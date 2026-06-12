@@ -1,7 +1,9 @@
 # Copyright contributors to the TSFM project
 #
-# This code is based on layers and components from the PatchTSMixer model in the HuggingFace Transformers
-# Library: https://github.com/huggingface/transformers/blob/main/src/transformers/models/patchtsmixer/modeling_patchtsmixer.py
+# This code is based on layers and components from the PatchTSMixer model in the
+# HuggingFace Transformers
+# Library:
+# https://github.com/huggingface/transformers/blob/main/src/transformers/models/patchtsmixer/modeling_patchtsmixer.py
 """PyTorch TinyTimeMixer model."""
 
 import copy
@@ -37,26 +39,39 @@ TINYTIMEMIXER_PRETRAINED_MODEL_ARCHIVE_LIST = []
 
 TINYTIMEMIXER_START_DOCSTRING = r"""
 
-    This model inherits from [`PreTrainedModel`]. Check the superclass documentation for the generic methods the
-    library implements for all its model (such as downloading or saving, resizing the input embeddings, pruning heads
+    The model inherits from [`PreTrainedModel`]. Check the superclass documentation for.
+
+    the generic methods the
+    library implements for all its model (such as downloading or saving, resizing the
+    input embeddings, pruning heads
     etc.)
 
-    This model is also a PyTorch [torch.nn.Module](https://pytorch.org/docs/stable/nn.html#torch.nn.Module) subclass.
-    Use it as a regular PyTorch Module and refer to the PyTorch documentation for all matter related to general usage
+    This model is also a PyTorch
+    [torch.nn.Module](https://pytorch.org/docs/stable/nn.html#torch.nn.Module) subclass.
+    Use it as a regular PyTorch Module and refer to the PyTorch documentation for all
+    matter related to general usage
     and behavior.
 
     Parameters:
         config ([`TinyTimeMixerConfig`]):
-            Model configuration class with all the parameters of the model. Initializing with a config file does not
-            load the weights associated with the model, only the configuration. Check out the
+            Model configuration class with all the parameters of the model. Initializing
+            with a config file does not
+            load the weights associated with the model, only the configuration. Check
+            out the
             [`~PreTrainedModel.from_pretrained`] method to load the model weights.
 """
 
 TINYTIMEMIXER_INPUTS_DOCSTRING = r"""
+    Run the operation.
+
     Args:
-        past_values (`torch.FloatTensor` of shape `(batch_size, seq_length, num_input_channels)`):
-            Context values of the time series. For a forecasting task, this denotes the history/past time series values.
-            For univariate time series, `num_input_channels` dimension should be 1. For multivariate time series, it is
+
+        past_values (`torch.FloatTensor` of shape `(batch_size, seq_length,
+        num_input_channels)`):
+            Context values of the time series. For a forecasting task, this denotes the
+            history/past time series values.
+            For univariate time series, `num_input_channels` dimension should be 1. For
+            multivariate time series, it is
             greater than 1.
 
         output_hidden_states (`bool`, *optional*):
@@ -71,7 +86,8 @@ def update_patch_mask(
     patch_mask: torch.Tensor, K: int, mode: str = "prepend"
 ) -> torch.Tensor:
     """
-    Add K patches (all valid = all False) either at the beginning or end
+    Add K patches (all valid = all False) either at the beginning or end.
+
     of a patch-level mask.
 
     Args:
@@ -105,11 +121,13 @@ def update_patch_mask(
 
 class MultiPinballLoss(nn.Module):
     """
-    Quantile (pinball) loss for predictions shaped as [B, Q, T, C]
+    Quantile (pinball) loss for predictions shaped as [B, Q, T, C].
+
     against targets shaped as [B, T, C].
 
     Taus:
-      - if config.quantile_levels is None -> torch.linspace(0.1,0.9,Q) (preserves old default)
+      - if config.quantile_levels is None -> torch.linspace(0.1,0.9,Q) (preserves old
+      default)
       - else -> sorted(config.quantile_levels)
 
     Optional horizon weighting via `horizon_weights` (shape [T]).
@@ -153,7 +171,8 @@ class MultiPinballLoss(nn.Module):
         ).lower()
         if self.width_penalty_mode not in ("boundary", "wis"):
             raise ValueError(
-                f"width_penalty_mode must be 'boundary' or 'wis', got: {self.width_penalty_mode}"
+                "width_penalty_mode must be 'boundary' or 'wis', got: "
+                f"{self.width_penalty_mode}"
             )
 
     @staticmethod
@@ -164,6 +183,7 @@ class MultiPinballLoss(nn.Module):
         device=None,
         dtype=None,
     ) -> torch.Tensor:
+        """Run the method."""
         cut = int(round(cut_ratio * T))
         cut = max(1, min(T, cut))
 
@@ -182,6 +202,7 @@ class MultiPinballLoss(nn.Module):
         taus=None,
         horizon_weights: torch.Tensor = None,  # [T] optional
     ) -> torch.Tensor:
+        """Run the forward pass."""
         # ----------------------------
         # Resolve taus
         # ----------------------------
@@ -199,7 +220,8 @@ class MultiPinballLoss(nn.Module):
 
         if taus.numel() != pred.size(1):
             raise ValueError(
-                f"taus length ({taus.numel()}) must match pred.size(1) ({pred.size(1)}). "
+                f"taus length ({taus.numel()}) must match pred.size(1) "
+                f"({pred.size(1)}). "
                 f"config.quantile_levels={self.static_taus}"
             )
 
@@ -255,7 +277,8 @@ class MultiPinballLoss(nn.Module):
                 # (q_{high} - q_{low}) for pairs (0,-1), (1,-2), ...
                 if Q % 2 != 1:
                     raise ValueError(
-                        f"WIS-like width penalty expects odd Q (median present). Got Q={Q}."
+                        "WIS-like width penalty expects odd Q "
+                        f"(median present). Got Q={Q}."
                     )
                 k = (Q - 1) // 2
 
@@ -350,7 +373,8 @@ class MultiPinballLoss(nn.Module):
 #         # Safety: ensure Q matches pred.size(1) when using default taus
 #         if taus.numel() != pred.size(1):
 #             raise ValueError(
-#                 f"taus length ({taus.numel()}) must match pred.size(1) ({pred.size(1)}). "
+#                 f"taus length ({taus.numel()}) must match pred.size(1)
+# ({pred.size(1)}). "
 #                 f"config.quantile_levels={self.static_taus}"
 #             )
 
@@ -484,8 +508,9 @@ def weighted_l1_over_horizon(
     y_hat: torch.Tensor, target: torch.Tensor, horizon_weights: torch.Tensor = None
 ):
     """
-    y_hat, target: [B, T, C]
-    horizon_weights: [T] optional
+    y_hat, target: [B, T, C].
+
+    horizon_weights: [T] optional.
     """
     l1 = (y_hat - target).abs()  # [B,T,C]
     if horizon_weights is not None:
@@ -498,14 +523,17 @@ def weighted_l1_over_horizon(
 
 
 class PinballLoss(nn.Module):
+    """Define the TinyTimeMixer component."""
+
     def __init__(self, quantile: float):
         """
         Initialize the Pinball Loss for multidimensional tensors.
 
         Args:
-        quantile (float): The desired quantile (e.g., 0.5 for median, 0.9 for 90th percentile).
+        quantile (float): The desired quantile (e.g., 0.5 for median, 0.9 for 90th
+        percentile).
         """
-        super(PinballLoss, self).__init__()
+        super().__init__()
         self.quantile = quantile
 
     def forward(self, predictions, targets):
@@ -573,10 +601,12 @@ class TinyTimeMixerGatedAttention(nn.Module):
         else:
             self.attn_layer = nn.Linear(gate_in_dim, self.C)
 
-        # Optional: call this from outside after construction if you want identity-ish init
+        # Optional: call this from outside after construction if you want identity-ish
+        # init
         # self._init_identity_weights()
 
     def pick_gate_groups(self, C: int, requested_G: int) -> int:
+        """Run the method."""
         if requested_G <= 1:
             return 1
 
@@ -616,7 +646,8 @@ class TinyTimeMixerGatedAttention(nn.Module):
 
     def forward(self, x: torch.Tensor, context=None) -> torch.Tensor:
         """
-        x:       [..., C]
+        x:       [..., C].
+
         context: [..., C] or broadcastable to x (e.g. [B, 1, C])
                  Only used if self.use_reg_context == True.
 
@@ -687,13 +718,14 @@ class TinyTimeMixerGatedAttentionOLD(nn.Module):
         self.attn_softmax = nn.Softmax(dim=-1)
 
     def forward(self, inputs):
+        """Run the forward pass."""
         attn_weight = self.attn_softmax(self.attn_layer(inputs))
         inputs = inputs * attn_weight
         return inputs
 
 
 class TinyTimeMixerCategoricalEmbeddingLayer(nn.Module):
-    """ """
+    """Represent model data."""
 
     def __init__(self, config: TinyTimeMixerConfig):
         super().__init__()
@@ -709,13 +741,18 @@ class TinyTimeMixerCategoricalEmbeddingLayer(nn.Module):
 
     def forward(self, static_categorical_values: torch.Tensor):
         """
+        Run the operation.
+
         Parameters
         ----------
-            static_categorical_values (`torch.FloatTensor` of shape `(batch_size, number_of_categorical_variables)`):
-            Tokenized categorical values can be passed here. Ensure to pass in the same order as the vocab size list used in the
+            static_categorical_values (`torch.FloatTensor` of shape `(batch_size,
+            number_of_categorical_variables)`):
+            Tokenized categorical values can be passed here. Ensure to pass in the same
+            order as the vocab size list used in the
             TinyTimeMixerConfig param `categorical_vocab_size_list`
         Returns:
-            `torch.Tensor` of shape `(batch_size, number_of_categorical_variables, num_patches, d_model)`
+            `torch.Tensor` of shape `(batch_size, number_of_categorical_variables,
+            num_patches, d_model)`
         """
         # static_categorical_values [bs x number_of_categorical_variables]
         embedded_tensors = []
@@ -738,9 +775,7 @@ class TinyTimeMixerCategoricalEmbeddingLayer(nn.Module):
 
 
 class TinyTimeMixerBatchNorm(nn.Module):
-    """
-    Compute batch normalization over the sequence length (time) dimension.
-    """
+    """Compute batch normalization over the sequence length (time) dimension."""
 
     def __init__(self, config: TinyTimeMixerConfig):
         super().__init__()
@@ -748,6 +783,8 @@ class TinyTimeMixerBatchNorm(nn.Module):
 
     def forward(self, inputs: torch.Tensor):
         """
+        Run the operation.
+
         Parameters
         ----------
             inputs (`torch.Tensor` of shape `(batch_size, sequence_length, d_model)`):
@@ -763,9 +800,7 @@ class TinyTimeMixerBatchNorm(nn.Module):
 
 
 class TinyTimeMixerPositionalEncoding(nn.Module):
-    """
-    Class for positional encoding
-    """
+    """Class for positional encoding."""
 
     def __init__(self, config: TinyTimeMixerConfig):
         super().__init__()
@@ -798,20 +833,25 @@ class TinyTimeMixerPositionalEncoding(nn.Module):
             position_enc = nn.Parameter(position_enc, requires_grad=False)
         else:
             raise ValueError(
-                f"{config.positional_encoding_type} is not a valid positional encoder. Available types are 'random' and 'sincos'."
+                f"{config.positional_encoding_type} is not a valid positional "
+                "encoder. Available types are 'random' and 'sincos'."
             )
         return position_enc
 
     def forward(self, patch_input: torch.Tensor):
+        """Run the forward pass."""
         # hidden_state: [bs x num_channels x num_patches x d_model]
         hidden_state = patch_input + self.position_enc
         return hidden_state
 
 
 class TinyTimeMixerNormLayer(nn.Module):
-    """Normalization block
+    """Normalization block.
+
+    Run the operation.
 
     Args:
+
         config (`TinyTimeMixerConfig`, *required*):
             Configuration.
     """
@@ -828,8 +868,12 @@ class TinyTimeMixerNormLayer(nn.Module):
 
     def forward(self, inputs: torch.Tensor):
         """
+        Run the operation.
+
         Args:
-            inputs (`torch.Tensor` of shape `((batch_size, num_channels, num_patches, d_model))`):
+
+            inputs (`torch.Tensor` of shape `((batch_size, num_channels, num_patches,
+            d_model))`):
                 Input to the normalization layer.
 
         Returns
@@ -860,6 +904,8 @@ class TinyTimeMixerNormLayer(nn.Module):
 
 
 class TinyTimeMixerMLP(nn.Module):
+    """Define the TinyTimeMixer component."""
+
     def __init__(self, in_features, out_features, config):
         super().__init__()
         num_hidden = in_features * config.expansion_factor
@@ -870,8 +916,12 @@ class TinyTimeMixerMLP(nn.Module):
 
     def forward(self, inputs: torch.Tensor):
         """
+        Run the operation.
+
         Args:
-            inputs (`torch.Tensor` of shape `((batch_size, num_channels, num_patches, d_model))`):
+
+            inputs (`torch.Tensor` of shape `((batch_size, num_channels, num_patches,
+            d_model))`):
                 Input to the MLP layer.
 
         Returns
@@ -885,9 +935,12 @@ class TinyTimeMixerMLP(nn.Module):
 
 
 class TinyTimeMixerChannelFeatureMixerBlock(nn.Module):
-    """This module mixes the features in the channel dimension.
+    """Mix features in the channel dimension.
+
+    Run the operation.
 
     Args:
+
         config (`TinyTimeMixerConfig`, *required*):
             Configuration.
     """
@@ -912,11 +965,15 @@ class TinyTimeMixerChannelFeatureMixerBlock(nn.Module):
 
     def forward(self, inputs: torch.Tensor):
         """
+        Run the operation.
+
         Args:
-            inputs (`torch.Tensor` of shape `((batch_size, num_channels, num_patches, d_model))`):
+
+            inputs (`torch.Tensor` of shape `((batch_size, num_channels, num_patches,
+            d_model))`):
                 input to the MLP layer
         Returns:
-            `torch.Tensor` of the same shape as `inputs`
+            `torch.Tensor` of the same shape as `inputs`.
         """
         residual = inputs
         inputs = self.norm(inputs)
@@ -935,7 +992,7 @@ class TinyTimeMixerChannelFeatureMixerBlock(nn.Module):
 
 
 class TinyTimeMixerAttention(nn.Module):
-    """Multi-headed attention from 'Attention Is All You Need' paper"""
+    """Multi-headed attention from 'Attention Is All You Need' paper."""
 
     def __init__(
         self,
@@ -956,7 +1013,8 @@ class TinyTimeMixerAttention(nn.Module):
 
         if (self.head_dim * num_heads) != self.embed_dim:
             raise ValueError(
-                f"embed_dim must be divisible by num_heads (got `embed_dim`: {self.embed_dim}"
+                "embed_dim must be divisible by num_heads "
+                f"(got `embed_dim`: {self.embed_dim}"
                 f" and `num_heads`: {num_heads})."
             )
         self.scaling = self.head_dim**-0.5
@@ -984,7 +1042,7 @@ class TinyTimeMixerAttention(nn.Module):
         layer_head_mask: torch.Tensor | None = None,
         output_attentions: bool = False,
     ) -> tuple[torch.Tensor, torch.Tensor | None, tuple[torch.Tensor] | None]:
-        """Input shape: Batch x Time x Channel"""
+        """Input shape: Batch x Time x Channel."""
         # if key_value_states are provided this layer is used as a cross-attention layer
         # for the decoder
         is_cross_attention = key_value_states is not None
@@ -1021,12 +1079,16 @@ class TinyTimeMixerAttention(nn.Module):
             value_states = self._shape(self.v_proj(hidden_states), -1, bsz)
 
         if self.is_decoder:
-            # if cross_attention save Tuple(torch.Tensor, torch.Tensor) of all cross attention key/value_states.
+            # if cross_attention save Tuple(torch.Tensor, torch.Tensor) of all cross
+            # attention key/value_states.
             # Further calls to cross_attention layer can then reuse all cross-attention
             # key/value_states (first "if" case)
-            # if uni-directional self-attention (decoder) save Tuple(torch.Tensor, torch.Tensor) of
-            # all previous decoder key/value_states. Further calls to uni-directional self-attention
-            # can concat previous decoder key/value_states to current projected key/value_states (third "elif" case)
+            # if uni-directional self-attention (decoder) save Tuple(torch.Tensor,
+            # torch.Tensor) of
+            # all previous decoder key/value_states. Further calls to uni-directional
+            # self-attention
+            # can concat previous decoder key/value_states to current projected
+            # key/value_states (third "elif" case)
             # if encoder bi-directional self-attention `past_key_value` is always `None`
             past_key_value = (key_states, value_states)
 
@@ -1040,14 +1102,17 @@ class TinyTimeMixerAttention(nn.Module):
 
         if attn_weights.size() != (bsz * self.num_heads, tgt_len, src_len):
             raise ValueError(
-                f"Attention weights should be of size {(bsz * self.num_heads, tgt_len, src_len)}, but is"
+                "Attention weights should be of size "
+                f"{(bsz * self.num_heads, tgt_len, src_len)}, but is"
                 f" {attn_weights.size()}"
             )
 
         if attention_mask is not None:
             if attention_mask.size() != (bsz, 1, tgt_len, src_len):
                 raise ValueError(
-                    f"Attention mask should be of size {(bsz, 1, tgt_len, src_len)}, but is {attention_mask.size()}"
+                    "Attention mask should be of size "
+                    f"{(bsz, 1, tgt_len, src_len)}, but is "
+                    f"{attention_mask.size()}"
                 )
             attn_weights = (
                 attn_weights.view(bsz, self.num_heads, tgt_len, src_len)
@@ -1060,7 +1125,8 @@ class TinyTimeMixerAttention(nn.Module):
         if layer_head_mask is not None:
             if layer_head_mask.size() != (self.num_heads,):
                 raise ValueError(
-                    f"Head mask for a single layer should be of size {(self.num_heads,)}, but is"
+                    "Head mask for a single layer should be of size "
+                    f"{(self.num_heads,)}, but is"
                     f" {layer_head_mask.size()}"
                 )
             attn_weights = layer_head_mask.view(1, -1, 1, 1) * attn_weights.view(
@@ -1090,14 +1156,16 @@ class TinyTimeMixerAttention(nn.Module):
 
         if attn_output.size() != (bsz * self.num_heads, tgt_len, self.head_dim):
             raise ValueError(
-                f"`attn_output` should be of size {(bsz * self.num_heads, tgt_len, self.head_dim)}, but is"
+                "`attn_output` should be of size "
+                f"{(bsz * self.num_heads, tgt_len, self.head_dim)}, but is"
                 f" {attn_output.size()}"
             )
 
         attn_output = attn_output.view(bsz, self.num_heads, tgt_len, self.head_dim)
         attn_output = attn_output.transpose(1, 2)
 
-        # Use the `embed_dim` from the config (stored in the class) rather than `hidden_state` because `attn_output` can be
+        # Use the `embed_dim` from the config (stored in the class) rather than
+        # `hidden_state` because `attn_output` can be
         # partitioned across GPUs when using tensor-parallelism.
         attn_output = attn_output.reshape(bsz, tgt_len, self.embed_dim)
 
@@ -1107,9 +1175,12 @@ class TinyTimeMixerAttention(nn.Module):
 
 
 class PatchMixerBlock(nn.Module):
-    """This module mixes the patch dimension.
+    """Mix the patch dimension.
+
+    Run the operation.
 
     Args:
+
         config (`TinyTimeMixerConfig`, *required*):
             Configuration.
     """
@@ -1143,7 +1214,10 @@ class PatchMixerBlock(nn.Module):
 
     def forward(self, hidden_state):
         """
+        Run the operation.
+
         Args:
+
             hidden_state (`torch.Tensor`): Input tensor.
 
         Returns
@@ -1183,9 +1257,12 @@ class PatchMixerBlock(nn.Module):
 
 
 class FeatureMixerBlock(nn.Module):
-    """This module mixes the hidden feature dimension.
+    """Mix the hidden feature dimension.
+
+    Run the operation.
 
     Args:
+
         config (`TinyTimeMixerConfig`, *required*):
             Configuration.
 
@@ -1211,7 +1288,10 @@ class FeatureMixerBlock(nn.Module):
 
     def forward(self, hidden: torch.Tensor):
         """
+        Run the operation.
+
         Args:
+
             hidden (`torch.Tensor` of shape `(batch_size, num_patches, d_model)`):
                 Input tensor to the layer.
 
@@ -1231,11 +1311,14 @@ class FeatureMixerBlock(nn.Module):
 
 
 class ForecastChannelHeadMixer(nn.Module):
-    """ForecastChannelMixer Module to reconcile forecasts across channels with exogenous support.
+    """Reconcile forecasts across channels with exogenous support.
 
-    When channel_context_length is positive this mode creates a patch for every multi-variate forecast point with its surronding context
+    When channel_context_length is positive this mode creates a patch for every.
+
+    multi-variate forecast point with its surronding context
     it then flattens it and applies MLP to it.
-    By this way, every forecast point learn from its pre and post surrounding context in a channel mixed way.
+    By this way, every forecast point learn from its pre and post surrounding context in
+    a channel mixed way.
     Residual is added to ensure noise reduction with initial forecasts.
     """
 
@@ -1327,22 +1410,33 @@ class ForecastChannelHeadMixer(nn.Module):
         future_values: torch.Tensor | None = None,
     ):
         """
-        Args:
-            base_forecasts (`torch.Tensor` of shape `(batch_size, prediction length, forecast_channels)`):
-                Base Forecasts to reconcile
+        Run the operation.
 
-            past_values (`torch.FloatTensor` of shape `(batch_size, seq_length, num_input_channels)`):
-            Context values of the time series. For a forecasting task, this denotes the history/past time series values.
-            For univariate time series, `num_input_channels` dimension should be 1. For multivariate time series, it is
+        Args:
+
+            base_forecasts (`torch.Tensor` of shape `(batch_size, prediction length,
+            forecast_channels)`):
+                Base Forecasts to reconcile.
+
+            past_values (`torch.FloatTensor` of shape `(batch_size, seq_length,
+            num_input_channels)`):
+            Context values of the time series. For a forecasting task, this denotes the
+            history/past time series values.
+            For univariate time series, `num_input_channels` dimension should be 1. For
+            multivariate time series, it is
             greater than 1.
 
-            future_values (`torch.Tensor` of shape `(batch_size, prediction length, input_channels)`, *optional*, Defaults to None):
-                Actual groundtruths of the forecasts. Pass dummy values (say 0) for forecast channels, if groundtruth is unknown.
-                Pass the correct values for Exogenous channels where the forecast values are known.
+            future_values (`torch.Tensor` of shape `(batch_size, prediction length,
+            input_channels)`, *optional*, Defaults to None):
+                Actual groundtruths of the forecasts. Pass dummy values (say 0) for
+                forecast channels, if groundtruth is unknown.
+                Pass the correct values for Exogenous channels where the forecast values
+                are known.
 
         Returns
         -------
-            `torch.Tensor`: Updated forecasts of shape `(batch_size, prediction length, forecast_channels)`
+            `torch.Tensor`: Updated forecasts of shape `(batch_size, prediction length,
+            forecast_channels)`
         """
         # base_forecasts.shape == (batch_size x forecast_len x n_vars)
 
@@ -1378,17 +1472,18 @@ class ForecastChannelHeadMixer(nn.Module):
         residual = base_forecasts
 
         if exog_values is not None:
-            base_forecasts = torch.cat(
-                (base_forecasts, exog_values), dim=-1
-            )  # x.shape == (batch_size x forecast_len x (forecast_channels+exog_channels))
+            base_forecasts = torch.cat((base_forecasts, exog_values), dim=-1)
 
         if self.fcm_context_length > 0:
-            # this mode creates a patch for every multi-variate forecast point with its surronding context
+            # this mode creates a patch for every multi-variate forecast point with its
+            # surronding context
             # it then flattens it and applies MLP to it.
-            # By this way, every forecast point learn from its pre and post surrounding context in a channel mixed way.
+            # By this way, every forecast point learn from its pre and post surrounding
+            # context in a channel mixed way.
             # Residual is added to ensure noise reduction with initial forecasts.
 
-            # prefill and postfill zeros to enable patching for every forecast point with surrounding context
+            # prefill and postfill zeros to enable patching for every forecast point
+            # with surrounding context
 
             dummy = torch.zeros(
                 base_forecasts.shape[0],
@@ -1475,7 +1570,10 @@ class TinyTimeMixerLayer(nn.Module):
 
     def forward(self, hidden: torch.Tensor):
         """
+        Run the operation.
+
         Args:
+
             hidden (`torch.Tensor` of shape `(batch_size, num_patches, d_model)`):
                 Input tensor to the layer.
 
@@ -1514,14 +1612,15 @@ class TinyTimeMixerAdaptivePatchingBlock(nn.Module):
         if config.d_model // self.adaptive_patch_factor <= 4:
             # do not allow reduction beyond d_model less than 4
             logger.warning(
-                "Disabling adaptive patching at level %s. Either increase d_model or reduce adaptive_patching_levels"
-                % (adapt_patch_level)
+                "Disabling adaptive patching at level %s. Either increase "
+                "d_model or reduce adaptive_patching_levels" % (adapt_patch_level)
             )
             self.adaptive_patch_factor = 1
 
         if config.d_model % self.adaptive_patch_factor != 0:
             raise ValueError(
-                "d_model should be divisible by 2^i, where i varies from 0 to adaptive_patching_levels."
+                "d_model should be divisible by 2^i, where i varies from "
+                "0 to adaptive_patching_levels."
             )
         temp_config.num_patches = temp_config.num_patches * self.adaptive_patch_factor
         temp_config.d_model = temp_config.d_model // self.adaptive_patch_factor
@@ -1532,8 +1631,12 @@ class TinyTimeMixerAdaptivePatchingBlock(nn.Module):
 
     def forward(self, hidden: torch.Tensor):
         """
+        Run the operation.
+
         Args:
-            hidden (`torch.Tensor` of shape `(batch_size x nvars x num_patch x d_model)`):
+
+            hidden (`torch.Tensor` of shape `(batch_size x nvars x num_patch x
+            d_model)`):
                 Input tensor to the layer.
 
         Returns
@@ -1574,7 +1677,10 @@ class TinyTimeMixerAdaptivePatchingBlock(nn.Module):
 class TinyTimeMixerBlock(nn.Module):
     """The main computing framework of the `TinyTimeMixer` model.
 
+    Run the operation.
+
     Args:
+
         config (`TinyTimeMixerConfig`, *required*):
             Configuration.
     """
@@ -1603,14 +1709,18 @@ class TinyTimeMixerBlock(nn.Module):
 
     def forward(self, hidden_state, output_hidden_states: bool = False):
         """
+        Run the operation.
+
         Args:
+
             hidden_state (`torch.Tensor`): The input tensor.
             output_hidden_states (`bool`, *optional*, defaults to False.):
                 Whether to output the hidden states as well.
 
         Returns
         -------
-            `torch.Tensor`: The embedding. `list`: List of all hidden states if `output_hidden_states` is set to
+            `torch.Tensor`: The embedding. `list`: List of all hidden states if
+            `output_hidden_states` is set to
             `True`.
         """
         all_hidden_states = []
@@ -1633,9 +1743,12 @@ class TinyTimeMixerBlock(nn.Module):
 
 
 class TinyTimeMixerDecoder(nn.Module):
-    """Decoder for tiny time mixer
+    """Decoder for tiny time mixer.
+
+    Run the operation.
 
     Args:
+
         config (`TinyTimeMixerConfig`, *required*):
             Configuration.
     """
@@ -1669,10 +1782,12 @@ class TinyTimeMixerDecoder(nn.Module):
 
         if config.categorical_vocab_size_list is not None:
             if config.decoder_mode == "common_channel":
-                # logger.warning("Setting decoder_mode to mix_channel as static categorical variables is available")
+                # logger.warning("Setting decoder_mode to mix_channel as static
+                # categorical variables is available")
                 # config.decoder_mode = "mix_channel"
                 raise ValueError(
-                    "set decoder_mode to mix_channel when using static categorical variables"
+                    "set decoder_mode to mix_channel when using static "
+                    "categorical variables"
                 )
 
             decoder_config.num_input_channels += len(config.categorical_vocab_size_list)
@@ -1694,18 +1809,25 @@ class TinyTimeMixerDecoder(nn.Module):
         static_categorical_values: torch.Tensor | None = None,
     ):
         """
+        Run the operation.
+
         Args:
-            hidden_state (`torch.Tensor` of shape `(batch_size x nvars x num_patch x d_model)`): The input tensor from backbone.
+
+            hidden_state (`torch.Tensor` of shape `(batch_size x nvars x num_patch x
+            d_model)`): The input tensor from backbone.
             output_hidden_states (`bool`, *optional*, defaults to False.):
                 Whether to output the hidden states as well.
 
-            static_categorical_values (`torch.FloatTensor` of shape `(batch_size, number_of_categorical_variables)`, *optional*):
-            Tokenized categorical values can be passed here. Ensure to pass in the same order as the vocab size list used in the
+            static_categorical_values (`torch.FloatTensor` of shape `(batch_size,
+            number_of_categorical_variables)`, *optional*):
+            Tokenized categorical values can be passed here. Ensure to pass in the same
+            order as the vocab size list used in the
             TinyTimeMixerConfig param `categorical_vocab_size_list`
 
         Returns
         -------
-            `torch.Tensor`: The embedding. `list`: List of all hidden states if `output_hidden_states` is set to
+            `torch.Tensor`: The embedding. `list`: List of all hidden states if
+            `output_hidden_states` is set to
             `True`.
         """
         if output_hidden_states:
@@ -1767,9 +1889,12 @@ class TinyTimeMixerDecoder(nn.Module):
 
 
 class TinyTimeMixerForPredictionHead(nn.Module):
-    """Prediction Head for Forecasting
+    """Prediction Head for Forecasting.
+
+    Run the operation.
 
     Args:
+
         config (`TinyTimeMixerConfig`, *required*): Configuration.
     """
 
@@ -1811,23 +1936,34 @@ class TinyTimeMixerForPredictionHead(nn.Module):
     def forward(self, hidden_features, past_values, future_values=None):
         """
 
+        Run the operation.
+
         Args:
-            hidden_features `(batch_size, n_vars, num_patch, d_model)` in `common_channel`/`mix_channel` mode.): Input hidden
+
+            hidden_features `(batch_size, n_vars, num_patch, d_model)` in
+            `common_channel`/`mix_channel` mode.): Input hidden
                 features.
 
-            past_values (`torch.FloatTensor` of shape `(batch_size, seq_length, num_input_channels)`):
-            Context values of the time series. For a forecasting task, this denotes the history/past time series values.
-            For univariate time series, `num_input_channels` dimension should be 1. For multivariate time series, it is
+            past_values (`torch.FloatTensor` of shape `(batch_size, seq_length,
+            num_input_channels)`):
+            Context values of the time series. For a forecasting task, this denotes the
+            history/past time series values.
+            For univariate time series, `num_input_channels` dimension should be 1. For
+            multivariate time series, it is
             greater than 1.
 
-            future_values (`torch.Tensor` of shape `(batch_size, prediction length, input_channels)`, *optional*, Defaults to None):
-                Actual groundtruths of the forecasts. Pass dummy values (say 0) for forecast channels, if groundtruth is unknown.
-                Pass the correct values for Exogenous channels where the forecast values are known.
+            future_values (`torch.Tensor` of shape `(batch_size, prediction length,
+            input_channels)`, *optional*, Defaults to None):
+                Actual groundtruths of the forecasts. Pass dummy values (say 0) for
+                forecast channels, if groundtruth is unknown.
+                Pass the correct values for Exogenous channels where the forecast values
+                are known.
 
 
         Returns
         -------
-            `torch.Tensor` of shape `(batch_size, prediction_length, forecast_channels)`.
+            `torch.Tensor` of shape `(batch_size, prediction_length,
+            forecast_channels)`.
 
         """
         hidden_features = self.flatten(
@@ -1890,6 +2026,8 @@ class TinyTimeMixerForPredictionHead(nn.Module):
 
 
 class TinyTimeMixerPreTrainedModel(PreTrainedModel):
+    """Define the TinyTimeMixer component."""
+
     # Weight initialization
     config_class = TinyTimeMixerConfig
     base_model_prefix = "model"
@@ -1897,7 +2035,7 @@ class TinyTimeMixerPreTrainedModel(PreTrainedModel):
     supports_gradient_checkpointing = False
 
     def _init_weights(self, module):
-        """Initialize weights"""
+        """Initialize weights."""
         # if isinstance(module, MultiQuantileHead):
         #     # Initialize MQ temperature parameter if enabled.
         #     # This avoids doing init inside the head and keeps HF-style init central.
@@ -1924,7 +2062,8 @@ class TinyTimeMixerPreTrainedModel(PreTrainedModel):
             module.batchnorm.bias.data.zero_()
             module.batchnorm.weight.data.fill_(1.0)
         elif isinstance(module, nn.Linear):
-            # print(f"Initializing Linear layers with method: {self.config.init_linear}")
+            # print(f"Initializing Linear layers with method:
+            # {self.config.init_linear}")
             if self.config.init_linear == "normal":
                 module.weight.data.normal_(mean=0.0, std=self.config.init_std)
                 if module.bias is not None:
@@ -1940,7 +2079,8 @@ class TinyTimeMixerPreTrainedModel(PreTrainedModel):
             else:
                 module.reset_parameters()
         elif isinstance(module, nn.Embedding):
-            # print(f"Initializing Embedding layers with method: {self.config.init_embed}")
+            # print(f"Initializing Embedding layers with method:
+            # {self.config.init_embed}")
             if self.config.init_embed == "normal":
                 nn.init.normal_(module.weight)
             elif self.config.init_embed == "uniform":
@@ -1955,7 +2095,7 @@ class TinyTimeMixerPreTrainedModel(PreTrainedModel):
 
 class TinyTimeMixerPatchify(nn.Module):
     """
-    A class to patchify the time series sequence into different patches
+    A class to patchify the time series sequence into different patches.
 
     Returns
     -------
@@ -1976,7 +2116,8 @@ class TinyTimeMixerPatchify(nn.Module):
 
         if self.sequence_length <= self.patch_length:
             raise ValueError(
-                f"Sequence length ({self.sequence_length}) has to be greater than the patch length ({self.patch_length})"
+                f"Sequence length ({self.sequence_length}) has to be greater "
+                f"than the patch length ({self.patch_length})"
             )
 
         # get the number of patches
@@ -1990,19 +2131,24 @@ class TinyTimeMixerPatchify(nn.Module):
 
     def forward(self, past_values: torch.Tensor):
         """
+        Run the operation.
+
         Parameters
         ----------
-            past_values (`torch.Tensor` of shape `(batch_size, sequence_length, num_channels)`, *required*):
+            past_values (`torch.Tensor` of shape `(batch_size, sequence_length,
+            num_channels)`, *required*):
                 Input for patchification
 
         Returns
         -------
-            `torch.Tensor` of shape `(batch_size, num_channels, num_patches, patch_length)`
+            `torch.Tensor` of shape `(batch_size, num_channels, num_patches,
+            patch_length)`
         """
         sequence_length = past_values.shape[-2]
         if sequence_length != self.sequence_length:
             raise ValueError(
-                f"Input sequence length ({sequence_length}) doesn't match model configuration ({self.sequence_length})."
+                f"Input sequence length ({sequence_length}) doesn't match "
+                f"model configuration ({self.sequence_length})."
             )
         # output: [bs x new_sequence_length x num_channels]
         output = past_values[:, self.sequence_start :, :]
@@ -2017,7 +2163,9 @@ class TinyTimeMixerPatchify(nn.Module):
 
 class TinyTimeMixerStdScaler(nn.Module):
     """
-    Standardize features by calculating the mean and scaling along the first dimension, and then normalizes it by
+    Standardize features by calculating the mean and scaling along the first dimension,.
+
+    and then normalizes it by
     subtracting from the mean and dividing by the standard deviation.
     """
 
@@ -2033,17 +2181,22 @@ class TinyTimeMixerStdScaler(nn.Module):
         self, data: torch.Tensor, observed_indicator: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
+        Run the operation.
+
         Parameters
         ----------
-            data (`torch.Tensor` of shape `(batch_size, sequence_length, num_input_channels)`):
+            data (`torch.Tensor` of shape `(batch_size, sequence_length,
+            num_input_channels)`):
                 input for Batch norm calculation
-            observed_indicator (`torch.BoolTensor` of shape `(batch_size, sequence_length, num_input_channels)`):
+            observed_indicator (`torch.BoolTensor` of shape `(batch_size,
+            sequence_length, num_input_channels)`):
                 Calculating the scale on the observed indicator.
 
         Returns
         -------
             tuple of `torch.Tensor` of shapes
-                (`(batch_size, sequence_length, num_input_channels)`,`(batch_size, 1, num_input_channels)`,
+                (`(batch_size, sequence_length, num_input_channels)`,`(batch_size, 1,
+                num_input_channels)`,
                 `(batch_size, 1, num_input_channels)`)
         """
         denominator = observed_indicator.sum(self.dim, keepdim=self.keepdim)
@@ -2065,9 +2218,7 @@ class TinyTimeMixerStdScaler(nn.Module):
         loc: torch.Tensor,
         scale: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Undo normalization + affine transform on observed values.
-        """
+        """Undo normalization + affine transform on observed values."""
         normalized = (data - loc) / scale
 
         # if self.suppress_outliers:
@@ -2081,9 +2232,7 @@ class TinyTimeMixerStdScaler(nn.Module):
         loc: torch.Tensor,
         scale: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Undo normalization + affine transform on observed values.
-        """
+        """Undo normalization + affine transform on observed values."""
         # if self.suppress_outliers:
         #     data = torch.sinh(data)
 
@@ -2094,7 +2243,9 @@ class TinyTimeMixerStdScaler(nn.Module):
 
 class TinyTimeMixerMeanScaler(nn.Module):
     """
-    Computes a scaling factor as the weighted average absolute value along the first dimension, and scales the data
+    Computes a scaling factor as the weighted average absolute value along the first.
+
+    dimension, and scales the data
     accordingly.
     """
 
@@ -2113,17 +2264,22 @@ class TinyTimeMixerMeanScaler(nn.Module):
         self, data: torch.Tensor, observed_indicator: torch.Tensor
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
+        Run the operation.
+
         Parameters
         ----------
-            data (`torch.Tensor` of shape `(batch_size, sequence_length, num_input_channels)`):
+            data (`torch.Tensor` of shape `(batch_size, sequence_length,
+            num_input_channels)`):
                 input for Batch norm calculation
-            observed_indicator (`torch.BoolTensor` of shape `(batch_size, sequence_length, num_input_channels)`):
+            observed_indicator (`torch.BoolTensor` of shape `(batch_size,
+            sequence_length, num_input_channels)`):
                 Calculating the scale on the observed indicator.
 
         Returns
         -------
             tuple of `torch.Tensor` of shapes
-                (`(batch_size, sequence_length, num_input_channels)`,`(batch_size, 1, num_input_channels)`,
+                (`(batch_size, sequence_length, num_input_channels)`,`(batch_size, 1,
+                num_input_channels)`,
                 `(batch_size, 1, num_input_channels)`)
         """
         ts_sum = (data * observed_indicator).abs().sum(self.dim, keepdim=True)
@@ -2158,9 +2314,7 @@ class TinyTimeMixerMeanScaler(nn.Module):
         loc: torch.Tensor,
         scale: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Undo normalization + affine transform on observed values.
-        """
+        """Undo normalization + affine transform on observed values."""
         normalized = data / scale
 
         # if self.suppress_outliers:
@@ -2174,18 +2328,14 @@ class TinyTimeMixerMeanScaler(nn.Module):
         loc: torch.Tensor,
         scale: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Undo normalization + affine transform on observed values.
-        """
+        """Undo normalization + affine transform on observed values."""
         restored = data * scale + loc
         # restored = torch.where(observed_indicator.bool(), restored, data)
         return restored
 
 
 class TinyTimeMixerNOPScaler(nn.Module):
-    """
-    Assigns a scaling factor equal to 1 along the first dimension, and therefore applies no scaling to the input data.
-    """
+    """Assign a scaling factor equal to 1 without scaling input data."""
 
     def __init__(self, config: TinyTimeMixerConfig):
         super().__init__()
@@ -2196,13 +2346,17 @@ class TinyTimeMixerNOPScaler(nn.Module):
         self, data: torch.Tensor, observed_indicator: torch.Tensor = None
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
+        Run the operation.
+
         Parameters
         ----------
-            data (`torch.Tensor` of shape `(batch_size, sequence_length, num_input_channels)`):
+            data (`torch.Tensor` of shape `(batch_size, sequence_length,
+            num_input_channels)`):
                 input for Batch norm calculation
         Returns:
             tuple of `torch.Tensor` of shapes
-                (`(batch_size, sequence_length, num_input_channels)`,`(batch_size, 1, num_input_channels)`,
+                (`(batch_size, sequence_length, num_input_channels)`,`(batch_size, 1,
+                num_input_channels)`,
                 `(batch_size, 1, num_input_channels)`)
         """
         scale = torch.ones_like(data, requires_grad=False).mean(
@@ -2219,7 +2373,7 @@ class TinyTimeMixerNOPScaler(nn.Module):
         loc: torch.Tensor = None,
         scale: torch.Tensor = None,
     ) -> torch.Tensor:
-        """ """
+        """Represent model data."""
         return data
 
     def inverse(
@@ -2228,9 +2382,7 @@ class TinyTimeMixerNOPScaler(nn.Module):
         loc: torch.Tensor,
         scale: torch.Tensor,
     ) -> torch.Tensor:
-        """
-        Undo normalization + affine transform on observed values.
-        """
+        """Undo normalization + affine transform on observed values."""
         restored = data * scale + loc
         # restored = torch.where(observed_indicator.bool(), restored, data)
         return restored
@@ -2242,7 +2394,8 @@ class TinyTimeMixerEncoderOutput(ModelOutput):
     Base class for `TinyTimeMixerEncoderOutput`, with potential hidden states.
 
     Args:
-        last_hidden_state (`torch.FloatTensor` of shape `(batch_size, num_channels, num_patches, d_model)`):
+        last_hidden_state (`torch.FloatTensor` of shape `(batch_size, num_channels,
+        num_patches, d_model)`):
             Hidden-state at the output of the last layer of the model.
         hidden_states (`tuple(torch.FloatTensor)`, *optional*):
             Hidden-states of the model at the output of each layer.
@@ -2253,6 +2406,8 @@ class TinyTimeMixerEncoderOutput(ModelOutput):
 
 
 class MultiScaleFromPatchedSequence(nn.Module):
+    """Define the TinyTimeMixer component."""
+
     def __init__(self, config: TinyTimeMixerConfig):
         super().__init__()
 
@@ -2271,6 +2426,7 @@ class MultiScaleFromPatchedSequence(nn.Module):
         )
 
     def forward(self, patched_x):
+        """Run the forward pass."""
         B, C, P, L = patched_x.shape
         S = P * L
         x = patched_x.view(B, C, S)
@@ -2312,8 +2468,10 @@ class MultiScaleFromPatchedSequence(nn.Module):
 
 
 class TinyTimeMixerAddLearnableRegisterTokens(nn.Module):
+    """Define the TinyTimeMixer component."""
+
     def __init__(self, config: TinyTimeMixerConfig, device):
-        super(TinyTimeMixerAddLearnableRegisterTokens, self).__init__()
+        super().__init__()
         self.register_tokens = config.register_tokens
         d_model = config.d_model
 
@@ -2325,6 +2483,7 @@ class TinyTimeMixerAddLearnableRegisterTokens(nn.Module):
             )
 
     def forward(self, x, patch_mask=None):
+        """Run the forward pass."""
         # Input x shape: batch x num_channels x num_patches x d_model
         batch_size, num_channels, num_patches, d_model = x.size()
 
@@ -2367,10 +2526,13 @@ class TinyTimeMixerAddFFTPatches(nn.Module):
       - config.use_fft_embedding (bool, default False)
       - config.get_one_freq_emb (bool, default False)
 
-      - config.fft_ignore_dc (bool, default False)   # keep exact old behavior by default
+      - config.fft_ignore_dc (bool, default False)   # keep exact old behavior by
+      default
 
-      - config.fft_d_freq_min (int, default 4)       # only used when get_one_freq_emb=True
-      - config.fft_d_freq_max (int, default 64)      # only used when get_one_freq_emb=True
+      - config.fft_d_freq_min (int, default 4)       # only used when
+      get_one_freq_emb=True
+      - config.fft_d_freq_max (int, default 64)      # only used when
+      get_one_freq_emb=True
     """
 
     def __init__(self, config):
@@ -2429,10 +2591,14 @@ class TinyTimeMixerAddFFTPatches(nn.Module):
 
     def forward(self, x, raw_input, patch_mask=None):
         """
+        Run the operation.
+
         Args:
+
             x: [B, C, P, D] patched tokens
-            raw_input: [B, S, C] original time-series (or longer; we slice to context_length)
-            patch_mask: optional mask corresponding to x's patch dimension
+            raw_input: [B, S, C] original time-series (or longer; we slice to
+            context_length)
+            patch_mask: optional mask corresponding to x's patch dimension.
 
         Returns
         -------
@@ -2473,7 +2639,8 @@ class TinyTimeMixerAddFFTPatches(nn.Module):
             return x, patch_mask
 
         # New behavior: build one token from top-k embeddings
-        # freq_tokens: [B, C, k, d_freq] -> [B, C, k*d_freq] -> proj -> [B, C, 1, d_model]
+        # freq_tokens: [B, C, k, d_freq] -> [B, C, k*d_freq] -> proj -> [B, C, 1,
+        # d_model]
         freq_flat = freq_tokens.reshape(B, C, self.fft_k * self.d_freq)
         one_token = self.freq_concat_proj(freq_flat).unsqueeze(2)
 
@@ -2499,7 +2666,8 @@ class MultiQuantileHead(nn.Module):
     """
     Generic multi-quantile head.
 
-    - Uses config.quantile_levels (default: [0.1..0.9]) instead of hardcoded 9 quantiles.
+    - Uses config.quantile_levels (default: [0.1..0.9]) instead of hardcoded 9
+    quantiles.
     - Assumes:
         * quantile_levels contains 0.5 (median)
         * len(quantile_levels) is odd
@@ -2600,6 +2768,7 @@ class MultiQuantileHead(nn.Module):
         self.pw2 = nn.Conv1d(pw2_in, self.num_quantiles, kernel_size=1)
 
     def forward(self, mean_hat, decoder_hidden_state=None):
+        """Run the forward pass."""
         # mean_hat: [B,T,C]
         mean_hat_ct = mean_hat.transpose(-1, -2).contiguous()  # [B,C,T]
         B, C, T = mean_hat_ct.shape
@@ -2675,7 +2844,8 @@ class MultiQuantileHead(nn.Module):
             down_asc = torch.flip(down_near_to_far, dims=[2])
             qhat_ctqt = torch.cat([down_asc, q50, up_near_to_far], dim=2)
         # # quantiles around median
-        # # down_near_to_far: [q_(median-1), q_(median-2), ..., q_(lowest)] in that order
+        # # down_near_to_far: [q_(median-1), q_(median-2), ..., q_(lowest)] in that
+        # order
         # down_near_to_far = q50 - down_cum
         # up_near_to_far = q50 + up_cum
 
@@ -2849,7 +3019,8 @@ class MultiQuantileHead(nn.Module):
 #             getattr(config, "mq_detach_mean_for_head", False)
 #         )
 #         self.median_mode = str(getattr(config, "mq_median_mode", "biased"))
-#         self.median_bias_shrink = float(getattr(config, "mq_median_bias_shrink", 0.05))
+#         self.median_bias_shrink = float(getattr(config, "mq_median_bias_shrink",
+# 0.05))
 
 #         self.enable_delta_temperature = bool(
 #             getattr(config, "mq_enable_delta_temperature", False)
@@ -2866,7 +3037,8 @@ class MultiQuantileHead(nn.Module):
 
 #         if self.median_mode not in ("biased", "fixed", "shrink"):
 #             raise ValueError(
-#                 f"mq_median_mode must be one of ['biased','fixed','shrink'], got {self.median_mode}"
+#                 f"mq_median_mode must be one of ['biased','fixed','shrink'], got
+# {self.median_mode}"
 #             )
 
 #         # --- Core layers (UNCHANGED from your baseline) ---
@@ -2900,7 +3072,8 @@ class MultiQuantileHead(nn.Module):
 #         if self.temperature_per_horizon:
 #             if T > self._temp_u.numel():
 #                 raise ValueError(
-#                     f"T={T} exceeds configured prediction_length={self._temp_u.numel()} for mq_temperature_per_horizon."
+#                     f"T={T} exceeds configured
+# prediction_length={self._temp_u.numel()} for mq_temperature_per_horizon."
 #                 )
 #             temp = (
 #                 F.softplus(self._temp_u[:T]).to(device=device, dtype=dtype) + self.eps
@@ -3058,7 +3231,9 @@ class MultiQuantileHead(nn.Module):
 
 class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
     """
-    Encoder for TinyTimeMixer which inputs patched time-series and outputs patched embeddings.
+    Encoder for TinyTimeMixer which inputs patched time-series and outputs patched.
+
+    embeddings.
 
     Args:
         config (`TinyTimeMixerConfig`, *required*):
@@ -3126,17 +3301,23 @@ class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
         unpatched_past_values: torch.Tensor | None = None,
     ) -> tuple | TinyTimeMixerEncoderOutput:
         r"""
+        Run the operation.
+
         Args:
-            past_values (`torch.FloatTensor` of shape `(batch_size, seq_length, num_input_channels)`):
+
+            past_values (`torch.FloatTensor` of shape `(batch_size, seq_length,
+            num_input_channels)`):
                 Context values of the time series.
-                For univariate time series, `num_input_channels` dimension should be 1. For multivariate time series,
+                For univariate time series, `num_input_channels` dimension should be 1.
+                For multivariate time series,
                 it is greater than 1.
 
             output_hidden_states (`bool`, *optional*):
                 Whether or not to return the hidden states of all layers.
 
             return_dict (`bool`, *optional*):
-                Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
+                Whether or not to return a [`~utils.ModelOutput`] instead of a plain
+                tuple.
 
         Returns
         -------
@@ -3144,7 +3325,8 @@ class TinyTimeMixerEncoder(TinyTimeMixerPreTrainedModel):
         """
         return_dict = return_dict if return_dict is not None else self.use_return_dict
 
-        # flatten [bs x num_patch x d_model]. common_channel/mix_channel: [bs x n_vars x num_patch x d_model]
+        # flatten [bs x num_patch x d_model]. common_channel/mix_channel: [bs x n_vars x
+        # num_patch x d_model]
         patches = self.patcher(past_values)
         if self.resolution_prefix_tuning:
             if freq_token is not None:
@@ -3207,17 +3389,22 @@ class TinyTimeMixerModelOutput(ModelOutput):
     Base class for model's outputs, with potential hidden states.
 
     Args:
-        last_hidden_state (`torch.FloatTensor`  of shape `(batch_size, num_channels, num_patches, d_model)`):
+        last_hidden_state (`torch.FloatTensor`  of shape `(batch_size, num_channels,
+        num_patches, d_model)`):
             Hidden-state at the output of the last layer of the model.
         hidden_states (`tuple(torch.FloatTensor)`, *optional*):
             Hidden-states of the model at the output of each layer.
-        patch_input (`torch.FloatTensor` of shape `(batch_size, num_channels, num_patches, patch_length)`):
+        patch_input (`torch.FloatTensor` of shape `(batch_size, num_channels,
+        num_patches, patch_length)`):
             Patched input data to the model.
         loc: (`torch.FloatTensor` of shape `(batch_size, 1, num_channels)`,*optional*):
-            Gives the mean of the context window per channel. Used for revin denorm outside the model, if revin
+            Gives the mean of the context window per channel. Used for revin denorm
+            outside the model, if revin
             enabled.
-        scale: (`torch.FloatTensor` of shape `(batch_size, 1, num_channels)`,*optional*):
-            Gives the std dev of the context window per channel. Used for revin denorm outside the model, if revin
+        scale: (`torch.FloatTensor` of shape `(batch_size, 1,
+        num_channels)`,*optional*):
+            Gives the std dev of the context window per channel. Used for revin denorm
+            outside the model, if revin
             enabled.
     """
 
@@ -3233,6 +3420,8 @@ class TinyTimeMixerModelOutput(ModelOutput):
     TINYTIMEMIXER_START_DOCSTRING,
 )
 class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
+    """Define the TinyTimeMixer component."""
+
     def __init__(self, config: TinyTimeMixerConfig):
         if config.init_processing is False:
             config.check_and_init_preprocessing()
@@ -3269,14 +3458,15 @@ class TinyTimeMixerModel(TinyTimeMixerPreTrainedModel):
         freq_token: torch.Tensor | None = None,
     ) -> TinyTimeMixerModelOutput:
         r"""
-        past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
-            Boolean mask to indicate which `past_values` were observed and which were missing. Mask values selected
+        past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length,.
+
+        num_input_channels)`, *optional*):
+            Boolean mask to indicate which `past_values` were observed and which were
+            missing. Mask values selected
             in `[0, 1]` or `[False, True]`:
                 - 1 or True for values that are **observed**,
-                - 0 or False for values that are **missing** (i.e. NaNs that were replaced by zeros).
-
-        Returns
-        -------
+                - 0 or False for values that are **missing** (i.e. NaNs that were
+                replaced by zeros).
 
         """
         return_dict = return_dict if return_dict is not None else self.use_return_dict
@@ -3329,19 +3519,26 @@ class TinyTimeMixerForPredictionOutput(ModelOutput):
     Output type of [`TinyTimeMixerForPredictionOutput`].
 
     Args:
-        prediction_outputs (`torch.FloatTensor` of shape `(batch_size, prediction_length, num_input_channels)`):
+        prediction_outputs (`torch.FloatTensor` of shape `(batch_size,
+        prediction_length, num_input_channels)`):
             Prediction output from the forecast head.
-        backbone_hidden_state (`torch.FloatTensor` of shape `(batch_size, num_input_channels, num_patches, d_model)`):
+        backbone_hidden_state (`torch.FloatTensor` of shape `(batch_size,
+        num_input_channels, num_patches, d_model)`):
             Backbone embeddings before passing through the decoder
-        decoder_hidden_state (`torch.FloatTensor` of shape `(batch_size, num_input_channels, num_patches, d_model)`):
+        decoder_hidden_state (`torch.FloatTensor` of shape `(batch_size,
+        num_input_channels, num_patches, d_model)`):
             Decoder embeddings before passing through the head.
         hidden_states (`tuple(torch.FloatTensor)`, *optional*):
-            Hidden-states of the model at the output of each layer plus the optional initial embedding outputs.
-        loss (*optional*, returned when `y` is provided, `torch.FloatTensor` of shape `()`):
+            Hidden-states of the model at the output of each layer plus the optional
+            initial embedding outputs.
+        loss (*optional*, returned when `y` is provided, `torch.FloatTensor` of shape
+        `()`):
             Total loss.
-        loc (`torch.FloatTensor`, *optional* of shape `(batch_size, 1, num_input_channels)`):
+        loc (`torch.FloatTensor`, *optional* of shape `(batch_size, 1,
+        num_input_channels)`):
             Input mean
-        scale (`torch.FloatTensor`, *optional* of shape `(batch_size, 1, num_input_channels)`):
+        scale (`torch.FloatTensor`, *optional* of shape `(batch_size, 1,
+        num_input_channels)`):
             Input std dev
 
     """
@@ -3360,7 +3557,7 @@ class TinyTimeMixerForPredictionOutput(ModelOutput):
 
 @dataclass
 class TinyTimeMixerForDecomposedPredictionOutput(ModelOutput):
-    """ """
+    """Represent model data."""
 
     loss: torch.FloatTensor | None = None
     prediction_outputs: torch.FloatTensor = None
@@ -3378,11 +3575,14 @@ class TinyTimeMixerForDecomposedPredictionOutput(ModelOutput):
 @dataclass
 class SampleTinyTimeMixerPredictionOutput(ModelOutput):
     """
-    Base class for time series model's predictions outputs that contains the sampled values from the chosen
+    Base class for time series model's predictions outputs that contains the sampled.
+
+    values from the chosen
     distribution.
 
     Args:
-        sequences (`torch.FloatTensor` of shape `(batch_size, num_samples, prediction_length, number_channels)`):
+        sequences (`torch.FloatTensor` of shape `(batch_size, num_samples,
+        prediction_length, number_channels)`):
             Sampled values from the chosen distribution.
     """
 
@@ -3390,9 +3590,7 @@ class SampleTinyTimeMixerPredictionOutput(ModelOutput):
 
 
 def nll(input: torch.distributions.Distribution, target: torch.Tensor) -> torch.Tensor:
-    """
-    Computes the negative log likelihood loss from input distribution with respect to target.
-    """
+    """Compute negative log likelihood loss for the target."""
     return -input.log_prob(target)
 
 
@@ -3400,7 +3598,9 @@ def weighted_average(
     input_tensor: torch.Tensor, weights: torch.Tensor | None = None, dim=None
 ) -> torch.Tensor:
     """
-    Computes the weighted average of a given tensor across a given `dim`, masking values associated with weight zero,
+    Compute the weighted average across a dimension.
+
+    Values associated with weight zero are masked,
     meaning instead of `nan * 0 = nan` you will get `0 * 0 = 0`.
 
     Args:
@@ -3518,41 +3718,56 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
         metadata: torch.Tensor | None = None,
     ) -> TinyTimeMixerForPredictionOutput:
         r"""
-        past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
-            Boolean mask to indicate which `past_values` were observed and which were missing. Mask values selected
+        past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length,.
+
+        num_input_channels)`, *optional*):
+            Boolean mask to indicate which `past_values` were observed and which were
+            missing. Mask values selected
             in `[0, 1]` or `[False, True]`:
                 - 1 or True for values that are **observed**,
-                - 0 or False for values that are **missing** (i.e. NaNs that were replaced by zeros).
-        future_values (`torch.FloatTensor` of shape `(batch_size, target_len, num_input_channels)` for forecasting,:
-            `(batch_size, num_targets)` for regression, or `(batch_size,)` for classification, *optional*): Target
-            values of the time series, that serve as labels for the model. The `future_values` is what the
-            Transformer needs during training to learn to output, given the `past_values`. Note that, this is NOT
+                - 0 or False for values that are **missing** (i.e. NaNs that were
+                replaced by zeros).
+        future_values (`torch.FloatTensor` of shape `(batch_size, target_len,
+        num_input_channels)` for forecasting,:
+            `(batch_size, num_targets)` for regression, or `(batch_size,)` for
+            classification, *optional*): Target
+            values of the time series, that serve as labels for the model. The
+            `future_values` is what the
+            Transformer needs during training to learn to output, given the
+            `past_values`. Note that, this is NOT
             required for a pretraining task.
 
-            For a forecasting task, the shape is be `(batch_size, target_len, num_input_channels)`. Even if we want
-            to forecast only specific channels by setting the indices in `prediction_channel_indices` parameter,
-            pass the target data with all channels, as channel Filtering for both prediction and target will be
+            For a forecasting task, the shape is be `(batch_size, target_len,
+            num_input_channels)`. Even if we want
+            to forecast only specific channels by setting the indices in
+            `prediction_channel_indices` parameter,
+            pass the target data with all channels, as channel Filtering for both
+            prediction and target will be
             manually applied before the loss computation.
-        future_observed_mask (`torch.Tensor` of shape `(batch_size, prediction_length, num_targets)`, *optional*):
-            Boolean mask to indicate which `future_values` were observed and which were missing. Mask values selected
+        future_observed_mask (`torch.Tensor` of shape `(batch_size, prediction_length,
+        num_targets)`, *optional*):
+            Boolean mask to indicate which `future_values` were observed and which were
+            missing. Mask values selected
             in `[0, 1]` or `[False, True]`:
                 - 1 or True for values that are **observed**,
-                - 0 or False for values that are **missing** (i.e. NaNs that were replaced by zeros).
+                - 0 or False for values that are **missing** (i.e. NaNs that were
+                replaced by zeros).
         return_loss (`bool`,  *optional*):
             Whether to return the loss in the `forward` call.
-        static_categorical_values (`torch.FloatTensor` of shape `(batch_size, number_of_categorical_variables)`, *optional*):
-            Tokenized categorical values can be passed here. Ensure to pass in the same order as the vocab size list used in the
+        static_categorical_values (`torch.FloatTensor` of shape `(batch_size,
+        number_of_categorical_variables)`, *optional*):
+            Tokenized categorical values can be passed here. Ensure to pass in the same
+            order as the vocab size list used in the
             TinyTimeMixerConfig param `categorical_vocab_size_list`
-        metadata (`torch.Tensor`, *optional*): A tensor containing metadata. Currently unused in TinyTimeMixer, but used
+        metadata (`torch.Tensor`, *optional*): A tensor containing metadata. Currently
+        unused in TinyTimeMixer, but used
             to support custom trainers. Defaults to None.
-
-        Returns
-        -------
 
         """
         if past_values.dim() != 3:
             raise ValueError(
-                "`past_values` must have 3 dimensions of shape `(batch_size, sequence_length, num_input_channels)`."
+                "`past_values` must have 3 dimensions of shape "
+                "`(batch_size, sequence_length, num_input_channels)`."
             )
 
         sequence_length = (
@@ -3576,7 +3791,8 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
             past_values = torch.cat([pad_values, past_values], dim=1)
 
         # elif past_values.shape[1] < sequence_length:
-        #     raise ValueError("Context length in `past_values` is shorter that TTM context_length.")
+        #     raise ValueError("Context length in `past_values` is shorter that TTM
+        # context_length.")
 
         if past_observed_mask is not None:
             if past_observed_mask.shape[1] > sequence_length:
@@ -3595,7 +3811,8 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
 
                 past_observed_mask = torch.cat([pad_mask, past_observed_mask], dim=1)
 
-        # if past_observed_mask is not None and past_observed_mask.shape[1] > sequence_length:
+        # if past_observed_mask is not None and past_observed_mask.shape[1] >
+        # sequence_length:
         #     past_observed_mask = past_observed_mask[:, -sequence_length:, :]
 
         if self.multi_quantile_head_block is not None:
@@ -3610,7 +3827,8 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
             loss = nn.HuberLoss(delta=self.config.huber_delta)
         elif self.loss == "nll":
             raise Exception(
-                "NLL loss and Distribution heads are currently not allowed. Use mse or mae as loss functions."
+                "NLL loss and Distribution heads are currently not allowed. "
+                "Use mse or mae as loss functions."
             )
             loss = nll
         elif self.loss is None:
@@ -3748,7 +3966,8 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
                 if future_observed_mask is not None:
                     loss_val = loss(y_hat[fut_mask_bool], future_values[fut_mask_bool])
                 else:
-                    # avoiding mask operations for performance benefits on normal scenarios.
+                    # avoiding mask operations for performance benefits on normal
+                    # scenarios.
                     loss_val = loss(y_hat, future_values)
 
         m_last_hidden_state = model_output.last_hidden_state
@@ -3781,9 +4000,9 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
 
         return TinyTimeMixerForPredictionOutput(
             loss=loss_val,
-            prediction_outputs=y_hat,  # tensor [batch_size x prediction_length x num_input_channels]
-            backbone_hidden_state=m_last_hidden_state,  # x: [batch_size x nvars x num_patch x d_model]
-            decoder_hidden_state=decoder_output,  # x: [batch_size x nvars x num_patch x decoder_d_model]
+            prediction_outputs=y_hat,
+            backbone_hidden_state=m_last_hidden_state,
+            decoder_hidden_state=decoder_output,
             hidden_states=hidden_states,
             loc=loc,
             scale=scale,
@@ -3798,20 +4017,28 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
         past_observed_mask: torch.Tensor | None = None,
     ) -> SampleTinyTimeMixerPredictionOutput:
         """
-        Generate sequences of sample predictions from a model with a probability distribution head.
+        Generate sequences of sample predictions from a model with a probability.
+
+        distribution head.
 
         Args:
-            past_values (`torch.FloatTensor` of shape `(batch_size, sequence_length, num_input_channels)`):
-                Past values of the time series that serves as context in order to predict the future.
+            past_values (`torch.FloatTensor` of shape `(batch_size, sequence_length,
+            num_input_channels)`):
+                Past values of the time series that serves as context in order to
+                predict the future.
 
-            past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
-                Boolean mask to indicate which `past_values` were observed and which were missing. Mask values selected
+            past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length,
+            num_input_channels)`, *optional*):
+                Boolean mask to indicate which `past_values` were observed and which
+                were missing. Mask values selected
                 in `[0, 1]` or `[False, True]`:
                     - 1 or True for values that are **observed**,
-                    - 0 or False for values that are **missing** (i.e. NaNs that were replaced by zeros).
+                    - 0 or False for values that are **missing** (i.e. NaNs that were
+                    replaced by zeros).
 
         Return:
-            [`SampleTinyTimeMixerPredictionOutput`] where the outputs `sequences` tensor will have shape `(batch_size,
+            [`SampleTinyTimeMixerPredictionOutput`] where the outputs `sequences` tensor
+            will have shape `(batch_size,
             number of samples, prediction_length, num_input_channels)`.
         """
         # get number of samples
@@ -3842,6 +4069,8 @@ class TinyTimeMixerForPrediction(TinyTimeMixerPreTrainedModel):
 
 
 class TinyTimeMixerForMaskedPrediction(TinyTimeMixerForPrediction):
+    """Define the TinyTimeMixer component."""
+
     def __init__(self, config: TinyTimeMixerConfig):
         if config.prediction_filter_length is not None:
             append_length = config.prediction_filter_length
@@ -3876,36 +4105,50 @@ class TinyTimeMixerForMaskedPrediction(TinyTimeMixerForPrediction):
         metadata: torch.Tensor | None = None,
     ) -> TinyTimeMixerForPredictionOutput:
         r"""
-        past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
-            Boolean mask to indicate which `past_values` were observed and which were missing. Mask values selected
+        past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length,.
+
+        num_input_channels)`, *optional*):
+            Boolean mask to indicate which `past_values` were observed and which were
+            missing. Mask values selected
             in `[0, 1]` or `[False, True]`:
                 - 1 or True for values that are **observed**,
-                - 0 or False for values that are **missing** (i.e. NaNs that were replaced by zeros).
-        future_values (`torch.FloatTensor` of shape `(batch_size, target_len, num_input_channels)` for forecasting,:
-            `(batch_size, num_targets)` for regression, or `(batch_size,)` for classification, *optional*): Target
-            values of the time series, that serve as labels for the model. The `future_values` is what the
-            Transformer needs during training to learn to output, given the `past_values`. Note that, this is NOT
+                - 0 or False for values that are **missing** (i.e. NaNs that were
+                replaced by zeros).
+        future_values (`torch.FloatTensor` of shape `(batch_size, target_len,
+        num_input_channels)` for forecasting,:
+            `(batch_size, num_targets)` for regression, or `(batch_size,)` for
+            classification, *optional*): Target
+            values of the time series, that serve as labels for the model. The
+            `future_values` is what the
+            Transformer needs during training to learn to output, given the
+            `past_values`. Note that, this is NOT
             required for a pretraining task.
 
-            For a forecasting task, the shape is be `(batch_size, target_len, num_input_channels)`. Even if we want
-            to forecast only specific channels by setting the indices in `prediction_channel_indices` parameter,
-            pass the target data with all channels, as channel Filtering for both prediction and target will be
+            For a forecasting task, the shape is be `(batch_size, target_len,
+            num_input_channels)`. Even if we want
+            to forecast only specific channels by setting the indices in
+            `prediction_channel_indices` parameter,
+            pass the target data with all channels, as channel Filtering for both
+            prediction and target will be
             manually applied before the loss computation.
-        future_observed_mask (`torch.Tensor` of shape `(batch_size, prediction_length, num_targets)`, *optional*):
-            Boolean mask to indicate which `future_values` were observed and which were missing. Mask values selected
+        future_observed_mask (`torch.Tensor` of shape `(batch_size, prediction_length,
+        num_targets)`, *optional*):
+            Boolean mask to indicate which `future_values` were observed and which were
+            missing. Mask values selected
             in `[0, 1]` or `[False, True]`:
                 - 1 or True for values that are **observed**,
-                - 0 or False for values that are **missing** (i.e. NaNs that were replaced by zeros).
+                - 0 or False for values that are **missing** (i.e. NaNs that were
+                replaced by zeros).
         return_loss (`bool`,  *optional*):
             Whether to return the loss in the `forward` call.
-        static_categorical_values (`torch.FloatTensor` of shape `(batch_size, number_of_categorical_variables)`, *optional*):
-            Tokenized categorical values can be passed here. Ensure to pass in the same order as the vocab size list used in the
+        static_categorical_values (`torch.FloatTensor` of shape `(batch_size,
+        number_of_categorical_variables)`, *optional*):
+            Tokenized categorical values can be passed here. Ensure to pass in the same
+            order as the vocab size list used in the
             TinyTimeMixerConfig param `categorical_vocab_size_list`
-        metadata (`torch.Tensor`, *optional*): A tensor containing metadata. Currently unused in TinyTimeMixer, but used
+        metadata (`torch.Tensor`, *optional*): A tensor containing metadata. Currently
+        unused in TinyTimeMixer, but used
             to support custom trainers. Defaults to None.
-
-        Returns
-        -------
 
         """
         if future_values is not None:
@@ -3971,6 +4214,7 @@ def _gaussian_kernel(
 ) -> torch.Tensor:
     """
     Create a 1D Gaussian kernel of length w (odd), normalized to sum=1.
+
     sigma default is proportional to window, giving a smooth low-pass.
     """
     assert w % 2 == 1 and w >= 3, "w must be odd and >=3"
@@ -3992,7 +4236,9 @@ def robust_lowess_like(
     pad_mode: str = "reflect",
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
-    Robust LOWESS-like smoothing via Gaussian local average + Tukey bisquare reweighting.
+    Robust LOWESS-like smoothing via Gaussian local average + Tukey bisquare.
+
+    reweighting.
 
     Args:
         x        : [B, T, C] float tensor
@@ -4161,6 +4407,7 @@ class TinyTimeMixerForDecomposedPrediction(TinyTimeMixerPreTrainedModel):
         static_categorical_values: torch.Tensor | None = None,
         metadata: torch.Tensor | None = None,
     ) -> TinyTimeMixerForDecomposedPredictionOutput:
+        """Run the forward pass."""
         return_dict = return_dict if return_dict is not None else self.use_return_dict
 
         return self._forward_decomposed(
@@ -4179,8 +4426,10 @@ class TinyTimeMixerForDecomposedPrediction(TinyTimeMixerPreTrainedModel):
     def set_stage(
         self, forecast_loss_type: str, w_tr: float, w_res: float, w_joint: float
     ):
+        """Run the method."""
         print(
-            f"[MODEL] set_stage → {forecast_loss_type}  weights=({w_tr},{w_res},{w_joint})"
+            f"[MODEL] set_stage → {forecast_loss_type}  "
+            f"weights=({w_tr},{w_res},{w_joint})"
         )
         self.forecast_loss_type = forecast_loss_type
         self.trend_loss_weight = float(w_tr)
@@ -4229,8 +4478,9 @@ class TinyTimeMixerForDecomposedPrediction(TinyTimeMixerPreTrainedModel):
     def _detrend_short_ctx(self, past_scaled: torch.Tensor, tau_ctx_est: torch.Tensor):
         """
         Use model context trend (stop-grad) to detrend the *short* residual context.
+
         past_scaled : [B, L_ctx, C]
-        tau_ctx_est : [B, L_ctx, C] (model estimate over context)
+        tau_ctx_est : [B, L_ctx, C] (model estimate over context).
 
         Returns
         -------
@@ -4248,6 +4498,7 @@ class TinyTimeMixerForDecomposedPrediction(TinyTimeMixerPreTrainedModel):
         return x_short - tau_tail, L_res  # [B,L_res,C]
 
     def combine_quantiles_fast(self, trend_q, resid_q, eps: float = 1e-8):
+        """Run the method."""
         if trend_q is None and resid_q is None:
             return None
         if trend_q is None:
@@ -4352,36 +4603,50 @@ class TinyTimeMixerForDecomposedPrediction(TinyTimeMixerPreTrainedModel):
         metadata: torch.Tensor | None = None,
     ) -> TinyTimeMixerForDecomposedPredictionOutput:
         r"""
-        past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
-            Boolean mask to indicate which `past_values` were observed and which were missing. Mask values selected
+        past_observed_mask (`torch.Tensor` of shape `(batch_size, sequence_length,.
+
+        num_input_channels)`, *optional*):
+            Boolean mask to indicate which `past_values` were observed and which were
+            missing. Mask values selected
             in `[0, 1]` or `[False, True]`:
                 - 1 or True for values that are **observed**,
-                - 0 or False for values that are **missing** (i.e. NaNs that were replaced by zeros).
-        future_values (`torch.FloatTensor` of shape `(batch_size, target_len, num_input_channels)` for forecasting,:
-            `(batch_size, num_targets)` for regression, or `(batch_size,)` for classification, *optional*): Target
-            values of the time series, that serve as labels for the model. The `future_values` is what the
-            Transformer needs during training to learn to output, given the `past_values`. Note that, this is NOT
+                - 0 or False for values that are **missing** (i.e. NaNs that were
+                replaced by zeros).
+        future_values (`torch.FloatTensor` of shape `(batch_size, target_len,
+        num_input_channels)` for forecasting,:
+            `(batch_size, num_targets)` for regression, or `(batch_size,)` for
+            classification, *optional*): Target
+            values of the time series, that serve as labels for the model. The
+            `future_values` is what the
+            Transformer needs during training to learn to output, given the
+            `past_values`. Note that, this is NOT
             required for a pretraining task.
 
-            For a forecasting task, the shape is be `(batch_size, target_len, num_input_channels)`. Even if we want
-            to forecast only specific channels by setting the indices in `prediction_channel_indices` parameter,
-            pass the target data with all channels, as channel Filtering for both prediction and target will be
+            For a forecasting task, the shape is be `(batch_size, target_len,
+            num_input_channels)`. Even if we want
+            to forecast only specific channels by setting the indices in
+            `prediction_channel_indices` parameter,
+            pass the target data with all channels, as channel Filtering for both
+            prediction and target will be
             manually applied before the loss computation.
-        future_observed_mask (`torch.Tensor` of shape `(batch_size, prediction_length, num_targets)`, *optional*):
-            Boolean mask to indicate which `future_values` were observed and which were missing. Mask values selected
+        future_observed_mask (`torch.Tensor` of shape `(batch_size, prediction_length,
+        num_targets)`, *optional*):
+            Boolean mask to indicate which `future_values` were observed and which were
+            missing. Mask values selected
             in `[0, 1]` or `[False, True]`:
                 - 1 or True for values that are **observed**,
-                - 0 or False for values that are **missing** (i.e. NaNs that were replaced by zeros).
+                - 0 or False for values that are **missing** (i.e. NaNs that were
+                replaced by zeros).
         return_loss (`bool`,  *optional*):
             Whether to return the loss in the `forward` call.
-        static_categorical_values (`torch.FloatTensor` of shape `(batch_size, number_of_categorical_variables)`, *optional*):
-            Tokenized categorical values can be passed here. Ensure to pass in the same order as the vocab size list used in the
+        static_categorical_values (`torch.FloatTensor` of shape `(batch_size,
+        number_of_categorical_variables)`, *optional*):
+            Tokenized categorical values can be passed here. Ensure to pass in the same
+            order as the vocab size list used in the
             TinyTimeMixerConfig param `categorical_vocab_size_list`
-        metadata (`torch.Tensor`, *optional*): A tensor containing metadata. Currently unused in TinyTimeMixer, but used
+        metadata (`torch.Tensor`, *optional*): A tensor containing metadata. Currently
+        unused in TinyTimeMixer, but used
             to support custom trainers. Defaults to None.
-
-        Returns
-        -------
 
         """
         if past_observed_mask is None:
@@ -4581,7 +4846,7 @@ class TinyTimeMixerForDecomposedPrediction(TinyTimeMixerPreTrainedModel):
                 v
                 for v in [
                     loss_val,
-                    combined_point_forecast,  # tensor [batch_size x prediction_length x num_input_channels]
+                    combined_point_forecast,
                     combined_quantile_forecast,
                     trend_prediction_outputs,
                     residual_prediction_outputs,
@@ -4596,7 +4861,7 @@ class TinyTimeMixerForDecomposedPrediction(TinyTimeMixerPreTrainedModel):
 
         return TinyTimeMixerForDecomposedPredictionOutput(
             loss=loss_val,
-            prediction_outputs=combined_point_forecast,  # tensor [batch_size x prediction_length x num_input_channels]
+            prediction_outputs=combined_point_forecast,
             quantile_outputs=combined_quantile_forecast,
             trend_prediction_outputs=trend_prediction_outputs,
             residual_prediction_outputs=residual_prediction_outputs,
