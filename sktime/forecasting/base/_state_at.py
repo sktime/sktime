@@ -36,3 +36,17 @@ class _StateAtMixin:
         return self.get_tag(
             "capability:pretrain", tag_value_default=False, raise_error=False
         )
+
+    def _get_protected_pretrained_attrs(self):
+        """Return names of attributes protected by state-aware operations.
+
+        Source of truth is the ``pretrain:fitted_params`` tag. If the tag
+        is empty or not set, falls back to the runtime list
+        ``_pretrained_attrs`` auto-registered by ``pretrain``.
+        """
+        tag_attrs = self.get_tag(
+            "pretrain:fitted_params", tag_value_default=None, raise_error=False
+        )
+        if tag_attrs:
+            return list(tag_attrs)
+        return list(getattr(self, "_pretrained_attrs", None) or [])
