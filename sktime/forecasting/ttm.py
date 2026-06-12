@@ -664,29 +664,44 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        common_params = {
+            "config": {
+                "context_length": 3,
+                "prediction_length": 2,
+                "num_patches": 3,
+                "patch_length": 1,
+                "patch_stride": 1,
+                "d_model": 4,
+                "num_layers": 1,
+                "decoder_d_model": 4,
+                "decoder_num_layers": 1,
+                "expansion_factor": 1,
+                "dropout": 0.0,
+                "head_dropout": 0.0,
+                "use_decoder": False,
+                "loss": "mse",
+            },
+            "training_args": {
+                "max_steps": 1,
+                "output_dir": "test_output",
+                "per_device_train_batch_size": 4,
+                "report_to": "none",
+            },
+        }
         test_params = [
             {
-                "training_args": {
-                    "max_steps": 5,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 4,
-                    "report_to": "none",
-                },
+                "model_path": "ibm-granite/granite-timeseries-ttm-r1",
+                "revision": "main",
+                "validation_split": 0.4,
+                "fit_strategy": "full",
+                **common_params,
             },
             {
-                "model_path": "ibm/TTM",
-                "revision": "main",
-                "config": {
-                    "context_length": 3,
-                    "prediction_length": 2,
-                },
-                "validation_split": 0.2,
-                "training_args": {
-                    "max_steps": 5,
-                    "output_dir": "test_output",
-                    "per_device_train_batch_size": 4,
-                    "report_to": "none",
-                },
+                "model_path": "ibm-granite/granite-timeseries-ttm-r2",
+                "revision": "1024-96-r2",
+                "validation_split": 0.1,
+                "fit_strategy": "minimal",
+                **common_params,
             },
         ]
         return test_params
