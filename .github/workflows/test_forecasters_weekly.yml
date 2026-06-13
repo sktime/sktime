@@ -32,9 +32,11 @@ jobs:
         run: |
           python - <<EOF
           import json
-          from sktime.registry import all_estimators
 
-          from sktime.utils.dependencies._dependencies import _get_lowest_compatible_python_version
+          from sktime.registry import all_estimators
+          from sktime.utils.dependencies._dependencies import (
+              _get_lowest_compatible_python_version,
+          )
 
           forecasters = all_estimators("forecaster")
 
@@ -44,8 +46,18 @@ jobs:
 
               matrix_data.append({
                   "name": name,
-                  "python_version": py_ver
+                  "python_version": py_ver,
               })
+
+          n_forecasters = len(matrix_data)
+          print(f"Collected {n_forecasters} forecasters")
+
+          # GitHub Actions matrix limit is 256 jobs.
+          if n_forecasters > 250:
+            raise RuntimeError(
+                f"Collected {n_forecasters} forecasters, "
+                "which exceeds the safety limit of 250."
+            )
 
           output_json = json.dumps(matrix_data)
 
