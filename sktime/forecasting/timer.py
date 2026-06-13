@@ -78,10 +78,10 @@ class TimerForecaster(BaseForecaster):
         "authors": ["PewterZz"],
         "maintainers": "PewterZz",
         "python_dependencies": [
-            "transformers>=4.40,<4.45",
+            "transformers>=4.40,<4.41",
             "torch",
         ],
-        "python_version": ">=3.13",
+        "python_version": "<3.13",
         # estimator type
         # --------------
         "capability:multivariate": False,
@@ -283,12 +283,9 @@ class _CachedTimer:
         if self._model is not None:
             return self._model
 
-        from transformers import AutoModelForCausalLM
+        from sktime.libs.timer import TimerForPrediction
 
-        self._model = AutoModelForCausalLM.from_pretrained(
-            self.model_name,
-            trust_remote_code=True,
-        )
+        self._model = TimerForPrediction.from_pretrained(self.model_name)
 
         self._model.to(self.device)
         self._model.eval()

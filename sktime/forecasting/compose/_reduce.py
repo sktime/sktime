@@ -39,7 +39,7 @@ from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.registry import is_scitype, scitype
 from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.series.summarize import WindowSummarizer
+from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.multiindex import apply_method_per_series
@@ -329,11 +329,11 @@ class _Reducer(_BaseWindowForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.linear_model import LinearRegression
         from sklearn.pipeline import make_pipeline
 
-        from sktime.transformations.panel.reduce import Tabularizer
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from sktime.transformations.reduce import Tabularizer
 
         # naming convention is as follows:
         #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
@@ -1852,7 +1852,7 @@ class _ReducerMixin:
 
 
 class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
-    """Direct reduction forecaster, incl single-output, multi-output, exogeneous Dir.
+    """Direct reduction forecaster, incl single-output, multi-output, exogenous Dir.
 
     Implements direct reduction, of forecasting to tabular regression.
 
@@ -1865,7 +1865,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     Algorithm details:
 
-    In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
+    In ``fit``, given endogeneous time series ``y`` and possibly exogenous ``X``:
     fits ``estimator`` to feature-label pairs as defined as follows.
 
     * if ``X_treatment = "concurrent"``:
@@ -1882,7 +1882,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
       estimator is fitted as a multi-output estimator (for all ``h_j``
       simultaneously)
 
-    In ``predict``, given possibly exogeneous ``X``, at cutoff time ``c``,
+    In ``predict``, given possibly exogenous ``X``, at cutoff time ``c``,
 
     * if ``X_treatment = "concurrent"``:
       applies fitted estimators' predict to
@@ -1958,12 +1958,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         "maintainers": "hliebert",
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
+        "capability:unequal_length": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:libs": ["sktime.transformations.series.lag"],
+        "tests:libs": ["sktime.transformations.lag"],
     }
 
     def __init__(
@@ -2036,7 +2037,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_multioutput(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.transformations.lag import Lag, ReducerTransform
         from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
 
         impute_method = self.impute_method
@@ -2116,7 +2117,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit_multiple(self, y, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.lag import Lag, ReducerTransform
+        from sktime.transformations.lag import Lag, ReducerTransform
 
         impute_method = self.impute_method
         X_treatment = self.X_treatment
@@ -2193,7 +2194,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_multiple(self, X=None, fh=None):
         """Fit to training data."""
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         if X is not None and self._X is not None:
             X_pool = X.combine_first(self._X)
@@ -2313,13 +2314,13 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
 
 class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
-    """Recursive reduction forecaster, incl exogeneous Rec.
+    """Recursive reduction forecaster, incl exogenous Rec.
 
     Implements recursive reduction, of forecasting to tabular regression.
 
     Algorithm details:
 
-    In ``fit``, given endogeneous time series ``y`` and possibly exogeneous ``X``:
+    In ``fit``, given endogeneous time series ``y`` and possibly exogenous ``X``:
         fits ``estimator`` to feature-label pairs as defined as follows.
 
         features = ``y(t)``, ``y(t-1)``, ..., ``y(t-window_size)``, if provided:
@@ -2327,7 +2328,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         labels = ``y(t+1)``
         ranging over all ``t`` where the above have been observed (are in the index)
 
-    In ``predict``, given possibly exogeneous ``X``, at cutoff time ``c``,
+    In ``predict``, given possibly exogenous ``X``, at cutoff time ``c``,
         applies fitted estimators' predict to
         feature = ``y(c)``, ``y(c-1)``, ..., ``y(c-window_size)``, if provided:
         ``X(c+1)``
@@ -2372,11 +2373,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "authors": "fkiraly",
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
+        "capability:unequal_length": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
-        "tests:libs": ["sktime.transformations.series.lag"],
+        "tests:libs": ["sktime.transformations.lag"],
     }
 
     def __init__(
@@ -2435,7 +2437,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         impute_method = self.impute_method
         if isinstance(impute_method, str):
-            from sktime.transformations.series.impute import Imputer
+            from sktime.transformations.impute import Imputer
 
             self._impute_method = Imputer(method=impute_method)
         elif impute_method is None:
@@ -2472,7 +2474,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         self : reference to self
         """
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         impute_method = self._impute_method
 
@@ -2559,7 +2561,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
@@ -2629,7 +2631,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_in_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         fh_idx = self._get_expected_pred_idx(fh=fh)
         y_cols = self._y.columns
@@ -2692,7 +2694,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         from sklearn.linear_model import LinearRegression
 
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
-        from sktime.transformations.series.impute import Imputer
+        from sktime.transformations.impute import Imputer
 
         est = LinearRegression()
         forecaster_imputer = Imputer(
@@ -2739,12 +2741,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
 
 class YfromX(BaseForecaster, _ReducerMixin):
-    """Simple reduction predicting endogeneous from concurrent exogeneous variables.
+    """Simple reduction predicting endogeneous from concurrent exogenous variables.
 
     Tabulates all seen ``X`` and ``y`` by time index and applies
     tabular supervised regression.
 
-    In ``fit``, given endogeneous time series ``y`` and exogeneous ``X``:
+    In ``fit``, given endogeneous time series ``y`` and exogenous ``X``:
     fits ``estimator`` to feature-label pairs as defined as follows.
 
     features = :math:`y(t)`, labels: :math:`X(t)`
@@ -2757,7 +2759,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
     uses ``estimator`` to predict :math:`y(t)`, from labels: :math:`X(t)`,
     passing on the ``predict_interval`` etc arguments.
 
-    If no exogeneous data is provided, will predict the mean of ``y`` seen in ``fit``.
+    If no exogenous data is provided, will predict the mean of ``y`` seen in ``fit``.
 
     In order to use a fit not on the entire historical data
     and update periodically, combine this with ``UpdateRefitsEvery``.
@@ -3150,10 +3152,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
-
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         params1 = {
             "estimator": LinearRegression(),

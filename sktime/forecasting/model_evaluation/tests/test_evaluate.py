@@ -17,6 +17,7 @@ __all__ = [
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import KFold
 
@@ -62,7 +63,6 @@ from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanAbsoluteScaledError()]
@@ -513,7 +513,7 @@ ARIMA_MODELS = [ARIMA, AutoARIMA]
 )
 @pytest.mark.parametrize("cls", ARIMA_MODELS)
 def test_evaluate_bigger_X(cls):
-    """Check that evaluating ARIMA models with exogeneous X works.
+    """Check that evaluating ARIMA models with exogenous X works.
 
     Example adapted from bug report #3657.
     """

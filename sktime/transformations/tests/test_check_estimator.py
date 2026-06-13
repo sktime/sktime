@@ -57,7 +57,7 @@ class _TransformChangeNInstances(BaseTransformer):
         "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        # does the transformer natively support categorical in exogeneous X?
+        # does the transformer natively support categorical in exogenous X?
         "remember_data": False,  # whether all data seen is remembered as self._X
     }
 

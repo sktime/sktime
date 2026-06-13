@@ -137,7 +137,6 @@ class NaiveForecaster(_BaseWindowForecaster):
         "capability:missing_values": True,
         "capability:exogenous": False,
         "capability:multivariate": False,
-        "capability:pred_var": True,
         "capability:pred_int": True,
         # CI and test flags
         # -----------------
@@ -355,7 +354,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         return y_pred[fh_idx]
 
     def _predict_naive(self, fh=None, X=None):
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         strategy = self.strategy
         sp = self.sp
@@ -693,7 +692,6 @@ class NaiveVariance(BaseForecaster):
         "capability:missing_values": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
-        "capability:pred_var": True,
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
@@ -859,7 +857,7 @@ class NaiveVariance(BaseForecaster):
         y : pd.Series or pd.DataFrame
             sktime compatible time series to use in computing residuals matrix
         X : pd.DataFrame
-            sktime compatible exogeneous time series to use in forecasts
+            sktime compatible exogenous time series to use in forecasts
         forecaster : sktime compatible forecaster
             forecaster to use in computing the sliding residuals
         initial_window : int

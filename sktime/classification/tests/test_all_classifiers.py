@@ -6,6 +6,7 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.base import BaseObject
 from sktime.classification.tests._expected_outputs import (
@@ -20,7 +21,6 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 
 class ClassifierFixtureGenerator(BaseFixtureGenerator):

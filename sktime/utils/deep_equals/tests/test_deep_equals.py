@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from scipy.sparse import csr_matrix
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.deep_equals._deep_equals import deep_equals
@@ -69,3 +70,25 @@ def test_deep_equals_negative(fixture1, fixture2):
         f"the following, different objects: x={x}, y={y}"
     )
     assert not deep_equals(x, y), msg
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torchmetrics", severity="none"),
+    reason="torchmetrics soft dependency not found",
+)
+def test_deep_equals_torchmetrics_metric():
+    """torchmetrics Metric ``==`` returns tensors; plugin compares config instead."""
+    from copy import deepcopy
+
+    from sktime.utils.dependencies import _safe_import
+
+    R2Score = _safe_import("torchmetrics.regression.R2Score")
+
+    m1 = R2Score(multioutput="uniform_average")
+    m2 = R2Score(multioutput="uniform_average")
+    m3 = R2Score(multioutput="raw_values")
+
+    assert deep_equals(m1, m1)
+    assert deep_equals(m1, m2)
+    assert deep_equals(m1, deepcopy(m1))
+    assert not deep_equals(m1, m3)

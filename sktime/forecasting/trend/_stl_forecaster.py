@@ -6,9 +6,9 @@ __author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"]
 __all__ = ["STLForecaster"]
 
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class STLForecaster(BaseForecaster):
@@ -142,7 +142,7 @@ class STLForecaster(BaseForecaster):
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
         "capability:multivariate": False,  # which y are fine? False/True
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
