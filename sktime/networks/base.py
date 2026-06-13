@@ -3,7 +3,7 @@
 __author__ = ["Withington", "TonyBagnall", "fkiraly"]
 
 from sktime.base import BaseObject
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 
 
 class BaseDeepNetwork(BaseObject):

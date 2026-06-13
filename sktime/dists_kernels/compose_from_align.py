@@ -90,7 +90,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         """Test parameters for DistFromAligner."""
         # importing inside to avoid circular dependencies
         from sktime.alignment.dtw_python import AlignerDTW
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
         if _check_estimator_deps(AlignerDTW, severity="none"):
             return {"aligner": AlignerDTW()}

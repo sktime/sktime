@@ -31,7 +31,7 @@ def run_test_vm(cls_name):
     """
     from sktime.registry import craft
     from sktime.utils import check_estimator
-    from sktime.utils.dependencies import _check_estimator_deps
+    from skbase.utils.dependencies import _check_estimator_deps
 
     cls = craft(cls_name)
     if not _check_estimator_deps(cls, severity="none"):

@@ -632,7 +632,7 @@ class StatsForecastBackAdapter:
         """
         from sktime.forecasting.theta import ThetaForecaster
         from sktime.forecasting.var import VAR
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 

@@ -20,7 +20,7 @@ from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils._testing.scenarios_classification import (
     ClassifierFitPredictMultivariate,
 )
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 
 class ClassifierFixtureGenerator(BaseFixtureGenerator):

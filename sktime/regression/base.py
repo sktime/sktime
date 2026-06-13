@@ -28,7 +28,7 @@ import numpy as np
 
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 
 

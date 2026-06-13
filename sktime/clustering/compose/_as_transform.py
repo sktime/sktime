@@ -209,7 +209,7 @@ class ClustererAsTransformer(BaseTransformer):
         # imports
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeansTslearn
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
         params = []
 

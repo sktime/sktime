@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.chronos2 import Chronos2Forecaster
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(

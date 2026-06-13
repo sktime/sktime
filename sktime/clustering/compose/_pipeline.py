@@ -335,7 +335,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
         from sktime.transformations.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
         params = []
 

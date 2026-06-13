@@ -264,7 +264,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         )
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.kernel_based import RocketClassifier
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
         params0 = {"classifiers": [DummyClassifier()]}
 

@@ -19,7 +19,7 @@ from sktime.split.base._common import (
     SPLIT_GENERATOR_TYPE,
     SPLIT_TYPE,
 )
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import NON_FLOAT_WINDOW_LENGTH_TYPES
 from sktime.utils.validation.forecasting import check_fh
 

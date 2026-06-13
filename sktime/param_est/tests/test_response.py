@@ -9,7 +9,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.param_est.impulse import ImpulseResponseFunction
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 
 
 # DynamicFactor tests

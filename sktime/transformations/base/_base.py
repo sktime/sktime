@@ -59,7 +59,7 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_to_scitype
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
     is_sklearn_clusterer,

@@ -28,7 +28,7 @@ from sktime.transformations.summarize import SummaryTransformer
 from sktime.transformations.theta import ThetaLinesTransformer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(

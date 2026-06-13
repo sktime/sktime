@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from sktime.forecasting.autots import AutoTS
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(

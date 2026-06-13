@@ -32,7 +32,7 @@ import numpy as np
 
 from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 
 
 class BaseEarlyClassifier(BaseEstimator):

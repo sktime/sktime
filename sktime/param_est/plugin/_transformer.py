@@ -219,7 +219,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
         from sktime.param_est.seasonality import SeasonalityACF
         from sktime.transformations.detrend import Deseasonalizer
         from sktime.transformations.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
         # use of dictionary to plug "foo" parameter into "power", uses mock param_est
         params1 = {

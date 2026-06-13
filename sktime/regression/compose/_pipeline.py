@@ -295,7 +295,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         """
         from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
         from sktime.transformations.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)

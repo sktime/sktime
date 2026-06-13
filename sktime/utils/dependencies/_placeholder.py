@@ -38,7 +38,7 @@ def _placeholder_record(module_name, obj_name=None, dependencies=None, condition
     """
 
     def decorator(cls):
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
         # we need to write to a new var _obj_name
         # or obj_name will be considered local and lead to "not assigned" error

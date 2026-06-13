@@ -7,7 +7,7 @@ from sktime.tests._config import (
     EXCLUDED_TESTS_BY_TEST,
 )
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps
 
 
 def test_excluded_tests_by_test():
