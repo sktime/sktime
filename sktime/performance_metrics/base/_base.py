@@ -5,8 +5,9 @@
 __author__ = ["rnkuhns", "fkiraly"]
 __all__ = ["BaseMetric"]
 
-from sktime.base import BaseObject
 from skbase.utils.dependencies import _check_estimator_deps
+
+from sktime.base import BaseObject
 
 
 class BaseMetric(BaseObject):

@@ -5,8 +5,9 @@
 __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
-from sktime.transformations.base import BaseTransformer
 from skbase.utils.dependencies import _check_estimator_deps
+
+from sktime.transformations.base import BaseTransformer
 from sktime.utils.validation import check_n_jobs
 
 

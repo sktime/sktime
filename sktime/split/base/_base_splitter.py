@@ -8,6 +8,7 @@ from collections.abc import Iterator
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert
@@ -19,7 +20,6 @@ from sktime.split.base._common import (
     SPLIT_GENERATOR_TYPE,
     SPLIT_TYPE,
 )
-from skbase.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import NON_FLOAT_WINDOW_LENGTH_TYPES
 from sktime.utils.validation.forecasting import check_fh
 

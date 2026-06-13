@@ -293,9 +293,10 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
         from sktime.transformations.exponent import ExponentTransformer
-        from skbase.utils.dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
