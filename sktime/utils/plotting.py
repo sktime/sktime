@@ -9,7 +9,6 @@ import math
 from warnings import simplefilter, warn
 
 from sktime.datatypes._check import check_is_scitype
-from sktime.forecasting.model_evaluation._functions import gen_y_X_train_test_global
 
 
 def plot_series(
@@ -511,6 +510,7 @@ def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
     axes : np.ndarray
         matplotlib axes object with the figure
     """
+    from sktime.forecasting.model_evaluation._functions import gen_y_X_train_test_global
     from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib")
