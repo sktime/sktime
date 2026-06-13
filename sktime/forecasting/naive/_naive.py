@@ -354,7 +354,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         return y_pred[fh_idx]
 
     def _predict_naive(self, fh=None, X=None):
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         strategy = self.strategy
         sp = self.sp
@@ -857,7 +857,7 @@ class NaiveVariance(BaseForecaster):
         y : pd.Series or pd.DataFrame
             sktime compatible time series to use in computing residuals matrix
         X : pd.DataFrame
-            sktime compatible exogeneous time series to use in forecasts
+            sktime compatible exogenous time series to use in forecasts
         forecaster : sktime compatible forecaster
             forecaster to use in computing the sliding residuals
         initial_window : int
