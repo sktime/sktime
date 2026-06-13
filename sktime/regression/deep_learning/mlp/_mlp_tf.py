@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.mlp import MLPNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MLPRegressor(BaseDeepRegressor):
@@ -104,8 +103,6 @@ class MLPRegressor(BaseDeepRegressor):
         n_layers=3,
         hidden_dim=500,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
