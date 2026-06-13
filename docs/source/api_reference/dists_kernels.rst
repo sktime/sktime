@@ -239,28 +239,3 @@ Base class
     :template: class.rst
 
     BasePairwiseTransformer
-
-Standalone ``numba`` distances
-------------------------------
-
-Standalong functions not wrapped in the ``sktime`` ``BaseObject`` interface.
-Can be used within other ``numba`` compiled functions for end-to-end compilation.
-
-.. currentmodule:: sktime.distances
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    ddtw_distance
-    dtw_distance
-    edr_distance
-    erp_distance
-    euclidean_distance
-    lcss_distance
-    msm_distance
-    pairwise_distance
-    squared_distance
-    twe_distance
-    wddtw_distance
-    wdtw_distance
