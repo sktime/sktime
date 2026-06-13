@@ -6,6 +6,7 @@ __author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
@@ -15,7 +16,6 @@ from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.detrend import Deseasonalizer
 from sktime.transformations.theta import ThetaLinesTransformer
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.warnings import warn

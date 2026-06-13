@@ -49,6 +49,7 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.base import BaseEstimator
 from sktime.base._proba import _PredictProbaMixin
@@ -66,7 +67,6 @@ from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn

@@ -322,7 +322,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         }  # functionally equivalent to params2 for multi-class classification
         params = [params1, params2, params3, params4, params5]
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("torchmetrics", severity="none"):
             params.append(
