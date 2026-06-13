@@ -41,10 +41,10 @@ Change Point Detection
     :toctree: auto_generated/
     :template: class.rst
 
-    CROPS
-    MovingWindow
-    PELT
-    SeededBinarySegmentation
+    crops.CROPS
+    moving_window.MovingWindow
+    pelt.PELT
+    seeded_binseg.SeededBinarySegmentation
 
 Naive Baselines
 ^^^^^^^^^^^^^^^
@@ -83,8 +83,8 @@ Window-based Anomaly Detection
 
     HampelDetector
 
-Foundation Model-based Anomaly Detection
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Foundation Models for Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Anomaly detection using foundational models.
 
@@ -95,6 +95,14 @@ Anomaly detection using foundational models.
     :template: class.rst
 
     MomentFMAnomalyDetector
+
+.. currentmodule:: sktime.detection.tspulse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSPulseAnomalyDetector
 
 Reduction to Tabular Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -138,17 +146,9 @@ Segment anomaly detectors identify anomalous segment.
     :toctree: auto_generated/
     :template: class.rst
 
-    CAPA
-    CircularBinarySegmentation
-    StatThresholdAnomaliser
-
-.. currentmodule:: sktime.detection.skchange_aseg
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    mvcapa.MVCAPA
+    capa.CAPA
+    circular_binseg.CircularBinarySegmentation
+    stat_threshold.StatThresholdAnomaliser
 
 Naive Baselines
 ^^^^^^^^^^^^^^^

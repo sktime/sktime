@@ -189,7 +189,10 @@ class HFTransformersForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
-        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:python_dependencies": ["peft"],
     }
 
     def __init__(
@@ -225,6 +228,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         if isinstance(self.model_path, PreTrainedModel):
             self.model = self.model_path
+            self.info = {"mismatched_keys": []}
             config = self.model.config
 
         else:
@@ -312,6 +316,12 @@ class HFTransformersForecaster(BaseForecaster):
         # Prepare training arguments
         training_args = deepcopy(self.training_args)
         training_args["label_names"] = ["future_values"]
+        # evaluation_strategy was renamed to eval_strategy in transformers 4.41.0
+        if _check_soft_dependencies("transformers>=4.41.0", severity="none"):
+            if "evaluation_strategy" in training_args:
+                training_args["eval_strategy"] = training_args.pop(
+                    "evaluation_strategy"
+                )
         training_args = TrainingArguments(**training_args)
 
         # Handle fine-tuning strategy

@@ -84,8 +84,8 @@ class EnbPIForecaster(BaseForecaster):
     >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.difference import Differencer
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.difference import Differencer
+    >>> from sktime.transformations.detrend import Deseasonalizer
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y = load_airline()
     >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(
