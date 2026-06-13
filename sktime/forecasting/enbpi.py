@@ -13,7 +13,7 @@ from sktime.transformations.bootstrap import (
     MovingBlockBootstrapTransformer,
     TSBootstrapAdapter,
 )
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
