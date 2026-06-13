@@ -510,8 +510,9 @@ def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
     axes : np.ndarray
         matplotlib axes object with the figure
     """
-    from sktime.forecasting.model_evaluation._functions import gen_y_X_train_test_global
     from skbase.utils.dependencies import _check_soft_dependencies
+
+    from sktime.forecasting.model_evaluation._functions import gen_y_X_train_test_global
 
     _check_soft_dependencies("matplotlib")
 

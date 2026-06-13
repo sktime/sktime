@@ -8,11 +8,11 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.linear_model import Ridge
 from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.forecasting.base import BaseForecaster
-from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.utils.singleton import _multiton
 
 

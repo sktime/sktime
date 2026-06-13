@@ -5,7 +5,6 @@ __author__ = ["SveaMeyer13"]
 import math
 
 import numpy as np
-
 from skbase.utils.dependencies import _check_soft_dependencies
 
 

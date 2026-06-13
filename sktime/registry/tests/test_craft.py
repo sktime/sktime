@@ -4,9 +4,9 @@
 __author__ = ["fkiraly"]
 
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.registry._craft import craft, deps, imports
-from skbase.utils.dependencies import _check_soft_dependencies
 
 simple_spec = "NaiveForecaster()"
 simple_spec_with_dep = "VAR(trend='ct')"

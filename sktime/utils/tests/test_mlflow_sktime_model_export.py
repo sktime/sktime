@@ -10,13 +10,13 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline, load_arrow_head, load_longley
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.utils.multiindex import flatten_multiindex
 
 if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="none"):

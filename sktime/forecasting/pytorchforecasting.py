@@ -4,10 +4,11 @@
 import functools
 from typing import Any
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.forecasting.base.adapters._pytorchforecasting import (
     _PytorchForecastingAdapter,
 )
-from skbase.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["XinyuWu"]
 

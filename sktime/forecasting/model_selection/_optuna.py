@@ -322,8 +322,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
-        from sktime.forecasting.naive import NaiveForecaster
         from skbase.utils.dependencies import _check_soft_dependencies
+
+        from sktime.forecasting.naive import NaiveForecaster
 
         if not _check_soft_dependencies("optuna", severity="none"):
             return {
