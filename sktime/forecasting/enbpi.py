@@ -3,6 +3,7 @@
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 from sklearn.utils import check_random_state
 
@@ -13,7 +14,6 @@ from sktime.transformations.bootstrap import (
     MovingBlockBootstrapTransformer,
     TSBootstrapAdapter,
 )
-from skbase.utils.dependencies import _check_soft_dependencies
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
