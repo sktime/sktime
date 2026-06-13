@@ -11,7 +11,7 @@ from sktime.performance_metrics.forecasting import (
 )
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.transformations.compose import TransformIf
-from sktime.transformations.series.detrend import Deseasonalizer
+from sktime.transformations.detrend import Deseasonalizer
 
 __author__ = ["jgyasu"]
 

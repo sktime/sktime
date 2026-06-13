@@ -1,4 +1,4 @@
-"""Base class template for Catalogues."""
+"""Base class template for catalogues."""
 
 __author__ = ["jgyasu"]
 
@@ -13,7 +13,21 @@ from sktime.registry import craft
 
 
 class BaseCatalogue(BaseObject):
-    """Base class for catalogues."""
+    """Base class for catalogue objects.
+
+    A catalogue is a curated collection of objects grouped by category,
+    such as datasets, estimators, metrics, or cross-validation splitters.
+
+    Subclasses must implement the private ``_get`` method, which returns
+    the catalogue contents as a dictionary mapping category names to lists
+    of entries.
+
+    Notes
+    -----
+    Catalogue contents are cached after the first access. Implementations
+    of ``_get`` should therefore return deterministic contents and should
+    not rely on repeated invocation.
+    """
 
     _tags = {
         "authors": ["sktime developers"],
@@ -27,8 +41,11 @@ class BaseCatalogue(BaseObject):
     }
 
     def __init__(self):
+        """Initialize the catalogue."""
         super().__init__()
-        self._cached_objects = None
+
+        self._cached_catalogue = None
+        self._cached_objects = {}
 
         if _check_estimator_deps(self, severity="warning"):
             self.__post_init__()
@@ -45,120 +62,359 @@ class BaseCatalogue(BaseObject):
         pass
 
     @abstractmethod
-    def _get(self):
-        """Get the default items for this catalogue. Implemented by subclasses.
+    def _get(self) -> dict[str, list]:
+        """Return catalogue contents grouped by category.
 
         Returns
         -------
-        dict
-            Dictionary of categories containing lists of item names/ids, dicts,
-            or objects.
+        dict[str, list]
+            Dictionary mapping category names to lists of catalogue entries.
+
+            Keys are category names defined by the catalogue (for example,
+            ``"forecaster"``, ``"classifier"``, ``"dataset"``, ``"metric"``,
+            ``"cv_splitter"``, etc.). Values are lists containing the entries
+            belonging to that category.
+
+            Each entry may be one of the following:
+
+            * ``str`` - a specification resolvable via ``craft``.
+            * ``dict[str, Any]`` - mapping of human-given names to object
+            specifications or objects.
+            * object - an already-instantiated object or callable.
+
+            For example, a forecasting catalogue may return:
+
+            {
+                "dataset": ["Airline"],
+                "forecaster": [
+                    {"NaiveForecaster":
+                        "NaiveForecaster(strategy='last')"}
+                ],
+                "metric": [
+                    "MeanAbsoluteError()",
+                    "MeanAbsolutePercentageError()",
+                ],
+                "cv_splitter": [
+                    "ExpandingWindowSplitter("
+                    "initial_window=12, step_length=6, fh=6)"
+                ],
+            }
+
+        Notes
+        -----
+        The returned catalogue is cached after the first access. Implementations
+        should therefore return deterministic contents and must not rely on
+        repeated invocation.
         """
-        pass
 
     def get(self, object_type="all", as_object=False):
-        """Get objects from the catalogue based on type.
+        """Retrieve entries from the catalogue.
 
         Parameters
         ----------
         object_type : str, default="all"
-            Type of objects to retrieve. Options:
+            Category of entries to retrieve.
 
-            - "all": all object types
-            - or one of categories returned by `available_categories` method
+            Valid values are:
+
+            * ``"all"`` to retrieve entries from every category.
+            * Any category returned by ``available_categories``.
 
         as_object : bool, default=False
-            If True, return object instances.
-            If False, return specification strings or function names.
+            Whether to resolve catalogue specifications into objects.
+
+            If ``False``, display names or specification strings or
+            dict of {human_given_name: specification_string} are returned.
+
+            If ``True``, catalogue entries are resolved using ``craft``
+            and returned as instantiated objects or dict of {human_given_name: object}.
 
         Returns
         -------
-        list[str] or list[Any]
-            List of specification names (default) or object instances.
+        list
+            Catalogue entries matching the requested category.
+
+            If ``as_object=False``, entries are returned as display names.
+            Specification strings remain unchanged, objects are converted to
+            display names, and dictionary entries are returned as mappings of
+            human-given names to specification strings.
+
+            If ``as_object=True``, entries are returned as resolved
+            objects. String specifications are instantiated via ``craft``,
+            dictionary entries are returned as mappings of human-given names to
+            resolved objects, and object entries are returned unchanged.
         """
-        names_dict = self._get()
+        catalogue = self._get_catalogue()
 
-        if object_type != "all" and object_type not in names_dict:
-            raise KeyError(
-                f"Invalid object_type '{object_type}'. "
-                f"Available keys: {list(names_dict.keys())}"
-            )
+        self._validate_object_type(object_type, catalogue)
 
-        items = (
-            [item for items in names_dict.values() for item in items]
-            if object_type == "all"
-            else names_dict[object_type]
-        )
+        items = self._get_items(catalogue, object_type)
 
         if not as_object:
-            res = []
-            for item in items:
-                if isinstance(item, str):
-                    res.append(item)
-                elif isinstance(item, dict):
-                    # keep the custom ID mapping but resolve the estimator repr
-                    res.append(
-                        {
-                            k: (
-                                v
-                                if isinstance(v, str)
-                                else (v.__name__ if callable(v) else type(v).__name__)
-                            )
-                            for k, v in item.items()
-                        }
-                    )
-                else:
-                    res.append(item.__name__ if callable(item) else type(item).__name__)
-            return res
+            return [self._to_name(item) for item in items]
 
-        # as_object=True path
-        if self._cached_objects is None:
-            self._cached_objects = {}
-
-        if object_type not in self._cached_objects:
-            processed = []
-            for item in items:
-                # handle dictionaries of estimators mapped to custom IDs
-                if isinstance(item, dict):
-                    processed_dict = {}
-                    for est_id, est in item.items():
-                        if isinstance(est, str):
-                            est = craft(est)
-                        processed_dict[est_id] = est
-                    processed.append(processed_dict)
-
-                # handle string specs
-                elif isinstance(item, str):
-                    processed.append(craft(item))
-
-                # handle raw objects/callables
-                else:
-                    processed.append(item)
-            self._cached_objects[object_type] = processed
-
-        return self._cached_objects[object_type]
+        return self._get_objects(object_type, items)
 
     def available_categories(self):
-        """Return the available item categories in the catalogue.
+        """Return the available catalogue categories.
 
         Returns
         -------
         list[str]
-            List of keys from _get(), e.g., ['dataset', 'estimator', 'metric'].
+            Names of all categories defined by the catalogue. Each name can be
+            passed to ``get`` via the ``object_type`` parameter to retrieve the
+            corresponding catalogue entries.
         """
-        return list(self._get().keys())
+        return list(self._get_catalogue().keys())
 
     def __len__(self):
-        """Return the total number of items in the catalogue."""
-        return len(self.get("all"))
+        """Return the total number of catalogue entries.
+
+        Returns
+        -------
+        int
+            Total number of entries across all categories.
+        """
+        return sum(len(items) for items in self._get_catalogue().values())
 
     def __contains__(self, name):
-        """Check if an item name exists in the catalogue."""
-        all_items = self.get("all")
-        # check against both standard list items and dictionary keys/values
-        for item in all_items:
-            if item == name:
+        """Check whether an entry exists in the catalogue.
+
+        Parameters
+        ----------
+        name : str
+            Entry name to search for.
+
+        Returns
+        -------
+        bool
+            True if the entry exists, otherwise False.
+        """
+        for item in self.get("all"):
+            if isinstance(item, dict):
+                if name in item:
+                    return True
+            elif item == name:
                 return True
-            if isinstance(item, dict) and (name in item or name in item.values()):
-                return True
+
         return False
+
+    def _get_catalogue(self):
+        """Return cached catalogue contents.
+
+        Returns
+        -------
+        dict[str, list]
+            Catalogue contents grouped by category. Dictionary keys are category
+            names (for example, ``"forecaster"``, ``"dataset"``, etc.), and values
+            are lists of catalogue entries belonging to that category. The returned
+            catalogue has been validated and cached.
+        """
+        if self._cached_catalogue is None:
+            catalogue = self._get()
+
+            self._validate_catalogue(catalogue)
+            self._validate_tag_counts(catalogue)
+
+            self._cached_catalogue = catalogue
+
+        return self._cached_catalogue
+
+    def _validate_catalogue(self, catalogue):
+        """Validate the structure returned by ``_get``.
+
+        Parameters
+        ----------
+        catalogue : dict
+            Catalogue contents returned by ``_get``.
+
+        Raises
+        ------
+        TypeError
+            If the catalogue does not conform to the required structure.
+        """
+        if not isinstance(catalogue, dict):
+            raise TypeError(
+                f"{type(self).__name__}._get must return a dict, "
+                f"but found {type(catalogue).__name__}."
+            )
+
+        for category, items in catalogue.items():
+            if not isinstance(items, list):
+                raise TypeError(
+                    f"Catalogue category '{category}' must contain a list, "
+                    f"but found {type(items).__name__}."
+                )
+
+    def _validate_tag_counts(self, catalogue):
+        """Validate tag metadata against catalogue contents.
+
+        Parameters
+        ----------
+        catalogue : dict[str, list]
+            Catalogue contents.
+
+        Raises
+        ------
+        ValueError
+            If the ``n_items`` tag does not match the actual number of
+            catalogue entries.
+        """
+        expected = self.get_tag("n_items")
+
+        if expected is None:
+            return
+
+        actual = sum(len(items) for items in catalogue.values())
+
+        if actual != expected:
+            raise ValueError(
+                f"Tag 'n_items' specifies {expected} items, "
+                f"but catalogue contains {actual}."
+            )
+
+    def _validate_object_type(self, object_type, catalogue):
+        """Validate a requested category.
+
+        Parameters
+        ----------
+        object_type : str
+            Requested category.
+        catalogue : dict[str, list]
+            Catalogue contents.
+
+        Raises
+        ------
+        KeyError
+            If the requested category does not exist.
+        """
+        if object_type == "all":
+            return
+
+        if object_type not in catalogue:
+            raise KeyError(
+                f"Invalid object_type '{object_type}'. "
+                f"Available categories are: {list(catalogue.keys())}."
+            )
+
+    def _get_items(self, catalogue, object_type):
+        """Extract entries for a category.
+
+        Parameters
+        ----------
+        catalogue : dict[str, list]
+            Catalogue contents.
+        object_type : str
+            Requested category.
+
+        Returns
+        -------
+        list
+            Catalogue entries belonging to the requested category. If
+            ``object_type="all"``, entries from all categories are returned in a
+            single flattened list.
+        """
+        if object_type == "all":
+            return [
+                item for category_items in catalogue.values() for item in category_items
+            ]
+
+        return catalogue[object_type]
+
+    def _to_name(self, item):
+        """Convert a catalogue entry to a display name.
+
+        Parameters
+        ----------
+        item : Any
+            Catalogue entry.
+
+        Returns
+        -------
+        str or dict
+            Human-readable representation of the entry.
+        """
+        if isinstance(item, str):
+            return item
+
+        if isinstance(item, dict):
+            return {key: self._object_name(value) for key, value in item.items()}
+
+        return self._object_name(item)
+
+    def _object_name(self, obj):
+        """Return a readable name for an object.
+
+        Parameters
+        ----------
+        obj : Any
+            Object to convert.
+
+        Returns
+        -------
+        str
+            Readable object name.
+        """
+        if isinstance(obj, str):
+            return obj
+
+        if callable(obj):
+            return obj.__name__
+
+        return type(obj).__name__
+
+    def _get_objects(self, object_type, items):
+        """Resolve and cache catalogue entries.
+
+        Parameters
+        ----------
+        object_type : str
+            Requested category.
+        items : list
+            Catalogue entries.
+
+        Returns
+        -------
+        list
+            Catalogue entries resolved to concrete objects.
+
+            String specifications are instantiated using ``craft``. Dictionary
+            entries are returned as mappings whose keys are human-given names and
+            whose values are resolved objects. Entries that are already objects
+            are returned unchanged. Results are cached per ``object_type``.
+        """
+        if object_type not in self._cached_objects:
+            self._cached_objects[object_type] = [
+                self._resolve_item(item) for item in items
+            ]
+
+        return self._cached_objects[object_type]
+
+    def _resolve_item(self, item):
+        """Resolve a catalogue entry to an object.
+
+        Parameters
+        ----------
+        item : Any
+            Catalogue entry.
+
+        Returns
+        -------
+        Any
+            Resolved representation of the catalogue entry.
+
+            String entries are instantiated using ``craft``.
+            Dictionary entries are returned as mappings from human-given names to
+            resolved objects.
+            Existing objects are returned unchanged.
+        """
+        if isinstance(item, str):
+            return craft(item)
+
+        if isinstance(item, dict):
+            return {
+                key: craft(value) if isinstance(value, str) else value
+                for key, value in item.items()
+            }
+
+        return item
