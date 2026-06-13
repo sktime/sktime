@@ -4,7 +4,7 @@ from sktime.libs._torch_self_attention.tests.seq_self_attention.util import (
     TestMaskShapeTorch,
 )
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
+from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
 
 pytestmark = pytest.mark.skipif(
     not run_test_module_changed("sktime.libs._torch_self_attention")

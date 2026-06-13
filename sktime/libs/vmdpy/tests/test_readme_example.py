@@ -3,7 +3,7 @@
 import pytest
 
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

@@ -421,7 +421,7 @@ class TabularToSeriesAdaptor(BaseTransformer):
         from sklearn.feature_selection import VarianceThreshold
         from sklearn.preprocessing import LabelEncoder, StandardScaler
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         params1 = {"transformer": StandardScaler(), "fit_in_transform": False}
         params2 = {

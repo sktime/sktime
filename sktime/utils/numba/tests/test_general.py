@@ -7,7 +7,7 @@ import pytest
 from numpy.testing import assert_array_equal
 
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 DATATYPES = ["int32", "int64", "float32", "float64"]
 

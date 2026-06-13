@@ -16,7 +16,7 @@ from sktime.datasets import (
 )
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.datatypes import check_is_mtype, check_raise
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3

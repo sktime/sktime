@@ -15,7 +15,7 @@ from sktime.forecasting.base import (
     ForecastingHorizon,
     _GlobalForecastingDeprecationMixin,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]

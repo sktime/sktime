@@ -8,7 +8,7 @@ __all__ = ["BoxCoxTransformer", "LogTransformer"]
 import numpy as np
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation import is_int
 
 

@@ -12,7 +12,7 @@ from sklearn.linear_model import Ridge
 from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.utils.singleton import _multiton
 
 

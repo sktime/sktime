@@ -6,7 +6,7 @@ import abc
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __author__ = ["yarnabrina", "fnhirwa"]

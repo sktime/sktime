@@ -8,7 +8,7 @@ from sktime.datatypes._adapter.gluonts import (
     convert_pandas_multiindex_to_pandasDataset,
     convert_pandas_to_listDataset,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

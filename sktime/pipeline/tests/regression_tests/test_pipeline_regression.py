@@ -17,7 +17,7 @@ from sktime.transformations.difference import Differencer
 from sktime.transformations.exponent import ExponentTransformer
 from sktime.transformations.lag import Lag
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen, _make_hierarchical
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

@@ -26,7 +26,7 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.utils.singleton import _multiton
 
 

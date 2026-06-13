@@ -6,7 +6,7 @@ from sktime.dists_kernels._numba_distances._distance import (
     distance_alignment_path,
     pairwise_distance,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("matplotlib", severity="warning")
 

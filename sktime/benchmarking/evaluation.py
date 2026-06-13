@@ -12,7 +12,7 @@ from scipy.stats import ranksums, ttest_ind
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 class Evaluator:

@@ -10,7 +10,7 @@ from sktime.classification.interval_based import TimeSeriesForestClassifier
 from sktime.clustering.k_means import TimeSeriesKMeans
 from sktime.datasets import load_unit_test
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

@@ -6,7 +6,7 @@ import math
 
 import numpy as np
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 def _check_friedman(n_strategies, n_datasets, ranked_data, alpha):

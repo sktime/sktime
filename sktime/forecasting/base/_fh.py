@@ -13,7 +13,7 @@ from pandas import Timedelta
 from pandas.tseries.frequencies import to_offset
 
 from sktime.utils.datetime import _coerce_duration_to_int
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,

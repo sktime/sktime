@@ -9,7 +9,7 @@ from sktime.transformations.adapt import TabularToSeriesAdaptor
 from sktime.transformations.boxcox import BoxCoxTransformer
 from sktime.transformations.compose import ColumnEnsembleTransformer
 from sktime.transformations.subset import ColumnSelect
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

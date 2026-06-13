@@ -4,7 +4,7 @@ import numpy as np
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.networks.es_rnn import ESRNN
-from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
+from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
 
 torch = _safe_import("torch")
 Dataset = _safe_import("torch.utils.data.Dataset")

@@ -8,7 +8,7 @@ from sktime.datatypes._registry import (
     mtype_to_scitype,
     scitype_to_mtype,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 def pytest_generate_tests(metafunc):

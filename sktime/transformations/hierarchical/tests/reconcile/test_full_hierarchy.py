@@ -10,7 +10,7 @@ from sktime.transformations.hierarchical.reconcile._optimal import (
     _create_summing_matrix_from_index,
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.fixture

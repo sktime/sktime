@@ -333,7 +333,7 @@ class _Reducer(_BaseWindowForecaster):
         from sklearn.pipeline import make_pipeline
 
         from sktime.transformations.reduce import Tabularizer
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
         #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
@@ -3155,7 +3155,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         params1 = {
             "estimator": LinearRegression(),

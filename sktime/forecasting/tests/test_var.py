@@ -12,7 +12,7 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.var import VAR
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

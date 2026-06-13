@@ -10,7 +10,7 @@ import pytest
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.dummies import SeasonalDummiesOneHot
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

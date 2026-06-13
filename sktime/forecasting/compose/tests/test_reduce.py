@@ -37,7 +37,7 @@ from sktime.split.tests.test_split import _get_windows
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = [13, 17]

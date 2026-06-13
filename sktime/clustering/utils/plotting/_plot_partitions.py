@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes import convert_to
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 def _plot(cluster_values, center, axes):

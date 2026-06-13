@@ -12,7 +12,7 @@ from sktime.dists_kernels._numba_distances.tests._utils import (
     create_test_distance_numpy,
 )
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 def _validate_distance_alignment_path_result(

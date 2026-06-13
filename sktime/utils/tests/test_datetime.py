@@ -19,7 +19,7 @@ from sktime.utils.datetime import (
     infer_freq,
     set_hier_freq,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

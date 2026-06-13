@@ -34,7 +34,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 # this needs to be refactored with the convert module
 MTYPE_LIST_TABLE = [

@@ -20,7 +20,7 @@ from sktime.utils._testing.hierarchical import (
     _make_hierarchical,
     _make_index,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 # get all the methods
 METHOD_LIST = [x for x in ReconcilerForecaster.METHOD_LIST if not x.endswith("nonneg")]

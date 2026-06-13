@@ -9,7 +9,7 @@ from scipy.sparse import csr_matrix
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.deep_equals._deep_equals import deep_equals
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 # examples used for comparison below
 EXAMPLES = [
