@@ -354,7 +354,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         return y_pred[fh_idx]
 
     def _predict_naive(self, fh=None, X=None):
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         strategy = self.strategy
         sp = self.sp
