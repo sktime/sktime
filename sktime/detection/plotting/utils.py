@@ -16,7 +16,7 @@ __author__ = ["patrickzib"]
 
 
 def plot_time_series_with_change_points(
-    ts_name, ts, true_cps, true_cps_dates=None, font_size=16, legend=True, **kwargs
+    ts_name, ts, true_cps, font_size=16, true_cps_dates=None, legend=True, **kwargs
 ):
     """Plot the time series with the known change points.
 
