@@ -2,8 +2,10 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-import torch
-import torch.nn.functional as F
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+F = _safe_import("torch.nn.functional")
 
 
 # ---------------------------

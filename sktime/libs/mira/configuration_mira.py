@@ -5,9 +5,11 @@ https://github.com/Time-MoE
 """
 
 from typing import List, Optional
-from transformers import PretrainedConfig
-from transformers.utils import logging
 
+from sktime.utils.dependencies import _safe_import
+
+PretrainedConfig = _safe_import("transformers.PretrainedConfig")
+logging = _safe_import("transformers.utils.logging")
 logger = logging.get_logger(__name__)
 
 

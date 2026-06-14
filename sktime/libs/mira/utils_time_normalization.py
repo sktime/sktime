@@ -2,7 +2,9 @@
 # Copyright (c) Microsoft
 # Licensed under MIT
 
-import torch
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
 
 
 def safe_nanmin(x: torch.Tensor, dim=1, keepdim=True):

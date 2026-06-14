@@ -11,20 +11,30 @@ import math
 from typing import Optional, Tuple, List, Union
 import warnings
 
-import torch
-from torch import nn
-import torch.nn.functional as F
-from transformers import PreTrainedModel, Cache, DynamicCache, StaticCache
-from transformers.activations import ACT2FN
-from transformers.modeling_attn_mask_utils import _prepare_4d_causal_attention_mask
-from transformers.modeling_outputs import (
-    MoeModelOutputWithPast,
-    MoeCausalLMOutputWithPast,
+from sktime.utils.dependencies import _safe_import
+
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
+PreTrainedModel = _safe_import("transformers.PreTrainedModel")
+Cache = _safe_import("transformers.Cache")
+DynamicCache = _safe_import("transformers.DynamicCache")
+StaticCache = _safe_import("transformers.StaticCache")
+ACT2FN = _safe_import("transformers.activations.ACT2FN")
+_prepare_4d_causal_attention_mask = _safe_import(
+    "transformers.modeling_attn_mask_utils._prepare_4d_causal_attention_mask"
 )
-from transformers.utils import (
-    logging,
-    is_flash_attn_2_available,
-    is_flash_attn_greater_or_equal_2_10,
+MoeModelOutputWithPast = _safe_import(
+    "transformers.modeling_outputs.MoeModelOutputWithPast"
+)
+MoeCausalLMOutputWithPast = _safe_import(
+    "transformers.modeling_outputs.MoeCausalLMOutputWithPast"
+)
+logging = _safe_import("transformers.utils.logging")
+is_flash_attn_2_available = _safe_import("transformers.utils.is_flash_attn_2_available")
+is_flash_attn_greater_or_equal_2_10 = _safe_import(
+    "transformers.utils.is_flash_attn_greater_or_equal_2_10"
 )
 
 from .configuration_mira import MIRAConfig

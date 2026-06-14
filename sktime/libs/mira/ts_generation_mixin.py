@@ -5,16 +5,34 @@
 import warnings
 from typing import Any, Dict, List, Optional, Union
 
-import torch
+from sktime.utils.dependencies import _safe_import
 
-from transformers import GenerationMixin, LogitsProcessorList, StoppingCriteriaList
-from transformers.generation import validate_stopping_criteria, EosTokenCriteria
-from transformers.generation.utils import (
-    GenerateNonBeamOutput,
-    GenerateEncoderDecoderOutput,
-    GenerateDecoderOnlyOutput,
+torch = _safe_import("torch")
+
+GenerationMixin = _safe_import("transformers.GenerationMixin")
+LogitsProcessorList = _safe_import(
+    "transformers.generation.logits_process.LogitsProcessorList"
 )
-from transformers.utils import ModelOutput
+StoppingCriteriaList = _safe_import(
+    "transformers.generation.stopping_criteria.StoppingCriteriaList"
+)
+validate_stopping_criteria = _safe_import(
+    "transformers.generation.stopping_criteria.validate_stopping_criteria"
+)
+EosTokenCriteria = _safe_import(
+    "transformers.generation.stopping_criteria.EosTokenCriteria"
+)
+GenerateNonBeamOutput = _safe_import(
+    "transformers.generation.utils.GenerateNonBeamOutput"
+)
+GenerateEncoderDecoderOutput = _safe_import(
+    "transformers.generation.utils.GenerateEncoderDecoderOutput"
+)
+GenerateDecoderOnlyOutput = _safe_import(
+    "transformers.generation.utils.GenerateDecoderOnlyOutput"
+)
+ModelOutput = _safe_import("transformers.utils.ModelOutput")
+BaseStreamer = _safe_import("transformers.generation.streaming_utils.BaseStreamer")
 
 
 class MIRAGenerationMixin(GenerationMixin):
