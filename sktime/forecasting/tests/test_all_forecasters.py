@@ -278,7 +278,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_categorical_X_raises_error(self, estimator_instance):
         """Test that categorical X in not supported forecasters raises error.
 
-        Only test with forecasters which do not ignore exogeneous X and those that do
+        Only test with forecasters which do not ignore exogenous X and those that do
         not support categorical natively. These are the cases where error is expected
         to be raised.
         """
@@ -845,7 +845,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             with pytest.raises(ValueError):
                 f.predict_quantiles(fh=FH0 + 1)
 
-    def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
+    def test_hierarchical_with_exogenous(self, estimator_instance, n_columns):
         """Check that hierarchical forecasting works, also see bug #3961.
 
         Arguments
@@ -948,6 +948,31 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
         _assert_correct_columns(y_pred, y_train)
+
+    def test_unequal_length_hierarchical_fit_predict(self, estimator_instance):
+        """Test forecaster support for hierarchical series of unequal length."""
+        from sktime.utils._testing.hierarchical import _make_hierarchical
+
+        estimator = estimator_instance
+
+        if estimator.get_tag("capability:unequal_length"):
+            y = _make_hierarchical(
+                hierarchy_levels=(2, 3),
+                min_timepoints=15,
+                max_timepoints=36,
+                n_columns=1,
+                index_type="range",
+                random_state=42,
+                same_cutoff=False,
+            )
+
+            fh = [1, 2]
+
+            estimator.fit(y, fh=fh)
+            y_pred = estimator.predict()
+
+            assert isinstance(y_pred, pd.DataFrame)
+            assert check_is_mtype(y_pred, "pd_multiindex_hier")
 
     @staticmethod
     def _pretrain_fh(estimator_instance):
