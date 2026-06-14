@@ -20,9 +20,9 @@ from dataclasses import dataclass, field
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
-from sktime.utils.dependencies import _check_estimator_deps
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
