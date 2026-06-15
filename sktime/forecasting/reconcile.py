@@ -101,7 +101,7 @@ class ReconcilerForecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:multivariate": False,  # which y are fine? False/True
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": [
             "pd.DataFrame",
@@ -119,6 +119,7 @@ class ReconcilerForecaster(BaseForecaster):
         "X-y-must-have-same-index": False,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
+        "capability:unequal_length": False,
         "fit_is_empty": False,
         # CI and test flags
         # -----------------
@@ -379,10 +380,10 @@ class ReconcilerForecaster(BaseForecaster):
 
         if shrink:
             # diag matrix of variances
-            var_d = pd.DataFrame(0.0, index=cov_mat.index, columns=cov_mat.columns)
-            np.fill_diagonal(var_d.values, np.diag(cov_mat))
+            diag_mat = np.diag(np.diag(cov_mat.values))
+            var_d = pd.DataFrame(diag_mat, index=cov_mat.index, columns=cov_mat.columns)
 
-            # get correltion from covariance above
+            # get correlation from covariance above
             cor_mat = resid.corr()
             nobs = len(resid)
 

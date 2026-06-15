@@ -163,7 +163,7 @@ def _get_tag_fixture():
     # just picked a few valid tags to try out as valid str return_tags args:
     test_str_as_arg = [
         "X-y-must-have-same-index",
-        "capability:pred_var",
+        "capability:pred_int",
         "skip-inverse-transform",
     ]
 
@@ -253,12 +253,6 @@ def test_scitype_inference(estimator_scitype):
     base_class = _check_estimator_types(estimator_scitype)[0]
     all_scitypes = scitype(base_class, force_single_scitype=False, coerce_to_list=True)
     inferred_scitype = all_scitypes[0]
-
-    # stepout for detector due to rename in scitype
-    # todo 1.0.0 - remove this stepout entirely
-    if estimator_scitype == "series-annotator":
-        assert "series-annotator" in all_scitypes
-        return None
 
     assert inferred_scitype == estimator_scitype, (
         "one of scitype, _check_estimator_types is incorrect, these should be inverses"

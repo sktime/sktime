@@ -213,7 +213,8 @@ def _run_test_for_class(
 
         If multiple reasons are present, the first one in the above list is returned.
     """
-    from sktime.utils.dependencies import _check_estimator_deps
+    from skbase.utils.dependencies import _check_estimator_deps
+
     from sktime.utils.git_diff import (
         get_packages_with_changed_specs,
         is_class_changed,

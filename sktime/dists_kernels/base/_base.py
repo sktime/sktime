@@ -32,11 +32,12 @@ Inspection methods:
 
 __author__ = ["fkiraly"]
 
+from skbase.utils.dependencies import _check_estimator_deps
+
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_Series_to_Panel
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BasePairwiseTransformer(BaseEstimator):
@@ -299,9 +300,9 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         """
         from sktime.dists_kernels.compose import PwTrafoPanelPipeline
         from sktime.dists_kernels.dummy import ConstantPwTrafoPanel
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # when other is an integer or float, treat it as constant distance/kernel
@@ -382,7 +383,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
             ColumnSelect(columns) * self
             where ``columns`` only item in ``key``
         """
-        from sktime.transformations.series.subset import ColumnSelect
+        from sktime.transformations.subset import ColumnSelect
 
         return ColumnSelect(key) * self
 
