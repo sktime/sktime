@@ -365,7 +365,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         self : reference to self
         """
         self._freq, self._freq_token = self._resolve_freq(y=y, fh=fh)
-        self._revision = self._resolve_revision(y=y, fh=fh, freq=self._freq)
+        self._revision = self._resolve_revision(y=y, fh=fh)
 
         self.model = _CachedTinyTimeMixer(
             key=self._get_unique_key(),
@@ -446,7 +446,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         freq_token = _map_frequency_token(freq)
         return freq, freq_token
 
-    def _resolve_revision(self, y, fh=None, freq=None):
+    def _resolve_revision(self, y, fh=None):
         if self.revision is not None or self.model_path is None:
             return self.revision
 
@@ -465,7 +465,6 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             model_path=self.model_path,
             context_len=context_len,
             horizon_len=horizon_len,
-            freq=freq,
         )
 
     def _get_unique_key(self):
@@ -779,7 +778,7 @@ def _get_context_length(y):
     return len(y)
 
 
-def _get_auto_revision(model_path, context_len, horizon_len, freq):
+def _get_auto_revision(model_path, context_len, horizon_len):
     """Return an auto-selected TTM revision.
 
     This is a placeholder until the Granite revision selection logic is added.
@@ -810,39 +809,36 @@ def _get_auto_revision(model_path, context_len, horizon_len, freq):
         except ValueError:
             continue
 
+        distance = int(
+            abs(revision_context_len - context_len)
+            + abs(revision_horizon_len - horizon_len)
+        )
+
         valid_revisions.append(
             {
                 "name": revision,
                 "context_len": revision_context_len,
                 "horizon_len": revision_horizon_len,
+                "distance": distance,
             }
         )
 
-    compatible_revisions = [
-        revision
-        for revision in valid_revisions
-        if revision["context_len"] <= context_len
-        and revision["horizon_len"] >= horizon_len
-    ]
-    if not compatible_revisions:
+    if not valid_revisions:
         raise ValueError(
-            "Could not find a compatible TinyTimeMixer revision for "
-            f"context_len={context_len}, horizon_len={horizon_len}, "
-            f"freq={freq!r} in model_path={model_path!r}."
+            "Could not find valid TinyTimeMixer revisions in "
+            f"model_path={model_path!r}."
         )
 
-    selected_revision = min(
-        compatible_revisions,
-        key=lambda revision: (
-            revision["horizon_len"],
-            -revision["context_len"],
-            revision["name"],
-        ),
-    )["name"]
+    valid_revisions = sorted(
+        valid_revisions,
+        key=lambda revision: revision["distance"],
+    )
+    selected_revision = valid_revisions[0]["name"]
+
     warn(
         "Selected TinyTimeMixer revision "
         f"{selected_revision!r} for model_path={model_path!r}, "
-        f"context_len={context_len}, horizon_len={horizon_len}, freq={freq!r}."
+        f"context_len={context_len}, horizon_len={horizon_len}."
     )
 
     return selected_revision
