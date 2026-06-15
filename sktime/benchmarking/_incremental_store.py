@@ -1,4 +1,18 @@
-"""Incremental crash-safe storage for partial benchmark results."""
+"""Internal crash-safe checkpoint store for benchmark runs.
+
+This module provides incremental persistence used during a benchmark run.
+It is not part of the public, user-facing storage API and is not a
+`BaseStorageHandler` subclass.
+
+Final results are written in the user's chosen file format (JSON, CSV, or
+Parquet) via `sktime.benchmarking._storage_handlers`. Partial checkpoints
+are always stored as JSON fragments in a ``{output_file}.parts/`` directory,
+regardless of the final format. This avoids duplicating format-specific
+checkpoint logic for every storage backend.
+
+`IncrementalResultStore` is coordinated by `BenchmarkResultsPersistence`.
+Benchmark orchestration code should not import or use it directly.
+"""
 
 from __future__ import annotations
 
@@ -13,8 +27,6 @@ from sktime.benchmarking._storage_handlers import JSONStorageHandler, _atomic_wr
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 1
-
 
 def result_key(task_id: str, model_id: str) -> str:
     """Return a stable hash key for a task-model pair."""
@@ -23,19 +35,37 @@ def result_key(task_id: str, model_id: str) -> str:
 
 
 class IncrementalResultStore:
-    """Crash-safe incremental store for individual benchmark results.
+    """Crash-safe checkpoint store for individual benchmark results.
 
-    Each completed task-estimator run is persisted as a pair of files in a
-    ``{output_file}.parts/`` directory:
+    Persists each completed task-estimator run as a pair of files in a
+    ``{output_path}.parts/`` directory:
 
-    * ``{hash}.json`` — serialized result (JSON format used by JSONStorageHandler)
-    * ``{hash}.done`` — completion marker with content SHA256
+    * ``{hash}.json`` — serialized result (uses ``JSONStorageHandler`` format)
+    * ``{hash}.done`` — completion marker with a content SHA256 checksum
+
+    A result is only considered valid when both files exist and the checksum
+    matches. Incomplete or corrupted entries are skipped on load.
 
     Parameters
     ----------
     output_path : str, Path, or None
-        Path to the final benchmark output file. When ``None``, the store is
-        disabled (no persistence).
+        Path to the final benchmark output file. The parts directory is
+        derived as ``f"{output_path}.parts"``. When ``None``, the store is
+        disabled.
+
+    Attributes
+    ----------
+    output_path : Path or None
+        Coerced final output path.
+    parts_dir : Path or None
+        Directory holding incremental checkpoint files.
+
+    Notes
+    -----
+    This is an internal implementation detail, not a final-format storage
+    handler. It always serializes to JSON regardless of whether the user's
+    final output is CSV, Parquet, etc. See
+    `BenchmarkResultsPersistence` for the public persistence interface.
     """
 
     def __init__(self, output_path: str | Path | None) -> None:
@@ -47,7 +77,16 @@ class IncrementalResultStore:
             self.parts_dir = Path(f"{output_path}.parts")
 
     def save_result(self, result: ResultObject) -> None:
-        """Persist a single completed result incrementally."""
+        """Persist a single completed result as an atomic checkpoint.
+
+        Writes the JSON payload first, then the ``.done`` marker, so that
+        a crash mid-write never produces a loadable but incomplete result.
+
+        Parameters
+        ----------
+        result : ResultObject
+            A completed experiment result to checkpoint.
+        """
         if self.parts_dir is None:
             return
 
@@ -60,13 +99,19 @@ class IncrementalResultStore:
         _atomic_write_text(result_path, contents)
 
         content_hash = hashlib.sha256(contents.encode("utf-8")).hexdigest()
-        done_contents = json.dumps(
-            {"schema_version": SCHEMA_VERSION, "sha256": content_hash}
-        )
+        done_contents = json.dumps({"sha256": content_hash})
         _atomic_write_text(done_path, done_contents)
 
     def load_results(self) -> list[ResultObject]:
-        """Load all valid completed partial results from the parts directory."""
+        """Load all valid completed partial results from the parts directory.
+
+        Returns
+        -------
+        list of ResultObject
+            Valid checkpoint results. Entries missing a ``.done`` file, with
+            a checksum mismatch, or with invalid JSON are skipped with a
+            warning logged.
+        """
         if self.parts_dir is None or not self.parts_dir.exists():
             return []
 
@@ -105,13 +150,10 @@ class IncrementalResultStore:
         except (OSError, json.JSONDecodeError):
             return False
 
-        if done_data.get("schema_version") != SCHEMA_VERSION:
-            return False
-
         content_hash = hashlib.sha256(contents).hexdigest()
         return content_hash == done_data.get("sha256")
 
     def cleanup(self) -> None:
-        """Remove the partial results directory after successful final merge."""
+        """Remove the ``.parts/`` directory after a successful final save."""
         if self.parts_dir is not None and self.parts_dir.exists():
             shutil.rmtree(self.parts_dir)

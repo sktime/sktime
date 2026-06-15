@@ -1,4 +1,13 @@
-"""Storage handlers for benchmarking results."""
+"""Final-format storage handlers for benchmark results.
+
+Each `BaseStorageHandler` subclass implements the strategy for a
+specific output file format (JSON, CSV, Parquet). The appropriate handler is
+selected by file extension via `get_storage_backend`.
+
+Crash-safe incremental checkpoints during a run are not handled here,
+they live in `sktime.benchmarking._incremental_store` and are coordinated
+by `sktime.benchmarking._results_persistence`.
+"""
 
 import abc
 import ast

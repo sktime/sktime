@@ -83,7 +83,7 @@ def test_incremental_store_ignores_hash_mismatch(tmp_path):
 
     key = result_key(result.task_id, result.model_id)
     done_path = store.parts_dir / f"{key}.done"
-    done_path.write_text(json.dumps({"schema_version": 1, "sha256": "invalid_hash"}))
+    done_path.write_text(json.dumps({"sha256": "invalid_hash"}))
 
     assert store.load_results() == []
 
@@ -113,8 +113,8 @@ def test_incremental_store_disabled_when_no_output_path():
     assert store.load_results() == []
 
 
-def test_done_file_contains_expected_schema(tmp_path):
-    """Test writing checksum metadata using the expected done-file schema."""
+def test_done_file_contains_checksum(tmp_path):
+    """Test writing checksum metadata in the done file."""
     output_file = tmp_path / "results.json"
     store = IncrementalResultStore(output_file)
     result = _sample_result()
@@ -128,7 +128,7 @@ def test_done_file_contains_expected_schema(tmp_path):
     expected_hash = hashlib.sha256(contents.encode("utf-8")).hexdigest()
     done_data = json.loads(done_path.read_text(encoding="utf-8"))
 
-    assert done_data == {"schema_version": 1, "sha256": expected_hash}
+    assert done_data == {"sha256": expected_hash}
 
 
 def test_benchmarking_results_loads_from_parts_on_resume(tmp_path):
@@ -177,13 +177,14 @@ def test_benchmarking_results_incremental_save_and_final_merge(
     results.update(_sample_result(task_id="val_1", model_id="model_1"))
     results.update(_sample_result(task_id="val_2", model_id="model_2"))
 
-    assert results.incremental_store.parts_dir.exists()
-    assert len(list(results.incremental_store.parts_dir.glob("*.json"))) == 2
+    parts_dir = IncrementalResultStore(output_file).parts_dir
+    assert parts_dir.exists()
+    assert len(list(parts_dir.glob("*.json"))) == 2
 
     results.save()
 
     assert output_file.exists()
-    assert not results.incremental_store.parts_dir.exists()
+    assert not IncrementalResultStore(output_file).parts_dir.exists()
 
     loaded = storage_handler(output_file).load()
     assert len(loaded) == 2
@@ -200,7 +201,7 @@ def test_benchmarking_results_update_replaces_existing_result(tmp_path):
     assert len(results.results) == 1
     assert results.results[0].folds[0].scores["accuracy"] == 0.99
 
-    loaded = results.incremental_store.load_results()
+    loaded = IncrementalResultStore(output_file).load_results()
     assert len(loaded) == 1
     assert loaded[0].folds[0].scores["accuracy"] == 0.99
 
@@ -255,8 +256,9 @@ def test_results_saved_after_each_step(tmp_path, monkeypatch, output_suffix):
         original_update(self, new_result)
         n_completed += 1
 
-        assert self.incremental_store.parts_dir.exists()
-        assert len(self.incremental_store.load_results()) == n_completed
+        store = IncrementalResultStore(results_path)
+        assert store.parts_dir.exists()
+        assert len(store.load_results()) == n_completed
         assert not results_path.exists()
 
     monkeypatch.setattr(_BenchmarkingResults, "update", counting_update)

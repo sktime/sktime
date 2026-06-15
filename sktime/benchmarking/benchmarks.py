@@ -3,7 +3,6 @@
 import logging
 import warnings
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import pandas as pd
 
@@ -12,8 +11,7 @@ from sktime.benchmarking._benchmarking_dataclasses import (
     ResultObject,
     TaskObject,
 )
-from sktime.benchmarking._incremental_store import IncrementalResultStore
-from sktime.benchmarking._storage_handlers import get_storage_backend
+from sktime.benchmarking._results_persistence import BenchmarkResultsPersistence
 from sktime.benchmarking._utils import _check_id_format
 from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
@@ -91,52 +89,45 @@ def _coerce_estimator_and_id(estimators, estimator_id=None):
 
 @dataclass
 class _BenchmarkingResults:
-    """Results of a benchmarking run.
+    """In-memory container for benchmark results.
+
+    Holds completed `ResultObject` instances and provides query and export
+    operations. All file I/O is delegated to `BenchmarkResultsPersistence`.
+
+    On construction, previously saved results are loaded automatically when
+    ``path`` is given — either from a completed output file or from crash-safe
+    partial checkpoints left by an interrupted run.
 
     Parameters
     ----------
-    results : list of ResultObject
-        The results of the benchmarking run.
+    path : str or None
+        Path to the benchmark output file. Determines the final storage format
+        by file extension. When ``None``, results are kept in memory only.
+    results : list of ResultObject, optional
+        In-memory result list. Overwritten on init by loading from persistence
+        when saved data exists.
     """
 
     path: str
     results: list[ResultObject] = field(default_factory=list)
 
     def __post_init__(self):
-        """Load existing results from the path or partial store."""
-        # Instantiate main storage handler
-        self.storage_backend = get_storage_backend(self.path)
-        # Instantiate incremental storage handler
-        self.incremental_store = IncrementalResultStore(self.path)
-
-        # Check for completed result file or partial result directory
-        # stored in the HD. If present, load them as a list of `ResultObject`,
-        # else self.results is an empty list.
-        # The main storage backend stays in the strategy pattern where
-        # the storage handler is decided by the extension of the file path
-        # passed by the user.
-        # `IncrementalResultStore` is an internal storage handler. Regardless of
-        # the final file type, it uses JSON for storing immediate results. Having
-        # incremental storage handler for each filetype would be redundant
-        # since it is used as an internal tool by the benchmarking framework,
-        # and the users at the end will get the results in
-        # their requested filetype anyway.
-        output_path = Path(self.path) if self.path is not None else None
-        if output_path is not None and output_path.exists():
-            self.results = self.storage_backend(self.path).load()
-        elif (
-            self.incremental_store.parts_dir is not None
-            and self.incremental_store.parts_dir.exists()
-        ):
-            self.results = self.incremental_store.load_results()
-        else:
-            self.results = []
+        """Initialise persistence and load any previously saved results."""
+        self._persistence = BenchmarkResultsPersistence(self.path)
+        self.results = self._persistence.load()
 
     def update(self, new_result):
-        """Update the results with a new result."""
-        # Remove those in-memory results having the same
-        # task_id and estimator_id as the new_result to avoid
-        # duplication
+        """Add or replace a result and checkpoint it to disk.
+
+        If a result with the same ``task_id`` and ``model_id`` already exists,
+        it is replaced in memory. The new result is also written to incremental
+        checkpoint storage so progress survives crashes.
+
+        Parameters
+        ----------
+        new_result : ResultObject
+            A completed experiment result.
+        """
         self.results = [
             result
             for result in self.results
@@ -147,25 +138,16 @@ class _BenchmarkingResults:
         ]
         # Append new `ResultObject` to in-memory storage
         self.results.append(new_result)
-        # Store new `ResultObject` immediately on HD
-        self.incremental_store.save_result(new_result)
+        self._persistence.persist_result(new_result)
 
     def save(self):
-        """Save the results to a file and remove partial result files."""
-        # No saving on the HD if a file path isn't passed
-        if self.path is None:
-            return
+        """Write all results to the final output file.
 
-        # Save final result to HD using respecting storage handler
-        self.storage_backend(self.path).save(self.results)
-
-        output_path = Path(self.path)
-        if not output_path.exists():
-            raise RuntimeError(f"Failed to save benchmark results to {self.path}")
-
-        # Remove immediate result directory from the HD once
-        # the final result file is saved
-        self.incremental_store.cleanup()
+        Persists the complete in-memory result set in the format determined
+        by ``path`` (e.g. JSON, CSV, Parquet) and removes incremental
+        checkpoint files. No operation when ``path`` is ``None``.
+        """
+        self._persistence.save_final(self.results)
 
     def contains(self, task_id: str, model_id: str):
         """Check if the results contain a specific task and model.
