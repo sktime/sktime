@@ -500,7 +500,6 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         data["_target_column"] = data["_target_column"].fillna(0).astype(float)
         for c in time_varying_known_reals:
             data[c] = data[c].astype(float)
-        data["_target_column"] = data["_target_column"].fillna(0)
         # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
             time_idx = (
