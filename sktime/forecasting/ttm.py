@@ -4,6 +4,8 @@
 __author__ = ["ajati", "wgifford", "vijaye12", "geetu040"]
 # ajati, wgifford, vijaye12 for ibm-granite code
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from skbase.utils.stdout_mute import StdoutMute
@@ -20,6 +22,21 @@ from sktime.utils.warnings import warn
 
 torch = _safe_import("torch")
 Dataset = _safe_import("torch.utils.data.Dataset")
+
+_FREQUENCY_TOKEN_MAP = {
+    "oov": 0,
+    "min": 1,
+    "2min": 2,
+    "5min": 3,
+    "10min": 4,
+    "15min": 5,
+    "30min": 6,
+    "h": 7,
+    "H": 7,
+    "d": 8,
+    "D": 8,
+    "W": 9,
+}
 
 
 class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
@@ -127,6 +144,11 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
     device : str, default="cpu"
         Device for model inference and fine-tuning, for example ``"cpu"``,
         ``"cuda"``, or ``"cuda:0"``.
+
+    frequency_token : int, str, or None, default=None
+        Frequency token to pass to models that use resolution prefix tuning,
+        such as TTM-R2. If ``None``, the token is inferred from the time index
+        where possible, and falls back to the out-of-vocabulary token.
 
     validation_split : float, default=0.2
         Fraction of the data to use for validation
@@ -274,11 +296,13 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         use_source_package=False,
         fit_strategy="minimal",
         device="cpu",
+        frequency_token=None,
     ):
         super().__init__()
         self.model_path = model_path
         self.revision = revision
         self.device = device
+        self.frequency_token = frequency_token
         self.config = config
         self._config = config if config is not None else {}
         self.training_args = training_args
@@ -345,6 +369,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             fh_values=fh_values,
         ).load()
 
+        self.frequency_token_ = self._get_frequency_token(y, config)
+
         if self.fit_strategy == "zero-shot":
             if len(info["mismatched_keys"]) > 0:
                 raise ValueError(
@@ -397,6 +423,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             context_length=config.context_length,
             prediction_length=config.prediction_length,
             X=X_train,
+            frequency_token=self.frequency_token_,
         )
 
         eval = None
@@ -406,6 +433,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 context_length=config.context_length,
                 prediction_length=config.prediction_length,
                 X=X_eval,
+                frequency_token=self.frequency_token_,
             )
 
         from transformers import Trainer, TrainingArguments
@@ -428,6 +456,16 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
         # Get the model
         self.model = trainer.model
+
+    def _get_frequency_token(self, y, config):
+        """Return frequency token for resolution-prefix models, if needed."""
+        if not getattr(config, "resolution_prefix_tuning", False):
+            return None
+
+        return _resolve_frequency_token(
+            frequency_token=self.frequency_token,
+            index=y.index,
+        )
 
     def _get_unique_key(self, fh_values):
         """Build cache key for the multiton model loader."""
@@ -512,11 +550,20 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                     torch.tensor(future_exog).to(self.model.dtype).to(self.model.device)
                 )
 
+        freq_token = None
+        if self.frequency_token_ is not None:
+            freq_token = torch.tensor(
+                [self.frequency_token_],
+                dtype=torch.int,
+                device=self.model.device,
+            )
+
         self.model.eval()
         outputs = self.model(
             past_values=past_values,
             past_observed_mask=observed_mask,
             future_values=future_values,
+            freq_token=freq_token,
         )
         pred = outputs.prediction_outputs.detach().cpu().numpy()
 
@@ -656,10 +703,80 @@ def _pad_truncate(data, seq_len, pad_value=0):
     return truncated_data, mask
 
 
+def _resolve_frequency_token(frequency_token, index):
+    """Resolve explicit or index-inferred frequency token."""
+    if frequency_token is not None:
+        return _map_frequency_token(frequency_token)
+
+    freq = _infer_index_frequency(index)
+    return _map_frequency_token(freq)
+
+
+def _infer_index_frequency(index):
+    """Infer a pandas-style frequency string from an sktime index."""
+    if isinstance(index, pd.MultiIndex):
+        index = index.get_level_values(-1)
+
+    freq = getattr(index, "freqstr", None)
+    if freq is not None:
+        return freq
+
+    freq = getattr(getattr(index, "freq", None), "freqstr", None)
+    if freq is not None:
+        return freq
+
+    inferred_freq = getattr(index, "inferred_freq", None)
+    if inferred_freq is not None:
+        return inferred_freq
+
+    try:
+        return pd.infer_freq(index)
+    except (TypeError, ValueError):
+        return None
+
+
+def _map_frequency_token(freq):
+    """Map a frequency value to the TTM frequency token vocabulary."""
+    if freq is None:
+        return _FREQUENCY_TOKEN_MAP["oov"]
+
+    if isinstance(freq, (int, np.integer)):
+        return int(freq)
+
+    freq = str(freq)
+    if freq in _FREQUENCY_TOKEN_MAP:
+        return _FREQUENCY_TOKEN_MAP[freq]
+
+    if freq.lower() in _FREQUENCY_TOKEN_MAP:
+        return _FREQUENCY_TOKEN_MAP[freq.lower()]
+
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            offset_freq = pd.tseries.frequencies.to_offset(freq).freqstr
+    except (TypeError, ValueError):
+        offset_freq = None
+
+    if offset_freq in _FREQUENCY_TOKEN_MAP:
+        return _FREQUENCY_TOKEN_MAP[offset_freq]
+    if offset_freq is not None and offset_freq.lower() in _FREQUENCY_TOKEN_MAP:
+        return _FREQUENCY_TOKEN_MAP[offset_freq.lower()]
+
+    warn(f"Frequency token {freq} was not found in the frequency token mapping.")
+    return _FREQUENCY_TOKEN_MAP["oov"]
+
+
 class PyTorchDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
 
-    def __init__(self, y, context_length, prediction_length, X=None):
+    def __init__(
+        self,
+        y,
+        context_length,
+        prediction_length,
+        X=None,
+        frequency_token=None,
+    ):
         """
         Initialize the dataset.
 
@@ -677,6 +794,7 @@ class PyTorchDataset(Dataset):
         """
         self.context_length = context_length
         self.prediction_length = prediction_length
+        self.frequency_token = frequency_token
 
         self.y = np.expand_dims(y.values, axis=0)
 
@@ -800,6 +918,9 @@ class PyTorchDataset(Dataset):
             # Concatenate past and future exogenous for the full sequence
             full_exog = np.concatenate([past_exog, future_exog], axis=0)
             result["exogenous_values"] = tensor(full_exog).float()
+
+        if self.frequency_token is not None:
+            result["freq_token"] = tensor(self.frequency_token).int()
 
         return result
 
