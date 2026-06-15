@@ -333,6 +333,30 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 }
             )
 
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain forecaster on panel/global data (first batch).
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Panel or hierarchical time series data to pretrain on.
+            The last index level is time, all other levels identify instances.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series.
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        pass
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
