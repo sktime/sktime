@@ -403,7 +403,7 @@ def _calendar_dummies(x, funcs):
         cd = getattr(date_sequence, funcs)
     cd = pd.DataFrame(cd)
     cd = cd.rename(columns={cd.columns[0]: funcs})
-    cd[funcs] = np.int64(cd[funcs])
+    cd = cd.astype({funcs: np.int64}) # The safe, non-chained way
     return cd
 
 
@@ -421,7 +421,8 @@ def _prep_dummies(DUMMIES):
     Includes defining function call names and ranking of date information based on
     frequency (e.g. year has a lower frequency than week).
     """
-    DUMMIES = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0])
+    # 1. Create a clean DataFrame from the raw data
+    df = pd.DataFrame(DUMMIES[1:], columns=DUMMIES[0]).copy(deep=True)
 
     date_order = [
         "year",
@@ -435,31 +436,32 @@ def _prep_dummies(DUMMIES):
         "millisecond",
     ]
 
-    DUMMIES["fourier"] = DUMMIES["child"] + "_in_" + DUMMIES["parent"]
-    DUMMIES["dummy"] = DUMMIES["child"] + "_of_" + DUMMIES["parent"]
-    DUMMIES.loc[DUMMIES["dummy"] == "year_of_year", "dummy"] = "year"
-    DUMMIES.loc[DUMMIES["dummy_func"] == "is_weekend", ["dummy", "fourier"]] = (
-        "is_weekend"
-    )
+    # 2. Build new columns using .loc[] for non-categorical assignments.
+    #    This avoids Copy-on-Write chained assignment warnings.
+    df.loc[:, "fourier"] = df["child"] + "_in_" + df["parent"]
+    df.loc[:, "dummy"] = df["child"] + "_of_" + df["parent"]
+    
+    # 3. .loc with boolean indexing to filter and assign values safely.
+    df.loc[df["dummy"] == "year_of_year", "dummy"] = "year"
+    df.loc[df["dummy_func"] == "is_weekend", ["dummy", "fourier"]] = "is_weekend"
 
-    DUMMIES["child"] = (
-        DUMMIES["child"].astype("category").cat.reorder_categories(date_order)
-    )
+    # 4. For categorical columns, build them separately to avoid CoW warnings.
+    #    We create a new DataFrame from a dict of columns, which bypasses the
+    #    chained assignment detection that triggers FutureWarnings with categorical operations.
+    
+    # Prepare all the new categorical columns first
+    child_cat = df["child"].astype("category", copy=False)
+    child_cat = child_cat.cat.reorder_categories(date_order)
 
     flist = ["minimal", "efficient", "comprehensive"]
+    feature_scope_cat = df["feature_scope"].astype("category", copy=False)
+    feature_scope_cat = feature_scope_cat.cat.reorder_categories(flist)
+    feature_scope_ordered = pd.Categorical(feature_scope_cat, ordered=True)
 
-    DUMMIES["feature_scope"] = (
-        DUMMIES["feature_scope"].astype("category").cat.reorder_categories(flist)
-    )
-
-    DUMMIES["feature_scope"] = pd.Categorical(DUMMIES["feature_scope"], ordered=True)
-
-    DUMMIES["rank"] = DUMMIES["child"].cat.codes
-
-    col = DUMMIES["child"]
-    DUMMIES.insert(0, "ts_frequency", col)
-
-    DUMMIES["ts_frequency"] = DUMMIES["ts_frequency"].cat.rename_categories(
+    rank_col = child_cat.cat.codes
+    
+    ts_freq_col = child_cat.copy()
+    ts_freq_cat = ts_freq_col.cat.rename_categories(
         {
             "year": "Y",
             "quarter": "Q",
@@ -472,4 +474,15 @@ def _prep_dummies(DUMMIES):
             "millisecond": "L",
         }
     )
-    return DUMMIES
+
+    # Create new DataFrame from dictionary to avoid CoW FutureWarnings.
+    # This single-step construction bypasses the chained assignment detection.
+    df = pd.DataFrame({
+        "ts_frequency": ts_freq_cat,
+        **{col: df[col] for col in df.columns if col not in ["child", "feature_scope"]},
+        "child": child_cat,
+        "feature_scope": feature_scope_ordered,
+        "rank": rank_col,
+    })
+    
+    return df
