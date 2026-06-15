@@ -150,6 +150,9 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         such as TTM-R2. If ``None``, the token is inferred from the time index
         where possible, and falls back to the out-of-vocabulary token.
 
+    verbose : bool, default=False
+        If True, show training output from ``transformers.Trainer``.
+
     validation_split : float, default=0.2
         Fraction of the data to use for validation
 
@@ -298,12 +301,14 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         fit_strategy="minimal",
         device="cpu",
         frequency_token=None,
+        verbose=False,
     ):
         super().__init__()
         self.model_path = model_path
         self.revision = revision
         self.device = device
         self.frequency_token = frequency_token
+        self.verbose = verbose
         self.config = config
         self._config = config if config is not None else {}
         self.training_args = training_args
@@ -452,8 +457,11 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             callbacks=self.callbacks,
         )
 
-        with StdoutMute() as _:
+        if self.verbose:
             trainer.train()
+        else:
+            with StdoutMute() as _:
+                trainer.train()
 
         # Get the model
         self.model = trainer.model
