@@ -366,7 +366,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         )
         self._freq_token = _map_frequency_token(self._freq)
 
-        self.model, info, config = _CachedTinyTimeMixer(
+        self.model = _CachedTinyTimeMixer(
             key=self._get_unique_key(),
             model_path=self.model_path,
             revision=self.revision,
@@ -379,36 +379,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         if not self.model.config.resolution_prefix_tuning:
             self._freq_token = None
 
-        if self.fit_strategy == "zero-shot":
-            if len(info["mismatched_keys"]) > 0:
-                raise ValueError(
-                    "Fit strategy is 'zero-shot', but the model weights in the"
-                    "configuration are mismatched compared to the pretrained model."
-                    "Please ensure they match."
-                )
+        if not any(param.requires_grad for param in self.model.parameters()):
             return
-        elif self.fit_strategy == "minimal":
-            if len(info["mismatched_keys"]) == 0:
-                return  # No need to fit
-            # Freeze all loaded parameters
-            for param in self.model.parameters():
-                param.requires_grad = False
-
-            # Adjust requires_grad property of model weights based on info
-            for key in info["mismatched_keys"]:
-                # transformers>=5.0 may return tuples (key, shape) instead
-                # of plain strings for mismatched_keys
-                if isinstance(key, tuple):
-                    key = key[0]
-                _model = self.model
-                for attr_name in key.split(".")[:-1]:
-                    _model = getattr(_model, attr_name)
-                _model.weight.requires_grad = True
-        elif self.fit_strategy == "full":
-            for param in self.model.parameters():
-                param.requires_grad = True
-        else:
-            raise ValueError("Unknown fit strategy")
 
         if self.validation_split is not None:
             y_train, y_eval = temporal_train_test_split(
@@ -428,8 +400,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
         train = PyTorchDataset(
             y=y_train,
-            context_length=config.context_length,
-            prediction_length=config.prediction_length,
+            context_length=self.model.config.context_length,
+            prediction_length=self.model.config.prediction_length,
             X=X_train,
             frequency_token=self._freq_token,
         )
@@ -438,8 +410,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         if self.validation_split is not None:
             eval = PyTorchDataset(
                 y=y_eval,
-                context_length=config.context_length,
-                prediction_length=config.prediction_length,
+                context_length=self.model.config.context_length,
+                prediction_length=self.model.config.prediction_length,
                 X=X_eval,
                 frequency_token=self._freq_token,
             )
@@ -955,15 +927,89 @@ class _CachedTinyTimeMixer:
         self._ttm_classes = None
 
     def load(self):
-        """Load and return the cached model, loading info, and config."""
+        """Load and return the cached model."""
         if self.model_ is not None:
-            return self.model_, self.info_, self.config_
+            return self.model_
 
         self.config_ = self._build_config()
         self.model_, self.info_ = self._load_model()
         self.model_ = self.model_.to(self.device)
+        self._set_training_parameters()
 
-        return self.model_, self.info_, self.config_
+        return self.model_
+
+    def _set_training_parameters(self):
+        """Set trainable parameters based on fit strategy."""
+        if self.fit_strategy == "zero-shot":
+            self._set_zero_shot_parameters()
+            return
+        if self.fit_strategy == "minimal":
+            self._set_minimal_parameters()
+            return
+        if self.fit_strategy == "full":
+            self._set_full_parameters()
+            return
+
+        raise ValueError(
+            "Unknown fit_strategy. Expected one of 'zero-shot', 'minimal', "
+            f"or 'full', but found {self.fit_strategy!r}."
+        )
+
+    def _set_zero_shot_parameters(self):
+        """Validate zero-shot compatibility and skip training."""
+        mismatched_keys = self.info_["mismatched_keys"]
+        if len(mismatched_keys) > 0:
+            raise ValueError(
+                "fit_strategy='zero-shot' requires all pretrained weights to "
+                "match the loaded model configuration, but mismatched weights "
+                f"were found: {self._format_mismatched_keys(mismatched_keys)}. "
+                "Use fit_strategy='minimal' or 'full', or choose a compatible "
+                "model/configuration."
+            )
+        self._freeze_all_parameters()
+
+    def _set_minimal_parameters(self):
+        """Freeze loaded parameters and train only mismatched weights."""
+        mismatched_keys = self.info_["mismatched_keys"]
+        self._freeze_all_parameters()
+        if len(mismatched_keys) == 0:
+            return
+
+        for key in mismatched_keys:
+            self._set_mismatched_key_trainable(key)
+
+    def _set_full_parameters(self):
+        """Train all model parameters."""
+        for param in self.model_.parameters():
+            param.requires_grad = True
+
+    def _freeze_all_parameters(self):
+        """Freeze all model parameters."""
+        for param in self.model_.parameters():
+            param.requires_grad = False
+
+    def _set_mismatched_key_trainable(self, key):
+        """Set the module parameter corresponding to a mismatched key trainable."""
+        # transformers>=5.0 may return tuples (key, shape) instead of plain strings.
+        if isinstance(key, tuple):
+            key = key[0]
+
+        module = self.model_
+        for attr_name in key.split(".")[:-1]:
+            module = getattr(module, attr_name)
+
+        parameter_name = key.split(".")[-1]
+        getattr(module, parameter_name).requires_grad = True
+
+    @staticmethod
+    def _format_mismatched_keys(mismatched_keys):
+        """Format mismatched key names for error messages."""
+        formatted_keys = []
+        for key in mismatched_keys:
+            if isinstance(key, tuple):
+                key = key[0]
+            formatted_keys.append(str(key))
+        return ", ".join(formatted_keys)
 
     def _load_model(self):
         """Load pretrained weights or initialize from config."""
