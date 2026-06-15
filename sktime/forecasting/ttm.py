@@ -128,8 +128,11 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
           full fine tuning of the model loaded from pretrained/provided config,
           else ValueError is raised.
 
-    revision: str, default="main"
+    revision: str or None, default="main"
         Revision of the model to use:
+
+        - None: Automatically select a compatible revision based on the
+          training context length, forecasting horizon, and frequency.
 
         - "main": For loading model with context_length of 512
           and prediction_length of 96.
@@ -137,7 +140,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         - "1024_96_v1": For loading model with context_length of 1024
           and prediction_length of 96.
 
-        This param becomes irrelevant when model_path is None
+        This param becomes irrelevant when model_path is None.
 
     device : str, default="cpu"
         Device for model inference and fine-tuning, for example ``"cpu"``,
@@ -444,12 +447,12 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         return freq, freq_token
 
     def _resolve_revision(self, y, fh=None, freq=None):
-        if self.revision != "auto":
+        if self.revision is not None or self.model_path is None:
             return self.revision
 
         if fh is None:
             raise ValueError(
-                "revision='auto' requires `fh` to be passed to `fit`, so the "
+                "revision=None requires `fh` to be passed to `fit`, so the "
                 "TinyTimeMixer revision can be selected from the requested "
                 "forecasting horizon. Pass `fh` in `fit`, or set `revision` "
                 "explicitly."
@@ -785,7 +788,7 @@ def _get_auto_revision(model_path, context_len, horizon_len, freq):
         "huggingface-hub",
         severity="error",
         msg=(
-            "revision='auto' requires the optional dependency "
+            "revision=None requires the optional dependency "
             "`huggingface-hub` to inspect available TinyTimeMixer revisions. "
             "Please install `huggingface-hub`, or set `revision` explicitly."
         ),
