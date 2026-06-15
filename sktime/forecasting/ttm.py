@@ -635,11 +635,11 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         """
         common_params = {
             "config": {
-                "context_length": 3,
-                "prediction_length": 2,
-                "num_patches": 3,
-                "patch_length": 1,
-                "patch_stride": 1,
+                "context_length": 20,
+                "prediction_length": 15,
+                "num_patches": 5,
+                "patch_length": 4,
+                "patch_stride": 4,
                 "d_model": 4,
                 "num_layers": 1,
                 "decoder_d_model": 4,
