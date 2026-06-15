@@ -124,6 +124,10 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
         This param becomes irrelevant when model_path is None
 
+    device : str, default="cpu"
+        Device for model inference and fine-tuning, for example ``"cpu"``,
+        ``"cuda"``, or ``"cuda:0"``.
+
     validation_split : float, default=0.2
         Fraction of the data to use for validation
 
@@ -269,10 +273,12 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         broadcasting=False,
         use_source_package=False,
         fit_strategy="minimal",
+        device="cpu",
     ):
         super().__init__()
         self.model_path = model_path
         self.revision = revision
+        self.device = device
         self.config = config
         self._config = config if config is not None else {}
         self.training_args = training_args
@@ -332,6 +338,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             key=self._get_unique_key(fh_values),
             model_path=self.model_path,
             revision=self.revision,
+            device=self.device,
             user_config=self._config,
             use_source_package=self.use_source_package,
             fit_strategy=self.fit_strategy,
@@ -427,6 +434,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         key = {
             "model_path": self.model_path,
             "revision": self.revision,
+            "device": self.device,
             "config": self._config,
             "fh": fh_values,
             "fit_strategy": self.fit_strategy,
@@ -805,6 +813,7 @@ class _CachedTinyTimeMixer:
         key,
         model_path,
         revision,
+        device,
         user_config,
         use_source_package,
         fit_strategy,
@@ -813,6 +822,7 @@ class _CachedTinyTimeMixer:
         self.key = key
         self.model_path = model_path
         self.revision = revision
+        self.device = device
         self.user_config = user_config
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
@@ -829,6 +839,7 @@ class _CachedTinyTimeMixer:
 
         self.config_ = self._build_config()
         self.model_, self.info_ = self._load_model()
+        self.model_ = self.model_.to(self.device)
 
         return self.model_, self.info_, self.config_
 
