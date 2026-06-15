@@ -112,6 +112,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         self._dataset_params = (
             deepcopy(dataset_params) if dataset_params is not None else {}
         )
+        self._callbacks = self.trainer_params.pop("callbacks", None)
         self._trainer_params = (
             deepcopy(trainer_params) if trainer_params is not None else {}
         )
@@ -169,7 +170,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
                     self._random_log_dir = self._gen_random_log_dir(data)
                     self._trainer_params["default_root_dir"] = self._random_log_dir
 
-        trainer_instance = pl.Trainer(**self._trainer_params)
+        trainer_instance = pl.Trainer(callbacks=self._callbacks, **self._trainer_params)
         return algorithm_instance, trainer_instance
 
     def _gen_random_log_dir(self, data=None):
