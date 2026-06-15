@@ -32,10 +32,8 @@ _FREQUENCY_TOKEN_MAP = {
     "15min": 5,
     "30min": 6,
     "h": 7,
-    "H": 7,
     "d": 8,
-    "D": 8,
-    "W": 9,
+    "w": 9,
 }
 
 
@@ -145,10 +143,11 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         Device for model inference and fine-tuning, for example ``"cpu"``,
         ``"cuda"``, or ``"cuda:0"``.
 
-    frequency_token : int, str, or None, default=None
-        Frequency token to pass to models that use resolution prefix tuning,
-        such as TTM-R2. If ``None``, the token is inferred from the time index
-        where possible, and falls back to the out-of-vocabulary token.
+    freq : str or None, default=None
+        Frequency to pass to models that use resolution prefix tuning,
+        such as TTM-R2. If ``None``, the frequency is inferred from the
+        forecasting horizon or time index where possible, and falls back to the
+        out-of-vocabulary token.
 
     verbose : bool, default=False
         If True, show training output from ``transformers.Trainer``.
@@ -300,14 +299,16 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         use_source_package=False,
         fit_strategy="minimal",
         device="cpu",
-        frequency_token=None,
+        freq=None,
         verbose=False,
     ):
         super().__init__()
         self.model_path = model_path
         self.revision = revision
         self.device = device
-        self.frequency_token = frequency_token
+        self.freq = freq
+        self._freq = None
+        self._freq_token = None
         self.verbose = verbose
         self.config = config
         self._config = config if config is not None else {}
@@ -360,22 +361,23 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         -------
         self : reference to self
         """
-        fh_values = None
-        if fh is not None:
-            fh_values = tuple(fh.to_relative(self._cutoff)._values)
+        self._freq = (
+            self.freq or getattr(fh, "freq", None) or _infer_index_frequency(y.index)
+        )
+        self._freq_token = _map_frequency_token(self._freq)
 
         self.model, info, config = _CachedTinyTimeMixer(
-            key=self._get_unique_key(fh_values),
+            key=self._get_unique_key(),
             model_path=self.model_path,
             revision=self.revision,
             device=self.device,
             user_config=self._config,
             use_source_package=self.use_source_package,
             fit_strategy=self.fit_strategy,
-            fh_values=fh_values,
         ).load()
 
-        self.frequency_token_ = self._get_frequency_token(y, config)
+        if not self.model.config.resolution_prefix_tuning:
+            self._freq_token = None
 
         if self.fit_strategy == "zero-shot":
             if len(info["mismatched_keys"]) > 0:
@@ -429,7 +431,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             context_length=config.context_length,
             prediction_length=config.prediction_length,
             X=X_train,
-            frequency_token=self.frequency_token_,
+            frequency_token=self._freq_token,
         )
 
         eval = None
@@ -439,7 +441,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 context_length=config.context_length,
                 prediction_length=config.prediction_length,
                 X=X_eval,
-                frequency_token=self.frequency_token_,
+                frequency_token=self._freq_token,
             )
 
         from transformers import Trainer, TrainingArguments
@@ -466,24 +468,13 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         # Get the model
         self.model = trainer.model
 
-    def _get_frequency_token(self, y, config):
-        """Return frequency token for resolution-prefix models, if needed."""
-        if not getattr(config, "resolution_prefix_tuning", False):
-            return None
-
-        return _resolve_frequency_token(
-            frequency_token=self.frequency_token,
-            index=y.index,
-        )
-
-    def _get_unique_key(self, fh_values):
+    def _get_unique_key(self):
         """Build cache key for the multiton model loader."""
         key = {
             "model_path": self.model_path,
             "revision": self.revision,
             "device": self.device,
             "config": self._config,
-            "fh": fh_values,
             "fit_strategy": self.fit_strategy,
             "use_source_package": self.use_source_package,
         }
@@ -521,6 +512,18 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
+
+        max_fh = fh.to_numpy().max()
+        prediction_length = self.model.config.prediction_length
+        if prediction_length < max_fh:
+            raise ValueError(
+                "The requested forecasting horizon is longer than the loaded "
+                "TinyTimeMixer model can predict. The maximum requested "
+                f"relative horizon is {max_fh}, but the model "
+                f"prediction_length is {prediction_length}. Fit the forecaster "
+                "with a longer fh, choose a model revision with a longer "
+                "prediction_length, or provide a compatible config."
+            )
 
         _y = self._y
 
@@ -560,9 +563,9 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 )
 
         freq_token = None
-        if self.frequency_token_ is not None:
+        if self._freq_token is not None:
             freq_token = torch.tensor(
-                [self.frequency_token_],
+                [self._freq_token],
                 dtype=torch.int,
                 device=self.model.device,
             )
@@ -710,15 +713,6 @@ def _pad_truncate(data, seq_len, pad_value=0):
         mask[:, -original_seq_len:, :] = 1
 
     return truncated_data, mask
-
-
-def _resolve_frequency_token(frequency_token, index):
-    """Resolve explicit or index-inferred frequency token."""
-    if frequency_token is not None:
-        return _map_frequency_token(frequency_token)
-
-    freq = _infer_index_frequency(index)
-    return _map_frequency_token(freq)
 
 
 def _infer_index_frequency(index):
@@ -947,7 +941,6 @@ class _CachedTinyTimeMixer:
         user_config,
         use_source_package,
         fit_strategy,
-        fh_values,
     ):
         self.key = key
         self.model_path = model_path
@@ -956,7 +949,6 @@ class _CachedTinyTimeMixer:
         self.user_config = user_config
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
-        self.fh_values = fh_values
         self.model_ = None
         self.info_ = None
         self.config_ = None
@@ -1004,13 +996,6 @@ class _CachedTinyTimeMixer:
         config = self._load_base_config()
         config_dict = config.to_dict()
         config_dict.update(self.user_config)
-
-        if self.fh_values is not None:
-            config_dict["prediction_length"] = max(
-                *self.fh_values,
-                config_dict["prediction_length"],
-            )
-
         return config.from_dict(config_dict)
 
     def _load_base_config(self):
