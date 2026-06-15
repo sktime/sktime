@@ -6,7 +6,6 @@ __author__ = ["ajati", "wgifford", "vijaye12", "geetu040"]
 
 import numpy as np
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 from skbase.utils.stdout_mute import StdoutMute
 
 from sktime.forecasting.base import (
@@ -359,7 +358,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 TinyTimeMixerConfig,
                 TinyTimeMixerForPrediction,
             )
-        elif _check_soft_dependencies("torch", severity="error"):
+        else:
             from sktime.libs.granite_ttm import (
                 TinyTimeMixerConfig,
                 TinyTimeMixerForPrediction,
