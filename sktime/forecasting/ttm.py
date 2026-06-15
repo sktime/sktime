@@ -324,8 +324,6 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         -------
         self : reference to self
         """
-        from transformers import Trainer, TrainingArguments
-
         fh_values = None
         if fh is not None:
             fh_values = tuple(fh.to_relative(self._cutoff)._values)
@@ -402,6 +400,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 prediction_length=config.prediction_length,
                 X=X_eval,
             )
+
+        from transformers import Trainer, TrainingArguments
 
         # Get Training Configuration
         training_args = TrainingArguments(**self._training_args)
