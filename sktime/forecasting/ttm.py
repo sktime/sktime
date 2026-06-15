@@ -15,6 +15,7 @@ from sktime.forecasting.base import (
 )
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
+from sktime.utils.singleton import _multiton
 from sktime.utils.warnings import warn
 
 torch = _safe_import("torch")
@@ -325,95 +326,19 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         """
         from transformers import Trainer, TrainingArguments
 
-        if self.use_source_package:
-            from tsfm_public.models.tinytimemixer import (
-                TinyTimeMixerConfig,
-                TinyTimeMixerForPrediction,
-            )
-        else:
-            from sktime.libs.granite_ttm import (
-                TinyTimeMixerConfig,
-                TinyTimeMixerForPrediction,
-            )
-
-        # Initialize to self.config, then adjust accordingly
-        config = self.config
-        if self.model_path is None:
-            if self.fit_strategy != "full":
-                raise ValueError(
-                    "Invalid configuration: 'model_path' is set to None."
-                    "This requires 'fit_strategy' to be 'full'."
-                    "Please set 'fit_strategy' to 'full' or provide a valid model path."
-                )
-            # Load tinytimemixer config
-            config = TinyTimeMixerConfig()
-            # call to initialize attributes like num_patchess
-            config.check_and_init_preprocessing()
-        else:
-            # Get the pretrained model Configuration
-            config = TinyTimeMixerConfig.from_pretrained(
-                self.model_path,
-                revision=self.revision,
-            )
-
-        # Update config with user provided config
-        _config = config.to_dict()
-        _config.update(self._config)
-
-        # validate patches in configuration
-        # context_length / num_patches == patch_length == patch_stride
-        # if this condition is not satisfied in the configuration
-        # this error is raised in forward pass of the model
-        # RuntimeError: mat1 and mat2 shapes cannot be multiplied (384x4 and 32x64)
-        context_length = _config.get("context_length")
-        num_patches = _config.get("num_patches")
-        patch_length = _config.get("patch_length")
-        patch_stride = _config.get("patch_stride")
-        patch_size = context_length / num_patches
-        if patch_size != patch_length or patch_size != patch_stride:
-            # update the config here
-            patch_size = max(1, int(patch_size))
-            _config["patch_length"] = patch_size
-            _config["patch_stride"] = patch_size
-            _config["num_patches"] = _config["context_length"] // patch_size
-
-            msg = (
-                "Invalid configuration detected. "
-                "The provided values do not satisfy the required condition:\n"
-                "context_length / num_patches == patch_length == patch_stride\n"
-                "Provided configuration:\n"
-                f"- context_length: {context_length}\n"
-                f"- num_patches: {num_patches}\n"
-                f"- patch_length: {patch_length}\n"
-                f"- patch_stride: {patch_stride}\n"
-                "Configuration has been automatically updated to:\n"
-                f"- context_length: {context_length}\n"
-                f"- num_patches: {_config['num_patches']}\n"
-                f"- patch_length: {_config['patch_length']}\n"
-                f"- patch_stride: {_config['patch_stride']}"
-            )
-            warn(msg)
-
+        fh_values = None
         if fh is not None:
-            _config["prediction_length"] = max(
-                *(fh.to_relative(self._cutoff)._values),
-                _config["prediction_length"],
-            )
+            fh_values = tuple(fh.to_relative(self._cutoff)._values)
 
-        config = config.from_dict(_config)
-
-        if self.model_path is not None:
-            # Load the the pretrained model with updated config
-            self.model, info = TinyTimeMixerForPrediction.from_pretrained(
-                self.model_path,
-                revision=self.revision,
-                config=config,
-                output_loading_info=True,
-                ignore_mismatched_sizes=True,
-            )
-        else:
-            # Initialize model with default config
-            self.model = TinyTimeMixerForPrediction(config=config)
+        self.model, info, config = _CachedTinyTimeMixer(
+            key=self._get_unique_key(fh_values),
+            model_path=self.model_path,
+            revision=self.revision,
+            user_config=self._config,
+            use_source_package=self.use_source_package,
+            fit_strategy=self.fit_strategy,
+            fh_values=fh_values,
+        ).load()
 
         if self.fit_strategy == "zero-shot":
             if len(info["mismatched_keys"]) > 0:
@@ -496,6 +421,18 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
         # Get the model
         self.model = trainer.model
+
+    def _get_unique_key(self, fh_values):
+        """Build cache key for the multiton model loader."""
+        key = {
+            "model_path": self.model_path,
+            "revision": self.revision,
+            "config": self._config,
+            "fh": fh_values,
+            "fit_strategy": self.fit_strategy,
+            "use_source_package": self.use_source_package,
+        }
+        return str(sorted(key.items()))
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -857,3 +794,140 @@ class PyTorchDataset(Dataset):
             result["exogenous_values"] = tensor(full_exog).float()
 
         return result
+
+
+@_multiton
+class _CachedTinyTimeMixer:
+    """Cached TinyTimeMixer model, ensuring one instance per loading config."""
+
+    def __init__(
+        self,
+        key,
+        model_path,
+        revision,
+        user_config,
+        use_source_package,
+        fit_strategy,
+        fh_values,
+    ):
+        self.key = key
+        self.model_path = model_path
+        self.revision = revision
+        self.user_config = user_config
+        self.use_source_package = use_source_package
+        self.fit_strategy = fit_strategy
+        self.fh_values = fh_values
+        self.model = None
+        self.info = None
+        self.config = None
+
+    def load(self):
+        """Load and return the cached model, loading info, and config."""
+        if self.model is not None:
+            return self.model, self.info, self.config
+
+        _, TinyTimeMixerForPrediction = self._get_ttm_classes()
+        config = self._get_model_config()
+
+        if self.model_path is not None:
+            # Load the the pretrained model with updated config
+            self.model, self.info = TinyTimeMixerForPrediction.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+                config=config,
+                output_loading_info=True,
+                ignore_mismatched_sizes=True,
+            )
+        else:
+            # Initialize model with default config
+            self.model = TinyTimeMixerForPrediction(config=config)
+            self.info = {"mismatched_keys": []}
+
+        self.config = config
+
+        return self.model, self.info, self.config
+
+    def _get_model_config(self):
+        """Build the effective TinyTimeMixer config used for loading."""
+        TinyTimeMixerConfig, _ = self._get_ttm_classes()
+
+        # Initialize to user config, then adjust accordingly
+        config = self.user_config
+        if self.model_path is None:
+            if self.fit_strategy != "full":
+                raise ValueError(
+                    "Invalid configuration: 'model_path' is set to None."
+                    "This requires 'fit_strategy' to be 'full'."
+                    "Please set 'fit_strategy' to 'full' or provide a valid model path."
+                )
+            # Load tinytimemixer config
+            config = TinyTimeMixerConfig()
+            # call to initialize attributes like num_patchess
+            config.check_and_init_preprocessing()
+        else:
+            # Get the pretrained model Configuration
+            config = TinyTimeMixerConfig.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+            )
+
+        # Update config with user provided config
+        _config = config.to_dict()
+        _config.update(self.user_config)
+
+        # validate patches in configuration
+        # context_length / num_patches == patch_length == patch_stride
+        # if this condition is not satisfied in the configuration
+        # this error is raised in forward pass of the model
+        # RuntimeError: mat1 and mat2 shapes cannot be multiplied (384x4 and 32x64)
+        context_length = _config.get("context_length")
+        num_patches = _config.get("num_patches")
+        patch_length = _config.get("patch_length")
+        patch_stride = _config.get("patch_stride")
+        patch_size = context_length / num_patches
+        if patch_size != patch_length or patch_size != patch_stride:
+            # update the config here
+            patch_size = max(1, int(patch_size))
+            _config["patch_length"] = patch_size
+            _config["patch_stride"] = patch_size
+            _config["num_patches"] = _config["context_length"] // patch_size
+
+            msg = (
+                "Invalid configuration detected. "
+                "The provided values do not satisfy the required condition:\n"
+                "context_length / num_patches == patch_length == patch_stride\n"
+                "Provided configuration:\n"
+                f"- context_length: {context_length}\n"
+                f"- num_patches: {num_patches}\n"
+                f"- patch_length: {patch_length}\n"
+                f"- patch_stride: {patch_stride}\n"
+                "Configuration has been automatically updated to:\n"
+                f"- context_length: {context_length}\n"
+                f"- num_patches: {_config['num_patches']}\n"
+                f"- patch_length: {_config['patch_length']}\n"
+                f"- patch_stride: {_config['patch_stride']}"
+            )
+            warn(msg)
+
+        if self.fh_values is not None:
+            _config["prediction_length"] = max(
+                *self.fh_values,
+                _config["prediction_length"],
+            )
+
+        return config.from_dict(_config)
+
+    def _get_ttm_classes(self):
+        """Return TinyTimeMixer config/model classes."""
+        if self.use_source_package:
+            from tsfm_public.models.tinytimemixer import (
+                TinyTimeMixerConfig,
+                TinyTimeMixerForPrediction,
+            )
+        else:
+            from sktime.libs.granite_ttm import (
+                TinyTimeMixerConfig,
+                TinyTimeMixerForPrediction,
+            )
+
+        return TinyTimeMixerConfig, TinyTimeMixerForPrediction
