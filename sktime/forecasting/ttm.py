@@ -361,15 +361,13 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         -------
         self : reference to self
         """
-        self._freq = (
-            self.freq or getattr(fh, "freq", None) or _infer_index_frequency(y.index)
-        )
-        self._freq_token = _map_frequency_token(self._freq)
+        self._freq, self._freq_token = self._resolve_freq(y=y, fh=fh)
+        self._revision = self._resolve_revision(y=y, fh=fh, freq=self._freq)
 
         self.model = _CachedTinyTimeMixer(
             key=self._get_unique_key(),
             model_path=self.model_path,
-            revision=self.revision,
+            revision=self._revision,
             device=self.device,
             user_config=self._config,
             use_source_package=self.use_source_package,
@@ -440,11 +438,35 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         # Get the model
         self.model = trainer.model
 
+    def _resolve_freq(self, y, fh=None):
+        freq = self.freq or getattr(fh, "freq", None) or _infer_index_frequency(y.index)
+        freq_token = _map_frequency_token(freq)
+        return freq, freq_token
+
+    def _resolve_revision(self, y, fh=None, freq=None):
+        if self.revision != "auto":
+            return self.revision
+
+        if fh is None:
+            raise ValueError(
+                "revision='auto' requires `fh` to be passed to `fit`, so the "
+                "TinyTimeMixer revision can be selected from the requested "
+                "forecasting horizon. Pass `fh` in `fit`, or set `revision` "
+                "explicitly."
+            )
+
+        context_len = _get_context_length(y)
+        horizon_len = fh.to_numpy().max()
+
+        return _get_auto_revision(
+            context_len=context_len, horizon_len=horizon_len, freq=freq
+        )
+
     def _get_unique_key(self):
         """Build cache key for the multiton model loader."""
         key = {
             "model_path": self.model_path,
-            "revision": self.revision,
+            "revision": self._revision,
             "device": self.device,
             "config": self._config,
             "fit_strategy": self.fit_strategy,
@@ -739,6 +761,25 @@ def _map_frequency_token(freq):
 
     warn(f"Frequency token {freq} was not found in the frequency token mapping.")
     return _FREQUENCY_TOKEN_MAP["oov"]
+
+
+def _get_context_length(y):
+    """Return the per-series context length for univariate or panel data."""
+    if isinstance(y.index, pd.MultiIndex):
+        instance_levels = list(range(y.index.nlevels - 1))
+        if instance_levels:
+            return int(y.groupby(level=instance_levels, sort=False).size().max())
+
+    return len(y)
+
+
+def _get_auto_revision(context_len, horizon_len, freq):
+    """Return an auto-selected TTM revision.
+
+    This is a placeholder until the Granite revision selection logic is added.
+    """
+    _ = (context_len, horizon_len, freq)
+    return "main"
 
 
 class PyTorchDataset(Dataset):
