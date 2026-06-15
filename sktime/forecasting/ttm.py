@@ -205,7 +205,10 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
     ...     model_path=None,
     ...     fit_strategy="full",
     ...     config={
-    ...         "context_length": 8,
+    ...         "context_length": 12,
+    ...         "num_patches": 4,
+    ...         "patch_length": 3,
+    ...         "patch_stride": 3,
     ...         "prediction_length": 2
     ...     },
     ...     training_args={
