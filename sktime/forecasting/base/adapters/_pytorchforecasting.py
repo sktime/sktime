@@ -223,6 +223,12 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
         # convert data to pytorch-forecasting datasets
+        if getattr(self, "deterministic", False):
+            import torch
+
+            torch_state = torch.get_rng_state()
+            torch.manual_seed(0)
+
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
@@ -253,6 +259,10 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
+        if getattr(self, "deterministic", False):
+            import torch
+
+            torch.set_rng_state(torch_state)
         return self
 
     def _predict(
@@ -293,6 +303,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         _y = self._extend_y(_y, fh)
         # check if dummy X is needed
         _X = self._dummy_X(_X, _y)
+        _origin_time_idx_backup = self._origin_time_idx
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -326,7 +337,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length
         )
-
+        self._origin_time_idx = _origin_time_idx_backup
         absolute_horizons = self.fh.to_absolute_index(self.cutoff)
         dateindex = output.index.get_level_values(-1).map(
             lambda x: x in absolute_horizons
@@ -382,6 +393,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         _y = self._extend_y(_y, fh)
         # check if dummy X is needed
         _X = self._dummy_X(_X, _y)
+        _origin_time_idx_backup = self._origin_time_idx
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -417,6 +429,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length, alpha=alpha
         )
+        self._origin_time_idx = _origin_time_idx_backup
 
         absolute_horizons = self.fh.to_absolute_index(self.cutoff)
         dateindex = output.index.get_level_values(-1).map(
@@ -484,6 +497,9 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
             data = deepcopy(y)
         # if fh is not continuous, there will be NaN after extend_y in prediect
         data = data.copy()
+        data["_target_column"] = data["_target_column"].fillna(0).astype(float)
+        for c in time_varying_known_reals:
+            data[c] = data[c].astype(float)
         data["_target_column"] = data["_target_column"].fillna(0)
         # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
@@ -564,9 +580,9 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
         # set the instance columns to multi index
         data.set_index(index_names, inplace=True)
-        self._origin_time_idx.set_index(index_names, inplace=True)
+        _origin_time_idx_indexed = self._origin_time_idx.set_index(index_names)
         # add origin time_idx column to data
-        data = data.join(self._origin_time_idx, on=index_names)
+        data = data.join(_origin_time_idx_indexed, on=index_names)
         # drop _auto_time_idx column
         data.reset_index(level=list(range(len(index_names))), inplace=True)
         data.drop("_auto_time_idx", axis=1, inplace=True)
