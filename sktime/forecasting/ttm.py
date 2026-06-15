@@ -973,9 +973,9 @@ class _CachedTinyTimeMixer:
 
     def _load_from_pretrained(self):
         """Load TinyTimeMixer weights from ``self.model_path``."""
-        _, TinyTimeMixerForPrediction = self._get_ttm_classes()
+        TinyTimeMixerModel = self._get_model_class()
 
-        return TinyTimeMixerForPrediction.from_pretrained(
+        return TinyTimeMixerModel.from_pretrained(
             self.model_path,
             revision=self.revision,
             config=self.config_,
@@ -985,9 +985,9 @@ class _CachedTinyTimeMixer:
 
     def _load_from_config(self):
         """Initialize TinyTimeMixer from config with random weights."""
-        _, TinyTimeMixerForPrediction = self._get_ttm_classes()
+        TinyTimeMixerModel = self._get_model_class()
 
-        model = TinyTimeMixerForPrediction(config=self.config_)
+        model = TinyTimeMixerModel(config=self.config_)
         info = {"mismatched_keys": []}
         return model, info
 
@@ -1007,7 +1007,7 @@ class _CachedTinyTimeMixer:
 
     def _load_base_config(self):
         """Load pretrained config or create a default config for random init."""
-        TinyTimeMixerConfig, _ = self._get_ttm_classes()
+        TinyTimeMixerConfig, _, _ = self._get_ttm_classes()
 
         if self.model_path is not None:
             return TinyTimeMixerConfig.from_pretrained(
@@ -1027,6 +1027,37 @@ class _CachedTinyTimeMixer:
         config.check_and_init_preprocessing()
         return config
 
+    def _get_model_class(self):
+        """Return the TinyTimeMixer model class matching ``self.config_``."""
+        _, TinyTimeMixerForPrediction, TinyTimeMixerForDecomposedPrediction = (
+            self._get_ttm_classes()
+        )
+
+        if self._is_decomposed_config():
+            return TinyTimeMixerForDecomposedPrediction
+
+        return TinyTimeMixerForPrediction
+
+    def _is_decomposed_config(self):
+        """Return whether ``self.config_`` describes a decomposed TTM model."""
+        return any(
+            getattr(self.config_, attr, None) is not None
+            for attr in (
+                "residual_context_length",
+                "trend_patch_length",
+                "trend_patch_stride",
+                "trend_d_model",
+                "trend_decoder_d_model",
+                "trend_num_layers",
+                "trend_decoder_num_layers",
+                "trend_register_tokens",
+                "trend_fft_length",
+                "trend_multi_scale",
+                "trend_adaptive_patching_levels",
+                "trend_head_d_model",
+            )
+        )
+
     def _get_ttm_classes(self):
         """Return TinyTimeMixer config/model classes."""
         if self._ttm_classes is not None:
@@ -1035,13 +1066,19 @@ class _CachedTinyTimeMixer:
         if self.use_source_package:
             from tsfm_public.models.tinytimemixer import (
                 TinyTimeMixerConfig,
+                TinyTimeMixerForDecomposedPrediction,
                 TinyTimeMixerForPrediction,
             )
         else:
-            from sktime.libs.granite_ttm import (
-                TinyTimeMixerConfig,
+            from sktime.libs.granite_ttm import TinyTimeMixerConfig
+            from sktime.libs.granite_ttm.modeling_tinytimemixer import (
+                TinyTimeMixerForDecomposedPrediction,
                 TinyTimeMixerForPrediction,
             )
 
-        self._ttm_classes = TinyTimeMixerConfig, TinyTimeMixerForPrediction
+        self._ttm_classes = (
+            TinyTimeMixerConfig,
+            TinyTimeMixerForPrediction,
+            TinyTimeMixerForDecomposedPrediction,
+        )
         return self._ttm_classes
