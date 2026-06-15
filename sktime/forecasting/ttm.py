@@ -922,8 +922,6 @@ class _CachedTinyTimeMixer:
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
         self.model_ = None
-        self.info_ = None
-        self.config_ = None
         self._ttm_classes = None
 
     def load(self):
@@ -931,23 +929,37 @@ class _CachedTinyTimeMixer:
         if self.model_ is not None:
             return self.model_
 
-        self.config_ = self._build_config()
-        self.model_, self.info_ = self._load_model()
+        config = self._build_config()
+        self.model_, info = self._load_model(config)
         self.model_ = self.model_.to(self.device)
-        self._set_training_parameters()
+        self._set_training_parameters(info)
 
         return self.model_
 
-    def _set_training_parameters(self):
+    def _set_training_parameters(self, info):
         """Set trainable parameters based on fit strategy."""
-        if self.fit_strategy == "zero-shot":
-            self._set_zero_shot_parameters()
-            return
-        if self.fit_strategy == "minimal":
-            self._set_minimal_parameters()
-            return
+        mismatched_keys = info["mismatched_keys"]
+
         if self.fit_strategy == "full":
-            self._set_full_parameters()
+            self._set_requires_grad(True)
+            return
+
+        if self.fit_strategy == "minimal":
+            self._set_requires_grad(False)
+            for key in mismatched_keys:
+                self._set_mismatched_key_trainable(key)
+            return
+
+        if self.fit_strategy == "zero-shot":
+            if len(mismatched_keys) > 0:
+                raise ValueError(
+                    "fit_strategy='zero-shot' requires all pretrained weights to "
+                    "match the loaded model configuration, but mismatched weights "
+                    f"were found: {self._format_mismatched_keys(mismatched_keys)}. "
+                    "Use fit_strategy='minimal' or 'full', or choose a compatible "
+                    "model/configuration."
+                )
+            self._set_requires_grad(False)
             return
 
         raise ValueError(
@@ -955,38 +967,10 @@ class _CachedTinyTimeMixer:
             f"or 'full', but found {self.fit_strategy!r}."
         )
 
-    def _set_zero_shot_parameters(self):
-        """Validate zero-shot compatibility and skip training."""
-        mismatched_keys = self.info_["mismatched_keys"]
-        if len(mismatched_keys) > 0:
-            raise ValueError(
-                "fit_strategy='zero-shot' requires all pretrained weights to "
-                "match the loaded model configuration, but mismatched weights "
-                f"were found: {self._format_mismatched_keys(mismatched_keys)}. "
-                "Use fit_strategy='minimal' or 'full', or choose a compatible "
-                "model/configuration."
-            )
-        self._freeze_all_parameters()
-
-    def _set_minimal_parameters(self):
-        """Freeze loaded parameters and train only mismatched weights."""
-        mismatched_keys = self.info_["mismatched_keys"]
-        self._freeze_all_parameters()
-        if len(mismatched_keys) == 0:
-            return
-
-        for key in mismatched_keys:
-            self._set_mismatched_key_trainable(key)
-
-    def _set_full_parameters(self):
-        """Train all model parameters."""
+    def _set_requires_grad(self, requires_grad):
+        """Set trainability for all model parameters."""
         for param in self.model_.parameters():
-            param.requires_grad = True
-
-    def _freeze_all_parameters(self):
-        """Freeze all model parameters."""
-        for param in self.model_.parameters():
-            param.requires_grad = False
+            param.requires_grad = requires_grad
 
     def _set_mismatched_key_trainable(self, key):
         """Set the module parameter corresponding to a mismatched key trainable."""
@@ -1011,29 +995,29 @@ class _CachedTinyTimeMixer:
             formatted_keys.append(str(key))
         return ", ".join(formatted_keys)
 
-    def _load_model(self):
+    def _load_model(self, config):
         """Load pretrained weights or initialize from config."""
         if self.model_path is not None:
-            return self._load_from_pretrained()
-        return self._load_from_config()
+            return self._load_from_pretrained(config)
+        return self._load_from_config(config)
 
-    def _load_from_pretrained(self):
+    def _load_from_pretrained(self, config):
         """Load TinyTimeMixer weights from ``self.model_path``."""
-        TinyTimeMixerModel = self._get_model_class()
+        TinyTimeMixerModel = self._get_model_class(config)
 
         return TinyTimeMixerModel.from_pretrained(
             self.model_path,
             revision=self.revision,
-            config=self.config_,
+            config=config,
             output_loading_info=True,
             ignore_mismatched_sizes=True,
         )
 
-    def _load_from_config(self):
+    def _load_from_config(self, config):
         """Initialize TinyTimeMixer from config with random weights."""
-        TinyTimeMixerModel = self._get_model_class()
+        TinyTimeMixerModel = self._get_model_class(config)
 
-        model = TinyTimeMixerModel(config=self.config_)
+        model = TinyTimeMixerModel(config=config)
         info = {"mismatched_keys": []}
         return model, info
 
@@ -1066,21 +1050,22 @@ class _CachedTinyTimeMixer:
         config.check_and_init_preprocessing()
         return config
 
-    def _get_model_class(self):
-        """Return the TinyTimeMixer model class matching ``self.config_``."""
+    def _get_model_class(self, config):
+        """Return the TinyTimeMixer model class matching ``config``."""
         _, TinyTimeMixerForPrediction, TinyTimeMixerForDecomposedPrediction = (
             self._get_ttm_classes()
         )
 
-        if self._is_decomposed_config():
+        if self._is_decomposed_config(config):
             return TinyTimeMixerForDecomposedPrediction
 
         return TinyTimeMixerForPrediction
 
-    def _is_decomposed_config(self):
-        """Return whether ``self.config_`` describes a decomposed TTM model."""
+    @staticmethod
+    def _is_decomposed_config(config):
+        """Return whether ``config`` describes a decomposed TTM model."""
         return any(
-            getattr(self.config_, attr, None) is not None
+            getattr(config, attr, None) is not None
             for attr in (
                 "residual_context_length",
                 "trend_patch_length",
