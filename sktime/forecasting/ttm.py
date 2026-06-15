@@ -155,7 +155,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
     config : dict, default={}
         Configuration to use for the model. See the ``transformers``
-        documentation for details.
+        documentation for details. The provided configuration must be valid for
+        the selected TinyTimeMixer model architecture.
 
     training_args : dict, default={}
         Training arguments to use for the model. See ``transformers.TrainingArguments``
@@ -996,8 +997,11 @@ class _CachedTinyTimeMixer:
         config_dict = config.to_dict()
         config_dict.update(self.user_config)
 
-        self._validate_patch_config(config_dict)
-        self._update_prediction_length(config_dict)
+        if self.fh_values is not None:
+            config_dict["prediction_length"] = max(
+                *self.fh_values,
+                config_dict["prediction_length"],
+            )
 
         return config.from_dict(config_dict)
 
@@ -1022,49 +1026,6 @@ class _CachedTinyTimeMixer:
         # call to initialize attributes like num_patchess
         config.check_and_init_preprocessing()
         return config
-
-    def _validate_patch_config(self, config_dict):
-        # validate patches in configuration
-        # context_length / num_patches == patch_length == patch_stride
-        # if this condition is not satisfied in the configuration
-        # this error is raised in forward pass of the model
-        # RuntimeError: mat1 and mat2 shapes cannot be multiplied (384x4 and 32x64)
-        context_length = config_dict.get("context_length")
-        num_patches = config_dict.get("num_patches")
-        patch_length = config_dict.get("patch_length")
-        patch_stride = config_dict.get("patch_stride")
-        patch_size = context_length / num_patches
-        if patch_size != patch_length or patch_size != patch_stride:
-            # update the config here
-            patch_size = max(1, int(patch_size))
-            config_dict["patch_length"] = patch_size
-            config_dict["patch_stride"] = patch_size
-            config_dict["num_patches"] = config_dict["context_length"] // patch_size
-
-            msg = (
-                "Invalid configuration detected. "
-                "The provided values do not satisfy the required condition:\n"
-                "context_length / num_patches == patch_length == patch_stride\n"
-                "Provided configuration:\n"
-                f"- context_length: {context_length}\n"
-                f"- num_patches: {num_patches}\n"
-                f"- patch_length: {patch_length}\n"
-                f"- patch_stride: {patch_stride}\n"
-                "Configuration has been automatically updated to:\n"
-                f"- context_length: {context_length}\n"
-                f"- num_patches: {config_dict['num_patches']}\n"
-                f"- patch_length: {config_dict['patch_length']}\n"
-                f"- patch_stride: {config_dict['patch_stride']}"
-            )
-            warn(msg)
-
-    def _update_prediction_length(self, config_dict):
-        """Extend prediction length when the fit horizon requires it."""
-        if self.fh_values is not None:
-            config_dict["prediction_length"] = max(
-                *self.fh_values,
-                config_dict["prediction_length"],
-            )
 
     def _get_ttm_classes(self):
         """Return TinyTimeMixer config/model classes."""
