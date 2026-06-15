@@ -112,15 +112,37 @@ def test_load_model_from_disk(model_class) -> None:
     _assert_correct_columns(y_pred, y_test)
 
 
+@pytest.mark.parametrize(
+    "model_class",
+    [
+        PytorchForecastingDeepAR,
+        PytorchForecastingNBeats,
+        PytorchForecastingNHiTS,
+        PytorchForecastingTFT,
+    ],
+)
 @pytest.mark.skipif(
-    not run_test_for_class(PytorchForecastingDeepAR),
+    not run_test_for_class(
+        [
+            PytorchForecastingDeepAR,
+            PytorchForecastingNBeats,
+            PytorchForecastingNHiTS,
+            PytorchForecastingTFT,
+        ]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_predict_var_with_exogenous_x():
-    """Regression test for #10376 - predict_var with future X on non-hierarchical data.
+def test_predict_with_future_exogenous_x(model_class):
+    """Test predict with future-only exogenous X on non-hierarchical data.
 
-    _Xy_precheck was returning only future X rows, causing _Xy_to_dataset to produce
-    an empty training dataset via LEFT join, leading to a StandardScaler crash.
+    Verifies that passing only future X rows at predict time (no overlap with
+    training X) works correctly. Training X is prepended in _Xy_precheck so
+    the internal LEFT join in _Xy_to_dataset retains full history.
+
+    Parameters
+    ----------
+    model_class : class
+        One of the four PytorchForecasting model classes.
     """
     from sktime.utils._testing.series import _make_series
 
@@ -134,11 +156,10 @@ def test_predict_var_with_exogenous_x():
     X_train = long_x.iloc[:n_train]
     X_test = long_x.iloc[n_train:]
 
-    params = PytorchForecastingDeepAR.get_test_params()[0]
-    forecaster = PytorchForecastingDeepAR(**params)
+    params = model_class.get_test_params()[0]
+    forecaster = model_class(**params)
     forecaster.fit(y=y, X=X_train, fh=1)
 
-    # should not raise ValueError: Found array with 0 sample(s)
-    pred_var = forecaster.predict_var(X=X_test)
-    assert pred_var is not None
-    assert len(pred_var) == 1
+    y_pred = forecaster.predict(X=X_test)
+    assert y_pred is not None
+    assert len(y_pred) == 1
