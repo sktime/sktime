@@ -41,6 +41,17 @@ class Toto2Forecaster(BaseForecaster):
     seed : int or None, optional (default=None)
         Random seed for reproducibility; if None, a random seed is drawn.
 
+    Notes
+    -----
+    Toto-2 emits forecasts at a fixed grid of quantile levels (0.1, 0.2, ..., 0.9).
+    ``predict_quantiles`` and ``predict_interval`` return any other level by linear
+    interpolation between adjacent grid quantiles, and clamp to the nearest grid
+    quantile for levels outside ``[0.1, 0.9]`` (e.g. a 0.05 request returns the 0.1
+    quantile, so intervals wider than 80% coverage saturate). Interpolation assumes
+    the grid quantiles are monotone in the level; the model is trained to produce
+    monotone quantiles, so quantile crossing is treated as a model issue and is not
+    corrected here.
+
     References
     ----------
     .. [1] https://github.com/DataDog/toto
