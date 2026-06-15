@@ -16,7 +16,7 @@ from sktime.forecasting.base import (
     _GlobalForecastingDeprecationMixin,
 )
 from sktime.split import temporal_train_test_split
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 from sktime.utils.singleton import _multiton
 from sktime.utils.warnings import warn
 
@@ -459,7 +459,10 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         horizon_len = fh.to_numpy().max()
 
         return _get_auto_revision(
-            context_len=context_len, horizon_len=horizon_len, freq=freq
+            model_path=self.model_path,
+            context_len=context_len,
+            horizon_len=horizon_len,
+            freq=freq,
         )
 
     def _get_unique_key(self):
@@ -773,13 +776,73 @@ def _get_context_length(y):
     return len(y)
 
 
-def _get_auto_revision(context_len, horizon_len, freq):
+def _get_auto_revision(model_path, context_len, horizon_len, freq):
     """Return an auto-selected TTM revision.
 
     This is a placeholder until the Granite revision selection logic is added.
     """
-    _ = (context_len, horizon_len, freq)
-    return "main"
+    _check_soft_dependencies(
+        "huggingface-hub",
+        severity="error",
+        msg=(
+            "revision='auto' requires the optional dependency "
+            "`huggingface-hub` to inspect available TinyTimeMixer revisions. "
+            "Please install `huggingface-hub`, or set `revision` explicitly."
+        ),
+    )
+    from huggingface_hub import HfApi
+
+    api = HfApi()
+    refs = api.list_repo_refs(model_path, repo_type="model")
+    available_revisions = [i.name for i in refs.branches]
+
+    valid_revisions = []
+    for revision in available_revisions:
+        parts = revision.split("-")
+        if len(parts) < 2:
+            continue
+        try:
+            revision_context_len = int(parts[0])
+            revision_horizon_len = int(parts[1])
+        except ValueError:
+            continue
+
+        valid_revisions.append(
+            {
+                "name": revision,
+                "context_len": revision_context_len,
+                "horizon_len": revision_horizon_len,
+            }
+        )
+
+    compatible_revisions = [
+        revision
+        for revision in valid_revisions
+        if revision["context_len"] <= context_len
+        and revision["horizon_len"] >= horizon_len
+    ]
+    if not compatible_revisions:
+        raise ValueError(
+            "Could not find a compatible TinyTimeMixer revision for "
+            f"context_len={context_len}, horizon_len={horizon_len}, "
+            f"freq={freq!r} in model_path={model_path!r}."
+        )
+
+    selected_revision = min(
+        compatible_revisions,
+        key=lambda revision: (
+            revision["horizon_len"],
+            -revision["context_len"],
+            revision["name"],
+        ),
+    )["name"]
+    warn(
+        "Selected TinyTimeMixer revision "
+        f"{selected_revision!r} for model_path={model_path!r}, "
+        f"context_len={context_len}, horizon_len={horizon_len}, freq={freq!r}."
+    )
+
+    return selected_revision
 
 
 class PyTorchDataset(Dataset):
