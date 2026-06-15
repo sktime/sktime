@@ -104,9 +104,23 @@ class _BenchmarkingResults:
 
     def __post_init__(self):
         """Load existing results from the path or partial store."""
+        # Instantiate main storage handler
         self.storage_backend = get_storage_backend(self.path)
+        # Instantiate incremental storage handler
         self.incremental_store = IncrementalResultStore(self.path)
 
+        # Check for completed result file or partial result directory
+        # stored in the HD. If present, load them as a list of `ResultObject`,
+        # else self.results is an empty list.
+        # The main storage backend stays in the strategy pattern where
+        # the storage handler is decided by the extension of the file path
+        # passed by the user.
+        # `IncrementalResultStore` is an internal storage handler. Regardless of
+        # the final file type, it uses JSON for storing immediate results. Having
+        # incremental storage handler for each filetype would be redundant
+        # since it is used as an internal tool by the benchmarking framework,
+        # and the users at the end will get the results in
+        # their requested filetype anyway.
         output_path = Path(self.path) if self.path is not None else None
         if output_path is not None and output_path.exists():
             self.results = self.storage_backend(self.path).load()
@@ -120,6 +134,9 @@ class _BenchmarkingResults:
 
     def update(self, new_result):
         """Update the results with a new result."""
+        # Remove those in-memory results having the same
+        # task_id and estimator_id as the new_result to avoid
+        # duplication
         self.results = [
             result
             for result in self.results
@@ -128,20 +145,26 @@ class _BenchmarkingResults:
                 and result.model_id == new_result.model_id
             )
         ]
+        # Append new `ResultObject` to in-memory storage
         self.results.append(new_result)
+        # Store new `ResultObject` immediately on HD
         self.incremental_store.save_result(new_result)
 
     def save(self):
         """Save the results to a file and remove partial result files."""
+        # No saving on the HD if a file path isn't passed
         if self.path is None:
             return
 
+        # Save final result to HD using respecting storage handler
         self.storage_backend(self.path).save(self.results)
 
         output_path = Path(self.path)
         if not output_path.exists():
             raise RuntimeError(f"Failed to save benchmark results to {self.path}")
 
+        # Remove immediate result directory from the HD once
+        # the final result file is saved
         self.incremental_store.cleanup()
 
     def contains(self, task_id: str, model_id: str):

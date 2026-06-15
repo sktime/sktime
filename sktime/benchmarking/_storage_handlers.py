@@ -14,6 +14,8 @@ from sktime.benchmarking._benchmarking_dataclasses import (
 )
 
 
+# Atomic writes to ensure old result file isn't deleted before
+# new file is saved
 def _atomic_write_text(path: Path, contents: str) -> None:
     """Write text to *path* atomically via a temporary file."""
     tmp_path = path.with_suffix(path.suffix + ".tmp")
