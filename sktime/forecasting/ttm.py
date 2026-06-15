@@ -273,7 +273,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": True,
-        "requires-fh-in-fit": True,
+        "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:missing_values": False,
