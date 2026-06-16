@@ -3,11 +3,12 @@
 This module is the single entry point for all benchmark result I/O.
 It coordinates two complementary mechanisms:
 
-1. **Final-format storage** — selected by file extension via the strategy
-   pattern in `sktime.benchmarking._storage_handlers` (JSON, CSV,
-   Parquet, etc.).
-2. **Incremental checkpoints** — crash-safe partial writes managed internally
-   by `IncrementalResultStore`.
+1. **Final-format storage** — a single results file at ``path``,
+   with format selected by file extension via
+   `sktime.benchmarking._storage_handlers` (JSON, CSV, Parquet).
+2. **Incremental checkpoints** — crash-safe partial writes in a
+   ``{path}.parts/`` directory, managed internally by
+   `IncrementalResultStore`.
 """
 
 from __future__ import annotations
@@ -33,24 +34,27 @@ class BenchmarkResultsPersistence:
     Parameters
     ----------
     path : str or None
-        Path to the final benchmark output file (e.g. ``"results.json"``).
-        The file extension determines the storage format. When ``None``,
-        persistence is disabled and all methods become no-ops except
-        :meth:`load`, which returns an empty list.
+        Path to the benchmark results file (e.g. ``"results.csv"``).
+        Must refer to a file, not a directory; the file extension determines
+        the final storage format (``.json``, ``.csv``, or ``.parquet``).
+        When ``None``, persistence is disabled: `load` returns an
+        empty list and `persist_result` / `save_final` are
+        not performed.
 
     Notes
     -----
-    Load priority on `load`:
+    Load priority in `load`:
 
-    1. If the final output file exists, load from it (completed run).
-    2. Otherwise, if partial checkpoint files exist, load those (interrupted
-       run).
+    1. If the final results file at ``path`` exists, load from it
+       (completed run).
+    2. Otherwise, if checkpoint files exist in ``{path}.parts/``, load
+       those (interrupted run).
     3. Otherwise, return an empty list (fresh run).
 
-    Incremental checkpoints are always stored as JSON fragments in a
-    ``{path}.parts/`` directory, independent of the final output format.
-    They are removed automatically by `save_final` after a successful
-    final write.
+    Incremental checkpoints are stored as JSON fragments in a
+    ``{path}.parts/`` **directory** (derived from the results file path),
+    independent of the final output format. That directory is removed
+    automatically by `save_final` after a successful final write.
     """
 
     def __init__(self, path: str | None) -> None:
@@ -60,20 +64,22 @@ class BenchmarkResultsPersistence:
         self._incremental_store = IncrementalResultStore(path)
 
     def load(self) -> list[ResultObject]:
-        """Load previously persisted results.
+        """Load previously persisted results from disk.
+
+        Reads from the final results file at ``path`` when it exists;
+        otherwise falls back to valid checkpoints in ``{path}.parts/``.
 
         Returns
         -------
         list of ResultObject
             Loaded results. Returns an empty list when ``path`` is ``None``,
-            when no output file or partial checkpoints exist, or when partial
-            checkpoints are incomplete or corrupted.
+            when neither the results file nor checkpoint directory exists,
+            or when checkpoints are incomplete or corrupted.
 
         Notes
         -----
-        A completed final output file takes precedence over partial
-        checkpoint files. This ensures that a successfully finished run is
-        never overwritten by stale incremental artifacts.
+        A completed final results file takes precedence over partial
+        checkpoint files.
         """
         if self.path is None:
             return []
@@ -87,9 +93,9 @@ class BenchmarkResultsPersistence:
     def persist_result(self, result: ResultObject) -> None:
         """Write a single result to incremental checkpoint storage.
 
-        Called after each task-estimator experiment completes so that
-        progress survives process crashes. Has no effect when ``path`` is
-        ``None``.
+        Appends one JSON checkpoint file pair under ``{path}.parts/`` after
+        each task-estimator experiment completes so progress survives process
+        crashes. Has no effect when ``path`` is ``None``.
 
         Parameters
         ----------
@@ -99,7 +105,10 @@ class BenchmarkResultsPersistence:
         self._incremental_store.save_result(result)
 
     def save_final(self, results: list[ResultObject]) -> None:
-        """Write all results to the final output file and remove checkpoints.
+        """Write all results to the final file at ``path`` and remove checkpoints.
+
+        Overwrites the results file in the format implied by its extension.
+        No operation when ``path`` is ``None``.
 
         Parameters
         ----------
@@ -109,7 +118,8 @@ class BenchmarkResultsPersistence:
         Raises
         ------
         RuntimeError
-            If the final output file was not created after the save operation.
+            If the results file at ``path`` was not created after the save
+            operation.
 
         Notes
         -----

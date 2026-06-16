@@ -26,7 +26,15 @@ from sktime.benchmarking._benchmarking_dataclasses import (
 # Atomic writes to ensure old result file isn't deleted before
 # new file is saved
 def _atomic_write_text(path: Path, contents: str) -> None:
-    """Write text to *path* atomically via a temporary file."""
+    """Write text to a file atomically via a temporary file.
+
+    Parameters
+    ----------
+    path : Path
+        Destination file path. Must refer to a file, not a directory.
+    contents : str
+        Text to write to the file.
+    """
     tmp_path = path.with_suffix(path.suffix + ".tmp")
     with open(tmp_path, "w", encoding="utf-8") as file:
         file.write(contents)
@@ -39,7 +47,7 @@ def _atomic_write_path(path: Path, write_fn) -> None:
     Parameters
     ----------
     path : Path
-        Final destination path.
+        Destination file path. Must refer to a file, not a directory.
     write_fn : callable
         Callable accepting the temporary path and writing the file contents.
     """
@@ -49,14 +57,16 @@ def _atomic_write_path(path: Path, write_fn) -> None:
 
 
 class BaseStorageHandler(abc.ABC):
-    """Handles storage of benchmark results.
+    """Handles storage of benchmark results to and from a single file.
 
-    The storage handler is responsible for storing and loading benchmark results.
+    Each subclass implements read/write for one output format (JSON, CSV,
+    or Parquet). The file extension of ``path`` determines which handler
+    is selected via `get_storage_backend`.
 
     Parameters
     ----------
-    path : str
-        The path to the file to save to or load
+    path : str or pathlib.Path
+        Path to the results file. Must refer to a file, not a directory.
     """
 
     def __init__(self, path):
@@ -65,21 +75,23 @@ class BaseStorageHandler(abc.ABC):
 
     @abc.abstractmethod
     def save(self, results: ResultObject):
-        """Save the results to a file.
+        """Save benchmark results to the file at ``self.path``.
+
+        Overwrites the existing file if present. Writes are atomic.
 
         Parameters
         ----------
-        results : ResultObject
-            The results to save.
+        results : list of ResultObject
+            Benchmark results to persist.
         """
 
     def load(self) -> list[ResultObject]:
-        """Load the results from a file.
+        """Load benchmark results from the file at ``self.path``.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results. Returns empty list if file doesn't exist.
+        list of ResultObject
+            Loaded results. Returns an empty list if the file does not exist.
         """
         if self.path is not None and not Path(self.path).exists():
             return []
@@ -87,32 +99,33 @@ class BaseStorageHandler(abc.ABC):
 
     @abc.abstractmethod
     def _load(self) -> list[ResultObject]:
-        """Load the results from an existing file.
+        """Load benchmark results from an existing file at ``self.path``.
 
-        This method assumes the file exists and should only contain the file loading
-        logic.
+        Assumes the file exists; called only by `load` after that
+        check. Subclasses implement format-specific parsing here.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results.
+        list of ResultObject
+            Loaded results.
         """
 
     @staticmethod
     @abc.abstractmethod
     def is_applicable(path):
-        """
-        Check if the storage handler is applicable for the given path.
+        """Return whether this handler supports the given results file path.
 
         Parameters
         ----------
-        path : str
-            The path to the file to save to or load
+        path : pathlib.Path or None
+            Path to the results file, or ``None`` for
+            `NullStorageHandler`. Must refer to a file, not a
+            directory, when not ``None``.
 
         Returns
         -------
         bool
-            True if the storage handler is applicable for the given path.
+            ``True`` if this handler should be used for ``path``.
         """
 
 
@@ -162,8 +175,9 @@ class JSONStorageHandler(BaseStorageHandler):
 
     Parameters
     ----------
-    path : str, or Path coercible
-        The path to the file to save to or load
+    path : str or pathlib.Path
+        Path to the JSON results file. Must refer to a file with a
+        ``.json`` extension, not a directory.
     """
 
     @staticmethod
@@ -204,24 +218,24 @@ class JSONStorageHandler(BaseStorageHandler):
         )
 
     def save(self, results: list[ResultObject]):
-        """Save the results to a JSON file.
+        """Save benchmark results to the JSON file at ``self.path``.
 
         Parameters
         ----------
-        results : ResultObject
-            The results to save.
+        results : list of ResultObject
+            Benchmark results to persist as a JSON array.
         """
         path = Path(self.path)
         contents = json.dumps([self.serialize_result(x) for x in results])
         _atomic_write_text(path, contents)
 
     def _load(self) -> list[ResultObject]:
-        """Load the results from a JSON file.
+        """Load benchmark results from the JSON file at ``self.path``.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results.
+        list of ResultObject
+            Loaded results parsed from a JSON array of records.
         """
         with open(self.path) as f:
             rows = json.load(f)
@@ -263,17 +277,18 @@ class ParquetStorageHandler(BaseStorageHandler):
 
     Parameters
     ----------
-    path : str, or Path coercible
-        The path to the file to save to or load
+    path : str or pathlib.Path
+        Path to the Parquet results file. Must refer to a file with a
+        ``.parquet`` extension, not a directory.
     """
 
     def save(self, results: list[ResultObject]):
-        """Save the results to a Parquet file.
+        """Save benchmark results to the Parquet file at ``self.path``.
 
         Parameters
         ----------
-        results : ResultObject
-            The results to save.
+        results : list of ResultObject
+            Benchmark results to persist as one row per model-validation pair.
         """
         results_df = pd.json_normalize(
             list(map(lambda x: asdict(x, pd_orient="tight"), results))
@@ -288,12 +303,12 @@ class ParquetStorageHandler(BaseStorageHandler):
         )
 
     def _load(self) -> list[ResultObject]:
-        """Load the results from a Parquet file.
+        """Load benchmark results from the Parquet file at ``self.path``.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results.
+        list of ResultObject
+            Loaded results reconstructed from tabular rows.
         """
         results_df = pd.read_parquet(self.path)
         results = []
@@ -344,17 +359,18 @@ class CSVStorageHandler(BaseStorageHandler):
 
     Parameters
     ----------
-    path : str, or Path coercible
-        The path to the file to save to or load
+    path : str or pathlib.Path
+        Path to the CSV results file. Must refer to a file with a
+        ``.csv`` extension, not a directory.
     """
 
     def save(self, results: list[ResultObject]):
-        """Save the results to a CSV file.
+        """Save benchmark results to the CSV file at ``self.path``.
 
         Parameters
         ----------
-        results : ResultObject
-            The results to save.
+        results : list of ResultObject
+            Benchmark results to persist as one row per model-validation pair.
         """
         results_df = pd.json_normalize(
             list(map(lambda x: asdict(x, pd_orient="tight"), results))
@@ -368,12 +384,12 @@ class CSVStorageHandler(BaseStorageHandler):
         )
 
     def _load(self) -> list[ResultObject]:
-        """Load the results from a CSV file.
+        """Load benchmark results from the CSV file at ``self.path``.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results.
+        list of ResultObject
+            Loaded results reconstructed from tabular rows.
         """
         results_df = pd.read_csv(self.path)
         results = []
@@ -442,17 +458,29 @@ STORAGE_HANDLERS = [
 
 
 def get_storage_backend(path: str | Path) -> BaseStorageHandler:
-    """Get the appropriate storage backend for a given path.
+    """Return the storage handler for a results file path.
+
+    Selects a handler based on the file extension of ``path``. Pass
+    ``None`` to obtain `NullStorageHandler` when no results file
+    should be used.
 
     Parameters
     ----------
-    path : str
-        The path to the file to save to or load
+    path : str, pathlib.Path, or None
+        Path to the results file. Must refer to a file, not a directory.
+        Supported extensions are ``.json``, ``.csv``, and ``.parquet``.
+        Use ``None`` when results should not be persisted to disk.
 
     Returns
     -------
-    BaseStorageHandler
-        The storage backend
+    type[BaseStorageHandler]
+        Handler class for ``path``. Instantiate it with ``path`` to
+        read or write results.
+
+    Raises
+    ------
+    ValueError
+        If no handler supports the file extension of ``path``.
     """
     if isinstance(path, str):
         path = Path(path)

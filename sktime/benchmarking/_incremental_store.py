@@ -4,11 +4,12 @@ This module provides incremental persistence used during a benchmark run.
 It is not part of the public, user-facing storage API and is not a
 `BaseStorageHandler` subclass.
 
-Final results are written in the user's chosen file format (JSON, CSV, or
-Parquet) via `sktime.benchmarking._storage_handlers`. Partial checkpoints
-are always stored as JSON fragments in a ``{output_file}.parts/`` directory,
-regardless of the final format. This avoids duplicating format-specific
-checkpoint logic for every storage backend.
+Final results are written to a single results file in the user's chosen
+format (JSON, CSV, or Parquet) via
+`sktime.benchmarking._storage_handlers`. Partial checkpoints are always
+stored as JSON fragments in a ``{results_file}.parts/`` directory next
+to that file, regardless of the final format. This avoids duplicating
+format-specific checkpoint logic for every storage backend.
 
 `IncrementalResultStore` is coordinated by `BenchmarkResultsPersistence`.
 Benchmark orchestration code should not import or use it directly.
@@ -29,7 +30,23 @@ logger = logging.getLogger(__name__)
 
 
 def result_key(task_id: str, model_id: str) -> str:
-    """Return a stable hash key for a task-model pair."""
+    """Return a SHA256 hash key for a task-model pair.
+
+    Used as the filename stem for checkpoint files in the ``.parts/``
+    directory.
+
+    Parameters
+    ----------
+    task_id : str
+        Task identifier.
+    model_id : str
+        Model (estimator) identifier.
+
+    Returns
+    -------
+    str
+        Hex-encoded SHA256 digest of ``"{task_id}|{model_id}"``.
+    """
     payload = f"{task_id}|{model_id}"
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
@@ -38,7 +55,8 @@ class IncrementalResultStore:
     """Crash-safe checkpoint store for individual benchmark results.
 
     Persists each completed task-estimator run as a pair of files in a
-    ``{output_path}.parts/`` directory:
+    ``{output_path}.parts/`` directory (where ``output_path`` is the final
+    results file path):
 
     * ``{hash}.json`` — serialized result (uses ``JSONStorageHandler`` format)
     * ``{hash}.done`` — completion marker with a content SHA256 checksum
@@ -48,23 +66,24 @@ class IncrementalResultStore:
 
     Parameters
     ----------
-    output_path : str, Path, or None
-        Path to the final benchmark output file. The parts directory is
+    output_path : str, pathlib.Path, or None
+        Path to the benchmark results file (e.g. ``"results.csv"``).
+        Must refer to a file, not a directory. The checkpoint directory is
         derived as ``f"{output_path}.parts"``. When ``None``, the store is
-        disabled.
+        disabled and all methods are not performed.
 
     Attributes
     ----------
-    output_path : Path or None
-        Coerced final output path.
-    parts_dir : Path or None
-        Directory holding incremental checkpoint files.
+    output_path : pathlib.Path or None
+        Coerced path to the final results file.
+    parts_dir : pathlib.Path or None
+        Directory holding incremental checkpoint files (``{output_path}.parts``).
 
     Notes
     -----
     This is an internal implementation detail, not a final-format storage
-    handler. It always serializes to JSON regardless of whether the user's
-    final output is CSV, Parquet, etc. See
+    handler. Checkpoints are always JSON regardless of whether the user's
+    final results file is CSV, Parquet, etc. See
     `BenchmarkResultsPersistence` for the public persistence interface.
     """
 
@@ -77,10 +96,12 @@ class IncrementalResultStore:
             self.parts_dir = Path(f"{output_path}.parts")
 
     def save_result(self, result: ResultObject) -> None:
-        """Persist a single completed result as an atomic checkpoint.
+        """Persist a single completed result as an atomic checkpoint file pair.
 
-        Writes the JSON payload first, then the ``.done`` marker, so that
-        a crash mid-write never produces a loadable but incomplete result.
+        Creates ``{output_path}.parts/`` if needed, then writes the JSON
+        payload and ``.done`` marker atomically so a crash mid-write never
+        produces a loadable but incomplete result. No operation when
+        ``output_path`` is ``None``.
 
         Parameters
         ----------
@@ -103,14 +124,18 @@ class IncrementalResultStore:
         _atomic_write_text(done_path, done_contents)
 
     def load_results(self) -> list[ResultObject]:
-        """Load all valid completed partial results from the parts directory.
+        """Load all valid completed partial results from ``parts_dir``.
+
+        Scans ``{output_path}.parts/`` for ``*.json`` files and returns only
+        entries with a matching, checksum-valid ``.done`` marker.
 
         Returns
         -------
         list of ResultObject
             Valid checkpoint results. Entries missing a ``.done`` file, with
             a checksum mismatch, or with invalid JSON are skipped with a
-            warning logged.
+            warning logged. Returns an empty list when ``output_path`` is
+            ``None`` or the parts directory does not exist.
         """
         if self.parts_dir is None or not self.parts_dir.exists():
             return []
@@ -139,7 +164,21 @@ class IncrementalResultStore:
 
     @staticmethod
     def _is_valid_result(json_path: Path, done_path: Path) -> bool:
-        """Return True if the result file is complete and uncorrupted."""
+        """Return whether a checkpoint JSON file and its ``.done`` marker match.
+
+        Parameters
+        ----------
+        json_path : pathlib.Path
+            Path to the checkpoint JSON file inside ``.parts/``.
+        done_path : pathlib.Path
+            Path to the companion ``.done`` marker file.
+
+        Returns
+        -------
+        bool
+            ``True`` if both files exist and the stored SHA256 matches the
+            JSON contents.
+        """
         if not json_path.exists() or not done_path.exists():
             return False
         try:
@@ -154,6 +193,11 @@ class IncrementalResultStore:
         return content_hash == done_data.get("sha256")
 
     def cleanup(self) -> None:
-        """Remove the ``.parts/`` directory after a successful final save."""
+        """Remove the ``{output_path}.parts/`` checkpoint directory.
+
+        Called after a successful final write to the results file. No
+        operation when ``output_path`` is ``None`` or the directory does
+        not exist.
+        """
         if self.parts_dir is not None and self.parts_dir.exists():
             shutil.rmtree(self.parts_dir)

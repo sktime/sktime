@@ -101,11 +101,14 @@ class _BenchmarkingResults:
     Parameters
     ----------
     path : str or None
-        Path to the benchmark output file. Determines the final storage format
-        by file extension. When ``None``, results are kept in memory only.
+        Path to the benchmark results file (e.g. ``"results.json"``).
+        Must refer to a file, not a directory; the file extension determines
+        the final storage format (``.json``, ``.csv``, or ``.parquet``).
+        When ``None``, results are kept in memory only and no file I/O
+        occurs.
     results : list of ResultObject, optional
         In-memory result list. Overwritten on init by loading from persistence
-        when saved data exists.
+        when saved data exists at ``path`` or in its checkpoint directory.
     """
 
     path: str
@@ -141,23 +144,30 @@ class _BenchmarkingResults:
         self._persistence.persist_result(new_result)
 
     def save(self):
-        """Write all results to the final output file.
+        """Write all results to the final output file at ``path``.
 
         Persists the complete in-memory result set in the format determined
-        by ``path`` (e.g. JSON, CSV, Parquet) and removes incremental
-        checkpoint files. No operation when ``path`` is ``None``.
+        by the file extension of ``path`` and removes
+        incremental checkpoint files in ``{path}.parts/``. No operation when
+        ``path`` is ``None``.
         """
         self._persistence.save_final(self.results)
 
     def contains(self, task_id: str, model_id: str):
-        """Check if the results contain a specific task and model.
+        """Check whether a task-model result is present in memory.
 
         Parameters
         ----------
         task_id : str
-            The task ID.
+            Task identifier.
         model_id : str
-            The model ID.
+            Model (estimator) identifier.
+
+        Returns
+        -------
+        bool
+            ``True`` if a result for the given ``task_id`` and ``model_id``
+            exists in the in-memory result list.
         """
         return any(
             result.task_id == task_id and result.model_id == model_id
@@ -165,7 +175,14 @@ class _BenchmarkingResults:
         )
 
     def to_dataframe(self):
-        """Convert the results to a pandas DataFrame."""
+        """Convert in-memory results to a summary pandas DataFrame.
+
+        Returns
+        -------
+        pandas.DataFrame
+            Aggregated benchmark metrics per task-model pair. Empty when
+            no results are stored.
+        """
         if not self.results:
             return pd.DataFrame()
         results_df = [result.to_dataframe() for result in self.results]
@@ -536,20 +553,28 @@ class BaseBenchmark:
                     )
 
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
-        """
-        Run the benchmarking for all tasks and estimators.
+        """Run benchmarking for all registered tasks and estimators.
 
         Parameters
         ----------
-        results_path : str
-            Path to save the results to.
-            If None, will not save the results.
+        results_path : str or None
+            Path to the benchmark results file where final output is
+            written (e.g. ``"results.csv"``). Must refer to a file,
+            not a directory; the file extension selects the storage format.
+            When ``None``, results are not persisted to disk.
+        force_rerun : str or list of str, optional (default="none")
+            Controls re-execution of experiments that already have saved
+            results:
 
-        force_rerun : Union[str, list[str]], optional (default="none")
+            * ``"none"`` — skip task-model pairs with existing results.
+            * ``"all"`` — rerun every task-model pair.
+            * list of str — rerun only pairs whose ``model_id`` is in the
+              list; other existing results are skipped.
 
-            * If "none", will skip validation if results already exist.
-            * If "all", will run validation for all tasks and models.
-            * If list of str, will run validation for tasks and models in list.
+        Returns
+        -------
+        pandas.DataFrame
+            Summary of benchmark run.
         """
         self.register_stored_tasks()
 
@@ -603,24 +628,30 @@ class BaseBenchmark:
         """
         Run the benchmarking for all tasks and estimators.
 
-        If ``output_file`` is provided, results will be saved to a file or location,
-        in a format inferred from the file extension.
-
-        The exact format is determined by the storage backend used, see
-        documentation on storage handlers in
-        ``sktime.benchmarking._storage_handlers.get_storage_backend``.
+        When ``output_file`` is given, results are written to that file on
+        completion and checkpointed incrementally during the run. The file
+        extension (``.json``, ``.csv``, or ``.parquet``) selects the final
+        storage format; see `get_storage_backend`.
 
         Parameters
         ----------
-        output_file : str or None (default)
-            Path to save the results to.
-            If None, results will not be saved.
+        output_file : str or None, optional (default=None)
+            Path to the benchmark results file (e.g. ``"results.csv"``).
+            Must refer to a file, not a directory. When ``None``, results are
+            returned as a DataFrame only and are not saved to disk.
+        force_rerun : str or list of str, optional (default="none")
+            Controls re-execution of experiments that already have saved
+            results:
 
-        force_rerun : Union[str, list[str]], optional (default="none")
+            * ``"none"`` — skip task-model pairs with existing results.
+            * ``"all"`` — rerun every task-model pair.
+            * list of str — rerun only pairs whose ``model_id`` is in the
+              list; other existing results are skipped.
 
-            * If "none", will skip validation if results already exist.
-            * If "all", will run validation for all tasks and models.
-            * If list of str, will run validation for tasks and models in list.
+        Returns
+        -------
+        pandas.DataFrame
+            Summary of benchmark run for all completed experiments.
         """
         return self._run(output_file, force_rerun)
 
