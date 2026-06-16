@@ -356,9 +356,12 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         -------
         self : reference to self
         """
-        pass
+        return self._do(y=y, X=X, fh=fh)
 
     def _fit(self, y, X=None, fh=None):
+        return self._do(y=y, X=X, fh=fh)
+
+    def _do(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
