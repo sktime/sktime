@@ -585,6 +585,14 @@ Deep learning based forecasters
 Pre-trained and foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. currentmodule:: sktime.forecasting.aurora
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AuroraForecaster
+
 .. currentmodule:: sktime.forecasting.chronos
 
 .. autosummary::
