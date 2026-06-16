@@ -284,6 +284,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         "capability:unequal_length": False,
         "property:randomness": "stochastic",
         "capability:random_state": False,
+        "capability:pretrain": True,
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -356,12 +357,9 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         -------
         self : reference to self
         """
-        return self._do(y=y, X=X, fh=fh)
+        return self._fit_or_pretrain(y=y, X=X, fh=fh)
 
     def _fit(self, y, X=None, fh=None):
-        return self._do(y=y, X=X, fh=fh)
-
-    def _do(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -391,6 +389,37 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         Returns
         -------
         self : reference to self
+        """
+        return self._fit_or_pretrain(y=y, X=X, fh=fh)
+
+    def _fit_or_pretrain(self, y, X=None, fh=None):
+        """Load and optionally train the TTM model for fit or pretrain.
+
+        This contains the common logic used by ``_fit`` and ``_pretrain``.
+        It resolves the frequency token and model revision, loads or initializes
+        the cached TinyTimeMixer model, prepares train/evaluation datasets, and
+        runs ``transformers.Trainer`` when the selected ``fit_strategy`` leaves
+        trainable parameters.
+
+        The fitted/pretrained model state produced here is consumed by
+        ``_predict``. In particular, the method sets ``self.model``,
+        ``self._freq_token``, and ``self._revision`` so prediction can construct
+        padded/truncated context windows, optional exogenous future values, and
+        frequency-token inputs for the loaded model.
+
+        Parameters
+        ----------
+        y : sktime time series object
+            Target series used for fitting or pretraining. For ``_pretrain``,
+            this may be panel or hierarchical data with the last index level
+            representing time and preceding levels identifying instances.
+        X : sktime time series object, optional (default=None)
+            Exogenous time series aligned with ``y``. If provided, it is split
+            consistently with ``y`` for validation and passed to the PyTorch
+            dataset used by the trainer.
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon used to resolve automatic model revisions and
+            later consumed by prediction. Required by the estimator tag.
         """
         self._freq, self._freq_token = self._resolve_freq(y=y, fh=fh)
         self._revision = self._resolve_revision(y=y, fh=fh)
