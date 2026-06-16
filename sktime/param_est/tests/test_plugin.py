@@ -5,6 +5,7 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.naive import NaiveForecaster
@@ -13,7 +14,6 @@ from sktime.param_est.plugin import PluginParamsForecaster
 from sktime.param_est.seasonality import SeasonalityACF
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.difference import Differencer
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(

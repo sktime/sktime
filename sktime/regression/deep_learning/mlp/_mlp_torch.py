@@ -260,7 +260,7 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         }
         params = [params1, params2]
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("torchmetrics", severity="none"):
             params.append(

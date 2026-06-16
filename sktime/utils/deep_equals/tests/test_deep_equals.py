@@ -6,10 +6,10 @@ import numpy as np
 import pandas as pd
 import pytest
 from scipy.sparse import csr_matrix
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.utils.deep_equals._deep_equals import deep_equals
-from sktime.utils.dependencies import _check_soft_dependencies
 
 # examples used for comparison below
 EXAMPLES = [
