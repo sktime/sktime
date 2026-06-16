@@ -281,6 +281,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
         "property:randomness": "stochastic",
         "capability:random_state": False,
         # testing configuration
@@ -868,6 +869,24 @@ def _get_auto_revision(model_path, context_len, horizon_len):
     return selected_revision
 
 
+def _same_index(data):
+    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
+        lambda x: x.index.get_level_values(-1)
+    )
+    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
+        "All series must has the same index"
+    )
+    return data.iloc[0], len(data.iloc[0])
+
+
+def _frame2numpy(data):
+    idx, length = _same_index(data)
+    arr = np.array(data.values, dtype=np.float32).reshape(
+        (-1, length, len(data.columns))
+    )
+    return arr
+
+
 class PyTorchDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
 
@@ -898,12 +917,19 @@ class PyTorchDataset(Dataset):
         self.prediction_length = prediction_length
         self.frequency_token = frequency_token
 
-        self.y = np.expand_dims(y.values, axis=0)
+        # multi-index conversion for y
+        if isinstance(y.index, pd.MultiIndex):
+            self.y = _frame2numpy(y)
+        else:
+            self.y = np.expand_dims(y.values, axis=0)
 
         # Handle exogenous variables
         self.X = None
         if X is not None:
-            self.X = np.expand_dims(X.values, axis=0)
+            if isinstance(X.index, pd.MultiIndex):
+                self.X = _frame2numpy(X)
+            else:
+                self.X = np.expand_dims(X.values, axis=0)
 
         self.n_sequences, self.n_timestamps, _ = self.y.shape
         self.single_length = max(
