@@ -71,9 +71,10 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
     4. **Configuration Override**: If custom configuration is provided,
        it overrides the default configuration.
 
-    5. **Forecasting Horizon**: If the forecasting horizon (``fh``) specified during
-       ``fit`` exceeds the default ``config.prediction_length``,
-       the configuration is updated to reflect ``max(fh)``.
+    5. **Forecasting Horizon**: If ``revision=None``, the forecasting horizon
+       (``fh``) specified during ``fit`` is used to select a compatible
+       checkpoint revision. For prediction, the requested horizon must fit
+       within the loaded model's ``config.prediction_length``.
 
     6. **Model Architecture**: The final configuration is used to construct the
        *model architecture*.
@@ -129,20 +130,19 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
           necessary files (e.g., configuration, tokenizer, and model weights).
 
         - If this parameter is *None*, fit_strategy should be *full* to allow
-          full fine tuning of the model loaded from pretrained/provided config,
-          else ValueError is raised.
+          training a randomly initialized model from the provided or default
+          config, else ValueError is raised.
 
-    revision: str or None, default="main"
+    revision : str or None, default="main"
         Revision of the model to use:
 
         - None: Automatically select a compatible revision based on the
-          training context length, forecasting horizon, and frequency.
+          training context length and forecasting horizon.
 
-        - "main": For loading model with context_length of 512
-          and prediction_length of 96.
+        - "main": Load the main branch of the selected checkpoint.
 
-        - "1024_96_v1": For loading model with context_length of 1024
-          and prediction_length of 96.
+        - A checkpoint branch name such as "52-16-ft-r2.1" can be used to load
+          a specific TinyTimeMixer variant.
 
         This param becomes irrelevant when model_path is None.
 
@@ -163,21 +163,21 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
     validation_split : float, default=0.2
         Fraction of the data to use for validation
 
-    config : dict, default={}
+    config : dict or None, default={}
         Configuration to use for the model. See the ``transformers``
         documentation for details. The provided configuration must be valid for
         the selected TinyTimeMixer model architecture.
 
-    training_args : dict, default={}
+    training_args : dict or None, default={}
         Training arguments to use for the model. See ``transformers.TrainingArguments``
         for details.
         Note that the ``output_dir`` argument is required.
 
-    compute_metrics : list, default=None
+    compute_metrics : list, default=[]
         List of metrics to compute during training. See ``transformers.Trainer``
         for details.
 
-    callbacks : list, default=[]
+    callbacks : list, default=None
         List of callbacks to use during training. See ``transformers.Trainer``
 
     broadcasting : bool, default=False
@@ -508,7 +508,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             dataset used by the trainer.
         fh : ForecastingHorizon or None, optional (default=None)
             Forecasting horizon used to resolve automatic model revisions and
-            later consumed by prediction. Required by the estimator tag.
+            later consumed by prediction. Required when ``revision=None``.
         """
         self._freq, self._freq_token = self._resolve_freq(y=y, fh=fh)
         self._revision = self._resolve_revision(y=y, fh=fh)
@@ -928,7 +928,8 @@ def _get_context_length(y):
 def _get_auto_revision(model_path, context_len, horizon_len):
     """Return an auto-selected TTM revision.
 
-    This is a placeholder until the Granite revision selection logic is added.
+    Selects the available Hugging Face branch with the smallest absolute
+    distance from the requested context and horizon lengths.
     """
     _check_soft_dependencies(
         "huggingface-hub",
