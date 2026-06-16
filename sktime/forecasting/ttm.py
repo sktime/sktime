@@ -190,7 +190,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         If False, the model and configuration will be loaded from the local
         version of package maintained in sktime because of model's unavailability
         on pypi.
-        To install the source package, follow the instructions here [4]_.
+        To install the source package, follow the instructions here [1]_.
 
     fit_strategy : str, default="minimal"
         Strategy to use for fitting (fine-tuning) the model. This can be one of
@@ -206,13 +206,12 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
     References
     ----------
-    .. [1] https://github.com/ibm-granite/granite-tsfm/tree/main/tsfm_public/models/tinytimemixer
+    .. [1] https://github.com/ibm-granite/granite-tsfm/
     .. [2] Ekambaram, V., Jati, A., Dayama, P., Mukherjee, S.,
            Nguyen, N.H., Gifford, W.M., Reddy, C. and Kalagnanam, J., 2024.
            Tiny Time Mixers (TTMs): Fast Pre-trained Models for Enhanced
            Zero/Few-Shot Forecasting of Multivariate Time Series. CoRR.
-    .. [3] https://github.com/ibm-granite/granite-tsfm/blob/main/notebooks/tutorial/ttm_tutorial.ipynb
-    .. [4] https://github.com/ibm-granite/granite-tsfm/tree/ttm
+    .. [3] https://github.com/ibm-granite/granite-tsfm/tree/main/notebooks
 
     Examples
     --------
