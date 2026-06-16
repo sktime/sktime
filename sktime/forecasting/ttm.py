@@ -216,33 +216,67 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
     Examples
     --------
+    Zero-shot forecasting with a pretrained TinyTimeMixer checkpoint:
+
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = TinyTimeMixerForecaster()
-    >>> # performs zero-shot forecasting, as default config (unchanged) is used
+    >>> forecaster = TinyTimeMixerForecaster(
+    ...     model_path="ibm-research/ttm-r3",
+    ...     # Other supported public checkpoints include:
+    ...     # model_path="ibm-granite/granite-timeseries-ttm-r1",
+    ...     # model_path="ibm-granite/granite-timeseries-ttm-r2",
+    ...     # model_path="ibm-granite/granite-timeseries-ttm-r2",
+    ...     # revision="52-16-ft-r2.1",
+    ...     # model_path="ibm-research/ttm-research-r2",
+    ... )
+    >>> forecaster.fit(y)
+    TinyTimeMixerForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+
+    Automatically select the best compatible model revision from the context
+    length and prediction length:
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    >>> y = load_airline()
+    >>> forecaster = TinyTimeMixerForecaster(
+    ...     model_path="ibm-research/ttm-r3",
+    ...     revision=None,
+    ... )
     >>> forecaster.fit(y, fh=[1, 2, 3])
     TinyTimeMixerForecaster(...)
     >>> y_pred = forecaster.predict()
 
-    Example with exogenous variables:
+    Forecasting with exogenous variables known during training and prediction:
 
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
     >>> from sktime.datasets import load_longley
     >>> from sktime.split import temporal_train_test_split
     >>> y, X = load_longley()
     >>> y_train, _, X_train, X_future = temporal_train_test_split(y, X, test_size=2)
-    >>>
-    >>> # Initialize forecaster
     >>> forecaster = TinyTimeMixerForecaster(
-    ...     model_path=None,
-    ...     fit_strategy="full",
+    ...     model_path="ibm-research/ttm-r3",
+    ... )
+    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])
+    TinyTimeMixerForecaster(...)
+    >>> y_pred = forecaster.predict(X=X_future)
+
+    Minimal fine-tuning updates only parameters that are not loaded from the
+    checkpoint, for example when the supplied configuration changes the model
+    shape:
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    >>> y = load_airline()
+    >>> forecaster = TinyTimeMixerForecaster(
+    ...     model_path="ibm-research/ttm-r3",
+    ...     fit_strategy="minimal",
     ...     config={
-    ...         "context_length": 12,
-    ...         "num_patches": 4,
-    ...         "patch_length": 3,
-    ...         "patch_stride": 3,
-    ...         "prediction_length": 2
+    ...         "context_length": 24,
+    ...         "trend_patch_length": 6,
+    ...         "trend_patch_stride": 6,
+    ...         "prediction_length": 12,
     ...     },
     ...     training_args={
     ...         "max_steps": 10,
@@ -251,13 +285,55 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
     ...         "report_to": "none",
     ...     },
     ... )
-    >>>
-    >>> # Fit with exogenous variables
-    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])
+    >>> forecaster.fit(y)
     TinyTimeMixerForecaster(...)
-    >>>
-    >>> # Predict with exogenous variables
-    >>> y_pred = forecaster.predict(X=X_future)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+
+    Initialize a random model when ``model_path`` is ``None``
+    and preform full fine-tuning:
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    >>> y = load_airline()
+    >>> forecaster = TinyTimeMixerForecaster(
+    ...     model_path=None,
+    ...     fit_strategy="full",
+    ...     training_args={
+    ...         "max_steps": 10,
+    ...         "output_dir": "test_output",
+    ...         "per_device_train_batch_size": 4,
+    ...         "report_to": "none",
+    ...     },
+    ... )
+    >>> forecaster.fit(y)
+    TinyTimeMixerForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+
+    Pretrain on panel data before fitting to the target forecasting series:
+
+    >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    >>> from sktime.datasets import load_airline, load_tecator
+    >>> y = load_airline()
+    >>> y_panel = load_tecator(
+    ...     return_type="pd-multiindex",
+    ...     return_X_y=False,
+    ... )
+    >>> y_panel.drop(["class_val"], axis=1, inplace=True)
+    >>> forecaster = TinyTimeMixerForecaster(
+    ...     model_path="ibm-research/ttm-r3",
+    ...     fit_strategy="full",
+    ...     training_args={
+    ...         "max_steps": 10,
+    ...         "output_dir": "test_output",
+    ...         "per_device_train_batch_size": 4,
+    ...         "report_to": "none",
+    ...     },
+    ... )
+    >>> forecaster.pretrain(y_panel)
+    TinyTimeMixerForecaster(...)
+    >>> forecaster.fit(y)
+    TinyTimeMixerForecaster(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
     _tags = {
