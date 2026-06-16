@@ -823,7 +823,6 @@ def _map_frequency_token(freq):
     if offset_freq is not None and offset_freq.lower() in _FREQUENCY_TOKEN_MAP:
         return _FREQUENCY_TOKEN_MAP[offset_freq.lower()]
 
-    warn(f"Frequency token {freq} was not found in the frequency token mapping.")
     return _FREQUENCY_TOKEN_MAP["oov"]
 
 
