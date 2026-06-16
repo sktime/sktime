@@ -3,6 +3,7 @@
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 from sklearn.utils import check_random_state
 
@@ -13,7 +14,6 @@ from sktime.transformations.bootstrap import (
     MovingBlockBootstrapTransformer,
     TSBootstrapAdapter,
 )
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -84,8 +84,8 @@ class EnbPIForecaster(BaseForecaster):
     >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.difference import Differencer
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.difference import Differencer
+    >>> from sktime.transformations.detrend import Deseasonalizer
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y = load_airline()
     >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(

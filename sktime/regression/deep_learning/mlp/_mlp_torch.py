@@ -70,6 +70,12 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     verbose : bool, default = False
@@ -108,6 +114,8 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        "tests:vm": True,
+        "tests:python_dependencies": "torchmetrics",
     }
 
     def __init__(
@@ -129,6 +137,7 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         criterion_kwargs: dict | None = None,
         callbacks: str | tuple[str] | None = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
@@ -148,6 +157,7 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
         self.criterion_kwargs = criterion_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -165,6 +175,7 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
             criterion_kwargs=self.criterion_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
+            metrics=self.metrics,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
@@ -247,4 +258,15 @@ class MLPRegressorTorch(BaseDeepRegressorTorch):
             "verbose": False,
             "random_state": 0,
         }
-        return [params1, params2]
+        params = [params1, params2]
+
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("torchmetrics", severity="none"):
+            params.append(
+                {
+                    "batch_size": 2,
+                    "metrics": "R2Score",
+                }
+            )
+        return params

@@ -84,6 +84,12 @@ class BaseDeepRegressorTorch(BaseRegressor):
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, default = 0.001
         The learning rate to be used in the optimizer.
     verbose : bool, default = True
@@ -111,6 +117,14 @@ class BaseDeepRegressorTorch(BaseRegressor):
     # be overridden.
     _instantiate_activation_vars = ("activation", "activation_hidden")
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.metrics is not None:
+            self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
+
     def __init__(
         self: "BaseDeepRegressorTorch",
         num_epochs: int = 16,
@@ -121,6 +135,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         optimizer_kwargs: dict = None,
         callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         verbose: bool = True,
         random_state: int | None = None,
@@ -133,6 +148,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self.optimizer_kwargs = optimizer_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -165,6 +181,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self._all_optimizers = None
         self._all_criterions = None
         self._all_callbacks = None
+        self._metrics_objects = None
 
     def _fit(self, X, y):
         self.network = self._build_network(X)
@@ -174,6 +191,8 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self._optimizer = self._instantiate_optimizer()
         # instantiate callbacks (learning rate schedulers)
         self._schedulers = self._instantiate_schedulers()
+        # instantiate metrics
+        self._metrics_objects = self._instantiate_metrics(self.metrics)
         # build dataloader
         dataloader = self._build_dataloader(X, y)
 
@@ -183,6 +202,8 @@ class BaseDeepRegressorTorch(BaseRegressor):
 
     def _run_epoch(self, epoch, dataloader):
         losses = []
+        metric_values = {name: [] for name in (self._metrics_objects or {})}
+
         for inputs, outputs in dataloader:
             y_pred = self.network(**inputs)
             loss = self._criterion(y_pred, outputs)
@@ -190,7 +211,28 @@ class BaseDeepRegressorTorch(BaseRegressor):
             loss.backward()
             self._optimizer.step()
             losses.append(loss.item())
+
+            # Compute metrics if any
+            if self._metrics_objects:
+                import torch
+
+                # # Some networks output shape (batch_size, 1) while sktime targets are
+                # # (batch_size,). Metrics expect y_pred to be in the same shape
+                # # as outputs.
+                if (
+                    y_pred.ndim == 2
+                    and y_pred.shape[1] == 1
+                    and outputs.ndim == 1
+                    and y_pred.shape[0] == outputs.shape[0]
+                ):
+                    y_pred = y_pred.squeeze(-1)
+                with torch.no_grad():
+                    for metric_name, metric_obj in self._metrics_objects.items():
+                        metric_value = metric_obj(y_pred, outputs)
+                        metric_values[metric_name].append(metric_value.item())
+
         epoch_loss = np.average(losses)
+
         # step the schedulers, if any
         if self._schedulers:
             for scheduler in self._schedulers:
@@ -201,9 +243,14 @@ class BaseDeepRegressorTorch(BaseRegressor):
                     scheduler.step(epoch_loss)
                 else:
                     scheduler.step()
-        # print loss for the epoch, if verbose is True
+
         if self.verbose:
-            print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
+            msg = f"Epoch {epoch + 1}: Loss: {epoch_loss}"
+            if metric_values:
+                for metric_name, values in metric_values.items():
+                    avg_metric = np.average(values)
+                    msg += f", {metric_name}: {avg_metric:.4f}"
+            print(msg)
 
     def _instantiate_activations(
         self, activations: dict[str, str | Callable | None]
@@ -441,6 +488,96 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 "https://pytorch.org/docs/stable/nn.html#loss-functions "
                 f"But got {type(self.criterion)} instead."
             )
+
+    def _instantiate_metric(self, metric, torchmetrics):
+        """Instantiate a single regression metric from torchmetrics.
+
+        Parameters
+        ----------
+        metric : str or Callable
+            Metric name from torchmetrics or a metric instance.
+        torchmetrics : module
+            The torchmetrics module.
+
+        Returns
+        -------
+        metric_name : str
+            Name to use as the key in the metrics dictionary.
+        metric_instance : Callable
+            The instantiated metric object.
+
+        Raises
+        ------
+        ValueError
+            If an unknown metric name is passed.
+        TypeError
+            If metric is neither a string nor a callable.
+        """
+        if isinstance(metric, str):
+            if not hasattr(torchmetrics, metric):
+                raise ValueError(
+                    f"Error in constructing torch based regressor "
+                    f"{type(self).__name__}, "
+                    f"unknown metric: {metric}. Please pass one of the available "
+                    f"metrics from torchmetrics or check the metric name. "
+                    f"See https://lightning.ai/docs/torchmetrics/stable/"
+                )
+            metric_class = getattr(torchmetrics, metric)
+            return metric, metric_class()
+        if isinstance(metric, Callable):
+            return metric.__class__.__name__, metric
+        raise TypeError(
+            "`metrics` can either be None, a str or a tuple of str "
+            "representing metrics from torchmetrics, or an instance of a "
+            f"torchmetrics metric. But got {type(metric)} instead."
+        )
+
+    def _instantiate_metrics(self, metrics):
+        """Instantiate metrics to be computed during training.
+
+        Metrics are computed from the torchmetrics library. If no metrics are passed,
+        returns None.
+
+        Parameters
+        ----------
+        metrics : None or str or Callable or tuple of str and/or Callable
+            Metrics to compute during training. If None, no metrics are computed beyond
+            the loss. Metrics are computed from torchmetrics library.
+            If a string/Callable is passed, it must be one of the metrics defined in
+            https://lightning.ai/docs/torchmetrics/stable/
+            Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
+
+        Returns
+        -------
+        metrics_dict : dict or None
+            A dictionary mapping metric names to metric objects from torchmetrics.
+            If no metrics are provided, returns None.
+
+        Raises
+        ------
+        ValueError
+            If an unknown metric name is passed.
+        TypeError
+            If metric is neither a string nor a callable.
+        """
+        if metrics is None:
+            return None
+
+        torchmetrics = _safe_import("torchmetrics")
+
+        if not isinstance(metrics, tuple):
+            metrics_list = (metrics,)
+        else:
+            metrics_list = metrics
+
+        metrics_dict = {}
+        for metric in metrics_list:
+            metric_name, metric_instance = self._instantiate_metric(
+                metric, torchmetrics
+            )
+            metrics_dict[metric_name] = metric_instance
+
+        return metrics_dict if metrics_dict else None
 
     @abc.abstractmethod
     def _build_network(self):

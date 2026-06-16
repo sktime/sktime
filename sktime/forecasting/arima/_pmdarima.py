@@ -712,7 +712,6 @@ class ARIMA(_PmdArimaAdapter):
         # -----------------
         "tests:skip_by_name": [
             "test_predict_time_index_with_X",  # bug report #9081
-            "test_predict_time_index_in_sample_full",  # bug report #10299
         ],
     }
 

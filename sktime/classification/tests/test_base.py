@@ -7,6 +7,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.model_selection import KFold
 
 from sktime.classification.base import BaseClassifier
@@ -20,7 +21,6 @@ from sktime.utils._testing.panel import (
     _make_panel,
     make_classification_problem,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class _DummyClassifier(BaseClassifier):
