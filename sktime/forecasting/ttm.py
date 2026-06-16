@@ -903,8 +903,15 @@ def _get_auto_revision(model_path, context_len, horizon_len):
     return selected_revision
 
 
+def _groupby_instance_levels(data):
+    levels = list(range(data.index.nlevels - 1))
+    return levels[0] if len(levels) == 1 else levels
+
+
 def _same_index(data):
-    grouped = data.groupby(level=list(range(data.index.nlevels - 1)), sort=False)
+    level = _groupby_instance_levels(data)
+    grouped = data.groupby(level=level, sort=False)
+
     indexes = grouped.apply(lambda x: x.index.get_level_values(-1))
     max_length = max(len(idx) for idx in indexes)
     return indexes.iloc[0], max_length
@@ -912,7 +919,8 @@ def _same_index(data):
 
 def _frame2numpy(data):
     _, length = _same_index(data)
-    groups = data.groupby(level=list(range(data.index.nlevels - 1)), sort=False)
+    level = _groupby_instance_levels(data)
+    groups = data.groupby(level=level, sort=False)
 
     arr = []
     for _, frame in groups:
