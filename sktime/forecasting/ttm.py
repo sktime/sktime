@@ -281,7 +281,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
-        "capability:unequal_length": False,
+        "capability:unequal_length": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
         "capability:pretrain": True,
@@ -904,21 +904,23 @@ def _get_auto_revision(model_path, context_len, horizon_len):
 
 
 def _same_index(data):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
+    grouped = data.groupby(level=list(range(data.index.nlevels - 1)), sort=False)
+    indexes = grouped.apply(lambda x: x.index.get_level_values(-1))
+    max_length = max(len(idx) for idx in indexes)
+    return indexes.iloc[0], max_length
 
 
 def _frame2numpy(data):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
+    _, length = _same_index(data)
+    groups = data.groupby(level=list(range(data.index.nlevels - 1)), sort=False)
+
+    arr = []
+    for _, frame in groups:
+        values = np.expand_dims(frame.values.astype(np.float32), axis=0)
+        padded, _ = _pad_truncate(values, length)
+        arr.append(padded[0])
+
+    return np.stack(arr, axis=0)
 
 
 class PyTorchDataset(Dataset):
