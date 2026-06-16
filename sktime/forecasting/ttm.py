@@ -58,8 +58,9 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
     **Initialization Process**:
 
     1. **Model Path**: The ``model_path`` parameter points to a local folder or
-       huggingface repo that contains both *configuration files*
-       and *pretrained weights*.
+       Hugging Face repo that contains both *configuration files*
+       and *pretrained weights*. Public TinyTimeMixer checkpoints are available
+       for the R1 [4]_, R2 [5]_, research R2 [6]_, and R3 [7]_ model families.
 
     2. **Default Configuration**: The model loads its default configuration from the
        *configuration files*.
@@ -115,10 +116,13 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
     Parameters
     ----------
     model_path : str, default="ibm/TTM"
-        Path to the Huggingface model to use for forecasting.
+        Path to the Hugging Face model to use for forecasting.
         This can be either:
 
-        - The name of a Huggingface repository (e.g., "ibm/TTM")
+        - The name of a Hugging Face repository, for example
+          ``"ibm-research/ttm-r3"`` [7]_. Related checkpoints are listed in
+          the TinyTimeMixer [8]_, Granite time series [9]_, and IBM Research
+          time series [10]_ collections.
 
         - A local path to a folder containing model files in a format supported
           by transformers. In this case, ensure that the directory contains all
@@ -148,8 +152,9 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
     freq : str or None, default=None
         Frequency to pass to models that use resolution prefix tuning,
-        such as TTM-R2. If ``None``, the frequency is inferred from the
-        forecasting horizon or time index where possible, and falls back to the
+        such as TTM-R2 [5]_ and research R2 [6]_. If ``None``, the frequency
+        is inferred from the forecasting horizon or time index where possible,
+        and falls back to the
         out-of-vocabulary token.
 
     verbose : bool, default=False
@@ -212,10 +217,19 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
            Tiny Time Mixers (TTMs): Fast Pre-trained Models for Enhanced
            Zero/Few-Shot Forecasting of Multivariate Time Series. CoRR.
     .. [3] https://github.com/ibm-granite/granite-tsfm/tree/main/notebooks
+    .. [4] https://huggingface.co/ibm-granite/granite-timeseries-ttm-r1
+    .. [5] https://huggingface.co/ibm-granite/granite-timeseries-ttm-r2
+    .. [6] https://huggingface.co/ibm-research/ttm-research-r2
+    .. [7] https://huggingface.co/ibm-research/ttm-r3
+    .. [8] https://huggingface.co/collections/geetu040/tinytimemixer
+    .. [9] https://huggingface.co/collections/ibm-granite/granite-time-series
+    .. [10] https://huggingface.co/collections/ibm-research/time-series-models
 
     Examples
     --------
-    Zero-shot forecasting with a pretrained TinyTimeMixer checkpoint:
+    Zero-shot forecasting with a pretrained TinyTimeMixer R3 checkpoint [7]_.
+    Other supported public checkpoints include R1 [4]_, R2 [5]_, and research
+    R2 [6]_ variants:
 
     >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
     >>> from sktime.datasets import load_airline
