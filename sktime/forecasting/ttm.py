@@ -402,7 +402,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         trainable parameters.
 
         The fitted/pretrained model state produced here is consumed by
-        ``_predict``. In particular, the method sets ``self.model``,
+        ``_predict``. In particular, the method sets ``self.model_``,
         ``self._freq_token``, and ``self._revision`` so prediction can construct
         padded/truncated context windows, optional exogenous future values, and
         frequency-token inputs for the loaded model.
@@ -424,7 +424,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         self._freq, self._freq_token = self._resolve_freq(y=y, fh=fh)
         self._revision = self._resolve_revision(y=y, fh=fh)
 
-        self.model = _CachedTinyTimeMixer(
+        self.model_ = _CachedTinyTimeMixer(
             key=self._get_unique_key(),
             model_path=self.model_path,
             revision=self._revision,
@@ -434,10 +434,10 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             fit_strategy=self.fit_strategy,
         ).load()
 
-        if not self.model.config.resolution_prefix_tuning:
+        if not self.model_.config.resolution_prefix_tuning:
             self._freq_token = None
 
-        if not any(param.requires_grad for param in self.model.parameters()):
+        if not any(param.requires_grad for param in self.model_.parameters()):
             return
 
         if self.validation_split is not None:
@@ -458,8 +458,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
         train = PyTorchDataset(
             y=y_train,
-            context_length=self.model.config.context_length,
-            prediction_length=self.model.config.prediction_length,
+            context_length=self.model_.config.context_length,
+            prediction_length=self.model_.config.prediction_length,
             X=X_train,
             frequency_token=self._freq_token,
         )
@@ -468,8 +468,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         if self.validation_split is not None:
             eval = PyTorchDataset(
                 y=y_eval,
-                context_length=self.model.config.context_length,
-                prediction_length=self.model.config.prediction_length,
+                context_length=self.model_.config.context_length,
+                prediction_length=self.model_.config.prediction_length,
                 X=X_eval,
                 frequency_token=self._freq_token,
             )
@@ -481,7 +481,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
         # Get the Trainer
         trainer = Trainer(
-            model=self.model,
+            model=self.model_,
             args=training_args,
             train_dataset=train,
             eval_dataset=eval,
@@ -496,7 +496,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 trainer.train()
 
         # Get the model
-        self.model = trainer.model
+        self.model_ = trainer.model
 
     def _resolve_freq(self, y, fh=None):
         freq = self.freq or getattr(fh, "freq", None) or _infer_index_frequency(y.index)
@@ -570,7 +570,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         fh = fh.to_relative(self.cutoff)
 
         max_fh = fh.to_numpy().max()
-        prediction_length = self.model.config.prediction_length
+        prediction_length = self.model_.config.prediction_length
         if prediction_length < max_fh:
             raise ValueError(
                 "The requested forecasting horizon is longer than the loaded "
@@ -589,14 +589,14 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
         # truncate or pad to match sequence length
         past_values, observed_mask = _pad_truncate(
-            hist, self.model.config.context_length
+            hist, self.model_.config.context_length
         )
 
         past_values = (
-            torch.tensor(past_values).to(self.model.dtype).to(self.model.device)
+            torch.tensor(past_values).to(self.model_.dtype).to(self.model_.device)
         )
         observed_mask = (
-            torch.tensor(observed_mask).to(self.model.dtype).to(self.model.device)
+            torch.tensor(observed_mask).to(self.model_.dtype).to(self.model_.device)
         )
 
         # Handle exogenous variables if provided
@@ -607,15 +607,17 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
             # Extract future exogenous values for the prediction horizon
             # X should contain future values that cover the prediction horizon
-            prediction_length = self.model.config.prediction_length
-            context_length = self.model.config.context_length
+            prediction_length = self.model_.config.prediction_length
+            context_length = self.model_.config.context_length
 
             # Get the last context_length + prediction_length values from exog_data
             if exog_data.shape[1] >= context_length + prediction_length:
                 # Take the last prediction_length values as future exogenous
                 future_exog = exog_data[:, -prediction_length:, :]
                 future_values = (
-                    torch.tensor(future_exog).to(self.model.dtype).to(self.model.device)
+                    torch.tensor(future_exog)
+                    .to(self.model_.dtype)
+                    .to(self.model_.device)
                 )
 
         freq_token = None
@@ -623,11 +625,11 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
             freq_token = torch.tensor(
                 [self._freq_token],
                 dtype=torch.int,
-                device=self.model.device,
+                device=self.model_.device,
             )
 
-        self.model.eval()
-        outputs = self.model(
+        self.model_.eval()
+        outputs = self.model_(
             past_values=past_values,
             past_observed_mask=observed_mask,
             future_values=future_values,
