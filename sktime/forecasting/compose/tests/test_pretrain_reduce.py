@@ -118,7 +118,7 @@ def test_window_normalizers_are_skbase_objects_and_invert_values():
 
 def test_reduction_forecaster_canonical_and_compatibility_imports_match():
     """Canonical compose import and old base import resolve to the same class."""
-    from sktime.forecasting.base.reduction import ReductionForecaster as BaseReduction
+    from sktime.forecasting.compose import ReductionForecaster as BaseReduction
     from sktime.forecasting.compose._pretrain_reduce import (
         ReductionForecaster as ComposeReduction,
     )
