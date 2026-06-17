@@ -329,11 +329,11 @@ class _Reducer(_BaseWindowForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.linear_model import LinearRegression
         from sklearn.pipeline import make_pipeline
 
         from sktime.transformations.reduce import Tabularizer
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
         #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
@@ -526,7 +526,7 @@ class _DirectReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -793,7 +793,7 @@ class _MultioutputReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -887,7 +887,7 @@ class _RecursiveReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -1130,7 +1130,7 @@ class _DirRecReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -3152,10 +3152,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
-
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         params1 = {
             "estimator": LinearRegression(),

@@ -162,7 +162,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, default=None
             Exogenous variables are ignored.
 

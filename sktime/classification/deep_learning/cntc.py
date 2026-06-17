@@ -371,7 +371,7 @@ class CNTCClassifier(BaseDeepClassifier):
 
         params = [param0, param1]
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("tensorflow", severity="none"):
             from tensorflow import keras
