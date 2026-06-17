@@ -114,7 +114,7 @@ class AuroraForecaster(BaseForecaster):
             "safetensors",
         ],
         "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
+        "y_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
         "capability:multivariate": True,
         "capability:unequal_length": False,
@@ -256,12 +256,8 @@ class AuroraForecaster(BaseForecaster):
         point = output.mean(dim=1).detach().cpu().numpy()
         values = point[:, (fh_rel.to_numpy() - 1).astype(int)].T
         index = fh.to_absolute(self._cutoff)._values
-        pred_df = pd.DataFrame(values, index=index, columns=columns)
+        pred_df = pd.DataFrame(values, index=index, columns=self._get_varnames())
         pred_df.index.names = self._context.index.names
-        if len(columns) == 1:
-            series = pred_df.iloc[:, 0]
-            series.name = columns[0]
-            return series
         return pred_df
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -313,17 +309,17 @@ class AuroraForecaster(BaseForecaster):
         index = fh.to_absolute(self._cutoff)._values
 
         if n_vars == 1:
-            qvals = np.quantile(samples[0, :, rel_idx], alpha, axis=0).T
-            name = columns[0]
+            qvals = np.quantile(samples[0][:, rel_idx], alpha, axis=0).T
             return pd.DataFrame(
                 qvals,
                 index=index,
-                columns=pd.MultiIndex.from_product([[name], alpha]),
+                columns=self._get_columns(method="predict_quantiles", alpha=alpha),
             )
 
+        varnames = self._get_varnames()
         frames = []
-        for var_idx, col in enumerate(columns):
-            qvals = np.quantile(samples[var_idx, :, rel_idx], alpha, axis=0).T
+        for var_idx, col in enumerate(varnames):
+            qvals = np.quantile(samples[var_idx][:, rel_idx], alpha, axis=0).T
             frames.append(
                 pd.DataFrame(
                     qvals,
