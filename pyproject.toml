@@ -275,6 +275,8 @@ Repository = "https://github.com/sktime/sktime"
 build-backend = "setuptools.build_meta"
 requires = [
   "setuptools>=78.1.1",
+  "Cython>=3.0",
+  "numpy>=2.0",
 ]
 
 [tool.setuptools.package-data]
@@ -287,6 +289,8 @@ sktime = [
   "*.txt",
   "*.ts",
   "*.tsv",
+  "transformations/rocket/*.pyx",
+  "transformations/rocket/*.pyi",
 ]
 
 [tool.setuptools.packages.find]
