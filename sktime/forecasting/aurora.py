@@ -124,6 +124,9 @@ class AuroraForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "property:randomness": "stochastic",
         "tests:vm": True,
+        # since aurora is generative probabilistic
+        # we skip the score test as it is not deterministic
+        "tests:skip_by_name": ["test_score"],
     }
 
     def __init__(
