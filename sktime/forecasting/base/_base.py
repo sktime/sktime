@@ -483,8 +483,22 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         assert y is not None, "y cannot be None, but found None"
 
         # if fit is called, estimator is reset, including fitted state
+        # but preserves pretrained attributes if they exist
         if not self._state == "pretrained":
+            # Back up pretrained state before full reset
+            _pretrained_attrs_backup = getattr(self, "_pretrained_attrs", [])
+            _pretrained_values = {}
+            for _attr in _pretrained_attrs_backup:
+                if hasattr(self, _attr):
+                    _pretrained_values[_attr] = getattr(self, _attr)
+
             self.reset()
+
+            # Restore pretrained state after reset
+            if _pretrained_attrs_backup:
+                self._pretrained_attrs = _pretrained_attrs_backup
+                for _attr, _val in _pretrained_values.items():
+                    setattr(self, _attr, _val)
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
