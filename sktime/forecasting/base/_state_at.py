@@ -144,3 +144,80 @@ class _StateAtMixin:
         if self.get_config()["check_clone"]:
             _check_clone(original=self, clone=self_clone)
         return self_clone
+
+    def _set_params_at(self, state, params):
+        """Set parameters, resetting only state above ``state``.
+
+        State-aware variant of ``set_params``. Mostly a copy of skbase
+        ``BaseObject.set_params``, with two differences: it calls
+        ``self._reset_at(state)`` instead of ``self.reset()``, and it
+        passes ``state`` on to components that implement
+        ``_set_params_at``. Components without the method receive a plain
+        ``set_params`` call; the state chain ends there by design.
+
+        Deliberately no early fallback on the capability tag here:
+        composites are usually not pretrain capable themselves, but must
+        still pass the state on to capable components. For estimator
+        trees without any pretrain-capable node, behavior is identical to
+        ``set_params``, because ``_reset_at`` falls back to ``reset``.
+
+        Parameters
+        ----------
+        state : str, "pretrained" or "new"
+            Upper bound on the retained state tier, see ``_reset_at``.
+        params : dict
+            Parameters as in ``set_params``, passed as an explicit dict.
+            ``<component>__<parameter>`` keys address components.
+
+        Returns
+        -------
+        self : reference to self, with parameters set.
+
+        Raises
+        ------
+        ValueError
+            If ``state`` is invalid, or parameter keys do not resolve.
+        """
+        self._check_target_state(state)
+        if not params:
+            return self
+        valid_params = self.get_params(deep=True)
+
+        unmatched_keys = []
+
+        nested_params = defaultdict(dict)
+        for full_key, value in params.items():
+            key, delim, sub_key = full_key.partition("__")
+            if key not in valid_params:
+                unmatched_keys += [key]
+            elif delim:
+                nested_params[key][sub_key] = value
+            else:
+                setattr(self, key, value)
+                valid_params[key] = value
+
+        self._reset_at(state)
+
+        for key, sub_params in nested_params.items():
+            component = valid_params[key]
+            if hasattr(component, "_set_params_at"):
+                component._set_params_at(state, sub_params)
+            else:
+                component.set_params(**sub_params)
+
+        if len(unmatched_keys) > 0:
+            valid_params = self.get_params(deep=True)
+            unmatched_params = {key: params[key] for key in unmatched_keys}
+            aliased_params = self._alias_params(unmatched_params, valid_params)
+
+            if set(aliased_params) == set(unmatched_params):
+                raise ValueError(
+                    "Invalid parameter keys provided to _set_params_at of "
+                    f"object {self}. Check the list of available parameters "
+                    "with `object.get_params().keys()`. "
+                    f"Invalid keys provided: {unmatched_keys}"
+                )
+
+            self._set_params_at(state, aliased_params)
+
+        return self
