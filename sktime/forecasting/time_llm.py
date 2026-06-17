@@ -238,14 +238,17 @@ class TimeLLMForecaster(BaseForecaster):
             Point predictions
         """
         self.model_ = self._load_model()
+        self.model_.eval()
 
         X_tensor = (
             torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
         )
         X_tensor = X_tensor.to(torch.float32)
-        res = self.model_.forward(
-            X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
-        )
+
+        with torch.no_grad():
+            res = self.model_.forward(
+                X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
+            )
 
         forecast_index = fh.to_absolute(self.cutoff).to_pandas()
 
