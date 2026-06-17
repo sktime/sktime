@@ -50,8 +50,6 @@ class TimeLLMForecaster(BaseForecaster):
         Dropout rate.
     device : str, default='cuda' if available else 'cpu'
         Device to run model on.
-    deterministic : bool, default=False
-        Whether the predictions should be deterministic or not.
 
     References
     ----------
@@ -108,7 +106,6 @@ class TimeLLMForecaster(BaseForecaster):
         dropout=0.1,
         device: str | None = None,
         prompt_domain=False,
-        deterministic=False,
     ):
         self.task_name = task_name
         self.pred_len = pred_len
@@ -124,7 +121,6 @@ class TimeLLMForecaster(BaseForecaster):
         self.dropout = dropout
         self.device = device
         self.prompt_domain = prompt_domain
-        self.deterministic = deterministic
 
         super().__init__()
 
@@ -241,11 +237,6 @@ class TimeLLMForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
-        if self.deterministic:
-            import transformers
-
-            transformers.set_seed(42)
-
         self.model_ = self._load_model()
 
         X_tensor = (
@@ -299,7 +290,6 @@ class TimeLLMForecaster(BaseForecaster):
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
-                "deterministic": True,
             },
             {
                 "task_name": "short_term_forecast",
@@ -316,7 +306,6 @@ class TimeLLMForecaster(BaseForecaster):
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
-                "deterministic": True,
             },
             {
                 "task_name": "short_term_forecast",
@@ -333,7 +322,6 @@ class TimeLLMForecaster(BaseForecaster):
                 "dropout": 0.1,
                 "device": None,
                 "prompt_domain": False,
-                "deterministic": True,
             },
         ]
 
