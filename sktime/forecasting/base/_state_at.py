@@ -53,7 +53,6 @@ class _StateAtMixin:
 
     def _save_pretrained_state(self):
         """Save protected pretrained attributes before an in-place reset."""
-
         if not getattr(self, "_pretrained_attrs", None):
             return {}
         attr_names = self._get_protected_pretrained_attrs()
