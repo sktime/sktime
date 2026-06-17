@@ -649,14 +649,6 @@ Pre-trained and foundation models
 
     MantisForecaster
 
-.. currentmodule:: sktime.forecasting.moirai
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MOIRAIForecaster
-
 .. currentmodule:: sktime.forecasting.mira
 
 .. autosummary::
@@ -664,6 +656,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     MIRAForecaster
+
+.. currentmodule:: sktime.forecasting.moirai
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MOIRAIForecaster
 
 .. currentmodule:: sktime.forecasting.momentfm
 

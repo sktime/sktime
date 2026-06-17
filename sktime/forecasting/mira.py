@@ -90,7 +90,6 @@ class MIRAForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "requires-fh-in-fit": False,
         "tests:vm": True,
         "tests:libs": ["sktime.libs.mira"],
@@ -166,57 +165,6 @@ class MIRAForecaster(BaseForecaster):
         self.model = self._load_model()
         self.model.eval()
         return self
-
-    def predict(self, fh=None, X=None, y=None):
-        """Forecast time series at future horizon.
-
-        State required:
-            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
-
-        Accesses in self:
-
-            * Fitted model attributes ending in "_".
-            * ``self.cutoff``, ``self.is_fitted``
-
-        Writes to self:
-            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
-            previously.
-
-        Parameters
-        ----------
-        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
-            The forecasting horizon encoding the time stamps to forecast at.
-            Should not be passed if has already been passed in ``fit``.
-            If has not been passed in fit, must be passed, not optional
-
-        X : time series in ``sktime`` compatible format, optional (default=None)
-            Exogenous time series. Ignored; ``capability:exogenous`` is ``False``.
-
-        y : time series in ``sktime`` compatible format, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed via ``fit_predict``,
-            reloading context from ``y`` before forecasting.
-            Only pass the historical values, not the time points to be predicted.
-
-        Returns
-        -------
-        y_pred : time series in sktime compatible data container format
-            Point forecasts at ``fh``, with same index as ``fh``.
-            ``y_pred`` has same type as the ``y`` that has been passed most recently:
-            ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
-
-        Notes
-        -----
-        If ``y`` is not None, global forecast will be performed: the estimator refits
-        on the extended history in ``y``, then predicts at ``fh``.
-
-        If ``y`` is None, non-global forecast will be performed using the series seen
-        in ``fit``.
-        """
-        if y is not None:
-            _fh = fh if self._fh is None and fh is not None else self._fh
-            return self.fit_predict(fh=_fh, X=X, y=y)
-        return super().predict(fh=fh, X=X)
 
     def _predict(self, fh, X=None):
         if self.model is None:
