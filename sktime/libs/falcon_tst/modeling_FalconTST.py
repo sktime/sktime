@@ -3,7 +3,7 @@
 import math
 from functools import reduce
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 # import transformer_engine as te
 from .configuration_FalconTST import FalconTSTConfig
