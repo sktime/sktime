@@ -22,13 +22,11 @@ class AuroraForecaster(BaseForecaster):
     """Zero-shot forecaster wrapping Aurora via the ``aurora-model`` package.
 
     Aurora is a multimodal time series foundation model supporting generative
-    probabilistic forecasting. Besides univariate and multivariate series, it
-    can optionally condition on free-text domain context and (advanced) vision
-    inputs. Text is not passed as exogenous time series ``X``; use the
-    dedicated ``text`` parameter instead.
+    probabilistic forecasting. Besides multivariate support, it can optionally
+    condition on free-text domain context and vision inputs.
 
     Inference follows the official ``aurora-model`` API [2]_ and Hugging Face
-    model card [1]_.
+    model card [1]_ examples.
 
     Parameters
     ----------
@@ -46,8 +44,8 @@ class AuroraForecaster(BaseForecaster):
         Number of trailing history steps passed to the model. If ``None``, uses
         the full series seen at predict time.
     inference_token_len : int, default=48
-        Patch length for inference. The authors recommend using the series
-        period length when known.
+        Patch length for inference. Using the series period length when known
+        is recommended.
     num_samples : int, default=100
         Number of stochastic forecast trajectories from flow matching. Point
         forecasts use the sample mean. Quantile forecasts require
@@ -96,10 +94,10 @@ class AuroraForecaster(BaseForecaster):
         "authors": [
             "Faakhir30",
             # Aurora authors:
-            "Xingjian Wu",
+            "ccloud0525",
+            "PengChen12",
             "Jianxin Jin",
             "Wanghui Qiu",
-            "Peng Chen",
             "Yang Shu",
             "Bin Yang",
             "Chenjuan Guo",
@@ -123,7 +121,6 @@ class AuroraForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "requires-fh-in-fit": False,
         "property:randomness": "stochastic",
         "tests:vm": True,
@@ -175,6 +172,7 @@ class AuroraForecaster(BaseForecaster):
             {} if self.generate_kwargs is None else self.generate_kwargs.copy()
         )
         self._device = _resolve_device(self.device)
+        self._context = None
 
     def _get_unique_model_key(self):
         key_items = {
@@ -213,18 +211,10 @@ class AuroraForecaster(BaseForecaster):
         """
         self.model = self._load_model()
         self.model.eval()
+        self._context = _as_dataframe(y)
+        if self.context_length is not None and len(self._context) > self.context_length:
+            self._context = self._context.iloc[-self.context_length :]
         return self
-
-    def predict(self, fh=None, X=None, y=None):
-        """Forecast time series at future horizon.
-
-        If ``y`` is not None, global forecast will be performed via
-        ``fit_predict`` using the extended history in ``y``.
-        """
-        if y is not None:
-            _fh = fh if self._fh is None and fh is not None else self._fh
-            return self.fit_predict(fh=_fh, X=X, y=y)
-        return super().predict(fh=fh, X=X)
 
     def _predict(self, fh, X=None):
         if self.model is None:
@@ -237,8 +227,7 @@ class AuroraForecaster(BaseForecaster):
         pred_len = int(np.max(fh_rel.to_numpy()))
 
         inputs, n_vars, columns = _prepare_context(
-            y=self._y,
-            context_length=self.context_length,
+            y=self._context,
             device=self._device,
         )
         text_kwargs = _prepare_text_kwargs(
@@ -265,12 +254,14 @@ class AuroraForecaster(BaseForecaster):
             output = self.model.generate(**generate_kwargs)
 
         point = output.mean(dim=1).detach().cpu().numpy()
-        rel_idx = (fh_rel.to_numpy() - 1).astype(int)
-        values = point[:, rel_idx]
-
+        values = point[:, (fh_rel.to_numpy() - 1).astype(int)].T
         index = fh.to_absolute(self._cutoff)._values
         pred_df = pd.DataFrame(values, index=index, columns=columns)
-        pred_df.index.names = self._y.index.names
+        pred_df.index.names = self._context.index.names
+        if len(columns) == 1:
+            series = pred_df.iloc[:, 0]
+            series.name = columns[0]
+            return series
         return pred_df
 
     def _predict_quantiles(self, fh, X, alpha):
@@ -290,8 +281,7 @@ class AuroraForecaster(BaseForecaster):
         pred_len = int(np.max(fh_rel.to_numpy()))
 
         inputs, n_vars, columns = _prepare_context(
-            y=self._y,
-            context_length=self.context_length,
+            y=self._context,
             device=self._device,
         )
         text_kwargs = _prepare_text_kwargs(
@@ -320,10 +310,10 @@ class AuroraForecaster(BaseForecaster):
         samples = output.detach().cpu().numpy()
         rel_idx = (fh_rel.to_numpy() - 1).astype(int)
         alpha = [float(a) for a in alpha]
+        index = fh.to_absolute(self._cutoff)._values
 
         if n_vars == 1:
             qvals = np.quantile(samples[0, :, rel_idx], alpha, axis=0).T
-            index = fh.to_absolute(self._cutoff)._values
             name = columns[0]
             return pd.DataFrame(
                 qvals,
@@ -332,7 +322,6 @@ class AuroraForecaster(BaseForecaster):
             )
 
         frames = []
-        index = fh.to_absolute(self._cutoff)._values
         for var_idx, col in enumerate(columns):
             qvals = np.quantile(samples[var_idx, :, rel_idx], alpha, axis=0).T
             frames.append(
@@ -380,6 +369,12 @@ class _CachedAurora:
         return self.model
 
 
+def _as_dataframe(y):
+    if isinstance(y, pd.Series):
+        return y.to_frame()
+    return y
+
+
 def _resolve_device(device):
     if device is not None:
         return device
@@ -391,13 +386,7 @@ def _resolve_device(device):
     return "cpu"
 
 
-def _as_dataframe(y):
-    if isinstance(y, pd.Series):
-        return y.to_frame()
-    return y
-
-
-def _prepare_context(y, context_length, device):
+def _prepare_context(y, device):
     """Build model inputs and metadata from ``y``.
 
     Returns
@@ -411,9 +400,6 @@ def _prepare_context(y, context_length, device):
         Column names from ``y``.
     """
     df = _as_dataframe(y)
-    if context_length is not None and len(df) > context_length:
-        df = df.iloc[-context_length:]
-
     columns = list(df.columns)
     n_vars = len(columns)
     values = df.to_numpy(dtype=np.float32)
