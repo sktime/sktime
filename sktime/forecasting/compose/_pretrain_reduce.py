@@ -384,8 +384,8 @@ class ReductionForecaster(BaseForecaster):
     """Global reduction forecaster with pretrainable direct heads.
 
     The forecaster trains one sklearn-style regressor per horizon step up to
-    ``steps_ahead``. Forecasts beyond that range are produced recursively with
-    the one-step head.
+    ``steps_ahead``. Forecasts beyond that range are produced recursively in
+    blocks of ``steps_ahead``, reusing the direct heads for each block.
     """
 
     _tags = {
@@ -511,32 +511,26 @@ class ReductionForecaster(BaseForecaster):
         return normalizer.inverse_transform(y_pred, lags)
 
     def _predict_all_steps(self, horizon, X=None):
-        """Predict all relative steps from 1 to horizon."""
+        """Predict all relative steps from 1 to horizon in direct-recursive blocks."""
         direct_estimators = self.direct_estimators_
-        normal_window = self.last_window_.copy()
+        rolling_window = self.last_window_.copy()
         preds = np.zeros(horizon, dtype=float)
         X_block = X
 
-        direct_horizon = min(self.steps_ahead, horizon)
-        for step in range(1, direct_horizon + 1):
-            X_row = None if X_block is None else X_block[step - 1]
-            row = self._make_prediction_row(normal_window, X_row=X_row)
-            yhat = direct_estimators[step - 1].predict(row)[0]
-            preds[step - 1] = self._invert_prediction(yhat, normal_window)
+        for block_start in range(0, horizon, self.steps_ahead):
+            block_window = rolling_window.copy()
+            block_size = min(self.steps_ahead, horizon - block_start)
 
-        rolling_window = self.last_window_.copy()
-        for step in range(1, direct_horizon + 1):
-            rolling_window = np.roll(rolling_window, -1)
-            rolling_window[-1] = preds[step - 1]
+            for block_offset in range(block_size):
+                step = block_start + block_offset
+                X_row = None if X_block is None else X_block[step]
+                row = self._make_prediction_row(block_window, X_row=X_row)
+                yhat = direct_estimators[block_offset].predict(row)[0]
+                preds[step] = self._invert_prediction(yhat, block_window)
 
-        for step in range(self.steps_ahead + 1, horizon + 1):
-            X_row = None if X_block is None else X_block[step - 1]
-            row = self._make_prediction_row(rolling_window, X_row=X_row)
-            yhat = self.one_step_estimator_.predict(row)[0]
-            yhat = self._invert_prediction(yhat, rolling_window)
-            preds[step - 1] = yhat
-            rolling_window = np.roll(rolling_window, -1)
-            rolling_window[-1] = yhat
+            for yhat in preds[block_start : block_start + block_size]:
+                rolling_window = np.roll(rolling_window, -1)
+                rolling_window[-1] = yhat
 
         return preds
 

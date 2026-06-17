@@ -575,15 +575,15 @@ def test_predict_returns_relative_horizon_index_after_pretrain_and_fit():
     assert list(y_pred.values) == [1.5, 1.5, 1.5]
 
 
-def test_prediction_uses_direct_heads_then_one_step_recursive_head():
-    """Steps up to K use direct heads; later steps use the one-step head."""
+def test_prediction_reuses_direct_heads_in_recursive_blocks():
+    """Forecasts beyond K reuse all direct heads in recursive blocks."""
     y = pd.Series(np.arange(8, dtype=float), index=pd.RangeIndex(8), name="y")
     forecaster = ReductionForecaster(
         estimator=RecordingRegressor(),
         window_length=3,
         steps_ahead=2,
     )
-    forecaster.fit(y, fh=[1, 2, 3, 4])
+    forecaster.fit(y, fh=[1, 2, 3, 4, 5])
 
     forecaster.direct_estimators_[0].constant = 10.0
     forecaster.direct_estimators_[0].label = "one"
@@ -593,11 +593,12 @@ def test_prediction_uses_direct_heads_then_one_step_recursive_head():
     RecordingRegressor.predict_log = []
     y_pred = forecaster.predict()
 
-    assert list(y_pred.values) == [10.0, 20.0, 10.0, 10.0]
+    assert list(y_pred.values) == [10.0, 20.0, 10.0, 20.0, 10.0]
     assert [entry[0] for entry in RecordingRegressor.predict_log] == [
         "one",
         "two",
         "one",
+        "two",
         "one",
     ]
     logged_rows = [
@@ -607,7 +608,8 @@ def test_prediction_uses_direct_heads_then_one_step_recursive_head():
         [5.0, 6.0, 7.0],
         [5.0, 6.0, 7.0],
         [7.0, 10.0, 20.0],
-        [10.0, 20.0, 10.0],
+        [7.0, 10.0, 20.0],
+        [20.0, 10.0, 20.0],
     ]
 
 
@@ -651,6 +653,104 @@ def test_predict_appends_future_exogenous_rows():
     assert first_row.shape[1] == 4
     assert first_row[0, -1] == 1000.0
     assert second_row[0, -1] == 1001.0
+
+
+def test_block_recursive_prediction_aligns_future_X_by_absolute_step():
+    """Recursive blocks use the matching future X row for each horizon step."""
+    forecaster = ReductionForecaster(
+        estimator=RecordingRegressor(),
+        window_length=3,
+        steps_ahead=2,
+    )
+    forecaster.pretrain(_panel_series(), X=_panel_X())
+
+    y = pd.Series(np.arange(8, dtype=float), index=pd.RangeIndex(8), name="y")
+    X_fit = pd.DataFrame({"x": np.arange(8, dtype=float)}, index=y.index)
+    X_pred = pd.DataFrame(
+        {"x": [1000.0, 1001.0, 1002.0, 1003.0, 1004.0]},
+        index=pd.RangeIndex(8, 13),
+    )
+    forecaster.fit(y, X=X_fit, fh=[1, 2, 3, 4, 5])
+
+    forecaster.direct_estimators_[0].constant = 10.0
+    forecaster.direct_estimators_[0].label = "one"
+    forecaster.direct_estimators_[1].constant = 20.0
+    forecaster.direct_estimators_[1].label = "two"
+
+    RecordingRegressor.predict_log = []
+    forecaster.predict(X=X_pred)
+
+    assert [entry[0] for entry in RecordingRegressor.predict_log] == [
+        "one",
+        "two",
+        "one",
+        "two",
+        "one",
+    ]
+    logged_rows = [
+        entry[2].ravel().tolist() for entry in RecordingRegressor.predict_log
+    ]
+    assert logged_rows == [
+        [5.0, 6.0, 7.0, 1000.0],
+        [5.0, 6.0, 7.0, 1001.0],
+        [7.0, 10.0, 20.0, 1002.0],
+        [7.0, 10.0, 20.0, 1003.0],
+        [20.0, 10.0, 20.0, 1004.0],
+    ]
+
+
+def test_block_recursive_prediction_normalizes_each_block_context_not_X():
+    """Later block heads share normalized block-start lags and raw future X."""
+    forecaster = ReductionForecaster(
+        estimator=RecordingRegressor(),
+        window_length=3,
+        steps_ahead=2,
+        normalization_strategy=SubtractMeanNormalizer(),
+    )
+    forecaster.pretrain(_panel_series(), X=_panel_X())
+
+    y = pd.Series(np.arange(8, dtype=float), index=pd.RangeIndex(8), name="y")
+    X_fit = pd.DataFrame({"x": np.arange(8, dtype=float)}, index=y.index)
+    X_pred = pd.DataFrame(
+        {"x": [1000.0, 1001.0, 1002.0, 1003.0]},
+        index=pd.RangeIndex(8, 12),
+    )
+    forecaster.fit(y, X=X_fit, fh=[1, 2, 3, 4])
+
+    forecaster.direct_estimators_[0].constant = 10.0
+    forecaster.direct_estimators_[0].label = "one"
+    forecaster.direct_estimators_[1].constant = 20.0
+    forecaster.direct_estimators_[1].label = "two"
+
+    RecordingRegressor.predict_log = []
+    y_pred = forecaster.predict(X=X_pred)
+
+    np.testing.assert_allclose(
+        y_pred.to_numpy(),
+        np.array([16.0, 26.0, 26.333333333333332, 36.33333333333333]),
+    )
+    logged_rows = [entry[2].ravel() for entry in RecordingRegressor.predict_log]
+    np.testing.assert_allclose(
+        logged_rows,
+        np.array(
+            [
+                [-1.0, 0.0, 1.0, 1000.0],
+                [-1.0, 0.0, 1.0, 1001.0],
+                [
+                    -9.333333333333332,
+                    -0.33333333333333215,
+                    9.666666666666668,
+                    1002.0,
+                ],
+                [
+                    -9.333333333333332,
+                    -0.33333333333333215,
+                    9.666666666666668,
+                    1003.0,
+                ],
+            ]
+        ),
+    )
 
 
 def test_fit_rejects_new_X_when_pretrained_without_X():
