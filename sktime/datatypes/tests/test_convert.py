@@ -4,13 +4,14 @@ __author__ = ["fkiraly"]
 
 import pytest
 
-from sktime.datatypes import SCITYPE_REGISTER, scitype_to_mtype
+from sktime.datatypes import scitype_to_mtype
 from sktime.datatypes._convert import _conversions_defined, convert
 from sktime.datatypes._examples import get_examples
+from sktime.datatypes._registry import generate_scitype_list
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
 
-SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
+SCITYPES = generate_scitype_list()
 
 # scitypes which have no conversions defined
 # should be listed here to avoid false positive test errors
