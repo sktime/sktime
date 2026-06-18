@@ -22,14 +22,14 @@ class FlowLoss(nn.Module):
 
     def forward(self, target, z, mask=None, mask_y=None):
         noise = torch.randn_like(target)
-        t = torch.rand(target.shape[0], device=target.device)
+        t = torch.rand(target.shape[0], device=target.device, dtype=target.dtype)
 
         noised_target = t[:, None] * target + (1 - t[:, None]) * noise
 
         predict_v = self.net(noised_target, t * 1000, z)
 
         weights = 1.0 / torch.arange(
-            1, self.in_channels + 1, dtype=torch.float32, device=target.device
+            1, self.in_channels + 1, dtype=target.dtype, device=target.device
         )
         if mask_y is not None:
             loss = (mask_y * weights * (predict_v - target) ** 2).sum(dim=-1)

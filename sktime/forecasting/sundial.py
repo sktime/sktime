@@ -161,7 +161,7 @@ class SundialForecaster(BaseForecaster):
         "capability:pretrain": True,
         "authors": ["WenWeiTHU", "geetu040"],
         "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers[torch]~=4.40.0"],
+        "python_dependencies": ["torch", "transformers~=4.40.0"],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.sundial"],
     }
@@ -240,6 +240,7 @@ class SundialForecaster(BaseForecaster):
             input_token_len=input_token_len,
             output_token_len=output_token_len,
             horizon_length=horizon_length,
+            dtype=self.model_.dtype,
         )
 
         training_args = (
@@ -374,6 +375,8 @@ class SundialForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
+        from skbase.utils.dependencies import _check_soft_dependencies
+
         config = {
             "input_token_len": 2,
             "hidden_size": 4,
@@ -387,32 +390,46 @@ class SundialForecaster(BaseForecaster):
             "diffusion_batch_mul": 1,
             "use_cache": False,
         }
-        return [
-            {
-                "model_path": None,
-                "config": config,
-                "device_map": "cpu",
-                "forward_kwargs": {"num_samples": 2, "revin": True},
-                "deterministic": True,
-                "validation_split": 0.1,
-                "training_args": {
-                    "output_dir": "test_output",
-                    "max_steps": 1,
-                },
+
+        common_params = {
+            "model_path": None,
+            "config": config,
+            "deterministic": True,
+            "validation_split": 0.1,
+            "training_args": {
+                "output_dir": "test_output",
+                "max_steps": 1,
             },
-            {
-                "model_path": None,
-                "config": config,
-                "device_map": None,
-                "forward_kwargs": {"num_samples": 3, "revin": False},
-                "deterministic": True,
-                "validation_split": 0.1,
-                "training_args": {
-                    "output_dir": "test_output",
-                    "max_steps": 1,
-                },
-            },
+        }
+
+        def _make_test_params(**kwargs):
+            params = deepcopy(common_params)
+            params.update(kwargs)
+            return params
+
+        params = [
+            _make_test_params(
+                device_map="cpu",
+                forward_kwargs={"num_samples": 2, "revin": True},
+            ),
+            _make_test_params(
+                device_map=None,
+                forward_kwargs={"num_samples": 3, "revin": False},
+            ),
         ]
+
+        if _check_soft_dependencies("torch", severity="none"):
+            import torch
+
+            params.append(
+                _make_test_params(
+                    device_map="cpu",
+                    dtype=torch.bfloat16,
+                    forward_kwargs={"num_samples": 2, "revin": False},
+                )
+            )
+
+        return params
 
 
 @_multiton
@@ -545,10 +562,11 @@ class SundialPyTorchDataset:
 class SundialDataCollator:
     """Pad Sundial training series to a common batch shape."""
 
-    def __init__(self, input_token_len, output_token_len, horizon_length):
+    def __init__(self, input_token_len, output_token_len, horizon_length, dtype=None):
         self.input_token_len = input_token_len
         self.output_token_len = output_token_len
         self.horizon_length = horizon_length
+        self.dtype = dtype
 
     def __call__(self, features):
         """Collate variable-length series into Sundial training tensors."""
@@ -587,9 +605,15 @@ class SundialDataCollator:
         mask_y = torch.zeros(len(features), self.output_token_len, dtype=torch.float32)
         mask_y[:, : self.horizon_length] = 1.0
 
+        input_ids = torch.stack(input_ids)
+        labels = torch.stack(labels)
+        if self.dtype is not None:
+            input_ids = input_ids.to(dtype=self.dtype)
+            labels = labels.to(dtype=self.dtype)
+
         return {
-            "input_ids": torch.stack(input_ids),
-            "labels": torch.stack(labels),
+            "input_ids": input_ids,
+            "labels": labels,
             "loss_masks": torch.stack(loss_masks),
             "mask_y": mask_y,
         }
