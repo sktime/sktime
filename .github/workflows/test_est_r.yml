@@ -6,7 +6,7 @@ on:
         type: string
 
 jobs:
-  test-est:
+  test-est-r:
     strategy:
       fail-fast: false
       matrix:
