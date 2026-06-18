@@ -44,11 +44,6 @@ jobs:
         env:
           UV_SYSTEM_PYTHON: 1
 
-      - name: Install r2py
-        run: uv pip install "rpy2>=3.6,<3.7"
-        env:
-          UV_SYSTEM_PYTHON: 1
-
       - name: Install dependencies for ${{ matrix.flag }}
         run: |
           python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
@@ -102,6 +97,11 @@ jobs:
       - name: Check R version (macOS)
         if: ${{ matrix.os == 'macos-latest' }}
         run: Rscript -e "cat('R=',paste(unlist(getRversion()),collapse='.'),'\n')"
+
+      - name: Install r2py
+        run: uv pip install "rpy2>=3.6,<3.7"
+        env:
+          UV_SYSTEM_PYTHON: 1
 
       - name: Run tests with ${{ matrix.flag }}
         env:
