@@ -87,6 +87,12 @@ def _small_panel_X():
     return pd.DataFrame({"x0": x0, "x1": x1}, index=idx)
 
 
+def _small_multivariate_panel_series():
+    y = _small_panel_series()
+    y["z"] = y["y"] + 100.0
+    return y
+
+
 def _unequal_panel_series():
     short_idx = pd.MultiIndex.from_product(
         [["short"], pd.RangeIndex(6)], names=["id", "time"]
@@ -329,6 +335,24 @@ def test_pretrain_with_exogenous_variables_uses_X_in_direct_heads():
         forecaster.direct_estimators_[1].X_,
         expected_step_2_X,
     )
+
+
+def test_pretrain_pools_multivariate_panel_columns_as_univariate_series():
+    """Multivariate pretrain panels are split into pooled univariate series."""
+    forecaster = ReductionForecaster(
+        estimator=RecordingRegressor(),
+        window_length=3,
+        steps_ahead=2,
+    )
+
+    forecaster.pretrain(_small_multivariate_panel_series(), X=_small_panel_X())
+
+    assert forecaster.n_pretrain_instances_ == 4
+    assert forecaster.n_pretrain_timepoints_ == 24
+    assert [est.fit_shape_ for est in forecaster.direct_estimators_] == [
+        (12, 5),
+        (8, 5),
+    ]
 
 
 def test_pretrain_with_normalizer_instance_does_not_normalize_X():
@@ -629,6 +653,47 @@ def test_predict_preserves_single_column_dataframe_output():
     assert list(y_pred.columns) == ["target"]
     assert list(y_pred.index) == [8, 9]
     assert list(y_pred["target"]) == [2.0, 2.0]
+
+
+def test_vectorized_hierarchical_predict_slices_future_X_by_group():
+    """Vectorized hierarchical predict passes each clone its own future X rows."""
+    time = pd.period_range("2000-01", periods=7, freq="M")
+    train_index = pd.MultiIndex.from_product(
+        [["h0", "h1"], ["a", "b"], time[:5]],
+        names=["level_0", "level_1", "time"],
+    )
+    full_x_index = pd.MultiIndex.from_product(
+        [["h0", "h1"], ["a", "b"], time],
+        names=["level_0", "level_1", "time"],
+    )
+    pred_index = pd.MultiIndex.from_product(
+        [["h0", "h1"], ["a", "b"], time[5:]],
+        names=["level_0", "level_1", "time"],
+    )
+    y_train = pd.DataFrame(
+        {"y": np.arange(len(train_index), dtype=float)},
+        index=train_index,
+    )
+    X = pd.DataFrame(
+        {"x": np.arange(len(full_x_index), dtype=float)},
+        index=full_x_index,
+    )
+    forecaster = ReductionForecaster(
+        estimator=RecordingRegressor(constant=1.0),
+        window_length=3,
+        steps_ahead=2,
+    )
+
+    forecaster.fit(y_train, X=X.loc[train_index], fh=[1, 2])
+    RecordingRegressor.predict_log = []
+    y_pred = forecaster.predict(X=X.loc[pred_index])
+
+    assert y_pred.index.equals(pred_index)
+    logged_future_x = [entry[2][0, -1] for entry in RecordingRegressor.predict_log]
+    np.testing.assert_array_equal(
+        logged_future_x,
+        X.loc[pred_index, "x"].to_numpy(dtype=float),
+    )
 
 
 def test_predict_appends_future_exogenous_rows():

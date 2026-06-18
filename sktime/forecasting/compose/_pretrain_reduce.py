@@ -15,6 +15,7 @@ import pandas as pd
 from skbase.base import BaseObject
 from sklearn.base import clone
 
+from sktime.datatypes import VectorizedDF, check_is_scitype
 from sktime.forecasting.base._base import BaseForecaster
 
 
@@ -175,6 +176,46 @@ def _coerce_univariate_y(y):
     raise TypeError("ReductionForecaster expects y as a pandas Series or DataFrame.")
 
 
+def _coerce_pretrain_y(y):
+    """Return y as pooled univariate series for global pretraining."""
+    if isinstance(y, pd.Series):
+        return y.copy()
+    if not isinstance(y, pd.DataFrame):
+        raise TypeError(
+            "ReductionForecaster expects y as a pandas Series or DataFrame."
+        )
+    if y.shape[1] == 1:
+        return y.iloc[:, 0].rename(y.columns[0])
+
+    pieces = []
+    if isinstance(y.index, pd.MultiIndex):
+        id_arrays = [
+            y.index.get_level_values(level) for level in range(y.index.nlevels - 1)
+        ]
+        id_names = list(y.index.names[:-1])
+        time_values = y.index.get_level_values(-1)
+        time_name = y.index.names[-1]
+    else:
+        id_arrays = []
+        id_names = []
+        time_values = y.index
+        time_name = y.index.name
+
+    for column in y.columns:
+        y_col = y.loc[:, column].copy()
+        column_values = pd.Index(
+            np.repeat(str(column), len(y_col)),
+            name="__variable__",
+        )
+        y_col.index = pd.MultiIndex.from_arrays(
+            [*id_arrays, column_values, time_values],
+            names=[*id_names, "__variable__", time_name],
+        )
+        pieces.append(y_col)
+
+    return pd.concat(pieces)
+
+
 def _sort_time_index(y):
     """Sort a single series by time if needed."""
     if not y.index.is_monotonic_increasing:
@@ -208,12 +249,14 @@ def _coerce_group_X(X, ids):
         return None
     if isinstance(X.index, pd.MultiIndex):
         id_levels = list(range(X.index.nlevels - 1))
-        if len(ids) == 1:
-            key = ids[0]
-            level = id_levels[0]
+        x_ids = ids[: len(id_levels)]
+        x_levels = id_levels[: len(x_ids)]
+        if len(x_ids) == 1:
+            key = x_ids[0]
+            level = x_levels[0]
         else:
-            key = ids
-            level = id_levels
+            key = x_ids
+            level = x_levels
         X = X.xs(key, level=level)
     if not X.index.is_monotonic_increasing:
         X = X.sort_index()
@@ -394,6 +437,7 @@ class ReductionForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:missing_values": False,
+        "capability:non_contiguous_X": False,
         "enforce_index_type": None,
         "requires-fh-in-fit": False,
         "scitype:y": "univariate",
@@ -451,7 +495,7 @@ class ReductionForecaster(BaseForecaster):
 
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain direct heads on panel or hierarchical data."""
-        y, _, _ = _coerce_univariate_y(y)
+        y = _coerce_pretrain_y(y)
         self._fit_heads(y, X=X)
         self.heads_source_ = "pretrain"
         self.n_pretrain_instances_ = _n_instances(y)
@@ -490,6 +534,34 @@ class ReductionForecaster(BaseForecaster):
         self.y_was_dataframe_ = y_was_dataframe
         self.y_name_ = y_name
         return self
+
+    def _check_X(self, X=None):
+        """Check X, preserving vectorized row alignment at predict time."""
+        X_inner = super()._check_X(X)
+
+        if X_inner is None or isinstance(X_inner, VectorizedDF):
+            return X_inner
+
+        yvec = getattr(self, "_yvec", None)
+        if not getattr(self, "_is_vectorized", False) or not isinstance(
+            yvec, VectorizedDF
+        ):
+            return X_inner
+
+        valid, _, metadata = check_is_scitype(
+            X_inner,
+            scitype=["Series", "Panel", "Hierarchical"],
+            return_metadata=["scitype"],
+            var_name="X",
+        )
+        if not valid or metadata["scitype"] == "Series":
+            return X_inner
+
+        return VectorizedDF(
+            X=X_inner,
+            iterate_as=yvec.iterate_as,
+            is_scitype=metadata["scitype"],
+        )
 
     def _make_prediction_row(self, lags, X_row=None):
         """Make a single regressor row from lags and optional exogenous values."""
