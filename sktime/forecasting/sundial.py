@@ -19,10 +19,10 @@ from sktime.utils.singleton import _multiton
 class SundialForecaster(BaseForecaster):
     """Sundial zero-shot forecaster via Hugging Face ``transformers``.
 
-    This forecaster wraps Sundial [1]_, [2]_ and exposes zero-shot forecasting
-    through the ``sktime`` forecasting interface. Calling :meth:`fit` loads the
-    model and stores the observed series as forecasting context; it does not
-    train or fine-tune model weights.
+    This forecaster wraps Sundial [1]_, [2]_, [3]_ and exposes zero-shot
+    forecasting through the ``sktime`` forecasting interface. Calling
+    :meth:`fit` loads the model and stores the observed series as forecasting
+    context; it does not train or fine-tune model weights.
 
     Sundial generates one or more sample paths. Point forecasts are computed as
     the empirical mean over generated samples. Quantile forecasts are computed
@@ -55,9 +55,11 @@ class SundialForecaster(BaseForecaster):
 
     References
     ----------
-    .. [1] Sundial repository:
+    .. [1] Sundial: A Family of Highly Capable Time Series Foundation Models:
+       https://arxiv.org/abs/2502.00816
+    .. [2] Sundial repository:
        https://github.com/thuml/Sundial
-    .. [2] Sundial model card:
+    .. [3] Sundial model card:
        https://huggingface.co/thuml/sundial-base-128m
 
     Examples
