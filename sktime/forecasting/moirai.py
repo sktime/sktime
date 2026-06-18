@@ -92,6 +92,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "hf-xet",
             "lightning",
             "hydra-core",
+            "safetensors",
         ],
         # estimator type
         # --------------
