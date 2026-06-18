@@ -327,6 +327,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
 
     Examples
     --------
@@ -420,8 +422,10 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
         random_log_path: bool = False,
+        deterministic: bool = False,
         broadcasting: bool = False,
     ) -> None:
+        self.deterministic = deterministic
         super().__init__(
             model_params,
             dataset_params,
@@ -513,6 +517,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -533,6 +538,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
         else:
@@ -564,6 +570,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -586,6 +593,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
 
@@ -901,6 +909,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
 
     Examples
     --------
@@ -996,8 +1006,10 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
         random_log_path: bool = False,
+        deterministic: bool = False,
         broadcasting: bool = False,
     ) -> None:
+        self.deterministic = deterministic
         super().__init__(
             model_params,
             dataset_params,
@@ -1025,13 +1037,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         dict
             keyword arguments for the underlying algorithm class
         """
-        # change default loss to QuantileLoss
-        # so that it can perform quantile forecast
-        from pytorch_forecasting import QuantileLoss
-
-        if "loss" not in self._model_params.keys():
-            self._model_params["loss"] = QuantileLoss()
-
         if "n_blocks" in self._model_params.keys():
             stacks = len(self._model_params["n_blocks"])
         else:
@@ -1084,6 +1089,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -1105,6 +1111,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
         else:
@@ -1136,6 +1143,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -1158,6 +1166,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
 
