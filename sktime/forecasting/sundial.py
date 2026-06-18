@@ -1,8 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Sundial forecaster for ``sktime``."""
 
-__author__ = ["thuml", "geetu040"]
-# THUML for thuml/sundial-base-128m
+__author__ = ["WenWeiTHU", "geetu040"]
+# WenWeiTHU for thuml/sundial-base-128m
 
 __all__ = ["SundialForecaster"]
 
@@ -106,7 +106,7 @@ class SundialForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:insample": False,
         "capability:pred_int": True,
-        "authors": ["thuml", "geetu040"],
+        "authors": ["WenWeiTHU", "geetu040"],
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers[torch]>=4.40.1,<5.0.0"],
         "tests:vm": True,
