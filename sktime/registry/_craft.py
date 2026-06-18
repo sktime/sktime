@@ -305,7 +305,7 @@ def _r_deps(spec, include_test_deps=False):
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
-        i.e., a string that executes to construct an object if all R 
+        i.e., a string that executes to construct an object if all R
         dependencies were present.
         dependencies inferred are of any classes in the scope of ``all_estimators``
 
