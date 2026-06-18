@@ -4,9 +4,9 @@
 __author__ = ["fkiraly"]
 
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.registry._craft import craft, deps, imports
-from sktime.utils.dependencies import _check_soft_dependencies
 
 simple_spec = "NaiveForecaster()"
 simple_spec_with_dep = "VAR(trend='ct')"
@@ -120,7 +120,7 @@ def test_imports():
         "CV\nfrom sktime.forecasting.naive import NaiveForecaster\nfrom sktime.fore"
         "casting.naive import NaiveForecaster\nfrom sktime.forecasting.theta impor"
         "t ThetaForecaster\nfrom sktime.split.expandingwindow import "
-        "ExpandingWindowSplitter\nfrom sktime.transformations.series.impute import "
+        "ExpandingWindowSplitter\nfrom sktime.transformations.impute import "
         "Imputer"
     )
     assert imports(pipe_spec_with_deps) == pipe_imports
