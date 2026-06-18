@@ -311,10 +311,10 @@ def _dataset_to_mtype(dataset_name, obj):
 
 def _process_dataset(dataset_name, temp_folder=None, robust=True):
     if dataset_name in fpp3:
-        datafile = "fpp3_1.0.2.tar.gz"
+        datafile = "fpp3_1.0.3.tar.gz"
         archivedir = "fpp3"
     elif dataset_name in tsibble:
-        datafile = "tsibble_1.1.6.tar.gz"
+        datafile = "tsibble_1.2.0.tar.gz"
         archivedir = "tsibble"
     elif dataset_name in tsibbledata:
         datafile = "tsibbledata_0.4.1.tar.gz"
@@ -355,7 +355,7 @@ def _load_fpp3(dataset, temp_folder=None, robust=True):
     The public function is robust (robust=True) and will use the non-latest version,
     protecting users from failures.
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies(["requests", "rdata"])
 

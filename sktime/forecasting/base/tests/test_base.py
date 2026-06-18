@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
@@ -23,7 +24,6 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
@@ -172,7 +172,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     elif method in ["predict_var"]:
         expected_mtype = "pd-multiindex"
     else:
-        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+        raise RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
     valid, _, _ = check_is_mtype(
         y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
@@ -212,7 +212,7 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     elif method in ["predict_var"]:
         expected_mtype = "pd_multiindex_hier"
     else:
-        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+        raise RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
     valid, _, _ = check_is_mtype(
         y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"

@@ -175,6 +175,10 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """,
     }
 
+    def __init__(self):
+        super().__init__()
+        self.__dynamic_tags__()
+
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
@@ -192,6 +196,13 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         other_params = other.get_params(deep=False)
 
         return deep_equals(self_params, other_params)
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        pass
 
     @classmethod
     def _get_set_config_doc(cls):
@@ -279,7 +290,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         from pathlib import Path
         from zipfile import ZipFile
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if serialization_format not in SERIALIZATION_FORMATS:
             raise ValueError(
@@ -416,9 +427,9 @@ class TagAliaserMixin(_TagAliaserMixin):
         "scitype:y": "capability:multivariate",
     }
     deprecate_dict = {
-        "handles-missing-data": "1.0.0",
-        "ignores-exogeneous-X": "1.0.0",
-        "univariate-only": "1.0.0",
+        "handles-missing-data": "1.1.0",
+        "ignores-exogeneous-X": "1.1.0",
+        "univariate-only": "1.1.0",
         "scitype:y": "1.1.0",
     }
 
@@ -492,7 +503,7 @@ class TagAliaserMixin(_TagAliaserMixin):
             # then: return value of old tag
             if old_tag_present:
                 # negate if new tag was queried and tag is in FLIPPED_TAGS
-                # todo 1.0.0 - remove this special case
+                # todo 1.1.0 - remove this special case
                 if new_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
                     return not old_tag_val
                 # todo 1.1.0 - remove this special case
@@ -517,7 +528,7 @@ class TagAliaserMixin(_TagAliaserMixin):
                     tag_value_default,
                     flag_attr_name="_tags",
                 )
-                # todo 1.0.0 - remove this special case
+                # todo 1.1.0 - remove this special case
                 if old_tag_queried and old_tag_name in cls.FLIPPED_TAGS:
                     return not new_tag_value
                 # todo 1.1.0 - remove this special case
@@ -612,7 +623,7 @@ class TagAliaserMixin(_TagAliaserMixin):
             # then: return value of old tag
             if old_tag_present:
                 # negate if new tag was queried and tag is in FLIPPED_TAGS
-                # todo 1.0.0 - remove this special case
+                # todo 1.1.0 - remove this special case
                 if new_tag_queried and old_tag_name in self.FLIPPED_TAGS:
                     return not old_tag_val
                 # todo 1.1.0 - remove this special case
@@ -638,7 +649,7 @@ class TagAliaserMixin(_TagAliaserMixin):
                     raise_error=False,
                     flag_attr_name="_tags",
                 )
-                # todo 1.0.0 - remove this special case
+                # todo 1.1.0 - remove this special case
                 if old_tag_queried and old_tag_name in self.FLIPPED_TAGS:
                     return not new_tag_value
                 if old_tag_queried and old_tag_name == "scitype:y":
@@ -751,7 +762,7 @@ class TagAliaserMixin(_TagAliaserMixin):
         alias_dict = cls.alias_dict
         new_tag = alias_dict[old_tag]
 
-        # todo 1.0.0 - remove this special case
+        # todo 1.1.0 - remove this special case
         # special treatment for tags that get boolean flipped:
         # "ignores-exogeneous-X", "univariate-only"
         # the new tag is the negation of the old tag
