@@ -681,6 +681,14 @@ Pre-trained and foundation models
 
     PatchTSTForecaster
 
+.. currentmodule:: sktime.forecasting.sundial
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SundialForecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
