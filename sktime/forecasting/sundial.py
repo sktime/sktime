@@ -392,19 +392,7 @@ class SundialForecaster(BaseForecaster):
                 "model_path": None,
                 "config": config,
                 "device_map": "cpu",
-                "forward_kwargs": {"num_samples": 2},
-                "deterministic": True,
-                "validation_split": 0.1,
-                "training_args": {
-                    "output_dir": "test_output",
-                    "max_steps": 1,
-                },
-            },
-            {
-                "model_path": None,
-                "config": config,
-                "device_map": "cpu",
-                "forward_kwargs": {"num_samples": 3, "revin": False},
+                "forward_kwargs": {"num_samples": 2, "revin": True},
                 "deterministic": True,
                 "validation_split": 0.1,
                 "training_args": {
@@ -416,7 +404,7 @@ class SundialForecaster(BaseForecaster):
                 "model_path": None,
                 "config": config,
                 "device_map": None,
-                "forward_kwargs": {"num_samples": 1, "revin": True},
+                "forward_kwargs": {"num_samples": 3, "revin": False},
                 "deterministic": True,
                 "validation_split": 0.1,
                 "training_args": {
