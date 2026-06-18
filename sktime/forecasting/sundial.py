@@ -75,14 +75,14 @@ class SundialForecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Loading the checkpoint from a local Hugging Face repository:
+    Passing generation options through ``forward_kwargs``:
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.sundial import SundialForecaster
     >>> y = load_airline()
     >>> forecaster = SundialForecaster(  # doctest: +SKIP
-    ...     model_path="../hf-repos/sundial-base-128m",
     ...     num_samples=20,
+    ...     forward_kwargs={"revin": False},
     ... )
     >>> y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])  # doctest: +SKIP
 
