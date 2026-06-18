@@ -283,14 +283,27 @@ jobs:
 
   test-est:
     needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
-    if: ${{ needs.detect-changed-classes.outputs.obj_list != '[]' }}
+    if: ${{ needs.detect-changed-classes.outputs.vm_chunks != '[]' }}
 
     strategy:
       fail-fast: false
       matrix:
-        chunk: ${{ fromJson(needs.prepare-chunks.outputs.obj_chunks) }}
+        chunk: ${{ fromJson(needs.prepare-chunks.outputs.vm_chunks) }}
 
     uses: ./.github/workflows/test_est.yml
+    with:
+      flags: ${{ toJson(matrix.chunk) }}
+
+  test-est-r:
+    needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
+    if: ${{ needs.detect-changed-classes.outputs.r_vm_chunks != '[]' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare-chunks.outputs.r_vm_chunks) }}
+
+    uses: ./.github/workflows/test_est_r.yml
     with:
       flags: ${{ toJson(matrix.chunk) }}
 
