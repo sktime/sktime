@@ -3,12 +3,12 @@
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "priyanshuharshbodhi1"]
 
 
-class Moirai2Forecaster(_BaseGlobalForecaster):
+class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     Adapter for using MOIRAI 2.0 Forecasters.
 
@@ -46,7 +46,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.moirai2_forecaster import Moirai2Forecaster
+    >>> from sktime.forecasting.moirai2 import Moirai2Forecaster
     >>> import pandas as pd
     >>> import numpy as np
     >>> forecaster = Moirai2Forecaster(  # doctest: +SKIP
@@ -108,6 +108,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.uni2ts"],
     }
 
     def __init__(
@@ -122,7 +123,6 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         batch_size=32,
         use_source_package=False,
     ):
-        super().__init__()
         self.checkpoint_path = checkpoint_path
         self.context_length = context_length
         self.num_feat_dynamic_real = num_feat_dynamic_real
@@ -132,7 +132,13 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         self.broadcasting = broadcasting
         self.batch_size = batch_size
         self.use_source_package = use_source_package
+        super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.broadcasting:
             self.set_tags(
                 **{
@@ -149,7 +155,25 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         import sktime.libs.uni2ts as _uni2ts_mod
 
         sys.modules.setdefault("uni2ts", _uni2ts_mod)
+        # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch when
+        # hf_xet was compiled for an older CPython than the current runtime).
+        # huggingface_hub reads HF_HUB_DISABLE_XET from constants.py at
+        # import time, and file_download.py accesses it as
+        # `constants.HF_HUB_DISABLE_XET` at call time. We must therefore
+        # patch huggingface_hub.constants directly (not file_download) so
+        # that _download_to_tmp_and_move skips xet_get for this session.
+        import os
+
         from sktime.libs.uni2ts.moirai2_forecast import Moirai2Forecast
+
+        try:
+            import hf_xet  # noqa: F401
+        except Exception:
+            os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+            if _check_soft_dependencies("huggingface_hub", severity="none"):
+                import huggingface_hub.constants as _hf_constants
+
+                _hf_constants.HF_HUB_DISABLE_XET = True
 
         if self.checkpoint_path.startswith("Salesforce"):
             from sktime.libs.uni2ts.moirai2_module import Moirai2Module
@@ -214,7 +238,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
-    def _predict(self, fh, y=None, X=None):
+    def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
@@ -231,13 +255,11 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
         if self._X is not None:
             _X = self._X.copy()
 
-        _use_fit_data_as_context = False
-        if X is not None and y is None:
-            _use_fit_data_as_context = True
-        elif y is not None:
-            _y = y.copy()
-            if X is not None:
-                _X = X.copy()
+        # Zero shot case with X and fit data as context.
+        # The _GlobalForecastingDeprecationMixin handles the legacy y parameter
+        # by temporarily swapping self._y before calling _predict, so here we
+        # only need to detect whether predict-time X was supplied.
+        _use_fit_data_as_context = X is not None
 
         if isinstance(_y, pd.Series):
             target = [_y.name]
