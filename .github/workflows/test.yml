@@ -191,8 +191,8 @@ jobs:
           VM_CHANGED_CLASSES=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes(vm=True)))')
           VM_CHANGED_CLASSES_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; print(len(_get_all_changed_classes(vm=True)))')
 
-          R_VM_CHANGED_CLASSES=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes(r=True)))')
-          R_VM_CHANGED_CLASSES_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; print(len(_get_all_changed_classes(r=True)))')
+          R_VM_CHANGED_CLASSES=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes(vm=True, r=True)))')
+          R_VM_CHANGED_CLASSES_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; print(len(_get_all_changed_classes(vm=True, r=True)))')
 
           echo "vm_changed_classes=$VM_CHANGED_CLASSES" >> $GITHUB_OUTPUT
           echo "vm_changed_classes_length=$VM_CHANGED_CLASSES_LENGTH" >> $GITHUB_OUTPUT
