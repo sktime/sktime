@@ -258,7 +258,6 @@ Forecasting
 * [ENH] Update ``HFTransformersForecaster`` tags and docstring (:pr:`10355`) :user:`fkiraly`
 * [ENH] fix deprecated import in ``test_hf_transformers_forecaster.py`` (:pr:`10369`) :user:`fkiraly`
 * [ENH] ``AutoResearchForecaster`` - agentic improvement of forecaster blueprint (:pr:`9855`) :user:`benHeid`
-* [ENH] Sundial forecasting foundation model :user:`geetu040`
 * [ENH] FalconTST forecasting foundation model (:pr:`10361`) :user:`geetu040`
 * [ENH] Kronos forecasting foundation model (:pr:`10347`) :user:`geetu040`
 * [ENH] deduplicate ``ARIMA`` test skips (:pr:`10372`) :user:`fkiraly`
