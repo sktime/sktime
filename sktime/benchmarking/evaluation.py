@@ -9,10 +9,10 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.stats import ranksums, ttest_ind
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class Evaluator:

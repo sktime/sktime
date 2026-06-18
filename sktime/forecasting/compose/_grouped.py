@@ -205,12 +205,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.forecasting.croston import Croston
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.adi_cv import ADICVTransformer
+    >>> from sktime.transformations.adi_cv import ADICVTransformer
 
     Importing the methods which can generate data of specific categories
     depending on their variance and average demand intervals.
 
-    >>> from sktime.transformations.series.tests.test_adi_cv import (
+    >>> from sktime.transformations.tests.test_adi_cv import (
     ...     _generate_erratic_series)
 
     The forecaster is defined which accepts a dictionary of forecasters,
@@ -269,7 +269,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             self.transformer = transformer
 
         else:
-            from sktime.transformations.series.adi_cv import ADICVTransformer
+            from sktime.transformations.adi_cv import ADICVTransformer
 
             self.transformer = ADICVTransformer(features=["class"])
 
@@ -539,7 +539,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         from sktime.forecasting.croston import Croston
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
-        from sktime.transformations.series.adi_cv import ADICVTransformer
+        from sktime.transformations.adi_cv import ADICVTransformer
 
         param1 = {
             "forecasters": {
