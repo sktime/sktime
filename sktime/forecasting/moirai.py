@@ -89,6 +89,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "torch",
             "einops",
             "huggingface_hub",
+            "hf-xet",
             "lightning",
             "hydra-core",
         ],
@@ -238,6 +239,17 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     torch.serialization.add_safe_globals(_safe_classes)
                     for cls in _safe_classes:
                         cls.__module__ = _orig_modules[cls]
+
+            # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch on
+            # Python 3.12 when an old CPython-3.8-compiled binary is installed).
+            # If the import fails for any reason, disable Xet transport so that
+            # huggingface_hub falls back to regular HTTP download.
+            import os
+
+            try:
+                import hf_xet  # noqa: F401
+            except Exception:
+                os.environ.setdefault("HF_HUB_DISABLE_XET_TRANSPORT", "1")
 
             if self.checkpoint_path.startswith("Salesforce"):
                 from sktime.libs.uni2ts.moirai_module import MoiraiModule

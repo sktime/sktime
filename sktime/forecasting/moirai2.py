@@ -155,7 +155,18 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         import sktime.libs.uni2ts as _uni2ts_mod
 
         sys.modules.setdefault("uni2ts", _uni2ts_mod)
+        # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch on
+        # Python 3.12 when an old CPython-3.8-compiled binary is installed).
+        # If the import fails for any reason, disable Xet transport so that
+        # huggingface_hub falls back to regular HTTP download.
+        import os
+
         from sktime.libs.uni2ts.moirai2_forecast import Moirai2Forecast
+
+        try:
+            import hf_xet  # noqa: F401
+        except Exception:
+            os.environ.setdefault("HF_HUB_DISABLE_XET_TRANSPORT", "1")
 
         if self.checkpoint_path.startswith("Salesforce"):
             from sktime.libs.uni2ts.moirai2_module import Moirai2Module
