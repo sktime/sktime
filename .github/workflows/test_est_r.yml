@@ -78,21 +78,18 @@ jobs:
           "$R_HOME\bin\x64" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           & Rscript.exe -e "sessionInfo()"
 
-      - name: Generate R dependency list for ${{ matrix.flag }}
-        run: |
-          python -c "from sktime.registry._craft import _r_deps; print('\n'.join(_r_deps('${{ matrix.flag }}')))" > r_deps.txt
-
       - name: Install R dependencies for ${{ matrix.flag }} (Windows)
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
-          $pkgs = Get-Content r_deps.txt
-          Rscript.exe -e "install.packages(c($($pkgs -join ',')), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
+          $pkgs = python -c "from sktime.registry import _r_deps; print(','.join(repr(x) for x in _r_deps('${{ matrix.flag }}')))"
+          & Rscript.exe -e "install.packages(c($pkgs), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
 
       - name: Install R dependencies for ${{ matrix.flag }} (Unix)
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          Rscript -e "pkgs <- readLines('r_deps.txt'); install.packages(pkgs, repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
+          PKGS=$(python -c "from sktime.registry import _r_deps; print(','.join(repr(x) for x in _r_deps('${{ matrix.flag }}')))")
+          Rscript -e "install.packages(c($PKGS), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
 
       - name: Check R version (macOS)
         if: ${{ matrix.os == 'macos-latest' }}
