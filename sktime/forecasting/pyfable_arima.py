@@ -105,7 +105,7 @@ class PyFableARIMA(BaseForecaster):
         "authors": ["ericjb"],
         "maintainers": ["ericjb"],
         "python_dependencies": ["rpy2==3.6.1"],
-        "r_dependencies":[
+        "r_dependencies": [
             "fable",
             "fabletools",
             "tsibble",
