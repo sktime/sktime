@@ -45,7 +45,7 @@ jobs:
           UV_SYSTEM_PYTHON: 1
 
       - name: Install r2py
-        run: uv pip install rpy2>=3.6,<3.7
+        run: uv pip install "rpy2>=3.6,<3.7"
         env:
           UV_SYSTEM_PYTHON: 1
 
