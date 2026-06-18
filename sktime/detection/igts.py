@@ -20,9 +20,9 @@ from dataclasses import dataclass, field
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
-from sktime.utils.dependencies import _check_estimator_deps
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
@@ -492,4 +492,10 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         -------
         params : dict or list of dict
         """
-        return {"k_max": 2, "step": 1}
+        return [
+            {"k_max": 1, "step": 1},
+            {"k_max": 2, "step": 1},
+            {"k_max": 2, "step": 10},
+            {"k_max": 10, "step": 5},
+            {"k_max": 10, "step": 10},
+        ]

@@ -6,6 +6,7 @@ __author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
@@ -13,9 +14,8 @@ from sktime.forecasting.compose._ensemble import _aggregate
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformations.series.detrend import Deseasonalizer
-from sktime.transformations.series.theta import ThetaLinesTransformer
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.transformations.detrend import Deseasonalizer
+from sktime.transformations.theta import ThetaLinesTransformer
 from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.warnings import warn
@@ -103,7 +103,7 @@ class ThetaForecaster(ExponentialSmoothing):
         # packaging info
         # --------------
         "authors": ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
@@ -144,7 +144,7 @@ class ThetaForecaster(ExponentialSmoothing):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -195,7 +195,7 @@ class ThetaForecaster(ExponentialSmoothing):
         Parameters
         ----------
         fh : array-like
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is
             one-step ahead forecast, i.e. np.array([1]).
         X : pd.DataFrame, optional (default=None)
@@ -254,7 +254,7 @@ class ThetaForecaster(ExponentialSmoothing):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -396,7 +396,7 @@ class ThetaModularForecaster(BaseForecaster):
 
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and decompose with :class:`ThetaLinesTransformer
-    <sktime.transformations.series.theta>` by modifying the local curvature of
+    <sktime.transformations.theta>` by modifying the local curvature of
     the time series using Theta-coefficient values - ``theta_values`` parameter.
     Thansformation gives a pd.DataFrame of shape ``len(input series) * len(theta)``.
 
@@ -462,7 +462,7 @@ class ThetaModularForecaster(BaseForecaster):
 
     _tags = {
         "authors": ["GuzalBulatova", "fkiraly"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,

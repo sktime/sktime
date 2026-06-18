@@ -70,7 +70,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.regression.compose import RegressorPipeline
     >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
@@ -293,9 +293,10 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.transformations.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
@@ -378,8 +379,8 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     >>> from sklearn.neighbors import KNeighborsRegressor
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.regression.compose import SklearnRegressorPipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
     >>> t1 = ExponentTransformer()
@@ -609,8 +610,8 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         """
         from sklearn.neighbors import KNeighborsRegressor
 
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         # example with series-to-series transformer before sklearn regressor
         t1 = ExponentTransformer(power=2)

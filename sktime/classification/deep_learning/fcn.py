@@ -1,6 +1,5 @@
 """Fully Convolutional Network (FCN) for classification."""
 
-__author__ = ["James-Large", "AurumnPegasus"]
 __all__ = ["FCNClassifier"]
 
 from copy import deepcopy
@@ -9,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.fcn import FCNNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNClassifier(BaseDeepClassifier):
@@ -20,27 +18,39 @@ class FCNClassifier(BaseDeepClassifier):
 
     Parameters
     ----------
-    should inherited fields be listed here?
-    n_epochs       : int, default = 2000
+    n_epochs : int, default = 2000
         the number of epochs to train the model
-    batch_size      : int, default = 16
+    batch_size : int, default = 16
         the number of samples per gradient update.
-    random_state    : int or None, default=None
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
+    random_state : int or None, default=None
         Seed for random number generation.
-    verbose         : boolean, default = False
+    verbose : boolean, default = False
         whether to output extra information
-    loss            : string, default="mean_squared_error"
+    loss : string, default="mean_squared_error"
         fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics         : list of strings, default=["accuracy"],
-    activation      : string or a tf callable, default="sigmoid"
-        Activation function used in the output linear layer.
+    optimizer : keras.optimizer, default=keras.optimizers.Adam(),
+    metrics : list of strings, default=["accuracy"],
+    activation : string or a tf callable, default="sigmoid"
+        Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
-    use_bias        : boolean, default = True
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias : boolean, default = True
         whether the layer uses a bias vector.
-    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
+    optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    filter_sizes : list or tuple of int , default = (128,256,128)
+        number of filters for each convolutional layer.
+        must have length equal to kernel_sizes.
+    kernel_sizes : list or tuple of int , default = (8,5,3)
+        kernel size for each convolutional layer.
+        must have length equal to filter_sizes.
+
 
     References
     ----------
@@ -62,13 +72,11 @@ class FCNClassifier(BaseDeepClassifier):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "noxthot"],
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
         "tests:skip_all": True,
-        # test behaviour
-        "tests:skip_by_name": ["test_fit_idempotent"],
     }
 
     def __init__(
@@ -81,11 +89,12 @@ class FCNClassifier(BaseDeepClassifier):
         metrics=None,
         random_state=None,
         activation="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        filter_sizes=(128, 256, 128),
+        kernel_sizes=(8, 5, 3),
     ):
-        _check_dl_dependencies(severity="error")
-
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -94,13 +103,33 @@ class FCNClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
+        self.filter_sizes = filter_sizes
+        self.kernel_sizes = kernel_sizes
 
         super().__init__()
 
-        self._network = FCNNetwork(random_state=self.random_state)
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        self._network = FCNNetwork(
+            activation=self.activation_hidden,
+            random_state=self.random_state,
+            filter_sizes=self.filter_sizes,
+            kernel_sizes=self.kernel_sizes,
+        )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -206,7 +235,7 @@ class FCNClassifier(BaseDeepClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,
@@ -218,8 +247,20 @@ class FCNClassifier(BaseDeepClassifier):
             "n_epochs": 12,
             "batch_size": 6,
             "use_bias": True,
+            "filter_sizes": [64, 128],
+            "kernel_sizes": [5, 3],
         }
-        test_params = [param1, param2]
+
+        # to check for tuple
+        params3 = {
+            "n_epochs": 8,
+            "batch_size": 4,
+            "use_bias": False,
+            "filter_sizes": (64, 128),
+            "kernel_sizes": (5, 3),
+        }
+
+        test_params = [param1, param2, params3]
 
         if _check_soft_dependencies("keras", severity="none"):
             from keras.callbacks import LambdaCallback

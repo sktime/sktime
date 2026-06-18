@@ -48,6 +48,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets._data_io import (
     _list_available_datasets,
@@ -58,7 +59,6 @@ from sktime.datasets._data_io import (
 from sktime.datasets._dataset_downloader import DatasetDownloader
 from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
-from sktime.utils.dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -134,8 +134,8 @@ def load_UCR_UEA_dataset(
 
     Examples
     --------
-    >>> from sktime.datasets import load_UCR_UEA_dataset
-    >>> X, y = load_UCR_UEA_dataset(name="ArrowHead")
+    >>> from sktime.datasets import load_UCR_UEA_dataset # doctest: +SKIP
+    >>> X, y = load_UCR_UEA_dataset(name="ArrowHead") # doctest: +SKIP
     """
     return _load_dataset(
         name, split, return_X_y, return_type, extract_path, y_dtype=y_dtype

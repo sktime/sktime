@@ -3,15 +3,10 @@
 import numpy as np
 
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import DataLoader, Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
@@ -86,6 +81,10 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         "authors": ["gzerveas", "geetu040"],
         # gzerveas for original code in research repository
         "maintainers": ["geetu040"],
+        # estimator type
+        # --------------
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -147,20 +146,29 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
             random_state=random_state,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {}
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * dynamic tag setting
+        * any soft dependency imports in the constructor
+        """
+        import torch
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.criterions = {}
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
+
+        super().__post_init__()
 
     def _build_network(self, X, y):
         from sktime.networks.mvts_transformer import (
@@ -188,6 +196,8 @@ class MVTSTransformerClassifier(BaseDeepClassifierPytorch):
         )
 
     def _build_dataloader(self, X, y=None):
+        from torch.utils.data import DataLoader
+
         dataset = PytorchDataset(X, y)
         return DataLoader(dataset, self.batch_size)
 

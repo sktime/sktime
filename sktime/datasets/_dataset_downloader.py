@@ -14,8 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
 
 from skbase.base import BaseObject
-
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 class DatasetDownloadStrategy(BaseObject):
@@ -131,10 +130,14 @@ class HuggingFaceDownloader(DatasetDownloadStrategy):
 
     Examples
     --------
-    >>> from sktime.datasets._dataset_downloader import HuggingFaceDownloader
-    >>> hf_repo_name = "sktime/tsc-datasets"
-    >>> downloader = HuggingFaceDownloader(hf_repo_name, folder_name="Beef")
-    >>> downloader.download()
+    >>> from sktime.datasets._dataset_downloader import (  # doctest: +SKIP
+    ...     HuggingFaceDownloader
+    ... )
+    >>> hf_repo_name = "sktime/tsc-datasets"  # doctest: +SKIP
+    >>> downloader = HuggingFaceDownloader(
+    ...     hf_repo_name, folder_name="Beef"
+    ... )  # doctest: +SKIP
+    >>> downloader.download()  # doctest: +SKIP
 
     References
     ----------
@@ -232,10 +235,14 @@ class URLDownloader(DatasetDownloadStrategy):
 
     Examples
     --------
-    >>> from sktime.datasets._dataset_downloader import URLDownloader
-    >>> urls = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
-    >>> downloader = URLDownloader(base_urls=urls)
-    >>> downloader.download()
+    >>> from sktime.datasets._dataset_downloader import (  # doctest: +SKIP
+    ...     URLDownloader,
+    ... )
+    >>> urls = [
+    ...     "https://timeseriesclassification.com/aeon-toolkit/Beef.zip"
+    ... ]  # doctest: +SKIP
+    >>> downloader = URLDownloader(base_urls=urls)  # doctest: +SKIP
+    >>> downloader.download()  # doctest: +SKIP
     """
 
     def __init__(self, base_urls):
@@ -351,15 +358,19 @@ class DatasetDownloader(DatasetDownloadStrategy):
 
     Examples
     --------
-    >>> from sktime.datasets._dataset_downloader import DatasetDownloader
-    >>> hf_repo_name = "sktime/tsc-datasets"
-    >>> urls = ["https://timeseriesclassification.com/aeon-toolkit/Beef.zip"]
-    >>> downloader = DatasetDownloader(
+    >>> from sktime.datasets._dataset_downloader import (  # doctest: +SKIP
+    ...     DatasetDownloader,
+    ... )
+    >>> hf_repo_name = "sktime/tsc-datasets"  # doctest: +SKIP
+    >>> urls = [
+    ...     "https://timeseriesclassification.com/aeon-toolkit/Beef.zip",
+    ... ]  # doctest: +SKIP
+    >>> downloader = DatasetDownloader(  # doctest: +SKIP
     ...     hf_repo_name=hf_repo_name,
     ...     folder_name="Beef",
     ...     fallback_urls=urls
     ... )
-    >>> downloader.download()
+    >>> downloader.download()  # doctest: +SKIP
     """
 
     def __init__(

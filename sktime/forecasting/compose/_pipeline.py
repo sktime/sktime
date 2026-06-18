@@ -101,7 +101,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         if sum(forecaster_indicator) != 1:
             raise TypeError(
                 f"exactly one forecaster must be contained in the chain, "
-                f"but found {forecaster_indicator.count('forecaster')}"
+                f"but found {sum(forecaster_indicator)}"
             )
 
         est_scitypes = [scitype(x) for x in estimators]
@@ -110,7 +110,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
         self._forecaster_index = forecaster_ind
 
         if not allow_postproc and forecaster_ind != len(estimators) - 1:
-            TypeError(
+            raise TypeError(
                 f"in {self_name}, last estimator must be a forecaster, "
                 f"but found a transformer"
             )
@@ -184,7 +184,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.40.0 - check why this cannot be easily removed
+                        # todo 1.1.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -192,7 +192,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         #   in the case where there is only one variable
                         if len(yt[ix].columns) == 1:
                             temp = yt[ix].columns
-                            yt[ix].columns = self._y.columns
+                            yt[ix].columns = self._get_varnames()
                         yt[ix] = transformer.inverse_transform(yt[ix], X)
                         if len(yt[ix].columns) == 1:
                             yt[ix].columns = temp
@@ -278,9 +278,9 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
         from sktime.forecasting.compose._reduce import YfromX
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-        from sktime.transformations.series.detrend import Detrender
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.detrend import Detrender
+        from sktime.transformations.exponent import ExponentTransformer
 
         # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
         STEPS1 = [
@@ -379,7 +379,7 @@ class ForecastingPipeline(_Pipeline):
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.impute import Imputer
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.split import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler
@@ -417,7 +417,7 @@ class ForecastingPipeline(_Pipeline):
 
     _tags = {
         "authors": ["mloning", "fkiraly", "aiwalter"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:exogenous": True,
@@ -433,10 +433,18 @@ class ForecastingPipeline(_Pipeline):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = self._check_steps(steps, allow_postproc=False)
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # setting self.steps_ early to allow self.forecaster_ property etc
+        self.steps_ = self._check_steps(self.steps, allow_postproc=False)
+
         tags_to_clone = [
-            "capability:exogenous",  # does estimator ignore the exogeneous X?
+            "capability:exogenous",  # does estimator ignore the exogenous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
@@ -508,7 +516,7 @@ class ForecastingPipeline(_Pipeline):
         y : pd.Series, pd.DataFrame
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, required
             Exogenous variables are ignored
 
@@ -580,7 +588,7 @@ class ForecastingPipeline(_Pipeline):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -615,7 +623,7 @@ class ForecastingPipeline(_Pipeline):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -646,7 +654,7 @@ class ForecastingPipeline(_Pipeline):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -681,7 +689,7 @@ class ForecastingPipeline(_Pipeline):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -729,8 +737,8 @@ class ForecastingPipeline(_Pipeline):
                 # we create a zero-column y from the forecasting horizon
                 requires_y = transformer.get_tag("requires_y", False)
                 if isinstance(y, ForecastingHorizon) and requires_y:
-                    y = y.to_absolute_index(self.cutoff)
-                    y = pd.DataFrame(index=y)
+                    y_index = y.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+                    y = pd.DataFrame(index=y_index)
                 elif isinstance(y, ForecastingHorizon) and not requires_y:
                     y = None
                 # else we just pass on y
@@ -759,7 +767,7 @@ class TransformedTargetForecaster(_Pipeline):
     """Meta-estimator for forecasting transformed time series.
 
     Pipeline functionality to apply transformers to endogeneous time series, ``y``.
-    The exogeneous data, ``X``, is not transformed.
+    The exogenous data, ``X``, is not transformed.
     To transform ``X``, the ``ForecastingPipeline`` can be used.
 
     For a list ``t1``, ``t2``, ..., ``tN``, ``f``, ``tp1``, ``tp2``, ..., ``tpM``,
@@ -835,9 +843,9 @@ class TransformedTargetForecaster(_Pipeline):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.transformations.series.impute import Imputer
-    >>> from sktime.transformations.series.detrend import Detrender
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.impute import Imputer
+    >>> from sktime.transformations.detrend import Detrender
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> y = load_airline()
 
         Example 1: string/estimator pairs
@@ -868,8 +876,12 @@ class TransformedTargetForecaster(_Pipeline):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "fkiraly", "aiwalter"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
+        # estimator type
+        # --------------
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:exogenous": True,
@@ -877,6 +889,7 @@ class TransformedTargetForecaster(_Pipeline):
         "capability:missing_values": True,
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
+        "capability:unequal_length": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -884,12 +897,19 @@ class TransformedTargetForecaster(_Pipeline):
 
     def __init__(self, steps):
         self.steps = steps
-        self.steps_ = self._check_steps(steps, allow_postproc=True)
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # setting self.steps_ early to allow self.forecaster_ property etc
+        self.steps_ = self._check_steps(self.steps, allow_postproc=True)
 
         # set the tags based on forecaster
         tags_to_clone = [
-            "capability:exogenous",  # does estimator ignore the exogeneous X?
+            "capability:exogenous",  # does estimator ignore the exogenous X?
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
@@ -901,11 +921,11 @@ class TransformedTargetForecaster(_Pipeline):
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
-        # above, we cloned the ignores-exogeneous-X tag,
+        # above, we cloned the capability:exogenous tag,
         # but we also need to check whether X is used as y in some transformer
-        # in this case X is not ignored by the pipe, even if the forecaster ignores it
+        # in this case X is used by the pipe, even if the forecaster does not use it
         # logic below checks whether there is at least one such transformer
-        # if there is, we override the ignores-exogeneous-X tag to False
+        # if there is, we override the capability:exogenous tag to True
         # also see discussion in bug issue #5518
         pre_ts = self.transformers_pre_
         post_ts = self.transformers_post_
@@ -1047,7 +1067,7 @@ class TransformedTargetForecaster(_Pipeline):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -1179,7 +1199,7 @@ class TransformedTargetForecaster(_Pipeline):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -1217,7 +1237,7 @@ class TransformedTargetForecaster(_Pipeline):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -1243,24 +1263,165 @@ class TransformedTargetForecaster(_Pipeline):
         )
         return pred_int_transformed
 
+    def _predict_var(self, fh=None, X=None, cov=False):
+        """Forecast variance at future horizon.
+
+        Overrides the mixin default to avoid infinite recursion.
+
+        Without this override, the mixin's ``_predict_var`` sees that
+        ``_predict_proba`` is implemented and calls ``predict_proba``,
+        which calls ``_predict_proba``, which (in the fallback path) calls
+        ``_predict_var`` again — causing infinite recursion.
+
+        When the inner forecaster has a native ``_predict_proba``, this
+        delegates to ``predict_proba`` to obtain the exact variance from
+        the ``TransformedDistribution``.
+        Otherwise, falls back to an interval-based approximation to
+        break the recursion cycle.
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        cov : bool, optional (default=False)
+            if True, computes covariance matrix forecast.
+            if False, computes marginal variance forecasts.
+
+        Returns
+        -------
+        pred_var : pd.DataFrame, format dependent on ``cov`` variable
+        """
+        forecaster = self.forecaster_
+        inner_has_proba = forecaster._has_implementation_of("_predict_proba")
+
+        if inner_has_proba:
+            # inner forecaster has native _predict_proba, so predict_proba
+            # will return a TransformedDistribution — get exact variance
+            pred_dist = self.predict_proba(fh=fh, X=X)
+            return pred_dist.var()
+
+        # fallback: compute variance from _predict_interval
+        # this breaks the recursion cycle since it does not call predict_proba
+        from scipy.stats import norm
+
+        pred_int = self._predict_interval(fh=fh, X=X, coverage=[0.5])
+        var_names = pred_int.columns.get_level_values(0).unique()
+        vars_dict = {}
+        for i in var_names:
+            pred_int_i = pred_int[i].copy()
+            iqr_i = pred_int_i.iloc[:, 1] - pred_int_i.iloc[:, 0]
+            std_i = iqr_i / (2 * norm.ppf(0.75))
+            var_i = std_i**2
+            vars_dict[i] = var_i
+
+        pred_var = pd.DataFrame(vars_dict)
+        return pred_var
+
+    # todo: does not work properly for multivariate or hierarchical
+    #   still need to implement this - once interface is consolidated
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        If the wrapped forecaster natively implements ``_predict_proba``,
+        this delegates to it and wraps the result in a
+        ``TransformedDistribution`` (from ``skpro``) that applies
+        the inverse transform chain lazily.
+        Otherwise, falls back to the mixin default which constructs a
+        Normal distribution from ``_predict_var`` and ``predict``.
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : optional (default=None)
+            guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            Exogeneous time series to predict from.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+        """
+        # check if the inner forecaster has a native _predict_proba
+        forecaster = self.forecaster_
+        inner_has_proba = forecaster._has_implementation_of("_predict_proba")
+
+        if not inner_has_proba:
+            # delegate to the mixin default (Normal from _predict_var + predict)
+            # this is safe because _predict_var is overridden above to go through
+            # _predict_interval directly, breaking the recursion cycle
+            from sktime.base._proba._mixin import _PredictProbaMixin
+
+            return _PredictProbaMixin._predict_proba(
+                self, fh=fh, X=X, marginal=marginal
+            )
+
+        # if the inner forecaster natively supports _predict_proba,
+        # delegate and wrap in a TransformedDistribution
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        if not _check_soft_dependencies("skpro", severity="none"):
+            raise RuntimeError(
+                "The skpro package is required for predict_proba with "
+                "TransformedTargetForecaster when the inner forecaster "
+                "natively implements predict_proba. "
+                "Please install skpro: pip install skpro"
+            )
+
+        from skpro.distributions.trafo import TransformedDistribution
+
+        pred_dist = forecaster.predict_proba(fh=fh, X=X, marginal=marginal)
+
+        # build inverse and forward transform callables from the
+        # pre-forecast transformer chain, for use by TransformedDistribution
+        transformers_pre = self.transformers_pre_
+
+        def _inverse_transform(y):
+            """Apply inverse transform chain to y."""
+            return self._get_inverse_transform(transformers_pre, y, X)
+
+        def _forward_transform(y):
+            """Apply forward transform chain to y."""
+            for _, transformer in transformers_pre:
+                y = transformer.transform(X=y, y=X)
+            return y
+
+        pred_dist = TransformedDistribution(
+            distribution=pred_dist,
+            transform=_inverse_transform,
+            inverse_transform=_forward_transform,
+            assume_monotonic=True,
+            index=pred_dist.index,
+            columns=pred_dist.columns,
+        )
+        return pred_dist
+
 
 class ForecastX(BaseForecaster):
-    """Forecaster that forecasts exogeneous data for use in an endogeneous forecast.
+    """Forecaster that forecasts exogenous data for use in an endogeneous forecast.
 
-    In ``predict``, this forecaster carries out a ``predict`` step on exogeneous ``X``.
+    In ``predict``, this forecaster carries out a ``predict`` step on exogenous ``X``.
     Then, a forecast is made for ``y``,
-    using exogeneous data plus its forecasts as ``X``.
+    using exogenous data plus its forecasts as ``X``.
     If ``columns`` argument is provided, will carry ``predict`` out only for the columns
     in ``columns``, and will use other columns in ``X`` unchanged.
 
     The two forecasters and forecasting horizons (for forecasting ``y`` resp ``X``)
     can be selected independently, but default to the same.
 
-    The typical use case is extending exogeneous data available only up until the cutoff
-    into the future, for use by an exogeneous forecaster that requires such future data.
+    The typical use case is extending exogenous data available only up until the cutoff
+    into the future, for use by an exogenous forecaster that requires such future data.
 
     If no X is passed in ``fit``, behaves like ``forecaster_y``.
-    In such a case (no exogeneous data), there is no benefit in using this compositor.
+    In such a case (no exogenous data), there is no benefit in using this compositor.
 
     If variables in ``columns`` are present in the provided ``X`` during ``predict``,
     by default these are still forecasted and the forecasts are used for prediction of
@@ -1273,7 +1434,7 @@ class ForecastX(BaseForecaster):
         sktime forecaster to use for endogeneous data ``y``
 
     forecaster_X : BaseForecaster, optional
-        sktime forecaster to use for exogeneous data ``X``,
+        sktime forecaster to use for exogenous data ``X``,
         default = None = same as ``forecaster_y``
 
     fh_X : None, ForecastingHorizon, or valid input to construct ForecastingHorizon
@@ -1325,7 +1486,7 @@ class ForecastX(BaseForecaster):
     forecaster_X_ : BaseForecaster
         clone of ``forecaster_X``, state updates with ``fit`` and ``update``
         created only if ``behaviour="update"`` and ``X`` passed is not None
-        and ``forecaster_y`` has ``ignores-exogeneous-X`` tag as ``False``
+        and ``forecaster_y`` has ``capability:exogenous`` tag as ``True``
     forecaster_y_ : BaseForecaster
         clone of ``forecaster_y``, state updates with ``fit`` and ``update``
 
@@ -1363,7 +1524,7 @@ class ForecastX(BaseForecaster):
     Notes
     -----
     * ``predict_behaviour="use_actuals"`` is as of now unused if future values are
-        passed for a subset of exogeneous variables in ``columns``. In that case, it
+        passed for a subset of exogenous variables in ``columns``. In that case, it
         behaves as if ``predict_behaviour="use_forecasts"``.
     """
 
@@ -1371,7 +1532,7 @@ class ForecastX(BaseForecaster):
         "authors": ["fkiraly", "benheid", "yarnabrina"],
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "capability:exogenous": True,
@@ -1464,7 +1625,7 @@ class ForecastX(BaseForecaster):
         y : time series in sktime compatible format
             Target time series to which to fit the forecaster
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : time series in sktime compatible format, optional, default=None
             Exogenous time series to which to fit the forecaster
 
@@ -1522,7 +1683,7 @@ class ForecastX(BaseForecaster):
         Parameters
         ----------
         X : typing.Optional[pd.DataFrame]
-            user input for exogeneous data in ``predict``
+            user input for exogenous data in ``predict``
 
         Returns
         -------
@@ -1553,12 +1714,12 @@ class ForecastX(BaseForecaster):
 
         If behaviour = "update": uses self.forecaster_X_, this is already fitted.
         If behaviour = "refitted", uses a local clone of self.forecaster_X,
-            after fitting it to self._X, i.e., all exogeneous data seen so far.
+            after fitting it to self._X, i.e., all exogenous data seen so far.
 
         Parameters
         ----------
         X : pandas.DataFrame, optional, default=None
-            exogeneous data seen in predict
+            exogenous data seen in predict
         fh : ForecastingHorizon, should be the input of the predict method, optional
         method : str, optional, default="predict"
             method of forecaster to call to obtain prediction
@@ -1677,7 +1838,7 @@ class ForecastX(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -1712,7 +1873,7 @@ class ForecastX(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -1741,7 +1902,7 @@ class ForecastX(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -1783,7 +1944,7 @@ class ForecastX(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -1880,8 +2041,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.compose import ForecastingPipeline, Permute
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.boxcox import BoxCoxTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
 
     Simple example: permute sequence of estimator in forecasting pipeline
 
@@ -1919,7 +2080,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
 
     _tags = {
         "authors": "aiwalter",
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "capability:exogenous": True,
@@ -2009,8 +2170,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         # transformers mixed with-without fit, ForecastingPipeline
         # steps are (str, estimator)

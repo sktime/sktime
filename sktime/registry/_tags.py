@@ -384,6 +384,33 @@ class requires_cython(_BaseTag):
     }
 
 
+class r_dependencies(_BaseTag):
+    """R package dependency requirement specifiers for the object (PEP 440).
+
+    - String name: ``"r_dependencies"``
+    - Private tag, developer and framework facing
+    - Values: None, or list of str, each str an R package name
+    - Example: ``["Rcpp"]``
+    - Example 2: ``["Rcpp", "dplyr"]``
+    - Default: no R requirements (``None``)
+
+    Experimental tag for objects that interface to R packages via ``rpy2``.
+
+    Should be set only for objects that interface R packages.
+
+    Currently no inequalities or version specifiers are supported,
+    only package names as strings.
+    """
+
+    _tags = {
+        "tag_name": "r_dependencies",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "R dependencies of estimator as list of str",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 class tests__core(_BaseTag):
     """Whether tests for this estimator are triggered by framework changes.
 
@@ -566,6 +593,46 @@ class tests__skip_by_name(_BaseTag):
         "parent_type": "object",
         "tag_type": "list",
         "short_descr": "list of names of tests that should be skipped for this object",
+        "user_facing": False,
+    }
+
+
+class tests__python_dependencies(_BaseTag):
+    """Python package dependency requirement specifiers for tests (PEP 440).
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"tests:python_dependencies"``
+    - Private tag, developer and framework facing
+    - Values: str or list of str, each str a PEP 440 compliant dependency specifier
+    - Example: ``"numpy>=1.20.0"``
+    - Example 2: ``["numpy>=1.20.0", "pandas>=1.3.0"]``
+    - Default: no requirements beyond ``sktime`` core dependencies (``None``)
+
+    ``sktime``'s CI framework regularly tests estimators in pull request.
+
+    The ``tests:python_dependencies`` tag specifies additional environment dependencies
+    required for testing the object, in a VM setup, via the ``tests:vm`` tag.
+
+    These dependencies will not be highlighted to the user when using the
+    estimator, and are used only in the CI testing setup.
+
+    This tag should be used, for example, if the tests instances in ``get_test_params``
+    requre additional packages not required for the main functionality of the object.
+
+    The ``tests:python_dependencies`` tag of an object is a string,
+    a list of strings, or a nested list of strings, with same format, convention,
+    and meaning as ``python_dependencies``.
+
+    It is developer facing only, and is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:python_dependencies",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "additional python dependencies for testing the estimator, as str or list of str (PEP 440)",  # noqa: E501
         "user_facing": False,
     }
 
@@ -840,7 +907,7 @@ class property__randomness(_BaseTag):
 # -----------
 
 
-class capability__exogeneous(_BaseTag):
+class capability__exogenous(_BaseTag):
     """Capability: the forecaster can use exogenous data.
 
     The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
@@ -1002,6 +1069,92 @@ class capability__pred_int__insample(_BaseTag):
     }
 
 
+class capability__pretrain(_BaseTag):
+    """Capability: the forecaster can use pretraining for global learning.
+
+    - String name: ``"capability:pretrain"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The ``capability:pretrain`` tag indicates whether a forecaster supports
+    pretraining on global/panel data before being fit to specific time series.
+
+    If the tag is ``True``, the forecaster implements the ``pretrain`` method
+    and can be used in the following workflow:
+
+    1. ``forecaster.pretrain(y_panel)`` - learn from panel/global data
+    2. ``forecaster.fit(y_series)`` - set context or fine-tune on specific series
+    3. ``forecaster.predict(fh)`` - make predictions
+
+    The ``pretrain`` method sets the forecaster state to ``"pretrained"``,
+    and subsequent calls to ``fit`` will preserve the pretrained weights
+    (enabling fine-tuning) rather than resetting the estimator.
+
+    If the tag is ``False``, the forecaster does not support pretraining,
+    and calling ``pretrain`` will have no effect.
+    """
+
+    _tags = {
+        "tag_name": "capability:pretrain",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can use pretrain for global learning",
+        "user_facing": True,
+    }
+
+
+class capability__non_contiguous_X(_BaseTag):
+    """Capability: the forecaster can handle non-contiguous exogenous data.
+
+    - String name: ``"capability:non_contiguous_X"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    Exogenous data are additional time series that can be used to improve
+    forecasting accuracy. When using `temporal_train_test_split` with a
+    non-contiguous forecasting horizon `fh` (e.g., `fh=[2, 5]`), the resulting
+    `X_test` will only contain observations corresponding to the specific time
+    points in `fh`, rather than a complete contiguous range.
+
+
+    If the ``capability:non_contiguous_X`` tag is ``True``, the forecaster
+    can handle non-contiguous exogenous data and will make predictions
+    correctly even when ``X`` contains only the requested time points.
+
+    If the tag is ``False``, the forecaster requires contiguous exogenous data
+    covering all time points from the first to the last element of ``fh``.
+    For example, if ``fh=[2, 5]``, the forecaster requires ``X`` to contain
+    data for time points 1, 2, 3, 4, and 5, not just 2 and 5.
+
+    Forecasters with ``capability:non_contiguous_X=False`` include those that:
+
+    * Use underlying libraries (e.g., statsmodels, statsforecast) that
+      internally generate predictions for all intermediate time steps
+    * Require contiguous data for their recursive prediction algorithms
+
+    If a forecaster has this tag set to ``False`` and receives non-contiguous
+    exogenous data, it will raise an error during prediction.
+
+    The ``ForecastX`` compositor directly addresses the ``capability:non_contiguous_X``
+    tag by providing a solution for forecasters that cannot handle non-contiguous
+    exogenous data. Instead of requiring contiguous exogenous data covering all
+    time points from the first to the last element of fh, ForecastX forecasts
+    the missing exogenous values internally.
+    """
+
+    _tags = {
+        "tag_name": "capability:non_contiguous_X",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can the forecaster handle non-contiguous exogenous data?",
+        "user_facing": True,
+    }
+
+
 class requires_fh_in_fit(_BaseTag):
     """Behaviour flag: forecaster requires forecasting horizon in fit.
 
@@ -1023,7 +1176,7 @@ class requires_fh_in_fit(_BaseTag):
 
     For instance, direct reduction to tabular regression
     requires the ``fh`` as it is used by the fitting algorithm to lag the endogeneous
-    against the exogeneous data. In contrast, recursive reduction to tabular regression
+    against the exogenous data. In contrast, recursive reduction to tabular regression
     does not require the ``fh`` in ``fit``, as only the prediction step
     requires the forecasting horizon, when applying the fitted tabular regression model
     by sliding it forward over the ``fh`` steps.
@@ -1103,8 +1256,6 @@ class capability__multivariate(_BaseTag):
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``univariate-only``  (transformations, note: boolean is inverted)
-    - Alias: ``univariate-metric`` (performance metrics, note: boolean is inverted)
 
     If the tag is ``True``, the estimator can handle multivariate time series,
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
@@ -1174,6 +1325,7 @@ class capability__unequal_length(_BaseTag):
             "classifier",
             "clusterer",
             "early_classifier",
+            "forecaster",
             "regressor",
             "transformer",
             "transformer-pairwise-panel",
@@ -1939,6 +2091,83 @@ class capability__bootstrap_index(_BaseTag):
     }
 
 
+class capability__unequal_length__removes(_BaseTag):
+    """Capability: the transformer produces equal length series on unequal length input.
+
+    - String name: ``"capability:unequal_length:removes"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag is only meaningful for transformers that return time series as output,
+    i.e., the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    The tag specifies whether the transformer returns equal length time series,
+    when given unequal length time series as input.
+    This is the case for example for truncation or padding transformers,
+    that is, transformations that are specifically designed to remove
+    unequal length.
+    However, the tag may also be ``True`` for other transformers,
+    that are not specifically designed for this purpose.
+
+    If the tag is ``True``, the transformer will return equal length time series,
+    when given unequal length time series as input.
+
+    If the tag is ``False``, the transformer may return unequal length time series,
+    when given unequal length time series as input.
+
+    Also see the tag ``capability:unequal_length:adds``.
+    The typical transformer with series output will have both tags being ``False``.
+    """
+
+    _tags = {
+        "tag_name": "capability:unequal_length:removes",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer output have equal length time series?",
+        "user_facing": True,
+    }
+
+
+class capability__unequal_length__adds(_BaseTag):
+    """Capability: transformer may produce unequal length series on equal length input.
+
+    - String name: ``"capability:unequal_length:adds"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag is only meaningful for transformers that return time series as output,
+    i.e., the tag ``scitype:transform-output`` is ``"Series"`` or ``"Panel"``.
+
+    The tag specifies whether the transformer can return unequal length time series
+    on equal length time series as input.
+
+    If the tag is ``True``, the transformer may return unequal length time series,
+    when given equal length time series as input.
+
+    If the tag is ``False``, the transformer will
+    always return equal length time series,
+    when given equal length time series as input.
+
+    Note that even if the tag is ``False``, the transformer may still return
+    unequal length time series, when given unequal length time series as input.
+
+    Also see the tag ``capability:unequal_length:removes``.
+    The typical transformer with series output will have both tags being ``False``.
+    """
+
+    _tags = {
+        "tag_name": "capability:unequal_length:adds",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "can outputs be unequal length even if inputs are equal length?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
@@ -2101,6 +2330,162 @@ class capability__variable_identification(_BaseTag):
         "parent_type": "detector",
         "tag_type": "bool",
         "short_descr": "Can the detector identify the variables causing each detection?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+# Time series aligner tags
+# ------------------------
+
+
+class capability__multiple_alignment(_BaseTag):
+    """Capability: aligner can align multiple series.
+
+    - String name: ``"capability:multiple-alignment"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner can align multiple time series
+    in a single alignment operation.
+    If the tag is ``False``, the aligner can only align two time series
+    in a single alignment operation.
+
+    If the tag is ``True``, the aligner's ``fit`` method can take as input
+    a collection of more than two time series.
+
+    Otherwise, the aligner's ``fit`` method can only take as input two time series.
+    """
+
+    _tags = {
+        "tag_name": "capability:multiple-alignment",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "is aligner capable of aligning multiple series (True) or only two (False)?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__distance(_BaseTag):
+    """Capability: aligner can return overall distance between aligned series.
+
+    - String name: ``"capability:distance"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner is capable of returning an overall distance
+    between the aligned time series via the ``get_distance`` method.
+
+    If the tag is ``False``, the aligner cannot return an overall distance
+    between the aligned time series, and calling ``get_distance`` will raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:distance",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "can aligner return overall distance between aligned series?",
+        "user_facing": True,
+    }
+
+
+class capability__distance_matrix(_BaseTag):
+    """Capability: aligner can return a distance matrix between aligned series.
+
+    - String name: ``"capability:distance-matrix"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to time series aligners.
+
+    If the tag is ``True``, the aligner is capable of returning a pairwise
+    distance matrix
+    between the aligned time series via the ``get_distance_matrix`` method.
+
+    If the tag is ``False``, the aligner cannot return a pairwise distance matrix
+    between the aligned time series,
+    and calling ``get_distance_matrix`` will raise an error.
+    """
+
+    _tags = {
+        "tag_name": "capability:distance-matrix",
+        "parent_type": "aligner",
+        "tag_type": "bool",
+        "short_descr": "can aligner return pairwise distance matrix between aligned series?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class property__alignment_type(_BaseTag):
+    """Property: type of alignment produced by the aligner.
+
+    - String name: ``"alignment_type"``
+    - Public property tag
+    - Values: string, one of ``"full"``, ``"partial"``
+    - Example: ``"full"``
+    - Default: ``"full"``
+
+    This tag applies to time series aligners.
+
+    The tag specifies whether the aligner produces a full alignment,
+    where the entire time series are aligned,
+    or a partial alignment, where only subsequences of the time series are aligned.
+
+    The possible values are:
+
+    * ``"full"``: the aligner produces a full alignment of the time series.
+      In this case, ``get_alignment`` will return alignments where indices
+      cover the entire length of the input time series.
+    * ``"partial"``: the aligner produces a partial alignment of the time series.
+      In this case, ``get_alignment`` returned alignments do not necessarily
+      cover the entire length of the input time series.
+    """
+
+    _tags = {
+        "tag_name": "alignment_type",
+        "parent_type": "aligner",
+        "tag_type": ("str", ["full", "partial"]),
+        "short_descr": "does aligner produce a full or partial alignment?",
+        "user_facing": True,
+    }
+
+
+# Parameter estimator tags
+# ------------------------
+
+
+class capability__pairwise_parameter_estimation(_BaseTag):
+    """Capability: parameter estimator supports pairwise parameter estimation.
+
+    - String name: ``"capability:pairwise"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to parameter estimators.
+
+    If the tag is ``True``, the estimator supports pairwise parameter estimation,
+    i.e., estimating parameters for a pair of time series.
+
+    If the tag is ``False``, the estimator does not support
+    pairwise parameter estimation.
+    """
+
+    _tags = {
+        "tag_name": "capability:pairwise",
+        "parent_type": "param_est",
+        "tag_type": "bool",
+        "short_descr": "does the estimator support pairwise parameter estimation?",
         "user_facing": True,
     }
 
@@ -2943,8 +3328,8 @@ class visual_block_kind(_BaseTag):
     in a jupyter notebook.
 
     Meta-estimators are composites with a variable number of sub-estimators,
-    such as ``ForecastingPipeline`` or ``ColumnTransformer``, inheriting from
-    ``_HeterogenousMetaEstimator``.
+    such as ``ForecastingPipeline`` or ``ColumnEnsembleTransformer``,
+    inheriting from ``_HeterogenousMetaEstimator``.
 
     The html display is triggered by calling the ``_repr_html_`` method on any
     ``scikit-base`` estimator, which returns a html representation of the estimator,
@@ -2965,6 +3350,196 @@ class visual_block_kind(_BaseTag):
         "tag_type": ("str", ["single", "serial", "parallel"]),
         "short_descr": "how to display html representation of a meta-estimator in jupyter notebook",  # noqa: E501
         "user_facing": False,
+    }
+
+
+# Catalogue tags
+# --------------
+
+
+class catalogue_type(_BaseTag):
+    """Catalogue subtype: what kind of catalogue this is.
+
+    - String name: ``"catalogue_type"``
+    - Public tag
+    - Values: string (e.g., ``"mixed"``, ``"datasets"``, ``"estimators"``)
+    - Example: ``"mixed"``
+    """
+
+    _tags = {
+        "tag_name": "catalogue_type",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Subtype of the catalogue (e.g., mixed, datasets, estimators).",
+        "user_facing": True,
+    }
+
+
+class n_items(_BaseTag):
+    """Number of total items in the catalogue.
+
+    - String name: ``"n_items"``
+    - Values: integer
+    - Example: ``5``
+    """
+
+    _tags = {
+        "tag_name": "n_items",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of items in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_datasets(_BaseTag):
+    """Number of dataset entries in the catalogue.
+
+    - String name: ``"n_datasets"``
+    - Values: integer
+    - Example: ``2``
+    """
+
+    _tags = {
+        "tag_name": "n_datasets",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of datasets in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_metrics(_BaseTag):
+    """Number of metric objects in the catalogue.
+
+    - String name: ``"n_metrics"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_metrics",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of metrics in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_cv_splitters(_BaseTag):
+    """Number of cross-validation splitters in the catalogue.
+
+    - String name: ``"n_cv_splitters"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_cv_splitters",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of CV splitters in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_classifiers(_BaseTag):
+    """Number of classifier estimators in the catalogue.
+
+    - String name: ``"n_classifiers"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_classifiers",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of classifiers in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class n_forecasters(_BaseTag):
+    """Number of forecaster estimators in the catalogue.
+
+    - String name: ``"n_forecasters"``
+    - Values: integer
+    - Example: ``1``
+    """
+
+    _tags = {
+        "tag_name": "n_forecasters",
+        "parent_type": "catalogue",
+        "tag_type": "int",
+        "short_descr": "Total number of forecasters in the catalogue.",
+        "user_facing": True,
+    }
+
+
+class info__name(_BaseTag):
+    """Information tag: human-readable name of the catalogue.
+
+    - String name: ``"info:name"``
+    - Public information tag
+    - Values: string (e.g., ``"TSC Bake Off Catalogue"``)
+    - Example: ``"My Catalogue"``
+    - Default: empty string
+
+    This tag should contain a short, human-readable name that describes
+    the catalogue.
+    """
+
+    _tags = {
+        "tag_name": "info:name",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Human-readable name for this catalogue.",
+        "user_facing": True,
+    }
+
+
+class info__description(_BaseTag):
+    """Information tag: short textual description of the catalogue.
+
+    - String name: ``"info:description"``
+    - Public information tag
+    - Values: string
+    - Example: ``"A M4 catalogue containing datasets, metrics, and models."``
+    - Default: empty string
+
+    This tag provides a concise description of the catalogue's purpose
+    or contents. Suitable for documentation or rendered UI text.
+    """
+
+    _tags = {
+        "tag_name": "info:description",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Short description of the catalogue.",
+        "user_facing": True,
+    }
+
+
+class info__source(_BaseTag):
+    """Information tag: source or reference for the catalogue.
+
+    - String name: ``"info:source"``
+    - Public information tag
+    - Values: string (e.g., a DOI)
+    - Example: ``"10.1016/j.ijforecast.2019.04.014"``
+    - Default: empty string
+
+    This tag should contain the source or origin of the catalogue,
+    typically a DOI, citation string, URL, or dataset repository reference.
+    """
+
+    _tags = {
+        "tag_name": "info:source",
+        "parent_type": "catalogue",
+        "tag_type": "str",
+        "short_descr": "Source reference for this catalogue (e.g., DOI).",
+        "user_facing": True,
     }
 
 
@@ -3012,16 +3587,19 @@ ESTIMATOR_TAG_REGISTER = [
         "which scitypes does X internally support?",
     ),
     (
+        "scitype:y",
+        # the scitype:y tag should be kept but for separate use,
+        # a list of the internal scitypes supported by the estimator
+        # or the base scitype of the target data
+        ["param_est", "metric"],
+        "str",
+        "what scitype of y does the object support? must be scitype string",
+    ),
+    (
         "scitype:instancewise",
         "transformer",
         "bool",
         "does the transformer transform instances independently?",
-    ),
-    (
-        "capability:unequal_length:removes",
-        "transformer",
-        "bool",
-        "is the transformer result guaranteed to be equal length series (and series)?",
     ),
     (
         "capability:missing_values:removes",
@@ -3054,36 +3632,6 @@ ESTIMATOR_TAG_REGISTER = [
         "classification algorithms.",
     ),
     (
-        "capability:multiple-alignment",
-        "aligner",
-        "bool",
-        "is aligner capable of aligning multiple series (True) or only two (False)?",
-    ),
-    (
-        "capability:pairwise",
-        "param_est",
-        "bool",
-        "Indicates whether the estimator supports pairwise parameter estimation.",
-    ),
-    (
-        "capability:distance",
-        "aligner",
-        "bool",
-        "does aligner return overall distance between aligned series?",
-    ),
-    (
-        "capability:distance-matrix",
-        "aligner",
-        "bool",
-        "does aligner return pairwise distance matrix between aligned series?",
-    ),
-    (
-        "alignment_type",
-        "aligner",
-        ("str", ["full", "partial"]),
-        "does aligner produce a full or partial alignment",
-    ),
-    (
         "remember_data",
         ["forecaster", "transformer"],
         "bool",
@@ -3099,7 +3647,7 @@ ESTIMATOR_TAG_REGISTER = [
         "task",
         "detector",
         "str",
-        "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
+        "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
     ),
     (
         "learning_type",
@@ -3201,48 +3749,20 @@ ESTIMATOR_TAG_REGISTER = [
         "can transformer handle multivariate series? True = no",
     ),
     (
-        "univariate-metric",  # -> capability:multivariate, invert
-        "metric",
-        "bool",
-        "Does the metric only work on univariate y data?",
-    ),
-    (
         "handles-missing-data",  # -> capability:missing_values
         "estimator",
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
-    ),
-    (
-        "scitype:y",  # -> capability:multivariate
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        "forecaster",
-        ("str", ["univariate", "multivariate", "both"]),
-        "which series type does the forecaster support? multivariate means >1 vars",
     ),
     # ---------------------------
     # to be deprecated or removed
     # ---------------------------
     # the following tags are to be deprecated or removed
     (
-        "capability:pred_var",  # redundant with capability:pred_int
-        # because if one of the proba methods is available, all others are too
-        "forecaster",
-        "bool",
-        "does the forecaster implement predict_variance?",
-    ),
-    (
         "capability:global_forecasting",
         ["forecaster"],
         "bool",
         "can the estimator make global forecasting?",
-    ),
-    (
-        "python_dependencies_alias",
-        "object",
-        "dict",
-        "deprecated tag for dependency import aliases",
     ),
     (
         "ignores-exogeneous-X",

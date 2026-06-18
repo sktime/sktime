@@ -29,9 +29,18 @@ def run_test_vm(cls_name):
     Exception
         if the ``check_estimator`` fails, or if the estimator is not found.
     """
+    from skbase.utils.dependencies import _check_estimator_deps
+
     from sktime.registry import craft
     from sktime.utils import check_estimator
-    from sktime.utils.dependencies import _check_estimator_deps
+
+    cls = craft(cls_name)
+    if not _check_estimator_deps(cls, severity="none"):
+        print(
+            f"Skipping estimator: {cls} due to incompatibility "
+            "with python or OS version."
+        )
+        return
 
     if _check_soft_dependencies("torch", severity="none"):
         # disable mps for macos runners if torch is available
@@ -45,12 +54,5 @@ def run_test_vm(cls_name):
         if platform.system() == "Darwin":
             os.environ["HF_XET_NUM_CONCURRENT_RANGE_GETS"] = "4"
 
-    cls = craft(cls_name)
-    if _check_estimator_deps(cls, severity="none"):
-        skips = cls.get_class_tag("tests:skip_by_name", None)
-        check_estimator(cls, raise_exceptions=True, tests_to_exclude=skips)
-    else:
-        print(
-            f"Skipping estimator: {cls} due to incompatibility "
-            "with python or OS version."
-        )
+    skips = cls.get_class_tag("tests:skip_by_name", None)
+    check_estimator(cls, raise_exceptions=True, tests_to_exclude=skips)

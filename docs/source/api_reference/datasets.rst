@@ -51,6 +51,7 @@ Individual datasets distributed with ``sktime``, available without internet acce
     lynx.Lynx
     m5_competition.M5Dataset
     macroeconomic.Macroeconomic
+    pbs.PBS
     shampoo_sales.ShampooSales
     uschange.USChange
 
@@ -102,6 +103,7 @@ Individual datasets distributed with ``sktime``, available without internet acce
     :toctree: auto_generated/
     :template: class.rst
 
+    acsf1.ACSF1
     arrow_head.ArrowHead
     basic_motions.BasicMotions
     gunpoint.GunPoint
