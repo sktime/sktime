@@ -18,6 +18,7 @@ __author__ = [
     "dsask",
     "othmaneabou",
     "daniellekutner",
+    "DresdenGman",
 ]
 __all__ = ["TotoForecaster"]
 
@@ -40,6 +41,10 @@ class TotoForecaster(BaseForecaster):
     of observability data. Generate both point forecasts and uncertainty estimates using
     a Student-T mixture model. Support for variable prediction horizons and context
     lengths.
+
+    Exogenous variables passed as ``X`` to ``fit`` and ``predict`` are forwarded
+    to the underlying Toto model as ``future_exogenous_variables``. The columns
+    present in ``X`` at fit time must also be present at predict time.
 
     Parameters
     ----------
@@ -77,9 +82,9 @@ class TotoForecaster(BaseForecaster):
 
     _tags = {
         "y_inner_mtype": ["pd.DataFrame"],
-        "X_inner_mtype": "None",
+        "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
-        "capability:exogenous": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -103,6 +108,7 @@ class TotoForecaster(BaseForecaster):
             "dsask",
             "othmaneabou",
             "daniellekutner",
+            "DresdenGman",
         ],
         "maintainers": ["JATAYU000"],
         "python_version": ">= 3.10",
@@ -134,47 +140,26 @@ class TotoForecaster(BaseForecaster):
                 self.set_tags(python_dependencies=["torch", "xformers", "accelerate"])
             else:
                 raise ImportError(
-                    """
-                    xformers is required for memory efficient attention.
-                    Refer to https://github.com/facebookresearch/xformers
-                    """
+                    """xformers is required for memory efficient attention.
+                    Refer to https://github.com/facebookresearch/xformers"""
                 )
         self.stabilize_with_global = stabilize_with_global
         self.scale_factor_exponent = scale_factor_exponent
         self.prediction_type = prediction_type
         if prediction_type not in ["mean", "median"]:
             raise ValueError("prediction_type must be either 'mean' or 'median'")
-
         self.seed = seed
         self._seed = np.random.randint(0, 2**31) if seed is None else seed
         super().__init__()
 
     def _get_toto_key(self):
-        """Get a unique key for the Toto model based on configuration parameters.
-
-        This key is used by the _multiton decorator to ensure only one instance
-        of a model with specific parameters exists.
-
-        Returns
-        -------
-        tuple
-            Unique identifier for this model configuration
-        """
+        """Get a unique key for the Toto model based on configuration parameters."""
         kwargs = self._get_toto_kwargs()
-        key = {
-            **kwargs,
-            "device": self._device,
-        }
+        key = {**kwargs, "device": self._device}
         return str(sorted(key.items()))
 
     def _get_toto_kwargs(self):
-        """Get keyword arguments for the Toto model.
-
-        Returns
-        -------
-        dict
-            Keyword arguments for the Toto model.
-        """
+        """Get keyword arguments for the Toto model."""
         return {
             "pretrained_model_name_or_path": self.model_path,
             "use_memory_efficient_attention": self.use_memory_efficient_attention,
@@ -182,36 +167,44 @@ class TotoForecaster(BaseForecaster):
             "scale_factor_exponent": self.scale_factor_exponent,
         }
 
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
+    def _X_to_tensor(self, X, device):
+        """Convert a pd.DataFrame of exogenous variables to a float32 torch tensor.
 
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
+        The tensor shape expected by Toto is (n_exog_cols, n_timepoints),
+        matching the layout used for the target series.
 
         Parameters
         ----------
-        y : sktime time series object
-            guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-
-            * if self.get_tag("capability:multivariate")==False:
-              guaranteed to be univariate (e.g., single-column for DataFrame)
-            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
-              the method should handle uni- and multivariate y appropriately
-
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
+        X : pd.DataFrame of shape (n_timepoints, n_exog_cols), or None
+        device : str
+            Torch device string, e.g. 'cpu' or 'cuda'.
 
         Returns
         -------
-        self : reference to self
+        torch.Tensor of shape (n_exog_cols, n_timepoints), or None if X is None.
+        """
+        import torch
+
+        if X is None:
+            return None
+        return torch.tensor(X.values.T, dtype=torch.float32).to(device)
+
+    def _fit(self, y, X=None, fh=None):
+        """Fit forecaster to training data.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Target time series to fit.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables. If provided, column names are stored so
+            that predict-time X can be validated for consistency.
+        fh : ForecastingHorizon, optional (default=None)
+            The forecast horizon.
+
+        Returns
+        -------
+        self : TotoForecaster
         """
         import torch
         from toto.data.util.dataset import MaskedTimeseries
@@ -220,21 +213,18 @@ class TotoForecaster(BaseForecaster):
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
             self._device = self.device
-        self.input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
-            self._device
-        )
 
+        self.input_series = torch.tensor(
+            y.values.T, dtype=torch.float32
+        ).to(self._device)
         self._id_mask = torch.zeros_like(self.input_series).to(self._device)
         self._padding_mask = torch.full_like(
             self.input_series, True, dtype=torch.bool
         ).to(self._device)
-
-        # current model does not use these two variable, might be needed in future.
         self.timestamp_seconds = torch.zeros_like(self.input_series)
         self.time_interval_seconds = torch.full(
             (self.input_series.shape[0],), 60 * 15, dtype=torch.float32
         ).to(self._device)
-
         self._series = MaskedTimeseries(
             series=self.input_series,
             padding_mask=self._padding_mask,
@@ -243,34 +233,28 @@ class TotoForecaster(BaseForecaster):
             time_interval_seconds=self.time_interval_seconds,
         )
 
+        # Store exogenous column names for predict-time validation.
+        # The historical X values are not passed to Toto during fit because
+        # the model is zero-shot; only future exogenous values matter at
+        # predict time.
+        self._X_columns = list(X.columns) if X is not None else None
+
         return self
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
+        fh : ForecastingHorizon
+            The forecast horizon.
+        X : pd.DataFrame, optional (default=None)
+            Future exogenous variables aligned to ``fh``. If provided at fit
+            time, X must also be provided here with the same columns.
 
         Returns
         -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
+        y_pred : pd.DataFrame
         """
         import torch
 
@@ -286,12 +270,18 @@ class TotoForecaster(BaseForecaster):
             device=self._device,
         ).load_from_checkpoint()
 
+        # Convert future exogenous variables to tensor if provided.
+        # Shape: (n_exog_cols, prediction_length)
+        future_exog_tensor = self._X_to_tensor(X, self._device)
+
         forecast = forecaster.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
+            future_exogenous_variables=future_exog_tensor,
         )
+
         if self.prediction_type.lower() == "median":
             all_predictions = forecast.median.cpu().squeeze(0).numpy().T
         else:
@@ -309,35 +299,17 @@ class TotoForecaster(BaseForecaster):
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous variables aligned to ``fh``.
+        alpha : list[float]
+            Quantile levels to compute.
 
         Returns
         -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+        pred_quantiles : pd.DataFrame
         """
         import torch
 
@@ -349,26 +321,28 @@ class TotoForecaster(BaseForecaster):
             device=self._device,
         ).load_from_checkpoint()
 
+        # Convert future exogenous variables to tensor if provided.
+        future_exog_tensor = self._X_to_tensor(X, self._device)
+
         forecast = forecaster.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
+            future_exogenous_variables=future_exog_tensor,
         )
+
         var_names = self._y.columns
         cols_idx = pd.MultiIndex.from_product([var_names, alpha])
         pred_index = fh.to_absolute(self._cutoff)._values
         relative_indices = fh.to_relative(self._cutoff) - 1
-
         pred_quantiles = pd.DataFrame(index=pred_index, columns=cols_idx)
         alpha_tensor = torch.tensor(alpha, device=self._device)
-
         quantiles = forecast.quantile(alpha_tensor)
         if quantiles.dim() > 3:
             quantile_values = quantiles.cpu().squeeze(1).numpy()
         else:
             quantile_values = quantiles.cpu().numpy()
-
         for i, var_name in enumerate(var_names):
             for j, a in enumerate(alpha):
                 selected_quantiles = quantile_values[j, i, relative_indices]
@@ -377,42 +351,18 @@ class TotoForecaster(BaseForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for forecasters.
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
+        """Return testing parameter settings for the estimator."""
         test_params = [
             {"num_samples": 2, "samples_per_batch": 2, "prediction_type": "median"},
             {"num_samples": 2, "samples_per_batch": 1, "prediction_type": "mean"},
             {"num_samples": 1, "samples_per_batch": 1, "prediction_type": "mean"},
         ]
-
         return test_params
 
 
 @_multiton
 class _CachedTotoForecaster:
-    """Cached Toto forecaster.
-
-    Toto is a zero-shot model and immutable, hence there will not be
-    any side effects of sharing the same instance across multiple uses.
-    This caching mechanism uses the _multiton decorator to ensure
-    that models with the same configuration are reused, preventing
-    duplicate models in memory when handling multivariate data.
-    """
+    """Cached Toto forecaster."""
 
     def __init__(self, key, toto_kwargs, device):
         self.key = key
@@ -423,7 +373,6 @@ class _CachedTotoForecaster:
     def load_from_checkpoint(self):
         if self.forecaster is not None:
             return self.forecaster
-
         from toto.inference.forecaster import TotoForecaster
         from toto.model.toto import Toto
 
@@ -431,5 +380,4 @@ class _CachedTotoForecaster:
         toto_model.to(self.device)
         toto_model.compile()
         self.forecaster = TotoForecaster(toto_model.model)
-
         return self.forecaster
