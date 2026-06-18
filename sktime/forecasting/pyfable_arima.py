@@ -92,10 +92,10 @@ class PyFableARIMA(BaseForecaster):
     _tags = {
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:missing_values": False,
         "capability:insample": True,
