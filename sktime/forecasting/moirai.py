@@ -240,16 +240,23 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     for cls in _safe_classes:
                         cls.__module__ = _orig_modules[cls]
 
-            # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch on
-            # Python 3.12 when an old CPython-3.8-compiled binary is installed).
-            # If the import fails for any reason, disable Xet transport so that
-            # huggingface_hub falls back to regular HTTP download.
+            # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch when
+            # hf_xet was compiled for an older CPython than the current runtime).
+            # huggingface_hub reads HF_HUB_DISABLE_XET from constants.py at
+            # import time, and file_download.py accesses it as
+            # `constants.HF_HUB_DISABLE_XET` at call time. We must therefore
+            # patch huggingface_hub.constants directly (not file_download) so
+            # that _download_to_tmp_and_move skips xet_get for this session.
             import os
 
             try:
                 import hf_xet  # noqa: F401
             except Exception:
-                os.environ.setdefault("HF_HUB_DISABLE_XET_TRANSPORT", "1")
+                os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+                if _check_soft_dependencies("huggingface_hub", severity="none"):
+                    import huggingface_hub.constants as _hf_constants
+
+                    _hf_constants.HF_HUB_DISABLE_XET = True
 
             if self.checkpoint_path.startswith("Salesforce"):
                 from sktime.libs.uni2ts.moirai_module import MoiraiModule
