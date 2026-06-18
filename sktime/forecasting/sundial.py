@@ -377,23 +377,21 @@ class SundialForecaster(BaseForecaster):
         """Return testing parameter settings for the estimator."""
         from skbase.utils.dependencies import _check_soft_dependencies
 
-        config = {
-            "input_token_len": 2,
-            "hidden_size": 4,
-            "intermediate_size": 8,
-            "output_token_lens": [8],
-            "num_hidden_layers": 1,
-            "num_attention_heads": 1,
-            "max_position_embeddings": 64,
-            "flow_loss_depth": 1,
-            "num_sampling_steps": 1,
-            "diffusion_batch_mul": 1,
-            "use_cache": False,
-        }
-
         common_params = {
             "model_path": None,
-            "config": config,
+            "config": {
+                "input_token_len": 2,
+                "hidden_size": 4,
+                "intermediate_size": 8,
+                "output_token_lens": [8],
+                "num_hidden_layers": 1,
+                "num_attention_heads": 1,
+                "max_position_embeddings": 64,
+                "flow_loss_depth": 1,
+                "num_sampling_steps": 1,
+                "diffusion_batch_mul": 1,
+                "use_cache": False,
+            },
             "deterministic": True,
             "validation_split": 0.1,
             "training_args": {
@@ -402,32 +400,28 @@ class SundialForecaster(BaseForecaster):
             },
         }
 
-        def _make_test_params(**kwargs):
-            params = deepcopy(common_params)
-            params.update(kwargs)
-            return params
+        test_params_1 = {
+            **common_params,
+            "device_map": "cpu",
+            "forward_kwargs": {"num_samples": 2, "revin": True},
+        }
 
-        params = [
-            _make_test_params(
-                device_map="cpu",
-                forward_kwargs={"num_samples": 2, "revin": True},
-            ),
-            _make_test_params(
-                device_map=None,
-                forward_kwargs={"num_samples": 3, "revin": False},
-            ),
-        ]
+        test_params_2 = {
+            **common_params,
+            "forward_kwargs": {"num_samples": 3, "revin": False},
+        }
 
         if _check_soft_dependencies("torch", severity="none"):
             import torch
 
-            params.append(
-                _make_test_params(
-                    device_map="cpu",
-                    dtype=torch.bfloat16,
-                    forward_kwargs={"num_samples": 2, "revin": False},
-                )
+            test_params_2.update(
+                {
+                    "dtype": torch.bfloat16,
+                    "device_map": "cuda" if torch.cuda.is_available() else None,
+                }
             )
+
+        params = [test_params_1, test_params_2]
 
         return params
 
