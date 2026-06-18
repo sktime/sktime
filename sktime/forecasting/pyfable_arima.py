@@ -105,6 +105,27 @@ class PyFableARIMA(BaseForecaster):
         "authors": ["ericjb"],
         "maintainers": ["ericjb"],
         "python_dependencies": ["rpy2==3.6.1"],
+        "r_dependencies":[
+            "fable",
+            "fabletools",
+            "tsibble",
+            "tsibbledata",
+            "urca",
+            "feasts",
+            "lubridate",
+            "ggplot2",
+            "stringr",
+            "readr",
+            "readxl",
+            "tidyr",
+            "distributional",
+            "patchwork",
+            "scales",
+            "anytime",
+            "timechange",
+            "tibble",
+            "dplyr"
+        ],
         # CI and test flags
         # -----------------
         "tests:skip_by_name": [
