@@ -119,7 +119,7 @@ class SundialForecaster(BaseForecaster):
         "capability:pred_int": True,
         "authors": ["WenWeiTHU", "geetu040"],
         "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers[torch]>=4.40.1,<5.0.0"],
+        "python_dependencies": ["transformers[torch]~=4.40.0"],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.sundial"],
     }
