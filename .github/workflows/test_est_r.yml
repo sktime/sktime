@@ -82,13 +82,13 @@ jobs:
         if: ${{ matrix.os == 'windows-latest' }}
         shell: pwsh
         run: |
-          $pkgs = python -c "from sktime.registry import _r_deps; print(','.join(repr(x) for x in _r_deps('${{ matrix.flag }}')))"
+          $pkgs = python -c "from sktime.registry._craft import _r_deps; print(','.join(repr(x) for x in _r_deps('${{ matrix.flag }}')))"
           & Rscript.exe -e "install.packages(c($pkgs), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
 
       - name: Install R dependencies for ${{ matrix.flag }} (Unix)
         if: ${{ matrix.os != 'windows-latest' }}
         run: |
-          PKGS=$(python -c "from sktime.registry import _r_deps; print(','.join(repr(x) for x in _r_deps('${{ matrix.flag }}')))")
+          PKGS=$(python -c "from sktime.registry._craft import _r_deps; print(','.join(repr(x) for x in _r_deps('${{ matrix.flag }}')))")
           Rscript -e "install.packages(c($PKGS), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
 
       - name: Check R version (macOS)
