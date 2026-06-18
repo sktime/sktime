@@ -33,6 +33,10 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `momentfm` - a package implementing the `momentfm` library, unofficial fork
   maintained since April 2025.
 
+* `sundial` - partial fork of Sundial, adapted from [thuml/sundial-base-128m](https://huggingface.co/thuml/sundial-base-128m).
+  Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
+  Licensed under Apache 2.0.
+
 * `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
 
 * `timemoe` - partial fork of `time-moe` package, from [Time-MoE/Time-MoE](https://github.com/Time-MoE/Time-MoE). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
