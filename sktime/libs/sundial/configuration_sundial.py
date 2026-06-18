@@ -1,4 +1,4 @@
-from typing import List
+# ruff: noqa: D100, D101, D107, UP035
 
 from transformers import PretrainedConfig
 

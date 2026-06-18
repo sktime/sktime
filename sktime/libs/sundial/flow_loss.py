@@ -1,3 +1,4 @@
+# ruff: noqa: D100, D101, D102, D103, D107, D200, D205, D400, E501, S311, UP008
 import math
 
 import torch

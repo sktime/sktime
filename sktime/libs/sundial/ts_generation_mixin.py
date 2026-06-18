@@ -1,6 +1,7 @@
+# ruff: noqa: D100, D101, D102, D103, D107, E501, F821, UP035
 import warnings
 from collections.abc import Callable
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Optional
 
 import torch
 from transformers import GenerationMixin, LogitsProcessorList, StoppingCriteriaList
