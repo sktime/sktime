@@ -37,8 +37,12 @@ Community Council Observers
      - GitHub ID
    * - Benedikt Heidrich
      - :user:`benheid`
+   * - Felipe Angelim Vieira
+     - :user:`felipeangelimvieira`
    * - Jana Schmidberger
      - :user:`janasberger`
+   * - Jigyasu
+     - :user:`jgyasu`
    * - Kiril Ralinovski
      - :user:`kirilral`
 
@@ -73,8 +77,6 @@ Core Developers
      - :user:`phoeenniixx`
    * - Benedikt Heidrich
      - :user:`benheid`
-   * - Daniel Bartling
-     - :user:`danbartl`
    * - Eric J Berger
      - :user:`ericjb`
    * - Felipe Angelim Vieira
@@ -97,14 +99,14 @@ Core Developers
      - :user:`marrov`
    * - Mateusz Kasprowicz
      - :user:`mateuszkasprowicz `
-   * - Mirae Parker
-     - :user:`miraep8`
    * - Pranav Bhat
      - :user:`PranavBhatP`
    * - Pranav Prajapati
      - :user:`pranavvp16`
    * - Sai Revanth Gowravajhala
      - :user:`SaiRevanth25`
+   * - Simon Blanke
+     - :user:`SimonBlanke`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
    * - Ugochukwu Onyeka
@@ -128,6 +130,8 @@ Former Core Developers
      - :user:`ayushmaanseth`
    * - Christopher Holder
      - :user:`chrisholder`
+   * - Daniel Bartling
+     - :user:`danbartl`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
    * - George Oastler
@@ -156,6 +160,8 @@ Former Core Developers
      - :user:`matteogales`
    * - Matthew Middlehurst
      - :user:`mattewmiddlehurst`
+   * - Mirae Parker
+     - :user:`miraep8`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
    * - Patrick Schäfer

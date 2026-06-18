@@ -108,6 +108,13 @@ class NaiveForecaster(_BaseWindowForecaster):
     >>> forecaster.fit(y)
     NaiveForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>>
+    >>> # Example 2: Seasonal Naive strategy
+    >>> # The airline data is monthly, so we use sp=12 (12 months per year)
+    >>> forecaster = NaiveForecaster(strategy="last", sp=12)
+    >>> forecaster.fit(y)
+    NaiveForecaster(sp=12)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
     """
 
     _tags = {
@@ -129,8 +136,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:exogenous": False,
-        "scitype:y": "univariate",
-        "capability:pred_var": True,
+        "capability:multivariate": False,
         "capability:pred_int": True,
         # CI and test flags
         # -----------------
@@ -156,7 +162,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, default=None
             Exogenous variables are ignored.
 
@@ -348,7 +354,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         return y_pred[fh_idx]
 
     def _predict_naive(self, fh=None, X=None):
-        from sktime.transformations.series.lag import Lag
+        from sktime.transformations.lag import Lag
 
         strategy = self.strategy
         sp = self.sp
@@ -681,12 +687,11 @@ class NaiveVariance(BaseForecaster):
         "authors": ["fkiraly", "bethrice44"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
-        "capability:pred_var": True,
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
@@ -852,7 +857,7 @@ class NaiveVariance(BaseForecaster):
         y : pd.Series or pd.DataFrame
             sktime compatible time series to use in computing residuals matrix
         X : pd.DataFrame
-            sktime compatible exogeneous time series to use in forecasts
+            sktime compatible exogenous time series to use in forecasts
         forecaster : sktime compatible forecaster
             forecaster to use in computing the sliding residuals
         initial_window : int

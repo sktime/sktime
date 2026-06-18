@@ -9,19 +9,20 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 from skbase.utils.stdout_mute import StdoutMute
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+    _GlobalForecastingDeprecationMixin,
+)
 from sktime.split import temporal_train_test_split
+from sktime.utils.dependencies import _safe_import
 from sktime.utils.warnings import warn
 
-if _check_soft_dependencies("torch", severity="none"):
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+Dataset = _safe_import("torch.utils.data.Dataset")
 
 
-class TinyTimeMixerForecaster(_BaseGlobalForecaster):
+class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 
@@ -264,17 +265,9 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate>=0.26.0"],
         # estimator type
         # --------------
-        "X_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "scitype:y": "both",
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
+        "capability:multivariate": True,
         "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
@@ -284,6 +277,8 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "property:randomness": "stochastic",
+        "capability:random_state": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -326,7 +321,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
                 }
             )
 
-    def _fit(self, y, X, fh):
+    def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -337,15 +332,16 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X :  sktime time series object, optional (default=None)
@@ -465,6 +461,10 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
 
             # Adjust requires_grad property of model weights based on info
             for key in info["mismatched_keys"]:
+                # transformers>=5.0 may return tuples (key, shape) instead
+                # of plain strings for mismatched_keys
+                if isinstance(key, tuple):
+                    key = key[0]
                 _model = self.model
                 for attr_name in key.split(".")[:-1]:
                     _model = getattr(_model, attr_name)
@@ -526,7 +526,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         # Get the model
         self.model = trainer.model
 
-    def _predict(self, fh, X, y=None):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -541,7 +541,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
@@ -559,13 +559,9 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        _y = y if self._global_forecasting else self._y
+        _y = self._y
 
-        # multi-index conversion goes here
-        if isinstance(_y.index, pd.MultiIndex):
-            hist = _frame2numpy(_y)
-        else:
-            hist = np.expand_dims(_y.values, axis=0)
+        hist = np.expand_dims(_y.values, axis=0)
 
         # hist.shape: (batch_size, n_timestamps, n_cols)
 
@@ -585,10 +581,7 @@ class TinyTimeMixerForecaster(_BaseGlobalForecaster):
         future_values = None
         if X is not None:
             # Process exogenous variables for prediction
-            if isinstance(X.index, pd.MultiIndex):
-                exog_data = _frame2numpy(X)
-            else:
-                exog_data = np.expand_dims(X.values, axis=0)
+            exog_data = np.expand_dims(X.values, axis=0)
 
             # Extract future exogenous values for the prediction horizon
             # X should contain future values that cover the prediction horizon
@@ -735,24 +728,6 @@ def _pad_truncate(data, seq_len, pad_value=0):
     return truncated_data, mask
 
 
-def _same_index(data):
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data):
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
-
-
 class PyTorchDataset(Dataset):
     """Dataset for use in sktime deep learning forecasters."""
 
@@ -775,19 +750,12 @@ class PyTorchDataset(Dataset):
         self.context_length = context_length
         self.prediction_length = prediction_length
 
-        # multi-index conversion for y
-        if isinstance(y.index, pd.MultiIndex):
-            self.y = _frame2numpy(y)
-        else:
-            self.y = np.expand_dims(y.values, axis=0)
+        self.y = np.expand_dims(y.values, axis=0)
 
         # Handle exogenous variables
         self.X = None
         if X is not None:
-            if isinstance(X.index, pd.MultiIndex):
-                self.X = _frame2numpy(X)
-            else:
-                self.X = np.expand_dims(X.values, axis=0)
+            self.X = np.expand_dims(X.values, axis=0)
 
         self.n_sequences, self.n_timestamps, _ = self.y.shape
         self.single_length = max(

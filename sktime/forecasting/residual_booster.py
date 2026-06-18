@@ -86,6 +86,11 @@ class ResidualBoostingForecaster(BaseForecaster):
         self.residual_forecaster = residual_forecaster
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         exog = self.base_forecaster.get_tag(
             "capability:exogenous"
         ) or self.residual_forecaster.get_tag("capability:exogenous")
@@ -165,14 +170,6 @@ class ResidualBoostingForecaster(BaseForecaster):
         y_base = self.base_future_.predict(fh=fh, X=X)
         y_resid = self.residual_forecaster_.predict(fh=fh, X=X)
         return y_base + y_resid
-
-    def _add_det_to_proba(self, y_proba, y_pred):
-        """Add multiindex columns to probabilistic forecasts."""
-        y_proba = y_proba.copy()
-        for col in y_proba.columns:
-            var = col[0]
-            y_proba[col] = y_proba[col] + y_pred[var]
-        return y_proba
 
     def _predict_interval(self, fh, X=None, coverage=0.9):
         """Combine prediction intervals from base and residual models."""

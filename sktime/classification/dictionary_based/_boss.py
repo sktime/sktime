@@ -11,6 +11,7 @@ from copy import copy
 from itertools import compress
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state, gen_even_slices
 from sklearn.utils.extmath import safe_sparse_dot
@@ -18,8 +19,7 @@ from sklearn.utils.sparsefuncs_fast import csr_row_norms
 from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.transformations.dictionary_based import SFAFast
 from sktime.utils.validation.panel import check_X_y
 
 # delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3
@@ -462,12 +462,15 @@ class BOSSEnsemble(BaseClassifier):
                 "alphabet_size": 4,
             }
         else:
-            return {
+            param1 = {
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
                 "feature_selection": "none",
                 "use_boss_distance": False,
             }
+            param2 = {**param1, "feature_selection": "chi2"}
+
+        return [param1, param2]
 
 
 class IndividualBOSS(BaseClassifier):

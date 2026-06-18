@@ -213,7 +213,8 @@ def _run_test_for_class(
 
         If multiple reasons are present, the first one in the above list is returned.
     """
-    from sktime.utils.dependencies import _check_estimator_deps
+    from skbase.utils.dependencies import _check_estimator_deps
+
     from sktime.utils.git_diff import (
         get_packages_with_changed_specs,
         is_class_changed,
@@ -462,4 +463,24 @@ def _get_all_changed_classes(vm=False, r=False):
     cc = [(name, est) for name, est in cc if _is_r_class(est) == r]
     # return only the name strings
     names = [name for name, _ in cc]
+    return names
+
+
+@lru_cache
+def _get_all_vm_classes():
+    """Get all sktime object classes that require their own VM.
+
+    This returns all classes with the ``"tests:vm"=True`` tag,
+    regardless of whether they have changed or not.
+    This is useful for comprehensive testing in CRON jobs like test-all.
+
+    Returns
+    -------
+    tuple of strings of class names : object classes that require their own VM
+    """
+    from sktime.registry import all_estimators
+
+    # Get all estimators with tests:vm = True tag
+    vm_estimators = all_estimators(filter_tags={"tests:vm": True})
+    names = [name for name, est in vm_estimators]
     return names

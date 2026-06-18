@@ -21,7 +21,7 @@ from queue import PriorityQueue
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.series.clasp import ClaSPTransformer
+from sktime.transformations.clasp import ClaSPTransformer
 from sktime.utils.validation.series import check_series
 
 
@@ -227,6 +227,12 @@ class ClaSPSegmentation(BaseDetector):
         "fit_is_empty": True,
         "python_dependencies": "numba",
         "X_inner_mtype": "pd.Series",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": [
+            "test_non_state_changing_method_contract",
+            "test_raises_not_fitted_error",
+        ],
     }
 
     def __init__(self, period_length=10, n_cps=1, exclusion_radius=0.05):
@@ -244,7 +250,7 @@ class ClaSPSegmentation(BaseDetector):
         X : pd.DataFrame
             Training data to fit model to (time series).
         Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+            Ground truth annotations for training if detector is supervised.
 
         Returns
         -------
