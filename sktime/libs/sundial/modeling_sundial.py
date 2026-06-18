@@ -43,7 +43,7 @@ class SundialPatchEmbedding(nn.Module):
         self.input_token_len = config.input_token_len
 
     def forward(self, x):
-        mask = torch.ones_like(x, dtype=torch.float32)
+        mask = torch.ones_like(x, dtype=x.dtype)
         input_length = x.shape[-1]
         padding_length = (
             self.input_token_len - (input_length % self.input_token_len)

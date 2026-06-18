@@ -42,11 +42,17 @@ class FlowLoss(nn.Module):
 
     def sample(self, z, num_samples=1):
         z = z.repeat(num_samples, 1)
-        noise = torch.randn(z.shape[0], self.in_channels).to(z.device)
+        noise = torch.randn(
+            z.shape[0],
+            self.in_channels,
+            device=z.device,
+            dtype=z.dtype,
+        )
         x = noise
         dt = 1.0 / self.num_sampling_steps
         for i in range(self.num_sampling_steps):
-            t = (torch.ones(x.shape[0]) * i / self.num_sampling_steps).to(x.device)
+            t = torch.ones(x.shape[0], device=x.device, dtype=x.dtype)
+            t = t * i / self.num_sampling_steps
             pred = self.net(x, t * 1000, z)
             x = x + (pred - noise) * dt
         x = x.reshape(num_samples, -1, self.in_channels).transpose(0, 1)
@@ -85,10 +91,10 @@ class TimestepEmbedder(nn.Module):
         half = dim // 2
         freqs = torch.exp(
             -math.log(max_period)
-            * torch.arange(start=0, end=half, dtype=torch.float32)
+            * torch.arange(start=0, end=half, dtype=t.dtype)
             / half
         ).to(device=t.device)
-        args = t[:, None].float() * freqs[None]
+        args = t[:, None] * freqs[None]
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         if dim % 2:
             embedding = torch.cat(
