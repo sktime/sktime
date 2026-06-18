@@ -88,7 +88,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "gluonts",
             "torch",
             "einops",
-            "huggingface-hub",
+            "huggingface_hub",
             "hf-xet",
             "lightning",
             "hydra-core",
@@ -163,7 +163,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             )
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
-    if _check_soft_dependencies(["lightning", "huggingface-hub"], severity="none"):
+    if _check_soft_dependencies(["lightning", "huggingface_hub"], severity="none"):
         import sktime
         from sktime.libs.uni2ts.forecast import MoiraiForecast
 

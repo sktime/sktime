@@ -80,7 +80,7 @@ class Moirai2Forecaster(_BaseGlobalForecaster):
             "gluonts",
             "torch",
             "einops",
-            "huggingface-hub",
+            "huggingface_hub",
             "hf-xet",
             "lightning",
             "hydra-core",
