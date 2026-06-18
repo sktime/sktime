@@ -90,18 +90,8 @@ class PyFableARIMA(BaseForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
-        "requires-fh-in-fit": False,
-        "X-y-must-have-same-index": True,
-        "enforce_index_type": None,
-        "capability:multivariate": False,
-        "capability:exogenous": True,
-        "capability:missing_values": False,
-        "capability:insample": True,
-        "capability:pred_int": True,
-        "capability:pred_int:insample": False,
-        "capability:update": False,
+        # packaging info
+        # --------------
         "authors": ["ericjb"],
         "maintainers": ["ericjb"],
         "python_dependencies": ["rpy2==3.6.1"],
@@ -126,6 +116,20 @@ class PyFableARIMA(BaseForecaster):
             "tibble",
             "dplyr",
         ],
+        # estimator type
+        # --------------
+        "y_inner_mtype": "pd.Series",
+        "X_inner_mtype": "pd.DataFrame",
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "capability:multivariate": False,
+        "capability:exogenous": True,
+        "capability:missing_values": False,
+        "capability:insample": True,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": False,
+        "capability:update": False,
         # CI and test flags
         # -----------------
         "tests:skip_by_name": [
