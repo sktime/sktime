@@ -394,6 +394,22 @@ allowed-confusables=["σ"]
   "D106", # Missing docstring in public nested class
   "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
 ]
+"sktime/libs/sundial/*.py" = [
+  "D100", # Missing docstring in public module
+  "D101", # Missing docstring in public class
+  "D102", # Missing docstring in public method
+  "D103", # Missing docstring in public function
+  "D200", # One-line docstring should fit on one line
+  "D205", # 1 blank line required between summary line and description
+  "D400", # First line should end with a period
+  "D107", # Missing docstring in __init__
+  "E501", # Line too long
+  "F401", # Imported but unused
+  "F821", # Undefined names in optional dependency fallback paths
+  "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
+  "UP008", # Use super() instead of super(__class__, self)
+  "UP035", # typing.List/Dict/Tuple deprecated
+]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
