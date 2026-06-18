@@ -72,6 +72,20 @@ class SundialForecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
+    Running with explicit device, dtype, and sampling settings:
+
+    >>> import torch
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.sundial import SundialForecaster
+    >>> y = load_airline()
+    >>> forecaster = SundialForecaster(  # doctest: +SKIP
+    ...     device_map="cuda",
+    ...     dtype=torch.bfloat16,
+    ...     num_samples=20,
+    ...     deterministic=True,
+    ... )
+    >>> y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])  # doctest: +SKIP
+
     Passing generation options through ``forward_kwargs``:
 
     >>> from sktime.datasets import load_airline
@@ -260,14 +274,24 @@ class SundialForecaster(BaseForecaster):
             {
                 "model_path": None,
                 "config": config,
+                "device_map": "cpu",
                 "num_samples": 2,
                 "deterministic": True,
             },
             {
                 "model_path": None,
                 "config": config,
+                "device_map": "cpu",
                 "num_samples": 3,
                 "forward_kwargs": {"revin": False},
+                "deterministic": True,
+            },
+            {
+                "model_path": None,
+                "config": config,
+                "device_map": None,
+                "num_samples": 1,
+                "forward_kwargs": {"revin": True},
                 "deterministic": True,
             },
         ]
