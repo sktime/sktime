@@ -105,6 +105,7 @@ class TotoForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:non_contiguous_X": False,
         # contribution and dependency tags
         "authors": [
             "JATAYU000",
