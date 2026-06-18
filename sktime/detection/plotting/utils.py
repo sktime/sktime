@@ -15,7 +15,9 @@ __all__ = [
 __author__ = ["patrickzib"]
 
 
-def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
+def plot_time_series_with_change_points(
+    ts_name, ts, true_cps, font_size=16, true_cps_dates=None, legend=True, **kwargs
+):
     """Plot the time series with the known change points.
 
     Parameters
@@ -27,8 +29,16 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
     true_cps: array-like, dtype=int
         the known change points
         these are highlighted in the time series as vertical lines
-    font_size: int
+    true_cps_dates: array-like, optional
+        the timestamps of true_cps
+        should have the same length as `true_cps`
+    font_size: int (default = 16)
         for plotting
+    legend: bool, (default = True)
+        whether a legend should be added
+    **kwargs: other parameters of plt.plot, optional
+        the other parameter accepted now is `figsize`, which is
+        a parameter to set the size of the figure.
 
     Returns
     -------
@@ -43,7 +53,10 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
 
     ts = check_X(ts)
 
-    fig = plt.figure(figsize=(20, 5))
+    if "figsize" in kwargs.keys():
+        fig = plt.figure(figsize=kwargs["figsize"])
+    else:
+        fig = plt.figure(figsize=(20, 5))
     true_cps = np.sort(true_cps)
     segments = [0] + list(true_cps) + [ts.shape[0]]
 
@@ -60,7 +73,12 @@ def plot_time_series_with_change_points(ts_name, ts, true_cps, font_size=16):
     for i, idx in enumerate(true_cps):
         ax.vlines(idx, lim1, lim2, linestyles="--", label=str(i) + "-th-CPT")
 
-    plt.legend(loc="best")
+    if true_cps_dates is not None:
+        ax.set_xticks(true_cps, true_cps_dates)
+
+    if legend:
+        plt.legend(loc="best")
+
     plt.title(ts_name, fontsize=font_size)
     return fig, ax
 
