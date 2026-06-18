@@ -124,7 +124,7 @@ class PyFableARIMA(BaseForecaster):
             "anytime",
             "timechange",
             "tibble",
-            "dplyr"
+            "dplyr",
         ],
         # CI and test flags
         # -----------------
