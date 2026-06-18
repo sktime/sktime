@@ -48,7 +48,11 @@ class SundialForecaster(BaseForecaster):
         ``torch.bfloat16``, or ``"auto"``.
     forward_kwargs : dict, optional (default=None)
         Additional keyword arguments forwarded to ``model.generate(...)`` during
-        prediction, for example ``{"num_samples": 20, "revin": True}``.
+        prediction. Sundial-specific options include arguments such as
+        ``num_samples`` and ``revin``; standard generation options supported by
+        ``transformers.GenerationMixin.generate`` may also be passed. See the
+        Sundial model card [3]_ and Transformers generation docs [4]_ for
+        details.
     deterministic : bool, default=False
         Whether predictions should reset the ``transformers`` random seed before
         generation.
@@ -61,6 +65,8 @@ class SundialForecaster(BaseForecaster):
        https://github.com/thuml/Sundial
     .. [3] Sundial model card:
        https://huggingface.co/thuml/sundial-base-128m
+    .. [4] Transformers `.generate()`:
+       https://huggingface.co/docs/transformers/main/en/main_classes/text_generation#transformers.GenerationMixin.generate
 
     Examples
     --------
@@ -85,7 +91,8 @@ class SundialForecaster(BaseForecaster):
     ... )
     >>> y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])  # doctest: +SKIP
 
-    Passing generation options through ``forward_kwargs``:
+    Passing Sundial and Transformers generation options through
+    ``forward_kwargs``:
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.sundial import SundialForecaster
