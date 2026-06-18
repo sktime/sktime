@@ -1,6 +1,8 @@
 # ruff: noqa: D100, D101, D107, UP035
 
-from transformers import PretrainedConfig
+from sktime.utils.dependencies import _safe_import
+
+PretrainedConfig = _safe_import("transformers.PretrainedConfig")
 
 
 class SundialConfig(PretrainedConfig):

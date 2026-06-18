@@ -3,17 +3,28 @@ import warnings
 from collections.abc import Callable
 from typing import Any, Optional
 
-import torch
-from transformers import GenerationMixin, LogitsProcessorList, StoppingCriteriaList
-from transformers.generation import EosTokenCriteria, validate_stopping_criteria
-from transformers.generation.utils import (
-    GenerateDecoderOnlyOutput,
-    GenerateEncoderDecoderOutput,
-    GenerateNonBeamOutput,
-    GenerateOutput,
-    GenerationConfig,
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+GenerationMixin = _safe_import("transformers.GenerationMixin")
+LogitsProcessorList = _safe_import("transformers.LogitsProcessorList")
+StoppingCriteriaList = _safe_import("transformers.StoppingCriteriaList")
+EosTokenCriteria = _safe_import("transformers.generation.EosTokenCriteria")
+validate_stopping_criteria = _safe_import(
+    "transformers.generation.validate_stopping_criteria"
 )
-from transformers.utils import ModelOutput
+GenerateDecoderOnlyOutput = _safe_import(
+    "transformers.generation.utils.GenerateDecoderOnlyOutput"
+)
+GenerateEncoderDecoderOutput = _safe_import(
+    "transformers.generation.utils.GenerateEncoderDecoderOutput"
+)
+GenerateNonBeamOutput = _safe_import(
+    "transformers.generation.utils.GenerateNonBeamOutput"
+)
+GenerateOutput = _safe_import("transformers.generation.utils.GenerateOutput")
+GenerationConfig = _safe_import("transformers.generation.utils.GenerationConfig")
+ModelOutput = _safe_import("transformers.utils.ModelOutput")
 
 
 class TSGenerationMixin(GenerationMixin):

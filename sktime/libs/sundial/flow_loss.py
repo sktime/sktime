@@ -1,8 +1,10 @@
 # ruff: noqa: D100, D101, D102, D103, D107, D200, D205, D400, E501, S311, UP008
 import math
 
-import torch
-import torch.nn as nn
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
 
 class FlowLoss(nn.Module):
