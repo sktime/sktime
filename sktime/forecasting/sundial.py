@@ -481,10 +481,21 @@ class _CachedSundial:
         if self.model_ is not None:
             return self.model_
 
+        if self.model_path is None or self.config is not None:
+            warn(
+                "Initializing Sundial from config creates random weights. Sundial "
+                "pretraining is required before these weights are suitable for "
+                "meaningful forecasting.",
+                UserWarning,
+                stacklevel=2,
+            )
+
         if self.model_path is not None:
             self.model_ = self._load_from_path()
         else:
             self.model_ = self._load_randomly()
+
+        self.model_ = self.model_.to(self.device_map, dtype=self.dtype)
 
         return self.model_
 
@@ -492,30 +503,17 @@ class _CachedSundial:
         """Load Sundial model weights from ``self.model_path``."""
         from sktime.libs.sundial import SundialConfig, SundialForPrediction
 
-        kwargs = {}
-        if self.config is not None:
-            config = deepcopy(self.config)
-            if isinstance(config, dict):
-                config = SundialConfig.from_dict(config)
-            kwargs["config"] = config
-        if self.device_map is not None:
-            kwargs["device_map"] = self.device_map
-        if self.dtype is not None:
-            kwargs["torch_dtype"] = self.dtype
+        config = deepcopy(self.config)
+        if isinstance(config, dict):
+            config = SundialConfig.from_dict(config)
 
-        return SundialForPrediction.from_pretrained(self.model_path, **kwargs)
+        return SundialForPrediction.from_pretrained(
+            self.model_path, config=config, ignore_mismatched_sizes=True
+        )
 
     def _load_randomly(self):
         """Initialize a Sundial model randomly from config."""
         from sktime.libs.sundial import SundialConfig, SundialForPrediction
-
-        warn(
-            "Initializing Sundial from config creates random weights. Sundial "
-            "pretraining is required before these weights are suitable for "
-            "meaningful forecasting.",
-            UserWarning,
-            stacklevel=2,
-        )
 
         config = deepcopy(self.config)
         if not config:
@@ -523,13 +521,7 @@ class _CachedSundial:
         if isinstance(config, dict):
             config = SundialConfig.from_dict(config)
 
-        model = SundialForPrediction(config)
-        if self.dtype is not None:
-            model = model.to(dtype=self.dtype)
-        if self.device_map is not None:
-            model = model.to(self.device_map)
-
-        return model
+        return SundialForPrediction(config)
 
 
 def _get_horizon_length(fh, output_token_len):
