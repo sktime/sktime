@@ -389,6 +389,7 @@ class BaseFixtureGenerator:
 
         # complete list of all non-state-changing methods
         nsc_list = NON_STATE_CHANGING_METHODS
+        # breakpoint()
 
         # subset to the methods that x has implemented
         nsc_list = [x for x in nsc_list if _has_capability(obj, x)]
@@ -644,8 +645,8 @@ class QuickTester:
                 try:
                     with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
                         test_fun(**deepcopy(args))
-                        results[key] = "PASSED"
-                        print_if_verbose("PASSED")
+                    results[key] = "PASSED"
+                    print_if_verbose("PASSED")
                 except Skipped as err:
                     test_fun(**deepcopy(args))
                     results[key] = f"SKIPPED: {err.msg}"
@@ -1521,6 +1522,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # dict_before = copy of dictionary of estimator before predict, post fit
         _ = scenario.run(estimator, method_sequence=["fit"])
         dict_before = estimator.__dict__.copy()
+        loss_params = str(estimator._model_params["loss"].__dict__)
 
         # skip test if vectorization would be necessary and method predict_proba
         # this is since vectorization is not implemented for predict_proba
@@ -1531,7 +1533,10 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 return None
 
         # dict_after = dictionary of estimator after predict and fit
+        # breakpoint()
         output = scenario.run(estimator, method_sequence=[method_nsc])
+        loss_params2 = str(estimator._model_params["loss"].__dict__)
+        assert loss_params == loss_params2
         dict_after = estimator.__dict__
 
         is_equal, msg = deep_equals(dict_after, dict_before, return_msg=True)

@@ -248,8 +248,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         else:
             from lightning.pytorch.callbacks import EarlyStopping
 
-            # from pytorch_forecasting.metrics import QuantileLoss
-
             early_stop_callback = EarlyStopping(
                 monitor="train_loss",
                 min_delta=1e-2,
@@ -313,100 +311,99 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     Parameters
     ----------
-        model_params :  dict[str, Any] (default=None)
-            parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
-            for example: {"num_blocks": [5, 5], "widths": [128, 1024]}
-        dataset_params : dict[str, Any] (default=None)
-            parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
-            max_prediction_length will be overwrite according to fh
-            time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
-            will be inferred from data, so you do not have to pass them
-        train_to_dataloader_params : dict[str, Any] (default=None)
-            parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
-            by default {"train": True}
-        validation_to_dataloader_params : dict[str, Any] (default=None)
-            parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
-            by default {"train": False}
-        model_path: string (default=None)
-            try to load a existing model without fitting. Calling the fit function is
-            still needed, but no real fitting will be performed.
-        random_log_path: bool (default=False)
-            use random root directory for logging. This parameter is for CI test in
-            Github action, not designed for end users.
-
+    model_params :  dict[str, Any] (default=None)
+        parameters to be passed to initialize the pytorch-forecasting NBeats model [1]_
+        for example: {"num_blocks": [5, 5], "widths": [128, 1024]}
+    dataset_params : dict[str, Any] (default=None)
+        parameters to initialize `TimeSeriesDataSet` [2]_ from `pandas.DataFrame`
+        max_prediction_length will be overwrite according to fh
+        time_idx, target, group_ids, time_varying_known_reals, time_varying_unknown_reals
+        will be inferred from data, so you do not have to pass them
+    train_to_dataloader_params : dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": True}
+    validation_to_dataloader_params : dict[str, Any] (default=None)
+        parameters to be passed for `TimeSeriesDataSet.to_dataloader()`
+        by default {"train": False}
+    model_path: string (default=None)
+        try to load a existing model without fitting. Calling the fit function is
+        still needed, but no real fitting will be performed.
+    random_log_path: bool (default=False)
+        use random root directory for logging. This parameter is for CI test in
+        Github action, not designed for end users.
     Examples
     --------
-        >>> # import packages
-        >>> from sktime.forecasting.base import ForecastingHorizon
-        >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
-        >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-        >>> from sklearn.model_selection import train_test_split
-        >>> # generate random data
-        >>> data = _make_hierarchical(
-        ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
-        ... )
-        >>> # define forecast horizon
-        >>> max_prediction_length = 5
-        >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
-        >>> # split y data for train and test
-        >>> y_train, y_test = train_test_split(
-        ...     data["c2"].to_frame(), test_size=0.2, train_size=0.8, shuffle=False
-        ... )
-        >>> len_levels = len(y_test.index.names)
-        >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
-        ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
-        ... )
-        >>> # define the model
-        >>> model = PytorchForecastingNBeats(
-        ...     trainer_params={
-        ...         "max_epochs": 5,  # for quick test
-        ...         "limit_train_batches": 10,  # for quick test
-        ...     },
-        ... )
-        >>> # fit and predict
-        >>> model.fit(y=y_train, fh=fh) # doctest: +SKIP
-        PytorchForecastingNBeats(trainer_params={'limit_train_batches': 10,
-                                                'max_epochs': 5})
-        >>> y_pred = model.predict(fh, y=y_test) # doctest: +SKIP
-        >>> print(y_test) # doctest: +SKIP
-                                    c2
-        h0   h1     time
-        h0_0 h1_180 2000-01-01  6.308914
-                    2000-01-02  3.471440
-                    2000-01-03  4.169305
-                    2000-01-04  5.990554
-                    2000-01-05  5.611347
-        ...                          ...
-        h0_4 h1_199 2000-02-10  6.448248
-                    2000-02-11  4.290731
-                    2000-02-12  5.494657
-                    2000-02-13  4.752948
-                    2000-02-14  5.243385
+    >>> # import packages
+    >>> from sktime.forecasting.base import ForecastingHorizon
+    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> from sklearn.model_selection import train_test_split
+    >>> # generate random data
+    >>> data = _make_hierarchical(
+    ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
+    ... )
+    >>> # define forecast horizon
+    >>> max_prediction_length = 5
+    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    >>> # split y data for train and test
+    >>> y_train, y_test = train_test_split(
+    ...     data["c2"].to_frame(), test_size=0.2, train_size=0.8, shuffle=False
+    ... )
+    >>> len_levels = len(y_test.index.names)
+    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+    ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
+    ... )
+    >>> # define the model
+    >>> model = PytorchForecastingNBeats(
+    ...     trainer_params={
+    ...         "max_epochs": 5,  # for quick test
+    ...         "limit_train_batches": 10,  # for quick test
+    ...     },
+    ... )
+    >>> # fit and predict
+    >>> model.fit(y=y_train, fh=fh) # doctest: +SKIP
+    PytorchForecastingNBeats(trainer_params={'limit_train_batches': 10,
+                                            'max_epochs': 5})
+    >>> y_pred = model.predict(fh, y=y_test) # doctest: +SKIP
+    >>> print(y_test) # doctest: +SKIP
+                                c2
+    h0   h1     time
+    h0_0 h1_180 2000-01-01  6.308914
+                2000-01-02  3.471440
+                2000-01-03  4.169305
+                2000-01-04  5.990554
+                2000-01-05  5.611347
+    ...                          ...
+    h0_4 h1_199 2000-02-10  6.448248
+                2000-02-11  4.290731
+                2000-02-12  5.494657
+                2000-02-13  4.752948
+                2000-02-14  5.243385
 
-        [4500 rows x 1 columns]
-        >>> print(y_pred) # doctest: +SKIP
-    >>>>>>> 46c18381b33142cf21d9472baeca4b4c9bd0f08a
-                                    c2
-        h0   h1     time
-        h0_0 h1_180 2000-02-15  5.167375
-                    2000-02-16  5.178759
-                    2000-02-17  5.251082
-                    2000-02-18  5.331861
-                    2000-02-19  5.372994
-        ...                          ...
-        h0_4 h1_199 2000-02-15  5.005799
-                    2000-02-16  4.998720
-                    2000-02-17  5.031197
-                    2000-02-18  5.081184
-                    2000-02-19  5.113482
+    [4500 rows x 1 columns]
+    >>> print(y_pred) # doctest: +SKIP
+>>>>>>> 46c18381b33142cf21d9472baeca4b4c9bd0f08a
+                                c2
+    h0   h1     time
+    h0_0 h1_180 2000-02-15  5.167375
+                2000-02-16  5.178759
+                2000-02-17  5.251082
+                2000-02-18  5.331861
+                2000-02-19  5.372994
+    ...                          ...
+    h0_4 h1_199 2000-02-15  5.005799
+                2000-02-16  4.998720
+                2000-02-17  5.031197
+                2000-02-18  5.081184
+                2000-02-19  5.113482
 
-        [500 rows x 1 columns]
+    [500 rows x 1 columns]
 
 
     References
     ----------
-        .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-        .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
@@ -1022,6 +1019,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         model_path: str | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
+        deterministic: bool = True,
     ) -> None:
         super().__init__(
             model_params,
@@ -1033,6 +1031,12 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             random_log_path,
             broadcasting,
         )
+        self.deterministic = deterministic
+
+        if "loss" not in self._model_params.keys():
+            from pytorch_forecasting import QuantileLoss
+
+            self._model_params["loss"] = QuantileLoss()
 
     @functools.cached_property
     def algorithm_class(self: "PytorchForecastingNHiTS"):
@@ -1052,10 +1056,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         """
         # change default loss to QuantileLoss
         # so that it can perform quantile forecast
-        from pytorch_forecasting import QuantileLoss
-
-        if "loss" not in self._model_params.keys():
-            self._model_params["loss"] = QuantileLoss()
 
         if "n_blocks" in self._model_params.keys():
             stacks = len(self._model_params["n_blocks"])
