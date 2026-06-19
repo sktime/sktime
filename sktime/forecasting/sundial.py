@@ -86,6 +86,8 @@ class SundialForecaster(BaseForecaster):
 
     Examples
     --------
+    Simple zero-shot forecasting with thuml/sundial-base-128m:
+
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.sundial import SundialForecaster  # doctest: +SKIP
     >>> y = load_airline()
