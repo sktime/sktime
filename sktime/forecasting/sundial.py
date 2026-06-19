@@ -568,42 +568,52 @@ class SundialDataCollator:
 
         lengths = [len(feature) for feature in features]
         max_length = max(lengths)
-        input_length = (
-            (max_length + self.input_token_len - 1) // self.input_token_len
-        ) * self.input_token_len
-        label_length = input_length - self.input_token_len + self.output_token_len
-        n_input_tokens = input_length // self.input_token_len
+        min_length = min(lengths)
+
+        if min_length <= self.horizon_length:
+            raise ValueError(
+                "Sundial pretraining requires every series in a batch to be at "
+                f"longer than the requested horizon. Found length "
+                f"{min_length}, but horizon_length={self.horizon_length}."
+            )
+
+        input_length = max_length - self.horizon_length
+        n_input_tokens = (
+            input_length + self.input_token_len - 1
+        ) // self.input_token_len
+        model_left_pad = n_input_tokens * self.input_token_len - input_length
+        label_right_pad = model_left_pad + self.output_token_len - self.horizon_length
 
         input_ids = []
         labels = []
         loss_masks = []
         for feature, length in zip(features, lengths):
-            left_pad = input_length - length
-            label_right_pad = label_length - left_pad - length
+            left_pad = max_length - length
+            feature = torch.nn.functional.pad(feature, (left_pad, 0), value=0.0)
 
-            input_ids.append(torch.nn.functional.pad(feature, (left_pad, 0), value=0.0))
+            input_ids.append(feature[: -self.horizon_length])
             labels.append(
                 torch.nn.functional.pad(
-                    feature,
-                    (left_pad, label_right_pad),
+                    feature[self.input_token_len :],
+                    (0, label_right_pad),
                     value=0.0,
                 )
             )
 
             token_starts = np.arange(n_input_tokens) * self.input_token_len
-            token_starts = token_starts - left_pad
+            token_starts = token_starts - model_left_pad - left_pad
             valid_targets = token_starts + self.horizon_length <= length
             valid_targets = valid_targets & (token_starts >= 0)
             loss_masks.append(torch.tensor(valid_targets, dtype=torch.float32))
-
-        mask_y = torch.zeros(len(features), self.output_token_len, dtype=torch.float32)
-        mask_y[:, : self.horizon_length] = 1.0
 
         input_ids = torch.stack(input_ids)
         labels = torch.stack(labels)
         if self.dtype is not None:
             input_ids = input_ids.to(dtype=self.dtype)
             labels = labels.to(dtype=self.dtype)
+
+        mask_y = torch.zeros(len(features), self.output_token_len, dtype=torch.float32)
+        mask_y[:, : self.horizon_length] = 1.0
 
         return {
             "input_ids": input_ids,
