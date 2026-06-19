@@ -87,7 +87,7 @@ class SundialForecaster(BaseForecaster):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.sundial import SundialForecaster
+    >>> from sktime.forecasting.sundial import SundialForecaster  # doctest: +SKIP
     >>> y = load_airline()
     >>> forecaster = SundialForecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
@@ -95,9 +95,9 @@ class SundialForecaster(BaseForecaster):
 
     Running with explicit device, dtype, and sampling settings:
 
-    >>> import torch
+    >>> import torch  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.sundial import SundialForecaster
+    >>> from sktime.forecasting.sundial import SundialForecaster  # doctest: +SKIP
     >>> y = load_airline()
     >>> forecaster = SundialForecaster(  # doctest: +SKIP
     ...     device="cuda",
@@ -111,7 +111,7 @@ class SundialForecaster(BaseForecaster):
     ``forward_kwargs``:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.sundial import SundialForecaster
+    >>> from sktime.forecasting.sundial import SundialForecaster  # doctest: +SKIP
     >>> y = load_airline()
     >>> forecaster = SundialForecaster(  # doctest: +SKIP
     ...     forward_kwargs={"num_samples": 20, "revin": False},
@@ -121,7 +121,7 @@ class SundialForecaster(BaseForecaster):
     Quantile prediction from generated samples:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.sundial import SundialForecaster
+    >>> from sktime.forecasting.sundial import SundialForecaster  # doctest: +SKIP
     >>> y = load_airline()
     >>> forecaster = SundialForecaster(  # doctest: +SKIP
     ...     forward_kwargs={"num_samples": 50},
@@ -132,22 +132,37 @@ class SundialForecaster(BaseForecaster):
     ...     alpha=[0.1, 0.5, 0.9],
     ... )
 
-    Global training on panel or hierarchical data:
+    Global training on panel data before forecasting a single series:
 
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.sundial import SundialForecaster
-    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> y_panel = _make_hierarchical(  # doctest: +SKIP
-    ...     hierarchy_levels=(3,),
-    ...     min_timepoints=128,
-    ...     max_timepoints=400,
+    >>> import torch  # doctest: +SKIP
+    >>> from sktime.datasets import load_airline, load_tecator
+    >>> from sktime.forecasting.sundial import SundialForecaster  # doctest: +SKIP
+    >>> device = "cuda" if torch.cuda.is_available() else None  # doctest: +SKIP
+    >>> y_panel = load_tecator(  # doctest: +SKIP
+    ...     return_type="pd-multiindex",
+    ...     return_X_y=False,
     ... )
+    >>> y_panel = y_panel.drop(["class_val"], axis=1)  # doctest: +SKIP
     >>> y = load_airline()
     >>> forecaster = SundialForecaster(  # doctest: +SKIP
-    ...     training_args={"output_dir": "sundial-output", "max_steps": 10},
+    ...     training_args={
+    ...         "output_dir": "sundial-output",
+    ...         "do_train": True,
+    ...         "do_eval": True,
+    ...         "evaluation_strategy": "epoch",
+    ...         "num_train_epochs": 10,
+    ...         "per_device_train_batch_size": 8,
+    ...         "per_device_eval_batch_size": 8,
+    ...         "learning_rate": 5e-5,
+    ...     },
+    ...     config={"output_token_lens": [8]},
+    ...     device=device,
+    ...     dtype=torch.bfloat16,
+    ...     validation_split=0.3,
     ... )
     >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
-    >>> y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
