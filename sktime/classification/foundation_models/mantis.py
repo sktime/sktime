@@ -5,9 +5,9 @@ __author__ = ["vedantag17"]
 __all__ = ["MantisClassifier"]
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.singleton import _multiton
 
 

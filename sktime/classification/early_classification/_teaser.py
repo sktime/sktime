@@ -610,9 +610,10 @@ class TEASER(BaseEarlyClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
-        from sktime.utils.dependencies import _check_estimator_deps
 
         if _check_estimator_deps(Catch22Classifier, severity="none"):
             est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
