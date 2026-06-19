@@ -647,15 +647,13 @@ class BaseDetector(BaseEstimator):
         y = kwargs.pop("y", None)
 
         if methodname == "fit":
-            # clone one copy of self per column/group slice
             clones_ = X.vectorize_est(
                 self,
                 method="clone",
                 rowname_default="detectors",
                 colname_default="detectors",
             )
-            # fit each clone on its own slice; store fitted clones
-            # varname_of_self="X" tells vectorize_est to pass the current slice as X
+
             self.detectors_ = X.vectorize_est(
                 clones_,
                 method="fit",
@@ -667,11 +665,51 @@ class BaseDetector(BaseEstimator):
             return self
 
         if methodname == "predict":
-            # if fit_is_empty, detectors_ was never stored during fit.
-            # mirror the transformer pattern: clone+fit on-the-fly, then predict.
-            if not self.get_tag("fit_is_empty") and hasattr(self, "detectors_"):
+            if not self.get_tag("fit_is_empty"):
+                # Guard: fit was not vectorized, so detectors_ was never
+                # created.  This means the user fitted on data that did not
+                # require broadcasting (e.g. univariate) but is now trying
+                # to predict on data that does (e.g. multivariate).
+                if not hasattr(self, "detectors_"):
+                    raise RuntimeError(
+                        f"{type(self).__name__} was fitted on data that did "
+                        "not require broadcasting (e.g., univariate series), "
+                        "but predict received data that requires broadcasting "
+                        "(e.g., multivariate or hierarchical series). "
+                        "The number of instances/columns in fit and predict "
+                        "must match."
+                    )
+
+                # Shape-mismatch guard, mirrors the pattern in
+                # sktime.transformations.base.BaseTransformer._vectorize.
+                # Ensures the number of fitted detectors matches the number
+                # of slices in the prediction data.
+                if not isinstance(X, VectorizedDF):
+                    n_detectors = 1
+                else:
+                    n_detectors = len(X)
+
+                n, m = self.detectors_.shape
+                n_fit = n * m
+
+                if n_detectors != n_fit:
+                    raise RuntimeError(
+                        f"{type(self).__name__} is a detector that applies "
+                        "per individual time series, and broadcasts across "
+                        f"instances. In fit, {type(self).__name__} makes one "
+                        "fit per instance, and applies that fit to the "
+                        "instance with the same index in predict. Vanilla "
+                        "use therefore requires the same number of instances "
+                        "in fit and predict, but found different number of "
+                        "instances in predict than in fit. "
+                        f"Number of instances seen in fit: {n_fit}; "
+                        f"number of instances seen in predict: {n_detectors}."
+                    )
+
                 detectors_ = self.detectors_
             else:
+                # fit_is_empty: no parameters were learned during fit.
+                #clone+fit+predict on fly
                 clones_ = X.vectorize_est(
                     self,
                     method="clone",
@@ -686,8 +724,6 @@ class BaseDetector(BaseEstimator):
                     colname_default="detectors",
                 )
 
-            # run predict on each slice with its own fitted clone
-            # varname_of_self="X" tells vectorize_est to pass the current slice as X
             results = X.vectorize_est(
                 detectors_,
                 method="predict",
@@ -696,13 +732,29 @@ class BaseDetector(BaseEstimator):
                 rowname_default="detectors",
                 colname_default="detectors",
             )
+            row_ix, col_ix = X.get_iter_indices()
 
-            # stitch annotation DataFrames together.
-            # using pd.concat with column/group names as keys to produce MultiIndex DataFrame.
-            _, col_ix = X.get_iter_indices()
-            row_ix, _ = X.get_iter_indices()
+            if row_ix is not None and col_ix is not None:
+                # Hierarchical + Multivariate: both row groups and columns.
+                row_n = len(row_ix)
+                col_n = len(col_ix)
+                keys = []
+                for i in range(row_n):
+                    for j in range(col_n):
+                        r = row_ix[i]
+                        c = col_ix[j]
+                        # flatten if row key is already a tuple (deep hierarchy)
+                        if isinstance(r, tuple):
+                            keys.append((*r, c))
+                        else:
+                            keys.append((r, c))
+            elif col_ix is not None:
+                # Multivariate only (no hierarchy).
+                keys = col_ix
+            else:
+                # Hierarchical only (single column).
+                keys = row_ix
 
-            keys = col_ix if col_ix is not None else row_ix
             y_out = pd.concat(results, keys=keys)
             return y_out
 
