@@ -59,9 +59,9 @@ class SundialForecaster(BaseForecaster):
         ``transformers.GenerationMixin.generate`` may also be passed. See the
         Sundial model card [3]_ and Transformers generation docs [4]_ for
         details.
-    deterministic : bool, default=False
-        Whether predictions should reset the ``transformers`` random seed before
-        generation.
+    random_state : int, RandomState instance or None, default=None
+        Random seed used for Sundial sampling during prediction. If set,
+        repeated predictions from the same fitted state are reproducible.
     validation_split : float or None, default=0.2
         Fraction of data reserved for evaluation when :meth:`pretrain` is used.
         If ``None``, no evaluation dataset is created.
@@ -107,7 +107,7 @@ class SundialForecaster(BaseForecaster):
     ...     device="cuda",
     ...     dtype=torch.bfloat16,
     ...     forward_kwargs={"num_samples": 20},
-    ...     deterministic=True,
+    ...     random_state=42,
     ... )
     >>> y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])  # doctest: +SKIP
 
@@ -181,6 +181,8 @@ class SundialForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pretrain": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "authors": ["WenWeiTHU", "geetu040"],
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers[torch]~=4.40.0"],
@@ -195,7 +197,7 @@ class SundialForecaster(BaseForecaster):
         device="cpu",
         dtype=None,
         forward_kwargs=None,
-        deterministic=False,
+        random_state=None,
         validation_split=0.2,
         training_args=None,
         compute_metrics=None,
@@ -206,7 +208,7 @@ class SundialForecaster(BaseForecaster):
         self.device = device
         self.dtype = dtype
         self.forward_kwargs = forward_kwargs
-        self.deterministic = deterministic
+        self.random_state = random_state
         self.validation_split = validation_split
         self.training_args = training_args
         self.compute_metrics = compute_metrics
@@ -494,10 +496,7 @@ class SundialForecaster(BaseForecaster):
             forecasting horizon.
         """
         import torch
-        import transformers
-
-        if self.deterministic:
-            transformers.set_seed(42)
+        from sklearn.utils import check_random_state
 
         self.model_ = self._load_model()
 
@@ -522,11 +521,25 @@ class SundialForecaster(BaseForecaster):
         past_values = past_values.to(self.model_.device)
 
         forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
-        output = self.model_.generate(
-            past_values,
-            max_new_tokens=horizon_length,
-            **forward_kwargs,
-        )
+        if self.random_state is None:
+            output = self.model_.generate(
+                past_values,
+                max_new_tokens=horizon_length,
+                **forward_kwargs,
+            )
+        else:
+            seed = check_random_state(self.random_state).randint(np.iinfo(np.int32).max)
+            devices = []
+            if past_values.device.type == "cuda":
+                devices = [past_values.device]
+
+            with torch.random.fork_rng(devices=devices):
+                torch.manual_seed(seed)
+                output = self.model_.generate(
+                    past_values,
+                    max_new_tokens=horizon_length,
+                    **forward_kwargs,
+                )
 
         samples = output.detach().float().cpu().numpy()
 
@@ -577,7 +590,7 @@ class SundialForecaster(BaseForecaster):
                 "diffusion_batch_mul": 1,
                 "use_cache": False,
             },
-            "deterministic": True,
+            "random_state": 42,
             "validation_split": 0.1,
             "training_args": {
                 "output_dir": "test_output",
