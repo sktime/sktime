@@ -463,7 +463,30 @@ class SundialForecaster(BaseForecaster):
         return pred_quantiles
 
     def _generate_samples(self, fh):
-        """Generate Sundial sample paths for the requested horizon."""
+        """Generate raw Sundial sample paths for prediction.
+
+        This helper converts the fitted forecasting context to Sundial's
+        expected tensor layout, validates that the requested horizon is within
+        the configured ``output_token_lens`` capacity, and calls
+        ``model.generate`` with ``forward_kwargs``.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon or None
+            Forecasting horizon requested by ``predict`` or
+            ``predict_quantiles``. If ``None``, ``self.fh`` is used.
+
+        Returns
+        -------
+        samples : np.ndarray
+            Generated sample paths with shape
+            ``(n_series, n_samples, horizon_length)``.
+        fh : ForecastingHorizon
+            Relative forecasting horizon used for generation.
+        preds_idx : np.ndarray
+            Zero-based positions in ``samples`` corresponding to the requested
+            forecasting horizon.
+        """
         import torch
         import transformers
 
