@@ -209,7 +209,27 @@ class SundialForecaster(BaseForecaster):
         super().__init__()
 
     def _pretrain(self, y, X=None, fh=None):
-        """Pretrain Sundial on panel/global data."""
+        """Pretrain forecaster on panel/global data (first batch).
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Panel or hierarchical time series data to pretrain on.
+            The last index level is time, all other levels identify instances.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series.
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon.
+
+        Returns
+        -------
+        self : reference to self
+        """
         self.model_ = self._load_model()
 
         input_token_len = self.model_.config.input_token_len
@@ -314,14 +334,68 @@ class SundialForecaster(BaseForecaster):
         self.model_ = trainer.model
 
     def _fit(self, y, X=None, fh=None):
-        """Load the model and store history for forecasting."""
+        """Fit forecaster to training data.
+
+        private _fit containing the core logic, called from fit
+
+        Writes to self:
+            Sets fitted model attributes ending in "_".
+
+        Parameters
+        ----------
+        y : sktime time series object
+            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
+            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series to fit to.
+
+        Returns
+        -------
+        self : reference to self
+        """
         self.model_ = self._load_model()
         self.context_ = y
 
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon."""
+        """Forecast time series at future horizon.
+
+        private _predict containing the core logic, called from predict
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
+            The forecasting horizon with the steps ahead to to predict.
+            If not passed in _fit, guaranteed to be passed here
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+
+        Returns
+        -------
+        y_pred : sktime time series object
+            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
+            Point predictions
+        """
         self.model_.eval()
         samples, fh, preds_idx = self._generate_samples(fh)
 
@@ -336,7 +410,38 @@ class SundialForecaster(BaseForecaster):
         return preds
 
     def _predict_quantiles(self, fh, X, alpha):
-        """Compute empirical prediction quantiles from generated samples."""
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
         samples, fh, preds_idx = self._generate_samples(fh)
 
         if alpha is None:
