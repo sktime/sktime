@@ -588,8 +588,8 @@ Deep learning based forecasters
 
     ESRNNForecaster
 
-Pre-trained and foundation models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pre-trained and foundation models - domain agnostic
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.forecasting.chronos
 
@@ -630,14 +630,6 @@ Pre-trained and foundation models
     :template: class.rst
 
     HFTransformersForecaster
-
-.. currentmodule:: sktime.forecasting.kronos
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    KronosForecaster
 
 .. currentmodule:: sktime.forecasting.lagllama
 
@@ -760,6 +752,24 @@ Pre-trained and foundation models
 
     TotoForecaster
 
+Pre-trained and foundation models - domain specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.kronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KronosForecaster
+
+.. currentmodule:: sktime.forecasting.windfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindFMForecaster
 
 Intermittent time series forecasters
 ------------------------------------
