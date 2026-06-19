@@ -219,20 +219,51 @@ class SundialForecaster(BaseForecaster):
             y_train = y
             y_eval = None
 
+        min_series_length = input_token_len + horizon_length
+        train_series_list = [
+            series
+            for series in _prepare_series_list(y_train)
+            if len(series) >= min_series_length
+        ]
+        if self.validation_split is not None and len(train_series_list) == 0:
+            full_series_list = [
+                series
+                for series in _prepare_series_list(y)
+                if len(series) >= min_series_length
+            ]
+            if len(full_series_list) > 0:
+                train_series_list = full_series_list
+                y_eval = None
+                warn(
+                    "Skipping Sundial evaluation dataset creation: validation "
+                    "split leaves no numeric series long enough to create a "
+                    "training target. Training continues on the full input.",
+                    stacklevel=2,
+                )
+
         train = SundialPyTorchDataset(
-            series_list=_prepare_series_list(y_train),
+            series_list=train_series_list,
+            min_length=min_series_length,
         )
 
         eval = None
-        if self.validation_split is not None and len(_prepare_series_list(y_eval)) > 0:
+        if y_eval is not None:
+            eval_series_list = [
+                series
+                for series in _prepare_series_list(y_eval)
+                if len(series) >= min_series_length
+            ]
+
+        if y_eval is not None and len(eval_series_list) > 0:
             eval = SundialPyTorchDataset(
-                series_list=_prepare_series_list(y_eval),
+                series_list=eval_series_list,
+                min_length=min_series_length,
             )
-        elif self.validation_split is not None:
+        elif y_eval is not None:
             warn(
                 "Skipping Sundial evaluation dataset creation: validation split "
-                "does not contain any non-empty numeric series. Training "
-                "continues without evaluation.",
+                "does not contain any numeric series long enough to create a "
+                "training target. Training continues without evaluation.",
                 stacklevel=2,
             )
 
@@ -533,13 +564,17 @@ def _prepare_series_list(data):
 class SundialPyTorchDataset:
     """Dataset for Sundial pretraining with ``Trainer``."""
 
-    def __init__(self, series_list):
-        self.series_list = [series for series in series_list if len(series) > 0]
+    def __init__(self, series_list, min_length=1):
+        self.min_length = min_length
+        self.series_list = [
+            series for series in series_list if len(series) >= self.min_length
+        ]
 
         if not self.series_list:
             raise ValueError(
                 "No training series were available for Sundial pretraining. "
-                "Provide at least one non-empty numeric series."
+                "Provide at least one numeric series with length greater than "
+                f"or equal to {self.min_length}."
             )
 
     def __len__(self):
