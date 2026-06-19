@@ -385,7 +385,7 @@ class requires_cython(_BaseTag):
 
 
 class r_dependencies(_BaseTag):
-    """R package dependency requirement specifiers for the object (PEP 440).
+    """R package dependency requirement specifiers, only for estimators from R.
 
     - String name: ``"r_dependencies"``
     - Private tag, developer and framework facing
