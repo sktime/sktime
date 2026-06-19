@@ -426,7 +426,7 @@ def run_test_module_changed(module, only_changed_modules=None):
 def _get_all_changed_classes(vm=False, r=False):
     """Get all sktime object classes that have changed compared to the main branch.
 
-    Returns a tuple of string class names of object classes that have changed.
+    Returns a list of string class names of object classes that have changed.
 
     Parameters
     ----------
@@ -442,7 +442,7 @@ def _get_all_changed_classes(vm=False, r=False):
 
     Returns
     -------
-    tuple of strings of class names : object classes that have changed
+    list of strings of class names : object classes that have changed
     """
     from sktime.registry import all_estimators
 
@@ -476,7 +476,7 @@ def _get_all_vm_classes():
 
     Returns
     -------
-    tuple of strings of class names : object classes that require their own VM
+    list of strings of class names : object classes that require their own VM
     """
     from sktime.registry import all_estimators
 

@@ -95,7 +95,7 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         run: Rscript -e "cat('R=',paste(unlist(getRversion()),collapse='.'),'\n')"
 
-      - name: Install r2py
+      - name: Install rpy2
         run: uv pip install "rpy2>=3.6,<3.7"
         env:
           UV_SYSTEM_PYTHON: 1
