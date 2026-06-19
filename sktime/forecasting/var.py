@@ -191,24 +191,30 @@ class VAR(_StatsModelsAdapter):
 
         # out-sample predictions
         if fh_int.max() > 0:
-            # workaround for statsmodels bug: forecast crashes if k_ar == 0
-            # temporarily set k_ar=1 with zero coefs so the engine doesn't crash;
-            # all-zero AR coefficients reduce to a pure trend (mathematically correct)
             k_ar_orig = self._fitted_forecaster.k_ar
             if k_ar_orig == 0:
+                # workaround for statsmodels bug: forecast crashes if k_ar == 0
+                # temporarily set k_ar=1 with zero coefs so the engine doesn't crash;
+                # all-zero AR coefficients reduce to a pure trend
+                # (mathematically correct)
                 k = self._fitted_forecaster.neqs
                 self._fitted_forecaster._results.k_ar = 1
                 self._fitted_forecaster._results.coefs = np.zeros((1, k, k))
-            try:
+                try:
+                    y_pred_outsample = self._fitted_forecaster.forecast(
+                        y=self._last_n_lags_of_y,
+                        steps=fh_int[-1],
+                        exog_future=exog_future,
+                    )
+                finally:
+                    self._fitted_forecaster._results.k_ar = 0
+                    self._fitted_forecaster._results.coefs = np.zeros((0, k, k))
+            else:
                 y_pred_outsample = self._fitted_forecaster.forecast(
                     y=self._last_n_lags_of_y,
                     steps=fh_int[-1],
                     exog_future=exog_future,
                 )
-            finally:
-                if k_ar_orig == 0:
-                    self._fitted_forecaster._results.k_ar = 0
-                    self._fitted_forecaster._results.coefs = np.zeros((0, k, k))
 
         # in-sample prediction by means of residuals
         if fh_int.min() <= 0:
@@ -290,22 +296,26 @@ class VAR(_StatsModelsAdapter):
             lower_cols = [f"{col} {alpha} lower" for col in y_cols_no_space]
             upper_cols = [f"{col} {alpha} upper" for col in y_cols_no_space]
 
-            # workaround for statsmodels bug: forecast_interval crashes if k_ar == 0
-            # temporarily set k_ar=1 with zero coefs so the engine doesn't crash;
-            # all-zero AR coefficients reduce to a pure trend (mathematically correct)
             k_ar_orig = self._fitted_forecaster.k_ar
             if k_ar_orig == 0:
+                # workaround for statsmodels bug: forecast_interval crashes if k_ar == 0
+                # temporarily set k_ar=1 with zero coefs so the engine doesn't crash;
+                # all-zero AR coefficients reduce to a pure trend
+                # (mathematically correct)
                 k = self._fitted_forecaster.neqs
                 self._fitted_forecaster._results.k_ar = 1
                 self._fitted_forecaster._results.coefs = np.zeros((1, k, k))
-            try:
+                try:
+                    fcast_interval = model.forecast_interval(
+                        self._last_n_lags_of_y, steps=steps, alpha=alpha
+                    )
+                finally:
+                    self._fitted_forecaster._results.k_ar = 0
+                    self._fitted_forecaster._results.coefs = np.zeros((0, k, k))
+            else:
                 fcast_interval = model.forecast_interval(
                     self._last_n_lags_of_y, steps=steps, alpha=alpha
                 )
-            finally:
-                if k_ar_orig == 0:
-                    self._fitted_forecaster._results.k_ar = 0
-                    self._fitted_forecaster._results.coefs = np.zeros((0, k, k))
             lower_int, upper_int = fcast_interval[1], fcast_interval[-1]
 
             # invert the "only_1s" column if it was added during fit
