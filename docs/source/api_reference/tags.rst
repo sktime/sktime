@@ -93,7 +93,7 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     :template: function.rst
     :nosignatures:
 
-    capability__exogeneous
+    capability__exogenous
     capability__insample
     capability__pred_int
     capability__pred_int__insample
