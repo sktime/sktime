@@ -75,6 +75,7 @@ These tags are typically used for typing, packaging and documentation purposes.
     python_dependencies
     env_marker
     requires_cython
+    r_dependencies
 
 
 .. _forecaster_tags:
