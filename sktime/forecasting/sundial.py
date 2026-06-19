@@ -492,14 +492,6 @@ class _CachedSundial:
                 UserWarning,
                 stacklevel=2,
             )
-        elif self.config is not None:
-            warn(
-                "Loading Sundial with a custom config can initialize checkpoint "
-                "parameters with incompatible shapes from scratch. Pretraining "
-                "is recommended before meaningful forecasting.",
-                UserWarning,
-                stacklevel=2,
-            )
 
         if self.model_path is not None:
             self.model_ = self._load_from_path()
