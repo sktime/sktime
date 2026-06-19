@@ -35,14 +35,16 @@ class SundialForecaster(BaseForecaster):
     model_path : str, default="thuml/sundial-base-128m"
         Hugging Face repository identifier or local path to a Sundial
         checkpoint. If ``None``, a model is created from ``config`` with random
-        weights. Use this path for tests or pretraining from scratch; the model
-        should be pretrained before it is used for meaningful forecasting.
+        weights and should be pretrained before it is used for meaningful
+        forecasting.
     config : SundialConfig or dict, optional (default=None)
-        Model configuration used when ``model_path=None``. If provided as a
-        ``dict``, it is converted with ``SundialConfig.from_dict``. If ``None``
-        and ``model_path=None``, the default ``SundialConfig`` is used. A config
-        without pretrained weights initializes random weights and should be
-        followed by :meth:`pretrain` before forecasting.
+        Model configuration used to initialize or override the Sundial model. If
+        provided as a ``dict``, it is converted with
+        ``SundialConfig.from_dict``. If ``model_path=None``, the model is
+        initialized from this config with random weights. If ``model_path`` is a
+        checkpoint and ``config`` changes parameter shapes, incompatible
+        checkpoint weights are initialized from scratch; pretraining or
+        fine-tuning is recommended before forecasting.
     device : str, int, or torch.device, default="cpu"
         Device on which to place the model, for example ``"cpu"``,
         ``"cuda"``, or ``"cuda:0"``.
@@ -135,6 +137,10 @@ class SundialForecaster(BaseForecaster):
     ... )
 
     Global training on panel data before forecasting a single series:
+
+    The example below changes ``output_token_lens``. This can initialize the
+    affected prediction-head weights from scratch, so :meth:`pretrain` is run
+    before forecasting.
 
     >>> import torch  # doctest: +SKIP
     >>> from sktime.datasets import load_airline, load_tecator
