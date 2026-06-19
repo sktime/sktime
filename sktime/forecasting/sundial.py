@@ -43,10 +43,9 @@ class SundialForecaster(BaseForecaster):
         and ``model_path=None``, the default ``SundialConfig`` is used. A config
         without pretrained weights initializes random weights and should be
         followed by :meth:`pretrain` before forecasting.
-    device_map : str, dict, int, or torch.device, default="cpu"
-        Device placement following the ``transformers`` ``device_map`` naming
-        convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
-        ``"auto"``.
+    device : str, int, or torch.device, default="cpu"
+        Device on which to place the model, for example ``"cpu"``,
+        ``"cuda"``, or ``"cuda:0"``.
     dtype : torch.dtype or str, optional (default=None)
         Data type used for model loading, following the ``transformers``
         ``dtype`` convention, for example ``torch.float16``,
@@ -101,7 +100,7 @@ class SundialForecaster(BaseForecaster):
     >>> from sktime.forecasting.sundial import SundialForecaster
     >>> y = load_airline()
     >>> forecaster = SundialForecaster(  # doctest: +SKIP
-    ...     device_map="cuda",
+    ...     device="cuda",
     ...     dtype=torch.bfloat16,
     ...     forward_kwargs={"num_samples": 20},
     ...     deterministic=True,
@@ -170,7 +169,7 @@ class SundialForecaster(BaseForecaster):
         self,
         model_path="thuml/sundial-base-128m",
         config=None,
-        device_map="cpu",
+        device="cpu",
         dtype=None,
         forward_kwargs=None,
         deterministic=False,
@@ -181,7 +180,7 @@ class SundialForecaster(BaseForecaster):
     ):
         self.model_path = model_path
         self.config = config
-        self.device_map = device_map
+        self.device = device
         self.dtype = dtype
         self.forward_kwargs = forward_kwargs
         self.deterministic = deterministic
@@ -237,7 +236,9 @@ class SundialForecaster(BaseForecaster):
                 warn(
                     "Skipping Sundial evaluation dataset creation: validation "
                     "split leaves no numeric series long enough to create a "
-                    "training target. Training continues on the full input.",
+                    "training target. Training continues on the full input. "
+                    "You can also decrease output_token_lens through config "
+                    "to reduce the default pretraining horizon.",
                     stacklevel=2,
                 )
 
@@ -263,7 +264,9 @@ class SundialForecaster(BaseForecaster):
             warn(
                 "Skipping Sundial evaluation dataset creation: validation split "
                 "does not contain any numeric series long enough to create a "
-                "training target. Training continues without evaluation.",
+                "training target. Training continues without evaluation. You "
+                "can also decrease output_token_lens through config to reduce "
+                "the default pretraining horizon.",
                 stacklevel=2,
             )
 
@@ -387,7 +390,7 @@ class SundialForecaster(BaseForecaster):
             key=self._get_unique_key(),
             model_path=self.model_path,
             config=self.config,
-            device_map=self.device_map,
+            device=self.device,
             dtype=self.dtype,
         ).load()
 
@@ -398,7 +401,7 @@ class SundialForecaster(BaseForecaster):
         key = {
             "model_path": self.model_path,
             "config": self.config,
-            "device_map": self.device_map,
+            "device": self.device,
             "dtype": self.dtype,
         }
         return str(sorted(key.items()))
@@ -433,7 +436,7 @@ class SundialForecaster(BaseForecaster):
 
         test_params_1 = {
             **common_params,
-            "device_map": "cpu",
+            "device": "cpu",
             "forward_kwargs": {"num_samples": 2, "revin": True},
         }
 
@@ -448,7 +451,7 @@ class SundialForecaster(BaseForecaster):
             test_params_2.update(
                 {
                     "dtype": torch.bfloat16,
-                    "device_map": "cuda" if torch.cuda.is_available() else None,
+                    "device": "cuda" if torch.cuda.is_available() else None,
                 }
             )
 
@@ -466,13 +469,13 @@ class _CachedSundial:
         key,
         model_path,
         config,
-        device_map,
+        device,
         dtype,
     ):
         self.key = key
         self.model_path = model_path
         self.config = config
-        self.device_map = device_map
+        self.device = device
         self.dtype = dtype
         self.model_ = None
 
@@ -481,11 +484,19 @@ class _CachedSundial:
         if self.model_ is not None:
             return self.model_
 
-        if self.model_path is None or self.config is not None:
+        if self.model_path is None:
             warn(
                 "Initializing Sundial from config creates random weights. Sundial "
                 "pretraining is required before these weights are suitable for "
                 "meaningful forecasting.",
+                UserWarning,
+                stacklevel=2,
+            )
+        elif self.config is not None:
+            warn(
+                "Loading Sundial with a custom config can initialize checkpoint "
+                "parameters with incompatible shapes from scratch. Pretraining "
+                "is recommended before meaningful forecasting.",
                 UserWarning,
                 stacklevel=2,
             )
@@ -495,7 +506,7 @@ class _CachedSundial:
         else:
             self.model_ = self._load_randomly()
 
-        self.model_ = self.model_.to(self.device_map, dtype=self.dtype)
+        self.model_ = self.model_.to(self.device, dtype=self.dtype)
 
         return self.model_
 
@@ -566,7 +577,9 @@ class SundialPyTorchDataset:
             raise ValueError(
                 "No training series were available for Sundial pretraining. "
                 "Provide at least one numeric series with length greater than "
-                f"or equal to {self.min_length}."
+                f"or equal to {self.min_length}. You can also decrease "
+                "output_token_lens through config to reduce the default "
+                "pretraining horizon."
             )
 
     def __len__(self):
@@ -603,7 +616,9 @@ class SundialDataCollator:
                 "Sundial pretraining requires every series in a batch to be at "
                 "least as long as input_token_len + horizon_length. Found "
                 f"length {min_length}, but input_token_len={self.input_token_len} "
-                f"and horizon_length={self.horizon_length}."
+                f"and horizon_length={self.horizon_length}. You can also "
+                "decrease output_token_lens through config to reduce the "
+                "default pretraining horizon."
             )
 
         input_length = max_length - self.horizon_length
