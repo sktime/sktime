@@ -570,11 +570,13 @@ class SundialDataCollator:
         max_length = max(lengths)
         min_length = min(lengths)
 
-        if min_length <= self.horizon_length:
+        min_required_length = self.input_token_len + self.horizon_length
+        if min_length < min_required_length:
             raise ValueError(
                 "Sundial pretraining requires every series in a batch to be at "
-                f"longer than the requested horizon. Found length "
-                f"{min_length}, but horizon_length={self.horizon_length}."
+                "least as long as input_token_len + horizon_length. Found "
+                f"length {min_length}, but input_token_len={self.input_token_len} "
+                f"and horizon_length={self.horizon_length}."
             )
 
         input_length = max_length - self.horizon_length
