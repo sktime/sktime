@@ -1,6 +1,6 @@
 """Tests for Regression Benchmark."""
 
-__author__ = ["jgyasu"]
+__author__ = ["NAME-ASHWANIYADAV"]
 
 import pandas as pd
 import pytest

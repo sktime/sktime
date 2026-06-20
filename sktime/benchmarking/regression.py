@@ -1,6 +1,6 @@
 """Benchmarking for regression estimators."""
 
-__author__ = ["jgyasu"]
+__author__ = ["NAME-ASHWANIYADAV"]
 __all__ = ["RegressionBenchmark"]
 
 from collections.abc import Callable

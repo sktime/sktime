@@ -6,7 +6,7 @@
 regression, here it is tested with various configurations.
 """
 
-__author__ = ["jgyasu"]
+__author__ = ["NAME-ASHWANIYADAV"]
 
 __all__ = ["TestEvaluate"]
 
