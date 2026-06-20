@@ -65,7 +65,7 @@ def _delegator(method):
     return delegated
 
 
-def _check_values(values) -> pd.Index:
+def _check_values(values):
     """Validate forecasting horizon values.
 
     Validation checks validity and also converts forecasting horizon values
@@ -89,11 +89,13 @@ def _check_values(values) -> pd.Index:
         Normalized forecasting horizon values as a 1D numpy array of integers or floats.
     """
     normalizer_found = False
-    for norm in ALL_NORMALIZERS:
+    for norm_cls in ALL_NORMALIZERS:
+        norm = norm_cls()
         if norm._is_applicable(values):
             values_pd = norm._normalize_pd_index_legacy(values)
             values_np = norm._normalize(values)
             normalizer_found = True
+            break
 
     values = values_pd
 

@@ -49,7 +49,10 @@ class FhIntTypeNonPandas:
             Normalized forecasting horizon as a 1D numpy array of integers or floats.
         """
         if self._is_int(fh) and fh > 0:
+            return np.arange(1, fh + 1, dtype=int)
+        elif self._is_int(fh):
             return np.array([fh])
+
         if isinstance(fh, range):
             return np.array(fh)
         else:
