@@ -2803,7 +2803,9 @@
       "name": "Gunmay Jhingran",
       "avatar_url": "https://avatars.githubusercontent.com/u/142904972?v=4",
       "profile": "https://github.com/gun29may",
-      "contributions": ["doc"]
+      "contributions": [
+        "doc"
+      ]
     },
     {
       "login": "paramsureliya",
@@ -2876,6 +2878,14 @@
       "profile": "https://github.com/NAME-ASHWANIYADAV",
       "contributions": [
         "code"
+	{
+      "login": "stephanielees",
+      "name": "Stephanie Lee Sugiharjo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/128904767?v=4",
+      "profile": "https://github.com/stephanielees",
+      "contributions": [
+        "code",
+        "bug"
       ]
     }
   ]
