@@ -178,6 +178,7 @@ class FhDateTypeNumpyOrPandas:
 
         return is_timedelta(x=x) or is_date_offset(x=x)
 
+    @staticmethod
     def _to_int64(x):
         """Convert datetime-like or timedelta-like x to int64 representation."""
         import pandas as pd
