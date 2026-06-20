@@ -78,9 +78,7 @@ def test_add_list_estimators(tmp_path):
     results_df = benchmark.run(results_file)
 
     pd.testing.assert_series_equal(
-        pd.Series(
-            ["DummyRegressor", "KNeighborsTimeSeriesRegressor"], name="model_id"
-        ),
+        pd.Series(["DummyRegressor", "KNeighborsTimeSeriesRegressor"], name="model_id"),
         results_df["model_id"],
     )
 
