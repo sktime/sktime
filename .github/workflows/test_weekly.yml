@@ -1,0 +1,67 @@
+name: weekly-test
+on:
+  schedule:
+    - cron: "0 3 * * 6"
+  workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect-estimators:
+    runs-on: ubuntu-latest
+    outputs:
+      obj_chunks: ${{ steps.chunk.outputs.obj_chunks }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install sktime
+        run: uv pip install .[dev]
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Collect and chunk estimators
+        id: chunk
+        run: |
+          python - <<'EOF'
+          import json
+          import os
+          from sktime.registry import all_estimators
+
+          estimators = all_estimators()
+          names = [name for name, _ in estimators]
+
+          CHUNK_SIZE = 10
+          chunks = [names[i:i+CHUNK_SIZE] for i in range(0, len(names), CHUNK_SIZE)]
+          if not chunks:
+              chunks = [[]]
+
+          print(f"Total estimators: {len(names)}", file=os.sys.stderr)
+          print(f"Chunks: {len(chunks)}", file=os.sys.stderr)
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"obj_chunks={json.dumps(chunks)}\n")
+          EOF
+
+  test-estimators:
+    needs: collect-estimators
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.collect-estimators.outputs.obj_chunks) }}
+
+    uses: ./.github/workflows/test_est.yml
+    with:
+      flags: ${{ toJson(matrix.chunk) }}
