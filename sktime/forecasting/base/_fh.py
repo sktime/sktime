@@ -122,6 +122,7 @@ def _check_values(values) -> pd.Index:
     # return sorted values
     return values.sort_values(), np.sort(values_np)
 
+
 def _check_freq(obj):
     """Coerce obj to a pandas frequency offset for the ForecastingHorizon.
 
