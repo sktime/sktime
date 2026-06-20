@@ -72,7 +72,11 @@ class FhIntTypeNonPandas:
         """Legacy normalizer for pandas index types, for downwards compatibility."""
         import pandas as pd
 
-        return pd.Index(self._normalize(fh))
+        vals = self._normalize(fh)
+        if len(vals) == 0:
+            return pd.RangeIndex(0)
+
+        return pd.Index(vals)
 
 
 class FhPandasIntType:
