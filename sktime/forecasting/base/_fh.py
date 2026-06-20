@@ -95,9 +95,8 @@ def _check_values(values):
             values_pd = norm._normalize_pd_index_legacy(values)
             values_np = norm._normalize(values)
             normalizer_found = True
+            values = values_pd
             break
-
-    values = values_pd
 
     # otherwise, raise type error
     if not normalizer_found:
