@@ -305,17 +305,17 @@ class ForecastingHorizon:
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
         if is_relative is None:
-            if is_in_valid_relative_index_types(values):
+            if is_in_valid_relative_index_types(values_pd):
                 is_relative = True
-            elif is_in_valid_absolute_index_types(values):
+            elif is_in_valid_absolute_index_types(values_pd):
                 is_relative = False
             else:
-                raise TypeError(f"{type(values)} is not a supported fh index type")
+                raise TypeError(f"{type(values_pd)} is not a supported fh index type")
         if is_relative:
-            if not is_in_valid_relative_index_types(values):
+            if not is_in_valid_relative_index_types(values_pd):
                 raise TypeError(error_msg)
         else:
-            if not is_in_valid_absolute_index_types(values):
+            if not is_in_valid_absolute_index_types(values_pd):
                 raise TypeError(error_msg)
         self._is_relative = is_relative
 
