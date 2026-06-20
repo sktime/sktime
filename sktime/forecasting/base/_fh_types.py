@@ -73,6 +73,7 @@ class FhIntTypeNonPandas:
         import pandas as pd
 
         vals = self._normalize(fh)
+        # downwards compatible, tests expect length zero values to be RangeIndex
         if len(vals) == 0:
             return pd.RangeIndex(0)
 
