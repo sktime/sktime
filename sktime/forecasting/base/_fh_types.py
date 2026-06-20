@@ -154,7 +154,7 @@ class FhDateTypeNumpyOrPandas:
         if self._is_timedelta_or_date_offset(fh):
             return True
 
-        if isinstance(fh, list | np.ndarray):
+        if isinstance(fh, (list, np.ndarray)):
             if all([self._is_timedelta_or_date_offset(value) for value in fh]):
                 return True
 
@@ -228,7 +228,7 @@ class FhDateTypeNumpyOrPandas:
         if self._is_timedelta_or_date_offset(fh):
             return np.array([self._to_int64(fh)])
 
-        if isinstance(fh, list | np.ndarray):
+        if isinstance(fh, (list, np.ndarray)):
             if all([self._is_timedelta_or_date_offset(value) for value in fh]):
                 return np.array([self._to_int64(value) for value in fh]).flatten()
 
@@ -246,7 +246,7 @@ class FhDateTypeNumpyOrPandas:
         if self._is_timedelta_or_date_offset(fh):
             return pd.Index([fh])
 
-        if isinstance(fh, list | np.ndarray):
+        if isinstance(fh, (list, np.ndarray)):
             if all([self._is_timedelta_or_date_offset(value) for value in fh]):
                 return pd.Index(fh)
 
