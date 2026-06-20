@@ -71,6 +71,7 @@ class FhIntTypeNonPandas:
 
         return pd.Index(self._normalize(fh))
 
+
 class FhPandasIntType:
     """Normalizer for integer-like forecasting horizons, pandas only."""
 
