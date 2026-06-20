@@ -24,14 +24,34 @@ from sktime.utils.validation import (
 class ExpandingWindowSplitter(BaseWindowSplitter):
     r"""Expanding window splitter.
 
-    Split time series repeatedly into an growing training set and a fixed-size test set.
+    Split time series repeatedly into a growing training set and a fixed-size test set.
 
-    Test window is defined by forecasting horizons
-    relative to the end of the training window.
-    It will contain as many indices
+    The training windows start at the first available time index in the data.
+    Each split expands the previous training window by ``step_length``.
+
+    If the time points in the data are :math:`(t_1, t_2, \ldots, t_N)`, the
+    training windows will be all indices in the intervals
+
+    .. math:: [t_1, t_1 + w), [t_1, t_1 + w + s), [t_1, t_1 + w + 2s), \ldots
+
+    where :math:`w` is the value of ``initial_window`` and :math:`s` is the
+    value of ``step_length``.
+
+    The test windows are defined by forecasting horizons
+    relative to the end of the training windows.
+
+    The test window will contain as many indices
     as there are forecasting horizons provided to the ``fh`` argument.
-    For a forecasating horizon :math:`(h_1,\ldots,h_H)`, the training window will
-    consist of the indices :math:`(k_n+h_1,\ldots,k_n+h_H)`.
+
+    For ``fh`` equal to the forecasting horizon :math:`(h_1,\ldots,h_H)`, the
+    test indices for the n-th split will consist of the indices
+    :math:`(k_n+h_1,\ldots,k_n+h_H)`, where
+    :math:`k_n = t_1 + w + (n - 1) \cdot s` is the end of the n-th training
+    window.
+
+    The number of splits is determined by the total length of the time series,
+    up until the last test window that lies within the observed time indices,
+    i.e., the largest integer :math:`n` such that :math:`k_n + h_H < t_N`.
 
     For example for ``initial_window = 5``, ``step_length = 1`` and ``fh = [1, 2, 3]``
     here is a representation of the folds::
