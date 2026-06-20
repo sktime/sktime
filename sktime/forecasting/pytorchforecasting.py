@@ -35,6 +35,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+        Mutually exclusive with ``model``.
+    model: pytorch-forecasting TemporalFusionTransformer instance (default=None)
+        a pre-initialized TFT model to use directly without training.
+        When provided, ``fit`` will skip training and use this model for prediction.
+        Mutually exclusive with ``model_path``.
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -137,6 +142,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
+        model: Any | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
@@ -148,6 +154,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
             validation_to_dataloader_params,
             trainer_params,
             model_path,
+            model,
             random_log_path,
             broadcasting,
         )
@@ -324,6 +331,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+        Mutually exclusive with ``model``.
+    model: pytorch-forecasting NBeats instance (default=None)
+        a pre-initialized NBeats model to use directly without training.
+        When provided, ``fit`` will skip training and use this model for prediction.
+        Mutually exclusive with ``model_path``.
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -419,6 +431,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
+        model: Any | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
@@ -429,6 +442,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
             validation_to_dataloader_params,
             trainer_params,
             model_path,
+            model,
             random_log_path,
             broadcasting,
         )
@@ -616,6 +630,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+        Mutually exclusive with ``model``.
+    model: pytorch-forecasting DeepAR instance (default=None)
+        a pre-initialized DeepAR model to use directly without training.
+        When provided, ``fit`` will skip training and use this model for prediction.
+        Mutually exclusive with ``model_path``.
     deterministic: bool (default=False)
         set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
@@ -716,6 +735,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
+        model: Any | None = None,
         deterministic: bool = False,
         random_log_path: bool = False,
         broadcasting: bool = False,
@@ -729,6 +749,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
             validation_to_dataloader_params,
             trainer_params,
             model_path,
+            model,
             random_log_path,
             broadcasting,
         )
@@ -898,6 +919,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+        Mutually exclusive with ``model``.
+    model: pytorch-forecasting NHiTS instance (default=None)
+        a pre-initialized NHiTS model to use directly without training.
+        When provided, ``fit`` will skip training and use this model for prediction.
+        Mutually exclusive with ``model_path``.
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -995,6 +1021,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
+        model: Any | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
@@ -1005,6 +1032,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             validation_to_dataloader_params,
             trainer_params,
             model_path,
+            model,
             random_log_path,
             broadcasting,
         )
