@@ -3,9 +3,6 @@
 from datetime import timedelta
 
 import numpy as np
-
-from sktime.utils.validation import is_int
-
 from skbase.utils.dependencies import _check_soft_dependencies
 
 
@@ -234,7 +231,7 @@ class FhDateTypeNumpyOrPandas:
                 return np.array([self._to_int64(value) for value in fh]).flatten()
 
         raise RuntimeError("Please only pass fh that pass _is_applicable.")
-    
+
     def _normalize_pd_index_legacy(self, fh):
         """Legacy normalizer for pandas index types, for downwards compatibility."""
         import pandas as pd
