@@ -252,3 +252,6 @@ class FhDateTypeNumpyOrPandas:
                 return pd.Index(fh)
 
         raise RuntimeError("Please only pass fh that pass _is_applicable.")
+
+
+ALL_NORMALIZERS = [FhIntTypeNonPandas, FhPandasIntType, FhDateTypeNumpyOrPandas]
