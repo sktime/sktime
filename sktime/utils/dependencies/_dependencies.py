@@ -1,7 +1,10 @@
 """Utility to check soft dependency imports, and raise warnings or errors."""
 
+from importlib.metadata import metadata
 from importlib.util import find_spec
 
+from packaging.specifiers import SpecifierSet
+from packaging.version import Version
 from skbase.utils.dependencies._dependencies import (
     _check_soft_dependencies,
     _raise_at_severity,
@@ -90,3 +93,40 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
     MLFLOW_DEPS = [["mlflow", "mlflow-skinny"]]
 
     return _check_soft_dependencies(MLFLOW_DEPS, msg=msg, severity=severity)
+
+
+def _get_lowest_bound(spec):
+    """Extract the lowest version allowed by a specifier string."""
+    spec_set = SpecifierSet(spec)
+
+    lower_bounds = []
+
+    for s in spec_set:
+        if s.operator in {">=", "==", ">"}:
+            lower_bounds.append(Version(s.version))
+
+    return max(lower_bounds) if lower_bounds else None
+
+
+def _get_lowest_compatible_python_version(estimator):
+    """Get the lowest Python version compatible with an estimator and sktime.
+
+    Parameters
+    ----------
+    estimator : sktime estimator class
+
+    Returns
+    -------
+    str
+        Lowest compatible Python version, e.g. "3.11".
+    """
+    spec = estimator.get_class_tag("python_version")
+
+    sktime_spec = metadata("sktime")["Requires-Python"]
+
+    sktime_lower = _get_lowest_bound(sktime_spec)
+    estimator_lower = _get_lowest_bound(spec) if spec is not None else None
+
+    candidates = [v for v in [sktime_lower, estimator_lower] if v is not None]
+
+    return str(max(candidates))
