@@ -541,6 +541,14 @@ Deep learning based forecasters
 
     CINNForecaster
 
+.. currentmodule:: sktime.forecasting.da_rnn
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DualStageAttentionRNN
+
 .. currentmodule:: sktime.forecasting.neuralforecast
 
 .. autosummary::
