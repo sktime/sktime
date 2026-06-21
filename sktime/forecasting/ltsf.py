@@ -1137,8 +1137,8 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
+                self.custom_dataset_pred.build_dataset(y)
+                dataset = self.custom_dataset_pred
             else:
                 raise NotImplementedError(
                     "Custom Dataset `build_dataset` method is not available. Please"
