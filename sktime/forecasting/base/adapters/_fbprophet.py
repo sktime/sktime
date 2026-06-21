@@ -21,6 +21,7 @@ class _ProphetAdapter(BaseForecaster):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:pred_int:monotonic": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
