@@ -140,9 +140,6 @@ EXCLUDED_TESTS = {
         "test_multioutput",
         "test_classifier_on_unit_test_data",
     ],
-    "ARLagOrderSelector": [
-        "test_doctest_examples",  # doctest fails, see #8129
-    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
