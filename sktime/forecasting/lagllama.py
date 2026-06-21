@@ -235,6 +235,19 @@ class LagLlamaForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["pranavvp16"],
+        "maintainers": ["pranavvp16"],
+        "python_version": "<3.14",
+        "python_dependencies": [
+            "gluonts>=0.14.0",
+            "torch",
+            "lightning>=2.0",
+            "huggingface_hub",
+        ],
+        # estimator type
+        # --------------
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:exogenous": False,
         "capability:multivariate": False,  # LagLlama is univariate only
@@ -257,6 +270,7 @@ class LagLlamaForecaster(BaseForecaster):
             "huggingface_hub",
         ],
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.lag_llama"],
     }
 
     def __init__(
