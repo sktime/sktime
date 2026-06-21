@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: python environment step
         uses: actions/setup-python@v6
@@ -41,7 +41,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: run tests on python ${{ matrix.python-version }}
         uses: ./.github/actions/test-base
@@ -79,7 +79,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: run tests for component ${{ matrix.sktime-component }} on python ${{ matrix.python-version }}
         uses: ./.github/actions/test-component
         with:
@@ -108,7 +108,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: update local git tracking reference
         run: git remote set-branches origin main
@@ -165,7 +165,7 @@ jobs:
 
     steps:
       - name: checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -213,7 +213,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
