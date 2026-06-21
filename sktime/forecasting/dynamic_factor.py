@@ -203,7 +203,7 @@ class DynamicFactor(_StatsModelsAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon
-            The forecasters horizon with the steps ahead to predict.
+            The forecasting horizon with the steps ahead to predict.
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)

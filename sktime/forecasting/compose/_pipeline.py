@@ -516,7 +516,7 @@ class ForecastingPipeline(_Pipeline):
         y : pd.Series, pd.DataFrame
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, required
             Exogenous variables are ignored
 
@@ -1067,7 +1067,7 @@ class TransformedTargetForecaster(_Pipeline):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -1625,7 +1625,7 @@ class ForecastX(BaseForecaster):
         y : time series in sktime compatible format
             Target time series to which to fit the forecaster
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : time series in sktime compatible format, optional, default=None
             Exogenous time series to which to fit the forecaster
 
