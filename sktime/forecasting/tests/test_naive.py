@@ -65,6 +65,76 @@ def test_strategy_mean(fh, window_length):
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
+@pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
+@pytest.mark.parametrize("aggfunc", ["mean", "median"])
+def test_strategy_rolling_statistic(fh, window_length, aggfunc):
+    """Test rolling strategy with built-in aggregation strings."""
+    f = NaiveForecaster(
+        strategy="rolling", window_length=window_length, aggfunc=aggfunc
+    )
+    f.fit(y_train)
+    y_pred = f.predict(fh)
+
+    aggregator = getattr(y_train.iloc[-window_length:], aggfunc)
+    expected_value = aggregator()
+    expected = np.repeat(expected_value, len(f.fh))
+    np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
+def test_strategy_rolling_callable(fh):
+    """Test rolling strategy with a custom aggregation callable."""
+
+    def trimmed_mean(arr):
+        arr = np.sort(arr.astype(float))
+        if len(arr) <= 2:
+            return arr.mean()
+        return arr[1:-1].mean()
+
+    window_length = 5
+    f = NaiveForecaster(
+        strategy="rolling", window_length=window_length, aggfunc=trimmed_mean
+    )
+    f.fit(y_train)
+    y_pred = f.predict(fh)
+
+    last_window = y_train.iloc[-window_length:].to_numpy()
+    expected_value = trimmed_mean(last_window)
+    expected = np.repeat(expected_value, len(f.fh))
+    np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_strategy_rolling_requires_window_length():
+    """Rolling strategy must be configured with a finite window length."""
+    f = NaiveForecaster(strategy="rolling")
+    with pytest.raises(ValueError, match="window_length"):
+        f.fit(y_train)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_strategy_rolling_seasonal_not_supported():
+    """Rolling strategy currently supports only non-seasonal data."""
+    f = NaiveForecaster(strategy="rolling", window_length=3, sp=3)
+    with pytest.raises(ValueError, match="sp=1"):
+        f.fit(y_train)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_strategy_last_seasonal(fh, sp):
     """Test last strategy on seasonal data."""
