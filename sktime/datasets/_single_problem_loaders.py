@@ -71,6 +71,7 @@ def load_UCR_UEA_dataset(
     return_type=None,
     extract_path=None,
     y_dtype="str",
+    download_entire_repo=False,
 ):
     """Load dataset from UCR UEA time series archive.
 
@@ -119,6 +120,11 @@ def load_UCR_UEA_dataset(
         e.g. ``C:/Temp`` or relative, e.g. ``Temp`` or ``./Temp``.
     y_dtype: str, optional(default='str')
         This dtype of the target variable.
+    download_entire_repo : bool, optional (default=False)
+        If True, fetch a full snapshot of the HuggingFace repository that hosts
+        the ``sktime`` classification datasets when the dataset is first requested.
+        This turns hundreds of API calls for large benchmarking downloads into a
+        single snapshot download.
 
 
     Returns
@@ -138,7 +144,13 @@ def load_UCR_UEA_dataset(
     >>> X, y = load_UCR_UEA_dataset(name="ArrowHead") # doctest: +SKIP
     """
     return _load_dataset(
-        name, split, return_X_y, return_type, extract_path, y_dtype=y_dtype
+        name,
+        split,
+        return_X_y,
+        return_type,
+        extract_path,
+        y_dtype=y_dtype,
+        download_entire_repo=download_entire_repo,
     )
 
 
