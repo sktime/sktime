@@ -526,7 +526,7 @@ class _DirectReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -793,7 +793,7 @@ class _MultioutputReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -887,7 +887,7 @@ class _RecursiveReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -1130,7 +1130,7 @@ class _DirRecReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
