@@ -230,11 +230,9 @@ class _Reducer(_BaseWindowForecaster):
             "fkiraly",
             "benheid",
         ],
-        "capability:exogenous": True,  # reduction uses X in non-trivial way
-        "capability:missing_values": True,
-        "capability:insample": False,
+        "capability:insample": True,
         "capability:pred_int": True,
-        "capability:pred_int:insample": False,
+        "capability:pred_int:insample": True,
     }
 
     def __init__(
@@ -305,10 +303,114 @@ class _Reducer(_BaseWindowForecaster):
         return y_pred
 
     def _predict_in_sample(self, fh, X=None, **kwargs):
-        # Note that we currently only support out-of-sample predictions. For the
-        # direct and multioutput strategy, we need to check this already during fit,
-        # as the fh is required for fitting.
-        pass
+        """Make in-sample prediction using vectorized approach.
+
+        Parameters
+        ----------
+        fh : np.array
+            all non-positive (<= 0)
+        X : pd.DataFrame
+            ignored for in-sample prediction as the training data is used
+
+        Returns
+        -------
+        y_pred : pd.DataFrame or pd.Series
+        """
+        # Relative fh for in-sample are <= 0
+        # Convert to absolute indices to know which windows we need
+        y = self._y
+        X_fit = self._X
+        window_length = self.window_length_
+        n_timepoints = len(y)
+
+        # identify points to predict
+        fh_idx = fh.to_indexer(self.cutoff)
+        # fh_idx are indices in y where we want predictions
+
+        # strategy check
+        strategy = getattr(self, "strategy", None)
+
+        if strategy == "recursive":
+            estimator = self.estimator_
+        elif strategy == "direct":
+            estimator = self.estimators_[0]
+        elif strategy == "multioutput":
+            estimator = self.estimator_
+        else:
+            # support for other strategies like dirrec could be added here
+            # for now, fall back to base class implementation
+            return super()._predict_in_sample(fh, X=X, **kwargs)
+
+        # we currently only support 1-step ahead in-sample forecasts
+        # i.e., at any point t, we use history up to t-1 to predict t.
+
+        # backfill y and X at the start to ensure we have enough history for all points
+        # we need points at indices t-window_length, ..., t-1
+        # for t=0, we need -window_length, ..., -1
+        y_vals = y.to_numpy()
+        y_padded = np.concatenate([np.full(window_length, y_vals[0]), y_vals])
+
+        if X_fit is not None:
+            X_vals = X_fit.to_numpy()
+            X_padded = np.concatenate(
+                [np.full((window_length, X_vals.shape[1]), X_vals[0]), X_vals]
+            )
+        else:
+            X_padded = None
+
+        # generate all windows
+        # window for index t in original y is now at index t + window_length
+        # and it ends at t + window_length - 1
+        n_predict = len(fh_idx)
+        Zt = np.zeros(
+            (
+                n_predict,
+                1 + (0 if X_padded is None else X_padded.shape[1]),
+                window_length,
+            )
+        )
+
+        for k in range(window_length):
+            # for window ending at t-1, the k-th lag is at t-1-k
+            # in y_padded, index is t + window_length - 1 - k
+            Zt[:, 0, window_length - 1 - k] = y_padded[fh_idx + window_length - 1 - k]
+            if X_padded is not None:
+                for j in range(X_padded.shape[1]):
+                    Zt[:, j + 1, window_length - 1 - k] = X_padded[
+                        fh_idx + window_length - 1 - k, j
+                    ]
+
+        # reshape if necessary
+        scitype = getattr(self, "_estimator_scitype", "tabular-regressor")
+        if scitype == "tabular-regressor":
+            Xt = Zt.reshape(n_predict, -1)
+        else:  # time-series-regressor
+            Xt = Zt
+
+        # predict
+        if "method" in kwargs:
+            method = kwargs["method"]
+        else:
+            method = "predict"
+
+        # handle multioutput (multioutput strategy)
+        if hasattr(estimator, method):
+            y_pred = getattr(estimator, method)(Xt)
+        else:
+            # fallback if for some reason estimator doesn't have the method
+            return super()._predict_in_sample(fh, X=X, **kwargs)
+
+        if strategy == "multioutput":
+            # only take the first column (1-step prediction)
+            if y_pred.ndim > 1:
+                y_pred = y_pred[:, 0]
+
+        # coerce to expected format
+        index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+        columns = self._get_columns(method=method, **kwargs)
+        y_pred = pd.DataFrame(y_pred, index=index, columns=columns)
+
+        return y_pred
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
