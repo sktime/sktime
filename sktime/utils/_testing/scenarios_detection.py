@@ -57,5 +57,26 @@ class DetectorUnivariateSimple(DetectorTestScenario):
     default_method_sequence = ["fit", "predict", "transform"]
 
 
+class DetectorMultivariateSimple(DetectorTestScenario):
+    """Simple multivariate detector scenario with default settings."""
+
+    _tags = {
+        "is_enabled": True,
+        "scitype": "detector",
+        "X_univariate": False,
+    }
+
+    @property
+    def args(self):
+        Z = _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SD2)
+        return {
+            "fit": {"X": Z},
+            "predict": {"X": Z},
+            "transform": {"X": Z},
+        }
+
+    default_method_sequence = ["fit", "predict", "transform"]
+
+
 # List of scenarios to be imported by tests
-scenarios_detectors = [DetectorUnivariateSimple]
+scenarios_detectors = [DetectorUnivariateSimple, DetectorMultivariateSimple]
