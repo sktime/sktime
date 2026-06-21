@@ -200,31 +200,75 @@ def generate_mtype_list(scitype=None, soft_deps="all"):
     return [x[0] for x in generate_mtype_register(scitype=scitype, soft_deps=soft_deps)]
 
 
-MTYPE_SOFT_DEPS_SERIES = {
-    "xr.DataArray": "xarray",
-    "dask_series": "dask",
-    "pl.DataFrame": "polars",
-    "gluonts_ListDataset_series": "gluonts",
-    "gluonts_PandasDataset_series": "gluonts",
-}
+def generate_soft_deps_register():
+    """Generate soft dependencies register using lookup.
+    
+    This function walks the class registry and extracts soft dependencies
+    from the python_dependencies tag of each class.
+    
+    Returns
+    -------
+    soft_deps : dict
+        keys are mtypes with soft dependencies, values are str or list of str
+        strings in values are names of soft dependency packages required for the mtype
+    """
+    # Import locally to avoid circular imports during module initialization
+    from sktime.utils.retrieval import _all_classes
+    from sktime.datatypes._base import BaseDatatype
+    
+    # Get all classes that are mtypes
+    classes = _all_classes("sktime.datatypes")
+    classes = [x[1] for x in classes]
+    classes = [x for x in classes if issubclass(x, BaseDatatype)]
+    classes = [x for x in classes if not x.__name__.startswith("Base")]
+    classes = [x for x in classes if not x.__name__.startswith("Scitype")]
+    
+    soft_deps = {}
+    
+    for cls in classes:
+        # Get the python_dependencies tag
+        deps_tag = cls.get_tag("python_dependencies")
+        
+        if deps_tag is None:
+            continue
+            
+        # Get the mtype name
+        mtype = cls.get_class_tag("name")
+        
+        if mtype is None:
+            continue
+            
+        # Store the dependencies
+        soft_deps[mtype] = deps_tag
+    
+    return soft_deps
 
-MTYPE_SOFT_DEPS_PANEL = {
-    "xr.DataArray": "xarray",
-    "dask_panel": "dask",
-    "gluonts_ListDataset_panel": "gluonts",
-    "gluonts_PandasDataset_panel": "gluonts",
-    "polars_panel": "polars",
-}
 
-MTYPE_SOFT_DEPS_HIERARCHICAL = {
-    "dask_hierarchical": "dask",
-    "polars_hierarchical": "polars",
-}
+# Lazy evaluation wrapper to avoid circular imports
+class _LazySoftDeps:
+    def __init__(self):
+        self._value = None
+        
+    def __get__(self, obj, objtype=None):
+        if self._value is None:
+            self._value = generate_soft_deps_register()
+        return self._value
+        
+    def keys(self):
+        """Make the lazy register support keys() method."""
+        if self._value is None:
+            self._value = generate_soft_deps_register()
+        return self._value.keys()
+        
+    def __contains__(self, item):
+        """Make the lazy register support 'in' operator."""
+        if self._value is None:
+            self._value = generate_soft_deps_register()
+        return item in self._value
 
-MTYPE_SOFT_DEPS = {}
-MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_SERIES)
-MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_PANEL)
-MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_HIERARCHICAL)
+
+# Generate the soft dependencies register programmatically
+MTYPE_SOFT_DEPS = _LazySoftDeps()
 
 # mtypes to exclude in checking since they are ambiguous and rare
 AMBIGUOUS_MTYPES = ["numpyflat", "alignment_loc", "pd-long", "pd-wide"]
@@ -236,14 +280,76 @@ __all__ = [
 ]
 
 
-SCITYPE_REGISTER = [
-    ("Series", "uni- or multivariate time series"),
-    ("Panel", "panel of uni- or multivariate time series"),
-    ("Hierarchical", "hierarchical panel of time series with 3 or more levels"),
-    ("Alignment", "series or sequence alignment"),
-    ("Table", "data table with primitive column types"),
-    ("Proba", "probability distribution or distribution statistics, return types"),
-]
+def generate_scitype_register():
+    """Generate scitype register using lookup.
+    
+    This function walks the class registry and extracts unique scitypes
+    along with their descriptions from the class tags.
+    
+    Returns
+    -------
+    scitype_register : list of tuples
+        each tuple corresponds to an mtype tag, elements as follows:
+        0 : string - name of the scitype as used throughout sktime and in datatypes
+        1 : string - plain English description of the scitype
+    """
+    # Import locally to avoid circular imports during module initialization
+    from sktime.utils.retrieval import _all_classes
+    from sktime.datatypes._base import BaseDatatype
+    
+    # Get all classes that are mtypes
+    classes = _all_classes("sktime.datatypes")
+    classes = [x[1] for x in classes]
+    classes = [x for x in classes if issubclass(x, BaseDatatype)]
+    classes = [x for x in classes if not x.__name__.startswith("Base")]
+    classes = [x for x in classes if not x.__name__.startswith("Scitype")]
+    
+    # Collect unique scitypes and their descriptions
+    scitype_info = {}
+    
+    for cls in classes:
+        # Get the scitype tag
+        scitype = cls.get_tag("scitype")
+        
+        if scitype is None:
+            continue
+            
+        # Get the description tag
+        description = cls.get_tag("description")
+        
+        if description is None:
+            # If no description, use a default
+            description = f"{scitype} data type"
+            
+        # Store the scitype info
+        if scitype not in scitype_info:
+            scitype_info[scitype] = description
+    
+    # Convert to list of tuples
+    scitype_register = [(scitype, description) for scitype, description in scitype_info.items()]
+    
+    return scitype_register
+
+
+# Lazy evaluation wrapper to avoid circular imports
+class _LazyScitypeRegister:
+    def __init__(self):
+        self._value = None
+        
+    def __get__(self, obj, objtype=None):
+        if self._value is None:
+            self._value = generate_scitype_register()
+        return self._value
+        
+    def __iter__(self):
+        """Make the lazy register iterable."""
+        if self._value is None:
+            self._value = generate_scitype_register()
+        return iter(self._value)
+
+
+# Generate the scitype register programmatically
+SCITYPE_REGISTER = _LazyScitypeRegister()
 
 SCITYPE_LIST = [x[0] for x in SCITYPE_REGISTER]
 
