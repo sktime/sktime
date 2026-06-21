@@ -26,6 +26,32 @@ s = pd.Series(np.arange(n_timepoints))
 y_train = s.iloc[:n_train]
 y_test = s.iloc[n_train:]
 
+def update(self, y, X=None, update_params=True):
+    """Efficiently update model state for new observations.
+
+    Parameters
+    ----------
+    y : pd.Series
+        New observed values to update the model with.
+    X : ignored
+        Exogenous variables (ignored for NaiveForecaster).
+    update_params : bool, default=True
+        Whether to update the model parameters.
+    """
+
+    if y is None or len(y) == 0:
+        return self
+
+    # Ensure y is in the correct internal format
+    y = self._check_y(y)
+
+    if update_params:
+        self._y = pd.concat([self._y, y])
+        self.cutoff = y.index[-1]
+    else:
+        self.cutoff = y.index[-1]
+
+    return self
 
 @pytest.mark.skipif(
     not run_test_for_class(NaiveForecaster),
