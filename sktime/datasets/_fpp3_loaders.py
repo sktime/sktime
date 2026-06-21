@@ -28,7 +28,7 @@ import pandas as pd
 #     _load_dataset,
 #     _load_provided_dataset,
 # )
-# from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
+# from sktime.datasets._readers_writers.tsf import load_from_tsf_to_dataframe
 # from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 
 

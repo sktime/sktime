@@ -246,6 +246,7 @@ use common utilities such as ``pandas.read_csv``
     load_from_arff_to_dataframe
     load_from_tsfile
     load_from_tsfile_to_dataframe
+    load_from_tsf_to_dataframe
     load_from_ucr_tsv_to_dataframe
     load_from_long_to_dataframe
     load_tsf_to_dataframe

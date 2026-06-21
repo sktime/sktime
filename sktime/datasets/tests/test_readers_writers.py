@@ -22,6 +22,7 @@ import sktime
 from sktime.datasets import (
     generate_example_long_table,
     load_from_long_to_dataframe,
+    load_from_tsf_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
     load_tsf_to_dataframe,
@@ -1166,7 +1167,7 @@ def test_load_from_long_incorrect_format(tmpdir):
         ),
     ],
 )
-def test_load_tsf_to_dataframe(input_path, return_type, output_df):
+def test_load_from_tsf_to_dataframe(input_path, return_type, output_df):
     """Test function for loading tsf format."""
     data_path = os.path.join(
         os.path.dirname(sktime.__file__),
@@ -1180,7 +1181,7 @@ def test_load_tsf_to_dataframe(input_path, return_type, output_df):
         "contain_equal_length": False,
     }
 
-    df, metadata = load_tsf_to_dataframe(data_path, return_type=return_type)
+    df, metadata = load_from_tsf_to_dataframe(data_path, return_type=return_type)
 
     assert_frame_equal(df, output_df, check_dtype=False)
     assert metadata == expected_metadata
@@ -1350,3 +1351,13 @@ def test_write_dataframe_to_ts_fail(tmp_path):
             path=str(tmp_path),
             problem_name="GunPoint",
         )
+
+
+def test_load_tsf_to_dataframe_deprecation():
+    """Test that `load_tsf_to_dataframe` raises a DeprecationWarning."""
+    data_path = os.path.join(
+        os.path.dirname(sktime.__file__),
+        "datasets/data/UnitTest/UnitTest_Tsf_Loader.tsf",
+    )
+    with pytest.warns(DeprecationWarning, match="load_tsf_to_dataframe is deprecated"):
+        load_tsf_to_dataframe(data_path, return_type="default_tsf")

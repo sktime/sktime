@@ -27,6 +27,7 @@ __all__ = [
     "load_from_long_to_dataframe",
     "load_from_tsfile",
     "load_from_tsfile_to_dataframe",
+    "load_from_tsf_to_dataframe",
     "load_from_ucr_tsv_to_dataframe",
     "make_multi_index_dataframe",
     "load_tsf_to_dataframe",
@@ -84,7 +85,10 @@ from sktime.datasets._readers_writers.ts import (
     write_ndarray_to_tsfile,
     write_panel_to_tsfile,
 )
-from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
+from sktime.datasets._readers_writers.tsf import (
+    load_from_tsf_to_dataframe,
+    load_tsf_to_dataframe,
+)
 from sktime.datasets._readers_writers.tsv import load_from_ucr_tsv_to_dataframe
 from sktime.datasets._readers_writers.utils import write_results_to_uea_format
 from sktime.datasets._single_problem_loaders import (
