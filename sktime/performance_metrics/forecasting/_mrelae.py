@@ -12,6 +12,8 @@ from sktime.performance_metrics.forecasting._functions import (
     mean_relative_absolute_error,
 )
 
+import numpy as np
+import pandas as pd 
 
 class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     """Mean relative absolute error (MRAE).
@@ -95,3 +97,73 @@ class MeanRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     }
 
     func = mean_relative_absolute_error
+ def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point.
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        multioutput = self.multioutput
+
+        y_pred_benchmark = kwargs.pop("y_pred_benchmark")
+
+        # eps to avoid division by zero, preserving sign of denominator
+        eps = np.finfo(np.float64).eps
+        denominator = np.where(
+            y_true - y_pred_benchmark >= 0,
+            np.maximum((y_true - y_pred_benchmark), eps),
+            np.minimum((y_true - y_pred_benchmark), -eps),
+        )
+
+        # pointwise relative absolute error
+        # mean is the aggregation across time points, dropped here
+        raw_values = np.abs((y_true - y_pred) / denominator)
+
+        # wrap back to DataFrame to preserve index/columns
+        raw_values = pd.DataFrame(
+            raw_values, index=y_true.index, columns=y_true.columns
+        )
+
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        return self._handle_multioutput(raw_values, multioutput)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class.
+        """
+        params1 = {}
+        params2 = {"by_index": True}
+        return [params1, params2]
