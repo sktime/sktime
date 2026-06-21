@@ -1,7 +1,6 @@
 """RestructuredText changelog generator."""
 
 import os
-from collections import defaultdict
 
 HEADERS = {
     "Accept": "application/vnd.github.v3+json",
@@ -32,7 +31,7 @@ def fetch_merged_pull_requests(page: int = 1) -> list[dict]:
         Elements of list are dictionaries with PR details, as obtained
         from the GitHub API via ``httpx.get``, from the ``pulls`` endpoint.
     """
-    import httpx
+    import httpx  # type: ignore
 
     params = {
         "base": "main",
@@ -60,7 +59,7 @@ def fetch_latest_release():  # noqa: D103
         Dictionary is as obtained from the GitHub API via ``httpx.get``,
         for ``releases/latest`` endpoint.
     """
-    import httpx
+    import httpx  # type: ignore
 
     response = httpx.get(
         f"{GITHUB_REPOS}/{OWNER}/{REPO}/releases/latest", headers=HEADERS
@@ -82,7 +81,7 @@ def fetch_pull_requests_since_last_release() -> list[dict]:
         Elements of list are dictionaries with PR details, as obtained
         from the GitHub API via ``httpx.get``, through ``fetch_merged_pull_requests``.
     """
-    from dateutil import parser
+    from dateutil import parser  # type: ignore
 
     release = fetch_latest_release()
     published_at = parser.parse(release["published_at"])
@@ -103,7 +102,7 @@ def fetch_pull_requests_since_last_release() -> list[dict]:
 
 def github_compare_tags(tag_left: str, tag_right: str = "HEAD"):
     """Compare commit between two tags."""
-    import httpx
+    import httpx  # type: ignore
 
     response = httpx.get(
         f"{GITHUB_REPOS}/{OWNER}/{REPO}/compare/{tag_left}...{tag_right}"
@@ -142,8 +141,8 @@ def render_row(pr):
         pattern2 = r"Bump ([\w\-/]+) from (\d+(?:\.\d+)*) to (\d+(?:\.\d+)*)"  # noqa: E501
         match2 = re.search(pattern2, title)
 
-        if match or match2:
-            m = match if match else match2
+        m = match or match2
+        if m is not None:
             package, from_ver, to_ver = m.groups()
 
             # add double backticks if not already present
@@ -178,15 +177,18 @@ def render_row(pr):
     )
 
 
-def assign_prs(prs, categs: list[dict[str, list[str]]]):
+import typing
+
+
+def assign_prs(prs, categs: list[dict[str, typing.Any]]):
     """Assign PR to categories based on labels."""
-    assigned = defaultdict(list)
+    assigned: dict[str, list[int]] = {}
 
     for i, pr in enumerate(prs):
         for cat in categs:
             pr_labels = [label["name"] for label in pr["labels"]]
             if not set(cat["labels"]).isdisjoint(set(pr_labels)):
-                assigned[cat["title"]].append(i)
+                assigned.setdefault(str(cat["title"]), []).append(i)
 
     #             if any(l.startswith("module") for l in pr_labels):
     #                 print(i, pr_labels)
@@ -213,7 +215,7 @@ def render_changelog(prs, assigned, label_to_subsection=None, module_order=None)
     module_order : list, optional
         List of subsection titles in the desired order.
     """
-    from dateutil import parser
+    from dateutil import parser  # type: ignore
 
     SECTION_ORDER = ["Enhancements", "Documentation", "Maintenance", "Fixes", "Other"]
     for title in SECTION_ORDER:
@@ -230,7 +232,7 @@ def render_changelog(prs, assigned, label_to_subsection=None, module_order=None)
         # Group PRs by module labels
         def group_prs_by_module(pr_group: list[dict]) -> dict[str, list[dict]]:
             """Group PRs by module labels and return a dictionary."""
-            subsection_map: dict[str, list[dict]] = defaultdict(list)
+            subsection_map: dict[str, list[dict]] = {}
 
             for pr in pr_group:
                 labels = [label["name"] for label in pr["labels"]]
@@ -238,10 +240,12 @@ def render_changelog(prs, assigned, label_to_subsection=None, module_order=None)
 
                 for label in labels:
                     if label in LABEL_TO_SUBSECTION:
-                        subsection_map[LABEL_TO_SUBSECTION[label]].append(pr)
+                        subsection_map.setdefault(
+                            LABEL_TO_SUBSECTION[label], []
+                        ).append(pr)
                         added = True
                 if not added:
-                    subsection_map["Other"].append(pr)
+                    subsection_map.setdefault("Other", []).append(pr)
 
             return subsection_map
 
