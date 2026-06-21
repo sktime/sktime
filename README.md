@@ -46,7 +46,7 @@ sktime is a library for time series analysis in Python. It provides a unified in
 
 ## :speech_balloon: Where to ask questions
 
-Questions and feedback are extremely welcome! We strongly believe in the value of sharing help publicly, as it allows a wider audience to benefit from it.
+Questions and feedbacks are extremely welcome! We strongly believe in the value of sharing help publicly, as it allows a wider audience to benefit from it.
 
 | Type                            | Platforms                               |
 | ------------------------------- | --------------------------------------- |
@@ -63,7 +63,7 @@ Questions and feedback are extremely welcome! We strongly believe in the value o
 [discord]: https://discord.com/invite/54ACzaFsn7
 
 ## :dizzy: Features
-Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__,  such as pipelining, ensembling, tuning, and reduction, empowering users to apply algorithms designed for one task to another.
+Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__,  such as pipelining, ensembling, tuning, and reduction, which empowers the users to apply algorithms designed for one task to another.
 
 sktime also provides **interfaces to related libraries**, for example [scikit-learn], [statsmodels], [tsfresh], [PyOD], and [fbprophet], among others.
 
@@ -142,7 +142,7 @@ or similar. Valid sets are:
 * `detection`
 * `alignment`
 
-Cave: in general, not all soft dependencies for a learning task are installed,
+Note: in general, not all soft dependencies for a learning task are installed,
 only a curated selection.
 
 ### conda
@@ -230,7 +230,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 
 ## :trophy: Hall of fame
 
-Thanks to all our community for all your wonderful contributions, PRs, issues, ideas.
+Thanks to all our community members for all your wonderful contributions, PRs, issues and ideas.
 
 <a href="https://github.com/sktime/sktime/graphs/contributors">
 <img src="https://opencollective.com/sktime/contributors.svg?width=600&button=false" />
@@ -241,8 +241,8 @@ Thanks to all our community for all your wonderful contributions, PRs, issues, i
 
 * **By the community, for the community** -- developed by a friendly and collaborative community.
 * The **right tool for the right task** -- helping users to diagnose their learning problem and suitable scientific model types.
-* **Embedded in state-of-art ecosystems** and **provider of interoperable interfaces** -- interoperable with [scikit-learn], [statsmodels], [tsfresh], and other community favorites.
+* **Embedded in state-of-the-art ecosystems** and **provider of interoperable interfaces** -- interoperable with [scikit-learn], [statsmodels], [tsfresh], and other community favorites.
 * **Rich model composition and reduction functionality** -- build tuning and feature extraction pipelines, solve forecasting tasks with [scikit-learn] regressors.
 * **Clean, descriptive specification syntax** -- based on modern object-oriented design principles for data science.
-* **Fair model assessment and benchmarking** -- build your models, inspect your models, check your models, and avoid pitfalls.
+* **Fair model assessment and benchmarking** -- build, inspect and check your models while avoiding pitfalls.
 * **Easily extensible** -- easy extension templates to add your own algorithms compatible with sktime's API.
