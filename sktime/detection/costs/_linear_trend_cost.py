@@ -10,19 +10,16 @@ from sktime.detection.costs._base import BaseCost
 
 
 def _fit_linear_trend(time_steps, values):
-    """OLS fit of a linear trend: returns (slope, intercept)."""
-    mean_t = np.mean(time_steps)
-    centered_t = time_steps - mean_t
-    denominator = np.sum(np.square(centered_t))
-    if denominator == 0.0:
-        raise ValueError(
-            "The time column has zero variance; all time values are identical. "
-            "OLS fit is not possible."
-        )
-    mean_v = np.mean(values)
-    numerator = np.sum(centered_t * (values - mean_v))
-    slope = numerator / denominator
-    intercept = mean_v - slope * mean_t
+    """OLS fit of a linear trend: returns (slope, intercept).
+
+    Uses ``numpy.linalg.lstsq`` for numerical stability, including the
+    degenerate case where all time steps are identical (zero variance),
+    for which the least-squares solution is still well-defined.
+    """
+    time_steps = np.asarray(time_steps, dtype=float)
+    values = np.asarray(values, dtype=float)
+    design = np.column_stack([time_steps, np.ones_like(time_steps)])
+    slope, intercept = np.linalg.lstsq(design, values, rcond=None)[0]
     return slope, intercept
 
 
