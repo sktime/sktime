@@ -65,6 +65,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         optimizer=None,
         optimizer_kwargs=None,
         lr=0.001,
+        custom_dataset_train=None,
+        custom_dataset_pred=None,
     ):
         self.num_epochs = num_epochs
         self.batch_size = batch_size
@@ -74,6 +76,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
+        self.custom_dataset_train = custom_dataset_train
+        self.custom_dataset_pred = custom_dataset_pred
 
         super().__init__()
 
@@ -201,28 +205,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                 self.n_pretrain_instances_ = n_new
 
         return self
-
-    def _build_train_dataset(self, y, pred_len):
-        """Build a training dataset for a single time series.
-
-        Subclasses should override this method to use custom dataset classes.
-        Both ``build_pytorch_train_dataloader`` and ``_build_panel_dataloader``
-        delegate to this method, so a single override customizes both
-        fit and pretrain data pipelines.
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            Single time series
-        pred_len : int
-            Prediction length (forecast horizon)
-
-        Returns
-        -------
-        dataset : torch.utils.data.Dataset
-            Training dataset
-        """
-        return PyTorchTrainDataset(y=y, seq_len=self._get_seq_len(), fh=pred_len)
 
     def _build_panel_dataloader(self, y, all_series, pred_len):
         """Build PyTorch DataLoader for panel/hierarchical data pretraining.
@@ -427,8 +409,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
+                self.custom_dataset_pred.build_dataset(y)
+                dataset = self.custom_dataset_pred
             else:
                 raise NotImplementedError(
                     "Custom Dataset `build_dataset` method is not available. Please"
