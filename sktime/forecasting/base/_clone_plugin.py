@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Clone plugin for preserving pretrained state in forecasters."""
 
-from copy import deepcopy
-
 from skbase.base._clone_plugins import BaseCloner, _default_clone
 
 
@@ -50,9 +48,12 @@ class _PretrainedCloner(BaseCloner):
         if obj.get_config()["clone_config"]:
             new_object.set_config(**obj.get_config())
         new_object._pretrained_attrs = list(obj._pretrained_attrs)
+        memo = {}
         for attr in obj._pretrained_attrs:
             if hasattr(obj, attr):
-                setattr(new_object, attr, deepcopy(getattr(obj, attr)))
+                attr_value = getattr(obj, attr)
+                attr_copy = obj._copy_pretrained_attr(attr, attr_value, memo=memo)
+                setattr(new_object, attr, attr_copy)
 
         new_object._state = "pretrained"
 
