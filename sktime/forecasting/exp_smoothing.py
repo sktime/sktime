@@ -178,6 +178,33 @@ class ExponentialSmoothing(_StatsModelsAdapter):
 
         super().__init__(random_state=random_state)
 
+    def _update(self, y, X=None, update_params=True):
+        if update_params:
+            self._fit_forecaster(self._y)
+        else:
+            from statsmodels.tsa.holtwinters import (
+                ExponentialSmoothing as _ExponentialSmoothing,
+            )
+
+            params = self._fitted_forecaster.params
+            self._forecaster = _ExponentialSmoothing(
+                self._y,
+                trend=self.trend,
+                damped_trend=self.damped_trend,
+                seasonal=self.seasonal,
+                seasonal_periods=self.sp,
+                use_boxcox=self.use_boxcox,
+                initialization_method="heuristic",
+            )
+            self._fitted_forecaster = self._forecaster.fit(
+                smoothing_level=params["smoothing_level"],
+                smoothing_trend=params["smoothing_trend"],
+                smoothing_seasonal=params["smoothing_seasonal"],
+                damping_trend=params["damping_trend"],
+                optimized=False,
+            )
+        return self
+
     def _fit_forecaster(self, y, X=None):
         from statsmodels.tsa.holtwinters import (
             ExponentialSmoothing as _ExponentialSmoothing,
