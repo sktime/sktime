@@ -54,7 +54,7 @@ def run_test_for_class(cls, return_reason=False):
     6. Condition 6:
 
       If the object is an sktime ``BaseObject``, and any of the modules
-      in the class tag ``tests:libs`` hvae changed, condition 6 is met.
+      in the class tag ``tests:libs`` have changed, condition 6 is met.
 
     cls can also be a list of classes or functions,
     in this case the test is run if and only if both of the following are True:
