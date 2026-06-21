@@ -2880,6 +2880,13 @@
         "code",
         "bug"
       ]
+    },
+    {
+      "login": "yaochengchen",
+      "name": "Yaocheng Chen",
+      "avatar_url": "https://avatars.githubusercontent.com/yaochengchen?v=4",
+      "profile": "https://github.com/yaochengchen",
+      "contributions": ["doc"]
     }
   ]
 }
