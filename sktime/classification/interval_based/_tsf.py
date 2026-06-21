@@ -101,6 +101,7 @@ class TimeSeriesForestClassifier(
 
     _feature_types = ["mean", "std", "slope"]
     _base_estimator = DecisionTreeClassifier(criterion="entropy")
+    VALID_MULTIVAR_VALUES = ["auto", "yes", "no"]
 
     _tags = {
         # packaging info
@@ -110,6 +111,7 @@ class TimeSeriesForestClassifier(
         "python_dependencies": ["joblib"],
         # estimator type
         # --------------
+        "capability:multivariate": True,
         "capability:feature_importance": True,
         "capability:predict_proba": True,
         "capability:random_state": True,
@@ -123,9 +125,16 @@ class TimeSeriesForestClassifier(
         inner_series_length: int | None = None,
         n_jobs=1,
         random_state=None,
+        use_multivariate="auto",
     ):
         self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
         # because sklearn tag logic looks at this attribute
+        if use_multivariate not in self.VALID_MULTIVAR_VALUES:
+            raise ValueError(
+                f"use_multivariate must be one of "
+                f" {self.VALID_MULTIVAR_VALUES}, got {use_multivariate}"
+            )
+        self.use_multivariate = use_multivariate
 
         super().__init__(
             min_interval=min_interval,
@@ -155,7 +164,14 @@ class TimeSeriesForestClassifier(
         return BaseClassifier.predict_proba(self, X=X, **kwargs)
 
     def _fit(self, X, y):
-        BaseTimeSeriesForest._fit(self, X=X, y=y)
+        use_multivariate = self.use_multivariate
+        if use_multivariate == "auto":
+            if not self._X_metadata.get("is_univariate", True):
+                use_multivariate = "yes"
+            else:
+                use_multivariate = "no"
+        self._is_multivariate = use_multivariate == "yes"
+        BaseTimeSeriesForest._fit(self, X=X, y=y, use_multivariate=use_multivariate)
 
     def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X. Built on top of predict_proba.
@@ -195,10 +211,16 @@ class TimeSeriesForestClassifier(
         """
         from joblib import Parallel, delayed
 
-        X = X.squeeze(1)
+        if self._is_multivariate:
+            pass
+        else:
+            X = X.squeeze(1)
         y_probas = Parallel(n_jobs=self.n_jobs)(
             delayed(_predict_single_classifier_proba)(
-                X, self.estimators_[i], self.intervals_[i]
+                X,
+                self.estimators_[i],
+                self.intervals_[i],
+                use_multivariate=self._is_multivariate,
             )
             for i in range(self.n_estimators)
         )
@@ -332,7 +354,12 @@ class TimeSeriesForestClassifier(
         return temporal_feature_importance
 
 
-def _predict_single_classifier_proba(X, estimator, intervals):
+def _predict_single_classifier_proba(X, estimator, intervals, use_multivariate=False):
     """Find probability estimates for each class for all cases in X."""
-    Xt = _transform(X, intervals)
+    if use_multivariate:
+        from sktime.base._panel.forest._tsf import _transform_multivariate
+
+        Xt = _transform_multivariate(X, intervals)
+    else:
+        Xt = _transform(X, intervals)
     return estimator.predict_proba(Xt)
