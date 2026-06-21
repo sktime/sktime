@@ -109,3 +109,58 @@ def test_load_model_from_disk(model_class) -> None:
     index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(2)
     _assert_correct_pred_time_index(index_pred, cutoff, fh)
     _assert_correct_columns(y_pred, y_test)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [
+            PytorchForecastingNBeats,
+        ]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_predict_new_series_with_total_in_train() -> None:
+    """Regression test for GH#8163.
+
+    Predicting on a new series should give finite values even when the training
+    data contained __total rows from Aggregator.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from sktime.transformations.hierarchical.aggregate import Aggregator
+
+    data = _make_hierarchical(
+        hierarchy_levels=(3, 2),
+        max_timepoints=30,
+        min_timepoints=30,
+        n_columns=1,
+    )
+    data.index = data.index.set_levels(
+        data.index.levels[-1].to_period("D"), level=-1
+    )
+    data = data.sort_index()
+    data = Aggregator().fit_transform(data)
+
+    time_level = data.index.get_level_values(-1).unique().sort_values()
+    y_train = data.loc[pd.IndexSlice[:, :, : time_level[20]]]
+    fh = ForecastingHorizon(range(1, 4), is_relative=True)
+
+    model = PytorchForecastingNBeats(
+        model_params={"context_length": 3},
+        dataset_params={"max_encoder_length": 3},
+        trainer_params={"max_epochs": 1},
+        random_log_path=True,
+    )
+    model.fit(y=y_train, fh=fh)
+
+    leaf_idx = [
+        idx
+        for idx in y_train.droplevel(-1).index.unique()
+        if "__total" not in idx
+    ][0]
+    y_pred = model.predict(y=y_train.loc[leaf_idx])
+
+    assert np.all(np.isfinite(y_pred.to_numpy())), (
+        "got non-finite predictions - see GH#8163"
+    )

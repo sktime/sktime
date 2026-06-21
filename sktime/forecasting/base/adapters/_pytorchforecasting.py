@@ -429,6 +429,17 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
             X = deepcopy(self._X)
         return X, y
 
+    @staticmethod
+    def _drop_total_rows(df):
+        """Drop rows where any non-time index level is '__total'."""
+        if df is None or df.index.nlevels <= 1:
+            return df
+        mask = None
+        for level in range(df.index.nlevels - 1):
+            level_mask = df.index.get_level_values(level) != "__total"
+            mask = level_mask if mask is None else (mask & level_mask)
+        return df.loc[mask]
+
     def _Xy_to_dataset(
         self,
         X: pd.DataFrame,
@@ -437,6 +448,12 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         max_prediction_length,
     ):
         from pytorch_forecasting.data import TimeSeriesDataSet
+
+        # strip __total rows added by Aggregator - they cause group encoding
+        # mismatches when predicting on series that don't have them
+        y = self._drop_total_rows(y)
+        if X is not None:
+            X = self._drop_total_rows(X)
 
         # X, y must have same index or X is None
         # assert X is None or (X.index == y.index).all()
