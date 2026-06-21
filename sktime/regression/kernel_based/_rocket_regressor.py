@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from sktime.pipeline import make_pipeline
 from sktime.regression._delegate import _DelegatedRegressor
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.panel.rocket import (
+from sktime.transformations.rocket import (
     MiniRocket,
     MiniRocketMultivariate,
     MultiRocket,

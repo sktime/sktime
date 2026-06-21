@@ -27,18 +27,18 @@ from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.adapt import TabularToSeriesAdaptor
+from sktime.transformations.boxcox import LogTransformer
 from sktime.transformations.compose import OptionalPassthrough, YtoX
+from sktime.transformations.detrend import Detrender
+from sktime.transformations.difference import Differencer
+from sktime.transformations.exponent import ExponentTransformer
+from sktime.transformations.feature_selection import FeatureSelection
+from sktime.transformations.fourier import FourierFeatures
 from sktime.transformations.hierarchical.aggregate import Aggregator
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.boxcox import LogTransformer
-from sktime.transformations.series.detrend import Detrender
-from sktime.transformations.series.difference import Differencer
-from sktime.transformations.series.exponent import ExponentTransformer
-from sktime.transformations.series.feature_selection import FeatureSelection
-from sktime.transformations.series.fourier import FourierFeatures
-from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.lag import Lag
-from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.impute import Imputer
+from sktime.transformations.lag import Lag
+from sktime.transformations.outlier_detection import HampelFilter
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.series import _make_series
 from sktime.utils.estimators import MockForecaster
@@ -122,8 +122,8 @@ def test_skip_inverse_transform():
 )
 def test_nesting_pipelines():
     """Test that nesting of pipelines works."""
-    from sktime.transformations.series.boxcox import LogTransformer
-    from sktime.transformations.series.detrend import Detrender
+    from sktime.transformations.boxcox import LogTransformer
+    from sktime.transformations.detrend import Detrender
     from sktime.utils._testing.scenarios_forecasting import (
         ForecasterFitPredictUnivariateWithX,
     )
@@ -354,7 +354,7 @@ def test_forecasting_pipeline_dunder_endog():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_forecasting_pipeline_dunder_exog():
-    """Test forecasting pipeline dunder for exogeneous transformation."""
+    """Test forecasting pipeline dunder for exogenous transformation."""
     y = _make_series()
     y_train, y_test = temporal_train_test_split(y)
     X = _make_series(n_columns=2)
@@ -616,7 +616,7 @@ def test_pipeline_featurizer_noexog():
 def test_pipeline_display():
     """Test that pipeline displays correctly."""
     from sktime.forecasting.compose import TransformedTargetForecaster, YfromX
-    from sktime.transformations.series.detrend import Detrender
+    from sktime.transformations.detrend import Detrender
 
     f = TransformedTargetForecaster([Detrender(), YfromX.create_test_instance()])
     f._sk_visual_block_()
@@ -656,7 +656,7 @@ def test_forecasting_pipeline_with_hierarchical_data():
     "ValueError: cannot join with no overlapping index names" error.
     """
     from sktime.forecasting.naive import NaiveForecaster
-    from sktime.transformations.series.summarize import WindowSummarizer
+    from sktime.transformations.summarize import WindowSummarizer
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     y = _make_hierarchical(
@@ -713,7 +713,7 @@ def test_transformed_target_forecaster_predict_proba_delegates():
     2. Inner forecaster without native _predict_proba (only quantiles/intervals):
        the pipeline should fall back to the default Normal distribution.
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     if not _check_soft_dependencies("skpro", severity="none"):
         pytest.skip("skpro required for this test")
@@ -722,7 +722,7 @@ def test_transformed_target_forecaster_predict_proba_delegates():
     from skpro.distributions.trafo import TransformedDistribution
 
     from sktime.forecasting.base._base import BaseForecaster
-    from sktime.transformations.series.exponent import ExponentTransformer
+    from sktime.transformations.exponent import ExponentTransformer
 
     y = load_airline()
     y_train, _ = temporal_train_test_split(y)
@@ -829,7 +829,7 @@ def test_transformed_target_forecaster_predict_proba_dunder():
     Addresses issue #9287: pipelines built with transformer * forecaster
     should also correctly delegate predict_proba.
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     if not _check_soft_dependencies("skpro", severity="none"):
         pytest.skip("skpro required for this test")
