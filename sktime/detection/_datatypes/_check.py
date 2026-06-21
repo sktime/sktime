@@ -38,7 +38,7 @@ def _is_points_dtype(obj):
     obj : pd.DataFrame
         Output of a detector to check
     """
-    return pd.api.types.is_integer_dtype(obj.ilocs.dtype)
+    return pd.api.types.is_integer_dtype(obj.iloc[:, 0].dtype)
 
 
 def _is_segments_dtype(obj):
@@ -51,7 +51,7 @@ def _is_segments_dtype(obj):
     obj : pd.DataFrame
         Output of a detector to check
     """
-    ilocs_dtype = obj.ilocs.dtype
+    ilocs_dtype = obj.iloc[:, 0].dtype
     if not (isinstance(ilocs_dtype, pd.IntervalDtype) or len(obj) == 0):
         return False
     if not len(obj) == 0:
