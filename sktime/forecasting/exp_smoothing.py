@@ -5,7 +5,8 @@
 __all__ = ["ExponentialSmoothing"]
 __author__ = ["mloning", "big-o"]
 
-from sktime.forecasting.base.adapters import _StatsModelsAdapter
+from sktime.forecasting.base.adapters import _StatsModelsAdapter 
+import pandas as pd
 
 
 class ExponentialSmoothing(_StatsModelsAdapter):
@@ -258,3 +259,24 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         ]
 
         return params
+    def _update(self, y, X=None, update_params=True):
+        """Basic update for ExponentialSmoothing."""
+
+        if not update_params:
+            return self
+
+        if hasattr(self, "_y") and self._y is not None:
+            y = y.copy()
+            y.index = range(self._y.index[-1] + 1,
+                        self._y.index[-1] + 1 + len(y))
+            self._y = pd.concat([self._y, y])
+        else:
+            self._y = y
+
+    
+        self._set_cutoff_from_y(self._y)
+
+   
+        self._fit_forecaster(self._y, X)
+
+        return self
