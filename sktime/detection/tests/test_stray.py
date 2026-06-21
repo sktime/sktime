@@ -93,7 +93,7 @@ def test_default_1D():
     scaler = MinMaxScaler()
     X = scaler.fit_transform(X.reshape(-1, 1))
     model = STRAY()
-    y_actual = model.fit_transform(X)
+    y_actual = model.fit(X).y_
     assert np.allclose(y_actual, y_expected)
 
 
@@ -144,7 +144,7 @@ def test_default_2D():
     scaler = MinMaxScaler()
     X = scaler.fit_transform(X)
     model = STRAY()
-    y_actual = model.fit_transform(X)
+    y_actual = model.fit(X).y_
     assert np.allclose(y_actual, y_expected)
 
 
