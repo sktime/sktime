@@ -1008,11 +1008,24 @@ def _check_cutoff(cutoff, index):
     if cutoff is None:
         raise ValueError("`cutoff` must be given, but found none.")
     if isinstance(index, pd.PeriodIndex):
-        assert isinstance(cutoff, (pd.Period, pd.PeriodIndex))
-        assert index.freqstr == cutoff.freqstr
+        if not isinstance(cutoff, (pd.Period, pd.PeriodIndex)):
+            raise TypeError(
+                f"`cutoff` must be a pd.Period or pd.PeriodIndex when index "
+                f"is a pd.PeriodIndex, but found: {type(cutoff)}"
+            )
+        if index.freqstr != cutoff.freqstr:
+            raise ValueError(
+                f"`cutoff` frequency must match index frequency, but found "
+                f"cutoff.freqstr={cutoff.freqstr} and "
+                f"index.freqstr={index.freqstr}"
+            )
 
     if isinstance(index, pd.DatetimeIndex):
-        assert isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex))
+        if not isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex)):
+            raise TypeError(
+                f"`cutoff` must be a pd.Timestamp or pd.DatetimeIndex when "
+                f"index is a pd.DatetimeIndex, but found: {type(cutoff)}"
+            )
 
 
 def _coerce_to_period(x, freq=None):
