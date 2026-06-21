@@ -424,6 +424,9 @@ class ForecastingHorizon:
         else:
             freq_from_self = None
 
+        if freq_from_obj == "ME":
+            freq_from_obj = "M"
+
         if freq_from_self is not None and freq_from_obj is not None:
             with _suppress_pd22_warning():
                 freqs_unequal = freq_from_self != freq_from_obj
@@ -433,12 +436,8 @@ class ForecastingHorizon:
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         elif freq_from_obj is not None:  # only freq_from_obj is not None
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
