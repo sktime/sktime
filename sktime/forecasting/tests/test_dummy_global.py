@@ -326,4 +326,3 @@ def test_pretrained_params_survive_repeated_fit():
     assert len(params_after_second_fit) > 0, (
         "pretrained params should survive second fit"
     )
-
