@@ -380,7 +380,7 @@ class SeasonalityACFqstat(BaseParamFitter):
             self.pvalues_adjusted_ = pvals_adj
         else:
             self.pvalues_adjusted_ = pvalues_cand
-            reject_cand = pvalues_cand > p_threshold
+            reject_cand = pvalues_cand <= p_threshold
 
         sorting = np.argsort(pvalues_cand)
         reject_ordered = reject_cand[sorting]
