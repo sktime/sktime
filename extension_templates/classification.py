@@ -66,6 +66,9 @@ class MyTimeSeriesClassifier(BaseClassifier):
     paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
     and so on
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the estimator.
+        Pass an int for reproducible results across multiple runs.
     """
 
     # optional todo: override base class estimator default tags here if necessary
@@ -76,8 +79,8 @@ class MyTimeSeriesClassifier(BaseClassifier):
         #
         # packaging info
         # --------------
-        "authors": ["author1", "author2"],  # authors, GitHub handles
-        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        "authors": ["Shamarvey1"],  # authors, GitHub handles
+        "maintainers": ["Shamarvey1"], # maintainers, GitHub handles
         # author = significant contribution to code at some point
         #     if interfacing a 3rd party estimator, ensure to give credit to the
         #     authors of the interfaced estimator
@@ -110,7 +113,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
     }
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb="default", paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None, random_state=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
@@ -120,6 +123,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._paramc
         self.paramc = paramc
+        self.random_state = random_state
 
         # leave this as is
         super().__init__()
@@ -371,3 +375,7 @@ class MyTimeSeriesClassifier(BaseClassifier):
         # # "default" params
         # params = {"est": value3, "parama": value4}
         # return params
+        return [
+    {"parama": 1, "paramb": "default", "random_state": 42},
+    {"parama": 2, "paramb": "other", "random_state": 123},
+]
