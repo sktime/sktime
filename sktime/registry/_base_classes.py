@@ -335,6 +335,14 @@ class metric_forecasting_proba(_BaseScitypeOfObject):
 
         return _BaseProbaForecastingErrorMetric
 
+    @classmethod
+    def get_test_class(cls):
+        from sktime.performance_metrics.forecasting.probabilistic.tests.test_all_metrics_forecasting_proba import (  # noqa E501
+            TestAllForecastingMetrics,  # noqa E501
+        )  # noqa E501
+
+        return TestAllForecastingMetrics
+
 
 class network(_BaseScitypeOfObject):
     """Deep learning network for time series."""
