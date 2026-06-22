@@ -159,3 +159,57 @@ class TestSetParamsAt:
 
         assert forecaster.strategy == "mean"
 
+
+class TestCloneAt:
+    """Tests for _clone_at."""
+
+    def test_pretrained_carries_pretrained_attrs(self):
+        """Clone at pretrained carries pretraining state."""
+        forecaster = _make_pretrained_dummy()
+        pretrain_mean = forecaster.global_mean_
+
+        cloned = forecaster._clone_at("pretrained")
+
+        assert cloned is not forecaster
+        assert cloned.state == "pretrained"
+        np.testing.assert_almost_equal(cloned.global_mean_, pretrain_mean)
+
+    def test_new_is_blank_clone(self):
+        """Clone at new bypasses pretrained-state cloning."""
+        forecaster = _make_pretrained_dummy()
+
+        cloned = forecaster._clone_at("new")
+
+        assert cloned is not forecaster
+        assert cloned.strategy == forecaster.strategy
+        assert cloned.state == "new"
+        assert not hasattr(cloned, "global_mean_")
+        assert not hasattr(cloned, "_pretrained_attrs")
+        assert hasattr(forecaster, "global_mean_")
+
+    def test_no_pretrain_capability_falls_back_to_clone(self):
+        """Forecasters without pretrain capability use ordinary clone."""
+        forecaster = NaiveForecaster()
+        forecaster.fit(_make_series(n_timepoints=20), fh=[1, 2, 3])
+
+        cloned = forecaster._clone_at("pretrained")
+
+        assert not cloned.is_fitted
+
+    def test_invalid_state_raises(self):
+        """Only new and pretrained are valid target states."""
+        with pytest.raises(ValueError, match="target state"):
+            DummyGlobalForecaster()._clone_at("fitted")
+
+
+def test_state_aware_tuner_sequence_preserves_pretraining():
+    """_clone_at followed by _set_params_at keeps pretraining state."""
+    forecaster = _make_pretrained_dummy()
+    pretrain_mean = forecaster.global_mean_
+
+    candidate = forecaster._clone_at("pretrained")
+    candidate._set_params_at("pretrained", {"strategy": "last"})
+    candidate.fit(_make_series(n_timepoints=20), fh=[1, 2, 3])
+
+    assert candidate.is_fitted
+    np.testing.assert_almost_equal(candidate.global_mean_, pretrain_mean)
