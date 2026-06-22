@@ -647,6 +647,14 @@ Pre-trained and foundation models - domain agnostic
 
     MantisForecaster
 
+.. currentmodule:: sktime.forecasting.mira
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MIRAForecaster
+
 .. currentmodule:: sktime.forecasting.moirai
 
 .. autosummary::
