@@ -19,10 +19,40 @@ class ConvTranClassifierTorch(BaseDeepClassifierPytorch):
     net_type : str, default="C-T"
         Network type to use. Should be one of "T" (Transformer),
         "C-T" (ConvTran) or "C-CT" (Causal ConvTran).
-    activation : str or None or Callable, default=None
-        Activation function to use in the output layer.
-    activation_hidden : str or None or Callable, default="relu"
-        Activation function to use in the hidden layers.
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+    activation_hidden : str, Callable, or None, default="relu"
+        Activation applied to the hidden layers.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
     emb_size : int, default=16
         Embedding dimension used in attention and feed-forward blocks.
     dim_ff : int, default=256
