@@ -71,7 +71,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingTFT(trainer_params={'limit_train_batches': 10,
                                         'max_epochs': 5})
     >>> y_pred = model.predict(fh, X=X_test, y=y_test)
@@ -358,7 +358,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, fh=fh) # doctest skip
+    >>> model.fit(y=y_train, fh=fh) # doctest: +SKIP
     PytorchForecastingNBeats(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
     >>> y_pred = model.predict(fh, y=y_test)
@@ -654,7 +654,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingDeepAR(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
     >>> y_pred = model.predict(fh, X=X_test, y=y_test)
@@ -934,7 +934,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest skip
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingNHiTS(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
     >>> y_pred = model.predict(fh, X=X_test, y=y_test)
