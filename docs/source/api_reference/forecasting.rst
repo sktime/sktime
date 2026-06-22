@@ -607,6 +607,14 @@ Pre-trained and foundation models - domain agnostic
 
     Chronos2Forecaster
 
+.. currentmodule:: sktime.forecasting.dynamix
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DynaMixForecaster
+
 .. currentmodule:: sktime.forecasting.falcon_tst
 
 .. autosummary::
