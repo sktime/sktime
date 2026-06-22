@@ -56,12 +56,19 @@ class AuroraForecaster(BaseForecaster):
         Optional text context for multimodal forecasting (e.g. domain metadata
         or event descriptions). The same text is applied to every target
         variable (channel-independent inference).
-    vision : array-like, optional, default=None
-        Optional real-image vision input forwarded as ``vision_inputs`` to
-        ``model.generate``. When ``None``, Aurora derives pseudo-images from
-        the time series internally.
-    generate_kwargs : dict, optional, default=None
-        Extra keyword arguments forwarded to ``model.generate``.
+    vision : PIL.Image, array-like, or torch.Tensor, optional, default=None
+        Optional external RGB image for multimodal conditioning. When
+        ``None`` (default), Aurora renders a pseudo-image from the historical
+        series internally (period-based 2D layout).
+
+        Set ``vision`` only when a real image should provide additional
+        context alongside the series (e.g. a chart or domain photograph).
+        Accepted inputs are passed to Aurora's ViT preprocessor: a single
+        ``PIL.Image``, a list of images (batch size must match the model
+        batch: 1 for univariate, ``n_vars`` for multivariate), a numpy array,
+        or a ``torch.Tensor`` of shape ``(batch, 3, H, W)`` in RGB channel
+        order. Images are resized to 224x224 and normalized inside the
+        model.
 
     References
     ----------
@@ -142,7 +149,6 @@ class AuroraForecaster(BaseForecaster):
         max_text_length: int = 200,
         text: str | None = None,
         vision=None,
-        generate_kwargs: dict | None = None,
     ):
         self.repo_id = repo_id
         self.weights_filename = weights_filename
@@ -155,7 +161,6 @@ class AuroraForecaster(BaseForecaster):
         self.max_text_length = max_text_length
         self.text = text
         self.vision = vision
-        self.generate_kwargs = generate_kwargs
         self.model = None
         super().__init__()
 
@@ -171,9 +176,6 @@ class AuroraForecaster(BaseForecaster):
 
     def __post_init__(self):
         """Post-initialization setup."""
-        self._generate_kwargs = (
-            {} if self.generate_kwargs is None else self.generate_kwargs.copy()
-        )
         self._device = _resolve_device(self.device)
         self._context = None
 
@@ -248,7 +250,6 @@ class AuroraForecaster(BaseForecaster):
             "num_samples": self.num_samples,
             "inference_token_len": self.inference_token_len,
             **text_kwargs,
-            **self._generate_kwargs,
         }
         if vision_inputs is not None:
             generate_kwargs["vision_inputs"] = vision_inputs
@@ -266,8 +267,8 @@ class AuroraForecaster(BaseForecaster):
     def _predict_quantiles(self, fh, X, alpha):
         if self.num_samples < 2:
             raise ValueError(
-                "Quantile prediction requires num_samples >= 2; "
-                f"got num_samples={self.num_samples}."
+                "Error in AuroraForecaster: Quantile prediction requires"
+                f"num_samples >= 2; got num_samples={self.num_samples}."
             )
 
         if self.model is None:
@@ -298,7 +299,6 @@ class AuroraForecaster(BaseForecaster):
             "num_samples": self.num_samples,
             "inference_token_len": self.inference_token_len,
             **text_kwargs,
-            **self._generate_kwargs,
         }
         if vision_inputs is not None:
             generate_kwargs["vision_inputs"] = vision_inputs
@@ -450,4 +450,6 @@ def _prepare_vision_inputs(vision, device):
         return None
     if torch.is_tensor(vision):
         return vision.to(device)
-    return torch.as_tensor(vision, dtype=torch.float32, device=device)
+    # PIL images, lists of images, or numpy arrays — Aurora's ViTImageProcessor
+    # handles resize/normalization inside VisionEncoder.process_real_image.
+    return vision
