@@ -1415,7 +1415,7 @@ class PanelGluontsList(ScitypePanel):
 
 
 class PanelGluontsPandas(ScitypePanel):
-    """Data type: polars.DataFrame based specification of panel of time series.
+    """Data type: gluonts PandasDataset based specification of panel of time series.
 
     Parameters
     ----------

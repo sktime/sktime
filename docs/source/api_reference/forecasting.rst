@@ -501,15 +501,21 @@ Deep learning based forecasters
     LTSFNLinearForecaster
     LTSFTransformerForecaster
 
-.. currentmodule:: sktime.forecasting.neuralprophet
 .. currentmodule:: sktime.forecasting.xlstm
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    NeuralProphet
     XLSTMForecaster
+
+.. currentmodule:: sktime.forecasting.neuralprophet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    NeuralProphet
 
 .. currentmodule:: sktime.forecasting.scinet
 
@@ -582,8 +588,8 @@ Deep learning based forecasters
 
     ESRNNForecaster
 
-Pre-trained and foundation models
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Pre-trained and foundation models - domain agnostic
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.forecasting.chronos
 
@@ -633,14 +639,6 @@ Pre-trained and foundation models
 
     HFTransformersForecaster
 
-.. currentmodule:: sktime.forecasting.kronos
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    KronosForecaster
-
 .. currentmodule:: sktime.forecasting.lagllama
 
 .. autosummary::
@@ -664,6 +662,15 @@ Pre-trained and foundation models
     :template: class.rst
 
     MOIRAIForecaster
+
+
+.. currentmodule:: sktime.forecasting.moirai2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Moirai2Forecaster
 
 .. currentmodule:: sktime.forecasting.momentfm
 
@@ -753,6 +760,24 @@ Pre-trained and foundation models
 
     TotoForecaster
 
+Pre-trained and foundation models - domain specific
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.kronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KronosForecaster
+
+.. currentmodule:: sktime.forecasting.windfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindFMForecaster
 
 Intermittent time series forecasters
 ------------------------------------
