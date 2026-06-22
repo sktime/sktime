@@ -102,3 +102,60 @@ class TestResetAt:
         assert forecaster.state == "pretrained"
         assert hasattr(forecaster, "global_mean_")
         assert hasattr(forecaster, "global_std_")
+
+
+class TestSetParamsAt:
+    """Tests for _set_params_at."""
+
+    def test_pretrained_keeps_pretrained_attrs(self):
+        """Setting params at pretrained keeps pretraining state."""
+        forecaster = _make_pretrained_dummy()
+        pretrain_mean = forecaster.global_mean_
+
+        forecaster._set_params_at("pretrained", {"strategy": "last"})
+
+        assert forecaster.strategy == "last"
+        assert forecaster.state == "pretrained"
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrain_mean)
+
+    def test_new_discards_pretrained_attrs(self):
+        """Setting params at new discards pretraining state."""
+        forecaster = _make_pretrained_dummy()
+
+        forecaster._set_params_at("new", {"strategy": "last"})
+
+        assert forecaster.strategy == "last"
+        assert forecaster.state == "new"
+        assert not hasattr(forecaster, "global_mean_")
+
+    def test_empty_params_is_noop(self):
+        """Empty params short-circuit without reset, matching set_params."""
+        forecaster = _make_pretrained_dummy()
+
+        forecaster._set_params_at("new", {})
+
+        assert forecaster.state == "pretrained"
+        assert hasattr(forecaster, "global_mean_")
+
+    def test_no_pretrain_capability_behaves_like_set_params(self):
+        """Without pretrain capability, state-aware set_params is ordinary."""
+        forecaster = NaiveForecaster(strategy="last")
+
+        forecaster._set_params_at("pretrained", {"strategy": "mean"})
+
+        assert forecaster.strategy == "mean"
+
+    def test_invalid_key_raises(self):
+        """Unresolvable parameter keys raise, as in set_params."""
+        with pytest.raises(ValueError, match="Invalid parameter keys"):
+            DummyGlobalForecaster()._set_params_at("new", {"no_such_param": 1})
+
+    def test_invalid_state_raises_before_setting_params(self):
+        """Invalid states raise before mutating parameters."""
+        forecaster = DummyGlobalForecaster(strategy="mean")
+
+        with pytest.raises(ValueError, match="target state"):
+            forecaster._set_params_at("fitted", {"strategy": "last"})
+
+        assert forecaster.strategy == "mean"
+
