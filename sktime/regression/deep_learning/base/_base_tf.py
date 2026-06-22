@@ -10,9 +10,9 @@ import os
 from abc import abstractmethod
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.regression.base import BaseRegressor
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class BaseDeepRegressor(BaseRegressor):

@@ -290,7 +290,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         from pathlib import Path
         from zipfile import ZipFile
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if serialization_format not in SERIALIZATION_FORMATS:
             raise ValueError(

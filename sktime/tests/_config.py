@@ -41,7 +41,6 @@ EXCLUDE_ESTIMATORS = [
     "EditDist",
     "LSTMFCNClassifier",
     "MLPClassifier",
-    "MLPRegressor",
     "ResNetRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194

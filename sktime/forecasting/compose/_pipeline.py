@@ -1366,7 +1366,7 @@ class TransformedTargetForecaster(_Pipeline):
 
         # if the inner forecaster natively supports _predict_proba,
         # delegate and wrap in a TransformedDistribution
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if not _check_soft_dependencies("skpro", severity="none"):
             raise RuntimeError(

@@ -9,13 +9,13 @@ from typing import Literal
 
 import numpy as np
 import pandas
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import (
     BaseForecaster,
     ForecastingHorizon,
     _GlobalForecastingDeprecationMixin,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
