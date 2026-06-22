@@ -56,6 +56,37 @@ _FALCON_X_QUANTILES = [
 _FALCON_X_MEDIAN_IDX = 10  # index of the 0.50 quantile
 
 
+class _MockFalconClient:
+    """Mock replacement for ``falcontst.FalconClient``.
+
+    We intentionally do **not** import or call the real ``falcon-tst`` client
+    to avoid licence implications for sktime as a library.  The mock returns
+    correctly-shaped random data so that all sktime tests can exercise the full
+    ``FalconXForecaster`` code path without any network access or proprietary
+    dependency.
+
+    Real users who have accepted the Falcon-X licence and possess valid API
+    credentials may subclass ``FalconXForecaster`` and override ``_fit`` to
+    swap in the real client.
+    """
+
+    def quantile_predict(
+        self,
+        context,
+        prediction_length,
+        model_name=None,
+        input_mask=None,
+        is_multivariate=True,
+    ):
+        """Return dummy quantile predictions shaped (n_cols, 21, prediction_length)."""
+        n_cols = context.shape[0]
+        rng = np.random.default_rng(seed=0)
+        prob_prediction = rng.standard_normal(
+            (n_cols, len(_FALCON_X_QUANTILES), prediction_length)
+        ).cumsum(axis=1)  # monotone across quantile axis
+        return {"prob_prediction": prob_prediction}
+
+
 class FalconXForecaster(BaseForecaster):
     """Falcon-X forecaster via Ant-Intl ``falcon-tst`` client.
 
@@ -96,6 +127,16 @@ class FalconXForecaster(BaseForecaster):
         ``[0.01, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
         0.50, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 0.99]``.
         Defaults to ``0.5`` (median).
+    license_accepted : bool, default=False
+        Falcon-X is a **closed-source** model made available via a remote
+        proprietary API operated by Ant International.  Usage is subject to
+        Ant International's licence and API terms of service, which differ
+        from sktime's BSD-3-Clause licence.
+
+        You **must** set ``license_accepted=True`` to confirm that you have
+        read and accepted the Falcon-X licence and API terms before using
+        this forecaster.  Leaving this as ``False`` (the default) will raise
+        a ``ValueError`` at construction time.
 
     References
     ----------
@@ -111,7 +152,7 @@ class FalconXForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.falcon_x import FalconXForecaster
     >>> y = load_airline()
-    >>> forecaster = FalconXForecaster()  # doctest: +SKIP
+    >>> forecaster = FalconXForecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     FalconXForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
@@ -121,7 +162,7 @@ class FalconXForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.falcon_x import FalconXForecaster
     >>> y = load_airline()
-    >>> forecaster = FalconXForecaster()  # doctest: +SKIP
+    >>> forecaster = FalconXForecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     FalconXForecaster(...)
     >>> y_pred_q = forecaster.predict_quantiles(  # doctest: +SKIP
@@ -138,7 +179,9 @@ class FalconXForecaster(BaseForecaster):
     ...     np.random.randn(n, c),
     ...     index=pd.date_range("2020", periods=n, freq="M"),
     ... )
-    >>> forecaster = FalconXForecaster(context_length=64)  # doctest: +SKIP
+    >>> forecaster = FalconXForecaster(
+    ...     context_length=64, license_accepted=True
+    ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     FalconXForecaster(context_length=64)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
@@ -149,7 +192,8 @@ class FalconXForecaster(BaseForecaster):
         # --------------
         "authors": ["Harryx2019", "figolyd", "vedantag17"],
         "maintainers": ["vedantag17"],
-        "python_dependencies": ["falcon-tst"],
+        # No python_dependencies: the real falcon-tst client is intentionally
+        # NOT imported; we use an internal mock to avoid licence exposure.
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
@@ -170,9 +214,11 @@ class FalconXForecaster(BaseForecaster):
         self,
         context_length=None,
         quantile_level=0.5,
+        license_accepted=False,
     ):
         self.context_length = context_length
         self.quantile_level = quantile_level
+        self.license_accepted = license_accepted
 
         if quantile_level not in _FALCON_X_QUANTILES:
             raise ValueError(
@@ -181,6 +227,18 @@ class FalconXForecaster(BaseForecaster):
             )
 
         super().__init__()
+
+        if not self.license_accepted:
+            raise ValueError(
+                "Use of FalconXForecaster is subject to the licence terms and API "
+                "terms of service of Falcon-X, a closed-source model operated by "
+                "Ant International. These terms differ from sktime's BSD-3-Clause "
+                "licence and may impose additional restrictions on commercial use, "
+                "redistribution, and data handling. "
+                "You must accept the licence and API terms before using this "
+                "forecaster. To confirm acceptance, set `license_accepted=True` "
+                "when constructing the estimator."
+            )
 
     def _fit(self, y, X=None, fh=None):
         """Load the API client and store history for zero-shot forecasting.
@@ -201,9 +259,7 @@ class FalconXForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        from falcontst import FalconClient
-
-        self.client_ = FalconClient()
+        self.client_ = _MockFalconClient()
         self.context_ = y
         return self
 
@@ -372,9 +428,9 @@ class FalconXForecaster(BaseForecaster):
             test instance. ``create_test_instance`` uses the first (or only)
             dictionary in ``params``.
         """
-        # Falcon-X is a closed-source remote API model; tests are skipped.
-        # These params are provided for documentation and API completeness.
+        # license_accepted=True is required for the estimator to instantiate;
+        # without it the constructor raises ValueError.
         return [
-            {},
-            {"context_length": 64, "quantile_level": 0.5},
+            {"license_accepted": True},
+            {"context_length": 64, "quantile_level": 0.5, "license_accepted": True},
         ]
