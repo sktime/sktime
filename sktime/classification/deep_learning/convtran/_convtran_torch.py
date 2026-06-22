@@ -19,9 +19,9 @@ class ConvTranClassifierTorch(BaseDeepClassifierPytorch):
     net_type : str, default="C-T"
         Network type to use. Should be one of "T" (Transformer),
         "C-T" (ConvTran) or "C-CT" (Causal ConvTran).
-    activation : str or None, default=None
+    activation : str or None or Callable, default=None
         Activation function to use in the output layer.
-    activation_hidden : str, default="relu"
+    activation_hidden : str or None or Callable, default="relu"
         Activation function to use in the hidden layers.
     emb_size : int, default=16
         Embedding dimension used in attention and feed-forward blocks.
@@ -108,7 +108,7 @@ class ConvTranClassifierTorch(BaseDeepClassifierPytorch):
         # model specific
         net_type: str = "C-T",
         activation: str | None | Callable = None,
-        activation_hidden: str = "relu",
+        activation_hidden: str | None | Callable = "relu",
         emb_size: int = 16,
         dim_ff: int = 256,
         num_heads: int = 8,
@@ -201,8 +201,8 @@ class ConvTranClassifierTorch(BaseDeepClassifierPytorch):
             input_size=self.input_size,
             num_classes=self.num_classes,
             net_type=self.net_type,
-            activation=self._validated_activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             emb_size=self.emb_size,
             dim_ff=self.dim_ff,
             num_heads=self.num_heads,
