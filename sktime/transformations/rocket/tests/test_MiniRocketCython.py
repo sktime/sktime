@@ -3,16 +3,18 @@
 import numpy as np
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.rocket._rocket_cython import MiniRocketCython
 
-try:
-    from sktime.utils.dependencies.compile import has_compiler
-except ImportError:
-    pytest.skip("compile module not available", allow_module_level=True)
 
-
+@pytest.mark.skipif(
+    not run_test_for_class(MiniRocketCython),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_minirocket_cython_compile_and_transform():
     """Verify MiniRocketCython compiles/transforms, or fails cleanly."""
+    from sktime.utils.dependencies.compile import has_compiler
+
     # 3 instances, 1 dimension, 5 timepoints
     X = np.array(
         [
