@@ -643,8 +643,8 @@ class QuickTester:
                 print_if_verbose(f"{key}")
 
                 try:
-                    # with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
-                    test_fun(**deepcopy(args))
+                    with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
+                        test_fun(**deepcopy(args))
                     results[key] = "PASSED"
                     print_if_verbose("PASSED")
                 except Skipped as err:

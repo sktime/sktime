@@ -509,7 +509,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
             data = deepcopy(y)
         # if fh is not continuous, there will be NaN after extend_y in prediect
         data = data.copy()
-        data["_target_column"] = data["_target_column"].fillna(0) # .astype(float)
+        data["_target_column"] = data["_target_column"].fillna(0)  # .astype(float)
         for c in time_varying_known_reals:
             data[c] = data[c].astype(float)
         # add integer time_idx column as pytorch-forecasting requires
