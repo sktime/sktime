@@ -110,7 +110,7 @@ class CiscoTSMForecaster(BaseForecaster):
         "authors": ["vedantag17"],
         "maintainers": ["vedantag17"],
         "python_dependencies": "cisco-tsm",
-        "python_version": ">=3.11",
+        "python_version": ">=3.11,<3.14",
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
