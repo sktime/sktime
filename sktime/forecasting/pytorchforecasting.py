@@ -42,29 +42,29 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     Examples
     --------
     >>> # import packages
-    >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
-    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon  # doctest: +SKIP
+    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT  # doctest: +SKIP
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical  # doctest: +SKIP
+    >>> from sklearn.model_selection import train_test_split  # doctest: +SKIP
     >>> # generate random data
-    >>> data = _make_hierarchical(
+    >>> data = _make_hierarchical(  # doctest: +SKIP
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
     ... )
     >>> # define forecast horizon
-    >>> max_prediction_length = 5
-    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    >>> max_prediction_length = 5  # doctest: +SKIP
+    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)  # doctest: +SKIP
     >>> # split X, y data for train and test
-    >>> x = data[["c0", "c1"]]
-    >>> y = data["c2"].to_frame()
-    >>> X_train, X_test, y_train, y_test = train_test_split(
+    >>> x = data[["c0", "c1"]]  # doctest: +SKIP
+    >>> y = data["c2"].to_frame()  # doctest: +SKIP
+    >>> X_train, X_test, y_train, y_test = train_test_split(  # doctest: +SKIP
     ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
     ... )
-    >>> len_levels = len(y_test.index.names)
-    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+    >>> len_levels = len(y_test.index.names)  # doctest: +SKIP
+    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(  # doctest: +SKIP
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
     ... )
     >>> # define the model
-    >>> model = PytorchForecastingTFT(
+    >>> model = PytorchForecastingTFT(  # doctest: +SKIP
     ...     trainer_params={
     ...         "max_epochs": 5,  # for quick test
     ...         "limit_train_batches": 2,  # for quick test
@@ -74,8 +74,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingTFT(trainer_params={'limit_train_batches': 10,
                                         'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    >>> print(y_test)
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test)  # doctest: +SKIP
+    >>> print(y_test)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  5.261697
@@ -91,7 +91,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 2000-02-14  4.534434
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)
+    >>> print(y_pred)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.310687
@@ -331,27 +331,27 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     Examples
     --------
     >>> # import packages
-    >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
-    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon  # doctest: +SKIP
+    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats  # doctest: +SKIP
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical  # doctest: +SKIP
+    >>> from sklearn.model_selection import train_test_split  # doctest: +SKIP
     >>> # generate random data
-    >>> data = _make_hierarchical(
+    >>> data = _make_hierarchical(  # doctest: +SKIP
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
     ... )
     >>> # define forecast horizon
-    >>> max_prediction_length = 5
-    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    >>> max_prediction_length = 5  # doctest: +SKIP
+    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)  # doctest: +SKIP
     >>> # split y data for train and test
-    >>> y_train, y_test = train_test_split(
+    >>> y_train, y_test = train_test_split(  # doctest: +SKIP
     ...     data["c2"].to_frame(), test_size=0.2, train_size=0.8, shuffle=False
     ... )
-    >>> len_levels = len(y_test.index.names)
-    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+    >>> len_levels = len(y_test.index.names)  # doctest: +SKIP
+    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(  # doctest: +SKIP
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
     ... )
     >>> # define the model
-    >>> model = PytorchForecastingNBeats(
+    >>> model = PytorchForecastingNBeats(  # doctest: +SKIP
     ...     trainer_params={
     ...         "max_epochs": 5,  # for quick test
     ...         "limit_train_batches": 10,  # for quick test
@@ -361,8 +361,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     >>> model.fit(y=y_train, fh=fh) # doctest: +SKIP
     PytorchForecastingNBeats(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, y=y_test)
-    >>> print(y_test)
+    >>> y_pred = model.predict(fh, y=y_test)  # doctest: +SKIP
+    >>> print(y_test)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  6.308914
@@ -378,7 +378,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 2000-02-14  5.243385
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)
+    >>> print(y_pred)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.167375
@@ -625,29 +625,29 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     Examples
     --------
     >>> # import packages
-    >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
-    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon  # doctest: +SKIP
+    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR  # doctest: +SKIP
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical  # doctest: +SKIP
+    >>> from sklearn.model_selection import train_test_split  # doctest: +SKIP
     >>> # generate random data
-    >>> data = _make_hierarchical(
+    >>> data = _make_hierarchical(  # doctest: +SKIP
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
     ... )
     >>> # define forecast horizon
-    >>> max_prediction_length = 5
-    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    >>> max_prediction_length = 5  # doctest: +SKIP
+    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)  # doctest: +SKIP
     >>> # split X, y data for train and test
-    >>> x = data[["c0", "c1"]]
-    >>> y = data["c2"].to_frame()
-    >>> X_train, X_test, y_train, y_test = train_test_split(
+    >>> x = data[["c0", "c1"]]  # doctest: +SKIP
+    >>> y = data["c2"].to_frame()  # doctest: +SKIP
+    >>> X_train, X_test, y_train, y_test = train_test_split(  # doctest: +SKIP
     ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
     ... )
-    >>> len_levels = len(y_test.index.names)
-    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+    >>> len_levels = len(y_test.index.names)  # doctest: +SKIP
+    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(  # doctest: +SKIP
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
     ... )
     >>> # define the model
-    >>> model = PytorchForecastingDeepAR(
+    >>> model = PytorchForecastingDeepAR(  # doctest: +SKIP
     ...     trainer_params={
     ...         "max_epochs": 5,  # for quick test
     ...         "limit_train_batches": 10,  # for quick test
@@ -657,8 +657,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingDeepAR(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    >>> print(y_test)
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test)  # doctest: +SKIP
+    >>> print(y_test)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  5.006716
@@ -674,7 +674,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 2000-02-14  5.482842
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)
+    >>> print(y_pred)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  4.919366
@@ -905,29 +905,29 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     Examples
     --------
     >>> # import packages
-    >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNHiTS
-    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sklearn.model_selection import train_test_split
+    >>> from sktime.forecasting.base import ForecastingHorizon  # doctest: +SKIP
+    >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNHiTS  # doctest: +SKIP
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical  # doctest: +SKIP
+    >>> from sklearn.model_selection import train_test_split  # doctest: +SKIP
     >>> # generate random data
-    >>> data = _make_hierarchical(
+    >>> data = _make_hierarchical(  # doctest: +SKIP
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
     ... )
     >>> # define forecast horizon
-    >>> max_prediction_length = 5
-    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
+    >>> max_prediction_length = 5  # doctest: +SKIP
+    >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)  # doctest: +SKIP
     >>> # split X, y data for train and test
-    >>> x = data["c0", "c1"]
-    >>> y = data["c2"].to_frame()
-    >>> X_train, X_test, y_train, y_test = train_test_split(
+    >>> x = data[["c0", "c1"]]  # doctest: +SKIP
+    >>> y = data["c2"].to_frame()  # doctest: +SKIP
+    >>> X_train, X_test, y_train, y_test = train_test_split(  # doctest: +SKIP
     ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
     ... )
-    >>> len_levels = len(y_test.index.names)
-    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
+    >>> len_levels = len(y_test.index.names)  # doctest: +SKIP
+    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(  # doctest: +SKIP
     ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
     ... )
     >>> # define the model
-    >>> model = PytorchForecastingNHiTS(
+    >>> model = PytorchForecastingNHiTS(  # doctest: +SKIP
     ...     trainer_params={
     ...         "max_epochs": 5,  # for quick test
     ...         "limit_train_batches": 10,  # for quick test
@@ -937,8 +937,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingNHiTS(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)
-    >>> print(y_test)
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test)  # doctest: +SKIP
+    >>> print(y_test)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  8.184178
@@ -954,7 +954,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 2000-02-14  5.454403
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)
+    >>> print(y_pred)  # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.764410
