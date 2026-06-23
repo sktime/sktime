@@ -113,6 +113,15 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         self._dataset_params = (
             deepcopy(dataset_params) if dataset_params is not None else {}
         )
+        # callbacks (e.g. EarlyStopping) are stateful nn objects that lightning
+        # mutates during fit; pull them out of trainer_params so they are not
+        # deep-copied/compared as hyper-parameters, and pass them to the Trainer
+        # directly in _instantiate_model
+        self._callbacks = (
+            self.trainer_params.pop("callbacks", None)
+            if self.trainer_params is not None
+            else None
+        )
         self._trainer_params = (
             deepcopy(trainer_params) if trainer_params is not None else {}
         )
@@ -170,7 +179,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
                     self._random_log_dir = self._gen_random_log_dir(data)
                     self._trainer_params["default_root_dir"] = self._random_log_dir
 
-        trainer_instance = pl.Trainer(**self._trainer_params)
+        trainer_instance = pl.Trainer(callbacks=self._callbacks, **self._trainer_params)
         return algorithm_instance, trainer_instance
 
     def _gen_random_log_dir(self, data=None):
@@ -327,6 +336,9 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length
         )
+        # _Xy_to_dataset mutates self._origin_time_idx; restore it so predict
+        # does not change the estimator's __dict__
+        self._origin_time_idx = _origin_time_idx_backup
 
         absolute_horizons = self.fh.to_absolute_index(self.cutoff)
         dateindex = output.index.get_level_values(-1).map(
@@ -383,6 +395,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         _y = self._extend_y(_y, fh)
         # check if dummy X is needed
         _X = self._dummy_X(_X, _y)
+        _origin_time_idx_backup = self._origin_time_idx
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -418,6 +431,9 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length, alpha=alpha
         )
+        # _Xy_to_dataset mutates self._origin_time_idx; restore it so predict
+        # does not change the estimator's __dict__
+        self._origin_time_idx = _origin_time_idx_backup
 
         absolute_horizons = self.fh.to_absolute_index(self.cutoff)
         dateindex = output.index.get_level_values(-1).map(

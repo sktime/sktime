@@ -35,6 +35,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -143,10 +145,12 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
+        deterministic: bool = False,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
+        self.deterministic = deterministic
         super().__init__(
             model_params,
             dataset_params,
@@ -222,6 +226,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -243,6 +248,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
         else:
@@ -273,6 +279,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -298,6 +305,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
 
@@ -328,6 +336,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -429,9 +439,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
+        deterministic: bool = False,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
+        self.deterministic = deterministic
         super().__init__(
             model_params,
             dataset_params,
@@ -523,6 +535,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -543,6 +556,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
         else:
@@ -574,6 +588,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -596,6 +611,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
 
@@ -914,6 +930,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -1019,7 +1037,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         model_path: str | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
-        deterministic: bool = True,
+        deterministic: bool = False,
     ) -> None:
         super().__init__(
             model_params,
@@ -1109,6 +1127,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -1130,6 +1149,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
         else:
@@ -1161,6 +1181,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -1183,6 +1204,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
 
