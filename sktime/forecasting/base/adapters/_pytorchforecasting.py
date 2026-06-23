@@ -231,6 +231,13 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
+        # seed before model instantiation and training so weight init and data
+        # loading are reproducible, making fit idempotent when deterministic
+        if getattr(self, "deterministic", False):
+            import torch
+
+            torch_state = torch.get_rng_state()
+            torch.manual_seed(0)
         # convert data to pytorch-forecasting datasets
         # origin_time_idx is only needed at predict time, so it is discarded here
         training, validation, _ = self._Xy_to_dataset(
@@ -263,6 +270,11 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
+        # restore the global RNG state so fit does not leak the seed elsewhere
+        if getattr(self, "deterministic", False):
+            import torch
+
+            torch.set_rng_state(torch_state)
         return self
 
     def _predict(

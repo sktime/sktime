@@ -1125,6 +1125,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "n_blocks": [1, 1],
                         "n_layers": 1,
                         "log_interval": -1,
+                        
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
                     "deterministic": True,  # to pass test_score
@@ -1154,6 +1155,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             ]
         else:
             from lightning.pytorch.callbacks import EarlyStopping
+            from pytorch_forecasting.data.encoders import TorchNormalizer
 
             early_stop_callback = EarlyStopping(
                 monitor="val_loss",
@@ -1178,6 +1180,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
+                        "target_normalizer": TorchNormalizer()
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
@@ -1201,6 +1204,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
+                        "target_normalizer": TorchNormalizer(),
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
