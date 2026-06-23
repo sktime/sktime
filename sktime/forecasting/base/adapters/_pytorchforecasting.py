@@ -452,6 +452,10 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         if X is None:
             X = deepcopy(self._X)
         elif self._X is not None:
+<<<<<<< HEAD
+=======
+            # prepend training X so _Xy_to_dataset has full history for the join
+>>>>>>> a654e3ef875c020a8a99bb0debf37bdeb1e8c203
             X = pd.concat([deepcopy(self._X), X])
         return X, y
 

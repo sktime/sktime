@@ -644,9 +644,10 @@ class QuickTester:
                 try:
                     with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
                         test_fun(**deepcopy(args))
-                    results[key] = "PASSED"
-                    print_if_verbose("PASSED")
+                        results[key] = "PASSED"
+                        print_if_verbose("PASSED")
                 except Skipped as err:
+                    test_fun(**deepcopy(args))
                     results[key] = f"SKIPPED: {err.msg}"
                     print_if_verbose(f"SKIPPED: {err.msg}")
                 except Exception as err:
