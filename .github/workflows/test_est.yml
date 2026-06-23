@@ -57,5 +57,6 @@ jobs:
       - name: Run tests with ${{ matrix.flag }}
         env:
           FLAG: ${{ matrix.flag }}
+          HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
         shell: bash
         run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"

@@ -293,6 +293,7 @@ jobs:
     uses: ./.github/workflows/test_est.yml
     with:
       flags: ${{ toJson(matrix.chunk) }}
+    secrets: inherit
 
   test-est-r:
     needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
