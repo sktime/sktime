@@ -157,6 +157,21 @@ class Model(nn.Module):
                     "google-bert/bert-base-uncased",
                     local_files_only=False,
                 )
+        elif configs.llm_model == "TINY_RANDOM":
+            self.bert_config = BertConfig(
+                vocab_size=5,
+                hidden_size=1,
+                num_hidden_layers=configs.llm_layers,
+                num_attention_heads=1,
+                intermediate_size=1,
+                max_position_embeddings=256,
+            )
+
+            self.bert_config.output_attentions = True
+            self.bert_config.output_hidden_states = True
+
+            self.llm_model = BertModel(self.bert_config)
+            self.tokenizer = BertTokenizer()
         else:
             raise Exception("LLM model is not defined")
 
