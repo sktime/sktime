@@ -2,6 +2,7 @@
 """Interfaces to estimators from pytorch-forecasting."""
 
 import functools
+from copy import deepcopy
 from typing import Any
 
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -240,17 +241,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 },
             ]
         else:
-            from lightning.pytorch.callbacks import EarlyStopping
-
             # from pytorch_forecasting.metrics import QuantileLoss
 
-            early_stop_callback = EarlyStopping(
-                monitor="train_loss",
-                min_delta=1e-2,
-                patience=3,
-                verbose=False,
-                mode="min",
-            )
             params = [
                 {
                     "trainer_params": {
@@ -272,7 +264,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
@@ -297,8 +288,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 },
             ]
 
-        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
-        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        params_broadcasting = [dict(deepcopy(p), broadcasting=True) for p in params]
+        params_no_broadcasting = [dict(deepcopy(p), broadcasting=False) for p in params]
         return params_broadcasting + params_no_broadcasting
 
 
@@ -536,15 +527,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 },
             ]
         else:
-            from lightning.pytorch.callbacks import EarlyStopping
-
-            early_stop_callback = EarlyStopping(
-                monitor="val_loss",
-                min_delta=1e-2,
-                patience=3,
-                verbose=False,
-                mode="min",
-            )
             params = [
                 {
                     "trainer_params": {
@@ -567,7 +549,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
@@ -589,8 +570,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 },
             ]
 
-        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
-        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        params_broadcasting = [dict(deepcopy(p), broadcasting=True) for p in params]
+        params_no_broadcasting = [dict(deepcopy(p), broadcasting=False) for p in params]
         return params_broadcasting + params_no_broadcasting
 
 
@@ -820,15 +801,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 },
             ]
         else:
-            from lightning.pytorch.callbacks import EarlyStopping
-
-            early_stop_callback = EarlyStopping(
-                monitor="val_loss",
-                min_delta=1e-2,
-                patience=3,
-                verbose=False,
-                mode="min",
-            )
             params = [
                 {
                     "trainer_params": {
@@ -851,7 +823,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 2,  # for quick test
                         "logger": False,
@@ -871,8 +842,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 },
             ]
 
-        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
-        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        params_broadcasting = [dict(deepcopy(p), broadcasting=True) for p in params]
+        params_no_broadcasting = [dict(deepcopy(p), broadcasting=False) for p in params]
         return params_broadcasting + params_no_broadcasting
 
 
@@ -1108,15 +1079,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 },
             ]
         else:
-            from lightning.pytorch.callbacks import EarlyStopping
-
-            early_stop_callback = EarlyStopping(
-                monitor="val_loss",
-                min_delta=1e-2,
-                patience=3,
-                verbose=False,
-                mode="min",
-            )
             params = [
                 {
                     "trainer_params": {
@@ -1139,7 +1101,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 },
                 {
                     "trainer_params": {
-                        "callbacks": [early_stop_callback],
                         "max_epochs": 1,  # for quick test
                         "limit_train_batches": 2,  # for quick test
                         "enable_checkpointing": False,
@@ -1161,6 +1122,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 },
             ]
 
-        params_broadcasting = [dict(p, **{"broadcasting": True}) for p in params]
-        params_no_broadcasting = [dict(p, **{"broadcasting": False}) for p in params]
+        params_broadcasting = [dict(deepcopy(p), broadcasting=True) for p in params]
+        params_no_broadcasting = [dict(deepcopy(p), broadcasting=False) for p in params]
         return params_broadcasting + params_no_broadcasting
