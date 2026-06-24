@@ -114,8 +114,9 @@ class _SerializationMixin:
         """Get object state for serialization."""
         state = self.__dict__.copy()
         skip = self.get_tag("serialization:skip", ())
+        native_artifacts = self.get_tag("serialization:native_artifacts", ())
 
-        for name in skip:
+        for name in (*skip, *native_artifacts):
             state.pop(name, None)
 
         return state
