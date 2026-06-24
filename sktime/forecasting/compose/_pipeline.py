@@ -184,7 +184,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 0.41.0 - check why this cannot be easily removed
+                        # todo 1.1.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -278,9 +278,9 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
 
         from sktime.forecasting.compose._reduce import YfromX
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-        from sktime.transformations.series.detrend import Detrender
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.detrend import Detrender
+        from sktime.transformations.exponent import ExponentTransformer
 
         # StandardScaler does not skip fit, NaiveForecaster is not probabilistic
         STEPS1 = [
@@ -379,7 +379,7 @@ class ForecastingPipeline(_Pipeline):
     >>> from sktime.datasets import load_longley
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import ForecastingPipeline
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.impute import Imputer
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.split import temporal_train_test_split
     >>> from sklearn.preprocessing import MinMaxScaler
@@ -843,9 +843,9 @@ class TransformedTargetForecaster(_Pipeline):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
-    >>> from sktime.transformations.series.impute import Imputer
-    >>> from sktime.transformations.series.detrend import Detrender
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.impute import Imputer
+    >>> from sktime.transformations.detrend import Detrender
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> y = load_airline()
 
         Example 1: string/estimator pairs
@@ -1366,7 +1366,7 @@ class TransformedTargetForecaster(_Pipeline):
 
         # if the inner forecaster natively supports _predict_proba,
         # delegate and wrap in a TransformedDistribution
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if not _check_soft_dependencies("skpro", severity="none"):
             raise RuntimeError(
@@ -2041,8 +2041,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.compose import ForecastingPipeline, Permute
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.boxcox import BoxCoxTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
 
     Simple example: permute sequence of estimator in forecasting pipeline
 
@@ -2170,8 +2170,8 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         # transformers mixed with-without fit, ForecastingPipeline
         # steps are (str, estimator)

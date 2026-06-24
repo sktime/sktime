@@ -16,6 +16,7 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -48,7 +49,6 @@ from sktime.utils._testing.estimator_checks import (
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 
@@ -1293,7 +1293,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
             if tag in ALIAS_DICT:
-                # todo 1.0.0: remove this exception once forecaster tag deprecation done
+                # todo 1.1.0: remove this exception once forecaster tag deprecation done
+                # specifically, deprecation of the capability:multivariate aliasing
                 object_type = estimator_instance.get_tag("object_type")
                 # special case: "scitype:y" deprecated only for forecasters
                 if tag == "scitype:y" and not object_type == "forecaster":

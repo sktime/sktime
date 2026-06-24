@@ -41,7 +41,6 @@ EXCLUDE_ESTIMATORS = [
     "EditDist",
     "LSTMFCNClassifier",
     "MLPClassifier",
-    "MLPRegressor",
     "ResNetRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
@@ -102,9 +101,6 @@ EXCLUDED_TESTS = {
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAXlegacy": ["test_fit_transform_output"],
     "DynamicFactor": [
-        "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
-    "ARIMA": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
@@ -184,8 +180,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MCDCNNRegressor",
         "MLPNetwork",
         "MUSE",
-        "MVCAPA",
-        "MatrixProfile",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
