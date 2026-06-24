@@ -674,8 +674,9 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         serialization_format: str, default = "pickle"
             Module to use for serialization.
             The available options are present under
-            `sktime.base._base.SERIALIZATION_FORMATS`. Note that non-default formats
-            might require installation of other soft dependencies.
+            `sktime.base._serialize.SERIALIZATION_FORMATS`.
+            Note that non-default formats might require installation of other
+            soft dependencies.
 
         Returns
         -------

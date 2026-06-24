@@ -14,7 +14,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.utils import check_random_state
 
-from sktime.base._base import SERIALIZATION_FORMATS
+from sktime.base._serialize import SERIALIZATION_FORMATS
 from sktime.classification.base import BaseClassifier
 
 
@@ -240,8 +240,9 @@ class BaseDeepClassifier(BaseClassifier):
         serialization_format : str, default = "pickle"
             Module to use for serialization.
             The available options are present under
-            ``sktime.base._base.SERIALIZATION_FORMATS``. Note that non-default formats
-            might require installation of other soft dependencies.
+            ``sktime.base._serialize.SERIALIZATION_FORMATS``.
+            Note that non-default formats might require installation of other
+            soft dependencies.
 
         Returns
         -------
