@@ -19,6 +19,20 @@ SERIALIZATION_FORMATS = {
 class _SerializationMixin:
     """Mixin containing serialization API for sktime base objects."""
 
+    def __getstate__(self):
+        """Get object state for serialization."""
+        state = self.__dict__.copy()
+        skip = self.get_tag("serialization:skip", ())
+
+        for name in skip:
+            state.pop(name, None)
+
+        return state
+
+    def __setstate__(self, state):
+        """Set object state after deserialization."""
+        self.__dict__.update(state)
+
     def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
 
