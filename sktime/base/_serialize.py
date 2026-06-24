@@ -84,6 +84,46 @@ def _write_object(path, obj, serialization_format):
     _dump_pickle(obj, path / "_obj", serialization_format)
 
 
+class _NativeArtifactStore:
+    """Store native serialization artifacts inside an sktime save bundle."""
+
+    def __init__(self, artifact_root):
+        self.artifact_root = artifact_root
+        self.index = {}
+
+    def dump(self, name, obj, *, estimator):
+        """Dump a native artifact to the store."""
+        raise NotImplementedError(
+            "Native artifact serialization is not implemented yet. "
+            f"Cannot serialize artifact {name!r} of type {type(obj)}."
+        )
+
+    def write_index(self):
+        """Write native artifact index."""
+        import json
+
+        self.artifact_root.mkdir()
+        with open(self.artifact_root / "index.json", "w", encoding="utf-8") as file:
+            json.dump(self.index, file, indent=2)
+
+
+def _write_native_artifacts(path, obj):
+    """Write native artifacts for an object if it opts into them."""
+    native_artifacts = obj.get_tag("serialization:native_artifacts", ())
+
+    if not native_artifacts:
+        return
+
+    store = _NativeArtifactStore(path / "_artifacts")
+
+    for name in native_artifacts:
+        artifact = getattr(obj, name, None)
+        if artifact is not None:
+            store.dump(name, artifact, estimator=obj)
+
+    store.write_index()
+
+
 def _finalize_bundle(path):
     """Zip bundle path and remove staging directory."""
     import shutil
@@ -155,6 +195,7 @@ class _SerializationMixin:
         path.mkdir()
         _write_metadata(path, type(self), serialization_format)
         _write_object(path, self, serialization_format)
+        _write_native_artifacts(path, self)
         return _finalize_bundle(path)
 
     @classmethod
