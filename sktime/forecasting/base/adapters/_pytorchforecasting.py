@@ -162,10 +162,6 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
-        if self._model_loss is None:
-            from pytorch_forecasting import QuantileLoss
-
-            self._model_loss = QuantileLoss()
         algorithm_instance = self.algorithm_class.from_dataset(
             data,
             loss=self._model_loss,

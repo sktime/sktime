@@ -1020,6 +1020,10 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             random_log_path,
             broadcasting,
         )
+        if self._model_loss is None:
+            from pytorch_forecasting import QuantileLoss
+
+            self._model_loss = QuantileLoss()
 
     @functools.cached_property
     def algorithm_class(self: "PytorchForecastingNHiTS"):
