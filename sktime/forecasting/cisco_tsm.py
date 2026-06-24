@@ -1,4 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+# Upstream model: splunk/cisco-time-series-model, Apache-2.0 License
+# https://github.com/splunk/cisco-time-series-model
 """Cisco Time Series Model (CTSM) forecaster for ``sktime``."""
 
 __author__ = ["vedantag17"]
@@ -9,6 +11,26 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
+
+# Default quantile levels produced by CTSM. Defined at module level so that
+# _DummyCiscoModel can reference them without importing CiscoTSMForecaster.
+_DEFAULT_QUANTILES = [
+    0.01,
+    0.05,
+    0.1,
+    0.2,
+    0.25,
+    0.3,
+    0.4,
+    0.5,
+    0.6,
+    0.7,
+    0.75,
+    0.8,
+    0.9,
+    0.95,
+    0.99,
+]
 
 
 class CiscoTSMForecaster(BaseForecaster):
@@ -45,13 +67,13 @@ class CiscoTSMForecaster(BaseForecaster):
         maximum of 30 720 points) is used. Shorter contexts reduce memory
         usage but may degrade forecast quality.
     quantiles : list of float or None, default=None
-        Quantile levels requested from the model. If ``None``, the
+        Quantile levels pre-computed by the model. If ``None``, the
         official 15-quantile set is used:
         ``[0.01, 0.05, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5,
            0.6, 0.7, 0.75, 0.8, 0.9, 0.95, 0.99]``.
-        The forecaster returns point forecasts (mean) only; quantile
-        outputs are computed internally by the model but not exposed
-        through the ``predict`` interface.
+        These levels are available via ``predict_quantiles`` /
+        ``predict_interval``. Arbitrary ``alpha`` values not in this set
+        are handled by linear interpolation over the available levels.
     ignore_deps : bool, default=False
         If ``True``, soft-dependency checks for ``cisco-tsm`` and
         ``torch`` are skipped. Useful for testing the sktime adapter
@@ -84,42 +106,28 @@ class CiscoTSMForecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     CiscoTSMForecaster(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> pred_int = forecaster.predict_interval(fh=[1, 2, 3],coverage=0.9)#doctest:+SKIP
     """
 
-    _DEFAULT_QUANTILES = [
-        0.01,
-        0.05,
-        0.1,
-        0.2,
-        0.25,
-        0.3,
-        0.4,
-        0.5,
-        0.6,
-        0.7,
-        0.75,
-        0.8,
-        0.9,
-        0.95,
-        0.99,
-    ]
+    _DEFAULT_QUANTILES = _DEFAULT_QUANTILES  # module-level constant
 
     _tags = {
         # packaging info
         # --------------
         "authors": ["vedantag17"],
         "maintainers": ["vedantag17"],
-        "python_dependencies": "cisco-tsm",
+        "python_dependencies": ["cisco-tsm", "torch"],
         "python_version": ">=3.11,<3.14",
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": "None",
         "capability:multivariate": False,
         "capability:exogenous": False,
         "capability:insample": False,
         "capability:missing_values": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": False,
         "requires-fh-in-fit": False,
         # CI and test flags
         # -----------------
@@ -277,6 +285,72 @@ class CiscoTSMForecaster(BaseForecaster):
         )
         return y_pred
 
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be ``"fitted"``.
+
+        Accesses in self:
+            ``_model_``, ``_context_``, ``_y_name_``, ``cutoff``
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : ignored
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+            Values not in the model's native quantile set are linearly
+            interpolated from the surrounding available levels.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        self._ensure_model_loaded()
+
+        fh_relative = fh.to_relative(self.cutoff)
+        horizon_len = int(max(fh_relative._values))
+        fh_vals = np.asarray(fh_relative._values, dtype=int) - 1
+
+        forecast_preds = self._model_.forecast(
+            self._context_,
+            horizon_len=horizon_len,
+        )
+        quantiles_dict = forecast_preds[0]["quantiles"]  # dict[float, np.ndarray]
+
+        # Sort available native levels for interpolation.
+        native_levels = sorted(quantiles_dict.keys())
+        # Stack into (n_native_quantiles, horizon_len) array.
+        native_matrix = np.stack(
+            [quantiles_dict[q] for q in native_levels], axis=0
+        )  # shape: (n_q, horizon_len)
+
+        var_name = self._y_name_ if self._y_name_ is not None else 0
+        row_idx = fh.to_absolute_index(self.cutoff)
+        cols_idx = pd.MultiIndex.from_product([[var_name], alpha])
+        pred_quantiles = pd.DataFrame(index=row_idx, columns=cols_idx, dtype=float)
+
+        native_arr = np.array(native_levels, dtype=float)
+        for a in alpha:
+            # Linear interpolation across quantile dimension at each horizon step.
+            interp_vals = np.array(
+                [np.interp(a, native_arr, native_matrix[:, t]) for t in fh_vals],
+                dtype=np.float32,
+            )
+            pred_quantiles[(var_name, a)] = interp_vals
+
+        return pred_quantiles
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -302,6 +376,11 @@ class CiscoTSMForecaster(BaseForecaster):
                 "context_length": 64,
                 "ignore_deps": True,
             },
+            {
+                "model_path": "cisco-ai/cisco-time-series-model-1.0",
+                "quantiles": [0.1, 0.5, 0.9],
+                "ignore_deps": True,
+            },
         ]
 
 
@@ -324,7 +403,14 @@ class _DummyCiscoModel:
     def forecast(self, series, horizon_len):
         """Return constant forecasts matching the CiscoTsmMR output format."""
         mean = np.full(horizon_len, self.horizon_fill, dtype=np.float32)
-        return [{"mean": mean, "quantiles": {}}]
+        # Provide the same 15 native quantile levels as the real model so that
+        # _predict_quantiles can interpolate without special-casing the dummy.
+        # Reference the class-level constant directly to avoid a circular import.
+        quantiles = {
+            q: np.full(horizon_len, self.horizon_fill, dtype=np.float32)
+            for q in _DEFAULT_QUANTILES
+        }
+        return [{"mean": mean, "quantiles": quantiles}]
 
 
 @_multiton
