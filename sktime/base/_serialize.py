@@ -16,6 +16,84 @@ SERIALIZATION_FORMATS = {
 }
 
 
+def _check_serialization_format(serialization_format):
+    """Validate serialization format and check soft dependencies."""
+    from skbase.utils.dependencies import _check_soft_dependencies
+
+    if serialization_format not in SERIALIZATION_FORMATS:
+        raise ValueError(
+            f"The provided `serialization_format`='{serialization_format}' "
+            "is not yet supported. The possible formats are: "
+            f"{SERIALIZATION_FORMATS}."
+        )
+
+    if serialization_format == "cloudpickle":
+        _check_soft_dependencies("cloudpickle", severity="error")
+
+
+def _validate_save_path(path):
+    """Validate and coerce save path."""
+    from pathlib import Path
+
+    if path is None:
+        return None
+
+    if not isinstance(path, (str, Path)):
+        raise TypeError(
+            "`path` is expected to either be a string or a Path object "
+            f"but found of type:{type(path)}."
+        )
+
+    return Path(path) if isinstance(path, str) else path
+
+
+def _serialize_to_memory(obj, serialization_format):
+    """Serialize object to an in-memory byte representation."""
+    if serialization_format == "cloudpickle":
+        import cloudpickle
+
+        return cloudpickle.dumps(obj)
+
+    import pickle
+
+    return pickle.dumps(obj)
+
+
+def _dump_pickle(obj, path, serialization_format):
+    """Serialize object to file using the selected pickle implementation."""
+    if serialization_format == "cloudpickle":
+        import cloudpickle
+
+        with open(path, "wb") as file:
+            cloudpickle.dump(obj, file)
+        return
+
+    import pickle
+
+    with open(path, "wb") as file:
+        pickle.dump(obj, file)
+
+
+def _write_metadata(path, cls, serialization_format):
+    """Write estimator class metadata to bundle."""
+    _dump_pickle(cls, path / "_metadata", serialization_format)
+
+
+def _write_object(path, obj, serialization_format):
+    """Write serialized estimator object to bundle."""
+    _dump_pickle(obj, path / "_obj", serialization_format)
+
+
+def _finalize_bundle(path):
+    """Zip bundle path and remove staging directory."""
+    import shutil
+    from zipfile import ZipFile
+
+    shutil.make_archive(base_name=path, format="zip", root_dir=path)
+    shutil.rmtree(path)
+    return ZipFile(path.with_name(f"{path.stem}.zip"))
+
+
 class _SerializationMixin:
     """Mixin containing serialization API for sktime base objects."""
 
@@ -68,53 +146,16 @@ class _SerializationMixin:
         if ``path`` is None - in-memory serialized self
         if ``path`` is file location - ZipFile with reference to the file
         """
-        import pickle
-        import shutil
-        from pathlib import Path
-        from zipfile import ZipFile
+        _check_serialization_format(serialization_format)
+        path = _validate_save_path(path)
 
-        from skbase.utils.dependencies import _check_soft_dependencies
+        if path is None:
+            return (type(self), _serialize_to_memory(self, serialization_format))
 
-        if serialization_format not in SERIALIZATION_FORMATS:
-            raise ValueError(
-                f"The provided `serialization_format`='{serialization_format}' "
-                "is not yet supported. The possible formats are: "
-                f"{SERIALIZATION_FORMATS}."
-            )
-
-        if path is not None and not isinstance(path, (str, Path)):
-            raise TypeError(
-                "`path` is expected to either be a string or a Path object "
-                f"but found of type:{type(path)}."
-            )
-        if path is not None:
-            path = Path(path) if isinstance(path, str) else path
-            path.mkdir()
-
-        if serialization_format == "cloudpickle":
-            _check_soft_dependencies("cloudpickle", severity="error")
-            import cloudpickle
-
-            if path is None:
-                return (type(self), cloudpickle.dumps(self))
-
-            with open(path / "_metadata", "wb") as file:
-                cloudpickle.dump(type(self), file)
-            with open(path / "_obj", "wb") as file:
-                cloudpickle.dump(self, file)
-
-        elif serialization_format == "pickle":
-            if path is None:
-                return (type(self), pickle.dumps(self))
-
-            with open(path / "_metadata", "wb") as file:
-                pickle.dump(type(self), file)
-            with open(path / "_obj", "wb") as file:
-                pickle.dump(self, file)
-
-        shutil.make_archive(base_name=path, format="zip", root_dir=path)
-        shutil.rmtree(path)
-        return ZipFile(path.with_name(f"{path.stem}.zip"))
+        path.mkdir()
+        _write_metadata(path, type(self), serialization_format)
+        _write_object(path, self, serialization_format)
+        return _finalize_bundle(path)
 
     @classmethod
     def load_from_serial(cls, serial):
