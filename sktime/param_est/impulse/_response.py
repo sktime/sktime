@@ -356,7 +356,7 @@ class ImpulseResponseFunction(BaseParamFitter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("statsmodels", severity="none"):
             from sktime.datasets import load_airline

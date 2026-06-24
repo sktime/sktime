@@ -3,11 +3,12 @@
 
 import functools
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.forecasting.base.adapters._neuralforecast import (
     _SUPPORTED_LOCAL_SCALAR_TYPES,
     _NeuralForecastAdapter,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 

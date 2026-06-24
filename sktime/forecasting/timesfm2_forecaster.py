@@ -23,10 +23,10 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.singleton import _multiton
 
 

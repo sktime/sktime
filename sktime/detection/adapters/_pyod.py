@@ -3,10 +3,10 @@
 """Implements outlier detection from pyOD."""
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 
 from sktime.detection.base import BaseDetector
-from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
