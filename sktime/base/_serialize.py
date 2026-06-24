@@ -56,6 +56,15 @@ class _TransformersArtifactBackend(_NativeArtifactBackend):
             "class": f"{cls.__module__}.{cls.__qualname__}",
         }
 
+    def load(self, path, record, *, estimator, name):
+        """Load a transformers model using from_pretrained."""
+        import importlib
+
+        module_name, class_name = record["class"].rsplit(".", 1)
+        module = importlib.import_module(module_name)
+        cls = getattr(module, class_name)
+        return cls.from_pretrained(path)
+
 
 _NATIVE_ARTIFACT_BACKENDS = [
     _TransformersArtifactBackend(),
@@ -71,6 +80,17 @@ def _get_native_artifact_backend(obj, *, name):
     raise TypeError(
         f"No native serialization backend is available for artifact {name!r} "
         f"of type {type(obj)!r}."
+    )
+
+
+def _get_native_artifact_backend_by_name(backend_name):
+    """Return native artifact backend by backend name."""
+    for backend in _NATIVE_ARTIFACT_BACKENDS:
+        if backend.backend == backend_name:
+            return backend
+
+    raise ValueError(
+        f"No native artifact backend is available for backend {backend_name!r}."
     )
 
 
@@ -140,6 +160,28 @@ class _SerializationMixin:
                 store.dump(name, artifact, estimator=self)
 
         store.write_index()
+
+    def _restore_native_artifacts(self, path):
+        """Restore native artifacts from an extracted save bundle."""
+        import json
+
+        index_path = path / "_artifacts" / "index.json"
+        if not index_path.exists():
+            return
+
+        with open(index_path, encoding="utf-8") as file:
+            index = json.load(file)
+
+        for name, record in index.items():
+            backend = _get_native_artifact_backend_by_name(record["backend"])
+            artifact_path = path / "_artifacts" / record["path"]
+            artifact = backend.load(
+                artifact_path,
+                record,
+                estimator=self,
+                name=name,
+            )
+            setattr(self, name, artifact)
 
     def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
@@ -254,10 +296,20 @@ class _SerializationMixin:
         deserialized self resulting in output at ``path``, of ``cls.save(path)``
         """
         import pickle
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
         from zipfile import ZipFile
 
-        with ZipFile(serial, "r") as file:
-            return pickle.loads(file.open("_obj").read())
+        with TemporaryDirectory() as tmpdir:
+            with ZipFile(serial, "r") as file:
+                file.extractall(tmpdir)
+
+            path = Path(tmpdir)
+            with open(path / "_obj", "rb") as file:
+                obj = pickle.load(file)
+
+            obj._restore_native_artifacts(path)
+            return obj
 
 
 def load(serial):
