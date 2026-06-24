@@ -16,72 +16,62 @@ SERIALIZATION_FORMATS = {
 }
 
 
-def _check_serialization_format(serialization_format):
-    """Validate serialization format and check soft dependencies."""
-    from skbase.utils.dependencies import _check_soft_dependencies
+class _NativeArtifactBackend:
+    """Base strategy for native artifact serialization."""
 
-    if serialization_format not in SERIALIZATION_FORMATS:
-        raise ValueError(
-            f"The provided `serialization_format`='{serialization_format}' "
-            "is not yet supported. The possible formats are: "
-            f"{SERIALIZATION_FORMATS}."
+    backend = None
+
+    def supports(self, obj):
+        """Return whether backend supports the object."""
+        raise NotImplementedError
+
+    def dump(self, obj, path, *, estimator, name):
+        """Dump object to path and return artifact metadata."""
+        raise NotImplementedError
+
+    def load(self, path, record, *, estimator, name):
+        """Load object from path and artifact metadata."""
+        raise NotImplementedError
+
+
+class _TransformersArtifactBackend(_NativeArtifactBackend):
+    """Native artifact backend for transformers models."""
+
+    backend = "transformers"
+
+    def supports(self, obj):
+        """Return whether object looks like a transformers PreTrainedModel."""
+        return any(
+            cls.__name__ == "PreTrainedModel"
+            and cls.__module__.startswith("transformers")
+            for cls in type(obj).__mro__
         )
 
-    if serialization_format == "cloudpickle":
-        _check_soft_dependencies("cloudpickle", severity="error")
+    def dump(self, obj, path, *, estimator, name):
+        """Dump a transformers model using save_pretrained."""
+        obj.save_pretrained(path, safe_serialization=True)
+        cls = type(obj)
+        return {
+            "backend": self.backend,
+            "class": f"{cls.__module__}.{cls.__qualname__}",
+        }
 
 
-def _validate_save_path(path):
-    """Validate and coerce save path."""
-    from pathlib import Path
-
-    if path is None:
-        return None
-
-    if not isinstance(path, (str, Path)):
-        raise TypeError(
-            "`path` is expected to either be a string or a Path object "
-            f"but found of type:{type(path)}."
-        )
-
-    return Path(path) if isinstance(path, str) else path
+_NATIVE_ARTIFACT_BACKENDS = [
+    _TransformersArtifactBackend(),
+]
 
 
-def _serialize_to_memory(obj, serialization_format):
-    """Serialize object to an in-memory byte representation."""
-    if serialization_format == "cloudpickle":
-        import cloudpickle
+def _get_native_artifact_backend(obj, *, name):
+    """Return native artifact backend for object."""
+    for backend in _NATIVE_ARTIFACT_BACKENDS:
+        if backend.supports(obj):
+            return backend
 
-        return cloudpickle.dumps(obj)
-
-    import pickle
-
-    return pickle.dumps(obj)
-
-
-def _dump_pickle(obj, path, serialization_format):
-    """Serialize object to file using the selected pickle implementation."""
-    if serialization_format == "cloudpickle":
-        import cloudpickle
-
-        with open(path, "wb") as file:
-            cloudpickle.dump(obj, file)
-        return
-
-    import pickle
-
-    with open(path, "wb") as file:
-        pickle.dump(obj, file)
-
-
-def _write_metadata(path, cls, serialization_format):
-    """Write estimator class metadata to bundle."""
-    _dump_pickle(cls, path / "_metadata", serialization_format)
-
-
-def _write_object(path, obj, serialization_format):
-    """Write serialized estimator object to bundle."""
-    _dump_pickle(obj, path / "_obj", serialization_format)
+    raise TypeError(
+        f"No native serialization backend is available for artifact {name!r} "
+        f"of type {type(obj)!r}."
+    )
 
 
 class _NativeArtifactStore:
@@ -93,45 +83,28 @@ class _NativeArtifactStore:
 
     def dump(self, name, obj, *, estimator):
         """Dump a native artifact to the store."""
-        raise NotImplementedError(
-            "Native artifact serialization is not implemented yet. "
-            f"Cannot serialize artifact {name!r} of type {type(obj)}."
+        artifact_path = self.artifact_root / name
+        artifact_path.mkdir(parents=True)
+        backend = _get_native_artifact_backend(obj, name=name)
+        record = backend.dump(
+            obj,
+            artifact_path,
+            estimator=estimator,
+            name=name,
         )
+        self.index[name] = {
+            **record,
+            "path": name,
+        }
+        return self.index[name]
 
     def write_index(self):
         """Write native artifact index."""
         import json
 
-        self.artifact_root.mkdir()
+        self.artifact_root.mkdir(exist_ok=True)
         with open(self.artifact_root / "index.json", "w", encoding="utf-8") as file:
             json.dump(self.index, file, indent=2)
-
-
-def _write_native_artifacts(path, obj):
-    """Write native artifacts for an object if it opts into them."""
-    native_artifacts = obj.get_tag("serialization:native_artifacts", ())
-
-    if not native_artifacts:
-        return
-
-    store = _NativeArtifactStore(path / "_artifacts")
-
-    for name in native_artifacts:
-        artifact = getattr(obj, name, None)
-        if artifact is not None:
-            store.dump(name, artifact, estimator=obj)
-
-    store.write_index()
-
-
-def _finalize_bundle(path):
-    """Zip bundle path and remove staging directory."""
-    import shutil
-    from zipfile import ZipFile
-
-    shutil.make_archive(base_name=path, format="zip", root_dir=path)
-    shutil.rmtree(path)
-    return ZipFile(path.with_name(f"{path.stem}.zip"))
 
 
 class _SerializationMixin:
@@ -150,6 +123,22 @@ class _SerializationMixin:
     def __setstate__(self, state):
         """Set object state after deserialization."""
         self.__dict__.update(state)
+
+    def _write_native_artifacts(self, path):
+        """Write native artifacts for self if it opts into them."""
+        native_artifacts = self.get_tag("serialization:native_artifacts", ())
+
+        if not native_artifacts:
+            return
+
+        store = _NativeArtifactStore(path / "_artifacts")
+
+        for name in native_artifacts:
+            artifact = getattr(self, name, None)
+            if artifact is not None:
+                store.dump(name, artifact, estimator=self)
+
+        store.write_index()
 
     def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
@@ -186,17 +175,54 @@ class _SerializationMixin:
         if ``path`` is None - in-memory serialized self
         if ``path`` is file location - ZipFile with reference to the file
         """
-        _check_serialization_format(serialization_format)
-        path = _validate_save_path(path)
+        import pickle
+        import shutil
+        from pathlib import Path
+        from zipfile import ZipFile
 
-        if path is None:
-            return (type(self), _serialize_to_memory(self, serialization_format))
+        from skbase.utils.dependencies import _check_soft_dependencies
 
-        path.mkdir()
-        _write_metadata(path, type(self), serialization_format)
-        _write_object(path, self, serialization_format)
-        _write_native_artifacts(path, self)
-        return _finalize_bundle(path)
+        if serialization_format not in SERIALIZATION_FORMATS:
+            raise ValueError(
+                f"The provided `serialization_format`='{serialization_format}' "
+                "is not yet supported. The possible formats are: "
+                f"{SERIALIZATION_FORMATS}."
+            )
+
+        if path is not None and not isinstance(path, (str, Path)):
+            raise TypeError(
+                "`path` is expected to either be a string or a Path object "
+                f"but found of type:{type(path)}."
+            )
+        if path is not None:
+            path = Path(path) if isinstance(path, str) else path
+            path.mkdir()
+
+        if serialization_format == "cloudpickle":
+            _check_soft_dependencies("cloudpickle", severity="error")
+            import cloudpickle
+
+            if path is None:
+                return (type(self), cloudpickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                cloudpickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                cloudpickle.dump(self, file)
+
+        elif serialization_format == "pickle":
+            if path is None:
+                return (type(self), pickle.dumps(self))
+
+            with open(path / "_metadata", "wb") as file:
+                pickle.dump(type(self), file)
+            with open(path / "_obj", "wb") as file:
+                pickle.dump(self, file)
+
+        self._write_native_artifacts(path)
+        shutil.make_archive(base_name=path, format="zip", root_dir=path)
+        shutil.rmtree(path)
+        return ZipFile(path.with_name(f"{path.stem}.zip"))
 
     @classmethod
     def load_from_serial(cls, serial):
