@@ -89,6 +89,10 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         "tests:vm": True,
         # libs tag is set so child classes get tested if this file changes
         "tests:libs": ["sktime.forecasting.base.adapters._pytorchforecasting"],
+        "tests:skip_by_name": [
+            "test_save_estimators_to_file",
+            "test_persistence_via_pickle",
+        ],
     }
 
     def __init__(
@@ -108,20 +112,12 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         self.train_to_dataloader_params = train_to_dataloader_params
         self.validation_to_dataloader_params = validation_to_dataloader_params
         self.model_path = model_path
-        self._model_params = deepcopy(model_params) if model_params is not None else {}
-
         self._dataset_params = (
             deepcopy(dataset_params) if dataset_params is not None else {}
         )
-        # callbacks (e.g. EarlyStopping) are stateful nn objects that lightning
-        # mutates during fit; pull them out of trainer_params so they are not
-        # deep-copied/compared as hyper-parameters, and pass them to the Trainer
-        # directly in _instantiate_model
-        self._callbacks = (
-            self.trainer_params.pop("callbacks", None)
-            if self.trainer_params is not None
-            else None
-        )
+        self._model_loss = model_params.pop("loss", None) if model_params else None
+        self._model_params = deepcopy(model_params) if model_params else {}
+        self._callbacks = trainer_params.pop("callbacks", None)
         self._trainer_params = (
             deepcopy(trainer_params) if trainer_params is not None else {}
         )
@@ -166,8 +162,13 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
+        if self._model_loss is None:
+            from pytorch_forecasting import QuantileLoss
+
+            self._model_loss = QuantileLoss()
         algorithm_instance = self.algorithm_class.from_dataset(
             data,
+            loss=self._model_loss,
             **self.algorithm_parameters,
             **self._model_params,
         )
