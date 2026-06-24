@@ -87,6 +87,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "requires-fh-in-fit": False,
+        "serialization:skip": ("model",),
         "tests:vm": True,
     }
 
@@ -107,16 +108,6 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.prediction_type = prediction_type
         self.model = None
         super().__init__()
-
-    def __getstate__(self):
-        """Get state for pickling."""
-        state = self.__dict__.copy()
-        state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Set state for unpickling."""
-        self.__dict__.update(state)
 
     def __post_init__(self):
         """Post-initialization setup."""
@@ -166,7 +157,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         return self
 
     def _run(self, pred_len):
-        if self.model is None:
+        if not hasattr(self, "model") or self.model is None:
             self.model = self._load_model()
         self.model.eval()
         past = torch.tensor(
