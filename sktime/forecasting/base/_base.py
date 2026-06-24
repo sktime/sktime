@@ -119,6 +119,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "capability:categorical_in_X": True,
         # does the forecaster natively support categorical in exogenous X?
         "capability:unequal_length": True,  # can forecaster handle unequal length TS?
+        "capability:update": False,
     }
 
     # configs and default config values
@@ -136,14 +137,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     }
 
     _config_doc = {
+        # enables legacy behaviour of storing data in fit - self._X, self._y
         "remember_data": """
-        remember_data : bool, default=True
+        remember_data : bool, default=False
             whether self._X and self._y are stored in fit, and updated
             in update. If True, self._X and self._y are stored and updated.
             If False, self._X and self._y are not stored and updated.
-            This reduces serialization size when using save,
-            but the update will default to "do nothing" rather than
-            "refit to all data seen".
+            This reduces serialization size when using save.
+            For refit-on-update behaviour without caching, use ``RefitForecaster``
+            from ``sktime.forecasting.stream``.
         """,
     }
 
@@ -177,7 +179,17 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         * dynamic tag setting
         * any soft dependency imports in the constructor
         """
-        pass
+        if not self.get_config()["remember_data"]:
+            warn(
+                "BaseForecaster no longer stores historical _X/_y during fit/update "
+                "by default (i.e., remember_data=False). If you require the legacy "
+                "behavior where _X and _y are cached, set config with "
+                "`set_config(remember_data=True)`. For efficient stateless updating, "
+                "consider using RefitForecaster from `sktime.forecasting.stream` "
+                "instead.",
+                UserWarning,
+                stacklevel=2,
+            )
 
     @classmethod
     def _get_clone_plugins(cls):
@@ -2098,6 +2110,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
             Exogeneous time series
         """
+        if y is not None:
+            y_for_cutoff = y.X_multiindex if isinstance(y, VectorizedDF) else y
+            self._set_cutoff_from_y(y_for_cutoff)
+
         if y is not None and self.get_config()["remember_data"]:
             # unwrap y if VectorizedDF
             if isinstance(y, VectorizedDF):
@@ -2107,9 +2123,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 self._y = y
             else:
                 self._y = update_data(self._y, y)
-
-            # set cutoff to the end of the observation horizon
-            self._set_cutoff_from_y(y)
 
         if X is not None and self.get_config()["remember_data"]:
             # unwrap X if VectorizedDF
@@ -2167,6 +2180,41 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
         self._cutoff = cutoff_idx
+
+    def _get_training_y(self):
+        """Return series for predict-time logic.
+
+        Returns ``self._y`` when ``remember_data=True``, otherwise
+        ``self._context_y_`` if set by the subclass in ``_fit``.
+        """
+        if self.get_config()["remember_data"]:
+            return self._y
+        return getattr(self, "_context_y_", None)
+
+    def _get_training_X(self):
+        """Return exogenous series for predict-time logic.
+
+        Returns ``self._X`` when ``remember_data=True``, otherwise
+        ``self._context_X_`` if set by the subclass in ``_fit``.
+        """
+        if self.get_config()["remember_data"]:
+            return self._X
+        return getattr(self, "_context_X_", None)
+
+    def __getstate__(self):
+        """Strip implicit data cache from serialized state when not remembering."""
+        state = self.__dict__.copy()
+        if not self.get_config()["remember_data"]:
+            state.pop("_X", None)
+            state.pop("_y", None)
+        return state
+
+    def __setstate__(self, state):
+        """Restore state after unpickling."""
+        self.__dict__.update(state)
+        if not self.get_config().get("remember_data", False):
+            setattr(self, "_y", None)
+            setattr(self, "_X", None)
 
     @property
     def fh(self):
@@ -2529,6 +2577,16 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._y_mtype_last_seen = mtype_last_seen
             self._y_metadata = y_metadata
             self._converter_store_y = _converter_store_y
+
+        elif update_params:
+            warn(
+                f"{self.__class__.__name__} has capability:update=False and does not "
+                f"implement a custom ``_update`` method. New data is not incorporated "
+                f"into the model. Wrap with ``RefitForecaster`` from "
+                f"``sktime.forecasting.stream`` to refit on all data seen, or set "
+                f"``remember_data=True`` to restore legacy refit-on-update behaviour.",
+                obj=self,
+            )
 
         # if update_params=False, and there are no components, do nothing
         # if update_params=False, and there are components, we update cutoffs
