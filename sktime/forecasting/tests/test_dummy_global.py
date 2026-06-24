@@ -271,7 +271,7 @@ class TestDummyGlobalForecaster:
     def test_clone_composite_preserves_inner_pretrained(self):
         """Test clone preserves pretrained state in composite forecasters."""
         from sktime.forecasting.compose import TransformedTargetForecaster
-        from sktime.transformations.series.detrend import Detrender
+        from sktime.transformations.detrend import Detrender
 
         y_panel = _make_hierarchical(
             hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10, n_columns=1

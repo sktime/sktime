@@ -213,7 +213,8 @@ def _run_test_for_class(
 
         If multiple reasons are present, the first one in the above list is returned.
     """
-    from sktime.utils.dependencies import _check_estimator_deps
+    from skbase.utils.dependencies import _check_estimator_deps
+
     from sktime.utils.git_diff import (
         get_packages_with_changed_specs,
         is_class_changed,
@@ -422,10 +423,10 @@ def run_test_module_changed(module, only_changed_modules=None):
 
 
 @lru_cache
-def _get_all_changed_classes(vm=False):
+def _get_all_changed_classes(vm=False, r=False):
     """Get all sktime object classes that have changed compared to the main branch.
 
-    Returns a tuple of string class names of object classes that have changed.
+    Returns a list of string class names of object classes that have changed.
 
     Parameters
     ----------
@@ -433,10 +434,15 @@ def _get_all_changed_classes(vm=False):
         whether to run estimator in its own virtual machine.
         Queries the tag ``"tests:vm"`` in the class tags.
         If ``vm`` is True, only classes with tag ``"tests:vm"=True`` are returned.
+    r : bool, optional, default=False
+        whether to return estimators with an R interface, or estimators without.
+        If ``r`` is True, only classes with tag ``"r_dependencies"`` are returned.
+        If ``r`` is False, only classes without tag ``"r_dependencies"`` (i.e.,
+        default value ``None``) are returned.
 
     Returns
     -------
-    tuple of strings of class names : object classes that have changed
+    list of strings of class names : object classes that have changed
     """
     from sktime.registry import all_estimators
 
@@ -445,7 +451,18 @@ def _get_all_changed_classes(vm=False):
         run, _ = _run_test_for_class(cls, ignore_deps=True, only_vm_required=vm)
         return run
 
-    names = [name for name, est in all_estimators() if _changed_class(est)]
+    def _is_r_class(cls):
+        """Check if a class is an R interface class."""
+        if not isclass(cls) or not hasattr(cls, "get_class_tags"):
+            return False
+        r_deps = cls.get_class_tag("r_dependencies", None)
+        return r_deps is not None
+
+    cc = [(name, est) for name, est in all_estimators() if _changed_class(est)]
+    # filter by r dependencies tag
+    cc = [(name, est) for name, est in cc if _is_r_class(est) == r]
+    # return only the name strings
+    names = [name for name, _ in cc]
     return names
 
 
@@ -459,7 +476,7 @@ def _get_all_vm_classes():
 
     Returns
     -------
-    tuple of strings of class names : object classes that require their own VM
+    list of strings of class names : object classes that require their own VM
     """
     from sktime.registry import all_estimators
 

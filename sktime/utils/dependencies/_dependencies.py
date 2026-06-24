@@ -15,6 +15,7 @@ __all__ = [
     "_check_mlflow_dependencies",
     "_check_soft_dependencies",
     "_raise_at_severity",
+    "_get_lowest_compatible_python_version",
 ]
 
 
@@ -95,19 +96,6 @@ def _check_mlflow_dependencies(msg=None, severity="error"):
     return _check_soft_dependencies(MLFLOW_DEPS, msg=msg, severity=severity)
 
 
-def _get_lowest_bound(spec):
-    """Extract the lowest version allowed by a specifier string."""
-    spec_set = SpecifierSet(spec)
-
-    lower_bounds = []
-
-    for s in spec_set:
-        if s.operator in {">=", "==", ">"}:
-            lower_bounds.append(Version(s.version))
-
-    return max(lower_bounds) if lower_bounds else None
-
-
 def _get_lowest_compatible_python_version(estimator):
     """Get the lowest Python version compatible with an estimator and sktime.
 
@@ -120,13 +108,30 @@ def _get_lowest_compatible_python_version(estimator):
     str
         Lowest compatible Python version, e.g. "3.11".
     """
-    spec = estimator.get_class_tag("python_version")
-
+    estimator_spec = estimator.get_class_tag("python_version")
     sktime_spec = metadata("sktime")["Requires-Python"]
 
-    sktime_lower = _get_lowest_bound(sktime_spec)
-    estimator_lower = _get_lowest_bound(spec) if spec is not None else None
+    estimator_spec_set = (
+        SpecifierSet(estimator_spec) if estimator_spec is not None else SpecifierSet()
+    )
+    sktime_spec_set = SpecifierSet(sktime_spec)
 
-    candidates = [v for v in [sktime_lower, estimator_lower] if v is not None]
+    major = 3
+    minor = 0
 
-    return str(max(candidates))
+    while True:
+        version = Version(f"{major}.{minor}")
+
+        if version in sktime_spec_set and version in estimator_spec_set:
+            return str(version)
+
+        minor += 1
+
+        # Safety guard against infinite loops if constraints are unsatisfiable
+        if minor > 100:
+            break
+
+    raise RuntimeError(
+        f"No compatible Python version found for "
+        f"sktime ({sktime_spec}) and estimator ({estimator_spec})."
+    )

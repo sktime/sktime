@@ -5,7 +5,7 @@ __author__ = ["Spinachboul"]
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.forecasting.hf_transformers_forecaster import HFTransformersForecaster
+from sktime.forecasting.hf_transformers import HFTransformersForecaster
 from sktime.tests.test_switch import run_test_for_class
 
 
