@@ -256,6 +256,7 @@ class TimesFM2Forecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pretrain": True,
+        "serialization:native_artifacts": ("model_",),
         "authors": ["rajatsen91", "siriuz42", "geetu040"],
         # rajatsen91, siriuz42 for google-research/timesfm
         "maintainers": ["geetu040"],
