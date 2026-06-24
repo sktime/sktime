@@ -318,6 +318,7 @@ class ChronosForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "serialization:skip": ("model_pipeline",),
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -457,17 +458,6 @@ class ChronosForecaster(BaseForecaster):
             "use_source_package": use_source_package,
         }
         return str(sorted(kwargs_plus_model_path.items()))
-
-    def __getstate__(self):
-        """Return state for pickling, handling unpickleable model pipeline."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_pipeline"):
-            state["model_pipeline"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from the unpickled state dictionary."""
-        self.__dict__.update(state)
 
     def _ensure_model_pipeline_loaded(self):
         """Ensure model pipeline is loaded, recreating if needed after unpickling."""
