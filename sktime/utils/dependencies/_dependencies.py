@@ -116,11 +116,20 @@ def _get_lowest_compatible_python_version(estimator):
     )
     sktime_spec_set = SpecifierSet(sktime_spec)
 
-    for minor in range(0, 20):
-        version = Version(f"3.{minor}")
+    major = 3
+    minor = 0
+
+    while True:
+        version = Version(f"{major}.{minor}")
 
         if version in sktime_spec_set and version in estimator_spec_set:
             return str(version)
+
+        minor += 1
+
+        # Safety guard against infinite loops if constraints are unsatisfiable
+        if minor > 100:
+            break
 
     raise RuntimeError(
         f"No compatible Python version found for "
