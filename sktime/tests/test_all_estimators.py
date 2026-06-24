@@ -389,7 +389,6 @@ class BaseFixtureGenerator:
 
         # complete list of all non-state-changing methods
         nsc_list = NON_STATE_CHANGING_METHODS
-        # breakpoint()
 
         # subset to the methods that x has implemented
         nsc_list = [x for x in nsc_list if _has_capability(obj, x)]
