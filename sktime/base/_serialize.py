@@ -21,6 +21,28 @@ class _NativeArtifactBackend:
 
     backend = None
 
+    def _get_class(self, record):
+        """Return class from artifact record."""
+        import importlib
+
+        class_path = record["class"]
+        parts = class_path.split(".")
+
+        for i in range(len(parts) - 1, 0, -1):
+            module_name = ".".join(parts[:i])
+            qualname = parts[i:]
+
+            try:
+                obj = importlib.import_module(module_name)
+            except ModuleNotFoundError:
+                continue
+
+            for attr in qualname:
+                obj = getattr(obj, attr)
+            return obj
+
+        raise ModuleNotFoundError(f"Could not import class {class_path!r}.")
+
     def supports(self, obj):
         """Return whether backend supports the object."""
         raise NotImplementedError
@@ -50,11 +72,7 @@ class _TransformersArtifactBackend(_NativeArtifactBackend):
     def dump(self, obj, path, *, estimator, name):
         """Dump a transformers model using save_pretrained."""
         obj.save_pretrained(path, safe_serialization=True)
-        cls = type(obj)
-        record = {
-            "backend": self.backend,
-            "class": f"{cls.__module__}.{cls.__qualname__}",
-        }
+        meta = {}
 
         try:
             device = obj.device
@@ -62,20 +80,18 @@ class _TransformersArtifactBackend(_NativeArtifactBackend):
             device = None
 
         if device is not None:
-            record["device"] = str(device)
+            meta["device"] = str(device)
 
-        return record
+        return meta
 
     def load(self, path, record, *, estimator, name):
         """Load a transformers model using from_pretrained."""
-        import importlib
         from warnings import warn
 
-        module_name, class_name = record["class"].rsplit(".", 1)
-        module = importlib.import_module(module_name)
-        cls = getattr(module, class_name)
+        cls = self._get_class(record)
 
-        device = record.get("device")
+        meta = record["meta"]
+        device = meta.get("device")
         if device is None:
             return cls.from_pretrained(path)
 
@@ -130,15 +146,18 @@ class _NativeArtifactStore:
         artifact_path = self.artifact_root / name
         artifact_path.mkdir(parents=True)
         backend = _get_native_artifact_backend(obj, name=name)
-        record = backend.dump(
+        meta = backend.dump(
             obj,
             artifact_path,
             estimator=estimator,
             name=name,
         )
+        cls = type(obj)
         self.index[name] = {
-            **record,
+            "backend": backend.backend,
+            "class": f"{cls.__module__}.{cls.__qualname__}",
             "path": name,
+            "meta": meta,
         }
         return self.index[name]
 
