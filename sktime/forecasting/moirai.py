@@ -236,6 +236,11 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
+        self._context_y_ = y
+        self._context_X_ = X
+
+        return self
+
     def _predict(self, fh, X=None):
         if self.deterministic:
             import torch
@@ -253,10 +258,12 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 "The MORAI adapter is not supporting insample predictions."
             )
 
-        _y = self._y.copy()
+        _y = self._get_training_y()
+        _y = _y.copy()
         _X = None
-        if self._X is not None:
-            _X = self._X.copy()
+        training_X = self._get_training_X()
+        if training_X is not None:
+            _X = training_X.copy()
 
         # Zero shot case with X and fit data as context
         _use_fit_data_as_context = X is not None
