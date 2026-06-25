@@ -123,6 +123,7 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
         import inspect
 
         init_params = {}
+        tuple_params = []
         signature = inspect.signature(type(obj).__init__)
 
         for name, param in signature.parameters.items():
@@ -136,9 +137,12 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
                 continue
 
             value = getattr(obj, name)
+            if isinstance(value, tuple):
+                tuple_params.append(name)
+
             init_params[name] = self._coerce_constructor_param(value)
 
-        return init_params
+        return init_params, tuple_params
 
     def _get_device(self, obj):
         """Return device for a torch module if it can be inferred."""
@@ -156,9 +160,13 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
         import torch
 
         torch.save(obj.state_dict(), path / "state_dict.pt")
+        init_params, tuple_params = self._get_constructor_params(obj)
         meta = {
-            "init_params": self._get_constructor_params(obj),
+            "init_params": init_params,
         }
+
+        if tuple_params:
+            meta["tuple_params"] = tuple_params
 
         device = self._get_device(obj)
         if device is not None:
@@ -176,6 +184,9 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
 
         meta = record["meta"]
         init_params = meta.get("init_params", {})
+        for param in meta.get("tuple_params", ()):
+            init_params[param] = tuple(init_params[param])
+
         try:
             obj = cls(**init_params)
         except Exception as exc:
@@ -379,7 +390,7 @@ class _SerializationMixin:
             path = Path(path) if isinstance(path, str) else path
             path.mkdir()
 
-        removed_attrs = self._remove_attrs_from_pickle()
+        removed_attrs = self._remove_attrs_from_pickle() if path is not None else {}
 
         if serialization_format == "cloudpickle":
             _check_soft_dependencies("cloudpickle", severity="error")
