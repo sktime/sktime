@@ -271,20 +271,17 @@ class _NativeArtifactStore:
 class _SerializationMixin:
     """Mixin containing serialization API for sktime base objects."""
 
-    def __getstate__(self):
-        """Get object state for serialization."""
-        state = self.__dict__.copy()
+    def _remove_attrs_from_pickle(self):
+        """Temporarily remove attributes that are stored outside _obj."""
         skip = self.get_tag("serialization:skip", ())
         native_artifacts = self.get_tag("serialization:native_artifacts", ())
+        removed_attrs = {}
 
         for name in (*skip, *native_artifacts):
-            state.pop(name, None)
+            if name in self.__dict__:
+                removed_attrs[name] = self.__dict__.pop(name)
 
-        return state
-
-    def __setstate__(self, state):
-        """Set object state after deserialization."""
-        self.__dict__.update(state)
+        return removed_attrs
 
     def _write_native_artifacts(self, path):
         """Write native artifacts for self if it opts into them."""
@@ -382,6 +379,8 @@ class _SerializationMixin:
             path = Path(path) if isinstance(path, str) else path
             path.mkdir()
 
+        removed_attrs = self._remove_attrs_from_pickle()
+
         if serialization_format == "cloudpickle":
             _check_soft_dependencies("cloudpickle", severity="error")
             import cloudpickle
@@ -403,6 +402,7 @@ class _SerializationMixin:
             with open(path / "_obj", "wb") as file:
                 pickle.dump(self, file)
 
+        self.__dict__.update(removed_attrs)
         self._write_native_artifacts(path)
         shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
