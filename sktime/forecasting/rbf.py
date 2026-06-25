@@ -206,7 +206,6 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         fh : int
             Prediction length (output dimension for direct mode, ignored for AR).
         """
-        fh = int(fh)
         output_size = fh if self.mode == "direct" else 1
 
         return RBFNetwork(
@@ -255,7 +254,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             # AR mode has no fh constraint (iterates step-by-step)
             if self.mode == "direct" and fh is not None:
                 fh_rel = fh.to_relative(self.cutoff)
-                max_fh = int(max(list(fh_rel)))
+                max_fh = max(list(fh_rel))
                 if max_fh > self.network.pred_len:
                     raise ValueError(
                         f"max(fh)={max_fh} exceeds the network's output "

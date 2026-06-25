@@ -151,7 +151,6 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.linear import LTSFLinearNetwork
 
-        fh = int(fh)
         return LTSFLinearNetwork(
             self.seq_len,
             fh,
@@ -216,7 +215,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
 
         if fh is not None:
             if hasattr(fh, "__iter__"):
-                fh = int(list(fh)[-1])
+                fh = list(fh)[-1]
             else:
                 fh = int(fh)
             if fh != network_fh:
@@ -260,7 +259,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
 
         # Validate fh against pretrained network's output dimension
         if hasattr(self, "network") and self.network is not None:
-            max_fh = int(max(list(fh)))
+            max_fh = max(list(fh))
             if max_fh > self.network.pred_len:
                 raise ValueError(
                     f"max(fh)={max_fh} exceeds the network's output dimension "
@@ -272,7 +271,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
 
         # Only build network if not already pretrained
         if not hasattr(self, "network") or self.network is None:
-            self.network = self._build_network(int(list(fh)[-1]))
+            self.network = self._build_network(list(fh)[-1])
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -503,7 +502,6 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.linear import LTSFDLinearNetwork
 
-        fh = int(fh)
         return LTSFDLinearNetwork(
             self.seq_len,
             fh,
@@ -698,7 +696,6 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.linear import LTSFNLinearNetwork
 
-        fh = int(fh)
         return LTSFNLinearNetwork(
             self.seq_len,
             fh,
@@ -763,7 +760,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
 
         if fh is not None:
             if hasattr(fh, "__iter__"):
-                fh = int(list(fh)[-1])
+                fh = list(fh)[-1]
             else:
                 fh = int(fh)
             if fh != network_fh:
@@ -807,7 +804,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
 
         # Validate fh against pretrained network's output dimension
         if hasattr(self, "network") and self.network is not None:
-            max_fh = int(max(list(fh)))
+            max_fh = max(list(fh))
             if max_fh > self.network.pred_len:
                 raise ValueError(
                     f"max(fh)={max_fh} exceeds the network's output dimension "
@@ -819,7 +816,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
 
         # Only build network if not already pretrained
         if not hasattr(self, "network") or self.network is None:
-            self.network = self._build_network(int(list(fh)[-1]))
+            self.network = self._build_network(list(fh)[-1])
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
@@ -1175,7 +1172,6 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.transformers import LTSFTransformerNetwork
 
-        fh = int(fh)
         num_features = self._y.shape[-1]
         self.enc_in = num_features
         self.dec_in = num_features
