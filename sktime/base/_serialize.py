@@ -282,13 +282,21 @@ class _NativeArtifactStore:
 class _SerializationMixin:
     """Mixin containing serialization API for sktime base objects."""
 
-    def _remove_attrs_from_pickle(self):
+    def _remove_attrs_from_pickle(self, path):
         """Temporarily remove attributes that are stored outside _obj."""
+        # TODO: update this when native memory serialization is implemented
         skip = self.get_tag("serialization:skip", ())
         native_artifacts = self.get_tag("serialization:native_artifacts", ())
         removed_attrs = {}
 
-        for name in (*skip, *native_artifacts):
+        for name in skip:
+            if name in self.__dict__:
+                removed_attrs[name] = self.__dict__.pop(name)
+
+        if path is not None:
+            return removed_attrs
+
+        for name in native_artifacts:
             if name in self.__dict__:
                 removed_attrs[name] = self.__dict__.pop(name)
 
@@ -390,7 +398,7 @@ class _SerializationMixin:
             path = Path(path) if isinstance(path, str) else path
             path.mkdir()
 
-        removed_attrs = self._remove_attrs_from_pickle() if path is not None else {}
+        removed_attrs = self._remove_attrs_from_pickle(path)
 
         if serialization_format == "cloudpickle":
             _check_soft_dependencies("cloudpickle", severity="error")
