@@ -227,6 +227,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         # Define the SCINet-based network
         from sktime.networks.scinet import SCINet
 
+        fh = int(fh)
         return SCINet(
             seq_len=self.seq_len,
             input_dim=self._y.shape[-1],

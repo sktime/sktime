@@ -241,6 +241,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.convtimenet.forecaster._convtimenet import Model
 
+        fh = int(fh)
         # Check if context_window needs adjustment
         # Formula: len(y) - context_window - fh + 1 must be > 0 for training samples
         dataset_len = self._y_len - self.context_window - fh + 1

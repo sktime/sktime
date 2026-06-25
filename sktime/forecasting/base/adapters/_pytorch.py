@@ -99,7 +99,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
         # Validate fh against pretrained network's output dimension
         if hasattr(self, "network") and self.network is not None:
-            max_fh = max(list(fh))
+            max_fh = int(max(list(fh)))
             if max_fh > self.network.pred_len:
                 raise ValueError(
                     f"max(fh)={max_fh} exceeds the network's output dimension "
@@ -110,7 +110,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                 )
 
         if not hasattr(self, "network") or self.network is None:
-            self.network = self._build_network(list(fh)[-1])
+            self.network = self._build_network(int(list(fh)[-1]))
 
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()

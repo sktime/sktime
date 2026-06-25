@@ -111,19 +111,6 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
 
     backend = "torch"
 
-    def _coerce_constructor_param(self, value):
-        """Coerce constructor parameters to index-compatible values."""
-        if type(value).__module__ == "numpy":
-            return value.item()
-        if isinstance(value, dict):
-            return {
-                key: self._coerce_constructor_param(val) for key, val in value.items()
-            }
-        if isinstance(value, (list, tuple)):
-            return [self._coerce_constructor_param(val) for val in value]
-
-        return value
-
     def _get_constructor_params(self, obj):
         """Get constructor parameters from object attributes."""
         import inspect
@@ -146,7 +133,7 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
             if isinstance(value, tuple):
                 tuple_params.append(name)
 
-            init_params[name] = self._coerce_constructor_param(value)
+            init_params[name] = value
 
         return init_params, tuple_params
 
