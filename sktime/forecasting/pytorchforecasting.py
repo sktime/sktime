@@ -38,6 +38,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
 
     Examples
     --------
@@ -139,8 +141,10 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         model_path: str | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
+        deterministic: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
+        self.deterministic = deterministic
         super().__init__(
             model_params,
             dataset_params,
@@ -216,6 +220,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -237,12 +242,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
         else:
             from lightning.pytorch.callbacks import EarlyStopping
-
-            # from pytorch_forecasting.metrics import QuantileLoss
 
             early_stop_callback = EarlyStopping(
                 monitor="train_loss",
@@ -269,6 +273,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -282,9 +287,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "hidden_size": 4,
                         "lstm_layers": 1,
                         "dropout": 0.1,
-                        # "loss": QuantileLoss(),
-                        # can not pass test_set_params and test_set_params_sklearn
-                        # QuantileLoss() != QuantileLoss()
                         "optimizer": "Adam",
                         # avoid jdb78/pytorch-forecasting#1571 bug in the CI
                         "log_interval": -1,
@@ -294,6 +296,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
 
@@ -411,6 +414,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:unequal_length": False,
+        # "capability:pred_int
     }
 
     def __init__(
