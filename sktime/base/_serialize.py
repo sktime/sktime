@@ -111,36 +111,6 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
 
     backend = "torch"
 
-    def _get_constructor_params(self, obj):
-        """Get constructor parameters from object attributes."""
-        import inspect
-
-        init_params = {}
-        tuple_params = []
-        signature = inspect.signature(type(obj).__init__)
-
-        for name, param in signature.parameters.items():
-            if name == "self" or param.kind in (
-                param.VAR_POSITIONAL,
-                param.VAR_KEYWORD,
-            ):
-                continue
-
-            if not hasattr(obj, name):
-                continue
-
-            value = getattr(obj, name)
-            if isinstance(value, tuple):
-                tuple_params.append(name)
-
-            init_params[name] = value
-
-        return init_params, tuple_params
-
-    def _get_device(self, obj):
-        """Return device for a torch module if it can be inferred."""
-        return str(next(obj.parameters()).device)
-
     def supports(self, obj):
         """Return whether object looks like a torch.nn.Module."""
         return any(
@@ -149,62 +119,29 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
         )
 
     def dump(self, obj, path, *, estimator, name):
-        """Dump a torch module using state_dict."""
+        """Dump a torch module using torch.save."""
         import torch
 
-        torch.save(obj.state_dict(), path / "state_dict.pt")
-        init_params, tuple_params = self._get_constructor_params(obj)
-        meta = {
-            "init_params": init_params,
-        }
-
-        if tuple_params:
-            meta["tuple_params"] = tuple_params
-
-        device = self._get_device(obj)
-        if device is not None:
-            meta["device"] = device
-
-        return meta
+        torch.save(obj, path / "model.pt")
+        return {}
 
     def load(self, path, record, *, estimator, name):
-        """Load a torch module from state_dict."""
+        """Load a torch module using torch.load."""
         from warnings import warn
 
         import torch
 
-        cls = self._get_class(record)
-
-        meta = record["meta"]
-        init_params = meta.get("init_params", {})
-        for param in meta.get("tuple_params", ()):
-            init_params[param] = tuple(init_params[param])
+        model_path = path / "model.pt"
 
         try:
-            obj = cls(**init_params)
-        except Exception as exc:
-            raise TypeError(
-                f"Could not reconstruct native torch artifact {name!r} "
-                f"of class {record['class']!r} from stored constructor "
-                f"parameters {init_params!r}."
-            ) from exc
-
-        state_dict = torch.load(path / "state_dict.pt", map_location="cpu")
-        obj.load_state_dict(state_dict)
-
-        device = meta.get("device")
-        if device is None:
-            return obj
-
-        try:
-            return obj.to(device)
+            return torch.load(model_path, weights_only=False)
         except Exception as exc:
             warn(
-                f"Could not load native artifact {name!r} on saved device "
-                f"{device!r}. Falling back to CPU. Original error: {exc}",
+                f"Could not load native artifact {name!r} on its saved device. "
+                f"Falling back to CPU. Original error: {exc}",
                 stacklevel=2,
             )
-            return obj.to("cpu")
+            return torch.load(model_path, map_location="cpu", weights_only=False)
 
 
 _NATIVE_ARTIFACT_BACKENDS = [
