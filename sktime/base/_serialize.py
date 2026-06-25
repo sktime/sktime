@@ -115,6 +115,12 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
         """Coerce constructor parameters to index-compatible values."""
         if type(value).__module__ == "numpy":
             return value.item()
+        if isinstance(value, dict):
+            return {
+                key: self._coerce_constructor_param(val) for key, val in value.items()
+            }
+        if isinstance(value, (list, tuple)):
+            return [self._coerce_constructor_param(val) for val in value]
 
         return value
 
@@ -287,16 +293,10 @@ class _SerializationMixin:
         # TODO: update this when native memory serialization is implemented
         skip = self.get_tag("serialization:skip", ())
         native_artifacts = self.get_tag("serialization:native_artifacts", ())
+        attrs_to_remove = skip if path is None else (*skip, *native_artifacts)
         removed_attrs = {}
 
-        for name in skip:
-            if name in self.__dict__:
-                removed_attrs[name] = self.__dict__.pop(name)
-
-        if path is not None:
-            return removed_attrs
-
-        for name in native_artifacts:
+        for name in attrs_to_remove:
             if name in self.__dict__:
                 removed_attrs[name] = self.__dict__.pop(name)
 
