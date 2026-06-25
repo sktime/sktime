@@ -30,6 +30,8 @@ _SCTYPE_TO_COLLECTION = {
     **dict.fromkeys(_SPLITTER_SCITYPES, "_cv_splitters"),
 }
 
+logger = logging.getLogger(__name__)
+
 
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
     """Check if estimator is initialised BaseEstimator object."""
@@ -85,6 +87,28 @@ def _coerce_estimator_and_id(estimators, estimator_id=None):
             "estimator must be of a type a dict, list or an initialised "
             f"BaseEstimator object but received {type(estimators)} type."
         )
+
+
+@dataclass
+class FailedExperimentRecord:
+    """Record of a failed task-estimator pair during benchmark execution.
+
+    Parameters
+    ----------
+    task_id : str
+        Identifier of the task that failed.
+    model_id : str
+        Identifier of the estimator that failed.
+    exception_type : str
+        Name of the exception type raised.
+    exception_message : str
+        Message of the exception raised.
+    """
+
+    task_id: str
+    model_id: str
+    exception_type: str
+    exception_message: str
 
 
 @dataclass
@@ -260,6 +284,8 @@ class BaseBenchmark:
         self._datasets = []
         self._cv_splitters = []
         self._metrics = []
+
+        self._failed_experiments: list[FailedExperimentRecord] = []
 
     def add_estimator(
         self,
@@ -471,6 +497,11 @@ class BaseBenchmark:
         if item not in collection:
             collection.append(item)
 
+    @property
+    def failed_experiments(self) -> list[FailedExperimentRecord]:
+        """Failed task-estimator pairs from the most recent benchmark run."""
+        return list(self._failed_experiments)
+
     def register_stored_tasks(self):
         """Register stored tasks from global DATASETS, METRICS, CV_SPLITTERS."""
         if self._datasets and self._metrics and self._cv_splitters:
@@ -519,21 +550,40 @@ class BaseBenchmark:
         self.register_stored_tasks()
 
         results = _BenchmarkingResults(path=results_path)
+        self._failed_experiments = []
 
         for task_id, estimator_id, task, estimator in self._generate_experiments():
             if results.contains(task_id, estimator_id) and (
                 force_rerun == "none"
                 or (isinstance(force_rerun, list) and estimator_id not in force_rerun)
             ):
-                logging.info(
+                logger.info(
                     f"Skipping validation - model: "
                     f"{task_id} - {estimator_id}"
                     ", as found prior result in results."
                 )
                 continue
 
-            logging.info(f"Running validation - model: {task_id} - {estimator_id}")
-            folds = self._run_validation(task, estimator)
+            logger.info(f"Running validation - model: {task_id} - {estimator_id}")
+            try:
+                folds = self._run_validation(task, estimator)
+            except Exception as exc:
+                failure = FailedExperimentRecord(
+                    task_id=task_id,
+                    model_id=estimator_id,
+                    exception_type=type(exc).__name__,
+                    exception_message=str(exc),
+                )
+                self._failed_experiments.append(failure)
+                logger.error(
+                    "Validation failed: %s - %s: %s: %s",
+                    task_id,
+                    estimator_id,
+                    failure.exception_type,
+                    failure.exception_message,
+                )
+                continue
+
             results.update(
                 ResultObject(
                     task_id=task_id,
@@ -542,9 +592,29 @@ class BaseBenchmark:
                 )
             )
 
+        self._report_failed_experiments()
+
         if results_path is not None:
             results.save()
         return results.to_dataframe()
+
+    def _report_failed_experiments(self):
+        """Log a summary of failed task-estimator pairs from the current run."""
+        if not self._failed_experiments:
+            return
+
+        logger.warning(
+            "Benchmark completed with %d failed task-estimator pair(s):",
+            len(self._failed_experiments),
+        )
+        for failure in self._failed_experiments:
+            logger.warning(
+                "  - task=%s, model=%s: %s: %s",
+                failure.task_id,
+                failure.model_id,
+                failure.exception_type,
+                failure.exception_message,
+            )
 
     def _generate_experiments(self):
         """Generate experiments for the benchmark.
