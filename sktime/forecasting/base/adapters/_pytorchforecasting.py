@@ -117,7 +117,9 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         )
         self._model_loss = model_params.pop("loss", None) if model_params else None
         self._model_params = deepcopy(model_params) if model_params else {}
-        self._callbacks = trainer_params.pop("callbacks", None)
+        self._callbacks = (
+            trainer_params.pop("callbacks", None) if trainer_params else None
+        )
         self._trainer_params = (
             deepcopy(trainer_params) if trainer_params is not None else {}
         )
