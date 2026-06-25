@@ -51,19 +51,43 @@ class _TransformersArtifactBackend(_NativeArtifactBackend):
         """Dump a transformers model using save_pretrained."""
         obj.save_pretrained(path, safe_serialization=True)
         cls = type(obj)
-        return {
+        record = {
             "backend": self.backend,
             "class": f"{cls.__module__}.{cls.__qualname__}",
         }
 
+        try:
+            device = obj.device
+        except Exception:
+            device = None
+
+        if device is not None:
+            record["device"] = str(device)
+
+        return record
+
     def load(self, path, record, *, estimator, name):
         """Load a transformers model using from_pretrained."""
         import importlib
+        from warnings import warn
 
         module_name, class_name = record["class"].rsplit(".", 1)
         module = importlib.import_module(module_name)
         cls = getattr(module, class_name)
-        return cls.from_pretrained(path)
+
+        device = record.get("device")
+        if device is None:
+            return cls.from_pretrained(path)
+
+        try:
+            return cls.from_pretrained(path, device_map=device)
+        except Exception as exc:
+            warn(
+                f"Could not load native artifact {name!r} on saved device "
+                f"{device!r}. Falling back to CPU. Original error: {exc}",
+                stacklevel=2,
+            )
+            return cls.from_pretrained(path, device_map="cpu")
 
 
 _NATIVE_ARTIFACT_BACKENDS = [
