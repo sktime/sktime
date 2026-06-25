@@ -6,6 +6,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.utils.singleton import _multiton
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
@@ -54,22 +55,22 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     >>> from sktime.forecasting.moirai import MOIRAIForecaster
     >>> import pandas as pd
     >>> import numpy as np
-    >>> morai_forecaster = MOIRAIForecaster(
-    ...     checkpoint_path=f"sktime/moirai-1.0-R-small"
+    >>> morai_forecaster = MOIRAIForecaster(  # doctest: +SKIP
+    ...     checkpoint_path="sktime/moirai-1.0-R-small"
     ... )
     >>> y = np.random.normal(0, 1, (30, 2))
     >>> X = y * 2 + np.random.normal(0, 1, (30,1))
     >>> index = pd.date_range("2020-01-01", periods=30, freq="D")
     >>> y = pd.DataFrame(y, index=index)
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)
-    >>> morai_forecaster.fit(y, X=X)
+    >>> morai_forecaster.fit(y, X=X)  # doctest: +SKIP
     MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
-    >>> X_test = pd.DataFrame(
+    >>> X_test = pd.DataFrame(  # doctest: +SKIP
     ...     np.random.normal(0, 1, (10, 2)),
     ...     columns=["x1", "x2"],
     ...     index=pd.date_range("2020-01-31", periods=10, freq="D"),
     ... )
-    >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)
+    >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)  # doctest: +SKIP
 
     References
     ----------
@@ -88,7 +89,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "gluonts",
             "torch",
             "einops",
-            "huggingface-hub",
+            "huggingface_hub",
             "hf-xet",
             "lightning",
             "hydra-core",
@@ -112,6 +113,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "capability:pretrain": True,
         "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
@@ -162,30 +164,125 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 }
             )
 
-    # Apply a patch for redirecting imports to sktime.libs.uni2ts
-    if _check_soft_dependencies(["lightning", "huggingface-hub"], severity="none"):
-        import sktime
-        from sktime.libs.uni2ts.forecast import MoiraiForecast
+    def _get_moirai_kwargs(self):
+        """Return model construction kwargs (excluding prediction_length).
 
-        @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
-        def _instantiate_patched_model(self, model_kwargs):
-            """Instantiate the model from the vendor package."""
-            from sktime.libs.uni2ts.forecast import MoiraiForecast
+        ``prediction_length`` is excluded from the cache key because it is
+        updated at predict-time via ``self.model_.hparams.prediction_length``.
 
-            if self.checkpoint_path.startswith("Salesforce"):
-                from sktime.libs.uni2ts.moirai_module import MoiraiModule
+        The effective feature dimensions are read from the fitted attributes
+        ``_feat_dynamic_real_dim_`` / ``_past_feat_dynamic_real_dim_`` when
+        available (populated inside ``_fit``), falling back to the constructor
+        parameters otherwise.  This ensures ``self.num_feat_dynamic_real``
+        and ``self.num_past_feat_dynamic_real`` are never mutated.
+        """
+        _num_feat_dynamic_real = getattr(
+            self,
+            "_feat_dynamic_real_dim_",
+            self.num_feat_dynamic_real if self.num_feat_dynamic_real is not None else 0,
+        )
+        _num_past_feat_dynamic_real = getattr(
+            self,
+            "_past_feat_dynamic_real_dim_",
+            self.num_past_feat_dynamic_real
+            if self.num_past_feat_dynamic_real is not None
+            else 0,
+        )
+        return {
+            "checkpoint_path": self.checkpoint_path,
+            "context_length": self.context_length,
+            "patch_size": self.patch_size,
+            "num_samples": self.num_samples,
+            "target_dim": self.target_dim,
+            "feat_dynamic_real_dim": _num_feat_dynamic_real,
+            "past_feat_dynamic_real_dim": _num_past_feat_dynamic_real,
+            "map_location": self.map_location,
+            "use_source_package": self.use_source_package,
+        }
 
-                model_kwargs["module"] = MoiraiModule.from_pretrained(
-                    self.checkpoint_path
-                )
-                return MoiraiForecast(**model_kwargs)
-            else:
-                from huggingface_hub import hf_hub_download
+    def _get_moirai_key(self):
+        """Return a unique cache key for the MOIRAI model."""
+        return str(sorted(self._get_moirai_kwargs().items()))
 
-                model_kwargs["checkpoint_path"] = hf_hub_download(
-                    repo_id=self.checkpoint_path, filename="model.ckpt"
-                )
-                return MoiraiForecast.load_from_checkpoint(**model_kwargs)
+    def _load_model(self, prediction_length):
+        """Load MOIRAI model weights via multiton cache.
+
+        Returns the cached model if one with the same configuration has already
+        been loaded; otherwise downloads and caches it.
+
+        Parameters
+        ----------
+        prediction_length : int
+            Initial prediction length passed to the model constructor.
+            This value can be overridden at predict-time.
+
+        Returns
+        -------
+        model : MoiraiForecast
+            The loaded (and possibly cached) MOIRAI model.
+        """
+        return _CachedMoirai(
+            key=self._get_moirai_key(),
+            moirai_kwargs=self._get_moirai_kwargs(),
+            prediction_length=prediction_length,
+        ).load_from_checkpoint()
+
+    def _init_model(self, prediction_length=1):
+        """Lazy-initialise the MOIRAI model, loading weights only once.
+
+        If ``model_`` has already been set (e.g., by a prior ``_fit`` or a
+        future ``_pretrain`` call) the existing instance is returned without
+        re-loading.  ``_pretrained_attrs`` is populated so that the framework
+        preserves the model across subsequent ``fit()`` calls.
+
+        Parameters
+        ----------
+        prediction_length : int, default=1
+            Passed through to ``_load_model`` on first initialisation.
+
+        Returns
+        -------
+        model_ : MoiraiForecast
+            The loaded (and possibly cached) MOIRAI model.
+        """
+        if not hasattr(self, "model_") or self.model_ is None:
+            self.model_ = self._load_model(prediction_length)
+            self._pretrained_attrs = ["model_"]
+        return self.model_
+
+    def _pretrain(self, y=None, X=None, fh=None):
+        """Pre-load MOIRAI model weights before fitting.
+
+        Calling ``pretrain()`` is optional.  When omitted, weights are loaded
+        lazily on the first ``fit()`` call.  If called, subsequent ``fit()``
+        calls reuse the already-loaded weights without downloading again.
+        """
+        self.model_ = self._init_model()
+
+    # ------------------------------------------------------------------
+    # Pickle support
+    # ------------------------------------------------------------------
+    # ``model_`` is a PyTorch / uni2ts Lightning module whose internal
+    # class references (e.g. ``uni2ts.distribution._base.DistrParamProj``)
+    # cannot be resolved by Python's pickler when the vendored
+    # ``sktime.libs.uni2ts`` package is used, because the classes are
+    # registered under the original ``uni2ts.*`` namespace.
+    #
+    # Since the model is stateless (zero-shot) and already cached by the
+    # multiton, we simply drop it from the pickle payload and restore it
+    # lazily on the next ``predict()`` call.
+    # ------------------------------------------------------------------
+
+    def __getstate__(self):
+        """Return picklable state with the non-serialisable model excluded."""
+        state = self.__dict__.copy()
+        state.pop("model_", None)
+        return state
+
+    def __setstate__(self, state):
+        """Restore state; model_ will be reloaded lazily on next predict."""
+        self.__dict__.update(state)
+        self.model_ = None
 
     def _fit(self, y, X=None, fh=None):
         if fh is not None:
@@ -193,48 +290,22 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             prediction_length = 1
 
-        # Set feature dimensions based on X if not already set
+        # Resolve effective feature dimensions without mutating hyper-parameters.
+        # self.num_feat_dynamic_real / self.num_past_feat_dynamic_real stay as
+        # the user set them (None means "infer from data").
         if self.num_feat_dynamic_real is None:
-            if X is not None:
-                self.num_feat_dynamic_real = X.shape[1]
-            else:
-                self.num_feat_dynamic_real = 0
+            self._feat_dynamic_real_dim_ = X.shape[1] if X is not None else 0
+        else:
+            self._feat_dynamic_real_dim_ = self.num_feat_dynamic_real
 
         if self.num_past_feat_dynamic_real is None:
-            self.num_past_feat_dynamic_real = 0
-
-        model_kwargs = {
-            "prediction_length": prediction_length,
-            "context_length": self.context_length,
-            "patch_size": self.patch_size,
-            "num_samples": self.num_samples,
-            "target_dim": self.target_dim,
-            "feat_dynamic_real_dim": self.num_feat_dynamic_real,
-            "past_feat_dynamic_real_dim": self.num_past_feat_dynamic_real,
-        }
-
-        # Load model from source package
-        if self.use_source_package:
-            if _check_soft_dependencies("uni2ts", severity="none"):
-                from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
-
-                if self.checkpoint_path.startswith("Salesforce"):
-                    model_kwargs["module"] = MoiraiModule.from_pretrained(
-                        self.checkpoint_path
-                    )
-                    self.model = MoiraiForecast(**model_kwargs)
-                else:
-                    from huggingface_hub import hf_hub_download
-
-                    model_kwargs["checkpoint_path"] = hf_hub_download(
-                        repo_id=self.checkpoint_path, filename="model.ckpt"
-                    )
-                    self.model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
-                    self.model.to(self.map_location)
-        # Load model from sktime
+            self._past_feat_dynamic_real_dim_ = 0
         else:
-            self.model = self._instantiate_patched_model(model_kwargs)
-            self.model.to(self.map_location)
+            self._past_feat_dynamic_real_dim_ = self.num_past_feat_dynamic_real
+
+        # Lazy-init: load model on first access; reuse on subsequent fit() calls.
+        self.model_ = self._init_model(prediction_length)
+        self.model_.to(self.map_location)
 
     def _predict(self, fh, X=None):
         if self.deterministic:
@@ -246,7 +317,11 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        self.model.hparams.prediction_length = max(fh._values)
+        # Re-load model from multiton cache if lost (e.g. after pickle round-trip).
+        if self.model_ is None:
+            self._init_model()
+
+        self.model_.hparams.prediction_length = max(fh._values)
 
         if min(fh._values) < 0:
             raise NotImplementedError(
@@ -267,11 +342,11 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             target = _y.columns
 
-        # Store the original index and target name
-        self._target_name = target
-        self._len_of_targets = len(target)
+        # Use local variables — predict must not mutate instance state.
+        _target_name = target
+        _len_of_targets = len(target)
 
-        target = [f"target_{i}" for i in range(self._len_of_targets)]
+        target = [f"target_{i}" for i in range(_len_of_targets)]
         _y.columns = target
 
         future_length = 0
@@ -284,8 +359,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             _X.columns = feat_dynamic_real
 
         pred_df = pd.concat([_y, _X], axis=1)
-        self._is_range_index = self.check_range_index(pred_df)
-        self._is_period_index = self.check_period_index(pred_df)
+        _is_range_index = self.check_range_index(pred_df)
+        _is_period_index = self.check_period_index(pred_df)  # noqa: F841
 
         if _use_fit_data_as_context:
             future_length = self._get_future_length(X)
@@ -309,7 +384,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             pred_df.index.freq = None
 
         # Check if the index is a range index
-        if self._is_range_index:
+        if _is_range_index:
             pred_df.index = self.handle_range_index(pred_df.index)
 
         _is_hierarchical = False
@@ -317,11 +392,41 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             pred_df = self._convert_hierarchical_to_panel(pred_df)
             _is_hierarchical = True
 
+        # Infer freq explicitly so gluonts doesn't have to; pd.concat/sort
+        # strips the .freq attribute from DatetimeIndex, and with very few
+        # data points pd.infer_freq returns None, crashing PandasDataset.
+        _time_idx = self.return_time_index(pred_df)
+        if _is_range_index:
+            # range → daily DatetimeIndex created by handle_range_index
+            _freq = "D"
+        elif isinstance(_time_idx, pd.PeriodIndex):
+            _freq = _time_idx.freqstr
+        else:
+            _freq = self.infer_freq(_time_idx)
+
+        # Ensure the index is uniformly spaced before handing off to gluonts.
+        # When X_test covers non-contiguous timepoints (e.g. fh=[2,4,6]) the
+        # concat above can leave gaps; gluonts's PandasDataset raises
+        # AssertionError if is_uniform(index) fails.
+        if _freq is not None and not isinstance(pred_df.index, pd.MultiIndex):
+            _tidx = pred_df.index
+            _full = pd.date_range(_tidx[0], _tidx[-1], freq=_freq)
+            if len(_full) > len(_tidx):
+                pred_df = pred_df.reindex(_full, fill_value=0)
+
+        # Recompute future_length from the actual pred_df after reindex so
+        # that gluonts knows how many trailing rows are "future" context.
+        # Using a stale len(X_test) after reindex causes gluonts to predict
+        # fewer steps than prediction_length, making pred_out keys disappear.
+        if _use_fit_data_as_context:
+            _n_train = len(self.return_time_index(_y).unique())
+            future_length = len(self.return_time_index(pred_df).unique()) - _n_train
+
         ds_test, df_config = self.create_pandas_dataset(
-            pred_df, target, feat_dynamic_real, future_length
+            pred_df, target, feat_dynamic_real, future_length, _target_name, _freq
         )
 
-        predictor = self.model.create_predictor(batch_size=self.batch_size)
+        predictor = self.model_.create_predictor(batch_size=self.batch_size)
         forecasts = predictor.predict(ds_test)
         forecast_it = iter(forecasts)
         predictions = self._get_prediction_df(forecast_it, df_config)
@@ -342,7 +447,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
 
-        if self._is_range_index:
+        if _is_range_index:
             timepoints = self.return_time_index(predictions)
             timepoints = timepoints.to_timestamp()
             timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
@@ -356,6 +461,21 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 predictions.index = predictions.index.map(lambda x: (int(x[0]), x[1]))
             else:
                 predictions.index = timepoints
+
+        # When the original data had a PeriodIndex we converted it to
+        # DatetimeIndex before handing it to gluonts.  pred_out (derived from
+        # _y) is still a PeriodIndex, so we must convert back before .loc[].
+        if _is_period_index and not _is_range_index:
+            _period_freq = self.return_time_index(_y).freqstr
+            if isinstance(predictions.index, pd.MultiIndex):
+                _last_level = predictions.index.get_level_values(-1)
+                if isinstance(_last_level, pd.DatetimeIndex):
+                    predictions.index = predictions.index.set_levels(
+                        _last_level.to_period(_period_freq).unique(),
+                        level=-1,
+                    )
+            elif isinstance(predictions.index, pd.DatetimeIndex):
+                predictions.index = predictions.index.to_period(_period_freq)
 
         if _use_fit_data_as_context:
             predictions = predictions.loc[first_seen_index:]
@@ -424,7 +544,13 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             return handle_panel_predictions(forecasts, df_config)
 
     def create_pandas_dataset(
-        self, df, target, dynamic_features=None, forecast_horizon=0
+        self,
+        df,
+        target,
+        dynamic_features=None,
+        forecast_horizon=0,
+        original_target=None,
+        freq=None,
     ):
         """Create a gluonts PandasDataset from the input data.
 
@@ -438,6 +564,16 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             List of dynamic features.
         forecast_horizon : int, default=0
             Forecast horizon.
+        original_target : list, default=None
+            Original (user-facing) target column names, stored in ``df_config``
+            so that ``_get_prediction_df`` can rename columns back.  When
+            ``None`` the renamed ``target`` list is used as-is.
+        freq : str, default=None
+            Pandas-compatible frequency string (e.g. ``"D"``, ``"M"``).
+            When provided it is passed directly to ``PandasDataset`` /
+            ``from_long_dataframe`` so that gluonts does not have to infer
+            it from the index (which can fail when the index has no ``.freq``
+            attribute after a ``pd.concat`` / ``sort_index`` call).
 
         Returns
         -------
@@ -452,7 +588,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         # Add original target to config
         df_config = {
-            "target": self._target_name,
+            "target": original_target if original_target is not None else target,
         }
 
         # PandasDataset expects non-multiindex dataframe with item_id
@@ -469,20 +605,24 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             df = df.reset_index()
             df.set_index(timepoints, inplace=True)
 
-            dataset = PandasDataset.from_long_dataframe(
-                df,
+            _from_long_kwargs = dict(
                 target=target,
                 feat_dynamic_real=dynamic_features,
                 item_id=item_id,
                 future_length=forecast_horizon,
             )
+            if freq is not None:
+                _from_long_kwargs["freq"] = freq
+            dataset = PandasDataset.from_long_dataframe(df, **_from_long_kwargs)
         else:
-            dataset = PandasDataset(
-                df,
+            _pd_kwargs = dict(
                 target=target,
                 feat_dynamic_real=dynamic_features,
                 future_length=forecast_horizon,
             )
+            if freq is not None:
+                _pd_kwargs["freq"] = freq
+            dataset = PandasDataset(df, **_pd_kwargs)
 
         return dataset, df_config
 
@@ -566,8 +706,16 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         """
         if isinstance(index, pd.PeriodIndex):
-            return index.freq
-        return pd.infer_freq(index[:3])
+            return index.freqstr
+        freq = pd.infer_freq(index[:3])
+        # pandas infers "start of period" aliases such as "MS", "QS", "AS".
+        # These are not valid Period frequencies and cause
+        # ``df.to_period(freq=...)`` to raise AttributeError inside gluonts.
+        # Mirror the normalisation gluonts applies in its own ``infer_freq``:
+        # strip the trailing "S" so "MS" → "M", "QS" → "Q", "AS" → "A".
+        if freq is not None and len(freq) > 1 and freq.endswith("S"):
+            freq = freq[:-1]
+        return freq
 
     def return_time_index(self, df):
         """Return the time index, given any type of index."""
@@ -665,3 +813,91 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             return len(X.index.get_level_values(-1).unique())
         else:
             return len(X)
+
+
+@_multiton
+class _CachedMoirai:
+    """Cached MOIRAI model to ensure only one instance exists in memory.
+
+    MOIRAI is a zero-shot model and immutable, hence there are no side effects
+    of sharing the same instance across multiple uses.  The multiton pattern
+    (keyed on model configuration) prevents redundant weight downloads when
+    ``fit()`` is called multiple times with different data.
+
+    ``prediction_length`` is *not* part of the cache key because it is updated
+    at inference time via ``self.model_.hparams.prediction_length`` in
+    ``MOIRAIForecaster._predict()``.
+    """
+
+    def __init__(self, key, moirai_kwargs, prediction_length):
+        self.key = key
+        self.moirai_kwargs = moirai_kwargs
+        self.prediction_length = prediction_length
+        self.model = None
+
+    def load_from_checkpoint(self):
+        """Return the cached model, loading weights on first call."""
+        if self.model is not None:
+            return self.model
+
+        kwargs = self.moirai_kwargs
+        model_kwargs = {
+            "prediction_length": self.prediction_length,
+            "context_length": kwargs["context_length"],
+            "patch_size": kwargs["patch_size"],
+            "num_samples": kwargs["num_samples"],
+            "target_dim": kwargs["target_dim"],
+            "feat_dynamic_real_dim": kwargs["feat_dynamic_real_dim"],
+            "past_feat_dynamic_real_dim": kwargs["past_feat_dynamic_real_dim"],
+        }
+
+        if kwargs["use_source_package"]:
+            if _check_soft_dependencies("uni2ts", severity="none"):
+                from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
+
+                if kwargs["checkpoint_path"].startswith("Salesforce"):
+                    model_kwargs["module"] = MoiraiModule.from_pretrained(
+                        kwargs["checkpoint_path"]
+                    )
+                    self.model = MoiraiForecast(**model_kwargs)
+                else:
+                    from huggingface_hub import hf_hub_download
+
+                    model_kwargs["checkpoint_path"] = hf_hub_download(
+                        repo_id=kwargs["checkpoint_path"], filename="model.ckpt"
+                    )
+                    # weights_only=False: PyTorch>=2.6 changed the default to True,
+                    # but MOIRAI checkpoints contain trusted uni2ts globals that
+                    # cannot be loaded with weights_only=True.
+                    self.model = MoiraiForecast.load_from_checkpoint(
+                        **model_kwargs, weights_only=False
+                    )
+        else:
+            # Use the sktime-vendored uni2ts package with sys.modules patched
+            # so that ``import uni2ts`` inside MoiraiForecast resolves to
+            # ``sktime.libs.uni2ts``.
+            import sktime
+            from sktime.libs.uni2ts.forecast import MoiraiForecast
+
+            with patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts}):
+                if kwargs["checkpoint_path"].startswith("Salesforce"):
+                    from sktime.libs.uni2ts.moirai_module import MoiraiModule
+
+                    model_kwargs["module"] = MoiraiModule.from_pretrained(
+                        kwargs["checkpoint_path"]
+                    )
+                    self.model = MoiraiForecast(**model_kwargs)
+                else:
+                    from huggingface_hub import hf_hub_download
+
+                    model_kwargs["checkpoint_path"] = hf_hub_download(
+                        repo_id=kwargs["checkpoint_path"], filename="model.ckpt"
+                    )
+                    # weights_only=False: PyTorch>=2.6 changed the default to True,
+                    # but MOIRAI checkpoints contain trusted uni2ts globals that
+                    # cannot be loaded with weights_only=True.
+                    self.model = MoiraiForecast.load_from_checkpoint(
+                        **model_kwargs, weights_only=False
+                    )
+
+        return self.model
