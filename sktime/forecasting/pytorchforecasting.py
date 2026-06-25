@@ -1093,7 +1093,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -1115,7 +1115,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,
+                    "deterministic": True,  # to pass test_score
                 },
             ]
         else:
@@ -1147,7 +1147,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -1170,7 +1170,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,
+                    "deterministic": True,  # to pass test_score
                 },
             ]
 
