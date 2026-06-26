@@ -48,7 +48,7 @@ class _NativeArtifactBackend:
         raise NotImplementedError
 
     def dump(self, obj, path, *, estimator, name):
-        """Dump object to path and return artifact metadata."""
+        """Dump object to path."""
         raise NotImplementedError
 
     def load(self, path, record, *, estimator, name):
@@ -70,7 +70,6 @@ class _PretrainedArtifactBackend(_NativeArtifactBackend):
     def dump(self, obj, path, *, estimator, name):
         """Dump an object using save_pretrained."""
         obj.save_pretrained(path)
-        return {}
 
     def load(self, path, record, *, estimator, name):
         """Load an object using from_pretrained."""
@@ -95,7 +94,6 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
         import torch
 
         torch.save(obj, path / "model.pt")
-        return {}
 
     def load(self, path, record, *, estimator, name):
         """Load a torch module using torch.load."""
@@ -157,7 +155,7 @@ class _NativeArtifactStore:
         artifact_path = self.artifact_root / name
         artifact_path.mkdir(parents=True)
         backend = _get_native_artifact_backend(obj, name=name)
-        meta = backend.dump(
+        backend.dump(
             obj,
             artifact_path,
             estimator=estimator,
@@ -168,7 +166,6 @@ class _NativeArtifactStore:
             "backend": backend.backend,
             "class": f"{cls.__module__}.{cls.__qualname__}",
             "path": name,
-            "meta": meta,
         }
         return self.index[name]
 
