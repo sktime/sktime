@@ -74,11 +74,7 @@ class _TransformersArtifactBackend(_NativeArtifactBackend):
         obj.save_pretrained(path, safe_serialization=True)
         meta = {}
 
-        try:
-            device = obj.device
-        except Exception:
-            device = None
-
+        device = getattr(obj, "device")
         if device is not None:
             meta["device"] = str(device)
 
