@@ -908,6 +908,24 @@ class _CachedMoirai:
         if self.model is not None:
             return self.model
 
+        # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch when
+        # hf_xet was compiled for an older CPython than the current runtime).
+        # huggingface_hub reads HF_HUB_DISABLE_XET from constants.py at
+        # import time, and file_download.py accesses it as
+        # `constants.HF_HUB_DISABLE_XET` at call time. We must therefore
+        # patch huggingface_hub.constants directly (not file_download) so
+        # that _download_to_tmp_and_move skips xet_get for this session.
+        import os
+
+        try:
+            import hf_xet  # noqa: F401
+        except Exception:
+            os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+            if _check_soft_dependencies("huggingface_hub", severity="none"):
+                import huggingface_hub.constants as _hf_constants
+
+                _hf_constants.HF_HUB_DISABLE_XET = True
+
         kwargs = self.moirai_kwargs
         model_kwargs = {
             "prediction_length": self.prediction_length,
