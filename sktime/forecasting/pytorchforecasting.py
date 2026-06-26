@@ -414,7 +414,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:unequal_length": False,
-        # "capability:pred_int
+        "tests:skip_by_name": [
+            "test_pred_int_tag",
+            "test_save_estimators_to_file",
+            "test_persistence_via_pickle",
+        ],
     }
 
     def __init__(

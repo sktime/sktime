@@ -164,10 +164,10 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
-        loss_kwargs = {} if self._model_loss is None else {"loss": self._model_loss}
+        if self._model_loss is not None:
+            self._model_params["loss"] = self._model_loss
         algorithm_instance = self.algorithm_class.from_dataset(
             data,
-            **loss_kwargs,
             **self.algorithm_parameters,
             **self._model_params,
         )
