@@ -151,15 +151,6 @@ class RBFNetwork(nn.Module):
         dropout_rate=0.1,
     ):
         super().__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.output_size = output_size
-        self.centers = centers
-        self.gamma = gamma
-        self.rbf_type = rbf_type
-        self.hidden_layers = hidden_layers
-        self.activation = activation
-        self.dropout_rate = dropout_rate
         self.mode = mode
         self.pred_len = output_size
         self.seq_len = input_size

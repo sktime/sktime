@@ -24,10 +24,6 @@ class Model(nn.Module):
 
         super().__init__()
 
-        self.configs = configs
-        self.norm = norm
-        self.act = act
-        self.head_type = head_type
         self.random_state = random_state
         if self.random_state is not None:
             torch.manual_seed(self.random_state)
@@ -37,8 +33,6 @@ class Model(nn.Module):
         c_in = configs["enc_in"]
         context_window = configs["seq_len"]
         target_window = configs["pred_len"]
-        self.seq_len = context_window
-        self.pred_len = target_window
 
         n_layers = configs["e_layers"]
         d_model = configs["d_model"]
