@@ -73,6 +73,7 @@ class XLSTMForecaster(BaseForecaster):
         # CI and testing tags
         # -------------------
         "tests:vm": True,
+        "serialization:native_artifacts": ("model",),
     }
 
     def __init__(

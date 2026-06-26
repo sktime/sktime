@@ -143,6 +143,7 @@ class KronosForecaster(BaseForecaster):
         ],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.kronos"],
+        "serialization:native_artifacts": ("tokenizer_", "model_"),
     }
 
     _kronos_columns = ["open", "high", "low", "close", "volume", "amount"]

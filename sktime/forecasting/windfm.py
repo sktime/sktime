@@ -164,6 +164,7 @@ class WindFMForecaster(BaseForecaster):
         ],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.windfm"],
+        "serialization:native_artifacts": ("tokenizer_", "model_"),
     }
 
     _target_col = "power"
