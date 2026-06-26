@@ -56,50 +56,26 @@ class _NativeArtifactBackend:
         raise NotImplementedError
 
 
-class _TransformersArtifactBackend(_NativeArtifactBackend):
-    """Native artifact backend for transformers models."""
+class _PretrainedArtifactBackend(_NativeArtifactBackend):
+    """Native artifact backend for save_pretrained/from_pretrained objects."""
 
-    backend = "transformers"
+    backend = "pretrained"
 
     def supports(self, obj):
-        """Return whether object looks like a transformers PreTrainedModel."""
-        return any(
-            cls.__name__ == "PreTrainedModel"
-            and cls.__module__.startswith("transformers")
-            for cls in type(obj).__mro__
+        """Return whether object supports pretrained-style serialization."""
+        return callable(getattr(obj, "save_pretrained", None)) and callable(
+            getattr(type(obj), "from_pretrained", None)
         )
 
     def dump(self, obj, path, *, estimator, name):
-        """Dump a transformers model using save_pretrained."""
-        obj.save_pretrained(path, safe_serialization=True)
-        meta = {}
-
-        device = getattr(obj, "device")
-        if device is not None:
-            meta["device"] = str(device)
-
-        return meta
+        """Dump an object using save_pretrained."""
+        obj.save_pretrained(path)
+        return {}
 
     def load(self, path, record, *, estimator, name):
-        """Load a transformers model using from_pretrained."""
-        from warnings import warn
-
+        """Load an object using from_pretrained."""
         cls = self._get_class(record)
-
-        meta = record["meta"]
-        device = meta.get("device")
-        if device is None:
-            return cls.from_pretrained(path)
-
-        try:
-            return cls.from_pretrained(path, device_map=device)
-        except Exception as exc:
-            warn(
-                f"Could not load native artifact {name!r} on saved device "
-                f"{device!r}. Falling back to CPU. Original error: {exc}",
-                stacklevel=2,
-            )
-            return cls.from_pretrained(path, device_map="cpu")
+        return cls.from_pretrained(path)
 
 
 class _TorchArtifactBackend(_NativeArtifactBackend):
@@ -141,7 +117,7 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
 
 
 _NATIVE_ARTIFACT_BACKENDS = [
-    _TransformersArtifactBackend(),
+    _PretrainedArtifactBackend(),
     _TorchArtifactBackend(),
 ]
 
