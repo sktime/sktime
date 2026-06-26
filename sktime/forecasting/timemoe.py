@@ -126,6 +126,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "serialization:native_artifacts": ("model",),
         # testing configuration
         # ---------------------
         "tests:vm": True,

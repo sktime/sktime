@@ -272,6 +272,7 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:global_forecasting": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
+        "serialization:native_artifacts": ("model",),
         # Tests and CI tags
         # -----------------
         "tests:vm": True,

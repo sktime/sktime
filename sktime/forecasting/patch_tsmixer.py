@@ -135,6 +135,7 @@ class PatchTSMixerForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": False,
         "requires-fh-in-fit": False,
+        "serialization:native_artifacts": ("model",),
         "tests:vm": True,
     }
 
