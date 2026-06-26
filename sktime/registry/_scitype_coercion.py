@@ -6,7 +6,7 @@ _coerce_register = dict()
 
 
 def _coerce_transformer_tabular_to_transformer(obj):
-    from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    from sktime.transformations.adapt import TabularToSeriesAdaptor
 
     return TabularToSeriesAdaptor(obj)
 
@@ -16,19 +16,13 @@ _coerce_register[("transformer_tabular", "transformer")] = (
 )
 
 
-def _coerce_series_annotator_to_transformer(obj):
+def _coerce_detector_to_transformer(obj):
     from sktime.detection.compose._as_transform import DetectorAsTransformer
 
     return DetectorAsTransformer(obj)
 
 
-# todo 1.0.0 - remove series-annotator
-_coerce_register[("series-annotator", "transformer")] = (
-    _coerce_series_annotator_to_transformer
-)
-
-
-_coerce_register[("detector", "transformer")] = _coerce_series_annotator_to_transformer
+_coerce_register[("detector", "transformer")] = _coerce_detector_to_transformer
 
 
 def _coerce_clusterer_to_transformer(obj):

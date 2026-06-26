@@ -80,7 +80,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if self.tune_by_variable:
             self.set_tags(**{"capability:multivariate": False})
 
-        # todo 1.0.0: check if this is still necessary
+        # todo 2.0.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if self.n_jobs != "deprecated":
             warn(
