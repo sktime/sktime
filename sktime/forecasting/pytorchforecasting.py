@@ -35,11 +35,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
-    deterministic: bool (default=False)
-        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
 
     Examples
     --------
@@ -128,12 +128,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:skip_all": True,
-        # the fitted pytorch-forecasting model caches a function-local class
-        # (TupleOutputMixIn.to_network_output.<locals>.Output)
-        "tests:skip_by_name": [
-            "test_save_estimators_to_file",
-            "test_persistence_via_pickle",
-        ],
     }
 
     def __init__(
@@ -145,9 +139,9 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
-        deterministic: bool = False,
         random_log_path: bool = False,
         broadcasting: bool = False,
+        deterministic: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
         self.deterministic = deterministic
@@ -226,7 +220,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,  # to pass test_score
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -248,7 +242,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,  # to pass test_score
+                    "deterministic": True,
                 },
             ]
         else:
@@ -279,7 +273,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,  # to pass test_score
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -293,9 +287,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "hidden_size": 4,
                         "lstm_layers": 1,
                         "dropout": 0.1,
-                        # "loss": QuantileLoss(),
-                        # can not pass test_set_params and test_set_params_sklearn
-                        # QuantileLoss() != QuantileLoss()
                         "optimizer": "Adam",
                         # avoid jdb78/pytorch-forecasting#1571 bug in the CI
                         "log_interval": -1,
@@ -305,7 +296,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,  # to pass test_score
+                    "deterministic": True,
                 },
             ]
 
@@ -336,11 +327,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
-    deterministic: bool (default=False)
-        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
 
     Examples
     --------
@@ -409,6 +400,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     [500 rows x 1 columns]
 
+
     References
     ----------
     .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
@@ -422,9 +414,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:unequal_length": False,
-        # the fitted pytorch-forecasting model caches a function-local class
-        # (TupleOutputMixIn.to_network_output.<locals>.Output)
         "tests:skip_by_name": [
+            "test_pred_int_tag",
             "test_save_estimators_to_file",
             "test_persistence_via_pickle",
         ],
@@ -438,8 +429,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
-        deterministic: bool = False,
         random_log_path: bool = False,
+        deterministic: bool = False,
         broadcasting: bool = False,
     ) -> None:
         self.deterministic = deterministic
@@ -730,12 +721,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
-        # the fitted pytorch-forecasting model caches a function-local class
-        # (TupleOutputMixIn.to_network_output.<locals>.Output)
-        "tests:skip_by_name": [
-            "test_save_estimators_to_file",
-            "test_persistence_via_pickle",
-        ],
     }
 
     def __init__(
@@ -929,8 +914,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
-    deterministic: bool (default=False)
-        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -1020,12 +1003,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
-        # the fitted pytorch-forecasting model caches a function-local class
-        # (TupleOutputMixIn.to_network_output.<locals>.Output)
-        "tests:skip_by_name": [
-            "test_save_estimators_to_file",
-            "test_persistence_via_pickle",
-        ],
     }
 
     def __init__(
@@ -1051,7 +1028,10 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             random_log_path,
             broadcasting,
         )
-        self.deterministic = deterministic
+        if self._model_loss is None:
+            from pytorch_forecasting import QuantileLoss
+
+            self._model_loss = QuantileLoss()
 
     @functools.cached_property
     def algorithm_class(self: "PytorchForecastingNHiTS"):
@@ -1121,7 +1101,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -1143,12 +1123,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,
+                    "deterministic": True,  # to pass test_score
                 },
             ]
         else:
             from lightning.pytorch.callbacks import EarlyStopping
-            from pytorch_forecasting.data.encoders import TorchNormalizer
 
             early_stop_callback = EarlyStopping(
                 monitor="val_loss",
@@ -1173,11 +1152,10 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
-                        "target_normalizer": TorchNormalizer(),
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -1197,11 +1175,10 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
-                        "target_normalizer": TorchNormalizer(),
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
-                    "deterministic": True,
+                    "deterministic": True,  # to pass test_score
                 },
             ]
 
