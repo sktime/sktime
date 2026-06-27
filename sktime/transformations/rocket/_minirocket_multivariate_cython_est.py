@@ -169,7 +169,6 @@ class MiniRocketMultivariateCython(BaseTransformer):
         from sktime_cython.transformations.rocket import (
             _minirocket_multivariate_cython as _cy,
         )
-
         from sktime_cython.transformations.rocket._minirocket import (
             _fit_dilations,
             _quantiles,
