@@ -104,7 +104,7 @@ class MiniRocketMultivariateCython(BaseTransformer):
         "property:randomness": "derandomized",
         # test and CI flags
         # -----------------
-        "tests:vm": True,         
+        "tests:vm": True, 
     }
 
     def __init__(
@@ -169,6 +169,7 @@ class MiniRocketMultivariateCython(BaseTransformer):
         from sktime_cython.transformations.rocket import (
             _minirocket_multivariate_cython as _cy,
         )
+
         from sktime.transformations.rocket._minirocket import (
             _fit_dilations,
             _quantiles,
