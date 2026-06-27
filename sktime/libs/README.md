@@ -43,6 +43,11 @@ This folder contains libraries directly distributed with, and maintained by, `sk
  the package with minimal dependencies and code specific to the forecaster.
  Official package available at [pypi](https://pypi.org/project/uni2ts/).
 
+* `windfm` - partial fork of WindFM, from
+  [shiyu-coder/WindFM](https://github.com/shiyu-coder/WindFM).
+  Unofficial fork of partial code specific to the forecaster. An official
+  package on pypi is not available.
+
  * `xlstm_time` - fork of the [repository of the same name](https://github.com/muslehal/xLSTMTime), implementing the xLSTM forecaster, by `mushlehal`.
 
 

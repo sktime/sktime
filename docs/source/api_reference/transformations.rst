@@ -262,7 +262,14 @@ Dictionary-based features
     SFAFast
     PAAlegacy
     SAXlegacy
-    fABBA
+
+.. currentmodule:: sktime.transformations.fabba
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FABBA
 
 Auto-correlation-based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -315,7 +322,6 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     TSFeaturesTransformer
-    TSFeaturesWideTransformer
 
 .. currentmodule:: sktime.transformations.catch22
 
@@ -751,7 +757,7 @@ Multivariate-to-univariate
 
 These transformers convert multivariate series to univariate.
 
-.. currentmodule:: sktime.transformations.compose
+.. currentmodule:: sktime.transformations.colconcat
 
 .. autosummary::
     :toctree: auto_generated/
@@ -968,6 +974,8 @@ They compute features that are related to a domain of application.
 
 Energy, weather and climate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.clear_sky
 
 .. autosummary::
     :toctree: auto_generated/
