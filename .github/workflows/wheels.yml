@@ -33,33 +33,7 @@ jobs:
 
   build_wheels:
     needs: check_tag
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
-    steps:
-      - uses: actions/checkout@v6
-
-      # builds compiled (Cython) wheels for cp310-cp313 across platforms.
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21
-        env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-*"
-          CIBW_SKIP: "*-musllinux_* *_i686"
-          # macOS: build both Intel (x86_64) and Apple Silicon (arm64).
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
-
-      - name: Store wheels
-        uses: actions/upload-artifact@v7
-        with:
-          name: wheels-${{ matrix.os }}
-          path: wheelhouse/*.whl
-
-  build_sdist:
-    needs: check_tag
-    name: Build sdist
+    name: Build wheels
     runs-on: ubuntu-latest
 
     steps:
