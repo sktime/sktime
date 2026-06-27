@@ -261,7 +261,9 @@ class MiniRocketMultivariateCython(BaseTransformer):
         import multiprocessing
         from concurrent.futures import ThreadPoolExecutor
 
-        from sktime.transformations.rocket import _minirocket_multivariate_cython as _cy
+        from sktime_cython.transformations.rocket import (
+            _minirocket_multivariate_cython as _cy,
+        )
 
         X = np.ascontiguousarray(X, dtype=np.float32)
 
