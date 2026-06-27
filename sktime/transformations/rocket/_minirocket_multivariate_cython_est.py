@@ -104,7 +104,7 @@ class MiniRocketMultivariateCython(BaseTransformer):
         "property:randomness": "derandomized",
         # test and CI flags
         # -----------------
-        "tests:vm": True, 
+        "tests:vm": True,
     }
 
     def __init__(
