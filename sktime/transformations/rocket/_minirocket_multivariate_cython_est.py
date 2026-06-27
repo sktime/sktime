@@ -90,6 +90,7 @@ class MiniRocketMultivariateCython(BaseTransformer):
         # --------------
         "authors": ["sssilvar"],
         "maintainers": ["sssilvar"],
+        "python_dependencies": ["sktime-cython"],
         # estimator type
         # --------------
         "capability:multivariate": True,
@@ -162,8 +163,10 @@ class MiniRocketMultivariateCython(BaseTransformer):
     def _fit_params(X, num_features, max_dilations_per_kernel, seed):
         """Pure-numpy + Cython fit, equivalent to numba ``_fit_multi``."""
         # reuse the non-numba fit scaffolding from the numba module
-        from sktime.transformations.rocket import _minirocket_multivariate_cython as _cy
-        from sktime.transformations.rocket._minirocket_multi_numba import (
+        from sktime_cython.transformations.rocket import (
+            _minirocket_multivariate_cython as _cy,
+        )
+        from sktime.transformations.rocket._minirocket import (
             _fit_dilations,
             _quantiles,
         )
