@@ -528,8 +528,6 @@ class BaseBenchmark:
             * If "all", will run validation for all tasks and models.
             * If list of str, will run validation for tasks and models in list.
         """
-        self.register_stored_tasks()
-
         results = _BenchmarkingResults(path=results_path)
 
         for task_id, estimator_id, task, estimator in self._generate_experiments():
