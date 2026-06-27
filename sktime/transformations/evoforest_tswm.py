@@ -812,6 +812,12 @@ class EvoForestTSWM(BaseTransformer):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "python_dependencies": "numba",
+        "authors": ["EvoForest"],
+        # estimator type
+        # --------------
         "object_type": "transformer",
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
@@ -821,8 +827,9 @@ class EvoForestTSWM(BaseTransformer):
         "fit_is_empty": True,
         "capability:multivariate": True,
         "capability:unequal_length": True,
-        "python_dependencies": "numba",
-        "authors": ["EvoForest"],
+        # test and CI flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(self, pooling="full"):

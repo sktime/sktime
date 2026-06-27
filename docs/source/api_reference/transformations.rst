@@ -330,14 +330,6 @@ These transformers extract larger collections of features.
 
     Catch22
 
-.. currentmodule:: sktime.transformations.evoforest_tswm
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    EvoForestTSWM
-
 .. currentmodule:: sktime.transformations.catch22wrapper
 
 .. autosummary::
@@ -345,6 +337,14 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     Catch22Wrapper
+
+.. currentmodule:: sktime.transformations.evoforest_tswm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EvoForestTSWM
 
 .. currentmodule:: sktime.transformations.tsfel
 
