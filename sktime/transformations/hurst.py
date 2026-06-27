@@ -228,7 +228,7 @@ class HurstExponentTransformer(BaseTransformer):
 
     def plot_log_log(self, ts: pd.Series):
         """Plot the log-log graph used in Hurst exponent calculation."""
-        from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         try:
             _check_soft_dependencies("matplotlib", severity="warning")

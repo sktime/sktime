@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import generate_example_long_table, make_multi_index_dataframe
 from sktime.datatypes._adapter import convert_from_multiindex_to_listdataset
@@ -22,7 +23,6 @@ from sktime.datatypes._panel._convert import (
 )
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.dependencies import _check_soft_dependencies
 
 N_INSTANCES = [10, 15]
 N_COLUMNS = [3, 5]

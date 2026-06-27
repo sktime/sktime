@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.model_selection import KFold
 
 from sktime.benchmarking.benchmarks import _coerce_estimator_and_id
@@ -23,7 +24,6 @@ from sktime.performance_metrics.forecasting import (
 from sktime.split import ExpandingWindowSplitter, InstanceSplitter, SingleWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.dependencies import _check_soft_dependencies
 
 # TODO:
 # Manual test is labor intensive, need to refactor the tests for fast iteration
