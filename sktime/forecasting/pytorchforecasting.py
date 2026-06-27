@@ -35,6 +35,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -71,11 +73,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh)  # doctest: +SKIP
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingTFT(trainer_params={'limit_train_batches': 10,
                                         'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)  # doctest: +SKIP
-    >>> print(y_test)  # doctest: +SKIP
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test) # doctest: +SKIP
+    >>> print(y_test) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  5.261697
@@ -91,7 +93,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 2000-02-14  4.534434
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)  # doctest: +SKIP
+    >>> print(y_pred) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.310687
@@ -126,6 +128,12 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:skip_all": True,
+        # the fitted pytorch-forecasting model caches a function-local class
+        # (TupleOutputMixIn.to_network_output.<locals>.Output)
+        "tests:skip_by_name": [
+            "test_save_estimators_to_file",
+            "test_persistence_via_pickle",
+        ],
     }
 
     def __init__(
@@ -137,10 +145,12 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
+        deterministic: bool = False,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
         self.allowed_encoder_known_variable_names = allowed_encoder_known_variable_names
+        self.deterministic = deterministic
         super().__init__(
             model_params,
             dataset_params,
@@ -216,6 +226,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -237,12 +248,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                         "max_encoder_length": 3,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
         else:
             from lightning.pytorch.callbacks import EarlyStopping
-
-            # from pytorch_forecasting.metrics import QuantileLoss
 
             early_stop_callback = EarlyStopping(
                 monitor="train_loss",
@@ -269,6 +279,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
                 {
                     "trainer_params": {
@@ -294,6 +305,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,  # to pass test_score
                 },
             ]
 
@@ -324,6 +336,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
@@ -358,11 +372,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, fh=fh)  # doctest: +SKIP
+    >>> model.fit(y=y_train, fh=fh) # doctest: +SKIP
     PytorchForecastingNBeats(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, y=y_test)  # doctest: +SKIP
-    >>> print(y_test)  # doctest: +SKIP
+    >>> y_pred = model.predict(fh, y=y_test) # doctest: +SKIP
+    >>> print(y_test) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  6.308914
@@ -378,7 +392,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 2000-02-14  5.243385
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)  # doctest: +SKIP
+    >>> print(y_pred) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.167375
@@ -395,7 +409,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     [500 rows x 1 columns]
 
-
     References
     ----------
     .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
@@ -409,6 +422,12 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:unequal_length": False,
+        # the fitted pytorch-forecasting model caches a function-local class
+        # (TupleOutputMixIn.to_network_output.<locals>.Output)
+        "tests:skip_by_name": [
+            "test_save_estimators_to_file",
+            "test_persistence_via_pickle",
+        ],
     }
 
     def __init__(
@@ -419,9 +438,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         validation_to_dataloader_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
+        deterministic: bool = False,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
+        self.deterministic = deterministic
         super().__init__(
             model_params,
             dataset_params,
@@ -513,6 +534,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -533,6 +555,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
         else:
@@ -564,6 +587,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -586,6 +610,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
 
@@ -654,11 +679,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh)  # doctest: +SKIP
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingDeepAR(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)  # doctest: +SKIP
-    >>> print(y_test)  # doctest: +SKIP
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test) # doctest: +SKIP
+    >>> print(y_test) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  5.006716
@@ -674,7 +699,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 2000-02-14  5.482842
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)  # doctest: +SKIP
+    >>> print(y_pred) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  4.919366
@@ -705,6 +730,12 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
+        # the fitted pytorch-forecasting model caches a function-local class
+        # (TupleOutputMixIn.to_network_output.<locals>.Output)
+        "tests:skip_by_name": [
+            "test_save_estimators_to_file",
+            "test_persistence_via_pickle",
+        ],
     }
 
     def __init__(
@@ -898,9 +929,13 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     model_path: string (default=None)
         try to load a existing model without fitting. Calling the fit function is
         still needed, but no real fitting will be performed.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
     random_log_path: bool (default=False)
         use random root directory for logging. This parameter is for CI test in
         Github action, not designed for end users.
+    deterministic: bool (default=False)
+        set seed before predict, so that it will give the same output for the same input
 
     Examples
     --------
@@ -917,7 +952,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
     >>> # split X, y data for train and test
-    >>> x = data["c0", "c1"]
+    >>> x = data[["c0", "c1"]]
     >>> y = data["c2"].to_frame()
     >>> X_train, X_test, y_train, y_test = train_test_split(
     ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
@@ -934,11 +969,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     ...     },
     ... )
     >>> # fit and predict
-    >>> model.fit(y=y_train, X=X_train, fh=fh)  # doctest: +SKIP
+    >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingNHiTS(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test)  # doctest: +SKIP
-    >>> print(y_test)  # doctest: +SKIP
+    >>> y_pred = model.predict(fh, X=X_test, y=y_test) # doctest: +SKIP
+    >>> print(y_test) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-01-01  8.184178
@@ -954,7 +989,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 2000-02-14  5.454403
 
     [4500 rows x 1 columns]
-    >>> print(y_pred)  # doctest: +SKIP
+    >>> print(y_pred) # doctest: +SKIP
                                 c2
     h0   h1     time
     h0_0 h1_180 2000-02-15  5.764410
@@ -985,6 +1020,12 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
+        # the fitted pytorch-forecasting model caches a function-local class
+        # (TupleOutputMixIn.to_network_output.<locals>.Output)
+        "tests:skip_by_name": [
+            "test_save_estimators_to_file",
+            "test_persistence_via_pickle",
+        ],
     }
 
     def __init__(
@@ -996,8 +1037,10 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         trainer_params: dict[str, Any] | None = None,
         model_path: str | None = None,
         random_log_path: bool = False,
+        deterministic: bool = False,
         broadcasting: bool = False,
     ) -> None:
+        self.deterministic = deterministic
         super().__init__(
             model_params,
             dataset_params,
@@ -1008,6 +1051,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             random_log_path,
             broadcasting,
         )
+        self.deterministic = deterministic
 
     @functools.cached_property
     def algorithm_class(self: "PytorchForecastingNHiTS"):
@@ -1025,13 +1069,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         dict
             keyword arguments for the underlying algorithm class
         """
-        # change default loss to QuantileLoss
-        # so that it can perform quantile forecast
-        from pytorch_forecasting import QuantileLoss
-
-        if "loss" not in self._model_params.keys():
-            self._model_params["loss"] = QuantileLoss()
-
         if "n_blocks" in self._model_params.keys():
             stacks = len(self._model_params["n_blocks"])
         else:
@@ -1084,6 +1121,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                         "log_interval": -1,
                     },
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -1105,10 +1143,12 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
         else:
             from lightning.pytorch.callbacks import EarlyStopping
+            from pytorch_forecasting.data.encoders import TorchNormalizer
 
             early_stop_callback = EarlyStopping(
                 monitor="val_loss",
@@ -1133,9 +1173,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
+                        "target_normalizer": TorchNormalizer(),
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
                 {
                     "trainer_params": {
@@ -1155,9 +1197,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                     },
                     "dataset_params": {
                         "max_encoder_length": 3,
+                        "target_normalizer": TorchNormalizer(),
                     },
                     "train_to_dataloader_params": {"batch_size": 2},
                     "random_log_path": True,  # fix multiprocess file access error in CI
+                    "deterministic": True,
                 },
             ]
 
