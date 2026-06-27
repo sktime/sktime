@@ -217,6 +217,7 @@ Shapelets, wavelets, and convolution
     RocketPyts
     MiniRocket
     MiniRocketMultivariate
+    MiniRocketMultivariateCython
     MiniRocketMultivariateVariable
     MultiRocket
     MultiRocketMultivariate
