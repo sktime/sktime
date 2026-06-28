@@ -16,6 +16,20 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
+Unreleased
+----------
+
+Enhancements
+~~~~~~~~~~~~
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] ``MiniRocketMultivariateCython``, a Cython (numba-free) implementation of
+  ``MiniRocketMultivariate`` with no JIT warmup, faster transform, and optional
+  thread parallelism via ``n_jobs`` :user:`sssilvar`
+
+
 Version 1.0.1 - 2026-06-11
 --------------------------
 
