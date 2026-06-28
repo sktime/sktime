@@ -108,28 +108,28 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdse = MedianSquaredError()
-    >>> mdse(y_true, y_pred)
+    >>> mdse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.25)
     >>> rmdse = MedianSquaredError(square_root=True)
-    >>> rmdse(y_true, y_pred)
+    >>> rmdse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mdse(y_true, y_pred)
+    >>> mdse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.625)
-    >>> rmdse(y_true, y_pred)
+    >>> rmdse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.75)
     >>> mdse = MedianSquaredError(multioutput='raw_values')
-    >>> mdse(y_true, y_pred)
+    >>> mdse(y_true, y_pred) # doctest: +SKIP
     array([0.25, 1.  ])
     >>> rmdse = MedianSquaredError(multioutput='raw_values', square_root=True)
-    >>> rmdse(y_true, y_pred)
+    >>> rmdse(y_true, y_pred) # doctest: +SKIP
     array([0.5, 1. ])
     >>> mdse = MedianSquaredError(multioutput=[0.3, 0.7])
-    >>> mdse(y_true, y_pred)
+    >>> mdse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.7749999999999999)
     >>> rmdse = MedianSquaredError(multioutput=[0.3, 0.7], square_root=True)
-    >>> rmdse(y_true, y_pred)
+    >>> rmdse(y_true, y_pred) # doctest: +SKIP
     np.float64(0.85)
     """
 

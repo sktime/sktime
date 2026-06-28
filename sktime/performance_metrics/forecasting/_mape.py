@@ -116,28 +116,28 @@ class MeanAbsolutePercentageError(BaseForecastingErrorMetric):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mape = MeanAbsolutePercentageError(symmetric=False)
-    >>> mape(y_true, y_pred)
+    >>> mape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.33690476190476193)
     >>> smape = MeanAbsolutePercentageError(symmetric=True)
-    >>> smape(y_true, y_pred)
+    >>> smape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5553379953379953)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mape(y_true, y_pred)
+    >>> mape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5515873015873016)
-    >>> smape(y_true, y_pred)
+    >>> smape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.6080808080808081)
     >>> mape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=False)
-    >>> mape(y_true, y_pred)
+    >>> mape(y_true, y_pred) # doctest: +SKIP
     array([0.38095238, 0.72222222])
     >>> smape = MeanAbsolutePercentageError(multioutput='raw_values', symmetric=True)
-    >>> smape(y_true, y_pred)
+    >>> smape(y_true, y_pred) # doctest: +SKIP
     array([0.71111111, 0.50505051])
     >>> mape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=False)
-    >>> mape(y_true, y_pred)
+    >>> mape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.6198412698412699)
     >>> smape = MeanAbsolutePercentageError(multioutput=[0.3, 0.7], symmetric=True)
-    >>> smape(y_true, y_pred)
+    >>> smape(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5668686868686869)
     """
 

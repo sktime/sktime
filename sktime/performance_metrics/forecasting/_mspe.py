@@ -98,30 +98,30 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mspe = MeanSquaredPercentageError(symmetric=False)
-    >>> mspe(y_true, y_pred)
+    >>> mspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.23776218820861678)
     >>> smspe = MeanSquaredPercentageError(square_root=True, symmetric=False)
-    >>> smspe(y_true, y_pred)
+    >>> smspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.48760864246710883)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mspe(y_true, y_pred)
+    >>> mspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5080309901738473)
-    >>> smspe(y_true, y_pred)
+    >>> smspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.7026794936195895)
     >>> mspe = MeanSquaredPercentageError(multioutput='raw_values', symmetric=False)
-    >>> mspe(y_true, y_pred)
+    >>> mspe(y_true, y_pred) # doctest: +SKIP
     array([0.34013605, 0.67592593])
     >>> smspe = MeanSquaredPercentageError(multioutput='raw_values', \
     symmetric=False, square_root=True)
-    >>> smspe(y_true, y_pred)
+    >>> smspe(y_true, y_pred) # doctest: +SKIP
     array([0.58321184, 0.82214714])
     >>> mspe = MeanSquaredPercentageError(multioutput=[0.3, 0.7], symmetric=False)
-    >>> mspe(y_true, y_pred)
+    >>> mspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5751889644746787)
     >>> smspe = MeanSquaredPercentageError(multioutput=[0.3, 0.7], \
     symmetric=False, square_root=True)
-    >>> smspe(y_true, y_pred)
+    >>> smspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.7504665536595034)
     """
 

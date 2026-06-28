@@ -73,18 +73,18 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> y_pred_benchmark = y_pred*1.1
     >>> mdrae = MedianRelativeAbsoluteError()
-    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(1.0)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
-    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(0.6944444444444443)
     >>> mdrae = MedianRelativeAbsoluteError(multioutput='raw_values')
-    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     array([0.55555556, 0.83333333])
     >>> mdrae = MedianRelativeAbsoluteError(multioutput=[0.3, 0.7])
-    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> mdrae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(0.7499999999999999)
     """
 

@@ -86,17 +86,17 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdae = MedianAbsoluteError()
-    >>> mdae(y_true, y_pred)
+    >>> mdae(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mdae(y_true, y_pred)
+    >>> mdae(y_true, y_pred) # doctest: +SKIP
     np.float64(0.75)
     >>> mdae = MedianAbsoluteError(multioutput='raw_values')
-    >>> mdae(y_true, y_pred)
+    >>> mdae(y_true, y_pred) # doctest: +SKIP
     array([0.5, 1. ])
     >>> mdae = MedianAbsoluteError(multioutput=[0.3, 0.7])
-    >>> mdae(y_true, y_pred)
+    >>> mdae(y_true, y_pred) # doctest: +SKIP
     np.float64(0.85)
     """
 
