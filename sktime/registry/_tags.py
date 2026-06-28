@@ -3608,6 +3608,12 @@ ESTIMATOR_TAG_REGISTER = [
         "is the transformer result guaranteed to have no missing values?",
     ),
     (
+        "capability:bootstrap_index",
+        "bootstrap",
+        "bool",
+        "whether the bootstrap algorithm returns bootstrap indices",
+    ),
+    (
         "capability:multithreading",
         ["classifier", "early_classifier"],
         "bool",
