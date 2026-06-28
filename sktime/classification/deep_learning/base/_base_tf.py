@@ -334,6 +334,14 @@ class BaseDeepClassifier(BaseClassifier):
         shutil.rmtree(path)
         return ZipFile(path.with_name(f"{path.stem}.zip"))
 
+    @staticmethod
+    def get_custom_objects():
+        """Return the custom objects needed for loading the model.
+
+        Will be overridden in child classes if necessary.
+        """
+        return None
+
     @classmethod
     def load_from_serial(cls, serial):
         """Load object from serialized memory container.
@@ -381,7 +389,10 @@ class BaseDeepClassifier(BaseClassifier):
                 tmpfile.write(in_memory_model)
                 tmpfile.close()
 
-                cls.model_ = load_model(tmpfilepath)
+                cls.model_ = load_model(
+                    tmpfilepath,
+                    custom_objects=cls.get_custom_objects(),
+                )
                 os.remove(tmpfilepath)
 
         cls.history = pickle.loads(in_memory_history)
@@ -417,9 +428,15 @@ class BaseDeepClassifier(BaseClassifier):
         keras_location_legacy = temp_unzip_loc / "keras"
         keras_location = temp_unzip_loc / "keras" / "model.keras"
         if keras_location.exists():
-            cls.model_ = keras.models.load_model(keras_location)
+            cls.model_ = keras.models.load_model(
+                keras_location,
+                custom_objects=cls.get_custom_objects(),
+            )
         elif keras_location_legacy.exists():
-            cls.model_ = keras.models.load_model(keras_location_legacy)
+            cls.model_ = keras.models.load_model(
+                keras_location_legacy,
+                custom_objects=cls.get_custom_objects(),
+            )
         else:
             cls.model_ = None
 

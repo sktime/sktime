@@ -1,4 +1,4 @@
-"""Time Convolutional Neural Network (CNN) for classification."""
+"""Time Convolutional Neural Network (CNN) for regression."""
 
 __all__ = ["TapNetRegressor"]
 
@@ -13,57 +13,68 @@ from sktime.regression.deep_learning.base import BaseDeepRegressor
 class TapNetRegressor(BaseDeepRegressor):
     """Time series attentional prototype network (TapNet), as described in [1].
 
-     TapNet was initially proposed for multivariate time series
-     classification. The is an adaptation for time series regression. TapNet comprises
-     these components: random dimension permutation, multivariate time series
-     encoding, and attentional prototype learning.
+    TapNet was initially proposed for multivariate time series
+    classification. This an adaptation for time series regression. TapNet comprises
+    these components: random dimension permutation, multivariate time series
+    encoding, and attentional prototype learning.
 
     Parameters
     ----------
-    filter_sizes : array of int, default = (256, 256, 128)
-        sets the kernel size argument for each convolutional block.
-        Controls number of convolutional filters
-        and number of neurons in attention dense layers.
-    kernel_size : array of int, default = (8, 5, 3)
-        controls the size of the convolutional kernels
-    layers : array of int, default = (500, 300)
-        size of dense layers
     n_epochs : int, default = 2000
         number of epochs to train the model
     batch_size : int, default = 16
         number of samples per update
-    callbacks : list of keras.callbacks.Callback, optional (default=None)
-        List of Keras callbacks to apply during model training.
     dropout : float, default = 0.5
-        dropout rate, in the range [0, 1)
-    lstm_dropout : float, default = 0.8
-        dropout rate for the LSTM layer, in the range [0, 1)
+        dropout rate for the convolutional layers, in the range [0, 1)
+    filter_sizes : tuple of int, default = (256, 256, 128)
+        number of convolutional filters in each conv block
+    kernel_size : tuple of int, default = (8, 5, 3)
+        specifying the length of the 1D convolution window
     dilation : int, default = 1
         dilation value
-    activation : str, default = "linear"
-        activation function for the last output layer
-        List of available activation functions: https://keras.io/api/layers/activations/
-    activation_hidden : str, default = "leaky_relu"
-        activation function for the hidden layers
-        List of available activation functions: https://keras.io/api/layers/activations/
-    loss : str, default = "mean_squared_error"
-        loss function for the classifier
-    optimizer : str or None, default = "Adam(lr=0.01)"
-        gradient updating function for the classifier
-    use_bias : bool, default = True
-        whether to use bias in the output dense layer
+    layers : array of int, default = (500, 300)
+        sizes of dense layers
     use_rp : bool, default = True
         whether to use random projections
+    activation : str or callable, default = "linear"
+        activation function for the last output layer
+        List of available activation functions: https://keras.io/api/layers/activations/
+    activation_hidden : str or callable, default = "leaky_relu"
+        activation function for the hidden layers
+        List of available activation functions: https://keras.io/api/layers/activations/
+    rp_group : int, default = 3
+        number of random permutation groups g for random dimension permutation
+    rp_alpha : float, default = 2.0
+        scale factor alpha used to compute the RDP group size:
+        ```
+        rp_dim = floor(n_dims * rp_alpha / rp_group)
+        ```
+    use_bias : bool, default = True
+        whether to use bias in the output dense layer
     use_att : bool, default = True
         whether to use self attention
     use_lstm : bool, default = True
         whether to use an LSTM layer
     use_cnn : bool, default = True
         whether to use a CNN layer
+    random_state : int or None, default = None
+        seed to any needed random actions
+    padding : str, default = 'same'
+        type of padding for convolution layers
+    loss : str, default = "mean_squared_error"
+        loss function for the classifier
+    optimizer : str or None, default = "Adam(lr=0.01)"
+        gradient updating function for the classifier
+    metrics : list of str or None, default = None
+        list of metrics to be evaluated by the model during training and testing
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
     verbose : bool, default = False
         whether to output extra information
-    random_state : int or None, default = None
-        seed for random
+    lstm_dropout : float, default = 0.8
+        dropout rate for the LSTM layer, in the range [0, 1)
+    fc_dropout : float, default = 0.0
+        dropout rate before the output layer, in the range (0, 1]
 
     References
     ----------
@@ -100,7 +111,8 @@ class TapNetRegressor(BaseDeepRegressor):
         use_rp=True,
         activation="linear",
         activation_hidden="leaky_relu",
-        rp_params=(-1, 3),
+        rp_group=3,
+        rp_alpha=2.0,
         use_bias=True,
         use_att=True,
         use_lstm=True,
@@ -113,12 +125,12 @@ class TapNetRegressor(BaseDeepRegressor):
         callbacks=None,
         verbose=False,
         lstm_dropout=0.8,
+        fc_dropout=0.0,
     ):
         self.batch_size = batch_size
         self.random_state = random_state
         self.kernel_size = kernel_size
         self.layers = layers
-        self.rp_params = rp_params
         self.filter_sizes = filter_sizes
         self.activation = activation
         self.activation_hidden = activation_hidden
@@ -139,9 +151,10 @@ class TapNetRegressor(BaseDeepRegressor):
         self.use_lstm = use_lstm
         self.use_cnn = use_cnn
 
-        # parameters for random projection
         self.use_rp = use_rp
-        self.rp_params = rp_params
+        self.rp_group = rp_group
+        self.rp_alpha = rp_alpha
+        self.fc_dropout = fc_dropout
 
         super().__init__()
 
@@ -156,20 +169,22 @@ class TapNetRegressor(BaseDeepRegressor):
         * any soft dependency imports in the constructor
         """
         self._network = TapNetNetwork(
-            activation=self.activation_hidden,
+            activation_hidden=self.activation_hidden,
             dropout=self.dropout,
             filter_sizes=self.filter_sizes,
             kernel_size=self.kernel_size,
             dilation=self.dilation,
             layers=self.layers,
             use_rp=self.use_rp,
-            rp_params=self.rp_params,
+            rp_group=self.rp_group,
+            rp_alpha=self.rp_alpha,
             use_att=self.use_att,
             use_lstm=self.use_lstm,
             use_cnn=self.use_cnn,
             random_state=self.random_state,
             padding=self.padding,
             lstm_dropout=self.lstm_dropout,
+            fc_dropout=self.fc_dropout,
         )
 
         super().__post_init__()
@@ -218,6 +233,18 @@ class TapNetRegressor(BaseDeepRegressor):
         )
 
         return model
+
+    @staticmethod
+    def get_custom_objects():
+        """Return the custom objects needed for loading the model.
+
+        Returns
+        -------
+        dict of str to type, mapping names to classes
+        """
+        from sktime.libs._keras_self_attention import SeqSelfAttention
+
+        return SeqSelfAttention.get_custom_objects()
 
     def _fit(self, X, y):
         """Fit the regressor on the training set (X, y).
