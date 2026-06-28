@@ -155,6 +155,9 @@ class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
 
         super().__init__()
 
+        if self.gamma == "auto":
+            self.set_tags(**{"fit_is_empty": False})
+
     def _get_tslearn_pwtrafo(self):
         """Adapter method to get tslearn pwtrafo."""
         from tslearn.metrics.softdtw_variants import (
@@ -166,6 +169,15 @@ class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
             return cdist_soft_dtw_normalized
         else:
             return cdist_soft_dtw
+
+    def _fit(self, X, X2=None):
+        """Fit the distance parameters if required."""
+        if self.gamma == "auto":
+            from tslearn.metrics import gamma_soft_dtw
+
+            X_tslearn = self._coerce_df_list_to_list_of_arr(X)
+            self.gamma_ = float(gamma_soft_dtw(X_tslearn))
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -190,5 +202,6 @@ class SoftDtwDistTslearn(_TslearnPwTrafoAdapter, BasePairwiseTransformerPanel):
         params0 = {}
         params1 = {"normalized": True, "gamma": 1.5}
         params2 = {"gamma": 0.5}
+        params3 = {"gamma": "auto"}
 
-        return [params0, params1, params2]
+        return [params0, params1, params2, params3]
