@@ -467,6 +467,23 @@ class _Reducer(_BaseWindowForecaster):
         # contains the value the window is summarized to.
 
         if self._X is not None:
+            # Warn if exogenous columns used during fit are missing at predict time
+            if X_update is not None:
+                fit_cols = set(self._X.columns)
+                pred_cols = set(X_update.columns)
+                missing_cols = fit_cols - pred_cols
+
+                if missing_cols:
+                    warn(
+                        (
+                            "Exogenous columns missing at predict time: "
+                            f"{missing_cols}. "
+                            "They will be filled with zeros, which may lead "
+                            "to incorrect forecasts."
+                        ),
+                        obj=self,
+                    )
+
             X = _create_fcst_df([index_range[-1]], self._X)
             X.update(self._X)
             if X_update is not None:
