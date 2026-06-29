@@ -103,6 +103,8 @@ default="full"
         "capability:multivariate": True,
         "capability:missing_values": False,
         "property:randomness": "stochastic",
+        "serialization:native_artifacts": ("_fine_tuned_model_", "_network_"),
+        "serialization:skip": ("_trainer_",),
         # CI and testing tags
         # -------------------
         "tests:vm": True,
@@ -236,6 +238,8 @@ default="full"
             base_learning_rate=self.base_learning_rate,
             learning_rate_adjusting=self.learning_rate_adjusting,
         )
+        self._fine_tuned_model_ = getattr(self._trainer_, "fine_tuned_model", None)
+        self._network_ = getattr(self._trainer_, "network", None)
 
         return self
 
@@ -382,6 +386,15 @@ default="full"
             import torch
 
             trainer = self._build_trainer()
+            network_artifact = getattr(self, "_network_", None)
+            if network_artifact is not None:
+                trainer.network = network_artifact
+
+            model_artifact = getattr(self, "_fine_tuned_model_", None)
+            if model_artifact is not None:
+                trainer.fine_tuned_model = model_artifact
+                self._trainer_ = trainer
+                return
 
             # Restore backbone weights if we serialised them
             network_bytes = getattr(self, "_network_state_bytes_", None)
