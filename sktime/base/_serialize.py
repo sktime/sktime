@@ -171,6 +171,9 @@ class _NativeArtifactStore:
 
     def save_index(self):
         """Save native artifact index."""
+        if len(self.index) == 0:
+            return
+
         import json
 
         self.artifact_root.mkdir(exist_ok=True)
@@ -328,6 +331,8 @@ class _SerializationMixin:
         native_save_path = save_path / "_artifacts"
         native_save_path.mkdir()
         self._save_native_artifacts(native_save_path)
+        if not any(native_save_path.iterdir()):
+            native_save_path.rmdir()
 
         shutil.make_archive(base_name=save_path, format="zip", root_dir=save_path)
         zip_path = save_path.with_name(f"{save_path.stem}.zip")
