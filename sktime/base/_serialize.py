@@ -183,7 +183,6 @@ class _SerializationMixin:
 
     def _remove_attrs_from_pickle(self, path):
         """Temporarily remove attributes that are stored outside _obj."""
-        # TODO: update this when native memory serialization is implemented
         skip = self.get_tag("serialization:skip", ())
         native_artifacts = self.get_tag("serialization:native_artifacts", ())
         attrs_to_remove = skip if path is None else (*skip, *native_artifacts)
@@ -233,6 +232,43 @@ class _SerializationMixin:
             )
             setattr(self, name, artifact)
 
+    def _get_serializer(self, serialization_format):
+        """Return serialization module for the given serialization format."""
+        import pickle
+
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        if serialization_format not in SERIALIZATION_FORMATS:
+            raise ValueError(
+                f"The provided `serialization_format`='{serialization_format}' "
+                "is not yet supported. The possible formats are: "
+                f"{SERIALIZATION_FORMATS}."
+            )
+
+        if serialization_format == "cloudpickle":
+            _check_soft_dependencies("cloudpickle", severity="error")
+            import cloudpickle
+
+            return cloudpickle
+
+        return pickle
+
+    def _get_save_path(self, path):
+        """Check path and return path used for saving."""
+        from pathlib import Path
+        from tempfile import TemporaryDirectory
+
+        if path is not None and not isinstance(path, (str, Path)):
+            raise TypeError(
+                "`path` is expected to either be a string or a Path object "
+                f"but found of type:{type(path)}."
+            )
+
+        save_path = TemporaryDirectory().name if path is None else path
+        save_path = Path(save_path) if isinstance(save_path, str) else save_path
+
+        return save_path
+
     def save(self, path=None, serialization_format="pickle"):
         """Save serialized self to bytes-like object or to (.zip) file.
 
@@ -268,57 +304,40 @@ class _SerializationMixin:
         if ``path`` is None - in-memory serialized self
         if ``path`` is file location - ZipFile with reference to the file
         """
-        import pickle
         import shutil
-        from pathlib import Path
         from zipfile import ZipFile
 
-        from skbase.utils.dependencies import _check_soft_dependencies
+        serializer = self._get_serializer(serialization_format)
+        save_path = self._get_save_path(path)
+        removed_attrs = self._remove_attrs_from_pickle(save_path)
 
-        if serialization_format not in SERIALIZATION_FORMATS:
-            raise ValueError(
-                f"The provided `serialization_format`='{serialization_format}' "
-                "is not yet supported. The possible formats are: "
-                f"{SERIALIZATION_FORMATS}."
-            )
+        native_artifacts = self.get_tag("serialization:native_artifacts", ())
 
-        if path is not None and not isinstance(path, (str, Path)):
-            raise TypeError(
-                "`path` is expected to either be a string or a Path object "
-                f"but found of type:{type(path)}."
-            )
-        if path is not None:
-            path = Path(path) if isinstance(path, str) else path
-            path.mkdir()
+        if path is None and not native_artifacts:
+            serial = serializer.dumps(self)
+            self.__dict__.update(removed_attrs)
+            return (type(self), serial)
 
-        removed_attrs = self._remove_attrs_from_pickle(path)
-
-        if serialization_format == "cloudpickle":
-            _check_soft_dependencies("cloudpickle", severity="error")
-            import cloudpickle
-
-            if path is None:
-                return (type(self), cloudpickle.dumps(self))
-
-            with open(path / "_metadata", "wb") as file:
-                cloudpickle.dump(type(self), file)
-            with open(path / "_obj", "wb") as file:
-                cloudpickle.dump(self, file)
-
-        elif serialization_format == "pickle":
-            if path is None:
-                return (type(self), pickle.dumps(self))
-
-            with open(path / "_metadata", "wb") as file:
-                pickle.dump(type(self), file)
-            with open(path / "_obj", "wb") as file:
-                pickle.dump(self, file)
-
+        save_path.mkdir()
+        with open(save_path / "_metadata", "wb") as file:
+            serializer.dump(type(self), file)
+        with open(save_path / "_obj", "wb") as file:
+            serializer.dump(self, file)
         self.__dict__.update(removed_attrs)
-        self._write_native_artifacts(path)
-        shutil.make_archive(base_name=path, format="zip", root_dir=path)
-        shutil.rmtree(path)
-        return ZipFile(path.with_name(f"{path.stem}.zip"))
+
+        self._write_native_artifacts(save_path)
+
+        shutil.make_archive(base_name=save_path, format="zip", root_dir=save_path)
+        zip_path = save_path.with_name(f"{save_path.stem}.zip")
+        shutil.rmtree(save_path)
+
+        if path is None:
+            with open(zip_path, "rb") as file:
+                serial = file.read()
+            zip_path.unlink()
+            return (type(self), serial)
+
+        return ZipFile(zip_path)
 
     @classmethod
     def load_from_serial(cls, serial):
@@ -333,7 +352,11 @@ class _SerializationMixin:
         deserialized self resulting in output ``serial``, of ``cls.save(None)``
         """
         import pickle
+        from io import BytesIO
+        from zipfile import is_zipfile
 
+        if is_zipfile(BytesIO(serial)):
+            return cls.load_from_path(BytesIO(serial))
         return pickle.loads(serial)
 
     @classmethod
