@@ -189,6 +189,7 @@ class HFTransformersForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
+        "serialization:native_artifacts": ("model",),
         # CI and test flags
         # -----------------
         "tests:vm": True,
