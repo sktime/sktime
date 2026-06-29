@@ -212,3 +212,42 @@ class TestBenchmarkAddMethods:
 
         with pytest.raises(TypeError, match="Unsupported tuple format of length 2"):
             benchmark.add((clf, "should_fail"))
+
+    def test_add_registers_estimators_before_run(self):
+        """Test add() registers estimators before run() is called."""
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+
+        assert len(benchmark.estimators.entities) == 1
+        assert "DummyClassifier" in benchmark.estimators.entities
+
+    def test_add_registers_tasks_before_run_tuple(self):
+        """Test add() registers tasks before run() when using task tuple."""
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+        benchmark.add((ArrowHead(), accuracy_score, KFold(n_splits=3)))
+
+        assert len(benchmark.tasks.entities) == 1
+
+    def test_add_registers_tasks_before_run_individually(self):
+        """Test add() registers tasks before run() when adding components."""
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+        benchmark.add(ArrowHead())
+        benchmark.add(accuracy_score)
+        benchmark.add(KFold(n_splits=3))
+
+        assert len(benchmark.tasks.entities) == 1
+
+    def test_add_registers_tasks_incrementally(self):
+        """Test tasks are registered as soon as all components are available."""
+        benchmark = ClassificationBenchmark()
+
+        benchmark.add(ArrowHead())
+        assert len(benchmark.tasks.entities) == 0
+
+        benchmark.add(accuracy_score)
+        assert len(benchmark.tasks.entities) == 0
+
+        benchmark.add(KFold(n_splits=3))
+        assert len(benchmark.tasks.entities) == 1

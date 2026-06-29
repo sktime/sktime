@@ -234,6 +234,12 @@ class ParquetStorageHandler(BaseStorageHandler):
         results : ResultObject
             The results to save.
         """
+        if not results:
+            pd.DataFrame(columns=["validation_id", "model_id"]).to_parquet(
+                self.path, index=False
+            )
+            return
+
         results_df = pd.json_normalize(
             list(map(lambda x: asdict(x, pd_orient="tight"), results))
         )
@@ -312,6 +318,12 @@ class CSVStorageHandler(BaseStorageHandler):
         results : ResultObject
             The results to save.
         """
+        if not results:
+            pd.DataFrame(columns=["validation_id", "model_id"]).to_csv(
+                self.path, index=False
+            )
+            return
+
         results_df = pd.json_normalize(
             list(map(lambda x: asdict(x, pd_orient="tight"), results))
         )
