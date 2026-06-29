@@ -131,6 +131,7 @@ class MomentFMClassifier(BaseClassifier):
             "transformers",
         ],
         "python_version": ">= 3.10",
+        "serialization:native_artifacts": ("model",),
         # testing configuration
         # ---------------------
         "tests:vm": True,
