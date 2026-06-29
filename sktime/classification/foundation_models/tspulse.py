@@ -142,10 +142,6 @@ class TSPulseClassifier(BaseClassifier):
         "serialization:native_artifacts": ("_model",),
         "serialization:skip": ("_pipeline",),
         "tests:vm": True,
-        "tests:skip_by_name": [
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
     }
 
     def __init__(
