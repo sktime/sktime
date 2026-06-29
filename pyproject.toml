@@ -397,3 +397,8 @@ allowed-confusables=["σ"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.pytest.ini_options]
+markers = [
+    "composition: composition-level integration tests",
+]
