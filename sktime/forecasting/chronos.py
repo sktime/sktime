@@ -323,10 +323,6 @@ class ChronosForecaster(BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.chronos"],
-        "tests:skip_by_name": [  # pickling problems
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
     }
 
     _default_chronos_config = {

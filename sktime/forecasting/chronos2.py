@@ -91,10 +91,6 @@ class Chronos2Forecaster(BaseForecaster):
         "capability:non_contiguous_X": False,
         "serialization:skip": ("model_pipeline",),
         "tests:vm": True,
-        "tests:skip_by_name": [
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
     }
 
     _default_config = {
