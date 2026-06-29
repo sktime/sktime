@@ -201,7 +201,7 @@ class _SerializationMixin:
         if not native_artifacts:
             return
 
-        store = _NativeArtifactStore(path / "_artifacts")
+        store = _NativeArtifactStore(path)
 
         for name in native_artifacts:
             artifact = getattr(self, name, None)
@@ -325,7 +325,7 @@ class _SerializationMixin:
             serializer.dump(self, file)
         self.__dict__.update(removed_attrs)
 
-        self._write_native_artifacts(save_path)
+        self._write_native_artifacts(save_path / "_artifacts")
 
         shutil.make_archive(base_name=save_path, format="zip", root_dir=save_path)
         zip_path = save_path.with_name(f"{save_path.stem}.zip")
