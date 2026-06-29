@@ -14,7 +14,21 @@ from sktime.transformations.compose._common import CORE_MTYPES
 
 
 class Id(BaseTransformer):
-    """Identity transformer, returns data unchanged in transform/inverse_transform."""
+    """Identity transformer, returns data unchanged in transform/inverse_transform.
+
+    Examples
+    --------
+    >>> from sktime.transformations.compose import Id
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> transformer = Id()
+    >>> y_t = transformer.fit_transform(y)
+    >>> y.equals(y_t)
+    True
+    >>> y_inv = transformer.inverse_transform(y_t)
+    >>> y.equals(y_inv)
+    True
+    """
 
     _tags = {
         "authors": "fkiraly",
