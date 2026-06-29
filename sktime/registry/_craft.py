@@ -290,3 +290,80 @@ def _get_public_import(module_path: str) -> str:
         if part.startswith("_"):
             return ".".join(parts[:i])  # Keep only part before first private submodule
     return module_path  # Return the original path if no private submodules are found
+
+
+def _r_deps(spec, include_test_deps=False):
+    """Get R dependency requirements for a craft spec.
+
+    The ``_r_deps`` utility returns a list of R requirement strings
+    required to construct the deserialization via ``craft``.
+
+    In case the spec includes estimators with disjunctions in their requirement
+    specifications, the first disjunctive requirement is returned, i.e.,
+    any disjunctions are resolved by picking the first dependency in the disjunction.
+
+    Parameters
+    ----------
+    spec : str, sktime/skbase compatible object specification
+        i.e., a string that executes to construct an object if all R
+        dependencies were present.
+        dependencies inferred are of any classes in the scope of ``all_estimators``
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
+
+    include_test_deps : bool, default=False
+        whether to include dependencies tagged as
+        "tests:r_dependencies" in addition to "r_dependencies"
+
+    Returns
+    -------
+    reqs : list of str
+        each str is R compatible requirement string for craft(spec)
+        if spec has no requirements, return is [], the length 0 list
+    """
+    register = dict(all_estimators())
+
+    dep_strs = []
+
+    for x in _extract_class_names(spec):
+        if x not in register.keys():
+            raise RuntimeError(
+                f"class {x} is required to build spec, but was not found "
+                "in all_estimators scope"
+            )
+        cls = register[x]
+
+        new_deps = cls.get_class_tag("r_dependencies")
+
+        def _resolve_disjunctions(dep):
+            """Resolve disjunctions in dependencies by picking first."""
+            if isinstance(dep, list):
+                return dep[0]  # pick first dependency in disjunction
+            return dep
+
+        def _coerce_dep_strs(dep):
+            """Coerce dependency tag value to list of strings."""
+            if dep is None:
+                return []
+            elif isinstance(dep, str) and len(dep) > 0:
+                return [dep]
+            elif isinstance(dep, str) and len(dep) == 0:
+                return []
+            elif isinstance(dep, list):
+                return [_resolve_disjunctions(d) for d in dep]
+            else:
+                return dep
+
+        new_deps = cls.get_class_tag("r_dependencies")
+        dep_strs += _coerce_dep_strs(new_deps)
+
+        if include_test_deps:
+            test_deps = cls.get_class_tag("tests:r_dependencies")
+            dep_strs += _coerce_dep_strs(test_deps)
+
+        reqs = list(set(dep_strs))
+
+    return reqs
