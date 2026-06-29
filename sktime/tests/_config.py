@@ -207,7 +207,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "SlopeTransformer",
         "StackingForecaster",
         "SummaryClassifier",
-        "SupervisedTimeSeriesForest",
         "TEASER",
         "TSFreshClassifier",
         "TapNetNetwork",
