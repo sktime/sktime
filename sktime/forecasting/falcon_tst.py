@@ -16,6 +16,7 @@ __author__ = ["Harryx2019", "figolyd", "geetu040"]
 
 __all__ = ["FalconTSTForecaster"]
 
+import os
 from copy import deepcopy
 from warnings import warn
 
@@ -199,6 +200,15 @@ class FalconTSTForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        hf_token = os.environ.get("HF_TOKEN", "")
+        hf_token_status = (
+            "healthy (set and non-empty)" if hf_token.strip() else "missing or empty"
+        )
+        raise RuntimeError(
+            "Temporary CI validation: FalconTSTForecaster._fit sees "
+            f"HF_TOKEN status: {hf_token_status}."
+        )
+
         self.model_ = self._load_model()
         self.context_ = y
 
