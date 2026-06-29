@@ -168,7 +168,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "FreshPRINCE",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
-        "HIVECOTEV2",
         "Hidalgo",
         "HierarchicalProphet",
         "InceptionTimeNetwork",
