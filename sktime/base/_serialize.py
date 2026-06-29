@@ -325,7 +325,9 @@ class _SerializationMixin:
         finally:
             self.__dict__.update(removed_attrs)
 
-        self._save_native_artifacts(save_path / "_artifacts")
+        native_save_path = save_path / "_artifacts"
+        native_save_path.mkdir()
+        self._save_native_artifacts(native_save_path)
 
         shutil.make_archive(base_name=save_path, format="zip", root_dir=save_path)
         zip_path = save_path.with_name(f"{save_path.stem}.zip")
@@ -384,7 +386,7 @@ class _SerializationMixin:
             with open(path / "_obj", "rb") as file:
                 obj = pickle.load(file)
 
-            obj._load_native_artifacts(path)
+            obj._load_native_artifacts(path / "_artifacts")
             return obj
 
 

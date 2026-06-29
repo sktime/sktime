@@ -648,16 +648,15 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         ]
         return params
 
-    def _write_native_artifacts(self, path):
+    def _save_native_artifacts(self, path):
         if not hasattr(self, "network"):
             return
 
-        state_dict_path = path / "_artifacts" / "state_dict.pt"
-        state_dict_path.parent.mkdir(parents=True, exist_ok=True)
+        state_dict_path = path / "state_dict.pt"
         torch.save(self.network.state_dict(), state_dict_path)
 
-    def _restore_native_artifacts(self, path):
-        state_dict_path = path / "_artifacts" / "state_dict.pt"
+    def _load_native_artifacts(self, path):
+        state_dict_path = path / "state_dict.pt"
         if not state_dict_path.exists():
             return
 
