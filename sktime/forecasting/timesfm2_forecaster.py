@@ -256,7 +256,7 @@ class TimesFM2Forecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pretrain": True,
-        "serialization:native_artifacts": ("model_",),
+        "serialization:skip": ("model_",),
         "authors": ["rajatsen91", "siriuz42", "geetu040"],
         # rajatsen91, siriuz42 for google-research/timesfm
         "maintainers": ["geetu040"],
@@ -294,6 +294,20 @@ class TimesFM2Forecaster(BaseForecaster):
 
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Set serialization tags conditional on model reconstruction."""
+        if (
+            self.model_path is None
+            or self.config is not None
+            or self.peft_config is not None
+        ):
+            self.set_tags(
+                **{
+                    "serialization:native_artifacts": ("model_",),
+                    "serialization:skip": (),
+                }
+            )
+
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain forecaster on panel/global data (first batch).
 
@@ -316,6 +330,12 @@ class TimesFM2Forecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self.set_tags(
+            **{
+                "serialization:native_artifacts": ("model_",),
+                "serialization:skip": (),
+            }
+        )
         self.model_ = self._load_model()
 
         context_length = self.model_.config.context_length
