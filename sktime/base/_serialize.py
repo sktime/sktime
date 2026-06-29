@@ -310,20 +310,20 @@ class _SerializationMixin:
         serializer = self._get_serializer(serialization_format)
         save_path = self._get_save_path(path)
         removed_attrs = self._remove_attrs_from_pickle(save_path)
-
         native_artifacts = self.get_tag("serialization:native_artifacts", ())
 
-        if path is None and not native_artifacts:
-            serial = serializer.dumps(self)
-            self.__dict__.update(removed_attrs)
-            return (type(self), serial)
+        try:
+            if path is None and not native_artifacts:
+                serial = serializer.dumps(self)
+                return (type(self), serial)
 
-        save_path.mkdir()
-        with open(save_path / "_metadata", "wb") as file:
-            serializer.dump(type(self), file)
-        with open(save_path / "_obj", "wb") as file:
-            serializer.dump(self, file)
-        self.__dict__.update(removed_attrs)
+            save_path.mkdir()
+            with open(save_path / "_metadata", "wb") as file:
+                serializer.dump(type(self), file)
+            with open(save_path / "_obj", "wb") as file:
+                serializer.dump(self, file)
+        finally:
+            self.__dict__.update(removed_attrs)
 
         self._write_native_artifacts(save_path / "_artifacts")
 
