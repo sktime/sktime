@@ -6,7 +6,7 @@ on:
         type: string
 
 env:
-  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
 
 jobs:
   test-est:

@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
 
 jobs:
   code-quality:

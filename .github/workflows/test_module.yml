@@ -3,7 +3,7 @@ on:
   workflow_call:
 
 env:
-  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
 
 jobs:
   detect:
