@@ -21,8 +21,8 @@ class _NativeArtifactBackend:
 
     backend = None
 
-    def _get_class(self, record):
-        """Return class from artifact record."""
+    def _load_class(self, record):
+        """Load class from artifact record."""
         import importlib
 
         class_path = record["class"]
@@ -47,8 +47,8 @@ class _NativeArtifactBackend:
         """Return whether backend supports the object."""
         raise NotImplementedError
 
-    def dump(self, obj, path, *, estimator, name):
-        """Dump object to path."""
+    def save(self, obj, path, *, estimator, name):
+        """Save object to path."""
         raise NotImplementedError
 
     def load(self, path, record, *, estimator, name):
@@ -67,13 +67,13 @@ class _PretrainedArtifactBackend(_NativeArtifactBackend):
             getattr(type(obj), "from_pretrained", None)
         )
 
-    def dump(self, obj, path, *, estimator, name):
-        """Dump an object using save_pretrained."""
+    def save(self, obj, path, *, estimator, name):
+        """Save an object using save_pretrained."""
         obj.save_pretrained(path)
 
     def load(self, path, record, *, estimator, name):
         """Load an object using from_pretrained."""
-        cls = self._get_class(record)
+        cls = self._load_class(record)
         return cls.from_pretrained(path)
 
 
@@ -89,8 +89,8 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
             for cls in type(obj).__mro__
         )
 
-    def dump(self, obj, path, *, estimator, name):
-        """Dump a torch module using torch.save."""
+    def save(self, obj, path, *, estimator, name):
+        """Save a torch module using torch.save."""
         import torch
 
         torch.save(obj, path / "model.pt")
@@ -120,8 +120,8 @@ _NATIVE_ARTIFACT_BACKENDS = [
 ]
 
 
-def _get_native_artifact_backend(obj, *, name):
-    """Return native artifact backend for object."""
+def _save_native_artifact_backend(obj, *, name):
+    """Return native artifact backend for saving object."""
     for backend in _NATIVE_ARTIFACT_BACKENDS:
         if backend.supports(obj):
             return backend
@@ -132,8 +132,8 @@ def _get_native_artifact_backend(obj, *, name):
     )
 
 
-def _get_native_artifact_backend_by_name(backend_name):
-    """Return native artifact backend by backend name."""
+def _load_native_artifact_backend(backend_name):
+    """Return native artifact backend for loading by backend name."""
     for backend in _NATIVE_ARTIFACT_BACKENDS:
         if backend.backend == backend_name:
             return backend
@@ -150,12 +150,12 @@ class _NativeArtifactStore:
         self.artifact_root = artifact_root
         self.index = {}
 
-    def dump(self, name, obj, *, estimator):
-        """Dump a native artifact to the store."""
+    def save(self, name, obj, *, estimator):
+        """Save a native artifact to the store."""
         artifact_path = self.artifact_root / name
         artifact_path.mkdir(parents=True)
-        backend = _get_native_artifact_backend(obj, name=name)
-        backend.dump(
+        backend = _save_native_artifact_backend(obj, name=name)
+        backend.save(
             obj,
             artifact_path,
             estimator=estimator,
@@ -169,8 +169,8 @@ class _NativeArtifactStore:
         }
         return self.index[name]
 
-    def write_index(self):
-        """Write native artifact index."""
+    def save_index(self):
+        """Save native artifact index."""
         import json
 
         self.artifact_root.mkdir(exist_ok=True)
@@ -194,8 +194,8 @@ class _SerializationMixin:
 
         return removed_attrs
 
-    def _write_native_artifacts(self, path):
-        """Write native artifacts for self if it opts into them."""
+    def _save_native_artifacts(self, path):
+        """Save native artifacts for self if it opts into them."""
         native_artifacts = self.get_tag("serialization:native_artifacts", ())
 
         if not native_artifacts:
@@ -206,12 +206,12 @@ class _SerializationMixin:
         for name in native_artifacts:
             artifact = getattr(self, name, None)
             if artifact is not None:
-                store.dump(name, artifact, estimator=self)
+                store.save(name, artifact, estimator=self)
 
-        store.write_index()
+        store.save_index()
 
-    def _restore_native_artifacts(self, path):
-        """Restore native artifacts from an extracted save bundle."""
+    def _load_native_artifacts(self, path):
+        """Load native artifacts from an extracted save bundle."""
         import json
 
         index_path = path / "_artifacts" / "index.json"
@@ -222,7 +222,7 @@ class _SerializationMixin:
             index = json.load(file)
 
         for name, record in index.items():
-            backend = _get_native_artifact_backend_by_name(record["backend"])
+            backend = _load_native_artifact_backend(record["backend"])
             artifact_path = path / "_artifacts" / record["path"]
             artifact = backend.load(
                 artifact_path,
@@ -325,7 +325,7 @@ class _SerializationMixin:
         finally:
             self.__dict__.update(removed_attrs)
 
-        self._write_native_artifacts(save_path / "_artifacts")
+        self._save_native_artifacts(save_path / "_artifacts")
 
         shutil.make_archive(base_name=save_path, format="zip", root_dir=save_path)
         zip_path = save_path.with_name(f"{save_path.stem}.zip")
@@ -384,7 +384,7 @@ class _SerializationMixin:
             with open(path / "_obj", "rb") as file:
                 obj = pickle.load(file)
 
-            obj._restore_native_artifacts(path)
+            obj._load_native_artifacts(path)
             return obj
 
 
