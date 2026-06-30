@@ -499,6 +499,7 @@ class SeasonalityCanovaHansen(BaseParamFitter):
         super().__init__()
 
     def __post_init__(self):
+        """Check that the seasonal period is valid."""
         if not isinstance(self.sp, (int, np.integer)) or self.sp < 2:
             raise ValueError("sp must be an integer greater than 1")
 
