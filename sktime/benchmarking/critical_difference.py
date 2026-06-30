@@ -78,6 +78,7 @@ def plot_critical_difference(
     width=10,
     textspace=2.5,
     reverse=True,
+    return_fig=False,
 ):
     """Compute critical difference statistics and plot critical difference diagram.
 
@@ -121,6 +122,10 @@ def plot_critical_difference(
         space on figure sides (in inches) for the method names (default: 2.5)
     reverse : bool
         if set to 'True', the lowest rank is on the right (default: 'True')
+    return_fig : bool
+        if 'True', the (fig, ax) tuple is returned and the figure is not shown
+        via ``plt.show()``. Use this for embedding the diagram (e.g. the
+        Hugging Face leaderboard) without side effects (default: 'False').
     """
     _check_soft_dependencies("matplotlib")
 
@@ -597,4 +602,7 @@ def plot_critical_difference(
             linewidth=linewidth_sign,
         )
         start += height
+
+    if return_fig:
+        return fig, ax
     plt.show()
