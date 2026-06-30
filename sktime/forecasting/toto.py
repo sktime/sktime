@@ -87,6 +87,7 @@ class TotoForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "serialization:skip": ("model_",),
         # contribution and dependency tags
         "authors": [
             "JATAYU000",
@@ -182,6 +183,14 @@ class TotoForecaster(BaseForecaster):
             "scale_factor_exponent": self.scale_factor_exponent,
         }
 
+    def _load_model(self):
+        """Load the cached zero-shot Toto forecaster."""
+        return _CachedTotoForecaster(
+            key=self._get_toto_key(),
+            toto_kwargs=self._get_toto_kwargs(),
+            device=self._device,
+        ).load_from_checkpoint()
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -242,6 +251,7 @@ class TotoForecaster(BaseForecaster):
             timestamp_seconds=self.timestamp_seconds,
             time_interval_seconds=self.time_interval_seconds,
         )
+        self.model_ = self._load_model()
 
         return self
 
@@ -280,13 +290,10 @@ class TotoForecaster(BaseForecaster):
 
         prediction_length = max(fh.to_relative(self._cutoff))
 
-        forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
-            toto_kwargs=self._get_toto_kwargs(),
-            device=self._device,
-        ).load_from_checkpoint()
+        if not hasattr(self, "model_") or self.model_ is None:
+            self.model_ = self._load_model()
 
-        forecast = forecaster.forecast(
+        forecast = self.model_.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
@@ -343,13 +350,10 @@ class TotoForecaster(BaseForecaster):
 
         prediction_length = max(fh.to_relative(self._cutoff))
 
-        forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
-            toto_kwargs=self._get_toto_kwargs(),
-            device=self._device,
-        ).load_from_checkpoint()
+        if not hasattr(self, "model_") or self.model_ is None:
+            self.model_ = self._load_model()
 
-        forecast = forecaster.forecast(
+        forecast = self.model_.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
