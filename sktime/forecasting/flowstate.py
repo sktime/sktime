@@ -223,6 +223,36 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         pred_q.index.names = self._context.index.names
         return pred_q
 
+    def _predict_var(self, fh, X=None, cov=False):
+        """Compute marginal variance from the FlowState inter-quartile range."""
+        from scipy.stats import norm
+
+        if cov:
+            raise NotImplementedError(
+                "FlowStateForecaster does not support covariance forecasts."
+            )
+
+        pred_int = self._predict_interval(fh=fh, X=X, coverage=[0.5])
+        var_name = pred_int.columns.get_level_values(0)[0]
+        iqr = pred_int[(var_name, 0.5, "upper")] - pred_int[(var_name, 0.5, "lower")]
+        var = (iqr / (2 * norm.ppf(0.75))) ** 2
+
+        return pd.DataFrame({var_name: var}, index=pred_int.index)
+
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Return FlowState predictive distribution.
+
+        FlowState provides fixed quantile knots, but sktime currently has no
+        matching linear-interpolation distribution object until skpro provides
+        HistogramQPD. Avoid the base class Normal fallback because it disagrees
+        with FlowState quantile predictions.
+        """
+        raise NotImplementedError(
+            "FlowStateForecaster.predict_proba requires a linear-interpolation "
+            "quantile-knot distribution such as skpro HistogramQPD. Until that "
+            "is available, use predict_quantiles or predict_interval instead."
+        )
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
