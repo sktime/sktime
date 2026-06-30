@@ -43,12 +43,42 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         "valid" or "same" otherwise.
     use_bias : bool, default = True
         Whether to use bias in output layer.
-    activation : str or None, default = None
-        Activation on output layer. None when using CrossEntropyLoss.
-    activation_hidden : str, default = "sigmoid"
-        Activation for hidden conv layers.
-        Supported activations include 'sigmoid', 'relu', 'tanh',
-        'softmax' or 'logsoftmax'.
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+    activation_hidden : str, Callable, or None, default="Sigmoid"
+        Activation applied to the hidden layers.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``Sigmoid``, ``ReLU``, ``Tanh``,
+        ``Softmax``, ``LogSoftmax``.
     optimizer : str or callable, default = "Adam"
         Optimizer to use. Same as TF default (Adam).
     optimizer_kwargs : dict or None, default = None
@@ -105,8 +135,8 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         filter_sizes: tuple[int, ...] = (6, 12),
         padding: str = "auto",
         use_bias: bool = True,
-        activation: str | None = None,
-        activation_hidden: str = "sigmoid",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "Sigmoid",
         optimizer: str | None | Callable = "Adam",
         optimizer_kwargs: dict | None = None,
         criterion: str | None | Callable = "CrossEntropyLoss",
@@ -190,8 +220,8 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
             kernel_sizes=self.kernel_sizes,
             avg_pool_size=self.avg_pool_size,
             filter_sizes=self.filter_sizes,
-            activation=self._validated_activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             use_bias=self.use_bias,
             padding=self.padding,
             init_weights=self.init_weights,
@@ -229,6 +259,6 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
             "kernel_sizes": (5,),
             "filter_sizes": (6,),
             "padding": "same",
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
         }
         return [params1, params2, params3]

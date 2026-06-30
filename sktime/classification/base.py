@@ -25,10 +25,10 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst", "ksharm
 import time
 
 import numpy as np
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF, check_is_scitype
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 
 
@@ -139,9 +139,9 @@ class BaseClassifier(BasePanelMixin):
         (last).
         """
         from sktime.classification.compose import ClassifierPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # behaviour is implemented only if other inherits from BaseTransformer
         #  in that case, distinctions arise from whether self or other is a pipeline
