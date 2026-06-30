@@ -301,7 +301,7 @@ For third party estimators with cython dependencies, the following steps should 
 *   In ``sktime``, a forwarding interface to the algorithm should be added.
     If the algorithm is kept up-to-date with the latest ``sktime`` interface,
     this should use the ``_placeholder_record`` template,
-    see for example ``Propherverse``.
+    see for example ``Prophetverse``.
     If the algorithm in ``home-package`` is not fully API compliant,
     or only thin python bindings are present,
     a delegator pattern can be used instead, see, e.g., ``MrSQM`` for an example.
