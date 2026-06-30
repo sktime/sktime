@@ -448,34 +448,34 @@ class UpdateEvery(_DelegatedForecaster):
 
 
 class DontUpdate(_DelegatedForecaster):
-    """Turns off updates, i.e., ensures that forecaster is only fit and never updated.
+    """Turns off updates, i.e., ensures forecaster is only fit and never updated.
 
     This is useful when comparing forecasters that update with forecasters that don't,
     in a set-up where all forecasters' ``update`` has ``update_params=True`` set.
 
-    Shorthand for UpdateEvery with default values.
+    Shorthand for ``UpdateEvery`` with default values.
 
     Parameters
     ----------
-    refit_interval : difference of sktime time indices (int or timedelta), optional
-        interval that needs to elapse after which the first update defaults to fit
-        default = 0, i.e., always refits, never updates
-        if index of y seen in fit is integer or y is index-free container type,
-            refit_interval must be int, and is interpreted as difference of int location
-        if index of y seen in fit is timestamp, must be int or pd.Timedelta
-            if pd.Timedelta, will be interpreted as time since last refit elapsed
-            if int, will be interpreted as number of time stamps seen since last refit
-    refit_window_size : difference of sktime time indices (int or timedelta), optional
-        length of the data window to refit to in case update calls fit
-        default = inf, i.e., refits to entire training data seen so far
-    refit_window_lag : difference of sktime indices (int or timedelta), optional
-        lag of the data window to refit to, w.r.t. cutoff, in case update calls fit
-        default = 0, i.e., refit window ends with and includes cutoff
+    forecaster : an sktime forecaster
+        the forecaster to be wrapped, which will never be updated after fit.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>> from sktime.forecasting.stream import DontUpdate
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> y0 = y.iloc[:-20]
+    >>> y1 = y.iloc[-20:-10]
+    >>> forecaster = DontUpdate(TrendForecaster())
+    >>> forecaster.fit(y0, fh=[1, 2, 3])
+    DontUpdate(...)
+    >>> # update is called but parameters are never updated
+    >>> forecaster.update(y1)
+    DontUpdate(...)
     """
 
-    # attribute for _DelegatedForecaster, which then delegates
-    #     all non-overridden methods are same as of getattr(self, _delegate_name)
-    #     see further details in _DelegatedForecaster docstring
     _delegate_name = "forecaster_"
 
     _tags = {
