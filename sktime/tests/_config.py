@@ -195,7 +195,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
         "RandomSamplesAugmenter",
-        "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
