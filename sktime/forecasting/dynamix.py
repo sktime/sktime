@@ -22,22 +22,12 @@ __author__ = ["yash-sangwan"]
 __all__ = ["DynaMixForecaster"]
 
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.dependencies import _safe_import
 from sktime.utils.singleton import _multiton
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
-
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        bfloat16 = None
-
-        class Tensor:
-            """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
 
 
 def _dynamix_cache_key(model: str, device: str) -> str:
@@ -113,11 +103,11 @@ class DynaMixForecaster(BaseForecaster):
     standardize : bool, default=True
         Whether the DynaMix forecaster standardizes the context series prior to
         forecasting.
-    seed : int or None, default=None
-        Random seed for reproducible forecasts. DynaMix is stochastic and draws
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the forecasts. DynaMix is stochastic and draws
         from the global ``torch`` RNG; if set, the RNG is seeded before each
-        ``predict`` call so that repeated forecasts are reproducible. If ``None``,
-        forecasts are non-deterministic across calls.
+        ``predict`` call so that repeated forecasts are reproducible (the model is
+        derandomized). If ``None``, forecasts are non-deterministic across calls.
     license_accepted : bool, default=False
         Whether the user accepts the GPL-3.0 license terms of DynaMix.
         Must be set to ``True`` to use the model.
@@ -161,7 +151,8 @@ class DynaMixForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,
         "capability:missing_values": False,
         "capability:pred_int": False,
-        "property:randomness": "stochastic",
+        "property:randomness": "derandomized",
+        "capability:random_state": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -173,14 +164,14 @@ class DynaMixForecaster(BaseForecaster):
         device: str = "cpu",
         preprocessing_method: str = "delay_embedding",
         standardize: bool = True,
-        seed=None,
+        random_state=None,
         license_accepted: bool = False,
     ):
         self.model = model
         self.device = device
         self.preprocessing_method = preprocessing_method
         self.standardize = standardize
-        self.seed = seed
+        self.random_state = random_state
         self.license_accepted = license_accepted
 
         self.model_ = None
@@ -302,8 +293,12 @@ class DynaMixForecaster(BaseForecaster):
         predict_len = len(fh)
 
         # DynaMix is stochastic; seed the global torch RNG for reproducibility
-        if self.seed is not None:
-            torch.manual_seed(self.seed)
+        # when a random_state is provided (derandomization).
+        if self.random_state is not None:
+            from sklearn.utils import check_random_state
+
+            rng = check_random_state(self.random_state)
+            torch.manual_seed(int(rng.randint(0, 2**31 - 1)))
 
         forecaster = _DynaMixModel(self.model_)
         with torch.no_grad():
@@ -348,14 +343,14 @@ class DynaMixForecaster(BaseForecaster):
         params1 = {
             "model": "dynamix-3d-alrnn-v1.0",
             "device": "cpu",
-            "seed": 42,
+            "random_state": 42,
             "license_accepted": True,
         }
         params2 = {
             "model": "dynamix-3d-alrnn-v1.0",
             "device": "cpu",
             "standardize": False,
-            "seed": 42,
+            "random_state": 42,
             "license_accepted": True,
         }
         return [params1, params2]
