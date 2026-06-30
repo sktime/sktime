@@ -77,6 +77,43 @@ class _PretrainedArtifactBackend(_NativeArtifactBackend):
         return cls.from_pretrained(path)
 
 
+class _KerasArtifactBackend(_NativeArtifactBackend):
+    """Native artifact backend for Keras models."""
+
+    backend = "keras"
+
+    def supports(self, obj):
+        """Return whether object looks like a Keras model."""
+        return any(
+            cls.__name__ == "Model" and "keras" in cls.__module__
+            for cls in type(obj).__mro__
+        )
+
+    def save(self, obj, path, *, estimator, name):
+        """Save a Keras model using the native .keras format."""
+        obj.save(path / "model.keras")
+
+    def load(self, path, record, *, estimator, name):
+        """Load a Keras model using keras.models.load_model."""
+        from tensorflow import keras
+
+        custom_objects = None
+        get_custom_objects = getattr(estimator, "get_custom_objects", None)
+        if callable(get_custom_objects):
+            custom_objects = get_custom_objects()
+
+        model = keras.models.load_model(
+            path / "model.keras",
+            custom_objects=custom_objects,
+        )
+
+        if hasattr(model, "optimizer"):
+            estimator.optimizer_ = model.optimizer
+            estimator.optimizer = model.optimizer
+
+        return model
+
+
 class _TorchArtifactBackend(_NativeArtifactBackend):
     """Native artifact backend for torch modules."""
 
@@ -156,6 +193,7 @@ class _TorchStateDictArtifactBackend(_NativeArtifactBackend):
 
 _NATIVE_ARTIFACT_BACKENDS = [
     _PretrainedArtifactBackend(),
+    _KerasArtifactBackend(),
     _TorchStateDictArtifactBackend(),
     _TorchArtifactBackend(),
 ]
