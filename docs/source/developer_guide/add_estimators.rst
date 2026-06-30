@@ -233,7 +233,7 @@ Adding an ``sktime`` compatible estimator to ``sktime``
 =======================================================
 
 When adding an ``sktime`` compatible estimator to ``sktime`` itself, a number of
-additional things need to be done.
+additional things need to be done:
 
 *   ensure that code also meets ``sktime's`` :ref:`documentation <developer_guide_documentation>` standards.
 *   add the estimator to the ``sktime`` API reference. This is done by adding a reference to the estimator in the
