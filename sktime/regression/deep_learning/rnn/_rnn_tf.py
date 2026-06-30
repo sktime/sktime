@@ -69,8 +69,6 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         # estimator type handled by parent class
         "tests:skip_by_name": [
             "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
         ],
     }
 
