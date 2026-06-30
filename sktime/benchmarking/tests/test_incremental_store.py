@@ -292,6 +292,19 @@ def test_benchmark_resumes_after_crash(tmp_path, monkeypatch, output_suffix):
 
     monkeypatch.setattr(benchmark, "_run_validation", crashing_run_validation)
 
+    original_save = _BenchmarkingResults.save
+    save_calls = 0
+
+    def crashing_save_once(self):
+        nonlocal save_calls
+        save_calls += 1
+        if save_calls == 1:
+            raise RuntimeError("Simulated benchmark failure")
+        return original_save(self)
+
+    # Validation failures are caught; simulate a crash during final save instead.
+    monkeypatch.setattr(_BenchmarkingResults, "save", crashing_save_once)
+
     with pytest.raises(RuntimeError, match="Simulated benchmark failure"):
         benchmark.run(str(results_path))
 
