@@ -298,3 +298,31 @@ class TestDummyGlobalForecaster:
         assert cloned_inner._state == "pretrained"
         assert hasattr(cloned_inner, "global_mean_")
         np.testing.assert_almost_equal(cloned_inner.global_mean_, pretrain_mean)
+
+
+def test_pretrained_params_survive_repeated_fit():
+    """Pretrained params should survive repeated calls to fit."""
+    from sktime.forecasting.dummy_global import DummyGlobalForecaster
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(3,), min_timepoints=12, max_timepoints=12
+    )
+    y_flat = y_panel.droplevel("hierarchy_0").groupby(level=0).first()
+    y_flat = y_flat.reset_index(level=1, drop=True)
+
+    forecaster = DummyGlobalForecaster()
+
+    forecaster.pretrain(y_panel)
+    params_before_fit = forecaster.get_pretrained_params(deep=False)
+    assert len(params_before_fit) > 0, "pretrain should set params"
+
+    forecaster.fit(y_flat, fh=[1, 2, 3])
+    params_after_first_fit = forecaster.get_pretrained_params(deep=False)
+    assert len(params_after_first_fit) > 0, "pretrained params should survive first fit"
+
+    forecaster.fit(y_flat, fh=[1, 2, 3])
+    params_after_second_fit = forecaster.get_pretrained_params(deep=False)
+    assert len(params_after_second_fit) > 0, (
+        "pretrained params should survive second fit"
+    )
