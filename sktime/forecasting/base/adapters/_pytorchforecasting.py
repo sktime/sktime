@@ -89,10 +89,8 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         "tests:vm": True,
         # libs tag is set so child classes get tested if this file changes
         "tests:libs": ["sktime.forecasting.base.adapters._pytorchforecasting"],
-        "tests:skip_by_name": [
-            "test_save_estimators_to_file",
-            "test_persistence_via_pickle",
-        ],
+        "serialization:native_artifacts": ("best_model",),
+        "serialization:skip": ("_callbacks", "_forecaster", "_trainer"),
     }
 
     def __init__(
