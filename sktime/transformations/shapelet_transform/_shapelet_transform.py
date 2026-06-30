@@ -1055,7 +1055,7 @@ class RandomShapeletTransform(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.shapelet_transform import (
+    >>> from sktime.transformations.panel.shapelet_transform import (
     ...     RandomShapeletTransform
     ... )
     >>> from sktime.datasets import load_unit_test
@@ -1158,14 +1158,12 @@ class RandomShapeletTransform(BaseTransformer):
         from joblib import Parallel, delayed
         from numba.typed.typedlist import List
 
-        from sktime.transformations.shapelet_transform import _shapelet_transform_numba
+        from sktime.transformations.panel._shapelet_transform_numba import (
+            _merge_shapelets,
+            _remove_identical_shapelets,
+            _remove_self_similar_shapelets,
+        )
         from sktime.utils.numba.general import z_normalise_series
-
-        stn = _shapelet_transform_numba
-
-        _merge_shapelets = stn._merge_shapelets
-        _remove_identical_shapelets = stn._remove_identical_shapelets
-        _remove_self_similar_shapelets = stn._remove_self_similar_shapelets
 
         self._n_jobs = check_n_jobs(self.n_jobs)
 
@@ -1313,9 +1311,9 @@ class RandomShapeletTransform(BaseTransformer):
         """
         from joblib import Parallel, delayed
 
-        from sktime.transformations.shapelet_transform import _shapelet_transform_numba
-
-        _online_shapelet_distance = _shapelet_transform_numba._online_shapelet_distance
+        from sktime.transformations.panel._shapelet_transform_numba import (
+            _online_shapelet_distance,
+        )
 
         output = np.zeros((len(X), len(self.shapelets)))
 
@@ -1356,13 +1354,14 @@ class RandomShapeletTransform(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"max_shapelets": 5, "n_shapelet_samples": 50, "batch_size": 20}
+        params1 = {"max_shapelets": 5, "n_shapelet_samples": 50, "batch_size": 20}
+        params2 = {"max_shapelets": 3, "n_shapelet_samples": 27, "batch_size": 10}
+        return [params1, params2]
 
     def _extract_random_shapelet(self, X, y, i, shapelets, max_shapelets_per_class):
-        from sktime.transformations.shapelet_transform import _shapelet_transform_numba
-
-        _find_shapelet_quality = _shapelet_transform_numba._find_shapelet_quality
-
+        from sktime.transformations.panel._shapelet_transform_numba import (
+            _find_shapelet_quality,
+        )
         from sktime.utils.numba.general import z_normalise_series
 
         rs = 255 if self.random_state == 0 else self.random_state
