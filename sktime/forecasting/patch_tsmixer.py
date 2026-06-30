@@ -168,8 +168,8 @@ class PatchTSMixerForecaster(BaseForecaster):
         super().__init__()
 
     def __dynamic_tags__(self):
-        """Set serialization tags conditional on whether fitting updates weights."""
-        if self.train_model:
+        """Set serialization tags conditional on model source and training."""
+        if self.train_model or self.model_path is None:
             self.set_tags(
                 **{
                     "serialization:native_artifacts": ("model",),
