@@ -201,10 +201,9 @@ class BaseFixtureGenerator:
 
     def _all_estimators(self):
         """Retrieve list of all estimator classes of type self.estimator_type_filter."""
-        # TODO(fangelim): refactor this _all_estimators
-        # to make it possible to set custom tags to filter
-        # as class attributes, similar to `estimator_type_filter`
         filter_tags = {"tests:skip_all": False}
+        if hasattr(self, "filter_tags"):
+            filter_tags.update(self.filter_tags)
 
         est_list = all_estimators(
             estimator_types=getattr(self, "estimator_type_filter", None),
@@ -1781,3 +1780,19 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # skip them for the underlying network
             if vars(estimator._network).get(key) is not None:
                 assert vars(estimator._network)[key] == value
+
+def test_all_estimators_custom_filter_tags():
+    """Test that custom filter_tags are correctly applied in _all_estimators."""
+    from sktime.tests.test_all_estimators import BaseFixtureGenerator
+
+    class MockTestClass(BaseFixtureGenerator):
+        # We test a simple tag filtering scenario
+        filter_tags = {"capability:multivariate": True}
+
+    mock_instance = MockTestClass()
+    estimators = mock_instance._all_estimators()
+    
+    # Assert that all returned estimators actually have the capability:multivariate tag set to True
+    for est in estimators:
+        assert est.get_class_tag("capability:multivariate", False) is True
+
