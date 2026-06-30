@@ -208,24 +208,30 @@ class GreykiteForecaster(BaseForecaster):
                 "The forecasting horizon `fh` must be provided in the `fit` method."
             )
 
-        if isinstance(y.index, pd.PeriodIndex):
-            y.index = y.index.to_timestamp()
         # Preserve the series name so _predict can return a named Series.
         self._y_name_ = y.name
-        # Convert y into a DataFrame with columns "ts" and "y".
-        # Exogenous variables (X) are not used: capability:exogenous is False,
-        # so sktime's base class will always pass X=None here.
-        df = pd.DataFrame({"ts": y.index, "y": y.values})
+
+        # Build the greykite DataFrame without mutating y.index.
+        # IMPORTANT: never do y.index = y.index.to_timestamp() in-place.
+        # The base class stores the same y_inner object as self._y before calling
+        # _fit (see BaseForecaster.fit: _update_y_X is called before _fit).
+        # An in-place index mutation would corrupt self._y and therefore
+        # self.cutoff, turning a MonthEnd PeriodIndex into a MonthBegin
+        # DatetimeIndex and causing frequency mismatches in the test framework.
+        if isinstance(y.index, pd.PeriodIndex):
+            ts_index = y.index.to_timestamp()
+        else:
+            ts_index = y.index
+        df = pd.DataFrame({"ts": ts_index, "y": y.values})
 
         # Create the forecast configuration if not already provided.
         # Use a shallow copy so that setting forecast_horizon does not mutate
         # either self.forecast_config (the user-supplied hyperparameter) or
         # self._forecast_config_ across repeated fit calls.
         fc = copy.copy(self._create_forecast_config(y))
-        if hasattr(fh, "to_numpy"):
-            steps = fh.to_numpy()
-        else:
-            steps = np.array(list(fh), dtype=int)
+        # Convert fh to relative integer steps so that both relative fh
+        # (e.g. [1, 2, 3]) and absolute fh (e.g. Period objects) work correctly.
+        steps = np.array(fh.to_relative(self.cutoff).to_numpy(), dtype=int)
         fc.forecast_horizon = int(steps.max())
 
         # Fit the model using Greykite's forecast_pipeline.
@@ -243,11 +249,9 @@ class GreykiteForecaster(BaseForecaster):
         if fh is None:
             fh = self._fh
         forecast_df = self._forecaster.forecast.df_test
-        if hasattr(fh, "to_numpy"):
-            steps = fh.to_numpy()
-        else:
-            steps = np.array(list(fh), dtype=int)
-        # Compute zero-based positions into greykite's forecast output.
+        # Convert fh to relative integer steps (handles both relative and
+        # Period-based absolute fh) then map to 0-based positions.
+        steps = np.array(fh.to_relative(self.cutoff).to_numpy(), dtype=int)
         positions = (steps - 1).astype(int)
 
         preds = forecast_df["forecast"].values
@@ -303,21 +307,27 @@ class GreykiteForecaster(BaseForecaster):
                 MetadataParam,
             )
 
-            # minimum for changepoint detection (ValueError) and triggers a
-            # MemoryError in the autoregressive lag builder.  Setting cv_max_splits=0
-            # skips the internal grid-search CV so the full dataset is used for fit.
+            # Both configs use SILVERKITE_EMPTY + cv_max_splits=0:
+            # - SILVERKITE_EMPTY: blank-slate template, no hyperparameter grid search
+            # - cv_max_splits=0: skips the internal CV loop (default is 3 splits,
+            #   each 2+ GB on the airline dataset) to prevent OOM kills on macOS CI
+            #   runners (~7 GB RAM, exit code 137 = SIGKILL).
             _test_config = ForecastConfig(
                 metadata_param=MetadataParam(time_col="ts", value_col="y"),
+                model_template="SILVERKITE_EMPTY",
                 evaluation_period_param=EvaluationPeriodParam(cv_max_splits=0),
+            )
+
+            _test_config2 = ForecastConfig(
+                metadata_param=MetadataParam(time_col="ts", value_col="y"),
+                model_template="SILVERKITE_EMPTY",
+                evaluation_period_param=EvaluationPeriodParam(cv_max_splits=0),
+                coverage=0.95,
             )
 
             return [
                 {"forecast_config": _test_config},
-                {
-                    "model_template": "SILVERKITE_EMPTY",
-                    "date_format": None,
-                    "coverage": 0.95,
-                },
+                {"forecast_config": _test_config2},
             ]
 
         return [
