@@ -275,6 +275,7 @@ class TSPulseClassifier(BaseClassifier):
             )
             trainer.train()
 
+        model.eval()
         self._model = model
         self._pipeline = TimeSeriesClassificationPipeline(
             model,
@@ -305,6 +306,7 @@ class TSPulseClassifier(BaseClassifier):
         if LABEL_COLUMN not in df.columns:
             df[LABEL_COLUMN] = self.classes_[0]
 
+        self._model.eval()
         out = self._pipeline(df)
         pred_col = f"{LABEL_COLUMN}_prediction"
         preds = out[pred_col].to_numpy()
