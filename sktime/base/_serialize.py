@@ -114,8 +114,49 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
             return torch.load(model_path, map_location="cpu", weights_only=False)
 
 
+class _TorchStateDictArtifactBackend(_NativeArtifactBackend):
+    """Native artifact backend for torch state dictionaries."""
+
+    backend = "torch_state_dict"
+
+    def supports(self, obj):
+        """Return whether object looks like a torch state dictionary."""
+        from collections.abc import Mapping
+
+        import torch
+
+        return isinstance(obj, Mapping) and all(
+            isinstance(value, torch.Tensor) for value in obj.values()
+        )
+
+    def save(self, obj, path, *, estimator, name):
+        """Save a torch state dictionary using torch.save."""
+        import torch
+
+        torch.save(obj, path / "state_dict.pt")
+
+    def load(self, path, record, *, estimator, name):
+        """Load a torch state dictionary using torch.load."""
+        from warnings import warn
+
+        import torch
+
+        state_dict_path = path / "state_dict.pt"
+
+        try:
+            return torch.load(state_dict_path, weights_only=False)
+        except Exception as exc:
+            warn(
+                f"Could not load native artifact {name!r} on its saved device. "
+                f"Falling back to CPU. Original error: {exc}",
+                stacklevel=2,
+            )
+            return torch.load(state_dict_path, map_location="cpu", weights_only=False)
+
+
 _NATIVE_ARTIFACT_BACKENDS = [
     _PretrainedArtifactBackend(),
+    _TorchStateDictArtifactBackend(),
     _TorchArtifactBackend(),
 ]
 
