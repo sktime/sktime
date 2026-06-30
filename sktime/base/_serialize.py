@@ -114,6 +114,39 @@ class _KerasArtifactBackend(_NativeArtifactBackend):
         return model
 
 
+class _LightningCheckpointArtifactBackend(_NativeArtifactBackend):
+    """Native artifact backend for Lightning checkpoint models."""
+
+    backend = "lightning_checkpoint"
+
+    def supports(self, obj):
+        """Return whether object supports Lightning checkpoint loading."""
+        return callable(getattr(type(obj), "load_from_checkpoint", None)) and any(
+            cls.__name__ == "LightningModule" and "lightning" in cls.__module__
+            for cls in type(obj).__mro__
+        )
+
+    def save(self, obj, path, *, estimator, name):
+        """Save a Lightning model checkpoint."""
+        import lightning
+        import torch
+
+        checkpoint_path = path / "model.ckpt"
+        checkpoint = {
+            "state_dict": obj.state_dict(),
+            obj.CHECKPOINT_HYPER_PARAMS_KEY: dict(obj.hparams),
+            "pytorch-lightning_version": lightning.__version__,
+        }
+        obj.on_save_checkpoint(checkpoint)
+        torch.save(checkpoint, checkpoint_path)
+
+    def load(self, path, record, *, estimator, name):
+        """Load a Lightning model checkpoint."""
+        cls = self._load_class(record)
+        checkpoint_path = path / "model.ckpt"
+        return cls.load_from_checkpoint(checkpoint_path)
+
+
 class _TorchArtifactBackend(_NativeArtifactBackend):
     """Native artifact backend for torch modules."""
 
@@ -194,6 +227,7 @@ class _TorchStateDictArtifactBackend(_NativeArtifactBackend):
 _NATIVE_ARTIFACT_BACKENDS = [
     _PretrainedArtifactBackend(),
     _KerasArtifactBackend(),
+    _LightningCheckpointArtifactBackend(),
     _TorchStateDictArtifactBackend(),
     _TorchArtifactBackend(),
 ]
