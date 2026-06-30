@@ -72,9 +72,13 @@ class _PretrainedArtifactBackend(_NativeArtifactBackend):
         obj.save_pretrained(path)
 
     def load(self, path, record, *, estimator, name):
-        """Load an object using from_pretrained."""
+        """Load an object using from_pretrained with estimator-provided kwargs."""
         cls = self._load_class(record)
-        return cls.from_pretrained(path)
+        load_kwargs = {}
+        get_load_kwargs = getattr(estimator, "_get_native_artifact_load_kwargs", None)
+        if callable(get_load_kwargs):
+            load_kwargs = get_load_kwargs(name)
+        return cls.from_pretrained(path, **load_kwargs)
 
 
 class _KerasArtifactBackend(_NativeArtifactBackend):
