@@ -1055,7 +1055,7 @@ class RandomShapeletTransform(BaseTransformer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.shapelet_transform import (
+    >>> from sktime.transformations.shapelet_transform import (
     ...     RandomShapeletTransform
     ... )
     >>> from sktime.datasets import load_unit_test
@@ -1158,12 +1158,14 @@ class RandomShapeletTransform(BaseTransformer):
         from joblib import Parallel, delayed
         from numba.typed.typedlist import List
 
-        from sktime.transformations.panel._shapelet_transform_numba import (
-            _merge_shapelets,
-            _remove_identical_shapelets,
-            _remove_self_similar_shapelets,
-        )
+        from sktime.transformations.shapelet_transform import _shapelet_transform_numba
         from sktime.utils.numba.general import z_normalise_series
+
+        stn = _shapelet_transform_numba
+
+        _merge_shapelets = stn._merge_shapelets
+        _remove_identical_shapelets = stn._remove_identical_shapelets
+        _remove_self_similar_shapelets = stn._remove_self_similar_shapelets
 
         self._n_jobs = check_n_jobs(self.n_jobs)
 
@@ -1311,9 +1313,9 @@ class RandomShapeletTransform(BaseTransformer):
         """
         from joblib import Parallel, delayed
 
-        from sktime.transformations.panel._shapelet_transform_numba import (
-            _online_shapelet_distance,
-        )
+        from sktime.transformations.shapelet_transform import _shapelet_transform_numba
+
+        _online_shapelet_distance = _shapelet_transform_numba._online_shapelet_distance
 
         output = np.zeros((len(X), len(self.shapelets)))
 
@@ -1359,9 +1361,10 @@ class RandomShapeletTransform(BaseTransformer):
         return [params1, params2]
 
     def _extract_random_shapelet(self, X, y, i, shapelets, max_shapelets_per_class):
-        from sktime.transformations.panel._shapelet_transform_numba import (
-            _find_shapelet_quality,
-        )
+        from sktime.transformations.shapelet_transform import _shapelet_transform_numba
+
+        _find_shapelet_quality = _shapelet_transform_numba._find_shapelet_quality
+
         from sktime.utils.numba.general import z_normalise_series
 
         rs = 255 if self.random_state == 0 else self.random_state
