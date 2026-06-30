@@ -615,6 +615,14 @@ Pre-trained and foundation models - domain agnostic
 
     FalconTSTForecaster
 
+.. currentmodule:: sktime.forecasting.falcon_x
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FalconXForecaster
+
 .. currentmodule:: sktime.forecasting.flowstate
 
 .. autosummary::
