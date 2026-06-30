@@ -102,6 +102,20 @@ class SingleWindowSplitter(BaseSplitter):
         super().__init__(fh=fh, window_length=window_length)
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+        """Split time series into a single train/test window.
+
+        Parameters
+        ----------
+        y : pd.Index
+            Index of the time series to split.
+
+        Yields
+        ------
+        training_window : np.ndarray
+            iloc indices of the training window.
+        test_window : np.ndarray
+            iloc indices of the test window.
+        """
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
