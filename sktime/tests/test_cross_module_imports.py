@@ -1,9 +1,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Test that type-specific modules do not cross-import each other at module level.
 
-Rule: modules in TYPE_MODULES must not import from a sibling TYPE_MODULE at the
-top level of a file. Imports inside functions, classes, or TYPE_CHECKING blocks are
-allowed, since they are deferred and do not cause cascading import chains.
+Three-tier import hierarchy:
+- base framework (base, datatypes, registry, utils, etc.) — anyone may import
+- networks — may import base framework only; type modules may import networks
+- type modules (forecasting, transformations, classification, etc.) — may import
+  networks or base framework, but must not cross-import each other
+
+Imports inside functions or classes are allowed (deferred, not module-level).
+Imports inside TYPE_CHECKING blocks are also checked — prefer lazy imports instead.
 
 Existing violations are listed in KNOWN_EXCEPTIONS and should be cleaned up
 in follow-up PRs. New violations will fail this test.
@@ -16,7 +21,7 @@ from pathlib import Path
 
 import pytest
 
-# Modules that should not cross-import each other at module level.
+# Type-specific modules that must not cross-import each other.
 TYPE_MODULES = frozenset(
     {
         "alignment",
@@ -24,105 +29,26 @@ TYPE_MODULES = frozenset(
         "clustering",
         "detection",
         "forecasting",
-        "networks",
         "param_est",
         "regression",
         "transformations",
     }
 )
 
-# Existing violations: (path relative to sktime root, importing module, imported module)
+# networks sits between base framework and type modules:
+# type modules may import networks, but networks must not import any type module.
+_NETWORKS = "networks"
+_CHECKED_SOURCES = TYPE_MODULES | {_NETWORKS}
+
+# Existing violations: (path relative to sktime root, source module, imported module).
 # These are pre-existing and should be fixed in follow-up PRs, not in this one.
 KNOWN_EXCEPTIONS = frozenset(
     {
         ("classification/compose/_pipeline.py", "classification", "transformations"),
         (
-            "classification/deep_learning/cnn/_cnn_tf.py",
+            "classification/compose/tests/test_pipeline.py",
             "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/cnn/_cnn_torch.py",
-            "classification",
-            "networks",
-        ),
-        ("classification/deep_learning/cntc.py", "classification", "networks"),
-        (
-            "classification/deep_learning/convtran/_convtran_torch.py",
-            "classification",
-            "networks",
-        ),
-        ("classification/deep_learning/fcn.py", "classification", "networks"),
-        (
-            "classification/deep_learning/inceptiontime/_inceptiontime_tf.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/inceptiontime/_inceptiontime_torch.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/lstmfcn/_lstmfcn_tf.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/lstmfcn/_lstmfcn_torch.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/macnn/_macnn_tf.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/macnn/_macnn_torch.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/mcdcnn/_mcdcnn_tf.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/mcdcnn/_mcdcnn_torch.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/mlp/_mlp_tf.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/mlp/_mlp_torch.py",
-            "classification",
-            "networks",
-        ),
-        ("classification/deep_learning/resnet.py", "classification", "networks"),
-        (
-            "classification/deep_learning/rnn/_rnn_tf.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/rnn/_rnn_torch.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/tapnet/_tapnet_tf.py",
-            "classification",
-            "networks",
-        ),
-        (
-            "classification/deep_learning/tapnet/_tapnet_torch.py",
-            "classification",
-            "networks",
+            "transformations",
         ),
         (
             "classification/dictionary_based/_boss.py",
@@ -159,7 +85,17 @@ KNOWN_EXCEPTIONS = frozenset(
             "classification",
             "transformations",
         ),
+        (
+            "classification/distance_based/tests/test_time_series_neighbors.py",
+            "classification",
+            "alignment",
+        ),
         ("classification/ensemble/_ctsf.py", "classification", "transformations"),
+        (
+            "classification/ensemble/tests/test_ensemble.py",
+            "classification",
+            "transformations",
+        ),
         (
             "classification/feature_based/_catch22_classifier.py",
             "classification",
@@ -225,15 +161,34 @@ KNOWN_EXCEPTIONS = frozenset(
             "classification",
             "transformations",
         ),
+        (
+            "classification/tests/_classification_test_reproduction.py",
+            "classification",
+            "transformations",
+        ),
+        (
+            "classification/tests/test_sklearn_compatibility.py",
+            "classification",
+            "transformations",
+        ),
         ("clustering/compose/_as_transform.py", "clustering", "transformations"),
         ("clustering/compose/_pipeline.py", "clustering", "transformations"),
+        (
+            "clustering/compose/tests/test_pipeline.py",
+            "clustering",
+            "transformations",
+        ),
         ("detection/clasp.py", "detection", "transformations"),
         ("detection/compose/_as_transform.py", "detection", "transformations"),
         ("detection/eagglo.py", "detection", "transformations"),
         ("detection/stray.py", "detection", "transformations"),
         ("detection/wclust.py", "detection", "clustering"),
+        (
+            "forecasting/base/tests/test_base_bugs.py",
+            "forecasting",
+            "transformations",
+        ),
         ("forecasting/boxcox_biasadj.py", "forecasting", "transformations"),
-        ("forecasting/cinn.py", "forecasting", "networks"),
         ("forecasting/cinn.py", "forecasting", "transformations"),
         ("forecasting/compose/_bagging.py", "forecasting", "transformations"),
         ("forecasting/compose/_grouped.py", "forecasting", "transformations"),
@@ -243,93 +198,112 @@ KNOWN_EXCEPTIONS = frozenset(
             "transformations",
         ),
         ("forecasting/compose/_reduce.py", "forecasting", "transformations"),
+        (
+            "forecasting/compose/tests/test_bagging.py",
+            "forecasting",
+            "transformations",
+        ),
+        (
+            "forecasting/compose/tests/test_column_ensemble.py",
+            "forecasting",
+            "transformations",
+        ),
+        (
+            "forecasting/compose/tests/test_groupbycategoryforecaster.py",
+            "forecasting",
+            "transformations",
+        ),
+        (
+            "forecasting/compose/tests/test_hierarchy_ensemble.py",
+            "forecasting",
+            "transformations",
+        ),
+        (
+            "forecasting/compose/tests/test_pipeline.py",
+            "forecasting",
+            "transformations",
+        ),
+        ("forecasting/compose/tests/test_reduce.py", "forecasting", "regression"),
+        (
+            "forecasting/compose/tests/test_reduce.py",
+            "forecasting",
+            "transformations",
+        ),
+        (
+            "forecasting/compose/tests/test_reduce_global.py",
+            "forecasting",
+            "transformations",
+        ),
+        (
+            "forecasting/compose/tests/test_transformer_select_forecaster.py",
+            "forecasting",
+            "transformations",
+        ),
         ("forecasting/enbpi.py", "forecasting", "transformations"),
-        ("forecasting/es_rnn.py", "forecasting", "networks"),
-        ("forecasting/rbf.py", "forecasting", "networks"),
+        (
+            "forecasting/model_selection/tests/test_tune.py",
+            "forecasting",
+            "transformations",
+        ),
         ("forecasting/reconcile.py", "forecasting", "transformations"),
+        ("forecasting/tests/test_reconcile.py", "forecasting", "transformations"),
         ("forecasting/theta.py", "forecasting", "transformations"),
         ("param_est/compose/_pipeline.py", "param_est", "transformations"),
         ("param_est/plugin/_forecaster.py", "param_est", "forecasting"),
         ("param_est/plugin/_transformer.py", "param_est", "transformations"),
+        ("param_est/tests/test_plugin.py", "param_est", "forecasting"),
+        ("param_est/tests/test_plugin.py", "param_est", "transformations"),
         ("regression/compose/_ensemble.py", "regression", "transformations"),
         ("regression/compose/_pipeline.py", "regression", "transformations"),
-        ("regression/deep_learning/cnn/_cnn_tf.py", "regression", "networks"),
-        ("regression/deep_learning/cnn/_cnn_torch.py", "regression", "networks"),
-        ("regression/deep_learning/cntc.py", "regression", "networks"),
-        (
-            "regression/deep_learning/convtran/_convtran_torch.py",
-            "regression",
-            "networks",
-        ),
-        ("regression/deep_learning/fcn.py", "regression", "networks"),
-        (
-            "regression/deep_learning/inceptiontime/_inceptiontime_tf.py",
-            "regression",
-            "networks",
-        ),
-        (
-            "regression/deep_learning/inceptiontime/_inceptiontime_torch.py",
-            "regression",
-            "networks",
-        ),
-        (
-            "regression/deep_learning/lstmfcn/_lstmfcn_tf.py",
-            "regression",
-            "networks",
-        ),
-        (
-            "regression/deep_learning/lstmfcn/_lstmfcn_torch.py",
-            "regression",
-            "networks",
-        ),
-        ("regression/deep_learning/macnn/_macnn_tf.py", "regression", "networks"),
-        (
-            "regression/deep_learning/macnn/_macnn_torch.py",
-            "regression",
-            "networks",
-        ),
-        (
-            "regression/deep_learning/mcdcnn/_mcdcnn_tf.py",
-            "regression",
-            "networks",
-        ),
-        (
-            "regression/deep_learning/mcdcnn/_mcdcnn_torch.py",
-            "regression",
-            "networks",
-        ),
-        ("regression/deep_learning/mlp/_mlp_tf.py", "regression", "networks"),
-        ("regression/deep_learning/mlp/_mlp_torch.py", "regression", "networks"),
-        ("regression/deep_learning/resnet.py", "regression", "networks"),
-        ("regression/deep_learning/rnn/_rnn_tf.py", "regression", "networks"),
-        ("regression/deep_learning/rnn/_rnn_torch.py", "regression", "networks"),
-        (
-            "regression/deep_learning/tapnet/_tapnet_tf.py",
-            "regression",
-            "networks",
-        ),
-        (
-            "regression/deep_learning/tapnet/_tapnet_torch.py",
-            "regression",
-            "networks",
-        ),
         (
             "regression/kernel_based/_rocket_regressor.py",
             "regression",
             "transformations",
         ),
-        ("transformations/basisfunction.py", "transformations", "networks"),
+        (
+            "regression/tests/test_categorical_in_composite.py",
+            "regression",
+            "transformations",
+        ),
         ("transformations/detrend/_detrend.py", "transformations", "forecasting"),
+        (
+            "transformations/detrend/tests/test_deseasonalise.py",
+            "transformations",
+            "forecasting",
+        ),
+        (
+            "transformations/detrend/tests/test_detrend.py",
+            "transformations",
+            "forecasting",
+        ),
         ("transformations/impute.py", "transformations", "forecasting"),
+        (
+            "transformations/summarize/tests/test_FittedParamExtractor.py",
+            "transformations",
+            "forecasting",
+        ),
+        (
+            "transformations/tests/test_imputer.py",
+            "transformations",
+            "forecasting",
+        ),
+        (
+            "transformations/tests/test_multiplexer.py",
+            "transformations",
+            "forecasting",
+        ),
+        ("transformations/tests/test_subset.py", "transformations", "forecasting"),
+        (
+            "transformations/tests/test_transformif.py",
+            "transformations",
+            "param_est",
+        ),
+        ("transformations/tests/test_vmd.py", "transformations", "forecasting"),
         ("transformations/theta.py", "transformations", "forecasting"),
     }
 )
 
 _SKTIME_ROOT = Path(__file__).parent.parent
-
-
-def _is_test_path(path):
-    return any(p in ("tests", "test") for p in path.parts)
 
 
 def _is_type_checking_block(node):
@@ -363,11 +337,9 @@ def _collect_violations():
     """Return set of (rel_path, source_module, imported_module) for cross-imports."""
     violations = set()
     for py_file in _SKTIME_ROOT.rglob("*.py"):
-        if _is_test_path(py_file):
-            continue
         rel = py_file.relative_to(_SKTIME_ROOT)
         parts = rel.parts
-        if not parts or parts[0] not in TYPE_MODULES:
+        if not parts or parts[0] not in _CHECKED_SOURCES:
             continue
         source = parts[0]
         try:
@@ -375,10 +347,21 @@ def _collect_violations():
         except SyntaxError:
             continue
         for node in ast.iter_child_nodes(tree):
-            if _is_type_checking_block(node):
-                continue
+            # gather import nodes: direct top-level ones, plus those inside
+            # TYPE_CHECKING blocks (which must also not cross-import type modules)
+            imp_nodes = []
             if isinstance(node, (ast.Import, ast.ImportFrom)):
-                target = _get_import_target(node)
+                imp_nodes.append(node)
+            elif _is_type_checking_block(node):
+                for inner in ast.iter_child_nodes(node):
+                    if isinstance(inner, (ast.Import, ast.ImportFrom)):
+                        imp_nodes.append(inner)
+            for imp_node in imp_nodes:
+                target = _get_import_target(imp_node)
+                # violation: target is a type module and differs from source
+                # type_module -> type_module: caught
+                # networks    -> type_module: caught (networks not in TYPE_MODULES)
+                # type_module -> networks:    allowed (networks not in TYPE_MODULES)
                 if target and target != source and target in TYPE_MODULES:
                     violations.add((str(rel).replace("\\", "/"), source, target))
     return violations
@@ -389,7 +372,8 @@ def test_no_new_cross_module_imports():
 
     Type-specific modules (forecasting, transformations, classification, etc.)
     must not import each other at module level to avoid cascading import chains
-    that can lead to circular imports.
+    that can lead to circular imports. Networks may be imported by type modules
+    but must not itself import any type module.
 
     Existing violations are grandfathered in KNOWN_EXCEPTIONS. Only new ones fail.
     To fix an exception: move the import inside the function/class that needs it,
