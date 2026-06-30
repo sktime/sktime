@@ -114,7 +114,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
-        "capability:pretrain": True,
+        "capability:pretrain": False,
         "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
@@ -204,41 +204,17 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         """Return a unique cache key for the MOIRAI model."""
         return str(sorted(self._get_moirai_kwargs().items()))
 
-    def _load_model(self, prediction_length):
-        """Load MOIRAI model weights via multiton cache.
-
-        Returns the cached model if one with the same configuration has already
-        been loaded; otherwise downloads and caches it.
-
-        Parameters
-        ----------
-        prediction_length : int
-            Initial prediction length passed to the model constructor.
-            This value can be overridden at predict-time.
-
-        Returns
-        -------
-        model : MoiraiForecast
-            The loaded (and possibly cached) MOIRAI model.
-        """
-        return _CachedMoirai(
-            key=self._get_moirai_key(),
-            moirai_kwargs=self._get_moirai_kwargs(),
-            prediction_length=prediction_length,
-        ).load_from_checkpoint()
-
     def _init_model(self, prediction_length=1):
         """Lazy-initialise the MOIRAI model, loading weights only once.
 
-        If ``model_`` has already been set (e.g., by a prior ``_fit`` or a
-        future ``_pretrain`` call) the existing instance is returned without
-        re-loading.  ``_pretrained_attrs`` is populated so that the framework
-        preserves the model across subsequent ``fit()`` calls.
+        If ``model_`` has already been set, the existing instance is returned without
+        re-loading.
 
         Parameters
         ----------
         prediction_length : int, default=1
-            Passed through to ``_load_model`` on first initialisation.
+            Initial prediction length passed to the model constructor.
+            This value can be overridden at predict-time.
 
         Returns
         -------
@@ -246,18 +222,12 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             The loaded (and possibly cached) MOIRAI model.
         """
         if not hasattr(self, "model_") or self.model_ is None:
-            self.model_ = self._load_model(prediction_length)
-            self._pretrained_attrs = ["model_"]
+            self.model_ = _CachedMoirai(
+                key=self._get_moirai_key(),
+                moirai_kwargs=self._get_moirai_kwargs(),
+                prediction_length=prediction_length,
+            ).load_from_checkpoint()
         return self.model_
-
-    def _pretrain(self, y=None, X=None, fh=None):
-        """Pre-load MOIRAI model weights before fitting.
-
-        Calling ``pretrain()`` is optional.  When omitted, weights are loaded
-        lazily on the first ``fit()`` call.  If called, subsequent ``fit()``
-        calls reuse the already-loaded weights without downloading again.
-        """
-        self.model_ = self._init_model()
 
     # ------------------------------------------------------------------
     # Pickle support
