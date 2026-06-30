@@ -70,6 +70,7 @@ Seasonality estimators
 
     SeasonalityACF
     SeasonalityACFqstat
+    SeasonalityCanovaHansen
     SeasonalityPeriodogram
 
 Stationarity tests
