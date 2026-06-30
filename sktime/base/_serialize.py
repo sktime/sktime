@@ -217,7 +217,7 @@ class _SerializationMixin:
         """Load native artifacts from an extracted save bundle."""
         import json
 
-        index_path = path / "_artifacts" / "index.json"
+        index_path = path / "index.json"
         if not index_path.exists():
             return
 
@@ -226,7 +226,7 @@ class _SerializationMixin:
 
         for name, record in index.items():
             backend = _load_native_artifact_backend(record["backend"])
-            artifact_path = path / "_artifacts" / record["path"]
+            artifact_path = path / record["path"]
             artifact = backend.load(
                 artifact_path,
                 record,
