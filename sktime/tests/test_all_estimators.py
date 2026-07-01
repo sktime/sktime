@@ -1624,12 +1624,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         if is_forecaster and method_nsc == "predict_var" and not skpro_available:
             return None
 
-        # escape Deep estimators if soft-dep `h5py` isn't installed
-        if isinstance(
-            estimator_instance, (BaseDeepClassifier, BaseDeepRegressor)
-        ) and not _check_soft_dependencies("h5py", severity="warning"):
-            return None
-
         set_random_state(estimator)
         # Fit the model, get args before and after
         scenario.run(estimator, method_sequence=["fit"], return_args=True)
