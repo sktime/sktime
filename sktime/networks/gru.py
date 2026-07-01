@@ -207,10 +207,13 @@ class GRUFCNN(NNModule):
         dropout: float = 0.0,
         gru_dropout: float = 0.0,
         bidirectional: bool = False,
-        conv_layers: list = [128, 256, 128],
-        kernel_sizes: list = [7, 5, 3],
+        conv_layers: list | None = None,
+        kernel_sizes: list | None = None,
     ):
         super().__init__()
+        conv_layers = [128, 256, 128] if conv_layers is None else list(conv_layers)
+        kernel_sizes = [7, 5, 3] if kernel_sizes is None else list(kernel_sizes)
+
         self.hidden_dim = hidden_dim
         self.gru_layers = gru_layers
         self.init_weights = init_weights
@@ -236,18 +239,18 @@ class GRUFCNN(NNModule):
         self.permute = Permute(0, 2, 1)
         self.conv1 = Conv(
             in_channels=input_size,
-            out_channels=conv_layers[0],
-            kernel_size=kernel_sizes[0],
+            out_channels=self.conv_layers[0],
+            kernel_size=self.kernel_sizes[0],
         )
         self.conv2 = Conv(
-            in_channels=conv_layers[0],
-            out_channels=conv_layers[1],
-            kernel_size=kernel_sizes[1],
+            in_channels=self.conv_layers[0],
+            out_channels=self.conv_layers[1],
+            kernel_size=self.kernel_sizes[1],
         )
         self.conv3 = Conv(
-            in_channels=conv_layers[1],
-            out_channels=conv_layers[2],
-            kernel_size=kernel_sizes[2],
+            in_channels=self.conv_layers[1],
+            out_channels=self.conv_layers[2],
+            kernel_size=self.kernel_sizes[2],
         )
         self.globalavgpool = nn.AdaptiveAvgPool1d(1)
 
@@ -257,7 +260,7 @@ class GRUFCNN(NNModule):
             nn.Dropout(self.gru_dropout) if self.gru_dropout else nn.Identity()
         )
         self.fc = nn.Linear(
-            hidden_dim * (1 + bidirectional) + conv_layers[-1], num_classes
+            hidden_dim * (1 + bidirectional) + self.conv_layers[-1], num_classes
         )
 
         # weights initialization
