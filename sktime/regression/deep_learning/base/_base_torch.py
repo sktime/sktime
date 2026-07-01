@@ -260,7 +260,9 @@ class BaseDeepRegressorTorch(BaseRegressor):
         Parameters
         ----------
         activations : dict[str, str | Callable | None]
-            Mapping from activation attribute names to activation specifications.
+            A mapping where each key is the name of an activation attribute, and the
+            value is either the activation specified by the user or a default provided
+            by the estimator.
 
         Returns
         -------

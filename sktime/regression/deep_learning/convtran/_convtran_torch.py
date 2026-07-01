@@ -17,10 +17,39 @@ class ConvTranRegressorTorch(BaseDeepRegressorTorch):
     net_type : str, default="C-T"
         Network type to use. Should be one of "T" (Transformer),
         "C-T" (ConvTran) or "C-CT" (Causal ConvTran).
-    activation : str or None, default=None
-        Activation function to use in the output layer.
-    activation_hidden : str, default="relu"
-        Activation function to use in the hidden layers.
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+    activation_hidden : str, Callable, or None, default="relu"
+        Activation applied to the hidden layers.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
     emb_size : int, default=16
         Embedding dimension used in attention and feed-forward blocks.
     dim_ff : int, default=256
@@ -103,7 +132,7 @@ class ConvTranRegressorTorch(BaseDeepRegressorTorch):
         # model specific
         net_type: str = "C-T",
         activation: str | None | Callable = None,
-        activation_hidden: str = "relu",
+        activation_hidden: str | None | Callable = "relu",
         emb_size: int = 16,
         dim_ff: int = 256,
         num_heads: int = 8,
@@ -190,8 +219,8 @@ class ConvTranRegressorTorch(BaseDeepRegressorTorch):
             input_size=self.input_size,
             num_classes=self.num_classes,
             net_type=self.net_type,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             emb_size=self.emb_size,
             dim_ff=self.dim_ff,
             num_heads=self.num_heads,
