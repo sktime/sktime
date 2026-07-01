@@ -16,6 +16,7 @@ from sktime.detection.base import BaseDetector
 __author__ = ["ermshaua", "patrickzib"]
 __all__ = ["ClaSPSegmentation", "find_dominant_window_sizes"]
 
+import warnings
 from queue import PriorityQueue
 
 import numpy as np
@@ -256,6 +257,20 @@ class ClaSPSegmentation(BaseDetector):
         -------
         self : True
         """
+        large_series_threshold = 10000
+        series_length = len(X)
+
+        if series_length > large_series_threshold:
+            warnings.warn(
+                f"Series length {series_length} exceeds "
+                f"threshold of {large_series_threshold}. "
+                "This may cause long runtimes. Consider "
+                "subsampling, or use "
+                "find_dominant_window_sizes to select "
+                "period_length for ClaSP.",
+                UserWarning,
+                stacklevel=2,
+            )
         return True
 
     def _predict(self, X):
