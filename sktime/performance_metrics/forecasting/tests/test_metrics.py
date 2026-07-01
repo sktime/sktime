@@ -139,6 +139,41 @@ def test_linex_function():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_median_relative_absolute_error_by_index():
+    """Test per-index values for MedianRelativeAbsoluteError."""
+    from sktime.performance_metrics.forecasting import MedianRelativeAbsoluteError
+
+    y_true = pd.DataFrame({"a": [3.0, -0.5, 2.0], "b": [1.0, 1.0, 7.0]})
+    y_pred = pd.DataFrame({"a": [2.5, 0.0, 2.5], "b": [2.0, 2.0, 8.0]})
+    y_pred_benchmark = pd.DataFrame(
+        {"a": [2.0, -0.25, 3.0], "b": [0.5, 2.5, 6.5]}
+    )
+
+    expected = (y_true - y_pred).abs() / (y_true - y_pred_benchmark).abs()
+
+    metric = MedianRelativeAbsoluteError(multioutput="raw_values")
+    result = metric.evaluate_by_index(
+        y_true, y_pred, y_pred_benchmark=y_pred_benchmark
+    )
+    pd.testing.assert_frame_equal(result, expected)
+
+    metric = MedianRelativeAbsoluteError()
+    result = metric.evaluate_by_index(
+        y_true, y_pred, y_pred_benchmark=y_pred_benchmark
+    )
+    pd.testing.assert_series_equal(result, expected.median(axis=1))
+
+    metric = MedianRelativeAbsoluteError(multioutput=[0.3, 0.7])
+    result = metric.evaluate_by_index(
+        y_true, y_pred, y_pred_benchmark=y_pred_benchmark
+    )
+    pd.testing.assert_series_equal(result, expected.dot([0.3, 0.7]))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_make_scorer():
     """Test make_forecasting_scorer and the failure case in #4827."""
     import functools
