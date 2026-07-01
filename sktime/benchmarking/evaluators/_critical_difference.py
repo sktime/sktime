@@ -1,6 +1,5 @@
 """Critical-difference diagram evaluator for benchmark results."""
 
-__author__ = ["SveaMeyer13", "viktorkaz", "mloning"]
 __all__ = ["CriticalDifferenceDiagram"]
 
 from skbase.utils.dependencies import _check_soft_dependencies

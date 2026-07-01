@@ -1,6 +1,5 @@
 """Friedman omnibus test evaluator for benchmark results."""
 
-__author__ = ["viktorkaz", "mloning"]
 __all__ = ["FriedmanEvaluator"]
 
 import pandas as pd

@@ -1,6 +1,5 @@
 """Independent t-test evaluator for benchmark results."""
 
-__author__ = ["viktorkaz", "mloning"]
 __all__ = ["TTestEvaluator"]
 
 import itertools

@@ -1,6 +1,5 @@
 """Nemenyi post-hoc test evaluator for benchmark results."""
 
-__author__ = ["viktorkaz", "mloning"]
 __all__ = ["NemenyiEvaluator"]
 
 import pandas as pd

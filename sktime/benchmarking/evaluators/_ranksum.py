@@ -1,6 +1,5 @@
 """Wilcoxon rank-sum test evaluator for benchmark results."""
 
-__author__ = ["viktorkaz", "mloning"]
 __all__ = ["RanksumEvaluator"]
 
 import itertools

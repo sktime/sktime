@@ -1,8 +1,5 @@
 """Base class for post-hoc benchmark evaluators (strategy pattern)."""
 
-__author__ = ["viktorkaz", "mloning", "Aaron Bostrom"]
-# original v1 statistical logic by the authors above; ported to v2 strategy
-# pattern. Add your GitHub handle when you contribute.
 __all__ = ["BasePostHocEvaluator"]
 
 import pandas as pd
