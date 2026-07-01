@@ -76,8 +76,7 @@ class TotoForecaster(BaseForecaster):
     """
 
     _tags = {
-        "y_inner_mtype": ["pd.DataFrame"],
-        "X_inner_mtype": "None",
+        "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
