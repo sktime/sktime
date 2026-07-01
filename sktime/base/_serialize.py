@@ -78,6 +78,9 @@ class _PretrainedArtifactBackend(_NativeArtifactBackend):
         get_load_kwargs = getattr(estimator, "_get_native_artifact_load_kwargs", None)
         if callable(get_load_kwargs):
             load_kwargs = get_load_kwargs(name)
+        if cls.__module__.startswith("peft.") and "model" in load_kwargs:
+            model = load_kwargs.pop("model")
+            return cls.from_pretrained(model, path, **load_kwargs)
         return cls.from_pretrained(path, **load_kwargs)
 
 

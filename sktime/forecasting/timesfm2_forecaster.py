@@ -29,6 +29,8 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.singleton import _multiton
 
+_DEFAULT_PEFT_CONFIG = object()
+
 
 class TimesFM2Forecaster(BaseForecaster):
     """TimesFM-2.x forecaster via Hugging Face ``transformers``.
@@ -606,7 +608,29 @@ class TimesFM2Forecaster(BaseForecaster):
 
         return self.model_
 
-    def _get_unique_key(self):
+    def _load_base_model_for_peft(self):
+        """Load the base TimesFM model needed to restore a PEFT adapter."""
+        return _CachedTimesFM2(
+            key=self._get_unique_key(peft_config=None),
+            model_path=self.model_path,
+            config=self.config,
+            device_map=self.device_map,
+            dtype=self.dtype,
+            quantization_config=self.quantization_config,
+            peft_config=None,
+        ).load()
+
+    def _get_native_artifact_load_kwargs(self, name):
+        """Return native artifact load kwargs."""
+        if (
+            name == "model_"
+            and self.model_path is not None
+            and self.peft_config is not None
+        ):
+            return {"model": self._load_base_model_for_peft()}
+        return {}
+
+    def _get_unique_key(self, peft_config=_DEFAULT_PEFT_CONFIG):
         """Build cache key for the multiton model loader.
 
         Returns
@@ -621,7 +645,9 @@ class TimesFM2Forecaster(BaseForecaster):
             "device_map": self.device_map,
             "dtype": self.dtype,
             "quantization_config": self.quantization_config,
-            "peft_config": self.peft_config,
+            "peft_config": (
+                self.peft_config if peft_config is _DEFAULT_PEFT_CONFIG else peft_config
+            ),
         }
         return str(sorted(key.items()))
 
