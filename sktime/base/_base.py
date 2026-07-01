@@ -548,6 +548,12 @@ class TagAliaserMixin(_TagAliaserMixin):
         tag_val = super().get_class_tag(
             tag_name=tag_name, tag_value_default=tag_value_default
         )
+        # Fix: _get_class_flag uses dict.get(), which returns the stored
+        # None value instead of tag_value_default when a tag is explicitly
+        # set to None (e.g. "python_version": None in _tags).
+        # When a non-None default is provided, treat None as "not set".
+        if tag_val is None and tag_value_default is not None:
+            return tag_value_default
         return tag_val
 
     def get_tag(self, tag_name, tag_value_default=None, raise_error=True):
@@ -670,6 +676,12 @@ class TagAliaserMixin(_TagAliaserMixin):
             tag_value_default=tag_value_default,
             raise_error=raise_error,
         )
+        # Fix: _get_flag uses dict.get(), which returns the stored
+        # None value instead of tag_value_default when a tag is explicitly
+        # set to None (e.g. "python_version": None in _tags).
+        # When a non-None default is provided, treat None as "not set".
+        if tag_val is None and tag_value_default is not None:
+            return tag_value_default
         return tag_val
 
     def set_tags(self, **tag_dict):
