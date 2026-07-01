@@ -193,7 +193,10 @@ class PyKANForecaster(BaseForecaster):
                 self.test_losses
             ):
                 self.model_ = model
-                self.state_dict_ = model.state_dict()
+                self.state_dict_ = {
+                    key: value.detach().clone()
+                    for key, value in model.state_dict().items()
+                }
                 self._best_grid = self._grids[i]
             self.train_losses += results["train_loss"]
             self.test_losses += results["test_loss"]
