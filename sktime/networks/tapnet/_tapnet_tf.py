@@ -7,6 +7,13 @@ import numpy as np
 from sktime.networks.base import BaseDeepNetwork
 
 
+def _tapnet_gather_channels(x, indices):
+    """Gather selected input channels for TapNet random projections."""
+    import tensorflow as tf
+
+    return tf.gather(x, indices=indices, axis=2)
+
+
 class TapNetNetwork(BaseDeepNetwork):
     """Establish Network structure for TapNet.
 
@@ -160,7 +167,6 @@ class TapNetNetwork(BaseDeepNetwork):
         input_layer  : a keras layer
         output_layer : a keras layer
         """
-        import tensorflow as tf
         from tensorflow import keras
 
         from sktime.libs._keras_self_attention import SeqSelfAttention
@@ -194,7 +200,8 @@ class TapNetNetwork(BaseDeepNetwork):
                 for i in range(self.rp_group):
                     self.idx = np.random.permutation(input_shape[1])[0 : self.rp_dim]
                     channel = keras.layers.Lambda(
-                        lambda x: tf.gather(x, indices=self.idx, axis=2)
+                        _tapnet_gather_channels,
+                        arguments={"indices": self.idx.tolist()},
                     )(input_layer)
                     # x_conv = x
                     # x_conv = self.conv_1_models[i](x[:, self.idx[i], :])
