@@ -121,7 +121,7 @@ class EnbPIForecaster(BaseForecaster):
         "capability:insample": False,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": False,  # ... for in-sample horizons?
-        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
+        "tests:vm": True,  # run on separate VM due to bootstrap dependencies
     }
 
     def __init__(
@@ -150,16 +150,24 @@ class EnbPIForecaster(BaseForecaster):
 
         super().__init__()
 
-        if bootstrap_transformer.get_tag("object_type") == "bootstrap":
+        if bootstrap_transformer is None:
+            mbb = MovingBlockBootstrapTransformer(return_indices=True)
+            self.bootstrap_transformer_ = mbb
+        elif not hasattr(bootstrap_transformer, "get_tag"):
+            self.bootstrap_transformer_ = TSBootstrapAdapter(
+                bootstrap_transformer, return_indices=True
+            )
+        elif (
+            bootstrap_transformer.get_tag(
+                "object_type", tag_value_default=None, raise_error=False
+            )
+            == "bootstrap"
+        ):
             self.bootstrap_transformer_ = TSBootstrapAdapter(
                 bootstrap_transformer, return_indices=True
             )
         else:
             self.bootstrap_transformer_ = bootstrap_transformer
-
-        if self.bootstrap_transformer is None:
-            mbb = MovingBlockBootstrapTransformer(return_indices=True)
-            self.bootstrap_transformer_ = mbb
 
         bs_capable = self.bootstrap_transformer_.get_tag(
             "capability:bootstrap_index", False, raise_error=False
