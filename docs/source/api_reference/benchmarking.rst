@@ -45,6 +45,7 @@ Storage Backends
     JSONStorageHandler
     ParquetStorageHandler
     CSVStorageHandler
+    PickleStorageHandler
     NullStorageHandler
 
 
