@@ -10,9 +10,11 @@ the lower the better.
 import numpy as np
 import sklearn
 from scipy.stats import gmean
+from sklearn.metrics import explained_variance_score as _explained_variance_score
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
 from sklearn.metrics import median_absolute_error as _median_absolute_error
+from sklearn.metrics import r2_score as _r2_score
 from sklearn.utils.validation import check_consistent_length
 
 from sktime.performance_metrics.forecasting._coerce import (
@@ -52,6 +54,8 @@ __all__ = [
     "median_relative_absolute_error",
     "geometric_mean_relative_absolute_error",
     "geometric_mean_relative_squared_error",
+    "explained_variance_score",
+    "r2_score",
 ]
 
 EPS = np.finfo(np.float64).eps
@@ -2836,3 +2840,123 @@ def mean_squared_log_error(
             return np.average(msle, weights=None)
 
     return np.average(msle, weights=multioutput)
+
+
+def explained_variance_score(
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", **kwargs
+):
+    """Explained variance score.
+
+    Best possible score is 1.0, lower values are worse.
+
+    This is a score metric (higher is better), providing a sktime-compatible
+    interface to ``sklearn.metrics.explained_variance_score``.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of scores in case of multioutput input.
+        If 'uniform_average', scores of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    score : float or ndarray of floats
+        Explained variance score.
+        If multioutput is 'raw_values', then the score is returned for each
+        output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average score of all output errors is returned.
+
+    See Also
+    --------
+    r2_score
+
+    References
+    ----------
+    https://scikit-learn.org/stable/modules/generated/sklearn.metrics.explained_variance_score.html
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import explained_variance_score
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> explained_variance_score(y_true, y_pred)  # doctest: +SKIP
+    np.float64(0.9571734475374732)
+    """  # noqa: E501
+    score = _explained_variance_score(
+        y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
+    )
+    return _handle_output(score, multioutput)
+
+
+def r2_score(
+    y_true, y_pred, horizon_weight=None, multioutput="uniform_average", **kwargs
+):
+    """R-squared (coefficient of determination) score.
+
+    Best possible score is 1.0 and it can be negative (because the model can be
+    arbitrarily worse). A constant model that always predicts the expected value
+    of y, disregarding the input features, would get a score of 0.0.
+
+    This is a score metric (higher is better), providing a sktime-compatible
+    interface to ``sklearn.metrics.r2_score``.
+
+    Parameters
+    ----------
+    y_true : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Ground truth (correct) target values.
+    y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs) \
+             where fh is the forecasting horizon
+        Forecasted values.
+    horizon_weight : array-like of shape (fh,), default=None
+        Forecast horizon weights.
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
+        Defines how to aggregate metric for multivariate (multioutput) data.
+        If array-like, values used as weights to average the errors.
+        If 'raw_values', returns a full set of scores in case of multioutput input.
+        If 'uniform_average', scores of all outputs are averaged with uniform weight.
+
+    Returns
+    -------
+    score : float or ndarray of floats
+        R2 score.
+        If multioutput is 'raw_values', then the score is returned for each
+        output separately.
+        If multioutput is 'uniform_average' or an ndarray of weights, then the
+        weighted average score of all output errors is returned.
+
+    See Also
+    --------
+    explained_variance_score
+
+    References
+    ----------
+    https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import r2_score
+    >>> y_true = np.array([3, -0.5, 2, 7, 2])
+    >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    >>> r2_score(y_true, y_pred)  # doctest: +SKIP
+    np.float64(0.9486081370449679)
+    """  # noqa: E501
+    score = _r2_score(
+        y_true, y_pred, sample_weight=horizon_weight, multioutput=multioutput
+    )
+    return _handle_output(score, multioutput)
