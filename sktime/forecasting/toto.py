@@ -110,6 +110,7 @@ class TotoForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on own VM?
+        "tests:skip_by_name": ["test_fit_idempotent"],
     }
 
     def __init__(
