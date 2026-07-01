@@ -1038,6 +1038,17 @@ def _coerce_to_period(x, freq=None):
         raise ValueError(
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
+    # Some offset aliases (e.g. "MS", "QS", "YS") are not valid period frequencies;
+    # convert to their period equivalents before calling to_period
+    if hasattr(freq, "name"):
+        try:
+            from pandas.tseries.frequencies import get_period_alias
+
+            period_alias = get_period_alias(freq.name)
+            if period_alias:
+                freq = period_alias
+        except Exception:
+            pass
     return x.to_period(freq)
 
 
