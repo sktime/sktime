@@ -12,6 +12,16 @@
   "skipCi": true,
   "contributors": [
     {
+      "login": "gopalparashar421",
+      "name": "Gopal Parashar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/155330090?v=4",
+      "profile": "https://github.com/gopalparashar421",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
       "login": "fkiraly",
       "name": "Franz Kiraly",
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
