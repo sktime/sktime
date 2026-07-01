@@ -206,6 +206,12 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         IMPORTANT: no significant compute or memory use should happen in __post_init__,
         memory and compute intensive operations should be in _fit, not __post_init__.
         """
+        if self.seq_len % (2**self.num_levels) != 0:
+            raise ValueError(
+                f"SCINetForecaster requires seq_len to be divisible by "
+                f"2^num_levels ({2**self.num_levels}). Got seq_len={self.seq_len}."
+            )
+
         import torch
 
         self.criterions = {
@@ -222,6 +228,15 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             "AdamW": torch.optim.AdamW,
             "SGD": torch.optim.SGD,
         }
+
+    def _fit(self, y, fh, X=None):
+        """Fit forecaster to training data."""
+        if self.seq_len > len(y):
+            raise ValueError(
+                f"SCINetForecaster requires seq_len ({self.seq_len}) "
+                f"to be <= the length of the training data ({len(y)})."
+            )
+        return super()._fit(y=y, fh=fh, X=X)
 
     def _build_network(self, fh):
         # Define the SCINet-based network
@@ -270,7 +285,8 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
                 "num_epochs": 1,
             },
             {
-                "seq_len": 16,
+                "seq_len": 12,
+                "num_levels": 2,
                 "pred_len": 4,
                 "lr": 0.001,
                 "optimizer": "Adam",
