@@ -106,7 +106,7 @@ class TotoForecaster(BaseForecaster):
         ],
         "maintainers": ["JATAYU000"],
         "python_version": ">= 3.10",
-        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3"],
+        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3", "setuptools<81"],
         # CI and test flags
         # -----------------
         "capability:pretrain": True,
@@ -244,21 +244,22 @@ class TotoForecaster(BaseForecaster):
             time_interval_seconds=self.time_interval_seconds,
         )
 
-        # Lazy-init: load model on first access; reuse on subsequent fit() calls.
-        self.forecaster_ = self._init_forecaster()
-
         return self
 
     def _load_forecaster(self):
-        """Load Toto model weights via multiton cache.
+        """Load or retrieve the Toto inference forecaster from the multiton cache.
 
-        Returns the cached forecaster if one with the same configuration has
-        already been loaded; otherwise downloads and caches it.
+        The model is never stored directly on the instance to avoid pickling
+        issues with the underlying PyTorch backbone.  The multiton-backed
+        :class:`_CachedTotoForecaster` ensures each unique configuration is
+        loaded only once regardless of how many ``fit`` / ``predict`` calls
+        are made.  After ``_pretrain``, the cache entry is updated in-place
+        with the fine-tuned model, so subsequent calls return that model.
 
         Returns
         -------
-        forecaster : TotoForecaster (toto package)
-            The loaded (and possibly cached) Toto forecaster.
+        forecaster : toto.inference.forecaster.TotoForecaster
+            The ready-to-use Toto inference forecaster.
         """
         return _CachedTotoForecaster(
             key=self._get_toto_key(),
@@ -266,123 +267,137 @@ class TotoForecaster(BaseForecaster):
             device=self._device,
         ).load_from_checkpoint()
 
-    def _init_forecaster(self):
-        """Lazy-initialise the Toto model, loading weights only once.
+    def _pretrain(self, y, X=None, fh=None):
+        """Fine-tune Toto on panel/hierarchical data.
 
-        If ``forecaster_`` has already been set (e.g., by a prior ``_fit`` or a
-        future ``_pretrain`` call) the existing instance is returned without
-        re-loading.  ``_pretrained_attrs`` is populated so that the framework
-        preserves the model across subsequent ``fit()`` calls.
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in ``"_"``.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Panel or hierarchical time series data to pretrain on.
+            The last index level is time; all other levels identify instances.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series (currently unused).
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon (currently unused during pretraining).
 
         Returns
         -------
-        forecaster_ : TotoForecaster (toto package)
-            The loaded (and possibly cached) Toto forecaster.
+        self : reference to self
         """
-        if not hasattr(self, "forecaster_") or self.forecaster_ is None:
-            self.forecaster_ = self._load_forecaster()
-            # Ensure ``_device`` is tracked as a pretrained attribute so the
-            # ``_PretrainedCloner`` can copy it to clones.  We do NOT overwrite
-            # an existing ``_pretrained_attrs`` list because the base
-            # ``pretrain()`` may have already extended it; overwriting would
-            # silently drop those entries and break ``test_pretrain_not_reset_by_fit``.
-            if not hasattr(self, "_pretrained_attrs") or not self._pretrained_attrs:
-                self._pretrained_attrs = ["_device"]
-            elif "_device" not in self._pretrained_attrs:
-                self._pretrained_attrs.insert(0, "_device")
-        return self.forecaster_
+        import torch
+        from lightning.pytorch import Trainer
+        from toto.data.datamodule.finetune_datamodule import FinetuneDataModule
+        from toto.inference.forecaster import TotoForecaster as _TotoInference
+        from toto.model.lightning_module import TotoForFinetuning
+        from toto.model.toto import Toto
 
-    def _pretrain(self, y=None, X=None, fh=None):
-        """Pre-load Toto model weights before fitting.
-
-        Calling ``pretrain()`` is optional.  When omitted, weights are loaded
-        lazily on the first ``fit()`` call.  If called, subsequent ``fit()``
-        calls reuse the already-loaded weights without downloading again.
-
-        Note: We intentionally do NOT set ``self.forecaster_`` here.
-        The base ``pretrain()`` auto-scans ``dir(self)`` after this method
-        returns and adds every attribute ending in ``"_"`` (without a leading
-        ``"_"``) to ``_pretrained_attrs``.  Setting ``forecaster_`` here
-        would cause it to be deepcopied by ``_PretrainedCloner.clone()``,
-        which fails because the underlying PyTorch module contains
-        ``staticmethod`` objects.  Instead, the model is loaded lazily in
-        ``_fit()`` via ``_init_forecaster()``, and the multiton cache
-        ensures it is only downloaded once regardless.
-        """
         if self.device is None:
-            import torch
-
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
             self._device = self.device
-        # Prime _pretrained_attrs with the one deepcopy-safe attribute.
-        # The base pretrain() will extend this list, but since no attr
-        # ending in "_" without a leading "_" is set above, the list stays
-        # as ["_device"]. This is enough for _PretrainedCloner to recognise
-        # the pretrained state and copy the device string to the clone.
-        self._pretrained_attrs = ["_device"]
 
-    # ------------------------------------------------------------------
-    # Pickle / deepcopy support
-    # ------------------------------------------------------------------
-    # ``forecaster_`` is a PyTorch module that contains ``staticmethod``
-    # objects which cannot be deepcopied or pickled by Python's default
-    # machinery.  Since Toto is a zero-shot model and the weights are
-    # cached by the multiton, we simply exclude ``forecaster_`` from the
-    # serialised payload and reload it lazily on the next predict call.
-    #
-    # Note: ``__deepcopy__`` is required in addition to ``__getstate__``
-    # because ``_PretrainedCloner`` uses ``copy.deepcopy`` directly (not
-    # pickle) when copying the pretrained attributes listed in
-    # ``_pretrained_attrs``.  The base ``pretrain()`` automatically adds
-    # every attribute ending in ``"_"`` (including ``forecaster_``) to
-    # ``_pretrained_attrs``, so we must intercept deepcopy here.
-    # ------------------------------------------------------------------
+        # Load base pre-trained backbone
+        toto_base = Toto.from_pretrained(**self._get_toto_kwargs())
+        toto_base.to(self._device)
+        patch_size = getattr(toto_base.model.patch_embed, "patch_size", 16)
 
-    def __getstate__(self):
-        """Return picklable state with the non-serialisable forecaster excluded."""
-        state = self.__dict__.copy()
-        state.pop("forecaster_", None)
-        return state
+        # Determine min length of series to adapt context and prediction horizons
+        instance_levels = list(range(y.index.nlevels - 1))
+        groupby_level = (
+            instance_levels[0] if len(instance_levels) == 1 else instance_levels
+        )
+        min_len = min(len(group) for _, group in y.groupby(level=groupby_level))
 
-    def __setstate__(self, state):
-        """Restore state; ``forecaster_`` is reloaded lazily on next predict.
+        # Adjust for short series (especially for tests)
+        prediction_horizon = min(64, max(1, min_len // 3))
+        max_context_length = min(512, max(1, min_len - prediction_horizon))
+        max_steps = 1000 if min_len >= 100 else 1
 
-        We intentionally do NOT set ``self.forecaster_ = None`` here.
-        If we did, the attribute would exist in ``self.__dict__`` and the
-        base ``pretrain()`` auto-scan (which collects every attr ending in
-        ``"_"`` without a leading ``"_"``) would add ``"forecaster_"`` to
-        ``_pretrained_attrs``.  The ``_PretrainedCloner`` then deepcopies it,
-        crashing on the PyTorch ``staticmethod`` objects inside.
-        Leaving it absent from ``__dict__`` means the ``not hasattr`` guards
-        in ``_init_forecaster`` / ``_predict`` / ``_predict_quantiles``
-        trigger a lazy reload from the multiton cache instead.
-        """
-        self.__dict__.update(state)
+        lightning_module = TotoForFinetuning(
+            pretrained_backbone=toto_base.model,
+            val_prediction_len=prediction_horizon,
+        )
+        lightning_module.to(self._device)
 
-    def __deepcopy__(self, memo):
-        """Deep-copy without the non-deepcopy-safe PyTorch forecaster.
+        # Convert panel/hierarchical y into a HuggingFace Dataset
+        import datasets as hfds
+        import numpy as np
 
-        ``forecaster_`` holds a ``toto`` PyTorch module that contains
-        ``staticmethod`` objects.  Python's ``copy.deepcopy`` cannot handle
-        these.  We rebuild the copy from a state dict that omits
-        ``forecaster_`` and write it directly to ``__dict__`` (not via
-        ``__setstate__``) so that ``forecaster_`` is *absent* from the
-        copy's ``__dict__``.  This prevents the base ``pretrain()``
-        auto-scan from discovering ``forecaster_`` and adding it to
-        ``_pretrained_attrs`` before weights are actually loaded.
-        """
-        from copy import deepcopy
+        records = []
+        for _, group in y.groupby(level=groupby_level):
+            time_index = group.index.get_level_values(-1)
+            timestamps = [str(t) for t in time_index]
+            n = len(time_index)
 
-        cls = self.__class__
-        new_obj = cls.__new__(cls)
-        memo[id(self)] = new_obj
-        state = self.__getstate__()  # already strips forecaster_
-        new_state = deepcopy(state, memo)
-        # Use direct __dict__ update, NOT __setstate__, to keep forecaster_
-        # absent from new_obj.__dict__.
-        new_obj.__dict__.update(new_state)
-        return new_obj
+            # One record per column (variate) so each series is univariate
+            for col in group.columns:
+                values = group[col].to_numpy(dtype=np.float64)
+                records.append(
+                    {
+                        "timestamp": timestamps,
+                        "target": values,
+                        # feat_dynamic_real is required by transform_fev_dataset;
+                        # supply a zero-filled placeholder.
+                        "feat_dynamic_real": np.zeros(n, dtype=np.float64),
+                    }
+                )
+
+        if not records:
+            raise ValueError("No series found in y after grouping by instance levels.")
+        hf_dataset = hfds.Dataset.from_list(records).with_format("numpy")
+
+        dm = FinetuneDataModule(
+            dataset=hf_dataset,
+            max_context_length=max_context_length,
+            prediction_horizon=prediction_horizon,
+            patch_size=patch_size,
+            train_batch_size=4,
+            val_batch_size=1,
+            num_workers=0,
+        )
+
+        accelerator = "gpu" if self._device == "cuda" else "cpu"
+        trainer = Trainer(
+            max_steps=max_steps,
+            enable_progress_bar=True,
+            accelerator=accelerator,
+            devices=1,
+        )
+
+        # Toto's GluonTSDatasetView enforces a strict minimum length for training:
+        # train_length >= 3 * patch_size AND test_length >= prediction_horizon
+        # If the input series is too short (e.g. sktime dummy test data of length 10),
+        # skip finetuning to avoid an AssertionError.
+        min_required_len = 3 * patch_size + prediction_horizon
+        if min_len > min_required_len:
+            trainer.fit(lightning_module, datamodule=dm)
+        else:
+            import warnings
+
+            warnings.warn(
+                f"Series length {min_len} is too short for Toto pretraining "
+                f"(requires > {min_required_len}). Skipping finetuning step."
+            )
+
+        # Push the fine-tuned model into the multiton cache so that
+        # _load_forecaster() returns it on all subsequent fit/predict calls.
+        # We do NOT store it on self to avoid pickling non-serialisable
+        # PyTorch staticmethod objects.
+        lightning_module.model.eval()
+        cached = _CachedTotoForecaster(
+            key=self._get_toto_key(),
+            toto_kwargs=self._get_toto_kwargs(),
+            device=self._device,
+        )
+        cached.forecaster = _TotoInference(lightning_module.model)
+        # Record the device as a picklable pretrained attribute so the base
+        # class auto-scan finds at least one entry in _pretrained_attrs.
+        self.pretrain_device_ = self._device
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -413,18 +428,14 @@ class TotoForecaster(BaseForecaster):
         """
         import torch
 
-        # Re-load forecaster from multiton cache if lost (e.g. after deepcopy
-        # or clone — clone has _device but forecaster_ is not set on it).
-        if not hasattr(self, "forecaster_") or self.forecaster_ is None:
-            self._init_forecaster()
-
         torch.manual_seed(self._seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(self._seed)
 
         prediction_length = max(fh.to_relative(self._cutoff))
 
-        forecast = self.forecaster_.forecast(
+        forecaster = self._load_forecaster()
+        forecast = forecaster.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
@@ -479,14 +490,10 @@ class TotoForecaster(BaseForecaster):
         """
         import torch
 
-        # Re-load forecaster from multiton cache if lost (e.g. after deepcopy
-        # or clone — clone has _device but forecaster_ is not set on it).
-        if not hasattr(self, "forecaster_") or self.forecaster_ is None:
-            self._init_forecaster()
-
         prediction_length = max(fh.to_relative(self._cutoff))
 
-        forecast = self.forecaster_.forecast(
+        forecaster = self._load_forecaster()
+        forecast = forecaster.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
