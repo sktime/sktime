@@ -1607,6 +1607,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         estimator = estimator_instance
         is_forecaster = scitype(estimator) == "forecaster"
 
+        if is_forecaster:
+            is_univariate_forecaster = not estimator.get_tag("capability:multivariate")
+            scenario_is_multivariate = not scenario.get_tag(
+                "univariate_y", True, raise_error=False
+            )
+            if is_univariate_forecaster and scenario_is_multivariate:
+                return None
+
         # escape predict_proba for forecasters, skpro distributions cannot be pickled
         if is_forecaster and method_nsc == "predict_proba":
             return None
@@ -1614,12 +1622,6 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         # escape predict_var for forecasters if skpro is not available
         skpro_available = _check_soft_dependencies("skpro", severity="none")
         if is_forecaster and method_nsc == "predict_var" and not skpro_available:
-            return None
-
-        # escape Deep estimators if soft-dep `h5py` isn't installed
-        if isinstance(
-            estimator_instance, (BaseDeepClassifier, BaseDeepRegressor)
-        ) and not _check_soft_dependencies("h5py", severity="warning"):
             return None
 
         set_random_state(estimator)
@@ -1655,6 +1657,14 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         method_nsc = method_nsc_arraylike
         estimator = estimator_instance
         is_forecaster = scitype(estimator) == "forecaster"
+
+        if is_forecaster:
+            is_univariate_forecaster = not estimator.get_tag("capability:multivariate")
+            scenario_is_multivariate = not scenario.get_tag(
+                "univariate_y", True, raise_error=False
+            )
+            if is_univariate_forecaster and scenario_is_multivariate:
+                return None
 
         # escape predict_proba for forecasters, skpro distributions cannot be pickled
         if is_forecaster and method_nsc == "predict_proba":

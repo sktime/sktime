@@ -262,15 +262,16 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         """
         params = [
             {
-                "seq_len": 8,
+                "seq_len": 4,
                 "pred_len": 3,
+                "num_levels": 2,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
             },
             {
-                "seq_len": 16,
+                "seq_len": 8,
                 "pred_len": 4,
                 "lr": 0.001,
                 "optimizer": "Adam",

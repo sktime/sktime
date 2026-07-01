@@ -416,8 +416,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "capability:unequal_length": False,
         "tests:skip_by_name": [
             "test_pred_int_tag",
-            "test_save_estimators_to_file",
-            "test_persistence_via_pickle",
         ],
     }
 

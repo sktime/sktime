@@ -99,8 +99,6 @@ class TapNetClassifier(BaseDeepClassifier):
         "tests:skip_all": True,
         "tests:skip_by_name": [
             "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
         ],
         # Run tests in a dedicated VM due to sporadic crashes and possible
         # memory leaks (see #8518)
@@ -329,3 +327,13 @@ class TapNetClassifier(BaseDeepClassifier):
             )
 
         return test_params
+
+    @staticmethod
+    def get_custom_objects():
+        """Return the custom objects needed for loading the model."""
+        from sktime.libs._keras_self_attention import SeqSelfAttention
+        from sktime.networks.tapnet._tapnet_tf import _tapnet_gather_channels
+
+        custom_objects = SeqSelfAttention.get_custom_objects()
+        custom_objects["_tapnet_gather_channels"] = _tapnet_gather_channels
+        return custom_objects

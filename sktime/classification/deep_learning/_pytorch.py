@@ -28,6 +28,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
         "capability:multioutput": False,
+        "serialization:native_artifacts": ("network",),
     }
 
     def __init__(

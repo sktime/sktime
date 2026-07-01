@@ -73,6 +73,8 @@ class PyKANForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
+        "serialization:skip": ("model_",),
+        "serialization:native_artifacts": ("state_dict_",),
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on vm in GHA
@@ -190,11 +192,15 @@ class PyKANForecaster(BaseForecaster):
             if len(self.test_losses) == 0 or results["test_loss"][-1] < min(
                 self.test_losses
             ):
-                self._state_dict = model.state_dict()
+                self.model_ = model
+                self.state_dict_ = {
+                    key: value.detach().clone()
+                    for key, value in model.state_dict().items()
+                }
                 self._best_grid = self._grids[i]
             self.train_losses += results["train_loss"]
             self.test_losses += results["test_loss"]
-        # self.state_dict = best_model.state_dict()
+        # self.state_dict_ = best_model.state_dict()
         return self
 
     def _predict(self, fh, X):
@@ -225,8 +231,12 @@ class PyKANForecaster(BaseForecaster):
         """
         from kan import KAN
 
-        model = KAN(width=self._layer_sizes, grid=self._best_grid, **self._model_params)
-        model.load_state_dict(self._state_dict)
+        model = getattr(self, "model_", None)
+        if model is None:
+            model = KAN(
+                width=self._layer_sizes, grid=self._best_grid, **self._model_params
+            )
+            model.load_state_dict(self.state_dict_)
         if X is not None:
             input_ = torch.cat(
                 [

@@ -176,6 +176,7 @@ class TimerS1Forecaster(BaseForecaster):
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers[torch]>4.57.0,<5.0.0"],
         "tests:vm": True,
+        "serialization:skip": ("model_",),
     }
 
     def __init__(

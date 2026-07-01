@@ -114,6 +114,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "property:randomness": "stochastic",
+        "serialization:skip": ("model",),
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -161,17 +162,6 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     "capability:global_forecasting": False,
                 }
             )
-
-    def __getstate__(self):
-        """Return state for pickling, excluding the unpickleable torch model."""
-        state = self.__dict__.copy()
-        if "model" in state:
-            state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface_hub"], severity="none"):

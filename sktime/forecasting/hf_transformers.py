@@ -189,6 +189,7 @@ class HFTransformersForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
+        "serialization:native_artifacts": ("model",),
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -290,6 +291,7 @@ class HFTransformersForecaster(BaseForecaster):
                 )
 
         # Dataset preparation
+        self.config_ = config
         if self.validation_split is not None:
             split = int(len(y) * (1 - self.validation_split))
             train_dataset = PyTorchDataset(
@@ -362,6 +364,39 @@ class HFTransformersForecaster(BaseForecaster):
             callbacks=self._callbacks,
         )
         trainer.train()
+
+    def _get_prediction_model_class(self, config):
+        """Return the transformers prediction model class for a config."""
+        import transformers
+
+        if hasattr(config, "architectures") and config.architectures:
+            prediction_model_class = config.architectures[0]
+        elif hasattr(config, "model_type"):
+            prediction_model_class = (
+                "".join(x.capitalize() for x in config.model_type.split("_"))
+                + "ForPrediction"
+            )
+        else:
+            raise ValueError("The model type cannot be inferred from the config.")
+
+        return getattr(transformers, prediction_model_class)
+
+    def _load_base_model_for_peft(self):
+        """Load the base forecasting model needed to restore a PEFT adapter."""
+        prediction_model_class = self._get_prediction_model_class(self.config_)
+        model, _ = prediction_model_class.from_pretrained(
+            self.model_path,
+            config=self.config_,
+            output_loading_info=True,
+            ignore_mismatched_sizes=True,
+        )
+        return model
+
+    def _get_native_artifact_load_kwargs(self, name):
+        """Return native artifact load kwargs."""
+        if name == "model" and self.fit_strategy == "peft":
+            return {"model": self._load_base_model_for_peft()}
+        return {}
 
     def _predict(self, fh, X=None):
         import transformers

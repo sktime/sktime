@@ -256,6 +256,8 @@ class LagLlamaForecaster(BaseForecaster):
             "lightning>=2.0",
             "huggingface_hub",
         ],
+        "serialization:skip": ("estimator_", "predictor_"),
+        "serialization:native_artifacts": ("prediction_net_",),
         "tests:vm": True,
     }
 
@@ -580,6 +582,8 @@ class LagLlamaForecaster(BaseForecaster):
         finally:
             torch.load = original_load
 
+        self.prediction_net_ = self.predictor_.prediction_net
+
         return self
 
     def _pretrain_update(self, y, X=None, fh=None):
@@ -692,6 +696,94 @@ class LagLlamaForecaster(BaseForecaster):
         ).load_predictor()
 
         return self
+
+    def _ensure_predictor_loaded(self, fh):
+        """Reload skipped predictor wrapper if needed after deserialization."""
+        if hasattr(self, "predictor_") and self.predictor_ is not None:
+            return
+
+        prediction_net = getattr(self, "prediction_net_", None)
+        if prediction_net is not None:
+            ckpt_path = self._ensure_checkpoint()
+            prediction_length = int(max(fh.to_relative(self.cutoff)))
+            estimator = self._make_lagllama_estimator(ckpt_path, prediction_length)
+            transformation = estimator.create_transformation()
+            self.estimator_ = estimator
+            self.predictor_ = estimator.create_predictor(
+                transformation,
+                prediction_net,
+            )
+            return
+
+        ckpt_path = self._ensure_checkpoint()
+        prediction_length = int(max(fh.to_relative(self.cutoff)))
+        cache_key = self._get_lagllama_cache_key(ckpt_path, prediction_length)
+        self.estimator_, self.predictor_ = _CachedLagLlama(
+            key=cache_key,
+            ckpt_path=ckpt_path,
+            device=self.device_,
+            context_length=self.context_length,
+            use_rope_scaling=self.use_rope_scaling,
+            num_samples=self.num_samples,
+            batch_size=self.batch_size,
+            nonnegative_pred_samples=self.nonnegative_pred_samples,
+            use_source_package=self.use_source_package,
+            prediction_length=prediction_length,
+            lr=self.lr,
+            aug_prob=self.aug_prob,
+            trainer_kwargs=self._trainer_kwargs,
+        ).load_predictor()
+
+    def _make_lagllama_estimator(self, ckpt_path, prediction_length):
+        """Create LagLlama estimator for rebuilding predictor wrappers."""
+        import torch
+
+        if self.use_source_package:
+            if _check_soft_dependencies("lag-llama", severity="warning"):
+                from lag_llama.gluon.estimator import LagLlamaEstimator
+            else:
+                from sktime.libs.lag_llama.gluon.estimator import LagLlamaEstimator
+        else:
+            from sktime.libs.lag_llama.gluon.estimator import LagLlamaEstimator
+
+        from sktime.libs.lag_llama.gluon.gluonts_torch_modules_loss_shim import (
+            ensure_gluonts_torch_modules_loss_shim,
+        )
+
+        ensure_gluonts_torch_modules_loss_shim()
+        ckpt = torch.load(ckpt_path, map_location=self.device_, weights_only=False)
+        estimator_args = ckpt["hyper_parameters"]["model_kwargs"]
+
+        rope_scaling_arguments = None
+        if self.use_rope_scaling:
+            rope_scaling_arguments = {
+                "type": "linear",
+                "factor": max(
+                    1.0,
+                    (self.context_length + prediction_length)
+                    / estimator_args["context_length"],
+                ),
+            }
+
+        return LagLlamaEstimator(
+            ckpt_path=ckpt_path,
+            prediction_length=prediction_length,
+            context_length=self.context_length,
+            input_size=estimator_args["input_size"],
+            n_layer=estimator_args["n_layer"],
+            n_embd_per_head=estimator_args["n_embd_per_head"],
+            n_head=estimator_args["n_head"],
+            scaling=estimator_args["scaling"],
+            time_feat=estimator_args["time_feat"],
+            rope_scaling=rope_scaling_arguments,
+            batch_size=self.batch_size,
+            num_parallel_samples=self.num_samples,
+            device=self.device_,
+            lr=self.lr,
+            aug_prob=self.aug_prob,
+            trainer_kwargs=self._trainer_kwargs,
+            nonnegative_pred_samples=self.nonnegative_pred_samples,
+        )
 
     def _get_lagllama_cache_key(self, ckpt_path, prediction_length):
         """Return a hashable key identifying this model configuration.
@@ -839,6 +931,7 @@ class LagLlamaForecaster(BaseForecaster):
             raise NotImplementedError(
                 "in-sample forecasting is not supported by LagLlamaForecaster"
             )
+        self._ensure_predictor_loaded(fh)
 
         # Use self._y (stored during fit)
         y = self._y
@@ -989,6 +1082,7 @@ class LagLlamaForecaster(BaseForecaster):
             raise NotImplementedError(
                 "in-sample forecasting is not supported by LagLlamaForecaster"
             )
+        self._ensure_predictor_loaded(fh)
 
         if alpha is None:
             alpha = [0.1, 0.25, 0.5, 0.75, 0.9]

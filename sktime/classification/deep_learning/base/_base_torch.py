@@ -128,6 +128,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "stochastic",
         "tests:vm": True,
+        "serialization:native_artifacts": ("network",),
     }
 
     # _instantiate_activation_vars is an iterable of attribute names of activations

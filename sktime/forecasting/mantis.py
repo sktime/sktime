@@ -77,6 +77,7 @@ class MantisForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "property:randomness": "stochastic",
+        "serialization:skip": ("trainer_",),
         # CI and testing tags
         # -------------------
         "tests:vm": True,
@@ -108,17 +109,6 @@ class MantisForecaster(BaseForecaster):
             self.set_tags(python_dependencies=[])
 
         super().__init__()
-
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable trainer."""
-        state = self.__dict__.copy()
-        if "trainer_" in state:
-            state["trainer_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""

@@ -164,6 +164,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:unequal_length": False,
         "property:randomness": "stochastic",
         "capability:random_state": False,
+        "serialization:native_artifacts": ("model",),
         # testing configuration
         # ---------------------
         # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083

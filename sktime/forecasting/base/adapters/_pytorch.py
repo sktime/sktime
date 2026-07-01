@@ -53,6 +53,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         "tests:vm": True,
         # libs tag is set so child classes get tested if this file changes
         "tests:libs": ["sktime.forecasting.base.adapters._pytorch"],
+        "serialization:native_artifacts": ("network",),
     }
 
     def __init__(

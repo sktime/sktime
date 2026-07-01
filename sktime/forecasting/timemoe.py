@@ -126,6 +126,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "serialization:skip": ("model",),
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -295,6 +296,13 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         import transformers
 
         transformers.set_seed(self._seed)
+        if not hasattr(self, "model") or self.model is None:
+            self.model = _CachedTimeMoE(
+                key=self._get_unique_timemoe_key(),
+                timemoe_kwargs=self._get_timemoe_kwargs(),
+                use_source_package=self.use_source_package,
+            ).load_from_checkpoint()
+
         if fh is not None:
             prediction_length = int(max(fh.to_relative(self.cutoff)))
         else:

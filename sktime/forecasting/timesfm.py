@@ -186,6 +186,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "serialization:skip": ("tfm",),
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -252,17 +253,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             )
 
         super().__init__()
-
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable TimesFM model."""
-        state = self.__dict__.copy()
-        if "tfm" in state:
-            state["tfm"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state, TimesFM model will be reloaded on next use."""
-        self.__dict__.update(state)
 
     def _fit(self, y, X=None, fh=None):
         if fh is None and self.horizon_len is None:

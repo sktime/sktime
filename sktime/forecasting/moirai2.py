@@ -105,6 +105,7 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "serialization:skip": ("model",),
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -194,6 +195,14 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             prediction_length = 1
 
+        model_kwargs = self._get_model_kwargs(
+            y=y, X=X, prediction_length=prediction_length
+        )
+        self.model = self._load_model(model_kwargs)
+        self.model.to(self.map_location)
+
+    def _get_model_kwargs(self, y, X, prediction_length):
+        """Build MOIRAI model keyword arguments from estimator state and data."""
         if self.num_feat_dynamic_real is None:
             self._num_feat_dynamic_real = X.shape[1] if X is not None else 0
         else:
@@ -204,12 +213,9 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
 
-        if isinstance(y, pd.DataFrame):
-            target_dim = y.shape[1]
-        else:
-            target_dim = 1
+        target_dim = y.shape[1] if isinstance(y, pd.DataFrame) else 1
 
-        model_kwargs = {
+        return {
             "prediction_length": prediction_length,
             "context_length": self.context_length,
             "target_dim": target_dim,
@@ -217,6 +223,8 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "past_feat_dynamic_real_dim": self._num_past_feat_dynamic_real,
         }
 
+    def _load_model(self, model_kwargs):
+        """Load MOIRAI model from checkpoint or source package."""
         if self.use_source_package:
             if _check_soft_dependencies("uni2ts", severity="none"):
                 from uni2ts.model.moirai2 import Moirai2Forecast, Moirai2Module
@@ -225,23 +233,32 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     model_kwargs["module"] = Moirai2Module.from_pretrained(
                         self.checkpoint_path
                     )
-                    self.model = Moirai2Forecast(**model_kwargs)
+                    return Moirai2Forecast(**model_kwargs)
                 else:
                     from huggingface_hub import hf_hub_download
 
                     model_kwargs["checkpoint_path"] = hf_hub_download(
                         repo_id=self.checkpoint_path, filename="model.ckpt"
                     )
-                    self.model = Moirai2Forecast.load_from_checkpoint(**model_kwargs)
-                    self.model.to(self.map_location)
-        else:
-            self.model = self._instantiate_patched_model(model_kwargs)
-            self.model.to(self.map_location)
+                    return Moirai2Forecast.load_from_checkpoint(**model_kwargs)
+
+            return None
+
+        return self._instantiate_patched_model(model_kwargs)
 
     def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
+
+        if not hasattr(self, "model") or self.model is None:
+            model_kwargs = self._get_model_kwargs(
+                y=self._y,
+                X=self._X,
+                prediction_length=max(fh._values),
+            )
+            self.model = self._load_model(model_kwargs)
+            self.model.to(self.map_location)
 
         self.model.hparams.prediction_length = max(fh._values)
 
