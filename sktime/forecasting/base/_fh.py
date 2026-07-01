@@ -346,6 +346,22 @@ class ForecastingHorizon:
                 raise TypeError(error_msg)
         self._is_relative = is_relative
 
+        #  Check for zero or negative values in relative forecasting horizon (Issue #8525) ---
+        if self._is_relative and len(self._values) > 0:
+            from sktime.utils.warnings import warn
+            
+            # Determine the appropriate zero baseline depending on index type
+            null_value = 0 if is_integer_index(self._values) else pd.Timedelta(0)
+            
+            # Trigger a warning if any value is less than or equal to zero
+            if (self._values <= null_value).any():
+                warn(
+                    "Relative forecasting horizon `fh` contains values that are less than "
+                    "or equal to zero. This implies in-sample or backcasting predictions.",
+                    obj=self,
+                    stacklevel=2,
+                )
+
     def _new(self, values=None, is_relative=None, freq=None):
         """Construct new ForecastingHorizon based on current object.
 
