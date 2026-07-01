@@ -481,6 +481,7 @@ class TimesFM2Forecaster(BaseForecaster):
         import torch
 
         self.model_ = self._load_model()
+        self.model_.eval()
 
         fh, preds_idx = self._validate_predict_fh(fh)
 
@@ -541,6 +542,7 @@ class TimesFM2Forecaster(BaseForecaster):
         import torch
 
         self.model_ = self._load_model()
+        self.model_.eval()
 
         quantiles = self.model_.config.quantiles
         past_values = self.context_
