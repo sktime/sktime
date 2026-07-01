@@ -5,9 +5,9 @@ import importlib
 
 from packaging.version import parse as parse_version
 from skbase.base._pretty_printing._object_html_repr import (
-    _object_html_repr as _skbase_object_html_repr,
+    _object_html_repr,
+    _VisualBlock,
 )
-from skbase.base._pretty_printing._object_html_repr import _VisualBlock
 
 __author__ = ["RNKuhns", "mateuszkasprowicz"]
 __all__ = [
@@ -16,11 +16,6 @@ __all__ = [
     "_get_reduced_path",
     "_object_html_repr",
 ]
-
-
-def _object_html_repr(base_object):
-    """Build a HTML representation of a BaseObject using the skbase renderer."""
-    return _skbase_object_html_repr(base_object)
 
 
 def _get_reduced_path(input_path_string):

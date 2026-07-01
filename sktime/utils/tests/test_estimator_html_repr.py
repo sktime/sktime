@@ -1,15 +1,10 @@
 from unittest.mock import patch
 
 import pytest
-from skbase.base._pretty_printing._object_html_repr import (
-    _VisualBlock as _SkbaseVisualBlock,
-)
 
 from sktime.base import BaseObject
-from sktime.utils import _estimator_html_repr as html_repr
 from sktime.utils._estimator_html_repr import (
     _HTMLDocumentationLinkMixin,
-    _VisualBlock,
 )
 
 
@@ -46,24 +41,6 @@ def test_get_doc_link_empty_for_non_sktime_object():
     ExternalDocumentationLink.__module__ = "external.module"
 
     assert ExternalDocumentationLink()._get_doc_link() == ""
-
-
-def test_visual_block_reexports_skbase_visual_block():
-    """Test that sktime's compatibility import points to skbase."""
-    assert _VisualBlock is _SkbaseVisualBlock
-
-
-def test_object_html_repr_delegates_to_skbase(monkeypatch):
-    """Test that the sktime helper delegates rendering to skbase."""
-    sentinel = object()
-
-    def fake_object_html_repr(base_object):
-        assert base_object is sentinel
-        return "<div>delegated</div>"
-
-    monkeypatch.setattr(html_repr, "_skbase_object_html_repr", fake_object_html_repr)
-
-    assert html_repr._object_html_repr(sentinel) == "<div>delegated</div>"
 
 
 def test_base_object_repr_html_uses_skbase_with_sktime_doc_links():
