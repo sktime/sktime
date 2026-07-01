@@ -23,7 +23,8 @@ from sktime.utils.stats import (
     _weighted_median,
     _weighted_min,
 )
-from sktime.utils.validation.forecasting import check_regressor
+from sktime.utils.validation import array_is_int
+from sktime.utils.validation.forecasting import check_cv, check_regressor
 
 VALID_AGG_FUNCS = {
     "mean": {"unweighted": np.mean, "weighted": np.average},
@@ -68,13 +69,22 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         Used to do an internal temporal_train_test_split(). The test_size data
         will be the endog data of the regressor and it is the most recent data.
         The exog data of the regressor are the predictions from the temporarily
-        trained ensemble models. If None, it will be set to 0.25.
+        trained ensemble models. If None, it will be set to 0.25. Only used if
+        ``cv`` is None.
     random_state : int, RandomState instance or None, default=None
         Used to set random_state of the default regressor.
     n_jobs : int or None, optional, default=None
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
         -1 means using all processors.
+    cv : temporal cross-validation splitter, optional, default=None
+        The sktime splitter to use for generating validation predictions for
+        automatic weight estimation. The splitter must generate strictly
+        temporal train/test splits, where every test window is after the
+        corresponding train window. If None, weights are estimated from the
+        existing single internal temporal train-test split controlled by
+        ``test_size``. If a forecasting horizon is passed to ``fit`` together
+        with ``cv``, every validation fold must use a compatible horizon.
 
     Attributes
     ----------
@@ -103,6 +113,18 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     >>> forecaster.fit(y=y, fh=[1,2,3])
     AutoEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
+
+    Use ``cv`` to estimate weights from multiple temporal validation folds
+    instead of one validation window:
+
+    >>> from sktime.split import ExpandingWindowSplitter
+    >>> cv = ExpandingWindowSplitter(
+    ...     fh=[1, 2, 3], initial_window=36, step_length=24
+    ... )
+    >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters, cv=cv)
+    >>> forecaster.fit(y=y, fh=[1, 2, 3])
+    AutoEnsembleForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
@@ -127,11 +149,13 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         test_size=None,
         random_state=None,
         n_jobs=None,
+        cv=None,
     ):
         self.method = method
         self.regressor = regressor
         self.test_size = test_size
         self.random_state = random_state
+        self.cv = cv
 
         super().__init__(
             forecasters=forecasters,
@@ -156,29 +180,15 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         forecasters = [x[1] for x in self.forecasters_]
 
-        # get training data for meta-model
-        if X is not None:
-            y_train, y_test, X_train, X_test = temporal_train_test_split(
-                y, X, test_size=self.test_size
-            )
-        else:
-            y_train, y_test = temporal_train_test_split(y, test_size=self.test_size)
-            X_train, X_test = None, None
-
-        # fit ensemble models
-        fh_test = ForecastingHorizon(y_test.index, is_relative=False)
-        self._fit_forecasters(forecasters, y_train, X_train, fh_test)
-
         if self.method == "feature-importance":
             self.regressor_ = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
             )
-            X_meta = pd.concat(self._predict_forecasters(fh_test, X_test), axis=1)
-            X_meta.columns = pd.RangeIndex(len(X_meta.columns))
+            X_meta, y_meta = self._get_meta_data(forecasters, y, X, fh)
 
             # fit meta-model (regressor) on predictions of ensemble models
-            # with y_test as endog/target
-            self.regressor_.fit(X=X_meta, y=y_test)
+            # with validation y as endog/target
+            self.regressor_.fit(X=X_meta, y=y_meta)
 
             # check if regressor is a sklearn.Pipeline
             if isinstance(self.regressor_, Pipeline):
@@ -188,15 +198,11 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 self.weights_ = _get_weights(self.regressor_)
 
         elif self.method == "inverse-variance":
-            # get in-sample forecasts
             if self.regressor is not None:
                 Warning(f"regressor will not be used because ${self.method} is set.")
-            inv_var = np.array(
-                [
-                    1 / np.var(y_test - y_pred_test)
-                    for y_pred_test in self._predict_forecasters(fh_test, X_test)
-                ]
-            )
+            X_meta, y_meta = self._get_meta_data(forecasters, y, X, fh)
+            errors = y_meta.to_numpy().reshape(-1, 1) - X_meta.to_numpy()
+            inv_var = 1 / np.var(errors, axis=0)
             # standardize the inverse variance
             self.weights_ = list(inv_var / np.sum(inv_var))
         else:
@@ -207,6 +213,233 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         self._fit_forecasters(forecasters, y, X, fh)
         return self
+
+    def _get_meta_data(self, forecasters, y, X, fh):
+        """Return validation predictions and targets for weight estimation."""
+        if self.cv is None:
+            return self._get_single_split_meta_data(forecasters, y, X)
+
+        cv = self._check_cv()
+        X_meta = []
+        y_meta = []
+
+        for fold, train_window, test_window in self._iter_cv_splits(cv, y):
+            y_train, y_test, X_train, X_test = self._get_fold_data(
+                y, X, train_window, test_window
+            )
+            fh_test = self._get_fold_fh(
+                y_train, y_test, train_window, test_window, cv, fh, fold
+            )
+            X_fold = self._get_fold_meta_data(
+                forecasters, y_train, X_train, X_test, fh_test, y_test, fold
+            )
+
+            X_meta.append(X_fold)
+            y_meta.append(y_test)
+
+        X_meta = pd.concat(X_meta, axis=0)
+        y_meta = pd.concat(y_meta, axis=0)
+        return X_meta, y_meta
+
+    def _get_fold_fh(self, y_train, y_test, train_window, test_window, cv, fh, fold):
+        """Return fold forecasting horizon and validate it against fit ``fh``."""
+        if self._fh_is_integer(cv.fh):
+            fh_test = ForecastingHorizon(
+                test_window - train_window[-1], is_relative=True
+            )
+        else:
+            fh_test = ForecastingHorizon(y_test.index, is_relative=False)
+
+        if fh is None:
+            return fh_test
+
+        expected_fh = fh.to_relative(self.cutoff)
+        fold_cutoff = pd.Index([y_train.index[-1]])
+        actual_fh = fh_test.to_relative(fold_cutoff)
+
+        if not np.array_equal(actual_fh.to_numpy(), expected_fh.to_numpy()):
+            raise ValueError(
+                "`cv` forecasting horizon is incompatible with the forecasting "
+                f"horizon passed to `fit` in fold {fold}. Expected "
+                f"{expected_fh.to_numpy()}, but found {actual_fh.to_numpy()} for "
+                f"train cutoff {y_train.index[-1]!r} and test index "
+                f"{y_test.index.tolist()}."
+            )
+
+        return fh_test
+
+    @staticmethod
+    def _fh_is_integer(fh):
+        """Return whether a splitter fh is integer-valued."""
+        if isinstance(fh, ForecastingHorizon):
+            fh_values = fh.to_numpy()
+        elif np.isscalar(fh):
+            fh_values = [fh]
+        else:
+            fh_values = np.atleast_1d(fh)
+
+        return array_is_int(fh_values)
+
+    def _get_single_split_meta_data(self, forecasters, y, X):
+        """Return validation predictions and targets from the legacy holdout."""
+        if X is not None:
+            y_train, y_test, X_train, X_test = temporal_train_test_split(
+                y, X, test_size=self.test_size
+            )
+        else:
+            y_train, y_test = temporal_train_test_split(y, test_size=self.test_size)
+            X_train, X_test = None, None
+
+        fh_test = ForecastingHorizon(y_test.index, is_relative=False)
+        X_meta = self._get_fold_meta_data(
+            forecasters, y_train, X_train, X_test, fh_test, y_test, fold=0
+        )
+        return X_meta, y_test
+
+    def _get_fold_meta_data(
+        self, forecasters, y_train, X_train, X_test, fh_test, y_test, fold
+    ):
+        """Return base forecaster predictions for one validation fold."""
+        self._fit_forecasters(forecasters, y_train, X_train, fh_test)
+        y_preds = self._predict_forecasters(fh_test, X_test)
+        self._check_fold_predictions(y_preds, y_test, fold)
+
+        X_meta = pd.concat(y_preds, axis=1)
+        X_meta.columns = pd.RangeIndex(len(X_meta.columns))
+        return X_meta
+
+    def _check_cv(self):
+        """Validate the temporal splitter for weight estimation."""
+        cv = check_cv(self.cv)
+        split_type = cv.get_tag("split_type", "temporal", raise_error=False)
+        if split_type != "temporal":
+            raise ValueError(
+                "`cv` must be an sktime temporal splitter, but found splitter "
+                f"with split_type={split_type!r}."
+            )
+        return cv
+
+    def _iter_cv_splits(self, cv, y):
+        """Yield normalized and validated cv split windows."""
+        splits = list(cv.split(y))
+
+        if len(splits) == 0:
+            raise ValueError("`cv` does not produce any valid train/test splits.")
+
+        for fold, (train_window, test_window) in enumerate(splits):
+            train_window, test_window = self._coerce_cv_split_windows(
+                train_window, test_window, fold
+            )
+            self._check_cv_split(train_window, test_window, len(y), fold)
+
+            yield fold, train_window, test_window
+
+    @staticmethod
+    def _coerce_cv_split_windows(train_window, test_window, fold):
+        """Return train and test windows as one-dimensional integer arrays."""
+        train_window = np.asarray(train_window)
+        test_window = np.asarray(test_window)
+
+        if train_window.ndim != 1 or test_window.ndim != 1:
+            raise ValueError(
+                "`cv` must produce one-dimensional train/test windows, but "
+                f"fold {fold} produced shapes {train_window.shape} and "
+                f"{test_window.shape}."
+            )
+
+        for name, window in [("train", train_window), ("test", test_window)]:
+            if len(window) > 0 and not np.issubdtype(window.dtype, np.integer):
+                raise ValueError(
+                    "`cv` must produce positional integer indices, but "
+                    f"the {name} window in fold {fold} has dtype "
+                    f"{window.dtype}."
+                )
+
+        return train_window.astype(int, copy=False), test_window.astype(int, copy=False)
+
+    @staticmethod
+    def _check_cv_split(train_window, test_window, n_timepoints, fold):
+        """Validate that a split is non-empty and temporally valid."""
+        if len(train_window) == 0 or len(test_window) == 0:
+            raise ValueError(
+                f"`cv` produced an empty train or test window in fold {fold}."
+            )
+
+        AutoEnsembleForecaster._check_window_is_strictly_increasing(
+            train_window, "train", fold
+        )
+        AutoEnsembleForecaster._check_window_is_strictly_increasing(
+            test_window, "test", fold
+        )
+        AutoEnsembleForecaster._check_window_bounds(
+            train_window, n_timepoints, "train", fold
+        )
+        AutoEnsembleForecaster._check_window_bounds(
+            test_window, n_timepoints, "test", fold
+        )
+
+        if np.max(train_window) >= np.min(test_window):
+            raise ValueError(
+                "`cv` must produce temporal validation splits where all test "
+                f"indices are after all train indices, but fold {fold} violates "
+                "this requirement."
+            )
+
+    @staticmethod
+    def _check_window_is_strictly_increasing(window, window_name, fold):
+        """Validate that a split window is sorted and duplicate-free."""
+        if len(window) > 1 and np.any(np.diff(window) <= 0):
+            raise ValueError(
+                "`cv` must produce strictly increasing, duplicate-free "
+                f"{window_name} windows, but fold {fold} produced "
+                f"{window.tolist()}."
+            )
+
+    @staticmethod
+    def _check_window_bounds(window, n_timepoints, window_name, fold):
+        """Validate that a split window contains valid positional indices."""
+        if np.min(window) < 0 or np.max(window) >= n_timepoints:
+            raise ValueError(
+                "`cv` must produce positional indices within the bounds of `y`, "
+                f"but the {window_name} window in fold {fold} contains "
+                f"{window.tolist()} for y of length {n_timepoints}."
+            )
+
+    @staticmethod
+    def _get_fold_data(y, X, train_window, test_window):
+        """Return y and X slices for one fold."""
+        y_train = y.iloc[train_window]
+        y_test = y.iloc[test_window]
+
+        if X is None:
+            return y_train, y_test, None, None
+
+        X_train = X.iloc[train_window]
+        X_test = X.iloc[test_window]
+
+        return y_train, y_test, X_train, X_test
+
+    @staticmethod
+    def _check_fold_predictions(y_preds, y_test, fold):
+        """Validate base forecaster predictions for one validation fold."""
+        for i, y_pred in enumerate(y_preds):
+            y_pred_array = np.asarray(y_pred)
+
+            if y_pred_array.ndim != 1:
+                raise ValueError(
+                    "Base forecaster prediction shape is incompatible with "
+                    f"`cv` fold {fold}. Forecaster at position {i} returned "
+                    f"shape {y_pred_array.shape}; expected a one-dimensional "
+                    "point forecast."
+                )
+
+            if len(y_pred_array) != len(y_test):
+                raise ValueError(
+                    "Base forecaster prediction length is incompatible with "
+                    f"`cv` fold {fold}. Forecaster at position {i} predicted "
+                    f"{len(y_pred_array)} rows, but the validation window has "
+                    f"{len(y_test)} rows."
+                )
 
     def _predict(self, fh, X):
         """Return the predicted reduction.
