@@ -386,8 +386,7 @@ def test_no_new_cross_module_imports():
     messages = []
     if new_violations:
         lines = "\n".join(
-            f"  {path}  ({src} -> {tgt})"
-            for path, src, tgt in sorted(new_violations)
+            f"  {path}  ({src} -> {tgt})" for path, src, tgt in sorted(new_violations)
         )
         messages.append(
             f"New cross-module imports found (move import inside the function "
@@ -395,8 +394,7 @@ def test_no_new_cross_module_imports():
         )
     if stale_exceptions:
         lines = "\n".join(
-            f"  {path}  ({src} -> {tgt})"
-            for path, src, tgt in sorted(stale_exceptions)
+            f"  {path}  ({src} -> {tgt})" for path, src, tgt in sorted(stale_exceptions)
         )
         messages.append(
             f"KNOWN_EXCEPTIONS entries no longer violated (remove them):\n{lines}"
