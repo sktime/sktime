@@ -121,6 +121,18 @@ class PCATransformer(BaseTransformer):
 
         super().__init__()
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        # param sets to test with
+        return [
+            {},
+            {
+                "n_components": 1,
+                "whiten": True,
+                "svd_solver": "full",
+            },
+        ]
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
