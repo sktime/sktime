@@ -78,7 +78,12 @@ class PyKANForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on vm in GHA
-        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],
+        # relevant issue: https://github.com/sktime/sktime/issues/10491
+        # deepcopy fails during `update_predict(..., reset_forecaster=False)`
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_update_predict_predicted_index",
+        ],
     }
 
     def __init__(

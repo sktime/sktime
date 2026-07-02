@@ -110,7 +110,12 @@ class TotoForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on own VM?
-        "tests:skip_by_name": ["test_fit_idempotent"],
+        # relevant issue: https://github.com/sktime/sktime/issues/10491
+        # deepcopy fails during `update_predict(..., reset_forecaster=False)`
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_update_predict_predicted_index",
+        ],
     }
 
     def __init__(
