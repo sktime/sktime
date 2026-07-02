@@ -8,6 +8,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.classification.base import BaseClassifier
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
+from sktime.utils.singleton import _multiton
 
 accelerate = _safe_import("accelerate")
 CrossEntropyLoss = _safe_import("torch.nn.CrossEntropyLoss")
@@ -19,6 +20,104 @@ empty_cache = _safe_import("torch.cuda.empty_cache")
 
 if _check_soft_dependencies("transformers", severity="none"):
     from sktime.libs.momentfm import MOMENTPipeline
+
+
+def _momentfm_cache_key(
+    pretrained_model_name_or_path, n_channels, num_class, dropout, device
+):
+    """Create a deterministic cache key for a MomentFM model configuration.
+
+    Parameters
+    ----------
+    pretrained_model_name_or_path : str
+        HuggingFace model identifier or local path.
+    n_channels : int
+        Number of input channels.
+    num_class : int
+        Number of output classes.
+    dropout : float
+        Dropout probability for the classification head.
+    device : str
+        Device string, e.g. ``"cpu"`` or ``"cuda"``.
+
+    Returns
+    -------
+    str
+        A string key that uniquely identifies this model configuration.
+    """
+    parts = [
+        str(pretrained_model_name_or_path),
+        str(n_channels),
+        str(num_class),
+        str(dropout),
+        str(device),
+    ]
+    return "_".join(parts)
+
+
+@_multiton
+class _CachedMomentFMPipeline:
+    """Cached MOMENTPipeline loader; ensures one backbone per unique configuration.
+
+    MomentFM loads large pretrained weights from HuggingFace.  By wrapping the
+    pipeline in a multiton, successive ``fit()`` calls with identical parameters
+    skip the expensive ``from_pretrained()`` download/load and reuse the already-
+    initialised pipeline instead.
+
+    Parameters
+    ----------
+    key : str
+        Unique cache key produced by :func:`_momentfm_cache_key`.
+    pretrained_model_name_or_path : str
+        HuggingFace model identifier or local path.
+    n_channels : int
+        Number of input channels.
+    num_class : int
+        Number of output classes.
+    dropout : float
+        Dropout probability for the classification head.
+    device : str
+        Device string used by the pipeline.
+    """
+
+    def __init__(
+        self,
+        key,
+        pretrained_model_name_or_path,
+        n_channels,
+        num_class,
+        dropout,
+        device,
+    ):
+        self.key = key
+        self.pretrained_model_name_or_path = pretrained_model_name_or_path
+        self.n_channels = n_channels
+        self.num_class = num_class
+        self.dropout = dropout
+        self.device = device
+        self._pipeline = None
+
+    def load(self):
+        """Load (or return cached) MOMENTPipeline for this configuration.
+
+        Returns
+        -------
+        MOMENTPipeline
+            The initialised pipeline, ready for fine-tuning.
+        """
+        if self._pipeline is None:
+            self._pipeline = MOMENTPipeline.from_pretrained(
+                self.pretrained_model_name_or_path,
+                model_kwargs={
+                    "task_name": "classification",
+                    "n_channels": self.n_channels,
+                    "num_class": self.num_class,
+                    "dropout": self.dropout,
+                    "device": self.device,
+                },
+            )
+            self._pipeline.init()
+        return self._pipeline
 
 
 class MomentFMClassifier(BaseClassifier):
@@ -172,6 +271,50 @@ class MomentFMClassifier(BaseClassifier):
         self.to_cpu_after_fit = to_cpu_after_fit
         super().__init__()
 
+    def _get_momentfm_cache_key(self):
+        """Build a unique cache key for the current model configuration.
+
+        The key encodes all parameters that influence which pretrained pipeline
+        is loaded so that the multiton cache can distinguish between different
+        configurations.
+
+        Returns
+        -------
+        str
+            Deterministic cache key string.
+        """
+        # n_channels is determined by X in _fit and stored as self._n_channels
+        return _momentfm_cache_key(
+            pretrained_model_name_or_path=self._pretrained_model_name_or_path,
+            n_channels=self._n_channels,
+            num_class=self.n_classes_,
+            dropout=self._config.get("head_dropout", self.head_dropout),
+            device=self._device,
+        )
+
+    def _load_model(self):
+        """Lazily load (or retrieve cached) MOMENTPipeline.
+
+        Uses the multiton pattern via :class:`_CachedMomentFMPipeline` so that
+        the expensive ``MOMENTPipeline.from_pretrained()`` call is executed at
+        most once per unique combination of model path, number of channels,
+        number of classes, dropout, and device.
+
+        Returns
+        -------
+        MOMENTPipeline
+            Initialised pipeline ready for fine-tuning.
+        """
+        key = self._get_momentfm_cache_key()
+        return _CachedMomentFMPipeline(
+            key=key,
+            pretrained_model_name_or_path=self._pretrained_model_name_or_path,
+            n_channels=self._n_channels,
+            num_class=self.n_classes_,
+            dropout=self._config.get("head_dropout", self.head_dropout),
+            device=self._device,
+        ).load()
+
     def _fit(self, X, y):
         """MomentFMClassifier fit method.
 
@@ -206,20 +349,17 @@ class MomentFMClassifier(BaseClassifier):
         if self._device == "auto":
             self._device = accelerator.device
 
+        # store n_channels so _get_momentfm_cache_key can use it
+        self._n_channels = X.shape[1] if len(X.shape) == 3 else 1
+
         cur_epoch = 0
         max_epoch = self.epochs
 
-        self.model = MOMENTPipeline.from_pretrained(
-            self._pretrained_model_name_or_path,
-            model_kwargs={
-                "task_name": "classification",
-                "n_channels": X.shape[1] if len(X.shape) == 3 else 1,
-                "num_class": self.n_classes_,
-                "dropout": self.head_dropout,
-                "device": self._device,
-            },
-        )
-        self.model.init()
+        # Lazy init: load (or retrieve cached) MOMENTPipeline backbone.
+        # Calling _load_model() ensures the expensive from_pretrained() call
+        # is executed at most once per unique configuration (multiton pattern).
+        self.model = self._load_model()
+
         # preparing the datasets
         y_train, y_test, X_train, X_test = temporal_train_test_split(
             y, X, train_size=1 - self.train_val_split, test_size=self.train_val_split
