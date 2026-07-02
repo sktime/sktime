@@ -12,10 +12,9 @@ __all__ = [
 
 import numpy as np
 import pandas as pd
-from skbase.base import BaseObject
 from sklearn.base import clone
 
-from sktime.datatypes import VectorizedDF, check_is_scitype
+from sktime.base import BaseObject
 from sktime.forecasting.base._base import BaseForecaster
 
 
@@ -24,14 +23,31 @@ class BaseWindowNormalizer(BaseObject):
 
     A normalizer uses the current lag window as context. It transforms lag
     features and, optionally, the supervised target using the same context, and
-    can invert a normalized prediction back to the original scale.
+    can invert a normalized prediction back to the original scale. Subclasses
+    should implement private methods. Public methods handle input coercion and
+    delegate to the private implementations.
     """
+
+    _tags = {
+        "object_type": "window-normalizer",
+        "capability:missing_values": True,
+    }
 
     def __init__(self):
         super().__init__()
 
     def transform(self, lags, target=None):
         """Transform a lag window and optional target."""
+        lags = self._coerce_lag_vector(lags)
+        if target is not None:
+            target = float(target)
+        return self._transform(lags, target=target)
+
+    def _transform(self, lags, target=None):
+        """Transform a lag window and optional target.
+
+        private _transform containing core logic, called from transform.
+        """
         lags = np.asarray(lags, dtype=float)
         loc, scale = self._loc_scale(lags)
         lags_t = (lags - loc) / scale
@@ -41,9 +57,111 @@ class BaseWindowNormalizer(BaseObject):
 
     def inverse_transform(self, y, lags):
         """Invert a transformed prediction using lag-window context."""
+        lags = self._coerce_lag_vector(lags)
+        y = float(y)
+        return self._inverse_transform(y, lags)
+
+    def _inverse_transform(self, y, lags):
+        """Invert a transformed prediction using lag-window context.
+
+        private _inverse_transform containing core logic, called from
+        inverse_transform.
+        """
         lags = np.asarray(lags, dtype=float)
         loc, scale = self._loc_scale(lags)
         return float(y) * scale + loc
+
+    def batch_transform(self, lags, target=None):
+        """Transform lag-window rows and optional target values.
+
+        Parameters
+        ----------
+        lags : array-like of shape (n_rows, window_length)
+            Lag windows to transform row-wise.
+        target : array-like of shape (n_rows,), optional
+            Target values to transform with the corresponding lag-window context.
+
+        Returns
+        -------
+        lags_t : np.ndarray of shape (n_rows, window_length)
+            Transformed lag windows.
+        target_t : np.ndarray of shape (n_rows,) or None
+            Transformed targets, or ``None`` if no target was passed.
+        """
+        lags = self._coerce_lag_matrix(lags)
+        if target is not None:
+            target = self._coerce_target_vector(target, n_rows=lags.shape[0])
+        return self._batch_transform(lags, target=target)
+
+    def _batch_transform(self, lags, target=None):
+        """Transform lag-window rows and optional target values.
+
+        private _batch_transform containing core logic, called from
+        batch_transform.
+        """
+        lags_t = np.empty_like(lags, dtype=float)
+
+        if target is None:
+            for i, lag_row in enumerate(lags):
+                lag_row_t, _ = self._transform(lag_row, None)
+                lags_t[i] = lag_row_t
+            return lags_t, None
+
+        target_t = np.empty(lags.shape[0], dtype=float)
+
+        for i, (lag_row, target_value) in enumerate(zip(lags, target)):
+            lag_row_t, target_value_t = self._transform(lag_row, target_value)
+            lags_t[i] = lag_row_t
+            target_t[i] = target_value_t
+
+        return lags_t, target_t
+
+    def batch_inverse_transform(self, y, lags):
+        """Invert transformed prediction rows using lag-window context."""
+        lags = self._coerce_lag_matrix(lags)
+        y = self._coerce_target_vector(y, n_rows=lags.shape[0])
+        return self._batch_inverse_transform(y, lags)
+
+    def _batch_inverse_transform(self, y, lags):
+        """Invert transformed prediction rows using lag-window context.
+
+        private _batch_inverse_transform containing core logic, called from
+        batch_inverse_transform.
+        """
+        return np.asarray(
+            [
+                self._inverse_transform(y_value, lag_row)
+                for y_value, lag_row in zip(y, lags)
+            ],
+            dtype=float,
+        )
+
+    def _batch_transform_from_loc_scale(self, lags, target=None):
+        """Vectorized batch transform for location-scale normalizers."""
+        lags = self._coerce_lag_matrix(lags)
+        loc, scale = self._batch_loc_scale(lags)
+        lags_t = (lags - loc[:, None]) / scale[:, None]
+
+        if target is None:
+            return lags_t, None
+
+        target = self._coerce_target_vector(target, n_rows=lags.shape[0])
+        return lags_t, (target - loc) / scale
+
+    def _batch_inverse_from_loc_scale(self, y, lags):
+        """Vectorized batch inverse for location-scale normalizers."""
+        lags = self._coerce_lag_matrix(lags)
+        y = self._coerce_target_vector(y, n_rows=lags.shape[0])
+        loc, scale = self._batch_loc_scale(lags)
+        return y * scale + loc
+
+    def _batch_loc_scale(self, lags):
+        """Return vectorized location and scale for lag-window rows."""
+        loc = np.empty(lags.shape[0], dtype=float)
+        scale = np.empty(lags.shape[0], dtype=float)
+        for i, lag_row in enumerate(lags):
+            loc[i], scale[i] = self._loc_scale(lag_row)
+        return loc, scale
 
     def _loc_scale(self, lags):
         """Return location and scale for a lag window."""
@@ -55,8 +173,61 @@ class BaseWindowNormalizer(BaseObject):
         value = float(value)
         return value if np.isfinite(value) else fallback
 
+    @staticmethod
+    def _coerce_lag_vector(lags):
+        """Coerce lag input to a 1D float array."""
+        lags = np.asarray(lags, dtype=float)
+        if lags.ndim != 1:
+            raise ValueError("lags must be a 1D array-like.")
+        return lags
 
-class MeanWindowNormalizer(BaseWindowNormalizer):
+    @staticmethod
+    def _clean_scale(scale):
+        """Return finite, non-zero scale array."""
+        scale = np.asarray(scale, dtype=float)
+        scale = np.where(np.isfinite(scale), scale, 1.0)
+        scale = np.where(np.abs(scale) < 1e-12, 1.0, scale)
+        return scale
+
+    @staticmethod
+    def _coerce_lag_matrix(lags):
+        """Coerce lag input to a 2D float array."""
+        lags = np.asarray(lags, dtype=float)
+        if lags.ndim == 1:
+            lags = lags.reshape(1, -1)
+        if lags.ndim != 2:
+            raise ValueError("lags must be a 1D or 2D array-like.")
+        return lags
+
+    @staticmethod
+    def _coerce_target_vector(target, n_rows):
+        """Coerce target input to a 1D float array matching lag rows."""
+        target = np.asarray(target, dtype=float)
+        if target.ndim == 0:
+            target = target.reshape(1)
+        if target.ndim != 1:
+            raise ValueError("target must be a 1D array-like.")
+        if target.shape[0] != n_rows:
+            raise ValueError(
+                "target must have the same number of rows as lags; "
+                f"found {target.shape[0]} and {n_rows}."
+            )
+        return target
+
+
+class _VectorizedLocScaleWindowNormalizer(BaseWindowNormalizer):
+    """Base class for normalizers with vectorized location-scale batches."""
+
+    def _batch_transform(self, lags, target=None):
+        """Transform lag-window rows and optional target values."""
+        return self._batch_transform_from_loc_scale(lags, target=target)
+
+    def _batch_inverse_transform(self, y, lags):
+        """Invert transformed prediction rows using lag-window context."""
+        return self._batch_inverse_from_loc_scale(y, lags)
+
+
+class MeanWindowNormalizer(_VectorizedLocScaleWindowNormalizer):
     """Scale values by the lag-window mean."""
 
     def _loc_scale(self, lags):
@@ -66,8 +237,16 @@ class MeanWindowNormalizer(BaseWindowNormalizer):
             scale = 1.0
         return 0.0, scale
 
+    def _batch_loc_scale(self, lags):
+        """Return vectorized location and scale for lag-window rows."""
+        n_rows = lags.shape[0]
+        loc = np.zeros(n_rows, dtype=float)
+        scale = np.nanmean(lags, axis=1) if lags.shape[1] else np.ones(n_rows)
+        scale = self._clean_scale(scale)
+        return loc, scale
 
-class SubtractMeanNormalizer(BaseWindowNormalizer):
+
+class SubtractMeanNormalizer(_VectorizedLocScaleWindowNormalizer):
     """Center values by subtracting the lag-window mean."""
 
     def _loc_scale(self, lags):
@@ -75,8 +254,16 @@ class SubtractMeanNormalizer(BaseWindowNormalizer):
         loc = self._finite_or(mean, 0.0)
         return loc, 1.0
 
+    def _batch_loc_scale(self, lags):
+        """Return vectorized location and scale for lag-window rows."""
+        n_rows = lags.shape[0]
+        loc = np.nanmean(lags, axis=1) if lags.shape[1] else np.zeros(n_rows)
+        loc = np.where(np.isfinite(loc), loc, 0.0)
+        scale = np.ones(n_rows, dtype=float)
+        return loc, scale
 
-class ZScoreWindowNormalizer(BaseWindowNormalizer):
+
+class ZScoreWindowNormalizer(_VectorizedLocScaleWindowNormalizer):
     """Standardize values by lag-window mean and standard deviation."""
 
     def _loc_scale(self, lags):
@@ -88,8 +275,17 @@ class ZScoreWindowNormalizer(BaseWindowNormalizer):
             scale = 1.0
         return loc, scale
 
+    def _batch_loc_scale(self, lags):
+        """Return vectorized location and scale for lag-window rows."""
+        n_rows = lags.shape[0]
+        loc = np.nanmean(lags, axis=1) if lags.shape[1] else np.zeros(n_rows)
+        loc = np.where(np.isfinite(loc), loc, 0.0)
+        scale = np.nanstd(lags, axis=1) if lags.shape[1] else np.ones(n_rows)
+        scale = self._clean_scale(scale)
+        return loc, scale
 
-class MinMaxWindowNormalizer(BaseWindowNormalizer):
+
+class MinMaxWindowNormalizer(_VectorizedLocScaleWindowNormalizer):
     """Scale values by lag-window minimum and range."""
 
     def _loc_scale(self, lags):
@@ -102,6 +298,20 @@ class MinMaxWindowNormalizer(BaseWindowNormalizer):
         scale = high - loc
         if not np.isfinite(scale) or abs(scale) < 1e-12:
             scale = 1.0
+        return loc, scale
+
+    def _batch_loc_scale(self, lags):
+        """Return vectorized location and scale for lag-window rows."""
+        n_rows = lags.shape[0]
+        if lags.shape[1]:
+            loc_raw = np.nanmin(lags, axis=1)
+            loc = np.where(np.isfinite(loc_raw), loc_raw, 0.0)
+            high_raw = np.nanmax(lags, axis=1)
+            high = np.where(np.isfinite(high_raw), high_raw, loc + 1.0)
+        else:
+            loc = np.zeros(n_rows, dtype=float)
+            high = np.ones(n_rows, dtype=float)
+        scale = self._clean_scale(high - loc)
         return loc, scale
 
 
@@ -119,13 +329,6 @@ _FIT_CONTEXT_ATTRS = (
     "train_index_",
     "y_was_dataframe_",
     "y_name_",
-)
-
-_VECTORIZED_NORMALIZER_TYPES = (
-    MeanWindowNormalizer,
-    SubtractMeanNormalizer,
-    ZScoreWindowNormalizer,
-    MinMaxWindowNormalizer,
 )
 
 
@@ -263,65 +466,9 @@ def _coerce_group_X(X, ids):
     return X
 
 
-def _clean_scale(scale):
-    """Return finite, non-zero scale array."""
-    scale = np.asarray(scale, dtype=float)
-    scale = np.where(np.isfinite(scale), scale, 1.0)
-    scale = np.where(np.abs(scale) < 1e-12, 1.0, scale)
-    return scale
-
-
-def _batch_loc_scale(normalizer, lags):
-    """Return vectorized location and scale for known normalizers."""
-    n_rows = lags.shape[0]
-
-    if isinstance(normalizer, MeanWindowNormalizer):
-        loc = np.zeros(n_rows, dtype=float)
-        scale = np.nanmean(lags, axis=1)
-        scale = _clean_scale(scale)
-        return loc, scale
-
-    if isinstance(normalizer, SubtractMeanNormalizer):
-        loc = np.nanmean(lags, axis=1)
-        loc = np.where(np.isfinite(loc), loc, 0.0)
-        scale = np.ones(n_rows, dtype=float)
-        return loc, scale
-
-    if isinstance(normalizer, ZScoreWindowNormalizer):
-        loc = np.nanmean(lags, axis=1)
-        loc = np.where(np.isfinite(loc), loc, 0.0)
-        scale = np.nanstd(lags, axis=1)
-        scale = _clean_scale(scale)
-        return loc, scale
-
-    if isinstance(normalizer, MinMaxWindowNormalizer):
-        loc_raw = np.nanmin(lags, axis=1)
-        loc = np.where(np.isfinite(loc_raw), loc_raw, 0.0)
-        high_raw = np.nanmax(lags, axis=1)
-        high = np.where(np.isfinite(high_raw), high_raw, loc + 1.0)
-        scale = _clean_scale(high - loc)
-        return loc, scale
-
-    raise TypeError("normalizer does not support vectorized loc/scale.")
-
-
-def _normalize_lag_block(lags, target, normalizer):
-    """Normalize one horizon block using row-wise fallback semantics."""
-    lags_t = np.empty_like(lags, dtype=float)
-    target_t = np.empty(target.shape[0], dtype=float)
-
-    for i, (lag_row, target_value) in enumerate(zip(lags, target)):
-        lag_row_t, target_value_t = normalizer.transform(lag_row, target_value)
-        lags_t[i] = lag_row_t
-        target_t[i] = target_value_t
-
-    return lags_t, target_t
-
-
-def _prepare_supervised_group_cache(y, X, window_length, normalizer):
+def _prepare_supervised_group_cache(y, X, window_length):
     """Prepare per-series NumPy data reused by all horizon heads."""
     group_cache = []
-    use_vectorized_normalizer = isinstance(normalizer, _VECTORIZED_NORMALIZER_TYPES)
 
     for ids, y_group in _iter_series_groups(y):
         values = y_group.to_numpy(dtype=float)
@@ -349,12 +496,6 @@ def _prepare_supervised_group_cache(y, X, window_length, normalizer):
                 )
             cache["X_targets"] = X_group.to_numpy(dtype=float)[indexer]
 
-        if use_vectorized_normalizer:
-            loc, scale = _batch_loc_scale(normalizer, windows)
-            cache["normalized_windows"] = (windows - loc[:, None]) / scale[:, None]
-            cache["loc"] = loc
-            cache["scale"] = scale
-
         group_cache.append(cache)
 
     return group_cache
@@ -366,7 +507,6 @@ def _build_supervised_table_from_cache(
     """Build one horizon's supervised table from reusable group cache."""
     X_blocks = []
     y_blocks = []
-    use_vectorized_normalizer = isinstance(normalizer, _VECTORIZED_NORMALIZER_TYPES)
 
     for cache in group_cache:
         values = cache["values"]
@@ -380,13 +520,8 @@ def _build_supervised_table_from_cache(
 
         if normalizer is None:
             lags_features = lags
-        elif use_vectorized_normalizer:
-            loc = cache["loc"][:n_rows]
-            scale = cache["scale"][:n_rows]
-            lags_features = cache["normalized_windows"][:n_rows]
-            target = (target - loc) / scale
         else:
-            lags_features, target = _normalize_lag_block(lags, target, normalizer)
+            lags_features, target = normalizer.batch_transform(lags, target)
 
         X_targets = cache["X_targets"]
         if X_targets is not None:
@@ -413,7 +548,6 @@ def _build_supervised_table(y, X, window_length, steps_ahead, normalizer):
         y=y,
         X=X,
         window_length=window_length,
-        normalizer=normalizer,
     )
     return _build_supervised_table_from_cache(
         group_cache=group_cache,
@@ -441,7 +575,12 @@ class ReductionForecaster(BaseForecaster):
         "capability:multivariate": False,
         "enforce_index_type": None,
         "requires-fh-in-fit": False,
-        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
+        "y_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X-y-must-have-same-index": True,
         "python_dependencies": "scikit-learn",
@@ -473,7 +612,6 @@ class ReductionForecaster(BaseForecaster):
             y=y,
             X=X,
             window_length=self.window_length,
-            normalizer=normalizer,
         )
         estimators = []
         for step in range(1, self.steps_ahead + 1):
@@ -524,50 +662,52 @@ class ReductionForecaster(BaseForecaster):
             self._fit_heads(y, X=X)
             self.heads_source_ = "fit"
 
-        if len(y) < self.window_length:
-            raise ValueError(
-                "Need at least window_length observations to store local context."
-            )
+        if isinstance(y.index, pd.MultiIndex):
+            self._store_panel_fit_context(y)
+        else:
+            if len(y) < self.window_length:
+                raise ValueError(
+                    "Need at least window_length observations to store local context."
+                )
+            self.is_panel_ = False
+            self.last_window_ = y.iloc[-self.window_length :].to_numpy(dtype=float)
 
-        self.last_window_ = y.iloc[-self.window_length :].to_numpy(dtype=float)
         self.train_index_ = y.index
         self.y_was_dataframe_ = y_was_dataframe
         self.y_name_ = y_name
         return self
 
-    def _check_X(self, X=None):
-        """Check X, preserving vectorized row alignment at predict time."""
-        X_inner = super()._check_X(X)
+    def _store_panel_fit_context(self, y):
+        """Store per-instance last windows for panel/hierarchical prediction."""
+        self.is_panel_ = True
+        self.group_last_windows_ = {}
+        self.group_cutoffs_ = {}
+        self.group_ids_ = []
+        self.y_id_names_ = list(y.index.names[:-1])
+        self.y_time_name_ = y.index.names[-1]
 
-        if X_inner is None or isinstance(X_inner, VectorizedDF):
-            return X_inner
+        for ids, y_group in _iter_series_groups(y):
+            if len(y_group) < self.window_length:
+                raise ValueError(
+                    "Need at least window_length observations in every series "
+                    "to store local context."
+                )
+            self.group_ids_.append(ids)
+            self.group_last_windows_[ids] = y_group.iloc[
+                -self.window_length :
+            ].to_numpy(dtype=float)
+            self.group_cutoffs_[ids] = y_group.index[-1:]
 
-        yvec = getattr(self, "_yvec", None)
-        if not getattr(self, "_is_vectorized", False) or not isinstance(
-            yvec, VectorizedDF
-        ):
-            return X_inner
-
-        valid, _, metadata = check_is_scitype(
-            X_inner,
-            scitype=["Series", "Panel", "Hierarchical"],
-            return_metadata=["scitype"],
-            var_name="X",
-        )
-        if not valid or metadata["scitype"] == "Series":
-            return X_inner
-
-        return VectorizedDF(
-            X=X_inner,
-            iterate_as=yvec.iterate_as,
-            is_scitype=metadata["scitype"],
-        )
+        first_id = self.group_ids_[0]
+        self.last_window_ = self.group_last_windows_[first_id].copy()
 
     def _make_prediction_row(self, lags, X_row=None):
         """Make a single regressor row from lags and optional exogenous values."""
         normalizer = getattr(self, "normalizer_", None)
         if normalizer is not None:
-            lags_t, _ = normalizer.transform(lags, None)
+            lags = np.asarray(lags, dtype=float).reshape(1, -1)
+            lags_t, _ = normalizer.batch_transform(lags)
+            lags_t = lags_t[0]
         else:
             lags_t = np.asarray(lags, dtype=float)
 
@@ -580,12 +720,17 @@ class ReductionForecaster(BaseForecaster):
         normalizer = getattr(self, "normalizer_", None)
         if normalizer is None:
             return float(y_pred)
-        return normalizer.inverse_transform(y_pred, lags)
+        y_pred = np.asarray([y_pred], dtype=float)
+        lags = np.asarray(lags, dtype=float).reshape(1, -1)
+        return normalizer.batch_inverse_transform(y_pred, lags)[0]
 
-    def _predict_all_steps(self, horizon, X=None):
+    def _predict_all_steps(self, horizon, X=None, last_window=None):
         """Predict all relative steps from 1 to horizon in direct-recursive blocks."""
         direct_estimators = self.direct_estimators_
-        rolling_window = self.last_window_.copy()
+        if last_window is None:
+            rolling_window = self.last_window_.copy()
+        else:
+            rolling_window = np.asarray(last_window, dtype=float).copy()
         preds = np.zeros(horizon, dtype=float)
         X_block = X
 
@@ -630,9 +775,9 @@ class ReductionForecaster(BaseForecaster):
             )
         return X_future.to_numpy(dtype=float)
 
-    def _predict(self, fh, X=None):
-        """Predict relative out-of-sample horizons."""
-        rel = fh.to_relative(self.cutoff).to_pandas()
+    def _predict_values_for_window(self, fh, cutoff, last_window, X=None):
+        """Predict one fitted series context and return values plus index."""
+        rel = fh.to_relative(cutoff).to_pandas()
         rel_values = np.asarray(rel, dtype=int)
 
         if np.any(rel_values < 1):
@@ -642,11 +787,50 @@ class ReductionForecaster(BaseForecaster):
 
         horizon = int(np.max(rel_values))
         full_fh = fh.__class__(np.arange(1, horizon + 1), is_relative=True)
-        full_index = full_fh.to_absolute_index(self.cutoff)
+        full_index = full_fh.to_absolute_index(cutoff)
         X_block = self._get_future_X_block(X, full_index)
-        all_preds = self._predict_all_steps(horizon, X=X_block)
+        all_preds = self._predict_all_steps(horizon, X=X_block, last_window=last_window)
         values = np.asarray([all_preds[step - 1] for step in rel_values], dtype=float)
-        index = fh.to_absolute_index(self.cutoff)
+        index = fh.to_absolute_index(cutoff)
+        return values, index
+
+    def _predict_panel(self, fh, X=None):
+        """Predict all panel/hierarchical instances from stored local contexts."""
+        all_values = []
+        all_index = []
+
+        for ids in self.group_ids_:
+            X_group = _coerce_group_X(X, ids)
+            values, index = self._predict_values_for_window(
+                fh=fh,
+                cutoff=self.group_cutoffs_[ids],
+                last_window=self.group_last_windows_[ids],
+                X=X_group,
+            )
+            all_values.extend(values)
+            all_index.extend((*ids, time) for time in index)
+
+        index = pd.MultiIndex.from_tuples(
+            all_index,
+            names=[*self.y_id_names_, self.y_time_name_],
+        )
+        values = np.asarray(all_values, dtype=float)
+
+        if getattr(self, "y_was_dataframe_", False):
+            return pd.DataFrame(values, index=index, columns=[self.y_name_])
+        return pd.Series(values, index=index, name=self.y_name_)
+
+    def _predict(self, fh, X=None):
+        """Predict relative out-of-sample horizons."""
+        if getattr(self, "is_panel_", False):
+            return self._predict_panel(fh=fh, X=X)
+
+        values, index = self._predict_values_for_window(
+            fh=fh,
+            cutoff=self.cutoff,
+            last_window=self.last_window_,
+            X=X,
+        )
 
         if getattr(self, "y_was_dataframe_", False):
             return pd.DataFrame(values, index=index, columns=[self.y_name_])

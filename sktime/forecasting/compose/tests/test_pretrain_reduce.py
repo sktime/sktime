@@ -18,6 +18,7 @@ from sktime.forecasting.compose._pretrain_reduce import (
     _build_supervised_table,
     _resolve_normalizer,
 )
+from sktime.registry import scitype
 
 
 class RecordingRegressor(BaseEstimator, RegressorMixin):
@@ -49,9 +50,51 @@ class LoggingNormalizer(BaseWindowNormalizer):
 
     calls = []
 
-    def transform(self, lags, target=None):
+    def _transform(self, lags, target=None):
+        """Transform one row and record the private hook call."""
         type(self).calls.append((tuple(np.asarray(lags, dtype=float)), float(target)))
-        return super().transform(lags, target)
+        return super()._transform(lags, target)
+
+
+class BatchHookNormalizer(BaseWindowNormalizer):
+    """Normalizer that records batch hook usage and rejects scalar hooks."""
+
+    batch_transform_targets = []
+    batch_inverse_calls = 0
+    scalar_transform_calls = 0
+    scalar_inverse_calls = 0
+
+    @classmethod
+    def reset(cls):
+        """Reset class-level call logs."""
+        cls.batch_transform_targets = []
+        cls.batch_inverse_calls = 0
+        cls.scalar_transform_calls = 0
+        cls.scalar_inverse_calls = 0
+
+    def _transform(self, lags, target=None):
+        """Reject scalar private transform calls."""
+        type(self).scalar_transform_calls += 1
+        raise AssertionError("_transform should not be used")
+
+    def _inverse_transform(self, y, lags):
+        """Reject scalar private inverse calls."""
+        type(self).scalar_inverse_calls += 1
+        raise AssertionError("_inverse_transform should not be used")
+
+    def _batch_transform(self, lags, target=None):
+        """Transform in batch and record target blocks."""
+        if target is None:
+            type(self).batch_transform_targets.append(None)
+            return lags + 10.0, None
+
+        type(self).batch_transform_targets.append(target.copy())
+        return lags + 10.0, target + 100.0
+
+    def _batch_inverse_transform(self, y, lags):
+        """Invert in batch and record calls."""
+        type(self).batch_inverse_calls += 1
+        return y + 5.0
 
 
 def _panel_series():
@@ -117,9 +160,42 @@ def test_window_normalizers_are_skbase_objects_and_invert_values():
     ]:
         assert isinstance(normalizer, BaseWindowNormalizer)
         assert isinstance(normalizer, BaseObject)
+        assert normalizer.get_tag("object_type") == "window-normalizer"
+        assert scitype(normalizer) == "window-normalizer"
         lags_t, target_t = normalizer.transform(lags, 8.0)
         assert lags_t.shape == lags.shape
         assert normalizer.inverse_transform(target_t, lags) == pytest.approx(8.0)
+
+
+def test_window_normalizers_batch_methods_match_scalar_contract():
+    """Batch normalizer methods match scalar transform semantics."""
+    lags = np.array([[2.0, 4.0, 6.0], [1.0, 3.0, 5.0], [5.0, 7.0, 11.0]])
+    target = np.array([8.0, 9.0, 13.0])
+
+    for normalizer in [
+        MeanWindowNormalizer(),
+        SubtractMeanNormalizer(),
+        ZScoreWindowNormalizer(),
+        MinMaxWindowNormalizer(),
+    ]:
+        batch_lags_t, batch_target_t = normalizer.batch_transform(lags, target)
+        expected_lags_t = []
+        expected_target_t = []
+
+        for lag_row, target_value in zip(lags, target):
+            lag_row_t, target_value_t = normalizer.transform(lag_row, target_value)
+            expected_lags_t.append(lag_row_t)
+            expected_target_t.append(target_value_t)
+
+        np.testing.assert_allclose(batch_lags_t, np.asarray(expected_lags_t))
+        np.testing.assert_allclose(batch_target_t, np.asarray(expected_target_t))
+
+        recovered = normalizer.batch_inverse_transform(batch_target_t, lags)
+        np.testing.assert_allclose(recovered, target)
+
+        batch_lags_only, batch_target_none = normalizer.batch_transform(lags)
+        assert batch_target_none is None
+        np.testing.assert_allclose(batch_lags_only, np.asarray(expected_lags_t))
 
 
 def test_reduction_forecaster_canonical_and_compatibility_imports_match():
@@ -259,7 +335,7 @@ def test_build_supervised_table_matches_rowwise_normalization(
 
 
 def test_custom_normalizer_preserves_rowwise_call_order():
-    """Custom normalizers are not vectorized and keep current call order."""
+    """Custom normalizers without batch overrides keep current call order."""
     LoggingNormalizer.calls = []
     forecaster = ReductionForecaster(
         estimator=RecordingRegressor(),
@@ -283,6 +359,56 @@ def test_custom_normalizer_preserves_rowwise_call_order():
         ((11.0, 12.0, 13.0), 15.0),
     ]
     assert LoggingNormalizer.calls == expected
+
+
+def test_supervised_table_uses_custom_batch_transform_hook():
+    """Custom batch_transform hooks are used without scalar fallback calls."""
+    BatchHookNormalizer.reset()
+
+    Xt, yt = _build_supervised_table(
+        y=_small_panel_series(),
+        X=None,
+        window_length=3,
+        steps_ahead=2,
+        normalizer=BatchHookNormalizer(),
+    )
+
+    expected_X = np.array(
+        [
+            [10.0, 11.0, 12.0],
+            [11.0, 12.0, 13.0],
+            [20.0, 21.0, 22.0],
+            [21.0, 22.0, 23.0],
+        ]
+    )
+    expected_y = np.array([104.0, 105.0, 114.0, 115.0])
+
+    np.testing.assert_array_equal(Xt, expected_X)
+    np.testing.assert_array_equal(yt, expected_y)
+    assert len(BatchHookNormalizer.batch_transform_targets) == 2
+    assert BatchHookNormalizer.scalar_transform_calls == 0
+    assert BatchHookNormalizer.scalar_inverse_calls == 0
+
+
+def test_prediction_uses_custom_batch_normalizer_hooks():
+    """Prediction row normalization and inverse scaling use batch hooks."""
+    BatchHookNormalizer.reset()
+    y = pd.Series(np.arange(8, dtype=float), index=pd.RangeIndex(8), name="y")
+    forecaster = ReductionForecaster(
+        estimator=RecordingRegressor(constant=2.0),
+        window_length=3,
+        steps_ahead=1,
+        normalization_strategy=BatchHookNormalizer(),
+    )
+
+    forecaster.fit(y, fh=[1])
+    y_pred = forecaster.predict()
+
+    assert y_pred.iloc[0] == pytest.approx(7.0)
+    assert BatchHookNormalizer.batch_transform_targets[-1] is None
+    assert BatchHookNormalizer.batch_inverse_calls == 1
+    assert BatchHookNormalizer.scalar_transform_calls == 0
+    assert BatchHookNormalizer.scalar_inverse_calls == 0
 
 
 def test_pretrain_fits_direct_heads_and_tracks_pretrained_params():

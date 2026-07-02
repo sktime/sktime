@@ -78,6 +78,29 @@ class object(_BaseScitypeOfObject):
         return TestAllObjects
 
 
+class window_normalizer(_BaseScitypeOfObject):
+    """Lag-window normalizer for reduction forecasters.
+
+    Window normalizers transform lag-window rows and invert normalized
+    predictions using the same lag-window context.
+
+    Base class:
+    :class:`sktime.forecasting.compose._pretrain_reduce.BaseWindowNormalizer`
+    """
+
+    _tags = {
+        "scitype_name": "window-normalizer",
+        "short_descr": "lag-window normalizer for reduction forecasters",
+        "parent_scitype": "object",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.forecasting.compose._pretrain_reduce import BaseWindowNormalizer
+
+        return BaseWindowNormalizer
+
+
 class estimator(_BaseScitypeOfObject):
     """Estimator objects, i.e., objects with fit method.
 
