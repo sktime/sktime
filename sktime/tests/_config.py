@@ -188,7 +188,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "PAAlegacy",
         "PCATransformer",
         "PaddingTransformer",
-        "PlateauFinder",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
