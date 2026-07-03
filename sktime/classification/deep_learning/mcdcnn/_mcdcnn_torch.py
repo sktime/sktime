@@ -40,16 +40,40 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
     criterion : str, optional (default="CrossEntropyLoss")
         The name of the loss function to be used during training,
         should be supported by PyTorch.
-    activation : str or Callable or None, optional (default=None)
-        The activation function to apply at the output.
-        List of available activation functions:
-        https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
-        When using CrossEntropyLoss (default) as the loss function,
-        the activation function in the output layer must be None.
-    activation_hidden : str or Callable, default="ReLU"
-        Activation function used in the hidden layers.
-        List of available activation functions:
-        https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
+    activation : str, Callable, or None, optional (default=None)
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+    activation_hidden : str, Callable, or None, default="ReLU"
+        Activation applied to the hidden layers.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
     criterion : str, optional (default="CrossEntropyLoss")
