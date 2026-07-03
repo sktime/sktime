@@ -173,12 +173,14 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface_hub"], severity="none"):
+
         def _instantiate_patched_model(self, model_kwargs):
             """Instantiate the model from the vendor package."""
             import sys
 
-            import sktime.libs.uni2ts as _uni2ts_mod
             import torch
+
+            import sktime.libs.uni2ts as _uni2ts_mod
 
             sys.modules.setdefault("uni2ts", _uni2ts_mod)
 
