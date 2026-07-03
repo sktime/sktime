@@ -271,6 +271,24 @@ class MomentFMClassifier(BaseClassifier):
         self.to_cpu_after_fit = to_cpu_after_fit
         super().__init__()
 
+    def __getstate__(self):
+        """Return state for pickling, excluding the unpicklable torch model.
+
+        ``MOMENTPipeline`` inherits from ``PreTrainedModel``, which registers
+        a local closure (``make_inputs_require_grads``) as a forward hook when
+        gradient-checkpointing is enabled.  Local closures are not picklable,
+        so we strip ``self.model`` from the serialised state.  It will be
+        reloaded from the multiton cache on the first ``_predict`` call after
+        unpickling.
+        """
+        state = self.__dict__.copy()
+        state["model"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from an unpickled state dictionary."""
+        self.__dict__.update(state)
+
     def _get_momentfm_cache_key(self):
         """Build a unique cache key for the current model configuration.
 
@@ -483,6 +501,12 @@ class MomentFMClassifier(BaseClassifier):
             input_mask = np.concatenate((np.ones(X.shape[-1]), np.zeros(pad_length)))
         else:
             input_mask = np.ones(X_.shape[-1])
+
+        # Reload from multiton cache if the model was cleared by unpickling
+        # (``__getstate__`` sets ``self.model = None`` to avoid pickling the
+        # non-serialisable HuggingFace forward hook).
+        if getattr(self, "model", None) is None:
+            self.model = self._load_model()
 
         self.model.eval()
         self.model.to(self._device)
