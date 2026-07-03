@@ -44,13 +44,11 @@ class Toto2Forecaster(BaseForecaster):
     Notes
     -----
     Toto-2 emits forecasts at a fixed grid of quantile levels (0.1, 0.2, ..., 0.9).
-    ``predict_quantiles`` and ``predict_interval`` return any other level by linear
-    interpolation between adjacent grid quantiles, and clamp to the nearest grid
-    quantile for levels outside ``[0.1, 0.9]`` (e.g. a 0.05 request returns the 0.1
-    quantile, so intervals wider than 80% coverage saturate). Interpolation assumes
-    the grid quantiles are monotone in the level; the model is trained to produce
-    monotone quantiles, so quantile crossing is treated as a model issue and is not
-    corrected here.
+    ``predict_proba`` returns a ``skpro`` ``HistogramQPD`` built from this grid: it
+    interpolates linearly between adjacent grid quantiles, and (via ``tails="mass"``)
+    clamps levels outside ``[0.1, 0.9]`` to the nearest grid quantile (e.g. a 0.05
+    request returns the 0.1 quantile, so intervals wider than 80% coverage saturate).
+    Interpolation assumes the grid quantiles are monotone in the level.
 
     References
     ----------
@@ -69,7 +67,7 @@ class Toto2Forecaster(BaseForecaster):
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
     Probabilistic forecasting. Toto-2 emits a fixed quantile grid (0.1, ..., 0.9);
-    other levels are obtained by linear interpolation:
+    other levels come from a HistogramQPD (linear interpolation, clamped tails):
 
     >>> forecaster = Toto2Forecaster(
     ...     model_path="Datadog/Toto-2.0-4m"
@@ -106,7 +104,7 @@ class Toto2Forecaster(BaseForecaster):
         "authors": ["siddharth7113"],
         "maintainers": ["siddharth7113"],
         "python_version": ">=3.12",
-        "python_dependencies": ["toto-models"],
+        "python_dependencies": ["toto-models", "skpro>=2.14"],
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -294,62 +292,49 @@ class Toto2Forecaster(BaseForecaster):
         target_mask = torch.cat([pad_mask, target_mask], dim=-1)
         return target, target_mask, True
 
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
 
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
+        private _predict_proba containing the core logic, called from predict_proba
 
         Parameters
         ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : sktime time series object, optional (default=None)
+                Exogeneous time series for the forecast
+            Should be of same scitype (Series, Panel, or Hierarchical) as y in fit
+            if self.get_tag("X-y-must-have-same-index"),
+                X.index must contain fh.index and y.index both
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
 
         Returns
         -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
         """
         import numpy as np
+        from skpro.distributions import HistogramQPD
 
         model, quantiles = self._run_forecast(fh)
 
-        # Toto-2 emits a fixed quantile grid (knots = [0.1, ..., 0.9]). We linearly
-        # interpolate to the requested levels; np.interp clamps levels outside the
-        # grid (e.g. 0.05, 0.95) to the nearest knot. Same approach as
-        # FlowStateForecaster / LagLlamaForecaster.
         knots = model.output_head.knots
-        q = quantiles.squeeze(1).cpu().numpy()  # [n_quantiles, n_var, horizon_padded]
+        q = quantiles.squeeze(1).cpu().numpy()
 
         var_names = self._y.columns
-        cols_idx = pd.MultiIndex.from_product([var_names, alpha])
         pred_index = fh.to_absolute(self._cutoff)._values
         relative_indices = np.asarray(fh.to_relative(self._cutoff)) - 1
 
-        pred_quantiles = pd.DataFrame(index=pred_index, columns=cols_idx)
-        for i, var_name in enumerate(var_names):
-            for a in alpha:
-                col = [float(np.interp(a, knots, q[:, i, t])) for t in relative_indices]
-                pred_quantiles[(var_name, a)] = col
+        row_index = pd.MultiIndex.from_product([knots, pred_index])
+        selected = q[:, :, relative_indices]
+        data = selected.transpose(0, 2, 1).reshape(len(knots) * len(pred_index), -1)
+        q_df = pd.DataFrame(data, index=row_index, columns=var_names)
 
-        return pred_quantiles
+        return HistogramQPD(q_df, tails="mass", index=pred_index, columns=var_names)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
