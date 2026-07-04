@@ -107,8 +107,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         * Learning rate schedulers can also be passed as a callable that accepts the
           optimizer and returns a scheduler instance, for custom configuration.
 
-        When any Lightning callback is specified, training is delegated to
-        ``lightning.pytorch.Trainer``. Otherwise, a plain PyTorch training loop is used.
+        Training uses ``lightning.pytorch.Trainer`` via an internal Lightning module
+        wrapper around the PyTorch network.
 
         If None, no callbacks are used.
     callback_kwargs : dict or None, default = None
@@ -130,7 +130,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
     _tags = {
         "authors": ["geetu040", "RecreationalMath"],
         "maintainers": ["geetu040", "RecreationalMath"],
-        "python_dependencies": ["torch"],
+        "python_dependencies": ["torch", "lightning"],
         "X_inner_mtype": "numpy3D",
         "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
@@ -153,9 +153,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         """
         if self.metrics is not None:
             self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
-        if self._uses_lightning_training():
-            # TODO: i hope this doesnt override the torchmetrics tag, will check
-            self.set_tags(**{"tests:python_dependencies": "lightning"})
 
     def __init__(
         self: "BaseDeepClassifierPytorch",
@@ -265,17 +262,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         )
         # build dataloader
         dataloader = self._build_dataloader(X, y)
-
-        if self._lightning_callbacks is not None:
-            self._fit_lightning(dataloader)
-        else:
-            self._fit_manual(dataloader)
-
-    def _fit_manual(self, dataloader):
-        """Train the network using a plain PyTorch loop."""
-        self.network.train()
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
+        self._fit_lightning(dataloader)
 
     def _fit_lightning(self, dataloader):
         """Train the network using ``lightning.pytorch.Trainer``."""
@@ -333,48 +320,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     if key.startswith("network.")
                 }
                 self.network.load_state_dict(network_state)
-
-    def _run_epoch(self, epoch, dataloader):
-        losses = []
-        metric_values = {name: [] for name in (self._metrics_objects or {})}
-
-        for inputs, outputs in dataloader:
-            y_pred = self.network(**inputs)
-            loss = self._criterion(y_pred, outputs)
-            self._optimizer.zero_grad()
-            loss.backward()
-            self._optimizer.step()
-            losses.append(loss.item())
-
-            # Compute metrics if any
-            if self._metrics_objects:
-                import torch
-
-                with torch.no_grad():
-                    for metric_name, metric_obj in self._metrics_objects.items():
-                        metric_value = metric_obj(y_pred, outputs)
-                        metric_values[metric_name].append(metric_value.item())
-
-        epoch_loss = np.average(losses)
-        # step the schedulers, if any
-        if self._schedulers:
-            for scheduler in self._schedulers:
-                if isinstance(scheduler, ReduceLROnPlateau):
-                    # if ReduceLROnPlateau is used,
-                    # a metric value need to be passed here.
-                    # We pass the loss value of the last epoch.
-                    scheduler.step(epoch_loss)
-                else:
-                    scheduler.step()
-
-        # print loss and metrics(if any) for the epoch, if verbose is True
-        if self.verbose:
-            msg = f"Epoch {epoch + 1}: Loss: {epoch_loss}"
-            if metric_values:
-                for metric_name, values in metric_values.items():
-                    avg_metric = np.average(values)
-                    msg += f", {metric_name}: {avg_metric:.4f}"
-            print(msg)
 
     def _instantiate_activations(
         self, activations: dict[str, str | Callable | None]
@@ -582,27 +527,16 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             self._validated_criterion = self.criterion
             self._validated_activation = self.activation
 
-    def _uses_lightning_training(self):
-        """Whether training should use ``lightning.pytorch.Trainer``."""
-        if self._callbacks is None:
-            return False
-        for callback in self._callbacks:
-            if not isinstance(callback, str):
-                return True
-            if callback.lower() in _LIGHTNING_CALLBACKS:
-                return True
-        return False
-
     def _instantiate_lightning_callbacks(self):
         """Instantiate Lightning callbacks from string names or instances.
 
         Returns
         -------
-        list or None
-            Instantiated Lightning callbacks, or None if not using Lightning training.
+        list
+            Instantiated Lightning callbacks. Empty if none are configured.
         """
-        if not self._uses_lightning_training():
-            return None
+        if self._callbacks is None:
+            return []
 
         _check_soft_dependencies("lightning", severity="error")
 
@@ -632,6 +566,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     )
             elif isinstance(callback, Callback):
                 lightning_callbacks.append(callback)
+            elif callable(callback):
+                # LR scheduler callables are handled in _instantiate_schedulers
+                continue
             else:
                 raise TypeError(
                     "Lightning callbacks must be passed as a supported string name or "
@@ -643,8 +580,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
     def _instantiate_schedulers(self):
         """Instantiate PyTorch learning rate schedulers for training.
 
-        Schedulers are stepped manually in the plain PyTorch loop, or from
-        ``_SktimeClassifierLightningModule.on_train_epoch_end`` when using Lightning.
+        Schedulers will step in ``_SktimeClassifierLightningModule.on_train_epoch_end``.
 
         Note: Since PyTorch learning rate schedulers need to be initialized with
         the optimizer object, we only accept the class name (str) of the scheduler here
@@ -684,9 +620,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         )
         for scheduler in self._callbacks:
             if isinstance(scheduler, str):
+                if scheduler.lower() in _LIGHTNING_CALLBACKS:
+                    continue
                 if scheduler.lower() not in self._all_callbacks:
-                    if self._uses_lightning_training():
-                        continue
                     raise ValueError(
                         f"Unknown learning rate scheduler: {scheduler}. "
                         f"Please pass one/many of {', '.join(self._all_callbacks)} "

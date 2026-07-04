@@ -91,7 +91,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
     _tags = {
         "authors": ["hfawaz", "James-Large", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
-        "python_dependencies": "torch",
+        "python_dependencies": ["torch", "lightning"],
         "property:randomness": "stochastic",
         "capability:random_state": True,
     }
