@@ -258,10 +258,9 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 "The MORAI adapter is not supporting insample predictions."
             )
 
-        _y = self._get_training_y()
-        _y = _y.copy()
+        _y = self._context_y_.copy()
         _X = None
-        training_X = self._get_training_X()
+        training_X = self._context_X_
         if training_X is not None:
             _X = training_X.copy()
 
