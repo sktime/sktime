@@ -1,15 +1,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for johansen parameter estimator."""
 
-__author__ = ["PBormann"]
+__author__ = ["OldPatrick"]
 
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.datasets import load_airline
 from sktime.param_est.cointegration import JohansenCointegration
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
