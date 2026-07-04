@@ -16,6 +16,14 @@ from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
+LightningModule = _safe_import("lightning.LightningModule", pkg_name="lightning")
+
+
+# Instance attrs owned by ``LightningModule`` / ``nn.Module``; must not be deleted
+# during ``reset``, otherwise module bookkeeping is corrupted before ``__init__``.
+_LIGHTNING_MODULE_STATE_ATTRS = frozenset(
+    attr for attr in dir(LightningModule()) if "__" not in attr
+) - set(dir(LightningModule))
 
 # Lightning callback names accepted as strings in the ``callbacks`` parameter.
 # See https://lightning.ai/docs/pytorch/stable/api_references.html#callbacks
@@ -62,7 +70,7 @@ LC_TO_UC_ACTIVATIONS = {
 }
 
 
-class BaseDeepClassifierPytorch(BaseClassifier):
+class BaseDeepClassifierPytorch(BaseClassifier, LightningModule):
     """Abstract base class for the Pytorch neural network classifiers.
 
     Parameters
@@ -107,8 +115,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         * Learning rate schedulers can also be passed as a callable that accepts the
           optimizer and returns a scheduler instance, for custom configuration.
 
-        Training uses ``lightning.pytorch.Trainer`` via an internal Lightning module
-        wrapper around the PyTorch network.
+        Training uses ``lightning.pytorch.Trainer``.
 
         If None, no callbacks are used.
     callback_kwargs : dict or None, default = None
@@ -146,11 +153,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
     # be overridden.
     _instantiate_activation_vars = ("activation", "activation_hidden")
 
-    def __dynamic_tags__(self):
-        """Dynamic tag setter logic for setting tag values conditional on parameters.
+    def __hash__(self):
+        # skbase sets __hash__ = None; nn.Module requires a hashable self.
+        return id(self)
 
-        This method should be used for setting dynamic tags only.
-        """
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters."""
         if self.metrics is not None:
             self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
 
@@ -191,7 +199,27 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.verbose = verbose
         self.random_state = random_state
 
+        LightningModule.__init__(self)
         super().__init__()
+
+    def reset(self):
+        """Reset estimator without deleting ``LightningModule`` internal state."""
+        params = self.get_params(deep=False)
+        config = self.get_config()
+
+        cls_attrs = set(dir(type(self)))
+        self_attrs = {attr for attr in dir(self) if "__" not in attr} - cls_attrs
+        for attr in self_attrs:
+            if attr in _LIGHTNING_MODULE_STATE_ATTRS:
+                continue
+            try:
+                delattr(self, attr)
+            except AttributeError:
+                pass
+
+        self.__init__(**params)
+        self.set_config(**config)
+        return self
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -238,6 +266,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._metrics_objects = None
 
     def _fit(self, X, y):
+        """Fit the model to the data."""
+        import lightning.pytorch as pl
+        from lightning.pytorch.callbacks import ModelCheckpoint
+
         if self.random_state is not None:
             import torch
 
@@ -262,22 +294,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         )
         # build dataloader
         dataloader = self._build_dataloader(X, y)
-        self._fit_lightning(dataloader)
-
-    def _fit_lightning(self, dataloader):
-        """Train the network using ``lightning.pytorch.Trainer``."""
-        _check_soft_dependencies("lightning", severity="error")
-
-        import lightning.pytorch as pl
-        from lightning.pytorch.callbacks import ModelCheckpoint
-
-        lightning_module = _SktimeClassifierLightningModule(
-            network=self.network,
-            criterion=self._criterion,
-            optimizer=self._optimizer,
-            schedulers=self._schedulers,
-            metrics_objects=self._metrics_objects,
-        )
 
         enable_checkpointing = any(
             isinstance(cb, ModelCheckpoint) for cb in self._lightning_callbacks
@@ -306,9 +322,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             callbacks=self._lightning_callbacks,
             **trainer_kwargs,
         )
-        trainer.fit(lightning_module, train_dataloaders=dataloader)
+        trainer.fit(self, train_dataloaders=dataloader)
 
-        # restore best checkpoint weights when ModelCheckpoint was used
         if trainer.checkpoint_callback is not None:
             best_path = trainer.checkpoint_callback.best_model_path
             if best_path:
@@ -320,6 +335,51 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     if key.startswith("network.")
                 }
                 self.network.load_state_dict(network_state)
+
+    def training_step(self, batch, batch_idx):
+        inputs, y = batch
+        y_pred = self.network(**inputs)
+        loss = self._criterion(y_pred, y)
+        self.log(
+            "train_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
+
+        if self._metrics_objects:
+            import torch
+
+            with torch.no_grad():
+                for metric_name, metric_obj in self._metrics_objects.items():
+                    metric_value = metric_obj(y_pred, y)
+                    self.log(
+                        f"train_{metric_name}",
+                        metric_value,
+                        on_step=False,
+                        on_epoch=True,
+                        prog_bar=True,
+                    )
+        return loss
+
+    def on_train_epoch_end(self):
+        if not self._schedulers:
+            return
+
+        epoch_loss = self.trainer.callback_metrics.get("train_loss")
+        if epoch_loss is not None:
+            epoch_loss = epoch_loss.item()
+
+        for scheduler in self._schedulers:
+            if isinstance(scheduler, ReduceLROnPlateau):
+                scheduler.step(epoch_loss)
+            else:
+                scheduler.step()
+
+    def configure_optimizers(self):
+        """Return the optimizer to use during training."""
+        return self._optimizer
 
     def _instantiate_activations(
         self, activations: dict[str, str | Callable | None]
@@ -580,7 +640,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
     def _instantiate_schedulers(self):
         """Instantiate PyTorch learning rate schedulers for training.
 
-        Schedulers will step in ``_SktimeClassifierLightningModule.on_train_epoch_end``.
+        Schedulers are stepped in ``on_train_epoch_end``.
 
         Note: Since PyTorch learning rate schedulers need to be initialized with
         the optimizer object, we only accept the class name (str) of the scheduler here
@@ -1035,69 +1095,3 @@ class PytorchDataset(Dataset):
         y = self.y[i]
         y = torchTensor(y, dtype=torchLong)
         return inputs, y
-
-
-LightningModule = _safe_import("lightning.LightningModule", pkg_name="lightning")
-
-
-class _SktimeClassifierLightningModule(LightningModule):
-    """Thin Lightning wrapper around a sktime PyTorch classification network."""
-
-    def __init__(
-        self,
-        network,
-        criterion,
-        optimizer,
-        schedulers=None,
-        metrics_objects=None,
-    ):
-        super().__init__()
-        self.network = network
-        self.criterion = criterion
-        self._optimizer = optimizer
-        self._schedulers = schedulers or []
-        self._metrics_objects = metrics_objects or {}
-
-    def training_step(self, batch, batch_idx):
-        inputs, y = batch
-        y_pred = self.network(**inputs)
-        loss = self.criterion(y_pred, y)
-        self.log(
-            "train_loss",
-            loss,
-            on_step=False,
-            on_epoch=True,
-            prog_bar=True,
-        )
-
-        if self._metrics_objects:
-            import torch
-
-            with torch.no_grad():
-                for metric_name, metric_obj in self._metrics_objects.items():
-                    metric_value = metric_obj(y_pred, y)
-                    self.log(
-                        f"train_{metric_name}",
-                        metric_value,
-                        on_step=False,
-                        on_epoch=True,
-                        prog_bar=True,
-                    )
-        return loss
-
-    def on_train_epoch_end(self):
-        if not self._schedulers:
-            return
-
-        epoch_loss = self.trainer.callback_metrics.get("train_loss")
-        if epoch_loss is not None:
-            epoch_loss = epoch_loss.item()
-
-        for scheduler in self._schedulers:
-            if isinstance(scheduler, ReduceLROnPlateau):
-                scheduler.step(epoch_loss)
-            else:
-                scheduler.step()
-
-    def configure_optimizers(self):
-        return self._optimizer
