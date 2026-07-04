@@ -74,7 +74,7 @@ class _BaseKnnTimeSeriesEstimator:
             weights=weights,
         )
 
-        # the distances in sktime.distances want numpy3D
+        # the distances in sktime.dists_kernels._numba_distances want numpy3D
         #   otherwise all Panel formats are ok
         if isinstance(distance, str):
             self.set_tags(X_inner_mtype="numpy3D")

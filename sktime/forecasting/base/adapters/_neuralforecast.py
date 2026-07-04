@@ -9,13 +9,13 @@ from typing import Literal
 
 import numpy as np
 import pandas
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import (
     BaseForecaster,
     ForecastingHorizon,
     _GlobalForecastingDeprecationMixin,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
@@ -58,6 +58,15 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         Panels, e.g., multiindex data input, will be broadcasted to single series,
         and for each single series, one copy of this forecaster will be applied.
 
+    Attributes
+    ----------
+    n_trainable_params_ : int or None
+        Number of trainable parameters summed across all underlying PyTorch models,
+        set after ``fit``. ``None`` if ``_forecaster.models`` is not iterable.
+    n_total_params_ : int or None
+        Total number of parameters summed across all underlying PyTorch models,
+        set after ``fit``. ``None`` if ``_forecaster.models`` is not iterable.
+
     Notes
     -----
     Only ``futr_exog_list`` will be considered as exogenous variables.
@@ -92,6 +101,11 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:global_forecasting": True,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._neuralforecast"],
     }
 
     def __init__(
@@ -396,7 +410,7 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
             self.target_col: y.to_numpy().flatten(),
         }
         if self.futr_exog_list and X is None:
-            raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
+            raise ValueError("Missing exogenous data, 'futr_exog_list' is non-empty.")
 
         if self.futr_exog_list:
             for column in self.futr_exog_list:
@@ -407,6 +421,20 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         maximum_forecast_horizon = fh.to_relative(self.cutoff)[-1]
         self._forecaster = self._instantiate_model(maximum_forecast_horizon)
         self._forecaster.fit(df=train_dataset, verbose=self.verbose_fit)
+
+        # Store the number of trainable and total parameters
+        if hasattr(self._forecaster.models, "__iter__"):
+            torch_models = self._forecaster.models
+            self.n_trainable_params_ = sum(
+                sum(p.numel() for p in model.parameters() if p.requires_grad)
+                for model in torch_models
+            )
+            self.n_total_params_ = sum(
+                sum(p.numel() for p in model.parameters()) for model in torch_models
+            )
+        else:
+            self.n_trainable_params_ = None
+            self.n_total_params_ = None
 
         return self
 
@@ -489,7 +517,7 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         y = self._y
 
         if self.futr_exog_list and X is None:
-            raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
+            raise ValueError("Missing exogenous data, 'futr_exog_list' is non-empty.")
 
         if self.futr_exog_list:
             X_time_index = X.index.get_level_values(-1)
