@@ -61,13 +61,12 @@ from sktime.datatypes import (
     get_cutoff,
     mtype_to_scitype,
     scitype_to_mtype,
-    update_data,
 )
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.utils.datetime import _shift
-from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
+from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn
 
@@ -119,7 +118,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "capability:categorical_in_X": True,
         # does the forecaster natively support categorical in exogenous X?
         "capability:unequal_length": True,  # can forecaster handle unequal length TS?
-        "capability:update": False,
     }
 
     # configs and default config values
@@ -133,26 +131,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #  "dask": uses `dask`, requires `dask` package in environment
         #  "ray": uses `ray`, requires `ray` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
-        "remember_data": True,  # whether to remember data in fit - self._X, self._y
-    }
-
-    _config_doc = {
-        # enables legacy behaviour of storing data in fit - self._X, self._y
-        "remember_data": """
-        remember_data : bool, default=False
-            whether self._X and self._y are stored in fit, and updated
-            in update. If True, self._X and self._y are stored and updated.
-            If False, self._X and self._y are not stored and updated.
-            This reduces serialization size when using save.
-            For refit-on-update behaviour without caching, use ``RefitForecaster``
-            from ``sktime.forecasting.stream``.
-        """,
     }
 
     def __init__(self):
-        self._y = None
-        self._X = None
-
         # forecasting horizon
         self._fh = None
         self._cutoff = None  # reference point for relative fh
@@ -179,17 +160,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         * dynamic tag setting
         * any soft dependency imports in the constructor
         """
-        if not self.get_config()["remember_data"]:
-            warn(
-                "BaseForecaster no longer stores historical _X/_y during fit/update "
-                "by default (i.e., remember_data=False). If you require the legacy "
-                "behavior where _X and _y are cached, set config with "
-                "`set_config(remember_data=True)`. For efficient stateless updating, "
-                "consider using RefitForecaster from `sktime.forecasting.stream` "
-                "instead.",
-                UserWarning,
-                stacklevel=2,
-            )
+        pass
 
     @classmethod
     def _get_clone_plugins(cls):
@@ -1507,12 +1478,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Accesses in self:
             Fitted model attributes ending in "_".
-            Pointers to seen data, self._y and self.X
             self.cutoff, self._is_fitted
             If update_params=True, model attributes ending in "_".
 
         Writes to self:
-            Update self._y and self._X with ``y`` and ``X``, by appending rows.
             Updates self.cutoff and self._cutoff to last index seen in ``y``.
             If update_params=True,
                 updates fitted model attributes ending in "_".
@@ -1577,8 +1546,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # update internal _X/_y with the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y
         self._update_y_X(y_inner, X_inner)
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
@@ -1634,11 +1602,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Time series with ground truth observations, to compute residuals to.
             Must have same type, dimension, and indices as expected return of predict.
 
-            If None, the y seen so far (self._y) are used, in particular:
-
-            * if preceded by a single fit call, then in-sample residuals are produced
-            * if fit requires ``fh``, it must have pointed to index of y in fit
-
         X : time series in sktime compatible format, optional (default=None)
             Exogeneous time series for updating and forecasting
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
@@ -1662,9 +1625,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             fh_orig = None
 
-        # if no y is passed, the so far observed y is used
-        if y is None and self.get_config()["remember_data"]:
-            y = self._y
+        # y must be passed explicitly; base does not cache training data
+        if y is None:
+            raise ValueError(
+                "y must be passed to predict_residuals; "
+                f"{self.__class__.__name__} does not store training data."
+            )
 
         # we want residuals, so fh must be the index of y
         # if data frame: take directly from y
@@ -2078,61 +2044,19 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """Shorthand for _check_X_y with one argument X, see _check_X_y."""
         return self._check_X_y(X=X)[0]
 
-    def _update_X(self, X, enforce_index_type=None):
-        if X is not None and self.get_config()["remember_data"]:
-            X = check_X(X, enforce_index_type=enforce_index_type)
-            self._X = update_data(self._X, X)
-
     def _update_y_X(self, y, X=None, enforce_index_type=None):
-        """Update internal memory of seen training data.
-
-        Accesses in self:
-        _y : only if exists, then assumed same type as y and same cols
-        _X : only if exists, then assumed same type as X and same cols
-            these assumptions should be guaranteed by calls
-
-        Writes to self:
-        _y : same type as y - new rows from y are added to current _y
-            if _y does not exist, stores y as _y
-        _X : same type as X - new rows from X are added to current _X
-            if _X does not exist, stores X as _X
-            this is only done if X is not None
-        cutoff : is set to latest index seen in y
-
-        _y and _X are guaranteed to be one of mtypes:
-            pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
-            pd_multiindex_hier
+        """Update cutoff from the latest endogenous series seen.
 
         Parameters
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Endogenous time series
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
-            Exogeneous time series
+            Exogeneous time series (ignored; subclasses may override)
         """
         if y is not None:
             y_for_cutoff = y.X_multiindex if isinstance(y, VectorizedDF) else y
             self._set_cutoff_from_y(y_for_cutoff)
-
-        if y is not None and self.get_config()["remember_data"]:
-            # unwrap y if VectorizedDF
-            if isinstance(y, VectorizedDF):
-                y = y.X_multiindex
-            # if _y does not exist yet, initialize it with y
-            if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
-                self._y = y
-            else:
-                self._y = update_data(self._y, y)
-
-        if X is not None and self.get_config()["remember_data"]:
-            # unwrap X if VectorizedDF
-            if isinstance(X, VectorizedDF):
-                X = X.X_multiindex
-            # if _X does not exist yet, initialize it with X
-            if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
-                self._X = X
-            else:
-                self._X = update_data(self._X, X)
 
     @property
     def cutoff(self):
@@ -2181,41 +2105,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
         self._cutoff = cutoff_idx
 
-    def _get_training_y(self):
-        """Return series for predict-time logic.
-
-        Returns ``self._y`` when ``remember_data=True``, otherwise
-        ``self._context_y_`` if set by the subclass in ``_fit``.
-        """
-        if self.get_config()["remember_data"]:
-            return self._y
-        return getattr(self, "_context_y_", None)
-
-    def _get_training_X(self):
-        """Return exogenous series for predict-time logic.
-
-        Returns ``self._X`` when ``remember_data=True``, otherwise
-        ``self._context_X_`` if set by the subclass in ``_fit``.
-        """
-        if self.get_config()["remember_data"]:
-            return self._X
-        return getattr(self, "_context_X_", None)
-
-    def __getstate__(self):
-        """Strip implicit data cache from serialized state when not remembering."""
-        state = self.__dict__.copy()
-        if not self.get_config()["remember_data"]:
-            state.pop("_X", None)
-            state.pop("_y", None)
-        return state
-
-    def __setstate__(self, state):
-        """Restore state after unpickling."""
-        self.__dict__.update(state)
-        if not self.get_config().get("remember_data", False):
-            setattr(self, "_y", None)
-            setattr(self, "_X", None)
-
     @property
     def fh(self):
         """Forecasting horizon that was passed."""
@@ -2243,7 +2132,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Writes fh to self._fh if does not exist.
         Checks equality of fh with self._fh if exists, raises error if not equal.
-        Assigns the frequency inferred from self._y
+        Assigns the frequency inferred from self._cutoff
         to the returned forecasting horizon object.
 
         Parameters
@@ -2554,37 +2443,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         -------
         self : reference to self
         """
-        if update_params and self.get_config()["remember_data"]:
-            # default to re-fitting if update is not implemented
-            warn(
-                f"NotImplementedWarning: {self.__class__.__name__} "
-                f"does not have a custom `update` method implemented. "
-                f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True. "
-                "To refit less often, use the wrappers in the "
-                "forecasting.stream module, e.g., UpdateEvery.",
-                obj=self,
-            )
-            # we need to overwrite the mtype last seen and converter store, since the _y
-            #    may have been converted
-            mtype_last_seen = self._y_mtype_last_seen
-            y_metadata = self._y_metadata
-            _converter_store_y = self._converter_store_y
-            # refit with updated data, not only passed data
-            self.fit(y=self._y, X=self._X, fh=self._fh)
-            # todo: should probably be self._fit, not self.fit
-            # but looping to self.fit for now to avoid interface break
-            self._y_mtype_last_seen = mtype_last_seen
-            self._y_metadata = y_metadata
-            self._converter_store_y = _converter_store_y
-
-        elif update_params:
+        if update_params:
             warn(
                 f"{self.__class__.__name__} has capability:update=False and does not "
                 f"implement a custom ``_update`` method. New data is not incorporated "
-                f"into the model. Wrap with ``RefitForecaster`` from "
-                f"``sktime.forecasting.stream`` to refit on all data seen, or set "
-                f"``remember_data=True`` to restore legacy refit-on-update behaviour.",
+                f"into the model. Wrap with ``UpdateRefitsEvery`` from "
+                f"``sktime.forecasting.stream`` (``refit_interval=0``) to refit on "
+                f"all data seen.",
                 obj=self,
             )
 
