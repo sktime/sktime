@@ -1,5 +1,8 @@
 """utility functions for benchmarking module."""
 
+__author__ = ["benHeid"]
+__all__ = ["_check_id_format"]
+
 import re
 
 

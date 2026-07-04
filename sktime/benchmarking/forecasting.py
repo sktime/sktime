@@ -1,5 +1,8 @@
 """Benchmarking for forecasting estimators."""
 
+__author__ = ["alex-hh"]
+__all__ = ["ForecastingBenchmark"]
+
 from collections.abc import Callable
 
 from sktime.benchmarking._benchmarking_dataclasses import (

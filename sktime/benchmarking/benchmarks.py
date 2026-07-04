@@ -1,5 +1,8 @@
 """Benchmarking interface for use with sktime objects."""
 
+__author__ = ["alex-hh"]
+__all__ = ["BaseBenchmark"]
+
 import logging
 import warnings
 from dataclasses import dataclass, field

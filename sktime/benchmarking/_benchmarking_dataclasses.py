@@ -1,5 +1,13 @@
 """Dataclasses for benchmarking."""
 
+__author__ = ["benHeid"]
+__all__ = [
+    "_coerce_data_for_evaluate",
+    "TaskObject",
+    "FoldResults",
+    "ResultObject",
+]
+
 import copy
 from collections.abc import Callable
 from dataclasses import dataclass, field, fields
