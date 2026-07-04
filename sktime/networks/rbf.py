@@ -1,6 +1,6 @@
 """RBF Neural Networks for Time Series Forecasting."""
 
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -152,6 +152,8 @@ class RBFNetwork(nn.Module):
     ):
         super().__init__()
         self.mode = mode
+        self.pred_len = output_size
+        self.seq_len = input_size
 
         self.rbf_layer = RBFLayer(
             in_features=input_size,
