@@ -6,9 +6,33 @@ __author__ = ["fkiraly"]
 
 import pandas as pd
 
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES, update_data
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+
+
+def _remember_y_X(self, y, X=None, enforce_index_type=None):
+    """Update cutoff and remember all data seen on the stream compositor."""
+    from sktime.datatypes import VectorizedDF
+    from sktime.utils.validation.forecasting import check_X
+
+    if y is not None:
+        y_for_cutoff = y.X_multiindex if isinstance(y, VectorizedDF) else y
+        self._set_cutoff_from_y(y_for_cutoff)
+        y_store = y.X_multiindex if isinstance(y, VectorizedDF) else y
+        if self._y is None or not self.is_fitted:
+            self._y = y_store
+        else:
+            self._y = update_data(self._y, y_store)
+
+    if X is not None:
+        X = check_X(X, enforce_index_type=enforce_index_type)
+        if isinstance(X, VectorizedDF):
+            X = X.X_multiindex
+        if self._X is None or not self.is_fitted:
+            self._X = X
+        else:
+            self._X = update_data(self._X, X)
 
 
 class UpdateRefitsEvery(_DelegatedForecaster):
@@ -97,6 +121,8 @@ class UpdateRefitsEvery(_DelegatedForecaster):
     ):
         self.forecaster = forecaster
         self.forecaster_ = forecaster.clone()
+        self._y = None
+        self._X = None
 
         self.refit_interval = refit_interval
         self.refit_window_size = refit_window_size
@@ -106,6 +132,9 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
+
+    def _update_y_X(self, y, X=None, enforce_index_type=None):
+        _remember_y_X(self, y, X, enforce_index_type)
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -317,6 +346,8 @@ class UpdateEvery(_DelegatedForecaster):
     def __init__(self, forecaster, update_interval=None):
         self.forecaster = forecaster
         self.forecaster_ = forecaster.clone()
+        self._y = None
+        self._X = None
 
         self.update_interval = update_interval
 
@@ -324,6 +355,9 @@ class UpdateEvery(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
+
+    def _update_y_X(self, y, X=None, enforce_index_type=None):
+        _remember_y_X(self, y, X, enforce_index_type)
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.

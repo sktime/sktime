@@ -4,10 +4,8 @@
 
 __all__ = [
     "DontUpdate",
-    "RefitForecaster",
     "UpdateEvery",
     "UpdateRefitsEvery",
 ]
 
-from sktime.forecasting.stream._refit import RefitForecaster
 from sktime.forecasting.stream._update import DontUpdate, UpdateEvery, UpdateRefitsEvery
