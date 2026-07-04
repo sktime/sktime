@@ -750,7 +750,7 @@ Pre-trained and foundation models - domain agnostic
     :toctree: auto_generated/
     :template: class.rst
 
-    TirexForecaster
+    TiRexForecaster
 
 .. currentmodule:: sktime.forecasting.toto
 
