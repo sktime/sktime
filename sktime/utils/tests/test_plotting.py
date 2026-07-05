@@ -387,7 +387,8 @@ def test_plot_correlations_arguments(y_airline, lags, suptitle, series_title):
     or not _check_soft_dependencies("matplotlib", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_plotting_dataframe_with_unused_levels():
+@pytest.mark.parametrize("variable_to_plot", ["x1", "x2"])
+def test_plotting_dataframe_with_unused_levels(variable_to_plot):
     """After subsetting, pd.DataFrame keeps information about unused levels."""
     import matplotlib
     import matplotlib.pyplot as plt
@@ -400,7 +401,6 @@ def test_plotting_dataframe_with_unused_levels():
     y_pred = forecaster.predict(fh=range(1, 10))
     coverage = 0.9
     y_pred_ints1 = forecaster.predict_interval(coverage=coverage)
-    variable_to_plot = "x1"
     pred_interval = y_pred_ints1[[variable_to_plot]].copy()
 
     matplotlib.use("agg")
