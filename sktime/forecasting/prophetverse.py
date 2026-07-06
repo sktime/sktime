@@ -152,7 +152,6 @@ class Prophetverse(_DelegatedForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # delegation, only for prophetverse 0.2.X
@@ -337,7 +336,6 @@ class HierarchicalProphet(_DelegatedForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # delegation, only for prophetverse 0.2.X
