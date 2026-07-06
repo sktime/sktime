@@ -1,8 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Parameter estimators for seasonality."""
 
-__author__ = ["fkiraly", "blazingbhavneek"]
-__all__ = ["SeasonalityACF", "SeasonalityPeriodogram"]
+__author__ = ["fkiraly", "blazingbhavneek", "hass-nation"]
+__all__ = ["SeasonalityACF", "SeasonalityPeriodogram", "SeasonalityCanovaHansen"]
 
 import numpy as np
 
@@ -421,6 +421,199 @@ class SeasonalityACFqstat(BaseParamFitter):
         params3 = {"candidate_sp": 12}
 
         return [params1, params2, params3]
+
+
+class SeasonalityCanovaHansen(BaseParamFitter):
+    r"""Estimate seasonal differencing order using the Canova-Hansen test.
+
+    The Canova-Hansen seasonal stability test assesses the null hypothesis of
+    deterministic, stable seasonality at a supplied seasonal period ``sp``.
+    This estimator converts the test outcome into a seasonal differencing order
+    ``D``: if the test statistic exceeds the Canova-Hansen critical value for
+    ``sp``, the fitted ``D`` is 1, otherwise 0.
+
+    This is useful when plugging fitted parameters into downstream seasonal
+    forecasters such as ARIMA variants that expose ``sp`` and ``D``.
+
+    Parameters
+    ----------
+    sp : int, optional, default=12
+        Seasonal period to test. Must be an integer greater than 1.
+
+    Attributes
+    ----------
+    sp_ : int
+        Seasonal period tested.
+    D_ : int
+        Seasonal differencing order implied by the test. Takes values 0 or 1.
+    test_statistic_ : float
+        Canova-Hansen seasonal stability test statistic.
+    critical_value_ : float
+        Critical value used for the supplied ``sp``.
+    seasonal_unit_root_ : bool
+        Whether a seasonal unit root is detected, i.e., whether ``D_ == 1``.
+
+    References
+    ----------
+    .. [1] Canova, F., & Hansen, B. E. (1995). Are seasonal patterns constant
+       over time? A test for seasonal stability. Journal of Business &
+       Economic Statistics, 13(3), 237-252.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.param_est.seasonality import SeasonalityCanovaHansen
+    >>>
+    >>> X = load_airline()  # doctest: +SKIP
+    >>> sp_est = SeasonalityCanovaHansen(sp=12)  # doctest: +SKIP
+    >>> sp_est.fit(X)  # doctest: +SKIP
+    SeasonalityCanovaHansen(...)
+    >>> sp_est.get_fitted_params()["D"]  # doctest: +SKIP
+    0
+    """
+
+    _tags = {
+        "authors": "hass-nation",
+        "X_inner_mtype": "pd.Series",
+        "scitype:X": "Series",
+        "capability:missing_values": False,
+        "capability:multivariate": False,
+    }
+
+    _CH_CRIT_VALS = (
+        0.4617146,
+        0.7479655,
+        1.0007818,
+        1.2375350,
+        1.4625240,
+        1.6920200,
+        1.9043096,
+        2.1169602,
+        2.3268562,
+        2.5406922,
+        2.7391007,
+    )
+
+    def __init__(self, sp=12):
+        self.sp = sp
+        super().__init__()
+
+    def __post_init__(self):
+        """Check that the seasonal period is valid."""
+        if not isinstance(self.sp, (int, np.integer)) or self.sp < 2:
+            raise ValueError("sp must be an integer greater than 1")
+
+    @staticmethod
+    def _seasonal_design_matrix(n_obs, sp):
+        """Construct seasonal Fourier regressors used by the CH test."""
+        t = np.arange(n_obs) + 1
+        fmat = np.full((n_obs, 2 * sp), np.nan, dtype=float)
+
+        for i in range(1, sp + 1):
+            fmat[:, (2 * i) - 1] = np.sin(2 * np.pi * i * t / sp)
+            fmat[:, 2 * (i - 1)] = np.cos(2 * np.pi * i * t / sp)
+
+        return fmat[:, : sp - 1]
+
+    @staticmethod
+    def _seasonal_selector(sp):
+        """Construct the selector matrix from Canova-Hansen's seasonal cycles."""
+        odd_columns = np.arange(0, sp - 1, 2)
+        selected = np.zeros(sp - 1, dtype=bool)
+        half_sp = sp // 2
+
+        for i in range((sp + 1) // 2):
+            if i + 1 == half_sp:
+                selected[odd_columns[i]] = True
+            if i + 1 < half_sp:
+                selected[odd_columns[i]] = True
+                selected[odd_columns[i] + 1] = True
+
+        return np.eye(sp - 1, dtype=float)[:, selected]
+
+    @classmethod
+    def _calc_critical_value(cls, sp):
+        """Return the Canova-Hansen critical value for ``sp``."""
+        if sp <= 12:
+            return cls._CH_CRIT_VALS[sp - 2]
+        if sp == 24:
+            return 5.098624
+        if sp == 52:
+            return 10.341416
+        if sp == 365:
+            return 65.44445
+        return 0.269 * (sp**0.928)
+
+    @classmethod
+    def _compute_test_statistic(cls, x, sp):
+        """Compute the Canova-Hansen seasonal stability test statistic."""
+        n_obs = x.shape[0]
+        seasonal_terms = cls._seasonal_design_matrix(n_obs, sp)
+        design = np.column_stack([np.ones(n_obs, dtype=float), seasonal_terms])
+        coeffs, *_ = np.linalg.lstsq(design, x, rcond=None)
+        residuals = x - design @ coeffs
+
+        scaled_residuals = (seasonal_terms.T * residuals).T.astype(np.float64)
+        cumulative_residuals = scaled_residuals.cumsum(axis=0)
+
+        truncation_lag = int(np.round(sp * ((n_obs / 100.0) ** 0.25)))
+        weights = 1 - np.arange(1, truncation_lag + 1) / (truncation_lag + 1)
+
+        omega_weighted = np.zeros((sp - 1, sp - 1), dtype=float)
+        for lag, weight in enumerate(weights, start=1):
+            omega_weighted += (
+                scaled_residuals[lag:].T @ scaled_residuals[:-lag]
+            ) * weight
+
+        omega = (
+            scaled_residuals.T @ scaled_residuals + omega_weighted + omega_weighted.T
+        ) / n_obs
+        selector = cls._seasonal_selector(sp)
+        reduced_omega = selector.T @ omega @ selector
+
+        singular_values = np.linalg.svd(reduced_omega, compute_uv=False)
+        if singular_values.min() < np.finfo(singular_values.dtype).eps:
+            return 0.0
+
+        inverse_omega = np.linalg.solve(
+            reduced_omega, np.eye(reduced_omega.shape[0], dtype=float)
+        )
+        stat = inverse_omega @ selector.T @ cumulative_residuals.T
+        stat = stat @ cumulative_residuals @ selector
+        return stat.diagonal().sum() / (n_obs**2)
+
+    def _fit(self, X):
+        """Fit estimator and estimate parameters."""
+        x = np.asarray(X, dtype=float)
+        if np.isnan(x).any():
+            raise ValueError(
+                "SeasonalityCanovaHansen does not support missing values in X"
+            )
+
+        sp = int(self.sp)
+        self.sp_ = sp
+        self.nobs_ = x.shape[0]
+        self.critical_value_ = self._calc_critical_value(sp)
+
+        if self.nobs_ < 2 * sp + 5:
+            self.test_statistic_ = 0.0
+            self.D_ = 0
+            self.seasonal_unit_root_ = False
+            return self
+
+        self.test_statistic_ = self._compute_test_statistic(x=x, sp=sp)
+        self.D_ = int(self.test_statistic_ > self.critical_value_)
+        self.seasonal_unit_root_ = bool(self.D_)
+
+        return self
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        params1 = {}
+        params2 = {"sp": 4}
+
+        return [params1, params2]
 
 
 class SeasonalityPeriodogram(BaseParamFitter):
