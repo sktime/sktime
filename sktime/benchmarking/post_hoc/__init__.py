@@ -19,14 +19,14 @@ __all__ = [
     "CriticalDifferenceDiagram",
 ]
 
-from sktime.benchmarking.evaluators._base import BasePostHocEvaluator
-from sktime.benchmarking.evaluators._critical_difference import (
+from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
+from sktime.benchmarking.post_hoc._critical_difference import (
     CriticalDifferenceDiagram,
 )
-from sktime.benchmarking.evaluators._friedman import FriedmanEvaluator
-from sktime.benchmarking.evaluators._nemenyi import NemenyiEvaluator
-from sktime.benchmarking.evaluators._rank import RankEvaluator
-from sktime.benchmarking.evaluators._ranksum import RanksumEvaluator
-from sktime.benchmarking.evaluators._sign import SignTestEvaluator
-from sktime.benchmarking.evaluators._ttest import TTestEvaluator
-from sktime.benchmarking.evaluators._wilcoxon import WilcoxonEvaluator
+from sktime.benchmarking.post_hoc._friedman import FriedmanEvaluator
+from sktime.benchmarking.post_hoc._nemenyi import NemenyiEvaluator
+from sktime.benchmarking.post_hoc._rank import RankEvaluator
+from sktime.benchmarking.post_hoc._ranksum import RanksumEvaluator
+from sktime.benchmarking.post_hoc._sign import SignTestEvaluator
+from sktime.benchmarking.post_hoc._ttest import TTestEvaluator
+from sktime.benchmarking.post_hoc._wilcoxon import WilcoxonEvaluator

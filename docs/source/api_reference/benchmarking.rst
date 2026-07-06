@@ -48,6 +48,30 @@ Storage Backends
     NullStorageHandler
 
 
+Post-hoc evaluators
+-------------------
+
+Post-hoc statistical evaluators consume the results of ``BaseBenchmark.run`` and
+compute ranking, omnibus / pairwise significance tests, and critical-difference
+diagrams.
+
+.. currentmodule:: sktime.benchmarking.post_hoc
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BasePostHocEvaluator
+    RankEvaluator
+    FriedmanEvaluator
+    NemenyiEvaluator
+    WilcoxonEvaluator
+    SignTestEvaluator
+    RanksumEvaluator
+    TTestEvaluator
+    CriticalDifferenceDiagram
+
+
 Benchmarking Framework v1
 -------------------------
 
@@ -144,5 +168,9 @@ Post-hoc tests and utilities
 ----------------------------
 
 .. currentmodule:: sktime.benchmarking.critical_difference
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
 
     plot_critical_difference

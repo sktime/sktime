@@ -48,7 +48,7 @@ class BasePostHocEvaluator(BaseObject):
         "object_type": "benchmark-evaluator",
         "authors": ["viktorkaz", "mloning", "Aaron Bostrom"],
         "python_dependencies": None,
-        "capability:pairwise": False,
+        "capability:pairwise_test": False,
         "capability:plot": False,
     }
 
@@ -60,15 +60,24 @@ class BasePostHocEvaluator(BaseObject):
     # ------------------------------------------------------------------ #
     # public API
     # ------------------------------------------------------------------ #
-    def evaluate(self, results):
+    def evaluate(self, results=None, scores=None):
         """Run the post-hoc analysis on benchmark results.
+
+        Exactly one of ``results`` or ``scores`` must be passed. Passing a
+        pre-computed ``scores`` matrix skips the coercion step, which is useful
+        when running several evaluators over the same benchmark output: coerce
+        once via ``coerce_to_score_matrix`` and pass the matrix to each.
 
         Parameters
         ----------
-        results : pandas.DataFrame or str or pathlib.Path
+        results : pandas.DataFrame or str or pathlib.Path, optional
             Either the flat results ``DataFrame`` returned by
             ``BaseBenchmark.run()``, or a path to a result artifact written by a
             storage handler (``.csv`` / ``.json`` / ``.parquet``).
+        scores : pandas.DataFrame, optional
+            A pre-computed score matrix as returned by
+            ``coerce_to_score_matrix``: index = ``validation_id``,
+            columns = ``model_id``.
 
         Returns
         -------
@@ -76,8 +85,16 @@ class BasePostHocEvaluator(BaseObject):
             The analysis result. Shape and columns depend on the concrete
             evaluator (see the subclass docstring).
         """
-        scores = self._coerce_to_score_matrix(results)
+        scores = self._resolve_scores(results, scores)
         return self._evaluate(scores)
+
+    def _resolve_scores(self, results, scores):
+        """Return a score matrix from either ``results`` or a pre-computed one."""
+        if (results is None) == (scores is None):
+            raise ValueError("Exactly one of `results` or `scores` must be passed.")
+        if scores is not None:
+            return scores
+        return self.coerce_to_score_matrix(results)
 
     # ------------------------------------------------------------------ #
     # strategy hook (abstract)
@@ -100,8 +117,27 @@ class BasePostHocEvaluator(BaseObject):
     # ------------------------------------------------------------------ #
     # shared adapter: v2 results -> (n_datasets, n_estimators) score matrix
     # ------------------------------------------------------------------ #
-    def _coerce_to_score_matrix(self, results):
-        """Coerce v2 benchmark output to a ``(n_datasets, n_estimators)`` matrix."""
+    def coerce_to_score_matrix(self, results):
+        """Coerce v2 benchmark output to a ``(n_datasets, n_estimators)`` matrix.
+
+        Parameters
+        ----------
+        results : pandas.DataFrame or str or pathlib.Path
+            The flat results table from ``BaseBenchmark.run()`` or a path to a
+            result artifact (see ``evaluate``).
+
+        Returns
+        -------
+        pandas.DataFrame
+            Score matrix, index = ``validation_id``, columns = ``model_id``,
+            values = the per-task mean of the selected metric.
+
+        Raises
+        ------
+        ValueError
+            If any ``(model_id, validation_id)`` cell is missing, i.e. an
+            estimator has no score on some task (e.g. a failed experiment).
+        """
         df = self._load_results(results)
         metric = self._resolve_metric(df)
         column = f"{metric}{_MEAN_SUFFIX}"
@@ -111,7 +147,25 @@ class BasePostHocEvaluator(BaseObject):
                 f"{list(df.columns)}."
             )
         scores = df.pivot(index="validation_id", columns="model_id", values=column)
+        self._check_no_missing(scores)
         return scores
+
+    @staticmethod
+    def _check_no_missing(scores):
+        """Raise if any (model, task) score is missing (NaN) in the matrix."""
+        if not scores.isna().to_numpy().any():
+            return
+        missing = [
+            (str(model), str(task))
+            for task in scores.index
+            for model in scores.columns
+            if pd.isna(scores.at[task, model])
+        ]
+        raise ValueError(
+            "Score matrix contains missing values; every estimator must have a "
+            "score on every task before a post-hoc analysis can run. Missing "
+            f"(model_id, validation_id) pairs: {missing}."
+        )
 
     @staticmethod
     def _load_results(results):
@@ -159,6 +213,22 @@ class BasePostHocEvaluator(BaseObject):
     def _as_estimator_dict(scores):
         """Map a score matrix to the legacy ``{model_id: [scores]}`` dict form."""
         return {col: scores[col].to_numpy() for col in scores.columns}
+
+    def _mean_ranks(self, scores):
+        """Average rank of each estimator across datasets.
+
+        Ranks estimators within each dataset (best = rank 1 when
+        ``lower_is_better``) and averages the ranks across datasets.
+
+        Returns
+        -------
+        pandas.DataFrame
+            Columns ``["model_id", "rank"]``, sorted by ascending rank.
+        """
+        ranks = scores.rank(axis=1, ascending=self.lower_is_better)
+        mean_ranks = ranks.mean(axis=0).reset_index()
+        mean_ranks.columns = ["model_id", "rank"]
+        return mean_ranks.sort_values("rank").reset_index(drop=True)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -2490,6 +2490,62 @@ class capability__pairwise_parameter_estimation(_BaseTag):
     }
 
 
+# Benchmark post-hoc evaluator tags
+# ---------------------------------
+
+
+class capability__pairwise_test(_BaseTag):
+    """Capability: post-hoc evaluator performs a pairwise statistical test.
+
+    - String name: ``"capability:pairwise_test"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to post-hoc benchmark evaluators.
+
+    If ``True``, the evaluator performs a pairwise statistical comparison
+    between estimators (e.g. Wilcoxon, sign, rank-sum, or t-test), returning one
+    row per estimator pair.
+
+    If ``False``, the evaluator produces an omnibus or ranking result rather than
+    pairwise comparisons.
+    """
+
+    _tags = {
+        "tag_name": "capability:pairwise_test",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "does the evaluator perform a pairwise statistical test?",
+        "user_facing": True,
+    }
+
+
+class capability__plot(_BaseTag):
+    """Capability: post-hoc evaluator can render a diagram.
+
+    - String name: ``"capability:plot"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to post-hoc benchmark evaluators.
+
+    If ``True``, the evaluator exposes a ``plot`` method that renders a diagram
+    (e.g. a critical-difference diagram) and returns a matplotlib ``(fig, ax)``.
+    """
+
+    _tags = {
+        "tag_name": "capability:plot",
+        "parent_type": "object",
+        "tag_type": "bool",
+        "short_descr": "can the evaluator render a diagram?",
+        "user_facing": True,
+    }
+
+
 # Metrics tags
 # ------------
 

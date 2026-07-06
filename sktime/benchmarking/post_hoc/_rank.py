@@ -2,7 +2,7 @@
 
 __all__ = ["RankEvaluator"]
 
-from sktime.benchmarking.evaluators._base import BasePostHocEvaluator
+from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
 
 
 class RankEvaluator(BasePostHocEvaluator):
@@ -25,8 +25,4 @@ class RankEvaluator(BasePostHocEvaluator):
     """
 
     def _evaluate(self, scores):
-        # rank estimators within each dataset (row), then average over datasets
-        ranks = scores.rank(axis=1, ascending=self.lower_is_better)
-        mean_ranks = ranks.mean(axis=0).reset_index()
-        mean_ranks.columns = ["model_id", "rank"]
-        return mean_ranks.sort_values("rank").reset_index(drop=True)
+        return self._mean_ranks(scores)

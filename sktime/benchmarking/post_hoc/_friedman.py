@@ -4,7 +4,7 @@ __all__ = ["FriedmanEvaluator"]
 
 import pandas as pd
 
-from sktime.benchmarking.evaluators._base import BasePostHocEvaluator
+from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
 
 
 class FriedmanEvaluator(BasePostHocEvaluator):

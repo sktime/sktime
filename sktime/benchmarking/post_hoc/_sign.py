@@ -7,7 +7,7 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from sktime.benchmarking.evaluators._base import BasePostHocEvaluator
+from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
 
 
 class SignTestEvaluator(BasePostHocEvaluator):
@@ -23,7 +23,7 @@ class SignTestEvaluator(BasePostHocEvaluator):
         Columns ``["estimator_1", "estimator_2", "p_val"]``.
     """
 
-    _tags = {"capability:pairwise": True}
+    _tags = {"capability:pairwise_test": True}
 
     def _evaluate(self, scores):
         from scipy import stats

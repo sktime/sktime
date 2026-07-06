@@ -4,7 +4,7 @@ __all__ = ["CriticalDifferenceDiagram"]
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.benchmarking.evaluators._base import BasePostHocEvaluator
+from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
 
 
 class CriticalDifferenceDiagram(BasePostHocEvaluator):
@@ -62,20 +62,22 @@ class CriticalDifferenceDiagram(BasePostHocEvaluator):
         Returns
         -------
         pandas.DataFrame
-            Columns ``["model_id", "avg_rank"]``, sorted by ascending rank.
+            Columns ``["model_id", "rank"]``, sorted by ascending rank.
         """
-        ranks = scores.rank(axis=1, ascending=self.lower_is_better)
-        avg_ranks = ranks.mean(axis=0).reset_index()
-        avg_ranks.columns = ["model_id", "avg_rank"]
-        return avg_ranks.sort_values("avg_rank").reset_index(drop=True)
+        return self._mean_ranks(scores)
 
-    def plot(self, results):
+    def plot(self, results=None, scores=None):
         """Render the critical-difference diagram.
+
+        Exactly one of ``results`` or ``scores`` must be passed (see
+        ``evaluate``).
 
         Parameters
         ----------
-        results : pandas.DataFrame or str or pathlib.Path
+        results : pandas.DataFrame or str or pathlib.Path, optional
             Benchmark results, as accepted by ``evaluate``.
+        scores : pandas.DataFrame, optional
+            A pre-computed score matrix from ``coerce_to_score_matrix``.
 
         Returns
         -------
@@ -85,7 +87,7 @@ class CriticalDifferenceDiagram(BasePostHocEvaluator):
 
         from sktime.benchmarking.critical_difference import plot_critical_difference
 
-        scores = self._coerce_to_score_matrix(results)
+        scores = self._resolve_scores(results, scores)
         return plot_critical_difference(
             scores.to_numpy(),
             list(scores.columns),

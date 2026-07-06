@@ -7,7 +7,7 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from sktime.benchmarking.evaluators._base import BasePostHocEvaluator
+from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
 
 
 class TTestEvaluator(BasePostHocEvaluator):
@@ -39,7 +39,7 @@ class TTestEvaluator(BasePostHocEvaluator):
         boolean ``"significant"`` column when ``correction="bonferroni"``.
     """
 
-    _tags = {"capability:pairwise": True}
+    _tags = {"capability:pairwise_test": True}
 
     def __init__(
         self, metric=None, lower_is_better=True, correction="none", alpha=0.05

@@ -5,7 +5,7 @@ __all__ = ["NemenyiEvaluator"]
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.benchmarking.evaluators._base import BasePostHocEvaluator
+from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
 
 
 class NemenyiEvaluator(BasePostHocEvaluator):
@@ -24,7 +24,7 @@ class NemenyiEvaluator(BasePostHocEvaluator):
 
     _tags = {
         "python_dependencies": "scikit_posthocs",
-        "capability:pairwise": True,
+        "capability:pairwise_test": True,
     }
 
     def _evaluate(self, scores):
