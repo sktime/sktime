@@ -137,7 +137,12 @@ class DynaMixForecaster(BaseForecaster):
         # --------------
         "authors": ["yash-sangwan"],
         "maintainers": ["yash-sangwan"],
-        "python_dependencies": ["torch", "huggingface_hub", "safetensors"],
+        "python_dependencies": [
+            "torch",
+            "huggingface_hub",
+            "safetensors",
+            "statsmodels",
+        ],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
