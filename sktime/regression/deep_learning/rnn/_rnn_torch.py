@@ -204,7 +204,6 @@ class SimpleRNNRegressorTorch(BaseDeepRegressorTorch):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # Note: we do not validate activation_hidden here.
