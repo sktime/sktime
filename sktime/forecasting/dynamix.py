@@ -4,10 +4,10 @@
 # licensed under the GNU General Public License v3.0 (GPL-3.0).
 # Pretrained weights are distributed at
 # https://huggingface.co/DurstewitzLab/dynamix (CC-BY-4.0).
-# DynaMix is GPL-licensed copyleft software and is NOT distributed with sktime;
-# this module is only a thin interface. The user must install the GPL-licensed
-# DynaMix package separately. No DynaMix source code is vendored into sktime,
-# so the permissive BSD-3 license of sktime is preserved.
+# The DynaMix inference code is vendored (partial fork) into
+# ``sktime.libs.dynamix`` under its original GPL-3.0 license; see
+# ``sktime/libs/dynamix/LICENSE``. DynaMix is copyleft software and its license
+# differs from sktime's permissive BSD-3 license.
 """
 Module implements DynaMixForecaster, a zero-shot time series forecasting model.
 
@@ -56,7 +56,7 @@ class _cached_DynaMix:
         self._obj = None
 
     def load(self):
-        from dynamix.utilities.utilities import load_hf_model
+        from sktime.libs.dynamix.utilities.utilities import load_hf_model
 
         if self._obj is None:
             obj = load_hf_model(self.model)
@@ -81,20 +81,17 @@ class DynaMixForecaster(BaseForecaster):
     of training, it uses the given series as context, and ``predict()`` produces
     forecasts for the requested future time points.
 
-    DynaMix is licensed under GPL-3.0, which is copyleft and differs from the
-    permissive sktime BSD-3 license. The GPL-licensed ``dynamix`` package is NOT
-    distributed with sktime and must be installed separately by the user::
-
-        pip install git+https://github.com/DurstewitzLab/DynaMix-python
-
-    ``torch`` is required at runtime and a clear error is raised if unavailable.
+    The DynaMix inference code is vendored into ``sktime.libs.dynamix`` as a
+    partial fork under its original GPL-3.0 license, which is copyleft and
+    differs from sktime's permissive BSD-3 license (see
+    ``sktime/libs/dynamix/LICENSE``). ``torch`` is required at runtime.
 
     Parameters
     ----------
     model : str, default="dynamix-3d-alrnn-v1.0"
         Identifier of the pretrained DynaMix model to load via ``load_hf_model``
-        from the ``dynamix`` package. Available models are published at
-        https://huggingface.co/DurstewitzLab/dynamix.
+        from the vendored ``sktime.libs.dynamix`` package. Available models are
+        published at https://huggingface.co/DurstewitzLab/dynamix.
     device : {"cpu", "cuda", ...}, default="cpu"
         Compute device used by the underlying DynaMix model.
     preprocessing_method : str, default="delay_embedding"
@@ -140,7 +137,7 @@ class DynaMixForecaster(BaseForecaster):
         # --------------
         "authors": ["yash-sangwan"],
         "maintainers": ["yash-sangwan"],
-        "python_dependencies": ["dynamix", "torch"],
+        "python_dependencies": ["torch", "huggingface_hub", "safetensors"],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.DataFrame",
@@ -156,6 +153,7 @@ class DynaMixForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.dynamix"],
     }
 
     def __init__(
@@ -244,15 +242,6 @@ class DynaMixForecaster(BaseForecaster):
         self : DynaMixForecaster
             Fitted forecaster (with ``model_`` set).
         """
-        try:
-            import dynamix  # noqa: F401
-        except ImportError:
-            raise ImportError(
-                "DynaMixForecaster requires the GPL-licensed DynaMix package, "
-                "which is not available on PyPI. Install it from source with:\n"
-                "    pip install git+https://github.com/DurstewitzLab/DynaMix-python"
-            )
-
         key = _dynamix_cache_key(self.model, self.device)
         self.model_ = _cached_DynaMix(
             key=key, model=self.model, device=self.device
@@ -278,8 +267,10 @@ class DynaMixForecaster(BaseForecaster):
         y_predict : pd.DataFrame
             Point forecasts, same columns as the series seen in ``_fit``.
         """
-        # alias the upstream forecaster to avoid the name collision with this class
-        from dynamix.model.forecaster import DynaMixForecaster as _DynaMixModel
+        # alias the vendored forecaster to avoid the name collision with this class
+        from sktime.libs.dynamix.model.forecaster import (
+            DynaMixForecaster as _DynaMixModel,
+        )
 
         y = self._y
 
