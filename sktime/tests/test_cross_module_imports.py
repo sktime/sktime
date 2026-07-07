@@ -182,7 +182,6 @@ KNOWN_EXCEPTIONS = frozenset(
             "transformations",
         ),
         ("forecasting/boxcox_biasadj.py", "forecasting", "transformations"),
-        ("forecasting/cinn.py", "forecasting", "transformations"),
         ("forecasting/compose/_bagging.py", "forecasting", "transformations"),
         ("forecasting/compose/_grouped.py", "forecasting", "transformations"),
         (
