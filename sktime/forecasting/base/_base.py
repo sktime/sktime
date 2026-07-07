@@ -66,6 +66,7 @@ from sktime.datatypes import (
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._pretrained_mixin import _PretrainedStateMixin
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
@@ -82,7 +83,7 @@ def _coerce_to_list(obj):
         return obj
 
 
-class BaseForecaster(_PredictProbaMixin, BaseEstimator):
+class BaseForecaster(_PretrainedStateMixin, _PredictProbaMixin, BaseEstimator):
     """Base forecaster template class.
 
     The base forecaster specifies the methods and method signatures that all forecasters
@@ -177,6 +178,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         * any soft dependency imports in the constructor
         """
         pass
+
+    def _copy_pretrained_attr(self, attr_name, attr_value, memo=None):
+        """Copy a pretrained attribute for ``clone``.
+
+        Subclasses may override this hook for framework-specific copies, for
+        example state-dict based copies of Torch or HuggingFace model objects.
+        """
+        return deepcopy(attr_value, memo)
 
     @classmethod
     def _get_clone_plugins(cls):
@@ -1656,7 +1665,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # we want residuals, so fh must be the index of y
         # if data frame: take directly from y
         # to avoid issues with _set_fh, we convert to relative if self.fh is
-        if isinstance(y, (pd.DataFrame, pd.Series)):
+        if isinstance(y, pd.DataFrame | pd.Series):
             fh = ForecastingHorizon(y.index, is_relative=False, freq=self._cutoff)
             if self._fh is not None and self.fh.is_relative:
                 fh = fh.to_relative(self._cutoff)
@@ -2738,7 +2747,7 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         raise ValueError(f"`y_preds` must be a list, but found: {type(y_preds)}")
     if len(y_preds) == 0:
         return pd.DataFrame(columns=cutoffs)
-    if not isinstance(y_preds[0], (pd.DataFrame, pd.Series)):
+    if not isinstance(y_preds[0], pd.DataFrame | pd.Series):
         raise ValueError("y_preds must be a list of pd.Series or pd.DataFrame")
     ylen = len(y_preds[0])
     ytype = type(y_preds[0])
