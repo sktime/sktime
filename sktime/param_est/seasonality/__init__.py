@@ -6,6 +6,6 @@ __all__ = [
     "SeasonalityPeriodogram",
 ]
 
-from sktime.param_est.seasonality._acf_qstat import SeasonalityACFqstat
 from sktime.param_est.seasonality._acf import SeasonalityACF
+from sktime.param_est.seasonality._acf_qstat import SeasonalityACFqstat
 from sktime.param_est.seasonality._periodogram import SeasonalityPeriodogram
