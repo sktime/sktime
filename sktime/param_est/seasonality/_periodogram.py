@@ -77,7 +77,7 @@ class SeasonalityPeriodogram(BaseParamFitter):
         super().__init__()
 
     def periodogram_peaks(self, data, min_period=4, max_period=None, thresh=0.90):
-        """Return a list of intervals containg high-scoring periods.
+        """Return a list of intervals containing high-scoring periods.
 
         Use a robust periodogram to estimate ranges containing
         high-scoring periodicities in possibly short, noisy data. Returns
