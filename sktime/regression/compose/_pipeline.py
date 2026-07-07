@@ -6,8 +6,6 @@ import numpy as np
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import convert_to
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose import TransformerPipeline
 from sktime.utils.sklearn import is_sklearn_regressor
 
 __author__ = ["fkiraly"]
@@ -180,6 +178,8 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         -------
         RegressorPipeline object, concatenation of `other` (first) with `self` (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
@@ -415,9 +415,23 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         self.regressor = regressor
         self.regressor_ = clone(regressor)
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        transformers = self.transformers
+
+        from sktime.transformations.compose import TransformerPipeline
+
+        self.transformers_ = TransformerPipeline(transformers)
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
@@ -475,6 +489,8 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         -------
         RegressorPipeline object, concatenation of `other` (first) with `self` (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
