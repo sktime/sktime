@@ -245,7 +245,6 @@ KNOWN_EXCEPTIONS = frozenset(
         ("param_est/plugin/_transformer.py", "param_est", "transformations"),
         ("param_est/tests/test_plugin.py", "param_est", "forecasting"),
         ("param_est/tests/test_plugin.py", "param_est", "transformations"),
-        ("regression/compose/_ensemble.py", "regression", "transformations"),
         ("regression/compose/_pipeline.py", "regression", "transformations"),
         (
             "regression/tests/test_categorical_in_composite.py",
