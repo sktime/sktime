@@ -11,7 +11,7 @@ from sktime.param_est.base import BaseParamFitter
 class SeasonalityACFqstat(BaseParamFitter):
     """Find candidate seasonality parameter using autocorrelation function LB q-stat.
 
-    Uses ``statsmodels.tsa.stattools.act`` for computing the autocorrelation function,
+    Uses ``statsmodels.tsa.stattools.acf`` for computing the autocorrelation function,
     and uses its testing functionality to determine candidate seasonality parameters.
     ("seasonality parameter" are integer lags, and abbreviated by sp, below)
 
