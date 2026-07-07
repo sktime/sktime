@@ -6,8 +6,6 @@ import numpy as np
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes import convert_to
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose import TransformerPipeline
 from sktime.utils.sklearn import is_sklearn_classifier
 
 __author__ = ["fkiraly"]
@@ -193,6 +191,8 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         ClassifierPipeline object, concatenation of ``other`` (first) with ``self``
         (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
@@ -458,9 +458,12 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         self.classifier = classifier
         self.classifier_ = clone(classifier)
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
 
         super().__init__()
+
+        from sktime.transformations.compose import TransformerPipeline
+
+        self.transformers_ = TransformerPipeline(transformers)
 
         # all sktime and sklearn transformers always support multivariate
         multivariate = True
@@ -519,6 +522,8 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         ClassifierPipeline object, concatenation of ``other`` (first) with ``self``
         (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
