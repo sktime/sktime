@@ -37,7 +37,7 @@ class SeasonalityACFqstat(BaseParamFitter):
         multiple testing correction applied to p-values of candidate sp in acf test
         multiple testing correction is applied to Ljung-Box tests on candidate_sp
         values can be "none" or strings accepted by ``statsmodels`` ``multipletests``
-        "none" = no multiple testim correction is applied, raw p-values are used
+        "none" = no multiple testing correction is applied, raw p-values are used
         "fdr_by" = Benjamini-Yekutieli FDR control procedure
         for other possible strings, see ``statsmodels.stats.multitest.multipletests``
     adjusted : bool, optional, default=False
