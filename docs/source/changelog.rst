@@ -16,8 +16,9 @@ available on GitHub.
 
 For our long-term plan, see our :ref:`roadmap`.
 
-Unreleased
-----------
+
+Version 1.0.2 - 2026-07-07
+--------------------------
 
 Enhancements
 ~~~~~~~~~~~~
