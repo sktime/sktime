@@ -66,6 +66,7 @@ from sktime.datatypes import (
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._state_at import _StateAtMixin
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
@@ -82,7 +83,7 @@ def _coerce_to_list(obj):
         return obj
 
 
-class BaseForecaster(_PredictProbaMixin, BaseEstimator):
+class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
     """Base forecaster template class.
 
     The base forecaster specifies the methods and method signatures that all forecasters
