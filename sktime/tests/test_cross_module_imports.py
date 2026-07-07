@@ -248,11 +248,6 @@ KNOWN_EXCEPTIONS = frozenset(
         ("regression/compose/_ensemble.py", "regression", "transformations"),
         ("regression/compose/_pipeline.py", "regression", "transformations"),
         (
-            "regression/kernel_based/_rocket_regressor.py",
-            "regression",
-            "transformations",
-        ),
-        (
             "regression/tests/test_categorical_in_composite.py",
             "regression",
             "transformations",
