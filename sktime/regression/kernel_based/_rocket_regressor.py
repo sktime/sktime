@@ -187,12 +187,14 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
 
         elif rocket_transform == "minirocket":
             from sktime.transformations.rocket import MiniRocket, MiniRocketMultivariate
+
             multivar_rocket = MiniRocketMultivariate(**common_params)
             univar_rocket = MiniRocket(**common_params)
 
         elif self.rocket_transform == "multirocket":
             from sktime.transformations.rocket import (
-                MultiRocket, MultiRocketMultivariate
+                MultiRocket,
+                MultiRocketMultivariate,
             )
             common_params["n_features_per_kernel"] = self.n_features_per_kernel
             multivar_rocket = MultiRocketMultivariate(**common_params)
