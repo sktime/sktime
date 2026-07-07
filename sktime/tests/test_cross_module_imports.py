@@ -258,11 +258,6 @@ KNOWN_EXCEPTIONS = frozenset(
             "transformations",
         ),
         (
-            "transformations/detrend/tests/test_deseasonalise.py",
-            "transformations",
-            "forecasting",
-        ),
-        (
             "transformations/detrend/tests/test_detrend.py",
             "transformations",
             "forecasting",
