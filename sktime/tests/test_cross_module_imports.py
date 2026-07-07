@@ -284,7 +284,6 @@ KNOWN_EXCEPTIONS = frozenset(
             "transformations",
             "param_est",
         ),
-        ("transformations/tests/test_vmd.py", "transformations", "forecasting"),
     }
 )
 
