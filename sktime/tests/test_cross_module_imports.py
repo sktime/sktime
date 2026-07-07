@@ -44,12 +44,6 @@ _CHECKED_SOURCES = TYPE_MODULES | {_NETWORKS}
 # These are pre-existing and should be fixed in follow-up PRs, not in this one.
 KNOWN_EXCEPTIONS = frozenset(
     {
-        ("classification/compose/_pipeline.py", "classification", "transformations"),
-        (
-            "classification/compose/tests/test_pipeline.py",
-            "classification",
-            "transformations",
-        ),
         (
             "classification/dictionary_based/_boss.py",
             "classification",
