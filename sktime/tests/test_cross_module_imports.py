@@ -172,7 +172,6 @@ KNOWN_EXCEPTIONS = frozenset(
             "clustering",
             "transformations",
         ),
-        ("detection/clasp.py", "detection", "transformations"),
         ("detection/compose/_as_transform.py", "detection", "transformations"),
         ("detection/eagglo.py", "detection", "transformations"),
         ("detection/stray.py", "detection", "transformations"),
