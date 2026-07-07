@@ -262,7 +262,6 @@ KNOWN_EXCEPTIONS = frozenset(
             "transformations",
             "forecasting",
         ),
-        ("transformations/impute.py", "transformations", "forecasting"),
         (
             "transformations/summarize/tests/test_FittedParamExtractor.py",
             "transformations",
