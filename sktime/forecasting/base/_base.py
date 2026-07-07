@@ -666,6 +666,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
 
+    def _get_X(self, X):
+        return X
+
+    def _get_y(self, y):
+        return y
+
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
 

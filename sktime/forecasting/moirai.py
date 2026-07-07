@@ -236,8 +236,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
-        self._context_y_ = y
-        self._context_X_ = X
+        self._cur_y = y
+        self._cur_X = X
 
         return self
 
@@ -258,9 +258,10 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 "The MORAI adapter is not supporting insample predictions."
             )
 
-        _y = self._context_y_.copy()
+        _y = self._get_y(self._cur_y)
         _X = None
-        training_X = self._context_X_
+        training_X = self._get_X(self._cur_X)
+
         if training_X is not None:
             _X = training_X.copy()
 

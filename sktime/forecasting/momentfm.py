@@ -232,7 +232,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self._y_cols = y.columns
         self._y_shape = y.values.shape
 
-        self._context_y_ = y
+        self._cur_y = y
 
         self._pretrained_model_name_or_path = self._config.get(
             "pretrained_model_name_or_path", self.pretrained_model_name_or_path
@@ -384,7 +384,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         fh should not be passed here and
         must be the same length as the one used to fit the model.
         """
-        y = self._context_y_
+        y = self._get_y(self._cur_y)
 
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy

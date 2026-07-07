@@ -136,6 +136,12 @@ class UpdateRefitsEvery(_DelegatedForecaster):
     def _update_y_X(self, y, X=None, enforce_index_type=None):
         _remember_y_X(self, y, X, enforce_index_type)
 
+    def _get_X(self, X):
+        return self._X
+
+    def _get_y(self, y):
+        return self._y
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
