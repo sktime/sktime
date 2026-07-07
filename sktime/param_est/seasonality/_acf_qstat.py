@@ -175,11 +175,13 @@ class SeasonalityACFqstat(BaseParamFitter):
                 pvals=pvalues_cand, alpha=p_threshold, method=p_adjust
             )
             self.pvalues_adjusted_ = pvals_adj
+            pvalues_for_sort = pvals_adj
         else:
             self.pvalues_adjusted_ = pvalues_cand
-            reject_cand = pvalues_cand > p_threshold
+            pvalues_for_sort = pvalues_cand
+            reject_cand = pvalues_cand <= p_threshold
 
-        sorting = np.argsort(pvalues_cand)
+        sorting = np.argsort(pvalues_for_sort)
         reject_ordered = reject_cand[sorting]
         sp_ordered = np.array(candidate_sp)[sorting]
         sp_significant = sp_ordered[reject_ordered]
