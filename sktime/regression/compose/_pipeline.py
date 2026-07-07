@@ -121,7 +121,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         """
         transformers = self.transformers
         regressor = self.regressor
-        
+
         self.regressor_ = regressor.clone()
 
         from sktime.transformations.compose import TransformerPipeline
