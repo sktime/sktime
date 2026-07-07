@@ -196,6 +196,7 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
                 MultiRocket,
                 MultiRocketMultivariate,
             )
+
             common_params["n_features_per_kernel"] = self.n_features_per_kernel
             multivar_rocket = MultiRocketMultivariate(**common_params)
             univar_rocket = MultiRocket(**common_params)

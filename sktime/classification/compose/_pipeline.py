@@ -6,8 +6,6 @@ import numpy as np
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes import convert_to
-from sktime.transformations.compose._pipeline import TransformerPipeline
-from sktime.transformations.compose._pipeline import TransformerPipeline
 from sktime.utils.sklearn import is_sklearn_classifier
 
 __author__ = ["fkiraly"]
