@@ -1149,6 +1149,12 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if hasattr(est_clone, "is_fitted"):
             assert not est_clone.is_fitted
 
+    def test_deepcopy(self, estimator_instance):
+        """Check that an unfitted estimator instance can be deepcopied."""
+        est_copy = deepcopy(estimator_instance)
+        assert isinstance(est_copy, type(estimator_instance))
+        assert est_copy is not estimator_instance
+
     def test_repr(self, estimator_instance):
         """Check that __repr__ call to instance does not raise exceptions."""
         estimator = estimator_instance
@@ -1690,6 +1696,36 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 decimal=6,
                 err_msg=msg,
             )
+
+    def test_deepcopy_fitted(self, estimator_instance, scenario):
+        """Check that a fitted estimator instance can be deepcopied."""
+        estimator = estimator_instance
+        set_random_state(estimator)
+        scenario.run(estimator, method_sequence=["fit"])
+
+        est_copy = deepcopy(estimator)
+        assert isinstance(est_copy, type(estimator))
+        assert est_copy is not estimator
+
+    def test_deepcopy_fitted_predict(
+        self, estimator_instance, scenario, method_nsc_arraylike
+    ):
+        """Check that a fitted estimator can still predict after deepcopy."""
+        estimator = estimator_instance
+        set_random_state(estimator)
+        scenario.run(estimator, method_sequence=["fit"])
+
+        est_copy = deepcopy(estimator)
+
+        # skip test if vectorization would be necessary and method predict_proba
+        # this is since vectorization is not implemented for predict_proba
+        if method_nsc_arraylike in ["predict_proba", "predict_var"]:
+            with ValidProbaErrors() as handler:
+                scenario.run(est_copy, method_sequence=[method_nsc_arraylike])
+            if handler.skipped:
+                return None
+        else:
+            scenario.run(est_copy, method_sequence=[method_nsc_arraylike])
 
     def test_multiprocessing_idempotent(
         self, estimator_instance, scenario, method_nsc_arraylike
