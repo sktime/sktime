@@ -80,7 +80,7 @@ pytestmark = pytest.mark.skipif(
 def test_metric_inference():
     """A single metric column is inferred when ``metric`` is not given."""
     df = _make_results_df()
-    scores = FriedmanEvaluator().coerce_to_score_matrix(df)
+    scores = FriedmanEvaluator()._coerce_to_score_matrix(df)
     assert list(scores.columns) == ["model_A", "model_B", "model_C"]
     assert scores.shape == (5, 3)
 
@@ -90,14 +90,14 @@ def test_metric_inference_ambiguous_raises():
     df = _make_results_df()
     df["OtherMetric_mean"] = 1.0
     with pytest.raises(ValueError, match="Multiple metrics"):
-        FriedmanEvaluator().coerce_to_score_matrix(df)
+        FriedmanEvaluator()._coerce_to_score_matrix(df)
 
 
 def test_explicit_metric_selection():
     """An explicit ``metric`` selects the right column among several."""
     df = _make_results_df()
     df["OtherMetric_mean"] = 1.0
-    scores = FriedmanEvaluator(metric=METRIC).coerce_to_score_matrix(df)
+    scores = FriedmanEvaluator(metric=METRIC)._coerce_to_score_matrix(df)
     assert scores.shape == (5, 3)
 
 
@@ -128,25 +128,6 @@ def test_missing_scores_raise():
     df = df[~((df.model_id == "model_C") & (df.validation_id == "task_0"))]
     with pytest.raises(ValueError, match="missing values"):
         FriedmanEvaluator().evaluate(df)
-
-
-def test_evaluate_with_precomputed_scores():
-    """evaluate(scores=) skips coercion and matches evaluate(results=)."""
-    df = _make_results_df()
-    scores = FriedmanEvaluator().coerce_to_score_matrix(df)
-    from_matrix = FriedmanEvaluator().evaluate(scores=scores)
-    from_results = FriedmanEvaluator().evaluate(df)
-    pd.testing.assert_frame_equal(from_matrix, from_results)
-
-
-def test_evaluate_requires_exactly_one_input():
-    """Passing both or neither of results/scores raises."""
-    df = _make_results_df()
-    scores = FriedmanEvaluator().coerce_to_score_matrix(df)
-    with pytest.raises(ValueError, match="Exactly one"):
-        FriedmanEvaluator().evaluate()
-    with pytest.raises(ValueError, match="Exactly one"):
-        FriedmanEvaluator().evaluate(results=df, scores=scores)
 
 
 # --------------------------------------------------------------------------- #

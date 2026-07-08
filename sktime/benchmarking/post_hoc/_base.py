@@ -48,8 +48,7 @@ class BasePostHocEvaluator(BaseObject):
         "object_type": "benchmark-evaluator",
         "authors": ["viktorkaz", "mloning", "Aaron Bostrom"],
         "python_dependencies": None,
-        "capability:pairwise_test": False,
-        "capability:plot": False,
+        "property:test_type": None,
     }
 
     def __init__(self, metric=None, lower_is_better=True):
@@ -60,24 +59,15 @@ class BasePostHocEvaluator(BaseObject):
     # ------------------------------------------------------------------ #
     # public API
     # ------------------------------------------------------------------ #
-    def evaluate(self, results=None, scores=None):
+    def evaluate(self, results):
         """Run the post-hoc analysis on benchmark results.
-
-        Exactly one of ``results`` or ``scores`` must be passed. Passing a
-        pre-computed ``scores`` matrix skips the coercion step, which is useful
-        when running several evaluators over the same benchmark output: coerce
-        once via ``coerce_to_score_matrix`` and pass the matrix to each.
 
         Parameters
         ----------
-        results : pandas.DataFrame or str or pathlib.Path, optional
+        results : pandas.DataFrame or str or pathlib.Path
             Either the flat results ``DataFrame`` returned by
             ``BaseBenchmark.run()``, or a path to a result artifact written by a
             storage handler (``.csv`` / ``.json`` / ``.parquet``).
-        scores : pandas.DataFrame, optional
-            A pre-computed score matrix as returned by
-            ``coerce_to_score_matrix``: index = ``validation_id``,
-            columns = ``model_id``.
 
         Returns
         -------
@@ -85,16 +75,8 @@ class BasePostHocEvaluator(BaseObject):
             The analysis result. Shape and columns depend on the concrete
             evaluator (see the subclass docstring).
         """
-        scores = self._resolve_scores(results, scores)
+        scores = self._coerce_to_score_matrix(results)
         return self._evaluate(scores)
-
-    def _resolve_scores(self, results, scores):
-        """Return a score matrix from either ``results`` or a pre-computed one."""
-        if (results is None) == (scores is None):
-            raise ValueError("Exactly one of `results` or `scores` must be passed.")
-        if scores is not None:
-            return scores
-        return self.coerce_to_score_matrix(results)
 
     # ------------------------------------------------------------------ #
     # strategy hook (abstract)
@@ -117,7 +99,7 @@ class BasePostHocEvaluator(BaseObject):
     # ------------------------------------------------------------------ #
     # shared adapter: v2 results -> (n_datasets, n_estimators) score matrix
     # ------------------------------------------------------------------ #
-    def coerce_to_score_matrix(self, results):
+    def _coerce_to_score_matrix(self, results):
         """Coerce v2 benchmark output to a ``(n_datasets, n_estimators)`` matrix.
 
         Parameters

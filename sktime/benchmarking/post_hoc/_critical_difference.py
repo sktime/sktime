@@ -38,7 +38,7 @@ class CriticalDifferenceDiagram(BasePostHocEvaluator):
 
     _tags = {
         "python_dependencies": "matplotlib",
-        "capability:plot": True,
+        "property:test_type": "plot",
     }
 
     def __init__(
@@ -66,18 +66,13 @@ class CriticalDifferenceDiagram(BasePostHocEvaluator):
         """
         return self._mean_ranks(scores)
 
-    def plot(self, results=None, scores=None):
+    def plot(self, results):
         """Render the critical-difference diagram.
-
-        Exactly one of ``results`` or ``scores`` must be passed (see
-        ``evaluate``).
 
         Parameters
         ----------
-        results : pandas.DataFrame or str or pathlib.Path, optional
+        results : pandas.DataFrame or str or pathlib.Path
             Benchmark results, as accepted by ``evaluate``.
-        scores : pandas.DataFrame, optional
-            A pre-computed score matrix from ``coerce_to_score_matrix``.
 
         Returns
         -------
@@ -87,7 +82,7 @@ class CriticalDifferenceDiagram(BasePostHocEvaluator):
 
         from sktime.benchmarking.critical_difference import plot_critical_difference
 
-        scores = self._resolve_scores(results, scores)
+        scores = self._coerce_to_score_matrix(results)
         return plot_critical_difference(
             scores.to_numpy(),
             list(scores.columns),

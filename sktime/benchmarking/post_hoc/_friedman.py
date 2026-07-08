@@ -22,6 +22,8 @@ class FriedmanEvaluator(BasePostHocEvaluator):
         Single row with columns ``["statistic", "p_value"]``.
     """
 
+    _tags = {"property:test_type": "omnibus"}
+
     def _evaluate(self, scores):
         from scipy.stats import friedmanchisquare
 

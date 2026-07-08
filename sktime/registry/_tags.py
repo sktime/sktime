@@ -2494,54 +2494,32 @@ class capability__pairwise_parameter_estimation(_BaseTag):
 # ---------------------------------
 
 
-class capability__pairwise_test(_BaseTag):
-    """Capability: post-hoc evaluator performs a pairwise statistical test.
+class property__test_type(_BaseTag):
+    """Property: type of post-hoc test a benchmark evaluator performs.
 
-    - String name: ``"capability:pairwise_test"``
-    - Public capability tag
-    - Values: boolean, ``True`` / ``False``
-    - Example: ``True``
-    - Default: ``False``
+    - String name: ``"property:test_type"``
+    - Public property tag
+    - Values: str, one of ``"omnibus"``, ``"pairwise"``, ``"plot"``, ``"ranking"``
+    - Example: ``"pairwise"``
+    - Default: ``None``
 
-    This tag applies to post-hoc benchmark evaluators.
+    This tag applies to post-hoc benchmark evaluators. It describes what the
+    evaluator *is* (its kind of analysis), which fixes the shape of its output:
 
-    If ``True``, the evaluator performs a pairwise statistical comparison
-    between estimators (e.g. Wilcoxon, sign, rank-sum, or t-test), returning one
-    row per estimator pair.
-
-    If ``False``, the evaluator produces an omnibus or ranking result rather than
-    pairwise comparisons.
+    - ``"omnibus"``: ``evaluate()`` returns a single overall statistic and
+      p-value.
+    - ``"pairwise"``: ``evaluate()`` returns a comparative table/matrix between
+      ``estimator_1`` and ``estimator_2``.
+    - ``"plot"``: the primary modality is plotting (e.g. returning a matplotlib
+      ``(fig, ax)``).
+    - ``"ranking"``: ``evaluate()`` returns a per-model ranking table.
     """
 
     _tags = {
-        "tag_name": "capability:pairwise_test",
+        "tag_name": "property:test_type",
         "parent_type": "object",
-        "tag_type": "bool",
-        "short_descr": "does the evaluator perform a pairwise statistical test?",
-        "user_facing": True,
-    }
-
-
-class capability__plot(_BaseTag):
-    """Capability: post-hoc evaluator can render a diagram.
-
-    - String name: ``"capability:plot"``
-    - Public capability tag
-    - Values: boolean, ``True`` / ``False``
-    - Example: ``True``
-    - Default: ``False``
-
-    This tag applies to post-hoc benchmark evaluators.
-
-    If ``True``, the evaluator exposes a ``plot`` method that renders a diagram
-    (e.g. a critical-difference diagram) and returns a matplotlib ``(fig, ax)``.
-    """
-
-    _tags = {
-        "tag_name": "capability:plot",
-        "parent_type": "object",
-        "tag_type": "bool",
-        "short_descr": "can the evaluator render a diagram?",
+        "tag_type": ("str", ["omnibus", "pairwise", "plot", "ranking"]),
+        "short_descr": "type of post-hoc test the evaluator performs",
         "user_facing": True,
     }
 
