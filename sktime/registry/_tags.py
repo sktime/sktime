@@ -1105,6 +1105,36 @@ class capability__pretrain(_BaseTag):
     }
 
 
+class pretrain__fitted_params(_BaseTag):
+    """Property: named attributes that carry pretrained state.
+
+    - String name: ``"pretrain:fitted_params"``
+    - Public property tag
+    - Values: list of str, names of estimator attributes
+    - Example: ``["model_", "network_"]``
+    - Default: ``[]`` (empty list)
+
+    The ``pretrain:fitted_params`` tag lists the names of instance attributes
+    that store state learned by ``pretrain``. State-aware operations such as
+    the private ``_reset_at("pretrained")`` preserve exactly these attributes,
+    while task-fitted attributes are removed.
+
+    If the tag is empty, state-aware operations fall back to the runtime list
+    ``_pretrained_attrs``, which ``pretrain`` populates automatically with
+    attributes created during the ``pretrain`` call.
+
+    The tag is only inspected for estimators with ``capability:pretrain=True``.
+    """
+
+    _tags = {
+        "tag_name": "pretrain:fitted_params",
+        "parent_type": "forecaster",
+        "tag_type": ("list", "str"),
+        "short_descr": "attributes carrying pretrained state",
+        "user_facing": True,
+    }
+
+
 class capability__non_contiguous_X(_BaseTag):
     """Capability: the forecaster can handle non-contiguous exogenous data.
 
