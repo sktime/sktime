@@ -145,6 +145,7 @@ class PAA(BaseTransformer):
         params2 = {"frame_size": 2}
 
         return [params1, params2]
+
     def _check_params(self):
         for attribute in ["frames", "frame_size"]:
             if not isinstance(getattr(self, attribute), int):
