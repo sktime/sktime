@@ -34,6 +34,47 @@ def _remember_y_X(self, y, X=None, enforce_index_type=None):
         else:
             self._X = update_data(self._X, X)
 
+    _propagate_pooled_data_to_inner(self)
+
+
+def _propagate_pooled_data_to_inner(compositor):
+    """Attach compositor pooled ``_y`` / ``_X`` onto the inner clone.
+
+    Called after every data ingestion and again after inner fit/refit, because
+    ``inner.fit()`` resets instance state and wipes dynamically attached attrs.
+    """
+    inner = getattr(compositor, "forecaster_", None)
+    if inner is None:
+        return
+    inner._y = compositor._y
+    inner._X = compositor._X
+    inner._get_y = compositor._get_y
+    inner._get_X = compositor._get_X
+    _bind_vectorized_slices(inner)
+
+
+def _bind_vectorized_slices(inner):
+    """Attach per-column ``_y`` slices onto vectorized inner forecasters.
+
+    Only needed after fit/refit when ``_yvec`` is first (re)built; the top-level
+    inner ``_y`` / ``_X`` is kept fresh by ``_remember_y_X`` on every ingestion.
+    """
+    if not getattr(inner, "_is_vectorized", False) or not hasattr(
+        inner, "forecasters_"
+    ):
+        return
+
+    yvec = getattr(inner, "_yvec", None)
+    if yvec is None:
+        return
+
+    for row_name, col_name, y_slice in yvec.items():
+        row_key = row_name if row_name is not None else "forecasters"
+        col_key = col_name if col_name is not None else "forecasters"
+        fcstr = inner.forecasters_.loc[row_key, col_key]
+        fcstr._y = y_slice
+        fcstr._get_y = lambda y=y_slice: y_slice
+
 
 class UpdateRefitsEvery(_DelegatedForecaster):
     """Refits periodically when update is called.
@@ -136,10 +177,10 @@ class UpdateRefitsEvery(_DelegatedForecaster):
     def _update_y_X(self, y, X=None, enforce_index_type=None):
         _remember_y_X(self, y, X, enforce_index_type)
 
-    def _get_X(self, X):
+    def _get_X(self, X=None):
         return self._X
 
-    def _get_y(self, y):
+    def _get_y(self, y=None):
         return self._y
 
     def _fit(self, y, X, fh):
@@ -177,6 +218,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self.last_fit_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
         estimator.fit(y=y, fh=fh, X=X)
+        _propagate_pooled_data_to_inner(self)
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -253,6 +295,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
                 X_win = _X
             fh = self._fh
             estimator.fit(y=y_win, X=X_win, fh=fh)
+            _propagate_pooled_data_to_inner(self)
 
             # remember that we just fitted the estimator
             self.last_fit_cutoff_ = self.cutoff[0]
@@ -361,9 +404,6 @@ class UpdateEvery(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
-
-    def _update_y_X(self, y, X=None, enforce_index_type=None):
-        _remember_y_X(self, y, X, enforce_index_type)
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -648,3 +688,17 @@ def _geq(a, b):
         return a.n >= b.n
     else:
         return a >= b
+
+
+def is_stream_update_estimator(estimator):
+    """Return whether ``estimator`` is a stream update estimator.
+
+    Parameters
+    ----------
+    estimator : estimator object
+
+    Returns
+    -------
+    bool : whether ``estimator`` is a stream update estimator
+    """
+    return isinstance(estimator, (UpdateRefitsEvery, UpdateEvery, DontUpdate))

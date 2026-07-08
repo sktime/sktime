@@ -131,6 +131,22 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #  "dask": uses `dask`, requires `dask` package in environment
         #  "ray": uses `ray`, requires `ray` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
+        # legacy: delegate to UpdateRefitsEvery(refit_interval=0)
+        "remember_data": True,
+    }
+
+    _config_doc = {
+        "remember_data": """
+        remember_data : bool, default=True
+            If True, ``fit``/``update``/``predict`` delegate to an internal
+            ``UpdateRefitsEvery`` wrapper with ``refit_interval=0``. The wrapper
+            stores all data in ``_y``/``_X`` and refits on update. Set to False
+            for a stateless forecaster;
+
+            internal wrapper will be removed in a next major release.
+            wrap with ``UpdateRefitsEvery(forecaster, refit_interval=0)`` explicitly
+            instead.
+        """,
     }
 
     def __init__(self):
@@ -141,6 +157,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self._converter_store_y = dict()  # storage dictionary for in/output conversion
 
         self._state = "new"
+        self._remember_data_wr_ = None
 
         super().__init__()
 
@@ -161,6 +178,36 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         * any soft dependency imports in the constructor
         """
         pass
+
+    @property
+    def _remember_data_wrapper(self):
+        """``UpdateRefitsEvery(refit_interval=0)`` wrapper, created once if needed."""
+        from sktime.forecasting.stream._update import is_stream_update_estimator
+
+        if is_stream_update_estimator(self) or not self.get_config().get(
+            "remember_data", False
+        ):
+            return None
+
+        if self._remember_data_wr_ is None:
+            from sktime.forecasting.stream import UpdateRefitsEvery
+
+            wr = UpdateRefitsEvery(self, refit_interval=0)
+            # disable remember_data for the inner cloned forecaster
+            # to avoid infinite recursion of remember_data_wrapper
+            wr.forecaster_.set_config(remember_data=False)
+            self._remember_data_wr_ = wr
+        return self._remember_data_wr_
+
+    def _sync_fitted_state_from_remember_wrapper(self, wrapper):
+        """Copy fitted interface state from remember-data wrapper to ``self``."""
+        self._fh = wrapper._fh
+        self._cutoff = wrapper._cutoff
+        self._state = wrapper._state
+        self._y_metadata = wrapper._y_metadata
+        self._y_mtype_last_seen = wrapper._y_mtype_last_seen
+        self._converter_store_y = wrapper._converter_store_y
+        self._is_vectorized = wrapper._is_vectorized
 
     @classmethod
     def _get_clone_plugins(cls):
@@ -465,6 +512,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            wrapper.fit(y=y, X=X, fh=fh)
+            self._sync_fitted_state_from_remember_wrapper(wrapper)
+            return self
+
         # if fit is called, estimator is reset, including fitted state
         if not self._state == "pretrained":
             self.reset()
@@ -538,6 +591,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         # handle inputs
         self.check_is_fitted()
+
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            y_pred = wrapper.predict(fh=fh, X=X)
+            # sync fh in case it was passed at predict time only
+            self._fh = wrapper._fh
+            return y_pred
 
         # input check and conversion for X
         X_inner = self._check_X(X=X)
@@ -635,8 +695,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # if X_pred is passed, run fit/predict with different X
         if X_pred is not None:
             return self.fit(y=y, X=X, fh=fh).predict(X=X_pred)
-        # otherwise, we use the same X for fit and predict
-        # below code carries out conversion and checks for X only once
+
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            y_pred = wrapper.fit_predict(y=y, X=X, fh=fh)
+            self._sync_fitted_state_from_remember_wrapper(wrapper)
+            return y_pred
 
         # if fit is called, fitted state is re-set
         self._is_fitted = False
@@ -666,10 +730,16 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         #  input conversions are skipped since we are using X_inner
         return self.predict(fh=fh, X=X_inner)
 
-    def _get_X(self, X):
+    def _get_X(self, X=None):
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            return wrapper._get_X(X)
         return X
 
-    def _get_y(self, y):
+    def _get_y(self, y=None):
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            return wrapper._get_y(y)
         return y
 
     def predict_quantiles(self, fh=None, X=None, alpha=None):
@@ -738,6 +808,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
+
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            quantiles = wrapper.predict_quantiles(fh=fh, X=X, alpha=alpha)
+            self._fh = wrapper._fh
+            return quantiles
 
         # input checks and conversions
 
@@ -837,6 +913,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             )
         self.check_is_fitted()
 
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            pred_int = wrapper.predict_interval(fh=fh, X=X, coverage=coverage)
+            self._fh = wrapper._fh
+            return pred_int
+
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
@@ -926,6 +1008,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             )
         self.check_is_fitted()
 
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            pred_var = wrapper.predict_var(fh=fh, X=X, cov=cov)
+            self._fh = wrapper._fh
+            return pred_var
+
         # input checks and conversions
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
@@ -1005,6 +1093,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 "an issue on sktime."
             )
         self.check_is_fitted()
+
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            pred_proba = wrapper.predict_proba(fh=fh, X=X, marginal=marginal)
+            self._fh = wrapper._fh
+            return pred_proba
 
         if hasattr(self, "_is_vectorized") and self._is_vectorized:
             raise NotImplementedError(
@@ -1313,6 +1407,12 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         self.check_is_fitted()
 
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            wrapper.update(y=y, X=X, update_params=update_params)
+            self._sync_fitted_state_from_remember_wrapper(wrapper)
+            return self
+
         if y is None or (hasattr(y, "__len__") and len(y) == 0):
             warn(
                 f"empty y passed to update of {self}, no update was carried out",
@@ -1608,6 +1708,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Time series with ground truth observations, to compute residuals to.
             Must have same type, dimension, and indices as expected return of predict.
 
+            If None, uses training data remembered by the internal
+            ``UpdateRefitsEvery`` wrapper when ``remember_data=True``.
+
         X : time series in sktime compatible format, optional (default=None)
             Exogeneous time series for updating and forecasting
             Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
@@ -1624,6 +1727,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         """
         self.check_is_fitted()
 
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            return wrapper.predict_residuals(y=y, X=X)
+
         # clone self._fh to avoid any side-effects to self due to calling _check_fh
         # and predict()
         if self._fh is not None:
@@ -1631,11 +1738,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         else:
             fh_orig = None
 
-        # y must be passed explicitly; base does not cache training data
+        # if no y is passed, subclasses may supply it via ``_get_y``
+        # (e.g. stream compositors)
+        if y is None:
+            y = self._get_y(y)
         if y is None:
             raise ValueError(
-                "y must be passed to predict_residuals; "
-                f"{self.__class__.__name__} does not store training data."
+                "y must be passed to predict_residuals when no training data is "
+                "available via ``_get_y``. Set remember_data=True or wrap with "
+                "``UpdateRefitsEvery`` (``refit_interval=0``)."
             )
 
         # we want residuals, so fh must be the index of y
@@ -2450,14 +2561,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self : reference to self
         """
         if update_params:
-            warn(
-                f"{self.__class__.__name__} has capability:update=False and does not "
-                f"implement a custom ``_update`` method. New data is not incorporated "
-                f"into the model. Wrap with ``UpdateRefitsEvery`` from "
-                f"``sktime.forecasting.stream`` (``refit_interval=0``) to refit on "
-                f"all data seen.",
-                obj=self,
+            msg = (
+                f"{self.__class__.__name__} has no update method and "  # noqa: S608
+                "does not implement a custom ``_update`` method. New data is "
+                "not incorporated into the model. Wrap with ``UpdateRefitsEvery`` "
+                "from ``sktime.forecasting.stream`` (``refit_interval=0``), "
+                "or set ``remember_data=True``."
             )
+            warn(msg, obj=self)
 
         # if update_params=False, and there are no components, do nothing
         # if update_params=False, and there are components, we update cutoffs

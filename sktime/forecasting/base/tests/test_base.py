@@ -484,17 +484,24 @@ def test_range_fh_in_predict():
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_base_does_not_cache_training_data():
-    """Test that BaseForecaster does not store _X/_y on fit."""
+def test_remember_data():
+    """Test remember_data config delegates to UpdateRefitsEvery wrapper."""
     from sktime.datasets import load_airline
 
     y = load_airline()
     X = load_airline()
     f = YfromX.create_test_instance()
-    f.fit(y, X, fh=[1, 2, 3])
 
+    f.set_config(remember_data=False)
+    f.fit(y, X, fh=[1, 2, 3])
     assert not hasattr(f, "_y") or f._y is None
-    assert not hasattr(f, "_X") or f._X is None
+    assert getattr(f, "_remember_data_wr_", None) is None
+
+    f.set_config(remember_data=True)
+    f.fit(y, X, fh=[1, 2, 3])
+    assert hasattr(f, "_remember_data_wr_")
+    assert f._remember_data_wr_._y is not None
+    assert not hasattr(f, "_y") or getattr(f, "_y", None) is None
 
 
 @pytest.mark.skipif(
