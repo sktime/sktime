@@ -145,4 +145,7 @@ class OptionalPassthrough(_DelegatedTransformer):
         """
         from sktime.transformations.boxcox import BoxCoxTransformer
 
-        return {"transformer": BoxCoxTransformer(), "passthrough": False}
+        param1 = {"transformer": BoxCoxTransformer(), "passthrough": False}
+        param2 = {"transformer": BoxCoxTransformer(), "passthrough": True}
+
+        return [param1, param2]

@@ -549,11 +549,13 @@ class DontUpdate(_DelegatedForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import TrendForecaster
 
-        forecaster = TrendForecaster.create_test_instance()
+        param1 = {"forecaster": TrendForecaster.create_test_instance()}
+        param2 = {"forecaster": NaiveForecaster()}
 
-        return {"forecaster": forecaster}
+        return [param1, param2]
 
 
 def _is_time_offset(obj):
