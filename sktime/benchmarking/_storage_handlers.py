@@ -1,4 +1,13 @@
-"""Storage handlers for benchmarking results."""
+"""Final-format storage handlers for benchmark results.
+
+Each `BaseStorageHandler` subclass implements the strategy for a
+specific output file format (JSON, CSV, Parquet). The appropriate handler is
+selected by file extension via `get_storage_backend`.
+
+Crash-safe incremental checkpoints during a run are not handled here,
+they live in `sktime.benchmarking._incremental_store` and are coordinated
+by `sktime.benchmarking._results_persistence`.
+"""
 
 import abc
 import ast
@@ -14,15 +23,50 @@ from sktime.benchmarking._benchmarking_dataclasses import (
 )
 
 
-class BaseStorageHandler(abc.ABC):
-    """Handles storage of benchmark results.
-
-    The storage handler is responsible for storing and loading benchmark results.
+# Atomic writes to ensure old result file isn't deleted before
+# new file is saved
+def _atomic_write_text(path: Path, contents: str) -> None:
+    """Write text to a file atomically via a temporary file.
 
     Parameters
     ----------
-    path : str
-        The path to the file to save to or load
+    path : Path
+        Destination file path. Must refer to a file, not a directory.
+    contents : str
+        Text to write to the file.
+    """
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    with open(tmp_path, "w", encoding="utf-8") as file:
+        file.write(contents)
+    tmp_path.replace(path)
+
+
+def _atomic_write_path(path: Path, write_fn) -> None:
+    """Write to *path* atomically via a temporary file.
+
+    Parameters
+    ----------
+    path : Path
+        Destination file path. Must refer to a file, not a directory.
+    write_fn : callable
+        Callable accepting the temporary path and writing the file contents.
+    """
+    tmp_path = path.with_suffix(path.suffix + ".tmp")
+    write_fn(tmp_path)
+    tmp_path.replace(path)
+
+
+class BaseStorageHandler(abc.ABC):
+    """Handles storage of benchmark results to and from a single file.
+
+    Each subclass implements read/write for one output format (JSON, CSV,
+    or Parquet). The file extension of ``path`` determines which handler
+    is selected via `get_storage_backend`.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the results file. Must refer to a file, not a directory.
     """
 
     def __init__(self, path):
@@ -31,21 +75,23 @@ class BaseStorageHandler(abc.ABC):
 
     @abc.abstractmethod
     def save(self, results: ResultObject):
-        """Save the results to a file.
+        """Save benchmark results to the file at ``self.path``.
+
+        Overwrites the existing file if present. Writes are atomic.
 
         Parameters
         ----------
-        results : ResultObject
-            The results to save.
+        results : list of ResultObject
+            Benchmark results to persist.
         """
 
     def load(self) -> list[ResultObject]:
-        """Load the results from a file.
+        """Load benchmark results from the file at ``self.path``.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results. Returns empty list if file doesn't exist.
+        list of ResultObject
+            Loaded results. Returns an empty list if the file does not exist.
         """
         if self.path is not None and not Path(self.path).exists():
             return []
@@ -53,32 +99,33 @@ class BaseStorageHandler(abc.ABC):
 
     @abc.abstractmethod
     def _load(self) -> list[ResultObject]:
-        """Load the results from an existing file.
+        """Load benchmark results from an existing file at ``self.path``.
 
-        This method assumes the file exists and should only contain the file loading
-        logic.
+        Assumes the file exists; called only by `load` after that
+        check. Subclasses implement format-specific parsing here.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results.
+        list of ResultObject
+            Loaded results.
         """
 
     @staticmethod
     @abc.abstractmethod
     def is_applicable(path):
-        """
-        Check if the storage handler is applicable for the given path.
+        """Return whether this handler supports the given results file path.
 
         Parameters
         ----------
-        path : str
-            The path to the file to save to or load
+        path : pathlib.Path or None
+            Path to the results file, or ``None`` for
+            `NullStorageHandler`. Must refer to a file, not a
+            directory, when not ``None``.
 
         Returns
         -------
         bool
-            True if the storage handler is applicable for the given path.
+            ``True`` if this handler should be used for ``path``.
         """
 
 
@@ -128,64 +175,72 @@ class JSONStorageHandler(BaseStorageHandler):
 
     Parameters
     ----------
-    path : str, or Path coercible
-        The path to the file to save to or load
+    path : str or pathlib.Path
+        Path to the JSON results file. Must refer to a file with a
+        ``.json`` extension, not a directory.
     """
 
+    @staticmethod
+    def serialize_result(result: ResultObject) -> dict:
+        """Serialize a ResultObject to the JSON storage format."""
+        return asdict(result, pd_orient="list")
+
+    @staticmethod
+    def deserialize_result(row: dict) -> ResultObject:
+        """Deserialize a ResultObject from the JSON storage format."""
+        folds = {}
+        for fold_id, fold in row["folds"].items():
+            scores = {}
+            for score_name, score_val in fold["scores"].items():
+                if isinstance(score_val, dict):
+                    score_val = pd.DataFrame.from_records(score_val)
+                scores[score_name] = score_val
+            if "ground_truth" in fold and fold["ground_truth"]:
+                ground_truth = pd.DataFrame(fold["ground_truth"])
+            else:
+                ground_truth = None
+            if "predictions" in fold and fold["predictions"]:
+                predictions = pd.DataFrame(fold["predictions"])
+            else:
+                predictions = None
+            if "train_data" in fold and fold["train_data"]:
+                train_data = pd.DataFrame(fold["train_data"])
+            else:
+                train_data = None
+            folds[int(fold_id)] = FoldResults(
+                scores, ground_truth, predictions, train_data
+            )
+
+        return ResultObject(
+            model_id=row["model_id"],
+            task_id=row["validation_id"],
+            folds=folds,
+        )
+
     def save(self, results: list[ResultObject]):
-        """Save the results to a JSON file.
+        """Save benchmark results to the JSON file at ``self.path``.
 
         Parameters
         ----------
-        results : ResultObject
-            The results to save.
+        results : list of ResultObject
+            Benchmark results to persist as a JSON array.
         """
-        with open(self.path, "w") as f:
-            json.dump(list(map(lambda x: asdict(x, pd_orient="list"), results)), f)
+        path = Path(self.path)
+        contents = json.dumps([self.serialize_result(x) for x in results])
+        _atomic_write_text(path, contents)
 
     def _load(self) -> list[ResultObject]:
-        """Load the results from a JSON file.
+        """Load benchmark results from the JSON file at ``self.path``.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results.
+        list of ResultObject
+            Loaded results parsed from a JSON array of records.
         """
-        results = []
         with open(self.path) as f:
-            results_json = json.load(f)
-        for row in results_json:
-            folds = {}
-            for fold_id, fold in row["folds"].items():
-                scores = {}
-                for score_name, score_val in fold["scores"].items():
-                    if isinstance(score_val, dict):
-                        score_val = pd.DataFrame.from_records(score_val)
-                    scores[score_name] = score_val
-                if "ground_truth" in fold and fold["ground_truth"]:
-                    ground_truth = pd.DataFrame(fold["ground_truth"])
-                else:
-                    ground_truth = None
-                if "predictions" in fold and fold["predictions"]:
-                    predictions = pd.DataFrame(fold["predictions"])
-                else:
-                    predictions = None
-                if "train_data" in fold and fold["train_data"]:
-                    train_data = pd.DataFrame(fold["train_data"])
-                else:
-                    train_data = None
-                folds[int(fold_id)] = FoldResults(
-                    scores, ground_truth, predictions, train_data
-                )
+            rows = json.load(f)
 
-            results.append(
-                ResultObject(
-                    model_id=row["model_id"],
-                    task_id=row["validation_id"],
-                    folds=folds,
-                )
-            )
-        return results
+        return [self.deserialize_result(row) for row in rows]
 
     @staticmethod
     def is_applicable(path):
@@ -222,18 +277,25 @@ class ParquetStorageHandler(BaseStorageHandler):
 
     Parameters
     ----------
-    path : str, or Path coercible
-        The path to the file to save to or load
+    path : str or pathlib.Path
+        Path to the Parquet results file. Must refer to a file with a
+        ``.parquet`` extension, not a directory.
     """
 
     def save(self, results: list[ResultObject]):
-        """Save the results to a Parquet file.
+        """Save benchmark results to the Parquet file at ``self.path``.
 
         Parameters
         ----------
-        results : ResultObject
-            The results to save.
+        results : list of ResultObject
+            Benchmark results to persist as one row per model-validation pair.
         """
+        if not results:
+            pd.DataFrame(columns=["validation_id", "model_id"]).to_parquet(
+                self.path, index=False
+            )
+            return
+
         results_df = pd.json_normalize(
             list(map(lambda x: asdict(x, pd_orient="tight"), results))
         )
@@ -241,15 +303,18 @@ class ParquetStorageHandler(BaseStorageHandler):
         results_df = results_df.sort_values(by=["validation_id", "model_id"])
 
         results_df = results_df.reset_index(drop=True)
-        results_df.to_parquet(self.path, index=False)
+        _atomic_write_path(
+            Path(self.path),
+            lambda tmp_path: results_df.to_parquet(tmp_path, index=False),
+        )
 
     def _load(self) -> list[ResultObject]:
-        """Load the results from a Parquet file.
+        """Load benchmark results from the Parquet file at ``self.path``.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results.
+        list of ResultObject
+            Loaded results reconstructed from tabular rows.
         """
         results_df = pd.read_parquet(self.path)
         results = []
@@ -300,18 +365,25 @@ class CSVStorageHandler(BaseStorageHandler):
 
     Parameters
     ----------
-    path : str, or Path coercible
-        The path to the file to save to or load
+    path : str or pathlib.Path
+        Path to the CSV results file. Must refer to a file with a
+        ``.csv`` extension, not a directory.
     """
 
     def save(self, results: list[ResultObject]):
-        """Save the results to a CSV file.
+        """Save benchmark results to the CSV file at ``self.path``.
 
         Parameters
         ----------
-        results : ResultObject
-            The results to save.
+        results : list of ResultObject
+            Benchmark results to persist as one row per model-validation pair.
         """
+        if not results:
+            pd.DataFrame(columns=["validation_id", "model_id"]).to_csv(
+                self.path, index=False
+            )
+            return
+
         results_df = pd.json_normalize(
             list(map(lambda x: asdict(x, pd_orient="tight"), results))
         )
@@ -319,15 +391,17 @@ class CSVStorageHandler(BaseStorageHandler):
         results_df = results_df.sort_values(by=["validation_id", "model_id"])
 
         results_df = results_df.reset_index(drop=True)
-        results_df.to_csv(self.path, index=False)
+        _atomic_write_path(
+            Path(self.path), lambda tmp_path: results_df.to_csv(tmp_path, index=False)
+        )
 
     def _load(self) -> list[ResultObject]:
-        """Load the results from a CSV file.
+        """Load benchmark results from the CSV file at ``self.path``.
 
         Returns
         -------
-        list[ResultObject]
-            The loaded results.
+        list of ResultObject
+            Loaded results reconstructed from tabular rows.
         """
         results_df = pd.read_csv(self.path)
         results = []
@@ -396,17 +470,29 @@ STORAGE_HANDLERS = [
 
 
 def get_storage_backend(path: str | Path) -> BaseStorageHandler:
-    """Get the appropriate storage backend for a given path.
+    """Return the storage handler for a results file path.
+
+    Selects a handler based on the file extension of ``path``. Pass
+    ``None`` to obtain `NullStorageHandler` when no results file
+    should be used.
 
     Parameters
     ----------
-    path : str
-        The path to the file to save to or load
+    path : str, pathlib.Path, or None
+        Path to the results file. Must refer to a file, not a directory.
+        Supported extensions are ``.json``, ``.csv``, and ``.parquet``.
+        Use ``None`` when results should not be persisted to disk.
 
     Returns
     -------
-    BaseStorageHandler
-        The storage backend
+    type[BaseStorageHandler]
+        Handler class for ``path``. Instantiate it with ``path`` to
+        read or write results.
+
+    Raises
+    ------
+    ValueError
+        If no handler supports the file extension of ``path``.
     """
     if isinstance(path, str):
         path = Path(path)
