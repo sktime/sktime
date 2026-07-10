@@ -16,9 +16,6 @@ from sktime.forecasting.base.adapters._pytorch import (
 )
 from sktime.forecasting.trend import CurveFitForecaster
 from sktime.networks.cinn import CINNNetwork
-from sktime.transformations.fourier import FourierFeatures
-from sktime.transformations.merger import Merger
-from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
@@ -217,6 +214,9 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         -------
         self : reference to self
         """
+        from sktime.transformations.fourier import FourierFeatures
+        from sktime.transformations.summarize import WindowSummarizer
+
         if self.window_size > len(y):
             raise ValueError(
                 f"Invalid window_size: {self.window_size}. "
@@ -328,6 +328,9 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             (dataset, n_cond_features) on success, None if the series is too
             short or curve fitting fails.
         """
+        from sktime.transformations.fourier import FourierFeatures
+        from sktime.transformations.summarize import WindowSummarizer
+
         if len(series) < self.window_size:
             warnings.warn(
                 f"Skipping series (length {len(series)}) shorter than "
@@ -554,6 +557,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        from sktime.transformations.merger import Merger
+
         if fh is None:
             fh = self._fh
         if len(fh) < self.sample_dim:
