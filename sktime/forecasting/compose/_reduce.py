@@ -38,8 +38,6 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.registry import is_scitype, scitype
-from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.multiindex import apply_method_per_series
@@ -200,6 +198,8 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     if len(transformers) == 1:
         tf_fit = transformers[0].fit(y)
     else:
+        from sktime.transformations.compose import FeatureUnion
+
         feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
         tf_fit = FeatureUnion(feat).fit(y)
     X_from_y = tf_fit.transform(y)
@@ -577,6 +577,8 @@ class _DirectReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
+            from sktime.transformations.summarize import WindowSummarizer
+
             self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
 
         if self.window_length is None:
@@ -932,6 +934,8 @@ class _RecursiveReducer(_Reducer):
             self.transformers_ = clone(self.transformers)
 
         if self.transformers is None and self.pooling == "global":
+            from sktime.transformations.summarize import WindowSummarizer
+
             kwargs = {
                 "lag_feature": {
                     "lag": list(range(1, self.window_length + 1)),
