@@ -456,6 +456,8 @@ class _Reducer(_BaseWindowForecaster):
         if len(self.transformers_) == 1:
             X_from_y = self.transformers_[0].fit_transform(y_raw)
         else:
+            from sktime.transformations.compose import FeatureUnion
+
             ref = self.transformers_
             feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
             X_from_y = FeatureUnion(feat).fit_transform(y_raw)
