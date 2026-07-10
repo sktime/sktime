@@ -222,7 +222,6 @@ KNOWN_EXCEPTIONS = frozenset(
             "forecasting",
             "transformations",
         ),
-        ("forecasting/enbpi.py", "forecasting", "transformations"),
         (
             "forecasting/model_selection/tests/test_tune.py",
             "forecasting",
