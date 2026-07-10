@@ -37,15 +37,62 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         Size of the bottleneck layer
     depth : int, default=6
         Number of inception modules to stack
-    activation : str or Callable or None, default=None
-        Activation function used for the final output layer.
-        Recommended: 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU', 'SELU', 'GELU', None
-    activation_hidden : str or Callable, default="ReLU"
-        Activation function used for hidden layers (output from inception modules).
-        Recommended: 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU', 'SELU', 'GELU'
-    activation_inception : str or Callable or None, default=None
-        Activation function used inside the inception modules.
-        Recommended: 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU', 'SELU', 'GELU', None
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
+        ``ELU``, ``SELU``, ``GELU``.
+    activation_hidden : str, Callable, or None, default="ReLU"
+        Activation applied to the hidden layers (output from inception modules).
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
+        ``ELU``, ``SELU``, ``GELU``.
+    activation_inception : str, Callable, or None, default=None
+        Activation applied inside the inception modules.
+
+        Permitted values:
+
+        - ``None``: no activation is applied inside the inception modules.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations:
+        ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``, ``ELU``, ``SELU``,
+        ``GELU``.
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "Adam"
         The optimizer to use for training the model.
@@ -184,7 +231,6 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # input_size to be inferred from the data
