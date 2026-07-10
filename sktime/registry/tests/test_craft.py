@@ -73,7 +73,7 @@ dunder_spec_with_deps = (
 specs = [simple_spec, pipe_spec_no_deps, dunder_spec_no_deps]
 
 
-if _check_soft_dependencies(["statsmodels", "prophet"], severity="none"):
+if _check_soft_dependencies(["statsmodels"], severity="none"):
     specs += [simple_spec_with_dep, pipe_spec_with_deps, dunder_spec_with_deps]
 
 
