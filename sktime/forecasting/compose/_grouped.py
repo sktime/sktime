@@ -268,7 +268,6 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         self.forecasters = forecasters
         self.fallback_forecaster = fallback_forecaster
 
-
         super().__init__()
 
     def __post_init__(self):
@@ -293,7 +292,6 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             _transformer = ADICVTransformer(features=["class"])
 
         self.transformer_ = coerce_scitype(_transformer, "transformer").clone()
-
 
         from sktime.transformations.base import BaseTransformer
 
