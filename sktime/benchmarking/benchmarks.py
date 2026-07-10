@@ -243,22 +243,12 @@ class _SktimeRegistry:
 
         Parameters
         ----------
-        entity_id: str
-            A unique entity ID.
-        entry_point: Callable or str
-            The python entrypoint of the entity class. Should be one of:
-
-            - the string path to the python object (e.g.module.name:factory_func, or
-                module.name:Class)
-            - the python object (class or factory) itself
-
-        deprecated: Bool, optional (default=False)
-            Flag to denote whether this entity should be skipped in validation runs
-            and considered deprecated and replaced by a more recent/better model
-        nondeterministic: Bool, optional (default=False)
-            Whether this entity is non-deterministic even after seeding
-        kwargs: Dict, optional (default=None)
-            kwargs to pass to the entity entry point when instantiating the entity.
+        entity_id : str
+            A unique entity ID. If an entity with the same ID is already
+            registered, a unique suffix (e.g., ``"_2"``) is appended and
+            a ``UserWarning`` is issued.
+        entity : BaseEstimator or TaskObject
+            The entity to register.
         """
         entity_id_unique = _make_strings_unique(list(self.entities.keys()), entity_id)
         _check_id_format(self.entity_id_format, entity_id_unique)
@@ -386,12 +376,8 @@ class BaseBenchmark:
 
         Parameters
         ----------
-        estimator : Dict, List or BaseEstimator object
-            Estimator to add to the benchmark.
-            If Dict, keys are estimator_ids used to customise identifier ID
-            and values are estimators.
-            If List, each element is an estimator. estimator_ids are generated
-            automatically using the estimator's class name.
+        estimator : BaseEstimator
+            A single initialised estimator to add to the benchmark.
 
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
