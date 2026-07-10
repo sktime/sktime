@@ -8,8 +8,6 @@ __all__ = ["ThetaLinesTransformer"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
 
 
@@ -103,6 +101,9 @@ class ThetaLinesTransformer(BaseTransformer):
             pd.DataFrame of shape: [len(X), len(self.theta)], if self.theta is tuple
         """
         theta = _check_theta(self.theta)
+
+        from sktime.forecasting.base import ForecastingHorizon
+        from sktime.forecasting.trend import PolynomialTrendForecaster
 
         forecaster = PolynomialTrendForecaster()
         forecaster.fit(y=X)
