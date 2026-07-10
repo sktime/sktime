@@ -222,7 +222,7 @@ class ReconcilerForecaster(BaseForecaster):
         self.forecaster_ = self.forecaster.clone()
 
         if not self._requires_residuals:
-            Class, kwargs = self.TRFORM_METHOD_MAP[self.method]
+            Class, kwargs = self._decode_reconciler_method(self.method)
             self.reconciler_transform_ = Class(**kwargs)
             yt = self.reconciler_transform_.fit_transform(y)
             self.forecaster_.fit(y=yt, X=X, fh=fh)
