@@ -280,6 +280,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         * any soft dependency imports in the constructor
         """
         transformer = self.transformer
+        forecasters = self.forecasters
         fallback_forecaster = self.fallback_forecaster
 
         # saving arguments to object storage
