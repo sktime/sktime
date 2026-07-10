@@ -51,14 +51,15 @@ class T0Forecaster(BaseForecaster):
         when a CUDA device is available, otherwise "cpu".
     context_length : int or None, default=None
         Maximum context length for inference. If None, the full context is used.
-    seed : int or None, optional, default=None
-        Random seed for reproducibility.
+    random_state : int or None, optional, default=None
+        Random seed for reproducibility. T0's inference is deterministic, so this
+        does not change the forecast; it is accepted for interface consistency.
     ignore_deps : bool, optional, default=False
         If True, dependency checks are skipped.
 
     Attributes
     ----------
-    model : t0.T0Forecaster
+    model_ : t0.T0Forecaster
         The underlying T0 model used for forecasting.
 
     References
@@ -75,7 +76,7 @@ class T0Forecaster(BaseForecaster):
     >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y, test_size=12)
-    >>> forecaster = T0Forecaster(seed=0)  # doctest: +SKIP
+    >>> forecaster = T0Forecaster(random_state=0)  # doctest: +SKIP
     >>> forecaster.fit(y_train)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
@@ -113,9 +114,11 @@ class T0Forecaster(BaseForecaster):
         "authors": ["siddharth7113"],
         "maintainers": ["siddharth7113"],
         "python_dependencies": ["tfc-t0"],
-        "python_version": ">=3.11,<3.14",
+        "python_version": ">=3.11",
         # estimator type / capability tags
         # --------------------------------
+        "property:randomness": "random",
+        "capability:random_state": True,
         "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
@@ -135,24 +138,24 @@ class T0Forecaster(BaseForecaster):
         model_path: str = "theforecastingcompany/t0-alpha",
         device: str | None = None,
         context_length: int | None = None,
-        seed: int | None = None,
+        random_state: int | None = None,
         ignore_deps: bool = False,
     ):
         self.model_path = model_path
         self.device = device
         self.context_length = context_length
-        self.seed = seed
+        self.random_state = random_state
         self.ignore_deps = ignore_deps
 
-        self.model = None
+        self.model_ = None
+
+        super().__init__()
 
         if ignore_deps:
             self.set_tags(python_dependencies=[])
 
-        super().__init__()
-
     def __post_init__(self):
-        """Post-init constructor logic: resolve the random seed.
+        """Post-init constructor logic: resolve device and random state.
 
         This method should be used for:
 
@@ -160,13 +163,23 @@ class T0Forecaster(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+        if self.random_state is None:
+            self._random_state = np.random.randint(0, 2**31)
+        else:
+            self._random_state = self.random_state
+
+        if self.device is not None:
+            self._device = self.device
+        else:
+            import torch
+
+            self._device = "cuda" if torch.cuda.is_available() else "cpu"
 
     def __getstate__(self):
         """Return state for pickling, excluding the unpickleable model."""
         state = self.__dict__.copy()
-        if hasattr(self, "model"):
-            state["model"] = None
+        if hasattr(self, "model_"):
+            state["model_"] = None
         return state
 
     def __setstate__(self, state):
@@ -175,15 +188,9 @@ class T0Forecaster(BaseForecaster):
 
     def _get_model_kwargs(self):
         """Collect arguments that uniquely identify a loaded model instance."""
-        if self.device is not None:
-            device = self.device
-        else:
-            import torch
-
-            device = "cuda" if torch.cuda.is_available() else "cpu"
         return {
             "pretrained_model_name_or_path": self.model_path,
-            "device": device,
+            "device": self._device,
         }
 
     def _get_unique_key(self):
@@ -199,9 +206,8 @@ class T0Forecaster(BaseForecaster):
 
     def _ensure_model_loaded(self):
         """Reload the model if needed, e.g. after unpickling."""
-        if not hasattr(self, "model") or self.model is None:
-            if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.model = self._load_model()
+        if not hasattr(self, "model_") or self.model_ is None:
+            self.model_ = self._load_model()
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -234,16 +240,14 @@ class T0Forecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        # zero-shot model: no training, only load the model and store the context
-        self.model = self._load_model()
+        self.model_ = self._load_model()
 
         context = y
         if self.context_length is not None and context.shape[0] > self.context_length:
             context = context.iloc[-self.context_length :]
 
         # T0 expects context as (n_series, n_timesteps); each y column is a series
-        self._context = context.values.T
-        self._context_index = context.index
+        self.context_ = context.values.T
         self._y_index_names = y.index.names
         return self
 
@@ -361,11 +365,10 @@ class T0Forecaster(BaseForecaster):
         import torch
 
         self._ensure_model_loaded()
-        torch.manual_seed(self._seed)
 
         horizon = int(max(fh.to_relative(self.cutoff)))
 
-        context = torch.as_tensor(self._context, dtype=torch.float32)
+        context = torch.as_tensor(self.context_, dtype=torch.float32)
         n_series, context_len = context.shape
 
         predict_kwargs = {}
@@ -375,14 +378,16 @@ class T0Forecaster(BaseForecaster):
         if future_covariates is not None:
             predict_kwargs["future_covariates"] = future_covariates
 
-        out = self.model.predict(
-            context, horizon=horizon, quantiles=quantiles, **predict_kwargs
-        )
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(self._random_state)
+            out = self.model_.predict(
+                context, horizon=horizon, quantiles=quantiles, **predict_kwargs
+            )
 
         index = (
             ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
         )
-        pred_out = fh.get_expected_pred_idx(self._context, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(self.context_, cutoff=self.cutoff)
         return out, index, pred_out
 
     def _build_future_covariates(self, X, n_series, context_len, horizon):
@@ -440,7 +445,7 @@ class T0Forecaster(BaseForecaster):
         """
         return [
             {"model_path": "theforecastingcompany/t0-alpha"},
-            {"model_path": "theforecastingcompany/t0-alpha", "seed": 42},
+            {"model_path": "theforecastingcompany/t0-alpha", "random_state": 42},
         ]
 
 
@@ -466,5 +471,5 @@ class _CachedT0:
 
         model_path = self.t0_kwargs["pretrained_model_name_or_path"]
         device = self.t0_kwargs.get("device", "cpu")
-        self.model = _T0Model.from_pretrained(model_path).eval().to(device)
+        self.model = _T0Model.from_pretrained(model_path, map_location=device).eval()
         return self.model

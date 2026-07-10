@@ -607,14 +607,6 @@ Pre-trained and foundation models - domain agnostic
 
     Chronos2Forecaster
 
-.. currentmodule:: sktime.forecasting.t0
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    T0Forecaster
-
 .. currentmodule:: sktime.forecasting.falcon_tst
 
 .. autosummary::
@@ -695,6 +687,14 @@ Pre-trained and foundation models - domain agnostic
     :template: class.rst
 
     PatchTSTForecaster
+
+.. currentmodule:: sktime.forecasting.t0
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    T0Forecaster
 
 .. currentmodule:: sktime.forecasting.time_llm
 
