@@ -227,7 +227,6 @@ KNOWN_EXCEPTIONS = frozenset(
             "forecasting",
             "transformations",
         ),
-        ("forecasting/reconcile.py", "forecasting", "transformations"),
         ("forecasting/tests/test_reconcile.py", "forecasting", "transformations"),
         ("forecasting/theta.py", "forecasting", "transformations"),
         ("param_est/compose/_pipeline.py", "param_est", "transformations"),
