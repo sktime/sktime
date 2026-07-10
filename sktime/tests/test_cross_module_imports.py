@@ -175,7 +175,6 @@ KNOWN_EXCEPTIONS = frozenset(
         ("detection/compose/_as_transform.py", "detection", "transformations"),
         ("detection/eagglo.py", "detection", "transformations"),
         ("detection/stray.py", "detection", "transformations"),
-        ("detection/wclust.py", "detection", "clustering"),
         (
             "forecasting/base/tests/test_base_bugs.py",
             "forecasting",
