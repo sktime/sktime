@@ -31,7 +31,7 @@ class EnbPIForecaster(BaseForecaster):
     1. Uses a bootstrap transformer to generate bootstrap samples
         and returning the corresponding indices of the original time
         series. Note that the bootstrap transformer must be able to
-        return indices of the original time series as and additional column.
+        return indices of the original time series as an additional column.
         I.e., the ``bootstrap_transformer`` must have the
         ``capability:bootstrap_indices`` tag, and its parameter
         ``return_indices`` must be set to True.
