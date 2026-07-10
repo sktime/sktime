@@ -184,7 +184,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
         "OptionalPassthrough",
-        "PAA",
         "PAAlegacy",
         "PaddingTransformer",
         "PlateauFinder",
