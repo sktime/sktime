@@ -670,7 +670,6 @@ Domain agnostic foundation models
 
     MOIRAIForecaster
 
-
 .. currentmodule:: sktime.forecasting.moirai2
 
 .. autosummary::
@@ -820,6 +819,14 @@ e.g., energy, weather, or specific finance tasks.
     :template: class.rst
 
     KronosForecaster
+
+.. currentmodule:: sktime.forecasting.mira
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MIRAForecaster
 
 .. currentmodule:: sktime.forecasting.windfm
 
