@@ -5,6 +5,9 @@ on:
         required: true
         type: string
 
+env:
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
+
 jobs:
   test-est-r:
     strategy:

@@ -744,6 +744,14 @@ Pre-trained and foundation models - domain agnostic
 
     TinyTimeMixerForecaster
 
+.. currentmodule:: sktime.forecasting.tirex
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TiRexForecaster
+
 .. currentmodule:: sktime.forecasting.toto
 
 .. autosummary::
