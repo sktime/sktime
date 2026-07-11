@@ -1148,12 +1148,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
         pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
 
-        prior_attrs = [
+        prior_attrs = {
             a
             for a in dir(self)
             if a.endswith("_")
             and not a.startswith("_")
-        ]
+        }
 
         # pretrain accepts multivariate panel data even for univariate forecasters,
         # because _pretrain can split columns into separate univariate series.

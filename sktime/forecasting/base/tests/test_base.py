@@ -560,7 +560,7 @@ def _get_exog_proba_fcst():
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base"]),
-    reason="run only if base module has changed or datatypes module has changed",
+    reason="run only if forecasting base module has changed",
 )
 def test_pretrain_respects_preexisting_attrs():
     """Test that pretrain does not misclassify preexisting attrs as set by pretrain.
