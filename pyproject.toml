@@ -221,6 +221,7 @@ dl = [
   'huggingface-hub>=0.23.0; python_version < "3.12"',
   'accelerate',
   'tqdm',
+  'safetensors',
   'hydra-core; python_version < "3.13"',
   'torchmetrics; python_version < "3.13"',
 ]
@@ -392,6 +393,15 @@ allowed-confusables=["σ"]
   "D103", # Missing docstring in public function
   "D104", # Missing docstring in public package
   "D106", # Missing docstring in public nested class
+  "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
+]
+"sktime/libs/dynamix/**/*.py" = [
+  "D",    # pydocstyle: vendored code uses Google-style docstrings
+  "E501", # Line too long
+  "F841", # Local variable assigned but never used
+  "N801", # Class name should use CapWords convention
+  "N803", # Argument name should be lowercase
+  "N806", # Variable in function should be lowercase
   "S311", # Standard pseudo-random generators are not suitable for cryptographic purposes
 ]
 

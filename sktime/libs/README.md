@@ -23,6 +23,12 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 
 # private vendor forks in `sktime`
 
+* `dynamix` - partial fork of DynaMix, from [DurstewitzLab/DynaMix-python](https://github.com/DurstewitzLab/DynaMix-python).
+  Unofficial fork of the inference-only code specific to the forecaster
+  (`DynaMixForecaster`). An official package on pypi is not available.
+  **Licensed under GPL-3.0** (copyleft), which differs from the permissive
+  BSD-3 license of `sktime`; see `sktime/libs/dynamix/LICENSE`.
+
 * `granite_ttm` - a package implementing TinyTimeMixer.
   Unofficial fork of package which is not available on pypi.
 
