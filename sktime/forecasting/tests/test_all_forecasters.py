@@ -1012,6 +1012,35 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 f"capability:pretrain=True but does not override _pretrain method"
             )
 
+    def test_pretrain_update_capability_tag(self, estimator_instance):
+        """Test that pretrain update capability matches its implementation."""
+        from sktime.forecasting.base import BaseForecaster
+
+        has_custom_pretrain_update = (
+            estimator_instance.__class__._pretrain_update
+            != BaseForecaster._pretrain_update
+        )
+        can_pretrain = estimator_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+        can_pretrain_update = estimator_instance.get_tag(
+            "capability:pretrain_update",
+            tag_value_default=False,
+            raise_error=False,
+        )
+
+        if can_pretrain_update:
+            assert can_pretrain, (
+                f"{estimator_instance.__class__.__name__} sets "
+                "capability:pretrain_update=True but does not set "
+                "capability:pretrain=True"
+            )
+            assert has_custom_pretrain_update, (
+                f"{estimator_instance.__class__.__name__} sets "
+                "capability:pretrain_update=True but does not override "
+                "_pretrain_update"
+            )
+
     def test_pretrain_state_transitions(self, estimator_instance, n_columns):
         """Test that pretrain() correctly transitions state.
 
