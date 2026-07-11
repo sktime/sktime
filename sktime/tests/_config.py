@@ -140,9 +140,6 @@ EXCLUDED_TESTS = {
         "test_multioutput",
         "test_classifier_on_unit_test_data",
     ],
-    "ARLagOrderSelector": [
-        "test_doctest_examples",  # doctest fails, see #8129
-    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -184,9 +181,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
         "OptionalPassthrough",
-        "PAA",
         "PAAlegacy",
-        "PCATransformer",
         "PaddingTransformer",
         "PlateauFinder",
         "Prophetverse",
@@ -195,7 +190,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
         "RandomSamplesAugmenter",
-        "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
