@@ -654,14 +654,6 @@ Domain agnostic foundation models
 
     MantisForecaster
 
-.. currentmodule:: sktime.forecasting.mira
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    MIRAForecaster
-
 .. currentmodule:: sktime.forecasting.moirai
 
 .. autosummary::
@@ -669,7 +661,6 @@ Domain agnostic foundation models
     :template: class.rst
 
     MOIRAIForecaster
-
 
 .. currentmodule:: sktime.forecasting.moirai2
 
@@ -820,6 +811,14 @@ e.g., energy, weather, or specific finance tasks.
     :template: class.rst
 
     KronosForecaster
+
+.. currentmodule:: sktime.forecasting.mira
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MIRAForecaster
 
 .. currentmodule:: sktime.forecasting.windfm
 
