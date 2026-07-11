@@ -102,7 +102,7 @@ class ARLagOrderSelector(BaseParamFitter):
         "authors": "satvshr",
         "python_dependencies": "statsmodels",
         "tests:skip_by_name": [
-            #skip for failing doctest example #8129
+            # skip for failing doctest, see #8129
             "test_doctest_examples"
         ],
     }
