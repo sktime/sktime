@@ -688,6 +688,14 @@ Pre-trained and foundation models - domain agnostic
 
     PatchTSTForecaster
 
+.. currentmodule:: sktime.forecasting.sundial
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SundialForecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
@@ -759,6 +767,14 @@ Pre-trained and foundation models - domain agnostic
     :template: class.rst
 
     TotoForecaster
+
+.. currentmodule:: sktime.forecasting.toto2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Toto2Forecaster
 
 Pre-trained and foundation models - domain specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
