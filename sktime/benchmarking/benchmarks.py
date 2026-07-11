@@ -255,7 +255,7 @@ class _SktimeRegistry:
         if entity_id != entity_id_unique:
             warnings.warn(
                 message=f"Entity with ID [id={entity_id}] already registered, "
-                + "new id is {entity_id_unique}",
+                + f"new id is {entity_id_unique}",
                 category=UserWarning,
                 stacklevel=2,
             )
