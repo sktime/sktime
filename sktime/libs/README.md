@@ -26,8 +26,16 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `granite_ttm` - a package implementing TinyTimeMixer.
   Unofficial fork of package which is not available on pypi.
 
+* `lag_llama` - partial fork of Lag-Llama, from [time-series-foundation-models/lag-llama](https://github.com/time-series-foundation-models/lag-llama).
+  Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
+  Licensed under Apache 2.0.
+
 * `momentfm` - a package implementing the `momentfm` library, unofficial fork
   maintained since April 2025.
+
+* `sundial` - partial fork of Sundial, adapted from [thuml/sundial-base-128m](https://huggingface.co/thuml/sundial-base-128m).
+  Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
+  Licensed under Apache 2.0.
 
 * `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
 
@@ -38,6 +46,13 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `uni2ts` - a package implementing the MOIRAIForecaster. Unofficial fork of
  the package with minimal dependencies and code specific to the forecaster.
  Official package available at [pypi](https://pypi.org/project/uni2ts/).
+
+* `windfm` - partial fork of WindFM, from
+  [shiyu-coder/WindFM](https://github.com/shiyu-coder/WindFM).
+  Unofficial fork of partial code specific to the forecaster. An official
+  package on pypi is not available.
+
+ * `xlstm_time` - fork of the [repository of the same name](https://github.com/muslehal/xLSTMTime), implementing the xLSTM forecaster, by `mushlehal`.
 
 
 # Snippets from other libraries

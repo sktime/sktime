@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.resnet import ResNetNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class ResNetClassifier(BaseDeepClassifier):
@@ -93,8 +92,6 @@ class ResNetClassifier(BaseDeepClassifier):
         use_bias=True,
         optimizer=None,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.callbacks = callbacks
         self.verbose = verbose
@@ -109,11 +106,22 @@ class ResNetClassifier(BaseDeepClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         self.history = None
         self._network = ResNetNetwork(
-            activation=activation_hidden,
-            random_state=random_state,
+            activation=self.activation_hidden,
+            random_state=self.random_state,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -221,7 +229,7 @@ class ResNetClassifier(BaseDeepClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

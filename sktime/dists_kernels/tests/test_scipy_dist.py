@@ -2,6 +2,7 @@
 
 import numpy as np
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.dists_kernels.scipy_dist import ScipyDist
 from sktime.tests.test_switch import run_test_for_class
@@ -56,27 +57,6 @@ def X2_df():
     )
 
 
-def _get_kul_name():
-    """Get name of kul... distance.
-
-    Utility to bridge deprecation of kulsinski distance in scipy.
-    Name pre-1.11.0 is kulsinski, and from 1.11.0 it is kulczynski1.
-
-    Returns
-    -------
-    name : str
-        one of "kulsinski" (if scipy < 1.11.0) and "kulczynski1" (if scipy >= 1.11.0)
-    """
-    try:
-        from scipy.spatial.distance import kulczynski1  # noqa: F401
-
-        name = "kulczynski1"
-    except Exception:
-        name = "kulsinski"
-
-    return name
-
-
 # potential parameters
 METRIC_VALUES = [
     "braycurtis",
@@ -90,7 +70,6 @@ METRIC_VALUES = [
     "hamming",
     "jaccard",
     "jensenshannon",
-    _get_kul_name(),
     "mahalanobis",
     "matching",
     "minkowski",
@@ -104,6 +83,13 @@ METRIC_VALUES = [
 ]
 P_VALUES = [1, 2, 5, 10]
 COLALIGN_VALUES = ["intersect", "force-align", "none"]
+
+
+if _check_soft_dependencies("scipy<1.11.0", severity="none"):
+    METRIC_VALUES.append("kulsinski")
+elif _check_soft_dependencies("scipy<1.17.0", severity="none"):
+    METRIC_VALUES.append("kulczynski1")
+# kulsinski distance is no longer present after scipy 1.17
 
 
 @pytest.mark.skipif(

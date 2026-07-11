@@ -1,15 +1,9 @@
 #!/usr/bin/env python3 -u
 # License: BSD 3 clause
-"""Utility methods to print system info for debugging.
+"""Utility methods to print system info for debugging."""
 
-adapted from
-:func: `sklearn.show_versions`
-"""
-
-__author__ = ["mloning", "fkiraly"]
 __all__ = ["show_versions"]
 
-import importlib
 import platform
 import sys
 
@@ -37,8 +31,8 @@ def _get_sys_info():
 DEFAULT_DEPS_TO_SHOW = [
     "pip",
     "sktime",
-    "sklearn",
-    "skbase",
+    "scikit-learn",
+    "scikit-base",
     "numpy",
     "scipy",
     "pandas",
@@ -60,23 +54,17 @@ DEFAULT_DEPS_TO_SHOW = [
 ]
 
 
-def _get_deps_info(deps=None, source="distributions"):
+def _get_deps_info(deps=None):
     """Overview of the installed version of main dependencies.
+
+        Uses ``importlib.distributions``.
+        Strings in deps are assumed to be PEP 440 package strings,
+        e.g., ``scikit-learn``, not ``sklearn``.
 
     Parameters
     ----------
     deps : optional, list of strings with package names
         if None, behaves as deps = ["sktime"].
-
-    source : str, optional one of "distributions" (default) or "import"
-        source of version information
-
-        * "distributions" - uses importlib.distributions. In this case,
-          strings in deps are assumed to be PEP 440 package strings,
-          e.g., scikit-learn, not sklearn.
-        * "import" - uses the __version__ attribute of the module.
-          In this case, strings in deps are assumed to be import names,
-          e.g., sklearn, not scikit-learn.
 
     Returns
     -------
@@ -90,36 +78,17 @@ def _get_deps_info(deps=None, source="distributions"):
     if deps is None:
         deps = ["sktime"]
 
-    if source == "distributions":
-        from sktime.utils.dependencies._dependencies import _get_installed_packages
+    from skbase.utils.dependencies._dependencies import (
+        _get_installed_packages,
+        _norm_pkgname,
+    )
 
-        KEY_ALIAS = {"sklearn": "scikit-learn", "skbase": "scikit-base"}
-
-        pkgs = _get_installed_packages()
-
-        deps_info = {}
-        for modname in deps:
-            pkg_name = KEY_ALIAS.get(modname, modname)
-            deps_info[modname] = pkgs.get(pkg_name, None)
-
-        return deps_info
-
-    def get_version(module):
-        return getattr(module, "__version__", None)
+    pkgs = _get_installed_packages(lowercase=True)
 
     deps_info = {}
-
     for modname in deps:
-        try:
-            if modname in sys.modules:
-                mod = sys.modules[modname]
-            else:
-                mod = importlib.import_module(modname)
-        except ImportError:
-            deps_info[modname] = None
-        else:
-            ver = get_version(mod)
-            deps_info[modname] = ver
+        modname_norm = _norm_pkgname(modname)
+        deps_info[modname] = pkgs.get(modname_norm, None)
 
     return deps_info
 

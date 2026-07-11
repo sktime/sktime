@@ -29,7 +29,7 @@ class EAgglo(BaseTransformer):
     Parameters
     ----------
     member : array_like (default=None)
-        Assigns points to to the initial cluster membership, therefore the first
+        Assigns points to the initial cluster membership, therefore the first
         dimension should be the same as for data. If ``None`` it will be initialized
         to dummy vector where each point is assigned to separate cluster.
     alpha : float (default=1.0)

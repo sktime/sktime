@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.transformations.hierarchical.aggregate import Aggregator
@@ -10,7 +11,6 @@ from sktime.transformations.hierarchical.reconcile._optimal import (
     _create_summing_matrix_from_index,
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.fixture

@@ -7,6 +7,9 @@ release a dedicated package.
 sktime migration: 2024, July
 Version 0.2.3 release: 2024, July (wgifford)
 
+sktime sync update: 2026, June
+Updated vendored code to upstream Version 0.2.3 release: 2026, May (wgifford)
+
 Original authors: Wesley Gifford, vijaye12, Arindam Jati
 
 2024 releases subject to following license:

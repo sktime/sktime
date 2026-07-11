@@ -61,15 +61,28 @@ class MrSEQL(_DelegatedClassifier):
         self.symrep = symrep
         self.custom_config = custom_config
 
-        if not isinstance(symrep, (list, tuple)):
-            self._symrep = [symrep]
-        else:
-            self._symrep = symrep
-
-        if "sfa" in self._symrep:
+        if "sfa" in self._coerce_to_list(symrep):
             self.set_tags(**{"python_dependencies": ["mrseql", "numba"]})
 
         super().__init__()
+
+    def _coerce_to_list(self, x):
+        """Coerce x to a list if it is not already a list or tuple."""
+        if isinstance(x, (list, tuple)):
+            return x
+        else:
+            return [x]
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        self._symrep = self._coerce_to_list(self.symrep)
 
         # construct the delegate - direct delegation to MrSEQLClassifier
         from mrseql import MrSEQLClassifier
@@ -120,7 +133,7 @@ class MrSEQL(_DelegatedClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         params1 = {}
 
