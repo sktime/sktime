@@ -760,6 +760,14 @@ Pre-trained and foundation models - domain agnostic
 
     TotoForecaster
 
+.. currentmodule:: sktime.forecasting.toto2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Toto2Forecaster
+
 Pre-trained and foundation models - domain specific
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
