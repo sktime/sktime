@@ -249,7 +249,7 @@ notebooks = [
   "prophet",
   "pytorch-forecasting",
   "torch",
-  "lightning>=2.0,<2.6",
+  "lightning>=2.0,<2.7",
   "skpro",
   "statsforecast",
 ]
