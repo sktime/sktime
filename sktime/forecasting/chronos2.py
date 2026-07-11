@@ -130,7 +130,6 @@ class Chronos2Forecaster(BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed

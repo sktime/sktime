@@ -217,6 +217,7 @@ Shapelets, wavelets, and convolution
     RocketPyts
     MiniRocket
     MiniRocketMultivariate
+    MiniRocketMultivariateCython
     MiniRocketMultivariateVariable
     MultiRocket
     MultiRocketMultivariate
@@ -337,6 +338,14 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     Catch22Wrapper
+
+.. currentmodule:: sktime.transformations.evoforest_tswm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EvoForestTSWM
 
 .. currentmodule:: sktime.transformations.tsfel
 
