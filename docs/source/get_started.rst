@@ -141,21 +141,16 @@ Time Series Clustering
     >>> k_means.fit(X_train)
     >>> plot_cluster_algorithm(k_means, X_test, k_means.n_clusters)
 
-Time Series Annotation
-~~~~~~~~~~~~~~~~~~~~~~
-
-.. warning::
-
-   The time series annotation API is experimental,
-   and may change in future releases.
+Detection
+~~~~~~~~~
 
 .. code-block:: python
 
-    >>> from sktime.detection.adapters import PyODAnnotator
+    >>> from sktime.detection.adapters import PyODDetector
     >>> from pyod.models.iforest import IForest
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> pyod_model = IForest()
-    >>> pyod_sktime_annotator = PyODAnnotator(pyod_model)
-    >>> pyod_sktime_annotator.fit(y)
-    >>> annotated_series = pyod_sktime_annotator.predict(y)
+    >>> pyod_sktime_detector = PyODDetector(pyod_model)
+    >>> pyod_sktime_detector.fit(y)
+    >>> annotated_series = pyod_sktime_detector.predict(y)

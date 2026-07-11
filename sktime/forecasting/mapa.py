@@ -2,9 +2,9 @@
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -132,7 +132,7 @@ class MAPAForecaster(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": True,
@@ -161,6 +161,20 @@ class MAPAForecaster(BaseForecaster):
         self.weights = weights
         self.base_forecaster = base_forecaster
 
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
         self._aggregation_levels = (
             self.aggregation_levels if self.aggregation_levels else [1, 2, 4]
         )
@@ -170,8 +184,6 @@ class MAPAForecaster(BaseForecaster):
         self._y_cols = None
         self._y_name = None
         self._transformation_offset = None
-
-        super().__init__()
 
         self._base_forecaster = self._initialize_base_forecaster(self.base_forecaster)
 
@@ -364,7 +376,7 @@ class MAPAForecaster(BaseForecaster):
 
             else:
                 if _check_soft_dependencies("statsmodels", severity="none"):
-                    from sktime.transformations.series.detrend import STLTransformer
+                    from sktime.transformations.detrend import STLTransformer
                 stl = STLTransformer(
                     sp=seasonal_period,
                     seasonal=7,

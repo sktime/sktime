@@ -384,6 +384,33 @@ class requires_cython(_BaseTag):
     }
 
 
+class r_dependencies(_BaseTag):
+    """R package dependency requirement specifiers, only for estimators from R.
+
+    - String name: ``"r_dependencies"``
+    - Private tag, developer and framework facing
+    - Values: None, or list of str, each str an R package name
+    - Example: ``["Rcpp"]``
+    - Example 2: ``["Rcpp", "dplyr"]``
+    - Default: no R requirements (``None``)
+
+    Experimental tag for objects that interface to R packages via ``rpy2``.
+
+    Should be set only for objects that interface R packages.
+
+    Currently no inequalities or version specifiers are supported,
+    only package names as strings.
+    """
+
+    _tags = {
+        "tag_name": "r_dependencies",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "R dependencies of estimator as list of str",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 class tests__core(_BaseTag):
     """Whether tests for this estimator are triggered by framework changes.
 
@@ -880,7 +907,7 @@ class property__randomness(_BaseTag):
 # -----------
 
 
-class capability__exogeneous(_BaseTag):
+class capability__exogenous(_BaseTag):
     """Capability: the forecaster can use exogenous data.
 
     The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
@@ -1078,6 +1105,36 @@ class capability__pretrain(_BaseTag):
     }
 
 
+class pretrain__fitted_params(_BaseTag):
+    """Property: named attributes that carry pretrained state.
+
+    - String name: ``"pretrain:fitted_params"``
+    - Public property tag
+    - Values: list of str, names of estimator attributes
+    - Example: ``["model_", "network_"]``
+    - Default: ``[]`` (empty list)
+
+    The ``pretrain:fitted_params`` tag lists the names of instance attributes
+    that store state learned by ``pretrain``. State-aware operations such as
+    the private ``_reset_at("pretrained")`` preserve exactly these attributes,
+    while task-fitted attributes are removed.
+
+    If the tag is empty, state-aware operations fall back to the runtime list
+    ``_pretrained_attrs``, which ``pretrain`` populates automatically with
+    attributes created during the ``pretrain`` call.
+
+    The tag is only inspected for estimators with ``capability:pretrain=True``.
+    """
+
+    _tags = {
+        "tag_name": "pretrain:fitted_params",
+        "parent_type": "forecaster",
+        "tag_type": ("list", "str"),
+        "short_descr": "attributes carrying pretrained state",
+        "user_facing": True,
+    }
+
+
 class capability__non_contiguous_X(_BaseTag):
     """Capability: the forecaster can handle non-contiguous exogenous data.
 
@@ -1149,7 +1206,7 @@ class requires_fh_in_fit(_BaseTag):
 
     For instance, direct reduction to tabular regression
     requires the ``fh`` as it is used by the fitting algorithm to lag the endogeneous
-    against the exogeneous data. In contrast, recursive reduction to tabular regression
+    against the exogenous data. In contrast, recursive reduction to tabular regression
     does not require the ``fh`` in ``fit``, as only the prediction step
     requires the forecasting horizon, when applying the fitted tabular regression model
     by sliding it forward over the ``fh`` steps.
@@ -1229,8 +1286,6 @@ class capability__multivariate(_BaseTag):
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: ``univariate-only``  (transformations, note: boolean is inverted)
-    - Alias: ``univariate-metric`` (performance metrics, note: boolean is inverted)
 
     If the tag is ``True``, the estimator can handle multivariate time series,
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
@@ -1300,6 +1355,7 @@ class capability__unequal_length(_BaseTag):
             "classifier",
             "clusterer",
             "early_classifier",
+            "forecaster",
             "regressor",
             "transformer",
             "transformer-pairwise-panel",
@@ -3302,8 +3358,8 @@ class visual_block_kind(_BaseTag):
     in a jupyter notebook.
 
     Meta-estimators are composites with a variable number of sub-estimators,
-    such as ``ForecastingPipeline`` or ``ColumnTransformer``, inheriting from
-    ``_HeterogenousMetaEstimator``.
+    such as ``ForecastingPipeline`` or ``ColumnEnsembleTransformer``,
+    inheriting from ``_HeterogenousMetaEstimator``.
 
     The html display is triggered by calling the ``_repr_html_`` method on any
     ``scikit-base`` estimator, which returns a html representation of the estimator,
@@ -3561,6 +3617,15 @@ ESTIMATOR_TAG_REGISTER = [
         "which scitypes does X internally support?",
     ),
     (
+        "scitype:y",
+        # the scitype:y tag should be kept but for separate use,
+        # a list of the internal scitypes supported by the estimator
+        # or the base scitype of the target data
+        ["param_est", "metric"],
+        "str",
+        "what scitype of y does the object support? must be scitype string",
+    ),
+    (
         "scitype:instancewise",
         "transformer",
         "bool",
@@ -3612,7 +3677,7 @@ ESTIMATOR_TAG_REGISTER = [
         "task",
         "detector",
         "str",
-        "subtype of series annotator, e.g., 'anomaly_detection', 'segmentation'",
+        "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
     ),
     (
         "learning_type",
@@ -3714,48 +3779,20 @@ ESTIMATOR_TAG_REGISTER = [
         "can transformer handle multivariate series? True = no",
     ),
     (
-        "univariate-metric",  # -> capability:multivariate, invert
-        "metric",
-        "bool",
-        "Does the metric only work on univariate y data?",
-    ),
-    (
         "handles-missing-data",  # -> capability:missing_values
         "estimator",
         "bool",
         "can the estimator handle missing data (NA, np.nan) in inputs?",
-    ),
-    (
-        "scitype:y",  # -> capability:multivariate
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        "forecaster",
-        ("str", ["univariate", "multivariate", "both"]),
-        "which series type does the forecaster support? multivariate means >1 vars",
     ),
     # ---------------------------
     # to be deprecated or removed
     # ---------------------------
     # the following tags are to be deprecated or removed
     (
-        "capability:pred_var",  # redundant with capability:pred_int
-        # because if one of the proba methods is available, all others are too
-        "forecaster",
-        "bool",
-        "does the forecaster implement predict_variance?",
-    ),
-    (
         "capability:global_forecasting",
         ["forecaster"],
         "bool",
         "can the estimator make global forecasting?",
-    ),
-    (
-        "python_dependencies_alias",
-        "object",
-        "dict",
-        "deprecated tag for dependency import aliases",
     ),
     (
         "ignores-exogeneous-X",

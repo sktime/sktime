@@ -12,13 +12,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
+
 jobs:
   code-quality:
     name: code-quality
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -36,7 +39,7 @@ jobs:
           UV_SYSTEM_PYTHON: 1
 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -72,7 +75,7 @@ jobs:
     outputs:
       notebooks: ${{ steps.check.outputs.notebooks }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Needed to access the full git history
 
@@ -95,7 +98,7 @@ jobs:
     if: ${{ needs.detect-notebooks-change.outputs.notebooks == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -124,7 +127,7 @@ jobs:
     if: ${{ needs.detect-notebooks-change.outputs.notebooks == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -153,11 +156,15 @@ jobs:
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     outputs:
-      obj_list: ${{ steps.get-change-list.outputs.obj_list }}
-      obj_list_length: ${{ steps.get-change-list.outputs.obj_list_length }}
+      all_changed_classes: ${{ steps.get-change-list.outputs.all_changed_classes }}
+      all_changed_classes_length: ${{ steps.get-change-list.outputs.all_changed_classes_length }}
+      vm_changed_classes: ${{ steps.get-change-list.outputs.vm_changed_classes }}
+      vm_changed_classes_length: ${{ steps.get-change-list.outputs.vm_changed_classes_length }}
+      r_vm_changed_classes: ${{ steps.get-change-list.outputs.r_vm_changed_classes }}
+      r_vm_changed_classes_length: ${{ steps.get-change-list.outputs.r_vm_changed_classes_length }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: git remote set-branches origin 'main'
 
@@ -181,72 +188,129 @@ jobs:
       - name: Get list of names of changed classes
         id: get-change-list
         run: |
-          OBJ_LIST=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; obj_list = _get_all_changed_classes(vm=True); print(json.dumps(obj_list))')
-          OBJ_LIST_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; obj_list = _get_all_changed_classes(vm=True); print(len(obj_list))')
-          echo "OBJ_LIST=$OBJ_LIST" >> $GITHUB_ENV
-          echo "OBJ_LIST_LENGTH=$OBJ_LIST_LENGTH" >> $GITHUB_ENV
-          echo "obj_list=$OBJ_LIST" >> $GITHUB_OUTPUT
-          echo "obj_list_length=$OBJ_LIST_LENGTH" >> $GITHUB_OUTPUT
+          ALL_CHANGED_CLASSES=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes()))')
+          ALL_CHANGED_CLASSES_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; print(len(_get_all_changed_classes()))')
+
+          VM_CHANGED_CLASSES=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes(vm=True)))')
+          VM_CHANGED_CLASSES_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; print(len(_get_all_changed_classes(vm=True)))')
+
+          R_VM_CHANGED_CLASSES=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; import json; print(json.dumps(_get_all_changed_classes(vm=True, r=True)))')
+          R_VM_CHANGED_CLASSES_LENGTH=$(python -c 'from sktime.tests.test_switch import _get_all_changed_classes; print(len(_get_all_changed_classes(vm=True, r=True)))')
+
+          echo "vm_changed_classes=$VM_CHANGED_CLASSES" >> $GITHUB_OUTPUT
+          echo "vm_changed_classes_length=$VM_CHANGED_CLASSES_LENGTH" >> $GITHUB_OUTPUT
+
+          echo "all_changed_classes=$ALL_CHANGED_CLASSES" >> $GITHUB_OUTPUT
+          echo "all_changed_classes_length=$ALL_CHANGED_CLASSES_LENGTH" >> $GITHUB_OUTPUT
+
+          echo "r_vm_changed_classes=$R_VM_CHANGED_CLASSES" >> $GITHUB_OUTPUT
+          echo "r_vm_changed_classes_length=$R_VM_CHANGED_CLASSES_LENGTH" >> $GITHUB_OUTPUT
 
       - name: Print changed classes
         run: |
-          echo "Number of changed classes: $OBJ_LIST_LENGTH"
-          echo "Changed classes: $OBJ_LIST"
+          echo "All changed classes (${{ steps.get-change-list.outputs.all_changed_classes_length }}):"
+          echo "${{ steps.get-change-list.outputs.all_changed_classes }}"
+          echo
+
+          echo "Changed classes requiring VM, Python only (${{ steps.get-change-list.outputs.vm_changed_classes_length }}):"
+          echo "${{ steps.get-change-list.outputs.vm_changed_classes }}"
+          echo
+
+
+          echo "Changed classes requiring VM and R (${{ steps.get-change-list.outputs.r_vm_changed_classes_length }}):"
+          echo "${{ steps.get-change-list.outputs.r_vm_changed_classes }}"
+
+  prepare-chunks:
+    needs: detect-changed-classes
+    runs-on: ubuntu-latest
+    outputs:
+      vm_chunks: ${{ steps.chunk_vm.outputs.vm_chunks }}
+      r_vm_chunks: ${{ steps.chunk_r.outputs.r_vm_chunks }}
+
+    steps:
+      - name: Chunk VM changed classes
+        id: chunk_vm
+        shell: bash
+        run: |
+          python - <<'EOF'
+          import json
+          import os
+
+          # Load input
+          obj_list = json.loads('''${{ needs.detect-changed-classes.outputs.vm_changed_classes }}''')
+
+          CHUNK_SIZE = 10  # chosen such that this times number of runs is smaller 256
+
+          # Split into chunks
+          chunks = [obj_list[i:i+CHUNK_SIZE] for i in range(0, len(obj_list), CHUNK_SIZE)]
+
+          # Fallback to avoid empty matrix error
+          if not chunks:
+              chunks = [[]]
+
+          print(f"Number of chunks: {len(chunks)}", file=os.sys.stderr)
+          print(f"Chunks: {chunks}")
+
+          # Emit output
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"vm_chunks={json.dumps(chunks)}\n")
+          EOF
+
+      - name: Chunk R VM changed classes
+        id: chunk_r
+        shell: bash
+        run: |
+          python - <<'EOF'
+          import json
+          import os
+
+          # Load input
+          obj_list = json.loads('''${{ needs.detect-changed-classes.outputs.r_vm_changed_classes }}''')
+
+          CHUNK_SIZE = 10  # chosen such that this times number of runs is smaller 256
+
+          # Split into chunks
+          chunks = [obj_list[i:i+CHUNK_SIZE] for i in range(0, len(obj_list), CHUNK_SIZE)]
+
+          # Fallback to avoid empty matrix error
+          if not chunks:
+              chunks = [[]]
+
+          print(f"Number of chunks: {len(chunks)}", file=os.sys.stderr)
+          print(f"Chunks: {chunks}")
+
+          # Emit output
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"r_vm_chunks={json.dumps(chunks)}\n")
+          EOF
 
   test-est:
-    needs: detect-changed-classes
-    if: ${{ needs.detect-changed-classes.outputs.obj_list != '[]' }}
+    needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
+    if: ${{ needs.detect-changed-classes.outputs.vm_chunks != '[]' }}
 
     strategy:
       fail-fast: false
       matrix:
-        flag: ${{ fromJson(needs.detect-changed-classes.outputs.obj_list) }}
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        chunk: ${{ fromJson(needs.prepare-chunks.outputs.vm_chunks) }}
 
-    runs-on: ${{ matrix.os }}
+    uses: ./.github/workflows/test_est.yml
+    with:
+      flags: ${{ toJson(matrix.chunk) }}
+    secrets: inherit
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+  test-est-r:
+    needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
+    if: ${{ needs.detect-changed-classes.outputs.r_vm_chunks != '[]' }}
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
+    strategy:
+      fail-fast: false
+      matrix:
+        chunk: ${{ fromJson(needs.prepare-chunks.outputs.r_vm_chunks) }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install OSX packages
-        run: ./.github/scripts/install_osx_dependencies.sh
-
-      - name: Force non-GUI Matplotlib backend (Windows)
-        if: ${{ matrix.os == 'windows-latest' }}
-        shell: pwsh
-        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
-
-      - name: Install sktime with dev dependencies
-        run: uv pip install .[dev]
-        env:
-          UV_SYSTEM_PYTHON: 1
-
-      - name: Install dependencies for ${{ matrix.flag }}
-        run: |
-          python -c "from sktime.registry import deps; print('\n'.join(deps('${{ matrix.flag }}', include_test_deps=True)))" > deps.txt
-          pip install -r deps.txt
-        continue-on-error: true
-
-      - name: Show dependencies
-        run: uv pip list
-
-      - name: Run tests with ${{ matrix.flag }}
-        env:
-          FLAG: ${{ matrix.flag }}
-        shell: bash
-        run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
+    uses: ./.github/workflows/test_est_r.yml
+    with:
+      flags: ${{ toJson(matrix.chunk) }}
+    secrets: inherit
 
   detect-package-change:
     needs: code-quality
@@ -257,7 +321,7 @@ jobs:
     outputs:
       sktime: ${{ steps.check.outputs.sktime }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Needed to access the full git history
 
@@ -279,7 +343,7 @@ jobs:
     needs: detect-package-change
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -308,7 +372,7 @@ jobs:
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -338,7 +402,7 @@ jobs:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: git remote set-branches origin 'main'
 
@@ -376,7 +440,7 @@ jobs:
         mlflow-version: ['2.9.2', '3.latest']
     name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -411,7 +475,7 @@ jobs:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: git remote set-branches origin 'main'
 
@@ -431,9 +495,15 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: pip install .[dev,dependencies_lower]
+        # We require `scikit-base>=0.6.1` which was released after the 2023 cutoff
+        # so we bump its date later
+        run: >
+          uv pip install .[dev]
+          --exclude-newer-package "scikit-base=false"
+          --exclude-newer-package "setuptools=false"
         env:
           UV_SYSTEM_PYTHON: 1
+          UV_EXCLUDE_NEWER: "2023-07-01"
 
       - name: Show dependencies
         run: uv pip list
@@ -445,7 +515,7 @@ jobs:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: git remote set-branches origin 'main'
 
@@ -465,9 +535,13 @@ jobs:
         run: python -c "import sys; print(sys.version)"
 
       - name: Install sktime and dependencies
-        run: pip install .[dev,dependencies_2024]
+        run: >
+          uv pip install .[dev]
+          --exclude-newer-package "setuptools=false"
+          --exclude-newer-package "scikit-base=false"
         env:
           UV_SYSTEM_PYTHON: 1
+          UV_EXCLUDE_NEWER: "2024-09-01"
 
       - name: Show dependencies
         run: uv pip list
@@ -485,7 +559,7 @@ jobs:
       datasets: ${{ steps.filter.outputs.datasets }}
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -496,24 +570,6 @@ jobs:
               - sktime/datasets/**
             pyproject:
               - pyproject.toml
-
-  test-base:
-    needs: test-nosoftdeps
-    name: base
-    uses: ./.github/workflows/test_base.yml
-    secrets: inherit
-
-  test-module:
-    needs: test-nosoftdeps
-    name: module
-    uses: ./.github/workflows/test_module.yml
-    secrets: inherit
-
-  test-other:
-    needs: test-nosoftdeps
-    name: other
-    uses: ./.github/workflows/test_other.yml
-    secrets: inherit
 
   test-datasets:
     needs: detect
@@ -533,7 +589,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: git remote set-branches origin 'main'
 
@@ -562,7 +618,7 @@ jobs:
 
       - name: Install sktime and dependencies
         shell: bash
-        run: uv pip install .[all_extras_pandas2,dev,dl,compatibility_tests] --no-cache-dir
+        run: uv pip install .[all_extras,dev,dl,compatibility_tests] --no-cache-dir
         env:
           UV_SYSTEM_PYTHON: 1
 

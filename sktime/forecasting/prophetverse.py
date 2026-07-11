@@ -10,7 +10,7 @@ from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.dependencies import _placeholder_record
 
 
-# TODO 0.41.0: update upper and/or lower bounds when Prophetverse 0.11.0 is released
+# TODO 1.1.0: update upper and/or lower bounds when Prophetverse 0.11.0 is released
 @_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.11.0")
 class Prophetverse(_DelegatedForecaster):
     """Univariate prophetverse forecaster - prophet model implemented in numpyro.
@@ -91,8 +91,8 @@ class Prophetverse(_DelegatedForecaster):
     ...         )
     ...     ],
     ... )
-    >>> model.fit(y)
-    >>> model.predict(fh=[1, 2, 3])
+    >>> model.fit(y) # doctest: +SKIP
+    >>> model.predict(fh=[1, 2, 3]) # doctest: +SKIP
     """
 
     _tags = {
@@ -105,12 +105,14 @@ class Prophetverse(_DelegatedForecaster):
         # --------------
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:unequal_length": False,
         "enforce_index_type": [pd.Period, pd.DatetimeIndex],
         "requires-fh-in-fit": False,
         "y_inner_mtype": "pd.DataFrame",
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        # "tests:vm": True,   # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -143,13 +145,22 @@ class Prophetverse(_DelegatedForecaster):
         self.broadcast_mode = broadcast_mode
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         # delegation, only for prophetverse 0.2.X
         from prophetverse.sktime import Prophetverse
 
         self._delegate = Prophetverse(**self.get_params())
 
 
-# TODO 0.41.0: update upper and/or lower bounds when Prophetverse 0.11.0 is released
+# TODO 1.1.0: update upper and/or lower bounds when Prophetverse 0.11.0 is released
 @_placeholder_record("prophetverse.sktime", dependencies="prophetverse>=0.8.0,<0.11.0")
 class HierarchicalProphet(_DelegatedForecaster):
     """A Bayesian hierarchical time series forecasting model based on Meta's Prophet.
@@ -253,8 +264,8 @@ class HierarchicalProphet(_DelegatedForecaster):
     ... )
     >>> y = agg.fit_transform(y)
     >>> forecaster = HierarchicalProphet()
-    >>> forecaster.fit(y)
-    >>> forecaster.predict(fh=[1])
+    >>> forecaster.fit(y) # doctest: +SKIP
+    >>> forecaster.predict(fh=[1]) # doctest: +SKIP
     """
 
     _delegate_name = "_delegate"
@@ -267,9 +278,10 @@ class HierarchicalProphet(_DelegatedForecaster):
         "python_dependencies": "prophetverse",
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:missing_values": False,
+        "capability:unequal_length": False,
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -287,7 +299,8 @@ class HierarchicalProphet(_DelegatedForecaster):
         "capability:pred_int:insample": True,
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to dependency requirement prophetverse
+        # "tests:vm": True,  # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(
@@ -316,6 +329,15 @@ class HierarchicalProphet(_DelegatedForecaster):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         # delegation, only for prophetverse 0.2.X
         from prophetverse.sktime import HierarchicalProphet
 

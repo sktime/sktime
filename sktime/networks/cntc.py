@@ -1,7 +1,6 @@
 """a combination of CCNN and CLSTM as feature extractors."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNTCNetwork(BaseDeepNetwork):
@@ -84,8 +83,6 @@ class CNTCNetwork(BaseDeepNetwork):
         activation_attention="sigmoid",
         dropout=(0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1),
     ):
-        _check_dl_dependencies(severity="error")
-
         self.activation = activation
         self.activation_attention = activation_attention
         self.random_state = random_state

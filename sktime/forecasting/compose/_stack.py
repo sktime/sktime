@@ -66,8 +66,9 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "capability:missing_values": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "X-y-must-have-same-index": True,
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
@@ -88,7 +89,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 

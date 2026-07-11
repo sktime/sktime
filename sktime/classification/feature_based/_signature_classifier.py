@@ -13,10 +13,10 @@ from sklearn.pipeline import Pipeline
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.signature_based._checks import (
+from sktime.transformations.signature_based._checks import (
     _handle_sktime_signatures,
 )
-from sktime.transformations.panel.signature_based._signature_method import (
+from sktime.transformations.signature_based._signature_method import (
     SignatureTransformer,
 )
 
@@ -107,7 +107,7 @@ class SignatureClassifier(BaseClassifier):
         "classifier_type": "feature",
         # testing configuration
         # ---------------------
-        "tests:libs": ["sktime.transformations.panel.signature_based"],
+        "tests:libs": ["sktime.transformations.signature_based"],
         "tests:skip_by_name": [  # tagged in issue #2490
             "test_classifier_on_unit_test_data",
             "test_classifier_on_basic_motions",
@@ -141,15 +141,24 @@ class SignatureClassifier(BaseClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         self.signature_method = SignatureTransformer(
-            augmentation_list,
-            window_name,
-            window_depth,
-            window_length,
-            window_step,
-            rescaling,
-            sig_tfm,
-            depth,
+            self.augmentation_list,
+            self.window_name,
+            self.window_depth,
+            self.window_length,
+            self.window_step,
+            self.rescaling,
+            self.sig_tfm,
+            self.depth,
         ).signature_method
         self.pipeline = None
 

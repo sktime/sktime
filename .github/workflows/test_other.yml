@@ -10,7 +10,7 @@ jobs:
     outputs:
       other_change: ${{ steps.filter.outputs.other_change }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -51,7 +51,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: update local git tracking reference
         run: git remote set-branches origin main
@@ -75,7 +75,7 @@ jobs:
 
       - name: install core, test and all soft dependencies
         shell: bash
-        run: uv pip install .[all_extras_pandas2,tests]
+        run: uv pip install .[all_extras,tests]
         env:
           UV_SYSTEM_PYTHON: 1
 

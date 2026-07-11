@@ -15,17 +15,11 @@ import pandas as pd
 
 from sktime.base import BaseObject
 from sktime.datatypes import mtype_to_scitype
-from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils._testing.estimator_checks import _make_primitives, _make_tabular_X
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
-
-OLD_MIXINS = (_PanelToPanelTransformer,)
-
-OLD_PANEL_MIXINS = (_PanelToPanelTransformer,)
-
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
@@ -69,9 +63,6 @@ class TransformerTestScenario(TestScenario, BaseObject):
         # pre-refactor classes can't deal with Series *and* Panel both
         X_scitype = self.get_tag("X_scitype")
         y_scitype = self.get_tag("y_scitype", None, raise_error=False)
-
-        if _is_child_of(obj, OLD_PANEL_MIXINS) and X_scitype != "Panel":
-            return False
 
         # if transformer requires y, the scenario also must pass y
         has_y = self.get_tag("has_y")
@@ -143,13 +134,10 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
             # determine output by X_out_scitype
             #   until transformer refactor is complete, use the old classes, too
-            if _is_child_of(obj, OLD_MIXINS):
-                p2p = _is_child_of(obj, _PanelToPanelTransformer)
-            else:
-                s2s = X_scitype == "Series" and X_out_series
-                s2p = X_scitype == "Series" and X_out_prim
-                p2t = X_scitype == "Panel" and X_out_prim
-                p2p = X_scitype == "Panel" and X_out_series
+            s2s = X_scitype == "Series" and X_out_series
+            s2p = X_scitype == "Series" and X_out_prim
+            p2t = X_scitype == "Panel" and X_out_prim
+            p2p = X_scitype == "Panel" and X_out_series
 
             # expected input type of inverse_transform is expected output of transform
             if s2p:

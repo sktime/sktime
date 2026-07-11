@@ -101,13 +101,12 @@ class MyForecaster(BaseForecaster):
         #   in that case, X/y are passed through without conversion if on the list
         #   if not on the list, converted to the first entry of the same scitype
         #
-        # scitype:y controls whether internal y can be univariate/multivariate
+        # capability:multivariate controls whether inner y can be multivariate
         # if multivariate is not valid, applies vectorization over variables
-        "scitype:y": "univariate",
-        # valid values: "univariate", "multivariate", "both"
-        #   "univariate": inner _fit, _predict, etc, receive only univariate series
-        #   "multivariate": inner methods receive only series with 2 or more variables
-        #   "both": inner methods can see series with any number of variables
+        "capability:multivariate": False,
+        # valid values: True, False
+        #   False: inner _fit, _predict, etc, receive only univariate series
+        #   True: inner methods work with series with any number of variables
         #
         # capability tags: properties of the estimator
         # --------------------------------------------
@@ -214,7 +213,40 @@ class MyForecaster(BaseForecaster):
         # leave this as is
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
+        # do not put anything else in __init__,
+        # use __dynamic_tags__ for dynamic tag setting
+        # use __post_init__ for any further initialization logic
+
+    # todo: add if there is dynamic tag setting logic, otherwise delete this method
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # todo: if tags of estimator depend on component tags, set these here
+        #  typically only needed if estimator is a composite
+        #  tags set here apply to the instance, and override the class tags
+        #
+        # example 1: conditional setting of a tag based on parameter foo
+        # if self.foo == 42:
+        #   self.set_tags(**{"capability:missing_values": True})
+        # example 2: cloning tags from component estimator component_estimator
+        #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
+
+    # todo: add any post-init logic here, otherwise delete this method
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        # todo: optional, parameter checking or coercion should happen here
         # if writes derived values to self, should *not* overwrite self.paramc etc
         # instead, write to self._paramc, self._newparam (starting with _)
         # example of handling conditional parameters or mutable defaults:
@@ -224,17 +256,7 @@ class MyForecaster(BaseForecaster):
             self._paramc = MyOtherEstimator(foo=42)
         else:
             # estimators should be cloned to avoid side effects
-            self._paramc = paramc.clone()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
+            self._paramc = self.paramc.clone()
 
     # todo: implement this, mandatory
     def _fit(self, y, X, fh):
@@ -250,16 +272,17 @@ class MyForecaster(BaseForecaster):
         y : sktime time series object
             guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
+        X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series to fit to.
 
@@ -335,13 +358,14 @@ class MyForecaster(BaseForecaster):
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast

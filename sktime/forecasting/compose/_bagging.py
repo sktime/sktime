@@ -11,7 +11,6 @@ from sklearn.utils import check_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
-from sktime.transformations.base import BaseTransformer
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
@@ -81,9 +80,13 @@ class BaggingForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fkiraly", "ltsaprounis"],
-        "scitype:y": "both",  # which y are fine? univariate/multivariate/both
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        # estimator type
+        # --------------
+        "capability:multivariate": True,  # which y are fine? True/False
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": True,  # can estimator handle missing data?
         "y_inner_mtype": PANDAS_MTYPES,
         # which types do _fit, _predict, assume for y?
@@ -101,7 +104,7 @@ class BaggingForecaster(BaseForecaster):
 
     def __init__(
         self,
-        bootstrap_transformer: BaseTransformer = None,
+        bootstrap_transformer=None,
         forecaster: BaseForecaster = None,
         sp: int = 2,
         random_state: int | np.random.RandomState = None,
@@ -111,25 +114,43 @@ class BaggingForecaster(BaseForecaster):
         self.sp = sp
         self.random_state = random_state
 
-        if bootstrap_transformer is None:
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.bootstrap_transformer is None:
             # if the transformer is None, this uses the statsmodels dependent
             # sktime.transformations.bootstrap.STLBootstrapTransformer
             #
             # done before the super call to trigger exceptions
             self.set_tags(**{"python_dependencies": "statsmodels"})
 
-        super().__init__()
-
         # set the tags based on forecaster
         tags_to_clone = [
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
         ]
-        if forecaster is not None:
+        if self.forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        bootstrap_transformer = self.bootstrap_transformer
         self.bootstrap_transformer_ = self._check_transformer(bootstrap_transformer)
-        self.forecaster_ = self._check_forecaster(forecaster)
+        self.forecaster_ = self._check_forecaster(self.forecaster)
 
     def _check_transformer(self, transformer):
         """Check if the transformer is a valid transformer for BaggingForecaster.
@@ -215,7 +236,7 @@ class BaggingForecaster(BaseForecaster):
         y : pd.DataFrame
             Time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -284,7 +305,7 @@ class BaggingForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -319,7 +340,7 @@ class BaggingForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -396,9 +417,10 @@ class BaggingForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
+
         from sktime.forecasting.compose import YfromX
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6, n_series=3)
         fcst = YfromX.create_test_instance()

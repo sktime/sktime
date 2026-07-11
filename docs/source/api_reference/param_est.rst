@@ -124,3 +124,15 @@ Cointegration
     :template: class.rst
 
     JohansenCointegration
+
+
+Impulse and Shock Response Estimation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.impulse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ImpulseResponseFunction

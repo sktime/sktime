@@ -35,7 +35,7 @@ def _make_panel(
         number of variables in the time series
     n_timepoints : int, optional, default=20
         number of time points in each series
-    y : None (default), or 1D np.darray or 1D array-like, shape (n_instances, )
+    y : None (default), or 1D np.ndarray or 1D array-like, shape (n_instances, )
         if passed, return will be generated with association to y
     all_positive : bool, optional, default=False
         whether series contain only positive values when generated
