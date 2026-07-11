@@ -27,12 +27,43 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         Controls dropout rate of LSTM layer
     attention : bool, default=False
         If True, uses attention mechanism before LSTM layer
-    activation : str or None, default=None
-        Activation function used in the output layer.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_hidden : str, default="relu"
-        Activation function used for hidden layers.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
+        ``ELU``, ``SELU``, ``GELU``.
+    activation_hidden : str, Callable, or None, default="ReLU"
+        Activation applied to the hidden layers.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
+        ``ELU``, ``SELU``, ``GELU``.
     num_epochs : int, default=2000
         The number of epochs to train the model.
     batch_size : int, default=128
@@ -66,6 +97,12 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
         for default PyTorch initialization.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     verbose : bool, default = False
@@ -108,8 +145,8 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         lstm_size: int = 8,
         dropout: float = 0.8,
         attention: bool = False,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable | None = "ReLU",
         # base regressor specific
         num_epochs: int = 2000,
         batch_size: int = 128,
@@ -120,6 +157,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
         init_weights: str | None = "kaiming_uniform",
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int | None = None,
@@ -139,6 +177,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -165,6 +204,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
             optimizer_kwargs=self.optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
+            metrics=self.metrics,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
@@ -197,8 +237,8 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
             lstm_size=self.lstm_size,
             dropout=self.dropout,
             attention=self.attention,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             init_weights=self.init_weights,
             random_state=self.random_state,
         )
@@ -229,7 +269,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
             "lstm_size": 4,
             "dropout": 0.5,
             "attention": False,
-            "activation": "relu",
+            "activation": "ReLU",
             "num_epochs": 50,
             "batch_size": 2,
             "optimizer": "RMSprop",
@@ -248,7 +288,7 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
             "lstm_size": 4,
             "dropout": 0.25,
             "attention": True,
-            "activation": "relu",
+            "activation": "ReLU",
             "num_epochs": 50,
             "batch_size": 2,
             "optimizer": "RMSprop",

@@ -120,12 +120,8 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
@@ -177,7 +173,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
@@ -308,13 +303,10 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         _y_df = _y
 
         index_names = _y.index.names
-        if isinstance(_y.index, pd.MultiIndex):
-            _y = _frame2numpy(_y)
+        if isinstance(_y, pd.DataFrame):
+            _y = _y.values.reshape(1, -1, _y.shape[1])
         else:
-            if isinstance(_y, pd.DataFrame):
-                _y = _y.values.reshape(1, -1, _y.shape[1])
-            else:
-                _y = _y.values.reshape(1, -1, 1)
+            _y = _y.values.reshape(1, -1, 1)
 
         results = []
         for i in range(_y.shape[0]):
@@ -414,58 +406,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         )
 
         return test_params
-
-
-def _same_index(data):
-    """
-    Ensure that all series within a multi-indexed DataFrame share the same index.
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-        A multi-indexed DataFrame where the last level of the index should be the same
-        across all grouped series.
-
-    Returns
-    -------
-    pandas.Index, int
-        The common index found at the last level and the length of this index
-    """
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data):
-    """
-    Convert a multi-indexed DataFrame into a 3D NumPy array.
-
-    The function first ensures that all series in `data` share the same index at the
-    last level using `_same_index`, then reshapes the DataFrame values into a NumPy
-    array with dimensions `(batch_size, sequence_length, feature_dim)`.
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-        A multi-indexed DataFrame with consistent last-level indices across all series.
-
-    Returns
-    -------
-    numpy.ndarray
-        A 3D NumPy array of shape `(n_groups, sequence_length, n_features)`, where:
-        - `n_groups` is the number of unique index groups in `data`
-        - `sequence_length` is the length of the common index
-        - `n_features` is the number of columns in `data`.
-    """
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
 
 
 @_multiton

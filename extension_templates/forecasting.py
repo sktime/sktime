@@ -214,6 +214,7 @@ class MyForecaster(BaseForecaster):
         super().__init__()
 
         # do not put anything else in __init__,
+        # use __dynamic_tags__ for dynamic tag setting
         # use __post_init__ for any further initialization logic
 
     # todo: add if there is dynamic tag setting logic, otherwise delete this method
@@ -241,6 +242,9 @@ class MyForecaster(BaseForecaster):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         # todo: optional, parameter checking or coercion should happen here
         # if writes derived values to self, should *not* overwrite self.paramc etc

@@ -1919,7 +1919,7 @@
       "name": "Santiago Smith Silva",
       "avatar_url": "https://avatars.githubusercontent.com/u/16252054?v=4",
       "profile": "https://github.com/sssilvar",
-      "contributions": ["code"]
+      "contributions": ["code", "maintenance"]
     },
     {
       "login": "DManowitz",
@@ -2803,7 +2803,9 @@
       "name": "Gunmay Jhingran",
       "avatar_url": "https://avatars.githubusercontent.com/u/142904972?v=4",
       "profile": "https://github.com/gun29may",
-      "contributions": ["doc"]
+      "contributions": [
+        "doc"
+      ]
     },
     {
       "login": "paramsureliya",
@@ -2857,6 +2859,57 @@
       "profile": "https://github.com/Rusheel86",
       "contributions": [
         "bug"
+      ]
+    },
+    {
+      "login": "SajeelHussain",
+      "name": "Sajeel-Awan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/75925740?v=4",
+      "profile": "https://github.com/SajeelHussain",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+	{
+      "login": "stephanielees",
+      "name": "Stephanie Lee Sugiharjo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/128904767?v=4",
+      "profile": "https://github.com/stephanielees",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "areychana",
+      "name": "Archana K.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/93970069?v=4",
+      "profile": "https://github.com/areychana",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "kerimkarakan",
+      "name": "Kerim Karakan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/152054183?v=4",
+      "profile": "https://github.com/kerimkarakan",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "XAheli",
+      "name": "Aheli Poddar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/121807815?v=4",
+      "profile": "https://github.com/XAheli",
+      "contributions": [
+        "bug",
+        "code",
+        "maintenance",
+        "test"
       ]
     }
   ]

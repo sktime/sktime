@@ -66,7 +66,9 @@ Deep learning
     :template: class.rst
 
     convtimenet.ConvTimeNetClassifier
+    convtran.ConvTranClassifierTorch
     cnn.CNNClassifier
+    cnn.CNNClassifierTorch
     cntc.CNTCClassifier
     fcn.FCNClassifier
     gru.GRUClassifier
@@ -76,6 +78,7 @@ Deep learning
     lstmfcn.LSTMFCNClassifier
     lstmfcn.LSTMFCNClassifierTorch
     macnn.MACNNClassifier
+    macnn.MACCNNClassifierTorch
     mcdcnn.MCDCNNClassifier
     mcdcnn.MCDCNNClassifierTorch
     mlp.MLPClassifier
@@ -96,8 +99,9 @@ Foundation models
     :toctree: auto_generated/
     :template: class.rst
 
+    MantisClassifier
     MomentFMClassifier
-
+    TSPulseClassifier
 
 Dictionary-based
 ----------------

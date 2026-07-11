@@ -149,8 +149,8 @@ class KernelFromDist(BasePairwiseTransformerPanel):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.dists_kernels.dtw import DtwDist
-        from sktime.transformations.series.adapt import PandasTransformAdaptor
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.adapt import PandasTransformAdaptor
+        from sktime.transformations.summarize import SummaryTransformer
 
         params1 = {"dist": DtwDist()}
         t = SummaryTransformer("mean", None)

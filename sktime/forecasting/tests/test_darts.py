@@ -8,6 +8,7 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_longley
 from sktime.forecasting.darts import (
@@ -17,7 +18,6 @@ from sktime.forecasting.darts import (
 )
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["fnhirwa"]
 

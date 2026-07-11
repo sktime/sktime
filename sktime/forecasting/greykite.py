@@ -69,11 +69,13 @@ class GreykiteForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
         "capability:pred_int": False,  # Can produce prediction intervals.
-        "capability:insample": False,
+        "capability:unequal_length": False,
         "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
+        "capability:insample": False,
         # CI and test flags
         # -----------------
-        "tests:vm": True,
+        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
     }
 
     def __init__(
@@ -98,6 +100,9 @@ class GreykiteForecaster(BaseForecaster):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         self._forecaster = None
         self._forecast = None

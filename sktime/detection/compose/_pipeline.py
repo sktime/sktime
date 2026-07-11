@@ -30,7 +30,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.detection.lof import SubLOF
-    >>> from sktime.transformations.series.detrend import Detrender
+    >>> from sktime.transformations.detrend import Detrender
     >>>
     >>> n = 100
     >>> x = pd.Series(np.linspace(0, 5, n) + np.random.normal(0, 0.1, size=n))
@@ -379,9 +379,9 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         from sklearn.preprocessing import StandardScaler
 
         from sktime.detection.lof import SubLOF
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-        from sktime.transformations.series.detrend import Detrender
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.detrend import Detrender
+        from sktime.transformations.exponent import ExponentTransformer
 
         lof = SubLOF(
             n_neighbors=5, window_size=datetime.timedelta(days=25), novelty=True
@@ -401,7 +401,3 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         params3 = {"steps": [Detrender(), lof]}
 
         return [params1, params2, params3]
-
-
-# todo 1.0.0 - remove alias, i.e., remove this line
-AnnotatorPipeline = DetectorPipeline

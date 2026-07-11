@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.outlier_detection import HampelFilter
+from sktime.transformations.outlier_detection import HampelFilter
 
 
 @pytest.mark.skipif(

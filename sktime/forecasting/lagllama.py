@@ -246,6 +246,7 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pretrain": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:unequal_length": False,
         "authors": ["pranavvp16"],
         "maintainers": ["pranavvp16"],
         "python_version": "<3.14",
@@ -295,7 +296,6 @@ class LagLlamaForecaster(BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         import torch

@@ -26,11 +26,12 @@ State:
 __author__ = ["fkiraly"]
 
 
+from skbase.utils.dependencies import _check_estimator_deps
+
 from sktime.alignment.utils.utils_align import convert_align_to_align_loc, reindex_iloc
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert
 from sktime.datatypes._dtypekind import DtypeKind
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BaseAligner(BaseEstimator):
@@ -66,7 +67,6 @@ class BaseAligner(BaseEstimator):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass

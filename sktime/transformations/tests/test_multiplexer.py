@@ -17,7 +17,7 @@ from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import MultiplexTransformer
-from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.transformations.exponent import ExponentTransformer
 from sktime.utils.validation.forecasting import check_scoring
 
 RELEVANT_MODULES = ["sktime.transformations", "sktime.forecasting", "sktime.split"]
