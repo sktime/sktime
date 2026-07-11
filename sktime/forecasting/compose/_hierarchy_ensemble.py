@@ -10,7 +10,6 @@ import pandas as pd
 from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 from sktime.utils.parallel import parallelize
 from sktime.utils.warnings import warn
 
@@ -241,6 +240,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         # Creating aggregated levels in data
         if _check_index_no_total(y):
             z = self._aggregate(y)
@@ -414,6 +415,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : an instance of self.
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         z = y
         if _check_index_no_total(y):
             z = self._aggregate(y)
@@ -458,6 +461,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Point predictions
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         if X is not None:
             if _check_index_no_total(X):
                 X = self._aggregate(X)

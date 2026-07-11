@@ -344,7 +344,7 @@ def _check_feature_scope(feature_scope):
 
 
 def _check_ts_freq(ts_freq, DUMMIES):
-    if (ts_freq is not None) & (ts_freq not in DUMMIES["ts_frequency"].unique()):
+    if (ts_freq is not None) and (ts_freq not in DUMMIES["ts_frequency"].unique()):
         raise ValueError(
             "Invalid ts_freq specified, must be in: "
             + ", ".join(DUMMIES["ts_frequency"].unique())
