@@ -66,6 +66,7 @@ from sktime.datatypes import (
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._state_at import _StateAtMixin
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
@@ -82,7 +83,7 @@ def _coerce_to_list(obj):
         return obj
 
 
-class BaseForecaster(_PredictProbaMixin, BaseEstimator):
+class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
     """Base forecaster template class.
 
     The base forecaster specifies the methods and method signatures that all forecasters
@@ -174,7 +175,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass
@@ -482,9 +482,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
-        # if fit is called, estimator is reset, including fitted state
+        # skip reset on the first fit after pretrain; on refit, discard
+        # task-specific fitted state while retaining pretrained state
         if not self._state == "pretrained":
-            self.reset()
+            self._reset_at("pretrained")
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)

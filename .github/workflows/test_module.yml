@@ -1,6 +1,10 @@
 name: test module
 on:
   workflow_call:
+
+env:
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
+
 jobs:
   detect:
     name: detect
@@ -10,7 +14,7 @@ jobs:
     outputs:
       module_changes: ${{ steps.filter.outputs.changes }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -73,7 +77,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: ${{ matrix.sktime-component }}, ${{ matrix.operating-system }}, ${{ matrix.python-version }}
         uses: ./.github/actions/test-component
