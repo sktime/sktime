@@ -31,16 +31,15 @@ class IgnoreX(_DelegatedForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.compose import IgnoreX, make_reduction
-    >>> from sklearn.linear_model import LinearRegression
     >>> from sktime.datasets import load_longley
-    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.forecasting.compose import IgnoreX, YfromX
+    >>> from sklearn.linear_model import LinearRegression
     >>> y, X = load_longley()
-    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
-    >>> fh = y_test.index
-    >>> forecaster = IgnoreX(make_reduction(LinearRegression(), window_length=5))
-    >>> _ = forecaster.fit(y=y_train, X=X_train, fh=fh)
-    >>> y_pred = forecaster.predict(X=X_test)
+    >>> y_train, X_train = y.iloc[:-3], X.iloc[:-3]
+    >>> X_pred = X.iloc[-3:]
+    >>> forecaster = IgnoreX(YfromX(LinearRegression()))
+    >>> _ = forecaster.fit(y=y_train, X=X_train)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_pred)
     """
 
     # attribute for _DelegatedForecaster, which then delegates
