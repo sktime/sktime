@@ -9,7 +9,6 @@ from scipy.special import inv_boxcox
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.transformations.boxcox import BoxCoxTransformer
 
 
 class BoxCoxBiasAdjustedForecaster(BaseForecaster):
@@ -91,6 +90,8 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        from sktime.transformations.boxcox import BoxCoxTransformer
+
         self.boxcox_transformer_ = BoxCoxTransformer(lambda_fixed=self.lambda_fixed)
         y_transformed = self.boxcox_transformer_.fit_transform(y)
 
