@@ -17,7 +17,7 @@
 import math
 from dataclasses import dataclass
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from .configuration_TimerS1 import TimerS1Config
 from .ts_generation_mixin import TSGenerationMixin

@@ -110,7 +110,6 @@ class InceptionTimeRegressor(BaseDeepRegressor):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         network_params = {
@@ -241,7 +240,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

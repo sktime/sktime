@@ -32,11 +32,12 @@ Inspection methods:
 
 __author__ = ["fkiraly"]
 
+from skbase.utils.dependencies import _check_estimator_deps
+
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_Series_to_Panel
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BasePairwiseTransformer(BaseEstimator):

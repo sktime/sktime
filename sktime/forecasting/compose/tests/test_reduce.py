@@ -7,6 +7,7 @@ __author__ = ["Lovkush-A", "mloning", "LuisZugasti", "AyushmaanSeth"]
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression
@@ -37,7 +38,6 @@ from sktime.split.tests.test_split import _get_windows
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = [13, 17]

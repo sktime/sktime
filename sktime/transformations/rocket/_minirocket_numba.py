@@ -3,8 +3,8 @@
 __author__ = ["angus924"]
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.numba.njit import njit
 
 if _check_soft_dependencies("numba", severity="none"):

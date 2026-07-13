@@ -384,6 +384,33 @@ class requires_cython(_BaseTag):
     }
 
 
+class r_dependencies(_BaseTag):
+    """R package dependency requirement specifiers, only for estimators from R.
+
+    - String name: ``"r_dependencies"``
+    - Private tag, developer and framework facing
+    - Values: None, or list of str, each str an R package name
+    - Example: ``["Rcpp"]``
+    - Example 2: ``["Rcpp", "dplyr"]``
+    - Default: no R requirements (``None``)
+
+    Experimental tag for objects that interface to R packages via ``rpy2``.
+
+    Should be set only for objects that interface R packages.
+
+    Currently no inequalities or version specifiers are supported,
+    only package names as strings.
+    """
+
+    _tags = {
+        "tag_name": "r_dependencies",
+        "parent_type": "object",
+        "tag_type": ("list", "str"),
+        "short_descr": "R dependencies of estimator as list of str",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 class tests__core(_BaseTag):
     """Whether tests for this estimator are triggered by framework changes.
 
@@ -1074,6 +1101,36 @@ class capability__pretrain(_BaseTag):
         "parent_type": "forecaster",
         "tag_type": "bool",
         "short_descr": "can use pretrain for global learning",
+        "user_facing": True,
+    }
+
+
+class pretrain__fitted_params(_BaseTag):
+    """Property: named attributes that carry pretrained state.
+
+    - String name: ``"pretrain:fitted_params"``
+    - Public property tag
+    - Values: list of str, names of estimator attributes
+    - Example: ``["model_", "network_"]``
+    - Default: ``[]`` (empty list)
+
+    The ``pretrain:fitted_params`` tag lists the names of instance attributes
+    that store state learned by ``pretrain``. State-aware operations such as
+    the private ``_reset_at("pretrained")`` preserve exactly these attributes,
+    while task-fitted attributes are removed.
+
+    If the tag is empty, state-aware operations fall back to the runtime list
+    ``_pretrained_attrs``, which ``pretrain`` populates automatically with
+    attributes created during the ``pretrain`` call.
+
+    The tag is only inspected for estimators with ``capability:pretrain=True``.
+    """
+
+    _tags = {
+        "tag_name": "pretrain:fitted_params",
+        "parent_type": "forecaster",
+        "tag_type": ("list", "str"),
+        "short_descr": "attributes carrying pretrained state",
         "user_facing": True,
     }
 

@@ -10,6 +10,7 @@ __all__ = [
 
 import numpy as np
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.ensemble import VotingClassifier
 from sklearn.model_selection import (
@@ -38,7 +39,6 @@ from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.pca import PCATransformer
 from sktime.utils._testing.panel import _make_panel_X, make_classification_problem
-from sktime.utils.dependencies import _check_soft_dependencies
 
 DATA_ARGS = [
     {"return_numpy": True, "n_columns": 2, "n_instances": 7, "n_timepoints": 12},

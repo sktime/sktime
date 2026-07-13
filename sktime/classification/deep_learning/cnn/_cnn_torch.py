@@ -43,12 +43,42 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         "valid" or "same" otherwise.
     use_bias : bool, default = True
         Whether to use bias in output layer.
-    activation : str or callable or None, default = None
-        Activation on output layer. None when using CrossEntropyLoss.
-    activation_hidden : str or callable, default = "Sigmoid"
-        Activation for hidden conv layers.
-        Recommended activations include 'Sigmoid', 'ReLU', 'Tanh',
-        'Softmax' or 'LogSoftmax'.
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+    activation_hidden : str, Callable, or None, default="Sigmoid"
+        Activation applied to the hidden layers.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``Sigmoid``, ``ReLU``, ``Tanh``,
+        ``Softmax``, ``LogSoftmax``.
     optimizer : str or callable, default = "Adam"
         Optimizer to use. Same as TF default (Adam).
     optimizer_kwargs : dict or None, default = None
