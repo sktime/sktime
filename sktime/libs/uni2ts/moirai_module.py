@@ -2,8 +2,6 @@ from functools import partial
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.utils.dependencies import _safe_import
-
 if _check_soft_dependencies("torch", severity="none"):
     import torch.nn.functional as F
     from torch import nn
@@ -28,11 +26,9 @@ else:
         pass
 
 
-PyTorchModelHubMixin = _safe_import(
-    "huggingface_hub.PyTorchModelHubMixin", return_object="None"
-)
-
-if PyTorchModelHubMixin is None:
+if _check_soft_dependencies(["torch", "huggingface_hub"], severity="none"):
+    from huggingface_hub import PyTorchModelHubMixin
+else:
     # Create Dummy class
     class PyTorchModelHubMixin:
         def __init__(self):

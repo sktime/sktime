@@ -5,8 +5,9 @@
 __author__ = ["AyushmaanSeth", "mloning", "alwinw", "MatthewMiddlehurst"]
 __all__ = ["TSFreshFeatureExtractor", "TSFreshRelevantFeatureExtractor"]
 
+from skbase.utils.dependencies import _check_estimator_deps
+
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import check_n_jobs
 
 
@@ -67,7 +68,6 @@ class _TSFreshFeatureExtractor(BaseTransformer):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # _get_extraction_params should be after the init because this imports tsfresh
@@ -530,7 +530,6 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self.default_fc_parameters_ = self._get_extraction_params()

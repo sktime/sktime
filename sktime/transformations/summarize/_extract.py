@@ -451,9 +451,10 @@ class FittedParamExtractor(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.trend import TrendForecaster
-        from sktime.utils.dependencies import _check_estimator_deps
 
         # accessing a nested parameter
         params = [

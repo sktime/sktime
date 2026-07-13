@@ -3,9 +3,9 @@
 
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.param_est.seasonality import SeasonalityACF
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(

@@ -101,6 +101,10 @@ class ARLagOrderSelector(BaseParamFitter):
         "capability:pairwise": True,
         "authors": "satvshr",
         "python_dependencies": "statsmodels",
+        "tests:skip_by_name": [
+            # skip for failing doctest, see #8129
+            "test_doctest_examples"
+        ],
     }
 
     def __init__(

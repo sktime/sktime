@@ -12,11 +12,11 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 

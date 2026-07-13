@@ -38,8 +38,6 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.registry import is_scitype, scitype
-from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.multiindex import apply_method_per_series
@@ -200,6 +198,8 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     if len(transformers) == 1:
         tf_fit = transformers[0].fit(y)
     else:
+        from sktime.transformations.compose import FeatureUnion
+
         feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
         tf_fit = FeatureUnion(feat).fit(y)
     X_from_y = tf_fit.transform(y)
@@ -329,11 +329,11 @@ class _Reducer(_BaseWindowForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.linear_model import LinearRegression
         from sklearn.pipeline import make_pipeline
 
         from sktime.transformations.reduce import Tabularizer
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         # naming convention is as follows:
         #   reducers with Tabular take an sklearn estimator, e.g., LinearRegressor
@@ -456,6 +456,8 @@ class _Reducer(_BaseWindowForecaster):
         if len(self.transformers_) == 1:
             X_from_y = self.transformers_[0].fit_transform(y_raw)
         else:
+            from sktime.transformations.compose import FeatureUnion
+
             ref = self.transformers_
             feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
             X_from_y = FeatureUnion(feat).fit_transform(y_raw)
@@ -526,7 +528,7 @@ class _DirectReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -577,6 +579,8 @@ class _DirectReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
+            from sktime.transformations.summarize import WindowSummarizer
+
             self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
 
         if self.window_length is None:
@@ -793,7 +797,7 @@ class _MultioutputReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -887,7 +891,7 @@ class _RecursiveReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -932,6 +936,8 @@ class _RecursiveReducer(_Reducer):
             self.transformers_ = clone(self.transformers)
 
         if self.transformers is None and self.pooling == "global":
+            from sktime.transformations.summarize import WindowSummarizer
+
             kwargs = {
                 "lag_feature": {
                     "lag": list(range(1, self.window_length + 1)),
@@ -1130,7 +1136,7 @@ class _DirRecReducer(_Reducer):
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-             The forecasters horizon with the steps ahead to predict.
+             The forecasting horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -3152,10 +3158,9 @@ class YfromX(BaseForecaster, _ReducerMixin):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
-
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         params1 = {
             "estimator": LinearRegression(),

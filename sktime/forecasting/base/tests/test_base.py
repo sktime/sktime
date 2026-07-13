@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
@@ -23,7 +24,6 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
@@ -556,3 +556,31 @@ def _get_exog_proba_fcst():
     reg_proba = ResidualDouble(lin_reg, lin_reg)
 
     return YfromX(reg_proba)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base"]),
+    reason="run only if forecasting base module has changed",
+)
+def test_pretrain_respects_preexisting_attrs():
+    """Test that pretrain does not misclassify preexisting attrs as set by pretrain.
+
+    Regression test for bug #10531, but also a general API contract test.
+    """
+
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(2,),
+        min_timepoints=5,
+        max_timepoints=5,
+    )
+
+    forecaster = NaiveForecaster()
+
+    forecaster.pretrain(y_panel)
+
+    msg = "pretrain should not misclassify preexisting attrs as set by pretrain"
+    assert len(forecaster._pretrained_attrs) == 0, msg
+    assert len(forecaster.get_pretrained_params()) == 0, msg

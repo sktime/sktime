@@ -12,10 +12,10 @@ import warnings
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
