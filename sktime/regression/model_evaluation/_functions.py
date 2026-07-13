@@ -1,6 +1,11 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Utilities for performance evaluation of time series regression models."""
+"""Utilities for performance evaluation of time series regression models.
+
+The regression ``evaluate`` is a thin wrapper around the estimator type
+agnostic ``evaluate`` in ``sktime.classification.model_evaluation``,
+with regression-facing signature, defaults, and docstring.
+"""
 
 __author__ = ["NAME-ASHWANIYADAV"]
 __all__ = ["evaluate"]
@@ -8,40 +13,6 @@ __all__ = ["evaluate"]
 import collections.abc
 
 import numpy as np
-
-from sktime.utils._panel_evaluate import _run_evaluate
-
-
-def _check_scores(metrics):
-    """Validate regression metrics and return them in a standardised dict.
-
-    For regression, all metrics are deterministic (no predict_proba), so
-    every metric is placed under the ``"pred"`` key.
-
-    Parameters
-    ----------
-    metrics : callable, list of callables, or None
-        Regression scoring functions that accept ``(y_true, y_pred)``.
-        If None, defaults to ``sklearn.metrics.mean_squared_error``.
-
-    Returns
-    -------
-    metrics_type : dict
-        Dictionary with key ``"pred"`` mapping to the list of metrics.
-    """
-    if metrics is None:
-        from sklearn.metrics import mean_squared_error
-
-        metrics = [mean_squared_error]
-
-    if not isinstance(metrics, list):
-        metrics = [metrics]
-
-    for metric in metrics:
-        if not callable(metric):
-            raise ValueError(f"Metric {metric} is not callable")
-
-    return {"pred": metrics}
 
 
 def evaluate(
@@ -80,6 +51,10 @@ def evaluate(
 
     A distributed or parallel backend can be chosen using ``backend``.
 
+    This function delegates to the estimator type agnostic
+    :func:`sktime.classification.model_evaluation.evaluate`, as the
+    backtesting workflow is identical for classifiers and regressors.
+
     Parameters
     ----------
     regressor : sktime.BaseRegressor
@@ -106,7 +81,7 @@ def evaluate(
 
     scoring : callable or list of callables, optional (default=None)
         A scoring function or list of scoring functions that take
-        ``(y_true, y_pred)`` and optionally ``y_train``.
+        ``(y_true, y_pred)`` and return a float.
         If None, defaults to ``mean_squared_error``.
 
     return_data : bool, default=False
@@ -170,15 +145,21 @@ def evaluate(
     >>> cv = KFold(n_splits=3, shuffle=False)
     >>> results = evaluate(regressor=regressor, cv=cv, X=X, y=y)
     """
-    scoring = _check_scores(scoring)
+    # deferred import, sibling type modules must not cross-import at module
+    # level, see sktime/tests/test_cross_module_imports.py
+    from sktime.classification.model_evaluation import evaluate as _evaluate
 
-    return _run_evaluate(
-        estimator=regressor,
-        estimator_type="regressor",
+    if scoring is None:
+        from sklearn.metrics import mean_squared_error
+
+        scoring = mean_squared_error
+
+    return _evaluate(
+        classifier=regressor,
         cv=cv,
-        scoring=scoring,
         X=X,
         y=y,
+        scoring=scoring,
         return_data=return_data,
         error_score=error_score,
         backend=backend,
