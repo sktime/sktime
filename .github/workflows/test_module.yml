@@ -1,6 +1,10 @@
 name: test module
 on:
   workflow_call:
+
+env:
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
+
 jobs:
   detect:
     name: detect

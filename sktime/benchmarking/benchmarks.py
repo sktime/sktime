@@ -11,7 +11,7 @@ from sktime.benchmarking._benchmarking_dataclasses import (
     ResultObject,
     TaskObject,
 )
-from sktime.benchmarking._storage_handlers import get_storage_backend
+from sktime.benchmarking._results_persistence import BenchmarkResultsPersistence
 from sktime.benchmarking._utils import _check_id_format
 from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
@@ -125,40 +125,85 @@ class FailedExperimentRecord:
 
 @dataclass
 class _BenchmarkingResults:
-    """Results of a benchmarking run.
+    """In-memory container for benchmark results.
+
+    Holds completed `ResultObject` instances and provides query and export
+    operations. All file I/O is delegated to `BenchmarkResultsPersistence`.
+
+    On construction, previously saved results are loaded automatically when
+    ``path`` is given — either from a completed output file or from crash-safe
+    partial checkpoints left by an interrupted run.
 
     Parameters
     ----------
-    results : list of ResultObject
-        The results of the benchmarking run.
+    path : str or None
+        Path to the benchmark results file (e.g. ``"results.json"``).
+        Must refer to a file, not a directory; the file extension determines
+        the final storage format (``.json``, ``.csv``, or ``.parquet``).
+        When ``None``, results are kept in memory only and no file I/O
+        occurs.
+    results : list of ResultObject, optional
+        In-memory result list. Overwritten on init by loading from persistence
+        when saved data exists at ``path`` or in its checkpoint directory.
     """
 
     path: str
     results: list[ResultObject] = field(default_factory=list)
 
     def __post_init__(self):
-        """Load existing results from the path."""
-        self.storage_backend = get_storage_backend(self.path)
-        self.results = self.storage_backend(self.path).load()
+        """Initialise persistence and load any previously saved results."""
+        self._persistence = BenchmarkResultsPersistence(self.path)
+        self.results = self._persistence.load()
 
     def update(self, new_result):
-        """Update the results with a new result."""
+        """Add or replace a result and checkpoint it to disk.
+
+        If a result with the same ``task_id`` and ``model_id`` already exists,
+        it is replaced in memory. The new result is also written to incremental
+        checkpoint storage so progress survives crashes.
+
+        Parameters
+        ----------
+        new_result : ResultObject
+            A completed experiment result.
+        """
+        self.results = [
+            result
+            for result in self.results
+            if not (
+                result.task_id == new_result.task_id
+                and result.model_id == new_result.model_id
+            )
+        ]
+        # Append new `ResultObject` to in-memory storage
         self.results.append(new_result)
-        # todo: this should also update the storage backend!
+        self._persistence.persist_result(new_result)
 
     def save(self):
-        """Save the results to a file."""
-        self.storage_backend(self.path).save(self.results)
+        """Write all results to the final output file at ``path``.
+
+        Persists the complete in-memory result set in the format determined
+        by the file extension of ``path`` and removes
+        incremental checkpoint files in ``{path}.parts/``. No operation when
+        ``path`` is ``None``.
+        """
+        self._persistence.save_final(self.results)
 
     def contains(self, task_id: str, model_id: str):
-        """Check if the results contain a specific task and model.
+        """Check whether a task-model result is present in memory.
 
         Parameters
         ----------
         task_id : str
-            The task ID.
+            Task identifier.
         model_id : str
-            The model ID.
+            Model (estimator) identifier.
+
+        Returns
+        -------
+        bool
+            ``True`` if a result for the given ``task_id`` and ``model_id``
+            exists in the in-memory result list.
         """
         return any(
             result.task_id == task_id and result.model_id == model_id
@@ -166,7 +211,14 @@ class _BenchmarkingResults:
         )
 
     def to_dataframe(self):
-        """Convert the results to a pandas DataFrame."""
+        """Convert in-memory results to a summary pandas DataFrame.
+
+        Returns
+        -------
+        pandas.DataFrame
+            Aggregated benchmark metrics per task-model pair. Empty when
+            no results are stored.
+        """
         if not self.results:
             return pd.DataFrame()
         results_df = [result.to_dataframe() for result in self.results]
@@ -191,29 +243,19 @@ class _SktimeRegistry:
 
         Parameters
         ----------
-        entity_id: str
-            A unique entity ID.
-        entry_point: Callable or str
-            The python entrypoint of the entity class. Should be one of:
-
-            - the string path to the python object (e.g.module.name:factory_func, or
-                module.name:Class)
-            - the python object (class or factory) itself
-
-        deprecated: Bool, optional (default=False)
-            Flag to denote whether this entity should be skipped in validation runs
-            and considered deprecated and replaced by a more recent/better model
-        nondeterministic: Bool, optional (default=False)
-            Whether this entity is non-deterministic even after seeding
-        kwargs: Dict, optional (default=None)
-            kwargs to pass to the entity entry point when instantiating the entity.
+        entity_id : str
+            A unique entity ID. If an entity with the same ID is already
+            registered, a unique suffix (e.g., ``"_2"``) is appended and
+            a ``UserWarning`` is issued.
+        entity : BaseEstimator or TaskObject
+            The entity to register.
         """
         entity_id_unique = _make_strings_unique(list(self.entities.keys()), entity_id)
         _check_id_format(self.entity_id_format, entity_id_unique)
         if entity_id != entity_id_unique:
             warnings.warn(
                 message=f"Entity with ID [id={entity_id}] already registered, "
-                + "new id is {entity_id_unique}",
+                + f"new id is {entity_id_unique}",
                 category=UserWarning,
                 stacklevel=2,
             )
@@ -334,12 +376,8 @@ class BaseBenchmark:
 
         Parameters
         ----------
-        estimator : Dict, List or BaseEstimator object
-            Estimator to add to the benchmark.
-            If Dict, keys are estimator_ids used to customise identifier ID
-            and values are estimators.
-            If List, each element is an estimator. estimator_ids are generated
-            automatically using the estimator's class name.
+        estimator : BaseEstimator
+            A single initialised estimator to add to the benchmark.
 
         estimator_id : str, optional (default=None)
             Identifier for estimator. If none given then uses estimator's class name.
@@ -544,20 +582,28 @@ class BaseBenchmark:
                 )
 
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
-        """
-        Run the benchmarking for all tasks and estimators.
+        """Run benchmarking for all registered tasks and estimators.
 
         Parameters
         ----------
-        results_path : str
-            Path to save the results to.
-            If None, will not save the results.
+        results_path : str or None
+            Path to the benchmark results file where final output is
+            written (e.g. ``"results.csv"``). Must refer to a file,
+            not a directory; the file extension selects the storage format.
+            When ``None``, results are not persisted to disk.
+        force_rerun : str or list of str, optional (default="none")
+            Controls re-execution of experiments that already have saved
+            results:
 
-        force_rerun : Union[str, list[str]], optional (default="none")
+            * ``"none"`` — skip task-model pairs with existing results.
+            * ``"all"`` — rerun every task-model pair.
+            * list of str — rerun only pairs whose ``model_id`` is in the
+              list; other existing results are skipped.
 
-            * If "none", will skip validation if results already exist.
-            * If "all", will run validation for all tasks and models.
-            * If list of str, will run validation for tasks and models in list.
+        Returns
+        -------
+        pandas.DataFrame
+            Summary of benchmark run.
         """
         results = _BenchmarkingResults(path=results_path)
         self._failed_experiments = []
@@ -648,24 +694,30 @@ class BaseBenchmark:
         """
         Run the benchmarking for all tasks and estimators.
 
-        If ``output_file`` is provided, results will be saved to a file or location,
-        in a format inferred from the file extension.
-
-        The exact format is determined by the storage backend used, see
-        documentation on storage handlers in
-        ``sktime.benchmarking._storage_handlers.get_storage_backend``.
+        When ``output_file`` is given, results are written to that file on
+        completion and checkpointed incrementally during the run. The file
+        extension (``.json``, ``.csv``, or ``.parquet``) selects the final
+        storage format; see `get_storage_backend`.
 
         Parameters
         ----------
-        output_file : str or None (default)
-            Path to save the results to.
-            If None, results will not be saved.
+        output_file : str or None, optional (default=None)
+            Path to the benchmark results file (e.g. ``"results.csv"``).
+            Must refer to a file, not a directory. When ``None``, results are
+            returned as a DataFrame only and are not saved to disk.
+        force_rerun : str or list of str, optional (default="none")
+            Controls re-execution of experiments that already have saved
+            results:
 
-        force_rerun : Union[str, list[str]], optional (default="none")
+            * ``"none"`` — skip task-model pairs with existing results.
+            * ``"all"`` — rerun every task-model pair.
+            * list of str — rerun only pairs whose ``model_id`` is in the
+              list; other existing results are skipped.
 
-            * If "none", will skip validation if results already exist.
-            * If "all", will run validation for all tasks and models.
-            * If list of str, will run validation for tasks and models in list.
+        Returns
+        -------
+        pandas.DataFrame
+            Summary of benchmark run for all completed experiments.
         """
         return self._run(output_file, force_rerun)
 
