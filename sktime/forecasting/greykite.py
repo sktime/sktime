@@ -19,21 +19,7 @@ class GreykiteForecaster(BaseForecaster):
     and exposes a sktime-compatible API.
 
     WARNING: the ``greykite`` package has very restrictive dependencies that typically
-    prevent installation together with other packages. For this reason, this estimator
-    is also not covered by regular tests. We therefore recommend to run
-    ``check_estimator`` on your system before deploying this estimator.
-    Note: pickling is not supported (greykite uses patsy internally, see
-    https://github.com/pydata/patsy/issues/26), so run as follows::
-
-        check_estimator(
-            GreykiteForecaster,
-            tests_to_exclude=[
-                "test_fit_idempotent",
-                "test_persistence_via_pickle",
-                "test_save_estimators_to_file",
-                "test_update_predict_predicted_index",
-            ],
-        )
+    prevent installation together with other packages.
 
     Parameters
     ----------
@@ -88,8 +74,6 @@ class GreykiteForecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         # pickling is not supported for GreykiteForecaster.
-        # The greykite package internally uses patsy, which does not support
-        # pickling or deepcopy (see https://github.com/pydata/patsy/issues/26).
         "tests:skip_by_name": [
             "test_fit_idempotent",
             "test_persistence_via_pickle",
