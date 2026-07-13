@@ -389,38 +389,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             pred_df = self._convert_hierarchical_to_panel(pred_df)
             _is_hierarchical = True
 
-        # Infer freq explicitly so gluonts doesn't have to; pd.concat/sort
-        # strips the .freq attribute from DatetimeIndex, and with very few
-        # data points pd.infer_freq returns None, crashing PandasDataset.
-        _time_idx = self.return_time_index(pred_df)
-        if _is_range_index:
-            # range → daily DatetimeIndex created by handle_range_index
-            _freq = "D"
-        elif isinstance(_time_idx, pd.PeriodIndex):
-            _freq = _time_idx.freqstr
-        else:
-            _freq = self.infer_freq(_time_idx)
-
-        # Ensure the index is uniformly spaced before handing off to gluonts.
-        # When X_test covers non-contiguous timepoints (e.g. fh=[2,4,6]) the
-        # concat above can leave gaps; gluonts's PandasDataset raises
-        # AssertionError if is_uniform(index) fails.
-        if _freq is not None and not isinstance(pred_df.index, pd.MultiIndex):
-            _tidx = pred_df.index
-            _full = pd.date_range(_tidx[0], _tidx[-1], freq=_freq)
-            if len(_full) > len(_tidx):
-                pred_df = pred_df.reindex(_full, fill_value=0)
-
-        # Recompute future_length from the actual pred_df after reindex so
-        # that gluonts knows how many trailing rows are "future" context.
-        # Using a stale len(X_test) after reindex causes gluonts to predict
-        # fewer steps than prediction_length, making pred_out keys disappear.
-        if _use_fit_data_as_context:
-            _n_train = len(self.return_time_index(_y).unique())
-            future_length = len(self.return_time_index(pred_df).unique()) - _n_train
-
         ds_test, df_config = self.create_pandas_dataset(
-            pred_df, target, feat_dynamic_real, future_length, _target_name, _freq
+            pred_df, target, feat_dynamic_real, future_length, _target_name
         )
 
         predictor = self.model_.create_predictor(batch_size=self.batch_size)
@@ -472,38 +442,14 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             else:
                 predictions.index = timepoints
 
-        # When the original data had a PeriodIndex we converted it to
-        # DatetimeIndex before handing it to gluonts.  pred_out (derived from
-        # _y) is still a PeriodIndex, so we must convert back before .loc[].
-        if _is_period_index and not _is_range_index:
-            _period_freq = self.return_time_index(_y).freqstr
-            if isinstance(predictions.index, pd.MultiIndex):
-                _last_level = predictions.index.get_level_values(-1)
-                if isinstance(_last_level, pd.DatetimeIndex):
-                    predictions.index = predictions.index.set_levels(
-                        _last_level.to_period(_period_freq).unique(),
-                        level=-1,
-                    )
-            elif isinstance(predictions.index, pd.DatetimeIndex):
-                predictions.index = predictions.index.to_period(_period_freq)
-
         if _use_fit_data_as_context:
-            # first_seen_index is X.index[0], which for MultiIndex data is a
-            # tuple like ("item_A", Timestamp(...)). Extract the time component
-            # (last element) so that pd.Period() / .loc[] receive a scalar.
+            # first_seen_index may be a Period; convert to match predictions.index
             _fsi = first_seen_index
-            if isinstance(_fsi, tuple):
-                _fsi = _fsi[-1]
             if _period_freq is not None and not isinstance(_fsi, pd.Period):
                 _fsi = pd.Period(_fsi, freq=_period_freq)
             elif _period_freq is None and isinstance(_fsi, pd.Period):
                 _fsi = _fsi.to_timestamp()
-            if isinstance(predictions.index, pd.MultiIndex):
-                # Slice on the time level only
-                time_vals = predictions.index.get_level_values(-1)
-                predictions = predictions.loc[time_vals >= _fsi]
-            else:
-                predictions = predictions.loc[_fsi:]
+            predictions = predictions.loc[_fsi:]
 
         predictions = predictions.loc[pred_out]
         predictions.index = pred_out
@@ -569,13 +515,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             return handle_panel_predictions(forecasts, df_config)
 
     def create_pandas_dataset(
-        self,
-        df,
-        target,
-        dynamic_features=None,
-        forecast_horizon=0,
-        original_target=None,
-        freq=None,
+        self, df, target, dynamic_features=None, forecast_horizon=0, target_name=None
     ):
         """Create a gluonts PandasDataset from the input data.
 
@@ -589,16 +529,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             List of dynamic features.
         forecast_horizon : int, default=0
             Forecast horizon.
-        original_target : list, default=None
-            Original (user-facing) target column names, stored in ``df_config``
-            so that ``_get_prediction_df`` can rename columns back.  When
-            ``None`` the renamed ``target`` list is used as-is.
-        freq : str, default=None
-            Pandas-compatible frequency string (e.g. ``"D"``, ``"M"``).
-            When provided it is passed directly to ``PandasDataset`` /
-            ``from_long_dataframe`` so that gluonts does not have to infer
-            it from the index (which can fail when the index has no ``.freq``
-            attribute after a ``pd.concat`` / ``sort_index`` call).
+        target_name : list or Index, default=None
+            Original target column names (before renaming), stored in df_config.
 
         Returns
         -------
@@ -613,7 +545,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         # Add original target to config
         df_config = {
-            "target": original_target if original_target is not None else target,
+            "target": target_name,
         }
 
         # PandasDataset expects non-multiindex dataframe with item_id
@@ -630,24 +562,22 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             df = df.reset_index()
             df.set_index(timepoints, inplace=True)
 
-            _from_long_kwargs = dict(
+            dataset = PandasDataset.from_long_dataframe(
+                df,
                 target=target,
                 feat_dynamic_real=dynamic_features,
                 item_id=item_id,
                 future_length=forecast_horizon,
             )
-            if freq is not None:
-                _from_long_kwargs["freq"] = freq
-            dataset = PandasDataset.from_long_dataframe(df, **_from_long_kwargs)
         else:
-            _pd_kwargs = dict(
+            freq = self.infer_freq(df.index)
+            dataset = PandasDataset(
+                df,
                 target=target,
                 feat_dynamic_real=dynamic_features,
                 future_length=forecast_horizon,
+                freq=freq,
             )
-            if freq is not None:
-                _pd_kwargs["freq"] = freq
-            dataset = PandasDataset(df, **_pd_kwargs)
 
         return dataset, df_config
 
@@ -744,7 +674,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "AE": "Y",
         }
         if isinstance(index, pd.PeriodIndex):
-            return index.freqstr
+            return index.freq
         # Prefer the freq attribute already set on the index (e.g. by to_timestamp())
         if hasattr(index, "freq") and index.freq is not None:
             freq_str = index.freqstr
