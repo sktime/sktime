@@ -231,7 +231,6 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # input_size to be inferred from the data

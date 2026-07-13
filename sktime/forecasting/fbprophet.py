@@ -204,7 +204,6 @@ class Prophet(_ProphetAdapter):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         from prophet.forecaster import Prophet as _Prophet
