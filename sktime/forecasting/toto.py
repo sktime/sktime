@@ -25,11 +25,11 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 from sktime.utils.singleton import _multiton
 
 
-class TotoForecaster(BaseForecaster):
+class TotoForecaster(BaseFoundationForecaster):
     """Toto foundation model forecaster for zero-shot forecasting.
 
     Direct interface to forecaster from DataDog/toto [1]_.
@@ -124,8 +124,6 @@ class TotoForecaster(BaseForecaster):
         model_path: str = "Datadog/Toto-Open-Base-1.0",
         device=None,
     ):
-        self.model_path = model_path
-        self.device = device
         self.num_samples = num_samples
         self.samples_per_batch = samples_per_batch
         self.use_memory_efficient_attention = use_memory_efficient_attention
@@ -147,7 +145,11 @@ class TotoForecaster(BaseForecaster):
 
         self.seed = seed
         self._seed = np.random.randint(0, 2**31) if seed is None else seed
-        super().__init__()
+        super().__init__(
+            model_path=model_path,
+            device=device,
+            random_state=seed,
+        )
 
     def _get_toto_key(self):
         """Get a unique key for the Toto model based on configuration parameters.
