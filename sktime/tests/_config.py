@@ -120,13 +120,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    "ClusterSegmenter": [
-        "test_doctest_examples",
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-        "test_output_type",
-    ],
     "GreedyGaussianSegmentation": [
         "test_predict_points",
         "test_predict_segments",
@@ -139,9 +132,6 @@ EXCLUDED_TESTS = {
     "MACNNClassifier": [
         "test_multioutput",
         "test_classifier_on_unit_test_data",
-    ],
-    "ARLagOrderSelector": [
-        "test_doctest_examples",  # doctest fails, see #8129
     ],
 }
 
@@ -184,9 +174,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
         "OptionalPassthrough",
-        "PAA",
         "PAAlegacy",
-        "PCATransformer",
         "PaddingTransformer",
         "PlateauFinder",
         "Prophetverse",
@@ -195,7 +183,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
         "RandomSamplesAugmenter",
-        "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
