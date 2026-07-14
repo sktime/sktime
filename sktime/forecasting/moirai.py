@@ -5,13 +5,14 @@ from unittest.mock import patch
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
     """MOIRAI Forecasters.
 
     Parameters
@@ -147,7 +148,10 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.deterministic = deterministic
         self.batch_size = batch_size
         self.use_source_package = use_source_package
-        super().__init__()
+        super().__init__(
+            model_path=checkpoint_path,
+            device=map_location,
+        )
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
