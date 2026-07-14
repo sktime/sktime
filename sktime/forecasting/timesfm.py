@@ -9,14 +9,14 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import (
-    BaseForecaster,
     ForecastingHorizon,
     _GlobalForecastingDeprecationMixin,
 )
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 from sktime.utils.singleton import _multiton
 
 
-class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model
@@ -209,6 +209,9 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         use_source_package=False,
         ignore_deps=False,
     ):
+        self.broadcasting = broadcasting
+        self.use_source_package = use_source_package
+        self.ignore_deps = ignore_deps
         self.context_len = context_len
         self._context_len = None
         self.horizon_len = horizon_len
@@ -223,11 +226,10 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.per_core_batch_size = per_core_batch_size
         self.backend = backend
         self.verbose = verbose
-        self.broadcasting = broadcasting
-        self.use_source_package = use_source_package
-        self.ignore_deps = ignore_deps
-
-        super().__init__()
+        super().__init__(
+            model_path=repo_id,
+            device=backend,
+        )
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
