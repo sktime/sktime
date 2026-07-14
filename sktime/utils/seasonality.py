@@ -215,7 +215,7 @@ def _unpivot_sp(df, template=None):
     df_copied, _ = _make_period_index_df(template, freq)
     ix = df_copied.index.astype("int64")
 
-    df_stacked = df.stack(level=-1)
+    df_stacked = df.stack(level=-1, future_stack=True)
     if isinstance(df_stacked, pd.Series):
         df_stacked = pd.DataFrame(df_stacked)
 
