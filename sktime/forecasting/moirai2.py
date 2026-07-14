@@ -3,12 +3,13 @@
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "priyanshuharshbodhi1"]
 
 
-class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
     """
     Adapter for using MOIRAI 2.0 Forecasters.
 
@@ -132,7 +133,10 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.broadcasting = broadcasting
         self.batch_size = batch_size
         self.use_source_package = use_source_package
-        super().__init__()
+        super().__init__(
+            model_path=checkpoint_path,
+            device=map_location,
+        )
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
