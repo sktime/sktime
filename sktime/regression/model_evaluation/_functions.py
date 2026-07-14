@@ -2,9 +2,10 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Utilities for performance evaluation of time series regression models.
 
-The regression ``evaluate`` is a thin wrapper around the estimator type
-agnostic ``evaluate`` in ``sktime.classification.model_evaluation``,
-with regression-facing signature, defaults, and docstring.
+The regression ``evaluate`` is a thin wrapper around ``evaluate`` in
+``sktime.classification.model_evaluation``, which supports both
+classifiers and regressors, with regression-facing signature,
+defaults, and docstring.
 """
 
 __author__ = ["NAME-ASHWANIYADAV"]
@@ -51,7 +52,7 @@ def evaluate(
 
     A distributed or parallel backend can be chosen using ``backend``.
 
-    This function delegates to the estimator type agnostic
+    This function delegates to
     :func:`sktime.classification.model_evaluation.evaluate`, as the
     backtesting workflow is identical for classifiers and regressors.
 

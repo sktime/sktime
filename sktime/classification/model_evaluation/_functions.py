@@ -296,18 +296,16 @@ def evaluate(
 
     A distributed or parallel backend can be chosen using ``backend``.
 
-    While written for classifiers, this utility is estimator type agnostic:
-    the backtesting workflow applies unchanged to sktime regressors.
-    The regression counterpart,
+    While written for classifiers, this utility can also be used with
+    sktime regressors, as the backtesting workflow is identical for
+    classifiers and regressors. The regression counterpart,
     :func:`sktime.regression.model_evaluation.evaluate`, delegates to this
     function, with regression-facing signature and defaults.
 
     Parameters
     ----------
     classifier : sktime.BaseClassifier or sktime.BaseRegressor
-        Concrete sktime panel estimator to benchmark. Any panel estimator
-        with a compatible ``fit``/``predict`` interface is accepted,
-        e.g., sktime regressors.
+        Concrete sktime classifier or regressor to benchmark.
 
     cv : int, sklearn cross-validation generator or an iterable, default=3-fold CV
         Determines the cross-validation splitting strategy.
