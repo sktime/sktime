@@ -23,11 +23,11 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 from sktime.utils.singleton import _multiton
 
 
-class TimerS1Forecaster(BaseForecaster):
+class TimerS1Forecaster(BaseFoundationForecaster):
     """Timer-S1 forecaster via Hugging Face ``transformers``.
 
     This forecaster wraps Timer-S1 prediction models [1]_, [2]_ from Hugging
@@ -188,15 +188,16 @@ class TimerS1Forecaster(BaseForecaster):
         forward_kwargs=None,
         deterministic=False,
     ):
-        self.model_path = model_path
-        self.config = config
         self.device_map = device_map
         self.dtype = dtype
-        self.quantization_config = quantization_config
-        self.forward_kwargs = forward_kwargs
         self.deterministic = deterministic
-
-        super().__init__()
+        super().__init__(
+            model_path=model_path,
+            config=config,
+            device=device_map,
+            quantization_config=quantization_config,
+            forward_kwargs=forward_kwargs,
+        )
 
     def _fit(self, y, X=None, fh=None):
         """Load the model and store history for zero-shot forecasting.
