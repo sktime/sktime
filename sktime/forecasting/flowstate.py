@@ -9,17 +9,17 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import (
-    BaseForecaster,
     ForecastingHorizon,
     _GlobalForecastingDeprecationMixin,
 )
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 
 
-class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
     """Zero-shot forecaster wrapping IBM FlowState via granite-tsfm.
 
     FlowState, developed by IBM Research, is an encoder-decoder architecture,
@@ -99,14 +99,16 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         batch_first: bool = True,
         prediction_type: str = "mean",
     ):
-        self.model_path = model_path
         self.revision = revision
         self.scale_factor = scale_factor
-        self.config = config
         self.batch_first = batch_first
         self.prediction_type = prediction_type
+        super().__init__(
+            model_path=model_path,
+            config=config,
+        )
+
         self.model = None
-        super().__init__()
 
     def __getstate__(self):
         """Get state for pickling."""
@@ -120,6 +122,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     def __post_init__(self):
         """Post-initialization setup."""
+        super().__post_init__()
         self._config = {} if self.config is None else self.config.copy()
         self._device = _resolve_device()
 
