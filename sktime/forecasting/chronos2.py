@@ -5,11 +5,12 @@ __all__ = ["Chronos2Forecaster"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 from sktime.utils.singleton import _multiton
 
 
-class Chronos2Forecaster(BaseForecaster):
+class Chronos2Forecaster(BaseFoundationForecaster):
     """Interface to the Chronos-2 Zero-Shot Forecaster by Amazon Research.
 
     Chronos-2 is a pretrained encoder-only time series foundation model
@@ -111,14 +112,15 @@ class Chronos2Forecaster(BaseForecaster):
         seed: int | None = None,
         ignore_deps: bool = False,
     ):
-        self.model_path = model_path
-        self.seed = seed
-        self.config = config
         self.ignore_deps = ignore_deps
+        self.seed = seed
+        super().__init__(
+            model_path=model_path,
+            config=config,
+            random_state=seed,
+        )
 
         self.model_pipeline = None
-
-        super().__init__()
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
@@ -137,6 +139,7 @@ class Chronos2Forecaster(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
+        super().__post_init__()
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
 
         import torch
