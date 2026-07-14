@@ -26,7 +26,6 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.utils.singleton import _multiton
 
 
 class TotoForecaster(BaseFoundationForecaster):
@@ -148,73 +147,17 @@ class TotoForecaster(BaseFoundationForecaster):
         super().__init__(
             model_path=model_path,
             device=device,
-            random_state=seed,
+            load_kwargs={
+                "pretrained_model_name_or_path": model_path,
+                "use_memory_efficient_attention": use_memory_efficient_attention,
+                "stabilize_with_global": stabilize_with_global,
+                "scale_factor_exponent": scale_factor_exponent,
+            },
+            random_state=self._seed,
         )
 
-    def _get_toto_key(self):
-        """Get a unique key for the Toto model based on configuration parameters.
-
-        This key is used by the _multiton decorator to ensure only one instance
-        of a model with specific parameters exists.
-
-        Returns
-        -------
-        tuple
-            Unique identifier for this model configuration
-        """
-        kwargs = self._get_toto_kwargs()
-        key = {
-            **kwargs,
-            "device": self._device,
-        }
-        return str(sorted(key.items()))
-
-    def _get_toto_kwargs(self):
-        """Get keyword arguments for the Toto model.
-
-        Returns
-        -------
-        dict
-            Keyword arguments for the Toto model.
-        """
-        return {
-            "pretrained_model_name_or_path": self.model_path,
-            "use_memory_efficient_attention": self.use_memory_efficient_attention,
-            "stabilize_with_global": self.stabilize_with_global,
-            "scale_factor_exponent": self.scale_factor_exponent,
-        }
-
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-
-            * if self.get_tag("capability:multivariate")==False:
-              guaranteed to be univariate (e.g., single-column for DataFrame)
-            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
-              the method should handle uni- and multivariate y appropriately
-
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
-        """
+    def _prepare_foundation_context(self, y, X, fh):
+        """Fit Toto-specific context state."""
         import torch
         from toto.data.util.dataset import MaskedTimeseries
 
@@ -245,127 +188,45 @@ class TotoForecaster(BaseFoundationForecaster):
             time_interval_seconds=self.time_interval_seconds,
         )
 
-        return self
-
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-
-        Returns
-        -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
-        """
-        import torch
-
-        torch.manual_seed(self._seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self._seed)
-
+    def _predict_samples_native(self, fh, X=None):
+        """Generate native Toto forecast object for a future horizon."""
         prediction_length = max(fh.to_relative(self._cutoff))
 
-        forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
-            toto_kwargs=self._get_toto_kwargs(),
-            device=self._device,
-        ).load_from_checkpoint()
-
-        forecast = forecaster.forecast(
+        forecast = self.model_.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
         )
-        if self.prediction_type.lower() == "median":
-            all_predictions = forecast.median.cpu().squeeze(0).numpy().T
-        else:
-            all_predictions = forecast.mean.cpu().squeeze(0).numpy().T
+        y_index = fh.to_absolute(self._cutoff)._values
+        return forecast, y_index
 
-        pred_index = fh.to_absolute(self._cutoff)._values
+    def _format_point_predictions(self, prediction_result, y_index, fh):
+        """Format Toto point predictions."""
+        if self.prediction_type.lower() == "median":
+            all_predictions = prediction_result.median.cpu().squeeze(0).numpy().T
+        else:
+            all_predictions = prediction_result.mean.cpu().squeeze(0).numpy().T
+
         relative_indices = fh.to_relative(self._cutoff) - 1
         selected_predictions = all_predictions[relative_indices]
 
-        y_pred = pd.DataFrame(
-            selected_predictions, index=pred_index, columns=self._y.columns
+        return pd.DataFrame(
+            selected_predictions, index=y_index, columns=self._y.columns
         )
-        return y_pred
 
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
-
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
+    def _format_quantile_predictions(self, prediction_result, y_index, fh, alpha):
+        """Format Toto quantile predictions."""
         import torch
 
-        prediction_length = max(fh.to_relative(self._cutoff))
-
-        forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
-            toto_kwargs=self._get_toto_kwargs(),
-            device=self._device,
-        ).load_from_checkpoint()
-
-        forecast = forecaster.forecast(
-            self._series,
-            prediction_length=prediction_length,
-            num_samples=self.num_samples,
-            samples_per_batch=self.samples_per_batch,
-        )
         var_names = self._y.columns
         cols_idx = pd.MultiIndex.from_product([var_names, alpha])
-        pred_index = fh.to_absolute(self._cutoff)._values
         relative_indices = fh.to_relative(self._cutoff) - 1
 
-        pred_quantiles = pd.DataFrame(index=pred_index, columns=cols_idx)
+        pred_quantiles = pd.DataFrame(index=y_index, columns=cols_idx)
         alpha_tensor = torch.tensor(alpha, device=self._device)
 
-        quantiles = forecast.quantile(alpha_tensor)
+        quantiles = prediction_result.quantile(alpha_tensor)
         if quantiles.dim() > 3:
             quantile_values = quantiles.cpu().squeeze(1).numpy()
         else:
@@ -376,6 +237,24 @@ class TotoForecaster(BaseFoundationForecaster):
                 selected_quantiles = quantile_values[j, i, relative_indices]
                 pred_quantiles[(var_name, a)] = selected_quantiles
         return pred_quantiles
+
+    def _make_fallback_X(self, y):
+        """Return no exogenous fallback for Toto."""
+        return None
+
+    def _load_native_model(self, model_path):
+        """Load native Toto forecaster."""
+        from toto.inference.forecaster import TotoForecaster
+        from toto.model.toto import Toto
+
+        toto_model = Toto.from_pretrained(**self.load_kwargs)
+        toto_model.to(self._device)
+        toto_model.compile()
+        return TotoForecaster(toto_model.model)
+
+    def _get_backend_device(self):
+        """Return resolved Toto backend device."""
+        return self._device
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -403,35 +282,3 @@ class TotoForecaster(BaseFoundationForecaster):
         ]
 
         return test_params
-
-
-@_multiton
-class _CachedTotoForecaster:
-    """Cached Toto forecaster.
-
-    Toto is a zero-shot model and immutable, hence there will not be
-    any side effects of sharing the same instance across multiple uses.
-    This caching mechanism uses the _multiton decorator to ensure
-    that models with the same configuration are reused, preventing
-    duplicate models in memory when handling multivariate data.
-    """
-
-    def __init__(self, key, toto_kwargs, device):
-        self.key = key
-        self.toto_kwargs = toto_kwargs
-        self.device = device
-        self.forecaster = None
-
-    def load_from_checkpoint(self):
-        if self.forecaster is not None:
-            return self.forecaster
-
-        from toto.inference.forecaster import TotoForecaster
-        from toto.model.toto import Toto
-
-        toto_model = Toto.from_pretrained(**self.toto_kwargs)
-        toto_model.to(self.device)
-        toto_model.compile()
-        self.forecaster = TotoForecaster(toto_model.model)
-
-        return self.forecaster
