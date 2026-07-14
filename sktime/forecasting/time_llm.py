@@ -8,14 +8,14 @@ from types import SimpleNamespace
 
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 
 
-class TimeLLMForecaster(BaseForecaster):
+class TimeLLMForecaster(BaseFoundationForecaster):
     """
     Interface to the Time-LLM.
 
@@ -119,10 +119,8 @@ class TimeLLMForecaster(BaseForecaster):
         self.d_ff = d_ff
         self.n_heads = n_heads
         self.dropout = dropout
-        self.device = device
         self.prompt_domain = prompt_domain
-
-        super().__init__()
+        super().__init__(device=device)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
