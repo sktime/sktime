@@ -19,11 +19,11 @@ __all__ = ["TimerForecaster"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 from sktime.utils.singleton import _multiton
 
 
-class TimerForecaster(BaseForecaster):
+class TimerForecaster(BaseFoundationForecaster):
     """Timer foundation model forecaster.
 
     Wraps the Timer generative pre-trained Transformer for zero-shot
@@ -104,9 +104,7 @@ class TimerForecaster(BaseForecaster):
     ):
         self.model_name = model_name
         self.context_length = context_length
-        self.device = device
-
-        super().__init__()
+        super().__init__(device=device)
 
     def _get_unique_key(self):
         """Get unique key for Timer model to use in multiton cache."""
