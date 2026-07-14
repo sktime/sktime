@@ -9,11 +9,12 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 from sktime.utils.singleton import _multiton
 
 
-class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
     """
     Interface for TimeMOE forecaster for zero-shot forecasting.
 
@@ -140,13 +141,14 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
-        self.seed = seed
-        self.config = config
-        self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
-
-        super().__init__()
+        self.seed = seed
+        super().__init__(
+            model_path=model_path,
+            config=config,
+            random_state=seed,
+        )
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values condition on parameters.
@@ -175,6 +177,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
+        super().__post_init__()
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
 
         _config = self._get_default_config()
