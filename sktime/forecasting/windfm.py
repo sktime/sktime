@@ -11,12 +11,12 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
 from sktime.utils.singleton import _multiton
 from sktime.utils.warnings import warn
 
 
-class WindFMForecaster(BaseForecaster):
+class WindFMForecaster(BaseFoundationForecaster):
     """WindFM zero-shot forecaster for wind power data.
 
     This forecaster wraps WindFM [1]_, a foundation model for wind power
@@ -187,17 +187,17 @@ class WindFMForecaster(BaseForecaster):
         predict_kwargs=None,
         deterministic=False,
     ):
-        self.model_path = model_path
         self.tokenizer_path = tokenizer_path
-        self.device = device
         self.columns = columns
         self.freq = freq
         self.start = start
         self.clip = clip
         self.predict_kwargs = predict_kwargs
         self.deterministic = deterministic
-
-        super().__init__()
+        super().__init__(
+            model_path=model_path,
+            device=device,
+        )
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
