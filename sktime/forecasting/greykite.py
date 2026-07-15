@@ -92,6 +92,14 @@ class GreykiteForecaster(BaseForecaster):
 
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.model_template == "PROPHET":
+            self.set_tags(**{"python_dependencies": ["greykite>=1.0.0", "prophet"]})
+
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
@@ -146,7 +154,7 @@ class GreykiteForecaster(BaseForecaster):
         model_components_param = ModelComponentsParam()
 
         # Create the ForecastConfig using Greykite's parameters.
-        self.forecast_config = ForecastConfig(
+        default_forecast_config = ForecastConfig(
             metadata_param=metadata_param,
             model_components_param=model_components_param,
             model_template=self.model_template,
@@ -156,7 +164,7 @@ class GreykiteForecaster(BaseForecaster):
             computation_param=ComputationParam(),
             forecast_one_by_one=False,
         )
-        return self.forecast_config
+        return default_forecast_config
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
