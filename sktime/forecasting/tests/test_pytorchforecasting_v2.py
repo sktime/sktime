@@ -17,11 +17,22 @@ __author__ = ["vedantag17"]
 
 # Single gate for all tests: skip the whole module if PTF v2 deps are absent.
 PTF_V2_DEPS = ["pytorch-forecasting>=1.0.0", "torch", "lightning"]
+
+_ptf_v2_available = _check_soft_dependencies(*PTF_V2_DEPS, severity="none")
+
+# Version check alone is insufficient — some builds of pytorch-forecasting>=1.0.0
+# lack the v2 D2 data pipeline (TslibDataModule). Verify the actual submodule.
+if _ptf_v2_available:
+    try:
+        import pytorch_forecasting.data.data_module._tslib_data_module  # noqa: F401
+    except (ImportError, ModuleNotFoundError):
+        _ptf_v2_available = False
+
 pytestmark = pytest.mark.skipif(
-    not _check_soft_dependencies(*PTF_V2_DEPS, severity="none"),
+    not _ptf_v2_available,
     reason=(
         "Skipping pytorch-forecasting v2 tests: "
-        "pytorch-forecasting>=1.0.0, torch, or lightning not installed."
+        "pytorch-forecasting v2 D2 pipeline not available."
     ),
 )
 
