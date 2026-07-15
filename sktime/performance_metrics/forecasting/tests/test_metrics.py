@@ -191,3 +191,129 @@ def test_metric_coercion_bug():
 
     assert isinstance(metric, pd.DataFrame)
     assert metric.shape == (1, 1)
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for gh-5102
+# MASE / RMSSE must work when y_train has NaN due to unequal-length series
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "metric_fn, kwargs",
+    [
+        ("mean_squared_scaled_error", {"square_root": True}),
+        ("mean_squared_scaled_error", {"square_root": False}),
+        ("mean_absolute_scaled_error", {}),
+        ("median_absolute_scaled_error", {}),
+        ("median_squared_scaled_error", {"square_root": True}),
+        ("median_squared_scaled_error", {"square_root": False}),
+    ],
+)
+def test_scaled_metrics_unequal_length_no_error(metric_fn, kwargs):
+    """Regression test for gh-5102.
+
+    Scaled metrics must not raise when y_train contains NaN values due to
+    unequal-length series padded into a rectangular (wide-format) array.
+    """
+    import importlib
+
+    mod = importlib.import_module("sktime.performance_metrics.forecasting")
+    fn = getattr(mod, metric_fn)
+
+    # Series 0 has 4 training points (no NaN)
+    # Series 1 has 3 training points (padded with 1 leading NaN)
+    y_train = np.array([[1.5, np.nan], [0.5, 1.0], [-1.0, 1.0], [7.0, -6.0]])
+    y_true = np.array([[0.5, 1.0], [-1.0, 1.0], [7.0, -6.0]])
+    y_pred = np.array([[0.0, 2.0], [-1.0, 2.0], [8.0, -5.0]])
+
+    # Must not raise — this was the bug reported in gh-5102
+    result = fn(y_true, y_pred, y_train=y_train, **kwargs)
+
+    assert np.isfinite(result), (
+        f"{metric_fn} returned non-finite result for unequal-length y_train: {result}"
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "metric_fn, kwargs",
+    [
+        ("mean_squared_scaled_error", {"square_root": True}),
+        ("mean_absolute_scaled_error", {}),
+    ],
+)
+def test_scaled_metrics_unequal_length_multioutput_raw(metric_fn, kwargs):
+    """gh-5102: multioutput='raw_values' must return finite per-column array."""
+    import importlib
+
+    mod = importlib.import_module("sktime.performance_metrics.forecasting")
+    fn = getattr(mod, metric_fn)
+
+    y_train = np.array([[1.5, np.nan], [0.5, 1.0], [-1.0, 1.0], [7.0, -6.0]])
+    y_true = np.array([[0.5, 1.0], [-1.0, 1.0], [7.0, -6.0]])
+    y_pred = np.array([[0.0, 2.0], [-1.0, 2.0], [8.0, -5.0]])
+
+    result = fn(
+        y_true, y_pred, y_train=y_train, multioutput="raw_values", **kwargs
+    )
+
+    assert result.shape == (2,), f"Expected shape (2,), got {result.shape}"
+    assert np.all(np.isfinite(result)), (
+        f"{metric_fn}: expected all-finite result with raw_values, got {result}"
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_scaled_metrics_nan_free_unchanged():
+    """gh-5102: fix must not change output for NaN-free (equal-length) inputs."""
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsoluteScaledError,
+        MeanSquaredScaledError,
+    )
+
+    # All four columns have the same length — no NaN
+    y_train = np.array([[1.5, 0.5], [0.5, 1.0], [-1.0, 1.0], [7.0, -6.0]])
+    y_true = np.array([[0.5, 1.0], [-1.0, 1.0], [7.0, -6.0]])
+    y_pred = np.array([[0.0, 2.0], [-1.0, 2.0], [8.0, -5.0]])
+
+    result_mase = MeanAbsoluteScaledError()(y_true, y_pred, y_train=y_train)
+    result_rmsse = MeanSquaredScaledError(square_root=True)(
+        y_true, y_pred, y_train=y_train
+    )
+
+    assert np.isfinite(result_mase), f"MASE not finite for clean data: {result_mase}"
+    assert np.isfinite(result_rmsse), (
+        f"RMSSE not finite for clean data: {result_rmsse}"
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_scaled_metrics_univariate_still_works():
+    """gh-5102: fix must not break the standard univariate (1-D) path."""
+    from sktime.performance_metrics.forecasting import MeanAbsoluteScaledError
+
+    y_train = np.array([5.0, 0.5, 4.0, 6.0, 3.0, 5.0, 2.0])
+    y_true = np.array([3.0, -0.5, 2.0, 7.0, 2.0])
+    y_pred = np.array([2.5, 0.0, 2.0, 8.0, 1.25])
+
+    result = MeanAbsoluteScaledError()(y_true, y_pred, y_train=y_train)
+
+    assert np.isfinite(result), f"MASE not finite for univariate input: {result}"
+    # Value should match the docstring example exactly
+    assert np.isclose(result, 0.18333333333333335, rtol=1e-6), (
+        f"Unexpected MASE value for univariate: {result}"
+    )

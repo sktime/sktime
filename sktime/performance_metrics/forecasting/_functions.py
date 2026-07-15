@@ -456,8 +456,15 @@ def mean_absolute_scaled_error(
     y_train = np.asarray(y_train)
     y_pred_naive = y_train[:-sp]
 
-    # mean absolute error of naive seasonal prediction
-    mae_naive = mean_absolute_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
+    # NaN-aware naive MAE: compute per-column using numpy, bypassing sklearn's
+    # check_array which rejects NaN. Fixes gh-5102 (unequal-length series).
+    naive_abs_diff = np.abs(y_train[sp:] - y_pred_naive)  # (T-sp, n_cols)
+    mae_naive = np.nanmean(naive_abs_diff, axis=0)         # (n_cols,) or scalar
+    if isinstance(multioutput, str) and multioutput == "uniform_average":
+        mae_naive = np.nanmean(mae_naive)
+    elif isinstance(multioutput, np.ndarray):
+        mae_naive = np.average(mae_naive, weights=multioutput)
+    # else multioutput == "raw_values" → keep per-column array as-is
 
     mae_pred = mean_absolute_error(
         y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
@@ -586,10 +593,15 @@ def median_absolute_scaled_error(
     y_train = np.asarray(y_train)
     y_pred_naive = y_train[:-sp]
 
-    # mean absolute error of naive seasonal prediction
-    mdae_naive = median_absolute_error(
-        y_train[sp:], y_pred_naive, multioutput=multioutput
-    )
+    # NaN-aware naive MdAE: compute per-column using numpy, bypassing sklearn's
+    # check_array which rejects NaN. Fixes gh-5102 (unequal-length series).
+    naive_abs_diff = np.abs(y_train[sp:] - y_pred_naive)  # (T-sp, n_cols)
+    mdae_naive = np.nanmedian(naive_abs_diff, axis=0)      # (n_cols,) or scalar
+    if isinstance(multioutput, str) and multioutput == "uniform_average":
+        mdae_naive = np.nanmean(mdae_naive)
+    elif isinstance(multioutput, np.ndarray):
+        mdae_naive = np.average(mdae_naive, weights=multioutput)
+    # else multioutput == "raw_values" → keep per-column array as-is
 
     mdae_pred = median_absolute_error(
         y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
@@ -725,8 +737,15 @@ def mean_squared_scaled_error(
     y_train = np.asarray(y_train)
     y_pred_naive = y_train[:-sp]
 
-    # mean squared error of naive seasonal prediction
-    mse_naive = mean_squared_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
+    # NaN-aware naive MSE: compute per-column using numpy, bypassing sklearn's
+    # check_array which rejects NaN. Fixes gh-5102 (unequal-length series).
+    naive_sq_diff = (y_train[sp:] - y_pred_naive) ** 2    # (T-sp, n_cols)
+    mse_naive = np.nanmean(naive_sq_diff, axis=0)          # (n_cols,) or scalar
+    if isinstance(multioutput, str) and multioutput == "uniform_average":
+        mse_naive = np.nanmean(mse_naive)
+    elif isinstance(multioutput, np.ndarray):
+        mse_naive = np.average(mse_naive, weights=multioutput)
+    # else multioutput == "raw_values" → keep per-column array as-is
 
     mse = mean_squared_error(
         y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
@@ -857,10 +876,15 @@ def median_squared_scaled_error(
     y_train = np.asarray(y_train)
     y_pred_naive = y_train[:-sp]
 
-    # median squared error of naive seasonal prediction
-    mdse_naive = median_squared_error(
-        y_train[sp:], y_pred_naive, multioutput=multioutput
-    )
+    # NaN-aware naive MdSE: compute per-column using numpy, bypassing sklearn's
+    # check_array which rejects NaN. Fixes gh-5102 (unequal-length series).
+    naive_sq_diff = (y_train[sp:] - y_pred_naive) ** 2    # (T-sp, n_cols)
+    mdse_naive = np.nanmedian(naive_sq_diff, axis=0)       # (n_cols,) or scalar
+    if isinstance(multioutput, str) and multioutput == "uniform_average":
+        mdse_naive = np.nanmean(mdse_naive)
+    elif isinstance(multioutput, np.ndarray):
+        mdse_naive = np.average(mdse_naive, weights=multioutput)
+    # else multioutput == "raw_values" → keep per-column array as-is
 
     mdse = median_squared_error(
         y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
