@@ -281,7 +281,10 @@ class ARDL(_StatsModelsAdapter):
         self.maxorder = maxorder
 
         if not self.auto_ardl:
-            assert self.lags is not None
+            if self.lags is None:
+                raise ValueError(
+                    "`lags` must be specified when `auto_ardl` is False."
+                )
 
         if self.auto_ardl and self.lags is not None:
             raise ValueError("lags should not be specified if auto_ardl is True")

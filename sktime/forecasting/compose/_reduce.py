@@ -58,8 +58,16 @@ def _concat_y_X(y, X):
 
 def _check_fh(fh):
     """Check fh prior to sliding-window transform."""
-    assert fh.is_relative
-    assert fh.is_all_out_of_sample()
+    if not fh.is_relative:
+        raise ValueError(
+            "Forecasting horizon `fh` must be relative for sliding-window "
+            "transform, but found absolute `fh`."
+        )
+    if not fh.is_all_out_of_sample():
+        raise ValueError(
+            "Forecasting horizon `fh` must be all out-of-sample for "
+            "sliding-window transform."
+        )
     return fh.to_indexer().to_numpy()
 
 
@@ -141,8 +149,16 @@ def _sliding_window_transform(
     if scitype == "tabular-regressor" and transformers is None:
         Xt = Xt.reshape(Xt.shape[0], -1)
 
-    assert Xt.ndim == 2 or Xt.ndim == 3
-    assert yt.ndim == 2
+    if Xt.ndim not in (2, 3):
+        raise ValueError(
+            f"Sliding-window transform X output must be 2d or 3d, "
+            f"but found {Xt.ndim}d array."
+        )
+    if yt.ndim != 2:
+        raise ValueError(
+            f"Sliding-window transform y output must be 2d, "
+            f"but found {yt.ndim}d array."
+        )
 
     return yt, Xt
 
