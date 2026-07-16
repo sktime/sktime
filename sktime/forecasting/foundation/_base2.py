@@ -20,7 +20,8 @@ class BaseFoundationForecaster(BaseForecaster):
 
     Concrete forecasters implement ``_load_model`` and ``_inference``. They can
     additionally override ``_update_attrs_in_fit`` and ``_cache_key_extra`` for
-    model-specific fitted state and loading parameters, respectively.
+    model-specific fitted state and loading parameters, respectively. Non-Torch
+    backends set ``_uses_torch_inference_context`` to ``False``.
     """
 
     _tags = {
@@ -28,6 +29,7 @@ class BaseFoundationForecaster(BaseForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "tests:vm": True,
     }
+    _uses_torch_inference_context = True
 
     def __init__(
         self,
@@ -128,7 +130,7 @@ class BaseFoundationForecaster(BaseForecaster):
             cutoff=self.cutoff,
             alpha=None if alpha is None else tuple(alpha),
             coverage=None if coverage is None else tuple(coverage),
-            inference=InferenceConfig(random_state=self.random_state),
+            inference=InferenceConfig(random_state=self.random_state_),
         )
 
     def _get_or_load_model_handle(self):
@@ -144,7 +146,11 @@ class BaseFoundationForecaster(BaseForecaster):
 
     @contextmanager
     def _inference_context(self, handle):
-        """Set local Torch seed, eval mode, and inference mode."""
+        """Apply local Torch seeding, eval mode, and inference mode when enabled."""
+        if not self._uses_torch_inference_context:
+            yield
+            return
+
         import torch
 
         model = handle.model
