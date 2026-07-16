@@ -66,6 +66,7 @@ Deep learning
     :template: class.rst
 
     convtimenet.ConvTimeNetClassifier
+    convtran.ConvTranClassifierTorch
     cnn.CNNClassifier
     cnn.CNNClassifierTorch
     cntc.CNTCClassifier

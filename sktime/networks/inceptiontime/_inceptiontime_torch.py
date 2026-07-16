@@ -3,6 +3,7 @@
 __authors__ = ["Faakhir30"]
 __all__ = ["InceptionTimeNetworkTorch"]
 
+from collections.abc import Callable
 
 from sktime.utils.dependencies import _safe_import
 
@@ -36,15 +37,18 @@ class InceptionTimeNetworkTorch(NNModule):
         Size of the bottleneck layer
     depth : int, default=6
         Number of inception modules to stack
-    activation : str or None, default=None
+    activation : Callable or None, default=None
         Activation used for the final output layer.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
-    activation_hidden : str, default="relu"
+        Recommended: Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
+    activation_hidden : Callable or None, default=None
         Activation function used for hidden layers (output from inception modules).
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_inception : str or None, default=None
+        Recommended: Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU'
+    activation_inception : Callable or None, default=None
         Activation function used inside the inception modules.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
+        Recommended: Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
     init_weights : str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
@@ -89,12 +93,13 @@ class InceptionTimeNetworkTorch(NNModule):
         use_bottleneck: bool = True,
         bottleneck_size: int = 32,
         depth: int = 6,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
-        activation_inception: str | None = None,
+        activation: Callable | None = None,
+        activation_hidden: Callable | None = None,
+        activation_inception: Callable | None = None,
         init_weights: str | None = None,
         random_state: int | None = None,
     ):
+        super().__init__()
         self.input_size = input_size
         self.num_classes = num_classes
         self.n_filters = n_filters
@@ -103,20 +108,12 @@ class InceptionTimeNetworkTorch(NNModule):
         self.bottleneck_size = bottleneck_size
         self.depth = depth
         self.kernel_size = kernel_size
-        self.activation = activation
-        self.activation_hidden = activation_hidden
-        self.activation_inception = activation_inception
         self.init_weights = init_weights
         self.random_state = random_state
         self.n_conv_layers = n_conv_layers
-
-        super().__init__()
-
-        self._activation = self._instantiate_activation(self.activation)
-        self._activation_hidden = self._instantiate_activation(self.activation_hidden)
-        self._activation_inception = self._instantiate_activation(
-            self.activation_inception
-        )
+        self.activation = activation
+        self.activation_hidden = activation_hidden
+        self.activation_inception = activation_inception
 
         nnModuleList = _safe_import("torch.nn.ModuleList")
         self.inception_modules = nnModuleList()
@@ -132,8 +129,8 @@ class InceptionTimeNetworkTorch(NNModule):
                     kernel_size=self.kernel_size,
                     bottleneck_size=self.bottleneck_size,
                     use_bottleneck=self.use_bottleneck,
-                    activation_inception=self._activation_inception,
-                    activation_output=self._activation_hidden,
+                    activation_inception=self.activation_inception,
+                    activation_output=self.activation_hidden,
                 )
             )
             current_channels = 4 * self.n_filters
@@ -148,7 +145,7 @@ class InceptionTimeNetworkTorch(NNModule):
                     ShortcutLayer(
                         in_channels=shortcut_in_channels,
                         out_channels=current_channels,
-                        activation=self._activation,
+                        activation=self.activation,
                     )
                 )
 
@@ -195,7 +192,8 @@ class InceptionTimeNetworkTorch(NNModule):
         x = x.squeeze(-1)
 
         out = self.fc(x)
-        out = self._activation(out)
+        if self.activation is not None:
+            out = self.activation(out)
 
         if self.num_classes == 1:  # Regression case
             out = out.squeeze(-1)
@@ -224,43 +222,6 @@ class InceptionTimeNetworkTorch(NNModule):
 
             if module.bias is not None:
                 module.bias.data.zero_()
-
-    def _instantiate_activation(self, activation_str):
-        """Instantiate activation function.
-
-        Parameters
-        ----------
-        activation_str : str
-            Name of the activation function
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied
-        """
-        if activation_str is None or activation_str.lower() == "linear":
-            nnIdentity = _safe_import("torch.nn.Identity")
-            return nnIdentity()
-        elif activation_str.lower() == "relu":
-            return _safe_import("torch.nn.ReLU")()
-        elif activation_str.lower() == "tanh":
-            return _safe_import("torch.nn.Tanh")()
-        elif activation_str.lower() == "sigmoid":
-            return _safe_import("torch.nn.Sigmoid")()
-        elif activation_str.lower() == "leaky_relu":
-            return _safe_import("torch.nn.LeakyReLU")()
-        elif activation_str.lower() == "elu":
-            return _safe_import("torch.nn.ELU")()
-        elif activation_str.lower() == "selu":
-            return _safe_import("torch.nn.SELU")()
-        elif activation_str.lower() == "gelu":
-            return _safe_import("torch.nn.GELU")()
-        else:
-            raise ValueError(
-                f"Unsupported activation: {activation_str}. "
-                "Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', "
-                "'elu', 'selu', 'gelu', 'linear'"
-            )
 
 
 class InceptionModule(NNModule):
@@ -361,7 +322,10 @@ class InceptionModule(NNModule):
         """
         if self.bottleneck is not None:
             input_inception = self.bottleneck(x)
-            input_inception = self.bottleneck_activation(input_inception)
+            if self.bottleneck_activation is not None:
+                input_inception = self.bottleneck_activation(input_inception)
+            else:
+                input_inception = input_inception
         else:
             input_inception = x
 
@@ -369,20 +333,23 @@ class InceptionModule(NNModule):
         conv_outputs = []
         for i, conv in enumerate(self.conv_list):
             out = conv(input_inception)
-            out = self.conv_activations[i](out)
+            if self.conv_activations[i] is not None:
+                out = self.conv_activations[i](out)
             conv_outputs.append(out)
 
         # MaxPool branch
         maxpool_out = self.maxpool(x)
         maxpool_out = self.conv_from_maxpool(maxpool_out)
-        maxpool_out = self.maxpool_activation(maxpool_out)
+        if self.maxpool_activation is not None:
+            maxpool_out = self.maxpool_activation(maxpool_out)
         conv_outputs.append(maxpool_out)
 
         torchCat = _safe_import("torch.cat")
         x = torchCat(conv_outputs, dim=1)
 
         x = self.bn(x)
-        x = self.output_activation(x)
+        if self.output_activation is not None:
+            x = self.output_activation(x)
 
         return x
 
@@ -431,6 +398,7 @@ class ShortcutLayer(NNModule):
         shortcut = self.bn(shortcut)
 
         x = shortcut + out_tensor
-        x = self.activation(x)
+        if self.activation is not None:
+            x = self.activation(x)
 
         return x

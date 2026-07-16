@@ -34,14 +34,39 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         layers.
     pool_padding : str or None, optional (default="same")
         The type of padding to be applied to pooling layers.
-    activation : str or callable or None, optional (default=None)
-        The activation function to apply at the output.
-        List of available activation functions:
-        https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
-    activation_hidden : string or callable, default="relu"
-        Activation function used in the hidden layers.
-        List of available activation functions:
-        https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
+    activation : str, Callable, or None, optional (default=None)
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+    activation_hidden : str, Callable, or None, default="ReLU"
+        Activation applied to the hidden layers.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
     use_bias : bool, optional (default=True)
         Whether bias should be included in the output layer.
     criterion : str, optional (default="MSELoss")
@@ -64,6 +89,12 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         order they are passed. If None, then no learning rate scheduler is used.
     callback_kwargs : dict or None, optional (default=None)
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, optional (default=0.01)
         The learning rate to use for the optimizer.
     verbose : bool, optional (default=False)
@@ -106,7 +137,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         conv_padding: str | None = "same",
         pool_padding: str | None = "same",
         activation: str | None | Callable = None,
-        activation_hidden: str | Callable = "relu",
+        activation_hidden: str | Callable = "ReLU",
         use_bias: bool = True,
         criterion: str | None | Callable = "MSELoss",
         criterion_kwargs: dict | None = None,
@@ -114,6 +145,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         optim_kwargs: dict | None = None,
         callbacks: str | tuple[str, ...] | None = None,
         callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.01,
         verbose: bool = False,
         random_state: int = 0,
@@ -131,6 +163,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
+        self.metrics = metrics
 
         self.optim = optim
         self.optim_kwargs = optim_kwargs
@@ -162,6 +195,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
+            metrics=self.metrics,
         )
 
     def __post_init__(self):
@@ -171,7 +205,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         if len(self.filter_sizes) != len(self.kernel_sizes):
@@ -204,8 +237,8 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             conv_padding=self.conv_padding,
             pool_padding=self.pool_padding,
             random_state=self.random_state,
-            activation=self.activation,
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             use_bias=self.use_bias,
         )
 
@@ -252,7 +285,7 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
             "dense_units": 1,
             "conv_padding": "same",
             "pool_padding": "same",
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "use_bias": False,
             "optim": "Adam",
             "optim_kwargs": {"weight_decay": 0.001},

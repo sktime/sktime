@@ -4,6 +4,8 @@ __authors__ = ["Faakhir30"]
 __all__ = ["MACNNNetworkTorch"]
 
 
+from collections.abc import Callable
+
 from sktime.utils.dependencies import _safe_import
 
 # handling soft dependencies for Torch modules
@@ -42,12 +44,14 @@ class MACNNNetworkTorch(NNModule):
         Length of this tuple determines the number of MACNN stacks.
     reduction : int, default=16
         The factor by which the first dense layer of a MACNN Block will be divided by.
-    activation : str or None = None
+    activation : Callable or None = None
         Activation function used for output layer.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_hidden : str, default="relu"
+        Recommended: Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
+    activation_hidden : Callable or None, default=None
         Activation function used for internal layers.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
+        Recommended: Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
     init_weights : str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
@@ -89,11 +93,12 @@ class MACNNNetworkTorch(NNModule):
         filter_sizes: tuple = (64, 128, 256),
         kernel_sizes: tuple = (3, 6, 12),
         reduction: int = 16,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
+        activation: Callable | None = None,
+        activation_hidden: Callable | None = None,
         init_weights: str | None = None,
         random_state: int = 0,
     ):
+        super().__init__()
         self.input_size = input_size
         self.num_classes = num_classes
         self.padding = padding
@@ -103,16 +108,10 @@ class MACNNNetworkTorch(NNModule):
         self.filter_sizes = filter_sizes
         self.kernel_sizes = kernel_sizes
         self.reduction = reduction
-        self.activation = activation
-        self.activation_hidden = activation_hidden
         self.init_weights = init_weights
         self.random_state = random_state
-
-        super().__init__()
-
-        if self.activation is not None:
-            self._activation = _instantiate_activation(self.activation)
-        self._activation_hidden = _instantiate_activation(self.activation_hidden)
+        self.activation = activation
+        self.activation_hidden = activation_hidden
 
         nnMaxPool1d = _safe_import("torch.nn.MaxPool1d")
         nnAdaptiveAvgPool1d = _safe_import("torch.nn.AdaptiveAvgPool1d")
@@ -253,7 +252,7 @@ class MACNNBlock(NNModule):
         kernel_sizes: tuple,
         reduction: int,
         padding: str,
-        activation: str,
+        activation: Callable,
     ):
         super().__init__()
         self.in_channels = in_channels
@@ -261,7 +260,7 @@ class MACNNBlock(NNModule):
         self.kernel_sizes = kernel_sizes
         self.reduction = reduction
         self.padding = padding
-        self.activation_str = activation
+        self.activation = activation
 
         nnConv1d = _safe_import("torch.nn.Conv1d")
         nnBatchNorm1d = _safe_import("torch.nn.BatchNorm1d")
@@ -279,8 +278,6 @@ class MACNNBlock(NNModule):
 
         out_channels = filter_size * len(self.kernel_sizes)
         self.bn = nnBatchNorm1d(out_channels)
-
-        self._activation = _instantiate_activation(self.activation_str)
 
         self.global_pool = _safe_import("torch.nn.AdaptiveAvgPool1d")(1)
 
@@ -300,56 +297,20 @@ class MACNNBlock(NNModule):
         x1 = torchCat(conv_outputs, dim=1)
 
         x1 = self.bn(x1)
-        x1 = self._activation(x1)
+        if self.activation is not None:
+            x1 = self.activation(x1)
 
         x2 = self.global_pool(x1)
         x2 = x2.squeeze(-1)  # (B, C)
 
         x2 = self.fc1(x2)
-        x2 = self._activation(x2)
+        if self.activation is not None:
+            x2 = self.activation(x2)
         x2 = self.fc2(x2)
-        x2 = self._activation(x2)
+        if self.activation is not None:
+            x2 = self.activation(x2)
 
         x2 = x2.unsqueeze(-1)  # (B, C, 1)
         out = x1 * x2
 
         return out
-
-
-def _instantiate_activation(activation):
-    """Instantiate the activation function for hidden layers.
-
-    Returns
-    -------
-    activation_function : torch.nn.Module
-        The activation function to be applied in hidden layers.
-    """
-    if isinstance(activation, NNModule):
-        return activation
-    elif isinstance(activation, str):
-        act = activation.lower()
-        if act == "relu":
-            return _safe_import("torch.nn.ReLU")()
-        elif act == "tanh":
-            return _safe_import("torch.nn.Tanh")()
-        elif act == "sigmoid":
-            return _safe_import("torch.nn.Sigmoid")()
-        elif act == "leaky_relu":
-            return _safe_import("torch.nn.LeakyReLU")()
-        elif act == "elu":
-            return _safe_import("torch.nn.ELU")()
-        elif act == "selu":
-            return _safe_import("torch.nn.SELU")()
-        elif act == "gelu":
-            return _safe_import("torch.nn.GELU")()
-        else:
-            raise ValueError(
-                "If `activation` is a string, it must be one of "
-                "'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', or 'gelu'. "
-                f"Found {activation}"
-            )
-    else:
-        raise TypeError(
-            "`activation` should either be of type str or torch.nn.Module. "
-            f"But found the type to be: {type(activation)}"
-        )

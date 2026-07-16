@@ -78,7 +78,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     Examples
     --------
     >>> from sktime.transformations.compose import TransformerPipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> t1 = ExponentTransformer(power=2)
     >>> t2 = ExponentTransformer(power=0.5)
 
@@ -105,7 +105,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
         If applied to Table, sklearn transformers are applied to the table as a whole.
 
     >>> from sklearn.preprocessing import StandardScaler
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
 
         This applies the scaler per series, then summarizes:
 
@@ -463,7 +463,7 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # imports
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)

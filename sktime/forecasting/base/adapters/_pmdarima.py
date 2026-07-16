@@ -157,9 +157,12 @@ class _PmdArimaAdapter(BaseForecaster):
             diff_order = self._forecaster.model_.order[1]
 
         # Initialize return objects
-        fh_abs = fh.to_absolute(self.cutoff).to_numpy()
+        # fh_abs_full keeps the full index (including points that cannot be forecast
+        # due to differencing); fh_abs is trimmed below when diff_order > 0.
+        fh_abs_full = fh.to_absolute(self.cutoff).to_numpy()
+        fh_abs = fh_abs_full  # may be re-assigned below
         fh_idx = fh.to_indexer(self.cutoff, from_cutoff=False)
-        y_pred = pd.Series(index=fh_abs, dtype="float64")
+        y_pred = pd.Series(index=fh_abs_full, dtype="float64")
 
         # for in-sample predictions, pmdarima requires zero-based integer indices
         start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
@@ -173,8 +176,8 @@ class _PmdArimaAdapter(BaseForecaster):
             if end < start:
                 # since we might have forced `start` to surpass `end`
                 end = diff_order
-            # get rid of unforecastable points
-            fh_abs = fh_abs[fh_idx >= diff_order]
+            # get rid of unforecastable points from the active fh window
+            fh_abs = fh_abs_full[fh_idx >= diff_order]
             # reindex accordingly
             fh_idx = fh_idx[fh_idx >= diff_order] - diff_order
 
@@ -189,7 +192,9 @@ class _PmdArimaAdapter(BaseForecaster):
         if return_pred_int:
             pred_ints = []
             for a in alpha:
-                pred_int = pd.DataFrame(index=fh_abs, columns=["lower", "upper"])
+                # Use fh_abs_full so that prediction intervals have the same index
+                # length as predict() — earlier points (lost to differencing) get NaN.
+                pred_int = pd.DataFrame(index=fh_abs_full, columns=["lower", "upper"])
                 result = self._forecaster.predict_in_sample(
                     start=start,
                     end=end,

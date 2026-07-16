@@ -10,7 +10,7 @@ of sktime across sklearn versions. This fork ensures upwards compatibility.
 __all__ = ["_check_reg_targets"]
 
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric", xp=None):

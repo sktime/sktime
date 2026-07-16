@@ -23,16 +23,44 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         Dimensionality of the hidden layers.
     n_layers : int, default = 4
         Number of hidden layers.
-    activation : str or None or an instance of activation functions defined in
-        torch.nn, default = None
-        Activation function used in the fully connected output layer. List of supported
-        activation functions: ['sigmoid', 'softmax', 'logsoftmax', 'logsigmoid'].
-        If None, then no activation function is applied.
-    activation_hidden : str or None or an instance of activation functions defined in
-        torch.nn, default = "relu"
-        The activation function applied inside the hidden layers of the MLP.
-        Can be any of "relu", "leakyrelu", "elu", "prelu", "gelu", "selu",
-        "rrelu", "celu", "tanh", "hardtanh".
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``Sigmoid``, ``Softmax``, ``LogSoftmax``,
+        ``LogSigmoid``.
+    activation_hidden : str, Callable, or None, default="ReLU"
+        Activation applied to the hidden layers of the MLP.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``LeakyReLU``, ``ELU``, ``PReLU``, ``GELU``,
+        ``SELU``, ``RReLU``, ``CELU``, ``Tanh``, ``Hardtanh``.
     bias : bool, default = True
         If False, then the layer does not use bias weights.
     dropout : float or tuple of floats, default = (0.1, 0.2, 0.2, 0.3)
@@ -73,6 +101,12 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "Accuracy", "F1Score", "Precision", "Recall"
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     verbose : bool, default = False
@@ -111,6 +145,8 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        "tests:vm": True,
+        "tests:python_dependencies": "torchmetrics",
     }
 
     def __init__(
@@ -118,8 +154,8 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         # model architecture parameters
         hidden_dim: int = 500,
         n_layers: int = 4,
-        activation: str | None | Callable = None,
-        activation_hidden: str | None | Callable = "relu",
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable | None = "ReLU",
         bias: bool = True,
         dropout: float | tuple[float, ...] = (0.1, 0.2, 0.2, 0.3),
         fc_dropout: float = 0.0,
@@ -132,6 +168,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         criterion_kwargs: dict | None = None,
         callbacks: str | tuple[str] | None = "ReduceLROnPlateau",
         callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         verbose: bool = False,
         random_state: int = 0,
@@ -151,6 +188,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         self.criterion_kwargs = criterion_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -170,6 +208,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             criterion_kwargs=self.criterion_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
+            metrics=self.metrics,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
@@ -198,8 +237,8 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             num_classes=self.num_classes,
             hidden_dim=self.hidden_dim,
             n_layers=self.n_layers,
-            activation=self._validated_activation,  # use self._validated_activation
-            activation_hidden=self.activation_hidden,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
             bias=self.bias,
             dropout=self.dropout,
             fc_dropout=self.fc_dropout,
@@ -233,7 +272,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             "hidden_dim": 5,
             "n_layers": 1,
             "activation": None,
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "bias": False,
             "dropout": 0.0,
             "fc_dropout": 0.0,
@@ -252,8 +291,8 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         params3 = {
             "hidden_dim": 5,
             "n_layers": 1,
-            "activation": "sigmoid",
-            "activation_hidden": "relu",
+            "activation": "Sigmoid",
+            "activation_hidden": "ReLU",
             "bias": False,
             "dropout": 0.0,
             "fc_dropout": 0.0,
@@ -273,7 +312,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             "hidden_dim": 5,
             "n_layers": 1,
             "activation": None,
-            "activation_hidden": "relu",
+            "activation_hidden": "ReLU",
             "bias": False,
             "dropout": 0.0,
             "fc_dropout": 0.0,
@@ -292,8 +331,8 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         params5 = {
             "hidden_dim": 5,
             "n_layers": 1,
-            "activation": "logsoftmax",
-            "activation_hidden": "relu",
+            "activation": "LogSoftmax",
+            "activation_hidden": "ReLU",
             "bias": False,
             "dropout": 0.0,
             "fc_dropout": 0.0,
@@ -309,4 +348,15 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
             "verbose": False,
             "random_state": 0,
         }  # functionally equivalent to params2 for multi-class classification
-        return [params1, params2, params3, params4, params5]
+        params = [params1, params2, params3, params4, params5]
+
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("torchmetrics", severity="none"):
+            params.append(
+                {
+                    "batch_size": 2,
+                    "metrics": ("Accuracy", "F1Score"),
+                }
+            )
+        return params
