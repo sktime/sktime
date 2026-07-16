@@ -138,12 +138,10 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
-        self.seed = seed
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
         super().__init__(
             model_path=model_path,
-            config=config,
             device="cpu",
             dtype="torch.bfloat16",
             random_state=seed,
