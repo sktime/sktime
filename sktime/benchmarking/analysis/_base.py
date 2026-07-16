@@ -5,6 +5,7 @@ __all__ = ["BaseBenchmarkAnalyzer"]
 import pandas as pd
 
 from sktime.base import BaseObject
+from sktime.utils.dependencies import _check_estimator_deps
 
 # column suffix used by the v2 ``BaseBenchmark.run()`` output for aggregated
 # per-(model, task) scores, see ``ResultObject.to_dataframe``.
@@ -40,8 +41,7 @@ class BaseBenchmarkAnalyzer(BaseObject):
         otherwise a ``ValueError`` is raised.
     lower_is_better : bool, optional (default=True)
         Whether lower metric values indicate better performance (e.g. error
-        metrics). Controls ranking direction and the ``is_errors`` semantics of
-        the critical-difference diagram.
+        metrics). Controls direction of comparison or ranking.
     """
 
     _tags = {
@@ -54,7 +54,23 @@ class BaseBenchmarkAnalyzer(BaseObject):
     def __init__(self, metric=None, lower_is_better=True):
         self.metric = metric
         self.lower_is_better = lower_is_better
-        super().__init__()
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     # ------------------------------------------------------------------ #
     # public API
