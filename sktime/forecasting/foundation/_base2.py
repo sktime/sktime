@@ -203,7 +203,8 @@ class BaseFoundationForecaster(BaseForecaster):
         """Build a deterministic cache key from model-loading parameters."""
         key_items = {
             "class": self.__class__.__name__,
-            "config": self.config_,
+            # for zero-shot forecasters, the cached model is indifferent to config
+            # "config": self.config_,
             "device": self.device_,
             "dtype": self.dtype_,
             "model_path": self.model_path,
