@@ -37,8 +37,17 @@ class _CacheEntry:
 
     def to_public_dict(self) -> dict[str, Any]:
         """Return diagnostics without exposing model objects."""
-        family = self.key[0] if self.key else None
-        model_path = self.key[1] if len(self.key) > 1 else None
+        is_named_key = all(
+            isinstance(item, tuple) and len(item) == 2 for item in self.key
+        )
+        if is_named_key:
+            key_items = dict(self.key)
+            family = key_items.get("class")
+            model_path = key_items.get("model_path")
+        else:
+            family = self.key[0] if self.key else None
+            model_path = self.key[1] if len(self.key) > 1 else None
+
         return {
             "key": self.key,
             "family": family,
