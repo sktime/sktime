@@ -98,7 +98,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
             model_path=model_path,
             revision=revision,
             config=config,
-            device=None,
+            device="auto",
         )
 
     def _load_model(self):
