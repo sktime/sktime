@@ -55,7 +55,7 @@ Benchmark analyzers consume the results of ``BaseBenchmark.run`` and
 compute ranking, omnibus / pairwise significance tests, and critical-difference
 diagrams.
 
-.. currentmodule:: sktime.benchmarking.post_hoc
+.. currentmodule:: sktime.benchmarking.analysis
 
 .. autosummary::
     :toctree: auto_generated/
