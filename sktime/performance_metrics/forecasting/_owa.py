@@ -187,19 +187,18 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         y_train = kwargs["y_train"]
-        metric_kwargs = {k: v for k, v in kwargs.items() if k != "y_train"}
+        metric_kwargs = {
+            k: v for k, v in kwargs.items() if k not in ("y_train", "sample_weight")
+        }
         owa = self._compute_owa(y_true, y_pred, y_train, **metric_kwargs)
-        owa = self._handle_multioutput(owa, self.multioutput)
 
-        if isinstance(owa, pd.Series):
-            owa = pd.DataFrame(
-                np.tile(owa.to_numpy(), (len(y_true), 1)),
-                index=y_true.index,
-                columns=y_true.columns,
-            )
-        else:
-            owa = pd.Series(owa, index=y_true.index)
-        return owa
+        owa = pd.DataFrame(
+            np.tile(np.asarray(owa).reshape(1, -1), (len(y_true), 1)),
+            index=y_true.index,
+            columns=y_true.columns,
+        )
+        owa = self._get_weighted_df(owa, **kwargs)
+        return self._handle_multioutput(owa, self.multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
