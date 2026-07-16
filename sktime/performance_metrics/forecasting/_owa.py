@@ -1,6 +1,7 @@
 """Overall Weighted Average (OWA) metric for forecasting."""
 
 import numpy as np
+import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
@@ -128,8 +129,8 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
             Deseasonalizer(sp=self.sp, model="additive"),
         ) * NaiveForecaster(strategy="last")
 
-    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
-        y_train = kwargs["y_train"]
+    def _predict_naive2(self, y_train, y_true):
+        """Fit Naive-2 on training data and predict for the test horizon."""
         index = y_true.index
 
         if hasattr(index, "nlevels") and index.nlevels > 1:
@@ -141,26 +142,29 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
 
         naive2 = self._make_naive2_forecaster()
         naive2.fit(y_train, fh=fh)
-        y_pred_naive2 = naive2.predict(fh)
+        return naive2.predict(fh)
+
+    def _compute_owa(self, y_true, y_pred, y_train, **kwargs):
+        """Compute aggregate OWA from model and Naive-2 benchmark forecasts."""
+        y_pred_naive2 = self._predict_naive2(y_train, y_true)
+        metric_kwargs = {k: v for k, v in kwargs.items() if k != "y_train"}
 
         mase = MeanAbsoluteScaledError(
             sp=self.sp,
             multioutput="raw_values",
             multilevel="raw_values",
-            by_index=True,
         )
         smape = MeanAbsolutePercentageError(
             symmetric=True,
             multioutput="raw_values",
             multilevel="raw_values",
-            by_index=True,
         )
 
-        mase_model = mase(y_true, y_pred, y_train=y_train)
-        mase_naive2 = mase(y_true, y_pred_naive2, y_train=y_train)
+        mase_model = mase(y_true, y_pred, y_train=y_train, **metric_kwargs)
+        mase_naive2 = mase(y_true, y_pred_naive2, y_train=y_train, **metric_kwargs)
 
-        smape_model = smape(y_true, y_pred)
-        smape_naive2 = smape(y_true, y_pred_naive2)
+        smape_model = smape(y_true, y_pred, **metric_kwargs)
+        smape_naive2 = smape(y_true, y_pred_naive2, **metric_kwargs)
 
         eps = self.eps
         if eps is None:
@@ -169,9 +173,33 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
         smape_ratio = smape_model / np.maximum(smape_naive2, eps)
 
         owa = np.float64(0.5) * (mase_ratio + smape_ratio)
+        if isinstance(owa, pd.DataFrame):
+            owa = pd.Series(owa.to_numpy().ravel(), index=y_true.columns)
+        elif isinstance(owa, np.ndarray):
+            owa = pd.Series(owa, index=y_true.columns)
+        return owa
 
-        owa = self._get_weighted_df(owa, **kwargs)
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        y_train = kwargs["y_train"]
+        metric_kwargs = {k: v for k, v in kwargs.items() if k != "y_train"}
+        owa = self._compute_owa(y_true, y_pred, y_train, **metric_kwargs)
         return self._handle_multioutput(owa, self.multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        y_train = kwargs["y_train"]
+        metric_kwargs = {k: v for k, v in kwargs.items() if k != "y_train"}
+        owa = self._compute_owa(y_true, y_pred, y_train, **metric_kwargs)
+        owa = self._handle_multioutput(owa, self.multioutput)
+
+        if isinstance(owa, pd.Series):
+            owa = pd.DataFrame(
+                np.tile(owa.to_numpy(), (len(y_true), 1)),
+                index=y_true.index,
+                columns=y_true.columns,
+            )
+        else:
+            owa = pd.Series(owa, index=y_true.index)
+        return owa
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
