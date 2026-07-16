@@ -6,8 +6,8 @@ Benchmarking
 
 The :mod:`sktime.benchmarking` module contains functionality to perform benchmarking.
 
-Benchmarking Framework v2
--------------------------
+Benchmarking Framework
+----------------------
 
 .. currentmodule:: sktime.benchmarking.benchmarks
 
@@ -48,10 +48,10 @@ Storage Backends
     NullStorageHandler
 
 
-Post-hoc evaluators
+Benchmark analyzers
 -------------------
 
-Post-hoc statistical evaluators consume the results of ``BaseBenchmark.run`` and
+Benchmark analyzers consume the results of ``BaseBenchmark.run`` and
 compute ranking, omnibus / pairwise significance tests, and critical-difference
 diagrams.
 
@@ -70,107 +70,3 @@ diagrams.
     RanksumEvaluator
     TTestEvaluator
     CriticalDifferenceDiagram
-
-
-Benchmarking Framework v1
--------------------------
-
-.. currentmodule:: sktime.benchmarking.base
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseMetric
-    BaseResults
-    BaseDataset
-    HDDBaseResults
-    HDDBaseDataset
-
-.. currentmodule:: sktime.benchmarking.data
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    UEADataset
-    RAMDataset
-
-
-.. currentmodule:: sktime.benchmarking.evaluation
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Evaluator
-
-.. currentmodule:: sktime.benchmarking.experiments
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    run_clustering_experiment
-    load_and_run_clustering_experiment
-    run_classification_experiment
-    load_and_run_classification_experiment
-
-.. currentmodule:: sktime.benchmarking.orchestration
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    Orchestrator
-
-.. currentmodule:: sktime.benchmarking.results
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    RAMResults
-    HDDResults
-
-.. currentmodule:: sktime.benchmarking.strategies
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseStrategy
-    BaseSupervisedLearningStrategy
-    TSCStrategy
-    TSRStrategy
-
-.. currentmodule:: sktime.benchmarking.tasks
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BaseTask
-    TSCTask
-    TSRTask
-
-.. currentmodule:: sktime.benchmarking.metrics
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    PairwiseMetric
-    AggregateMetric
-
-
-Post-hoc tests and utilities
-----------------------------
-
-.. currentmodule:: sktime.benchmarking.critical_difference
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    plot_critical_difference

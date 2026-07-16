@@ -1,4 +1,4 @@
-"""Base class for post-hoc benchmark evaluators (strategy pattern)."""
+"""Base class for benchmark evaluators (strategy pattern)."""
 
 __all__ = ["BaseBenchmarkAnalyzer"]
 
@@ -16,11 +16,11 @@ _NON_METRIC_BASES = frozenset({"fit_time", "pred_time", "runtime"})
 
 
 class BaseBenchmarkAnalyzer(BaseObject):
-    """Base class for post-hoc statistical benchmark analyzers.
+    """Base class forbenchmark analyzers.
 
     Benchmark analyzers consume the flat results table produced by the v2
     benchmarking framework (``BaseBenchmark.run()`` /
-    ``ResultObject.to_dataframe``) and compute a post-hoc statistical analysis
+    ``ResultObject.to_dataframe``) and compute a benchmark analysis
     (ranking, omnibus / pairwise significance tests, critical-difference
     diagrams).
 
@@ -60,7 +60,7 @@ class BaseBenchmarkAnalyzer(BaseObject):
     # public API
     # ------------------------------------------------------------------ #
     def evaluate(self, results):
-        """Run the post-hoc analysis on benchmark results.
+        """Compute results of the benchmark analysis, on benchmark results.
 
         Parameters
         ----------
@@ -73,7 +73,7 @@ class BaseBenchmarkAnalyzer(BaseObject):
         -------
         pandas.DataFrame
             The analysis result. Shape and columns depend on the concrete
-            evaluator (see the subclass docstring).
+            benchmark analyzer (see the subclass docstring).
         """
         scores = self._coerce_to_score_matrix(results)
         return self._evaluate(scores)
@@ -82,7 +82,7 @@ class BaseBenchmarkAnalyzer(BaseObject):
     # strategy hook (abstract)
     # ------------------------------------------------------------------ #
     def _evaluate(self, scores):
-        """Compute the post-hoc analysis.
+        """Compute results of the benchmark analysis, on benchmark results.
 
         Parameters
         ----------
@@ -145,7 +145,7 @@ class BaseBenchmarkAnalyzer(BaseObject):
         ]
         raise ValueError(
             "Score matrix contains missing values; every estimator must have a "
-            "score on every task before a post-hoc analysis can run. Missing "
+            "score on every task before a benchmark analysis can run. Missing "
             f"(model_id, validation_id) pairs: {missing}."
         )
 

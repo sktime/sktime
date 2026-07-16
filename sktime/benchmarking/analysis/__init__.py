@@ -1,9 +1,8 @@
-"""Post-hoc statistical evaluators for benchmark results (v2, strategy pattern).
+"""Analyzers for benchmark results (v2, strategy pattern).
 
 These evaluators consume the flat results table produced by the v2 benchmarking
 framework (``BaseBenchmark.run`` / ``ResultObject.to_dataframe``) and compute
-post-hoc statistical analyses that were previously locked inside the legacy v1
-``Evaluator``: ranking, omnibus / pairwise significance tests, and the
+analysis results: ranking, omnibus / pairwise significance tests, and the
 critical-difference diagram.
 """
 

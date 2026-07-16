@@ -2520,8 +2520,8 @@ class capability__pairwise_parameter_estimation(_BaseTag):
     }
 
 
-# Benchmark post-hoc evaluator tags
-# ---------------------------------
+# Benchmark analyzer tags
+# -----------------------
 
 
 class property__analyzer_type(_BaseTag):
