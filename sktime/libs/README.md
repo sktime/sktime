@@ -26,12 +26,20 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `granite_ttm` - a package implementing TinyTimeMixer.
   Unofficial fork of package which is not available on pypi.
 
+* `mira` - partial fork of MIRA, from [microsoft/MIRA](https://github.com/microsoft/MIRA).
+  Unofficial fork of partial code specific to the forecaster. An official package on
+  PyPI is not available. Licensed under MIT.
+
 * `lag_llama` - partial fork of Lag-Llama, from [time-series-foundation-models/lag-llama](https://github.com/time-series-foundation-models/lag-llama).
   Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
   Licensed under Apache 2.0.
 
 * `momentfm` - a package implementing the `momentfm` library, unofficial fork
   maintained since April 2025.
+
+* `sundial` - partial fork of Sundial, adapted from [thuml/sundial-base-128m](https://huggingface.co/thuml/sundial-base-128m).
+  Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
+  Licensed under Apache 2.0.
 
 * `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
 
