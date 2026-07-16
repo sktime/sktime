@@ -3,6 +3,7 @@
 from contextlib import contextmanager
 
 import numpy as np
+from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.foundation._cache import FOUNDATION_MODEL_CACHE
@@ -59,7 +60,7 @@ class BaseFoundationForecaster(BaseForecaster):
 
     def __post_init__(self):
         """Initialize normalized copies of shared constructor parameters."""
-        self.random_state_ = self.random_state
+        self.random_state_ = check_random_state(self.random_state)
         self.config_ = {} if self.config is None else self.config.copy()
         self.device_ = self._resolve_device()
         self.dtype_ = self._resolve_dtype()
