@@ -2525,7 +2525,7 @@ class capability__pairwise_parameter_estimation(_BaseTag):
 
 
 class property__analyzer_type(_BaseTag):
-    """Property: type of post-hoc test a benchmark evaluator performs.
+    """Property: type of analysis a benchmark analyzer performs.
 
     - String name: ``"property:analyzer_type"``
     - Public property tag
@@ -2533,8 +2533,9 @@ class property__analyzer_type(_BaseTag):
     - Example: ``"pairwise"``
     - Default: ``None``
 
-    This tag applies to post-hoc benchmark evaluators. It describes what the
-    evaluator *is* (its kind of analysis), which fixes the shape of its output:
+    This tag applies to benchmark analyzers. It describes what the
+    analyzer *is* (its kind of analysis), which also fixes the shape of the output of
+    its ``evaluate`` method.
 
     - ``"omnibus"``: ``evaluate()`` returns a single overall statistic and
       p-value.
@@ -2549,7 +2550,7 @@ class property__analyzer_type(_BaseTag):
         "tag_name": "property:analyzer_type",
         "parent_type": "object",
         "tag_type": ("str", ["omnibus", "pairwise", "plot", "ranking"]),
-        "short_descr": "type of post-hoc test the evaluator performs",
+        "short_descr": "type of analysis the benchmark analyzer performs",
         "user_facing": True,
     }
 
