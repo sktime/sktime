@@ -13,15 +13,12 @@ def coverage_to_alpha(coverage) -> tuple[float, ...]:
     return tuple(alpha)
 
 
-def format_point_result(result, request, y) -> pd.Series | pd.DataFrame:
+def format_point_result(result, request, y) -> pd.DataFrame:
     """Format a normalized point forecast as an sktime prediction."""
     values = _get_point_values(result)
     values = _select_requested_rows(values, request)
     index = pd.Index(request.absolute_index)
     names = _get_variable_names(y)
-
-    if len(names) == 1 and values.ndim == 1:
-        return pd.Series(values, index=index, name=names[0])
 
     values = _as_2d(values, len(names))
     return pd.DataFrame(values, index=index, columns=names)
@@ -127,8 +124,4 @@ def _as_2d(values, n_columns: int):
 
 def _get_variable_names(y) -> list:
     """Return sktime variable names for fitted target data."""
-    if isinstance(y, pd.Series):
-        return [0 if y.name is None else y.name]
-    if isinstance(y, pd.DataFrame):
-        return list(y.columns)
-    return [0]
+    return list(y.columns)
