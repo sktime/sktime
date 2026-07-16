@@ -11,8 +11,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -177,7 +176,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
         return np.median(prediction_results[0].numpy(), axis=0)
 
 
-class ChronosForecaster(BaseFoundationForecaster):
+class ChronosForecaster(BaseForecaster):
     """
     Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
@@ -353,15 +352,13 @@ class ChronosForecaster(BaseFoundationForecaster):
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
+        self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
+        self.config = config
         self.seed = seed
 
-        super().__init__(
-            model_path=model_path,
-            config=config,
-            random_state=seed,
-        )
+        super().__init__()
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
@@ -384,7 +381,6 @@ class ChronosForecaster(BaseFoundationForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        super().__post_init__()
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
 
         # initialize model_strategy as None, will be set correctly after loading config.
