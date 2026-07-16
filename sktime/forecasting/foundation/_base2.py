@@ -164,6 +164,14 @@ class BaseFoundationForecaster(BaseForecaster):
             with torch.inference_mode():
                 yield
 
+    def _resolve_random_state(self):
+        rng = check_random_state(self.random_state)
+        return (
+            None
+            if self.random_state is None
+            else int(rng.randint(np.iinfo(np.int32).max))
+        )
+
     def _resolve_dtype(self):
         if self.dtype == "torch.bfloat16":
             import torch
