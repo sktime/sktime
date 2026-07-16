@@ -149,6 +149,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
             device="cpu",
             dtype="torch.bfloat16",
             random_state=seed,
+            ignore_deps=ignore_deps,
         )
 
     def __dynamic_tags__(self):
@@ -156,9 +157,10 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
 
         This method should be used for setting dynamic tags only.
         """
+        super().__dynamic_tags__()
         if self.ignore_deps:
-            self.set_tags(python_dependencies=[])
-        elif self.use_source_package:
+            return
+        if self.use_source_package:
             self.set_tags(python_dependencies=["timemoe"])
         else:
             self.set_tags(
