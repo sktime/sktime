@@ -1,7 +1,7 @@
 """InceptionTime+ classifier via tsai."""
 
 __author__ = ["oguiza", "obaidsafi51"]
-__all__ = ["InceptionTimeplusClassifier"]
+__all__ = ["InceptionTimePlusClassifier"]
 
 
 from sktime.classification.deep_learning.tsai._base import BaseTsaiClassifier

@@ -6,7 +6,7 @@ __all__ = ["BaseTsaiClassifier"]
 
 import abc 
 import numpy as np 
-from sktime.utils.dependencies import _check_dl_dependencies
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.classification.base import BaseClassifier
 
 
@@ -97,7 +97,7 @@ class BaseTsaiClassifier(BaseClassifier):
             torch.backends.cudnn.deterministic = True
             torch.backends.cudnn.benchmark = False
 
-        _check_dl_dependencies("tsai", severity="error")
+        _check_soft_dependencies("tsai", severity="error")
         from tsai.all import TSClassifier, get_splits
         from sklearn.preprocessing import LabelEncoder
 
@@ -192,7 +192,7 @@ class BaseTsaiClassifier(BaseClassifier):
     
     
     @abc.abstractmethod
-    def _build_model(self, n_vars, n_class):
+    def _build_model(self, n_vars, n_classes):
         """Instantiate and return the tsai model (nn.Module).
 
         Parameters
