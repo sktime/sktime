@@ -1,0 +1,49 @@
+name: Generate contributors board
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - CONTRIBUTORS.md
+      - build_tools/generate_contributors_board.py
+      - build_tools/contributors_board/**
+      - .github/workflows/generate_contributors_board.yml
+  pull_request: # TODO: remove this after verifying the workflow
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-board:
+    if: github.repository == 'sktime/sktime'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install generator dependencies
+        run: pip install Pillow requests
+
+      - name: Generate contributors board
+        run: python build_tools/generate_contributors_board.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Commit updated board
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet docs/source/images/contributors-board.png; then
+            git add docs/source/images/contributors-board.png
+            git commit -m "[MNT] update contributors board"
+            git push
+          else
+            echo "No changes to contributors board."
+          fi
