@@ -16,7 +16,7 @@ _NON_METRIC_BASES = frozenset({"fit_time", "pred_time", "runtime"})
 
 
 class BaseBenchmarkAnalyzer(BaseObject):
-    """Base class forbenchmark analyzers.
+    """Base class for benchmark analyzers.
 
     Benchmark analyzers consume the flat results table produced by the v2
     benchmarking framework (``BaseBenchmark.run()`` /
@@ -45,7 +45,7 @@ class BaseBenchmarkAnalyzer(BaseObject):
     """
 
     _tags = {
-        "object_type": "benchmark-analyzer",
+        "object_type": "benchmark_analyzer",
         "authors": ["viktorkaz", "mloning", "Aaron Bostrom"],
         "python_dependencies": None,
         "property:analyzer_type": None,
