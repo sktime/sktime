@@ -6,17 +6,15 @@ __author__ = ["rajatsen91", "geetu040"]
 
 
 import numpy as np
-import pandas as pd
 
 from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
     _GlobalForecastingDeprecationMixin,
 )
-from sktime.utils.singleton import _multiton
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
+from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
 
 
-class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model
@@ -174,7 +172,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "env_marker": "sys_platform=='linux'",
         # estimator type
         # --------------
-        "y_inner_mtype": "pd.Series",
         "capability:multivariate": False,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
@@ -191,6 +188,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timesfm"],
     }
+    _uses_torch_inference_context = False
 
     def __init__(
         self,
@@ -227,13 +225,14 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
-        super().__init__()
+        super().__init__(model_path=repo_id, device=backend, ignore_deps=ignore_deps)
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
 
         This method should be used for setting dynamic tags only.
         """
+        super().__dynamic_tags__()
         if not self.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
@@ -252,24 +251,13 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         if self.broadcasting:
             self.set_tags(
                 **{
-                    "y_inner_mtype": "pd.Series",
+                    "y_inner_mtype": "pd.DataFrame",
                     "X_inner_mtype": "pd.DataFrame",
                     "capability:global_forecasting": False,
                 }
             )
 
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable TimesFM model."""
-        state = self.__dict__.copy()
-        if "tfm" in state:
-            state["tfm"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state, TimesFM model will be reloaded on next use."""
-        self.__dict__.update(state)
-
-    def _fit(self, y, X=None, fh=None):
+    def _update_attrs_in_fit(self, y, X=None, fh=None):
         if fh is None and self.horizon_len is None:
             raise ValueError(
                 "Both 'fh' and 'horizon_len' cannot be None. Provide at least one."
@@ -291,17 +279,25 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             context_multiple = (len(y) // self.input_patch_len) + 1
             self._context_len = context_multiple * self.input_patch_len
 
-        self.context = y
-        self.tfm = self._load_model()
-
     def _load_model(self):
-        """Load TimesFM model via multiton cache."""
-        return _CachedTimesFM(
-            key=self._get_unique_timesfm_key(),
-            timesfm_kwargs=self._get_timesfm_kwargs(),
-            use_source_package=self.use_source_package,
-            repo_id=self.repo_id,
-        ).load_from_checkpoint()
+        """Load TimesFM model."""
+        if self.use_source_package:
+            from timesfm import TimesFm
+        else:
+            from sktime.libs.timesfm import TimesFm
+
+        tfm = TimesFm(**self._get_timesfm_kwargs())
+        if self.repo_id is not None:
+            tfm.load_from_checkpoint(repo_id=self.repo_id)
+        else:
+            if not hasattr(tfm, "init_from_random_weights"):
+                raise NotImplementedError(
+                    "repo_id=None requires the vendored TimesFM "
+                    "implementation. Set use_source_package=False."
+                )
+            tfm.init_from_random_weights()
+
+        return ModelHandle(model=tfm)
 
     def _get_timesfm_kwargs(self):
         """Get the kwargs for TimesFM model."""
@@ -317,62 +313,37 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "verbose": self.verbose,
         }
 
-    def _get_unique_timesfm_key(self):
-        """Get unique key for TimesFM model to use in multiton."""
-        repo_id = self.repo_id
-        use_source_package = self.use_source_package
-        kwargs = self._get_timesfm_kwargs()
-        kwargs_plus_repo_id = {
-            **kwargs,
-            "repo_id": repo_id,
-            "use_source_package": use_source_package,
-        }
-        return str(sorted(kwargs_plus_repo_id.items()))
-
-    def _predict(self, fh, X=None):
-        if fh is None:
-            fh = self.fh
-        fh = fh.to_relative(self.cutoff)
-
-        if max(fh._values.values) > self._horizon_len:
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        if pred_len > self._horizon_len:
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"
                 f" specified horizon_len of {self._horizon_len}. Change the horizon_len"
                 " when initializing the model or try another forecasting horizon."
             )
 
-        context = self.context
-        context_np = np.expand_dims(context.values, axis=0)
+        context_np = np.expand_dims(context_y.iloc[:, 0].values, axis=0)
         # context_np.shape: (batch_size, n_timestamps)
 
-        if not hasattr(self, "tfm") or self.tfm is None:
-            self.tfm = self._load_model()
-
-        pred, _ = self.tfm.forecast(context_np)
-
-        # converting pred datatype
-
-        batch_size, n_timestamps = pred.shape
-
-        index = (
-            ForecastingHorizon(range(1, n_timestamps + 1))
-            .to_absolute(self._cutoff)
-            ._values
-        )
-        pred = pd.Series(
-            # batch_size * num_timestamps
-            pred.ravel(),
-            index=index,
-            name=context.name,
+        pred, raw = handle.model.forecast(context_np)
+        return ForecastResult(
+            mean=pred.ravel().reshape(-1, 1),
+            raw=raw,
         )
 
-        absolute_horizons = fh.to_absolute_index(self.cutoff)
-        dateindex = pred.index.get_level_values(-1).map(
-            lambda x: x in absolute_horizons
-        )
-        pred = pred.loc[dateindex]
-
-        return pred
+    def _cache_key_extra(self):
+        """Return model-loading parameters specific to TimesFM."""
+        load_kwargs = self._get_timesfm_kwargs()
+        load_kwargs["use_source_package"] = self.use_source_package
+        return tuple(sorted(load_kwargs.items()))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -422,39 +393,3 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         ]
         test_params.extend(params_no_broadcasting)
         return test_params
-
-
-@_multiton
-class _CachedTimesFM:
-    """Cached TimesFM model, to ensure only one instance exists in memory.
-
-    TimesFM is a zero shot model and immutable, hence there will not be
-    any side effects of sharing the same instance across multiple uses.
-    """
-
-    def __init__(self, key, timesfm_kwargs, use_source_package, repo_id):
-        self.key = key
-        self.timesfm_kwargs = timesfm_kwargs
-        self.repo_id = repo_id
-        self.use_source_package = use_source_package
-        self.tfm = None
-
-    def load_from_checkpoint(self):
-        if self.tfm is None:
-            if self.use_source_package:
-                from timesfm import TimesFm
-            else:
-                from sktime.libs.timesfm import TimesFm
-
-            self.tfm = TimesFm(**self.timesfm_kwargs)
-            if self.repo_id is not None:
-                self.tfm.load_from_checkpoint(repo_id=self.repo_id)
-            else:
-                if not hasattr(self.tfm, "init_from_random_weights"):
-                    raise NotImplementedError(
-                        "repo_id=None requires the vendored TimesFM "
-                        "implementation. Set use_source_package=False."
-                    )
-                self.tfm.init_from_random_weights()
-
-        return self.tfm
