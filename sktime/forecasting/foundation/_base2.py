@@ -172,6 +172,12 @@ class BaseFoundationForecaster(BaseForecaster):
             else int(rng.randint(np.iinfo(np.int32).max))
         )
 
+    def _resolve_config(self):
+        if self.config is None:
+            return {}
+
+        return self.config.copy()
+
     def _resolve_dtype(self):
         if self.dtype == "torch.bfloat16":
             import torch
