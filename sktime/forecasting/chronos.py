@@ -8,11 +8,11 @@ __all__ = ["ChronosForecaster"]
 from abc import ABC, abstractmethod
 
 import numpy as np
-import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.utils.singleton import _multiton
+from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
+from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -27,14 +27,6 @@ else:
             """Dummy class if torch is unavailable."""
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    import transformers
-else:
-
-    class PreTrainedModel:
-        """Dummy class if transformers is unavailable."""
-
-
 class ChronosModelStrategy(ABC):
     """Abstract base class defining the interface for Chronos model strategies."""
 
@@ -44,7 +36,7 @@ class ChronosModelStrategy(ABC):
         pass
 
     @abstractmethod
-    def create_pipeline(self, key: str, kwargs: dict, use_source_package: bool):
+    def create_pipeline(self, kwargs: dict, use_source_package: bool):
         """Create the appropriate pipeline for the model.
 
         This method handles the creation of a cached pipeline instance for th specific
@@ -52,8 +44,6 @@ class ChronosModelStrategy(ABC):
 
         Parameters
         ----------
-        key: str
-            Unique identifier for the model instance.
         kwargs: dict
             Configuration parameters for the model pipeline. Should include:
 
@@ -130,9 +120,14 @@ class ChronosDefaultStrategy(ChronosModelStrategy):
             "device_map": "cpu",
         }
 
-    def create_pipeline(self, key: str, kwargs: dict, use_source_package: bool):
-        return _CachedChronos(
-            key=key, chronos_kwargs=kwargs, use_source_package=use_source_package
+    def create_pipeline(self, kwargs: dict, use_source_package: bool):
+        if use_source_package:
+            from chronos import ChronosPipeline
+        else:
+            from sktime.libs.chronos import ChronosPipeline
+
+        return ChronosPipeline.from_pretrained(
+            **kwargs,
         )
 
     def predict(
@@ -160,9 +155,14 @@ class ChronosBoltStrategy(ChronosModelStrategy):
             "device_map": "cpu",
         }
 
-    def create_pipeline(self, key: str, kwargs: dict, use_source_package: bool):
-        return _CachedChronosBolt(
-            key=key, chronos_bolt_kwargs=kwargs, use_source_package=use_source_package
+    def create_pipeline(self, kwargs: dict, use_source_package: bool):
+        if use_source_package:
+            from chronos import ChronosBoltPipeline
+        else:
+            from sktime.libs.chronos import ChronosBoltPipeline
+
+        return ChronosBoltPipeline.from_pretrained(
+            **kwargs,
         )
 
     def predict(
@@ -176,7 +176,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
         return np.median(prediction_results[0].numpy(), axis=0)
 
 
-class ChronosForecaster(BaseForecaster):
+class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
     """
     Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
@@ -352,22 +352,31 @@ class ChronosForecaster(BaseForecaster):
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
-        self.model_path = model_path
         self.use_source_package = use_source_package
-        self.ignore_deps = ignore_deps
-        self.config = config
         self.seed = seed
 
-        super().__init__()
+        normalized_config = self._default_chronos_config.copy()
+        if config is not None:
+            normalized_config.update(config)
+
+        super().__init__(
+            model_path=model_path,
+            config=config,
+            device=normalized_config["device_map"],
+            dtype=normalized_config["torch_dtype"],
+            random_state=seed,
+            ignore_deps=ignore_deps,
+        )
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
 
         This method should be used for setting dynamic tags only.
         """
+        super().__dynamic_tags__()
         if self.ignore_deps:
-            self.set_tags(python_dependencies=[])
-        elif self.use_source_package:
+            return
+        if self.use_source_package:
             self.set_tags(python_dependencies=["chronos"])
         else:
             self.set_tags(python_dependencies=["torch", "transformers", "accelerate"])
@@ -381,15 +390,13 @@ class ChronosForecaster(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+        super().__post_init__()
 
         # initialize model_strategy as None, will be set correctly after loading config.
         self.model_strategy = None
 
         # set config
         self._config = None
-
-        self.context = None
 
         self._initialize_model_type()
 
@@ -420,211 +427,47 @@ class ChronosForecaster(BaseForecaster):
                 f"Error: {str(e)}"
             ) from e
 
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored.
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self.model_pipeline = self._load_pipeline()
-        self._context = y
-        return self
-
     def _get_chronos_kwargs(self):
         """Get the kwargs for Chronos model."""
         return {
             "pretrained_model_name_or_path": self.model_path,
-            "torch_dtype": self._config["torch_dtype"],
-            "device_map": self._config["device_map"],
+            "torch_dtype": self.dtype_,
+            "device_map": self.device_,
         }
 
-    def _get_unique_chronos_key(self):
-        """Get unique key for Chronos model to use in multiton."""
-        model_path = self.model_path
-        use_source_package = self.use_source_package
-        kwargs = self._get_chronos_kwargs()
-        kwargs_plus_model_path = {
-            **kwargs,
-            "model_path": model_path,
-            "use_source_package": use_source_package,
-        }
-        return str(sorted(kwargs_plus_model_path.items()))
-
-    def __getstate__(self):
-        """Return state for pickling, handling unpickleable model pipeline."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_pipeline"):
-            state["model_pipeline"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from the unpickled state dictionary."""
-        self.__dict__.update(state)
-
-    def _ensure_model_pipeline_loaded(self):
-        """Ensure model pipeline is loaded, recreating if needed after unpickling."""
-        if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
-            if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.model_pipeline = self._load_pipeline()
-
-    def _load_pipeline(self):
-        """Load the model pipeline using the multiton pattern.
-
-        Returns
-        -------
-        pipeline : ChronosPipeline or ChronosBoltPipeline
-            The loaded model pipeline ready for predictions.
-        """
-        return self.model_strategy.create_pipeline(
-            key=self._get_unique_chronos_key(),
+    def _load_model(self):
+        """Load the model pipeline."""
+        pipeline = self.model_strategy.create_pipeline(
             kwargs=self._get_chronos_kwargs(),
             use_source_package=self.use_source_package,
-        ).load_from_checkpoint()
+        )
+        return ModelHandle(model=pipeline.model, pipeline=pipeline)
 
-    def predict(self, fh=None, X=None, y=None):
-        """Forecast time series at future horizon.
-
-        State required:
-            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
-
-        Accesses in self:
-
-            * Fitted model attributes ending in "_".
-            * ``self.cutoff``, ``self.is_fitted``
-
-        Writes to self:
-            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
-            previously.
-
-        Parameters
-        ----------
-        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
-            The forecasting horizon encoding the time stamps to forecast at.
-            Should not be passed if has already been passed in ``fit``.
-            If has not been passed in fit, must be passed, not optional
-
-        X : time series in ``sktime`` compatible format, optional (default=None)
-            Exogeneous time series to use in prediction.
-            Should be of same scitype (``Series``, ``Panel``, or ``Hierarchical``)
-            as ``y`` in ``fit``.
-            If ``self.get_tag("X-y-must-have-same-index")``,
-            ``X.index`` must contain ``fh`` index reference.
-            If ``y`` is not passed (not performing global forecasting), ``X`` should
-            only contain the time points to be predicted.
-            If ``y`` is passed (performing global forecasting), ``X`` must contain
-            all historical values and the time points to be predicted.
-
-        y : time series in ``sktime`` compatible format, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed.
-            Only pass the historical values not the time points to be predicted.
-
-        Returns
-        -------
-        y_pred : time series in sktime compatible data container format
-            Point forecasts at ``fh``, with same index as ``fh``.
-            ``y_pred`` has same type as the ``y`` that has been passed most recently:
-            ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
-
-        Notes
-        -----
-        If ``y`` is not None, global forecast will be performed.
-        In global forecast mode,
-        ``X`` should contain all historical values and the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
-
-        If ``y`` is None, non global forecast will be performed.
-        In non global forecast mode,
-        ``X`` should only contain the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
-        """
-        if self._fh is None and fh is not None:
-            _fh = fh
-        else:
-            _fh = self._fh
-
-        if y is not None:
-            return self.fit_predict(fh=_fh, X=X, y=y)
-
-        return super().predict(fh=fh, X=X)
-
-    def _predict(self, fh, y=None, X=None):
-        """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored.
-
-        Returns
-        -------
-        y_pred : pd.DataFrame
-            Predicted forecasts.
-        """
-        self._ensure_model_pipeline_loaded()
-
-        transformers.set_seed(self._seed)
-        if fh is not None:
-            # needs to be integer not np.int64
-            prediction_length = int(max(fh.to_relative(self.cutoff)))
-        else:
-            prediction_length = 1
-
-        _y = self._context.copy()
-        if y is not None:
-            _y = y.copy()
-        _y_df = _y
-
-        index_names = _y.index.names
-        _y = _y.values.reshape(1, -1, 1)
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Make predictions using the model pipeline."""
+        _y = context_y.values.reshape(1, -1, 1)
 
         results = []
         for i in range(_y.shape[0]):
             _y_i = _y[i, :, 0]
-            _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
+            _y_i = _y_i[-handle.pipeline.model.config.context_length :]
 
             values = self.model_strategy.predict(
-                self.model_pipeline, torch.Tensor(_y_i), prediction_length, self._config
+                handle.pipeline, torch.Tensor(_y_i), pred_len, self._config
             )
             results.append(values)
 
         pred = np.stack(results, axis=1)
-
-        index = (
-            ForecastingHorizon(range(1, pred.shape[0] + 1))
-            .to_absolute(self._cutoff)
-            ._values
-        )
-        pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
-
-        pred = pd.DataFrame(
-            pred.reshape(-1, 1),
-            index=index,
-            columns=_y_df.columns,
-        )
-        dateindex = pred.index.get_level_values(-1).map(lambda x: x in pred_out)
-        pred.index.names = index_names
-
-        y_pred = pred.loc[dateindex]
-        return y_pred
+        return ForecastResult(median=pred)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -661,63 +504,3 @@ class ChronosForecaster(BaseForecaster):
             }
         )
         return test_params
-
-
-@_multiton
-class _CachedChronos:
-    """Cached Chronos model, to ensure only one instance exists in memory.
-
-    Chronos is a zero shot model and immutable, hence there will not be
-    any side effects of sharing the same instance across multiple uses.
-    """
-
-    def __init__(self, key, chronos_kwargs, use_source_package):
-        self.key = key
-        self.chronos_kwargs = chronos_kwargs
-        self.use_source_package = use_source_package
-        self.model_pipeline = None
-
-    def load_from_checkpoint(self):
-        if self.model_pipeline is not None:
-            return self.model_pipeline
-
-        if self.use_source_package:
-            from chronos import ChronosPipeline
-        else:
-            from sktime.libs.chronos import ChronosPipeline
-
-        self.model_pipeline = ChronosPipeline.from_pretrained(
-            **self.chronos_kwargs,
-        )
-
-        return self.model_pipeline
-
-
-@_multiton
-class _CachedChronosBolt:
-    """Cached Chronos-Bolt model, to ensure only one instance exists in memory.
-
-    Chronos-Bolt is a zero-shot model and immutable, hence there will not be any
-    side effects of sharing the same instance across multiple uses.
-    """
-
-    def __init__(self, key, chronos_bolt_kwargs, use_source_package):
-        self.key = key
-        self.chronos_bolt_kwargs = chronos_bolt_kwargs
-        self.use_source_package = use_source_package
-        self.model_pipeline = None
-
-    def load_from_checkpoint(self):
-        if self.model_pipeline is not None:
-            return self.model_pipeline
-
-        if self.use_source_package:
-            from chronos import ChronosBoltPipeline
-        else:
-            from sktime.libs.chronos import ChronosBoltPipeline
-
-        self.model_pipeline = ChronosBoltPipeline.from_pretrained(
-            **self.chronos_bolt_kwargs,
-        )
-
-        return self.model_pipeline
