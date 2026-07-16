@@ -135,7 +135,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
             past_values=past,
             prediction_length=pred_len,
             scale_factor=self.scale_factor,
-            batch_first=self.batch_first,
+            batch_first=True,
             prediction_type=self.prediction_type,
         )
 
