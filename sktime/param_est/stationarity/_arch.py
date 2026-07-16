@@ -355,7 +355,7 @@ class StationarityPhillipsPerron(BaseParamFitter):
         - "c" - Include a constant (Default)
         - "ct" - Include a constant and linear time trend
 
-    evaluator_type : {"tau", "rho"}
+    test_type : {"tau", "rho"}
         The test to use when computing the test statistic. "tau" is based on
         the t-stat and "rho" uses a test based on nobs times the re-centered
         regression coefficient
@@ -401,12 +401,12 @@ class StationarityPhillipsPerron(BaseParamFitter):
         self,
         lags=None,
         trend="c",
-        evaluator_type="tau",
+        test_type="tau",
         p_threshold=0.05,
     ):
         self.lags = lags
         self.trend = trend
-        self.evaluator_type = evaluator_type
+        self.test_type = test_type
         self.p_threshold = p_threshold
         super().__init__()
 
@@ -435,7 +435,7 @@ class StationarityPhillipsPerron(BaseParamFitter):
             y=X,
             lags=self.lags,
             trend=self.trend,
-            evaluator_type=self.evaluator_type,
+            test_type=self.test_type,
         )
         self.test_statistic_ = result.stat
         self.pvalue = result.pvalue
@@ -468,7 +468,7 @@ class StationarityPhillipsPerron(BaseParamFitter):
         params2 = {
             "lags": 5,
             "trend": "ct",
-            "evaluator_type": "rho",
+            "test_type": "rho",
             "p_threshold": 0.1,
         }
 
