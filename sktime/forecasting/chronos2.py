@@ -2,14 +2,11 @@
 
 __all__ = ["Chronos2Forecaster"]
 
-import numpy as np
-import pandas as pd
-
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.utils.singleton import _multiton
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
+from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
 
 
-class Chronos2Forecaster(BaseForecaster):
+class Chronos2Forecaster(BaseFoundationForecaster):
     """Interface to the Chronos-2 Zero-Shot Forecaster by Amazon Research.
 
     Chronos-2 is a pretrained encoder-only time series foundation model
@@ -51,11 +48,6 @@ class Chronos2Forecaster(BaseForecaster):
     ignore_deps : bool, optional, default=False
         If True, dependency checks are skipped.
 
-    Attributes
-    ----------
-    model_pipeline : Chronos2Pipeline
-        The underlying model pipeline used for forecasting.
-
     References
     ----------
     .. [1] https://github.com/amazon-science/chronos-forecasting
@@ -83,8 +75,6 @@ class Chronos2Forecaster(BaseForecaster):
         "X-y-must-have-same-index": False,
         "capability:missing_values": False,
         "capability:pred_int": False,
-        "y_inner_mtype": "pd.DataFrame",
-        "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:insample": False,
         "capability:global_forecasting": True,
@@ -98,6 +88,7 @@ class Chronos2Forecaster(BaseForecaster):
 
     _default_config = {
         "limit_prediction_length": False,
+        "torch_dtype": "torch.bfloat16",
         "device_map": "cpu",
         "batch_size": 256,
         "context_length": None,
@@ -112,184 +103,91 @@ class Chronos2Forecaster(BaseForecaster):
         ignore_deps: bool = False,
     ):
         self.model_path = model_path
-        self.seed = seed
         self.config = config
+        self.seed = seed
         self.ignore_deps = ignore_deps
 
-        self.model_pipeline = None
+        normalized_config = self._default_config.copy()
+        if config is not None:
+            normalized_config.update(config)
 
-        super().__init__()
+        self.limit_prediction_length = normalized_config["limit_prediction_length"]
+        self.batch_size = normalized_config["batch_size"]
+        self.context_length = normalized_config["context_length"]
+        self.cross_learning = normalized_config["cross_learning"]
 
-    def __dynamic_tags__(self):
-        """Dynamic tag setter logic for setting tag values conditional on parameters.
+        super().__init__(
+            model_path=model_path,
+            device=normalized_config["device_map"],
+            dtype=normalized_config["torch_dtype"],
+            random_state=seed,
+            ignore_deps=ignore_deps,
+        )
 
-        This method should be used for setting dynamic tags only.
-        """
-        if self.ignore_deps:
-            self.set_tags(python_dependencies=[])
+    def _load_model(self):
+        """Load a Chronos-2 checkpoint into a cacheable model handle."""
+        from chronos import Chronos2Pipeline
 
-    def __post_init__(self):
-        """Post-init constructor logic, can be used by inheriting classes.
+        model = Chronos2Pipeline.from_pretrained(
+            pretrained_model_name_or_path=self.model_path,
+            torch_dtype=self.dtype_,
+            device_map=self.device_,
+        )
+        return ModelHandle(model=model)
 
-        This method should be used for:
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Build Chronos-2 context and return its median forecast."""
+        model = handle.model
 
-        * parameter validation
-        * initialization logic beyond self.param = param
-        * any soft dependency imports in the constructor
-        """
-        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
-
-        import torch
-
-        self._config = self._default_config.copy()
-        self._config["torch_dtype"] = torch.bfloat16
-
-        if self.config is not None:
-            self._config.update(self.config)
-
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable model pipeline."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_pipeline"):
-            state["model_pipeline"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
-
-    def _get_pipeline_kwargs(self):
-        return {
-            "pretrained_model_name_or_path": self.model_path,
-            "torch_dtype": self._config["torch_dtype"],
-            "device_map": self._config["device_map"],
-        }
-
-    def _get_unique_key(self):
-        kwargs = self._get_pipeline_kwargs()
-        return str(sorted(kwargs.items()))
-
-    def _load_pipeline(self):
-        return _CachedChronos2(
-            key=self._get_unique_key(),
-            chronos2_kwargs=self._get_pipeline_kwargs(),
-        ).load_from_checkpoint()
-
-    def _ensure_model_pipeline_loaded(self):
-        """Reload model pipeline if needed after unpickling."""
-        if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
-            if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.model_pipeline = self._load_pipeline()
-
-    def _fit(self, y, X=None, fh=None):
-        """Fit the forecaster to training data.
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            Target time series.
-        X : pd.DataFrame, optional
-            Past exogenous covariates.
-        fh : ForecastingHorizon, optional
-
-        Returns
-        -------
-        self
-        """
-        self.model_pipeline = self._load_pipeline()
-
-        context_length = self._config["context_length"]
+        context_length = self.context_length
         if context_length is None:
-            context_length = self.model_pipeline.model_context_length
+            context_length = model.model_context_length
 
-        context = y
+        context = context_y.iloc[-context_length:]
+        target = context.to_numpy().T
+        input_dict = {"target": target}
 
-        if context.shape[0] > context_length:
-            context = context.iloc[-context_length:]
-
-        context = context.values.T
-
-        self._context = context
-        self._y_index_names = y.index.names
-        return self
-
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-        X : pd.DataFrame, optional
-            Future exogenous covariates (known-future). Column names must be
-            a subset of X provided in fit.
-
-        Returns
-        -------
-        y_pred : pd.DataFrame
-        """
-        import transformers
-
-        self._ensure_model_pipeline_loaded()
-        transformers.set_seed(self._seed)
-
-        prediction_length = int(max(fh.to_relative(self.cutoff)))
-
-        context_length = self._config["context_length"]
-        if context_length is None:
-            context_length = self.model_pipeline.model_context_length
-
-        context = self._context
-        input_dict = {"target": context}
-
-        if self._X is not None:
-            actual_len = context.shape[1]
-            past_X = self._X.values[-actual_len:]
+        if context_X is not None:
+            actual_len = target.shape[1]
+            past_X = context_X.to_numpy()[-actual_len:]
             input_dict["past_covariates"] = {
-                col: past_X[:, i] for i, col in enumerate(self._X.columns)
+                col: past_X[:, i] for i, col in enumerate(context_X.columns)
             }
 
-        if X is not None:
-            if self._X is None:
+        if future_X is not None:
+            if context_X is None:
                 raise ValueError(
                     "X was not provided in fit but is provided in predict. "
                     "To use future covariates, provide past covariate values "
                     "in fit as well."
                 )
-            future_vals = X.values[:prediction_length]
+            future_vals = future_X.to_numpy()[:pred_len]
             input_dict["future_covariates"] = {
-                col: future_vals[:, i] for i, col in enumerate(X.columns)
+                col: future_vals[:, i] for i, col in enumerate(future_X.columns)
             }
 
-        predictions = self.model_pipeline.predict(
+        predictions = model.predict(
             [input_dict],
-            prediction_length=prediction_length,
-            batch_size=self._config["batch_size"],
+            prediction_length=pred_len,
+            batch_size=self.batch_size,
             context_length=context_length,
-            cross_learning=self._config["cross_learning"],
-            limit_prediction_length=self._config["limit_prediction_length"],
+            cross_learning=self.cross_learning,
+            limit_prediction_length=self.limit_prediction_length,
         )
 
         pred_tensor = predictions[0]
-        quantiles = self.model_pipeline.quantiles
-        median_idx = quantiles.index(0.5)
-        point_forecast = pred_tensor[:, median_idx, :].numpy()
-
-        index = (
-            ForecastingHorizon(range(1, prediction_length + 1))
-            .to_absolute(self._cutoff)
-            ._values
-        )
-        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
-
-        pred_df = pd.DataFrame(
-            point_forecast.T,
-            index=index,
-            columns=self._get_varnames(),
-        )
-        pred_df.index.names = self._y_index_names
-
-        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
-        return pred_df.loc[dateindex]
+        median_idx = model.quantiles.index(0.5)
+        point_forecast = pred_tensor[:, median_idx, :].detach().cpu().numpy()
+        return ForecastResult(median=point_forecast.T, raw=predictions)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -298,27 +196,3 @@ class Chronos2Forecaster(BaseForecaster):
             {"model_path": "amazon/chronos-2"},
             {"model_path": "amazon/chronos-2", "seed": 42},
         ]
-
-
-@_multiton
-class _CachedChronos2:
-    """Cached Chronos-2 model to ensure only one instance exists in memory.
-
-    Chronos-2 is a zero-shot model and immutable, so sharing the same instance
-    across multiple uses has no side effects.
-    """
-
-    def __init__(self, key, chronos2_kwargs):
-        self.key = key
-        self.chronos2_kwargs = chronos2_kwargs
-        self.model_pipeline = None
-
-    def load_from_checkpoint(self):
-        """Load Chronos-2 pipeline from pretrained checkpoint."""
-        if self.model_pipeline is not None:
-            return self.model_pipeline
-
-        from chronos import Chronos2Pipeline
-
-        self.model_pipeline = Chronos2Pipeline.from_pretrained(**self.chronos2_kwargs)
-        return self.model_pipeline
