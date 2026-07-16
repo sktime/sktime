@@ -1,211 +1,231 @@
-"""Shared base class for foundation-model forecasters."""
+"""Shared base class for zero-shot foundation-model forecasters."""
+
+from contextlib import contextmanager
 
 import numpy as np
-import pandas as pd
-from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.foundation._cache import FOUNDATION_MODEL_CACHE, _stable_repr
-from sktime.forecasting.foundation._result import ModelHandle
-from sktime.utils.warnings import warn
+from sktime.forecasting.foundation._cache import FOUNDATION_MODEL_CACHE
+from sktime.forecasting.foundation._config import InferenceConfig
+from sktime.forecasting.foundation._format import (
+    format_point_result,
+    format_quantile_result,
+)
+from sktime.forecasting.foundation._result import ForecastRequest, ForecastResult
 
 
 class BaseFoundationForecaster(BaseForecaster):
-    """Shared base class for pretrained/foundation forecasting models."""
+    """Shared lifecycle for zero-shot foundation-model forecasters.
+
+    Concrete forecasters implement ``_load_model`` and ``_inference``. They can
+    additionally override ``_update_attrs_in_fit`` and ``_cache_key_extra`` for
+    model-specific fitted state and loading parameters, respectively.
+    """
+
+    _tags = {
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
+        "tests:vm": True,
+    }
 
     def __init__(
         self,
         model_path=None,
         tokenizer_path=None,
+        revision=None,
         config=None,
-        load_kwargs=None,
-        quantization_config=None,
         device=None,
-        forward_kwargs=None,
+        dtype=None,
+        quantization_config=None,
         random_state=None,
     ):
         self.model_path = model_path
         self.tokenizer_path = tokenizer_path
+        self.revision = revision
         self.config = config
-        self.load_kwargs = load_kwargs
-        self.quantization_config = quantization_config
         self.device = device
-        self.forward_kwargs = forward_kwargs
+        self.dtype = dtype
+        self.quantization_config = quantization_config
         self.random_state = random_state
 
         super().__init__()
 
     def __post_init__(self):
-        """Post-init constructor logic for shared foundation-model parameters."""
-        self.random_state_ = check_random_state(self.random_state)
+        """Initialize normalized copies of shared constructor parameters."""
+        self.random_state_ = self.random_state
+        self.config_ = {} if self.config is None else self.config.copy()
+        self.device_ = self._resolve_device()
+        self.dtype_ = self.dtype
 
     def _fit(self, y, X=None, fh=None):
-        """Fit zero-shot foundation forecaster context and load backend state."""
-        if X is None:
-            if self.get_tag("capability:exogenous", False):
-                warn(
-                    f"{self.__class__.__name__} received no X. Placeholder "
-                    "covariates will be created from y.",
-                    obj=self,
-                )
-            X = self._make_fallback_X(y)
-
-        self.y_name_ = getattr(y, "name", None)
-        self.y_context_ = y.copy()
-        self.X_context_ = None if X is None else X.copy()
-        self.max_context_ = len(self.y_context_)
-
-        self._prepare_foundation_context(y=y, X=X, fh=fh)
-        self.model_handle_ = self._load_foundation_backend()
-        self._fit_foundation_context(y=y, X=X, fh=fh, handle=self.model_handle_)
+        """Store zero-shot context and load shared immutable model state."""
+        self._update_attrs_in_fit(y=y, X=X, fh=fh)
+        self.context_y_ = y.copy()
+        self.context_X_ = None if X is None else X.copy()
+        self.model_handle_ = self._get_or_load_model_handle()
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast point predictions from foundation-model sample paths."""
-        prediction_result, y_index = self._predict_samples(fh=fh, X=X)
-        return self._format_point_predictions(
-            prediction_result=prediction_result,
-            y_index=y_index,
-            fh=fh,
-        )
+        """Forecast point predictions from normalized foundation output."""
+        result, request = self._foundation_predict(fh=fh, X=X)
+        return format_point_result(result=result, request=request, y=self.context_y_)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Forecast quantiles from foundation-model sample paths."""
-        prediction_result, y_index = self._predict_samples(fh=fh, X=X)
-        return self._format_quantile_predictions(
-            prediction_result=prediction_result,
-            y_index=y_index,
-            fh=fh,
+        """Forecast quantiles from normalized foundation output."""
+        result, request = self._foundation_predict(fh=fh, X=X, alpha=alpha)
+        return format_quantile_result(
+            result=result,
+            request=request,
+            y=self.context_y_,
             alpha=alpha,
         )
 
-    def _format_point_predictions(self, prediction_result, y_index, fh):
-        """Format point predictions from sample paths."""
-        point_pred = prediction_result.median(axis=1).to_numpy()
-        return pd.Series(point_pred, index=y_index, name=self.y_name_)
+    def _foundation_predict(self, fh, X=None, alpha=None, coverage=None):
+        """Run model-specific inference with shared horizon and reload setup."""
+        if fh is None:
+            fh = self.fh
 
-    def _format_quantile_predictions(self, prediction_result, y_index, fh, alpha):
-        """Format quantile predictions from sample paths."""
-        quantiles = np.quantile(prediction_result.to_numpy(), q=alpha, axis=1).T
-        columns = pd.MultiIndex.from_product([self._get_varnames(), alpha])
-        return pd.DataFrame(quantiles, index=y_index, columns=columns)
+        request = self._make_forecast_request(
+            fh=fh,
+            alpha=alpha,
+            coverage=coverage,
+        )
+        pred_len = max(request.relative_fh)
 
-    def _predict_samples(self, fh, X=None):
-        """Generate native sample paths after applying shared prediction setup."""
-        self._seed_torch_if_requested()
-        return self._predict_samples_native(fh=fh, X=X)
+        self.model_handle_ = self._get_or_load_model_handle()
+        with self._inference_context(handle=self.model_handle_):
+            result = self._inference(
+                handle=self.model_handle_,
+                context_y=self.context_y_,
+                context_X=self.context_X_,
+                future_X=X,
+                pred_len=pred_len,
+                fh=fh,
+                alpha=request.alpha,
+            )
+        if not isinstance(result, ForecastResult):
+            raise TypeError(
+                f"{self.__class__.__name__}._inference must return ForecastResult, "
+                f"but returned {type(result).__name__}."
+            )
+        return result, request
 
-    def _seed_torch_if_requested(self):
-        """Seed torch for deterministic native sampling when random_state is set."""
-        if self.random_state is None:
-            return
+    def _make_forecast_request(self, fh, alpha=None, coverage=None):
+        """Normalize an sktime forecasting horizon for backend adapters."""
+        relative_fh = np.asarray(fh.to_relative(self.cutoff).to_pandas(), dtype=int)
+        absolute_index = fh.to_absolute(self.cutoff).to_pandas()
+        return ForecastRequest(
+            relative_fh=tuple(int(value) for value in relative_fh),
+            absolute_index=absolute_index,
+            cutoff=self.cutoff,
+            alpha=None if alpha is None else tuple(alpha),
+            coverage=None if coverage is None else tuple(coverage),
+            inference=InferenceConfig(random_state=self.random_state),
+        )
+
+    def _get_or_load_model_handle(self):
+        """Return an existing or process-cached immutable model handle."""
+        handle = getattr(self, "model_handle_", None)
+        if handle is not None:
+            return handle
+
+        return FOUNDATION_MODEL_CACHE.get_or_load(
+            key=self._get_unique_model_key(),
+            loader=self._load_model,
+        )
+
+    @contextmanager
+    def _inference_context(self, handle):
+        """Set local Torch seed, eval mode, and inference mode."""
+        import torch
+
+        model = handle.model
+        if hasattr(model, "eval"):
+            model.eval()
+
+        devices = []
+        model_device = getattr(model, "device", None)
+        if model_device is not None:
+            model_device = torch.device(model_device)
+            if model_device.type == "cuda":
+                devices = [model_device.index or torch.cuda.current_device()]
+
+        with torch.random.fork_rng(devices=devices):
+            if self.random_state_ is not None:
+                torch.manual_seed(self.random_state_)
+            with torch.inference_mode():
+                yield
+
+    def _resolve_device(self):
+        """Resolve explicit, configured, or automatic device selection once."""
+        device = self.device
+        if device is None:
+            device = "auto"
+        if device != "auto":
+            return device
 
         import torch
 
-        torch.manual_seed(self.random_state)
         if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self.random_state)
+            return "cuda"
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return "mps"
+        return "cpu"
 
-    def _load_foundation_backend(self):
-        """Load or retrieve cached backend state as a foundation model handle."""
-        handle = getattr(self, "model_handle_", None)
-        if handle is not None:
-            self._unpack_model_handle(handle)
-            return handle
+    def _get_unique_model_key(self):
+        """Build a deterministic cache key from model-loading parameters."""
+        key_items = {
+            "class": self.__class__.__name__,
+            "config": self.config_,
+            "device": self.device_,
+            "dtype": self.dtype_,
+            "model_path": self.model_path,
+            "quantization_config": self.quantization_config,
+            "revision": self.revision,
+            "tokenizer_path": self.tokenizer_path,
+            "extra": self._cache_key_extra(),
+        }
+        return tuple(sorted(key_items.items()))
 
-        handle = FOUNDATION_MODEL_CACHE.get_or_load(
-            key=self._get_unique_key(),
-            loader=self._load_model_handle,
-        )
-        self._unpack_model_handle(handle)
-        return handle
-
-    def _load_model_handle(self):
-        """Load native backend objects and wrap them in a model handle."""
-        tokenizer = self._load_native_tokenizer(self.tokenizer_path)
-        model = self._load_native_model(self.model_path)
-        handle = ModelHandle(model=model, tokenizer=tokenizer)
-        return self._prepare_model_handle(handle)
-
-    def _prepare_model_handle(self, handle):
-        """Apply common post-load setup to a model handle."""
-        handle.tokenizer = self._to_device(handle.tokenizer)
-        handle.model = self._to_device(handle.model)
-        handle.pipeline = self._to_device(handle.pipeline)
-        return handle
-
-    def _unpack_model_handle(self, handle):
-        """Expose model handle members under legacy fitted attribute names."""
-        self.tokenizer_ = handle.tokenizer
-        self.model_ = handle.model
-        self.pipeline_ = handle.pipeline
-
-    def _to_device(self, obj):
-        """Move backend object to device and eval mode if supported."""
-        if obj is None:
-            return None
-
-        device = self._get_backend_device()
-        if device is not None and hasattr(obj, "to"):
-            obj = obj.to(device)
-        if hasattr(obj, "eval"):
-            obj = obj.eval()
-        return obj
-
-    def _get_unique_key(self):
-        """Build cache key for foundation backend loading."""
-        return (
-            self.__class__.__name__,
-            self.model_path,
-            self.tokenizer_path,
-            self._get_backend_device(),
-            _stable_repr(self.config),
-            _stable_repr(self.load_kwargs),
-            _stable_repr(self.quantization_config),
-            _stable_repr(self._cache_key_extra()),
-        )
+    @classmethod
+    def _has_implementation_of(cls, method):
+        """Respect probabilistic capability tags for shared quantile logic."""
+        if method == "_predict_quantiles" and not cls.get_class_tag(
+            "capability:pred_int", False
+        ):
+            return False
+        return super()._has_implementation_of(method)
 
     def __getstate__(self):
-        """Return pickle state without loaded backend objects."""
+        """Return pickle state without potentially unpickleable backend objects."""
         state = self.__dict__.copy()
         state["model_handle_"] = None
-        state["tokenizer_"] = None
-        state["model_"] = None
-        state["pipeline_"] = None
         return state
 
     def __setstate__(self, state):
-        """Restore estimator state from pickle."""
+        """Restore estimator state; the backend is reloaded on next prediction."""
         self.__dict__.update(state)
 
-    def _prepare_foundation_context(self, y, X, fh):
-        """Prepare estimator-specific context needed before backend loading."""
+    def _update_attrs_in_fit(self, y, X, fh):
+        """Update model-specific fitted attributes before loading the model."""
 
-    def _fit_foundation_context(self, y, X, fh, handle):
-        """Customize estimator-specific fitted context after backend loading."""
-
-    def _make_fallback_X(self, y):
-        """Create placeholder covariates from y when X is omitted."""
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not support automatic X fallback"
-        )
-
-    def _predict_samples_native(self, fh, X=None):
-        """Generate model-native sample paths."""
+    def _load_model(self):
+        """Load native backend state and return a ``ModelHandle``."""
         raise NotImplementedError
 
-    def _load_native_tokenizer(self, tokenizer_path):
-        """Load a native tokenizer object, if the backend uses one."""
-        return None
-
-    def _load_native_model(self, model_path):
-        """Load a native model object."""
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Run native inference and return a ``ForecastResult``."""
         raise NotImplementedError
 
     def _cache_key_extra(self):
-        """Return estimator-specific cache-key components."""
+        """Return estimator-specific model-loading cache-key components."""
         return ()
-
-    def _get_backend_device(self):
-        """Return device used for cached backend objects."""
-        return self.device
