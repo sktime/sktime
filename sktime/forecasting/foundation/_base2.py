@@ -38,6 +38,7 @@ class BaseFoundationForecaster(BaseForecaster):
         dtype=None,
         quantization_config=None,
         random_state=None,
+        ignore_deps=None,
     ):
         self.model_path = model_path
         self.tokenizer_path = tokenizer_path
@@ -47,8 +48,14 @@ class BaseFoundationForecaster(BaseForecaster):
         self.dtype = dtype
         self.quantization_config = quantization_config
         self.random_state = random_state
+        self.ignore_deps = ignore_deps
 
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Clear soft-dependency tags when dependency checks are disabled."""
+        if self.ignore_deps:
+            self.set_tags(python_dependencies=[])
 
     def __post_init__(self):
         """Initialize normalized copies of shared constructor parameters."""
