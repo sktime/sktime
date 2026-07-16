@@ -46,7 +46,7 @@ class BaseBenchmarkAnalyzer(BaseObject):
 
     _tags = {
         "object_type": "benchmark_analyzer",
-        "authors": ["viktorkaz", "mloning", "Aaron Bostrom"],
+        "authors": ["viktorkaz", "mloning", "abostrom", "yash-sangwan"],
         "python_dependencies": None,
         "property:analyzer_type": None,
     }
