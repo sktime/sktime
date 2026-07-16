@@ -233,7 +233,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 Thanks to all our community for all your wonderful contributions, PRs, issues, ideas.
 
 <a href="https://github.com/sktime/sktime/graphs/contributors">
-<img src="https://opencollective.com/sktime/contributors.svg?width=600&button=false" />
+<img src="https://contrib.rocks/image?repo=sktime/sktime" />
 </a>
 <br>
 
