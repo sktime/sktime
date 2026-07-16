@@ -60,8 +60,8 @@ class BaseFoundationForecaster(BaseForecaster):
 
     def __post_init__(self):
         """Initialize normalized copies of shared constructor parameters."""
-        self.random_state_ = check_random_state(self.random_state)
-        self.config_ = {} if self.config is None else self.config.copy()
+        self.random_state_ = self._resolve_random_state()
+        self.config_ = self._resolve_config()
         self.device_ = self._resolve_device()
         self.dtype_ = self._resolve_dtype()
 
