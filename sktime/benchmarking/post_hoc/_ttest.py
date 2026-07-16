@@ -39,7 +39,7 @@ class TTestEvaluator(BasePostHocEvaluator):
         boolean ``"significant"`` column when ``correction="bonferroni"``.
     """
 
-    _tags = {"property:test_type": "pairwise"}
+    _tags = {"property:evaluator_type": "pairwise"}
 
     def __init__(
         self, metric=None, lower_is_better=True, correction="none", alpha=0.05

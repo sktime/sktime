@@ -24,7 +24,7 @@ class RankEvaluator(BasePostHocEvaluator):
         Columns ``["model_id", "rank"]``, sorted by ascending average rank.
     """
 
-    _tags = {"property:test_type": "ranking"}
+    _tags = {"property:evaluator_type": "ranking"}
 
     def _evaluate(self, scores):
         return self._mean_ranks(scores)

@@ -23,7 +23,7 @@ class RanksumEvaluator(BasePostHocEvaluator):
         Columns ``["estimator_1", "estimator_2", "statistic", "p_val"]``.
     """
 
-    _tags = {"property:test_type": "pairwise"}
+    _tags = {"property:evaluator_type": "pairwise"}
 
     def _evaluate(self, scores):
         from scipy.stats import ranksums

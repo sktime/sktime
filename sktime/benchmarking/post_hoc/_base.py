@@ -48,7 +48,7 @@ class BasePostHocEvaluator(BaseObject):
         "object_type": "benchmark-evaluator",
         "authors": ["viktorkaz", "mloning", "Aaron Bostrom"],
         "python_dependencies": None,
-        "property:test_type": None,
+        "property:evaluator_type": None,
     }
 
     def __init__(self, metric=None, lower_is_better=True):

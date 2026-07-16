@@ -38,7 +38,7 @@ class CriticalDifferenceDiagram(BasePostHocEvaluator):
 
     _tags = {
         "python_dependencies": "matplotlib",
-        "property:test_type": "plot",
+        "property:evaluator_type": "plot",
     }
 
     def __init__(

@@ -24,7 +24,7 @@ class NemenyiEvaluator(BasePostHocEvaluator):
 
     _tags = {
         "python_dependencies": "scikit_posthocs",
-        "property:test_type": "pairwise",
+        "property:evaluator_type": "pairwise",
     }
 
     def _evaluate(self, scores):
