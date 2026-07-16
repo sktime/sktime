@@ -3,17 +3,13 @@
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.libs._aws_fortuna_enbpi.enbpi import EnbPI
-from sktime.transformations.bootstrap import (
-    MovingBlockBootstrapTransformer,
-    TSBootstrapAdapter,
-)
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 
 __all__ = ["EnbPIForecaster"]
 __author__ = ["benheid"]
@@ -32,33 +28,33 @@ class EnbPIForecaster(BaseForecaster):
 
     For training:
 
-        1. Uses a bootstrap transformer to generate bootstrap samples
-           and returning the corresponding indices of the original time
-           series. Note that the bootstrap transformer must be able to
-           return indices of the original time series as and additional column.
-           I.e., the ``bootstrap_transformer`` must have the
-           ``capability:bootstrap_indices`` tag, and its parameter
-           ``return_indices`` must be set to True.
-        2. Fit a forecaster on the first n - max(fh) values of each
-           bootstrap sample
-        3. Uses each forecaster to predict the last max(fh) values of each
-           bootstrap sample
+    1. Uses a bootstrap transformer to generate bootstrap samples
+        and returning the corresponding indices of the original time
+        series. Note that the bootstrap transformer must be able to
+        return indices of the original time series as an additional column.
+        I.e., the ``bootstrap_transformer`` must have the
+        ``capability:bootstrap_indices`` tag, and its parameter
+        ``return_indices`` must be set to True.
+    2. Fit a forecaster on the first n - max(fh) values of each
+        bootstrap sample
+    3. Uses each forecaster to predict the last max(fh) values of each
+        bootstrap sample
 
     For Prediction:
 
-        1. Average the predictions of each fitted forecaster using the
-           aggregation function
+    1. Average the predictions of each fitted forecaster using the
+        aggregation function
 
     For Probabilistic Forecasting:
 
-        1. Calculate the point forecast by average the prediction of each
-           fitted forecaster using the aggregation function
-        2. Passes the indices of the bootstrapped samples, the predictions
-           from the fit call, the point prediction of the test set, and
-           the desired error rate to the EnbPI algorithm to calculate the
-           prediction intervals.
-           For more information on the EnbPI algorithm, see the references
-           and the documentation of the EnbPI class in aws-fortuna.
+    1. Calculate the point forecast by average the prediction of each
+        fitted forecaster using the aggregation function
+    2. Passes the indices of the bootstrapped samples, the predictions
+        from the fit call, the point prediction of the test set, and
+        the desired error rate to the EnbPI algorithm to calculate the
+        prediction intervals.
+        For more information on the EnbPI algorithm, see the references
+        and the documentation of the EnbPI class in aws-fortuna.
 
     Parameters
     ----------
@@ -84,8 +80,8 @@ class EnbPIForecaster(BaseForecaster):
     >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.difference import Differencer
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
+    >>> from sktime.transformations.difference import Differencer
+    >>> from sktime.transformations.detrend import Deseasonalizer
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> y = load_airline()
     >>> forecaster = Differencer(lags=[1]) * Deseasonalizer(sp=12) * EnbPIForecaster(
@@ -109,7 +105,7 @@ class EnbPIForecaster(BaseForecaster):
         "authors": ["benheid"],
         "python_dependencies": ["tsbootstrap>=0.1.0"],
         "capability:multivariate": False,  # which y are fine? False/True
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.DataFrame",
         # which types do _fit, _predict, assume for y?
@@ -151,6 +147,8 @@ class EnbPIForecaster(BaseForecaster):
         super().__init__()
 
         if bootstrap_transformer.get_tag("object_type") == "bootstrap":
+            from sktime.transformations.bootstrap import TSBootstrapAdapter
+
             self.bootstrap_transformer_ = TSBootstrapAdapter(
                 bootstrap_transformer, return_indices=True
             )
@@ -158,6 +156,8 @@ class EnbPIForecaster(BaseForecaster):
             self.bootstrap_transformer_ = bootstrap_transformer
 
         if self.bootstrap_transformer is None:
+            from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
+
             mbb = MovingBlockBootstrapTransformer(return_indices=True)
             self.bootstrap_transformer_ = mbb
 
@@ -268,6 +268,8 @@ class EnbPIForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
+
         params = [
             {
                 "bootstrap_transformer": MovingBlockBootstrapTransformer(

@@ -3,6 +3,8 @@
 __authors__ = ["RecreationalMath"]
 __all__ = ["RNNNetworkTorch"]
 
+from collections.abc import Callable
+
 import numpy as np
 
 # from sktime.networks.base import BaseDeepNetwork
@@ -28,12 +30,12 @@ class RNNNetworkTorch(NNModule):
         E.g., setting n_layers=2 would mean stacking two RNNs together to form
         a stacked RNN, with the second RNN taking in outputs of the first RNN
         and computing the final results.
-    activation : str or None, default = None
-        Activation function used in the fully connected output layer. List of supported
-        activation functions: ['sigmoid', 'softmax', 'logsoftmax', 'logsigmoid'].
-        If None, then no activation function is applied.
-    activation_hidden : str, default = "relu"
-        The activation function applied inside the RNN. Can be either 'tanh' or 'relu'.
+    activation : Callable or None, default = None
+        Activation function used in the fully connected output layer. Recommended
+        Callable instance of 'Sigmoid', 'Softmax', 'LogSoftmax', 'LogSigmoid', None
+    activation_hidden : Callable or None, default = None
+        The activation function applied inside the RNN. Recommended Callable instance
+        of 'ReLU', 'Tanh', None
         Because currently PyTorch only supports these two activations inside the RNN.
         https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
     bias : bool, default = False
@@ -71,8 +73,8 @@ class RNNNetworkTorch(NNModule):
         num_classes: int,
         hidden_dim: int = 6,
         n_layers: int = 1,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
+        activation: Callable | None = None,
+        activation_hidden: Callable | None = None,
         bias: bool = False,
         init_weights: bool = True,
         dropout: float = 0.0,
@@ -80,18 +82,19 @@ class RNNNetworkTorch(NNModule):
         bidirectional: bool = False,
         random_state: int = 0,
     ):
+        super().__init__()
         self.input_size = input_size
         self.random_state = random_state
         self.hidden_dim = hidden_dim
-        self.activation = activation
-        # if activation_hidden is invalid, i.e. not in ['tanh', 'relu']
-        # PyTorch will raise an error
-        self.activation_hidden = activation_hidden
         self.n_layers = n_layers
         self.bias = bias
         self.dropout = dropout
         self.bidirectional = bidirectional
-        super().__init__()
+
+        self.activation = activation
+        # if activation_hidden is invalid, i.e. not in ['tanh', 'relu']
+        # PyTorch will raise an error
+        self.activation_hidden = activation_hidden
 
         # Checking input dimensions
         if isinstance(self.input_size, int):
@@ -112,11 +115,14 @@ class RNNNetworkTorch(NNModule):
             )
 
         nnRNN = _safe_import("torch.nn.RNN")
+        hidden_activation_name = None
+        if self.activation_hidden is not None:
+            hidden_activation_name = self.activation_hidden.__class__.__name__.lower()
         self.rnn = nnRNN(
             input_size=in_features,
             hidden_size=self.hidden_dim,
             num_layers=self.n_layers,
-            nonlinearity=self.activation_hidden,
+            nonlinearity=hidden_activation_name,
             bias=self.bias,
             batch_first=True,
             dropout=self.dropout,
@@ -134,8 +140,6 @@ class RNNNetworkTorch(NNModule):
             out_features=self.num_classes,
         )
         # to handle the case when num_classes = 1 for regression
-        if self.activation:
-            self._activation = self._instantiate_activation()
         if self.init_weights:
             self.apply(self._init_weights)
 
@@ -174,7 +178,7 @@ class RNNNetworkTorch(NNModule):
             out = self.out_dropout(out)
         out = self.fc(out)
         if self.activation:
-            out = self._activation(out)
+            out = self.activation(out)
         return out
 
     def _init_weights(self, module):
@@ -197,40 +201,6 @@ class RNNNetworkTorch(NNModule):
                 nnInitOrthogonal_(param.data)
             elif "bias" in name:
                 param.data.fill_(0)
-
-    def _instantiate_activation(self):
-        """Instantiate the activation function to be applied on the output layer.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied on the output layer.
-        """
-        # support for more activation functions will be added
-        # based on requirements of SimpleRNNRegressorTorch once it is implemented
-        # currently only used in SimpleRNNClassifierTorch
-        if isinstance(self.activation, NNModule):
-            return self.activation
-        elif isinstance(self.activation, str):
-            if self.activation.lower() == "sigmoid":
-                return _safe_import("torch.nn.Sigmoid")()
-            elif self.activation.lower() == "softmax":
-                return _safe_import("torch.nn.Softmax")(dim=1)
-            elif self.activation.lower() == "logsoftmax":
-                return _safe_import("torch.nn.LogSoftmax")(dim=1)
-            elif self.activation.lower() == "logsigmoid":
-                return _safe_import("torch.nn.LogSigmoid")()
-            else:
-                raise ValueError(
-                    "If `activation` is not None, it must be one of "
-                    "'sigmoid', 'logsigmoid', 'softmax' or 'logsoftmax'. "
-                    f"Found {self.activation}"
-                )
-        else:
-            raise TypeError(
-                "`activation` should either be of type str or torch.nn.Module. "
-                f"But found the type to be: {type(self.activation)}"
-            )
 
     def get_sequence_vector_from_hidden(self, h_n):
         """

@@ -2,13 +2,14 @@
 
 __author__ = ["fkiraly"]
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.datatypes._registry import (
     MTYPE_SOFT_DEPS,
     generate_mtype_register,
     mtype_to_scitype,
     scitype_to_mtype,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def pytest_generate_tests(metafunc):

@@ -2,9 +2,9 @@
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -376,7 +376,7 @@ class MAPAForecaster(BaseForecaster):
 
             else:
                 if _check_soft_dependencies("statsmodels", severity="none"):
-                    from sktime.transformations.series.detrend import STLTransformer
+                    from sktime.transformations.detrend import STLTransformer
                 stl = STLTransformer(
                     sp=seasonal_period,
                     seasonal=7,

@@ -4,7 +4,6 @@ from importlib.util import find_spec
 
 from skbase.utils.dependencies._dependencies import (
     _check_soft_dependencies,
-    _get_installed_packages,
     _raise_at_severity,
 )
 
@@ -12,7 +11,6 @@ __all__ = [
     "_check_dl_dependencies",
     "_check_mlflow_dependencies",
     "_check_soft_dependencies",
-    "_get_installed_packages",
     "_raise_at_severity",
 ]
 

@@ -64,13 +64,14 @@ Deep learning
     cnn.CNNRegressor
     cnn.CNNRegressorTorch
     cntc.CNTCRegressor
+    convtran.ConvTranRegressorTorch
     fcn.FCNRegressor
     inceptiontime.InceptionTimeRegressor
     inceptiontime.InceptionTimeRegressorTorch
     lstmfcn.LSTMFCNRegressor
     lstmfcn.LSTMFCNRegressorTorch
     macnn.MACNNRegressor
-    macnn.MACCNNRegressorTorch
+    macnn.MACNNRegressorTorch
     mcdcnn.MCDCNNRegressor
     mcdcnn.MCDCNNRegressorTorch
     mlp.MLPRegressor

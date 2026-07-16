@@ -25,10 +25,10 @@ __author__ = ["mloning", "fkiraly", "ksharma6"]
 import time
 
 import numpy as np
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BasePanelMixin
 from sktime.datatypes import VectorizedDF
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 
 
@@ -108,7 +108,6 @@ class BaseRegressor(BasePanelMixin):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass
@@ -130,9 +129,9 @@ class BaseRegressor(BasePanelMixin):
         (last).
         """
         from sktime.regression.compose import RegressorPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # behaviour is implemented only if other inherits from BaseTransformer
         #  in that case, distinctions arise from whether self or other is a pipeline

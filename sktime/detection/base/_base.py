@@ -24,11 +24,11 @@ __all__ = ["BaseDetector"]
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation.series import check_series
 
 
@@ -73,8 +73,7 @@ class BaseDetector(BaseEstimator):
         "python_dependencies": None,  # str or list of str, package soft dependencies
         # estimator tags
         # --------------
-        # todo 1.0.0 - remove series-annotator
-        "object_type": ["detector", "series-annotator"],  # type of object
+        "object_type": "detector",
         "learning_type": "None",  # supervised, unsupervised
         "task": "None",  # anomaly_detection, change_point_detection, segmentation
         "capability:multivariate": False,
@@ -104,7 +103,6 @@ class BaseDetector(BaseEstimator):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass
@@ -127,8 +125,8 @@ class BaseDetector(BaseEstimator):
             not nested, contains only non-DetectorPipeline ``sktime`` steps
         """
         from sktime.detection.compose import DetectorPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -995,7 +993,7 @@ class BaseDetector(BaseEstimator):
               labels of segments.
         """
         if isinstance(y_dense, pd.DataFrame):
-            y_sparse = y_dense.iloc[:, 0]
+            y_dense = y_dense.iloc[:, 0]
         if not isinstance(y_dense, pd.Series):
             y_dense = pd.Series(y_dense, dtype="int64")
         if 0 in y_dense.values:
