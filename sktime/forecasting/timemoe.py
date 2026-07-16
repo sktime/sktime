@@ -146,6 +146,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
 
         super().__init__(
             model_path=model_path,
+            config=config,
             device="cpu",
             dtype="torch.bfloat16",
             random_state=seed,
