@@ -750,7 +750,7 @@ Domain agnostic foundation models
 
     TimesFMForecaster
 
-.. currentmodule:: sktime.forecasting.timesfm2_forecaster
+.. currentmodule:: sktime.forecasting.timesfm2
 
 .. autosummary::
     :toctree: auto_generated/
