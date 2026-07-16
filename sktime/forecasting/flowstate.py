@@ -91,8 +91,13 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
         batch_first: bool = True,
         prediction_type: str = "mean",
     ):
+        self.model_path = model_path
+        self.revision = revision
         self.scale_factor = scale_factor
+        self.config = config
+        self.batch_first = batch_first
         self.prediction_type = prediction_type
+
         super().__init__(
             model_path=model_path,
             revision=revision,

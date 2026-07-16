@@ -99,7 +99,10 @@ class TimerForecaster(BaseFoundationForecaster):
         context_length=2880,
         device="cpu",
     ):
+        self.model_name = model_name
         self.context_length = context_length
+        self.device = device
+
         super().__init__(model_path=model_name, device=device)
 
     def _load_model(self):
