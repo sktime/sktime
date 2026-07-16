@@ -55,7 +55,7 @@ class BaseFoundationForecaster(BaseForecaster):
         self.random_state_ = self.random_state
         self.config_ = {} if self.config is None else self.config.copy()
         self.device_ = self._resolve_device()
-        self.dtype_ = self.dtype
+        self.dtype_ = self._resolve_dtype()
 
     def _fit(self, y, X=None, fh=None):
         """Store zero-shot context and load shared immutable model state."""
@@ -156,13 +156,18 @@ class BaseFoundationForecaster(BaseForecaster):
             with torch.inference_mode():
                 yield
 
+    def _resolve_dtype(self):
+        if self.dtype == "torch.bfloat16":
+            import torch
+
+            return torch.bfloat16
+
+        return self.dtype
+
     def _resolve_device(self):
         """Resolve explicit, configured, or automatic device selection once."""
-        device = self.device
-        if device is None:
-            device = "auto"
-        if device != "auto":
-            return device
+        if self.device != "auto":
+            return self.device
 
         import torch
 
