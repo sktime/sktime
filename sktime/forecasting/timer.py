@@ -129,18 +129,20 @@ class TimerForecaster(BaseFoundationForecaster):
         model = handle.model
         context = context_y.iloc[:, 0].to_numpy(dtype=np.float32)
 
-        # Timer requires at least one complete input token. Left-padding retains
-        # the previous behavior for short series used in estimator checks.
-        token_len = model.config.input_token_len
-        if len(context) < token_len:
-            context = np.pad(context, (token_len - len(context), 0))
+        if self.context_length <= 0:
+            raise ValueError("context_length must be a positive integer.")
 
+        token_len = model.config.input_token_len
         if len(context) > self.context_length:
             context = context[-self.context_length :]
 
-        # Timer requires input length to be a multiple of input_token_len
+        # Timer requires at least one complete input token and accepts only
+        # whole tokens. Preserve the most recent observations when aligning.
         usable_len = (len(context) // token_len) * token_len
-        context = context[-usable_len:]
+        if usable_len == 0:
+            context = np.pad(context, (token_len - len(context), 0))
+        else:
+            context = context[-usable_len:]
 
         # Timer expects shape (batch_size, seq_len)
         input_tensor = torch.tensor(
