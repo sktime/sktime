@@ -61,7 +61,7 @@ diagrams.
     :toctree: auto_generated/
     :template: class.rst
 
-    BasePostHocEvaluator
+    BaseBenchmarkAnalyzer
     RankEvaluator
     FriedmanEvaluator
     NemenyiEvaluator

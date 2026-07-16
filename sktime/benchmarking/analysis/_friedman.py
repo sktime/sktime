@@ -4,10 +4,10 @@ __all__ = ["FriedmanEvaluator"]
 
 import pandas as pd
 
-from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
+from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class FriedmanEvaluator(BasePostHocEvaluator):
+class FriedmanEvaluator(BaseBenchmarkAnalyzer):
     """Friedman test for differences between estimators across datasets.
 
     Non-parametric omnibus test of the null hypothesis that all estimators
@@ -22,7 +22,7 @@ class FriedmanEvaluator(BasePostHocEvaluator):
         Single row with columns ``["statistic", "p_value"]``.
     """
 
-    _tags = {"property:evaluator_type": "omnibus"}
+    _tags = {"property:analyzer_type": "omnibus"}
 
     def _evaluate(self, scores):
         from scipy.stats import friedmanchisquare

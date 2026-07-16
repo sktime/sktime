@@ -2,10 +2,10 @@
 
 __all__ = ["RankEvaluator"]
 
-from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
+from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class RankEvaluator(BasePostHocEvaluator):
+class RankEvaluator(BaseBenchmarkAnalyzer):
     """Average ranks of estimators across datasets.
 
     Ranks the estimators on every dataset (task) and averages the ranks across
@@ -14,7 +14,7 @@ class RankEvaluator(BasePostHocEvaluator):
     Parameters
     ----------
     metric : str, optional (default=None)
-        Metric to analyse; see ``BasePostHocEvaluator``.
+        Metric to analyse; see ``BaseBenchmarkAnalyzer``.
     lower_is_better : bool, optional (default=True)
         If ``True``, the best (lowest) score on each dataset gets rank 1.
 
@@ -24,7 +24,7 @@ class RankEvaluator(BasePostHocEvaluator):
         Columns ``["model_id", "rank"]``, sorted by ascending average rank.
     """
 
-    _tags = {"property:evaluator_type": "ranking"}
+    _tags = {"property:analyzer_type": "ranking"}
 
     def _evaluate(self, scores):
         return self._mean_ranks(scores)

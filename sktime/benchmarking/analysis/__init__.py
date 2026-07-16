@@ -8,7 +8,7 @@ critical-difference diagram.
 """
 
 __all__ = [
-    "BasePostHocEvaluator",
+    "BaseBenchmarkAnalyzer",
     "RankEvaluator",
     "FriedmanEvaluator",
     "NemenyiEvaluator",
@@ -19,14 +19,14 @@ __all__ = [
     "CriticalDifferenceDiagram",
 ]
 
-from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
-from sktime.benchmarking.post_hoc._critical_difference import (
+from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
+from sktime.benchmarking.analysis._critical_difference import (
     CriticalDifferenceDiagram,
 )
-from sktime.benchmarking.post_hoc._friedman import FriedmanEvaluator
-from sktime.benchmarking.post_hoc._nemenyi import NemenyiEvaluator
-from sktime.benchmarking.post_hoc._rank import RankEvaluator
-from sktime.benchmarking.post_hoc._ranksum import RanksumEvaluator
-from sktime.benchmarking.post_hoc._sign import SignTestEvaluator
-from sktime.benchmarking.post_hoc._ttest import TTestEvaluator
-from sktime.benchmarking.post_hoc._wilcoxon import WilcoxonEvaluator
+from sktime.benchmarking.analysis._friedman import FriedmanEvaluator
+from sktime.benchmarking.analysis._nemenyi import NemenyiEvaluator
+from sktime.benchmarking.analysis._rank import RankEvaluator
+from sktime.benchmarking.analysis._ranksum import RanksumEvaluator
+from sktime.benchmarking.analysis._sign import SignTestEvaluator
+from sktime.benchmarking.analysis._ttest import TTestEvaluator
+from sktime.benchmarking.analysis._wilcoxon import WilcoxonEvaluator

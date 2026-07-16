@@ -6,10 +6,10 @@ import itertools
 
 import pandas as pd
 
-from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
+from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class RanksumEvaluator(BasePostHocEvaluator):
+class RanksumEvaluator(BaseBenchmarkAnalyzer):
     """Wilcoxon rank-sum test on each ordered pair of estimators.
 
     Non-parametric test of whether two estimators' per-dataset scores are drawn
@@ -23,7 +23,7 @@ class RanksumEvaluator(BasePostHocEvaluator):
         Columns ``["estimator_1", "estimator_2", "statistic", "p_val"]``.
     """
 
-    _tags = {"property:evaluator_type": "pairwise"}
+    _tags = {"property:analyzer_type": "pairwise"}
 
     def _evaluate(self, scores):
         from scipy.stats import ranksums

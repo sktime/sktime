@@ -7,10 +7,10 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
+from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class SignTestEvaluator(BasePostHocEvaluator):
+class SignTestEvaluator(BaseBenchmarkAnalyzer):
     """Sign test for consistent differences between estimator pairs.
 
     Non-parametric test based on the binomial distribution, counting the number
@@ -23,7 +23,7 @@ class SignTestEvaluator(BasePostHocEvaluator):
         Columns ``["estimator_1", "estimator_2", "p_val"]``.
     """
 
-    _tags = {"property:evaluator_type": "pairwise"}
+    _tags = {"property:analyzer_type": "pairwise"}
 
     def _evaluate(self, scores):
         from scipy import stats

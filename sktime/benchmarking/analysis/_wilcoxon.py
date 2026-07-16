@@ -6,10 +6,10 @@ import itertools
 
 import pandas as pd
 
-from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
+from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class WilcoxonEvaluator(BasePostHocEvaluator):
+class WilcoxonEvaluator(BaseBenchmarkAnalyzer):
     """Wilcoxon signed-rank test on each unique pair of estimators.
 
     Non-parametric paired test of whether the per-dataset score differences
@@ -23,7 +23,7 @@ class WilcoxonEvaluator(BasePostHocEvaluator):
         Columns ``["estimator_1", "estimator_2", "statistic", "p_val"]``.
     """
 
-    _tags = {"property:evaluator_type": "pairwise"}
+    _tags = {"property:analyzer_type": "pairwise"}
 
     def _evaluate(self, scores):
         from scipy.stats import wilcoxon

@@ -4,10 +4,10 @@ __all__ = ["CriticalDifferenceDiagram"]
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
+from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class CriticalDifferenceDiagram(BasePostHocEvaluator):
+class CriticalDifferenceDiagram(BaseBenchmarkAnalyzer):
     """Critical-difference (CD) diagram evaluator.
 
     Object-oriented wrapper around
@@ -22,7 +22,7 @@ class CriticalDifferenceDiagram(BasePostHocEvaluator):
     Parameters
     ----------
     metric : str, optional (default=None)
-        Metric to analyse; see ``BasePostHocEvaluator``.
+        Metric to analyse; see ``BaseBenchmarkAnalyzer``.
     lower_is_better : bool, optional (default=True)
         Whether lower scores are better; forwarded as ``is_errors`` to the
         underlying diagram.
@@ -38,7 +38,7 @@ class CriticalDifferenceDiagram(BasePostHocEvaluator):
 
     _tags = {
         "python_dependencies": "matplotlib",
-        "property:evaluator_type": "plot",
+        "property:analyzer_type": "plot",
     }
 
     def __init__(

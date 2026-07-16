@@ -1,6 +1,6 @@
 """Base class for post-hoc benchmark evaluators (strategy pattern)."""
 
-__all__ = ["BasePostHocEvaluator"]
+__all__ = ["BaseBenchmarkAnalyzer"]
 
 import pandas as pd
 
@@ -15,10 +15,10 @@ _MEAN_SUFFIX = "_mean"
 _NON_METRIC_BASES = frozenset({"fit_time", "pred_time", "runtime"})
 
 
-class BasePostHocEvaluator(BaseObject):
-    """Base class for post-hoc statistical evaluators of benchmark results.
+class BaseBenchmarkAnalyzer(BaseObject):
+    """Base class for post-hoc statistical benchmark analyzers.
 
-    Post-hoc evaluators consume the flat results table produced by the v2
+    Benchmark analyzers consume the flat results table produced by the v2
     benchmarking framework (``BaseBenchmark.run()`` /
     ``ResultObject.to_dataframe``) and compute a post-hoc statistical analysis
     (ranking, omnibus / pairwise significance tests, critical-difference
@@ -45,10 +45,10 @@ class BasePostHocEvaluator(BaseObject):
     """
 
     _tags = {
-        "object_type": "benchmark-evaluator",
+        "object_type": "benchmark-analyzer",
         "authors": ["viktorkaz", "mloning", "Aaron Bostrom"],
         "python_dependencies": None,
-        "property:evaluator_type": None,
+        "property:analyzer_type": None,
     }
 
     def __init__(self, metric=None, lower_is_better=True):

@@ -2524,10 +2524,10 @@ class capability__pairwise_parameter_estimation(_BaseTag):
 # ---------------------------------
 
 
-class property__evaluator_type(_BaseTag):
+class property__analyzer_type(_BaseTag):
     """Property: type of post-hoc test a benchmark evaluator performs.
 
-    - String name: ``"property:evaluator_type"``
+    - String name: ``"property:analyzer_type"``
     - Public property tag
     - Values: str, one of ``"omnibus"``, ``"pairwise"``, ``"plot"``, ``"ranking"``
     - Example: ``"pairwise"``
@@ -2546,7 +2546,7 @@ class property__evaluator_type(_BaseTag):
     """
 
     _tags = {
-        "tag_name": "property:evaluator_type",
+        "tag_name": "property:analyzer_type",
         "parent_type": "object",
         "tag_type": ("str", ["omnibus", "pairwise", "plot", "ranking"]),
         "short_descr": "type of post-hoc test the evaluator performs",

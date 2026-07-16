@@ -7,10 +7,10 @@ import itertools
 import numpy as np
 import pandas as pd
 
-from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
+from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class TTestEvaluator(BasePostHocEvaluator):
+class TTestEvaluator(BaseBenchmarkAnalyzer):
     """Independent two-sample t-test on each ordered pair of estimators.
 
     Reproduces the legacy ``Evaluator.t_test`` (``scipy.stats.ttest_ind``) and,
@@ -22,7 +22,7 @@ class TTestEvaluator(BasePostHocEvaluator):
     Parameters
     ----------
     metric : str, optional (default=None)
-        Metric to analyse; see ``BasePostHocEvaluator``.
+        Metric to analyse; see ``BaseBenchmarkAnalyzer``.
     lower_is_better : bool, optional (default=True)
         Direction of the metric; not used by the t-test itself but kept for a
         consistent evaluator interface.
@@ -39,7 +39,7 @@ class TTestEvaluator(BasePostHocEvaluator):
         boolean ``"significant"`` column when ``correction="bonferroni"``.
     """
 
-    _tags = {"property:evaluator_type": "pairwise"}
+    _tags = {"property:analyzer_type": "pairwise"}
 
     def __init__(
         self, metric=None, lower_is_better=True, correction="none", alpha=0.05

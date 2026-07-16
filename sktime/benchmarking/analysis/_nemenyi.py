@@ -5,10 +5,10 @@ __all__ = ["NemenyiEvaluator"]
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.benchmarking.post_hoc._base import BasePostHocEvaluator
+from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class NemenyiEvaluator(BasePostHocEvaluator):
+class NemenyiEvaluator(BaseBenchmarkAnalyzer):
     """Nemenyi post-hoc test for pairwise differences between estimators.
 
     Pairwise post-hoc test, typically run after a significant
@@ -24,7 +24,7 @@ class NemenyiEvaluator(BasePostHocEvaluator):
 
     _tags = {
         "python_dependencies": "scikit_posthocs",
-        "property:evaluator_type": "pairwise",
+        "property:analyzer_type": "pairwise",
     }
 
     def _evaluate(self, scores):
