@@ -21,13 +21,12 @@ from copy import deepcopy
 from warnings import warn
 
 import numpy as np
-import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
-from sktime.utils.singleton import _multiton
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
+from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
 
 
-class TimerS1Forecaster(BaseForecaster):
+class TimerS1Forecaster(BaseFoundationForecaster):
     """Timer-S1 forecaster via Hugging Face ``transformers``.
 
     This forecaster wraps Timer-S1 prediction models [1]_, [2]_ from Hugging
@@ -47,8 +46,8 @@ class TimerS1Forecaster(BaseForecaster):
       randomly initialized model.
     - Quantile prediction is only available for quantiles present in
       ``model.config.quantiles``.
-    - Loaded models are cached via a multiton helper keyed by model-loading
-      inputs to avoid repeated model instantiation.
+    - Loaded models are shared through the foundation-model cache, keyed by
+      model-loading inputs to avoid repeated model instantiation.
     - The default Timer-S1 checkpoint has 8 billion parameters. For most
       hardware, reduced-memory loading with ``dtype`` and ``quantization_config``,
       or a pre-quantized checkpoint, is recommended.
@@ -188,251 +187,134 @@ class TimerS1Forecaster(BaseForecaster):
         forward_kwargs=None,
         deterministic=False,
     ):
-        self.model_path = model_path
-        self.config = config
         self.device_map = device_map
         self.dtype = dtype
         self.quantization_config = quantization_config
         self.forward_kwargs = forward_kwargs
         self.deterministic = deterministic
+        super().__init__(
+            model_path=model_path,
+            config=config,
+            device=device_map,
+            dtype=dtype,
+            quantization_config=quantization_config,
+            random_state=42 if deterministic else None,
+        )
 
-        super().__init__()
-
-    def _fit(self, y, X=None, fh=None):
-        """Load the model and store history for zero-shot forecasting.
-
-        private _fit containing the core logic, called from fit
-
-        This method does not train or fine-tune Timer-S1 weights. Training may
-        be added in future.
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-
-            * if self.get_tag("capability:multivariate")==False:
-              guaranteed to be univariate (e.g., single-column for DataFrame)
-            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
-              the method should handle uni- and multivariate y appropriately
-
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self.model_ = self._load_model()
-        self.context_ = y
-
-    def _predict(self, fh, X):
-        """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-
-        Returns
-        -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
-        """
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Generate Timer-S1 quantiles and normalize the backend output."""
         import torch
-        import transformers
 
-        if self.deterministic:
-            transformers.set_seed(42)
+        model = handle.model
+        model_quantiles = [round(value, 3) for value in model.config.quantiles]
+        requested = None if alpha is None else list(alpha)
+        requested_rounded = (
+            None if requested is None else [round(value, 3) for value in requested]
+        )
+        if requested_rounded is not None and not set(requested_rounded).issubset(
+            model_quantiles
+        ):
+            raise ValueError(
+                "Requested quantiles are not all available in model config: "
+                f"requested={requested_rounded}, available={model_quantiles}."
+            )
 
-        self.model_ = self._load_model()
-
-        if fh is None:
-            fh = self.fh
-        fh = fh.to_relative(self.cutoff)
-        preds_idx = fh._values.values - 1
-        horizon_length = np.max(preds_idx) + 1
-
-        quantiles = np.array(self.model_.config.quantiles)
+        quantiles = np.asarray(model.config.quantiles)
         weights = (quantiles[:-1] + quantiles[1:]) / 2
         weights = np.concatenate([[0.0], weights, [1.0]])
         weights = np.diff(weights)
 
-        past_values = self.context_
-        past_values = np.expand_dims(past_values, axis=0)
-        past_values = torch.from_numpy(past_values)
-        past_values = past_values.to(self.model_.dtype)
-        past_values = past_values.to(self.model_.device)
+        past_values = torch.from_numpy(context_y.iloc[:, 0].to_numpy()[None, :])
+        past_values = past_values.to(dtype=model.dtype, device=model.device)
 
-        forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
-        output = self.model_.generate(
-            past_values, max_new_tokens=horizon_length, **forward_kwargs
+        forward_kwargs = deepcopy(self.forward_kwargs) if self.forward_kwargs else {}
+        output = model.generate(past_values, max_new_tokens=pred_len, **forward_kwargs)
+
+        quantile_values = output.squeeze(axis=0).detach().float().cpu().numpy()
+        point_values = np.average(quantile_values, weights=weights, axis=0)
+        result_quantiles = None
+        if requested is not None:
+            result_quantiles = {
+                value: quantile_values[model_quantiles.index(rounded)].reshape(-1, 1)
+                for value, rounded in zip(requested, requested_rounded)
+            }
+
+        return ForecastResult(
+            mean=point_values.reshape(-1, 1),
+            quantiles=result_quantiles,
+            raw=output,
         )
-
-        preds = output.squeeze(axis=0)
-        preds = preds.detach().float().cpu().numpy()
-        preds = np.average(preds, weights=weights, axis=0)
-        preds = preds[preds_idx]
-        preds = pd.Series(
-            preds,
-            index=fh.to_absolute(self._cutoff)._values,
-            name=self.context_.name,
-        )
-
-        return preds
-
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
-
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
-        import torch
-        import transformers
-
-        if self.deterministic:
-            transformers.set_seed(42)
-
-        self.model_ = self._load_model()
-
-        quantiles = self.model_.config.quantiles
-        past_values = self.context_
-
-        if fh is None:
-            fh = self.fh
-        fh = fh.to_relative(self.cutoff)
-        preds_idx = fh._values.values - 1
-        horizon_length = np.max(preds_idx) + 1
-
-        if alpha is None:
-            alpha = quantiles
-        alpha = [round(i, 3) for i in alpha]
-        quantiles = [round(i, 3) for i in quantiles]
-        if not set(alpha).issubset(set(quantiles)):
-            raise ValueError(
-                "Requested quantiles are not all available in model config: "
-                f"requested={alpha}, available={quantiles}."
-            )
-        quantiles_idx = np.array([quantiles.index(i) for i in alpha])
-
-        past_values = np.expand_dims(past_values, axis=0)
-        past_values = torch.from_numpy(past_values)
-        past_values = past_values.to(self.model_.dtype)
-        past_values = past_values.to(self.model_.device)
-
-        forward_kwargs = {} if not self.forward_kwargs else self.forward_kwargs
-        output = self.model_.generate(
-            past_values, max_new_tokens=horizon_length, **forward_kwargs
-        )
-
-        preds = output.squeeze(axis=0)
-        preds = preds.T
-        preds = preds[preds_idx]
-        preds = preds[:, quantiles_idx]
-        preds = preds.detach().float().cpu().numpy()
-
-        index = fh.to_absolute(self._cutoff)._values
-        name = self.context_.name if self.context_.name is not None else 0
-        columns = pd.MultiIndex.from_product([[name], alpha])
-        pred_quantiles = pd.DataFrame(
-            data=preds,
-            index=index,
-            columns=columns,
-        )
-
-        return pred_quantiles
 
     def _load_model(self):
-        """Load or retrieve a cached Timer-S1 model instance.
+        """Load Timer-S1 and return its shared foundation-model handle."""
+        if self.model_path is not None:
+            model = self._load_from_path()
+        else:
+            model = self._load_randomly()
+        return ModelHandle(model=model)
 
-        Returns
-        -------
-        model : transformers.PreTrainedModel
-            Loaded model according to ``self.device_map`` and
-            ``self.dtype``. If ``self.model_`` already exists, it is
-            returned directly.
-        """
-        if hasattr(self, "model_") and self.model_ is not None:
-            return self.model_
+    def _load_from_path(self):
+        """Load pretrained Timer-S1 weights."""
+        from sktime.libs.timer_s1 import TimerS1ForPrediction
 
-        self.model_ = _CachedTimerS1(
-            key=self._get_unique_key(),
-            model_path=self.model_path,
-            config=self.config,
-            device_map=self.device_map,
-            dtype=self.dtype,
+        return TimerS1ForPrediction.from_pretrained(
+            self.model_path,
+            device_map=self.device_,
+            dtype=self.dtype_,
             quantization_config=self.quantization_config,
-        ).load()
+            trust_remote_code=True,
+        )
 
-        return self.model_
+    def _load_randomly(self):
+        """Initialize Timer-S1 from a local configuration."""
+        from sktime.libs.timer_s1 import TimerS1Config, TimerS1ForPrediction
 
-    def _get_unique_key(self):
-        """Build cache key for the multiton model loader.
+        warn(
+            "Initializing Timer-S1 from config creates random weights. "
+            "Timer-S1 training is not supported by this estimator at the "
+            "moment, so these weights will stay random and are only suitable "
+            "for tests or local experimentation.",
+            UserWarning,
+            stacklevel=2,
+        )
 
-        Returns
-        -------
-        key : str
-            Deterministic string representation of model-loading attributes used
-            by :class:`_CachedTimerS1`.
-        """
-        key = {
+        config = deepcopy(self.config_)
+        if not config:
+            config = TimerS1Config()
+        if isinstance(config, dict):
+            config = TimerS1Config.from_dict(config)
+
+        model = TimerS1ForPrediction(config).to(self.device_)
+        if self.dtype_ is not None:
+            model = model.to(dtype=self.dtype_)
+        return model
+
+    def _get_unique_model_key(self):
+        """Build a hashable key from all Timer-S1 loading inputs."""
+        key_items = {
+            "class": self.__class__.__name__,
             "model_path": self.model_path,
-            "config": self.config,
+            "config": self.config_ if self.model_path is None else None,
             "device_map": self.device_map,
-            "dtype": self.dtype,
+            "dtype": self.dtype_,
             "quantization_config": self.quantization_config,
         }
-        return str(sorted(key.items()))
+        return self.__class__.__name__, str(sorted(key_items.items()))
+
+    def _resolve_config(self):
+        """Copy dict and ``TimerS1Config`` inputs without mutating either."""
+        if self.config is None:
+            return {}
+        return deepcopy(self.config)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -484,111 +366,3 @@ class TimerS1Forecaster(BaseForecaster):
         test_params.append(test_param_2)
 
         return test_params
-
-
-@_multiton
-class _CachedTimerS1:
-    """Multiton-backed cache wrapper for a loaded Timer-S1 model.
-
-    Instances are keyed externally (via :class:`TimerS1Forecaster`) so that
-    repeated forecasters with equivalent loading parameters can share a single
-    model instance in memory.
-
-    Parameters
-    ----------
-    key : str
-        Multiton key (stored for traceability).
-    model_path : str or None
-        Model identifier/path for ``from_pretrained``. If ``None``, create model
-        from config only.
-    config : transformers.PretrainedConfig or dict or None
-        Configuration used for model loading/creation.
-    device_map : str, dict, int, or torch.device
-        Device placement for loading models.
-    dtype : torch.dtype or str or None
-        Data type used for model loading.
-    quantization_config : transformers.quantizers.HfQuantizer or None
-        Quantization configuration used for model loading.
-    """
-
-    def __init__(
-        self,
-        key,
-        model_path,
-        config,
-        device_map,
-        dtype,
-        quantization_config,
-    ):
-        self.key = key
-        self.model_path = model_path
-        self.config = config
-        self.device_map = device_map
-        self.dtype = dtype
-        self.quantization_config = quantization_config
-        self.model_ = None
-
-    def load(self):
-        """Load model if needed and return cached instance.
-
-        Returns
-        -------
-        model : transformers.PreTrainedModel
-            Loaded Timer-S1 prediction model according to ``self.device_map``,
-            ``self.dtype``, and ``self.quantization_config``.
-
-        Notes
-        -----
-        - If ``model_path`` is set, loads weights via ``from_pretrained``.
-        - If ``model_path`` is ``None``, initializes from config with random
-          weights. These weights are not trained by the estimator.
-        """
-        if self.model_ is not None:
-            return self.model_
-
-        if self.model_path is not None:
-            self.model_ = self._load_from_path()
-        else:
-            self.model_ = self._load_randomly()
-
-        return self.model_
-
-    def _load_from_path(self):
-        """Load Timer-S1 model weights from ``self.model_path``."""
-        from sktime.libs.timer_s1 import TimerS1ForPrediction
-
-        model = TimerS1ForPrediction.from_pretrained(
-            self.model_path,
-            device_map=self.device_map,
-            dtype=self.dtype,
-            quantization_config=self.quantization_config,
-            trust_remote_code=True,
-        )
-
-        return model
-
-    def _load_randomly(self):
-        """Initialize a Timer-S1 model randomly from config."""
-        from sktime.libs.timer_s1 import TimerS1Config, TimerS1ForPrediction
-
-        warn(
-            "Initializing Timer-S1 from config creates random weights. "
-            "Timer-S1 training is not supported by this estimator at the "
-            "moment, so these weights will stay random and are only suitable "
-            "for tests or local experimentation.",
-            UserWarning,
-            stacklevel=2,
-        )
-
-        config = deepcopy(self.config)
-        if not config:
-            config = TimerS1Config()
-        if isinstance(config, dict):
-            config = TimerS1Config.from_dict(config)
-
-        model = TimerS1ForPrediction(config)
-        model = model.to(self.device_map)
-        if self.dtype is not None:
-            model = model.to(dtype=self.dtype)
-
-        return model
