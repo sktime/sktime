@@ -114,17 +114,19 @@ class ForecastingBenchmark(BaseBenchmark):
             1. the ``cv_global`` splitter is used to split data at instance level,
             into a global training set ``y_train``,
             and a global test set ``y_test_global``.
-            2. The estimator is fitted to the global training set ``y_train``.
+            2. The estimator is pretrained on the global training set ``y_train``.
             3. ``cv_splitter`` then splits the global test set ``y_test_global``
             temporally, to obtain temporal splits ``y_past``, ``y_true``.
+            4. The estimator is fitted on ``y_past`` and predicts ``y_true``.
 
             Overall, with ``y_train``, ``y_past``, ``y_true`` as above,
             the following evaluation will be applied:
 
             .. code-block:: python
 
-                forecaster.fit(y=y_train, fh=cv.fh)
-                y_pred = forecaster.predict(y=y_past)
+                forecaster.pretrain(y=y_train, fh=cv.fh)
+                forecaster.fit(y=y_past, fh=cv.fh)
+                y_pred = forecaster.predict()
                 metric(y_true, y_pred)
 
         error_score : "raise" or numeric, default="raise"

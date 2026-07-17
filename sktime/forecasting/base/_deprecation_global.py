@@ -19,7 +19,7 @@ class _GlobalForecastingDeprecationMixin:
     .. deprecated:: 0.41.0
 
         The ``y`` parameter in ``predict()`` is deprecated and will be removed
-        in version 1.1.0. Global forecasting now uses the data from ``fit()``.
+        in version 1.2.0. Global forecasting now uses the data from ``fit()``.
 
     Usage
     -----
@@ -31,7 +31,7 @@ class _GlobalForecastingDeprecationMixin:
     The mixin must come before ``BaseForecaster`` to ensure correct MRO.
     """
 
-    # TODO 1.1.0: Remove this mixin class entirely
+    # TODO 1.2.0: Remove this mixin class entirely
 
     @contextmanager
     def _temporary_y_swap(self, X, y):
@@ -56,7 +56,7 @@ class _GlobalForecastingDeprecationMixin:
 
         warn(
             f"In {self.__class__.__name__}.{method_name}(), the 'y' parameter "
-            "is deprecated and will be removed in sktime version 1.1.0. "
+            "is deprecated and will be removed in sktime version 1.2.0. "
             "Global forecasters now pass global pretraining data via pretrain, and"
             "historical  data via fit. "
             "To retain current behavior, pass pretraining data to pretrain(y) - "
@@ -312,7 +312,7 @@ class _BaseGlobalForecaster(BaseForecaster):
     .. deprecated:: 0.41.0
 
         ``_BaseGlobalForecaster`` is deprecated and will be removed in
-        version 1.1.0. Inherit from ``BaseForecaster`` directly instead.
+        version 1.2.0. Inherit from ``BaseForecaster`` directly instead.
 
         For backward compatibility with the ``y`` parameter in ``predict()``,
         also inherit from ``_GlobalForecastingDeprecationMixin``.
@@ -335,7 +335,7 @@ class _BaseGlobalForecaster(BaseForecaster):
 
     _tags = {"object_type": ["global_forecaster", "forecaster"]}
 
-    # TODO 1.1.0: remove _BaseGlobalForecaster class entirely
+    # TODO 1.2.0: remove _BaseGlobalForecaster class entirely
     def __init_subclass__(cls, **kwargs):
         """Warn when _BaseGlobalForecaster is subclassed."""
         super().__init_subclass__(**kwargs)
@@ -347,7 +347,7 @@ class _BaseGlobalForecaster(BaseForecaster):
 
             warn(
                 f"Class '{cls.__name__}' inherits from _BaseGlobalForecaster, "
-                "which is deprecated and will be removed in sktime version 1.1.0. "
+                "which is deprecated and will be removed in sktime version 1.2.0. "
                 "Please inherit from BaseForecaster instead. "
                 "For backward compatibility with the 'y' parameter in predict(), "
                 "also inherit from _GlobalForecastingDeprecationMixin. "
