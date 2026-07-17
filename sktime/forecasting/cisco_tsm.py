@@ -351,6 +351,73 @@ class CiscoTSMForecaster(BaseForecaster):
 
         return pred_quantiles
 
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            _model_, _context_, _y_name_, cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : ignored
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro HistogramQPD
+            predictive distribution
+        """
+        self._ensure_model_loaded()
+
+        fh_relative = fh.to_relative(self.cutoff)
+        horizon_len = int(max(fh_relative._values))
+        fh_vals = np.asarray(fh_relative._values, dtype=int) - 1
+
+        forecast_preds = self._model_.forecast(
+            self._context_,
+            horizon_len=horizon_len,
+        )
+        quantiles_dict = forecast_preds[0]["quantiles"]  # dict[float, np.ndarray]
+
+        # Sort available native levels for the QPD knots.
+        knots = sorted(quantiles_dict.keys())
+        # Stack into (n_knots, horizon_len) array.
+        native_matrix = np.stack(
+            [quantiles_dict[q] for q in knots], axis=0
+        )  # shape: (n_knots, horizon_len)
+
+        # Slice to select the target horizon points.
+        selected_matrix = native_matrix[:, fh_vals]  # shape: (n_knots, len(fh_vals))
+
+        var_name = self._y_name_ if self._y_name_ is not None else 0
+        pred_index = fh.to_absolute_index(self.cutoff)
+        row_idx = pd.MultiIndex.from_product([knots, pred_index])
+
+        # For a univariate forecaster, the DataFrame columns is a single element.
+        columns = [var_name]
+
+        # Reshape data to (len(knots) * len(pred_index), 1) matching the product index.
+        # Outer level: knots (quantiles), Inner level: pred_index (time indices).
+        # Since row-major order is used, the inner level (time) varies fastest.
+        q_df = pd.DataFrame(
+            data=selected_matrix.reshape(-1, 1),
+            index=row_idx,
+            columns=columns,
+            dtype=float,
+        )
+
+        from skpro.distributions import HistogramQPD
+
+        return HistogramQPD(q_df, tails="mass", index=pred_index, columns=columns)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
