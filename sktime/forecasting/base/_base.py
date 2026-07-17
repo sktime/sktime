@@ -65,6 +65,7 @@ from sktime.datatypes import (
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._state_at import _StateAtMixin
 from sktime.utils.datetime import _shift
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh
 from sktime.utils.validation.series import check_equal_time_index
@@ -81,7 +82,7 @@ def _coerce_to_list(obj):
         return obj
 
 
-class BaseForecaster(_PredictProbaMixin, BaseEstimator):
+class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
     """Base forecaster template class.
 
     The base forecaster specifies the methods and method signatures that all forecasters
@@ -174,7 +175,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass
@@ -518,9 +518,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._sync_fitted_state_from_remember_wrapper(wrapper)
             return self
 
-        # if fit is called, estimator is reset, including fitted state
+        # skip reset on the first fit after pretrain; on refit, discard
+        # task-specific fitted state while retaining pretrained state
         if not self._state == "pretrained":
-            self.reset()
+            self._reset_at("pretrained")
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -1230,6 +1231,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
         pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
 
+        prior_attrs = {
+            a for a in dir(self) if a.endswith("_") and not a.startswith("_")
+        }
+
         # pretrain accepts multivariate panel data even for univariate forecasters,
         # because _pretrain can split columns into separate univariate series.
         # Pass multivariate=True to prevent column vectorization.
@@ -1266,6 +1271,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             if a.endswith("_")
             and not a.startswith("_")
             and a not in self._pretrained_attrs
+            and a not in prior_attrs
         ]
         self._pretrained_attrs.extend(new_attrs)
 

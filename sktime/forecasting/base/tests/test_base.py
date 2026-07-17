@@ -554,3 +554,31 @@ def _get_exog_proba_fcst():
     reg_proba = ResidualDouble(lin_reg, lin_reg)
 
     return YfromX(reg_proba)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base"]),
+    reason="run only if forecasting base module has changed",
+)
+def test_pretrain_respects_preexisting_attrs():
+    """Test that pretrain does not misclassify preexisting attrs as set by pretrain.
+
+    Regression test for bug #10531, but also a general API contract test.
+    """
+
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(2,),
+        min_timepoints=5,
+        max_timepoints=5,
+    )
+
+    forecaster = NaiveForecaster()
+
+    forecaster.pretrain(y_panel)
+
+    msg = "pretrain should not misclassify preexisting attrs as set by pretrain"
+    assert len(forecaster._pretrained_attrs) == 0, msg
+    assert len(forecaster.get_pretrained_params()) == 0, msg

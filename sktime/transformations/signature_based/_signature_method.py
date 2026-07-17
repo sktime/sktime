@@ -118,7 +118,6 @@ class SignatureTransformer(BaseTransformer):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         if self.backend not in ["esig", "iisignature"]:
