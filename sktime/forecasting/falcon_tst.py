@@ -22,11 +22,11 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
 
-class FalconTSTForecaster(BaseFoundationForecaster):
+class FalconTSTForecaster(BaseForecaster):
     """Falcon-TST forecaster via Hugging Face ``transformers``.
 
     This forecaster wraps Falcon-TST prediction models [1]_, [2]_ from Hugging
@@ -156,14 +156,13 @@ class FalconTSTForecaster(BaseFoundationForecaster):
         quantization_config=None,
         revin=True,
     ):
+        self.model_path = model_path
+        self.config = config
         self.device_map = device_map
+        self.quantization_config = quantization_config
         self.revin = revin
-        super().__init__(
-            model_path=model_path,
-            config=config,
-            device=device_map,
-            quantization_config=quantization_config,
-        )
+
+        super().__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Load the model and store history for zero-shot forecasting.
