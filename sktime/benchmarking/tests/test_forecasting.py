@@ -13,6 +13,7 @@ from sktime.datasets import (
     load_airline,
     load_longley,
 )
+from sktime.forecasting.dummy_global import DummyGlobalForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import TrendForecaster
 from sktime.performance_metrics.forecasting import (
@@ -199,8 +200,6 @@ def test_forecastingbenchmark_global_mode(
     scorers,
 ):
     """Test benchmarking a forecaster estimator in global mode."""
-    from sktime.forecasting.dummy_global import DummyGlobalForecaster
-
     benchmark = ForecastingBenchmark()
 
     benchmark.add_estimator(DummyGlobalForecaster())
