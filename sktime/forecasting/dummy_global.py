@@ -199,10 +199,7 @@ class DummyGlobalForecaster(BaseForecaster):
             self.global_mean_ = float(np.nanmean(values))
 
         if self.strategy == "mean_by_index" and not hasattr(self, "mean_by_index_"):
-            if isinstance(y, pd.DataFrame):
-                self.mean_by_index_ = y.copy()
-            else:
-                self.mean_by_index_ = y.copy()
+            self.mean_by_index_ = y.copy()
 
         return self
 
