@@ -3,7 +3,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.model_selection import KFold
 
 from sktime.benchmarking.benchmarks import _coerce_estimator_and_id
