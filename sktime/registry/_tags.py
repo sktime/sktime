@@ -2233,7 +2233,7 @@ class capability__update(_BaseTag):
 
     _tags = {
         "tag_name": "capability:update",
-        "parent_type": ["forecaster", "transformer", "detector"],
+        "parent_type": ["transformer", "detector"],
         "tag_type": "bool",
         "short_descr": "does the estimator provided stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
