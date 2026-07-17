@@ -9,13 +9,13 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.benchmarking.analysis import (
     CriticalDifferenceDiagram,
-    FriedmanEvaluator,
-    NemenyiEvaluator,
-    RankEvaluator,
-    RanksumEvaluator,
-    SignTestEvaluator,
-    TTestEvaluator,
-    WilcoxonEvaluator,
+    FriedmanTest,
+    NemenyiTest,
+    AverageRank,
+    RankSumTest,
+    SignTest,
+    TwoSampleTTest,
+    WilcoxonSignedRankTest,
 )
 from sktime.tests.test_switch import run_test_module_changed
 
@@ -30,13 +30,13 @@ SCORES_BY_MODEL = {
 }
 
 ALL_EVALUATORS = [
-    RankEvaluator,
-    FriedmanEvaluator,
-    NemenyiEvaluator,
-    WilcoxonEvaluator,
-    SignTestEvaluator,
-    RanksumEvaluator,
-    TTestEvaluator,
+    AverageRank,
+    FriedmanTest,
+    NemenyiTest,
+    WilcoxonSignedRankTest,
+    SignTest,
+    RankSumTest,
+    TwoSampleTTest,
     CriticalDifferenceDiagram,
 ]
 
@@ -80,7 +80,7 @@ pytestmark = pytest.mark.skipif(
 def test_metric_inference():
     """A single metric column is inferred when ``metric`` is not given."""
     df = _make_results_df()
-    scores = FriedmanEvaluator()._coerce_to_score_matrix(df)
+    scores = FriedmanTest()._coerce_to_score_matrix(df)
     assert list(scores.columns) == ["model_A", "model_B", "model_C"]
     assert scores.shape == (5, 3)
 
@@ -90,14 +90,14 @@ def test_metric_inference_ambiguous_raises():
     df = _make_results_df()
     df["OtherMetric_mean"] = 1.0
     with pytest.raises(ValueError, match="Multiple metrics"):
-        FriedmanEvaluator()._coerce_to_score_matrix(df)
+        FriedmanTest()._coerce_to_score_matrix(df)
 
 
 def test_explicit_metric_selection():
     """An explicit ``metric`` selects the right column among several."""
     df = _make_results_df()
     df["OtherMetric_mean"] = 1.0
-    scores = FriedmanEvaluator(metric=METRIC)._coerce_to_score_matrix(df)
+    scores = FriedmanTest(metric=METRIC)._coerce_to_score_matrix(df)
     assert scores.shape == (5, 3)
 
 
@@ -116,8 +116,8 @@ def test_load_from_csv_path(tmp_path):
     path = tmp_path / "results.csv"
     CSVStorageHandler(path).save(result_objects)
 
-    from_path = FriedmanEvaluator(metric=METRIC).evaluate(path)
-    from_df = FriedmanEvaluator(metric=METRIC).evaluate(_make_results_df())
+    from_path = FriedmanTest(metric=METRIC).evaluate(path)
+    from_df = FriedmanTest(metric=METRIC).evaluate(_make_results_df())
     pd.testing.assert_frame_equal(from_path, from_df)
 
 
@@ -127,27 +127,27 @@ def test_missing_scores_raise():
     # drop model_C's score on task_0 -> a hole in the pivoted matrix
     df = df[~((df.model_id == "model_C") & (df.validation_id == "task_0"))]
     with pytest.raises(ValueError, match="missing values"):
-        FriedmanEvaluator().evaluate(df)
+        FriedmanTest().evaluate(df)
 
 
 # --------------------------------------------------------------------------- #
 # parity with the underlying scipy computations (the legacy Evaluator math)
 # --------------------------------------------------------------------------- #
 def test_friedman_parity():
-    """FriedmanEvaluator matches ``scipy.stats.friedmanchisquare``."""
+    """FriedmanTest matches ``scipy.stats.friedmanchisquare``."""
     from scipy.stats import friedmanchisquare
 
-    out = FriedmanEvaluator().evaluate(_make_results_df())
+    out = FriedmanTest().evaluate(_make_results_df())
     stat, p = friedmanchisquare(*SCORES_BY_MODEL.values())
     assert out.loc[0, "statistic"] == pytest.approx(stat)
     assert out.loc[0, "p_value"] == pytest.approx(p)
 
 
 def test_wilcoxon_parity():
-    """WilcoxonEvaluator matches ``scipy.stats.wilcoxon`` per pair."""
+    """WilcoxonSignedRankTest matches ``scipy.stats.wilcoxon`` per pair."""
     from scipy.stats import wilcoxon
 
-    out = WilcoxonEvaluator().evaluate(_make_results_df())
+    out = WilcoxonSignedRankTest().evaluate(_make_results_df())
     # 3 estimators -> 3 unique unordered pairs
     assert len(out) == 3
     row = out[(out.estimator_1 == "model_A") & (out.estimator_2 == "model_B")].iloc[0]
@@ -157,10 +157,10 @@ def test_wilcoxon_parity():
 
 
 def test_ranksum_parity():
-    """RanksumEvaluator matches ``scipy.stats.ranksums`` per pair."""
+    """RankSumTest matches ``scipy.stats.ranksums`` per pair."""
     from scipy.stats import ranksums
 
-    out = RanksumEvaluator().evaluate(_make_results_df())
+    out = RankSumTest().evaluate(_make_results_df())
     # ordered pairs incl. self -> 3 * 3 = 9 rows
     assert len(out) == 9
     row = out[(out.estimator_1 == "model_A") & (out.estimator_2 == "model_C")].iloc[0]
@@ -170,10 +170,10 @@ def test_ranksum_parity():
 
 
 def test_ttest_parity_and_bonferroni():
-    """TTestEvaluator matches ``ttest_ind`` and adds a Bonferroni flag."""
+    """TwoSampleTTest matches ``ttest_ind`` and adds a Bonferroni flag."""
     from scipy.stats import ttest_ind
 
-    out = TTestEvaluator().evaluate(_make_results_df())
+    out = TwoSampleTTest().evaluate(_make_results_df())
     assert "significant" not in out.columns
     row = out[(out.estimator_1 == "model_A") & (out.estimator_2 == "model_B")].iloc[0]
     s, p = ttest_ind(
@@ -183,7 +183,7 @@ def test_ttest_parity_and_bonferroni():
     assert row["statistic"] == pytest.approx(s)
     assert row["p_val"] == pytest.approx(p)
 
-    corrected = TTestEvaluator(correction="bonferroni", alpha=0.05).evaluate(
+    corrected = TwoSampleTTest(correction="bonferroni", alpha=0.05).evaluate(
         _make_results_df()
     )
     assert "significant" in corrected.columns
@@ -192,11 +192,11 @@ def test_ttest_parity_and_bonferroni():
 
 
 def test_sign_test_parity():
-    """SignTestEvaluator matches a direct binomial test."""
+    """SignTest matches a direct binomial test."""
     from scipy import stats
 
     binom = stats.binomtest if hasattr(stats, "binomtest") else stats.binom_test
-    out = SignTestEvaluator().evaluate(_make_results_df())
+    out = SignTest().evaluate(_make_results_df())
     assert len(out) == 9  # ordered pairs incl. self
     a = np.asarray(SCORES_BY_MODEL["model_A"])
     b = np.asarray(SCORES_BY_MODEL["model_B"])
@@ -206,8 +206,8 @@ def test_sign_test_parity():
 
 
 def test_rank_evaluator():
-    """RankEvaluator returns one mean rank per model, best first."""
-    out = RankEvaluator().evaluate(_make_results_df())
+    """AverageRank returns one mean rank per model, best first."""
+    out = AverageRank().evaluate(_make_results_df())
     assert list(out.columns) == ["model_id", "rank"]
     assert len(out) == 3
     # model_A has the lowest errors on every dataset -> best (rank 1) when
@@ -223,17 +223,17 @@ def test_rank_evaluator():
     reason="scikit_posthocs not installed",
 )
 def test_nemenyi_evaluator():
-    """NemenyiEvaluator returns a square pairwise p-value matrix."""
-    out = NemenyiEvaluator().evaluate(_make_results_df())
+    """NemenyiTest returns a square pairwise p-value matrix."""
+    out = NemenyiTest().evaluate(_make_results_df())
     assert out.shape == (3, 3)
 
 
 def test_nemenyi_missing_dependency_raises():
-    """NemenyiEvaluator raises a clean error if scikit_posthocs is missing."""
+    """NemenyiTest raises a clean error if scikit_posthocs is missing."""
     if _check_soft_dependencies("scikit_posthocs", severity="none"):
         pytest.skip("scikit_posthocs is installed")
     with pytest.raises(ModuleNotFoundError):
-        NemenyiEvaluator().evaluate(_make_results_df())
+        NemenyiTest().evaluate(_make_results_df())
 
 
 @pytest.mark.skipif(
@@ -270,7 +270,7 @@ def test_construct_via_test_params(evaluator_cls):
 
 def test_evaluator_is_stateless():
     """Repeated calls do not mutate the evaluator and give identical results."""
-    evaluator = FriedmanEvaluator()
+    evaluator = FriedmanTest()
     df = _make_results_df()
     first = evaluator.evaluate(df)
     second = evaluator.evaluate(df)

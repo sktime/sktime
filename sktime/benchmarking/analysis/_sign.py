@@ -1,6 +1,6 @@
 """Sign test evaluator for benchmark results."""
 
-__all__ = ["SignTestEvaluator"]
+__all__ = ["SignTest"]
 
 import itertools
 
@@ -10,7 +10,7 @@ import pandas as pd
 from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class SignTestEvaluator(BaseBenchmarkAnalyzer):
+class SignTest(BaseBenchmarkAnalyzer):
     """Sign test for consistent differences between estimator pairs.
 
     Non-parametric test based on the binomial distribution, counting the number

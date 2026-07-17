@@ -62,11 +62,11 @@ diagrams.
     :template: class.rst
 
     BaseBenchmarkAnalyzer
-    RankEvaluator
-    FriedmanEvaluator
-    NemenyiEvaluator
-    WilcoxonEvaluator
-    SignTestEvaluator
-    RanksumEvaluator
-    TTestEvaluator
+    AverageRank
+    FriedmanTest
+    NemenyiTest
+    WilcoxonSignedRankTest
+    SignTest
+    RankSumTest
+    TwoSampleTTest
     CriticalDifferenceDiagram

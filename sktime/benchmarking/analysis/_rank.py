@@ -1,11 +1,11 @@
 """Average-rank evaluator for benchmark results."""
 
-__all__ = ["RankEvaluator"]
+__all__ = ["AverageRank"]
 
 from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class RankEvaluator(BaseBenchmarkAnalyzer):
+class AverageRank(BaseBenchmarkAnalyzer):
     """Average ranks of estimators across datasets.
 
     Ranks the estimators on every dataset (task) and averages the ranks across

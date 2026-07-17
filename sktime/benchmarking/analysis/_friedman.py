@@ -1,20 +1,20 @@
 """Friedman omnibus test evaluator for benchmark results."""
 
-__all__ = ["FriedmanEvaluator"]
+__all__ = ["FriedmanTest"]
 
 import pandas as pd
 
 from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class FriedmanEvaluator(BaseBenchmarkAnalyzer):
+class FriedmanTest(BaseBenchmarkAnalyzer):
     """Friedman test for differences between estimators across datasets.
 
     Non-parametric omnibus test of the null hypothesis that all estimators
     perform equally across datasets, reproducing the legacy
     ``Evaluator.friedman_test`` (``scipy.stats.friedmanchisquare``). A
     significant result is the usual precondition for running a post-hoc test
-    such as ``NemenyiEvaluator``.
+    such as ``NemenyiTest``.
 
     Returns
     -------

@@ -1,6 +1,6 @@
 """Nemenyi post-hoc test evaluator for benchmark results."""
 
-__all__ = ["NemenyiEvaluator"]
+__all__ = ["NemenyiTest"]
 
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -8,11 +8,11 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class NemenyiEvaluator(BaseBenchmarkAnalyzer):
+class NemenyiTest(BaseBenchmarkAnalyzer):
     """Nemenyi post-hoc test for pairwise differences between estimators.
 
     Pairwise post-hoc test, typically run after a significant
-    ``FriedmanEvaluator`` result, reproducing the legacy ``Evaluator.nemenyi``
+    ``FriedmanTest`` result, reproducing the legacy ``Evaluator.nemenyi``
     (``scikit_posthocs.posthoc_nemenyi``).
 
     Returns

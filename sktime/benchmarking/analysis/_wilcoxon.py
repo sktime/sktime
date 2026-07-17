@@ -1,6 +1,6 @@
 """Wilcoxon signed-rank test evaluator for benchmark results."""
 
-__all__ = ["WilcoxonEvaluator"]
+__all__ = ["WilcoxonSignedRankTest"]
 
 import itertools
 
@@ -9,7 +9,7 @@ import pandas as pd
 from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class WilcoxonEvaluator(BaseBenchmarkAnalyzer):
+class WilcoxonSignedRankTest(BaseBenchmarkAnalyzer):
     """Wilcoxon signed-rank test on each unique pair of estimators.
 
     Non-parametric paired test of whether the per-dataset score differences

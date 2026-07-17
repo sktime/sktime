@@ -8,13 +8,13 @@ critical-difference diagram.
 
 __all__ = [
     "BaseBenchmarkAnalyzer",
-    "RankEvaluator",
-    "FriedmanEvaluator",
-    "NemenyiEvaluator",
-    "WilcoxonEvaluator",
-    "SignTestEvaluator",
-    "RanksumEvaluator",
-    "TTestEvaluator",
+    "AverageRank",
+    "FriedmanTest",
+    "NemenyiTest",
+    "WilcoxonSignedRankTest",
+    "SignTest",
+    "RankSumTest",
+    "TwoSampleTTest",
     "CriticalDifferenceDiagram",
 ]
 
@@ -22,10 +22,10 @@ from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 from sktime.benchmarking.analysis._critical_difference import (
     CriticalDifferenceDiagram,
 )
-from sktime.benchmarking.analysis._friedman import FriedmanEvaluator
-from sktime.benchmarking.analysis._nemenyi import NemenyiEvaluator
-from sktime.benchmarking.analysis._rank import RankEvaluator
-from sktime.benchmarking.analysis._ranksum import RanksumEvaluator
-from sktime.benchmarking.analysis._sign import SignTestEvaluator
-from sktime.benchmarking.analysis._ttest import TTestEvaluator
-from sktime.benchmarking.analysis._wilcoxon import WilcoxonEvaluator
+from sktime.benchmarking.analysis._friedman import FriedmanTest
+from sktime.benchmarking.analysis._nemenyi import NemenyiTest
+from sktime.benchmarking.analysis._rank import AverageRank
+from sktime.benchmarking.analysis._ranksum import RankSumTest
+from sktime.benchmarking.analysis._sign import SignTest
+from sktime.benchmarking.analysis._ttest import TwoSampleTTest
+from sktime.benchmarking.analysis._wilcoxon import WilcoxonSignedRankTest

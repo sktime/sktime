@@ -1,6 +1,6 @@
 """Independent t-test evaluator for benchmark results."""
 
-__all__ = ["TTestEvaluator"]
+__all__ = ["TwoSampleTTest"]
 
 import itertools
 
@@ -10,7 +10,7 @@ import pandas as pd
 from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class TTestEvaluator(BaseBenchmarkAnalyzer):
+class TwoSampleTTest(BaseBenchmarkAnalyzer):
     """Independent two-sample t-test on each ordered pair of estimators.
 
     Reproduces the legacy ``Evaluator.t_test`` (``scipy.stats.ttest_ind``) and,

@@ -1,6 +1,6 @@
 """Wilcoxon rank-sum test evaluator for benchmark results."""
 
-__all__ = ["RanksumEvaluator"]
+__all__ = ["RankSumTest"]
 
 import itertools
 
@@ -9,7 +9,7 @@ import pandas as pd
 from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
 
 
-class RanksumEvaluator(BaseBenchmarkAnalyzer):
+class RankSumTest(BaseBenchmarkAnalyzer):
     """Wilcoxon rank-sum test on each ordered pair of estimators.
 
     Non-parametric test of whether two estimators' per-dataset scores are drawn
