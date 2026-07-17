@@ -3,7 +3,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-from skbase.utils.dependencies import _check_estimator_deps
 from sklearn.model_selection import KFold
 
 from sktime.benchmarking.benchmarks import _coerce_estimator_and_id
@@ -22,7 +21,7 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredPercentageError,
 )
 from sktime.split import ExpandingWindowSplitter, InstanceSplitter, SingleWindowSplitter
-from sktime.tests.test_switch import run_test_module_changed
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 # TODO:
@@ -180,8 +179,9 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.benchmarking")
     and not run_test_module_changed("sktime.forecasting.base")
-    and not _check_estimator_deps(NaiveForecaster, severity="none")
-    reason="run test only if benchmarking module has changed",
+    and not run_test_for_class(DummyGlobalForecaster),
+    reason="run test only if one of the following changes: benchmarking module, "
+    "forecasting base module, or DummyGlobalForecaster logic",
 )
 @pytest.mark.parametrize(
     "expected_results_df, scorers",
