@@ -138,6 +138,15 @@ class ClassificationBenchmark(BaseBenchmark):
             TaskObject(**task_kwargs),
         )
 
+    # We need this because older dataloaders were functions without tags
+    def _task_type_for_data(self) -> str:
+        return "classification"
+
+    def _failed_result_score_keys(self, task: TaskObject) -> list[str]:
+        keys = [scorer.__name__ for scorer in task.scorers]
+        keys.extend(["fit_time", "pred_time"])
+        return keys
+
     def _run_validation(self, task: TaskObject, estimator: BaseClassifier):
         cv_splitter = task.cv_splitter
         scorers = task.scorers
