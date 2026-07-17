@@ -18,7 +18,7 @@ __author__ = ["sinemkilicdere", "martinloretzzz"]
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
 if _check_soft_dependencies("torch", severity="none"):
@@ -60,7 +60,7 @@ class _cached_TiRex:
         return self._obj
 
 
-class TiRexForecaster(BaseFoundationForecaster):
+class TiRexForecaster(BaseForecaster):
     """Interface to the TiRex Zero-Shot Forecaster.
 
     This forecaster loads the TiRex model from the ``tirex-ts`` package when fit() is
@@ -130,13 +130,13 @@ class TiRexForecaster(BaseFoundationForecaster):
         license_accepted: bool = False,
     ):
         self.model = model
+        self.device = device
         self.license_accepted = license_accepted
-        super().__init__(
-            model_path=model,
-            device=device,
-        )
 
         self.model_ = None
+
+        # leave this as is
+        super().__init__()
 
         if not self.license_accepted:
             raise ValueError(
