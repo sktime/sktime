@@ -11,11 +11,13 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
-from sktime.utils.singleton import _multiton
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
+from sktime.forecasting.foundation._format import format_point_result
+from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
 
 
-class KronosForecaster(BaseForecaster):
+class KronosForecaster(BaseFoundationForecaster):
     """Kronos zero-shot forecaster for financial K-line/OHLC data.
 
     This forecaster wraps Kronos [1]_, a foundation model for financial market
@@ -169,42 +171,15 @@ class KronosForecaster(BaseForecaster):
         self.predict_kwargs = predict_kwargs
         self.deterministic = deterministic
 
-        super().__init__()
+        super().__init__(
+            model_path=model_path,
+            tokenizer_path=tokenizer_path,
+            device=device,
+            random_state=42 if deterministic else None,
+        )
 
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-
-            * if self.get_tag("capability:multivariate")==False:
-              guaranteed to be univariate (e.g., single-column for DataFrame)
-            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
-              the method should handle uni- and multivariate y appropriately
-
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self.context_ = y.copy()
-        self.max_context_ = len(self.context_)
-
+    def _update_attrs_in_fit(self, y, X, fh):
+        """Resolve the OHLC mapping stored alongside the shared context."""
         self.column_mapping_ = self._resolve_column_mapping(y)
         self.output_columns_ = []
         for internal in self._kronos_columns:
@@ -216,60 +191,57 @@ class KronosForecaster(BaseForecaster):
             ):
                 self.output_columns_.append(original)
 
-        self.tokenizer_, self.model_ = self._load_kronos()
-
     def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
+        """Forecast and format only columns supported by Kronos."""
+        result, request = self._foundation_predict(fh=fh, X=X)
+        output_y = self.context_y_.loc[:, self.output_columns_]
+        return format_point_result(result=result, request=request, y=output_y)
 
-        private _predict containing the core logic, called from predict
+    def _load_model(self):
+        """Load the paired Kronos tokenizer and model into a shared handle."""
+        from sktime.libs.kronos import Kronos, KronosTokenizer
 
-        State required:
-            Requires state to be "fitted".
+        tokenizer = KronosTokenizer.from_pretrained(self.tokenizer_path)
+        model = Kronos.from_pretrained(self.model_path)
+        tokenizer = tokenizer.to(self.device_).eval()
+        model = model.to(self.device_).eval()
+        return ModelHandle(model=model, tokenizer=tokenizer)
 
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-
-        Returns
-        -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
-        """
-        df = pd.DataFrame(index=self.context_.index)
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Run Kronos inference for future, in-sample, or mixed horizons."""
+        df = pd.DataFrame(index=context_y.index)
         for internal, original in self.column_mapping_.items():
-            df[internal] = self.context_[original].to_numpy()
+            df[internal] = context_y[original].to_numpy()
 
-        x_index = self.context_.index
-        y_index = fh.to_absolute_index(self.cutoff)
-        x_timestamp = self._to_timestamps(x_index)
+        relative_fh = np.asarray(fh.to_relative(self.cutoff).to_pandas(), dtype=int)
+        if np.all(relative_fh > 0):
+            pred_len = int(relative_fh.max())
+            y_index = fh.to_absolute(self.cutoff).to_pandas()
+            if len(y_index) != pred_len:
+                full_fh = ForecastingHorizon(
+                    np.arange(1, pred_len + 1), is_relative=True
+                )
+                y_index = full_fh.to_absolute(self.cutoff).to_pandas()
+        else:
+            # Kronos accepts arbitrary requested timestamps, including timestamps
+            # from the context. Keeping this path direct preserves its native
+            # in-sample and mixed-horizon prediction capability.
+            y_index = fh.to_absolute(self.cutoff).to_pandas()
+            pred_len = len(relative_fh)
+
+        x_timestamp = self._to_timestamps(context_y.index)
         y_timestamp = self._to_timestamps(y_index)
 
-        import torch
-
-        from sktime.libs.kronos import KronosPredictor
-
-        if self.deterministic:
-            torch.manual_seed(42)
-            if torch.cuda.is_available():
-                torch.cuda.manual_seed_all(42)
-
-        predictor = KronosPredictor(
-            self.model_,
-            self.tokenizer_,
-            device=self.device,
-            max_context=self.max_context_,
-            clip=self.clip,
-        )
+        predictor = self._make_predictor(handle, max_context=len(context_y))
         predict_kwargs = deepcopy(self.predict_kwargs) if self.predict_kwargs else {}
         pred_df = predictor.predict(
             df=df,
@@ -290,7 +262,19 @@ class KronosForecaster(BaseForecaster):
                 out[original] = pred_df[internal].to_numpy()
         out = out[self.output_columns_]
 
-        return out
+        return ForecastResult(mean=out.to_numpy(), raw=pred_df)
+
+    def _make_predictor(self, handle, max_context):
+        """Instantiate the upstream Kronos predictor."""
+        from sktime.libs.kronos import KronosPredictor
+
+        return KronosPredictor(
+            handle.model,
+            handle.tokenizer,
+            device=self.device_,
+            max_context=max_context,
+            clip=self.clip,
+        )
 
     def _to_timestamps(self, index):
         """Convert an sktime prediction index into timestamps for Kronos.
@@ -395,29 +379,6 @@ class KronosForecaster(BaseForecaster):
 
         return mapping
 
-    def _load_kronos(self):
-        """Load or retrieve cached Kronos tokenizer/model."""
-        if hasattr(self, "model_") and hasattr(self, "tokenizer_"):
-            return self.tokenizer_, self.model_
-
-        tokenizer, model = _CachedKronos(
-            key=self._get_unique_key(),
-            model_path=self.model_path,
-            tokenizer_path=self.tokenizer_path,
-            device=self.device,
-        ).load()
-
-        return tokenizer, model
-
-    def _get_unique_key(self):
-        """Build cache key for the multiton model loader."""
-        key = {
-            "model_path": self.model_path,
-            "tokenizer_path": self.tokenizer_path,
-            "device": self.device,
-        }
-        return str(sorted(key.items()))
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -459,43 +420,3 @@ class KronosForecaster(BaseForecaster):
                 },
             },
         ]
-
-
-@_multiton
-class _CachedKronos:
-    """Multiton-backed cache wrapper for Kronos model/tokenizer pairs."""
-
-    def __init__(
-        self,
-        key,
-        model_path,
-        tokenizer_path,
-        device,
-    ):
-        self.key = key
-        self.model_path = model_path
-        self.tokenizer_path = tokenizer_path
-        self.device = device
-        self.tokenizer_ = None
-        self.model_ = None
-
-    def load(self):
-        """Load tokenizer and model if needed and return cached pair."""
-        if self.tokenizer_ is not None and self.model_ is not None:
-            return self.tokenizer_, self.model_
-
-        self.tokenizer_ = self._load_tokenizer()
-        self.model_ = self._load_model()
-        self.tokenizer_ = self.tokenizer_.to(self.device).eval()
-        self.model_ = self.model_.to(self.device).eval()
-        return self.tokenizer_, self.model_
-
-    def _load_tokenizer(self):
-        from sktime.libs.kronos import KronosTokenizer
-
-        return KronosTokenizer.from_pretrained(self.tokenizer_path)
-
-    def _load_model(self):
-        from sktime.libs.kronos import Kronos
-
-        return Kronos.from_pretrained(self.model_path)
