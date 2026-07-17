@@ -201,7 +201,7 @@ def test_forecastingbenchmark_global_mode(
 
     benchmark = ForecastingBenchmark()
 
-    benchmark.add_estimator()
+    benchmark.add_estimator(DummyGlobalForecaster())
 
     benchmark.add_task(
         data_loader_global,
