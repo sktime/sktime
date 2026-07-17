@@ -200,46 +200,8 @@ class TotoForecaster(BaseForecaster):
         """Restore state from the unpickled state dictionary."""
         self.__dict__.update(state)
 
-    def _check_skip(self):
-        """Check call stack for tests to skip due to sktime/pandas frequency bugs."""
-        try:
-            import sys
-
-            import pytest
-
-            frame = sys._getframe(1)
-            while frame:
-                # Check frame function name
-                name = frame.f_code.co_name
-                if name in [
-                    "test_hierarchical_with_exogenous",
-                    "test_predict_time_index_in_sample_full",
-                    "test_predict_time_index_with_X",
-                    "test_predict_time_index",
-                ]:
-                    pytest.skip(f"Skipping {name} due to sktime frequency bug")
-                # Check local variables in the frame
-                if "test_name" in frame.f_locals:
-                    t_name = frame.f_locals["test_name"]
-                    if t_name in [
-                        "test_hierarchical_with_exogenous",
-                        "test_predict_time_index_in_sample_full",
-                        "test_predict_time_index_with_X",
-                        "test_predict_time_index",
-                    ]:
-                        pytest.skip(f"Skipping {t_name} due to sktime frequency bug")
-                frame = frame.f_back
-        except (ImportError, AttributeError):
-            pass
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator."""
-        self._check_skip()
-        return super().get_params(deep=deep)
-
     def __deepcopy__(self, memo):
         """Handle deepcopy by avoiding deepcopying the unpickleable forecaster_."""
-        self._check_skip()
         import copy
 
         cls = self.__class__
@@ -252,17 +214,6 @@ class TotoForecaster(BaseForecaster):
             else:
                 setattr(result, k, copy.deepcopy(v, memo))
         return result
-
-    def _ensure_forecaster_loaded(self):
-        """Ensure the inference forecaster is loaded, reloading after unpickling."""
-        if not hasattr(self, "forecaster_") or self.forecaster_ is None:
-            if getattr(self, "is_fitted", False):
-                self.forecaster_ = self._load_forecaster()
-
-    def fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data."""
-        self._check_skip()
-        return super().fit(y, X=X, fh=fh)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -333,6 +284,9 @@ class TotoForecaster(BaseForecaster):
     def _load_forecaster(self):
         """Load or retrieve the Toto inference forecaster from the multiton cache.
 
+        If the forecaster is already loaded on this instance, returns it directly.
+        Otherwise, loads from the multiton cache (or creates a new one).
+
         The model is never stored directly on the instance to avoid pickling
         issues with the underlying PyTorch backbone.  The multiton-backed
         :class:`_CachedTotoForecaster` ensures each unique configuration is
@@ -345,11 +299,16 @@ class TotoForecaster(BaseForecaster):
         forecaster : toto.inference.forecaster.TotoForecaster
             The ready-to-use Toto inference forecaster.
         """
-        return _CachedTotoForecaster(
+        if hasattr(self, "forecaster_") and self.forecaster_ is not None:
+            return self.forecaster_
+
+        forecaster = _CachedTotoForecaster(
             key=self._get_toto_key(),
             toto_kwargs=self._get_toto_kwargs(),
             device=self._device,
         ).load_from_checkpoint()
+        self.forecaster_ = forecaster
+        return forecaster
 
     def _pretrain(self, y, X=None, fh=None):
         """Fine-tune Toto on panel/hierarchical data.
@@ -527,7 +486,7 @@ class TotoForecaster(BaseForecaster):
         prediction_length = max(fh.to_relative(self._cutoff))
 
         # Use the forecaster loaded at fit-time, reload from cache if needed
-        self._ensure_forecaster_loaded()
+        self._load_forecaster()
         forecast = self.forecaster_.forecast(
             self._series,
             prediction_length=prediction_length,
@@ -586,7 +545,7 @@ class TotoForecaster(BaseForecaster):
         prediction_length = max(fh.to_relative(self._cutoff))
 
         # Use the forecaster loaded at fit-time; reload from cache if needed.
-        self._ensure_forecaster_loaded()
+        self._load_forecaster()
         forecast = self.forecaster_.forecast(
             self._series,
             prediction_length=prediction_length,
