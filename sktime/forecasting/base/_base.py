@@ -192,10 +192,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         if self._remember_data_wr_ is None:
             from sktime.forecasting.stream import UpdateRefitsEvery
 
-            wr = UpdateRefitsEvery(self, refit_interval=0)
-            # disable remember_data for the inner cloned forecaster
-            # to avoid infinite recursion of remember_data_wrapper
-            wr.forecaster_.set_config(remember_data=False)
+            # clone first and disable remember_data on the clone
+            # to avoid infinite recursion.
+            self_without_remeber_data = self.clone()
+            self_without_remeber_data.set_config(remember_data=False)
+            wr = UpdateRefitsEvery(self_without_remeber_data, refit_interval=0)
             self._remember_data_wr_ = wr
         return self._remember_data_wr_
 
@@ -1558,6 +1559,19 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         self.check_is_fitted()
 
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            y_pred = wrapper.update_predict(
+                y=y,
+                cv=cv,
+                X=X,
+                update_params=update_params,
+                reset_forecaster=reset_forecaster,
+            )
+            if not reset_forecaster:
+                self._sync_fitted_state_from_remember_wrapper(wrapper)
+            return y_pred
+
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
@@ -1654,6 +1668,14 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             return self.predict(fh=fh, X=X)
 
         self.check_is_fitted()
+
+        wrapper = self._remember_data_wrapper
+        if wrapper is not None:
+            y_pred = wrapper.update_predict_single(
+                y=y, fh=fh, X=X, update_params=update_params
+            )
+            self._sync_fitted_state_from_remember_wrapper(wrapper)
+            return y_pred
 
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
