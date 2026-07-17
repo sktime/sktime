@@ -450,7 +450,12 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         y = deepcopy(self._y)
         if X is None:
             X = deepcopy(self._X)
-        elif self._X is not None:
+        elif self._X is not None and not getattr(self, "_global_forecasting", False):
+            # Local predict: user typically passes future-only X; prepend fit-time
+            # X so _Xy_to_dataset has full history for the join.
+            # Global predict (deprecated predict(y=...)): X already contains
+            # history + future for the forecast instances — do not prepend the
+            # global training panel stored in self._X.
             X = pd.concat([deepcopy(self._X), X])
         return X, y
 

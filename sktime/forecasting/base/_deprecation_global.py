@@ -39,17 +39,25 @@ class _GlobalForecastingDeprecationMixin:
 
         Preserves old global forecasting behavior during the deprecation period,
         so that _predict sees the passed y instead of the fit-time y.
+
+        Also sets ``_global_forecasting`` so adapters that distinguish global
+        predict (history passed via ``y``, ``X`` already containing history +
+        future) from local predict (future-only ``X`` prepended with ``self._X``)
+        keep the correct data handling path.
         """
         old_y = self._y
         old_cutoff = self._cutoff
+        old_global_forecasting = getattr(self, "_global_forecasting", False)
         _, y_inner = self._check_X_y(X=X, y=y)
         self._y = y_inner
         self._set_cutoff_from_y(y_inner)
+        self._global_forecasting = True
         try:
             yield
         finally:
             self._y = old_y
             self._cutoff = old_cutoff
+            self._global_forecasting = old_global_forecasting
 
     def _warn_y_deprecated(self, method_name):
         from sktime.utils.warnings import warn

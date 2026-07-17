@@ -5,6 +5,7 @@ import os
 
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.model_selection import train_test_split
 
 from sktime.datatypes._utilities import get_cutoff
@@ -163,3 +164,47 @@ def test_predict_with_future_exogenous_x(model_class):
     y_pred = forecaster.predict(X=X_test)
     assert y_pred is not None
     assert len(y_pred) == 1
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pytorch-forecasting", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+def test_xy_precheck_global_mode_does_not_prepend_train_x():
+    """Regression: deprecated global predict(y=...) must not prepend train X.
+
+    After #10383, local predict prepends fit-time X to future-only X. Global
+    evaluate still calls predict(y=y_hist, X=X_hist_and_future) via the
+    deprecation mixin; prepending the global training panel there mixes
+    instance sets and yields empty/invalid results.
+    """
+    import numpy as np
+
+    idx_train = pd.MultiIndex.from_product(
+        [["train"], [0, 1], pd.RangeIndex(4)], names=["panel", "inst", "time"]
+    )
+    idx_pred = pd.MultiIndex.from_product(
+        [["test"], [0], pd.RangeIndex(5)], names=["panel", "inst", "time"]
+    )
+    y_train = pd.DataFrame({"y": np.ones(len(idx_train))}, index=idx_train)
+    X_train = pd.DataFrame({"x": np.ones(len(idx_train))}, index=idx_train)
+    y_hist = pd.DataFrame({"y": np.ones(4)}, index=idx_pred[:4])
+    X_pred = pd.DataFrame({"x": np.ones(len(idx_pred))}, index=idx_pred)
+    X_future = pd.DataFrame({"x": np.ones(1)}, index=idx_pred[-1:])
+
+    forecaster = PytorchForecastingDeepAR()
+    forecaster._y = y_train
+    forecaster._X = X_train
+    forecaster._state = "fitted"
+
+    # local path: future-only X is prepended with training X
+    X_local, y_local = forecaster._Xy_precheck(X_future)
+    assert len(X_local) == len(X_train) + len(X_future)
+    assert y_local.equals(y_train)
+
+    # global path (deprecated predict(y=...)): X already has history+future
+    with forecaster._temporary_y_swap(X_pred, y_hist):
+        assert forecaster._global_forecasting is True
+        X_global, _ = forecaster._Xy_precheck(X_pred)
+        assert len(X_global) == len(X_pred)
+    assert getattr(forecaster, "_global_forecasting", False) is False
