@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps
 from sklearn.model_selection import KFold
 
 from sktime.benchmarking.benchmarks import _coerce_estimator_and_id
@@ -177,7 +178,9 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.benchmarking"),
+    not run_test_module_changed("sktime.benchmarking")
+    and not run_test_module_changed("sktime.forecasting.base")
+    and not _check_estimator_deps(NaiveForecaster, severity="none")
     reason="run test only if benchmarking module has changed",
 )
 @pytest.mark.parametrize(
