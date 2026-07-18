@@ -2921,6 +2921,17 @@
         "maintenance",
         "test"
       ]
+    },
+    {
+      "login": "AdrianJBHughes",
+      "name": "Adrian Hughes",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6243296?v=4",
+      "profile": "https://github.com/AdrianJBHughes",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
     }
   ]
 }
