@@ -64,7 +64,7 @@ class GreykiteForecaster(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
+        "python_dependencies": ["greykite>=1.0.0"],
         # estimator type
         # --------------
         "capability:multivariate": False,  # Handles univariate targets here.
@@ -90,7 +90,7 @@ class GreykiteForecaster(BaseForecaster):
             "test_update_predict_predicted_index",
             "test_deepcopy_fitted_predict",
         ],
-        "tests:python_dependencies": ["prophet"],
+        "tests:python_dependencies": ["prophet", "setuptools<82"],
     }
 
     def __init__(
