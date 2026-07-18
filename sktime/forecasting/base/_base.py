@@ -160,6 +160,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self._state = "new"
         self._remember_data_wr_ = None
 
+        # TODO: remove this after all forecasters have been updated
+        # to use _get_X and _get_y
+        self._X = None
+        self._y = None
+
         super().__init__()
 
         # this block has a double purpose:
