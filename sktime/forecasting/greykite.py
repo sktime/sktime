@@ -75,7 +75,17 @@ class GreykiteForecaster(BaseForecaster):
         "capability:insample": False,
         # CI and test flags
         # -----------------
-        # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
+        "tests:vm": True,
+        # pickling is not supported for GreykiteForecaster.
+        # The greykite package internally uses patsy, which does not support
+        # pickling or deepcopy (see https://github.com/pydata/patsy/issues/26).
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+            "test_update_predict_predicted_index",
+            "test_deepcopy_fitted_predict",
+        ],
     }
 
     def __init__(
