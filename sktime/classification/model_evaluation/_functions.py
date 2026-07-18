@@ -398,7 +398,7 @@ def evaluate(
         return_data=return_data,
         error_score=error_score,
         backend=backend,
-        backend_params=backend_params
+        backend_params=backend_params,
     )
 
 
