@@ -102,6 +102,13 @@ class MyClusterer(BaseClusterer):
         "capability:predict": True,  # implements _predict for cluster assignment?
         "capability:predict_proba": False,  # implements non-default _predict_proba?
         "capability:out_of_sample": True,  # implements _predict for new data?
+        "capability:feature_importance": False,  # can provide feature importance?
+        "capability:sample_weight": False,  # ability to handle sample weights in fit
+        "capability:contractable": False,  # supports a maximum fit time contract?
+        "capability:train_estimate": False,  # can estimate performance on train set?
+        "capability:random_state": False,  # has a random_state parameter?
+        "property:randomness": "deterministic",  # or "stochastic"/"derandomized"
+        "fit_is_empty": False,  # is fit empty and can be skipped?
     }
 
     # todo: add any hyper-parameters and components to constructor

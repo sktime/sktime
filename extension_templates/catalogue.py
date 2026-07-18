@@ -68,6 +68,9 @@ class MyCatalogue(BaseCatalogue):
         "info:name": "MyCatalogue",
         "info:description": "Example catalogue template",
         "info:source": "DOI",
+        "capability:sample_weight": False,  # ability to handle sample weights in fit
+        "capability:random_state": False,  # has a random_state parameter?
+        "property:randomness": "deterministic",  # or "stochastic"/"derandomized"
     }
 
     # todo: add any hyper-parameters and components to constructor

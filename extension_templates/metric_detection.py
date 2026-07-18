@@ -85,6 +85,12 @@ class MyMetric(BaseDetectionMetric):
         "requires_X": False,
         "requires_y_true": True,  # if False, is unsupervised metric
         "lower_is_better": True,
+        "requires-y-train": False,  # whether y_train must be passed in evaluate
+        "requires-y-pred-benchmark": False,  # whether y_pred_benchmark must be passed
+        "capability:multivariate": False,  # whether metric supports multivariate inputs
+        "capability:sample_weight": False,  # ability to handle sample weights
+        "capability:random_state": False,  # has a random_state parameter?
+        "property:randomness": "deterministic",  # or "stochastic"/"derandomized"
     }
 
     # todo: add any hyper-parameters and components to constructor

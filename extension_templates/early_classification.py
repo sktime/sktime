@@ -66,6 +66,9 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
     # optional todo: override base class estimator default tags here if necessary
     # these are the default values, only add if different to these.
     _tags = {
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # remove maintainers tag if maintained by sktime core team
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
         # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
         # types are allowable, see datatypes/panel/_registry.py for options.
@@ -76,6 +79,10 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        "capability:sample_weight": False,  # ability to handle sample weights in fit
+        "capability:random_state": False,  # has a random_state parameter?
+        "property:randomness": "deterministic",  # or "stochastic"/"derandomized"
+        "fit_is_empty": False,  # is fit empty and can be skipped?
     }
 
     # todo: add any hyper-parameters and components to constructor

@@ -96,6 +96,14 @@ class MyAligner(BaseAligner):
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
         "capability:unequal_length": True,  # can align sequences of unequal length?
+        "alignment_type": "full",  # "full" (entire series) or "partial" (subsequences)
+        "capability:feature_importance": False,  # can provide feature importance?
+        "capability:sample_weight": False,  # ability to handle sample weights in fit
+        "capability:contractable": False,  # supports a maximum fit time contract?
+        "capability:train_estimate": False,  # can estimate performance on train set?
+        "capability:random_state": False,  # has a random_state parameter?
+        "property:randomness": "deterministic",  # or "stochastic"/"derandomized"
+        "fit_is_empty": False,  # is fit empty and can be skipped?
     }
 
     # todo: add any hyper-parameters and components to constructor

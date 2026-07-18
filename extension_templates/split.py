@@ -87,6 +87,20 @@ class MySplitter(BaseSplitter):
         # calls split ("iloc") or split_loc ("loc"). Setting this can give
         # performance advantages, e.g., if "loc" is faster to obtain.
         #
+        # property:randomness = deterministic or stochastic behaviour?
+        "property:randomness": "deterministic",
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # "derandomized" = stochastic unless random_state is set, see below
+        #
+        # capability:random_state = does splitter have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, splitter can be derandomized by setting random_state
+        #
+        # capability:sample_weight = can the splitter handle sample weights?
+        "capability:sample_weight": False,
+        # valid values: boolean True (yes), False (no)
+        #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
         # ----------------------------------------------------------------------------

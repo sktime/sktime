@@ -107,6 +107,13 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:class_weight": False,  # ability to handle class weights
+        "capability:categorical_in_X": False,  # ability to handle categorical data in X
+        "capability:categorical_in_y": False,  # ability to handle categorical data in y
+        "capability:predict_proba": False,  # implements non-default predict_proba?
+        "capability:sample_weight": False,  # ability to handle sample weights in fit
+        "capability:random_state": False,  # has a random_state parameter?
+        "property:randomness": "deterministic",  # or "stochastic"/"derandomized"
+        "fit_is_empty": False,  # is fit empty and can be skipped?
     }
 
     # todo: add any hyper-parameters and components to constructor

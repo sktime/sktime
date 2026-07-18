@@ -64,6 +64,15 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         # maintainer = algorithm maintainer role, "owner" of the sktime class
         #     for 3rd party interfaces, the scope is the sktime class only
         # remove maintainer tag if maintained by sktime core team
+        "capability:multivariate": False,  # ability to handle multivariate X
+        "capability:unequal_length": False,  # can handle unequal length panels?
+        "capability:feature_importance": False,  # can provide feature importance?
+        "capability:sample_weight": False,  # ability to handle sample weights in fit
+        "capability:contractable": False,  # supports a maximum fit time contract?
+        "capability:train_estimate": False,  # can estimate performance on train set?
+        "capability:random_state": False,  # has a random_state parameter?
+        "property:randomness": "deterministic",  # or "stochastic"/"derandomized"
+        "fit_is_empty": False,  # is fit empty and can be skipped?
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)

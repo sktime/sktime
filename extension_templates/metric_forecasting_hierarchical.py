@@ -148,6 +148,8 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
         # "pred_quantiles" = quantile forecasts
         # "pred_var" = variance forecasts
         "scitype:y_pred": "pred",
+        # whether the metric requires y_true to be passed in evaluate
+        "requires_y_true": True,
         # whether the metric requires training data y_train to be passed
         "requires-y-train": False,
         # whether the metric requires a benchmark forecast y_pred_benchmark
@@ -161,6 +163,9 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
         # with pd.MultiIndex; framework will NOT vectorize over hierarchy levels.
         # Your _evaluate must handle the MultiIndex pd.DataFrame directly.
         "inner_implements_multilevel": True,
+        "capability:sample_weight": False,  # ability to handle sample weights
+        "capability:random_state": False,  # has a random_state parameter?
+        "property:randomness": "deterministic",  # or "stochastic"/"derandomized"
     }
 
     # todo: add hyper-parameters to constructor, keep multioutput/multilevel/by_index
