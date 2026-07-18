@@ -149,7 +149,7 @@ def evaluate(
         scoring = mean_squared_error
 
     return _evaluate(
-        estimatorr=regressor,
+        estimator=regressor,
         cv=cv,
         X=X,
         y=y,
