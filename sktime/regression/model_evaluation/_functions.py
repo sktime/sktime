@@ -141,7 +141,7 @@ def evaluate(
     """
     # deferred import, sibling type modules must not cross-import at module
     # level, see sktime/tests/test_cross_module_imports.py
-    from sktime.classification.model_evaluation import _evaluate
+    from sktime.classification.model_evaluation._functions import _evaluate
 
     if scoring is None:
         from sklearn.metrics import mean_squared_error
