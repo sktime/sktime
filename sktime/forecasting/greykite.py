@@ -76,6 +76,7 @@ class GreykiteForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        # greykite failures tracked in #10083
         # pickling is not supported for GreykiteForecaster.
         # The greykite package internally uses patsy, which does not support
         # pickling or deepcopy (see https://github.com/pydata/patsy/issues/26).
