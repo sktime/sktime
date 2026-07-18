@@ -1,14 +1,7 @@
 #!/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Utilities for performance evaluation of time series regression models.
+"""Utilities for performance evaluation of time series regression models."""
 
-The regression ``evaluate`` is a thin wrapper around ``evaluate`` in
-``sktime.classification.model_evaluation``, which supports both
-classifiers and regressors, with regression-facing signature,
-defaults, and docstring.
-"""
-
-__author__ = ["NAME-ASHWANIYADAV"]
 __all__ = ["evaluate"]
 
 import collections.abc
@@ -148,7 +141,7 @@ def evaluate(
     """
     # deferred import, sibling type modules must not cross-import at module
     # level, see sktime/tests/test_cross_module_imports.py
-    from sktime.classification.model_evaluation import evaluate as _evaluate
+    from sktime.classification.model_evaluation import _evaluate
 
     if scoring is None:
         from sklearn.metrics import mean_squared_error
@@ -156,7 +149,7 @@ def evaluate(
         scoring = mean_squared_error
 
     return _evaluate(
-        classifier=regressor,
+        estimatorr=regressor,
         cv=cv,
         X=X,
         y=y,
