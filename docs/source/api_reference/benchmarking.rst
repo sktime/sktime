@@ -33,6 +33,14 @@ Benchmarking Framework
 
     ClassificationBenchmark
 
+.. currentmodule:: sktime.benchmarking.regression
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    RegressionBenchmark
+
 
 Storage Backends
 ----------------
