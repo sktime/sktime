@@ -6,6 +6,7 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.tests.test_switch import run_test_module_changed
 
@@ -207,6 +208,9 @@ def test_owa_aggregate_then_ratio():
     per the definition in the M4 competition paper.
     """
     from sktime.performance_metrics.forecasting import OverallWeightedAverage
+
+    if not _check_estimator_deps(OverallWeightedAverage, severity="none"):
+        pytest.skip("OverallWeightedAverage dependencies not available.")
 
     y_train = np.array([100.0, 100.1, 100.0, 100.2, 100.1, 100.0])
     y_true = np.array([100.05, 100.0, 100.15])
