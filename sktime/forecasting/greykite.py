@@ -62,6 +62,11 @@ class GreykiteForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
+        # estimator type
+        # --------------
         "capability:multivariate": False,  # Handles univariate targets here.
         "capability:exogenous": True,  # Can handle exogenous variables.
         "capability:missing_values": True,  # Handles missing data.
@@ -70,8 +75,6 @@ class GreykiteForecaster(BaseForecaster):
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
         "capability:pred_int": False,  # Can produce prediction intervals.
         "capability:unequal_length": False,
-        "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
-        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
         "capability:insample": False,
         # CI and test flags
         # -----------------
