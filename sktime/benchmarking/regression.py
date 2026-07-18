@@ -13,11 +13,6 @@ class RegressionBenchmark(ClassificationBenchmark):
     loaders, cross validation splitting strategies and performance metrics,
     and return results as a df (as well as saving to file).
 
-    Name alias for ``ClassificationBenchmark``, which also handles
-    regressors, as the benchmarking workflow is identical for classifiers
-    and regressors. See ``ClassificationBenchmark`` for the full parameter
-    documentation.
-
     Parameters
     ----------
     id_format: str, optional (default=None)
