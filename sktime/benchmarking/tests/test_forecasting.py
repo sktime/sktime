@@ -177,7 +177,7 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     )
 
 
-@pytest.mark.skip(reason="currently unfixed failure, see #10555")
+@pytest.mark.xfail(reason="currently unfixed failure, see #10555")
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.benchmarking")
     and not run_test_module_changed("sktime.forecasting.base")
