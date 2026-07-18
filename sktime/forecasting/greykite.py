@@ -113,7 +113,7 @@ class GreykiteForecaster(BaseForecaster):
         This method should be used for setting dynamic tags only.
         """
         if self.model_template == "PROPHET":
-            self.set_tags({"python_dependencies": ["greykite>=1.0.0", "prophet"]})
+            self.set_tags(**{"python_dependencies": ["greykite>=1.0.0", "prophet"]})
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
