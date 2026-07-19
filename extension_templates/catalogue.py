@@ -68,9 +68,23 @@ class MyCatalogue(BaseCatalogue):
         "info:name": "MyCatalogue",
         "info:description": "Example catalogue template",
         "info:source": "DOI",
-        "capability:sample_weight": False,  # ability to handle sample weights in fit
-        "capability:random_state": False,  # has a random_state parameter?
-        "property:randomness": "deterministic",  # or "stochastic"/"derandomized"
+        #
+        # capability:sample_weight = can the estimator handle sample weights in fit?
+        "capability:sample_weight": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:random_state = does estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, estimator can be derandomized by setting random_state,
+        # producing the same result on every run (up to numerical precision)
+        #
+        # property:randomness = deterministic or stochastic behaviour?
+        "property:randomness": "deterministic",
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # "stochastic" = may produce different results on different runs
+        # "deterministic" = always produces the same result
+        # "derandomized" = stochastic unless random_state is set, then deterministic
     }
 
     # todo: add any hyper-parameters and components to constructor
