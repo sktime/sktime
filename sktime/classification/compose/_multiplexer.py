@@ -120,7 +120,7 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         component_names = self._get_estimator_names(self._classifiers, make_unique=True)
         selected = self.selected_classifier
         if selected is not None and selected not in component_names:
-            raise Exception(
+            raise ValueError(
                 f"Invalid selected_classifier parameter value provided, "
                 f" found: {self.selected_classifier}. Must be one of these"
                 f" valid selected_classifier parameter values: {component_names}."
