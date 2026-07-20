@@ -124,8 +124,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         "capability:missing_values": False,
         "capability:pred_int": False,
         "capability:pretrain": True,
-        "serialization:skip": ("network",),
-        "serialization:native_artifacts": ("state_dict_",),
+        "serialization:native_artifacts": ("network",),
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on vm in GHA
@@ -277,8 +276,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
         if not hasattr(self, "network") or self.network is None:
             self.network = self._build_network(None)
-            if hasattr(self, "state_dict_"):
-                self.network.load_state_dict(self.state_dict_)
 
         self.optimizer = self._instantiate_optimizer()
         early_stopper = _EarlyStopper(patience=self.patience, min_delta=self.delta)
@@ -301,7 +298,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         self.z_ = res[0].detach().numpy()
         self.z_mean_ = self.z_.mean(axis=0)
         self.z_std_ = self.z_.std()
-        self.state_dict_ = self.network.state_dict()
 
     def _instantiate_optimizer(self):
         """Create Adam optimizer for the cINN network."""
@@ -314,6 +310,12 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             encoded_cond_size=self.encoded_cond_size,
             num_coupling_layers=self.n_coupling_layers,
         ).build()
+
+    def _create_torch_artifact(self, name):
+        """Construct the cINN network architecture for deserialization."""
+        if name != "network":
+            raise ValueError(f"Unknown torch artifact {name!r}.")
+        return self._build_network(None)
 
     def _prepare_pretrain_series_data(self, series):
         """Prepare dataset from a single series for pretraining.
@@ -438,7 +440,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, data_loader)
 
-        self.state_dict_ = self.network.state_dict()
         self._pretrain_pred_len = self.sample_dim
         if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
             self.n_pretrain_instances_ = len(y.index.get_level_values(0).unique())
@@ -488,17 +489,12 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             combined_dataset, batch_size=self.batch_size, shuffle=True
         )
 
-        if not hasattr(self, "network") or self.network is None:
-            self.network = self._build_network(None)
-            self.network.load_state_dict(self.state_dict_)
-
         self.optimizer = self._instantiate_optimizer()
 
         self.network.train()
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, data_loader)
 
-        self.state_dict_ = self.network.state_dict()
         if hasattr(y, "index") and isinstance(y.index, pd.MultiIndex):
             n_new = len(y.index.get_level_values(0).unique())
             if hasattr(self, "n_pretrain_instances_"):
@@ -585,10 +581,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
         dataset = self._prepare_data(yz=z, X=X, z=z)
         X, z = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(index))))
-
-        if not hasattr(self, "network") or self.network is None:
-            self.network = self._build_network(None)
-            self.network.load_state_dict(self.state_dict_)
 
         res = self.network.reverse_sample(
             z, c=X.reshape((-1, self.sample_dim * self.n_cond_features))
