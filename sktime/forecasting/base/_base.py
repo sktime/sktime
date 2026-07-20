@@ -915,19 +915,29 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
 
+        cov : bool, optional (default=False)
+            If True, computes covariance matrix forecast.
+            If False, computes marginal variance forecasts.
+
         Returns
         -------
         pred_var : pd.DataFrame, format dependent on ``cov`` variable
-            Variance forecasts, with columns and rows as follows:
-
-            * Column names are exactly those of ``y`` passed in ``fit``/``update``.
-              For nameless formats, column index will be a RangeIndex.
-            * Row index is fh, with additional levels equal to instance levels,
-              from y seen in fit, if y seen in fit was Panel or Hierarchical.
-            * Entries are variance forecasts, for var in col index.
-
-            A variance forecast for given variable and fh index is a predicted
-            marginal variance for that variable and index, given observed data.
+            If cov=False:
+                Column names are exactly those of ``y`` passed in ``fit``/``update``.
+                For nameless formats, column index will be a RangeIndex.
+                Row index is fh, with additional levels equal to instance levels,
+                from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                Entries are variance forecasts, for var in col index.
+                A variance forecast for given variable and fh index is a predicted
+                marginal variance for that variable and index, given observed data.
+            If cov=True:
+                Column index is a multiindex: 1st level is variable names (as above)
+                2nd level is fh.
+                Row index is fh, with additional levels equal to instance levels,
+                from y seen in fit, if y seen in fit was Panel or Hierarchical.
+                Entries are (co-)variance forecasts, for var in col index, and
+                covariance between time index in row and col.
+                No covariance forecasts are returned between different variables.
         """
         if not self.get_tag("capability:pred_int"):
             raise NotImplementedError(
