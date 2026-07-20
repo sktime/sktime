@@ -376,8 +376,10 @@ class _SerializationMixin:
         saved files are zip files with following contents:
 
         * ``_metadata`` - contains class of self, i.e., ``type(self)``
-        * ``_obj`` - serialized self. This class uses the default serialization
-          (pickle).
+        * ``_obj`` - serialized self
+        * ``_artifacts/`` - optional framework-native model artifacts
+
+        See :ref:`serialization_ref` for archive and artifact layouts.
 
         Parameters
         ----------
@@ -394,6 +396,8 @@ class _SerializationMixin:
             The available options are "pickle" and "cloudpickle".
             Note that non-default formats might require
             installation of other soft dependencies.
+            This setting applies to ``_metadata`` and ``_obj``; native artifact
+            backends always use their framework-specific formats.
 
         Returns
         -------
@@ -495,8 +499,9 @@ def load(serial):
     ----------
     serial : serialized container (tuple), str (path), or Path object (reference)
         if serial is a tuple (serialized container):
-            Contains two elements, first in-memory metadata and second
-            the related object.
+            Contains two elements: the object's class and serialized bytes returned
+            by ``save()``. The bytes can be a pickle stream or an in-memory ZIP
+            archive containing native artifacts.
         if serial is a string (path reference):
             The name of the file without the extension, for e.g: if the file
             is `estimator.zip`, `serial='estimator'`. It can also represent a
@@ -505,6 +510,9 @@ def load(serial):
         if serial is a Path object (path reference):
             `serial` then points to the `.zip` file into which the
             object was stored using class method `.save()` of an estimator.
+
+        See :ref:`serialization_ref` for in-memory, archive, and native artifact
+        layouts.
 
     Returns
     -------
