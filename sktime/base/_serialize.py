@@ -154,43 +154,6 @@ class _LightningCheckpointArtifactBackend(_NativeArtifactBackend):
         return cls.load_from_checkpoint(checkpoint_path)
 
 
-class _TorchArtifactBackend(_NativeArtifactBackend):
-    """Native artifact backend for torch modules."""
-
-    backend = "torch"
-
-    def supports(self, obj):
-        """Return whether object looks like a torch.nn.Module."""
-        return any(
-            cls.__name__ == "Module" and cls.__module__ == "torch.nn.modules.module"
-            for cls in type(obj).__mro__
-        )
-
-    def save(self, obj, path, *, estimator, name):
-        """Save a torch module using torch.save."""
-        import torch
-
-        torch.save(obj, path / "model.pt")
-
-    def load(self, path, record, *, estimator, name):
-        """Load a torch module using torch.load."""
-        from warnings import warn
-
-        import torch
-
-        model_path = path / "model.pt"
-
-        try:
-            return torch.load(model_path, weights_only=False)
-        except Exception as exc:
-            warn(
-                f"Could not load native artifact {name!r} on its saved device. "
-                f"Falling back to CPU. Original error: {exc}",
-                stacklevel=2,
-            )
-            return torch.load(model_path, map_location="cpu", weights_only=False)
-
-
 class _TorchStateDictArtifactBackend(_NativeArtifactBackend):
     """Native artifact backend for torch modules, using state dictionaries."""
 
@@ -247,7 +210,6 @@ _NATIVE_ARTIFACT_BACKENDS = [
     _KerasArtifactBackend(),
     _LightningCheckpointArtifactBackend(),
     _TorchStateDictArtifactBackend(),
-    _TorchArtifactBackend(),
 ]
 
 
