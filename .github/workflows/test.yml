@@ -560,16 +560,39 @@ jobs:
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
       - uses: actions/checkout@v7
-
-      - uses: dorny/paths-filter@v3
-        id: filter
         with:
-          filters: |
-            datasets:
-              - sktime/base/**
-              - sktime/datasets/**
-            pyproject:
-              - pyproject.toml
+          fetch-depth: 0
+
+      - id: filter
+        name: Detect changed files
+        shell: bash
+        run: |
+          # Get the merge base with the target branch
+          BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
+
+          echo "Comparing against $BASE"
+
+          changed_files=$(git diff --name-only "$BASE" HEAD)
+
+          echo "Changed files:"
+          echo "$changed_files"
+
+          datasets=false
+          pyproject=false
+
+          if echo "$changed_files" | grep -qE '^sktime/(base|datasets)/'; then
+            datasets=true
+          fi
+
+          if echo "$changed_files" | grep -qE '^pyproject\.toml$'; then
+            pyproject=true
+          fi
+
+          echo "datasets=$datasets" >> "$GITHUB_OUTPUT"
+          echo "pyproject=$pyproject" >> "$GITHUB_OUTPUT"
+
+          echo "datasets=$datasets"
+          echo "pyproject=$pyproject"
 
   test-datasets:
     needs: detect

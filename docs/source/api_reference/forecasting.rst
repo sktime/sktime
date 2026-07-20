@@ -490,6 +490,9 @@ Structural time series models
 Deep learning based forecasters
 -------------------------------
 
+Deep learning forecasters, excluding pre-trained models and foundation models.
+See next section for foundation models.
+
 .. currentmodule:: sktime.forecasting.ltsf
 
 .. autosummary::
@@ -588,8 +591,12 @@ Deep learning based forecasters
 
     ESRNNForecaster
 
-Pre-trained and foundation models - domain agnostic
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pre-trained and foundation models
+---------------------------------
+
+Domain agnostic foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.forecasting.chronos
 
@@ -606,6 +613,14 @@ Pre-trained and foundation models - domain agnostic
     :template: class.rst
 
     Chronos2Forecaster
+
+.. currentmodule:: sktime.forecasting.cisco_tsm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CiscoTSMForecaster
 
 .. currentmodule:: sktime.forecasting.falcon_tst
 
@@ -654,7 +669,6 @@ Pre-trained and foundation models - domain agnostic
     :template: class.rst
 
     MOIRAIForecaster
-
 
 .. currentmodule:: sktime.forecasting.moirai2
 
@@ -736,7 +750,7 @@ Pre-trained and foundation models - domain agnostic
 
     TimesFMForecaster
 
-.. currentmodule:: sktime.forecasting.timesfm2_forecaster
+.. currentmodule:: sktime.forecasting.timesfm2
 
 .. autosummary::
     :toctree: auto_generated/
@@ -776,8 +790,27 @@ Pre-trained and foundation models - domain agnostic
 
     Toto2Forecaster
 
-Pre-trained and foundation models - domain specific
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Multimodal foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The multimodal foundation models below are domain-agnostic, but can also
+use multimodal input, e.g., additional text or image data.
+
+.. currentmodule:: sktime.forecasting.aurora
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AuroraForecaster
+
+
+Domain specific foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Domain specific foundation models are intended for specific domains,
+e.g., energy, weather, or specific finance tasks.
 
 .. currentmodule:: sktime.forecasting.kronos
 
@@ -786,6 +819,14 @@ Pre-trained and foundation models - domain specific
     :template: class.rst
 
     KronosForecaster
+
+.. currentmodule:: sktime.forecasting.mira
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MIRAForecaster
 
 .. currentmodule:: sktime.forecasting.windfm
 
