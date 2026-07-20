@@ -192,43 +192,54 @@ class _TorchArtifactBackend(_NativeArtifactBackend):
 
 
 class _TorchStateDictArtifactBackend(_NativeArtifactBackend):
-    """Native artifact backend for torch state dictionaries."""
+    """Native artifact backend for torch modules, using state dictionaries."""
 
     backend = "torch_state_dict"
 
     def supports(self, obj):
-        """Return whether object looks like a torch state dictionary."""
-        from collections.abc import Mapping
-
+        """Return whether object is a torch module."""
         import torch
 
-        return isinstance(obj, Mapping) and all(
-            isinstance(value, torch.Tensor) for value in obj.values()
-        )
+        return isinstance(obj, torch.nn.Module)
 
     def save(self, obj, path, *, estimator, name):
-        """Save a torch state dictionary using torch.save."""
+        """Save a torch module's state dictionary on CPU."""
         import torch
 
-        torch.save(obj, path / "state_dict.pt")
+        state_dict = obj.state_dict()
+        for key, value in state_dict.items():
+            if isinstance(value, torch.Tensor):
+                state_dict[key] = value.detach().cpu()
+
+        torch.save(state_dict, path / "state_dict.pt")
 
     def load(self, path, record, *, estimator, name):
-        """Load a torch state dictionary using torch.load."""
-        from warnings import warn
-
+        """Construct a torch module and restore its state dictionary."""
         import torch
 
-        state_dict_path = path / "state_dict.pt"
-
-        try:
-            return torch.load(state_dict_path, weights_only=False)
-        except Exception as exc:
-            warn(
-                f"Could not load native artifact {name!r} on its saved device. "
-                f"Falling back to CPU. Original error: {exc}",
-                stacklevel=2,
+        create_artifact = getattr(estimator, "_create_torch_artifact", None)
+        if not callable(create_artifact):
+            raise TypeError(
+                f"Estimator {type(estimator).__name__} must implement "
+                "`_create_torch_artifact(name)` to load native torch artifact "
+                f"{name!r}."
             )
-            return torch.load(state_dict_path, map_location="cpu", weights_only=False)
+
+        artifact = create_artifact(name)
+        if not isinstance(artifact, torch.nn.Module):
+            raise TypeError(
+                "`_create_torch_artifact` must return a torch.nn.Module, but "
+                f"returned {type(artifact)!r} for artifact {name!r}."
+            )
+
+        state_dict_path = path / "state_dict.pt"
+        state_dict = torch.load(
+            state_dict_path,
+            map_location="cpu",
+            weights_only=True,
+        )
+        artifact.load_state_dict(state_dict)
+        return artifact
 
 
 _NATIVE_ARTIFACT_BACKENDS = [
