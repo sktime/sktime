@@ -104,10 +104,10 @@ default="full"
         "capability:missing_values": False,
         "property:randomness": "stochastic",
         "serialization:native_artifacts": (
+            "_network_",
             "_fine_tuned_model_",
-            "_network_state_dict_",
         ),
-        "serialization:skip": ("_network_", "_trainer_"),
+        "serialization:skip": ("_trainer_",),
         # CI and testing tags
         # -------------------
         "tests:vm": True,
@@ -203,9 +203,6 @@ default="full"
         )
         self._fine_tuned_model_ = getattr(self._trainer_, "fine_tuned_model", None)
         self._network_ = getattr(self._trainer_, "network", None)
-        self._network_state_dict_ = (
-            self._network_.state_dict() if self._network_ is not None else None
-        )
 
         return self
 
@@ -346,11 +343,6 @@ default="full"
             network_artifact = getattr(self, "_network_", None)
             if network_artifact is not None:
                 trainer.network = network_artifact
-            else:
-                network_state_dict = getattr(self, "_network_state_dict_", None)
-                if network_state_dict is not None:
-                    trainer.network.load_state_dict(network_state_dict)
-                self._network_ = trainer.network
 
             model_artifact = getattr(self, "_fine_tuned_model_", None)
             if model_artifact is not None:
@@ -360,6 +352,32 @@ default="full"
             )
 
             self._trainer_ = trainer
+
+    def _create_torch_artifact(self, name):
+        """Construct Mantis module architectures for deserialization."""
+        if name == "_network_":
+            return self._build_trainer().network
+
+        if name == "_fine_tuned_model_":
+            trainer = self._build_trainer()
+            trainer.network = self._network_
+
+            n_classes = len(self._label_encoder_.classes_)
+            dummy_X = np.zeros(
+                (n_classes, self._n_channels_, self.seq_len), dtype=np.float32
+            )
+            dummy_y = np.arange(n_classes, dtype=np.int64)
+            trainer.fit(
+                dummy_X,
+                dummy_y,
+                fine_tuning_type=self._fit_fine_tuning_type_,
+                num_epochs=0,
+                batch_size=n_classes,
+                learning_rate_adjusting=False,
+            )
+            return trainer.fine_tuned_model
+
+        raise ValueError(f"Unknown torch artifact {name!r}.")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
