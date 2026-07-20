@@ -830,61 +830,12 @@ class LagLlamaForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions with same index type as input y
         """
-        from gluonts.evaluation import make_evaluation_predictions
-
-        # LagLlama does not support in-sample forecasting (fh <= 0)
-        fh_rel = fh.to_relative(self.cutoff)
-        if len(fh_rel) > 0 and min(fh_rel) <= 0:
-            raise NotImplementedError(
-                "in-sample forecasting is not supported by LagLlamaForecaster"
-            )
-
         # Use self._y (stored during fit)
         y = self._y
-        _y = self._y.copy()
 
-        _y = self._extend_df(_y, fh)
-
-        # _is_range_index is pre-computed in _fit; do not mutate it here
-        # (see _fit comment on the sktime non-state-changing contract).
-        if self._is_range_index:
-            _y.index = self.handle_range_index(_y.index)
-
-        # Check for hierarchical data and convert to panel
-        _is_hierarchical = False
-        _original_index_names = None
-        if _y.index.nlevels >= 3:
-            _original_index_names = _y.index.names
-            _y = self._convert_hierarchical_to_panel(_y)
-            _is_hierarchical = True
-
-        _y = self._convert_to_float(_y)
-        dataset = self._get_gluonts_dataset(_y)
-
-        # make_evaluation_predictions returns a lazy iterator; sampling only occurs
-        # when the iterator is consumed. Consume it inside the seeded context so
-        # that numpy, torch, and Python RNG are all fixed during sampling.
-        import random
-
-        import numpy as np
-        import torch
-
-        np_state = np.random.get_state()
-        py_state = random.getstate()
-        np.random.seed(0)
-        random.seed(0)
-        try:
-            with torch.random.fork_rng():
-                torch.manual_seed(0)
-                forecast_it, _ = make_evaluation_predictions(
-                    dataset=dataset,
-                    predictor=self.predictor_,
-                    num_samples=self.num_samples,
-                )
-                forecasts = list(forecast_it)
-        finally:
-            np.random.set_state(np_state)
-            random.setstate(py_state)
+        forecasts, _is_hierarchical, _original_index_names = self._generate_forecasts(
+            fh
+        )
         predictions = self._get_prediction_df(iter(forecasts), self._df_config)
 
         # Convert back to hierarchical if needed
@@ -897,88 +848,30 @@ class LagLlamaForecaster(BaseForecaster):
         # Use the original y (not _y) to get the correct index structure
         pred_out_expected = fh.get_expected_pred_idx(y, cutoff=self.cutoff)
 
-        # Handle range index conversion back
-        if self._is_range_index:
-            timepoints = self.return_time_index(predictions)
-            timepoints = timepoints.to_timestamp()
-            timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
-                lambda x: x.days
-            ) + self.return_time_index(y)[0]
-            if isinstance(predictions.index, pd.MultiIndex):
-                predictions.index = predictions.index.set_levels(
-                    levels=timepoints.unique(), level=-1
-                )
-                # Convert str type to int
-                predictions.index = predictions.index.map(lambda x: (int(x[0]), x[1]))
-            else:
-                predictions.index = timepoints
+        return self._align_prediction_index(predictions, y, pred_out_expected)
 
-            # Subset/align to fh, same as non-range branch
-            try:
-                predictions = predictions.loc[pred_out_expected]
-            except (KeyError, IndexError):
-                predictions = predictions.reindex(pred_out_expected)
-            predictions.index = pred_out_expected
-        else:
-            # For non-range indices, align predictions to the expected index.
-            # For panel data predictions is a MultiIndex DataFrame; extract the
-            # time level to check for Period/Datetime mismatch.
-            pred_out_for_loc = pred_out_expected
-            pred_time_idx = (
-                predictions.index.get_level_values(-1)
-                if isinstance(predictions.index, pd.MultiIndex)
-                else predictions.index
-            )
-            exp_time_idx = (
-                pred_out_expected.get_level_values(-1)
-                if isinstance(pred_out_expected, pd.MultiIndex)
-                else pred_out_expected
-            )
-            if isinstance(pred_time_idx, pd.PeriodIndex) and isinstance(
-                exp_time_idx, pd.DatetimeIndex
-            ):
-                if isinstance(pred_out_expected, pd.MultiIndex):
-                    pred_out_for_loc = pred_out_expected.set_levels(
-                        pred_out_expected.levels[-1].to_period(pred_time_idx.freq),
-                        level=-1,
-                    )
-                else:
-                    pred_out_for_loc = pred_out_expected.to_period(pred_time_idx.freq)
-            elif isinstance(pred_time_idx, pd.DatetimeIndex) and isinstance(
-                exp_time_idx, pd.PeriodIndex
-            ):
-                if isinstance(pred_out_expected, pd.MultiIndex):
-                    pred_out_for_loc = pred_out_expected.set_levels(
-                        pred_out_expected.levels[-1].to_timestamp(), level=-1
-                    )
-                else:
-                    pred_out_for_loc = pred_out_expected.to_timestamp()
+    def _generate_forecasts(self, fh):
+        """Run the GluonTS prediction path shared by _predict and _predict_proba.
 
-            try:
-                predictions = predictions.loc[pred_out_for_loc]
-            except (KeyError, IndexError):
-                predictions = predictions.reindex(pred_out_for_loc)
-            predictions.index = pred_out_expected
-
-        return predictions
-
-    def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Compute quantile forecasts.
+        Extends the fitted series to the horizon, handles range-index and
+        hierarchical conversion, and consumes the (lazy) GluonTS forecast
+        iterator inside a seeded RNG context, so that repeated calls produce
+        identical Monte Carlo sample paths.
 
         Parameters
         ----------
         fh : ForecastingHorizon
             The forecasting horizon.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series (ignored).
-        alpha : list of float, optional (default=None)
-            The quantiles to predict. If None, uses default [0.1, 0.25, 0.5, 0.75, 0.9].
 
         Returns
         -------
-        quantiles : pd.DataFrame
-            Quantile forecasts with MultiIndex (alpha, time) or
-            MultiIndex (alpha, item, time) for panel data.
+        forecasts : list of gluonts SampleForecast
+            One forecast object per series, carrying the Monte Carlo samples.
+        is_hierarchical : bool
+            True if the fitted data was hierarchical (3+ index levels) and was
+            flattened to panel format for GluonTS.
+        original_index_names : list of str or None
+            Original index level names, if the data was hierarchical.
         """
         from gluonts.evaluation import make_evaluation_predictions
 
@@ -989,28 +882,21 @@ class LagLlamaForecaster(BaseForecaster):
                 "in-sample forecasting is not supported by LagLlamaForecaster"
             )
 
-        if alpha is None:
-            alpha = [0.1, 0.25, 0.5, 0.75, 0.9]
-
-        # Use self._y (stored during fit)
-        y = self._y
-        _y = y.copy()
-
+        _y = self._y.copy()
         _y = self._extend_df(_y, fh)
 
-        # Handle range index
-        original_is_range_index = False
-        if self.check_range_index(y):
+        # _is_range_index is pre-computed in _fit; do not mutate it here
+        # (see _fit comment on the sktime non-state-changing contract).
+        if self._is_range_index:
             _y.index = self.handle_range_index(_y.index)
-            original_is_range_index = True
 
         # Check for hierarchical data and convert to panel
-        _is_hierarchical = False
-        _original_index_names = None
+        is_hierarchical = False
+        original_index_names = None
         if _y.index.nlevels >= 3:
-            _original_index_names = _y.index.names
+            original_index_names = _y.index.names
             _y = self._convert_hierarchical_to_panel(_y)
-            _is_hierarchical = True
+            is_hierarchical = True
 
         _y = self._convert_to_float(_y)
         dataset = self._get_gluonts_dataset(_y)
@@ -1040,163 +926,191 @@ class LagLlamaForecaster(BaseForecaster):
             np.random.set_state(np_state)
             random.setstate(py_state)
 
-        # Extract quantiles for each forecast
-        quantile_dfs = []
+        return forecasts, is_hierarchical, original_index_names
 
-        for forecast in forecasts:
-            # GluonTS forecasts have .quantile(q) method
-            forecast_quantiles = {}
-            for q in alpha:
-                q_val = forecast.quantile(q)
-                # Convert to Series if it's a numpy array
-                if not isinstance(q_val, pd.Series):
-                    q_val = pd.Series(q_val, index=forecast.mean_ts.index)
-                forecast_quantiles[q] = q_val
+    def _align_prediction_index(self, predictions, y, pred_out_expected):
+        """Align raw prediction output to the expected sktime prediction index.
 
-            # Build DataFrame for this forecast
-            if forecast.item_id is not None:
-                # Panel data - need MultiIndex (alpha, item_id, timepoints)
-                for q in alpha:
-                    q_series = forecast_quantiles[q]
-                    df = q_series.reset_index()
-                    df.columns = [self._df_config["timepoints"], "quantile"]
-                    df["alpha"] = q
-                    df[self._df_config["item_id"]] = forecast.item_id
-                    quantile_dfs.append(df)
-            else:
-                # Single series - MultiIndex (alpha, timepoints)
-                for q in alpha:
-                    q_series = forecast_quantiles[q]
-                    df = q_series.to_frame(name="quantile")
-                    df["alpha"] = q
-                    df = df.reset_index()
-                    df.columns = ["timepoints", "quantile", "alpha"]
-                    quantile_dfs.append(df)
+        Restores range indices from the dummy datetime index, reconciles
+        Period vs Datetime index mismatches, and subsets rows to the
+        forecasting horizon. Works for any column layout, so it is shared by
+        point predictions and the sample paths used in _predict_proba.
 
-        # Combine all quantile forecasts
-        if len(quantile_dfs) > 0:
-            result = pd.concat(quantile_dfs, ignore_index=True)
+        Parameters
+        ----------
+        predictions : pd.DataFrame
+            Predictions with a GluonTS-produced time index (last index level).
+        y : pd.DataFrame
+            The fit-time series, used to restore range index offsets.
+        pred_out_expected : pd.Index
+            Expected sktime prediction index, from fh.get_expected_pred_idx.
 
-            # Set appropriate index for sktime format
-            # sktime expects: Index=timepoints, Columns=MultiIndex(variable, alpha)
-            # variable names should follow sktime's internal feature naming:
-            # - unnamed pd.Series -> variable name 0
-            # - named pd.Series -> that name
-            # - pd.DataFrame -> column names
-            var_name = None
-            if hasattr(self, "_y_metadata") and "feature_names" in self._y_metadata:
-                # BaseForecaster sets this during fit; for unnamed Series this is [0]
-                featnames = self._y_metadata.get("feature_names", None)
-                if isinstance(featnames, (list, tuple)) and len(featnames) > 0:
-                    var_name = featnames[0]
-            if var_name is None:
-                # fallback to stored fit columns (may be None for Series name=None)
-                var_name = (
-                    self._fit_column_names[0]
-                    if hasattr(self, "_fit_column_names")
-                    and len(self._fit_column_names) > 0
-                    else 0
+        Returns
+        -------
+        pd.DataFrame
+            Predictions with index equal to pred_out_expected.
+        """
+        if self._is_range_index:
+            timepoints = self.return_time_index(predictions)
+            timepoints = timepoints.to_timestamp()
+            timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
+                lambda x: x.days
+            ) + self.return_time_index(y)[0]
+            if isinstance(predictions.index, pd.MultiIndex):
+                predictions.index = predictions.index.set_levels(
+                    levels=timepoints.unique(), level=-1
                 )
-            if forecasts[0].item_id is not None:
-                # Panel: MultiIndex (alpha, item_id, timepoints)
-                result = result.set_index(
-                    ["alpha", self._df_config["item_id"], self._df_config["timepoints"]]
-                )
-                # Unstack to get: Index=(item_id, timepoints), Columns=alpha
-                result = result["quantile"].unstack(level=0)
-                # Add variable level to columns using from_tuples
-                new_columns = [(var_name, alpha_val) for alpha_val in result.columns]
-                result.columns = pd.MultiIndex.from_tuples(
-                    new_columns, names=["variable", "alpha"]
+                # Restore integer item_ids (panel range-index case)
+                predictions.index = predictions.index.map(
+                    lambda x: (int(x[0]),) + x[1:] if len(x) == 2 else x
                 )
             else:
-                # Single series: set index to (alpha, timepoints), then unstack
-                result = result.set_index(["alpha", "timepoints"])
-                # Unstack to get: Index=timepoints, Columns=alpha
-                result = result["quantile"].unstack(level=0)
-                # Add variable level to columns using from_tuples
-                new_columns = [(var_name, alpha_val) for alpha_val in result.columns]
-                result.columns = pd.MultiIndex.from_tuples(
-                    new_columns, names=["variable", "alpha"]
-                )
+                predictions.index = timepoints
 
-            # Convert back to hierarchical if needed.
-            # Cannot use _convert_panel_to_hierarchical here because result has
-            # MultiIndex columns (variable, alpha), which breaks the reset_index /
-            # set_index approach used by that helper. Instead, rebuild the hierarchical
-            # MultiIndex directly from the flattened "A*B" item_id strings.
-            if _is_hierarchical:
-                new_tuples = [
-                    tuple(str(item_id).split("*")) + (time_val,)
-                    for item_id, time_val in result.index
-                ]
-                result.index = pd.MultiIndex.from_tuples(
-                    new_tuples, names=_original_index_names
-                )
-
-            # Handle range index conversion back (mirrors _predict logic)
-            if original_is_range_index:
-                timepoints = self.return_time_index(result)
-                timepoints = timepoints.to_timestamp()
-                timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
-                    lambda x: x.days
-                ) + self.return_time_index(y)[0]
-
-                if isinstance(result.index, pd.MultiIndex):
-                    result.index = result.index.set_levels(
-                        levels=timepoints.unique(), level=-1
-                    )
-                    # Restore integer item_ids (panel range-index case)
-                    result.index = result.index.map(
-                        lambda x: (int(x[0]),) + x[1:] if len(x) == 2 else x
-                    )
-                else:
-                    result.index = timepoints
-
-            # Align to expected sktime index (mirrors _predict logic).
-            # For panel/hierarchical data, pred_out_expected is a MultiIndex;
-            # extract the time level to check for Period/Datetime mismatch.
-            pred_out_expected = fh.get_expected_pred_idx(y, cutoff=self.cutoff)
-            pred_out_for_loc = pred_out_expected
-            result_time_idx = (
-                result.index.get_level_values(-1)
-                if isinstance(result.index, pd.MultiIndex)
-                else result.index
-            )
-            exp_time_idx = (
-                pred_out_expected.get_level_values(-1)
-                if isinstance(pred_out_expected, pd.MultiIndex)
-                else pred_out_expected
-            )
-            if isinstance(result_time_idx, pd.PeriodIndex) and isinstance(
-                exp_time_idx, pd.DatetimeIndex
-            ):
-                if isinstance(pred_out_expected, pd.MultiIndex):
-                    pred_out_for_loc = pred_out_expected.set_levels(
-                        pred_out_expected.levels[-1].to_period(result_time_idx.freq),
-                        level=-1,
-                    )
-                else:
-                    pred_out_for_loc = pred_out_expected.to_period(result_time_idx.freq)
-            elif isinstance(result_time_idx, pd.DatetimeIndex) and isinstance(
-                exp_time_idx, pd.PeriodIndex
-            ):
-                if isinstance(pred_out_expected, pd.MultiIndex):
-                    pred_out_for_loc = pred_out_expected.set_levels(
-                        pred_out_expected.levels[-1].to_timestamp(), level=-1
-                    )
-                else:
-                    pred_out_for_loc = pred_out_expected.to_timestamp()
-
+            # Subset/align to fh, same as non-range branch
             try:
-                result = result.loc[pred_out_for_loc]
+                predictions = predictions.loc[pred_out_expected]
             except (KeyError, IndexError):
-                result = result.reindex(pred_out_for_loc)
-            result.index = pred_out_expected
+                predictions = predictions.reindex(pred_out_expected)
+            predictions.index = pred_out_expected
+            return predictions
 
-            return result
+        # For non-range indices, align predictions to the expected index.
+        # For panel data predictions is a MultiIndex DataFrame; extract the
+        # time level to check for Period/Datetime mismatch.
+        pred_out_for_loc = pred_out_expected
+        pred_time_idx = (
+            predictions.index.get_level_values(-1)
+            if isinstance(predictions.index, pd.MultiIndex)
+            else predictions.index
+        )
+        exp_time_idx = (
+            pred_out_expected.get_level_values(-1)
+            if isinstance(pred_out_expected, pd.MultiIndex)
+            else pred_out_expected
+        )
+        if isinstance(pred_time_idx, pd.PeriodIndex) and isinstance(
+            exp_time_idx, pd.DatetimeIndex
+        ):
+            if isinstance(pred_out_expected, pd.MultiIndex):
+                pred_out_for_loc = pred_out_expected.set_levels(
+                    pred_out_expected.levels[-1].to_period(pred_time_idx.freq),
+                    level=-1,
+                )
+            else:
+                pred_out_for_loc = pred_out_expected.to_period(pred_time_idx.freq)
+        elif isinstance(pred_time_idx, pd.DatetimeIndex) and isinstance(
+            exp_time_idx, pd.PeriodIndex
+        ):
+            if isinstance(pred_out_expected, pd.MultiIndex):
+                pred_out_for_loc = pred_out_expected.set_levels(
+                    pred_out_expected.levels[-1].to_timestamp(), level=-1
+                )
+            else:
+                pred_out_for_loc = pred_out_expected.to_timestamp()
 
-        return pd.DataFrame()
+        try:
+            predictions = predictions.loc[pred_out_for_loc]
+        except (KeyError, IndexError):
+            predictions = predictions.reindex(pred_out_for_loc)
+        predictions.index = pred_out_expected
+        return predictions
+
+    def _get_varname(self):
+        """Return the variable name for probabilistic output columns.
+
+        Follows sktime's internal feature naming: unnamed pd.Series maps to
+        variable name 0, named pd.Series to that name, pd.DataFrame to its
+        column name.
+        """
+        if hasattr(self, "_y_metadata") and "feature_names" in self._y_metadata:
+            # BaseForecaster sets this during fit; for unnamed Series this is [0]
+            featnames = self._y_metadata.get("feature_names", None)
+            if isinstance(featnames, (list, tuple)) and len(featnames) > 0:
+                return featnames[0]
+        # fallback to stored fit columns (may be None for Series name=None)
+        if hasattr(self, "_fit_column_names") and len(self._fit_column_names) > 0:
+            return self._fit_column_names[0]
+        return 0
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        The Monte Carlo sample paths generated by LagLlama are wrapped in an
+        ``Empirical`` distribution, so that ``predict_quantiles``,
+        ``predict_interval``, and ``predict_var`` are all derived from the
+        same samples and are consistent with each other by construction.
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : sktime time series object, optional (default=None)
+            Exogenous time series (ignored by LagLlama).
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro.distributions.Empirical
+            predictive distribution constructed from LagLlama sample paths
+        """
+        from skpro.distributions.empirical import Empirical
+
+        y = self._y
+        forecasts, is_hierarchical, original_index_names = self._generate_forecasts(fh)
+
+        # Assemble samples in wide format: rows = (instance, time), cols = sample id.
+        # GluonTS SampleForecast.samples has shape (num_samples, prediction_length).
+        sample_dfs = []
+        for forecast in forecasts:
+            samples = forecast.samples
+            wide_i = pd.DataFrame(
+                samples.T,
+                index=forecast.mean_ts.index,
+                columns=pd.RangeIndex(samples.shape[0]),
+            )
+            if forecast.item_id is not None:
+                wide_i.index = pd.MultiIndex.from_product(
+                    [[forecast.item_id], wide_i.index],
+                    names=[
+                        self._df_config["item_id"],
+                        self._df_config["timepoints"],
+                    ],
+                )
+            sample_dfs.append(wide_i)
+        wide = pd.concat(sample_dfs)
+
+        # Convert back to hierarchical if needed. Rebuild the hierarchical
+        # MultiIndex directly from the flattened "A*B" item_id strings.
+        if is_hierarchical:
+            new_tuples = [
+                tuple(str(item_id).split("*")) + (time_val,)
+                for item_id, time_val in wide.index
+            ]
+            wide.index = pd.MultiIndex.from_tuples(
+                new_tuples, names=original_index_names
+            )
+
+        pred_out_expected = fh.get_expected_pred_idx(y, cutoff=self.cutoff)
+        wide = self._align_prediction_index(wide, y, pred_out_expected)
+
+        # Convert wide samples to the Empirical spl format: rows indexed by
+        # (sample_id, *instance/time levels), single column with variable name.
+        var_name = self._get_varname()
+        spl = pd.concat(
+            {i: wide[[i]].set_axis(pd.Index([var_name]), axis=1) for i in wide.columns},
+            names=["sample"],
+        )
+
+        return Empirical(
+            spl,
+            time_indep=marginal,
+            index=pred_out_expected,
+            columns=pd.Index([var_name]),
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
