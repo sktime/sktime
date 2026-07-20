@@ -64,3 +64,34 @@ def test_clone_nested_sklearn():
 
     # failure condition, see issue #4704: the setting of the copy also sets the orig
     assert original_model.get_params()["estimator__random_state"] == 5
+
+
+def test_load_warns_for_different_sktime_version(tmp_path, monkeypatch):
+    """Test loading an estimator saved with a different sktime version warns."""
+    import pytest
+
+    import sktime.base._base
+    from sktime.base import BaseObject, load
+
+    monkeypatch.setattr(sktime.base._base, "SKTIME_VERSION", "0.0.0")
+    save_path = tmp_path / "estimator"
+    BaseObject().save(save_path)
+
+    with pytest.warns(UserWarning, match="created with sktime version 0.0.0"):
+        load(save_path.with_suffix(".zip"))
+
+
+def test_load_does_not_warn_for_same_sktime_version(tmp_path):
+    """Test loading an estimator saved with the current sktime version does not warn."""
+    import warnings
+
+    from sktime.base import BaseObject, load
+
+    save_path = tmp_path / "estimator"
+    BaseObject().save(save_path)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        loaded = load(save_path.with_suffix(".zip"))
+
+    assert isinstance(loaded, BaseObject)

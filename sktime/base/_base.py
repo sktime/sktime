@@ -263,6 +263,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         * ``_metadata`` - contains class of self, i.e., ``type(self)``
         * ``_obj`` - serialized self. This class uses the default serialization
           (pickle).
+        * ``_sktime_version`` - contains the sktime version used for serialization.
 
         Parameters
         ----------
@@ -328,6 +329,9 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
                 pickle.dump(type(self), file)
             with open(path / "_obj", "wb") as file:
                 pickle.dump(self, file)
+
+        with open(path / "_sktime_version", "w") as file:
+            file.write(SKTIME_VERSION)
 
         shutil.make_archive(base_name=path, format="zip", root_dir=path)
         shutil.rmtree(path)
