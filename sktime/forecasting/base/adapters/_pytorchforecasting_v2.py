@@ -28,7 +28,6 @@ from pandas.api.types import is_numeric_dtype
 from sktime.forecasting.base import (
     BaseForecaster,
     ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
 )
 
 __all__ = ["_PytorchForecastingAdapterV2"]
@@ -210,7 +209,7 @@ def _sktime_to_ptf_v2_timeseries(
     return timeseries, conversion_meta
 
 
-class _PytorchForecastingAdapterV2(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class _PytorchForecastingAdapterV2(BaseForecaster):
     """Base adapter class for pytorch-forecasting v2 models.
 
     This adapter targets PTF v2's D1/D2 data pipeline (``TimeSeries`` +
