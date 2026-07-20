@@ -45,6 +45,22 @@ def test_strategy_last(fh):
     not run_test_for_class(NaiveForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.parametrize("sp, expected", [(1, 19), (2, 18)])
+def test_strategy_last_with_duplicate_time_index(sp, expected):
+    """Test last strategy with a duplicate time index."""
+    index = pd.period_range("2000-01", periods=19, freq="M")
+    y = pd.Series(range(20), index=index.append(pd.PeriodIndex([index[-1]], freq="M")))
+
+    y_pred = NaiveForecaster(strategy="last", sp=sp).fit(y, fh=[1]).predict()
+
+    assert y_pred.iloc[0] == expected
+    assert y_pred.index.equals(pd.PeriodIndex(["2001-08"], freq="M"))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("fh", TEST_OOS_FHS)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 def test_strategy_mean(fh, window_length):
