@@ -355,14 +355,19 @@ class ChronosForecaster(BaseForecaster):
         self.config = config
         self.seed = seed
 
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
         elif self.use_source_package:
             self.set_tags(python_dependencies=["chronos"])
         else:
             self.set_tags(python_dependencies=["torch", "transformers", "accelerate"])
-
-        super().__init__()
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -371,7 +376,6 @@ class ChronosForecaster(BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed

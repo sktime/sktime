@@ -2871,7 +2871,26 @@
         "doc"
       ]
     },
-	{
+    {
+      "login": "siddharth7113",
+      "name": "Siddharth",
+      "avatar_url": "https://avatars.githubusercontent.com/u/114160268?v=4",
+      "profile": "https://github.com/siddharth7113",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "NAME-ASHWANIYADAV",
+      "name": "NAME-ASHWANIYADAV",
+      "avatar_url": "https://avatars.githubusercontent.com/NAME-ASHWANIYADAV?v=4",
+      "profile": "https://github.com/NAME-ASHWANIYADAV",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "stephanielees",
       "name": "Stephanie Lee Sugiharjo",
       "avatar_url": "https://avatars.githubusercontent.com/u/128904767?v=4",
@@ -2879,6 +2898,37 @@
       "contributions": [
         "code",
         "bug"
+      ]
+    },
+    {
+      "login": "areychana",
+      "name": "Archana K.",
+      "avatar_url": "https://avatars.githubusercontent.com/u/93970069?v=4",
+      "profile": "https://github.com/areychana",
+      "contributions": [
+        "code",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "kerimkarakan",
+      "name": "Kerim Karakan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/152054183?v=4",
+      "profile": "https://github.com/kerimkarakan",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "XAheli",
+      "name": "Aheli Poddar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/121807815?v=4",
+      "profile": "https://github.com/XAheli",
+      "contributions": [
+        "bug",
+        "code",
+        "maintenance",
+        "test"
       ]
     }
   ]

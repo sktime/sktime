@@ -1149,6 +1149,36 @@ class capability__pretrain(_BaseTag):
     }
 
 
+class pretrain__fitted_params(_BaseTag):
+    """Property: named attributes that carry pretrained state.
+
+    - String name: ``"pretrain:fitted_params"``
+    - Public property tag
+    - Values: list of str, names of estimator attributes
+    - Example: ``["model_", "network_"]``
+    - Default: ``[]`` (empty list)
+
+    The ``pretrain:fitted_params`` tag lists the names of instance attributes
+    that store state learned by ``pretrain``. State-aware operations such as
+    the private ``_reset_at("pretrained")`` preserve exactly these attributes,
+    while task-fitted attributes are removed.
+
+    If the tag is empty, state-aware operations fall back to the runtime list
+    ``_pretrained_attrs``, which ``pretrain`` populates automatically with
+    attributes created during the ``pretrain`` call.
+
+    The tag is only inspected for estimators with ``capability:pretrain=True``.
+    """
+
+    _tags = {
+        "tag_name": "pretrain:fitted_params",
+        "parent_type": "forecaster",
+        "tag_type": ("list", "str"),
+        "short_descr": "attributes carrying pretrained state",
+        "user_facing": True,
+    }
+
+
 class capability__non_contiguous_X(_BaseTag):
     """Capability: the forecaster can handle non-contiguous exogenous data.
 
@@ -2530,6 +2560,41 @@ class capability__pairwise_parameter_estimation(_BaseTag):
         "parent_type": "param_est",
         "tag_type": "bool",
         "short_descr": "does the estimator support pairwise parameter estimation?",
+        "user_facing": True,
+    }
+
+
+# Benchmark analyzer tags
+# -----------------------
+
+
+class property__analyzer_type(_BaseTag):
+    """Property: type of analysis a benchmark analyzer performs.
+
+    - String name: ``"property:analyzer_type"``
+    - Public property tag
+    - Values: str, one of ``"omnibus"``, ``"pairwise"``, ``"plot"``, ``"ranking"``
+    - Example: ``"pairwise"``
+    - Default: ``None``
+
+    This tag applies to benchmark analyzers. It describes what the
+    analyzer *is* (its kind of analysis), which also fixes the shape of the output of
+    its ``evaluate`` method.
+
+    - ``"omnibus"``: ``evaluate()`` returns a single overall statistic and
+      p-value.
+    - ``"pairwise"``: ``evaluate()`` returns a comparative table/matrix between
+      ``estimator_1`` and ``estimator_2``.
+    - ``"plot"``: the primary modality is plotting (e.g. returning a matplotlib
+      ``(fig, ax)``).
+    - ``"ranking"``: ``evaluate()`` returns a per-model ranking table.
+    """
+
+    _tags = {
+        "tag_name": "property:analyzer_type",
+        "parent_type": "object",
+        "tag_type": ("str", ["omnibus", "pairwise", "plot", "ranking"]),
+        "short_descr": "type of analysis the benchmark analyzer performs",
         "user_facing": True,
     }
 

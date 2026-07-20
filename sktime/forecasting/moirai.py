@@ -118,6 +118,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.uni2ts"],
     }
 
     def __init__(

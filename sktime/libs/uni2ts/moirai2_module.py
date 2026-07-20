@@ -37,7 +37,7 @@ else:
             pass
 
 
-if _check_soft_dependencies("torch", "huggingface_hub", severity="none"):
+if _check_soft_dependencies(["torch", "huggingface_hub"], severity="none"):
     from huggingface_hub import PyTorchModelHubMixin
 else:
 

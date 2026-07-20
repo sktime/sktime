@@ -137,7 +137,7 @@ class TimesFM2Forecaster(BaseForecaster):
     Simple zero-shot forecasting with TimesFM-2.5:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> from sktime.forecasting.timesfm2 import TimesFM2Forecaster
     >>> y = load_airline()
     >>> # By default, loads google/timesfm-2.5-200m-transformers.
     >>> forecaster = TimesFM2Forecaster()  # doctest: +SKIP
@@ -148,7 +148,7 @@ class TimesFM2Forecaster(BaseForecaster):
     Simple zero-shot forecasting with TimesFM-2.0:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> from sktime.forecasting.timesfm2 import TimesFM2Forecaster
     >>> y = load_airline()
     >>> # Loads google/timesfm-2.0-500m-pytorch.
     >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
@@ -161,7 +161,7 @@ class TimesFM2Forecaster(BaseForecaster):
     Quantile prediction:
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> from sktime.forecasting.timesfm2 import TimesFM2Forecaster
     >>> y = load_airline()
     >>> forecaster = TimesFM2Forecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
@@ -175,7 +175,7 @@ class TimesFM2Forecaster(BaseForecaster):
 
     >>> import torch  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> from sktime.forecasting.timesfm2 import TimesFM2Forecaster
     >>> from transformers import QuantoConfig  # doctest: +SKIP
     >>> y = load_airline()
     >>> forecaster = TimesFM2Forecaster(  # doctest: +SKIP
@@ -191,7 +191,7 @@ class TimesFM2Forecaster(BaseForecaster):
 
     >>> from peft import LoraConfig  # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> from sktime.forecasting.timesfm2 import TimesFM2Forecaster
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> y_panel = _make_hierarchical(  # doctest: +SKIP
     ...     hierarchy_levels=(3,),
@@ -219,7 +219,7 @@ class TimesFM2Forecaster(BaseForecaster):
     ``model_path`` and are ignored when ``model_path=None``.
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.timesfm2_forecaster import TimesFM2Forecaster
+    >>> from sktime.forecasting.timesfm2 import TimesFM2Forecaster
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> y_panel = _make_hierarchical(  # doctest: +SKIP
     ...     hierarchy_levels=(3,),

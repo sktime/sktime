@@ -12,6 +12,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
+
 jobs:
   code-quality:
     name: code-quality
@@ -293,6 +296,7 @@ jobs:
     uses: ./.github/workflows/test_est.yml
     with:
       flags: ${{ toJson(matrix.chunk) }}
+    secrets: inherit
 
   test-est-r:
     needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
@@ -306,6 +310,7 @@ jobs:
     uses: ./.github/workflows/test_est_r.yml
     with:
       flags: ${{ toJson(matrix.chunk) }}
+    secrets: inherit
 
   detect-package-change:
     needs: code-quality
@@ -555,16 +560,39 @@ jobs:
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
       - uses: actions/checkout@v7
-
-      - uses: dorny/paths-filter@v3
-        id: filter
         with:
-          filters: |
-            datasets:
-              - sktime/base/**
-              - sktime/datasets/**
-            pyproject:
-              - pyproject.toml
+          fetch-depth: 0
+
+      - id: filter
+        name: Detect changed files
+        shell: bash
+        run: |
+          # Get the merge base with the target branch
+          BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
+
+          echo "Comparing against $BASE"
+
+          changed_files=$(git diff --name-only "$BASE" HEAD)
+
+          echo "Changed files:"
+          echo "$changed_files"
+
+          datasets=false
+          pyproject=false
+
+          if echo "$changed_files" | grep -qE '^sktime/(base|datasets)/'; then
+            datasets=true
+          fi
+
+          if echo "$changed_files" | grep -qE '^pyproject\.toml$'; then
+            pyproject=true
+          fi
+
+          echo "datasets=$datasets" >> "$GITHUB_OUTPUT"
+          echo "pyproject=$pyproject" >> "$GITHUB_OUTPUT"
+
+          echo "datasets=$datasets"
+          echo "pyproject=$pyproject"
 
   test-datasets:
     needs: detect

@@ -11,7 +11,6 @@ from sklearn.utils import check_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
-from sktime.transformations.base import BaseTransformer
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
@@ -105,7 +104,7 @@ class BaggingForecaster(BaseForecaster):
 
     def __init__(
         self,
-        bootstrap_transformer: BaseTransformer = None,
+        bootstrap_transformer=None,
         forecaster: BaseForecaster = None,
         sp: int = 2,
         random_state: int | np.random.RandomState = None,
