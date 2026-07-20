@@ -252,6 +252,7 @@ notebooks = [
   "lightning>=2.0,<2.7",
   "skpro",
   "statsforecast",
+  'numba<0.63; python_version < "3.14"',
 ]
 numpy1 = [
   "numpy<2.0.0",
