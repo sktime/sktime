@@ -73,8 +73,7 @@ class PyKANForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:insample": False,
-        "serialization:skip": ("model_",),
-        "serialization:native_artifacts": ("state_dict_",),
+        "serialization:native_artifacts": ("model_",),
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on vm in GHA
@@ -198,15 +197,24 @@ class PyKANForecaster(BaseForecaster):
                 self.test_losses
             ):
                 self.model_ = model
-                self.state_dict_ = {
-                    key: value.detach().clone()
-                    for key, value in model.state_dict().items()
-                }
                 self._best_grid = self._grids[i]
             self.train_losses += results["train_loss"]
             self.test_losses += results["test_loss"]
-        # self.state_dict_ = best_model.state_dict()
         return self
+
+    def _create_torch_artifact(self, name):
+        """Construct the fitted KAN architecture for deserialization."""
+        if name != "model_":
+            raise ValueError(f"Unknown torch artifact {name!r}.")
+
+        from kan import KAN
+
+        return KAN(
+            width=self._layer_sizes,
+            grid=self._best_grid,
+            device=self.device,
+            **self._model_params,
+        )
 
     def _predict(self, fh, X):
         """Forecast time series at future horizon.
@@ -234,14 +242,7 @@ class PyKANForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        from kan import KAN
-
-        model = getattr(self, "model_", None)
-        if model is None:
-            model = KAN(
-                width=self._layer_sizes, grid=self._best_grid, **self._model_params
-            )
-            model.load_state_dict(self.state_dict_)
+        model = self.model_
         if X is not None:
             input_ = torch.cat(
                 [
