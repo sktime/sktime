@@ -267,6 +267,11 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         else:
             self.network = self._build_network(self._fh_length)
 
+        # Persist the actual output dimension used to build the fitted network.
+        # In direct mode, ``pred_len`` is a pretraining default and can differ
+        # from the forecasting horizon supplied to ``fit``.
+        self._network_pred_len_ = self.network.pred_len
+
         X_train, y_train = self._create_windows(y_scaled)
         X_tensor = torch.FloatTensor(X_train).to(self._device)
         y_tensor = torch.FloatTensor(y_train).to(self._device)
@@ -354,6 +359,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self._fh_length = pred_len if self.mode == "direct" else 1
 
         self.network = self._build_network(pred_len)
+        self._network_pred_len_ = self.network.pred_len
         dataloader = self._build_panel_dataloader(y, all_series, pred_len)
 
         self._criterion = self._instantiate_criterion()
