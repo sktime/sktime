@@ -161,9 +161,10 @@ class _TorchStateDictArtifactBackend(_NativeArtifactBackend):
 
     def supports(self, obj):
         """Return whether object is a torch module."""
-        import torch
-
-        return isinstance(obj, torch.nn.Module)
+        return any(
+            cls.__name__ == "Module" and cls.__module__ == "torch.nn.modules.module"
+            for cls in type(obj).__mro__
+        )
 
     def save(self, obj, path, *, estimator, name):
         """Save a torch module's state dictionary on CPU."""
