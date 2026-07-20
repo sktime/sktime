@@ -222,6 +222,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         y = self._encode_y(y)
 
+        self._network_input_shape_ = X.shape
+        self._network_classes_ = np.unique(y)
         self.network = self._build_network(X, y)
 
         # instantiate loss function and optimizer
@@ -242,6 +244,14 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.network.train()
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
+
+    def _create_torch_artifact(self, name):
+        """Construct the fitted network architecture for deserialization."""
+        if name != "network":
+            raise ValueError(f"Unknown torch artifact {name!r}.")
+
+        X = np.broadcast_to(np.empty(1), self._network_input_shape_)
+        return self._build_network(X, self._network_classes_)
 
     def _run_epoch(self, epoch, dataloader):
         losses = []
