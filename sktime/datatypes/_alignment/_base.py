@@ -20,6 +20,7 @@ class ScitypeAlignment(BaseDatatype):
         "name": None,  # any string
         "name_python": None,  # lower_snake_case
         "name_aliases": [],
+        "description": "series or sequence alignment",
         "python_version": None,
         "python_dependencies": None,
     }

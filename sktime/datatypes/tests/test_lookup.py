@@ -5,8 +5,8 @@ __author__ = ["fkiraly"]
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes._registry import (
-    MTYPE_SOFT_DEPS,
     generate_mtype_register,
+    generate_mtype_soft_deps,
     mtype_to_scitype,
     scitype_to_mtype,
 )
@@ -84,6 +84,7 @@ def test_scitype_to_mtype(mtype, scitype):
     """
     # check that mtype is always returned in "all" setting
     result = scitype_to_mtype(scitype, softdeps="all")
+    MTYPE_SOFT_DEPS = generate_mtype_soft_deps()
     msg = (
         f"scitype_to_mtype does not correctly retrieve all mtypes for scitype "
         f'"{scitype}", mtype "{mtype}" is missing from result returned: {result}'
