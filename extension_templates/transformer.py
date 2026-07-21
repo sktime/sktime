@@ -68,6 +68,9 @@ class MyTransformer(BaseTransformer):
     paramc : boolean, optional (default=MyOtherEstimator(foo=42))
         descriptive explanation of paramc
     and so on
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the estimator.
+        Pass an int for reproducible results across multiple runs.
     """
 
     # todo: fill out estimator tags here
@@ -252,7 +255,7 @@ class MyTransformer(BaseTransformer):
         #
         # author = author(s) of th estimator
         # an author is anyone with significant contribution to the code at some point
-        "authors": ["author1", "author2"],
+        "authors": ["Shamarvey1"],
         # valid values: str or list of str, should be GitHub handles
         # this should follow best scientific contribution practices
         # scope is the code, not the methodology (method is per paper citation)
@@ -263,7 +266,7 @@ class MyTransformer(BaseTransformer):
         # per algorithm maintainer role, see governance document
         # this is an "owner" type role, with rights and maintenance duties
         # for 3rd party interfaces, the scope is the sktime class only
-        "maintainers": ["maintainer1", "maintainer2"],
+        "maintainers": ["Shamarvey1"],
         # valid values: str or list of str, should be GitHub handles
         # remove tag if maintained by sktime core team
         #
@@ -285,7 +288,7 @@ class MyTransformer(BaseTransformer):
     #  avoid if possible, but see __init__ for instructions when needed
 
     # todo: add any hyper-parameters and components to constructor
-    def __init__(self, parama, paramb="default", paramc=None):
+    def __init__(self, parama, paramb="default", paramc=None, random_state=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
 
@@ -295,6 +298,7 @@ class MyTransformer(BaseTransformer):
         # IMPORTANT: the self.params should never be overwritten or mutated from now on
         # for handling defaults etc, write to other attributes, e.g., self._paramc
         self.paramc = paramc
+        self.random_state = random_state
 
         # leave this as is
         super().__init__()
@@ -576,3 +580,7 @@ class MyTransformer(BaseTransformer):
         # # "default" params - always returned except for "special_param_set" value
         # params = {"est": value3, "parama": value4}
         # return params
+        return [
+    {"parama": 1, "paramb": "default", "random_state": 42},
+    {"parama": 2, "paramb": "other", "random_state": 123},
+]
