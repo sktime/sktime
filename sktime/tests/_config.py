@@ -154,7 +154,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DontUpdate",
         "DummyRegressor",
         "ElasticEnsemble",
-        "FeatureSelection",
         "FreshPRINCE",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
