@@ -280,7 +280,6 @@ requires = [
 
 [tool.setuptools.package-data]
 sktime = [
-  "utils/_estimator_html_repr.css",
   "*.csv",
   "*.csv.gz",
   "*.arff",
