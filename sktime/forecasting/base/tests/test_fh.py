@@ -1071,3 +1071,22 @@ def test_timestamp_format_to_absolute():
     fh = ForecastingHorizon([1, 2, 3], freq="D")
     y_pred_idx = fh.to_absolute_index(cutoff)
     assert "12:00:00" in str(y_pred_idx)
+    
+
+def test_fh_zero_or_negative_relative_warning():
+    """Test that a warning is correctly raised for zero or negative relative horizons."""
+    import pytest
+    import pandas as pd
+    from sktime.forecasting.base import ForecastingHorizon
+
+    # Case 1: Check that an integer list containing zero triggers the warning
+    with pytest.warns(UserWarning, match="Relative forecasting horizon `fh` contains values"):
+        ForecastingHorizon([0, 1, 2], is_relative=True)
+
+    # Case 2: Check that an integer list containing a negative value triggers the warning
+    with pytest.warns(UserWarning, match="Relative forecasting horizon `fh` contains values"):
+        ForecastingHorizon([-3, -1, 5], is_relative=True)
+
+    # Case 3: Check that a pandas TimedeltaIndex containing zero duration triggers the warning
+    with pytest.warns(UserWarning, match="Relative forecasting horizon `fh` contains values"):
+        ForecastingHorizon(pd.TimedeltaIndex(["0D", "1D", "2D"]), is_relative=True)
