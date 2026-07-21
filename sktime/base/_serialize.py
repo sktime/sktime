@@ -61,10 +61,23 @@ class _PretrainedArtifactBackend(_NativeArtifactBackend):
 
     backend = "pretrained"
 
+    _pretrained_base_classes = {
+        "huggingface_hub.hub_mixin.ModelHubMixin",
+        "peft.peft_model.PeftModel",
+        "transformers.integrations.peft.PeftAdapterMixin",
+        "transformers.modeling_utils.PreTrainedModel",
+    }
+
     def supports(self, obj):
         """Return whether object supports pretrained-style serialization."""
-        return callable(getattr(obj, "save_pretrained", None)) and callable(
-            getattr(type(obj), "from_pretrained", None)
+        cls = type(obj)
+        mro_classes = {f"{base.__module__}.{base.__qualname__}" for base in cls.__mro__}
+        from_pretrained = getattr(cls, "from_pretrained", None)
+        return (
+            callable(getattr(obj, "save_pretrained", None))
+            and callable(getattr(obj, "from_pretrained", None))
+            and bool(mro_classes & self._pretrained_base_classes)
+            and getattr(from_pretrained, "__self__", None) is cls
         )
 
     def save(self, obj, path, *, estimator, name):
