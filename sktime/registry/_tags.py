@@ -680,6 +680,18 @@ class capability__missing_values(_BaseTag):
     }
 
 
+class capability__bootstrap_index(_BaseTag):
+    """Whether bootstrap returns sampled indices."""
+
+    _tags = {
+        "tag_name": "capability:bootstrap_index",
+        "parent_type": "bootstrap",
+        "tag_type": "bool",
+        "short_descr": "whether bootstrap returns resampled indices",
+        "user_facing": True,
+    }
+
+
 class capability__feature_importance(_BaseTag):
     """Capability: the estimator can provide feature importance.
 
