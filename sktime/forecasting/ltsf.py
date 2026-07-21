@@ -272,6 +272,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         if not hasattr(self, "network") or self.network is None:
             self.network = self._build_network(list(fh)[-1])
 
+        self._network_pred_len_ = self.network.pred_len
+
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
 
