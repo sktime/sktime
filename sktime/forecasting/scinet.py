@@ -232,7 +232,14 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             input_dim=self._y.shape[-1],
             pred_len=fh,
             hid_size=self.hid_size,
-            num_stacks=self.hid_size,
+            # Copy-paste typo prior to #10054: this used to read
+            # ``num_stacks=self.hid_size``, which silently ignored the
+            # user-supplied ``num_stacks`` and reused ``hid_size`` for both
+            # arguments. The underlying ``SCINet`` only builds a second
+            # encoder block (``blocks2``) when ``num_stacks == 2``, so the
+            # bug also disabled stacking entirely for the common
+            # ``hid_size=1`` default.
+            num_stacks=self.num_stacks,
             num_levels=self.num_levels,
             num_decoder_layer=self.num_decoder_layer,
             concat_len=self.concat_len,
