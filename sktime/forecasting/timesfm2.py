@@ -560,6 +560,43 @@ class TimesFM2Forecaster(BaseForecaster):
 
         return pred_quantiles
 
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic,
+            called from predict_proba
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro BaseDistribution
+            predictive distribution built from model quantile output
+        """
+        from skpro.distributions import HistogramQPD
+
+        quantiles = self.predict_quantiles(fh=fh, X=X)
+
+        # Reshape from (fh, (variable, alpha)) to ((alpha, fh), variable)
+        # for HistogramQPD which expects a MultiIndex of (quantile, timepoint)
+        q = quantiles.stack(level=1)  # rows=(fh, alpha), cols=variable
+        q = q.reorder_levels([1, 0], axis=0)  # rows=(alpha, fh), cols=variable
+        q = q.sort_index()
+
+        return HistogramQPD(
+            q,
+            index=quantiles.index,
+            columns=quantiles.columns.get_level_values(0).unique(),
+            time_indep=marginal,
+        )
+
     def _load_model(self):
         """Load or retrieve a cached TimesFM model instance.
 
