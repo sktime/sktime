@@ -101,6 +101,7 @@ class VECM(_StatsModelsAdapter):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:pred_int:monotonic": False,
         "capability:non_contiguous_X": False,
         # CI and testing tags
         # -------------------

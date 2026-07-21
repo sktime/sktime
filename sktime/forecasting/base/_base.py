@@ -109,6 +109,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
+        "capability:pred_int:monotonic": True,  # are proba predictions monotonic?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:non_contiguous_X": True,  # support non-contiguous X?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?

@@ -137,7 +137,7 @@ def _get_expected_columns(y_test):
         return y_test.columns
 
 
-def _check_predict_intervals(pred_ints, y_test, fh, coverage):
+def _check_predict_intervals(pred_ints, y_test, fh, coverage, is_monotonic=False):
     """Check expected interval prediction output."""
     # check expected type
     valid, msg, _ = check_is_mtype(
@@ -170,8 +170,17 @@ def _check_predict_intervals(pred_ints, y_test, fh, coverage):
     )
     assert all(expected == found), msg
 
+    if isinstance(coverage, list) and is_monotonic:
+        sorted_cov = sorted(expected_coverages)
+        for var in expected_columns:
+            for idx in range(len(pred_ints.index)):
+                lowers = [pred_ints[(var, c, "lower")].iloc[idx] for c in sorted_cov]
+                uppers = [pred_ints[(var, c, "upper")].iloc[idx] for c in sorted_cov]
+                assert pd.Series(lowers).is_monotonic_decreasing
+                assert pd.Series(uppers).is_monotonic_increasing
 
-def _check_predict_quantiles(pred_quantiles, y_test, fh, alpha):
+
+def _check_predict_quantiles(pred_quantiles, y_test, fh, alpha, is_monotonic=False):
     """Check expected quantile prediction output."""
     # check expected type
     valid, msg, _ = check_is_mtype(
@@ -207,10 +216,10 @@ def _check_predict_quantiles(pred_quantiles, y_test, fh, alpha):
         )
 
         # check if values are monotonically increasing
-        # commented out until #4431 is resolved
-        # for var in pred_quantiles.columns.levels[0]:
-        #     for index in range(len(pred_quantiles.index)):
-        #        assert pred_quantiles[var].iloc[index].is_monotonic_increasing
+        if is_monotonic:
+            for var in pred_quantiles.columns.levels[0]:
+                for index in range(len(pred_quantiles.index)):
+                    assert pred_quantiles[var].iloc[index].is_monotonic_increasing
 
 
 def _check_predict_proba(pred_dist, y_test, fh_int):
@@ -494,6 +503,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns, index_type=index_type)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
+            is_monotonic = estimator_instance.get_tag("capability:pred_int:monotonic")
             pred_ints = estimator_instance.predict_interval(
                 fh=fh_int_oos, coverage=coverage
             )
@@ -502,6 +512,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 y_train,
                 fh_int_oos,
                 coverage,
+                is_monotonic=is_monotonic,
             )
         else:
             with pytest.raises(NotImplementedError, match="prediction intervals"):
@@ -532,12 +543,14 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_columns=n_columns)
         estimator_instance.fit(y_train, fh=fh_int_oos)
         if estimator_instance.get_tag("capability:pred_int"):
+            is_monotonic = estimator_instance.get_tag("capability:pred_int:monotonic")
             quantiles = estimator_instance.predict_quantiles(fh=fh_int_oos, alpha=alpha)
             _check_predict_quantiles(
                 quantiles,
                 y_train,
                 fh_int_oos,
                 alpha,
+                is_monotonic=is_monotonic,
             )
         else:
             with pytest.raises(NotImplementedError, match="quantile predictions"):

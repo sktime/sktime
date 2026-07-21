@@ -1069,6 +1069,34 @@ class capability__pred_int__insample(_BaseTag):
     }
 
 
+class capability__pred_int__monotonic(_BaseTag):
+    """Capability: probabilistic predictions are mathematically monotonic.
+
+    - String name: ``"capability:pred_int:monotonic"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``False``
+    - Default: ``True``
+
+    If the tag is ``True``, the forecaster guarantees that its probabilistic
+    forecasts are monotonic. That is, interval bounds strictly widen with
+    larger coverage, and quantiles strictly increase with larger alpha.
+    This is typical for deterministic probabilistic models.
+
+    If the tag is ``False``, the forecaster does not guarantee monotonic
+    probabilistic forecasts. This typically occurs in models that rely on
+    independent Monte Carlo sampling for different alpha or coverage values.
+    """
+
+    _tags = {
+        "tag_name": "capability:pred_int:monotonic",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "are probabilistic predictions guaranteed to be monotonic?",
+        "user_facing": True,
+    }
+
+
 class capability__pretrain(_BaseTag):
     """Capability: the forecaster can use pretraining for global learning.
 

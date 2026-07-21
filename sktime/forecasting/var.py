@@ -100,6 +100,7 @@ class VAR(_StatsModelsAdapter):
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:pred_int:monotonic": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
     }
