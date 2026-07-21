@@ -1126,10 +1126,10 @@ class BaseDetector(BaseEstimator):
         >>> import pandas as pd
         >>> from sktime.detection.base import BaseDetector
         >>> segments =  pd.DataFrame({
-                "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
-                (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
-                "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
-            })
+        ...     "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
+        ...     (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
+        ...     "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
+        ... })
         >>> BaseDetector.segments_to_change_points(segments)
         Index([0, 3, 4, 5, 6, 7, 8, 10, 11, 12], dtype='int64')
         """
