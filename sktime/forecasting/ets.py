@@ -447,6 +447,72 @@ class AutoETS(_StatsModelsAdapter):
                 return_params=self.return_params,
             )
 
+        self._selected_params = {
+            "error": self._forecaster.error,
+            "trend": self._forecaster.trend,
+            "damped_trend": self._forecaster.damped_trend,
+            "seasonal": self._forecaster.seasonal,
+        }
+
+    def _update(self, y, X=None, update_params=True):
+        """Update AutoETS model with new data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Target time series to update.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        update_params : bool, default=True
+            If True, update model coefficients.
+            If False, do nothing (fast path).
+
+        Returns
+        -------
+        self : AutoETS
+            Returns the updated forecaster.
+        """
+        if not update_params:
+            return self
+
+        if X is not None:
+            X = X.loc[y.index]
+
+        if self.auto and hasattr(self, "_selected_params"):
+            # Rebuild ETSModel with stored best parameters
+            from statsmodels.tsa.exponential_smoothing.ets import ETSModel as _ETSModel
+
+            self._forecaster = _ETSModel(
+                self._y,
+                error=self._selected_params["error"],
+                trend=self._selected_params["trend"],
+                damped_trend=self._selected_params["damped_trend"],
+                seasonal=self._selected_params["seasonal"],
+                seasonal_periods=self.sp,
+                initialization_method=self.initialization_method,
+                initial_level=self.initial_level,
+                initial_trend=self.initial_trend,
+                initial_seasonal=self.initial_seasonal,
+                bounds=self.bounds,
+                dates=self.dates,
+                freq=self.freq,
+                missing=self.missing,
+            )
+
+            self._fitted_forecaster = self._forecaster.fit(
+                start_params=self.start_params,
+                maxiter=self.maxiter,
+                full_output=self.full_output,
+                disp=self.disp,
+                callback=self.callback,
+                return_params=self.return_params,
+            )
+        else:
+            # Full refit if no _selected_params
+            self._fit_forecaster(self._y, X)
+
+        return self
+
     def _predict(self, fh, X):
         """Make forecasts.
 
