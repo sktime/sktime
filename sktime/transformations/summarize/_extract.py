@@ -49,6 +49,14 @@ class PlateauFinder(BaseTransformer):
         self.min_length = min_length
         super().__init__()
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        # just two quick param sets to test with
+        return [
+            {},
+            {"value": np.inf, "min_length": 1},
+        ]
+
     def _transform(self, X, y=None):
         """Transform X.
 
