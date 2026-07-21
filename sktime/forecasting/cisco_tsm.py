@@ -351,6 +351,66 @@ class CiscoTSMForecaster(BaseForecaster):
 
         return pred_quantiles
 
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic,
+            called from predict_proba
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : ignored
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+        """
+        import numpy as np
+        import pandas as pd
+        from skpro.distributions import HistogramQPD
+
+        self._ensure_model_loaded()
+
+        fh_relative = fh.to_relative(self.cutoff)
+        horizon_len = int(max(fh_relative._values))
+        fh_vals = np.asarray(fh_relative._values, dtype=int) - 1
+
+        forecast_preds = self._model_.forecast(
+            self._context_,
+            horizon_len=horizon_len,
+        )
+        quantiles_dict = forecast_preds[0]["quantiles"]
+
+        # Native quantile levels from the model.
+        native_levels = sorted(quantiles_dict.keys())
+        native_matrix = np.stack(
+            [quantiles_dict[q] for q in native_levels], axis=0
+        )  # shape: (n_q, horizon_len)
+
+        var_name = self._y_name_ if self._y_name_ is not None else 0
+        pred_index = fh.to_absolute_index(self.cutoff)._values
+
+        # Build a MultiIndex of (quantile_level, time_point) for the
+        # quantile-parameterised histogram.
+        row_index = pd.MultiIndex.from_product([native_levels, pred_index])
+
+        # Select the requested forecast steps and reshape so each
+        # (quantile, time) pair becomes one row.
+        selected = native_matrix[:, fh_vals]  # (n_q, n_t)
+        data = selected.reshape(-1, 1)  # (n_q * n_t, 1)
+
+        q_df = pd.DataFrame(data, index=row_index, columns=[var_name])
+
+        return HistogramQPD(q_df, tails="mass", index=pred_index, columns=[var_name])
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
