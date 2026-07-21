@@ -123,6 +123,7 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
         relative_to="y_true",
         eps=None,
         by_index=False,
+        sample_weight=None,
     ):
         self.relative_to = relative_to
         self.eps = eps
@@ -130,6 +131,7 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):

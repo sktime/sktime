@@ -151,6 +151,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
         by_index=False,
         relative_to="y_true",
         eps=None,
+        sample_weight=None,
     ):
         self.symmetric = symmetric
         self.relative_to = relative_to
@@ -159,6 +160,7 @@ class MedianAbsolutePercentageError(BaseForecastingErrorMetricFunc):
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
