@@ -17,6 +17,15 @@ from sktime.split import temporal_train_test_split
 from sktime.utils.singleton import _multiton
 
 
+def _empirical_quantiles_1d(samples, alpha):
+    """Empirical quantiles matching ``skpro`` ``Empirical._ppf_np`` uniform weights."""
+    spl = np.sort(samples)
+    weights = np.ones(len(spl), dtype=float)
+    weights = weights / weights.sum()
+    cum_weights = np.cumsum(weights)
+    return np.array([spl[np.searchsorted(cum_weights, a)] for a in alpha])
+
+
 class SundialForecaster(BaseForecaster):
     """Sundial forecaster via Hugging Face ``transformers``.
 
@@ -27,10 +36,11 @@ class SundialForecaster(BaseForecaster):
     the Sundial forward loss.
 
     Sundial generates one or more sample paths. Point forecasts are computed as
-    the empirical mean over generated samples. Probabilistic forecasts are
-    represented by an empirical distribution over generated samples; quantiles,
-    intervals, and variance are derived from that distribution using its
-    stepwise empirical quantile function.
+    the empirical mean over generated samples. Quantile forecasts are computed
+    directly from generated samples without requiring ``skpro``. When ``skpro``
+    is available, ``predict_proba`` returns an ``Empirical`` distribution over
+    the same sample paths; quantiles from ``predict_proba().quantile(...)`` and
+    ``predict_quantiles`` describe the same stepwise empirical distribution.
 
     Parameters
     ----------
@@ -418,6 +428,60 @@ class SundialForecaster(BaseForecaster):
         )
 
         return preds
+
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        samples, fh, preds_idx = self._generate_samples(fh)
+
+        alpha = [round(i, 3) for i in alpha]
+        preds = samples[:, :, preds_idx]
+        n_series, _, n_horizon = preds.shape
+        quantiles = np.empty((n_series, n_horizon, len(alpha)))
+        for i in range(n_series):
+            for j in range(n_horizon):
+                quantiles[i, j] = _empirical_quantiles_1d(preds[i, :, j], alpha)
+        quantiles = quantiles.transpose(1, 0, 2).reshape(n_horizon, -1)
+        quantiles = quantiles.astype(float)
+
+        columns = pd.MultiIndex.from_product([self.context_.columns, alpha])
+        pred_quantiles = pd.DataFrame(
+            data=quantiles,
+            index=fh.to_absolute(self._cutoff)._values,
+            columns=columns,
+        )
+
+        return pred_quantiles
 
     def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts from generated samples.
