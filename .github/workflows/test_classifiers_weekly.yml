@@ -1,0 +1,117 @@
+name: weekly classifiers test
+
+on:
+  schedule:
+    # Runs every Saturday at 03:00 UTC
+    - cron: "0 5 * * 6"
+
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect-classifiers:
+    runs-on: ubuntu-latest
+    outputs:
+      classifiers: ${{ steps.get.outputs.classifiers }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install sktime
+        run: pip install .[dev]
+
+      - name: Get all classifiers and Python versions
+        id: get
+        run: |
+          python - <<EOF
+          import json
+          from sktime.registry import all_estimators
+
+          from sktime.utils.dependencies._dependencies import _get_lowest_compatible_python_version
+
+          classifiers = all_estimators("classifier")
+
+          matrix_data = []
+          for name, est_class in classifiers:
+              py_ver = _get_lowest_compatible_python_version(est_class)
+
+              matrix_data.append({
+                  "name": name,
+                  "python_version": py_ver
+              })
+
+          output_json = json.dumps(matrix_data)
+
+          with open("classifiers.json", "w") as f:
+              f.write(output_json)
+
+          print(output_json)
+          EOF
+
+          echo "classifiers=$(cat classifiers.json)" >> $GITHUB_OUTPUT
+
+  test-classifiers:
+    needs: collect-classifiers
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        classifier: ${{ fromJson(needs.collect-classifiers.outputs.classifiers) }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.classifier.python_version }}
+
+      - name: Install sktime
+        run: pip install .[dev]
+
+      - name: Install soft dependencies
+        run: |
+          python - <<EOF
+          from sktime.registry import deps
+
+          name = "${{ matrix.classifier.name }}"
+          d = deps(name, include_test_deps=True)
+
+          if d:
+              with open("deps.txt", "w") as f:
+                  f.write("\n".join(d))
+          EOF
+
+          if [ -f deps.txt ]; then
+            pip install -r deps.txt
+          fi
+        continue-on-error: true
+
+      - name: Run targeted test
+        run: |
+          python - <<EOF
+          from sktime.registry import all_estimators
+          from sktime.utils.estimator_checks import check_estimator
+
+          name = "${{ matrix.classifier.name }}"
+          print(f"Running test for: {name}")
+
+          classifiers = dict(all_estimators("classifier"))
+          est = classifiers[name]
+
+          check_estimator(
+              estimator=est,
+              tests_to_run="test_fit_predict",
+              raise_exceptions=True,
+          )
+
+          print(f"PASS: {name}")
+          EOF
