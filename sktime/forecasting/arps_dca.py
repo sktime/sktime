@@ -281,6 +281,43 @@ class _ArpsDcaBase(BaseForecaster):
         y_arr = np.asarray(y_pred).reshape(-1, len(cols))
         return pd.DataFrame(y_arr, index=fh_abs, columns=cols)
 
+    def _mc_forecast_samples(self, fh_abs, t):
+        """Return array of shape (n_samples, len(t)) of MC-sampled forecasts.
+
+        Shared by ``_predict_quantiles`` and ``_predict_proba``. Falls back to
+        a single deterministic sample (the point forecast) if the curve fit
+        did not converge or the covariance matrix was degenerate.
+        """
+        func = self._rate_func if self.output == "rate" else self._cum_func
+
+        if not self._pred_int_available_:
+            warnings.warn(
+                f"{type(self).__name__}: probabilistic forecasts unavailable; "
+                "returning point forecast as naive prediction intervals.",
+                RuntimeWarning,
+                stacklevel=3,
+            )
+            y_point = self._apply_forecast_transforms(func(t, *self.params_))
+            return np.asarray(y_point).reshape(1, -1)
+
+        rng = np.random.default_rng(self.random_state)
+
+        try:
+            param_samples = rng.multivariate_normal(
+                self.params_, self.params_cov_, size=self.n_samples
+            )
+        except (np.linalg.LinAlgError, ValueError) as e:
+            raise RuntimeError(
+                "Parameter covariance matrix is singular or near-singular"
+            ) from e
+
+        param_samples = self._clip_param_samples(param_samples)
+
+        y_pred = func(
+            t, *[param_samples[:, [i]] for i in range(param_samples.shape[1])]
+        )
+        return self._apply_forecast_transforms(y_pred)
+
     def _predict_quantiles(self, fh, X, alpha):
         """Compute prediction quantiles via Monte Carlo parameter sampling.
 
@@ -301,46 +338,50 @@ class _ArpsDcaBase(BaseForecaster):
         fh_abs = fh.to_absolute_index(self.cutoff)
         t = self._index_to_float_array(fh_abs) - self.t0_
 
-        if not self._pred_int_available_:
-            warnings.warn(
-                f"{type(self).__name__}: probabilistic forecasts unavailable; "
-                "returning point forecast as naive prediction intervals.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-            func = self._rate_func if self.output == "rate" else self._cum_func
-            y_point = self._apply_forecast_transforms(func(t, *self.params_))
-            varnames = self._get_varnames()
-            col_index = pd.MultiIndex.from_product([varnames, alpha])
-            y_arr = np.asarray(y_point).reshape(-1, 1)
-            return pd.DataFrame(
-                np.tile(y_arr, len(alpha)), index=fh_abs, columns=col_index
-            )
-
-        rng = np.random.default_rng(self.random_state)
-
-        try:
-            param_samples = rng.multivariate_normal(
-                self.params_, self.params_cov_, size=self.n_samples
-            )
-        except (np.linalg.LinAlgError, ValueError) as e:
-            raise RuntimeError(
-                "Parameter covariance matrix is singular or near-singular"
-            ) from e
-
-        param_samples = self._clip_param_samples(param_samples)
-
-        func = self._rate_func if self.output == "rate" else self._cum_func
-
-        y_pred = func(
-            t, *[param_samples[:, [i]] for i in range(param_samples.shape[1])]
-        )
-        y_pred = self._apply_forecast_transforms(y_pred)
+        y_pred = self._mc_forecast_samples(fh_abs, t)
         quantile_values = np.quantile(y_pred, alpha, axis=0).T
 
         varnames = self._get_varnames()
         col_index = pd.MultiIndex.from_product([varnames, alpha])
         return pd.DataFrame(quantile_values, index=fh_abs, columns=col_index)
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute fully probabilistic forecasts via Monte Carlo parameter sampling.
+
+        Wraps the same Monte Carlo samples used by ``_predict_quantiles`` /
+        ``_predict_interval`` as an ``skpro`` ``Empirical`` distribution, so
+        all three probabilistic methods stay numerically consistent with
+        each other.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Forecasting horizon.
+        X : pd.DataFrame or None
+            Exogenous data, ignored.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro BaseDistribution
+            Empirical predictive distribution.
+        """
+        from skpro.distributions.empirical import Empirical
+
+        fh_abs = fh.to_absolute_index(self.cutoff)
+        t = self._index_to_float_array(fh_abs) - self.t0_
+
+        y_pred = self._mc_forecast_samples(fh_abs, t)
+
+        varnames = self._get_varnames()
+        n_samples = y_pred.shape[0]
+        spl_index = pd.MultiIndex.from_product(
+            [range(n_samples), fh_abs], names=["sample", *fh_abs.names]
+        )
+        spl = pd.DataFrame(y_pred.reshape(-1, 1), index=spl_index, columns=varnames)
+
+        return Empirical(spl, time_indep=marginal)
 
     def _predict_interval(self, fh, X, coverage):
         """Compute prediction intervals via Monte Carlo parameter sampling.
