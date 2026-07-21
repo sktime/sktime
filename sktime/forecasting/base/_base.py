@@ -120,6 +120,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         "capability:categorical_in_X": True,
         # does the forecaster natively support categorical in exogenous X?
         "capability:unequal_length": True,  # can forecaster handle unequal length TS?
+        "capability:pretrain_update": False,  # can repeated pretrain update state?
     }
 
     # configs and default config values
@@ -1075,8 +1076,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         ``pretrain`` is a no-op that still transitions the state.
 
         If called when the forecaster is already in the ``"pretrained"`` or
-        ``"fitted"`` state, the internal ``_pretrain_update`` method is called
-        instead, enabling incremental pretraining on additional data batches.
+        ``"fitted"`` state, the internal ``_pretrain_update`` method is called.
+        The ``capability:pretrain_update`` tag indicates whether this operation
+        is guaranteed to continue from the existing pretrained state.
 
         State change:
             Changes ``state`` from ``"new"`` to ``"pretrained"``.
@@ -2470,6 +2472,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
     def _pretrain_update(self, y, X=None, fh=None):
         """Pretrain forecaster on training data, if already pretrained.
+
+        The default calls ``_pretrain`` and does not guarantee continuation
+        from the existing pretrained state. Forecasters should set the
+        ``capability:pretrain_update`` tag to ``True`` only when overriding
+        this method with continuation semantics.
 
         Returns
         -------

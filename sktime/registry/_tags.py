@@ -1105,6 +1105,37 @@ class capability__pretrain(_BaseTag):
     }
 
 
+class capability__pretrain_update(_BaseTag):
+    """Capability: the forecaster can update an existing pretrained state.
+
+    - String name: ``"capability:pretrain_update"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    The ``capability:pretrain_update`` tag indicates whether a subsequent call
+    to ``pretrain`` can continue from the estimator's existing pretrained state.
+    The update consumes the newly passed panel or hierarchical data without
+    restarting from the estimator's initial state or an external checkpoint.
+
+    If the tag is ``True``, ``capability:pretrain`` must also be ``True`` and
+    the forecaster implements ``_pretrain_update`` with continuation semantics.
+
+    If the tag is ``False``, the forecaster does not guarantee that repeated
+    pretraining builds on its existing pretrained state. A full retrain or a
+    recomputation from only the new data does not qualify as a pretrain update.
+    """
+
+    _tags = {
+        "tag_name": "capability:pretrain_update",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "can repeated pretrain update existing pretrained state",
+        "user_facing": True,
+    }
+
+
 class pretrain__fitted_params(_BaseTag):
     """Property: named attributes that carry pretrained state.
 

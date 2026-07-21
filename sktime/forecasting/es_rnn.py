@@ -141,6 +141,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # -----------------
         "tests:vm": True,
         "capability:pretrain": True,
+        "capability:pretrain_update": True,
     }
 
     def __init__(

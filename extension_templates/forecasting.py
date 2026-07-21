@@ -157,6 +157,10 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean True (yes), False (no)
         # if True, implement _pretrain and optionally _pretrain_update below
         # enables the pretrain -> fit -> predict workflow for global learning
+        "capability:pretrain_update": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, repeated pretrain calls continue from the existing pretrained state
+        # requires capability:pretrain=True and an implementation of _pretrain_update
         #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
@@ -420,12 +424,14 @@ class MyForecaster(BaseForecaster):
         #   self.n_pretrain_instances_ = len(y.index.droplevel(-1).unique())
 
     # todo: consider implementing this, optional
-    # if not implementing, delete this method (default calls _pretrain)
+    # if implementing, set capability:pretrain_update to True
+    # otherwise, delete this method (default calls _pretrain)
     def _pretrain_update(self, y, X=None, fh=None):
         """Update pretrained forecaster with additional panel data.
 
         private _pretrain_update, called from pretrain when already pretrained.
-        Default implementation calls _pretrain. Override for incremental logic.
+        Must continue from the existing pretrained state. Restarting from the
+        initial state or recomputing from only the new data is not an update.
 
         Parameters
         ----------

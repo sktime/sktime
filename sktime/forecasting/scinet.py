@@ -132,6 +132,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
         "capability:pretrain": True,
+        "capability:pretrain_update": True,
     }
 
     def __init__(
