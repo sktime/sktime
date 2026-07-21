@@ -97,9 +97,6 @@ class TapNetClassifier(BaseDeepClassifier):
         # TapNet fails due to Lambda layer and stochastic failures,
         # see #3539, #3616, #3525
         "tests:skip_all": True,
-        "tests:skip_by_name": [
-            "test_fit_idempotent",
-        ],
         # Run tests in a dedicated VM due to sporadic crashes and possible
         # memory leaks (see #8518)
         "tests:vm": True,
