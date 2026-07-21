@@ -113,6 +113,19 @@ def _assert_torch_state_equal(left, right):
         assert torch.equal(left_state[key].cpu(), right_state[key].cpu())
 
 
+@pytest.fixture
+def dummy_pretrained_backend(monkeypatch):
+    """Let generic native-artifact tests use their dependency-free test double."""
+    original_supports = _PretrainedArtifactBackend.supports
+
+    def supports(self, obj):
+        if isinstance(obj, _DummyPretrainedArtifact):
+            return True
+        return original_supports(self, obj)
+
+    monkeypatch.setattr(_PretrainedArtifactBackend, "supports", supports)
+
+
 # standard serialization tests
 @pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
 def test_standard_serialization_in_memory(serialization_format):
@@ -153,7 +166,7 @@ def test_skipped_attribute_is_not_serialized(storage, tmp_path):
 
 
 @pytest.mark.parametrize("storage", ["memory", "file"])
-def test_native_artifact_roundtrip(storage, tmp_path):
+def test_native_artifact_roundtrip(storage, tmp_path, dummy_pretrained_backend):
     """Native artifacts round-trip in memory and through a file."""
     obj = _ObjectWithNativeArtifact(value="model weights")
     original_model = obj.model_
@@ -164,7 +177,7 @@ def test_native_artifact_roundtrip(storage, tmp_path):
     assert obj.model_ is original_model
 
 
-def test_native_artifact_archive_layout(tmp_path):
+def test_native_artifact_archive_layout(tmp_path, dummy_pretrained_backend):
     """Native artifacts are stored under _artifacts with an index."""
     zip_path = _save_to_file(_ObjectWithNativeArtifact(), tmp_path)
 
