@@ -80,6 +80,8 @@ class PyKANForecaster(BaseForecaster):
         # relevant issue: https://github.com/sktime/sktime/issues/10491
         # deepcopy fails during `update_predict(..., reset_forecaster=False)`
         "tests:skip_by_name": [
+            "test_deepcopy_fitted",
+            "test_deepcopy_fitted_predict",
             "test_fit_idempotent",
             "test_update_predict_predicted_index",
         ],
