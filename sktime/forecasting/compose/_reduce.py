@@ -1244,6 +1244,21 @@ class DirectTabularRegressionForecaster(_DirectReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.forecasting.compose import DirectTabularRegressionForecaster
+
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> regressor = LinearRegression()
+    >>> f = DirectTabularRegressionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train, fh=[1, 2, 3])
+    DirectTabularRegressionForecaster(...)
+    >>> y_pred = f.predict()
     """
 
     def __init__(
@@ -1294,6 +1309,21 @@ class MultioutputTabularRegressionForecaster(_MultioutputReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.forecasting.compose import MultioutputTabularRegressionForecaster
+
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> regressor = LinearRegression()
+    >>> f = MultioutputTabularRegressionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train, fh=[1, 2, 3])
+    MultioutputTabularRegressionForecaster(...)
+    >>> y_pred = f.predict()
     """
 
     _estimator_scitype = "tabular-regressor"
@@ -1322,6 +1352,22 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
+    
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
+
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = y_test.index
+    >>> regressor = LinearRegression()
+    >>> f = RecursiveTabularRegressionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train)
+    RecursiveTabularRegressionForecaster(...)
+    >>> y_pred = f.predict(fh=fh)
     """
 
     _tags = {
@@ -1377,6 +1423,22 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
+    
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.forecasting.compose import DirRecTabularRegressionForecaster
+
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = [1, 2, 3]
+    >>> regressor = LinearRegression()
+    >>> f = DirRecTabularRegressionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train, fh=fh)
+    DirRecTabularRegressionForecaster(...)
+    >>> y_pred = f.predict()
     """
 
     _estimator_scitype = "tabular-regressor"
@@ -1395,6 +1457,21 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.regression.interval_based import TimeSeriesForestRegressor
+    >>> from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = [1, 2, 3]
+    >>> regressor = TimeSeriesForestRegressor(n_estimators=10, random_state=42)
+    >>> f = DirectTimeSeriesRegressionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train, fh=fh)
+    DirectTimeSeriesRegressionForecaster(...)
+    >>> y_pred = f.predict()
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -1413,6 +1490,23 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.transformations.panel.reduce import Tabularizer
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sktime.forecasting.compose import MultioutputTimeSeriesRegressionForecaster
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = [1, 2, 3]
+    >>> regressor = make_pipeline(Tabularizer(), RandomForestRegressor(random_state=42))
+    >>> f = MultioutputTimeSeriesRegressionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train, fh=fh)
+    MultioutputTimeSeriesRegressionForecaster(...)
+    >>> y_pred = f.predict()
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -1431,6 +1525,21 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.regression.interval_based import TimeSeriesForestRegressor
+    >>> from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = y_test.index
+    >>> regressor = TimeSeriesForestRegressor(n_estimators=10, random_state=42)
+    >>> f = RecursiveTimeSeriesRegressionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train, fh=fh)
+    RecursiveTimeSeriesRegressionForecaster(...)
+    >>> y_pred = f.predict()
     """
 
     _tags = {
@@ -1456,6 +1565,22 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
+    
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sktime.regression.interval_based import TimeSeriesForestRegressor
+    >>> from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
+
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = [1, 2, 3]
+    >>> regressor = TimeSeriesForestRegressor(n_estimators=10, random_state=42)
+    >>> f = DirRecTimeSeriesRegressionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train, fh=fh)
+    DirRecTimeSeriesRegressionForecaster(...)
+    >>> y_pred = f.predict()
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -1957,6 +2082,21 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         * ``False`` : Window size differs for each forecasting horizon. Window
           length corresponds to (total observations + 1 - window_length +
           forecasting horizon).
+    
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.forecasting.compose import DirectReductionForecaster
+
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> regressor = LinearRegression()
+    >>> f = DirectReductionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train, fh=[1,2,3])
+    DirectReductionForecaster(...)
+    >>> y_pred = f.predict()
     """
 
     _tags = {
@@ -2373,6 +2513,22 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         "panel" = second lowest level, one reduced model per panel level (-2)
         if there are 2 or less levels, "global" and "panel" result in the same
         if there is only 1 level (single time series), all three settings agree
+    
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.split import temporal_train_test_split
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.forecasting.compose import RecursiveReductionForecaster
+
+    >>> y = load_airline()
+    >>> y_train, y_test = temporal_train_test_split(y)
+    >>> fh = y_test.index
+    >>> regressor = LinearRegression()
+    >>> f = RecursiveReductionForecaster(regressor, window_length=12)
+    >>> f.fit(y_train)
+    RecursiveReductionForecaster(...)
+    >>> y_pred = f.predict(fh=fh)
     """
 
     _tags = {
