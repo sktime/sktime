@@ -17,6 +17,28 @@ import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+
+# Module-level cache for statsforecast >= 1.6.0 parallel support check
+_statsforecast_parallel_supported_cache = None
+
+
+def _statsforecast_parallel_supported():
+    """Check if installed statsforecast version supports the parallel argument."""
+    global _statsforecast_parallel_supported_cache
+    if _statsforecast_parallel_supported_cache is not None:
+        return _statsforecast_parallel_supported_cache
+    try:
+        from importlib.metadata import version, PackageNotFoundError
+        try:
+            sf_version = version("statsforecast")
+            from packaging.version import Version
+            result = Version(sf_version) < Version("1.6.0")
+        except PackageNotFoundError:
+            result = True
+    except ImportError:
+        result = True
+    _statsforecast_parallel_supported_cache = result
+    return result
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
@@ -276,7 +298,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         return AutoARIMA
 
     def _get_statsforecast_params(self):
-        return {
+        params = {
             "d": self.d,
             "D": self.D,
             "max_p": self.max_p,
@@ -307,10 +329,14 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
             "allowmean": self.with_intercept,
             "blambda": self.blambda,
             "biasadj": self.biasadj,
-            "parallel": self.parallel,
-            "num_cores": self.n_jobs,
             "season_length": self.sp,
         }
+
+        # statsforecast >= 1.6.0 deprecated the parallel argument (GH#5207)
+        if _statsforecast_parallel_supported():
+            params["parallel"] = self.parallel
+            params["num_cores"] = self.n_jobs
+        return params
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
