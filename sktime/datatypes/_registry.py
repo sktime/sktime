@@ -200,6 +200,70 @@ def generate_mtype_list(scitype=None, soft_deps="all"):
     return [x[0] for x in generate_mtype_register(scitype=scitype, soft_deps=soft_deps)]
 
 
+def generate_scitype_cls_list():
+    """Generate list of scitype classes using lookup.
+
+    Returns
+    -------
+    classes : list of classes
+        all classes that are scitypes, i.e. subclasses of BaseDatatype
+        and starting with "Scitype"
+    """
+    return _generate_scitype_cls_list().copy()
+
+
+@lru_cache(maxsize=3)
+def _generate_scitype_cls_list():
+    """Generate list of scitype classes using lookup, cached function."""
+    # Directly import scitype base classes to avoid circular imports from _all_classes
+    from sktime.datatypes._alignment._base import ScitypeAlignment
+    from sktime.datatypes._hierarchical._base import ScitypeHierarchical
+    from sktime.datatypes._panel._base import ScitypePanel
+    from sktime.datatypes._proba._base import ScitypeProba
+    from sktime.datatypes._series._base import ScitypeSeries
+    from sktime.datatypes._table._base import ScitypeTable
+
+    classes = [
+        ScitypeAlignment,
+        ScitypeHierarchical,
+        ScitypePanel,
+        ScitypeProba,
+        ScitypeSeries,
+        ScitypeTable,
+    ]
+
+    return classes
+
+
+def generate_scitype_register():
+    """Generate scitype class register using lookup.
+
+    Returns
+    -------
+    register : list of tuples
+        each tuple corresponds to a scitype, elements as follows:
+
+        0 : string - name of the scitype as used throughout sktime and in datatypes
+        1 : string - plain English description of the scitype
+    """
+    return _generate_scitype_register().copy()
+
+
+@lru_cache(maxsize=3)
+def _generate_scitype_register():
+    """Generate scitype class register using lookup, cached function."""
+    classes = _generate_scitype_cls_list()
+
+    def to_tuple(cls):
+        """Return tuple of scitype register elements."""
+        scitype = cls.get_class_tag("scitype")
+        description = cls.get_class_tag("description")
+        return scitype, description
+
+    register = [to_tuple(x) for x in classes]
+    return register
+
+
 MTYPE_SOFT_DEPS_SERIES = {
     "xr.DataArray": "xarray",
     "dask_series": "dask",
@@ -221,6 +285,9 @@ MTYPE_SOFT_DEPS_HIERARCHICAL = {
     "polars_hierarchical": "polars",
 }
 
+# MTYPE_SOFT_DEPS is built from the per-scitype dicts
+# These are derived from mtype class python_dependencies tags
+# Individual dicts are kept for reference and potential future refactoring
 MTYPE_SOFT_DEPS = {}
 MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_SERIES)
 MTYPE_SOFT_DEPS.update(MTYPE_SOFT_DEPS_PANEL)
@@ -236,16 +303,10 @@ __all__ = [
 ]
 
 
-SCITYPE_REGISTER = [
-    ("Series", "uni- or multivariate time series"),
-    ("Panel", "panel of uni- or multivariate time series"),
-    ("Hierarchical", "hierarchical panel of time series with 3 or more levels"),
-    ("Alignment", "series or sequence alignment"),
-    ("Table", "data table with primitive column types"),
-    ("Proba", "probability distribution or distribution statistics, return types"),
-]
-
-SCITYPE_LIST = [x[0] for x in SCITYPE_REGISTER]
+# SCITYPE_REGISTER and SCITYPE_LIST will be initialized at the end of this module
+# after all function definitions are complete to avoid circular imports
+SCITYPE_REGISTER = None
+SCITYPE_LIST = None
 
 
 def mtype_to_scitype(mtype: str, return_unique=False, coerce_to_list=False):
@@ -381,3 +442,8 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
         # return only mtypes with soft dependencies present (or requiring none)
         mtypes = [m for m in mtypes if present(m)]
         return mtypes
+
+# Initialize SCITYPE_REGISTER and SCITYPE_LIST after all function definitions
+# This ensures that all imports are complete and circular imports are avoided
+SCITYPE_REGISTER = generate_scitype_register()
+SCITYPE_LIST = [x[0] for x in SCITYPE_REGISTER]
