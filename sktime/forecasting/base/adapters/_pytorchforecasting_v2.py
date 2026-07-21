@@ -247,7 +247,7 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         "authors": ["vedantag17"],
         "maintainers": ["vedantag17"],
         "python_dependencies": [
-            "pytorch-forecasting>=1.0.0",
+            "pytorch-forecasting>=1.8.0",
             "torch",
             "lightning",
         ],
