@@ -487,6 +487,19 @@ Structural time series models
 
     GreykiteForecaster
 
+Decline curve analysis forecasts
+--------------------------------
+
+.. currentmodule:: sktime.forecasting.arps_dca
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ArpsExponential
+    ArpsHyperbolic
+    ArpsHarmonic
+
 Deep learning based forecasters
 -------------------------------
 
