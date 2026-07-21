@@ -13,6 +13,19 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
+# minimal architecture used when model_path is None: a small, randomly-initialized
+# T0 model built locally (no checkpoint download), for testing / offline use
+_RANDOM_MODEL_CONFIG = {
+    "embed_dim": 32,
+    "num_layers": 1,
+    "num_heads": 2,
+    "mlp_hidden_dim": 64,
+    "patch_size": 8,
+    "group_every_n": 1,
+    "dropout": 0.0,
+    "quantile_levels": [0.1, 0.5, 0.9],
+}
+
 
 class T0Forecaster(BaseForecaster):
     """Interface to the T0 zero-shot forecaster by The Forecasting Company.
@@ -44,8 +57,14 @@ class T0Forecaster(BaseForecaster):
 
     Parameters
     ----------
-    model_path : str, default="theforecastingcompany/t0-alpha"
-        Path to the T0 HuggingFace model checkpoint.
+    model_path : str or None, default="theforecastingcompany/t0-alpha"
+        Path to the T0 HuggingFace model checkpoint. The default checkpoint is a
+        gated model on the HuggingFace Hub, so using it requires accepting the
+        vendor's license (see ``license_accepted``) and authenticating with a
+        HuggingFace token. If ``None``, a small randomly-initialized T0 model is
+        built locally instead of downloading any checkpoint - this produces
+        untrained (meaningless) forecasts and is intended only for testing or
+        offline use where the gated checkpoint is unavailable.
     device : str or None, default=None
         Device for inference, e.g., "cpu", "cuda", or "mps". If None, uses "cuda"
         when a CUDA device is available, otherwise "cpu".
@@ -54,6 +73,12 @@ class T0Forecaster(BaseForecaster):
     random_state : int or None, optional, default=None
         Random seed for reproducibility. T0's inference is deterministic, so this
         does not change the forecast; it is accepted for interface consistency.
+    license_accepted : bool, optional, default=False
+        Whether the user has read and accepted the license terms of the model at
+        ``model_path``. The default checkpoint is gated and licensed by The
+        Forecasting Company, so ``license_accepted`` must be set to ``True`` to
+        load a real checkpoint; otherwise ``fit`` raises. Ignored when
+        ``model_path`` is ``None`` (the local random model needs no license).
     ignore_deps : bool, optional, default=False
         If True, dependency checks are skipped.
 
@@ -76,7 +101,7 @@ class T0Forecaster(BaseForecaster):
     >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
     >>> y_train, y_test = temporal_train_test_split(y, test_size=12)
-    >>> forecaster = T0Forecaster(random_state=0)  # doctest: +SKIP
+    >>> forecaster = T0Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y_train)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
@@ -94,7 +119,7 @@ class T0Forecaster(BaseForecaster):
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
     >>> y_tr, y_te, X_tr, X_te = temporal_train_test_split(y, X, test_size=3)
-    >>> forecaster = T0Forecaster()  # doctest: +SKIP
+    >>> forecaster = T0Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y_tr, X=X_tr)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_te)  # doctest: +SKIP
 
@@ -103,7 +128,7 @@ class T0Forecaster(BaseForecaster):
     >>> from sktime.datasets import load_longley
     >>> _, y_multi = load_longley()  # 5-column economic indicators frame
     >>> y_multi_train = y_multi.iloc[:-3]
-    >>> forecaster = T0Forecaster()  # doctest: +SKIP
+    >>> forecaster = T0Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y_multi_train)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
@@ -135,16 +160,18 @@ class T0Forecaster(BaseForecaster):
 
     def __init__(
         self,
-        model_path: str = "theforecastingcompany/t0-alpha",
+        model_path: str | None = "theforecastingcompany/t0-alpha",
         device: str | None = None,
         context_length: int | None = None,
         random_state: int | None = None,
+        license_accepted: bool = False,
         ignore_deps: bool = False,
     ):
         self.model_path = model_path
         self.device = device
         self.context_length = context_length
         self.random_state = random_state
+        self.license_accepted = license_accepted
         self.ignore_deps = ignore_deps
 
         self.model_ = None
@@ -209,6 +236,40 @@ class T0Forecaster(BaseForecaster):
         if not hasattr(self, "model_") or self.model_ is None:
             self.model_ = self._load_model()
 
+    @classmethod
+    def print_license(cls):
+        """Print the license and notice shipped with the ``tfc-t0`` package."""
+        import importlib
+
+        dist = importlib.metadata.distribution("tfc-t0")
+        for fname in ("licenses/LICENSE", "licenses/NOTICE"):
+            text = dist.read_text(fname)
+            if text:
+                print(text)
+
+    def _check_license(self):
+        """Guard loading of a gated checkpoint behind explicit license acceptance.
+
+        Raises if a real checkpoint is requested (``model_path`` is not ``None``)
+        but the user has not set ``license_accepted=True``. The local random
+        model (``model_path=None``) needs no license and is exempt.
+        """
+        if self.model_path is not None and not self.license_accepted:
+            raise ValueError(
+                f"Use of the T0 checkpoint '{self.model_path}' is subject to the "
+                "license and access terms of its vendor, The Forecasting Company. "
+                "The default checkpoint is a gated model on the HuggingFace Hub: "
+                "access requires accepting the vendor's terms on the model page "
+                "and authenticating with a HuggingFace token. You must read and "
+                "accept those terms to use it. "
+                "To confirm that you have read and accepted the license terms, set "
+                "the `license_accepted` parameter to True. "
+                "To print and view the license shipped with the t0 package, call "
+                "`T0Forecaster.print_license()`. "
+                "Alternatively, set `model_path=None` to build a small "
+                "randomly-initialized model locally (untrained; for testing only)."
+            )
+
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
@@ -240,6 +301,7 @@ class T0Forecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._check_license()
         self.model_ = self._load_model()
 
         context = y
@@ -443,9 +505,12 @@ class T0Forecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        # model_path=None builds a small random-weight model locally, so the
+        # contract suite runs without downloading the gated t0-alpha checkpoint
+        # (forked-PR CI cannot authenticate to the HuggingFace Hub)
         return [
-            {"model_path": "theforecastingcompany/t0-alpha"},
-            {"model_path": "theforecastingcompany/t0-alpha", "random_state": 42},
+            {"model_path": None},
+            {"model_path": None, "random_state": 42},
         ]
 
 
@@ -463,13 +528,26 @@ class _CachedT0:
         self.model = None
 
     def load_from_checkpoint(self):
-        """Load the T0 model from a pretrained checkpoint."""
+        """Load the T0 model (pretrained checkpoint, or a local random model)."""
         if self.model is not None:
             return self.model
 
+        import torch
         from t0 import T0Forecaster as _T0Model
 
         model_path = self.t0_kwargs["pretrained_model_name_or_path"]
         device = self.t0_kwargs.get("device", "cpu")
-        self.model = _T0Model.from_pretrained(model_path, map_location=device).eval()
+
+        if model_path is None:
+            with torch.random.fork_rng(devices=[]):
+                torch.manual_seed(0)
+                model = _T0Model(**_RANDOM_MODEL_CONFIG)
+            self.model = model.eval().to(device)
+        else:
+            # load weights straight onto the target device (faster than
+            # load-then-.to); tfc-t0 uses HF Hub's PyTorchModelHubMixin, whose
+            # kwarg is ``map_location``
+            self.model = _T0Model.from_pretrained(
+                model_path, map_location=device
+            ).eval()
         return self.model
