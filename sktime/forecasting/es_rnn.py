@@ -111,6 +111,12 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         Defines the network output dimension, default=3
     lr : int
         Learning rate for training
+    custom_dataset_train : Dataset, default=None
+        A custom dataset to be used for training. If not provided, the default dataset
+        structure is used.
+    custom_dataset_pred : Dataset, default=None
+        A custom dataset to be used for prediction. If not provided, the default dataset
+        structure is used.
 
     References
     ----------
@@ -163,7 +169,16 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         custom_dataset_train=None,
         custom_dataset_pred=None,
     ) -> None:
-        super().__init__()
+        super().__init__(
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            criterion_kwargs=criterion_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
+        )
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.seasonality_type = seasonality_type
@@ -172,15 +187,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.window = window
         self.pred_len = pred_len
         self.stride = stride
-        self.batch_size = batch_size
-        self.num_epochs = num_epochs
-        self.optimizer = optimizer
         self.criterion = criterion
-        self.optimizer_kwargs = optimizer_kwargs
-        self.criterion_kwargs = criterion_kwargs
-        self.custom_dataset_train = custom_dataset_train
-        self.custom_dataset_pred = custom_dataset_pred
-        self.lr = lr
         if _check_soft_dependencies("torch", severity="none"):
             import torch
 
@@ -251,8 +258,8 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             if hasattr(self.custom_dataset_pred, "build_dataset") and callable(
                 self.custom_dataset_pred.build_dataset
             ):
-                self.custom_dataset_train.build_dataset(y)
-                dataset = self.custom_dataset_train
+                self.custom_dataset_pred.build_dataset(y)
+                dataset = self.custom_dataset_pred
             else:
                 raise NotImplementedError(
                     "Custom Dataset `build_dataset` method is not available. Please"
