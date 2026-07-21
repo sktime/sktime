@@ -1,0 +1,133 @@
+name: weekly forecasters test
+
+on:
+  schedule:
+    # Runs every Saturday at 03:00 UTC
+    - cron: "0 3 * * 6"
+
+  workflow_dispatch:
+
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collect-forecasters:
+    runs-on: ubuntu-latest
+    outputs:
+      forecasters: ${{ steps.get.outputs.forecasters }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install sktime
+        run: pip install .[dev]
+
+      - name: Get all forecasters and Python versions
+        id: get
+        run: |
+          python - <<EOF
+          import json
+
+          from sktime.registry import all_estimators
+          from sktime.utils.dependencies._dependencies import (
+              _get_lowest_compatible_python_version,
+          )
+
+          forecasters = all_estimators("forecaster")
+
+          matrix_data = []
+          for name, est_class in forecasters:
+              py_ver = _get_lowest_compatible_python_version(est_class)
+
+              matrix_data.append({
+                  "name": name,
+                  "python_version": py_ver,
+              })
+
+          n_forecasters = len(matrix_data)
+          print(f"Collected {n_forecasters} forecasters")
+
+          # GitHub Actions matrix limit is 256 jobs.
+          if n_forecasters > 250:
+            raise RuntimeError(
+                f"Collected {n_forecasters} forecasters, "
+                "which exceeds the safety limit of 250."
+            )
+
+          output_json = json.dumps(matrix_data)
+
+          with open("forecasters.json", "w") as f:
+              f.write(output_json)
+
+          print(output_json)
+          EOF
+
+          echo "forecasters=$(cat forecasters.json)" >> $GITHUB_OUTPUT
+
+  test-forecasters:
+    needs: collect-forecasters
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        forecaster: ${{ fromJson(needs.collect-forecasters.outputs.forecasters) }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.forecaster.python_version }}
+
+      - name: Install sktime
+        run: pip install .[dev]
+
+      - name: Install soft dependencies
+        run: |
+          python - <<EOF
+          from sktime.registry import deps
+
+          name = "${{ matrix.forecaster.name }}"
+          d = deps(name, include_test_deps=True)
+
+          if d:
+              with open("deps.txt", "w") as f:
+                  f.write("\n".join(d))
+          EOF
+
+          if [ -f deps.txt ]; then
+            pip install -r deps.txt
+          fi
+        continue-on-error: true
+
+      - name: Run targeted test
+        run: |
+          python - <<EOF
+          from sktime.registry import all_estimators
+          from sktime.utils.estimator_checks import check_estimator
+
+          name = "${{ matrix.forecaster.name }}"
+          print(f"Running test for: {name}")
+
+          forecasters = dict(all_estimators("forecaster"))
+          est = forecasters[name]
+
+          check_estimator(
+              estimator=est,
+              tests_to_run="test_fit_predict",
+              raise_exceptions=True,
+          )
+
+          print(f"PASS: {name}")
+          EOF
