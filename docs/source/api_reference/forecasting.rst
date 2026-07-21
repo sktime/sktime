@@ -588,6 +588,14 @@ See next section for foundation models.
 
     PyKANForecaster
 
+.. currentmodule:: sktime.forecasting.hypertrees
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HyperTreeSTLForecaster
+
 .. currentmodule:: sktime.forecasting.rbf
 
 .. autosummary::
