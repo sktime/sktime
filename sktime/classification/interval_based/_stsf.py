@@ -452,7 +452,11 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}
         else:
-            return {"n_estimators": 2}
+            return [
+                {"n_estimators": 2},
+                {"n_estimators": 3, "n_jobs": 2},  # Testing parallelization path
+                {"n_estimators": 2, "random_state": 42}  # Testing fixed seeding
+            ]
 
 
 def _fisher_score(X, y, classes, class_counts):
