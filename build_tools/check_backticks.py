@@ -28,14 +28,14 @@ def extract_docstrings(filename):
         if (
             isinstance(node, ast.Expr)
             and isinstance(node.value, ast.Constant)
-            and isinstance(node.value.value, str)
+            and isinstance(getattr(node.value, "value", None), str)
         ):
             # if the node is an expression and
             # its value is a constant and
             # constant's value is a string
             # the node represents a docstring
             # See https://docs.python.org/3/library/ast.html#abstract-grammar
-            docstring = node.value.value
+            docstring = getattr(node.value, "value")
             lineno = node.value.lineno
             docstrings[lineno] = docstring
 
