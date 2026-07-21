@@ -2114,7 +2114,7 @@ class capability__bootstrap_index(_BaseTag):
 
     _tags = {
         "tag_name": "capability:bootstrap_index",
-        "parent_type": "transformer",
+        "parent_type": ["transformer", "bootstrap"],
         "tag_type": "bool",
         "short_descr": "can the bootstrap return the index of bootstraped time series?",
         "user_facing": True,
