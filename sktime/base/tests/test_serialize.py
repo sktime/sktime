@@ -237,6 +237,9 @@ def test_invalid_load_type_raises():
 PRETRAINED_AVAILABLE = _check_soft_dependencies(
     ["transformers", "torch"], severity="none"
 )
+PEFT_AVAILABLE = _check_soft_dependencies(
+    ["peft", "transformers", "torch"], severity="none"
+)
 KERAS_AVAILABLE = _check_soft_dependencies("tensorflow", severity="none")
 LIGHTNING_AVAILABLE = _check_soft_dependencies(["lightning", "torch"], severity="none")
 TORCH_AVAILABLE = _check_soft_dependencies("torch", severity="none")
@@ -270,6 +273,50 @@ def test_pretrained_artifact_backend(tmp_path):
 
     assert (path / "config.json").exists()
     _assert_torch_state_equal(model, loaded)
+
+
+@pytest.mark.skipif(not PEFT_AVAILABLE, reason="requires peft, transformers and torch")
+def test_pretrained_artifact_backend_peft(tmp_path, monkeypatch):
+    """PEFT adapters retain their special base-model loading path."""
+    import torch
+    from peft import LoraConfig, get_peft_model
+    from transformers import BertConfig, BertModel
+
+    config = BertConfig(
+        hidden_size=8,
+        num_hidden_layers=1,
+        num_attention_heads=2,
+        intermediate_size=16,
+        vocab_size=32,
+    )
+    model = get_peft_model(
+        BertModel(config),
+        LoraConfig(target_modules=["query", "value"]),
+    )
+
+    class _ArtifactFactory:
+        @staticmethod
+        def _get_native_artifact_load_kwargs(name):
+            return {"model": BertModel(config)}
+
+    backend = _PretrainedArtifactBackend()
+    path = tmp_path / "peft"
+    path.mkdir()
+
+    assert backend.supports(model)
+    backend.save(model, path, estimator=None, name="model")
+    monkeypatch.setattr(backend, "_load_class", lambda record: type(model))
+    loaded = backend.load(
+        path,
+        {},
+        estimator=_ArtifactFactory(),
+        name="model",
+    )
+
+    expected = {k: v for k, v in model.state_dict().items() if "lora_" in k}
+    actual = {k: v for k, v in loaded.state_dict().items() if "lora_" in k}
+    assert expected.keys() == actual.keys()
+    assert all(torch.equal(expected[k], actual[k]) for k in expected)
 
 
 @pytest.mark.skipif(not KERAS_AVAILABLE, reason="requires tensorflow")
