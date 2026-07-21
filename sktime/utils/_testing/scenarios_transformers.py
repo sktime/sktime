@@ -100,6 +100,11 @@ class TransformerTestScenario(TestScenario, BaseObject):
             if pd.RangeIndex not in supported_idx_types:
                 return False
 
+        # skip scenarios with negative values for estimators that don't support them
+        has_neg = self.get_tag("has-negative-data", False, raise_error=False)
+        if has_neg and not get_tag(obj, "capability:supports-negative-data"):
+            return False
+
         return True
 
     def get_args(self, key, obj=None, deepcopy_args=False):
