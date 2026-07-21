@@ -48,7 +48,7 @@ def cv_splitter_classification():
 def test_classification_continues_after_failure(
     tmp_path, cv_splitter_classification, caplog
 ):
-    """Failed classification pair is skipped; remaining pairs still run."""
+    """Failed classification pair is recorded with NaN; remaining pairs still run."""
     benchmark = ClassificationBenchmark()
     benchmark.add_estimator(_FailingClassifier())
     benchmark.add_estimator(DummyClassifier())
@@ -59,9 +59,15 @@ def test_classification_continues_after_failure(
     with caplog.at_level(logging.WARNING):
         results_df = benchmark.run(tmp_path / "results.csv")
 
-    assert len(results_df) == 1
-    assert results_df["model_id"].iloc[0] == "DummyClassifier"
-    assert "FailingClassifier" not in results_df["model_id"].values
+    assert len(results_df) == 2
+    assert set(results_df["model_id"]) == {"DummyClassifier", "_FailingClassifier"}
+
+    failing_row = results_df.loc[results_df["model_id"] == "_FailingClassifier"].iloc[0]
+    assert pd.isna(failing_row["accuracy_score_mean"])
+    assert pd.isna(failing_row["fit_time_mean"])
+
+    success_row = results_df.loc[results_df["model_id"] == "DummyClassifier"].iloc[0]
+    assert not pd.isna(success_row["accuracy_score_mean"])
 
     failures = benchmark.failed_experiments
     assert len(failures) == 1
@@ -77,7 +83,7 @@ def test_classification_continues_after_failure(
 
 
 def test_forecasting_continues_after_failure(tmp_path, cv_splitter_forecasting, caplog):
-    """Failed forecasting pair is skipped; remaining pairs still run."""
+    """Failed forecasting pair is recorded with NaN; remaining pairs still run."""
     benchmark = ForecastingBenchmark()
     benchmark.add_estimator(_FailingForecaster())
     benchmark.add_estimator(NaiveForecaster(strategy="last"))
@@ -88,9 +94,12 @@ def test_forecasting_continues_after_failure(tmp_path, cv_splitter_forecasting, 
     with caplog.at_level(logging.WARNING):
         results_df = benchmark.run(tmp_path / "results.csv")
 
-    assert len(results_df) == 1
-    assert results_df["model_id"].iloc[0] == "NaiveForecaster"
-    assert "_FailingForecaster" not in results_df["model_id"].values
+    assert len(results_df) == 2
+    assert set(results_df["model_id"]) == {"NaiveForecaster", "_FailingForecaster"}
+
+    failing_row = results_df.loc[results_df["model_id"] == "_FailingForecaster"].iloc[0]
+    assert pd.isna(failing_row["MeanAbsoluteError_mean"])
+    assert pd.isna(failing_row["fit_time_mean"])
 
     failures = benchmark.failed_experiments
     assert len(failures) == 1
@@ -118,8 +127,13 @@ def test_multiple_failures_all_reported(tmp_path, cv_splitter_classification, ca
     with caplog.at_level(logging.WARNING):
         results_df = benchmark.run(tmp_path / "results.csv")
 
-    assert len(results_df) == 2
-    assert set(results_df["model_id"]) == {"DummyClassifier"}
+    assert len(results_df) == 4
+    assert set(results_df["model_id"]) == {"DummyClassifier", "_FailingClassifier"}
+
+    failing_rows = results_df.loc[results_df["model_id"] == "_FailingClassifier"]
+    assert len(failing_rows) == 2
+    assert failing_rows["accuracy_score_mean"].isna().all()
+
     assert len(benchmark.failed_experiments) == 2
     assert {f.model_id for f in benchmark.failed_experiments} == {"_FailingClassifier"}
     assert {f.task_id for f in benchmark.failed_experiments} == {
@@ -129,8 +143,8 @@ def test_multiple_failures_all_reported(tmp_path, cv_splitter_classification, ca
     assert "Benchmark completed with 2 failed task-estimator pair(s)" in caplog.text
 
 
-def test_failed_pair_not_saved_to_checkpoint(tmp_path, cv_splitter_classification):
-    """Failed pairs are absent from saved results; successful pairs are persisted."""
+def test_failed_pair_saved_to_checkpoint_with_nan(tmp_path, cv_splitter_classification):
+    """Failed pairs are persisted with NaN scores; successful pairs are persisted."""
     results_file = tmp_path / "results.csv"
 
     benchmark = ClassificationBenchmark()
@@ -142,8 +156,11 @@ def test_failed_pair_not_saved_to_checkpoint(tmp_path, cv_splitter_classificatio
     benchmark.run(results_file)
 
     saved_df = pd.read_csv(results_file)
-    assert len(saved_df) == 1
-    assert saved_df["model_id"].iloc[0] == "DummyClassifier"
+    assert len(saved_df) == 2
+    assert set(saved_df["model_id"]) == {"DummyClassifier", "_FailingClassifier"}
+
+    failing_row = saved_df.loc[saved_df["model_id"] == "_FailingClassifier"].iloc[0]
+    assert pd.isna(failing_row["means.accuracy_score"])
 
 
 def test_rerun_retries_failed_pair_after_partial_success(
@@ -171,14 +188,14 @@ def test_rerun_retries_failed_pair_after_partial_success(
 
     results_df = benchmark2.run(results_file)
 
-    assert len(results_df) == 1
+    assert len(results_df) == 2
     assert len(benchmark2.failed_experiments) == 1
 
 
-def test_all_pairs_fail_returns_empty_results(
+def test_all_pairs_fail_returns_nan_results(
     tmp_path, cv_splitter_classification, caplog
 ):
-    """When every pair fails, results are empty and failures are reported."""
+    """When every pair fails, results contain NaN rows with expected columns."""
     benchmark = ClassificationBenchmark()
     benchmark.add_estimator(_FailingClassifier())
     benchmark.add_task(
@@ -188,7 +205,12 @@ def test_all_pairs_fail_returns_empty_results(
     with caplog.at_level(logging.WARNING):
         results_df = benchmark.run(tmp_path / "results.csv")
 
-    assert results_df.empty
+    assert len(results_df) == 1
+    assert results_df["model_id"].iloc[0] == "_FailingClassifier"
+    assert pd.isna(results_df["accuracy_score_mean"].iloc[0])
+    assert pd.isna(results_df["fit_time_mean"].iloc[0])
+    assert "validation_id" in results_df.columns
+    assert "model_id" in results_df.columns
     assert len(benchmark.failed_experiments) == 1
     assert "Benchmark completed with 1 failed task-estimator pair(s)" in caplog.text
 
