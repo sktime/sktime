@@ -50,9 +50,7 @@ def test_load_same_version_no_warning():
         loaded = load(serial)
 
     # Filter for UserWarning
-    user_warnings = [
-        w for w in record if issubclass(w.category, UserWarning)
-    ]
+    user_warnings = [w for w in record if issubclass(w.category, UserWarning)]
     assert len(user_warnings) == 0
     assert isinstance(loaded, NaiveForecaster)
 
