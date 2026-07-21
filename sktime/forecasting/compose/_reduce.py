@@ -1621,6 +1621,9 @@ def make_reduction(
     if scitype == "infer":
         scitype = _infer_scitype(estimator)
 
+    if scitype == "regressor_proba" and strategy == "recursive":
+        strategy = "direct"
+
     Forecaster = _get_forecaster(scitype, strategy)
 
     dispatch_params = {
