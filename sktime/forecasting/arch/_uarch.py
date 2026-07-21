@@ -166,6 +166,7 @@ class ARCH(BaseForecaster):
         "capability:missing_values": False,
         "capability:pred_int": True,
         "capability:exogenous": False,
+        "capability:non_contiguous_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
     }
@@ -230,10 +231,10 @@ class ARCH(BaseForecaster):
         self.random_state = random_state
         self.reindex = reindex
 
+        super().__init__()
+
         if self.mean in ["ARX", "HARX"]:
             self.set_tags(**{"capability:exogenous": True})
-
-        super().__init__()
 
     def _fit(self, y, X=None, fh=None):
         """Fit the training data to the estimator.
