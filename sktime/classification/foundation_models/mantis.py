@@ -112,8 +112,8 @@ default="full"
         # -------------------
         "tests:vm": True,
         "tests:skip_by_name": [
-            "test_fit_idempotent",
-            "test_multiprocessing_idempotent",
+            "test_deepcopy_fitted",
+            "test_deepcopy_fitted_predict",
         ],
     }
 
