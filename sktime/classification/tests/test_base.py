@@ -12,6 +12,7 @@ from sklearn.model_selection import KFold
 
 from sktime.classification.base import BaseClassifier
 from sktime.classification.deep_learning.base import BaseDeepClassifier
+from sktime.classification.deep_learning.base._base_torch import BaseDeepClassifierPytorch
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
 from sktime.tests.test_switch import run_test_module_changed
@@ -74,6 +75,30 @@ class _DummyDeepClassifierFull(BaseDeepClassifier):
 
     def _fit(self, X, y):
         return self
+    
+class _DummyDeepClassifierPytorch(BaseDeepClassifierPytorch):
+    """Dummy classifier for PyTorch base test."""
+
+    def __init__(self, num_epochs=1):
+        super().__init__(num_epochs=num_epochs)
+
+    def _build_network(self, X, y):
+        import torch.nn as nn
+
+        n_channels, series_length = X.shape[1:]
+        n_classes = len(np.unique(y))
+
+        class Net(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.flatten = nn.Flatten()
+                self.fc = nn.Linear(n_channels * series_length, n_classes)
+
+            def forward(self, X):
+                X = self.flatten(X)
+                return self.fc(X)
+
+        return Net()
 
 
 class _DummyHandlesAllInput(BaseClassifier):
@@ -600,3 +625,22 @@ def test_save_estimator_using_cloudpickle(foo):
         assert est.foo(2) == loaded_est.foo(2)
     else:
         assert est.foo == loaded_est.foo
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if torch not available",
+)
+def test_pytorch_deep_estimator_dummy():
+    """Check if the PyTorch base class logic works with a dummy."""
+
+    X, y = make_classification_problem(n_instances=10, n_timepoints=10)
+    
+    clf = _DummyDeepClassifierPytorch(num_epochs=1)
+    clf.fit(X, y)
+    y_pred = clf.predict(X)
+    
+    assert clf.is_fitted
+    assert len(y_pred) == len(y)
+    assert y_pred.ndim == 1
+    assert set(y_pred).issubset(set(y))

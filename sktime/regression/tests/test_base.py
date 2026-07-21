@@ -11,6 +11,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.regression.base import BaseRegressor
 from sktime.regression.deep_learning.base import BaseDeepRegressor
+from sktime.regression.deep_learning.base._base_torch import BaseDeepRegressorTorch
 from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
 from sktime.regression.dummy import DummyRegressor
 from sktime.utils._testing.panel import (
@@ -67,7 +68,29 @@ class _DummyDeepRegressorFull(BaseDeepRegressor):
 
     def _fit(self, X, y):
         return self
+    
+class _DummyDeepRegressorTorch(BaseDeepRegressorTorch):
+    """Dummy regressor for PyTorch base test."""
 
+    def __init__(self, num_epochs=1):
+        super().__init__(num_epochs=num_epochs)
+
+    def _build_network(self, X):
+        import torch.nn as nn
+
+        n_channels, series_length = X.shape[1:]
+
+        class Net(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.flatten = nn.Flatten()
+                self.fc = nn.Linear(n_channels * series_length, 1)
+
+            def forward(self, X):
+                X = self.flatten(X)
+                return self.fc(X)
+
+        return Net()
 
 class _DummyHandlesAllInput(BaseRegressor):
     """Dummy regressor for testing base class fit/predict."""
@@ -420,3 +443,19 @@ def test_save_estimator_using_cloudpickle(foo):
         assert est.foo(2) == loaded_est.foo(2)
     else:
         assert est.foo == loaded_est.foo
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none"),
+    reason="skip test if torch not available",
+)
+def test_pytorch_deep_regressor_dummy():
+    """Check if the PyTorch regressor base class logic works with a dummy."""
+    X, y = make_regression_problem(n_instances=10, n_timepoints=10)
+
+    reg = _DummyDeepRegressorTorch(num_epochs=1)
+    reg.fit(X, y)
+    y_pred = reg.predict(X)
+
+    assert reg.is_fitted
+    assert len(y_pred) == len(y)
+    assert y_pred.ndim == 1
