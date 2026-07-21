@@ -142,8 +142,8 @@ class SubLOF(BaseDetector):
 
     def __init__(
         self,
-        n_neighbors,
         window_size,
+        n_neighbors=20,
         *,
         algorithm="auto",
         leaf_size=30,
@@ -214,6 +214,14 @@ class SubLOF(BaseDetector):
 
         breaks = [x_min + interval_size * i for i in range(n_intervals)]
         interval_range = pd.IntervalIndex.from_breaks(breaks, closed="left")
+
+        # if the length of x is not divisible by interval_size, change the last interval
+        if np.mod(len(x), interval_size) > 0:
+            interval_range = list(interval_range)[:-1]
+            interval_range.append(
+                pd.Interval(left=len(x) - interval_size, right=len(x), closed="left")
+            )
+
         return interval_range
 
     def _predict(self, X):
