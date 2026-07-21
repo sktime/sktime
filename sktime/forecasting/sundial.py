@@ -23,7 +23,9 @@ def _empirical_quantiles_1d(samples, alpha):
     weights = np.ones(len(spl), dtype=float)
     weights = weights / weights.sum()
     cum_weights = np.cumsum(weights)
-    return np.array([spl[np.searchsorted(cum_weights, a)] for a in alpha])
+    idxs = np.searchsorted(cum_weights, alpha)
+    idxs = np.clip(idxs, 0, len(spl) - 1)
+    return spl[idxs]
 
 
 class SundialForecaster(BaseForecaster):
@@ -464,7 +466,6 @@ class SundialForecaster(BaseForecaster):
         """
         samples, fh, preds_idx = self._generate_samples(fh)
 
-        alpha = [round(i, 3) for i in alpha]
         preds = samples[:, :, preds_idx]
         n_series, _, n_horizon = preds.shape
         quantiles = np.empty((n_series, n_horizon, len(alpha)))

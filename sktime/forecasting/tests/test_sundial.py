@@ -62,3 +62,16 @@ def test_sundial_predict_proba_empirical_consistency(n_columns):
     assert sparse_dist.index.equals(sparse_index)
     sparse_quantiles = forecaster.predict_quantiles(fh=sparse_fh, alpha=alpha)
     assert_frame_equal(sparse_quantiles, sparse_dist.quantile(alpha))
+
+    near_boundary_alpha = [0.1, 0.5, 0.9998]
+    near_boundary_quantiles = forecaster.predict_quantiles(
+        fh=fh, alpha=near_boundary_alpha
+    )
+    assert (
+        near_boundary_quantiles.columns.get_level_values(1).unique().tolist()
+        == near_boundary_alpha
+    )
+    assert_frame_equal(
+        near_boundary_quantiles,
+        pred_dist.quantile(near_boundary_alpha),
+    )
