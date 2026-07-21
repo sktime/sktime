@@ -12,6 +12,7 @@ by `sktime.benchmarking._results_persistence`.
 import abc
 import ast
 import json
+import pickle
 from pathlib import Path
 
 import pandas as pd
@@ -421,6 +422,66 @@ class CSVStorageHandler(BaseStorageHandler):
         return path.suffix == ".csv"
 
 
+class PickleStorageHandler(BaseStorageHandler):
+    """Storage handler for pickle files, with ending .pkl or .pickle.
+
+    Loads and saves results in Python's binary pickle format.
+
+    Unlike the JSON, Parquet and CSV handlers, this handler serializes the
+    ``ResultObject`` instances directly, without an intermediate conversion to a
+    tabular or record-oriented representation. As a consequence:
+
+    - The full result objects, including ``ground_truth``, ``predictions`` and
+      ``train_data`` (returned when ``return_data=True``), are stored and
+      restored losslessly, regardless of the index type of the underlying
+      ``pandas`` objects (e.g. ``PeriodIndex``, ``DatetimeIndex``,
+      ``MultiIndex``). This is the recommended backend when ``return_data=True``,
+      as the tabular backends can lose information or fail to serialize such
+      indices.
+    - The on-disk representation is a compact binary blob, which is typically
+      much smaller than the equivalent CSV or JSON file. This makes it a good
+      choice for benchmarking runs over many models and datasets with
+      ``return_data=True``.
+
+    Warning
+    -------
+    The pickle format is not secure. Only load result files that you have
+    generated yourself or that come from a trusted source, as loading a
+    maliciously crafted pickle file can execute arbitrary code.
+
+    Parameters
+    ----------
+    path : str, or Path coercible
+        The path to the file to save to or load
+    """
+
+    def save(self, results: list[ResultObject]):
+        """Save the results to a pickle file.
+
+        Parameters
+        ----------
+        results : ResultObject
+            The results to save.
+        """
+        with open(self.path, "wb") as f:
+            pickle.dump(results, f)
+
+    def _load(self) -> list[ResultObject]:
+        """Load the results from a pickle file.
+
+        Returns
+        -------
+        list[ResultObject]
+            The loaded results.
+        """
+        with open(self.path, "rb") as f:
+            return pickle.load(f)
+
+    @staticmethod
+    def is_applicable(path):
+        return path.suffix in (".pkl", ".pickle")
+
+
 class NullStorageHandler(BaseStorageHandler):
     """Storage handler for no file access.
 
@@ -466,6 +527,7 @@ STORAGE_HANDLERS = [
     JSONStorageHandler,
     ParquetStorageHandler,
     CSVStorageHandler,
+    PickleStorageHandler,
 ]
 
 
