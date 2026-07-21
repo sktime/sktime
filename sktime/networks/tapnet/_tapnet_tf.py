@@ -5,6 +5,12 @@ import math
 import numpy as np
 
 from sktime.networks.base import BaseDeepNetwork
+from sktime.utils.dependencies import _safe_import
+
+register_keras_serializable = _safe_import(
+    "tensorflow.keras.utils.register_keras_serializable",
+    return_object="None",
+)
 
 
 def _tapnet_gather_channels(x, indices):
@@ -12,6 +18,12 @@ def _tapnet_gather_channels(x, indices):
     import tensorflow as tf
 
     return tf.gather(x, indices=indices, axis=2)
+
+
+if register_keras_serializable is not None:
+    _tapnet_gather_channels = register_keras_serializable(package="sktime")(
+        _tapnet_gather_channels
+    )
 
 
 class TapNetNetwork(BaseDeepNetwork):
