@@ -109,3 +109,78 @@ def test_ARCH_insample():
     assert np.allclose(
         sktime_pred_mean.values, arch_model_arch_pred_mean.values
     ) and np.allclose(sktime_pred_var.values, arch_model_arch_pred_var.values)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ARCH),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_ARCH_with_exogenous():
+    """Test ARX-GARCH with exogenous variables against arch package.
+
+    This test verifies that exogenous variables are correctly passed through
+    to the underlying arch package when using ARX or HARX mean models.
+    Regression test for bug where super().__init__() reset dynamic tags.
+    """
+    from arch import arch_model
+
+    # Generate returns data and exogenous variable
+    np.random.seed(42)
+    n_train = 100
+    n_forecast = 3
+    
+    date_range = pd.date_range(start="2020-01-03", periods=n_train + n_forecast, freq="B")
+    y = pd.Series(
+        np.random.normal(loc=0, scale=0.02, size=n_train),
+        index=pd.PeriodIndex(date_range[:n_train], freq="D"),
+    )
+    # Create exogenous variable for full period
+    X_full = pd.DataFrame(
+        {"exog": np.random.normal(loc=0, scale=0.01, size=n_train + n_forecast)},
+        index=pd.PeriodIndex(date_range, freq="D"),
+    )
+    X_train = X_full.iloc[:n_train]
+    X_forecast = X_full.iloc[n_train : n_train + n_forecast]
+
+    # Fit sktime ARX-GARCH model
+    sktime_model = ARCH(
+        mean="ARX",
+        lags=1,
+        vol="GARCH",
+        p=1,
+        q=1,
+        dist="Normal",
+        method="analytic",
+        random_state=42,
+        rescale=False,
+    )
+    sktime_model.fit(y, X=X_train)
+    
+    # Verify that exogenous capability is enabled
+    assert sktime_model.get_tag("capability:exogenous") is True
+    
+    # Predict with exogenous variables (X_forecast must match horizon exactly)
+    sktime_pred = sktime_model.predict(fh=[1, 2, 3], X=X_forecast)
+
+    # Fit arch package model directly for comparison
+    arch_model_direct = arch_model(
+        y,
+        x=X_train,
+        mean="ARX",
+        lags=1,
+        vol="GARCH",
+        p=1,
+        q=1,
+        dist="Normal",
+        rescale=False,
+    )
+    arch_fitted = arch_model_direct.fit(disp="off")
+    
+    # Forecast with arch package
+    x_forecast_dict = {col: X_forecast[col].values for col in X_forecast.columns}
+    arch_pred = arch_fitted.forecast(
+        horizon=3, x=x_forecast_dict, method="analytic"
+    )
+
+    # Compare predictions - should be very close
+    assert np.allclose(sktime_pred.values, arch_pred.mean.iloc[-1, :3].values, rtol=1e-5)
