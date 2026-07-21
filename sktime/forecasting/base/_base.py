@@ -916,9 +916,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             ``X.index`` must contain ``fh`` index reference.
 
         cov : bool, optional (default=False)
-            if False, returns marginal variance forecasts.
-            if True, returns covariance matrix forecasts, i.e., covariances
-            between time points as well as variances, see ``Returns`` below.
+            currently unused, present for downwards compatibility and future extension
 
         Returns
         -------
