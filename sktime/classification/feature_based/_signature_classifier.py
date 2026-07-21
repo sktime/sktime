@@ -13,10 +13,10 @@ from sklearn.pipeline import Pipeline
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.signature_based._checks import (
+from sktime.transformations.signature_based._checks import (
     _handle_sktime_signatures,
 )
-from sktime.transformations.panel.signature_based._signature_method import (
+from sktime.transformations.signature_based._signature_method import (
     SignatureTransformer,
 )
 
@@ -107,7 +107,7 @@ class SignatureClassifier(BaseClassifier):
         "classifier_type": "feature",
         # testing configuration
         # ---------------------
-        "tests:libs": ["sktime.transformations.panel.signature_based"],
+        "tests:libs": ["sktime.transformations.signature_based"],
         "tests:skip_by_name": [  # tagged in issue #2490
             "test_classifier_on_unit_test_data",
             "test_classifier_on_basic_motions",
@@ -148,7 +148,6 @@ class SignatureClassifier(BaseClassifier):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self.signature_method = SignatureTransformer(

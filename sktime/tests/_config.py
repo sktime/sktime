@@ -41,7 +41,6 @@ EXCLUDE_ESTIMATORS = [
     "EditDist",
     "LSTMFCNClassifier",
     "MLPClassifier",
-    "MLPRegressor",
     "ResNetRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
@@ -104,9 +103,6 @@ EXCLUDED_TESTS = {
     "DynamicFactor": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
-    "ARIMA": [
-        "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
@@ -124,13 +120,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    "ClusterSegmenter": [
-        "test_doctest_examples",
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-        "test_output_type",
-    ],
     "GreedyGaussianSegmentation": [
         "test_predict_points",
         "test_predict_segments",
@@ -144,9 +133,6 @@ EXCLUDED_TESTS = {
         "test_multioutput",
         "test_classifier_on_unit_test_data",
     ],
-    "ARLagOrderSelector": [
-        "test_doctest_examples",  # doctest fails, see #8129
-    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -154,9 +140,7 @@ EXCLUDED_TESTS = {
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
-        "CAPA",
         "CNTCNetwork",
-        "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
         "ContractableBOSS",
@@ -186,17 +170,11 @@ EXCLUDED_TESTS_BY_TEST = {
         "MCDCNNRegressor",
         "MLPNetwork",
         "MUSE",
-        "MVCAPA",
-        "MatrixProfile",
-        "MovingWindow",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
         "OptionalPassthrough",
-        "PAA",
         "PAAlegacy",
-        "PCATransformer",
-        "PELT",
         "PaddingTransformer",
         "PlateauFinder",
         "Prophetverse",
@@ -205,19 +183,16 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
         "RandomSamplesAugmenter",
-        "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
         "SFA",
         "SFAFast",
-        "SeededBinarySegmentation",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
         "SlopeTransformer",
         "StackingForecaster",
-        "StatThresholdAnomaliser",
         "SummaryClassifier",
         "SupervisedTimeSeriesForest",
         "TEASER",

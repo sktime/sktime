@@ -47,15 +47,62 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         Size of the bottleneck layer.
     depth : int, default=6
         Number of inception modules to stack.
-    activation: str or None, default=None
-        Activation function used for the final output layer.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
-    activation_hidden : str, default="relu"
-        Activation function used for hidden layers (output from inception modules).
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_inception : str or None, default=None
-        Activation function used inside the inception modules.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu', None
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
+        ``ELU``, ``SELU``, ``GELU``.
+    activation_hidden : str, Callable, or None, default="ReLU"
+        Activation applied to the hidden layers (output from inception modules).
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
+        ``ELU``, ``SELU``, ``GELU``.
+    activation_inception : str, Callable, or None, default=None
+        Activation applied inside the inception modules.
+
+        Permitted values:
+
+        - ``None``: no activation is applied inside the inception modules.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
+        ``ELU``, ``SELU``, ``GELU``, None.
     optimizer : case insensitive str or None or an instance of optimizers
         defined in torch.optim, default = "Adam"
         The optimizer to use for training the model.
@@ -70,6 +117,12 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         Currently only learning rate schedulers are supported as callbacks.
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "Accuracy", "F1Score", "Precision", "Recall"
     lr : float, default = 0.001
         The learning rate to use for the optimizer.
     init_weights : str or None, default = None
@@ -129,6 +182,12 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         "capability:random_state": True,
     }
 
+    _instantiate_activation_vars = (
+        "activation",
+        "activation_hidden",
+        "activation_inception",
+    )
+
     def __init__(
         self: "InceptionTimeClassifierTorch",
         num_epochs: int = 1500,
@@ -140,15 +199,16 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         use_bottleneck: bool = True,
         bottleneck_size: int = 32,
         depth: int = 6,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
-        activation_inception: str | None = None,
+        activation: str | Callable | None = None,
+        activation_hidden: str | Callable = "ReLU",
+        activation_inception: str | Callable | None = None,
         optimizer: str | None | Callable = "Adam",
         optimizer_kwargs: dict | None = None,
         criterion: str | None | Callable = "CrossEntropyLoss",
         criterion_kwargs: dict | None = None,
         callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         init_weights: str | None = None,
         verbose: bool = False,
@@ -172,6 +232,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.init_weights = init_weights
         self.verbose = verbose
@@ -187,6 +248,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             callbacks=self.callbacks,
             activation=self.activation,
             callback_kwargs=self.callback_kwargs,
+            metrics=self.metrics,
             lr=self.lr,
             verbose=self.verbose,
             random_state=self.random_state,
@@ -199,7 +261,6 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # input_size and num_classes to be inferred from the data
@@ -244,9 +305,9 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             depth=self.depth,
             kernel_size=self.kernel_size,
             random_state=self.random_state,
-            activation=self._validated_activation,
-            activation_hidden=self.activation_hidden,
-            activation_inception=self.activation_inception,
+            activation=self._callable_activations["activation"],
+            activation_hidden=self._callable_activations["activation_hidden"],
+            activation_inception=self._callable_activations["activation_inception"],
             init_weights=self.init_weights,
         )
 
@@ -268,6 +329,8 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             "n_filters": 8,
             "depth": 3,
             "num_epochs": 10,
+            "activation_hidden": "LeakyReLU",
+            "activation_inception": "Tanh",
             "batch_size": 2,
         }
         params2 = {
@@ -277,7 +340,23 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
             "depth": 6,
             "kernel_size": 20,
             "num_epochs": 12,
+            "activation_inception": "tanh",
+            "activation_hidden": "ReLU",
             "batch_size": 4,
         }
 
-        return [params1, params2]
+        params = [params1, params2]
+
+        from sktime.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies("torch", severity="none"):
+            import torch
+
+            params.append(
+                {
+                    "activation_inception": torch.nn.Tanh(),
+                    "activation_hidden": torch.nn.ReLU(inplace=False),
+                    "activation": None,
+                }
+            )
+        return params

@@ -5,7 +5,7 @@
 __author__ = ["aiwalter", "fkiraly"]
 __all__ = ["OptionalPassthrough"]
 
-from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.transformations.base import _DelegatedTransformer
 from sktime.transformations.compose._common import CORE_MTYPES
 from sktime.transformations.compose._id import Id
 
@@ -42,8 +42,8 @@ class OptionalPassthrough(_DelegatedTransformer):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.transformations.compose import OptionalPassthrough
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
-    >>> from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    >>> from sktime.transformations.detrend import Deseasonalizer
+    >>> from sktime.transformations.adapt import TabularToSeriesAdaptor
     >>> from sktime.forecasting.compose import TransformedTargetForecaster
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.split import SlidingWindowSplitter
@@ -143,6 +143,6 @@ class OptionalPassthrough(_DelegatedTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
 
         return {"transformer": BoxCoxTransformer(), "passthrough": False}

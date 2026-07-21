@@ -28,16 +28,16 @@ class BaseGridSearch(_DelegatedForecaster):
         self,
         forecaster,
         cv,
-        strategy="refit",
-        backend="loky",
-        refit=False,
         scoring=None,
-        verbose=0,
-        return_n_best_forecasters=1,
+        strategy="refit",
         update_behaviour="full_refit",
-        error_score=np.nan,
+        refit=False,
         tune_by_instance=False,
         tune_by_variable=False,
+        verbose=0,
+        return_n_best_forecasters=1,
+        error_score=np.nan,
+        backend="loky",
         backend_params=None,
         n_jobs="deprecated",
     ):
@@ -65,7 +65,6 @@ class BaseGridSearch(_DelegatedForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self._set_delegated_tags(self.forecaster)
@@ -80,7 +79,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if self.tune_by_variable:
             self.set_tags(**{"capability:multivariate": False})
 
-        # todo 1.0.0: check if this is still necessary
+        # todo 2.0.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if self.n_jobs != "deprecated":
             warn(

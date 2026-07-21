@@ -19,7 +19,6 @@ from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     DEFAULT_FH,
     DEFAULT_WINDOW_LENGTH,
-    FORECASTING_HORIZON_TYPES,
     SPLIT_GENERATOR_TYPE,
     _check_fh,
     _check_inputs_for_compatibility,
@@ -69,9 +68,7 @@ def _check_cutoffs_and_y(cutoffs: VALID_CUTOFF_TYPES, y: ACCEPTED_Y_TYPES) -> No
         raise TypeError("Unsupported type of `cutoffs`")
 
 
-def _check_cutoffs_fh_y(
-    cutoffs: VALID_CUTOFF_TYPES, fh: FORECASTING_HORIZON_TYPES, y: pd.Index
-) -> None:
+def _check_cutoffs_fh_y(cutoffs: VALID_CUTOFF_TYPES, fh, y: pd.Index) -> None:
     """Check that combination of inputs is compatible.
 
     Currently, only two cases are allowed:
@@ -157,7 +154,7 @@ class CutoffSplitter(BaseSplitter):
     def __init__(
         self,
         cutoffs: VALID_CUTOFF_TYPES,
-        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
+        fh=DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
         _check_inputs_for_compatibility([fh, cutoffs, window_length])

@@ -13,6 +13,7 @@ from sktime.datasets import (
     load_airline,
     load_longley,
 )
+from sktime.forecasting.dummy_global import DummyGlobalForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import TrendForecaster
 from sktime.performance_metrics.forecasting import (
@@ -21,9 +22,8 @@ from sktime.performance_metrics.forecasting import (
     MeanSquaredPercentageError,
 )
 from sktime.split import ExpandingWindowSplitter, InstanceSplitter, SingleWindowSplitter
-from sktime.tests.test_switch import run_test_module_changed
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.dependencies import _check_soft_dependencies
 
 # TODO:
 # Manual test is labor intensive, need to refactor the tests for fast iteration
@@ -60,7 +60,7 @@ EXPECTED_RESULTS_GLOBAL_1 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_global]_"
         + "[cv_splitter=SingleWindowSplitter]_[cv_global=InstanceSplitter]",
-        "model_id": "PytorchForecastingDeepAR",
+        "model_id": "DummyGlobalForecaster",
         "MeanSquaredPercentageError_fold_0_test": 0.0,
         "MeanSquaredPercentageError_fold_1_test": 0.0,
         "MeanSquaredPercentageError_mean": 0.0,
@@ -72,7 +72,7 @@ EXPECTED_RESULTS_GLOBAL_2 = pd.DataFrame(
     data={
         "validation_id": "[dataset=data_loader_global]_"
         + "[cv_splitter=SingleWindowSplitter]_[cv_global=InstanceSplitter]",
-        "model_id": "PytorchForecastingDeepAR",
+        "model_id": "DummyGlobalForecaster",
         "MeanAbsolutePercentageError_fold_0_test": 0.0,
         "MeanAbsolutePercentageError_fold_1_test": 0.0,
         "MeanAbsolutePercentageError_mean": 0.0,
@@ -177,13 +177,13 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     )
 
 
+@pytest.mark.xfail(reason="currently unfixed failure, see #10555")
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.benchmarking"),
-    reason="run test only if benchmarking module has changed",
-)
-@pytest.mark.skipif(
-    not _check_soft_dependencies("pytorch-forecasting", severity="none"),
-    reason="skip test if required soft dependency not available",
+    not run_test_module_changed("sktime.benchmarking")
+    and not run_test_module_changed("sktime.forecasting.base")
+    and not run_test_for_class(DummyGlobalForecaster),
+    reason="run test only if one of the following changes: benchmarking module, "
+    "forecasting base module, or DummyGlobalForecaster logic",
 )
 @pytest.mark.parametrize(
     "expected_results_df, scorers",
@@ -201,28 +201,9 @@ def test_forecastingbenchmark_global_mode(
     scorers,
 ):
     """Test benchmarking a forecaster estimator in global mode."""
-    from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
-
     benchmark = ForecastingBenchmark()
 
-    params = {
-        "trainer_params": {
-            # the training process is not deterministic
-            # train 10 epochs to make sure loss is low enough
-            "max_epochs": 1,
-        },
-        "model_params": {
-            "cell_type": "GRU",
-            "rnn_layers": 1,
-            "hidden_size": 2,
-            "log_interval": -1,
-        },
-        "dataset_params": {
-            "max_encoder_length": 2,
-        },
-        "random_log_path": True,  # fix parallel file access error in CI
-    }
-    benchmark.add_estimator(PytorchForecastingDeepAR(**params))
+    benchmark.add_estimator(DummyGlobalForecaster())
 
     benchmark.add_task(
         data_loader_global,

@@ -9,11 +9,11 @@ from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.ensemble._ctsf import ComposableTimeSeriesForestClassifier
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.panel.segment import IntervalSegmenter
-from sktime.transformations.panel.summarize._extract import (
+from sktime.transformations.adapt import TabularToSeriesAdaptor
+from sktime.transformations.segment import IntervalSegmenter
+from sktime.transformations.summarize._extract import (
     RandomIntervalFeatureExtractor,
 )
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils._testing.panel import make_classification_problem
 
 
