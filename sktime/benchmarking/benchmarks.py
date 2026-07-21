@@ -21,7 +21,7 @@ from sktime.utils.unique_str import _make_strings_unique
 _DATASET_SCITYPES = {"dataset_classification", "dataset_forecasting"}
 _METRIC_SCITYPES = {"metric_forecasting", "metric_tabular", "metric_proba_tabular"}
 _SPLITTER_SCITYPES = {"splitter", "splitter_tabular"}
-_ESTIMATOR_SCITYPES = {"classifier", "forecaster"}
+_ESTIMATOR_SCITYPES = {"classifier", "forecaster", "regressor"}
 
 # Maps scitype → which collection to add to (for single objects)
 _SCTYPE_TO_COLLECTION = {
