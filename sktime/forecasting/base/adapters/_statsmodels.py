@@ -216,6 +216,13 @@ class _StatsModelsAdapter(BaseForecaster):
 
         start, end = fh.to_absolute_int(self._y_first_index, self.cutoff)[[0, -1]]
         fh_int = fh.to_absolute_int(self._y_first_index, self.cutoff) - self._y_len
+
+        if X is not None and self._X is not None:
+            ind_drop = self._X.index
+            X = X.loc[~X.index.isin(ind_drop)]
+            # Entire range of the forecast horizon is required
+            X = X.iloc[: (fh_int[-1] + 1)]  # include end point
+
         # if fh > 1 steps ahead of cutoff
         fh_int = fh_int - fh_int[0]
 
@@ -227,7 +234,10 @@ class _StatsModelsAdapter(BaseForecaster):
         if inspect.signature(self._fitted_forecaster.get_prediction).parameters.get(
             "exog"
         ):
-            get_prediction_arguments["exog"] = X
+            if self._X is None:
+                get_prediction_arguments["exog"] = None
+            else:
+                get_prediction_arguments["exog"] = X
 
         prediction_results = self._fitted_forecaster.get_prediction(
             **get_prediction_arguments

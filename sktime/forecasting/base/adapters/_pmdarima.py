@@ -231,6 +231,8 @@ class _PmdArimaAdapter(BaseForecaster):
         Returns series of predicted values.
         """
         n_periods = int(fh.to_relative(self.cutoff)[-1])
+        if X is not None:
+            X = X.iloc[:n_periods]
         result = self._forecaster.predict(
             n_periods=n_periods,
             X=X,
