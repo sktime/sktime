@@ -72,8 +72,9 @@ class CiscoTSMForecaster(BaseForecaster):
         ``[0.01, 0.05, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5,
            0.6, 0.7, 0.75, 0.8, 0.9, 0.95, 0.99]``.
         These levels are available via ``predict_quantiles`` /
-        ``predict_interval``. Arbitrary ``alpha`` values not in this set
-        are handled by linear interpolation over the available levels.
+        ``predict_interval`` / ``predict_proba``. Arbitrary ``alpha``
+        values not in this set are handled by linear interpolation
+        over the available levels.
     ignore_deps : bool, default=False
         If ``True``, soft-dependency checks for ``cisco-tsm`` and
         ``torch`` are skipped. Useful for testing the sktime adapter
@@ -84,6 +85,9 @@ class CiscoTSMForecaster(BaseForecaster):
     - CTSM is a univariate model. Multivariate targets are not supported.
     - Exogenous variables are not supported.
     - In-sample prediction is not supported.
+    - ``predict_proba`` returns a ``skpro`` ``HistogramQPD`` over the
+      model quantile grid (``skpro>=2.14``), consistent with
+      ``predict_quantiles``.
     - The loaded ``CiscoTsmMR`` object is cached in-process via a
       multiton keyed on ``(model_path, num_layers, backend)`` to avoid
       redundant model loading across multiple estimator instances.
@@ -116,7 +120,7 @@ class CiscoTSMForecaster(BaseForecaster):
         # --------------
         "authors": ["vedantag17"],
         "maintainers": ["vedantag17"],
-        "python_dependencies": ["cisco-tsm", "torch"],
+        "python_dependencies": ["cisco-tsm", "torch", "skpro>=2.14"],
         "python_version": ">=3.11,<3.14",
         # estimator type
         # --------------
@@ -152,6 +156,11 @@ class CiscoTSMForecaster(BaseForecaster):
 
         # leave this as is
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Set tags that depend on constructor parameters."""
+        if self.ignore_deps:
+            self.set_tags(python_dependencies=None, python_version=None)
 
     def __getstate__(self):
         """Return state for pickling, excluding the heavy model object."""
@@ -285,6 +294,28 @@ class CiscoTSMForecaster(BaseForecaster):
         )
         return y_pred
 
+    def _predict_native_quantile_grid(self, fh):
+        """Return native CTSM quantile levels and values on ``fh``."""
+        self._ensure_model_loaded()
+
+        fh_relative = fh.to_relative(self.cutoff)
+        horizon_len = int(max(fh_relative._values))
+        fh_vals = np.asarray(fh_relative._values, dtype=int) - 1
+
+        forecast_preds = self._model_.forecast(
+            self._context_,
+            horizon_len=horizon_len,
+        )
+        quantiles_dict = forecast_preds[0]["quantiles"]
+
+        native_levels = sorted(quantiles_dict.keys())
+        native_matrix = np.stack([quantiles_dict[q] for q in native_levels], axis=0)
+        q_values = np.asarray(native_matrix[:, fh_vals], dtype=float)
+
+        var_name = self._y_name_ if self._y_name_ is not None else 0
+        index = fh.to_absolute_index(self.cutoff)
+        return native_levels, q_values, index, var_name
+
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
@@ -316,40 +347,54 @@ class CiscoTSMForecaster(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        self._ensure_model_loaded()
-
-        fh_relative = fh.to_relative(self.cutoff)
-        horizon_len = int(max(fh_relative._values))
-        fh_vals = np.asarray(fh_relative._values, dtype=int) - 1
-
-        forecast_preds = self._model_.forecast(
-            self._context_,
-            horizon_len=horizon_len,
+        native_levels, q_values, index, var_name = self._predict_native_quantile_grid(
+            fh
         )
-        quantiles_dict = forecast_preds[0]["quantiles"]  # dict[float, np.ndarray]
+        native_arr = np.asarray(native_levels, dtype=float)
 
-        # Sort available native levels for interpolation.
-        native_levels = sorted(quantiles_dict.keys())
-        # Stack into (n_native_quantiles, horizon_len) array.
-        native_matrix = np.stack(
-            [quantiles_dict[q] for q in native_levels], axis=0
-        )  # shape: (n_q, horizon_len)
-
-        var_name = self._y_name_ if self._y_name_ is not None else 0
-        row_idx = fh.to_absolute_index(self.cutoff)
         cols_idx = pd.MultiIndex.from_product([[var_name], alpha])
-        pred_quantiles = pd.DataFrame(index=row_idx, columns=cols_idx, dtype=float)
+        pred_quantiles = pd.DataFrame(index=index, columns=cols_idx, dtype=float)
 
-        native_arr = np.array(native_levels, dtype=float)
+        n_steps = q_values.shape[1]
         for a in alpha:
-            # Linear interpolation across quantile dimension at each horizon step.
-            interp_vals = np.array(
-                [np.interp(a, native_arr, native_matrix[:, t]) for t in fh_vals],
-                dtype=np.float32,
+            pred_quantiles[(var_name, a)] = np.array(
+                [np.interp(a, native_arr, q_values[:, j]) for j in range(n_steps)],
+                dtype=float,
             )
-            pred_quantiles[(var_name, a)] = interp_vals
 
         return pred_quantiles
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : ignored
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro HistogramQPD
+            predictive distribution (marginal by time point)
+        """
+        from skpro.distributions import HistogramQPD
+
+        native_levels, q_values, index, var_name = self._predict_native_quantile_grid(
+            fh
+        )
+
+        row_index = pd.MultiIndex.from_product([native_levels, index])
+        q_df = pd.DataFrame(
+            q_values.reshape(-1, 1),
+            index=row_index,
+            columns=[var_name],
+        )
+        return HistogramQPD(q_df, tails="mass", index=index, columns=[var_name])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -401,13 +446,11 @@ class _DummyCiscoModel:
         self.horizon_fill = horizon_fill
 
     def forecast(self, series, horizon_len):
-        """Return constant forecasts matching the CiscoTsmMR output format."""
+        """Return forecasts matching the CiscoTsmMR output format."""
         mean = np.full(horizon_len, self.horizon_fill, dtype=np.float32)
-        # Provide the same 15 native quantile levels as the real model so that
-        # _predict_quantiles can interpolate without special-casing the dummy.
-        # Reference the class-level constant directly to avoid a circular import.
+        # Strictly increasing in probability so HistogramQPD bins have width.
         quantiles = {
-            q: np.full(horizon_len, self.horizon_fill, dtype=np.float32)
+            q: np.full(horizon_len, self.horizon_fill + float(q), dtype=np.float32)
             for q in _DEFAULT_QUANTILES
         }
         return [{"mean": mean, "quantiles": quantiles}]
