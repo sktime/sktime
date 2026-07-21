@@ -18,18 +18,51 @@ from sktime.split.base._common import SPLIT_GENERATOR_TYPE
 
 
 class ExpandingGreedySplitter(BaseSplitter):
-    """Splitter that successively cuts test folds off the end of the series.
+    r"""Splitter that successively cuts test folds off the end of the series.
 
     Takes an integer ``test_size`` that defines the number of steps included in the
     test set of each fold. The train set of each fold will contain all data before
     the test set. If the data contains multiple instances, ``test_size`` is
     _per instance_.
 
+    If the time points in the data are :math:`(t_1, t_2, \ldots, t_N)`, with
+    ``test_size`` :math:`= s` and ``folds`` :math:`= K`, the test windows are
+    fixed-size windows of size :math:`s` cut from the end of the data backwards:
+
+    .. math::
+
+        [t_{N-Ks+1},\, t_{N-(K-1)s}], \quad
+        [t_{N-(K-1)s+1},\, t_{N-(K-2)s}], \quad
+        \ldots, \quad
+        [t_{N-s+1},\, t_N]
+
+    The corresponding training window for the :math:`n`-th fold expands from
+    :math:`t_1` to cover all data before its test window:
+
+    .. math::
+
+        [t_1,\, t_{N-(K-n+1) \cdot s}] \quad \text{for } n = 1, 2, \ldots, K
+
+    The number of splits is equal to ``folds``, i.e., :math:`K`.
+
     If no ``step_length`` is defined, the test sets (one for each fold) will be
     adjacent and disjoint, taken from the end of the dataset.
 
     For example, with ``test_size=7`` and ``folds=5``, the test sets in total will cover
     the last 35 steps of the data with no overlap.
+
+    For example, for ``test_size=3`` and ``folds=2`` on a series of 10 steps,
+    here is a representation of the folds::
+
+        |---------------------|
+        | * * * * x x x - - - |
+        | * * * * * * * x x x |
+
+    ``*`` = training fold.
+
+    ``x`` = test fold.
+
+    ``-`` = unused.
 
     Parameters
     ----------
