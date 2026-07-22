@@ -7,11 +7,13 @@ from sktime.forecasting.foundation._result import (
     ForecastResult,
     ModelHandle,
 )
+from sktime.forecasting.foundation._spec import FoundationModelSpec
 
 __all__ = [
     "BaseFoundationForecaster",
     "ForecastRequest",
     "ForecastResult",
+    "FoundationModelSpec",
     "ModelHandle",
     "clear_foundation_model_cache",
 ]
