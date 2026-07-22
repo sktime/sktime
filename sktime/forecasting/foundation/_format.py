@@ -4,15 +4,6 @@ import numpy as np
 import pandas as pd
 
 
-def coverage_to_alpha(coverage) -> tuple[float, ...]:
-    """Convert interval coverage values to lower/upper quantile levels."""
-    coverage = _as_tuple(coverage)
-    alpha = []
-    for value in coverage:
-        alpha.extend([0.5 - value / 2, 0.5 + value / 2])
-    return tuple(alpha)
-
-
 def format_point_result(result, request, y) -> pd.DataFrame:
     """Format a normalized point forecast as an sktime prediction."""
     values = _get_point_values(result)
@@ -39,27 +30,6 @@ def format_quantile_result(result, request, y, alpha) -> pd.DataFrame:
             data.append(values[:, variable_idx])
 
     columns = pd.MultiIndex.from_product([names, alpha])
-    return pd.DataFrame(np.asarray(data).T, index=index, columns=columns)
-
-
-def format_interval_result(result, request, y, coverage) -> pd.DataFrame:
-    """Format normalized quantile forecasts as an sktime interval frame."""
-    coverage = _as_tuple(coverage)
-    names = _get_variable_names(y)
-    index = pd.Index(request.absolute_index)
-
-    data = []
-    for variable_idx, _ in enumerate(names):
-        for cov in coverage:
-            lower = 0.5 - cov / 2
-            upper = 0.5 + cov / 2
-            for quantile in (lower, upper):
-                values = _get_quantile_values(result, quantile)
-                values = _select_requested_rows(values, request)
-                values = _as_2d(values, len(names))
-                data.append(values[:, variable_idx])
-
-    columns = pd.MultiIndex.from_product([names, coverage, ["lower", "upper"]])
     return pd.DataFrame(np.asarray(data).T, index=index, columns=columns)
 
 

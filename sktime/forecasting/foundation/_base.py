@@ -1,295 +1,253 @@
-"""Shared base class for foundation-model forecasters."""
+"""Shared base class for zero-shot foundation-model forecasters."""
 
-from abc import ABC, abstractmethod
+from contextlib import contextmanager
 
 import numpy as np
+from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.foundation._cache import (
-    FOUNDATION_MODEL_CACHE,
-    _stable_repr,
-)
-from sktime.forecasting.foundation._config import (
-    FineTuneConfig,
-    InferenceConfig,
-    ModelLoadConfig,
-)
+from sktime.forecasting.foundation._cache import FOUNDATION_MODEL_CACHE
 from sktime.forecasting.foundation._format import (
-    coverage_to_alpha,
-    format_interval_result,
     format_point_result,
     format_quantile_result,
 )
-from sktime.forecasting.foundation._hf import stable_peft_key, stable_quantization_key
-from sktime.forecasting.foundation._result import (
-    ForecastRequest,
-    ForecastResult,
-    ModelContext,
-    ModelHandle,
-)
+from sktime.forecasting.foundation._result import ForecastRequest, ForecastResult
 
 
-class BaseFoundationForecaster(BaseForecaster, ABC):
-    """Shared base class for pretrained/foundation forecasting models."""
+class BaseFoundationForecaster(BaseForecaster):
+    """Shared lifecycle for zero-shot foundation-model forecasters.
+
+    Concrete forecasters implement ``_load_model`` and ``_inference``. They can
+    additionally override ``_update_attrs_in_fit`` and ``_cache_key_extra`` for
+    model-specific fitted state and loading parameters, respectively. Non-Torch
+    backends set ``_uses_torch_inference_context`` to ``False``.
+    """
+
+    _tags = {
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
+        "tests:vm": True,
+    }
+    _uses_torch_inference_context = True
+
+    def __init__(
+        self,
+        model_path=None,
+        tokenizer_path=None,
+        revision=None,
+        config=None,
+        device=None,
+        dtype=None,
+        quantization_config=None,
+        random_state=None,
+        ignore_deps=None,
+    ):
+        self.model_path = model_path
+        self.tokenizer_path = tokenizer_path
+        self.revision = revision
+        self.config = config
+        self.device = device
+        self.dtype = dtype
+        self.quantization_config = quantization_config
+        self.random_state = random_state
+        self.ignore_deps = ignore_deps
+
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Clear soft-dependency tags when dependency checks are disabled."""
+        if self.ignore_deps:
+            self.set_tags(python_dependencies=[])
+
+    def __post_init__(self):
+        """Initialize normalized copies of shared constructor parameters."""
+        self.random_state_ = self._resolve_random_state()
+        self.config_ = self._resolve_config()
+        self.device_ = self._resolve_device()
+        self.dtype_ = self._resolve_dtype()
 
     def _fit(self, y, X=None, fh=None):
-        """Fit foundation forecaster state around a loaded model handle."""
-        self._init_foundation_runtime()
-
-        if getattr(self, "model_handle_", None) is None:
-            self.model_handle_ = self._get_or_load_model(for_training=False)
-
-        self.context_ = self._make_context(
-            y=y,
-            X=X,
-            fh=fh,
-            cutoff=self.cutoff,
-            handle=self.model_handle_,
-        )
-
-        if self._fine_tune_config.strategy != "zero-shot":
-            training_data = self._make_training_data(
-                y=y,
-                X=X,
-                fh=fh,
-                purpose="fit",
-                handle=self.model_handle_,
-            )
-            self.model_handle_ = self._train_model(
-                handle=self.model_handle_,
-                training_data=training_data,
-                tune=self._fine_tune_config,
-            )
-
+        """Store zero-shot context and load shared immutable model state."""
+        self._update_attrs_in_fit(y=y, X=X, fh=fh)
+        self.context_y_ = y.copy()
+        self.context_X_ = None if X is None else X.copy()
+        self.model_handle_ = self._get_or_load_model_handle()
         return self
-
-    def _pretrain(self, y, X=None, fh=None):
-        """Pretrain mutable foundation-model state."""
-        self._init_foundation_runtime()
-
-        if not self._foundation_spec.supports_pretrain:
-            raise NotImplementedError(
-                f"{self.__class__.__name__} does not support pretrain"
-            )
-
-        handle = getattr(self, "model_handle_", None)
-        if handle is None:
-            handle = self._get_or_load_model(for_training=True)
-
-        training_data = self._make_training_data(
-            y=y,
-            X=X,
-            fh=fh,
-            purpose="pretrain",
-            handle=handle,
-        )
-        self.model_handle_ = self._train_model(
-            handle=handle,
-            training_data=training_data,
-            tune=self._fine_tune_config,
-        )
-        self.pretrained_artifact_ = self.model_handle_.metadata.get("artifact")
-        return self
-
-    def _pretrain_update(self, y, X=None, fh=None):
-        """Update pretrained foundation-model state."""
-        return self._pretrain(y=y, X=X, fh=fh)
 
     def _predict(self, fh, X=None):
         """Forecast point predictions from normalized foundation output."""
-        result = self._foundation_predict(fh=fh, X=X, alpha=None, coverage=None)
-        return self._format_point_result(result=result, fh=fh)
+        result, request = self._foundation_predict(fh=fh, X=X)
+        return format_point_result(result=result, request=request, y=self.context_y_)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Forecast quantiles from normalized foundation output."""
-        result = self._foundation_predict(fh=fh, X=X, alpha=alpha, coverage=None)
-        return self._format_quantile_result(result=result, fh=fh, alpha=alpha)
-
-    def _predict_interval(self, fh, X=None, coverage=None):
-        """Forecast intervals from normalized foundation output."""
-        alpha = coverage_to_alpha(coverage)
-        result = self._foundation_predict(
-            fh=fh,
-            X=X,
-            alpha=alpha,
-            coverage=coverage,
-        )
-        return self._format_interval_result(
+        result, request = self._foundation_predict(fh=fh, X=X, alpha=alpha)
+        return format_quantile_result(
             result=result,
-            fh=fh,
-            coverage=coverage,
-        )
-
-    def _init_foundation_runtime(self):
-        """Initialize normalized runtime config objects."""
-        self._load_config = self._get_model_load_config()
-        self._fine_tune_config = self._get_fine_tune_config()
-        self._inference_config = self._get_inference_config()
-
-    def _get_or_load_model(self, *, for_training: bool) -> ModelHandle:
-        """Load a model handle, using the shared cache when allowed."""
-        key = self._foundation_cache_key()
-        shareable = self._is_cache_shareable(for_training=for_training)
-
-        return FOUNDATION_MODEL_CACHE.get_or_load(
-            key=key,
-            loader=lambda: self._load_model(
-                load=self._load_config,
-                tune=self._fine_tune_config,
-            ),
-            shareable=shareable,
-        )
-
-    def _foundation_cache_key(self) -> tuple:
-        """Return the shared cache key for this foundation-model load."""
-        return (
-            self._foundation_spec.family,
-            self._load_config.model_path,
-            self._load_config.revision,
-            self._load_config.cache_dir,
-            self._load_config.local_files_only,
-            _stable_repr(self._load_config.device_map),
-            _stable_repr(self._load_config.dtype),
-            stable_quantization_key(self._load_config.quantization_config),
-            stable_peft_key(self._fine_tune_config.parameter_efficient),
-            _stable_repr(self._load_config.extra_load_kwargs),
-            _stable_repr(self._cache_key_extra()),
-        )
-
-    def _is_cache_shareable(self, *, for_training: bool) -> bool:
-        """Return whether this load should use shared immutable cache state."""
-        if for_training:
-            return False
-        return self._fine_tune_config.strategy == "zero-shot"
-
-    def _foundation_predict(self, fh, X=None, alpha=None, coverage=None):
-        """Run a model-native prediction and return normalized output."""
-        self._ensure_foundation_model_loaded()
-
-        request = self._make_forecast_request(fh=fh, alpha=alpha, coverage=coverage)
-
-        context = self.context_
-        if X is not None:
-            context = self._update_context_with_X(
-                context=context,
-                X=X,
-                request=request,
-            )
-
-        return self._predict_native(
-            handle=self.model_handle_,
-            context=context,
             request=request,
+            y=self.context_y_,
+            alpha=alpha,
         )
 
-    def _ensure_foundation_model_loaded(self):
-        """Reload model state lazily after pickle or cache release."""
-        if getattr(self, "model_handle_", None) is None:
-            self._init_foundation_runtime()
-            self.model_handle_ = self._get_or_load_model(for_training=False)
+    def _foundation_predict(self, fh, X=None, alpha=None):
+        """Run model-specific inference with shared horizon and reload setup."""
+        if fh is None:
+            fh = self.fh
 
-    def _make_forecast_request(self, fh, alpha=None, coverage=None):
-        """Normalize sktime forecasting inputs for model-specific hooks."""
+        request = self._make_forecast_request(fh=fh, alpha=alpha)
+        pred_len = max(request.relative_fh)
+
+        self.model_handle_ = self._get_or_load_model_handle()
+        with self._inference_context(handle=self.model_handle_):
+            result = self._inference(
+                handle=self.model_handle_,
+                context_y=self.context_y_,
+                context_X=self.context_X_,
+                future_X=X,
+                pred_len=pred_len,
+                fh=fh,
+                alpha=request.alpha,
+            )
+        if not isinstance(result, ForecastResult):
+            raise TypeError(
+                f"{self.__class__.__name__}._inference must return ForecastResult, "
+                f"but returned {type(result).__name__}."
+            )
+        return result, request
+
+    def _make_forecast_request(self, fh, alpha=None):
+        """Normalize an sktime forecasting horizon for backend adapters."""
         relative_fh = np.asarray(fh.to_relative(self.cutoff).to_pandas(), dtype=int)
         absolute_index = fh.to_absolute(self.cutoff).to_pandas()
         return ForecastRequest(
             relative_fh=tuple(int(value) for value in relative_fh),
             absolute_index=absolute_index,
-            cutoff=self.cutoff,
             alpha=None if alpha is None else tuple(alpha),
-            coverage=None if coverage is None else tuple(coverage),
-            inference=self._inference_config,
         )
 
-    def _format_point_result(self, result: ForecastResult, fh):
-        """Format point forecasts with sktime output conventions."""
-        request = self._make_forecast_request(fh=fh)
-        return format_point_result(result=result, request=request, y=self._y)
+    def _get_or_load_model_handle(self):
+        """Return an existing or process-cached immutable model handle."""
+        handle = getattr(self, "model_handle_", None)
+        if handle is not None:
+            return handle
 
-    def _format_quantile_result(self, result: ForecastResult, fh, alpha):
-        """Format quantile forecasts with sktime output conventions."""
-        request = self._make_forecast_request(fh=fh, alpha=alpha)
-        return format_quantile_result(
-            result=result,
-            request=request,
-            y=self._y,
-            alpha=alpha,
+        return FOUNDATION_MODEL_CACHE.get_or_load(
+            key=self._get_unique_model_key(),
+            loader=self._load_model,
         )
 
-    def _format_interval_result(self, result: ForecastResult, fh, coverage):
-        """Format interval forecasts with sktime output conventions."""
-        request = self._make_forecast_request(fh=fh, coverage=coverage)
-        return format_interval_result(
-            result=result,
-            request=request,
-            y=self._y,
-            coverage=coverage,
+    @contextmanager
+    def _inference_context(self, handle):
+        """Apply local Torch seeding, eval mode, and inference mode when enabled."""
+        if not self._uses_torch_inference_context:
+            yield
+            return
+
+        import torch
+
+        model = handle.model
+        if hasattr(model, "eval"):
+            model.eval()
+
+        devices = []
+        model_device = getattr(model, "device", None)
+        if model_device is not None:
+            model_device = torch.device(model_device)
+            if model_device.type == "cuda":
+                devices = [model_device.index or torch.cuda.current_device()]
+
+        with torch.random.fork_rng(devices=devices):
+            if self.random_state_ is not None:
+                torch.manual_seed(self.random_state_)
+            with torch.inference_mode():
+                yield
+
+    def _resolve_random_state(self):
+        rng = check_random_state(self.random_state)
+        return (
+            None
+            if self.random_state is None
+            else int(rng.randint(np.iinfo(np.int32).max))
         )
+
+    def _resolve_config(self):
+        if self.config is None:
+            return {}
+
+        return self.config.copy()
+
+    def _resolve_dtype(self):
+        if self.dtype == "torch.bfloat16":
+            import torch
+
+            return torch.bfloat16
+
+        return self.dtype
+
+    def _resolve_device(self):
+        """Resolve explicit, configured, or automatic device selection once."""
+        if self.device != "auto":
+            return self.device
+
+        import torch
+
+        if torch.cuda.is_available():
+            return "cuda"
+        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return "mps"
+        return "cpu"
+
+    def _get_unique_model_key(self):
+        """Build a deterministic cache key from model-loading parameters."""
+        key_items = {
+            "class": self.__class__.__name__,
+            # for zero-shot forecasters, the cached model is indifferent to config
+            # "config": self.config_,
+            "device": self.device_,
+            "dtype": self.dtype_,
+            "model_path": self.model_path,
+            "quantization_config": self.quantization_config,
+            "revision": self.revision,
+            "tokenizer_path": self.tokenizer_path,
+            "extra": self._cache_key_extra(),
+        }
+        return tuple(sorted(key_items.items()))
+
+    @classmethod
+    def _has_implementation_of(cls, method):
+        """Respect probabilistic capability tags for shared quantile logic."""
+        if method == "_predict_quantiles" and not cls.get_class_tag(
+            "capability:pred_int", False
+        ):
+            return False
+        return super()._has_implementation_of(method)
 
     def __getstate__(self):
-        """Return pickle state without loaded model handles."""
+        """Return pickle state without potentially unpickleable backend objects."""
         state = self.__dict__.copy()
         state["model_handle_"] = None
         return state
 
-    def __setstate__(self, state):
-        """Restore estimator state from pickle."""
-        self.__dict__.update(state)
+    def _update_attrs_in_fit(self, y, X, fh):
+        """Update model-specific fitted attributes before loading the model."""
 
-    @abstractmethod
-    def _get_model_load_config(self) -> ModelLoadConfig:
-        """Return normalized model loading policy from estimator params."""
+    def _load_model(self):
+        """Load native backend state and return a ``ModelHandle``."""
+        raise NotImplementedError
 
-    @abstractmethod
-    def _load_model(
+    def _inference(
         self,
-        load: ModelLoadConfig,
-        tune: FineTuneConfig,
-    ) -> ModelHandle:
-        """Load or initialize model state."""
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Run native inference and return a ``ForecastResult``."""
+        raise NotImplementedError
 
-    @abstractmethod
-    def _make_context(self, y, X, fh, cutoff, handle: ModelHandle) -> ModelContext:
-        """Convert fitted sktime data into model-native prediction context."""
-
-    @abstractmethod
-    def _predict_native(
-        self,
-        handle: ModelHandle,
-        context: ModelContext,
-        request: ForecastRequest,
-    ) -> ForecastResult:
-        """Run model-native forecasting and return normalized output."""
-
-    def _get_fine_tune_config(self) -> FineTuneConfig:
-        """Return normalized tuning policy."""
-        return FineTuneConfig(strategy="zero-shot")
-
-    def _get_inference_config(self) -> InferenceConfig:
-        """Return normalized inference policy."""
-        return InferenceConfig()
-
-    def _make_training_data(self, y, X, fh, purpose, handle: ModelHandle):
-        """Build model-native training data."""
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not support training"
-        )
-
-    def _train_model(self, handle: ModelHandle, training_data, tune: FineTuneConfig):
-        """Train or fine-tune model-native state."""
-        raise NotImplementedError(
-            f"{self.__class__.__name__} does not support training"
-        )
-
-    def _update_context_with_X(
-        self,
-        context: ModelContext,
-        X,
-        request: ForecastRequest,
-    ) -> ModelContext:
-        """Update prediction context with future exogenous data."""
-        return context
-
-    def _cache_key_extra(self) -> tuple:
-        """Return estimator-specific cache-key components."""
+    def _cache_key_extra(self):
+        """Return estimator-specific model-loading cache-key components."""
         return ()
