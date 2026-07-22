@@ -8,6 +8,8 @@ __author__ = ["mloning", "fkiraly", "achieveordie"]
 
 import numbers
 import os
+import subprocess
+import sys
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -812,11 +814,15 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             pytest.skip(f"{estimator_class.__name__} has empty tests:specific")
 
         for module in modules:
-            ret = pytest.main(["--pyargs", module])
-            if ret != pytest.ExitCode.OK:
+            cmd = [sys.executable, "-m", "pytest", "--pyargs", module]
+            proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            if proc.returncode != 0:
+                stderr = proc.stderr.strip()
+                stdout = proc.stdout.strip()
                 err_msg = (
                     f"running specific tests failed for {estimator_class.__name__}, "
-                    f"module {module}, return code {ret}"
+                    f"module {module}, return code {proc.returncode}\n"
+                    f"stdout:\n{stdout}\n\nstderr:\n{stderr}"
                 )
                 raise RuntimeError(err_msg)
 
