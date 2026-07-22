@@ -792,6 +792,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime objects."""
 
     estimator_type_filter = "object"
+    _ran_specific_test_modules = set()
 
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
@@ -818,24 +819,33 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if len(modules) == 0:
             pytest.skip(f"{estimator_class.__name__} has empty tests:specific")
 
-        module_pat = re.compile(r"^sktime(?:\.[A-Za-z_][A-Za-z0-9_]*)+$")
+        module_pat = re.compile(r"^sktime(?:\.[A-Za-z_][A-Za-z0-9_]*)*$")
         bad_modules = [module for module in modules if not module_pat.fullmatch(module)]
         assert len(bad_modules) == 0, (
             f"{estimator_class.__name__}.tests:specific contains invalid module paths: "
             f"{bad_modules}"
         )
 
-        cmd = [sys.executable, "-m", "pytest", "--pyargs"] + modules
+        modules_to_run = [
+            module
+            for module in modules
+            if module not in self._ran_specific_test_modules
+        ]
+        if len(modules_to_run) == 0:
+            return None
+
+        cmd = [sys.executable, "-m", "pytest", "--pyargs"] + modules_to_run
         proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
         if proc.returncode != 0:
             stderr = proc.stderr.strip()
             stdout = proc.stdout.strip()
             err_msg = (
                 f"running specific tests failed for {estimator_class.__name__}, "
-                f"modules {modules}, return code {proc.returncode}\n"
+                f"modules {modules_to_run}, return code {proc.returncode}\n"
                 f"stdout:\n{stdout}\n\nstderr:\n{stderr}"
             )
             raise RuntimeError(err_msg)
+        self._ran_specific_test_modules.update(modules_to_run)
 
     def test_create_test_instance(self, estimator_class):
         """Check create_test_instance logic and basic constructor functionality.
