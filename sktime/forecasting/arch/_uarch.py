@@ -26,7 +26,7 @@ class ARCH(BaseForecaster):
 
     * a mean model, e.g., a constant mean or an ARX;
     * a volatility process, e.g., a GARCH or an EGARCH process; and
-    *a distribution for the standardized residuals.
+    * a distribution for the standardized residuals.
 
     Includes but is not limited to the following commonly used models:
     ARCH, GARCH, EGARCH, HARCH, FIARCH, ARX, HARX.
