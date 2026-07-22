@@ -599,7 +599,7 @@ class ChronosForecaster(BaseForecaster):
         results = []
         for i in range(_y.shape[0]):
             _y_i = _y[i, :, 0]
-            _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
+            _y_i = _y_i[-self.model_pipeline.model.config.max_position_embeddings :]
 
             values = self.model_strategy.predict(
                 self.model_pipeline, torch.Tensor(_y_i), prediction_length, self._config
