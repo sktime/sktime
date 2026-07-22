@@ -108,7 +108,7 @@ class TotoForecaster(BaseFoundationForecaster):
         ],
         "maintainers": ["JATAYU000"],
         "python_version": ">= 3.10",
-        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3"],
+        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3", "setuptools<82"],
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on own VM?
