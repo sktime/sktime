@@ -799,7 +799,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_run_specific_tests(self, estimator_class):
         """Run estimator specific pytest modules defined in ``tests:specific``."""
         modules = estimator_class.get_class_tag("tests:specific", None)
-        if not modules:
+        if modules is None:
             pytest.skip(f"{estimator_class.__name__} does not define tests:specific")
 
         msg = (
@@ -808,6 +808,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         )
         assert isinstance(modules, list), msg
         assert all(isinstance(module, str) for module in modules), msg
+        if len(modules) == 0:
+            pytest.skip(f"{estimator_class.__name__} has empty tests:specific")
 
         for module in modules:
             ret = pytest.main(["--pyargs", module])
