@@ -787,6 +787,19 @@ Augmentation
     ReverseAugmenter
     WhiteNoiseAugmenter
 
+Trajectory
+~~~~~~~~~~
+
+Transformers for spatial trajectory data, wrapping ``movingpandas``.
+
+.. currentmodule:: sktime.transformations.series.trajectory
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DouglasPeuckerTrajectoryGeneralizer
+
 FeatureSelection
 ~~~~~~~~~~~~~~~~
 
