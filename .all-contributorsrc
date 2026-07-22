@@ -2937,6 +2937,17 @@
         "maintenance",
         "test"
       ]
+    },
+    {
+      "login": "loulanyue",
+      "name": "Rafli Surya Wijaya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17882510?v=4",
+      "profile": "https://github.com/loulanyue",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
     }
   ]
 }
