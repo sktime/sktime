@@ -332,6 +332,36 @@ class AuroraForecaster(BaseForecaster):
             )
         return pd.concat(frames, axis=1)
 
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic,
+            called from predict_proba
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+        X : optional (default=None)
+        marginal : bool, optional (default=True)
+
+        Returns
+        -------
+        pred_dist : skpro BaseDistribution
+        """
+        from skpro.distributions import HistogramQPD
+
+        quantiles = self.predict_quantiles(fh=fh, X=X)
+        q = quantiles.stack(level=1)
+        q = q.reorder_levels([1, 0], axis=0)
+        q = q.sort_index()
+
+        return HistogramQPD(
+            q,
+            index=quantiles.index,
+            columns=quantiles.columns.get_level_values(0).unique(),
+            time_indep=marginal,
+        )
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
