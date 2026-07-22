@@ -175,6 +175,9 @@ class ARCH(BaseForecaster):
         "capability:non_contiguous_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
