@@ -190,6 +190,14 @@ class NaiveForecaster(_BaseWindowForecaster):
             #  if not given, set default window length
             if self.window_length is None:
                 self.window_length_ = len(y)
+                if sp != 1 and sp > n_timepoints:
+                    warn(
+                        f"The `sp`: {sp} is larger than the number of "
+                        f"timepoints in the training data: {n_timepoints}. "
+                        "This may produce unexpected results, consider "
+                        "setting `window_length` explicitly.",
+                        obj=self,
+                    )
 
         elif self.strategy == "drift":
             if sp != 1:
