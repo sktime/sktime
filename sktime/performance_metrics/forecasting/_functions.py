@@ -454,6 +454,8 @@ def mean_absolute_scaled_error(
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
+    if sp <= 0:
+        raise ValueError(f"sp must be a positive integer, got sp={sp}")
     y_pred_naive = y_train[:-sp]
 
     # mean absolute error of naive seasonal prediction
@@ -584,6 +586,8 @@ def median_absolute_scaled_error(
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
+    if sp <= 0:
+        raise ValueError(f"sp must be a positive integer, got sp={sp}")
     y_pred_naive = y_train[:-sp]
 
     # mean absolute error of naive seasonal prediction
@@ -723,6 +727,8 @@ def mean_squared_scaled_error(
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
+    if sp <= 0:
+        raise ValueError(f"sp must be a positive integer, got sp={sp}")
     y_pred_naive = y_train[:-sp]
 
     # mean squared error of naive seasonal prediction
@@ -855,6 +861,8 @@ def median_squared_scaled_error(
 
     # naive seasonal prediction
     y_train = np.asarray(y_train)
+    if sp <= 0:
+        raise ValueError(f"sp must be a positive integer, got sp={sp}")
     y_pred_naive = y_train[:-sp]
 
     # median squared error of naive seasonal prediction
