@@ -210,7 +210,10 @@ class WindFMForecaster(BaseFoundationForecaster):
 
     def _update_attrs_in_fit(self, y, X=None, fh=None):
         """Resolve the covariate mapping for the stored zero-shot context."""
-        self.column_mapping_ = self._resolve_column_mapping(X)
+        if X is None:
+            self.column_mapping_ = {col: col for col in self._covariate_cols}
+        else:
+            self.column_mapping_ = self._resolve_column_mapping(X)
 
     def _load_model(self):
         """Load the paired WindFM tokenizer and model into a shared handle."""
