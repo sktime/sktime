@@ -14,6 +14,7 @@ from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 
@@ -355,21 +356,26 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
+        self.model_path = model_path
+        self.config = config
         self.use_source_package = use_source_package
         self.seed = seed
+        self.ignore_deps = ignore_deps
 
         normalized_config = self._default_chronos_config.copy()
         if config is not None:
             normalized_config.update(config)
 
-        super().__init__(
+        model_spec = FoundationModelSpec(
             model_path=model_path,
             config=config,
             device=normalized_config["device_map"],
             dtype=normalized_config["torch_dtype"],
             random_state=seed,
             ignore_deps=ignore_deps,
+            load_extra_kwargs={"use_source_package": use_source_package},
         )
+        super().__init__(model_spec=model_spec)
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
@@ -377,7 +383,7 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         This method should be used for setting dynamic tags only.
         """
         super().__dynamic_tags__()
-        if self.ignore_deps:
+        if self.model_spec.ignore_deps:
             return
         if self.use_source_package:
             self.set_tags(python_dependencies=["chronos"])
@@ -398,17 +404,15 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         # initialize model_strategy as None, will be set correctly after loading config.
         self.model_strategy = None
 
-        # set config
-        self._config = None
-
         self._initialize_model_type()
 
     def _initialize_model_type(self):
         """Initialise model type and configuration based on model's architecture."""
         from transformers import AutoConfig
 
+        spec = self.model_spec_
         try:
-            config = AutoConfig.from_pretrained(self.model_path)
+            config = AutoConfig.from_pretrained(spec.model_path)
 
             # "ChronosBoltModelForForecasting is the name of the architecture"
             # as specified in the config.json file
@@ -419,30 +423,27 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
             else:
                 self.model_strategy = ChronosDefaultStrategy()
 
-            self._default_config = self.model_strategy.initialize_config()
-            self._config = self._default_config.copy()
-            if self.config is not None:
-                self._config.update(self.config)
+            predict_kwargs = self.model_strategy.initialize_config()
+            if spec.config is not None:
+                predict_kwargs.update(spec.config)
+            self._update_model_spec(predict_extra_kwargs=predict_kwargs)
 
         except Exception as e:
             raise ValueError(
-                f"Failed to load model configuration from {self.model_path}. "
+                f"Failed to load model configuration from {spec.model_path}. "
                 f"Error: {str(e)}"
             ) from e
 
-    def _get_chronos_kwargs(self):
-        """Get the kwargs for Chronos model."""
-        return {
-            "pretrained_model_name_or_path": self.model_path,
-            "torch_dtype": self.dtype_,
-            "device_map": self.device_,
-        }
-
     def _load_model(self):
         """Load the model pipeline."""
+        model_spec = self.model_spec_
         pipeline = self.model_strategy.create_pipeline(
-            kwargs=self._get_chronos_kwargs(),
-            use_source_package=self.use_source_package,
+            kwargs={
+                "pretrained_model_name_or_path": model_spec.model_path,
+                "torch_dtype": model_spec.dtype,
+                "device_map": model_spec.device,
+            },
+            use_source_package=model_spec.load_extra_kwargs["use_source_package"],
         )
         return ModelHandle(model=pipeline.model, pipeline=pipeline)
 
@@ -457,6 +458,7 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         alpha=None,
     ):
         """Make predictions using the model pipeline."""
+        model_spec = self.model_spec_
         _y = context_y.values.reshape(1, -1, 1)
 
         results = []
@@ -465,7 +467,10 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
             _y_i = _y_i[-handle.pipeline.model.config.context_length :]
 
             values = self.model_strategy.predict(
-                handle.pipeline, torch.Tensor(_y_i), pred_len, self._config
+                handle.pipeline,
+                torch.Tensor(_y_i),
+                pred_len,
+                model_spec.predict_extra_kwargs,
             )
             results.append(values)
 

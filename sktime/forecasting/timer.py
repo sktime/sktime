@@ -21,6 +21,7 @@ import numpy as np
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 
@@ -106,14 +107,22 @@ class TimerForecaster(BaseFoundationForecaster):
         self.context_length = context_length
         self.device = device
 
-        super().__init__(model_path=model_name, device=device)
+        model_spec = FoundationModelSpec(
+            model_path=model_name,
+            device=device,
+            predict_extra_kwargs={"context_length": context_length},
+        )
+        super().__init__(model_spec=model_spec)
 
     def _load_model(self):
         """Load a Timer checkpoint into a cacheable model handle."""
         from sktime.libs.timer import TimerForPrediction
 
-        model = TimerForPrediction.from_pretrained(self.model_path)
-        model = model.to(self.device_)
+        model_spec = self.model_spec_
+        model = TimerForPrediction.from_pretrained(
+            model_spec.model_path, **model_spec.load_extra_kwargs
+        )
+        model = model.to(model_spec.device)
         return ModelHandle(model=model)
 
     def _inference(
@@ -130,14 +139,16 @@ class TimerForecaster(BaseFoundationForecaster):
         import torch
 
         model = handle.model
+        model_spec = self.model_spec_
+        context_length = model_spec.predict_extra_kwargs["context_length"]
         context = context_y.iloc[:, 0].to_numpy(dtype=np.float32)
 
-        if self.context_length <= 0:
+        if context_length <= 0:
             raise ValueError("context_length must be a positive integer.")
 
         token_len = model.config.input_token_len
-        if len(context) > self.context_length:
-            context = context[-self.context_length :]
+        if len(context) > context_length:
+            context = context[-context_length:]
 
         # Timer requires at least one complete input token and accepts only
         # whole tokens. Preserve the most recent observations when aligning.
@@ -149,7 +160,7 @@ class TimerForecaster(BaseFoundationForecaster):
 
         # Timer expects shape (batch_size, seq_len)
         input_tensor = torch.tensor(
-            context, dtype=torch.float32, device=self.device_
+            context, dtype=torch.float32, device=model_spec.device
         ).unsqueeze(0)
 
         output = model.generate(input_tensor, max_new_tokens=pred_len)

@@ -6,14 +6,13 @@ __author__ = ["shiyu-coder", "geetu040"]
 
 __all__ = ["WindFMForecaster"]
 
-from copy import deepcopy
-
 import numpy as np
 import pandas as pd
 
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 from sktime.utils.warnings import warn
@@ -200,12 +199,14 @@ class WindFMForecaster(BaseFoundationForecaster):
         self.predict_kwargs = predict_kwargs
         self.deterministic = deterministic
 
-        super().__init__(
+        model_spec = FoundationModelSpec(
             model_path=model_path,
             tokenizer_path=tokenizer_path,
             device=device,
             random_state=42 if deterministic else None,
+            predict_extra_kwargs={"clip": clip, **(predict_kwargs or {})},
         )
+        super().__init__(model_spec=model_spec)
 
     def _update_attrs_in_fit(self, y, X=None, fh=None):
         """Resolve the covariate mapping for the stored zero-shot context."""
@@ -215,10 +216,11 @@ class WindFMForecaster(BaseFoundationForecaster):
         """Load the paired WindFM tokenizer and model into a shared handle."""
         from sktime.libs.windfm import WindFM, WindFMTokenizer
 
-        tokenizer = WindFMTokenizer.from_pretrained(self.tokenizer_path)
-        model = WindFM.from_pretrained(self.model_path)
-        tokenizer = tokenizer.to(self.device_).eval()
-        model = model.to(self.device_).eval()
+        model_spec = self.model_spec_
+        tokenizer = WindFMTokenizer.from_pretrained(model_spec.tokenizer_path)
+        model = WindFM.from_pretrained(model_spec.model_path)
+        tokenizer = tokenizer.to(model_spec.device).eval()
+        model = model.to(model_spec.device).eval()
         return ModelHandle(model=model, tokenizer=tokenizer)
 
     def _inference(
@@ -232,6 +234,9 @@ class WindFMForecaster(BaseFoundationForecaster):
         alpha=None,
     ):
         """Generate WindFM sample paths and normalize their forecasts."""
+        model_spec = self.model_spec_
+        predict_kwargs = dict(model_spec.predict_extra_kwargs)
+        clip = predict_kwargs.pop("clip")
         if context_X is None:
             context_X = self._make_fallback_X(context_y)
         df = self._make_windfm_frame(context_y=context_y, context_X=context_X)
@@ -255,8 +260,9 @@ class WindFMForecaster(BaseFoundationForecaster):
         x_timestamp = self._to_timestamps(x_index)
         y_timestamp = self._to_timestamps(y_index)
 
-        predictor = self._make_predictor(handle, max_context=len(context_y))
-        predict_kwargs = deepcopy(self.predict_kwargs) if self.predict_kwargs else {}
+        predictor = self._make_predictor(
+            handle, max_context=len(context_y), device=model_spec.device, clip=clip
+        )
         pred_df = predictor.predict(
             df=df,
             x_timestamp=x_timestamp,
@@ -277,16 +283,16 @@ class WindFMForecaster(BaseFoundationForecaster):
             quantiles=quantiles,
         )
 
-    def _make_predictor(self, handle, max_context):
+    def _make_predictor(self, handle, max_context, device, clip):
         """Instantiate the upstream WindFM predictor."""
         from sktime.libs.windfm import WindFMPredictor
 
         return WindFMPredictor(
             handle.model,
             handle.tokenizer,
-            device=self.device_,
+            device=device,
             max_context=max_context,
-            clip=self.clip,
+            clip=clip,
         )
 
     def _to_timestamps(self, index):

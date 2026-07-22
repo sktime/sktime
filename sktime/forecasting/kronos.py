@@ -6,8 +6,6 @@ __author__ = ["shiyu-coder", "geetu040"]
 
 __all__ = ["KronosForecaster"]
 
-from copy import deepcopy
-
 import numpy as np
 import pandas as pd
 
@@ -15,6 +13,7 @@ from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 from sktime.forecasting.foundation._format import format_point_result
@@ -174,12 +173,14 @@ class KronosForecaster(BaseFoundationForecaster):
         self.predict_kwargs = predict_kwargs
         self.deterministic = deterministic
 
-        super().__init__(
+        model_spec = FoundationModelSpec(
             model_path=model_path,
             tokenizer_path=tokenizer_path,
             device=device,
             random_state=42 if deterministic else None,
+            predict_extra_kwargs={"clip": clip, **(predict_kwargs or {})},
         )
+        super().__init__(model_spec=model_spec)
 
     def _update_attrs_in_fit(self, y, X, fh):
         """Resolve the OHLC mapping stored alongside the shared context."""
@@ -204,10 +205,11 @@ class KronosForecaster(BaseFoundationForecaster):
         """Load the paired Kronos tokenizer and model into a shared handle."""
         from sktime.libs.kronos import Kronos, KronosTokenizer
 
-        tokenizer = KronosTokenizer.from_pretrained(self.tokenizer_path)
-        model = Kronos.from_pretrained(self.model_path)
-        tokenizer = tokenizer.to(self.device_).eval()
-        model = model.to(self.device_).eval()
+        model_spec = self.model_spec_
+        tokenizer = KronosTokenizer.from_pretrained(model_spec.tokenizer_path)
+        model = Kronos.from_pretrained(model_spec.model_path)
+        tokenizer = tokenizer.to(model_spec.device).eval()
+        model = model.to(model_spec.device).eval()
         return ModelHandle(model=model, tokenizer=tokenizer)
 
     def _inference(
@@ -221,6 +223,9 @@ class KronosForecaster(BaseFoundationForecaster):
         alpha=None,
     ):
         """Run Kronos inference for future, in-sample, or mixed horizons."""
+        model_spec = self.model_spec_
+        predict_kwargs = dict(model_spec.predict_extra_kwargs)
+        clip = predict_kwargs.pop("clip")
         df = pd.DataFrame(index=context_y.index)
         for internal, original in self.column_mapping_.items():
             df[internal] = context_y[original].to_numpy()
@@ -244,8 +249,9 @@ class KronosForecaster(BaseFoundationForecaster):
         x_timestamp = self._to_timestamps(context_y.index)
         y_timestamp = self._to_timestamps(y_index)
 
-        predictor = self._make_predictor(handle, max_context=len(context_y))
-        predict_kwargs = deepcopy(self.predict_kwargs) if self.predict_kwargs else {}
+        predictor = self._make_predictor(
+            handle, max_context=len(context_y), device=model_spec.device, clip=clip
+        )
         pred_df = predictor.predict(
             df=df,
             x_timestamp=x_timestamp,
@@ -267,16 +273,16 @@ class KronosForecaster(BaseFoundationForecaster):
 
         return ForecastResult(mean=out.to_numpy())
 
-    def _make_predictor(self, handle, max_context):
+    def _make_predictor(self, handle, max_context, device, clip):
         """Instantiate the upstream Kronos predictor."""
         from sktime.libs.kronos import KronosPredictor
 
         return KronosPredictor(
             handle.model,
             handle.tokenizer,
-            device=self.device_,
+            device=device,
             max_context=max_context,
-            clip=self.clip,
+            clip=clip,
         )
 
     def _to_timestamps(self, index):

@@ -13,6 +13,7 @@ from sktime.forecasting.base import (
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 
@@ -228,7 +229,23 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
-        super().__init__(model_path=repo_id, device=backend, ignore_deps=ignore_deps)
+        model_spec = FoundationModelSpec(
+            model_path=repo_id,
+            device=backend,
+            ignore_deps=ignore_deps,
+            load_extra_kwargs={
+                "context_len": context_len,
+                "horizon_len": horizon_len,
+                "input_patch_len": input_patch_len,
+                "output_patch_len": output_patch_len,
+                "num_layers": num_layers,
+                "model_dims": model_dims,
+                "per_core_batch_size": per_core_batch_size,
+                "verbose": verbose,
+                "use_source_package": use_source_package,
+            },
+        )
+        super().__init__(model_spec=model_spec)
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
@@ -236,7 +253,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         This method should be used for setting dynamic tags only.
         """
         super().__dynamic_tags__()
-        if not self.ignore_deps:
+        if not self.model_spec.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
                 # todo 1.1.0: Regularly check whether timesfm version can be updated
@@ -261,37 +278,53 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
             )
 
     def _update_attrs_in_fit(self, y, X=None, fh=None):
-        if fh is None and self.horizon_len is None:
+        load_extra_kwargs = dict(self.model_spec_.load_extra_kwargs)
+        horizon_len = load_extra_kwargs["horizon_len"]
+        context_len = load_extra_kwargs["context_len"]
+        input_patch_len = load_extra_kwargs["input_patch_len"]
+
+        if fh is None and horizon_len is None:
             raise ValueError(
                 "Both 'fh' and 'horizon_len' cannot be None. Provide at least one."
             )
-        elif fh is not None and self.horizon_len is not None:
+        elif fh is not None and horizon_len is not None:
             fh = fh.to_relative(self.cutoff)
-            self._horizon_len = max(self.horizon_len, *fh._values.values)
+            self._horizon_len = max(horizon_len, *fh._values.values)
         elif fh is not None:
             fh = fh.to_relative(self.cutoff)
             self._horizon_len = max(*fh._values.values)
         else:
-            self._horizon_len = self.horizon_len
+            self._horizon_len = horizon_len
 
-        if self.context_len is not None:
-            self._context_len = self.context_len
+        if context_len is not None:
+            self._context_len = context_len
         else:
             # Compute context_len as the smallest multiple of input_patch_len
             # that is larger than the length of y.
-            context_multiple = (len(y) // self.input_patch_len) + 1
-            self._context_len = context_multiple * self.input_patch_len
+            context_multiple = (len(y) // input_patch_len) + 1
+            self._context_len = context_multiple * input_patch_len
+
+        load_extra_kwargs.update(
+            context_len=self._context_len,
+            horizon_len=self._horizon_len,
+        )
+        self._update_model_spec(
+            load_extra_kwargs=load_extra_kwargs,
+        )
 
     def _load_model(self):
         """Load TimesFM model."""
-        if self.use_source_package:
+        model_spec = self.model_spec_
+        load_kwargs = dict(model_spec.load_extra_kwargs)
+        use_source_package = load_kwargs.pop("use_source_package")
+        if use_source_package:
             from timesfm import TimesFm
         else:
             from sktime.libs.timesfm import TimesFm
 
-        tfm = TimesFm(**self._get_timesfm_kwargs())
-        if self.repo_id is not None:
-            tfm.load_from_checkpoint(repo_id=self.repo_id)
+        tfm = TimesFm(backend=model_spec.device, **load_kwargs)
+        if model_spec.model_path is not None:
+            tfm.load_from_checkpoint(repo_id=model_spec.model_path)
         else:
             if not hasattr(tfm, "init_from_random_weights"):
                 raise NotImplementedError(
@@ -301,20 +334,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
             tfm.init_from_random_weights()
 
         return ModelHandle(model=tfm)
-
-    def _get_timesfm_kwargs(self):
-        """Get the kwargs for TimesFM model."""
-        return {
-            "context_len": self._context_len,
-            "horizon_len": self._horizon_len,
-            "input_patch_len": self.input_patch_len,
-            "output_patch_len": self.output_patch_len,
-            "num_layers": self.num_layers,
-            "model_dims": self.model_dims,
-            "per_core_batch_size": self.per_core_batch_size,
-            "backend": self.backend,
-            "verbose": self.verbose,
-        }
 
     def _inference(
         self,
@@ -326,10 +345,11 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         fh,
         alpha=None,
     ):
-        if pred_len > self._horizon_len:
+        horizon_len = self.model_spec_.load_extra_kwargs["horizon_len"]
+        if pred_len > horizon_len:
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"
-                f" specified horizon_len of {self._horizon_len}. Change the horizon_len"
+                f" specified horizon_len of {horizon_len}. Change the horizon_len"
                 " when initializing the model or try another forecasting horizon."
             )
 
@@ -338,12 +358,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
 
         pred, _ = handle.model.forecast(context_np)
         return ForecastResult(mean=pred.ravel().reshape(-1, 1))
-
-    def _cache_key_extra(self):
-        """Return model-loading parameters specific to TimesFM."""
-        load_kwargs = self._get_timesfm_kwargs()
-        load_kwargs["use_source_package"] = self.use_source_package
-        return tuple(sorted(load_kwargs.items()))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

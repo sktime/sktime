@@ -24,6 +24,7 @@ import numpy as np
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 
@@ -158,35 +159,42 @@ class FalconTSTForecaster(BaseFoundationForecaster):
         quantization_config=None,
         revin=True,
     ):
+        self.model_path = model_path
+        self.config = config
         self.device_map = device_map
+        self.quantization_config = quantization_config
         self.revin = revin
-        super().__init__(
+        model_spec = FoundationModelSpec(
             model_path=model_path,
             config=config,
             device=device_map,
             quantization_config=quantization_config,
+            predict_extra_kwargs={"revin": revin},
         )
+        super().__init__(model_spec=model_spec)
 
-    def _resolve_config(self):
+    def _resolve_config(self, config):
         """Copy dict and ``PretrainedConfig`` inputs without mutating them."""
-        return {} if self.config is None else deepcopy(self.config)
-
-    def _update_attrs_in_fit(self, y, X=None, fh=None):
-        """Snapshot the configuration used to create a config-only model."""
-        self.model_config_ = deepcopy(self.config_)
+        return {} if config is None else deepcopy(config)
 
     def _load_model(self):
         """Load pretrained or config-only Falcon-TST into a model handle."""
         from sktime.libs.falcon_tst import FalconTSTConfig, FalconTSTForPrediction
 
-        if self.model_path is not None:
-            kwargs = {}
-            if self.device_map is not None:
-                kwargs["device_map"] = self.device_map
-            if self.quantization_config is not None:
-                kwargs["quantization_config"] = self.quantization_config
-
-            model = FalconTSTForPrediction.from_pretrained(self.model_path, **kwargs)
+        model_spec = self.model_spec_
+        if model_spec.model_path is not None:
+            pretrained_kwargs = {}
+            if model_spec.device is not None:
+                pretrained_kwargs["device_map"] = model_spec.device
+            if model_spec.quantization_config is not None:
+                pretrained_kwargs["quantization_config"] = (
+                    model_spec.quantization_config
+                )
+            model = FalconTSTForPrediction.from_pretrained(
+                model_spec.model_path,
+                **pretrained_kwargs,
+                **model_spec.load_extra_kwargs,
+            )
         else:
             warn(
                 "Initializing Falcon-TST from config creates random weights. "
@@ -197,14 +205,14 @@ class FalconTSTForecaster(BaseFoundationForecaster):
                 stacklevel=2,
             )
 
-            config = deepcopy(self.model_config_)
-            if not config:
-                config = FalconTSTConfig()
-            if isinstance(config, dict):
-                config = FalconTSTConfig.from_dict(config)
+            model_config = deepcopy(model_spec.config)
+            if not model_config:
+                model_config = FalconTSTConfig()
+            if isinstance(model_config, dict):
+                model_config = FalconTSTConfig.from_dict(model_config)
 
-            model = FalconTSTForPrediction(config)
-            model = model.to(self.device_map)
+            model = FalconTSTForPrediction(model_config)
+            model = model.to(model_spec.device)
 
         return ModelHandle(model=model)
 
@@ -222,25 +230,28 @@ class FalconTSTForecaster(BaseFoundationForecaster):
         import torch
 
         model = handle.model
+        predict_kwargs = self.model_spec_.predict_extra_kwargs
         past_values = torch.from_numpy(np.expand_dims(context_y.to_numpy(), axis=0))
         past_values = past_values.to(model.dtype).to(model.device)
 
         output = model.predict(
             past_values,
             forecast_horizon=pred_len,
-            revin=self.revin,
+            **predict_kwargs,
         )
         predictions = output.detach().float().cpu().numpy().squeeze(axis=0)
         return ForecastResult(mean=predictions)
 
     def _get_unique_model_key(self):
         """Build a hashable key from all Falcon-TST loading inputs."""
+        spec = self.model_spec_
         key_items = {
             "class": self.__class__.__name__,
-            "model_path": self.model_path,
-            "config": self.config_,
-            "device_map": self.device_map,
-            "quantization_config": self.quantization_config,
+            "model_path": spec.model_path,
+            "config": spec.config,
+            "device_map": spec.device,
+            "quantization_config": spec.quantization_config,
+            "load_extra_kwargs": spec.load_extra_kwargs,
         }
         return self.__class__.__name__, str(sorted(key_items.items()))
 

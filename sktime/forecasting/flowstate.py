@@ -10,6 +10,7 @@ from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 from sktime.utils.dependencies import _safe_import
@@ -101,23 +102,31 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
         self.batch_first = batch_first
         self.prediction_type = prediction_type
 
-        super().__init__(
+        model_spec = FoundationModelSpec(
             model_path=model_path,
             revision=revision,
             config=config,
             device="auto",
+            predict_extra_kwargs={
+                "scale_factor": scale_factor,
+                "batch_first": batch_first,
+                "prediction_type": prediction_type,
+            },
         )
+        super().__init__(model_spec=model_spec)
 
     def _load_model(self):
         """Load a FlowState checkpoint into a cacheable model handle."""
         from tsfm_public import FlowStateForPrediction
 
+        model_spec = self.model_spec_
         model = FlowStateForPrediction.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-            **self.config_,
+            model_spec.model_path,
+            revision=model_spec.revision,
+            **(model_spec.config or {}),
+            **model_spec.load_extra_kwargs,
         )
-        model = model.to(self.device_)
+        model = model.to(model_spec.device)
 
         return ModelHandle(model=model)
 
@@ -133,6 +142,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
     ):
         """Run the FlowState forward pass and normalize its outputs."""
         model = handle.model
+        predict_kwargs = self.model_spec_.predict_extra_kwargs
         past = torch.tensor(
             context_y.iloc[:, 0].to_numpy(dtype=np.float32).reshape(1, -1, 1),
             dtype=model.dtype,
@@ -141,9 +151,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
         output = model(
             past_values=past,
             prediction_length=pred_len,
-            scale_factor=self.scale_factor,
-            batch_first=True,
-            prediction_type=self.prediction_type,
+            **predict_kwargs,
         )
 
         values = output.prediction_outputs.detach().cpu().numpy()[0]
@@ -170,7 +178,9 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
                 for quantile in alpha
             }
 
-        point_key = "median" if self.prediction_type == "median" else "mean"
+        point_key = (
+            "median" if predict_kwargs["prediction_type"] == "median" else "mean"
+        )
         return ForecastResult(**{point_key: values}, quantiles=quantiles)
 
     @classmethod

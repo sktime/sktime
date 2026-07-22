@@ -25,6 +25,7 @@ import numpy as np
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 
@@ -190,19 +191,24 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         forward_kwargs=None,
         deterministic=False,
     ):
+        self.model_path = model_path
+        self.config = config
         self.device_map = device_map
         self.dtype = dtype
         self.quantization_config = quantization_config
         self.forward_kwargs = forward_kwargs
         self.deterministic = deterministic
-        super().__init__(
+        model_spec = FoundationModelSpec(
             model_path=model_path,
             config=config,
             device=device_map,
             dtype=dtype,
             quantization_config=quantization_config,
             random_state=42 if deterministic else None,
+            load_extra_kwargs={"trust_remote_code": True},
+            predict_extra_kwargs=forward_kwargs or {},
         )
+        super().__init__(model_spec=model_spec)
 
     def _inference(
         self,
@@ -218,6 +224,7 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         import torch
 
         model = handle.model
+        predict_kwargs = self.model_spec_.predict_extra_kwargs
         model_quantiles = [round(value, 3) for value in model.config.quantiles]
         requested = None if alpha is None else list(alpha)
         requested_rounded = (
@@ -239,8 +246,11 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         past_values = torch.from_numpy(context_y.iloc[:, 0].to_numpy()[None, :])
         past_values = past_values.to(dtype=model.dtype, device=model.device)
 
-        forward_kwargs = deepcopy(self.forward_kwargs) if self.forward_kwargs else {}
-        output = model.generate(past_values, max_new_tokens=pred_len, **forward_kwargs)
+        output = model.generate(
+            past_values,
+            max_new_tokens=pred_len,
+            **predict_kwargs,
+        )
 
         quantile_values = output.squeeze(axis=0).detach().float().cpu().numpy()
         point_values = np.average(quantile_values, weights=weights, axis=0)
@@ -258,7 +268,7 @@ class TimerS1Forecaster(BaseFoundationForecaster):
 
     def _load_model(self):
         """Load Timer-S1 and return its shared foundation-model handle."""
-        if self.model_path is not None:
+        if self.model_spec_.model_path is not None:
             model = self._load_from_path()
         else:
             model = self._load_randomly()
@@ -268,12 +278,13 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         """Load pretrained Timer-S1 weights."""
         from sktime.libs.timer_s1 import TimerS1ForPrediction
 
+        model_spec = self.model_spec_
         return TimerS1ForPrediction.from_pretrained(
-            self.model_path,
-            device_map=self.device_,
-            dtype=self.dtype_,
-            quantization_config=self.quantization_config,
-            trust_remote_code=True,
+            model_spec.model_path,
+            device_map=model_spec.device,
+            dtype=model_spec.dtype,
+            quantization_config=model_spec.quantization_config,
+            **model_spec.load_extra_kwargs,
         )
 
     def _load_randomly(self):
@@ -289,34 +300,37 @@ class TimerS1Forecaster(BaseFoundationForecaster):
             stacklevel=2,
         )
 
-        config = deepcopy(self.config_)
-        if not config:
-            config = TimerS1Config()
-        if isinstance(config, dict):
-            config = TimerS1Config.from_dict(config)
+        model_spec = self.model_spec_
+        model_config = deepcopy(model_spec.config)
+        if not model_config:
+            model_config = TimerS1Config()
+        if isinstance(model_config, dict):
+            model_config = TimerS1Config.from_dict(model_config)
 
-        model = TimerS1ForPrediction(config).to(self.device_)
-        if self.dtype_ is not None:
-            model = model.to(dtype=self.dtype_)
+        model = TimerS1ForPrediction(model_config).to(model_spec.device)
+        if model_spec.dtype is not None:
+            model = model.to(dtype=model_spec.dtype)
         return model
 
     def _get_unique_model_key(self):
         """Build a hashable key from all Timer-S1 loading inputs."""
+        spec = self.model_spec_
         key_items = {
             "class": self.__class__.__name__,
-            "model_path": self.model_path,
-            "config": self.config_ if self.model_path is None else None,
-            "device_map": self.device_map,
-            "dtype": self.dtype_,
-            "quantization_config": self.quantization_config,
+            "model_path": spec.model_path,
+            "config": spec.config if spec.model_path is None else None,
+            "device_map": spec.device,
+            "dtype": spec.dtype,
+            "quantization_config": spec.quantization_config,
+            "load_extra_kwargs": spec.load_extra_kwargs,
         }
         return self.__class__.__name__, str(sorted(key_items.items()))
 
-    def _resolve_config(self):
+    def _resolve_config(self, config):
         """Copy dict and ``TimerS1Config`` inputs without mutating either."""
-        if self.config is None:
+        if config is None:
             return {}
-        return deepcopy(self.config)
+        return deepcopy(config)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

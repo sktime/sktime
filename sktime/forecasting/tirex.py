@@ -19,6 +19,7 @@ __author__ = ["sinemkilicdere", "martinloretzzz"]
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 
@@ -93,8 +94,14 @@ class TiRexForecaster(BaseFoundationForecaster):
         license_accepted: bool = False,
     ):
         self.model = model
+        self.device = device
         self.license_accepted = license_accepted
-        super().__init__(model_path=model, device=device)
+        model_spec = FoundationModelSpec(
+            model_path=model,
+            device=device,
+            load_extra_kwargs={"backend": "torch"},
+        )
+        super().__init__(model_spec=model_spec)
 
         if not self.license_accepted:
             raise ValueError(
@@ -121,7 +128,12 @@ class TiRexForecaster(BaseFoundationForecaster):
         """Load the TiRex backend into the shared model cache."""
         from tirex import load_model
 
-        model = load_model(self.model, device=self.device_, backend="torch")
+        model_spec = self.model_spec_
+        model = load_model(
+            model_spec.model_path,
+            device=model_spec.device,
+            **model_spec.load_extra_kwargs,
+        )
         return ModelHandle(model=model)
 
     def _inference(

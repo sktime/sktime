@@ -9,6 +9,7 @@ from types import SimpleNamespace
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 from sktime.utils.dependencies import _safe_import
@@ -120,13 +121,34 @@ class TimeLLMForecaster(BaseFoundationForecaster):
         self.d_ff = d_ff
         self.n_heads = n_heads
         self.dropout = dropout
+        self.device = device
         self.prompt_domain = prompt_domain
-        super().__init__(device=device, dtype="torch.bfloat16")
+        model_spec = FoundationModelSpec(
+            device=device,
+            dtype="torch.bfloat16",
+            load_extra_kwargs={
+                "task_name": task_name,
+                "pred_len": pred_len,
+                "seq_len": seq_len,
+                "llm_model": llm_model,
+                "llm_layers": llm_layers,
+                "llm_dim": llm_dim,
+                "patch_len": patch_len,
+                "stride": stride,
+                "d_model": d_model,
+                "d_ff": d_ff,
+                "n_heads": n_heads,
+                "dropout": dropout,
+                "prompt_domain": prompt_domain,
+            },
+        )
+        super().__init__(model_spec=model_spec)
 
     def _update_attrs_in_fit(self, y, X=None, fh=None):
         """Set the data-dependent Time-LLM architecture parameters."""
+        load_extra_kwargs = dict(self.model_spec_.load_extra_kwargs)
         if fh is None:
-            self._pred_len = self.pred_len
+            self._pred_len = load_extra_kwargs["pred_len"]
         else:
             relative_fh = fh.to_relative(self.cutoff).to_pandas()
             if all(value > 0 for value in relative_fh):
@@ -135,35 +157,21 @@ class TimeLLMForecaster(BaseFoundationForecaster):
                 self._pred_len = len(relative_fh)
 
         self._enc_in = y.shape[1]
+        load_extra_kwargs.update(pred_len=self._pred_len, enc_in=self._enc_in)
+        self._update_model_spec(
+            load_extra_kwargs=load_extra_kwargs,
+        )
 
     def _load_model(self):
         """Construct Time-LLM and return its shared model handle."""
         from sktime.libs.time_llm.TimeLLM import Model
 
-        configs = SimpleNamespace(**self._get_time_llm_kwargs())
+        model_spec = self.model_spec_
+        configs = SimpleNamespace(**model_spec.load_extra_kwargs)
         model = Model(configs)
-        model = model.to(self.device_)
-        model = model.to(self.dtype_)
+        model = model.to(model_spec.device)
+        model = model.to(model_spec.dtype)
         return ModelHandle(model=model)
-
-    def _get_time_llm_kwargs(self):
-        """Get the kwargs for Time-LLM model."""
-        return {
-            "task_name": self.task_name,
-            "pred_len": self._pred_len,
-            "seq_len": self.seq_len,
-            "llm_model": self.llm_model,
-            "llm_layers": self.llm_layers,
-            "llm_dim": self.llm_dim,
-            "patch_len": self.patch_len,
-            "stride": self.stride,
-            "d_model": self.d_model,
-            "d_ff": self.d_ff,
-            "n_heads": self.n_heads,
-            "dropout": self.dropout,
-            "enc_in": self._enc_in,
-            "prompt_domain": self.prompt_domain,
-        }
 
     def _inference(
         self,
@@ -176,7 +184,8 @@ class TimeLLMForecaster(BaseFoundationForecaster):
         alpha=None,
     ):
         """Run Time-LLM inference and return normalized point forecasts."""
-        X_tensor = torch.tensor(context_y.values).reshape(1, -1, 1).to(self.device_)
+        device = self.model_spec_.device
+        X_tensor = torch.tensor(context_y.values).reshape(1, -1, 1).to(device)
         X_tensor = X_tensor.to(torch.float32)
 
         res = handle.model.forward(
@@ -186,15 +195,11 @@ class TimeLLMForecaster(BaseFoundationForecaster):
         values = values.reshape(-1, context_y.shape[1])
         return ForecastResult(mean=values)
 
-    def _cache_key_extra(self):
-        """Return all Time-LLM architecture parameters used during loading."""
-        return tuple(sorted(self._get_time_llm_kwargs().items()))
-
-    def _resolve_device(self):
+    def _resolve_device(self, device):
         """Preserve Time-LLM's automatic CUDA/CPU device selection."""
-        if self.device is None:
+        if device is None:
             return "cuda" if torch.cuda.is_available() else "cpu"
-        return self.device
+        return device
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

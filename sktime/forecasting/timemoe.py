@@ -13,6 +13,7 @@ from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 
@@ -147,14 +148,16 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
-        super().__init__(
+        model_spec = FoundationModelSpec(
             model_path=model_path,
-            config=config,
+            config=None,
             device="cpu",
             dtype="torch.bfloat16",
             random_state=seed,
             ignore_deps=ignore_deps,
+            load_extra_kwargs={"use_source_package": use_source_package},
         )
+        super().__init__(model_spec=model_spec)
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values condition on parameters.
@@ -162,9 +165,9 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         This method should be used for setting dynamic tags only.
         """
         super().__dynamic_tags__()
-        if self.ignore_deps:
+        if self.model_spec.ignore_deps:
             return
-        if self.use_source_package:
+        if self.model_spec.load_extra_kwargs["use_source_package"]:
             self.set_tags(python_dependencies=["timemoe"])
         else:
             self.set_tags(
@@ -177,7 +180,8 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
 
     def _load_model(self):
         """Load vendored or source-package TimeMoE into a model handle."""
-        if self.use_source_package:
+        model_spec = self.model_spec_
+        if model_spec.load_extra_kwargs["use_source_package"]:
             if not _check_soft_dependencies("timemoe", severity="none"):
                 raise ImportError(
                     "To use TimeMoE with use_source_package=True, "
@@ -189,9 +193,9 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
             from sktime.libs.timemoe import TimeMoeForPrediction
 
         model = TimeMoeForPrediction.from_pretrained(
-            self.model_path,
-            torch_dtype=self.dtype_,
-            device_map=self.device_,
+            model_spec.model_path,
+            torch_dtype=model_spec.dtype,
+            device_map=model_spec.device,
         )
         return ModelHandle(model=model)
 
@@ -209,6 +213,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         import torch
 
         model = handle.model
+        dtype = self.model_spec_.dtype
 
         y_values = context_y.copy()
         if isinstance(y_values, pd.DataFrame):
@@ -222,7 +227,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
             for j in range(y_values.shape[2]):
                 channel = y_values[i, :, j]
 
-                input_tensor = torch.tensor(channel, dtype=self.dtype_).unsqueeze(0)
+                input_tensor = torch.tensor(channel, dtype=dtype).unsqueeze(0)
 
                 attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
 

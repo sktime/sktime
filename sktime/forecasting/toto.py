@@ -26,6 +26,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 
@@ -145,7 +146,22 @@ class TotoForecaster(BaseFoundationForecaster):
             raise ValueError("prediction_type must be either 'mean' or 'median'")
 
         self.seed = seed
-        super().__init__(model_path=model_path, device=device, random_state=seed)
+        model_spec = FoundationModelSpec(
+            model_path=model_path,
+            device=device,
+            random_state=seed,
+            load_extra_kwargs={
+                "use_memory_efficient_attention": use_memory_efficient_attention,
+                "stabilize_with_global": stabilize_with_global,
+                "scale_factor_exponent": scale_factor_exponent,
+            },
+            predict_extra_kwargs={
+                "num_samples": num_samples,
+                "samples_per_batch": samples_per_batch,
+                "prediction_type": prediction_type,
+            },
+        )
+        super().__init__(model_spec=model_spec)
 
     def __dynamic_tags__(self):
         """Set dependency tags for memory-efficient attention."""
@@ -153,29 +169,14 @@ class TotoForecaster(BaseFoundationForecaster):
         if self.use_memory_efficient_attention:
             self.set_tags(python_dependencies=["torch", "xformers", "accelerate"])
 
-    def _resolve_device(self):
+    def _resolve_device(self, device):
         """Resolve Toto's automatic CUDA-or-CPU device policy."""
-        if self.device is not None:
-            return self.device
+        if device is not None:
+            return device
 
         import torch
 
         return "cuda" if torch.cuda.is_available() else "cpu"
-
-    def _get_toto_kwargs(self):
-        """Get keyword arguments for the Toto model.
-
-        Returns
-        -------
-        dict
-            Keyword arguments for the Toto model.
-        """
-        return {
-            "pretrained_model_name_or_path": self.model_path,
-            "use_memory_efficient_attention": self.use_memory_efficient_attention,
-            "stabilize_with_global": self.stabilize_with_global,
-            "scale_factor_exponent": self.scale_factor_exponent,
-        }
 
     def _update_attrs_in_fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -211,18 +212,17 @@ class TotoForecaster(BaseFoundationForecaster):
         import torch
         from toto.data.util.dataset import MaskedTimeseries
 
-        input_series = torch.tensor(y.values.T, dtype=torch.float32).to(self.device_)
+        device = self.model_spec_.device
+        input_series = torch.tensor(y.values.T, dtype=torch.float32).to(device)
 
-        id_mask = torch.zeros_like(input_series).to(self.device_)
-        padding_mask = torch.full_like(input_series, True, dtype=torch.bool).to(
-            self.device_
-        )
+        id_mask = torch.zeros_like(input_series).to(device)
+        padding_mask = torch.full_like(input_series, True, dtype=torch.bool).to(device)
 
         # current model does not use these two variable, might be needed in future.
         timestamp_seconds = torch.zeros_like(input_series)
         time_interval_seconds = torch.full(
             (input_series.shape[0],), 60 * 15, dtype=torch.float32
-        ).to(self.device_)
+        ).to(device)
 
         self._series = MaskedTimeseries(
             series=input_series,
@@ -237,8 +237,12 @@ class TotoForecaster(BaseFoundationForecaster):
         from toto.inference.forecaster import TotoForecaster
         from toto.model.toto import Toto
 
-        toto_model = Toto.from_pretrained(**self._get_toto_kwargs())
-        toto_model.to(self.device_)
+        model_spec = self.model_spec_
+        toto_model = Toto.from_pretrained(
+            pretrained_model_name_or_path=model_spec.model_path,
+            **model_spec.load_extra_kwargs,
+        )
+        toto_model.to(model_spec.device)
         toto_model.compile()
         forecaster = TotoForecaster(toto_model.model)
         return ModelHandle(model=toto_model, pipeline=forecaster)
@@ -279,13 +283,15 @@ class TotoForecaster(BaseFoundationForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        model_spec = self.model_spec_
+        predict_kwargs = model_spec.predict_extra_kwargs
         forecast = handle.pipeline.forecast(
             self._series,
             prediction_length=pred_len,
-            num_samples=self.num_samples,
-            samples_per_batch=self.samples_per_batch,
+            num_samples=predict_kwargs["num_samples"],
+            samples_per_batch=predict_kwargs["samples_per_batch"],
         )
-        if self.prediction_type.lower() == "median":
+        if predict_kwargs["prediction_type"].lower() == "median":
             all_predictions = forecast.median.cpu().squeeze(0).numpy().T
             point_result = {"median": all_predictions}
         else:
@@ -296,7 +302,7 @@ class TotoForecaster(BaseFoundationForecaster):
         if alpha is not None:
             import torch
 
-            alpha_tensor = torch.tensor(alpha, device=self.device_)
+            alpha_tensor = torch.tensor(alpha, device=model_spec.device)
             quantiles = forecast.quantile(alpha_tensor)
             if quantiles.dim() > 3:
                 quantile_values = quantiles.cpu().squeeze(1).numpy()
@@ -309,16 +315,6 @@ class TotoForecaster(BaseFoundationForecaster):
         return ForecastResult(
             **point_result,
             quantiles=quantile_results,
-        )
-
-    def _cache_key_extra(self):
-        """Return model-loading parameters specific to Toto."""
-        return tuple(
-            sorted(
-                (key, value)
-                for key, value in self._get_toto_kwargs().items()
-                if key != "pretrained_model_name_or_path"
-            )
         )
 
     @classmethod

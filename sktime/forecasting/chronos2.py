@@ -5,6 +5,7 @@ __all__ = ["Chronos2Forecaster"]
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
+    FoundationModelSpec,
     ModelHandle,
 )
 
@@ -114,28 +115,31 @@ class Chronos2Forecaster(BaseFoundationForecaster):
         if config is not None:
             normalized_config.update(config)
 
-        self.limit_prediction_length = normalized_config["limit_prediction_length"]
-        self.batch_size = normalized_config["batch_size"]
-        self.context_length = normalized_config["context_length"]
-        self.cross_learning = normalized_config["cross_learning"]
-
-        super().__init__(
+        model_spec = FoundationModelSpec(
             model_path=model_path,
-            config=config,
+            config=None,
             device=normalized_config["device_map"],
             dtype=normalized_config["torch_dtype"],
             random_state=seed,
             ignore_deps=ignore_deps,
+            predict_extra_kwargs={
+                "limit_prediction_length": normalized_config["limit_prediction_length"],
+                "batch_size": normalized_config["batch_size"],
+                "context_length": normalized_config["context_length"],
+                "cross_learning": normalized_config["cross_learning"],
+            },
         )
+        super().__init__(model_spec=model_spec)
 
     def _load_model(self):
         """Load a Chronos-2 checkpoint into a cacheable model handle."""
         from chronos import Chronos2Pipeline
 
+        model_spec = self.model_spec_
         model = Chronos2Pipeline.from_pretrained(
-            pretrained_model_name_or_path=self.model_path,
-            torch_dtype=self.dtype_,
-            device_map=self.device_,
+            pretrained_model_name_or_path=model_spec.model_path,
+            torch_dtype=model_spec.dtype,
+            device_map=model_spec.device,
         )
         return ModelHandle(model=model)
 
@@ -151,8 +155,11 @@ class Chronos2Forecaster(BaseFoundationForecaster):
     ):
         """Build Chronos-2 context and return its median forecast."""
         model = handle.model
-
-        context_length = self.context_length
+        predict_kwargs = self.model_spec_.predict_extra_kwargs
+        limit_prediction_length = predict_kwargs["limit_prediction_length"]
+        batch_size = predict_kwargs["batch_size"]
+        context_length = predict_kwargs["context_length"]
+        cross_learning = predict_kwargs["cross_learning"]
         if context_length is None:
             context_length = model.model_context_length
 
@@ -182,10 +189,10 @@ class Chronos2Forecaster(BaseFoundationForecaster):
         predictions = model.predict(
             [input_dict],
             prediction_length=pred_len,
-            batch_size=self.batch_size,
+            batch_size=batch_size,
             context_length=context_length,
-            cross_learning=self.cross_learning,
-            limit_prediction_length=self.limit_prediction_length,
+            cross_learning=cross_learning,
+            limit_prediction_length=limit_prediction_length,
         )
 
         pred_tensor = predictions[0]
