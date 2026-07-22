@@ -119,7 +119,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
         """Load a FlowState checkpoint into a cacheable model handle."""
         from tsfm_public import FlowStateForPrediction
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         model = FlowStateForPrediction.from_pretrained(
             model_spec.model_path,
             revision=model_spec.revision,
@@ -142,7 +142,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
     ):
         """Run the FlowState forward pass and normalize its outputs."""
         model = handle.model
-        predict_kwargs = self.model_spec_.predict_extra_kwargs
+        predict_kwargs = self.model_spec.predict_extra_kwargs
         past = torch.tensor(
             context_y.iloc[:, 0].to_numpy(dtype=np.float32).reshape(1, -1, 1),
             dtype=model.dtype,

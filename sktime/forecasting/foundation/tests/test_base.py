@@ -125,11 +125,11 @@ def test_post_init_normalizes_spec_without_mutating_constructor_spec():
 
     forecaster = _DummyFoundationForecaster(model_spec=spec)
 
-    assert forecaster.model_spec is spec
-    assert forecaster.model_spec_.config == config
-    assert forecaster.model_spec_.config is not config
-    assert forecaster.model_spec_.random_state is not None
-    assert forecaster.model_spec.random_state == 42
+    assert forecaster.model_spec is not spec
+    assert forecaster.model_spec.config == config
+    assert forecaster.model_spec.config is not config
+    assert forecaster.model_spec.random_state is not None
+    assert spec.random_state == 42
 
 
 @pytest.mark.parametrize(
@@ -326,16 +326,16 @@ def test_quantile_implementation_respects_capability_tag():
     )
 
 
-def test_update_model_spec_replaces_runtime_spec_only():
-    """Derived fit settings can update the runtime spec without changing params."""
+def test_update_model_spec_replaces_active_spec():
+    """Derived fit settings replace the active spec without mutating the old one."""
     original = FoundationModelSpec(model_path="dummy", device="cpu")
     forecaster = _DummyFoundationForecaster(original)
 
     forecaster._update_model_spec(load_extra_kwargs={"context_length": 32})
 
-    assert forecaster.model_spec is original
-    assert forecaster.model_spec.load_extra_kwargs == {}
-    assert forecaster.model_spec_.load_extra_kwargs == {"context_length": 32}
+    assert forecaster.model_spec is not original
+    assert original.load_extra_kwargs == {}
+    assert forecaster.model_spec.load_extra_kwargs == {"context_length": 32}
 
 
 def test_torch_inference_context_is_seeded_and_restores_rng(y):

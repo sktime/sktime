@@ -179,7 +179,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
 
     def _load_model(self):
         """Load vendored or source-package TimeMoE into a model handle."""
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         if model_spec.load_extra_kwargs["use_source_package"]:
             if not _check_soft_dependencies("timemoe", severity="none"):
                 raise ImportError(
@@ -212,7 +212,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         import torch
 
         model = handle.model
-        dtype = self.model_spec_.dtype
+        dtype = self.model_spec.dtype
 
         y_values = context_y.copy()
         if isinstance(y_values, pd.DataFrame):

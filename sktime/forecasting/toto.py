@@ -212,7 +212,7 @@ class TotoForecaster(BaseFoundationForecaster):
         import torch
         from toto.data.util.dataset import MaskedTimeseries
 
-        device = self.model_spec_.device
+        device = self.model_spec.device
         input_series = torch.tensor(y.values.T, dtype=torch.float32).to(device)
 
         id_mask = torch.zeros_like(input_series).to(device)
@@ -237,7 +237,7 @@ class TotoForecaster(BaseFoundationForecaster):
         from toto.inference.forecaster import TotoForecaster
         from toto.model.toto import Toto
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         toto_model = Toto.from_pretrained(
             pretrained_model_name_or_path=model_spec.model_path,
             **model_spec.load_extra_kwargs,
@@ -283,7 +283,7 @@ class TotoForecaster(BaseFoundationForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         predict_kwargs = model_spec.predict_extra_kwargs
         forecast = handle.pipeline.forecast(
             self._series,

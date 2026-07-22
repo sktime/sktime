@@ -128,7 +128,7 @@ class TiRexForecaster(BaseFoundationForecaster):
         """Load the TiRex backend into the shared model cache."""
         from tirex import load_model
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         model = load_model(
             model_spec.model_path,
             device=model_spec.device,

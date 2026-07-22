@@ -60,7 +60,7 @@ class FoundationModelSpec:
     ``frozen=True`` prevents attribute reassignment but does not make objects
     stored in standard fields recursively immutable. Adapters should treat the
     specification as read-only and use ``BaseFoundationForecaster._update_model_spec``
-    to create a replaced runtime specification when necessary.
+    to replace the active specification when necessary.
     """
 
     model_path: str | None = None

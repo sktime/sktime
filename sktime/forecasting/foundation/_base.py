@@ -49,12 +49,10 @@ class BaseFoundationForecaster(BaseForecaster):
     Attributes
     ----------
     model_spec : FoundationModelSpec
-        Original specification built from constructor parameters. This remains
-        unchanged so estimator parameters can be inspected and cloned reliably.
-    model_spec_ : FoundationModelSpec
-        Runtime-normalized specification. For example, ``device="auto"`` and
-        string Torch dtypes are resolved here. Subclasses should use this version
-        in loading and inference hooks.
+        Active runtime specification. The specification passed by the constructor
+        is replaced during ``__post_init__`` with a normalized copy. For example,
+        ``device="auto"`` and string Torch dtypes are resolved here. Later
+        fit-derived settings are also applied by replacing this attribute.
     context_y_ : pd.DataFrame
         Copy of the target passed to ``fit``, with shape
         ``(n_context_timepoints, n_target_variables)``.
@@ -98,8 +96,8 @@ class BaseFoundationForecaster(BaseForecaster):
 
             def _load_model(self):
                 model = NativeModel.from_pretrained(
-                    self.model_spec_.model_path
-                ).to(self.model_spec_.device)
+                    self.model_spec.model_path
+                ).to(self.model_spec.device)
                 return ModelHandle(model=model)
 
             def _inference(
@@ -115,7 +113,7 @@ class BaseFoundationForecaster(BaseForecaster):
                 values = handle.model.predict(
                     context_y.to_numpy(),
                     prediction_length=pred_len,
-                    **self.model_spec_.predict_extra_kwargs,
+                    **self.model_spec.predict_extra_kwargs,
                 )
                 return ForecastResult(mean=np.asarray(values))
 
@@ -165,17 +163,18 @@ class BaseFoundationForecaster(BaseForecaster):
         """Create the runtime specification after estimator initialization.
 
         ``BaseObject`` calls this hook automatically. Subclasses that override it
-        must call ``super().__post_init__()`` before accessing ``model_spec_``.
+        must call ``super().__post_init__()`` before using normalized values from
+        ``model_spec``.
         """
-        spec = self.model_spec
-        self.model_spec_ = replace(
-            spec,
-            config=self._resolve_config(spec.config),
-            device=self._resolve_device(spec.device),
-            dtype=self._resolve_dtype(spec.dtype),
-            random_state=self._resolve_random_state(spec.random_state),
-            load_extra_kwargs=spec.load_extra_kwargs,
-            predict_extra_kwargs=spec.predict_extra_kwargs,
+        model_spec = self.model_spec
+        self.model_spec = replace(
+            model_spec,
+            config=self._resolve_config(model_spec.config),
+            device=self._resolve_device(model_spec.device),
+            dtype=self._resolve_dtype(model_spec.dtype),
+            random_state=self._resolve_random_state(model_spec.random_state),
+            load_extra_kwargs=model_spec.load_extra_kwargs,
+            predict_extra_kwargs=model_spec.predict_extra_kwargs,
         )
 
     def _fit(self, y, X=None, fh=None):
@@ -334,8 +333,8 @@ class BaseFoundationForecaster(BaseForecaster):
                 devices = [model_device.index or torch.cuda.current_device()]
 
         with torch.random.fork_rng(devices=devices):
-            if self.model_spec_.random_state is not None:
-                torch.manual_seed(self.model_spec_.random_state)
+            if self.model_spec.random_state is not None:
+                torch.manual_seed(self.model_spec.random_state)
             with torch.inference_mode():
                 yield
 
@@ -392,17 +391,17 @@ class BaseFoundationForecaster(BaseForecaster):
         it as ``None`` when an adapter's public ``config`` controls prediction
         only. Nested containers in the key are normalized by the cache.
         """
-        spec = self.model_spec_
+        model_spec = self.model_spec
         key_items = {
             "class": self.__class__.__name__,
-            "config": spec.config,
-            "device": spec.device,
-            "dtype": spec.dtype,
-            "model_path": spec.model_path,
-            "quantization_config": spec.quantization_config,
-            "revision": spec.revision,
-            "tokenizer_path": spec.tokenizer_path,
-            "load_extra_kwargs": spec.load_extra_kwargs,
+            "config": model_spec.config,
+            "device": model_spec.device,
+            "dtype": model_spec.dtype,
+            "model_path": model_spec.model_path,
+            "quantization_config": model_spec.quantization_config,
+            "revision": model_spec.revision,
+            "tokenizer_path": model_spec.tokenizer_path,
+            "load_extra_kwargs": model_spec.load_extra_kwargs,
         }
         return tuple(sorted(key_items.items()))
 
@@ -450,7 +449,7 @@ class BaseFoundationForecaster(BaseForecaster):
 
         This required hook is called without arguments on a process-local cache
         miss. Read normalized loading values and ``load_extra_kwargs`` from
-        ``self.model_spec_``. Put a primary neural network or equivalent object in
+        ``self.model_spec``. Put a primary neural network or equivalent object in
         ``handle.model``; optional tokenizers and high-level prediction pipelines
         have dedicated fields.
 
@@ -479,7 +478,7 @@ class BaseFoundationForecaster(BaseForecaster):
 
         This required hook translates from sktime's pandas representation to the
         native backend representation. Read backend prediction options from
-        ``self.model_spec_.predict_extra_kwargs``. It must not format pandas output
+        ``self.model_spec.predict_extra_kwargs``. It must not format pandas output
         itself.
 
         Parameters
@@ -522,14 +521,14 @@ class BaseFoundationForecaster(BaseForecaster):
         raise NotImplementedError
 
     def _update_model_spec(self, **changes):
-        """Replace fields on the normalized runtime specification.
+        """Replace fields on the active runtime specification.
 
         Use this helper for values derived in ``__post_init__`` or
-        ``_update_attrs_in_fit``. It intentionally leaves the constructor-facing
-        ``model_spec`` unchanged. Unknown fields and invalid extra kwargs are
-        rejected by :func:`dataclasses.replace` and ``FoundationModelSpec``.
+        ``_update_attrs_in_fit``. The frozen specification is replaced rather than
+        mutated in place. Unknown fields and invalid extra kwargs are rejected by
+        :func:`dataclasses.replace` and ``FoundationModelSpec``.
 
         Call this before the first handle lookup. Replacing loading settings after
         ``model_handle_`` is attached does not invalidate that existing handle.
         """
-        self.model_spec_ = replace(self.model_spec_, **changes)
+        self.model_spec = replace(self.model_spec, **changes)

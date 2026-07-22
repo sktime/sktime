@@ -224,7 +224,7 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         import torch
 
         model = handle.model
-        predict_kwargs = self.model_spec_.predict_extra_kwargs
+        predict_kwargs = self.model_spec.predict_extra_kwargs
         model_quantiles = [round(value, 3) for value in model.config.quantiles]
         requested = None if alpha is None else list(alpha)
         requested_rounded = (
@@ -268,7 +268,7 @@ class TimerS1Forecaster(BaseFoundationForecaster):
 
     def _load_model(self):
         """Load Timer-S1 and return its shared foundation-model handle."""
-        if self.model_spec_.model_path is not None:
+        if self.model_spec.model_path is not None:
             model = self._load_from_path()
         else:
             model = self._load_randomly()
@@ -278,7 +278,7 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         """Load pretrained Timer-S1 weights."""
         from sktime.libs.timer_s1 import TimerS1ForPrediction
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         return TimerS1ForPrediction.from_pretrained(
             model_spec.model_path,
             device_map=model_spec.device,
@@ -300,7 +300,7 @@ class TimerS1Forecaster(BaseFoundationForecaster):
             stacklevel=2,
         )
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         model_config = deepcopy(model_spec.config)
         if not model_config:
             model_config = TimerS1Config()

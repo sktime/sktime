@@ -181,7 +181,7 @@ class FalconTSTForecaster(BaseFoundationForecaster):
         """Load pretrained or config-only Falcon-TST into a model handle."""
         from sktime.libs.falcon_tst import FalconTSTConfig, FalconTSTForPrediction
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         if model_spec.model_path is not None:
             pretrained_kwargs = {}
             if model_spec.device is not None:
@@ -230,7 +230,7 @@ class FalconTSTForecaster(BaseFoundationForecaster):
         import torch
 
         model = handle.model
-        predict_kwargs = self.model_spec_.predict_extra_kwargs
+        predict_kwargs = self.model_spec.predict_extra_kwargs
         past_values = torch.from_numpy(np.expand_dims(context_y.to_numpy(), axis=0))
         past_values = past_values.to(model.dtype).to(model.device)
 

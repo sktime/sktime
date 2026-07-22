@@ -205,7 +205,7 @@ class KronosForecaster(BaseFoundationForecaster):
         """Load the paired Kronos tokenizer and model into a shared handle."""
         from sktime.libs.kronos import Kronos, KronosTokenizer
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         tokenizer = KronosTokenizer.from_pretrained(model_spec.tokenizer_path)
         model = Kronos.from_pretrained(model_spec.model_path)
         tokenizer = tokenizer.to(model_spec.device).eval()
@@ -223,7 +223,7 @@ class KronosForecaster(BaseFoundationForecaster):
         alpha=None,
     ):
         """Run Kronos inference for future, in-sample, or mixed horizons."""
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         predict_kwargs = dict(model_spec.predict_extra_kwargs)
         clip = predict_kwargs.pop("clip")
         df = pd.DataFrame(index=context_y.index)

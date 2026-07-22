@@ -134,7 +134,7 @@ class Chronos2Forecaster(BaseFoundationForecaster):
         """Load a Chronos-2 checkpoint into a cacheable model handle."""
         from chronos import Chronos2Pipeline
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         model = Chronos2Pipeline.from_pretrained(
             pretrained_model_name_or_path=model_spec.model_path,
             torch_dtype=model_spec.dtype,
@@ -154,7 +154,7 @@ class Chronos2Forecaster(BaseFoundationForecaster):
     ):
         """Build Chronos-2 context and return its median forecast."""
         model = handle.model
-        predict_kwargs = self.model_spec_.predict_extra_kwargs
+        predict_kwargs = self.model_spec.predict_extra_kwargs
         limit_prediction_length = predict_kwargs["limit_prediction_length"]
         batch_size = predict_kwargs["batch_size"]
         context_length = predict_kwargs["context_length"]

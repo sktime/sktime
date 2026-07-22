@@ -409,9 +409,9 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         """Initialise model type and configuration based on model's architecture."""
         from transformers import AutoConfig
 
-        spec = self.model_spec_
+        model_spec = self.model_spec
         try:
-            config = AutoConfig.from_pretrained(spec.model_path)
+            config = AutoConfig.from_pretrained(model_spec.model_path)
 
             # "ChronosBoltModelForForecasting is the name of the architecture"
             # as specified in the config.json file
@@ -436,13 +436,13 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
 
         except Exception as e:
             raise ValueError(
-                f"Failed to load model configuration from {spec.model_path}. "
+                f"Failed to load model configuration from {model_spec.model_path}. "
                 f"Error: {str(e)}"
             ) from e
 
     def _load_model(self):
         """Load the model pipeline."""
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         pipeline = self.model_strategy.create_pipeline(
             kwargs={
                 "pretrained_model_name_or_path": model_spec.model_path,
@@ -464,7 +464,7 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         alpha=None,
     ):
         """Make predictions using the model pipeline."""
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         _y = context_y.values.reshape(1, -1, 1)
 
         results = []

@@ -146,7 +146,7 @@ class TimeLLMForecaster(BaseFoundationForecaster):
 
     def _update_attrs_in_fit(self, y, X=None, fh=None):
         """Set the data-dependent Time-LLM architecture parameters."""
-        load_extra_kwargs = dict(self.model_spec_.load_extra_kwargs)
+        load_extra_kwargs = dict(self.model_spec.load_extra_kwargs)
         if fh is None:
             self._pred_len = load_extra_kwargs["pred_len"]
         else:
@@ -166,7 +166,7 @@ class TimeLLMForecaster(BaseFoundationForecaster):
         """Construct Time-LLM and return its shared model handle."""
         from sktime.libs.time_llm.TimeLLM import Model
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         configs = SimpleNamespace(**model_spec.load_extra_kwargs)
         model = Model(configs)
         model = model.to(model_spec.device)
@@ -184,7 +184,7 @@ class TimeLLMForecaster(BaseFoundationForecaster):
         alpha=None,
     ):
         """Run Time-LLM inference and return normalized point forecasts."""
-        device = self.model_spec_.device
+        device = self.model_spec.device
         X_tensor = torch.tensor(context_y.values).reshape(1, -1, 1).to(device)
         X_tensor = X_tensor.to(torch.float32)
 

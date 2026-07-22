@@ -278,7 +278,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
             )
 
     def _update_attrs_in_fit(self, y, X=None, fh=None):
-        load_extra_kwargs = dict(self.model_spec_.load_extra_kwargs)
+        load_extra_kwargs = dict(self.model_spec.load_extra_kwargs)
         horizon_len = load_extra_kwargs["horizon_len"]
         context_len = load_extra_kwargs["context_len"]
         input_patch_len = load_extra_kwargs["input_patch_len"]
@@ -314,7 +314,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
 
     def _load_model(self):
         """Load TimesFM model."""
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         load_kwargs = dict(model_spec.load_extra_kwargs)
         use_source_package = load_kwargs.pop("use_source_package")
         if use_source_package:
@@ -345,7 +345,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         fh,
         alpha=None,
     ):
-        horizon_len = self.model_spec_.load_extra_kwargs["horizon_len"]
+        horizon_len = self.model_spec.load_extra_kwargs["horizon_len"]
         if pred_len > horizon_len:
             raise ValueError(
                 f"Error in {self.__class__.__name__}, the forecast horizon exceeds the"

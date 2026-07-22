@@ -118,7 +118,7 @@ class TimerForecaster(BaseFoundationForecaster):
         """Load a Timer checkpoint into a cacheable model handle."""
         from sktime.libs.timer import TimerForPrediction
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         model = TimerForPrediction.from_pretrained(
             model_spec.model_path, **model_spec.load_extra_kwargs
         )
@@ -139,7 +139,7 @@ class TimerForecaster(BaseFoundationForecaster):
         import torch
 
         model = handle.model
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         context_length = model_spec.predict_extra_kwargs["context_length"]
         context = context_y.iloc[:, 0].to_numpy(dtype=np.float32)
 

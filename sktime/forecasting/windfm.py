@@ -219,7 +219,7 @@ class WindFMForecaster(BaseFoundationForecaster):
         """Load the paired WindFM tokenizer and model into a shared handle."""
         from sktime.libs.windfm import WindFM, WindFMTokenizer
 
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         tokenizer = WindFMTokenizer.from_pretrained(model_spec.tokenizer_path)
         model = WindFM.from_pretrained(model_spec.model_path)
         tokenizer = tokenizer.to(model_spec.device).eval()
@@ -237,7 +237,7 @@ class WindFMForecaster(BaseFoundationForecaster):
         alpha=None,
     ):
         """Generate WindFM sample paths and normalize their forecasts."""
-        model_spec = self.model_spec_
+        model_spec = self.model_spec
         predict_kwargs = dict(model_spec.predict_extra_kwargs)
         clip = predict_kwargs.pop("clip")
         if context_X is None:
