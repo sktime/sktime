@@ -225,15 +225,15 @@ dl = [
   'torchmetrics; python_version < "3.13"',
 ]
 mlflow = [
-  "mlflow<4.0",
+  "mlflow<2.20",
 ]
 mlflow2 = [
-  "mlflow<3.0",
+  "mlflow<2.20",
 ]
 mlflow_tests = [
   "boto3",
   "botocore",
-  "mlflow<4.0",
+  "mlflow<2.20",
   "moto",
 ]
 notebooks = [
