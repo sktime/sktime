@@ -88,6 +88,7 @@ class DummyGlobalForecaster(BaseForecaster):
         ],
         "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
         "requires-fh-in-fit": False,
+        "tests:specific": ["sktime.forecasting.tests.test_dummy_global"],
     }
 
     def __init__(self, strategy="mean"):
