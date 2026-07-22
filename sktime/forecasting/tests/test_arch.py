@@ -155,12 +155,12 @@ def test_ARCH_with_exogenous():
         rescale=False,
     )
     sktime_model.fit(y, X=X_train)
-    
+
     # Verify that exogenous capability is enabled
     assert sktime_model.get_tag("capability:exogenous") is True
-    
+
     # Predict with exogenous variables (X_forecast must match horizon exactly)
-    sktime_pred = sktime_model.predict(fh=[1, 2, 3], X=X_forecast)
+    skt_pred = sktime_model.predict(fh=[1, 2, 3], X=X_forecast)
 
     # Fit arch package model directly for comparison
     arch_model_direct = arch_model(
@@ -175,12 +175,10 @@ def test_ARCH_with_exogenous():
         rescale=False,
     )
     arch_fitted = arch_model_direct.fit(disp="off")
-    
+
     # Forecast with arch package
     x_forecast_dict = {col: X_forecast[col].values for col in X_forecast.columns}
-    arch_pred = arch_fitted.forecast(
-        horizon=3, x=x_forecast_dict, method="analytic"
-    )
+    arch_pred = arch_fitted.forecast(horizon=3, x=x_forecast_dict, method="analytic")
 
     # Compare predictions - should be very close
-    assert np.allclose(sktime_pred.values, arch_pred.mean.iloc[-1, :3].values, rtol=1e-5)
+    assert np.allclose(skt_pred.values, arch_pred.mean.iloc[-1, :3].values, rtol=1e-5)
