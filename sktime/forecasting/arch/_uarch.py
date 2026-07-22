@@ -16,7 +16,7 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class ARCH(BaseForecaster):
-    r"""Directly interfaces ARCH models from python package arch.
+    r"""ARCH models from arch package, including (E)(G/H)AR(X)CH, FIAR(X)CH.
 
     ARCH models are a popular class of volatility models that use observed values of
     returns or residuals as volatility shocks to forecast the volatility in high
@@ -48,10 +48,12 @@ class ARCH(BaseForecaster):
         Power to use with GARCH and related models
     dist : int, optional
         Name of the error distribution.  Currently supported options are:
-            * Normal: 'normal', 'gaussian' (default)
-            * Students's t: 't', 'studentst'
-            * Skewed Student's t: 'skewstudent', 'skewt'
-            * Generalized Error Distribution: 'ged', 'generalized error"
+
+        * Normal: 'normal', 'gaussian' (default)
+        * Students's t: 't', 'studentst'
+        * Skewed Student's t: 'skewstudent', 'skewt'
+        * Generalized Error Distribution: 'ged', 'generalized error"
+
     hold_back : int
         Number of observations at the start of the sample to exclude when
         estimating model parameters.  Used when comparing models with different
