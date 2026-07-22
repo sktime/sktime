@@ -165,7 +165,7 @@ class ARCH(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
-        "capability:exogenous": False,
+        "capability:exogenous": True,
         "capability:non_contiguous_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
@@ -233,8 +233,13 @@ class ARCH(BaseForecaster):
 
         super().__init__()
 
-        if self.mean in ["ARX", "HARX"]:
-            self.set_tags(**{"capability:exogenous": True})
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.mean not in ["ARX", "HARX"]:
+            self.set_tags(**{"capability:exogenous": False})
 
     def _fit(self, y, X=None, fh=None):
         """Fit the training data to the estimator.
