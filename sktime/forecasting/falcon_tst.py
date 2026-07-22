@@ -62,6 +62,85 @@ class FalconTSTForecaster(BaseForecaster):
         ``None`` and ``model_path=None``, the default ``FalconTSTConfig`` is
         used. This path creates random weights; the estimator does not provide
         training for those weights.
+        Possible keys:
+        hidden_size (`int`, *optional*, defaults to 1024):
+            Dimensionality of the encoder layers and the pooler layer.
+        ffn_hidden_size (`int`, *optional*, defaults to 4096):
+            Dimensionality of the feed-forward networks in the transformer layers.
+        seq_length (`int`, *optional*, defaults to 2880):
+            Maximum sequence length that the model can handle.
+        add_bias_linear (`bool`, *optional*, defaults to `False`):
+            Whether to add bias in linear layers.
+        rope_theta (`int`, *optional*, defaults to 10000):
+            The base period of the RoPE embeddings.
+        num_hidden_layers (`int`, *optional*, defaults to 3):
+            Number of hidden layers in the transformer encoder.
+        num_attention_heads (`int`, *optional*, defaults to 16):
+            Number of attention heads for each attention layer in the
+            transformer encoder.
+        mask_pad_value (`float`, *optional*, defaults to 255.0):
+            Value used for padding/masking in input sequences.
+        expert_num_layers (`int`, *optional*, defaults to 4):
+            Number of transformer layers within each expert.
+        shared_patch_size (`int`, *optional*, defaults to 64):
+            Size of patches for the shared expert.
+        patch_size_list (`List[int]`, *optional*, defaults to [96, 64, 48, 24]):
+            List of patch sizes for different experts.
+        multi_forecast_head_list (`List[int]`, *optional*, defaults to [24, 96, 336]):
+            List of forecast lengths for multi-head prediction.
+        is_revin (`bool`, *optional*, defaults to `True`):
+            Whether to use RevIN (Reversible Instance Normalization).
+        params_dtype (`str`, *optional*, defaults to "bfloat16"):
+            Data type for model parameters.
+        use_cpu_initialization (`bool`, *optional*, defaults to `False`):
+            Whether to initialize model parameters on CPU.
+        rotary_interleaved (`bool`, *optional*, defaults to `False`):
+            Whether to use interleaved rotary position embeddings.
+        do_expert_forecast (`bool`, *optional*, defaults to `True`):
+            Whether experts perform forecasting.
+        residual_backcast (`bool`, *optional*, defaults to `True`):
+            Whether to use residual connections for backcast.
+        do_base_forecast (`bool`, *optional*, defaults to `False`):
+            Whether to use base forecasting.
+        heterogeneous_moe_layer (`bool`, *optional*, defaults to `True`):
+            Whether to use heterogeneous MoE layers.
+        test_data_seq_len (`int`, *optional*, defaults to 2880):
+            Sequence length for test data.
+        test_data_test_len (`int`, *optional*, defaults to 720):
+            Test length for test data.
+        autoregressive_step_list (`List[int]`, *optional*, defaults to [2, 4, 1]):
+            List of autoregressive steps for different forecast heads.
+        multi_forecast_head_type (`str`, *optional*, defaults to "single"):
+            Type of multi-forecast head aggregation.
+        num_experts (`int`, *optional*, defaults to 4):
+            Number of experts in the MoE layer.
+        moe_router_topk (`int`, *optional*, defaults to 2):
+            Number of top experts to route each token to.
+        moe_ffn_hidden_size (`int`, *optional*, defaults to 4096):
+            Hidden size for MoE feed-forward networks.
+        moe_shared_expert_intermediate_size (`int`, *optional*, defaults to 4096):
+            Intermediate size for shared experts.
+        init_method_std (`float`, *optional*, defaults to 0.06):
+            Standard deviation for weight initialization.
+        initializer_range (`float`, *optional*, defaults to 0.02):
+            Range for weight initialization.
+        moe_router_enable_expert_bias (`bool`, *optional*, defaults to `False`):
+            Whether to enable expert bias in routing.
+        moe_expert_final_layernorm (`bool`, *optional*, defaults to `True`):
+            Whether to apply layer normalization at the end of each expert.
+        transformer_input_layernorm (`bool`, *optional*, defaults to `True`):
+            Whether to apply layer normalization to transformer inputs.
+        moe_router_pre_softmax (`bool`, *optional*, defaults to `True`):
+            Whether to apply softmax before routing.
+        q_layernorm (`bool`, *optional*, defaults to `False`):
+            Whether to apply layer normalization to query vectors.
+        k_layernorm (`bool`, *optional*, defaults to `False`):
+            Whether to apply layer normalization to key vectors.
+        moe_router_score_function (`str`, *optional*, defaults to "softmax"):
+            Score function for MoE routing ("softmax" or "sigmoid").
+        tie_word_embeddings (`bool`, *optional*, defaults to `False`):
+            Whether to tie word embeddings.
+
     device_map : str, dict, int, or torch.device, default="cpu"
         Device placement following the ``transformers`` ``device_map`` naming
         convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or

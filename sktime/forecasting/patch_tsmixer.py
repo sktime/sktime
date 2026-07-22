@@ -51,6 +51,8 @@ class PatchTSMixerForecaster(BaseForecaster):
         Hub revision for ``from_pretrained``.
     config : dict, optional, default=None
         Extra fields for ``PatchTSMixerConfig`` (e.g. ``d_model``, ``patch_length``).
+        See the PatchTSMixerConfig documentation for more details.
+        https://huggingface.co/docs/transformers/v5.14.0/en/model_doc/patchtsmixer#transformers.PatchTSMixerConfig
     context_length : int, optional, default=None
         Input history length for sliding windows. If ``None``, taken from the loaded
         config or defaults to ``512`` when training from scratch.
@@ -66,7 +68,8 @@ class PatchTSMixerForecaster(BaseForecaster):
         Whether ``TimeSeriesPreprocessor`` standardizes targets.
     training_args : dict, optional, default=None
         Passed to ``TrainingArguments`` (``label_names=["future_values"]`` is set if
-        missing).
+        missing). See the TrainingArguments documentation for more details.
+        https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
     callbacks : list, optional, default=None
         Hugging Face ``Trainer`` callbacks (e.g. ``EarlyStoppingCallback``).
     num_parallel_samples : int, optional, default=None

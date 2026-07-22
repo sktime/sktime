@@ -102,6 +102,7 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         PatchTST model. Missing parameters in the config will be automatically
         replaced by their default values. See the PatchTSTConfig config on
         huggingface for more details.
+        https://huggingface.co/docs/transformers/v5.14.0/en/model_doc/patchtst#transformers.PatchTSTConfig
         Note: if `prediction_length` is passed as in larger than the passed `fh`
         in the `fit` function, the `prediction_length` will be used to train the
         model. If `prediction_length` is passed as in smaller than the passed
@@ -111,6 +112,7 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     training_args : dict, optional, default = None
         Training arguments to use for the model. If this is passed,
         the remaining applicable training arguments will be ignored
+        https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
     compute_metrics : list or function, default = None
         List of metrics or function to use during training
     callbacks: list or function, default = None

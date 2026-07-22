@@ -37,7 +37,54 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     scale_factor : float, default=1.0
         Temporal scaling passed to the model at predict time.
     config : dict, optional, default=None
-        Extra kwargs for ``FlowStateForPrediction.from_pretrained``.
+        context_length (`int`, *optional*, defaults to 2048)
+            The context/history length of the input sequence.
+        batch_first (`bool`):
+            Indicates whether the `batch_size` or the `seq_length` is the
+            first dimension of `past_values`.
+        scale_factor (`float`):
+            The scaling factor to adjust the parameter `Delta` of the S5
+            block and the Functional Basis Decoder.
+        prediction_length (`int`, *optional*):
+            Number of time steps to forecast for a forecasting task. Also
+            known as the Forecast Horizon. If not provided, or < 0, one
+            forecasting patch is returned.
+
+        embedding_feature_dim (`int`, *optional*, defaults to 512):
+            Feature dimension of the linear input embedding. Recommended
+            range is 128-512.
+
+        encoder_num_layers (`int`, *optional*, defaults to 6):
+            Number of encoder layers to use. I.e., number of S5 Layers in
+            the FlowState encoder. Recommended range is 3-15. Larger value
+            indicates more complex model.
+        encoder_state_dim (`int`, *optional*, defaults to 512):
+            State dimension of the S5 block. Recommended range is 128-1024.
+            Larger value indicates more complex model.
+        encoder_num_hippo_blocks (`int`, *optional*, defaults to 8):
+            Number of HiPPo blocks to use for initialization for the A
+            matrices of the S5 blocks. The `encoder_state_dim` needs to be
+            divisible by `encoder_num_hippo_blocks`.
+
+        decoder_prediction_length (`int`, *optional*):
+            Number of time steps to forecast for a forecasting task. Also
+            known as the Forecast Horizon. If not provided, or < 0, one
+            forecasting patch is returned.
+        decoder_patch_len (`int`, *optional*, defaults to 24)
+            The patch length used by the decoder when producing the
+            forecasts.
+        decoder_dim (`int`, *optional*, defaults to 256)
+            Dimension of the produced forecast, e.g., number of expected
+            output channels.
+        decoder_type (`string`, *optional*, defaults to legS)
+            The type of decoder used in the Functional Basis Decoder. The
+            type of the decoder determines which basis functions are used.
+            Possible choices are: ['legs', 'hlegs', 'four']
+
+        quantiles (`list[float]`, *optional*, defaults to
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+            The quantiles used to compute the decoder output.
+
     batch_first : bool, default=True
         ``past_values`` layout for the model.
     prediction_type : {"mean", "median"}, default="mean"
