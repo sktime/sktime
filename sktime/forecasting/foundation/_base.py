@@ -1,6 +1,7 @@
 """Shared base class for zero-shot foundation-model forecasters."""
 
 from contextlib import contextmanager
+from dataclasses import replace
 
 import numpy as np
 from sklearn.utils import check_random_state
@@ -12,6 +13,7 @@ from sktime.forecasting.foundation._format import (
     format_quantile_result,
 )
 from sktime.forecasting.foundation._result import ForecastRequest, ForecastResult
+from sktime.forecasting.foundation._spec import FoundationModelSpec
 
 
 class BaseFoundationForecaster(BaseForecaster):
@@ -30,41 +32,29 @@ class BaseFoundationForecaster(BaseForecaster):
     }
     _uses_torch_inference_context = True
 
-    def __init__(
-        self,
-        model_path=None,
-        tokenizer_path=None,
-        revision=None,
-        config=None,
-        device=None,
-        dtype=None,
-        quantization_config=None,
-        random_state=None,
-        ignore_deps=None,
-    ):
-        self.model_path = model_path
-        self.tokenizer_path = tokenizer_path
-        self.revision = revision
-        self.config = config
-        self.device = device
-        self.dtype = dtype
-        self.quantization_config = quantization_config
-        self.random_state = random_state
-        self.ignore_deps = ignore_deps
-
+    def __init__(self, model_spec: FoundationModelSpec):
+        if not isinstance(model_spec, FoundationModelSpec):
+            raise TypeError("model_spec must be a FoundationModelSpec")
+        self.model_spec = model_spec
         super().__init__()
 
     def __dynamic_tags__(self):
         """Clear soft-dependency tags when dependency checks are disabled."""
-        if self.ignore_deps:
+        if self.model_spec.ignore_deps:
             self.set_tags(python_dependencies=[])
 
     def __post_init__(self):
         """Initialize normalized copies of shared constructor parameters."""
-        self.random_state_ = self._resolve_random_state()
-        self.config_ = self._resolve_config()
-        self.device_ = self._resolve_device()
-        self.dtype_ = self._resolve_dtype()
+        spec = self.model_spec
+        self.model_spec_ = replace(
+            spec,
+            config=self._resolve_config(spec.config),
+            device=self._resolve_device(spec.device),
+            dtype=self._resolve_dtype(spec.dtype),
+            random_state=self._resolve_random_state(spec.random_state),
+            load_extra_kwargs=spec.load_extra_kwargs,
+            predict_extra_kwargs=spec.predict_extra_kwargs,
+        )
 
     def _fit(self, y, X=None, fh=None):
         """Store zero-shot context and load shared immutable model state."""
@@ -157,37 +147,35 @@ class BaseFoundationForecaster(BaseForecaster):
                 devices = [model_device.index or torch.cuda.current_device()]
 
         with torch.random.fork_rng(devices=devices):
-            if self.random_state_ is not None:
-                torch.manual_seed(self.random_state_)
+            if self.model_spec_.random_state is not None:
+                torch.manual_seed(self.model_spec_.random_state)
             with torch.inference_mode():
                 yield
 
-    def _resolve_random_state(self):
-        rng = check_random_state(self.random_state)
+    def _resolve_random_state(self, random_state):
+        rng = check_random_state(random_state)
         return (
-            None
-            if self.random_state is None
-            else int(rng.randint(np.iinfo(np.int32).max))
+            None if random_state is None else int(rng.randint(np.iinfo(np.int32).max))
         )
 
-    def _resolve_config(self):
-        if self.config is None:
-            return {}
+    def _resolve_config(self, config):
+        if config is None:
+            return None
 
-        return self.config.copy()
+        return config.copy()
 
-    def _resolve_dtype(self):
-        if self.dtype == "torch.bfloat16":
+    def _resolve_dtype(self, dtype):
+        if dtype == "torch.bfloat16":
             import torch
 
             return torch.bfloat16
 
-        return self.dtype
+        return dtype
 
-    def _resolve_device(self):
+    def _resolve_device(self, device):
         """Resolve explicit, configured, or automatic device selection once."""
-        if self.device != "auto":
-            return self.device
+        if device != "auto":
+            return device
 
         import torch
 
@@ -199,17 +187,18 @@ class BaseFoundationForecaster(BaseForecaster):
 
     def _get_unique_model_key(self):
         """Build a deterministic cache key from model-loading parameters."""
+        spec = self.model_spec_
         key_items = {
             "class": self.__class__.__name__,
             # for zero-shot forecasters, the cached model is indifferent to config
-            # "config": self.config_,
-            "device": self.device_,
-            "dtype": self.dtype_,
-            "model_path": self.model_path,
-            "quantization_config": self.quantization_config,
-            "revision": self.revision,
-            "tokenizer_path": self.tokenizer_path,
-            "extra": self._cache_key_extra(),
+            # "config": spec.config,
+            "device": spec.device,
+            "dtype": spec.dtype,
+            "model_path": spec.model_path,
+            "quantization_config": spec.quantization_config,
+            "revision": spec.revision,
+            "tokenizer_path": spec.tokenizer_path,
+            "load_extra_kwargs": spec.load_extra_kwargs,
         }
         return tuple(sorted(key_items.items()))
 
@@ -248,6 +237,6 @@ class BaseFoundationForecaster(BaseForecaster):
         """Run native inference and return a ``ForecastResult``."""
         raise NotImplementedError
 
-    def _cache_key_extra(self):
-        """Return estimator-specific model-loading cache-key components."""
-        return ()
+    def _update_model_spec(self, **changes):
+        """Update normalized runtime settings derived during fit or initialization."""
+        self.model_spec_ = replace(self.model_spec_, **changes)
