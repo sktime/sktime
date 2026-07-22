@@ -801,8 +801,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         modules = estimator_class.get_class_tag("tests:specific", None)
         if modules is None or modules == []:
             pytest.skip(f"{estimator_class.__name__} does not define tests:specific")
-        if isinstance(modules, str):
-            modules = [modules]
 
         msg = (
             f"{estimator_class.__name__}.tests:specific must be a list of strings, "
