@@ -143,7 +143,7 @@ class TimeBinAggregate(BaseTransformer):
             if bins is pd.IntervalIndex:
                 Xt.index = [(x.left + x.right) / 2 for x in Xt.index]
             else:
-                Xt.index = [(bins[i] + bins[i + 1]) / 2 for i in range(len(bins))]
+                Xt.index = [(bins[i] + bins[i + 1]) / 2 for i in range(len(bins) - 1)]
         elif self.return_index == "bin":
             Xt.index = self._bins
         return Xt
