@@ -3,9 +3,11 @@
 __all__ = ["PairwiseMetric", "AggregateMetric"]
 __author__ = ["viktorkaz", "mloning"]
 
+from warnings import warn
+
 import numpy as np
 
-from sktime.benchmarking.base import BaseMetric
+from sktime.benchmarking.base import BaseMetric, _V1_DEPRECATION_MSG
 
 
 class PairwiseMetric(BaseMetric):
@@ -21,6 +23,7 @@ class PairwiseMetric(BaseMetric):
     """
 
     def __init__(self, func, name=None, **kwargs):
+        warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
         name = func.__name__ if name is None else name
         self.func = func
         super().__init__(name=name, **kwargs)
@@ -55,6 +58,7 @@ class AggregateMetric(BaseMetric):
     """
 
     def __init__(self, func, method="jackknife", name=None, **kwargs):
+        warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
         allowed_methods = ("jackknife",)
         if method not in allowed_methods:
             raise NotImplementedError(

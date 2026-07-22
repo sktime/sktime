@@ -4,6 +4,7 @@ __author__ = ["viktorkaz", "mloning", "Aaron Bostrom"]
 __all__ = ["Evaluator"]
 
 import itertools
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -11,14 +12,21 @@ from scipy import stats
 from scipy.stats import ranksums, ttest_ind
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.benchmarking.base import BaseResults
+from sktime.benchmarking.base import BaseResults, _V1_DEPRECATION_MSG
 from sktime.exceptions import NotEvaluatedError
 
 
 class Evaluator:
-    """Analyze results of machine learning experiments."""
+    """Analyze results of machine learning experiments.
+
+    .. deprecated:: 1.1.0
+        Part of the deprecated v1 benchmarking framework; will be removed in
+        sktime 1.3.0. Use ``sktime.benchmarking.analysis`` (v2 post-hoc
+        analyzers) instead. See #10464.
+    """
 
     def __init__(self, results):
+        warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
         if not isinstance(results, BaseResults):
             raise ValueError("`results` must inherit from BaseResults")
         self.results = results
