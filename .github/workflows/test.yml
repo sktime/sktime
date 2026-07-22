@@ -641,7 +641,7 @@ jobs:
 
       - name: Install sktime and dependencies
         shell: bash
-        run: uv pip install .[all_extras,dev,dl,compatibility_tests] --no-cache-dir
+        run: uv pip install .[all_extras,dev,dl,compatibility_tests,numba] --no-cache-dir
         env:
           UV_SYSTEM_PYTHON: 1
 
