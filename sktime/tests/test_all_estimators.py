@@ -8,8 +8,6 @@ __author__ = ["mloning", "fkiraly", "achieveordie"]
 
 import numbers
 import os
-import subprocess
-import sys
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -801,8 +799,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     def test_run_specific_tests(self, estimator_class):
         """Run estimator specific pytest modules defined in ``tests:specific``."""
         modules = estimator_class.get_class_tag("tests:specific", None)
-        if modules is None:
-            return None
+        if modules is None or modules == []:
+            pytest.skip(f"{estimator_class.__name__} does not define tests:specific")
         if isinstance(modules, str):
             modules = [modules]
 
@@ -814,15 +812,11 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert all(isinstance(module, str) for module in modules), msg
 
         for module in modules:
-            cmd = [sys.executable, "-m", "pytest", "--pyargs", module]
-            proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
-            if proc.returncode != 0:
-                stderr = proc.stderr.strip()
-                stdout = proc.stdout.strip()
+            ret = pytest.main(["--pyargs", module])
+            if ret != pytest.ExitCode.OK:
                 err_msg = (
                     f"running specific tests failed for {estimator_class.__name__}, "
-                    f"module {module}, return code {proc.returncode}\n"
-                    f"stdout:\n{stdout}\n\nstderr:\n{stderr}"
+                    f"module {module}, return code {ret}"
                 )
                 raise RuntimeError(err_msg)
 
