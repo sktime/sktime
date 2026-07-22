@@ -294,6 +294,7 @@ class AutoARIMA(_PmdArimaAdapter):
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
+        "tests:specific": ["sktime.forecasting.tests.test_pmdarima"],
     }
 
     SARIMAX_KWARGS_KEYS = [
@@ -713,6 +714,7 @@ class ARIMA(_PmdArimaAdapter):
         "tests:skip_by_name": [
             "test_predict_time_index_with_X",  # bug report #9081
         ],
+        "tests:specific": ["sktime.forecasting.tests.test_pmdarima"],
     }
 
     SARIMAX_KWARGS_KEYS = [

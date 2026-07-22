@@ -82,6 +82,7 @@ class Croston(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:specific": ["sktime.forecasting.tests.test_croston"],
     }
 
     def __init__(self, smoothing=0.1):

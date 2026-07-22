@@ -8,6 +8,8 @@ __author__ = ["mloning", "fkiraly", "achieveordie"]
 
 import numbers
 import os
+import subprocess
+import sys
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -795,6 +797,34 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         from skbase.utils.doctest_run import run_doctest
 
         run_doctest(estimator_class, name=f"class {estimator_class.__name__}")
+
+    def test_run_specific_tests(self, estimator_class):
+        """Run estimator specific pytest modules defined in ``tests:specific``."""
+        modules = estimator_class.get_class_tag("tests:specific", None)
+        if modules is None:
+            return None
+        if isinstance(modules, str):
+            modules = [modules]
+
+        msg = (
+            f"{estimator_class.__name__}.tests:specific must be a list of strings, "
+            f"found: {modules}"
+        )
+        assert isinstance(modules, list), msg
+        assert all(isinstance(module, str) for module in modules), msg
+
+        for module in modules:
+            cmd = [sys.executable, "-m", "pytest", "--pyargs", module]
+            proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
+            if proc.returncode != 0:
+                stderr = proc.stderr.strip()
+                stdout = proc.stdout.strip()
+                err_msg = (
+                    f"running specific tests failed for {estimator_class.__name__}, "
+                    f"module {module}, return code {proc.returncode}\n"
+                    f"stdout:\n{stdout}\n\nstderr:\n{stderr}"
+                )
+                raise RuntimeError(err_msg)
 
     def test_create_test_instance(self, estimator_class):
         """Check create_test_instance logic and basic constructor functionality.
