@@ -42,28 +42,30 @@ def _calc_uniform_order_statistic_medians(n):
 
 def _box_norm(X, bounds, method):
     """Adapter for boxcox_normmax pre and post scipy 1.7.0."""
+    from scipy import optimize
+    from scipy.stats import boxcox_normmax
+
     if _check_soft_dependencies("scipy<1.7.0", severity="none"):
-        box_norm = _boxcox_normmax
-        args = {"bounds": bounds}
-    else:
-        from scipy import optimize
-        from scipy.stats import boxcox_normmax
+        return _boxcox_normmax(X, method=method, bounds=bounds)
 
-        options = {"xatol": 1e-12}
+    _DEFAULT_BOUNDS = (-2.0, 2.0)
+    _bounds = bounds if bounds is not None else _DEFAULT_BOUNDS
+    options = {"xatol": 1e-12}
 
-        def optimizer(fun):
-            return optimize.minimize_scalar(
-                fun, bounds=bounds, method="bounded", options=options
-            )
+    def _bounded_optimizer(fun):
+        return optimize.minimize_scalar(
+            fun, bounds=_bounds, method="bounded", options=options
+        )
 
-        box_norm = boxcox_normmax
+    if bounds is not None:
+        return boxcox_normmax(X, method=method, optimizer=_bounded_optimizer)
 
-        if bounds is not None:
-            args = {"optimizer": optimizer}
-        else:
-            args = {"brack": bounds}
+    try:
+        return boxcox_normmax(X, method=method)
+    except RuntimeError:
+        pass
 
-    return box_norm(X, method=method, **args)
+    return boxcox_normmax(X, method=method, optimizer=_bounded_optimizer)
 
 
 class BoxCoxTransformer(BaseTransformer):
