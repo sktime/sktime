@@ -1,4 +1,9 @@
-"""Shared base class for zero-shot foundation-model forecasters."""
+"""Shared lifecycle and extension points for foundation-model forecasters.
+
+This module contains the orchestration that is common to zero-shot forecasting
+adapters. Model-specific modules are responsible only for loading their native
+backend and translating between pandas data and :class:`ForecastResult`.
+"""
 
 from contextlib import contextmanager
 from dataclasses import replace
@@ -17,12 +22,121 @@ from sktime.forecasting.foundation._spec import FoundationModelSpec
 
 
 class BaseFoundationForecaster(BaseForecaster):
-    """Shared lifecycle for zero-shot foundation-model forecasters.
+    """Base class for zero-shot foundation-model forecasting adapters.
 
-    Concrete forecasters implement ``_load_model`` and ``_inference``. They can
-    additionally override ``_update_attrs_in_fit`` and ``_cache_key_extra`` for
-    model-specific fitted state and loading parameters, respectively. Non-Torch
-    backends set ``_uses_torch_inference_context`` to ``False``.
+    Subclasses must implement two hooks:
+
+    * :meth:`_load_model` loads the native model and returns a
+      :class:`ModelHandle`.
+    * :meth:`_inference` converts the stored pandas context to backend input and
+      returns a :class:`ForecastResult`.
+
+    The base class owns the rest of the forecasting lifecycle: storing context,
+    caching loaded models, normalizing forecasting horizons, setting up Torch
+    inference, and formatting point and quantile output according to the sktime
+    API.
+
+    Parameters
+    ----------
+    model_spec : FoundationModelSpec
+        Model identity, loading options, and prediction options. A concrete
+        estimator should expose meaningful public constructor parameters, assign
+        them to attributes, build one ``FoundationModelSpec``, and pass it to
+        ``super().__init__``. Standard fields such as ``device`` belong directly
+        on the specification; backend-only options belong in
+        ``load_extra_kwargs`` or ``predict_extra_kwargs``.
+
+    Attributes
+    ----------
+    model_spec : FoundationModelSpec
+        Original specification built from constructor parameters. This remains
+        unchanged so estimator parameters can be inspected and cloned reliably.
+    model_spec_ : FoundationModelSpec
+        Runtime-normalized specification. For example, ``device="auto"`` and
+        string Torch dtypes are resolved here. Subclasses should use this version
+        in loading and inference hooks.
+    context_y_ : pd.DataFrame
+        Copy of the target passed to ``fit``, with shape
+        ``(n_context_timepoints, n_target_variables)``.
+    context_X_ : pd.DataFrame or None
+        Copy of the exogenous data passed to ``fit``.
+    model_handle_ : ModelHandle or None
+        Native backend objects used for inference. Handles may be shared between
+        estimator instances and are deliberately removed during serialization.
+
+    Notes
+    -----
+    A typical subclass follows this workflow:
+
+    1. Define estimator tags, including soft dependencies and capabilities.
+    2. In ``__init__``, store every public parameter, construct a
+       ``FoundationModelSpec``, and call ``super().__init__(model_spec=...)``.
+    3. Implement ``_load_model`` and ``_inference``.
+    4. Optionally implement ``_update_attrs_in_fit`` when shapes or loading
+       settings depend on the fitted data. Use ``_update_model_spec`` for derived
+       runtime settings that must participate in the model cache key.
+    5. Override ``_get_unique_model_key`` if the default key does not contain all
+       inputs that affect loaded model state. In particular, the generic key does
+       not include ``config``.
+
+    A minimal adapter has the following structure (``NativeModel`` represents the
+    third-party backend)::
+
+        class MyFoundationForecaster(BaseFoundationForecaster):
+            _tags = {
+                "python_dependencies": ["native-package"],
+                "capability:pred_int": False,
+            }
+
+            def __init__(self, model_path="provider/checkpoint", device="auto"):
+                self.model_path = model_path
+                self.device = device
+                model_spec = FoundationModelSpec(
+                    model_path=model_path,
+                    device=device,
+                )
+                super().__init__(model_spec=model_spec)
+
+            def _load_model(self):
+                model = NativeModel.from_pretrained(
+                    self.model_spec_.model_path
+                ).to(self.model_spec_.device)
+                return ModelHandle(model=model)
+
+            def _inference(
+                self,
+                handle,
+                context_y,
+                context_X,
+                future_X,
+                pred_len,
+                fh,
+                alpha=None,
+            ):
+                values = handle.model.predict(
+                    context_y.to_numpy(),
+                    prediction_length=pred_len,
+                    **self.model_spec_.predict_extra_kwargs,
+                )
+                return ForecastResult(mean=np.asarray(values))
+
+    Set ``_uses_torch_inference_context = False`` for non-Torch backends. Consider
+    the ``capability:multivariate``, ``capability:pred_int``, exogenous-data, and
+    in-sample prediction tags when declaring adapter support. Override ``_predict``
+    or ``_predict_quantiles`` only when the shared column/index formatting cannot
+    represent a model's native output contract.
+
+    ``_inference`` receives pandas ``DataFrame`` context and should return numeric
+    arrays with time on axis 0 and target variables on axis 1. It may return a
+    complete future horizon of shape ``(pred_len, n_targets)``; the base class then
+    selects sparse requested steps. Alternatively, it may return exactly
+    ``len(fh)`` rows in requested horizon order, which is useful for backends that
+    natively support sparse, in-sample, or mixed horizons. Univariate output may
+    be one-dimensional.
+
+    Loaded handles are process-local shared state. Treat the model, tokenizer,
+    and pipeline in a handle as read-only during prediction. Per-fit or per-series
+    mutable state belongs on the estimator, not on the shared handle.
     """
 
     _tags = {
@@ -33,18 +147,27 @@ class BaseFoundationForecaster(BaseForecaster):
     _uses_torch_inference_context = True
 
     def __init__(self, model_spec: FoundationModelSpec):
+        """Initialize the forecaster from a model runtime specification."""
         if not isinstance(model_spec, FoundationModelSpec):
             raise TypeError("model_spec must be a FoundationModelSpec")
         self.model_spec = model_spec
         super().__init__()
 
     def __dynamic_tags__(self):
-        """Clear soft-dependency tags when dependency checks are disabled."""
+        """Clear soft-dependency tags when dependency checks are disabled.
+
+        Subclasses overriding this hook should call ``super().__dynamic_tags__()``
+        before applying their model-specific dynamic tags.
+        """
         if self.model_spec.ignore_deps:
             self.set_tags(python_dependencies=[])
 
     def __post_init__(self):
-        """Initialize normalized copies of shared constructor parameters."""
+        """Create the runtime specification after estimator initialization.
+
+        ``BaseObject`` calls this hook automatically. Subclasses that override it
+        must call ``super().__post_init__()`` before accessing ``model_spec_``.
+        """
         spec = self.model_spec
         self.model_spec_ = replace(
             spec,
@@ -57,7 +180,27 @@ class BaseFoundationForecaster(BaseForecaster):
         )
 
     def _fit(self, y, X=None, fh=None):
-        """Store zero-shot context and load shared immutable model state."""
+        """Store zero-shot context and obtain the shared model handle.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Target context with shape ``(n_context_timepoints, n_targets)``.
+        X : pd.DataFrame or None
+            Past exogenous context in the estimator's internal mtype.
+        fh : ForecastingHorizon or None
+            Validated forecasting horizon supplied by ``BaseForecaster``.
+
+        Returns
+        -------
+        self
+            Fitted forecaster.
+
+        Notes
+        -----
+        ``_update_attrs_in_fit`` runs before the model cache is queried so a
+        subclass can derive loading settings from ``y``, ``X``, or ``fh``.
+        """
         self._update_attrs_in_fit(y=y, X=X, fh=fh)
         self.context_y_ = y.copy()
         self.context_X_ = None if X is None else X.copy()
@@ -65,12 +208,20 @@ class BaseFoundationForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh, X=None):
-        """Forecast point predictions from normalized foundation output."""
+        """Forecast and format point predictions.
+
+        Point output is chosen from ``ForecastResult`` in this order: mean,
+        median, then the 0.5 quantile.
+        """
         result, request = self._foundation_predict(fh=fh, X=X)
         return format_point_result(result=result, request=request, y=self.context_y_)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Forecast quantiles from normalized foundation output."""
+        """Forecast and format requested quantiles.
+
+        Concrete classes must set the ``capability:pred_int`` tag to ``True`` to
+        expose this shared implementation.
+        """
         result, request = self._foundation_predict(fh=fh, X=X, alpha=alpha)
         return format_quantile_result(
             result=result,
@@ -80,11 +231,18 @@ class BaseFoundationForecaster(BaseForecaster):
         )
 
     def _foundation_predict(self, fh, X=None, alpha=None):
-        """Run model-specific inference with shared horizon and reload setup."""
+        """Run model-specific inference with shared horizon and reload setup.
+
+        ``alpha`` is normalized to a tuple before it reaches ``_inference``. The
+        model handle is restored lazily when an estimator was deserialized.
+        """
         if fh is None:
             fh = self.fh
 
         request = self._make_forecast_request(fh=fh, alpha=alpha)
+        # Most backends generate a dense out-of-sample horizon. Adapters that
+        # support in-sample or mixed horizons can inspect ``fh`` directly and
+        # return one row per requested step instead.
         pred_len = max(request.relative_fh)
 
         self.model_handle_ = self._get_or_load_model_handle()
@@ -106,7 +264,21 @@ class BaseFoundationForecaster(BaseForecaster):
         return result, request
 
     def _make_forecast_request(self, fh, alpha=None):
-        """Normalize an sktime forecasting horizon for backend adapters."""
+        """Normalize an sktime forecasting horizon for formatting.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            Horizon already validated by ``BaseForecaster``.
+        alpha : sequence of float or None
+            Requested quantile probabilities.
+
+        Returns
+        -------
+        ForecastRequest
+            Relative integer steps, their absolute output index, and immutable
+            quantile probabilities.
+        """
         relative_fh = np.asarray(fh.to_relative(self.cutoff).to_pandas(), dtype=int)
         absolute_index = fh.to_absolute(self.cutoff).to_pandas()
         return ForecastRequest(
@@ -116,7 +288,12 @@ class BaseFoundationForecaster(BaseForecaster):
         )
 
     def _get_or_load_model_handle(self):
-        """Return an existing or process-cached immutable model handle."""
+        """Return an attached or process-cached model handle.
+
+        The loader is called only on a cache miss. Because a cached handle can be
+        returned to several estimator instances, adapters must not store
+        series-specific mutable state in it.
+        """
         handle = getattr(self, "model_handle_", None)
         if handle is not None:
             return handle
@@ -128,7 +305,18 @@ class BaseFoundationForecaster(BaseForecaster):
 
     @contextmanager
     def _inference_context(self, handle):
-        """Apply local Torch seeding, eval mode, and inference mode when enabled."""
+        """Apply local Torch seeding, evaluation mode, and inference mode.
+
+        The Torch random-number-generator state is restored on exit, so prediction
+        does not alter application-level randomness. ``random_state`` seeds the
+        local context. Non-Torch adapters must set
+        ``_uses_torch_inference_context = False`` on the class.
+
+        Parameters
+        ----------
+        handle : ModelHandle
+            Handle whose ``model`` may expose ``eval`` and ``device``.
+        """
         if not self._uses_torch_inference_context:
             yield
             return
@@ -153,18 +341,25 @@ class BaseFoundationForecaster(BaseForecaster):
                 yield
 
     def _resolve_random_state(self, random_state):
+        """Convert sklearn-compatible random state input to one integer seed."""
         rng = check_random_state(random_state)
         return (
             None if random_state is None else int(rng.randint(np.iinfo(np.int32).max))
         )
 
     def _resolve_config(self, config):
+        """Return an isolated shallow copy of model configuration.
+
+        Override this hook when a backend uses a configuration object that does
+        not implement ``copy`` or requires a deep copy.
+        """
         if config is None:
             return None
 
         return config.copy()
 
     def _resolve_dtype(self, dtype):
+        """Resolve supported serialized dtype names to backend dtype objects."""
         if dtype == "torch.bfloat16":
             import torch
 
@@ -173,7 +368,11 @@ class BaseFoundationForecaster(BaseForecaster):
         return dtype
 
     def _resolve_device(self, device):
-        """Resolve explicit, configured, or automatic device selection once."""
+        """Resolve explicit, configured, or automatic Torch device selection.
+
+        Non-Torch adapters should pass an explicit backend/device value or
+        override this method if they support their own ``"auto"`` policy.
+        """
         if device != "auto":
             return device
 
@@ -186,11 +385,19 @@ class BaseFoundationForecaster(BaseForecaster):
         return "cpu"
 
     def _get_unique_model_key(self):
-        """Build a deterministic cache key from model-loading parameters."""
+        """Build a deterministic cache key from model-loading parameters.
+
+        Prediction-only options, random seeds, and dependency-check settings do
+        not change loaded model state and are intentionally omitted. ``config`` is
+        also omitted by default; adapters that use it to construct or alter model
+        weights must override this method and include a hashable representation.
+        Nested containers in the key are normalized by the cache.
+        """
         spec = self.model_spec_
         key_items = {
             "class": self.__class__.__name__,
-            # for zero-shot forecasters, the cached model is indifferent to config
+            # Generic pretrained checkpoints are indifferent to prediction config.
+            # Config-built adapters include config in an overridden key.
             # "config": spec.config,
             "device": spec.device,
             "dtype": spec.dtype,
@@ -212,16 +419,53 @@ class BaseFoundationForecaster(BaseForecaster):
         return super()._has_implementation_of(method)
 
     def __getstate__(self):
-        """Return pickle state without potentially unpickleable backend objects."""
+        """Return pickle state without potentially unpickleable backend objects.
+
+        The stored context and runtime specification remain serialized. A later
+        prediction reloads or reuses a cached handle transparently.
+        """
         state = self.__dict__.copy()
         state["model_handle_"] = None
         return state
 
     def _update_attrs_in_fit(self, y, X, fh):
-        """Update model-specific fitted attributes before loading the model."""
+        """Optionally derive model-specific fitted attributes before loading.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Target context, shape ``(n_context_timepoints, n_targets)``.
+        X : pd.DataFrame or None
+            Past exogenous context.
+        fh : ForecastingHorizon or None
+            Validated horizon available during fit.
+
+        Notes
+        -----
+        The default implementation is a no-op. Use ``_update_model_spec`` if a
+        derived value affects loading and therefore must be part of the cache key.
+        Ordinary per-series state can be stored as a fitted attribute ending in
+        ``_``.
+        """
 
     def _load_model(self):
-        """Load native backend state and return a ``ModelHandle``."""
+        """Load native backend state and return a :class:`ModelHandle`.
+
+        This required hook is called without arguments on a process-local cache
+        miss. Read normalized loading values and ``load_extra_kwargs`` from
+        ``self.model_spec_``. Put a primary neural network or equivalent object in
+        ``handle.model``; optional tokenizers and high-level prediction pipelines
+        have dedicated fields.
+
+        The returned objects must depend only on settings represented by
+        ``_get_unique_model_key``. Do not attach fitted series data or other
+        estimator-specific mutable state because the handle may be shared.
+
+        Returns
+        -------
+        ModelHandle
+            Loaded backend objects used by ``_inference``.
+        """
         raise NotImplementedError
 
     def _inference(
@@ -234,9 +478,61 @@ class BaseFoundationForecaster(BaseForecaster):
         fh,
         alpha=None,
     ):
-        """Run native inference and return a ``ForecastResult``."""
+        """Run native inference and return a normalized forecast result.
+
+        This required hook translates from sktime's pandas representation to the
+        native backend representation. Read backend prediction options from
+        ``self.model_spec_.predict_extra_kwargs``. It must not format pandas output
+        itself.
+
+        Parameters
+        ----------
+        handle : ModelHandle
+            Shared backend objects returned by ``_load_model``.
+        context_y : pd.DataFrame
+            Target history, shape ``(n_context_timepoints, n_targets)``. Rows are
+            chronological and columns correspond to output variables.
+        context_X : pd.DataFrame or None
+            Exogenous history supplied during fit.
+        future_X : pd.DataFrame or None
+            Exogenous values supplied for prediction. Its exact row coverage is
+            determined by the estimator's X tags and the sktime forecasting API.
+        pred_len : int
+            Largest relative horizon step. For a standard out-of-sample request,
+            generate steps ``1, ..., pred_len`` so sparse steps can be selected by
+            the formatter.
+        fh : ForecastingHorizon
+            Original validated horizon. Inspect this when the backend supports
+            sparse, in-sample, or mixed horizons natively.
+        alpha : tuple of float or None
+            Requested quantile probabilities, or ``None`` for point prediction.
+
+        Returns
+        -------
+        ForecastResult
+            Numeric mean, median, and/or quantile arrays. Each array must have
+            shape ``(pred_len, n_targets)`` for a dense horizon or
+            ``(len(fh), n_targets)`` in requested horizon order. One-dimensional
+            arrays are accepted for univariate targets.
+
+        Notes
+        -----
+        Quantile output is a mapping ``{probability: values}``; probabilities are
+        floats in ``[0, 1]``. At least one of ``mean``, ``median``, or quantile
+        ``0.5`` is required for point prediction. Do not mutate shared objects in
+        ``handle`` during this method.
+        """
         raise NotImplementedError
 
     def _update_model_spec(self, **changes):
-        """Update normalized runtime settings derived during fit or initialization."""
+        """Replace fields on the normalized runtime specification.
+
+        Use this helper for values derived in ``__post_init__`` or
+        ``_update_attrs_in_fit``. It intentionally leaves the constructor-facing
+        ``model_spec`` unchanged. Unknown fields and invalid extra kwargs are
+        rejected by :func:`dataclasses.replace` and ``FoundationModelSpec``.
+
+        Call this before the first handle lookup. Replacing loading settings after
+        ``model_handle_`` is attached does not invalidate that existing handle.
+        """
         self.model_spec_ = replace(self.model_spec_, **changes)
