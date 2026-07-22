@@ -11,8 +11,11 @@ import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch

@@ -18,8 +18,11 @@ __all__ = ["TimerForecaster"]
 
 import numpy as np
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 
 
 class TimerForecaster(BaseFoundationForecaster):
@@ -153,7 +156,7 @@ class TimerForecaster(BaseFoundationForecaster):
 
         # output shape: (batch_size, max_h) -- Timer returns only the forecast
         forecast_values = output[0].cpu().numpy()
-        return ForecastResult(mean=forecast_values.reshape(-1, 1), raw=output)
+        return ForecastResult(mean=forecast_values.reshape(-1, 1))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

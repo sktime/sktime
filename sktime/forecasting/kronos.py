@@ -12,9 +12,12 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 from sktime.forecasting.foundation._format import format_point_result
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
 
 
 class KronosForecaster(BaseFoundationForecaster):
@@ -262,7 +265,7 @@ class KronosForecaster(BaseFoundationForecaster):
                 out[original] = pred_df[internal].to_numpy()
         out = out[self.output_columns_]
 
-        return ForecastResult(mean=out.to_numpy(), raw=pred_df)
+        return ForecastResult(mean=out.to_numpy())
 
     def _make_predictor(self, handle, max_context):
         """Instantiate the upstream Kronos predictor."""

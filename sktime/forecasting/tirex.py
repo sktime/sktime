@@ -16,8 +16,11 @@ It does not require any training or data input.
 
 __author__ = ["sinemkilicdere", "martinloretzzz"]
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 
 
 class TiRexForecaster(BaseFoundationForecaster):
@@ -153,7 +156,7 @@ class TiRexForecaster(BaseFoundationForecaster):
             forecast = forecast.detach().cpu().numpy()
 
         values = forecast.reshape(-1)[:pred_len]
-        return ForecastResult(mean=values.reshape(-1, 1), raw=forecast)
+        return ForecastResult(mean=values.reshape(-1, 1))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -23,8 +23,11 @@ __all__ = ["TotoForecaster"]
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 
 
 class TotoForecaster(BaseFoundationForecaster):
@@ -306,7 +309,6 @@ class TotoForecaster(BaseFoundationForecaster):
         return ForecastResult(
             **point_result,
             quantiles=quantile_results,
-            raw=forecast,
         )
 
     def _cache_key_extra(self):

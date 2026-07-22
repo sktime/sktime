@@ -10,8 +10,11 @@ import numpy as np
 from sktime.forecasting.base import (
     _GlobalForecastingDeprecationMixin,
 )
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 
 
 class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
@@ -333,11 +336,8 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         context_np = np.expand_dims(context_y.iloc[:, 0].values, axis=0)
         # context_np.shape: (batch_size, n_timestamps)
 
-        pred, raw = handle.model.forecast(context_np)
-        return ForecastResult(
-            mean=pred.ravel().reshape(-1, 1),
-            raw=raw,
-        )
+        pred, _ = handle.model.forecast(context_np)
+        return ForecastResult(mean=pred.ravel().reshape(-1, 1))
 
     def _cache_key_extra(self):
         """Return model-loading parameters specific to TimesFM."""

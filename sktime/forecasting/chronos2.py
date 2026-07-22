@@ -2,8 +2,11 @@
 
 __all__ = ["Chronos2Forecaster"]
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 
 
 class Chronos2Forecaster(BaseFoundationForecaster):
@@ -188,7 +191,7 @@ class Chronos2Forecaster(BaseFoundationForecaster):
         pred_tensor = predictions[0]
         median_idx = model.quantiles.index(0.5)
         point_forecast = pred_tensor[:, median_idx, :].detach().cpu().numpy()
-        return ForecastResult(median=point_forecast.T, raw=predictions)
+        return ForecastResult(median=point_forecast.T)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

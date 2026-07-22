@@ -10,8 +10,11 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 
 
 class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
@@ -243,7 +246,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         else:
             combined_results = results[0]
 
-        return ForecastResult(mean=combined_results, raw=output)
+        return ForecastResult(mean=combined_results)
 
     @classmethod
     def get_test_params(cls, parameter_default="default"):

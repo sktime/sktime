@@ -7,8 +7,11 @@ __all__ = ["FlowStateForecaster"]
 import numpy as np
 
 from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
@@ -168,7 +171,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
             }
 
         point_key = "median" if self.prediction_type == "median" else "mean"
-        return ForecastResult(**{point_key: values}, quantiles=quantiles, raw=output)
+        return ForecastResult(**{point_key: values}, quantiles=quantiles)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

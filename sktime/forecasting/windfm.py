@@ -11,8 +11,11 @@ from copy import deepcopy
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 from sktime.utils.warnings import warn
 
 
@@ -272,8 +275,6 @@ class WindFMForecaster(BaseFoundationForecaster):
         return ForecastResult(
             median=np.median(samples, axis=1).reshape(-1, 1),
             quantiles=quantiles,
-            samples=samples[:, :, np.newaxis],
-            raw=pred_df,
         )
 
     def _make_predictor(self, handle, max_context):

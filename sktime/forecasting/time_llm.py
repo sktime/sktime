@@ -6,8 +6,11 @@ __author__ = ["KimMeen", "jgyasu"]
 
 from types import SimpleNamespace
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
@@ -181,7 +184,7 @@ class TimeLLMForecaster(BaseFoundationForecaster):
         )
         values = res.detach().to(torch.float32).cpu().numpy().astype("float64")
         values = values.reshape(-1, context_y.shape[1])
-        return ForecastResult(mean=values, raw=res)
+        return ForecastResult(mean=values)
 
     def _cache_key_extra(self):
         """Return all Time-LLM architecture parameters used during loading."""

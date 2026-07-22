@@ -22,8 +22,11 @@ from warnings import warn
 
 import numpy as np
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 
 
 class TimerS1Forecaster(BaseFoundationForecaster):
@@ -251,7 +254,6 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         return ForecastResult(
             mean=point_values.reshape(-1, 1),
             quantiles=result_quantiles,
-            raw=output,
         )
 
     def _load_model(self):

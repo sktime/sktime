@@ -21,8 +21,11 @@ from warnings import warn
 
 import numpy as np
 
-from sktime.forecasting.foundation._base2 import BaseFoundationForecaster
-from sktime.forecasting.foundation._result import ForecastResult, ModelHandle
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    ModelHandle,
+)
 
 
 class FalconTSTForecaster(BaseFoundationForecaster):
@@ -228,7 +231,7 @@ class FalconTSTForecaster(BaseFoundationForecaster):
             revin=self.revin,
         )
         predictions = output.detach().float().cpu().numpy().squeeze(axis=0)
-        return ForecastResult(mean=predictions, raw=output)
+        return ForecastResult(mean=predictions)
 
     def _get_unique_model_key(self):
         """Build a hashable key from all Falcon-TST loading inputs."""
