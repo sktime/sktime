@@ -663,6 +663,16 @@ Contributors
 :user:`zstinnett3`
 
 
+Version 0.41.0 - Unreleased
+---------------------------
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] Added a rolling window strategy with configurable aggregations to
+  ``NaiveForecaster`` for easier rolling baseline creation.
+
+
 Version 0.40.1 - 2025-11-24
 ---------------------------
 
