@@ -6,6 +6,7 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
+import io
 import numbers
 import os
 import re
@@ -793,7 +794,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime objects."""
 
     estimator_type_filter = "object"
-    _ran_specific_test_modules = set()
 
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
@@ -818,7 +818,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         assert isinstance(modules, list), msg
         assert all(isinstance(module, str) for module in modules), msg
         if len(modules) == 0:
-            pytest.skip(f"{estimator_class.__name__} has empty tests:specific")
+            return
 
         module_pat = re.compile(r"^sktime(?:\.[a-z_][a-z0-9_]*)*$")
         bad_modules = [module for module in modules if not module_pat.fullmatch(module)]
@@ -832,26 +832,24 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             f"{missing_modules}"
         )
 
-        modules_to_run = [
-            module
-            for module in modules
-            if module not in self._ran_specific_test_modules
-        ]
+        modules_to_run = modules.copy()
         if len(modules_to_run) == 0:
             return
 
-        cmd = [sys.executable, "-m", "pytest", "--pyargs"] + modules_to_run
-        proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
-        if proc.returncode != 0:
-            stderr = proc.stderr.strip()
-            stdout = proc.stdout.strip()
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            returncode = pytest.main(["--pyargs", *modules_to_run])
+
+        if returncode != pytest.ExitCode.OK:
             err_msg = (
                 f"running specific tests failed for {estimator_class.__name__}, "
-                f"modules {modules_to_run}, return code {proc.returncode}\n"
-                f"stdout:\n{stdout}\n\nstderr:\n{stderr}"
+                f"modules {modules_to_run}, return code {returncode}\n"
+                f"stdout:\n{stdout.getvalue().strip()}\n\n"
+                f"stderr:\n{stderr.getvalue().strip()}"
             )
             raise RuntimeError(err_msg)
-        self._ran_specific_test_modules.update(modules_to_run)
 
     def test_create_test_instance(self, estimator_class):
         """Check create_test_instance logic and basic constructor functionality.
