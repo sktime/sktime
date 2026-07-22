@@ -24,7 +24,8 @@ def run_test_for_class(cls, return_reason=False):
        If yes, behaviour depends on ONLY_CHANGED_MODULES setting:
        if off (False), always runs the test (return True);
        if on (True), runs test if and only if
-       at least one of conditions 2, 3, 4, 5, 6, 7 below are met.
+       at least one of run conditions 2, 3, 4, 5, 6, 7 below are met
+       (condition 1 is the prerequisite dependency check).
 
     2. Condition 2:
 
