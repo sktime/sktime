@@ -11,6 +11,7 @@ import os
 import re
 import subprocess
 import sys
+from importlib.util import find_spec
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -819,11 +820,16 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if len(modules) == 0:
             pytest.skip(f"{estimator_class.__name__} has empty tests:specific")
 
-        module_pat = re.compile(r"^sktime(?:\.[A-Za-z_][A-Za-z0-9_]*)*$")
+        module_pat = re.compile(r"^sktime(?:\.[a-z_][a-z0-9_]*)*$")
         bad_modules = [module for module in modules if not module_pat.fullmatch(module)]
         assert len(bad_modules) == 0, (
             f"{estimator_class.__name__}.tests:specific contains invalid module paths: "
             f"{bad_modules}"
+        )
+        missing_modules = [module for module in modules if find_spec(module) is None]
+        assert len(missing_modules) == 0, (
+            f"{estimator_class.__name__}.tests:specific contains missing modules: "
+            f"{missing_modules}"
         )
 
         modules_to_run = [
@@ -832,7 +838,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             if module not in self._ran_specific_test_modules
         ]
         if len(modules_to_run) == 0:
-            return None
+            return
 
         cmd = [sys.executable, "-m", "pytest", "--pyargs"] + modules_to_run
         proc = subprocess.run(cmd, check=False, capture_output=True, text=True)
