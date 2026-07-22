@@ -805,6 +805,9 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         ``tests:specific`` must be a list of importable module paths, e.g.,
         ``["sktime.forecasting.tests.test_dummy_global"]``.
         """
+        from skbase.utils.stderr_mute import StderrMute
+        from skbase.utils.stdout_mute import StdoutMute
+
         modules = estimator_class.get_class_tag("tests:specific", None)
         if modules is None:
             pytest.skip(f"{estimator_class.__name__} does not define tests:specific")
@@ -834,10 +837,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if len(modules_to_run) == 0:
             return
 
-        stdout = io.StringIO()
-        stderr = io.StringIO()
-
-        with redirect_stdout(stdout), redirect_stderr(stderr):
+        with StderrMute(), StdoutMute():
             returncode = pytest.main(["--pyargs", *modules_to_run])
 
         if returncode != pytest.ExitCode.OK:
