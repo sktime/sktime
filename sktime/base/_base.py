@@ -536,6 +536,8 @@ class TagAliaserMixin(_TagAliaserMixin):
                     # special case for scitype:y -> capability:multivariate
                     # scitype:y queried and not present, capability:multivariate present
                     # to maintain backwards compatibility during deprecation period
+                    if new_tag_value is None:
+                        return tag_value_default
                     if new_tag_value:  # True -> "multivariate"
                         return "both"
                     else:  # False -> "univariate"
@@ -656,6 +658,8 @@ class TagAliaserMixin(_TagAliaserMixin):
                     # special case for scitype:y -> capability:multivariate
                     # scitype:y queried and not present, capability:multivariate present
                     # to maintain backwards compatibility during deprecation period
+                    if new_tag_value is None:
+                        return tag_value_default
                     if new_tag_value:  # True -> "multivariate"
                         return "both"
                     else:  # False -> "univariate"
