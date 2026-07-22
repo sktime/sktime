@@ -10,11 +10,10 @@ import io
 import numbers
 import os
 import re
-import subprocess
 import sys
-from importlib.util import find_spec
 import types
 from copy import deepcopy
+from importlib.util import find_spec
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
 
@@ -67,7 +66,6 @@ def subsample_by_version_os(x):
     Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
     """
     import platform
-    import sys
 
     ix = sys.version_info.minor % 3
     os_str = platform.system()
