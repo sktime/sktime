@@ -128,8 +128,9 @@ def test_ARCH_with_exogenous():
     np.random.seed(42)
     n_train = 100
     n_forecast = 3
+    n_periods = n_train + n_forecast
     
-    date_range = pd.date_range(start="2020-01-03", periods=n_train + n_forecast, freq="B")
+    date_range = pd.date_range(start="2020-01-03", periods=n_periods, freq="B")
     y = pd.Series(
         np.random.normal(loc=0, scale=0.02, size=n_train),
         index=pd.PeriodIndex(date_range[:n_train], freq="D"),
