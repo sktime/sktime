@@ -258,6 +258,48 @@ def test_model_cache_separates_different_loading_spec(y):
     assert first.load_count == second.load_count == 1
 
 
+def test_model_cache_includes_load_affecting_config(y):
+    """Different model configurations produce separate cached handles."""
+    first = _DummyFoundationForecaster(
+        FoundationModelSpec(
+            model_path="dummy", device="cpu", config={"hidden_size": 32}
+        )
+    ).fit(y)
+    second = _DummyFoundationForecaster(
+        FoundationModelSpec(
+            model_path="dummy", device="cpu", config={"hidden_size": 64}
+        )
+    ).fit(y)
+
+    assert second.model_handle_ is not first.model_handle_
+    assert first.load_count == second.load_count == 1
+
+
+def test_model_cache_normalizes_config_objects(y):
+    """Equivalent config objects with ``to_dict`` share a cached handle."""
+
+    class _Config:
+        def __init__(self, hidden_size):
+            self.hidden_size = hidden_size
+
+        def to_dict(self):
+            return {"hidden_size": self.hidden_size}
+
+        def copy(self):
+            return _Config(self.hidden_size)
+
+    first = _DummyFoundationForecaster(
+        FoundationModelSpec(model_path="dummy", config=_Config(32))
+    ).fit(y)
+    second = _DummyFoundationForecaster(
+        FoundationModelSpec(model_path="dummy", config=_Config(32))
+    ).fit(y)
+
+    assert second.model_handle_ is first.model_handle_
+    assert first.load_count == 1
+    assert second.load_count == 0
+
+
 def test_pickle_drops_model_handle_and_reloads_lazily(y):
     """Serialization excludes backend state and prediction reloads it on demand."""
     forecaster = _DummyFoundationForecaster().fit(y)

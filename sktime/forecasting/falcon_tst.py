@@ -166,7 +166,7 @@ class FalconTSTForecaster(BaseFoundationForecaster):
         self.revin = revin
         model_spec = FoundationModelSpec(
             model_path=model_path,
-            config=config,
+            config=config if model_path is None else None,
             device=device_map,
             quantization_config=quantization_config,
             predict_extra_kwargs={"revin": revin},
@@ -175,7 +175,7 @@ class FalconTSTForecaster(BaseFoundationForecaster):
 
     def _resolve_config(self, config):
         """Copy dict and ``PretrainedConfig`` inputs without mutating them."""
-        return {} if config is None else deepcopy(config)
+        return None if config is None else deepcopy(config)
 
     def _load_model(self):
         """Load pretrained or config-only Falcon-TST into a model handle."""
@@ -241,19 +241,6 @@ class FalconTSTForecaster(BaseFoundationForecaster):
         )
         predictions = output.detach().float().cpu().numpy().squeeze(axis=0)
         return ForecastResult(mean=predictions)
-
-    def _get_unique_model_key(self):
-        """Build a hashable key from all Falcon-TST loading inputs."""
-        spec = self.model_spec_
-        key_items = {
-            "class": self.__class__.__name__,
-            "model_path": spec.model_path,
-            "config": spec.config,
-            "device_map": spec.device,
-            "quantization_config": spec.quantization_config,
-            "load_extra_kwargs": spec.load_extra_kwargs,
-        }
-        return self.__class__.__name__, str(sorted(key_items.items()))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

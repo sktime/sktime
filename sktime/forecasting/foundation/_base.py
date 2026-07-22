@@ -76,8 +76,7 @@ class BaseFoundationForecaster(BaseForecaster):
        settings depend on the fitted data. Use ``_update_model_spec`` for derived
        runtime settings that must participate in the model cache key.
     5. Override ``_get_unique_model_key`` if the default key does not contain all
-       inputs that affect loaded model state. In particular, the generic key does
-       not include ``config``.
+       inputs that affect loaded model state.
 
     A minimal adapter has the following structure (``NativeModel`` represents the
     third-party backend)::
@@ -389,16 +388,14 @@ class BaseFoundationForecaster(BaseForecaster):
 
         Prediction-only options, random seeds, and dependency-check settings do
         not change loaded model state and are intentionally omitted. ``config`` is
-        also omitted by default; adapters that use it to construct or alter model
-        weights must override this method and include a hashable representation.
-        Nested containers in the key are normalized by the cache.
+        included because it represents load-affecting model configuration. Leave
+        it as ``None`` when an adapter's public ``config`` controls prediction
+        only. Nested containers in the key are normalized by the cache.
         """
         spec = self.model_spec_
         key_items = {
             "class": self.__class__.__name__,
-            # Generic pretrained checkpoints are indifferent to prediction config.
-            # Config-built adapters include config in an overridden key.
-            # "config": spec.config,
+            "config": spec.config,
             "device": spec.device,
             "dtype": spec.dtype,
             "model_path": spec.model_path,

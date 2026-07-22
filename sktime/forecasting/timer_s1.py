@@ -200,7 +200,7 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         self.deterministic = deterministic
         model_spec = FoundationModelSpec(
             model_path=model_path,
-            config=config,
+            config=config if model_path is None else None,
             device=device_map,
             dtype=dtype,
             quantization_config=quantization_config,
@@ -312,24 +312,10 @@ class TimerS1Forecaster(BaseFoundationForecaster):
             model = model.to(dtype=model_spec.dtype)
         return model
 
-    def _get_unique_model_key(self):
-        """Build a hashable key from all Timer-S1 loading inputs."""
-        spec = self.model_spec_
-        key_items = {
-            "class": self.__class__.__name__,
-            "model_path": spec.model_path,
-            "config": spec.config if spec.model_path is None else None,
-            "device_map": spec.device,
-            "dtype": spec.dtype,
-            "quantization_config": spec.quantization_config,
-            "load_extra_kwargs": spec.load_extra_kwargs,
-        }
-        return self.__class__.__name__, str(sorted(key_items.items()))
-
     def _resolve_config(self, config):
         """Copy dict and ``TimerS1Config`` inputs without mutating either."""
         if config is None:
-            return {}
+            return None
         return deepcopy(config)
 
     @classmethod

@@ -13,12 +13,16 @@ from sktime.forecasting.foundation._result import ModelHandle
 def _make_hashable(obj):
     """Convert common containers to stable hashable equivalents.
 
-    Dictionaries, lists, tuples, and sets are normalized recursively. Other
-    unhashable objects fall back to ``repr``; such representations are not
-    guaranteed to be stable when they contain object identity. Adapters can
-    override ``_get_unique_model_key`` to provide a better representation for
-    custom configuration objects.
+    Dictionaries, lists, tuples, sets, and configuration objects exposing
+    ``to_dict`` are normalized recursively. Other unhashable objects fall back to
+    ``repr``; such representations are not guaranteed to be stable when they
+    contain object identity. Adapters can override ``_get_unique_model_key`` to
+    provide a better representation for other custom objects.
     """
+    to_dict = getattr(obj, "to_dict", None)
+    if callable(to_dict):
+        class_name = f"{obj.__class__.__module__}.{obj.__class__.__qualname__}"
+        return class_name, _make_hashable(to_dict())
     if isinstance(obj, dict):
         return tuple((key, _make_hashable(value)) for key, value in sorted(obj.items()))
     if isinstance(obj, (list, tuple)):

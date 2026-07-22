@@ -368,7 +368,6 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
 
         model_spec = FoundationModelSpec(
             model_path=model_path,
-            config=config,
             device=normalized_config["device_map"],
             dtype=normalized_config["torch_dtype"],
             random_state=seed,
@@ -424,8 +423,15 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
                 self.model_strategy = ChronosDefaultStrategy()
 
             predict_kwargs = self.model_strategy.initialize_config()
-            if spec.config is not None:
-                predict_kwargs.update(spec.config)
+            if self.config is not None:
+                load_config_names = {"device_map", "torch_dtype"}
+                predict_kwargs.update(
+                    {
+                        key: value
+                        for key, value in self.config.items()
+                        if key not in load_config_names
+                    }
+                )
             self._update_model_spec(predict_extra_kwargs=predict_kwargs)
 
         except Exception as e:

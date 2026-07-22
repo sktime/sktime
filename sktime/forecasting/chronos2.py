@@ -117,7 +117,6 @@ class Chronos2Forecaster(BaseFoundationForecaster):
 
         model_spec = FoundationModelSpec(
             model_path=model_path,
-            config=None,
             device=normalized_config["device_map"],
             dtype=normalized_config["torch_dtype"],
             random_state=seed,
