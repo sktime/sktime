@@ -596,10 +596,20 @@ class ChronosForecaster(BaseForecaster):
         index_names = _y.index.names
         _y = _y.values.reshape(1, -1, 1)
 
+        # context_length lives on model.config in sktime's internal chronos build,
+        # but the external chronos package (v2+) uses a plain T5Config that does
+        # not carry the attribute.  Fall back to the pipeline-level attribute, and
+        # if that is also absent skip the explicit truncation — the model handles
+        # it internally.
+        context_length = getattr(
+            self.model_pipeline.model.config, "context_length", None
+        ) or getattr(self.model_pipeline, "context_length", None)
+
         results = []
         for i in range(_y.shape[0]):
             _y_i = _y[i, :, 0]
-            _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
+            if context_length is not None:
+                _y_i = _y_i[-context_length:]
 
             values = self.model_strategy.predict(
                 self.model_pipeline, torch.Tensor(_y_i), prediction_length, self._config
