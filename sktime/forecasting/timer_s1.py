@@ -312,12 +312,6 @@ class TimerS1Forecaster(BaseFoundationForecaster):
             model = model.to(dtype=model_spec.dtype)
         return model
 
-    def _resolve_config(self, config):
-        """Copy dict and ``TimerS1Config`` inputs without mutating either."""
-        if config is None:
-            return None
-        return deepcopy(config)
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.

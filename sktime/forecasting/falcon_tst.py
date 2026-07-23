@@ -173,10 +173,6 @@ class FalconTSTForecaster(BaseFoundationForecaster):
         )
         super().__init__(model_spec=model_spec)
 
-    def _resolve_config(self, config):
-        """Copy dict and ``PretrainedConfig`` inputs without mutating them."""
-        return None if config is None else deepcopy(config)
-
     def _load_model(self):
         """Load pretrained or config-only Falcon-TST into a model handle."""
         from sktime.libs.falcon_tst import FalconTSTConfig, FalconTSTForPrediction
