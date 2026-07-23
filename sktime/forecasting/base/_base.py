@@ -915,6 +915,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
 
+        cov : bool, optional (default=False)
+            currently unused, present for downwards compatibility and future extension
+
         Returns
         -------
         pred_var : pd.DataFrame, format dependent on ``cov`` variable
