@@ -1,7 +1,5 @@
 """Adapter for using MOIRAI Forecasters."""
 
-from unittest.mock import patch
-
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -176,13 +174,16 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface_hub"], severity="none"):
-        import sktime
-        from sktime.libs.uni2ts.forecast import MoiraiForecast
 
-        @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
         def _instantiate_patched_model(self, model_kwargs):
             """Instantiate the model from the vendor package."""
+            import sys
+
             import torch
+
+            import sktime.libs.uni2ts as _uni2ts_mod
+
+            sys.modules.setdefault("uni2ts", _uni2ts_mod)
 
             from sktime.libs.uni2ts.distribution.log_normal import LogNormalOutput
             from sktime.libs.uni2ts.distribution.mixture import MixtureOutput
