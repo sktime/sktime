@@ -197,7 +197,6 @@ tests = [
 # these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "skchange",
 ]
 cython_extras = [
   "mrseql < 0.0.3",
