@@ -16,16 +16,20 @@ from sktime.forecasting.base import BaseForecaster
 
 
 class ARCH(BaseForecaster):
-    r"""Directly interfaces ARCH models from python package arch.
+    r"""ARCH models from arch package, including (E)(G/H)AR(X)CH, FIAR(X)CH.
 
     ARCH models are a popular class of volatility models that use observed values of
     returns or residuals as volatility shocks to forecast the volatility in high
     frequency time series data..
 
     A complete ARCH model is divided into three components:
-        a mean model, e.g., a constant mean or an ARX;
-        a volatility process, e.g., a GARCH or an EGARCH process; and
-        a distribution for the standardized residuals.
+
+    * a mean model, e.g., a constant mean or an ARX;
+    * a volatility process, e.g., a GARCH or an EGARCH process; and
+    * a distribution for the standardized residuals.
+
+    Includes but is not limited to the following commonly used models:
+    ARCH, GARCH, EGARCH, HARCH, FIARCH, ARX, HARX.
 
     Parameters
     ----------
@@ -48,10 +52,12 @@ class ARCH(BaseForecaster):
         Power to use with GARCH and related models
     dist : int, optional
         Name of the error distribution.  Currently supported options are:
-            * Normal: 'normal', 'gaussian' (default)
-            * Students's t: 't', 'studentst'
-            * Skewed Student's t: 'skewstudent', 'skewt'
-            * Generalized Error Distribution: 'ged', 'generalized error"
+
+        * Normal: 'normal', 'gaussian' (default)
+        * Students's t: 't', 'studentst'
+        * Skewed Student's t: 'skewstudent', 'skewt'
+        * Generalized Error Distribution: 'ged', 'generalized error"
+
     hold_back : int
         Number of observations at the start of the sample to exclude when
         estimating model parameters.  Used when comparing models with different
@@ -165,10 +171,13 @@ class ARCH(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
-        "capability:exogenous": False,
+        "capability:exogenous": True,
         "capability:non_contiguous_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -233,8 +242,13 @@ class ARCH(BaseForecaster):
 
         super().__init__()
 
-        if self.mean in ["ARX", "HARX"]:
-            self.set_tags(**{"capability:exogenous": True})
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.mean not in ["ARX", "HARX"]:
+            self.set_tags(**{"capability:exogenous": False})
 
     def _fit(self, y, X=None, fh=None):
         """Fit the training data to the estimator.
