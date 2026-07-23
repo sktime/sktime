@@ -360,13 +360,25 @@ class BaseFoundationForecaster(BaseForecaster):
         return deepcopy(config)
 
     def _resolve_dtype(self, dtype):
-        """Resolve supported serialized dtype names to backend dtype objects."""
-        if dtype == "torch.bfloat16":
-            import torch
+        """Resolve ``"torch.<name>"`` strings to native Torch dtype objects.
 
-            return torch.bfloat16
+        Native dtype objects and backend-specific values such as ``"auto"`` are
+        returned unchanged. A string in the ``torch.`` namespace must identify an
+        actual ``torch.dtype`` rather than another Torch attribute.
+        """
+        if not isinstance(dtype, str) or not dtype.startswith("torch."):
+            return dtype
 
-        return dtype
+        import torch
+
+        dtype_name = dtype.removeprefix("torch.")
+        resolved_dtype = getattr(torch, dtype_name, None)
+        if not isinstance(resolved_dtype, torch.dtype):
+            raise ValueError(
+                f"Unknown Torch dtype {dtype!r}. Expected a valid "
+                "'torch.<dtype_name>' string."
+            )
+        return resolved_dtype
 
     def _resolve_device(self, device):
         """Resolve explicit, configured, or automatic Torch device selection.
