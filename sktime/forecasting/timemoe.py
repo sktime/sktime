@@ -358,8 +358,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         dict
             The default configuration for TimeMoE model.
         """
-        import torch
-
         default_config = {
             "input_size": 1,
             "hidden_size": 4096,
@@ -381,7 +379,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "apply_aux_loss": True,
             "router_aux_loss_factor": 0.02,
             "tie_word_embeddings": False,
-            "torch_dtype": torch.bfloat16,
+            "torch_dtype": "auto",
             "device_map": "cpu",
         }
         return default_config
