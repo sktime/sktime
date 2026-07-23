@@ -4,10 +4,15 @@ __all__ = ["UEADataset", "RAMDataset", "make_datasets"]
 __author__ = ["viktorkaz", "mloning"]
 
 import os
+from warnings import warn
 
 import pandas as pd
 
-from sktime.benchmarking.base import BaseDataset, HDDBaseDataset
+from sktime.benchmarking.base import (
+    BaseDataset,
+    HDDBaseDataset,
+    _V1_DEPRECATION_MSG,
+)
 from sktime.datasets import load_from_tsfile_to_dataframe
 
 
@@ -88,7 +93,13 @@ class RAMDataset(BaseDataset):
 
 
 def make_datasets(path, dataset_cls, names=None, **kwargs):
-    """Make datasets."""
+    """Make datasets.
+
+    .. deprecated:: 1.1.0
+        Part of the deprecated v1 benchmarking framework; will be removed in
+        sktime 1.3.0. See #10464.
+    """
+    warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
     # check dataset class
     # if not isinstance(dataset_cls, BaseDataset):
     #     raise ValueError(f"dataset must inherit from BaseDataset, but found:"
