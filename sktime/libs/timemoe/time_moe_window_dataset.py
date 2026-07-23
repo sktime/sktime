@@ -2,9 +2,10 @@
 
 import random
 
-import numpy as np
-
 from sktime.libs.timemoe.ts_dataset import TimeSeriesDataset
+from sktime.utils.dependencies import _safe_import
+
+np = _safe_import("numpy")
 
 
 class TimeMoEWindowDataset:

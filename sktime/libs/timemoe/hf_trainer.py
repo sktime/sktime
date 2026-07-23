@@ -5,10 +5,12 @@ import math
 from dataclasses import dataclass, field
 from functools import partial
 
-import torch
-import transformers
-from torch.optim.lr_scheduler import LambdaLR
-from transformers import get_scheduler
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+transformers = _safe_import("transformers")
+LambdaLR = _safe_import("torch.optim.lr_scheduler.LambdaLR")
+get_scheduler = _safe_import("transformers.get_scheduler")
 
 
 class TimeMoeTrainer(transformers.Trainer):
