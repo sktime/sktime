@@ -152,6 +152,18 @@ class MyForecaster(BaseForecaster):
         # only needs to be set if capability:pred_int is True
         # if False, exception raised if proba methods are called with in-sample fh
         #
+        # capability:random_state = does estimator accept/use random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, estimator uses random_state in fit or predict
+        #
+        # property:randomness = type of randomness in the estimator
+        "property:randomness": "none",
+        # valid values: "none", "free", "fixed"
+        # "none": deterministic, no randomness
+        # "free": randomness not controlled by random_state
+        # "fixed": randomness controlled by random_state
+        #
         # capability:pretrain = does forecaster support pretraining on panel data?
         "capability:pretrain": False,
         # valid values: boolean True (yes), False (no)
