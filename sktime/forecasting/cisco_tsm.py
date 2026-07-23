@@ -7,10 +7,13 @@ __author__ = ["vedantag17"]
 __all__ = ["CiscoTSMForecaster"]
 
 import numpy as np
-import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
-from sktime.utils.singleton import _multiton
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    FoundationModelSpec,
+    ModelHandle,
+)
 
 # Default quantile levels produced by CTSM. Defined at module level so that
 # _DummyCiscoModel can reference them without importing CiscoTSMForecaster.
@@ -33,7 +36,7 @@ _DEFAULT_QUANTILES = [
 ]
 
 
-class CiscoTSMForecaster(BaseForecaster):
+class CiscoTSMForecaster(BaseFoundationForecaster):
     """Zero-shot univariate forecaster using the Cisco Time Series Model (CTSM).
 
     CTSM 1.0 is a 250M-parameter, decoder-only transformer foundation model
@@ -84,9 +87,8 @@ class CiscoTSMForecaster(BaseForecaster):
     - CTSM is a univariate model. Multivariate targets are not supported.
     - Exogenous variables are not supported.
     - In-sample prediction is not supported.
-    - The loaded ``CiscoTsmMR`` object is cached in-process via a
-      multiton keyed on ``(model_path, num_layers, backend)`` to avoid
-      redundant model loading across multiple estimator instances.
+    - The loaded ``CiscoTsmMR`` object is cached in-process using all settings
+      that affect model construction, including the native quantile levels.
     - The model is excluded from the pickle state to keep serialization
       lightweight; it is reloaded transparently on the first ``predict``
       call after unpickling.
@@ -110,6 +112,7 @@ class CiscoTSMForecaster(BaseForecaster):
     """
 
     _DEFAULT_QUANTILES = _DEFAULT_QUANTILES  # module-level constant
+    _uses_torch_inference_context = False
 
     _tags = {
         # packaging info
@@ -120,7 +123,7 @@ class CiscoTSMForecaster(BaseForecaster):
         "python_version": ">=3.11,<3.14",
         # estimator type
         # --------------
-        "y_inner_mtype": "pd.Series",
+        "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "None",
         "capability:multivariate": False,
         "capability:exogenous": False,
@@ -150,206 +153,93 @@ class CiscoTSMForecaster(BaseForecaster):
         self.quantiles = quantiles
         self.ignore_deps = ignore_deps
 
-        # leave this as is
-        super().__init__()
-
-    def __getstate__(self):
-        """Return state for pickling, excluding the heavy model object."""
-        state = self.__dict__.copy()
-        state["_model_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled dict."""
-        self.__dict__.update(state)
-
-    def _get_unique_key(self) -> str:
-        """Build a deterministic cache key for the multiton model loader."""
-        return (
-            f"model_path={self.model_path}|"
-            f"num_layers={self.num_layers}|"
-            f"backend={self.backend}"
+        native_quantiles = (
+            quantiles if quantiles is not None else self._DEFAULT_QUANTILES
         )
+        model_spec = FoundationModelSpec(
+            model_path=model_path,
+            ignore_deps=ignore_deps,
+            load_extra_kwargs={
+                "num_layers": num_layers,
+                "backend": backend,
+                "quantiles": native_quantiles,
+            },
+            predict_extra_kwargs={"context_length": context_length},
+        )
+        super().__init__(model_spec=model_spec)
 
     def _load_model(self):
-        """Instantiate and return a cached CiscoTsmMR model.
+        """Instantiate the CiscoTsmMR model for the shared handle cache.
 
         When ``ignore_deps=True`` a lightweight built-in dummy is returned so
         that ``check_estimator`` and unit tests can exercise the adapter
         contract without installing ``cisco-tsm``.
         """
-        if self.ignore_deps:
-            return _DummyCiscoModel(horizon_fill=0.0)
+        model_spec = self.model_spec
+        load_kwargs = model_spec.load_extra_kwargs
+        if model_spec.ignore_deps:
+            model = _DummyCiscoModel(
+                horizon_fill=0.0,
+                quantiles=load_kwargs["quantiles"],
+            )
+            return ModelHandle(model=model)
 
         from sktime.utils.dependencies import _check_soft_dependencies
 
         _check_soft_dependencies("cisco-tsm", "torch", severity="error")
+        from cisco_tsm import CiscoTsmMR, TimesFmCheckpoint, TimesFmHparams
 
-        _quantiles = (
-            self.quantiles if self.quantiles is not None else self._DEFAULT_QUANTILES
+        hparams = TimesFmHparams(
+            num_layers=load_kwargs["num_layers"],
+            use_positional_embedding=False,
+            backend=load_kwargs["backend"],
+            quantiles=load_kwargs["quantiles"],
         )
-        return _CachedCiscoTSM(
-            key=self._get_unique_key(),
-            model_path=self.model_path,
-            num_layers=self.num_layers,
-            backend=self.backend,
-            quantiles=_quantiles,
-        ).load()
-
-    def _ensure_model_loaded(self):
-        """Reload the model lazily, e.g. after unpickling."""
-        if not hasattr(self, "_model_") or self._model_ is None:
-            if self._is_fitted:
-                self._model_ = self._load_model()
-
-    def _fit(self, y, X=None, fh=None):
-        """Load the model and store training context.
-
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in ``_``.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Guaranteed univariate time series (``capability:multivariate`` is
-            ``False``). Used as the forecasting context.
-        X : ignored
-            Exogenous time series are not supported.
-        fh : ForecastingHorizon or None
-            Not required at fit time (``requires-fh-in-fit`` is ``False``).
-
-        Returns
-        -------
-        self : reference to self
-        """
-        self._model_ = self._load_model()
-
-        # Store the context array; clip to context_length if specified.
-        context = y.to_numpy(dtype=np.float32)
-        if self.context_length is not None and len(context) > self.context_length:
-            context = context[-self.context_length :]
-
-        self._context_ = context
-        self._y_name_ = y.name
-
-        return self
-
-    def _predict(self, fh, X=None):
-        """Forecast future values for the given horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be ``"fitted"``.
-
-        Accesses in self:
-            ``_model_``, ``_context_``, ``_y_name_``, ``cutoff``
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            The forecasting horizon. Only out-of-sample horizons are supported.
-        X : ignored
-
-        Returns
-        -------
-        y_pred : pd.Series
-            Point forecasts with absolute index matching ``fh``.
-        """
-        self._ensure_model_loaded()
-
-        fh_relative = fh.to_relative(self.cutoff)
-        horizon_len = int(max(fh_relative._values))
-
-        # Run CTSM inference.
-        # model.forecast returns list[dict] with keys 'mean' (np.ndarray of
-        # shape (horizon_len,)) and 'quantiles' (dict).
-        forecast_preds = self._model_.forecast(
-            self._context_,
-            horizon_len=horizon_len,
+        checkpoint = TimesFmCheckpoint(
+            huggingface_repo_id=model_spec.model_path,
         )
-        mean_forecast = forecast_preds[0]["mean"]  # (horizon_len,)
+        model = CiscoTsmMR(hparams=hparams, checkpoint=checkpoint)
+        return ModelHandle(model=model)
 
-        # Build output with the canonical sktime index idiom.
-        row_idx = fh.to_absolute_index(self.cutoff)
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Forecast from the univariate context and interpolate quantiles."""
+        context_length = self.model_spec.predict_extra_kwargs["context_length"]
+        context = context_y.iloc[:, 0].to_numpy(dtype=np.float32)
+        if context_length is not None and len(context) > context_length:
+            context = context[-context_length:]
 
-        # fh_relative is 1-based; map to 0-based positions in mean_forecast.
-        fh_vals = np.asarray(fh_relative._values, dtype=int) - 1
+        forecast = handle.model.forecast(context, horizon_len=pred_len)[0]
+        mean = np.asarray(forecast["mean"], dtype=np.float32)
+        if alpha is None:
+            return ForecastResult(mean=mean)
 
-        y_pred = pd.Series(
-            mean_forecast[fh_vals],
-            index=row_idx,
-            name=self._y_name_,
+        native_quantiles = forecast["quantiles"]
+        native_keys = sorted(native_quantiles)
+        native_levels = np.asarray(native_keys, dtype=float)
+        native_values = np.stack(
+            [native_quantiles[key] for key in native_keys],
+            axis=0,
         )
-        return y_pred
-
-    def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast.
-
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
-
-        State required:
-            Requires state to be ``"fitted"``.
-
-        Accesses in self:
-            ``_model_``, ``_context_``, ``_y_name_``, ``cutoff``
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to predict.
-        X : ignored
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
-            Values not in the model's native quantile set are linearly
-            interpolated from the surrounding available levels.
-
-        Returns
-        -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
-        """
-        self._ensure_model_loaded()
-
-        fh_relative = fh.to_relative(self.cutoff)
-        horizon_len = int(max(fh_relative._values))
-        fh_vals = np.asarray(fh_relative._values, dtype=int) - 1
-
-        forecast_preds = self._model_.forecast(
-            self._context_,
-            horizon_len=horizon_len,
-        )
-        quantiles_dict = forecast_preds[0]["quantiles"]  # dict[float, np.ndarray]
-
-        # Sort available native levels for interpolation.
-        native_levels = sorted(quantiles_dict.keys())
-        # Stack into (n_native_quantiles, horizon_len) array.
-        native_matrix = np.stack(
-            [quantiles_dict[q] for q in native_levels], axis=0
-        )  # shape: (n_q, horizon_len)
-
-        var_name = self._y_name_ if self._y_name_ is not None else 0
-        row_idx = fh.to_absolute_index(self.cutoff)
-        cols_idx = pd.MultiIndex.from_product([[var_name], alpha])
-        pred_quantiles = pd.DataFrame(index=row_idx, columns=cols_idx, dtype=float)
-
-        native_arr = np.array(native_levels, dtype=float)
-        for a in alpha:
-            # Linear interpolation across quantile dimension at each horizon step.
-            interp_vals = np.array(
-                [np.interp(a, native_arr, native_matrix[:, t]) for t in fh_vals],
+        quantiles = {
+            float(quantile): np.asarray(
+                [
+                    np.interp(quantile, native_levels, native_values[:, step])
+                    for step in range(pred_len)
+                ],
                 dtype=np.float32,
             )
-            pred_quantiles[(var_name, a)] = interp_vals
-
-        return pred_quantiles
+            for quantile in alpha
+        }
+        return ForecastResult(mean=mean, quantiles=quantiles)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -397,8 +287,9 @@ class _DummyCiscoModel:
         Constant value returned for every forecast step.
     """
 
-    def __init__(self, horizon_fill: float = 0.0):
+    def __init__(self, horizon_fill: float = 0.0, quantiles=None):
         self.horizon_fill = horizon_fill
+        self.quantiles = _DEFAULT_QUANTILES if quantiles is None else list(quantiles)
 
     def forecast(self, series, horizon_len):
         """Return constant forecasts matching the CiscoTsmMR output format."""
@@ -408,62 +299,6 @@ class _DummyCiscoModel:
         # Reference the class-level constant directly to avoid a circular import.
         quantiles = {
             q: np.full(horizon_len, self.horizon_fill, dtype=np.float32)
-            for q in _DEFAULT_QUANTILES
+            for q in self.quantiles
         }
         return [{"mean": mean, "quantiles": quantiles}]
-
-
-@_multiton
-class _CachedCiscoTSM:
-    """In-process cache for a loaded ``CiscoTsmMR`` model.
-
-    A single ``CiscoTsmMR`` instance is shared across all ``CiscoTSMForecaster``
-    objects that use the same ``(model_path, num_layers, backend)`` combination.
-    This avoids redundant HuggingFace downloads and memory duplication.
-
-    Parameters
-    ----------
-    key : str
-        Multiton key (used externally for lookup).
-    model_path : str
-        HuggingFace repository ID.
-    num_layers : int
-        Number of transformer layers.
-    backend : str
-        ``"cpu"`` or ``"gpu"``.
-    quantiles : list of float
-        Quantile levels for the model.
-    """
-
-    def __init__(self, key, model_path, num_layers, backend, quantiles):
-        self.key = key
-        self.model_path = model_path
-        self.num_layers = num_layers
-        self.backend = backend
-        self.quantiles = quantiles
-        self._model = None
-
-    def load(self):
-        """Instantiate and return the cached ``CiscoTsmMR`` model.
-
-        On first call the model is downloaded from HuggingFace and
-        initialised; subsequent calls return the cached instance.
-
-        Returns
-        -------
-        model : CiscoTsmMR
-        """
-        if self._model is not None:
-            return self._model
-
-        from cisco_tsm import CiscoTsmMR, TimesFmCheckpoint, TimesFmHparams
-
-        hparams = TimesFmHparams(
-            num_layers=self.num_layers,
-            use_positional_embedding=False,
-            backend=self.backend,
-            quantiles=self.quantiles,
-        )
-        ckpt = TimesFmCheckpoint(huggingface_repo_id=self.model_path)
-        self._model = CiscoTsmMR(hparams=hparams, checkpoint=ckpt)
-        return self._model
