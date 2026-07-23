@@ -88,6 +88,8 @@ Deep learning
     rnn.SimpleRNNClassifierTorch
     tapnet.TapNetClassifier
     tapnet.TapNetClassifierTorch
+    tsai.inceptiontimeplus.InceptionTimePlusClassifier
+
 
 Foundation models
 -----------------
