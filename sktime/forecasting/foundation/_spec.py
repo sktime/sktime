@@ -37,7 +37,8 @@ class FoundationModelSpec:
         CUDA/MPS/CPU resolution policy.
     dtype : Any or None, default=None
         Native dtype object or supported serialized dtype name. The base class
-        currently resolves ``"torch.bfloat16"``.
+        resolves any valid ``"torch.<dtype_name>"`` string, such as
+        ``"torch.float32"`` or ``"torch.bfloat16"``.
     quantization_config : Any or None, default=None
         Backend quantization settings used while loading the model.
     random_state : int, RandomState, or None, default=None
