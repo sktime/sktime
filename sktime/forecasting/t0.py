@@ -7,8 +7,11 @@
 
 __all__ = ["T0Forecaster"]
 
+from contextlib import nullcontext
+
 import numpy as np
 import pandas as pd
+from sklearn.utils import check_random_state
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
@@ -70,9 +73,12 @@ class T0Forecaster(BaseForecaster):
         when a CUDA device is available, otherwise "cpu".
     context_length : int or None, default=None
         Maximum context length for inference. If None, the full context is used.
-    random_state : int or None, optional, default=None
-        Random seed for reproducibility. T0's inference is deterministic, so this
-        does not change the forecast; it is accepted for interface consistency.
+    random_state : int, RandomState instance or None, optional, default=None
+        Random seed for reproducibility, sklearn-compatible. If ``None``, no
+        seeding is applied and the ambient random state is used. If set,
+        inference runs in a forked RNG seeded from ``random_state``, leaving the
+        global RNG untouched. T0's inference is deterministic, so this does not
+        change the forecast; it is accepted for interface consistency.
     license_accepted : bool, optional, default=False
         Whether the user has read and accepted the license terms of the model at
         ``model_path``. The default checkpoint is gated and licensed by The
@@ -163,7 +169,7 @@ class T0Forecaster(BaseForecaster):
         model_path: str | None = "theforecastingcompany/t0-alpha",
         device: str | None = None,
         context_length: int | None = None,
-        random_state: int | None = None,
+        random_state=None,
         license_accepted: bool = False,
         ignore_deps: bool = False,
     ):
@@ -178,7 +184,12 @@ class T0Forecaster(BaseForecaster):
 
         super().__init__()
 
-        if ignore_deps:
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.ignore_deps:
             self.set_tags(python_dependencies=[])
 
     def __post_init__(self):
@@ -190,10 +201,12 @@ class T0Forecaster(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        if self.random_state is None:
-            self._random_state = np.random.randint(0, 2**31)
-        else:
-            self._random_state = self.random_state
+        rng = check_random_state(self.random_state)
+        self._random_state = (
+            None
+            if self.random_state is None
+            else int(rng.randint(np.iinfo(np.int32).max))
+        )
 
         if self.device is not None:
             self._device = self.device
@@ -440,8 +453,14 @@ class T0Forecaster(BaseForecaster):
         if future_covariates is not None:
             predict_kwargs["future_covariates"] = future_covariates
 
-        with torch.random.fork_rng(devices=[]):
-            torch.manual_seed(self._random_state)
+        if self._random_state is None:
+            rng_context = nullcontext()
+        else:
+            rng_context = torch.random.fork_rng(devices=[])
+
+        with rng_context:
+            if self._random_state is not None:
+                torch.manual_seed(self._random_state)
             out = self.model_.predict(
                 context, horizon=horizon, quantiles=quantiles, **predict_kwargs
             )
@@ -505,9 +524,6 @@ class T0Forecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        # model_path=None builds a small random-weight model locally, so the
-        # contract suite runs without downloading the gated t0-alpha checkpoint
-        # (forked-PR CI cannot authenticate to the HuggingFace Hub)
         return [
             {"model_path": None},
             {"model_path": None, "random_state": 42},
@@ -532,17 +548,13 @@ class _CachedT0:
         if self.model is not None:
             return self.model
 
-        import torch
         from t0 import T0Forecaster as _T0Model
 
         model_path = self.t0_kwargs["pretrained_model_name_or_path"]
         device = self.t0_kwargs.get("device", "cpu")
 
         if model_path is None:
-            with torch.random.fork_rng(devices=[]):
-                torch.manual_seed(0)
-                model = _T0Model(**_RANDOM_MODEL_CONFIG)
-            self.model = model.eval().to(device)
+            self.model = _T0Model(**_RANDOM_MODEL_CONFIG).eval().to(device)
         else:
             # load weights straight onto the target device (faster than
             # load-then-.to); tfc-t0 uses HF Hub's PyTorchModelHubMixin, whose
