@@ -138,8 +138,8 @@ class ForecastingBenchmark(BaseBenchmark):
             * "refit" = forecaster is refitted to each training window
             * "update" = forecaster is updated with training window data,
               in sequence provided
-            * "no-update_params" = fit to first training window,
-              re-used without fit or update
+            * "no-update_params" = forecaster is updated via ``update``, with
+              ``update_params=False``, to the cutoff of each new training window
 
         cv_global_temporal:  SingleWindowSplitter, default=None
             ignored if cv_global is None. If passed, it splits the Panel temporally
