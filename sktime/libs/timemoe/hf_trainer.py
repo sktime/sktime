@@ -2,7 +2,6 @@
 
 import inspect
 import math
-from dataclasses import dataclass, field
 from functools import partial
 
 from sktime.utils.dependencies import _safe_import
@@ -75,13 +74,16 @@ class TimeMoeTrainer(Trainer):
             )
 
 
-@dataclass
 class TimeMoETrainingArguments(TrainingArguments):
-    """TrainingArguments with Time-MoE min learning rate."""
+    """TrainingArguments with Time-MoE min learning rate.
 
-    min_learning_rate: float = field(
-        default=0, metadata={"help": "Minimum learning rate for cosine_schedule"}
-    )
+    Not decorated with ``@dataclass`` so module import works when
+    ``TrainingArguments`` is a ``_safe_import`` placeholder.
+    """
+
+    def __init__(self, min_learning_rate: float = 0, **kwargs):
+        super().__init__(**kwargs)
+        object.__setattr__(self, "min_learning_rate", min_learning_rate)
 
 
 def _get_cosine_schedule_with_warmup_and_min_lr_lambda(
