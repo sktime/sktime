@@ -436,7 +436,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
 
                 with torch.no_grad():
-                    output = self.model(
+                    output = self.model_(
                         input_tensor,
                         attention_mask,
                         max_horizon_length=prediction_length,
