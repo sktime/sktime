@@ -75,6 +75,11 @@ class _FoundationModelCache:
             return handle
 
         handle = loader()
+        if not isinstance(handle, ModelHandle):
+            raise TypeError(
+                "Foundation model loaders must return a ModelHandle, "
+                f"but returned {type(handle).__name__}."
+            )
         self._entries[key] = handle
         return handle
 

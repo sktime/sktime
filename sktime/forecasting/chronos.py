@@ -63,9 +63,8 @@ class ChronosModelStrategy(ABC):
 
         Returns
         -------
-        _CachedChronos or _CachedChronosBolt
-            A cached instance of the appropriate pipeline class that can be used to load
-            the model checkpoint.
+        ChronosPipeline or ChronosBoltPipeline
+            Loaded native pipeline for the selected model architecture.
         """
         pass
 
@@ -253,11 +252,11 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
 
     Attributes
     ----------
-    model_pipeline: ChronosPipeline or ChronosBoltPipeline
-        The underlying model pipeline user for forecasting
-    is_bolt: bool
-        Indicates whether the model is a Chronos-Bolt model, to ensure
-        effective differentiation purely from model-path.
+    model_strategy : ChronosModelStrategy
+        Strategy selected from the checkpoint architecture and used to construct
+        and invoke the corresponding Chronos pipeline.
+    model_handle_ : ModelHandle
+        Shared handle containing the loaded native model and pipeline after fit.
 
     References
     ----------

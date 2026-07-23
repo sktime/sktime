@@ -148,7 +148,7 @@ class TotoForecaster(BaseFoundationForecaster):
         self.seed = seed
         model_spec = FoundationModelSpec(
             model_path=model_path,
-            device=device,
+            device="auto" if device is None else device,
             random_state=seed,
             load_extra_kwargs={
                 "use_memory_efficient_attention": use_memory_efficient_attention,
@@ -170,36 +170,7 @@ class TotoForecaster(BaseFoundationForecaster):
             self.set_tags(python_dependencies=["torch", "xformers", "accelerate"])
 
     def _update_attrs_in_fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-
-        Writes to self:
-            Sets fitted model attributes ending in "_".
-
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
-
-            * if self.get_tag("capability:multivariate")==False:
-              guaranteed to be univariate (e.g., single-column for DataFrame)
-            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
-              the method should handle uni- and multivariate y appropriately
-
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X :  sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : reference to self
-        """
+        """Convert the fitted target context to Toto's native container."""
         import torch
         from toto.data.util.dataset import MaskedTimeseries
 

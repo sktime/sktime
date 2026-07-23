@@ -306,9 +306,10 @@ class BaseFoundationForecaster(BaseForecaster):
     def _inference_context(self, handle):
         """Apply local Torch seeding, evaluation mode, and inference mode.
 
-        The Torch random-number-generator state is restored on exit, so prediction
-        does not alter application-level randomness. ``random_state`` seeds the
-        local context. Non-Torch adapters must set
+        When ``random_state`` is set, prediction runs in a seeded fork whose
+        random-number-generator state is restored on exit. Without a seed, the
+        ambient Torch generator advances normally so stochastic adapters produce
+        fresh samples on subsequent calls. Non-Torch adapters must set
         ``_uses_torch_inference_context = False`` on the class.
 
         Parameters
@@ -333,9 +334,14 @@ class BaseFoundationForecaster(BaseForecaster):
             if model_device.type == "cuda":
                 devices = [model_device.index or torch.cuda.current_device()]
 
+        random_state = self.model_spec.random_state
+        if random_state is None:
+            with torch.inference_mode():
+                yield
+            return
+
         with torch.random.fork_rng(devices=devices):
-            if self.model_spec.random_state is not None:
-                torch.manual_seed(self.model_spec.random_state)
+            torch.manual_seed(random_state)
             with torch.inference_mode():
                 yield
 
@@ -410,7 +416,7 @@ class BaseFoundationForecaster(BaseForecaster):
         """
         model_spec = self.model_spec
         key_items = {
-            "class": self.__class__.__name__,
+            "class": (f"{self.__class__.__module__}.{self.__class__.__qualname__}"),
             "config": model_spec.config,
             "device": model_spec.device,
             "dtype": model_spec.dtype,

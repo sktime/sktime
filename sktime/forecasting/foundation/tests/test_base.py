@@ -90,6 +90,13 @@ class _DependencyFoundationForecaster(_DummyFoundationForecaster):
     _tags = {"python_dependencies": ["dummy-package"]}
 
 
+class _InvalidHandleFoundationForecaster(_DummyFoundationForecaster):
+    """Dummy forecaster whose loader violates the ModelHandle contract."""
+
+    def _load_model(self):
+        return _DummyModel()
+
+
 @pytest.fixture(autouse=True)
 def _clear_model_cache():
     """Keep process-local model handles isolated between tests."""
@@ -356,6 +363,26 @@ def test_model_cache_includes_load_affecting_config(y):
     assert first.load_count == second.load_count == 1
 
 
+def test_model_cache_key_uses_fully_qualified_class_name():
+    """Cache identity includes the adapter module as well as its class name."""
+    forecaster = _DummyFoundationForecaster()
+    key = dict(forecaster._get_unique_model_key())
+
+    expected = (
+        f"{_DummyFoundationForecaster.__module__}."
+        f"{_DummyFoundationForecaster.__qualname__}"
+    )
+    assert key["class"] == expected
+
+
+def test_model_loader_must_return_model_handle(y):
+    """Invalid loader output fails before it can enter the shared cache."""
+    forecaster = _InvalidHandleFoundationForecaster()
+
+    with pytest.raises(TypeError, match="must return a ModelHandle"):
+        forecaster.fit(y)
+
+
 def test_model_cache_normalizes_config_objects(y):
     """Equivalent config objects with ``to_dict`` share a cached handle."""
 
@@ -454,3 +481,36 @@ def test_torch_inference_context_is_seeded_and_restores_rng(y):
     assert torch.equal(state_before, state_after)
     assert forecaster.model_handle_.model.eval_count == 2
     assert forecaster.inference_mode_enabled_
+
+
+def test_unseeded_torch_inference_advances_rng(y):
+    """An unseeded stochastic adapter does not replay the same Torch RNG state."""
+    torch = pytest.importorskip("torch")
+
+    class _TorchModel:
+        device = "cpu"
+
+        def eval(self):
+            return self
+
+    class _StochasticFoundationForecaster(_DummyFoundationForecaster):
+        _uses_torch_inference_context = True
+
+        def _load_model(self):
+            return ModelHandle(model=_TorchModel())
+
+        def _inference(self, **kwargs):
+            values = torch.rand(kwargs["pred_len"], 2).numpy()
+            return ForecastResult(mean=values)
+
+    forecaster = _StochasticFoundationForecaster(
+        FoundationModelSpec(model_path="stochastic-dummy")
+    ).fit(y)
+    state_before = torch.random.get_rng_state()
+
+    first = forecaster.predict(fh=[1, 2])
+    state_after = torch.random.get_rng_state()
+    second = forecaster.predict(fh=[1, 2])
+
+    assert not torch.equal(state_before, state_after)
+    assert not first.equals(second)

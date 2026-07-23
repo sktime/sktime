@@ -213,7 +213,7 @@ class AuroraForecaster(BaseFoundationForecaster):
             context_y = context_y.iloc[-context_length:]
         if alpha is not None and predict_kwargs["num_samples"] < 2:
             raise ValueError(
-                "Error in AuroraForecaster: Quantile prediction requires"
+                "Error in AuroraForecaster: Quantile prediction requires "
                 "num_samples >= 2; got "
                 f"num_samples={predict_kwargs['num_samples']}."
             )

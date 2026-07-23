@@ -124,7 +124,7 @@ class TimeLLMForecaster(BaseFoundationForecaster):
         self.device = device
         self.prompt_domain = prompt_domain
         model_spec = FoundationModelSpec(
-            device=device,
+            device="auto" if device is None else device,
             dtype="torch.bfloat16",
             load_extra_kwargs={
                 "task_name": task_name,

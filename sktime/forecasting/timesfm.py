@@ -215,7 +215,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         self._context_len = None
         self.horizon_len = horizon_len
         self._horizon_len = None
-        self._context_len = None
         self.freq = freq
         self.repo_id = repo_id
         self.input_patch_len = input_patch_len
@@ -244,6 +243,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
                 "verbose": verbose,
                 "use_source_package": use_source_package,
             },
+            predict_extra_kwargs={"freq": freq},
         )
         super().__init__(model_spec=model_spec)
 
@@ -356,7 +356,8 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         context_np = np.expand_dims(context_y.iloc[:, 0].values, axis=0)
         # context_np.shape: (batch_size, n_timestamps)
 
-        pred, _ = handle.model.forecast(context_np)
+        freq = self.model_spec.predict_extra_kwargs["freq"]
+        pred, _ = handle.model.forecast(context_np, freq=[freq])
         return ForecastResult(mean=pred.ravel().reshape(-1, 1))
 
     @classmethod
