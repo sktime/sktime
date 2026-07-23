@@ -383,8 +383,9 @@ class BaseFoundationForecaster(BaseForecaster):
     def _resolve_device(self, device):
         """Resolve explicit, configured, or automatic Torch device selection.
 
-        Non-Torch adapters should pass an explicit backend/device value or
-        override this method if they support their own ``"auto"`` policy.
+        Only ``"auto"`` triggers device detection, in CUDA/MPS/CPU preference
+        order. ``None`` and explicit backend/device values are returned unchanged.
+        Non-Torch adapters should pass an explicit value.
         """
         if device != "auto":
             return device

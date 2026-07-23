@@ -169,15 +169,6 @@ class TotoForecaster(BaseFoundationForecaster):
         if self.use_memory_efficient_attention:
             self.set_tags(python_dependencies=["torch", "xformers", "accelerate"])
 
-    def _resolve_device(self, device):
-        """Resolve Toto's automatic CUDA-or-CPU device policy."""
-        if device is not None:
-            return device
-
-        import torch
-
-        return "cuda" if torch.cuda.is_available() else "cpu"
-
     def _update_attrs_in_fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 

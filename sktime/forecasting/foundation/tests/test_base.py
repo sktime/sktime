@@ -185,6 +185,35 @@ def test_post_init_rejects_invalid_torch_dtype_strings(dtype):
 
 
 @pytest.mark.parametrize(
+    "cuda_available, mps_available, expected",
+    [
+        (True, False, "cuda"),
+        (False, True, "mps"),
+        (False, False, "cpu"),
+    ],
+)
+def test_post_init_resolves_automatic_torch_device(
+    monkeypatch, cuda_available, mps_available, expected
+):
+    """Auto selects an available Torch device in CUDA/MPS/CPU order."""
+    torch = pytest.importorskip("torch")
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: cuda_available)
+    monkeypatch.setattr(torch.backends.mps, "is_available", lambda: mps_available)
+
+    forecaster = _DummyFoundationForecaster(FoundationModelSpec(device="auto"))
+
+    assert forecaster.model_spec.device == expected
+
+
+@pytest.mark.parametrize("device", [None, "cpu", "cuda:1", "tpu"])
+def test_post_init_preserves_non_auto_device(device):
+    """None and explicit backend/device values pass through unchanged."""
+    forecaster = _DummyFoundationForecaster(FoundationModelSpec(device=device))
+
+    assert forecaster.model_spec.device == device
+
+
+@pytest.mark.parametrize(
     "ignore_deps, expected", [(False, ["dummy-package"]), (True, [])]
 )
 def test_ignore_deps_updates_dependency_tag(ignore_deps, expected):

@@ -33,8 +33,8 @@ class FoundationModelSpec:
         those resolved options in ``predict_extra_kwargs`` instead. The base
         resolver normalizes ``None`` to an empty runtime dictionary.
     device : Any or None, default=None
-        Device or backend selector. The string ``"auto"`` invokes the base Torch
-        CUDA/MPS/CPU resolution policy.
+        Device or backend selector. ``"auto"`` invokes CUDA/MPS/CPU resolution.
+        ``None`` and explicit values pass through unchanged.
     dtype : Any or None, default=None
         Native dtype object or supported serialized dtype name. The base class
         resolves any valid ``"torch.<dtype_name>"`` string, such as

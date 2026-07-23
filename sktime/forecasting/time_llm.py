@@ -195,12 +195,6 @@ class TimeLLMForecaster(BaseFoundationForecaster):
         values = values.reshape(-1, context_y.shape[1])
         return ForecastResult(mean=values)
 
-    def _resolve_device(self, device):
-        """Preserve Time-LLM's automatic CUDA/CPU device selection."""
-        if device is None:
-            return "cuda" if torch.cuda.is_available() else "cpu"
-        return device
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
