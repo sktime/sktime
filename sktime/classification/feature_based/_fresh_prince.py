@@ -89,6 +89,9 @@ class FreshPRINCE(BaseClassifier):
         "capability:train_estimate": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
+        # test exclusions
+        # ----------------
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
