@@ -5,15 +5,36 @@ __authors__ = ["geetu040", "RecreationalMath"]
 __all__ = ["BaseDeepClassifierPytorch"]
 
 import abc
+import tempfile
+import warnings
 from collections.abc import Callable
 
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
+LightningModule = _safe_import("lightning.LightningModule", pkg_name="lightning")
+
+
+# Instance attrs owned by ``LightningModule`` / ``nn.Module``; must not be deleted
+# during ``reset``, otherwise module bookkeeping is corrupted before ``__init__``.
+_LIGHTNING_MODULE_STATE_ATTRS = frozenset(
+    attr for attr in dir(LightningModule()) if "__" not in attr
+) - set(dir(LightningModule))
+
+# Lightning callback names accepted as strings in the ``callbacks`` parameter.
+# See https://lightning.ai/docs/pytorch/stable/api_references.html#callbacks
+_LIGHTNING_CALLBACKS = {
+    "earlystopping": "EarlyStopping",
+    "modelcheckpoint": "ModelCheckpoint",
+    "learningratemonitor": "LearningRateMonitor",
+    "richprogressbar": "RichProgressBar",
+    "tqdmprogressbar": "TQDMProgressBar",
+    "devicestatsmonitor": "DeviceStatsMonitor",
+}
 
 LC_TO_UC_ACTIVATIONS = {
     "elu": "ELU",
@@ -49,7 +70,7 @@ LC_TO_UC_ACTIVATIONS = {
 }
 
 
-class BaseDeepClassifierPytorch(BaseClassifier):
+class BaseDeepClassifierPytorch(BaseClassifier, LightningModule):
     """Abstract base class for the Pytorch neural network classifiers.
 
     Parameters
@@ -91,18 +112,29 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         https://pytorch.org/docs/stable/optim.html#algorithms
     optimizer_kwargs : dict or None, default = None
         The keyword arguments to be passed to the optimizer.
-    callbacks : None or str or a tuple of str, default = None
-        Currently only learning rate schedulers are supported as callbacks.
-        If more than one scheduler is passed, they are applied sequentially in the
-        order they are passed. If None, then no learning rate scheduler is used.
-        Note: Since PyTorch learning rate schedulers need to be initialized with
-        the optimizer object, we only accept the class name (str) of the scheduler here
-        and do not accept an instance of the scheduler. As that can lead to errors
-        and unexpected behavior.
-        List of available learning rate schedulers:
-        https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+    callbacks : None, str, tuple of str and/or lightning.pytorch.callbacks.Callback,
+        default = None
+        Callbacks to use during training. Supports:
+
+        * PyTorch learning rate schedulers, passed as case-insensitive strings.
+          If more than one scheduler is passed, they are applied sequentially in the
+          order they are passed. Since schedulers must be initialized with the
+          optimizer, only class names (str) are accepted, not instances.
+          List of available schedulers:
+          https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+        * Lightning callbacks, passed as instances of
+          ``lightning.pytorch.callbacks.Callback``. Case-insensitive string names are
+          also accepted when Lightning can construct the callback without arguments;
+          otherwise pass a configured instance.
+          See https://lightning.ai/docs/pytorch/stable/api_references.html#callbacks
+        * Learning rate schedulers can also be passed as a callable that accepts the
+          optimizer and returns a scheduler instance, for custom configuration.
+
+        Training uses ``lightning.pytorch.Trainer``.
+
+        If None, no callbacks are used.
     callback_kwargs : dict or None, default = None
-        The keyword arguments to be passed to the callbacks.
+        Deprecated and ignored. Pass callback or scheduler instances/callables instead.
     metrics : None or str or Callable or tuple of str and/or Callable, default = None
         Metrics to compute during training. If None, no metrics are computed beyond
         the loss. Metrics are computed from torchmetrics library.
@@ -120,7 +152,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
     _tags = {
         "authors": ["geetu040", "RecreationalMath"],
         "maintainers": ["geetu040", "RecreationalMath"],
-        "python_dependencies": ["torch"],
+        "python_dependencies": ["torch", "lightning"],
         "X_inner_mtype": "numpy3D",
         "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
@@ -136,11 +168,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
     # be overridden.
     _instantiate_activation_vars = ("activation", "activation_hidden")
 
-    def __dynamic_tags__(self):
-        """Dynamic tag setter logic for setting tag values conditional on parameters.
+    def __hash__(self):
+        # skbase sets __hash__ = None; nn.Module requires a hashable self.
+        return id(self)
 
-        This method should be used for setting dynamic tags only.
-        """
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters."""
         if self.metrics is not None:
             self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
 
@@ -153,7 +186,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         criterion_kwargs: dict | None = None,
         optimizer: str | Callable | None = None,
         optimizer_kwargs: dict | None = None,
-        callbacks: None | str | tuple[str, ...] = None,
+        callbacks: None | str | tuple[str | object, ...] = None,
         callback_kwargs: dict | None = None,
         metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
@@ -168,13 +201,40 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.optimizer = optimizer
         self.optimizer_kwargs = optimizer_kwargs
         self.callbacks = callbacks
+        if callback_kwargs is not None:
+            warnings.warn(
+                "callback_kwargs is deprecated and ignored. Pass callback or "
+                "scheduler instances/callables for custom configuration.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
         self.callback_kwargs = callback_kwargs
         self.metrics = metrics
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
 
+        LightningModule.__init__(self)
         super().__init__()
+
+    def reset(self):
+        """Reset estimator without deleting ``LightningModule`` internal state."""
+        params = self.get_params(deep=False)
+        config = self.get_config()
+
+        cls_attrs = set(dir(type(self)))
+        self_attrs = {attr for attr in dir(self) if "__" not in attr} - cls_attrs
+        for attr in self_attrs:
+            if attr in _LIGHTNING_MODULE_STATE_ATTRS:
+                continue
+            try:
+                delattr(self, attr)
+            except AttributeError:
+                pass
+
+        self.__init__(**params)
+        self.set_config(**config)
+        return self
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -208,12 +268,22 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._all_optimizers = None
         self._all_criterions = None
         self._all_callbacks = None
+        if self.callbacks is None:
+            self._callbacks = None
+        elif not isinstance(self.callbacks, tuple):
+            self._callbacks = (self.callbacks,)
+        else:
+            self._callbacks = self.callbacks
 
         # use this when y has str
         self.label_encoder = None
         self._metrics_objects = None
 
     def _fit(self, X, y):
+        """Fit the model to the data."""
+        import lightning.pytorch as pl
+        from lightning.pytorch.callbacks import ModelCheckpoint
+
         if self.random_state is not None:
             import torch
 
@@ -226,8 +296,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # instantiate loss function and optimizer
         self._criterion = self._instantiate_criterion()
         self._optimizer = self._instantiate_optimizer()
-        # instantiate callbacks (learning rate schedulers)
+        # instantiate callbacks (learning rate schedulers and/or Lightning callbacks)
         self._schedulers = self._instantiate_schedulers()
+        self._lightning_callbacks = self._instantiate_lightning_callbacks()
         # ensure num_classes is set before instantiating metrics
         # as classification metrics require num_classes as an argument
         self.num_classes = len(np.unique(y))
@@ -238,51 +309,91 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # build dataloader
         dataloader = self._build_dataloader(X, y)
 
-        self.network.train()
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
+        enable_checkpointing = any(
+            isinstance(cb, ModelCheckpoint) for cb in self._lightning_callbacks
+        )
+        needs_logger = any(
+            cb.__class__.__name__ == "LearningRateMonitor"
+            for cb in self._lightning_callbacks
+        )
 
-    def _run_epoch(self, epoch, dataloader):
-        losses = []
-        metric_values = {name: [] for name in (self._metrics_objects or {})}
+        trainer_kwargs = {
+            "max_epochs": self.num_epochs,
+            "enable_progress_bar": self.verbose,
+            "enable_model_summary": self.verbose,
+            "enable_checkpointing": enable_checkpointing,
+            "logger": False,
+        }
+        if needs_logger:
+            CSVLogger = _safe_import(
+                "lightning.pytorch.loggers.CSVLogger", pkg_name="lightning"
+            )
+            trainer_kwargs["logger"] = CSVLogger(
+                save_dir=tempfile.mkdtemp(prefix="sktime_lightning_logs_")
+            )
 
-        for inputs, outputs in dataloader:
-            y_pred = self.network(**inputs)
-            loss = self._criterion(y_pred, outputs)
-            self._optimizer.zero_grad()
-            loss.backward()
-            self._optimizer.step()
-            losses.append(loss.item())
+        trainer = pl.Trainer(
+            callbacks=self._lightning_callbacks,
+            **trainer_kwargs,
+        )
+        trainer.fit(self, train_dataloaders=dataloader)
 
-            # Compute metrics if any
-            if self._metrics_objects:
-                import torch
+        if trainer.checkpoint_callback is not None:
+            best_path = trainer.checkpoint_callback.best_model_path
+            if best_path:
+                checkpoint = _safe_import("torch.load")(best_path, weights_only=False)
+                state_dict = checkpoint["state_dict"]
+                network_state = {
+                    key.removeprefix("network."): value
+                    for key, value in state_dict.items()
+                    if key.startswith("network.")
+                }
+                self.network.load_state_dict(network_state)
 
-                with torch.no_grad():
-                    for metric_name, metric_obj in self._metrics_objects.items():
-                        metric_value = metric_obj(y_pred, outputs)
-                        metric_values[metric_name].append(metric_value.item())
+    def training_step(self, batch, batch_idx):
+        inputs, y = batch
+        y_pred = self.network(**inputs)
+        loss = self._criterion(y_pred, y)
+        self.log(
+            "train_loss",
+            loss,
+            on_step=False,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
-        epoch_loss = np.average(losses)
-        # step the schedulers, if any
-        if self._schedulers:
-            for scheduler in self._schedulers:
-                if isinstance(scheduler, ReduceLROnPlateau):
-                    # if ReduceLROnPlateau is used,
-                    # a metric value need to be passed here.
-                    # We pass the loss value of the last epoch.
-                    scheduler.step(epoch_loss)
-                else:
-                    scheduler.step()
+        if self._metrics_objects:
+            import torch
 
-        # print loss and metrics(if any) for the epoch, if verbose is True
-        if self.verbose:
-            msg = f"Epoch {epoch + 1}: Loss: {epoch_loss}"
-            if metric_values:
-                for metric_name, values in metric_values.items():
-                    avg_metric = np.average(values)
-                    msg += f", {metric_name}: {avg_metric:.4f}"
-            print(msg)
+            with torch.no_grad():
+                for metric_name, metric_obj in self._metrics_objects.items():
+                    metric_value = metric_obj(y_pred, y)
+                    self.log(
+                        f"train_{metric_name}",
+                        metric_value,
+                        on_step=False,
+                        on_epoch=True,
+                        prog_bar=True,
+                    )
+        return loss
+
+    def on_train_epoch_end(self):
+        if not self._schedulers:
+            return
+
+        epoch_loss = self.trainer.callback_metrics.get("train_loss")
+        if epoch_loss is not None:
+            epoch_loss = epoch_loss.item()
+
+        for scheduler in self._schedulers:
+            if isinstance(scheduler, ReduceLROnPlateau):
+                scheduler.step(epoch_loss)
+            else:
+                scheduler.step()
+
+    def configure_optimizers(self):
+        """Return the optimizer to use during training."""
+        return self._optimizer
 
     def _instantiate_activations(
         self, activations: dict[str, str | Callable | None]
@@ -492,33 +603,73 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             self._validated_criterion = self.criterion
             self._validated_activation = self.activation
 
-    def _instantiate_schedulers(self):
-        """Instantiate the schedulers to be used during training.
+    def _instantiate_lightning_callbacks(self):
+        """Instantiate Lightning callbacks from string names or instances.
 
-        Currently, only learning rate schedulers are supported as callbacks.
-        If more than one scheduler is passed, they are applied sequentially
-        in the order they are passed.
+        Returns
+        -------
+        list
+            Instantiated Lightning callbacks. Empty if none are configured.
+        """
+        if self._callbacks is None:
+            return []
+
+        _check_soft_dependencies("lightning", severity="error")
+
+        Callback = _safe_import(
+            "lightning.pytorch.callbacks.Callback", pkg_name="lightning"
+        )
+        callbacks_module = _safe_import(
+            "lightning.pytorch.callbacks", pkg_name="lightning"
+        )
+
+        lightning_callbacks = []
+        for callback in self._callbacks:
+            if isinstance(callback, str):
+                if callback.lower() in _LIGHTNING_CALLBACKS:
+                    callback_class_name = _LIGHTNING_CALLBACKS[callback.lower()]
+                    callback_class = getattr(callbacks_module, callback_class_name)
+                    lightning_callbacks.append(callback_class())
+                elif callback.lower() in (self._all_callbacks or {}):
+                    # LR scheduler strings are handled in _instantiate_schedulers
+                    continue
+                else:
+                    raise ValueError(
+                        f"Unknown callback: {callback}. Pass a PyTorch learning rate "
+                        f"scheduler name, a supported Lightning callback name "
+                        f"({', '.join(_LIGHTNING_CALLBACKS.values())}), or a "
+                        "``lightning.pytorch.callbacks.Callback`` instance."
+                    )
+            elif isinstance(callback, Callback):
+                lightning_callbacks.append(callback)
+            elif callable(callback):
+                # LR scheduler callables are handled in _instantiate_schedulers
+                continue
+            else:
+                raise TypeError(
+                    "Lightning callbacks must be passed as a supported string name or "
+                    f"an instance of lightning.pytorch.callbacks.Callback. "
+                    f"But got {type(callback)} instead."
+                )
+        return lightning_callbacks
+
+    def _instantiate_schedulers(self):
+        """Instantiate PyTorch learning rate schedulers for training.
+
+        Schedulers are stepped in ``on_train_epoch_end``.
 
         Note: Since PyTorch learning rate schedulers need to be initialized with
         the optimizer object, we only accept the class name (str) of the scheduler here
         and do not accept an instance of the scheduler. As that can lead to errors
         and unexpected behavior.
 
-        Sets
-        ------
-        self._schedulers : None or str or a tuple of str, each string
-            representing the name of a valid learning rate scheduler
-            implemented in PyTorch. For list of supported learning rate schedulers
-            see: https://docs.pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+        Returns
+        -------
+        list or None
             The list of instantiated schedulers to be used during training.
         """
-        if self.callbacks is None:
+        if self._callbacks is None:
             return None
-
-        if not isinstance(self.callbacks, tuple):
-            self._callbacks = (self.callbacks,)
-        else:
-            self._callbacks = self.callbacks
 
         if self._all_callbacks is None:
             self._all_callbacks = {
@@ -538,34 +689,30 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 "onecyclelr": "OneCycleLR",
                 "cosineannealingwarmrestarts": "CosineAnnealingWarmRestarts",
             }
+
         schedulers = []
+        Callback = _safe_import(
+            "lightning.pytorch.callbacks.Callback", pkg_name="lightning"
+        )
         for scheduler in self._callbacks:
             if isinstance(scheduler, str):
-                if scheduler.lower() in self._all_callbacks:
-                    scheduler_class = _safe_import(
-                        f"torch.optim.lr_scheduler.{self._all_callbacks[scheduler.lower()]}"  # noqa: E501
-                    )
-                    if self.callback_kwargs:
-                        schedulers.append(
-                            scheduler_class(self._optimizer, **self.callback_kwargs)
-                        )
-                    else:
-                        schedulers.append(scheduler_class(self._optimizer))
-                else:
+                if scheduler.lower() in _LIGHTNING_CALLBACKS:
+                    continue
+                if scheduler.lower() not in self._all_callbacks:
                     raise ValueError(
                         f"Unknown learning rate scheduler: {scheduler}. "
                         f"Please pass one/many of {', '.join(self._all_callbacks)} "
-                        "as a callback. Currently only learning rate schedulers are "
-                        "supported as callbacks."
+                        "as a callback."
                     )
-            else:
-                raise TypeError(
-                    "Callbacks can either be None, a str or a tuple of str representing"
-                    " a learning rate scheduler defined in PyTorch. "
-                    "As currently only learning rate schedulers are "
-                    f"supported as callbacks. But got {type(scheduler)} instead."
+                scheduler_class = _safe_import(
+                    f"torch.optim.lr_scheduler.{self._all_callbacks[scheduler.lower()]}"
                 )
-        return schedulers
+                schedulers.append(scheduler_class(self._optimizer))
+            elif callable(scheduler) and not (
+                Callback is not None and isinstance(scheduler, Callback)
+            ):
+                schedulers.append(scheduler(self._optimizer))
+        return schedulers or None
 
     def _instantiate_optimizer(self):
         # if no optimizer is passed, use Adam as default
