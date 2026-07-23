@@ -115,7 +115,7 @@ def test_constructor_requires_model_spec():
 
 def test_post_init_normalizes_spec_without_mutating_constructor_spec():
     """Runtime normalization creates an isolated fitted specification."""
-    config = {"layers": 2}
+    config = {"architecture": {"layers": 2}}
     spec = FoundationModelSpec(
         model_path="dummy",
         config=config,
@@ -124,12 +124,22 @@ def test_post_init_normalizes_spec_without_mutating_constructor_spec():
     )
 
     forecaster = _DummyFoundationForecaster(model_spec=spec)
+    config["architecture"]["layers"] = 3
 
     assert forecaster.model_spec is not spec
-    assert forecaster.model_spec.config == config
+    assert forecaster.model_spec.config == {"architecture": {"layers": 2}}
     assert forecaster.model_spec.config is not config
     assert forecaster.model_spec.random_state is not None
     assert spec.random_state == 42
+
+
+def test_post_init_normalizes_none_config_to_empty_dict():
+    """A missing model configuration becomes an empty runtime mapping."""
+    forecaster = _DummyFoundationForecaster(
+        FoundationModelSpec(model_path="dummy", config=None)
+    )
+
+    assert forecaster.model_spec.config == {}
 
 
 @pytest.mark.parametrize(
@@ -284,9 +294,6 @@ def test_model_cache_normalizes_config_objects(y):
 
         def to_dict(self):
             return {"hidden_size": self.hidden_size}
-
-        def copy(self):
-            return _Config(self.hidden_size)
 
     first = _DummyFoundationForecaster(
         FoundationModelSpec(model_path="dummy", config=_Config(32))
