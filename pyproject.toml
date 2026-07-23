@@ -165,7 +165,6 @@ dev = [
   "pytest-randomly",
   "pytest-timeout",
   "pytest-xdist",
-  "skpro",
   "wheel",
 ]
 
@@ -259,6 +258,9 @@ numpy1 = [
 ]
 pandas1 = [
   "pandas<2.0.0",
+]
+skpro = [
+  "skpro",
 ]
 compatibility_tests = [
   'catboost; python_version < "3.13"',
