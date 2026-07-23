@@ -8,12 +8,13 @@ from functools import partial
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
-transformers = _safe_import("transformers")
+Trainer = _safe_import("transformers.Trainer")
+TrainingArguments = _safe_import("transformers.TrainingArguments")
 LambdaLR = _safe_import("torch.optim.lr_scheduler.LambdaLR")
 get_scheduler = _safe_import("transformers.get_scheduler")
 
 
-class TimeMoeTrainer(transformers.Trainer):
+class TimeMoeTrainer(Trainer):
     """Trainer for Time-MoE with loss-mask signature support."""
 
     epsilon = 1e-8
@@ -75,7 +76,7 @@ class TimeMoeTrainer(transformers.Trainer):
 
 
 @dataclass
-class TimeMoETrainingArguments(transformers.TrainingArguments):
+class TimeMoETrainingArguments(TrainingArguments):
     """TrainingArguments with Time-MoE min learning rate."""
 
     min_learning_rate: float = field(
