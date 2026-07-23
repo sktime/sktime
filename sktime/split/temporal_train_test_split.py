@@ -69,7 +69,6 @@ def temporal_train_test_split(
         if ``not fh.is_relative``: the indices at the absolute index of ``fh``
     anchor : str, "start" (default) or "end"
         determines behaviour if train and test sizes do not sum up to all data
-        used only if ``fh=None`` and both ``test_size`` and ``train_size`` are not None
         if "start", cuts train and test set from start of available series
         if "end", cuts train and test set from end of available series
 
