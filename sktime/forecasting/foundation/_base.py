@@ -390,9 +390,10 @@ class BaseFoundationForecaster(BaseForecaster):
 
         Prediction-only options, random seeds, and dependency-check settings do
         not change loaded model state and are intentionally omitted. ``config`` is
-        included because it represents load-affecting model configuration. Leave
-        it as ``None`` when an adapter's public ``config`` controls prediction
-        only. Nested containers in the key are normalized by the cache.
+        included because it represents load-affecting model configuration. Omit
+        it when an adapter's public ``config`` controls prediction only; the
+        runtime value will then be an empty dictionary. Nested containers in the
+        key are normalized by the cache.
         """
         model_spec = self.model_spec
         key_items = {

@@ -25,12 +25,13 @@ class FoundationModelSpec:
     revision : str or None, default=None
         Model repository revision, branch, tag, or commit.
     config : Any or None, default=None
-        Load-affecting backend configuration. The base class makes a shallow
+        Load-affecting backend configuration. The base class makes a deep
         runtime copy by default and includes it in the model cache key. Adapters
-        using custom configuration objects may override ``_resolve_config``.
-        Leave this field as ``None`` when a similarly named public constructor
-        parameter contains prediction-only options; place those resolved options
-        in ``predict_extra_kwargs`` instead.
+        may override ``_resolve_config`` only for configuration objects that
+        cannot be deep-copied. Leave this field as ``None`` when a similarly named
+        public constructor parameter contains prediction-only options; place
+        those resolved options in ``predict_extra_kwargs`` instead. The base
+        resolver normalizes ``None`` to an empty runtime dictionary.
     device : Any or None, default=None
         Device or backend selector. The string ``"auto"`` invokes the base Torch
         CUDA/MPS/CPU resolution policy.
