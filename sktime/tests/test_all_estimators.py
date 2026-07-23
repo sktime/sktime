@@ -6,10 +6,14 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
+import io
 import numbers
 import os
+import re
+import sys
 import types
 from copy import deepcopy
+from importlib.util import find_spec
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
 
@@ -62,7 +66,6 @@ def subsample_by_version_os(x):
     Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
     """
     import platform
-    import sys
 
     ix = sys.version_info.minor % 3
     os_str = platform.system()
@@ -795,6 +798,56 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         from skbase.utils.doctest_run import run_doctest
 
         run_doctest(estimator_class, name=f"class {estimator_class.__name__}")
+
+    def test_run_specific_tests(self, estimator_class):
+        """Run pytest modules from ``tests:specific`` for the estimator.
+
+        ``tests:specific`` must be a list of importable module paths, e.g.,
+        ``["sktime.forecasting.tests.test_dummy_global"]``.
+        """
+        from skbase.utils.stderr_mute import StderrMute
+        from skbase.utils.stdout_mute import StdoutMute
+
+        modules = estimator_class.get_class_tag("tests:specific", None)
+        if modules is None:
+            pytest.skip(f"{estimator_class.__name__} does not define tests:specific")
+
+        msg = (
+            f"{estimator_class.__name__}.tests:specific must be a list of strings, "
+            f"found: {modules}"
+        )
+        assert isinstance(modules, list), msg
+        assert all(isinstance(module, str) for module in modules), msg
+        if len(modules) == 0:
+            return
+
+        module_pat = re.compile(r"^sktime(?:\.[a-z_][a-z0-9_]*)*$")
+        bad_modules = [module for module in modules if not module_pat.fullmatch(module)]
+        assert len(bad_modules) == 0, (
+            f"{estimator_class.__name__}.tests:specific contains invalid module paths: "
+            f"{bad_modules}"
+        )
+        missing_modules = [module for module in modules if find_spec(module) is None]
+        assert len(missing_modules) == 0, (
+            f"{estimator_class.__name__}.tests:specific contains missing modules: "
+            f"{missing_modules}"
+        )
+
+        modules_to_run = modules.copy()
+        if len(modules_to_run) == 0:
+            return
+
+        with StderrMute(), StdoutMute():
+            returncode = pytest.main(["--pyargs", *modules_to_run])
+
+        if returncode != pytest.ExitCode.OK:
+            err_msg = (
+                f"running specific tests failed for {estimator_class.__name__}, "
+                f"modules {modules_to_run}, return code {returncode}\n"
+                f"stdout:\n{stdout.getvalue().strip()}\n\n"
+                f"stderr:\n{stderr.getvalue().strip()}"
+            )
+            raise RuntimeError(err_msg)
 
     def test_create_test_instance(self, estimator_class):
         """Check create_test_instance logic and basic constructor functionality.
