@@ -143,6 +143,48 @@ def test_post_init_normalizes_none_config_to_empty_dict():
 
 
 @pytest.mark.parametrize(
+    "dtype_name",
+    [
+        "float16",
+        "float32",
+        "float64",
+        "bfloat16",
+        "int64",
+        "bool",
+        "complex64",
+        "half",
+        "double",
+        "long",
+    ],
+)
+def test_post_init_resolves_torch_dtype_strings(dtype_name):
+    """All valid Torch dtype names are resolved from their string form."""
+    torch = pytest.importorskip("torch")
+    forecaster = _DummyFoundationForecaster(
+        FoundationModelSpec(dtype=f"torch.{dtype_name}")
+    )
+
+    assert forecaster.model_spec.dtype is getattr(torch, dtype_name)
+
+
+@pytest.mark.parametrize("dtype", ["auto", None])
+def test_post_init_preserves_non_torch_dtype_values(dtype):
+    """Backend-specific and missing dtype values pass through unchanged."""
+    forecaster = _DummyFoundationForecaster(FoundationModelSpec(dtype=dtype))
+
+    assert forecaster.model_spec.dtype is dtype
+
+
+@pytest.mark.parametrize("dtype", ["torch.not_a_dtype", "torch.Tensor"])
+def test_post_init_rejects_invalid_torch_dtype_strings(dtype):
+    """Invalid or non-dtype Torch attributes produce a clear error."""
+    pytest.importorskip("torch")
+
+    with pytest.raises(ValueError, match="Unknown Torch dtype"):
+        _DummyFoundationForecaster(FoundationModelSpec(dtype=dtype))
+
+
+@pytest.mark.parametrize(
     "ignore_deps, expected", [(False, ["dummy-package"]), (True, [])]
 )
 def test_ignore_deps_updates_dependency_tag(ignore_deps, expected):
