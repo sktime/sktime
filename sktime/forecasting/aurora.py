@@ -8,17 +8,20 @@ import io
 
 import numpy as np
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    FoundationModelSpec,
+    ModelHandle,
+)
 from sktime.utils.dependencies import _safe_import
-from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 rearrange = _safe_import("einops.rearrange")
 
 
-class AuroraForecaster(BaseForecaster):
+class AuroraForecaster(BaseFoundationForecaster):
     """Zero-shot forecaster wrapping Aurora via the ``aurora-model`` package.
 
     Aurora is a multimodal time series foundation model supporting generative
@@ -161,176 +164,98 @@ class AuroraForecaster(BaseForecaster):
         self.max_text_length = max_text_length
         self.text = text
         self.vision = vision
-        self.model = None
-        super().__init__()
 
-    def __getstate__(self):
-        """Get state for pickling."""
-        state = self.__dict__.copy()
-        state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Set state for unpickling."""
-        self.__dict__.update(state)
-
-    def __post_init__(self):
-        """Post-initialization setup."""
-        self._device = _resolve_device(self.device)
-        self._context = None
-
-    def _get_unique_model_key(self):
-        key_items = {
-            "repo_id": self.repo_id,
-            "weights_filename": self.weights_filename,
-            "cache_dir": self.cache_dir,
-            "force_download": self.force_download,
-            "device": self._device,
-        }
-        return str(sorted(key_items.items()))
+        model_spec = FoundationModelSpec(
+            model_path=repo_id,
+            device="auto" if device is None else device,
+            load_extra_kwargs={
+                "weights_filename": weights_filename,
+                "cache_dir": cache_dir,
+                "force_download": force_download,
+            },
+            predict_extra_kwargs={
+                "context_length": context_length,
+                "inference_token_len": inference_token_len,
+                "num_samples": num_samples,
+                "max_text_length": max_text_length,
+                "text": text,
+            },
+        )
+        super().__init__(model_spec=model_spec)
 
     def _load_model(self):
-        return _CachedAurora(
-            key=self._get_unique_model_key(),
-            forecaster=self,
-        ).load_from_checkpoint()
+        """Load the Aurora checkpoint into a shared model handle."""
+        from aurora import load_model
 
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
+        model_spec = self.model_spec
+        with contextlib.redirect_stdout(io.StringIO()):
+            model = load_model(
+                repo_id=model_spec.model_path,
+                device=model_spec.device,
+                **model_spec.load_extra_kwargs,
+            )
+        return ModelHandle(model=model)
 
-        Loads the pretrained Aurora checkpoint and stores ``y`` as context
-        for zero-shot prediction.
-
-        Parameters
-        ----------
-        y : pd.Series or pd.DataFrame
-            Endogenous time series.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables. Ignored.
-        fh : ForecastingHorizon, optional (default=None)
-            Forecasting horizon.
-
-        Returns
-        -------
-        self
-        """
-        self.model = self._load_model()
-        self.model.eval()
-        self._context = _as_dataframe(y)
-        if self.context_length is not None and len(self._context) > self.context_length:
-            self._context = self._context.iloc[-self.context_length :]
-        return self
-
-    def _predict(self, fh, X=None):
-        if self.model is None:
-            self.model = self._load_model()
-            self.model.eval()
-
-        if fh is None:
-            fh = self.fh
-        fh_rel = fh.to_relative(self.cutoff)
-        pred_len = int(np.max(fh_rel.to_numpy()))
-
-        inputs, n_vars, columns = _prepare_context(
-            y=self._context,
-            device=self._device,
-        )
-        text_kwargs = _prepare_text_kwargs(
-            model=self.model,
-            text=self.text,
-            n_vars=n_vars,
-            max_text_length=self.max_text_length,
-            device=self._device,
-        )
-        vision_inputs = _prepare_vision_inputs(self.vision, self._device)
-
-        generate_kwargs = {
-            "inputs": inputs,
-            "max_output_length": pred_len,
-            "num_samples": self.num_samples,
-            "inference_token_len": self.inference_token_len,
-            **text_kwargs,
-        }
-        if vision_inputs is not None:
-            generate_kwargs["vision_inputs"] = vision_inputs
-
-        with torch.inference_mode():
-            output = self.model.generate(**generate_kwargs)
-
-        point = output.mean(dim=1).detach().cpu().numpy()
-        values = point[:, (fh_rel.to_numpy() - 1).astype(int)].T
-        index = fh.to_absolute(self._cutoff)._values
-        pred_df = pd.DataFrame(values, index=index, columns=self._get_varnames())
-        pred_df.index.names = self._context.index.names
-        return pred_df
-
-    def _predict_quantiles(self, fh, X, alpha):
-        if self.num_samples < 2:
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Generate Aurora sample paths and normalize their summaries."""
+        predict_kwargs = self.model_spec.predict_extra_kwargs
+        context_length = predict_kwargs["context_length"]
+        if context_length is not None and len(context_y) > context_length:
+            context_y = context_y.iloc[-context_length:]
+        if alpha is not None and predict_kwargs["num_samples"] < 2:
             raise ValueError(
                 "Error in AuroraForecaster: Quantile prediction requires"
-                f"num_samples >= 2; got num_samples={self.num_samples}."
+                "num_samples >= 2; got "
+                f"num_samples={predict_kwargs['num_samples']}."
             )
 
-        if self.model is None:
-            self.model = self._load_model()
-            self.model.eval()
-
-        if fh is None:
-            fh = self.fh
-        fh_rel = fh.to_relative(self.cutoff)
-        pred_len = int(np.max(fh_rel.to_numpy()))
-
-        inputs, n_vars, columns = _prepare_context(
-            y=self._context,
-            device=self._device,
+        inputs, n_vars, _ = _prepare_context(
+            y=context_y,
+            device=self.model_spec.device,
         )
         text_kwargs = _prepare_text_kwargs(
-            model=self.model,
-            text=self.text,
+            model=handle.model,
+            text=predict_kwargs["text"],
             n_vars=n_vars,
-            max_text_length=self.max_text_length,
-            device=self._device,
+            max_text_length=predict_kwargs["max_text_length"],
+            device=self.model_spec.device,
         )
-        vision_inputs = _prepare_vision_inputs(self.vision, self._device)
+        vision_inputs = _prepare_vision_inputs(
+            self.vision,
+            self.model_spec.device,
+        )
 
         generate_kwargs = {
             "inputs": inputs,
             "max_output_length": pred_len,
-            "num_samples": self.num_samples,
-            "inference_token_len": self.inference_token_len,
+            "num_samples": predict_kwargs["num_samples"],
+            "inference_token_len": predict_kwargs["inference_token_len"],
             **text_kwargs,
         }
         if vision_inputs is not None:
             generate_kwargs["vision_inputs"] = vision_inputs
 
-        with torch.inference_mode():
-            output = self.model.generate(**generate_kwargs)
-
+        output = handle.model.generate(**generate_kwargs)
         samples = output.detach().cpu().numpy()
-        rel_idx = (fh_rel.to_numpy() - 1).astype(int)
-        alpha = [float(a) for a in alpha]
-        index = fh.to_absolute(self._cutoff)._values
+        mean = samples.mean(axis=1).T
 
-        if n_vars == 1:
-            qvals = np.quantile(samples[0][:, rel_idx], alpha, axis=0).T
-            return pd.DataFrame(
-                qvals,
-                index=index,
-                columns=self._get_columns(method="predict_quantiles", alpha=alpha),
-            )
+        if alpha is None:
+            return ForecastResult(mean=mean)
 
-        varnames = self._get_varnames()
-        frames = []
-        for var_idx, col in enumerate(varnames):
-            qvals = np.quantile(samples[var_idx][:, rel_idx], alpha, axis=0).T
-            frames.append(
-                pd.DataFrame(
-                    qvals,
-                    index=index,
-                    columns=pd.MultiIndex.from_product([[col], alpha]),
-                )
-            )
-        return pd.concat(frames, axis=1)
+        quantiles = {
+            float(quantile): np.quantile(samples, quantile, axis=1).T
+            for quantile in alpha
+        }
+        return ForecastResult(mean=mean, quantiles=quantiles)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -341,48 +266,10 @@ class AuroraForecaster(BaseForecaster):
         ]
 
 
-@_multiton
-class _CachedAurora:
-    """Cached Aurora model; shared across forecaster instances with the same key."""
-
-    def __init__(self, key: str, forecaster: "AuroraForecaster"):
-        self.key = key
-        self.forecaster = forecaster
-        self.model = None
-
-    def load_from_checkpoint(self):
-        if self.model is not None:
-            return self.model
-
-        from aurora import load_model
-
-        f = self.forecaster
-        with contextlib.redirect_stdout(io.StringIO()):
-            self.model = load_model(
-                repo_id=f.repo_id,
-                weights_filename=f.weights_filename,
-                cache_dir=f.cache_dir,
-                force_download=f.force_download,
-                device=f._device,
-            )
-        return self.model
-
-
 def _as_dataframe(y):
     if isinstance(y, pd.Series):
         return y.to_frame()
     return y
-
-
-def _resolve_device(device):
-    if device is not None:
-        return device
-    if _check_soft_dependencies("torch", severity="none"):
-        if torch.cuda.is_available():
-            return "cuda"
-        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            return "mps"
-    return "cpu"
 
 
 def _prepare_context(y, device):
