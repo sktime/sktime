@@ -133,13 +133,15 @@ class ForecastingBenchmark(BaseBenchmark):
             FitFailedWarning is raised.
 
         strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
-            defines the ingestion mode when the forecaster is updated with new data
+            defines the ingestion mode when the forecaster is updated with new data.
 
-            * "refit" = forecaster is refitted to each training window
-            * "update" = forecaster is updated with training window data,
-              in sequence provided
-            * "no-update_params" = fit to first training window,
-              re-used without fit or update
+            * "refit" = forecaster is reset and refitted via ``fit`` on current
+              training window data to forecast the test window
+            * "update" = forecaster is updated via ``update`` on current
+              training window data to forecast the test window
+            * "no-update_params" = forecaster is forwarded via ``update``
+              with ``update_params=False`` up to the cutoff of the current
+              training window data
 
         cv_global_temporal:  SingleWindowSplitter, default=None
             ignored if cv_global is None. If passed, it splits the Panel temporally
