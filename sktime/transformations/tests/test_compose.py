@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests for transformer composition functionality attached to the base class."""
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "aminmiral"]
 __all__ = []
 
 import pandas as pd
@@ -12,15 +12,18 @@ from sklearn.preprocessing import StandardScaler
 from sktime.datasets import load_airline, load_unit_test
 from sktime.datatypes import get_examples
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.transformations.base import BaseTransformer
 from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.boxcox import LogTransformer
 from sktime.transformations.compose import (
     FeatureUnion,
+    GroupbyCategoryTransformer,
     InvertTransform,
     IxToX,
     OptionalPassthrough,
     TransformerPipeline,
 )
+from sktime.transformations.difference import Differencer
 from sktime.transformations.exponent import ExponentTransformer
 from sktime.transformations.impute import Imputer
 from sktime.transformations.padder import PaddingTransformer
@@ -438,3 +441,107 @@ def test_ixtox():
 
     ixtox = IxToX(level=-1)
     assert ixtox.fit_transform(X).columns.tolist() == ["level_2"]
+
+
+class _MeanCategorizer(BaseTransformer):
+    """Test-only transformer: category = str(round(mean)) of each instance.
+
+    Used in place of ADICVTransformer to give tests full, deterministic
+    control over which category each panel instance is assigned to.
+    """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        "scitype:transform-output": "Primitives",
+        "scitype:instancewise": False,
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "None",
+        "fit_is_empty": True,
+        "capability:missing_values": True,
+    }
+
+    def _transform(self, X, y=None):
+        category = str(round(X.mean().mean()))
+        return pd.DataFrame({"category": [category]})
+
+
+def _make_category_panel(instance_means, n_timepoints=3):
+    """Build a panel where each instance is a constant series at instance_means[i]."""
+    frames = []
+    for i, mean in enumerate(instance_means):
+        idx = pd.MultiIndex.from_product(
+            [[f"inst_{i}"], range(n_timepoints)], names=["instance", "time"]
+        )
+        frames.append(pd.DataFrame({"c0": [float(mean)] * n_timepoints}, index=idx))
+    return pd.concat(frames)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_groupby_category_transformer_fit_transform():
+    """Test that each category gets its own fitted transformer, incl. fallback."""
+    X = _make_category_panel([1.0, 1.0, 100.0, 100.0, 500.0])
+
+    t = GroupbyCategoryTransformer(
+        transformers={"1": Differencer(), "100": ExponentTransformer(power=2)},
+        categorizer=_MeanCategorizer(),
+        fallback_transformer=Differencer(),
+    )
+    t.fit(X)
+
+    assert set(t.transformers_.keys()) == {"1", "100", "500"}
+    assert isinstance(t.transformers_["1"], Differencer)
+    assert isinstance(t.transformers_["100"], ExponentTransformer)
+    assert isinstance(t.transformers_["500"], Differencer)  # fallback was used
+
+    Xt = t.transform(X)
+    assert Xt.index.equals(X.index)
+
+    # category "100" was routed through ExponentTransformer(power=2)
+    high_rows = Xt.loc[["inst_2", "inst_3"]]
+    assert (high_rows["c0"] == 100.0**2).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_groupby_category_transformer_transform_new_data():
+    """Test transform re-categorizes the passed X, instead of replaying fit groups.
+
+    Regression test: transform must call the fitted categorizer on the data it
+    is actually given, not reuse the instance grouping computed during fit.
+    Otherwise, transforming a subset of the fitted instances silently produces
+    a wrong or malformed result instead of matching the input exactly.
+    """
+    X = _make_category_panel([1.0, 1.0, 100.0, 100.0])
+
+    t = GroupbyCategoryTransformer(
+        transformers={"1": Differencer(), "100": ExponentTransformer(power=2)},
+        categorizer=_MeanCategorizer(),
+    )
+    t.fit(X)
+
+    X_new = X.loc[["inst_2", "inst_3"]]
+    Xt_new = t.transform(X_new)
+
+    assert Xt_new.index.equals(X_new.index)
+    assert (Xt_new["c0"] == 100.0**2).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_groupby_category_transformer_unknown_category_raises():
+    """Test that a category with no transformer and no fallback raises."""
+    X = _make_category_panel([1.0, 500.0])
+
+    t = GroupbyCategoryTransformer(
+        transformers={"1": Differencer()},
+        categorizer=_MeanCategorizer(),
+    )
+    with pytest.raises(ValueError, match="500"):
+        t.fit(X)
