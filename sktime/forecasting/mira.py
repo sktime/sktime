@@ -5,16 +5,20 @@ __all__ = ["MIRAForecaster"]
 
 import numpy as np
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import ForecastingHorizon
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    FoundationModelSpec,
+    ModelHandle,
+)
 from sktime.utils.dependencies import _safe_import
-from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 
 
-class MIRAForecaster(BaseForecaster):
+class MIRAForecaster(BaseFoundationForecaster):
     """Zero-shot forecaster wrapping Microsoft MIRA via vendored ``sktime.libs.mira``.
 
     MIRA is a foundation model for medical time series, supporting zero-shot
@@ -110,78 +114,53 @@ class MIRAForecaster(BaseForecaster):
         self.context_length = context_length
         self.time_alpha = time_alpha
         self.time_snap_step = time_snap_step
-        self.model = None
-        super().__init__()
 
-    def __getstate__(self):
-        """Get state for pickling."""
-        state = self.__dict__.copy()
-        state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Set state for unpickling."""
-        self.__dict__.update(state)
-
-    def __post_init__(self):
-        """Post-initialization setup."""
-        self._config = {} if self.config is None else self.config.copy()
-        self._device = _resolve_device()
-
-    def _get_unique_model_key(self):
-        key_items = {
-            "model_path": self.model_path,
-            "revision": self.revision,
-            "device": self._device,
-            **self._config,
-        }
-        return str(sorted(key_items.items()))
+        model_spec = FoundationModelSpec(
+            model_path=model_path,
+            revision=revision,
+            config=config,
+            device="auto",
+            predict_extra_kwargs={
+                "context_length": context_length,
+                "time_alpha": time_alpha,
+                "time_snap_step": time_snap_step,
+            },
+        )
+        super().__init__(model_spec=model_spec)
 
     def _load_model(self):
-        return _CachedMIRA(
-            key=self._get_unique_model_key(),
-            forecaster=self,
-        ).load_from_checkpoint()
+        """Load MIRA from the vendored implementation into a shared handle."""
+        from sktime.libs.mira import MIRAForPrediction
 
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
+        model_spec = self.model_spec
+        load_kwargs = {"revision": model_spec.revision}
+        load_kwargs.update(model_spec.config)
+        model = MIRAForPrediction.from_pretrained(
+            model_spec.model_path,
+            **load_kwargs,
+        )
+        return ModelHandle(model=model.to(model_spec.device))
 
-        Loads the pretrained MIRA checkpoint and stores ``y`` as context
-        for zero-shot prediction.
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            Endogenous time series (univariate, one column).
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables. Ignored.
-        fh : ForecastingHorizon, optional (default=None)
-            Forecasting horizon.
-
-        Returns
-        -------
-        self
-        """
-        self.model = self._load_model()
-        self.model.eval()
-        return self
-
-    def _predict(self, fh, X=None):
-        if self.model is None:
-            self.model = self._load_model()
-            self.model.eval()
-
-        if fh is None:
-            fh = self.fh
-        fh_rel = fh.to_relative(self.cutoff)
-        pred_len = int(np.max(fh_rel.to_numpy()))
-
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Run MIRA's normalized autoregressive rollout."""
+        predict_kwargs = self.model_spec.predict_extra_kwargs
         values, times = _prepare_context(
-            y=self._y,
+            y=context_y,
             pred_len=pred_len,
             cutoff=self.cutoff,
-            context_length=self.context_length,
+            context_length=predict_kwargs["context_length"],
         )
+        values = values.to(self.model_spec.device)
+        times = times.to(self.model_spec.device)
         context_len = values.shape[1]
 
         from sktime.libs.mira.mira_inference import mira_predict_autoregressive_norm
@@ -192,15 +171,15 @@ class MIRAForecaster(BaseForecaster):
             time_values=times,
             attention_mask=torch.ones_like(times),
             seq_length=times.shape[1],
-            alpha=self.time_alpha,
-            snap_step=self.time_snap_step,
+            alpha=predict_kwargs["time_alpha"],
+            snap_step=predict_kwargs["time_snap_step"],
         )
 
         mean = values.mean(dim=1, keepdim=True)
         std = values.std(dim=1, keepdim=True) + 1e-6
 
         preds = mira_predict_autoregressive_norm(
-            self.model,
+            handle.model,
             values,
             times,
             context_len,
@@ -212,17 +191,7 @@ class MIRAForecaster(BaseForecaster):
         values_out = preds.detach().cpu().numpy()
         if values_out.ndim == 1:
             values_out = values_out[:, np.newaxis]
-
-        pred_len_out = values_out.shape[0]
-        index = (
-            ForecastingHorizon(range(1, pred_len_out + 1))
-            .to_absolute(self._cutoff)
-            ._values
-        )
-        pred_df = pd.DataFrame(values_out, index=index, columns=self._y.columns)
-        pred_df.index.names = self._y.index.names
-        pred_out = fh_rel.get_expected_pred_idx(self._y, cutoff=self.cutoff)
-        return pred_df.loc[pred_df.index.isin(pred_out)]
+        return ForecastResult(mean=values_out)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -244,37 +213,6 @@ class MIRAForecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         return [{}, {"time_alpha": 0.5}]
-
-
-@_multiton
-class _CachedMIRA:
-    """Cached MIRA model; shared across forecaster instances with the same key."""
-
-    def __init__(self, key: str, forecaster: "MIRAForecaster"):
-        self.key = key
-        self.forecaster = forecaster
-        self.model = None
-
-    def load_from_checkpoint(self):
-        if self.model is not None:
-            return self.model
-
-        from sktime.libs.mira import MIRAForPrediction
-
-        f = self.forecaster
-        kwargs = {"revision": f.revision}
-        kwargs.update(f._config)
-        self.model = MIRAForPrediction.from_pretrained(f.model_path, **kwargs)
-        return self.model.to(f._device)
-
-
-def _resolve_device():
-    if _check_soft_dependencies("torch", severity="none"):
-        if torch.cuda.is_available():
-            return "cuda"
-        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            return "mps"
-    return "cpu"
 
 
 def _index_as_float(index) -> np.ndarray:
