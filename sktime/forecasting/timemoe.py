@@ -510,8 +510,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         params : dict
             Dictionary of test parameters.
         """
-        import torch
-
         tiny_config = {
             "hidden_size": 16,
             "intermediate_size": 32,
@@ -524,7 +522,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "max_position_embeddings": 32,
             "use_dense": False,
             "apply_aux_loss": True,
-            "torch_dtype": torch.float32,
             "device_map": "cpu",
         }
         training_args = {
