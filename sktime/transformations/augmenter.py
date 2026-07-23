@@ -52,11 +52,11 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     Parameters
     ----------
     scale: float, scale parameter (default=1.0)
-            Specifies the standard deviation.
+        Specifies the standard deviation.
     random_state: None or int or ``np.random.RandomState`` instance, optional
-            "If int or RandomState, use it for drawing the random variates.
-            If None, rely on ``self.random_state``.
-            Default is None." [3]
+        "If int or RandomState, use it for drawing the random variates.
+        If None, rely on ``self.random_state``.
+        Default is None." [3]
 
     Examples
     --------
