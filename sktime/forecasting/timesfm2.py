@@ -75,6 +75,9 @@ class TimesFM2Forecaster(BaseForecaster):
         If provided as ``dict``, the architecture entry (for example
         ``"TimesFmModelForPrediction"`` or ``"TimesFm2_5ModelForPrediction"``)
         is used to infer the config class.
+        See the TimesFM-2.5 config documentation for more details.
+        https://huggingface.co/docs/transformers/v5.14.0/en/model_doc/timesfm2_5#transformers.TimesFm2_5Config
+
     device_map : str, dict, int, or torch.device, default="cpu"
         Device placement following the ``transformers`` ``device_map`` naming
         convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
@@ -97,6 +100,7 @@ class TimesFM2Forecaster(BaseForecaster):
         ``peft.get_peft_model``. Applied only when ``model_path`` is not
         ``None``; ignored for config-only initialization with
         ``model_path=None``.
+        https://huggingface.co/docs/peft/en/package_reference/config#peft.PeftConfig
     validation_split : float or None, default=0.2
         Fraction of data reserved for evaluation when :meth:`pretrain` is used.
         If ``None``, no evaluation dataset is created.

@@ -174,6 +174,7 @@ class LagLlamaForecaster(BaseForecaster):
     trainer_kwargs : dict, optional (default=None)
         Arguments passed to PyTorch Lightning Trainer during pretrain()
         (e.g., ``{"max_epochs": 10}``). If None, defaults to ``{"max_epochs": 50}``.
+        https://lightning.ai/docs/pytorch/stable/common/trainer.html#init
     lr : float, optional (default=5e-4)
         Learning rate for fine-tuning during pretrain().
     aug_prob : float, optional (default=0.0)

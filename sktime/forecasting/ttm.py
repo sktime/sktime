@@ -167,11 +167,160 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         Configuration to use for the model. See the ``transformers``
         documentation for details. The provided configuration must be valid for
         the selected TinyTimeMixer model architecture.
+        Configuration inherits from `transformers.PretrainedConfig` and can
+        be used to control the model outputs.
+
+        context_length (`int`, *optional*, defaults to 64)
+            The context/history length for the input sequence.
+        patch_length (`int`, *optional*, defaults to 8)
+            The patch length for the input sequence.
+        num_input_channels (`int`):
+            Number of input variates. For Univariate, set it to 1.
+        patch_stride (`int`, *optional*, defaults to 8):
+            Amount of points to stride. If its value is same as
+            patch_length, we get non-overlapping patches.
+        d_model (`int`, *optional*, defaults to 16):
+            Hidden feature size of the model.
+        prediction_length (`int`, *optional*, defaults to 16)
+            Number of time steps to forecast for a forecasting task. Also
+            known as the Forecast Horizon.
+        num_parallel_samples (`int`, *optional*, defaults to 100):
+            The number of samples to generate in parallel for probabilistic
+            forecast.
+        expansion_factor (`int`, *optional*, defaults to 2):
+            Expansion factor to use inside MLP. Recommended range is 2-5.
+            Larger value indicates more complex model.
+        num_layers (`int`, *optional*, defaults to 3):
+            Number of layers to use. Recommended range is 3-15. Larger value
+            indicates more complex model.
+        dropout (`float`, *optional*, defaults to 0.2):
+            The dropout probability the `TinyTimeMixer` backbone.
+            Recommended range is 0.2-0.7
+        mode (`str`, *optional*, defaults to `"common_channel"`):
+            Mixer Mode. Determines how to process the channels. Allowed
+            values: "common_channel", "mix_channel". In "common_channel"
+            mode, we follow Channel-independent modelling with no explicit
+            channel-mixing. Channel mixing happens in an implicit manner via
+            shared weights across channels. (preferred first approach) In
+            "mix_channel" mode, we follow explicit channel-mixing in
+            addition to patch and feature mixer. (preferred approach when
+            channel correlations are very important to model)
+        gated_attn (`bool`, *optional*, defaults to `True`):
+            Enable Gated Attention.
+        norm_mlp (`str`, *optional*, defaults to `"LayerNorm"`):
+            Normalization layer (BatchNorm or LayerNorm).
+        self_attn (`bool`, *optional*, defaults to `False`):
+            Enable Tiny self attention across patches. This can be enabled
+            when the output of Vanilla TinyTimeMixer with gated attention is
+            not satisfactory. Enabling this leads to explicit pair-wise
+            attention and modelling across patches.
+        self_attn_heads (`int`, *optional*, defaults to 1):
+            Number of self-attention heads. Works only when `self_attn` is
+            set to `True`.
+        use_positional_encoding (`bool`, *optional*, defaults to `False`):
+            Enable the use of positional embedding for the tiny
+            self-attention layers. Works only when `self_attn` is set to
+            `True`.
+        positional_encoding_type (`str`, *optional*, defaults to `"sincos"`):
+            Positional encodings. Options `"random"` and `"sincos"` are
+            supported. Works only when `use_positional_encoding` is set to
+            `True`
+        scaling (`string` or `bool`, *optional*, defaults to `"std"`):
+            Whether to scale the input targets via "mean" scaler, "std"
+            scaler or no scaler if `None`. If `True`, the scaler is set to
+            "mean".
+        loss (`string`, *optional*, defaults to `"mse"`):
+            The loss function to finetune or pretrain the the model. Allowed
+            values are "mse" or "mae" or "pinball" or "huber". Use pinball
+            loss for probabilistic forecasts of different quantiles.
+            Distribution head (nll) is currently disabled and not allowed.
+        init_std (`float`, *optional*, defaults to 0.02):
+            The standard deviation of the truncated normal weight
+            initialization distribution.
+        post_init (`bool`, *optional*, defaults to `False`):
+            Whether to use custom weight initialization from `transformers`
+            library, or the default initialization in `PyTorch`. Setting it
+            to `False` performs `PyTorch` weight initialization.
+        norm_eps (`float`, *optional*, defaults to 1e-05):
+            A value added to the denominator for numerical stability of
+            normalization.
+        adaptive_patching_levels (`int`, *optional*, defaults to 0):
+            If adaptive_patching_levels is i, then we will have i levels
+            with each level having n_layers. Level id starts with 0.
+            num_patches at level i will be multipled by (2^i) and
+            num_features at level i will be divided by (2^i). For Ex. if
+            adaptive_patching_levels is 3 - then we will have 3 levels:
+                level 2: num_features//(2^2), num_patches*(2^2)
+                level 1: num_features//(2^1), num_patches*(2^1)
+                level 0: num_features//(2^0), num_patches*(2^0)
+            adaptive_patching_levels = 1 is same as one level PatchTSMixer.
+            This module gets disabled when adaptive_patching_levels is 0 or
+            neg value. Defaults to 0 (off mode).
+        resolution_prefix_tuning (`bool`, *optional*, defaults to `False`):
+            Enable if your dataloader has time resolution information as
+            defined in `get_freq_mapping` function in
+            `modelling_tinytimemixer`.
+        frequency_token_vocab_size (`int`, *optional*, defaults to 5):
+            Vocab size to use when resolution_prefix_tuning is enabled.
+        head_dropout (`float`, *optional*, defaults to 0.2):
+            The dropout probability the `TinyTimeMixer` head.
+        distribution_output (`string`, *optional*, defaults to `"student_t"`):
+            The distribution emission head for the model when loss is "nll".
+            Could be either "student_t", "normal" or "negative_binomial".
+        prediction_channel_indices (`list`, *optional*):
+            List of channel indices to forecast. If None, forecast all
+            channels. Target data is expected to have all channels and we
+            explicitly filter the channels in prediction and target before
+            loss computation. Please provide the indices in sorted ascending
+            order.
+        exogenous_channel_indices (`list`, *optional*):
+            List of channel indices whose values are known in the forecast
+            period. Please provide the indices in sorted ascending order.
+        decoder_num_layers (`int`, *optional*, defaults to 8):
+            Number of layers to use in decoder
+        decoder_d_model(`int`, *optional*, defaults to 16):
+            Defines the hidden feature size of the decoder.
+        decoder_adaptive_patching_levels (`int`, *optional*, defaults to 0):
+            Adaptive Patching levels for decoder. Preferable to set it to 0
+            for decoder to keep it light weight.
+        decoder_raw_residual (`bool`, *optional*, defaults to `False`):
+            Flag to enable merging of raw embedding with encoder embedding
+            for decoder input. Defaults to False.
+        decoder_mode (`string`, *optional*, defaults to `"common_channel"`):
+            Decoder channel mode. Use `"common_channel" for
+            channel-independent modelling and `"mix_channel"` for
+            channel-mixing modelling
+        use_decoder (`bool`, *optional*, defaults to `True`):
+            Enable to use decoder.
+        enable_forecast_channel_mixing (`bool`, *optional*, defaults to `False`):
+            Enable if we want to reconcile forecasts across all channels and
+            also to enable exogenous infusion, if you have them.
+        fcm_gated_attn (`bool`, *optional*, defaults to `True`):
+            Enable gated attention in forecast channel mixing block.
+        fcm_context_length (`int`, *optional*, defaults to `1):
+            Surrounding context length to use. For Ex. If we want to
+            consider 2 lag point before and after a data point, provide
+            value 2 for `fcm_context_length`
+        fcm_use_mixer (`bool`, *optional*, defaults to `True`):
+            Enable Mixing in forecast channel mixing block.
+        fcm_mix_layers (`int`, *optional*, defaults to 2):
+            Number of mixer layers to use if fcm_use_mixer is enabled
+        fcm_prepend_past (`bool`, *optional*, defaults to `True`):
+            Prepend last context for forecast reconciliation
+        fcm_prepend_past_offset  (`int`, *optional*, defaults to None):
+        categorical_vocab_size_list (`list`, *optional*):
+            List of vocab size for all the tokenized categorical variables
+            to use. Pass it in the same order as used in the foreward call
+            param `static_categorical_values`.
+        prediction_filter_length (`int`,*optional*, defaults to None):
+            Actual length in the prediction output to use for loss
+            calculations.
 
     training_args : dict or None, default={}
         Training arguments to use for the model. See ``transformers.TrainingArguments``
         for details.
         Note that the ``output_dir`` argument is required.
+        https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
 
     compute_metrics : list, default=[]
         List of metrics to compute during training. See ``transformers.Trainer``

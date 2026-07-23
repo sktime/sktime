@@ -58,9 +58,11 @@ class HFTransformersForecaster(BaseForecaster):
     config : dict, default={}
         Configuration to use for the model. See the `transformers`
         documentation for details.
+        https://huggingface.co/docs/transformers/en/main_classes/configuration
     training_args : dict, default={}
         Training arguments to use for the model. See `transformers.TrainingArguments`
         for details.
+        https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
         Note that the `output_dir` argument is required.
     compute_metrics : list, default=None
         List of metrics to compute during training. See `transformers.Trainer`
@@ -74,6 +76,7 @@ class HFTransformersForecaster(BaseForecaster):
         When `fit_strategy` is set to "peft",
         this will be used to set up PEFT parameters for the model.
         See the `peft` documentation for details.
+        https://huggingface.co/docs/peft/en/package_reference/config#peft.PeftConfig
 
     Examples
     --------
