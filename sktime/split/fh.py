@@ -62,7 +62,7 @@ class ForecastingHorizonSplitter(BaseSplitter):
             min_step, max_step = idx.min(), idx.max()
             steps = fh.to_indexer()
 
-            last_train_ix_minus_one = len(y) - max_step - 1
+            last_train_ix_minus_one = len(y) - max_step
             first_test_ix = last_train_ix_minus_one + min(0, min_step - 1)
 
             train_ix = np.arange(last_train_ix_minus_one)
