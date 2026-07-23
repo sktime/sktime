@@ -6,6 +6,7 @@ backend and translating between pandas data and :class:`ForecastResult`.
 """
 
 from contextlib import contextmanager
+from copy import deepcopy
 from dataclasses import replace
 
 import numpy as np
@@ -346,15 +347,17 @@ class BaseFoundationForecaster(BaseForecaster):
         )
 
     def _resolve_config(self, config):
-        """Return an isolated shallow copy of model configuration.
+        """Return an isolated deep copy of model configuration.
 
-        Override this hook when a backend uses a configuration object that does
-        not implement ``copy`` or requires a deep copy.
+        ``None`` is normalized to an empty dictionary so loading hooks can safely
+        treat a missing config as a mapping. Deep copying supports both ordinary
+        dictionaries and ``transformers.PretrainedConfig``-style objects without
+        requiring child adapters to override this method.
         """
         if config is None:
-            return None
+            return {}
 
-        return config.copy()
+        return deepcopy(config)
 
     def _resolve_dtype(self, dtype):
         """Resolve supported serialized dtype names to backend dtype objects."""
