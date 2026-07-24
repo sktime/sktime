@@ -12,11 +12,11 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
@@ -282,7 +282,16 @@ def _evaluate_window(x, meta):
                 temp_result[result_key] = [score]
 
         # get cutoff
-        cutoff = forecaster.cutoff
+        if global_mode:
+            # in global mode, cutoff should reflect y_hist (per-fold history),
+            # not the global y_train which may span more timepoints
+            if isinstance(y_hist.index, pd.MultiIndex):
+                last_time = y_hist.index.get_level_values(-1).max()
+            else:
+                last_time = y_hist.index[-1]
+            cutoff = pd.Index([last_time])
+        else:
+            cutoff = forecaster.cutoff
 
     except Exception as e:
         if error_score == "raise":
@@ -441,7 +450,7 @@ def evaluate(
     1. Initialize the counter to ``i = 1``
     2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
        with ``fh`` set to the absolute indices of :math:`y_{test, 1}`.
-    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogenous
         data :math:`X_{test, i}`. Predictions are made using either ``predict``,
         ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
     4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, i}`
@@ -476,7 +485,7 @@ def evaluate(
     1. Initialize the counter to ``i = 1``
     2. Fit the ``forecaster`` to :math:`y_{train, i}`, :math:`X_{train, 1i`,
        with ``fh`` set to the absolute indices of :math:`y_{true, i}`.
-    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogenous
         data :math:`X_{true, i}` and the historical values :math:`y{hist, i}`.
         Predictions are made using either ``predict``,
         ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
@@ -518,8 +527,8 @@ def evaluate(
         * "refit" = forecaster is refitted to each training window
         * "update" = forecaster is updated with training window data,
           in sequence provided
-        * "no-update_params" = fit to first training window,
-          re-used without fit or update
+        * "no-update_params" = forecaster is updated via ``update``, with
+          ``update_params=False``, to the cutoff of each new training window
 
     scoring : subclass of sktime.performance_metrics.BaseMetric or list of same,
         default=None. Used to get a score function that takes y_pred and y_test

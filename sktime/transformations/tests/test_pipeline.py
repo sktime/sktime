@@ -9,8 +9,8 @@ from sklearn.tree import DecisionTreeClassifier
 
 from sktime.datasets import load_gunpoint
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.panel.segment import RandomIntervalSegmenter
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+from sktime.transformations.adapt import TabularToSeriesAdaptor
+from sktime.transformations.segment import RandomIntervalSegmenter
 from sktime.utils._testing.panel import make_classification_problem
 
 mean_transformer = TabularToSeriesAdaptor(

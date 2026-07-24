@@ -91,11 +91,11 @@ class ForecastingBenchmark(BaseBenchmark):
 
         Parameters
         ----------
-        data : Union[Callable, tuple]
+        dataset_loader : Union[Callable, tuple]
             Can be
 
             - a function which returns a dataset, like from `sktime.datasets`.
-            - a tuple containing two data container that are sktime comptaible.
+            - a tuple containing two data containers that are sktime compatible.
             - single data container that is sktime compatible (only endogenous data).
 
         cv_splitter : BaseSplitter object
@@ -138,8 +138,8 @@ class ForecastingBenchmark(BaseBenchmark):
             * "refit" = forecaster is refitted to each training window
             * "update" = forecaster is updated with training window data,
               in sequence provided
-            * "no-update_params" = fit to first training window,
-              re-used without fit or update
+            * "no-update_params" = forecaster is updated via ``update``, with
+              ``update_params=False``, to the cutoff of each new training window
 
         cv_global_temporal:  SingleWindowSplitter, default=None
             ignored if cv_global is None. If passed, it splits the Panel temporally

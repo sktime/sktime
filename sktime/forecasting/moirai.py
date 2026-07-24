@@ -1,0 +1,839 @@
+"""Adapter for using MOIRAI Forecasters."""
+
+from unittest.mock import patch
+
+import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
+
+from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+
+__author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
+# gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
+
+
+class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+    """MOIRAI Forecasters.
+
+    Parameters
+    ----------
+    checkpoint_path : str, default=None
+        Path to the checkpoint of the model.
+        Supported weights are available at [1]_.
+    context_length : int, default=200
+        Length of the context window, time points the model will take as input
+        for inference.
+    patch_size : int, default=32
+        Time steps to perform patching with.
+    num_samples : int, default=100
+        Number of samples to draw.
+    map_location : str, default=None
+        Hardware to use for the model.
+    target_dim : int, default=2
+        Dimension of the target.
+    deterministic : bool, default=False
+        Whether to use a deterministic model.
+    batch_size : int, default=32
+        Number of samples in each batch of inference.
+    broadcasting : bool, default=False
+        if True, multiindex data input will be broadcasted to single series.
+        For each single series, one copy of this forecaster will try to
+        fit and predict on it. The broadcasting is happening inside automatically,
+        from the outerside api perspective, the input and output are the same,
+        only one multiindex output from ``predict``
+        use_source_package : bool, default=False
+        If True, the model and configuration will be loaded directly from the source
+        package ``uni2ts.models.moirai``. This is useful if you
+        want to bypass the local version of the package or when working in an
+        environment where the latest updates from the source package are needed.
+        If False, the model and configuration will be loaded from the local
+        version of package maintained in sktime.
+        To install the source package, follow the instructions here [2]_.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.moirai import MOIRAIForecaster
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> morai_forecaster = MOIRAIForecaster(  # doctest: +SKIP
+    ...     checkpoint_path="sktime/moirai-1.0-R-small"
+    ... )
+    >>> y = np.random.normal(0, 1, (30, 2))  # doctest: +SKIP
+    >>> X = y * 2 + np.random.normal(0, 1, (30,1))  # doctest: +SKIP
+    >>> index = pd.date_range("2020-01-01", periods=30, freq="D")  # doctest: +SKIP
+    >>> y = pd.DataFrame(y, index=index)  # doctest: +SKIP
+    >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)  # doctest: +SKIP
+    >>> morai_forecaster.fit(y, X=X)  # doctest: +SKIP
+    MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
+    >>> X_test = pd.DataFrame(
+    ...     np.random.normal(0, 1, (10, 2)),
+    ...     columns=["x1", "x2"],
+    ...     index=pd.date_range("2020-01-31", periods=10, freq="D"),
+    ... )
+    >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)  # doctest: +SKIP
+
+    References
+    ----------
+    .. [1] https://huggingface.co/collections/sktime/moirai-variations-66ba3bc9f1dfeeafaed3b974
+    .. [2] https://pypi.org/project/uni2ts/1.1.0/
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
+        # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
+        "maintainers": ["pranavvp16"],
+        "python_version": "<3.14",
+        "python_dependencies": [
+            "gluonts",
+            "torch",
+            "einops",
+            "huggingface_hub",
+            "hf-xet",
+            "lightning",
+            "hydra-core",
+            "safetensors",
+        ],
+        # estimator type
+        # --------------
+        "capability:exogenous": True,
+        "requires-fh-in-fit": False,
+        "X-y-must-have-same-index": True,
+        "enforce_index_type": None,
+        "capability:missing_values": False,
+        "capability:pred_int": False,
+        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+        "y_inner_mtype": [
+            "pd.Series",
+            "pd.DataFrame",
+            "pd-multiindex",
+            "pd_multiindex_hier",
+        ],
+        "capability:insample": False,
+        "capability:pred_int:insample": False,
+        "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "property:randomness": "stochastic",
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.libs.uni2ts"],
+    }
+
+    def __init__(
+        self,
+        checkpoint_path: str,
+        context_length=200,
+        patch_size=32,
+        num_samples=100,
+        num_feat_dynamic_real=None,
+        num_past_feat_dynamic_real=None,
+        map_location=None,
+        target_dim=2,
+        broadcasting=False,
+        deterministic=False,
+        batch_size=32,
+        use_source_package=False,
+    ):
+        self.checkpoint_path = checkpoint_path
+        self.context_length = context_length
+        self.patch_size = patch_size
+        self.num_samples = num_samples
+        self.num_feat_dynamic_real = num_feat_dynamic_real
+        self.num_past_feat_dynamic_real = num_past_feat_dynamic_real
+        self.map_location = map_location
+        self.target_dim = target_dim
+        self.broadcasting = broadcasting
+        self.deterministic = deterministic
+        self.batch_size = batch_size
+        self.use_source_package = use_source_package
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.DataFrame",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
+
+    def __getstate__(self):
+        """Return state for pickling, excluding the unpickleable torch model."""
+        state = self.__dict__.copy()
+        if "model" in state:
+            state["model"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from unpickled state dictionary."""
+        self.__dict__.update(state)
+
+    # Apply a patch for redirecting imports to sktime.libs.uni2ts
+    if _check_soft_dependencies(["lightning", "huggingface_hub"], severity="none"):
+        import sktime
+        from sktime.libs.uni2ts.forecast import MoiraiForecast
+
+        @patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts})
+        def _instantiate_patched_model(self, model_kwargs):
+            """Instantiate the model from the vendor package."""
+            import torch
+
+            from sktime.libs.uni2ts.distribution.log_normal import LogNormalOutput
+            from sktime.libs.uni2ts.distribution.mixture import MixtureOutput
+            from sktime.libs.uni2ts.distribution.negative_binomial import (
+                NegativeBinomialOutput,
+            )
+            from sktime.libs.uni2ts.distribution.normal import (
+                NormalFixedScaleOutput,
+                NormalOutput,
+            )
+            from sktime.libs.uni2ts.distribution.student_t import StudentTOutput
+            from sktime.libs.uni2ts.forecast import MoiraiForecast
+            from sktime.libs.uni2ts.loss.packed.distribution import PackedNLLLoss
+
+            # PyTorch 2.6+ defaults weights_only=True in torch.load, blocking
+            # unpickling of custom classes unless registered as safe globals.
+            # The checkpoint stores classes under "uni2ts.*" module paths, but
+            # sktime vendors them under "sktime.libs.uni2ts.*".
+            #
+            # PyTorch 2.12+ stores safe globals in a set and resolves
+            # cls.__module__ at unpickling time (not at add-time), so the
+            # tuple form (cls, "uni2ts.path.ClassName") must be used to
+            # specify the exact path stored in the checkpoint.
+            # PyTorch 2.6-2.11 resolves cls.__module__ at add-time, so we
+            # temporarily patch __module__ before calling add_safe_globals.
+            if hasattr(torch.serialization, "add_safe_globals"):
+                import torch._weights_only_unpickler as _wou
+
+                _cls_path_pairs = [
+                    (MixtureOutput, "uni2ts.distribution.mixture.MixtureOutput"),
+                    (NormalOutput, "uni2ts.distribution.normal.NormalOutput"),
+                    (
+                        NormalFixedScaleOutput,
+                        "uni2ts.distribution.normal.NormalFixedScaleOutput",
+                    ),
+                    (LogNormalOutput, "uni2ts.distribution.log_normal.LogNormalOutput"),
+                    (
+                        NegativeBinomialOutput,
+                        "uni2ts.distribution.negative_binomial.NegativeBinomialOutput",
+                    ),
+                    (StudentTOutput, "uni2ts.distribution.student_t.StudentTOutput"),
+                    (
+                        PackedNLLLoss,
+                        "uni2ts.loss.packed.distribution.PackedNLLLoss",
+                    ),
+                ]
+                # Use tuple form if supported (PyTorch 2.12+)
+                if hasattr(_wou, "_get_user_allowed_globals"):
+                    torch.serialization.add_safe_globals(_cls_path_pairs)
+                else:
+                    # Fallback for PyTorch 2.6-2.11: patch __module__ at add-time
+                    _safe_classes = [cls for cls, _ in _cls_path_pairs]
+                    _orig_modules = {cls: cls.__module__ for cls in _safe_classes}
+                    for cls, path in _cls_path_pairs:
+                        cls.__module__ = ".".join(path.split(".")[:-1])
+                    torch.serialization.add_safe_globals(_safe_classes)
+                    for cls in _safe_classes:
+                        cls.__module__ = _orig_modules[cls]
+
+            # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch when
+            # hf_xet was compiled for an older CPython than the current runtime).
+            # huggingface_hub reads HF_HUB_DISABLE_XET from constants.py at
+            # import time, and file_download.py accesses it as
+            # `constants.HF_HUB_DISABLE_XET` at call time. We must therefore
+            # patch huggingface_hub.constants directly (not file_download) so
+            # that _download_to_tmp_and_move skips xet_get for this session.
+            import os
+
+            try:
+                import hf_xet  # noqa: F401
+            except Exception:
+                os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+                if _check_soft_dependencies("huggingface_hub", severity="none"):
+                    import huggingface_hub.constants as _hf_constants
+
+                    _hf_constants.HF_HUB_DISABLE_XET = True
+
+            if self.checkpoint_path.startswith("Salesforce"):
+                from sktime.libs.uni2ts.moirai_module import MoiraiModule
+
+                model_kwargs["module"] = MoiraiModule.from_pretrained(
+                    self.checkpoint_path
+                )
+                return MoiraiForecast(**model_kwargs)
+            else:
+                from huggingface_hub import hf_hub_download
+
+                model_kwargs["checkpoint_path"] = hf_hub_download(
+                    repo_id=self.checkpoint_path, filename="model.ckpt"
+                )
+                return MoiraiForecast.load_from_checkpoint(**model_kwargs)
+
+    def _fit(self, y, X=None, fh=None):
+        if fh is not None:
+            prediction_length = max(fh.to_relative(self.cutoff))
+        else:
+            prediction_length = 1
+
+        if self.num_feat_dynamic_real is None:
+            self._num_feat_dynamic_real = X.shape[1] if X is not None else 0
+        else:
+            self._num_feat_dynamic_real = self.num_feat_dynamic_real
+
+        if self.num_past_feat_dynamic_real is None:
+            self._num_past_feat_dynamic_real = 0
+        else:
+            self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
+
+        self.model = self._load_model(prediction_length)
+
+    def _get_model_kwargs(self, prediction_length):
+        """Return MOIRAI model kwargs from fitted estimator state."""
+        model_kwargs = {
+            "prediction_length": prediction_length,
+            "context_length": self.context_length,
+            "patch_size": self.patch_size,
+            "num_samples": self.num_samples,
+            "target_dim": self.target_dim,
+            "feat_dynamic_real_dim": self._num_feat_dynamic_real,
+            "past_feat_dynamic_real_dim": self._num_past_feat_dynamic_real,
+        }
+        return model_kwargs
+
+    def _load_model(self, prediction_length):
+        """Load the MOIRAI model from source or the vendored sktime copy."""
+        model_kwargs = self._get_model_kwargs(prediction_length)
+        # Load model from source package
+        if self.use_source_package:
+            if _check_soft_dependencies("uni2ts", severity="none"):
+                from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
+
+                if self.checkpoint_path.startswith("Salesforce"):
+                    model_kwargs["module"] = MoiraiModule.from_pretrained(
+                        self.checkpoint_path
+                    )
+                    return MoiraiForecast(**model_kwargs)
+                else:
+                    from huggingface_hub import hf_hub_download
+
+                    model_kwargs["checkpoint_path"] = hf_hub_download(
+                        repo_id=self.checkpoint_path, filename="model.ckpt"
+                    )
+                    model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
+                    model.to(self.map_location)
+                    return model
+        # Load model from sktime
+        else:
+            model = self._instantiate_patched_model(model_kwargs)
+            model.to(self.map_location)
+            return model
+
+    def _predict(self, fh, X=None):
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+
+        if getattr(self, "model", None) is None:
+            self.model = self._load_model(max(fh._values))
+
+        if self.deterministic:
+            import torch
+
+            torch.manual_seed(42)
+
+        self.model.hparams.prediction_length = max(fh._values)
+
+        if min(fh._values) < 0:
+            raise NotImplementedError(
+                "The MORAI adapter is not supporting insample predictions."
+            )
+
+        _y = self._y.copy()
+        _X = None
+        if self._X is not None:
+            _X = self._X.copy()
+
+        # Zero shot case with X and fit data as context
+        _use_fit_data_as_context = X is not None
+
+        if isinstance(_y, pd.Series):
+            target = [_y.name]
+            _y, _is_converted_to_df = self._series_to_df(_y)
+        else:
+            target = _y.columns
+
+        # Use local variables for predict-time state so that _predict
+        # does not add new keys to __dict__ (sktime non-state-changing contract).
+        _target_name = target
+        _len_of_targets = len(target)
+
+        target = [f"target_{i}" for i in range(_len_of_targets)]
+        _y.columns = target
+
+        future_length = 0
+        feat_dynamic_real = None
+
+        if _X is not None:
+            feat_dynamic_real = [
+                f"feat_dynamic_real_{i}" for i in range(self._X.shape[1])
+            ]
+            _X.columns = feat_dynamic_real
+
+        pred_df = pd.concat([_y, _X], axis=1)
+        _is_range_index = self.check_range_index(pred_df)
+        _is_period_index = self.check_period_index(pred_df)
+
+        if _use_fit_data_as_context:
+            future_length = self._get_future_length(X)
+            first_seen_index = X.index[0]
+            X_to_extend = X.copy()
+            X_to_extend.columns = feat_dynamic_real
+            _X = pd.concat([_X, X_to_extend]).sort_index()
+            pred_df = pd.concat([_y, _X], axis=1).sort_index()
+            pred_df.fillna(0, inplace=True)
+        else:
+            if _X is not None:
+                future_length = len(_X.index.get_level_values(-1).unique()) - len(
+                    _y.index.get_level_values(-1).unique()
+                )
+            else:
+                future_length = 0
+        # check whether the index is a PeriodIndex; store freq to restore later
+        _period_freq = None
+        if isinstance(pred_df.index, pd.PeriodIndex):
+            time_idx = self.return_time_index(pred_df)
+            _period_freq = time_idx.freq
+            # Keep the natural DatetimeIndex freq from to_timestamp() so that
+            # gluonts can infer the frequency. Setting freq=None breaks gluonts
+            # internal infer_freq for short series (< 3 time points).
+            pred_df.index = time_idx.to_timestamp()
+
+        # For non-consecutive fh (e.g. fh=[2,5]) the future X only has rows at
+        # those positions, leaving gaps that gluonts rejects as non-uniform.
+        # Reindex to fill all intermediate steps and set future_length=max(fh).
+        if _use_fit_data_as_context and not _is_range_index:
+            if not isinstance(pred_df.index, pd.MultiIndex):
+                # Use the RAW freq from the index for pd.date_range, NOT the
+                # gluonts-mapped version. 'MS' (month-start) must stay 'MS';
+                # mapping to 'M' would produce month-END dates that don't align.
+                if hasattr(pred_df.index, "freq") and pred_df.index.freq is not None:
+                    _raw_freq_str = pred_df.index.freqstr
+                else:
+                    _raw_freq_str = (
+                        pd.infer_freq(pred_df.index[:3]) if len(pred_df) >= 3 else None
+                    )
+                if _raw_freq_str is not None:
+                    full_idx = pd.date_range(
+                        pred_df.index[0], pred_df.index[-1], freq=_raw_freq_str
+                    )
+                    if len(full_idx) > len(pred_df):
+                        pred_df = pred_df.reindex(full_idx, fill_value=0)
+                        future_length = int(max(fh._values))
+
+        # Check if the index is a range index
+        if _is_range_index:
+            pred_df.index = self.handle_range_index(pred_df.index)
+
+        _is_hierarchical = False
+        if pred_df.index.nlevels >= 3:
+            pred_df = self._convert_hierarchical_to_panel(pred_df)
+            _is_hierarchical = True
+
+        ds_test, df_config = self.create_pandas_dataset(
+            pred_df, target, feat_dynamic_real, future_length, _target_name
+        )
+
+        predictor = self.model.create_predictor(batch_size=self.batch_size)
+        forecasts = predictor.predict(ds_test)
+        forecast_it = iter(forecasts)
+        predictions = self._get_prediction_df(forecast_it, df_config)
+        if isinstance(_y.index.get_level_values(-1), pd.DatetimeIndex):
+            if isinstance(predictions.index, pd.MultiIndex):
+                predictions.index = predictions.index.set_levels(
+                    levels=predictions.index.get_level_values(-1)
+                    .to_timestamp()
+                    .unique(),
+                    level=-1,
+                )
+            else:
+                predictions.index = predictions.index.to_timestamp()
+        elif _period_freq is not None:
+            # We converted pred_df from PeriodIndex to DatetimeIndex; gluonts
+            # may return DatetimeIndex predictions. Convert back to PeriodIndex
+            # so that pred_out (which has PeriodIndex) can index into predictions.
+            if isinstance(predictions.index, pd.MultiIndex):
+                dt_level = predictions.index.get_level_values(-1)
+                if isinstance(dt_level, pd.DatetimeIndex):
+                    predictions.index = predictions.index.set_levels(
+                        levels=dt_level.to_period(_period_freq).unique(),
+                        level=-1,
+                    )
+            elif isinstance(predictions.index, pd.DatetimeIndex):
+                predictions.index = predictions.index.to_period(_period_freq)
+        if _is_hierarchical:
+            predictions = self._convert_panel_to_hierarchical(
+                predictions, _y.index.names
+            )
+
+        pred_out = fh.get_expected_pred_idx(_y, cutoff=self.cutoff)
+
+        if _is_range_index:
+            timepoints = self.return_time_index(predictions)
+            timepoints = timepoints.to_timestamp()
+            timepoints = (timepoints - pd.Timestamp("2010-01-01")).map(
+                lambda x: x.days
+            ) + self.return_time_index(_y)[0]
+            if isinstance(predictions.index, pd.MultiIndex):
+                predictions.index = predictions.index.set_levels(
+                    levels=timepoints.unique(), level=-1
+                )
+                # Convert str type to int
+                predictions.index = predictions.index.map(lambda x: (int(x[0]), x[1]))
+            else:
+                predictions.index = timepoints
+
+        if _use_fit_data_as_context:
+            # first_seen_index may be a Period; convert to match predictions.index
+            _fsi = first_seen_index
+            if _period_freq is not None and not isinstance(_fsi, pd.Period):
+                _fsi = pd.Period(_fsi, freq=_period_freq)
+            elif _period_freq is None and isinstance(_fsi, pd.Period):
+                _fsi = _fsi.to_timestamp()
+            predictions = predictions.loc[_fsi:]
+
+        predictions = predictions.loc[pred_out]
+        predictions.index = pred_out
+        return predictions
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        return [
+            {
+                "deterministic": True,
+                "checkpoint_path": "sktime/moirai-1.0-R-small",
+            },
+            {
+                "deterministic": True,
+                "checkpoint_path": "Salesforce/moirai-1.0-R-small",
+            },
+        ]
+
+    def _get_prediction_df(self, forecast_iter, df_config):
+        def handle_series_prediction(forecast, target):
+            # Renames the predicted column to the target column name
+            pred = forecast.mean_ts
+            if target[0] is not None:
+                return pred.rename(target[0])
+            else:
+                return pred
+
+        def handle_panel_predictions(forecasts_it, df_config):
+            # Convert all panel forecasts to a single panel dataframe
+            panels = []
+            for forecast in forecasts_it:
+                df = forecast.mean_ts.reset_index()
+                df.columns = [df_config["timepoints"], df_config["target"][0]]
+                df[df_config["item_id"]] = forecast.item_id
+                df.set_index(
+                    [df_config["item_id"], df_config["timepoints"]], inplace=True
+                )
+                panels.append(df)
+            return pd.concat(panels)
+
+        forecasts = list(forecast_iter)
+
+        # Assuming all forecasts_it are either series or panel type.
+        if forecasts[0].item_id is None:
+            return handle_series_prediction(forecasts[0], df_config["target"])
+        else:
+            return handle_panel_predictions(forecasts, df_config)
+
+    def create_pandas_dataset(
+        self, df, target, dynamic_features=None, forecast_horizon=0, target_name=None
+    ):
+        """Create a gluonts PandasDataset from the input data.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Input data.
+        target : str
+            Target column name.
+        dynamic_features : list, default=None
+            List of dynamic features.
+        forecast_horizon : int, default=0
+            Forecast horizon.
+        target_name : list or Index, default=None
+            Original target column names (before renaming), stored in df_config.
+
+        Returns
+        -------
+        dataset : PandasDataset
+            Pandas dataset.
+        df_config : dict
+            Configuration of the input data.
+
+        """
+        if _check_soft_dependencies("gluonts", severity="none"):
+            from gluonts.dataset.pandas import PandasDataset
+
+        # Add original target to config
+        df_config = {
+            "target": target_name,
+        }
+
+        # PandasDataset expects non-multiindex dataframe with item_id
+        # and timepoints
+        if isinstance(df.index, pd.MultiIndex):
+            if None in df.index.names:
+                df.index.names = ["item_id", "timepoints"]
+            item_id = df.index.names[0]
+            df_config["item_id"] = item_id
+            timepoints = df.index.names[-1]
+            df_config["timepoints"] = timepoints
+
+            # Reset index to create a non-multiindex dataframe
+            df = df.reset_index()
+            df.set_index(timepoints, inplace=True)
+
+            dataset = PandasDataset.from_long_dataframe(
+                df,
+                target=target,
+                feat_dynamic_real=dynamic_features,
+                item_id=item_id,
+                future_length=forecast_horizon,
+            )
+        else:
+            freq = self.infer_freq(df.index)
+            dataset = PandasDataset(
+                df,
+                target=target,
+                feat_dynamic_real=dynamic_features,
+                future_length=forecast_horizon,
+                freq=freq,
+            )
+
+        return dataset, df_config
+
+    # def _extend_df(self, df, _y, X=None):
+    #     """Extend the input dataframe up to the timepoints that need to be predicted.
+    #
+    #     Parameters
+    #     ----------
+    #     df : pd.DataFrame
+    #         Input data that needs to be extended
+    #     X : pd.DataFrame, default=None
+    #         Assumes that X has future timepoints and is
+    #         concatenated to the input data,
+    #         if X is present in the input, but None here the values of X are assumed
+    #         to be 0 in future timepoints that need to be predicted.
+    #     is_range_index : bool, default=False
+    #         If True, the index is a range index.
+    #     is_period_index : bool, default=False
+    #         If True, the index is a period index.
+    #
+    #     Returns
+    #     -------
+    #     pd.DataFrame
+    #         Extended dataframe with future timepoints.
+    #     """
+    #     index = self.return_time_index(df)
+    #
+    #     # Extend the index to the future timepoints
+    #     # respective to index last seen
+    #
+    #     if self._is_range_index:
+    #         pred_index = pd.RangeIndex(
+    #             self.cutoff[0] + 1, self.cutoff[0] + max(self.fh._values)
+    #         )
+    #     elif self._is_period_index:
+    #         pred_index = pd.period_range(
+    #             self.cutoff[0],
+    #             periods=max(self.fh._values) + 1,
+    #             freq=index.freq,
+    #         )[1:]
+    #     else:
+    #         pred_index = pd.date_range(
+    #             self.cutoff[0],
+    #             periods=max(self.fh._values) + 1,
+    #             freq=self.infer_freq(index),
+    #         )[1:]
+    #
+    #     if isinstance(df.index, pd.MultiIndex):
+    #         # Works for any number of levels in the MultiIndex
+    #         index_levels = [
+    #             df.index.get_level_values(i).unique()
+    #             for i in range(df.index.nlevels - 1)
+    #         ]
+    #         index_levels.append(pred_index)
+    #         new_index = pd.MultiIndex.from_product(index_levels, names=df.index.names)
+    #     else:
+    #         new_index = pred_index
+    #
+    #     df_y = pd.DataFrame(columns=_y.columns, index=new_index)
+    #     df_y.fillna(0, inplace=True)
+    #     pred_df = pd.concat([df_y, X], axis=1)
+    #     extended_df = pd.concat([df, pred_df])
+    #     extended_df = extended_df.sort_index()
+    #     extended_df.fillna(0, inplace=True)
+    #
+    #     return extended_df, df_y
+
+    def infer_freq(self, index):
+        """
+        Infer frequency of the index.
+
+        Parameters
+        ----------
+        index: pd.Index
+            Index of the time series data.
+
+        Notes
+        -----
+        Uses only first 3 values of the index to infer the frequency.
+        As `freq=None` is returned in case of multiindex timepoints.
+
+        """
+        # Mapping from pandas DatetimeIndex freq aliases (produced by
+        # PeriodIndex.to_timestamp()) to gluonts-compatible freq strings.
+        _offset_to_period = {
+            "MS": "M",
+            "ME": "M",
+            "QS": "Q",
+            "QE": "Q",
+            "QS-OCT": "Q",
+            "YS": "Y",
+            "AS": "Y",
+            "YE": "Y",
+            "AE": "Y",
+        }
+        if isinstance(index, pd.PeriodIndex):
+            return index.freq
+        # Prefer the freq attribute already set on the index (e.g. by to_timestamp())
+        if hasattr(index, "freq") and index.freq is not None:
+            freq_str = index.freqstr
+            return _offset_to_period.get(freq_str, freq_str)
+        # Fall back to inferring from the first 3 values
+        freq = pd.infer_freq(index[:3]) if len(index) >= 3 else None
+        if freq is not None:
+            return _offset_to_period.get(freq, freq)
+        return freq
+
+    def return_time_index(self, df):
+        """Return the time index, given any type of index."""
+        if isinstance(df.index, pd.MultiIndex):
+            return df.index.get_level_values(-1)
+        else:
+            return df.index
+
+    def check_range_index(self, df):
+        """Check if the index is a range index."""
+        timepoints = self.return_time_index(df)
+        if isinstance(timepoints, pd.RangeIndex):
+            return True
+        elif pd.api.types.is_integer_dtype(timepoints):
+            return True
+        return False
+
+    def check_period_index(self, df):
+        """Check if the index is a PeriodIndex."""
+        timepoints = self.return_time_index(df)
+        if isinstance(timepoints, pd.PeriodIndex):
+            return True
+        return False
+
+    def handle_range_index(self, index):
+        """
+        Convert RangeIndex to Dummy DatetimeIndex.
+
+        As gluonts PandasDataset expects a DatetimeIndex.
+        """
+        start_date = "2010-01-01"
+        if isinstance(index, pd.MultiIndex):
+            n_periods = index.levels[-1].size
+            datetime_index = pd.date_range(
+                start=start_date, periods=n_periods, freq="D"
+            )
+            new_index = index.set_levels(datetime_index, level=-1)
+        else:
+            n_periods = index.size
+            new_index = pd.date_range(start=start_date, periods=n_periods, freq="D")
+        return new_index
+
+    def _series_to_df(self, y):
+        """Convert series to DataFrame."""
+        is_converted = False
+        if isinstance(y, pd.Series):
+            y = y.to_frame()
+            is_converted = True
+        return y, is_converted
+
+    def _convert_hierarchical_to_panel(self, df):
+        # Flatten the MultiIndex to a panel type DataFrame
+        data = df.copy()
+        flattened_index = [("*".join(map(str, x[:-1])), x[-1]) for x in data.index]
+        # Create a new MultiIndex with the flattened level and the last level unchanged
+        data.index = pd.MultiIndex.from_tuples(
+            flattened_index, names=["Flattened_Level", data.index.names[-1]]
+        )
+        return data
+
+    def _convert_panel_to_hierarchical(self, df, original_index_names=None):
+        # Store the original index names
+        if original_index_names is None:
+            original_index_names = df.index.names
+
+        # Reset the index to get 'Flattened_Level' as a column
+        data = df.reset_index()
+
+        # Split the 'Flattened_Level' column into multiple columns
+        split_levels = data["Flattened_Level"].str.split("*", expand=True)
+        split_levels.columns = original_index_names[:-1]
+        # Get the names of the split levels as a list of column names
+        index_names = split_levels.columns.tolist()
+
+        # Combine the split levels with the rest of the data
+        data_converted = pd.concat(
+            [split_levels, data.drop(columns=["Flattened_Level"])], axis=1
+        )
+
+        # Get the last index name if it exists, otherwise use a default name
+        last_index_name = (
+            original_index_names[-1]
+            if original_index_names[-1] is not None
+            else "timepoints"
+        )
+
+        # Set the new index with the split levels and the last index name
+        data_converted = data_converted.set_index(index_names + [last_index_name])
+
+        return data_converted
+
+    def _get_future_length(self, X):
+        """Get the future length."""
+        if isinstance(X.index, pd.MultiIndex):
+            return len(X.index.get_level_values(-1).unique())
+        else:
+            return len(X)

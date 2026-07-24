@@ -214,6 +214,7 @@ class MyForecaster(BaseForecaster):
         super().__init__()
 
         # do not put anything else in __init__,
+        # use __dynamic_tags__ for dynamic tag setting
         # use __post_init__ for any further initialization logic
 
     # todo: add if there is dynamic tag setting logic, otherwise delete this method

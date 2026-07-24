@@ -26,10 +26,10 @@ class TapNetNetworkTorch(NNModule):
         and in format (n_instances, n_dims, series_length).
     num_classes : int
         Number of outputs.
-    activation : str or None or callable, default=None
+    activation : callable or None, default = None
         Activation function to use in the output layer. If callable, it must
         accept and return a torch tensor.
-    activation_hidden : str, default="leaky_relu"
+    activation_hidden : callable or None, default = None
         Activation function to use in the hidden layers.
     kernel_size : tuple of int, default = (8, 5, 3)
         Specifying the length of the 1D convolution window.
@@ -92,8 +92,8 @@ class TapNetNetworkTorch(NNModule):
         self,
         input_size: int | tuple[int, ...],
         num_classes: int,
-        activation: str | Callable | None = None,
-        activation_hidden: str = "leaky_relu",
+        activation: Callable | None = None,
+        activation_hidden: Callable | None = None,
         kernel_size: tuple[int, ...] = (8, 5, 3),
         layers: tuple[int, ...] = (500, 300),
         filter_sizes: tuple[int, ...] = (256, 256, 128),
@@ -191,14 +191,6 @@ class TapNetNetworkTorch(NNModule):
             torch_manual_seed(self.random_state)
         else:
             self._rng = np.random.default_rng()
-
-        # Activations
-        self._activation_hidden = self._instantiate_hidden_activation()
-        self._activation_out = (
-            self._instantiate_output_activation()
-            if self.activation is not None
-            else None
-        )
 
         # Random projection parameters (RDP)
         if self.use_rp:
@@ -324,7 +316,7 @@ class TapNetNetworkTorch(NNModule):
                 padding=self.padding,
             ),
             BatchNorm1d(self.filter_sizes[0]),
-            self._instantiate_hidden_activation(),
+            self.activation_hidden,
         ]
         if self.dropout > 0.0:
             Dropout = _safe_import("torch.nn.Dropout")
@@ -351,75 +343,12 @@ class TapNetNetworkTorch(NNModule):
                 )
             )
             layers.append(BatchNorm1d(self.filter_sizes[i]))
-            layers.append(self._instantiate_hidden_activation())
+            layers.append(self.activation_hidden)
             if self.dropout > 0.0:
                 Dropout = _safe_import("torch.nn.Dropout")
                 layers.append(Dropout(p=self.dropout))
             in_channels = self.filter_sizes[i]
         return Sequential(*layers)
-
-    def _instantiate_hidden_activation(self):
-        """Instantiate the activation function to be applied on the hidden layers.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied on the hidden layers.
-        """
-        if isinstance(self.activation_hidden, NNModule):
-            return self.activation_hidden
-        if not isinstance(self.activation_hidden, str):
-            raise TypeError(
-                "`activation_hidden` should be a str or torch.nn.Module. "
-                f"Found {type(self.activation_hidden)}"
-            )
-
-        act = self.activation_hidden.lower()
-        if act in ("relu",):
-            return _safe_import("torch.nn.ReLU")()
-        if act in ("leaky_relu", "leakyrelu"):
-            return _safe_import("torch.nn.LeakyReLU")(negative_slope=0.01)
-
-        raise ValueError(
-            "Unsupported activation_hidden. Supported: "
-            "'relu', 'leaky_relu'. "
-            f"Found {self.activation_hidden}"
-        )
-
-    def _instantiate_output_activation(self):
-        """Instantiate the activation function to be applied on the output layer.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module or callable
-            The activation function to be applied on the output layer.
-        """
-        if callable(self.activation):
-            return self.activation
-        if isinstance(self.activation, NNModule):
-            return self.activation
-        if not isinstance(self.activation, str):
-            raise TypeError(
-                "`activation` should be a str, callable, or torch.nn.Module. "
-                f"Found {type(self.activation)}"
-            )
-
-        act = self.activation.lower()
-        if act == "sigmoid":
-            return _safe_import("torch.nn.Sigmoid")()
-        if act == "softmax":
-            return _safe_import("torch.nn.Softmax")(dim=1)
-        if act == "logsoftmax":
-            return _safe_import("torch.nn.LogSoftmax")(dim=1)
-        if act == "logsigmoid":
-            return _safe_import("torch.nn.LogSigmoid")()
-
-        raise ValueError(
-            "Unsupported activation. Supported: "
-            "'sigmoid', 'softmax', 'logsoftmax', 'logsigmoid', callable, "
-            "or torch.nn.Module. "
-            f"Found {self.activation}"
-        )
 
     def _init_weights(self, module):
         """Apply tensorflow-like initializations.
@@ -504,12 +433,12 @@ class TapNetNetworkTorch(NNModule):
         for i, fc in enumerate(self.fcs):
             x = fc(x)
             if i < len(self.fcs) - 1:
-                x = self._activation_hidden(x)
+                x = self.activation_hidden(x)
                 if x.shape[0] > 1:
                     x = self.bns[i](x)
         if self.fc_dropout:
             x = self.out_dropout(x)
         x = self.out(x)
-        if self._activation_out is not None:
-            x = self._activation_out(x)
+        if self.activation is not None:
+            x = self.activation(x)
         return x

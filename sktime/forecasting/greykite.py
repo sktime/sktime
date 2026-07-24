@@ -62,6 +62,11 @@ class GreykiteForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "python_dependencies": ["greykite>=1.0.0"],
+        # estimator type
+        # --------------
         "capability:multivariate": False,  # Handles univariate targets here.
         "capability:exogenous": True,  # Can handle exogenous variables.
         "capability:missing_values": True,  # Handles missing data.
@@ -69,11 +74,24 @@ class GreykiteForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
         "capability:pred_int": False,  # Can produce prediction intervals.
+        "capability:unequal_length": False,
         "capability:insample": False,
-        "python_dependencies": ["greykite>=1.0.0"],  # Required Python dependencies.
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        # greykite failures tracked in #10083
+        "tests:skip_all": True,
+        # pickling is not supported for GreykiteForecaster.
+        # The greykite package internally uses patsy, which does not support
+        # pickling or deepcopy (see https://github.com/pydata/patsy/issues/26).
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+            "test_update_predict_predicted_index",
+            "test_deepcopy_fitted_predict",
+        ],
+        "tests:python_dependencies": ["prophet", "setuptools<82"],
     }
 
     def __init__(
@@ -89,6 +107,14 @@ class GreykiteForecaster(BaseForecaster):
         self.coverage = coverage
 
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.model_template == "PROPHET":
+            self.set_tags(**{"python_dependencies": ["greykite>=1.0.0", "prophet"]})
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
