@@ -582,10 +582,19 @@ class ChronosForecaster(BaseForecaster):
         index_names = _y.index.names
         _y = _y.values.reshape(1, -1, 1)
 
+        model_config = self.model_pipeline.model.config
+        # the ``context_length`` shortcut is only set on sktime's vendored
+        # models; the source ``chronos`` package only exposes it nested
+        # under ``chronos_config`` on the underlying HF model config
+        context_length = (
+            getattr(model_config, "context_length", None)
+            or model_config.chronos_config["context_length"]
+        )
+
         results = []
         for i in range(_y.shape[0]):
             _y_i = _y[i, :, 0]
-            _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
+            _y_i = _y_i[-context_length:]
 
             values = self.model_strategy.predict(
                 self.model_pipeline, torch.Tensor(_y_i), prediction_length, self._config
