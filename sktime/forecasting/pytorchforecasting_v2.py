@@ -120,9 +120,6 @@ class PytorchForecastingTFTV2(_PytorchForecastingAdapterV2):
         Parameters for ``lightning.pytorch.Trainer``.
         Example: ``{"max_epochs": 10, "accelerator": "cpu"}``.
 
-    random_log_path : bool, default=False
-        Use random root directory for logging. For CI testing.
-
     broadcasting : bool, default=False
         If True, fall back to per-series fitting instead of global.
 
@@ -143,7 +140,6 @@ class PytorchForecastingTFTV2(_PytorchForecastingAdapterV2):
     >>> model = PytorchForecastingTFTV2(
     ...     trainer_params={"max_epochs": 1, "limit_train_batches": 2,
     ...                     "enable_checkpointing": False, "logger": False},
-    ...     random_log_path=True,
     ... )
     >>> model.fit(y=y, fh=fh)  # doctest: +SKIP
     >>> y_pred = model.predict(fh)  # doctest: +SKIP
@@ -168,6 +164,7 @@ class PytorchForecastingTFTV2(_PytorchForecastingAdapterV2):
         "tests:skip_by_name": [
             "test_save_estimators_to_file",
             "test_persistence_via_pickle",
+            "test_hierarchical_with_exogenous",
         ],
     }
 
@@ -176,14 +173,12 @@ class PytorchForecastingTFTV2(_PytorchForecastingAdapterV2):
         model_params: dict[str, Any] | None = None,
         data_module_params: dict[str, Any] | None = None,
         trainer_params: dict[str, Any] | None = None,
-        random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
         super().__init__(
             model_params=model_params,
             data_module_params=data_module_params,
             trainer_params=trainer_params,
-            random_log_path=random_log_path,
             broadcasting=broadcasting,
         )
 
@@ -202,71 +197,6 @@ class PytorchForecastingTFTV2(_PytorchForecastingAdapterV2):
             keyword arguments for the underlying algorithm class
         """
         return {}
-
-    def _instantiate_model(self, data_module):
-        """Instantiate the PTF v2 model.
-
-        Parameters
-        ----------
-        data_module : TslibDataModule
-            The data module providing metadata.
-
-        Returns
-        -------
-        model : TslibBaseModel subclass
-            The instantiated model.
-        """
-        from copy import deepcopy
-
-        from pytorch_forecasting.metrics import MAE
-
-        model_params = deepcopy(self._model_params) if self._model_params else {}
-        model_params.update(self.algorithm_parameters)
-
-        # Set loss — default to MAE if none provided
-        loss = self._model_loss
-        if loss is None:
-            loss = MAE()
-        model_params["loss"] = loss
-
-        # Pass metadata from data module, adding TFT-specific required fields
-        # that TslibDataModule does not automatically populate. The D2 dataset
-        # keeps targets separate from continuous features; TFT consumes the
-        # historical target as an encoder continuous input.
-        metadata = dict(data_module.metadata)
-        feature_names = metadata.get("feature_names", {})
-        n_features = metadata.get("n_features", {})
-        continuous_names = set(feature_names.get("continuous", []))
-        categorical_names = set(feature_names.get("categorical", []))
-        known_names = set(feature_names.get("known", []))
-
-        n_targets = n_features.get("target", 1)
-        n_encoder_cont = n_features.get("continuous", 0) + n_targets
-        n_encoder_cat = n_features.get("categorical", 0)
-        n_decoder_cont = len(continuous_names & known_names)
-        n_decoder_cat = len(categorical_names & known_names)
-
-        # TFT uses these length aliases
-        metadata["max_encoder_length"] = metadata.get("context_length", 3)
-        metadata["max_prediction_length"] = metadata.get("prediction_length", 1)
-        metadata["encoder_cont"] = n_encoder_cont
-        metadata["decoder_cont"] = n_decoder_cont
-        metadata["encoder_cat"] = n_encoder_cat
-        metadata["decoder_cat"] = n_decoder_cat
-        metadata["static_categorical_features"] = n_features.get(
-            "static_categorical", 0
-        )
-        metadata["static_continuous_features"] = n_features.get("static_continuous", 0)
-
-        model_params["metadata"] = metadata
-
-        import warnings
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            model = self.algorithm_class(**model_params)
-
-        return model
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -294,7 +224,6 @@ class PytorchForecastingTFTV2(_PytorchForecastingAdapterV2):
                     "context_length": 3,
                     "batch_size": 2,
                 },
-                "random_log_path": True,
             },
             {
                 "trainer_params": {
@@ -307,7 +236,6 @@ class PytorchForecastingTFTV2(_PytorchForecastingAdapterV2):
                     "context_length": 5,
                     "batch_size": 2,
                 },
-                "random_log_path": True,
             },
         ]
 

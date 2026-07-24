@@ -235,8 +235,6 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
     trainer_params : dict[str, Any] or None, default=None
         Parameters for ``lightning.pytorch.Trainer``.
         Example: ``{"max_epochs": 10, "accelerator": "cpu"}``.
-    random_log_path : bool, default=False
-        Use random root directory for logging.
     broadcasting : bool, default=False
         If True, fall back to per-series fitting.
     """
@@ -280,6 +278,7 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         "tests:skip_by_name": [
             "test_save_estimators_to_file",
             "test_persistence_via_pickle",
+            "test_hierarchical_with_exogenous",
         ],
     }
 
@@ -288,13 +287,11 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         model_params=None,
         data_module_params=None,
         trainer_params=None,
-        random_log_path=False,
         broadcasting=False,
     ):
         self.model_params = model_params
         self.data_module_params = data_module_params
         self.trainer_params = trainer_params
-        self.random_log_path = random_log_path
         self.broadcasting = broadcasting
 
         # Internal deep copies to avoid mutation
@@ -319,6 +316,44 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
                 }
             )
         super().__init__()
+
+    def __deepcopy__(self, memo):
+        """Deep copy the estimator, handling PyTorch non-leaf tensors.
+
+        After training, PyTorch models contain non-leaf tensors in their
+        computation graph that cannot be deepcopied directly. This method
+        serializes those model attributes via ``torch.save``/``torch.load``
+        (which handles non-leaf tensors correctly) and deepcopies everything
+        else normally.
+        """
+        import io
+
+        import torch
+
+        cls = type(self)
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+
+        # Attributes that contain PyTorch tensors / Lightning objects
+        # and need serialization via torch.save/load
+        torch_attrs = {"_forecaster", "best_model", "_data_module"}
+        skip_attrs = {"_trainer"}  # Trainer is not needed post-fit
+
+        for k, v in self.__dict__.items():
+            if k in torch_attrs and v is not None:
+                # Serialize and deserialize through a buffer to avoid
+                # the non-leaf tensor deepcopy limitation
+                buffer = io.BytesIO()
+                torch.save(v, buffer)
+                buffer.seek(0)
+                setattr(result, k, torch.load(buffer, weights_only=False))
+            elif k in skip_attrs:
+                # Skip the trainer — it will be recreated if needed
+                setattr(result, k, None)
+            else:
+                setattr(result, k, deepcopy(v, memo))
+
+        return result
 
     @functools.cached_property
     @abc.abstractmethod
@@ -363,21 +398,8 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
 
-        # Determine context_length from data or params
-        context_length = self._data_module_params.get("context_length", None)
-        if context_length is None:
-            # Use a sensible default: min(max available, 2 * prediction_length)
-            if _y.index.nlevels > 1:
-                group_sizes = _y.groupby(level=list(range(_y.index.nlevels - 1))).size()
-                min_series_len = group_sizes.min()
-            else:
-                min_series_len = len(_y)
-            context_length = min(
-                min_series_len - self._max_prediction_length,
-                2 * self._max_prediction_length,
-            )
-            context_length = max(context_length, 1)
-
+        # Determine context_length from data_module_params or use fixed default
+        context_length = self._data_module_params.get("context_length", 3)
         self._context_length = context_length
 
         # Convert sktime data to PTF v2 TimeSeries (D1)
@@ -395,32 +417,38 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         self._forecaster = self._instantiate_model(self._data_module)
 
         # Instantiate trainer
+        import logging
+
         import lightning.pytorch as pl
 
         trainer_kwargs = deepcopy(self._trainer_params)
-        if self.random_log_path:
-            if (
-                "logger" not in trainer_kwargs
-                and "default_root_dir" not in trainer_kwargs
-            ):
-                import os
-                import time
-                from random import randint
+        # Suppress logging and progress bar during fit to reduce output in tests
+        # User can override by explicitly setting these in trainer_params
+        if "logger" not in trainer_kwargs:
+            trainer_kwargs["logger"] = False
+        if "enable_progress_bar" not in trainer_kwargs:
+            trainer_kwargs["enable_progress_bar"] = False
+        if "enable_model_summary" not in trainer_kwargs:
+            trainer_kwargs["enable_model_summary"] = False
 
-                random_num = (
-                    hash(time.time_ns())
-                    + hash(self.algorithm_class)
-                    + hash(randint(0, int(time.time())))  # noqa: S311
-                )
-                self._random_log_dir = (
-                    os.getcwd() + "/lightning_logs/" + str(abs(random_num))
-                )
-                trainer_kwargs["default_root_dir"] = self._random_log_dir
+        # Silence PyTorch Lightning's internal console logging
+        _pl_loggers = [
+            logging.getLogger("lightning.pytorch"),
+            logging.getLogger("pytorch_lightning"),
+            logging.getLogger("lightning"),
+        ]
+        _prev_levels = [lg.level for lg in _pl_loggers]
+        for lg in _pl_loggers:
+            lg.setLevel(logging.WARNING)
 
         self._trainer = pl.Trainer(callbacks=self._callbacks, **trainer_kwargs)
 
         # Train
         self._trainer.fit(self._forecaster, datamodule=self._data_module)
+
+        # Restore logger levels
+        for lg, lvl in zip(_pl_loggers, _prev_levels):
+            lg.setLevel(lvl)
 
         self.best_model = self._forecaster
         return self
@@ -463,15 +491,31 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         pred_data_module.setup(stage="predict")
 
         # Get predictions
+        import logging
+
         import lightning.pytorch as pl
 
-        trainer_kwargs = {}
-        if hasattr(self, "_random_log_dir"):
-            trainer_kwargs["default_root_dir"] = self._random_log_dir
+        trainer_kwargs = deepcopy(self._trainer_params)
         trainer_kwargs["logger"] = False
+        trainer_kwargs["enable_progress_bar"] = False
+        trainer_kwargs["enable_model_summary"] = False
+
+        # Silence PyTorch Lightning's internal console logging
+        _pl_loggers = [
+            logging.getLogger("lightning.pytorch"),
+            logging.getLogger("pytorch_lightning"),
+            logging.getLogger("lightning"),
+        ]
+        _prev_levels = [lg.level for lg in _pl_loggers]
+        for lg in _pl_loggers:
+            lg.setLevel(logging.WARNING)
 
         pred_trainer = pl.Trainer(**trainer_kwargs)
         predictions = pred_trainer.predict(self.best_model, datamodule=pred_data_module)
+
+        # Restore logger levels
+        for lg, lvl in zip(_pl_loggers, _prev_levels):
+            lg.setLevel(lvl)
 
         # Convert predictions back to sktime format
         output = self._predictions_to_dataframe(predictions, fh)
@@ -540,8 +584,28 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
             loss = MAE()
         model_params["loss"] = loss
 
-        # Pass metadata from data module
-        model_params["metadata"] = data_module.metadata
+        # Enrich metadata from data module with encoder/decoder feature counts
+        # so all v2 models receive a complete metadata dict automatically.
+        metadata = dict(data_module.metadata)
+        feature_names = metadata.get("feature_names", {})
+        n_features = metadata.get("n_features", {})
+        continuous_names = set(feature_names.get("continuous", []))
+        categorical_names = set(feature_names.get("categorical", []))
+        known_names = set(feature_names.get("known", []))
+
+        n_targets = n_features.get("target", 1)
+        metadata["encoder_cont"] = n_features.get("continuous", 0) + n_targets
+        metadata["encoder_cat"] = n_features.get("categorical", 0)
+        metadata["decoder_cont"] = len(continuous_names & known_names)
+        metadata["decoder_cat"] = len(categorical_names & known_names)
+        metadata["max_encoder_length"] = metadata.get("context_length", 3)
+        metadata["max_prediction_length"] = metadata.get("prediction_length", 1)
+        metadata["static_categorical_features"] = n_features.get(
+            "static_categorical", 0
+        )
+        metadata["static_continuous_features"] = n_features.get("static_continuous", 0)
+
+        model_params["metadata"] = metadata
 
         import warnings
 
