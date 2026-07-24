@@ -626,7 +626,6 @@ class _CachedTotoForecaster:
 
         toto_model = Toto.from_pretrained(**self.toto_kwargs)
         toto_model.to(self.device)
-        toto_model.compile()
         self.forecaster = TotoForecaster(toto_model.model)
 
         return self.forecaster
