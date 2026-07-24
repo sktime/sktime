@@ -1,20 +1,17 @@
-"""Tests for Classification Benchmark."""
+"""Tests for Regression Benchmark."""
 
-__author__ = ["jgyasu"]
+__author__ = ["NAME-ASHWANIYADAV"]
 
 import pandas as pd
 import pytest
-from sklearn.metrics import accuracy_score, brier_score_loss
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import KFold
 
-from sktime.benchmarking.classification import ClassificationBenchmark
-from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
-from sktime.classification.dummy import DummyClassifier
-from sktime.datasets import (
-    load_unit_test,
-)
+from sktime.benchmarking.regression import RegressionBenchmark
+from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
+from sktime.regression.dummy import DummyRegressor
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils._testing.panel import make_classification_problem
+from sktime.utils._testing.panel import make_regression_problem
 
 
 @pytest.mark.skipif(
@@ -22,14 +19,14 @@ from sktime.utils._testing.panel import make_classification_problem
     reason="run test only if benchmarking module has changed",
 )
 @pytest.mark.parametrize("write_file", [True, False])
-def test_classification_benchmark(tmp_path, write_file):
-    """Test classification benchmark with single estimator and task."""
-    benchmark = ClassificationBenchmark()
-    benchmark.add_estimator(DummyClassifier())
-    scorers = [accuracy_score]
+def test_regression_benchmark(tmp_path, write_file):
+    """Test regression benchmark with single estimator and task."""
+    benchmark = RegressionBenchmark()
+    benchmark.add_estimator(DummyRegressor())
+    scorers = [mean_squared_error]
 
     cv_splitter = KFold(n_splits=3)
-    benchmark.add_task(make_classification_problem, cv_splitter, scorers)
+    benchmark.add_task(make_regression_problem, cv_splitter, scorers)
 
     if write_file:
         results_file = tmp_path / "results.csv"
@@ -38,11 +35,11 @@ def test_classification_benchmark(tmp_path, write_file):
     results_df = benchmark.run(results_file)
 
     expected_benchmark_labels = [
-        "accuracy_score_fold_0_test",
-        "accuracy_score_fold_1_test",
-        "accuracy_score_fold_2_test",
-        "accuracy_score_mean",
-        "accuracy_score_std",
+        "mean_squared_error_fold_0_test",
+        "mean_squared_error_fold_1_test",
+        "mean_squared_error_fold_2_test",
+        "mean_squared_error_mean",
+        "mean_squared_error_std",
         "fit_time_fold_0_test",
         "fit_time_fold_1_test",
         "fit_time_fold_2_test",
@@ -67,23 +64,21 @@ def test_classification_benchmark(tmp_path, write_file):
 )
 def test_add_list_estimators(tmp_path):
     """Test adding list of estimators."""
-    benchmark = ClassificationBenchmark()
+    benchmark = RegressionBenchmark()
 
-    estimators = [DummyClassifier(), KNeighborsTimeSeriesClassifier()]
+    estimators = [DummyRegressor(), KNeighborsTimeSeriesRegressor()]
 
     benchmark.add_estimator(estimators)
-    scorers = [accuracy_score, brier_score_loss]
+    scorers = [mean_squared_error, mean_absolute_error]
 
     cv_splitter = KFold(n_splits=3)
-    benchmark.add_task(make_classification_problem, cv_splitter, scorers)
+    benchmark.add_task(make_regression_problem, cv_splitter, scorers)
 
     results_file = tmp_path / "results.csv"
     results_df = benchmark.run(results_file)
 
     pd.testing.assert_series_equal(
-        pd.Series(
-            ["DummyClassifier", "KNeighborsTimeSeriesClassifier"], name="model_id"
-        ),
+        pd.Series(["DummyRegressor", "KNeighborsTimeSeriesRegressor"], name="model_id"),
         results_df["model_id"],
     )
 
@@ -94,15 +89,15 @@ def test_add_list_estimators(tmp_path):
 )
 def test_add_dict_estimators(tmp_path):
     """Test adding dict of estimators."""
-    benchmark = ClassificationBenchmark()
+    benchmark = RegressionBenchmark()
 
-    estimators = {"D": DummyClassifier(), "KN": KNeighborsTimeSeriesClassifier()}
+    estimators = {"D": DummyRegressor(), "KN": KNeighborsTimeSeriesRegressor()}
 
     benchmark.add_estimator(estimators)
-    scorers = [accuracy_score, brier_score_loss]
+    scorers = [mean_squared_error, mean_absolute_error]
 
     cv_splitter = KFold(n_splits=3)
-    benchmark.add_task(make_classification_problem, cv_splitter, scorers)
+    benchmark.add_task(make_regression_problem, cv_splitter, scorers)
 
     results_file = tmp_path / "results.csv"
     results_df = benchmark.run(results_file)
@@ -119,19 +114,19 @@ def test_add_dict_estimators(tmp_path):
 )
 def test_add_estimator_twice(tmp_path):
     """Test adding the same estimator twice."""
-    benchmark = ClassificationBenchmark()
-    benchmark.add_estimator(DummyClassifier())
-    benchmark.add_estimator(DummyClassifier())
-    scorers = [accuracy_score]
+    benchmark = RegressionBenchmark()
+    benchmark.add_estimator(DummyRegressor())
+    benchmark.add_estimator(DummyRegressor())
+    scorers = [mean_squared_error]
 
     cv_splitter = KFold(n_splits=3)
-    benchmark.add_task(make_classification_problem, cv_splitter, scorers)
+    benchmark.add_task(make_regression_problem, cv_splitter, scorers)
 
     results_file = tmp_path / "results.csv"
     results_df = benchmark.run(results_file)
 
     pd.testing.assert_series_equal(
-        pd.Series(["DummyClassifier", "DummyClassifier_2"], name="model_id"),
+        pd.Series(["DummyRegressor", "DummyRegressor_2"], name="model_id"),
         results_df["model_id"],
     )
 
@@ -143,14 +138,14 @@ def test_add_estimator_twice(tmp_path):
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
 )
-def test_add_multiple_task(tmp_path):
+def test_add_multiple_tasks(tmp_path):
     """Test adding multiple tasks for benchmarking."""
-    benchmark = ClassificationBenchmark()
-    benchmark.add_estimator(DummyClassifier())
+    benchmark = RegressionBenchmark()
+    benchmark.add_estimator(DummyRegressor())
 
-    dataset_loaders = [make_classification_problem, load_unit_test]
+    dataset_loaders = [make_regression_problem]
     cv_splitter = KFold(n_splits=3)
-    scorers = [accuracy_score, brier_score_loss]
+    scorers = [mean_squared_error, mean_absolute_error]
 
     for dataset_loader in dataset_loaders:
         benchmark.add_task(
@@ -165,10 +160,32 @@ def test_add_multiple_task(tmp_path):
     pd.testing.assert_series_equal(
         pd.Series(
             [
-                "[dataset=make_classification_problem]_[cv_splitter=KFold]",
-                "[dataset=load_unit_test]_[cv_splitter=KFold]",
+                "[dataset=make_regression_problem]_[cv_splitter=KFold]",
             ],
             name="validation_id",
         ),
         results_df["validation_id"],
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_multiple_metrics(tmp_path):
+    """Test benchmark with multiple metrics produces all expected columns."""
+    benchmark = RegressionBenchmark()
+    benchmark.add_estimator(DummyRegressor())
+    scorers = [mean_squared_error, mean_absolute_error]
+
+    cv_splitter = KFold(n_splits=2)
+    benchmark.add_task(make_regression_problem, cv_splitter, scorers)
+
+    results_file = tmp_path / "results.csv"
+    results_df = benchmark.run(results_file)
+
+    result_rows = results_df.T.index.to_list()
+
+    # Check both metrics are present
+    assert "mean_squared_error_mean" in result_rows
+    assert "mean_absolute_error_mean" in result_rows
