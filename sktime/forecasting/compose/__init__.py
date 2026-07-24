@@ -12,6 +12,7 @@ __all__ = [
     "TransformedTargetForecaster",
     "ForecastingPipeline",
     "ForecastX",
+    "FrozenForecaster",
     "GroupbyCategoryForecaster",
     "DirectTabularRegressionForecaster",
     "DirectTimeSeriesRegressionForecaster",
@@ -43,6 +44,7 @@ from sktime.forecasting.compose._ensemble import (
 )
 from sktime.forecasting.compose._fallback import FallbackForecaster
 from sktime.forecasting.compose._fhplex import FhPlexForecaster
+from sktime.forecasting.compose._frozen import FrozenForecaster
 from sktime.forecasting.compose._grouped import (
     ForecastByLevel,
     GroupbyCategoryForecaster,
