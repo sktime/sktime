@@ -841,8 +841,7 @@ def _pad_truncate(data, seq_len, pad_value=0):
     Returns
     -------
     - padded_data: array padded or truncated to (batch_size, seq_len, n_dims)
-    - mask: observed-value mask matching Granite-TSFM preprocessing. Both
-      existing values and synthetic zero-padding positions are marked observed.
+    - mask: mask indicating padded elements (1 for existing; 0 for missing)
     """
     batch_size, original_seq_len, n_dims = data.shape
 
@@ -857,12 +856,8 @@ def _pad_truncate(data, seq_len, pad_value=0):
             mode="constant",
             constant_values=pad_value,
         )
-        # Granite-TSFM pads the input dataframe with numeric zeros and then
-        # constructs ``past_observed_mask`` using ``~np.isnan``. Consequently,
-        # its synthetic padding is observed by the model. Match that behavior
-        # so short-history forecasts have the same scaling and predictions as
-        # the source pipeline.
-        mask = np.ones_like(truncated_data)
+        mask = np.zeros_like(truncated_data)
+        mask[:, -original_seq_len:, :] = 1
 
     return truncated_data, mask
 
