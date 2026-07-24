@@ -243,7 +243,12 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
             try:
                 import hf_xet  # noqa: F401
-            except Exception:
+            except BaseException as exc:
+                # PyO3 raises Rust panics as PanicException, which inherits
+                # directly from BaseException rather than Exception.
+                is_pyo3_panic = type(exc).__name__ == "PanicException"
+                if not isinstance(exc, Exception) and not is_pyo3_panic:
+                    raise
                 os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
                 if _check_soft_dependencies("huggingface_hub", severity="none"):
                     import huggingface_hub.constants as _hf_constants
