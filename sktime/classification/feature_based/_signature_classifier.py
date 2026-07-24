@@ -90,6 +90,16 @@ class SignatureClassifier(BaseClassifier):
     See Also
     --------
     SignatureTransformer
+
+    Examples
+    --------
+    >>> from sktime.classification.feature_based import SignatureClassifier
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train", return_X_y=True)
+    >>> X_test, y_test = load_basic_motions(split="test", return_X_y=True)
+    >>> clf = SignatureClassifier()
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    >>> clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
