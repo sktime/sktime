@@ -5,6 +5,9 @@ on:
         required: true
         type: string
 
+env:
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
+
 jobs:
   test-est:
     strategy:
@@ -18,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -26,7 +29,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -38,8 +41,8 @@ jobs:
         shell: pwsh
         run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
-      - name: Install sktime with dev dependencies
-        run: uv pip install .[dev]
+      - name: Install sktime with dev dependencies and skpro
+        run: uv pip install .[dev,skpro]
         env:
           UV_SYSTEM_PYTHON: 1
 

@@ -301,7 +301,7 @@ def run_classification_experiment(
          train probabilities, the classifier will be built but no file will be output.
     """
     if not test_file and not train_file:
-        raise Exception(
+        raise ValueError(
             "Both test_file and train_file are set to False. "
             "At least one must be output."
         )

@@ -13,13 +13,6 @@ from sklearn.preprocessing import StandardScaler
 from sktime.pipeline import make_pipeline
 from sktime.regression._delegate import _DelegatedRegressor
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.panel.rocket import (
-    MiniRocket,
-    MiniRocketMultivariate,
-    MultiRocket,
-    MultiRocketMultivariate,
-    Rocket,
-)
 
 
 class RocketRegressor(_DelegatedRegressor, BaseRegressor):
@@ -136,15 +129,6 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
 
-        if rocket_transform in ["multirocket", "minirocket"]:
-            if self.num_kernels < 84:
-                self.num_kernels_ = 84
-            else:
-                self.num_kernels_ = (self.num_kernels // 84) * 84
-
-        else:
-            self.num_kernels_ = num_kernels
-
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
         self.use_multivariate = use_multivariate
@@ -153,6 +137,29 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         self.random_state = random_state
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        n_jobs = self.n_jobs
+        use_multivariate = self.use_multivariate
+        num_kernels = self.num_kernels
+        rocket_transform = self.rocket_transform
+
+        if rocket_transform in ["multirocket", "minirocket"]:
+            if self.num_kernels < 84:
+                self.num_kernels_ = 84
+            else:
+                self.num_kernels_ = (self.num_kernels // 84) * 84
+
+        else:
+            self.num_kernels_ = num_kernels
 
         from sktime.utils.validation import check_n_jobs
 
@@ -172,15 +179,24 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         }
 
         if rocket_transform == "rocket":
+            from sktime.transformations.rocket import Rocket
+
             del common_params["max_dilations_per_kernel"]
             univar_rocket = Rocket(**common_params)
             multivar_rocket = univar_rocket
 
         elif rocket_transform == "minirocket":
+            from sktime.transformations.rocket import MiniRocket, MiniRocketMultivariate
+
             multivar_rocket = MiniRocketMultivariate(**common_params)
             univar_rocket = MiniRocket(**common_params)
 
         elif self.rocket_transform == "multirocket":
+            from sktime.transformations.rocket import (
+                MultiRocket,
+                MultiRocketMultivariate,
+            )
+
             common_params["n_features_per_kernel"] = self.n_features_per_kernel
             multivar_rocket = MultiRocketMultivariate(**common_params)
             univar_rocket = MultiRocket(**common_params)

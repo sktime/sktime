@@ -278,7 +278,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_categorical_X_raises_error(self, estimator_instance):
         """Test that categorical X in not supported forecasters raises error.
 
-        Only test with forecasters which do not ignore exogeneous X and those that do
+        Only test with forecasters which do not ignore exogenous X and those that do
         not support categorical natively. These are the cases where error is expected
         to be raised.
         """
@@ -845,7 +845,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             with pytest.raises(ValueError):
                 f.predict_quantiles(fh=FH0 + 1)
 
-    def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
+    def test_hierarchical_with_exogenous(self, estimator_instance, n_columns):
         """Check that hierarchical forecasting works, also see bug #3961.
 
         Arguments

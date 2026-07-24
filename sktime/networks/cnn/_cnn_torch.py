@@ -42,12 +42,12 @@ class CNNNetworkTorch(NNModule):
     padding : str, default = "auto"
         Padding for conv layers. "auto": "same" if series_length < 60 else "valid";
         "valid" or "same" passed directly.
-    activation : str or None, default = None
+    activation : Callable or None, default = None
         Activation applied to the output layer. None for regression.
         For output layer, use None for regression (linear) or pass from
         classifier/regressor.
-    activation_hidden : str, default = "sigmoid"
-        Activation function for hidden conv layers: "sigmoid", "relu" or "tanh".
+    activation_hidden : Callable or None, default = None
+        Activation function for hidden conv layers.
     init_weights: str or None, default = None
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
@@ -87,23 +87,22 @@ class CNNNetworkTorch(NNModule):
         use_bias=True,
         padding="auto",
         activation=None,
-        activation_hidden="sigmoid",
+        activation_hidden=None,
         init_weights=None,
         random_state=None,
     ):
+        super().__init__()
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.kernel_sizes = kernel_sizes
         self.avg_pool_size = avg_pool_size
         self.filter_sizes = filter_sizes
-        self.activation_hidden = activation_hidden
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.padding = padding
         self.init_weights = init_weights
         self.random_state = random_state
-
-        super().__init__()
 
         n_dims = self.input_shape[0]
         series_length = self.input_shape[1]
@@ -141,7 +140,8 @@ class CNNNetworkTorch(NNModule):
                     padding=pad_value,
                 )
             )
-            layers.append(self._instantiate_activation(self.activation_hidden))
+            if self.activation_hidden is not None:
+                layers.append(self.activation_hidden)
             layers.append(nnAvgPool1d(self.avg_pool_size))
             in_ch = self.filter_sizes[i]
 
@@ -160,7 +160,6 @@ class CNNNetworkTorch(NNModule):
         self._flattened_size = L * self.filter_sizes[-1]
 
         self.fc = nnLinear(self._flattened_size, self.num_classes, bias=self.use_bias)
-        self._activation = self._instantiate_activation(self.activation)
 
         if self.random_state is not None:
             torch_manual_seed = _safe_import("torch.manual_seed")
@@ -194,8 +193,8 @@ class CNNNetworkTorch(NNModule):
         out = self.conv_blocks(X)
         out = self.flatten(out)
         out = self.fc(out)
-        if self._activation is not None:
-            out = self._activation(out)
+        if self.activation is not None:
+            out = self.activation(out)
 
         if self.num_classes == 1:  # (regression)
             out = out.squeeze(1)  # (batch_size,)
@@ -223,44 +222,3 @@ class CNNNetworkTorch(NNModule):
 
             if module.bias is not None:
                 module.bias.data.zero_()
-
-    def _instantiate_activation(self, activation):
-        """Instantiate the activation function given an activation string.
-
-        Parameters
-        ----------
-        activation : str or None
-            The activation function to be instantiated.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The instantiated activation function.
-        """
-        # support for more activation functions will be added
-        if activation is None or activation == "linear":
-            return _safe_import("torch.nn.Identity")()
-        elif isinstance(activation, NNModule):
-            return activation
-        elif isinstance(activation, str):
-            if activation.lower() == "sigmoid":
-                return _safe_import("torch.nn.Sigmoid")()
-            elif activation.lower() == "relu":
-                return _safe_import("torch.nn.ReLU")()
-            elif activation.lower() == "tanh":
-                return _safe_import("torch.nn.Tanh")()
-            elif activation.lower() == "softmax":
-                return _safe_import("torch.nn.Softmax")(dim=1)
-            elif activation.lower() == "logsoftmax":
-                return _safe_import("torch.nn.LogSoftmax")(dim=1)
-            else:
-                raise ValueError(
-                    "If `activation` is not None, it must be one of "
-                    "'sigmoid', 'relu', 'tanh', 'softmax' or 'logsoftmax'. "
-                    f"Found {activation}"
-                )
-        else:
-            raise TypeError(
-                "`activation` should either be of type str or torch.nn.Module. "
-                f"But found the type to be: {type(activation)}"
-            )

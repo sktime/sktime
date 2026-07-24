@@ -8,20 +8,18 @@ from collections.abc import Iterator
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     DEFAULT_FH,
     DEFAULT_WINDOW_LENGTH,
-    FORECASTING_HORIZON_TYPES,
     PANDAS_MTYPES,
     SPLIT_GENERATOR_TYPE,
     SPLIT_TYPE,
 )
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation import NON_FLOAT_WINDOW_LENGTH_TYPES
 from sktime.utils.validation.forecasting import check_fh
 
@@ -107,7 +105,7 @@ class BaseSplitter(BaseObject):
 
     def __init__(
         self,
-        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
+        fh=DEFAULT_FH,
         window_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
         self.window_length = window_length
@@ -128,7 +126,6 @@ class BaseSplitter(BaseObject):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass
@@ -458,7 +455,7 @@ class BaseSplitter(BaseObject):
         """
         raise NotImplementedError("abstract method")
 
-    def get_fh(self) -> ForecastingHorizon:
+    def get_fh(self):
         """Return the forecasting horizon.
 
         Returns

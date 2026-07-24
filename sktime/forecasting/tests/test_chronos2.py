@@ -3,9 +3,9 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.forecasting.chronos2 import Chronos2Forecaster
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(

@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.mlp import MLPNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MLPRegressor(BaseDeepRegressor):
@@ -85,6 +84,7 @@ class MLPRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
+        "tests:skip_all": True,  # DL suspected hangs/memouts, see #4610
     }
 
     def __init__(
@@ -104,8 +104,6 @@ class MLPRegressor(BaseDeepRegressor):
         n_layers=3,
         hidden_dim=500,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -233,7 +231,7 @@ class MLPRegressor(BaseDeepRegressor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

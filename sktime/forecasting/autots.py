@@ -309,7 +309,6 @@ class AutoTS(BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         from autots import AutoTS as _autots

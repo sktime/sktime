@@ -15,12 +15,12 @@ from importlib import import_module
 from unittest.mock import patch
 
 import pytest
+from skbase.utils.dependencies import _check_python_version, _check_soft_dependencies
 
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
-from sktime.utils.dependencies import _check_python_version, _check_soft_dependencies
 
 # list of soft dependencies used
 # excludes estimators, only for soft dependencies used in non-estimator modules

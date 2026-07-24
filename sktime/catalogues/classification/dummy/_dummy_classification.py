@@ -14,8 +14,8 @@ class DummyClassificationCatalogue(BaseCatalogue):
         "maintainers": "jgyasu",
         "object_type": "catalogue",
         "catalogue_type": "mixed",
-        "n_items": 5,
-        "n_datasets": 2,
+        "n_items": 4,
+        "n_datasets": 1,
         "n_classifiers": 1,
         "n_metrics": 1,
         "n_cv_splitters": 1,
@@ -24,7 +24,6 @@ class DummyClassificationCatalogue(BaseCatalogue):
     def _get(self):
         """Return a dict of items (datasets, forecasters, metrics)."""
         datasets = [
-            "Beef",
             "ArrowHead",
         ]
 
@@ -35,7 +34,7 @@ class DummyClassificationCatalogue(BaseCatalogue):
         cv_splitters = [KFold(n_splits=3)]
 
         all_objects = {
-            "dataset": [f"UCRUEADataset('{dataset}')" for dataset in datasets],
+            "dataset": datasets,
             "classifier": classifiers,
             "metric": metrics,
             "cv_splitter": cv_splitters,
