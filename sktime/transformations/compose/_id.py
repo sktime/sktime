@@ -14,7 +14,25 @@ from sktime.transformations.compose._common import CORE_MTYPES
 
 
 class Id(BaseTransformer):
-    """Identity transformer, returns data unchanged in transform/inverse_transform."""
+    """Identity transformer, returns data unchanged in transform/inverse_transform.
+
+    Example
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.transformations.compose._id import Id
+    >>> y = load_airline()
+    >>> transformer = Id()
+    >>> transformer.fit(y)
+    Id()
+    >>> transformer.transform(y).head()
+    Period
+    1949-01    112.0
+    1949-02    118.0
+    1949-03    132.0
+    1949-04    129.0
+    1949-05    121.0
+    Freq: M, Name: Number of airline passengers, dtype: float64
+    """
 
     _tags = {
         "authors": "fkiraly",
