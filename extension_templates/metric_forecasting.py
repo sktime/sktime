@@ -130,6 +130,8 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
         # "pred_quantiles" = quantile forecasts
         # "pred_var" = variance forecasts
         "scitype:y_pred": "pred",
+        # whether the metric requires y_true to be passed in evaluate
+        "requires_y_true": True,
         # whether the metric requires training data y_train to be passed
         "requires-y-train": False,
         # whether the metric requires a benchmark forecast y_pred_benchmark
@@ -142,6 +144,17 @@ class MyForecastingMetric(BaseForecastingErrorMetric):
         # data with pd.MultiIndex. If False (default), the framework handles this
         # via vectorization over hierarchy levels automatically.
         "inner_implements_multilevel": False,
+        # whether the metric can handle sample weights in evaluate
+        "capability:sample_weight": False,
+        # whether the metric has a random_state parameter
+        # if True, metric can be derandomized by setting random_state,
+        # producing the same result on every run (up to numerical precision)
+        "capability:random_state": False,
+        # whether the metric behaves deterministically or stochastically
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # "stochastic" = may produce different results on different runs
+        # "derandomized" = stochastic unless random_state is set, then deterministic
+        "property:randomness": "deterministic",
     }
 
     # todo: add hyper-parameters to constructor, keep multioutput/multilevel/by_index

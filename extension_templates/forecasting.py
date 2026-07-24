@@ -116,6 +116,13 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean False (ignores X), True (uses X in non-trivial manner)
         # CAVEAT: if tag is set to False, inner methods always see X=None
         #
+        # capability:non_contiguous_X = can handle non-contiguous exogenous X?
+        "capability:non_contiguous_X": True,
+        # valid values: boolean True (yes), False (no)
+        # only relevant if capability:exogenous is True
+        # if False, forecaster requires X covering every time point from the first
+        # to the last element of fh, not just the points requested in fh
+        #
         # requires-fh-in-fit = is forecasting horizon always required in fit?
         "requires-fh-in-fit": True,
         # valid values: boolean True (yes), False (no)
@@ -157,6 +164,56 @@ class MyForecaster(BaseForecaster):
         # valid values: boolean True (yes), False (no)
         # if True, implement _pretrain and optionally _pretrain_update below
         # enables the pretrain -> fit -> predict workflow for global learning
+        #
+        # pretrain:fitted_params = names of attributes carrying pretrained state
+        "pretrain:fitted_params": [],
+        # valid values: list of str, names of attributes set by _pretrain
+        # only relevant if capability:pretrain is True
+        #
+        # capability:categorical_in_X = can estimator handle categorical variables in X?
+        "capability:categorical_in_X": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:categorical_in_y = can estimator handle categorical variables in y?
+        "capability:categorical_in_y": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:unequal_length = can estimator handle unequal length panels/series?
+        "capability:unequal_length": False,
+        # valid values: boolean True (yes), False (no)
+        # only relevant for panel or hierarchical inner_mtype
+        #
+        # property:randomness = deterministic or stochastic behaviour?
+        "property:randomness": "deterministic",
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # "derandomized" = stochastic unless random_state is set, see below
+        #
+        # capability:random_state = does estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, estimator can be derandomized by setting random_state
+        #
+        # fit_is_empty = does the estimator have an empty fit method, i.e., no fitting?
+        "fit_is_empty": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:sample_weight = can the estimator handle sample weights in fit?
+        "capability:sample_weight": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:contractable = does estimator support a maximum fit time contract?
+        "capability:contractable": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:train_estimate = can estimator estimate performance on train set?
+        "capability:train_estimate": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, exposes a training performance estimate via get_fitted_params
+        #
+        # capability:feature_importance = can the estimator provide feature importance?
+        "capability:feature_importance": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, exposes feature importances via get_fitted_params
         #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages

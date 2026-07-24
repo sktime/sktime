@@ -66,6 +66,9 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
     # optional todo: override base class estimator default tags here if necessary
     # these are the default values, only add if different to these.
     _tags = {
+        "authors": ["author1", "author2"],  # authors, GitHub handles
+        "maintainers": ["maintainer1", "maintainer2"],  # maintainers, GitHub handles
+        # remove maintainers tag if maintained by sktime core team
         "X_inner_mtype": "numpy3D",  # which type do _fit/_predict accept, usually
         # this is either "numpy3D" or "nested_univ" (nested pd.DataFrame). Other
         # types are allowable, see datatypes/panel/_registry.py for options.
@@ -76,6 +79,28 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         "capability:feature_importance": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        #
+        # capability:sample_weight = can the estimator handle sample weights in fit?
+        "capability:sample_weight": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:random_state = does estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, estimator can be derandomized by setting random_state,
+        # producing the same result on every run (up to numerical precision)
+        #
+        # property:randomness = deterministic or stochastic behaviour?
+        "property:randomness": "deterministic",
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # "stochastic" = may produce different results on different runs
+        # "deterministic" = always produces the same result
+        # "derandomized" = stochastic unless random_state is set, then deterministic
+        #
+        # fit_is_empty = is fit empty and can be skipped?
+        "fit_is_empty": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, _fit is considered empty and calling it has no effect
     }
 
     # todo: add any hyper-parameters and components to constructor

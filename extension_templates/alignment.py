@@ -96,6 +96,49 @@ class MyAligner(BaseAligner):
         "capability:distance": False,  # does compute/return overall distance?
         "capability:distance-matrix": False,  # does compute/return distance matrix?
         "capability:unequal_length": True,  # can align sequences of unequal length?
+        #
+        # alignment_type = does aligner produce a full or partial alignment?
+        "alignment_type": "full",
+        # valid values: "full", "partial"
+        # "full" = entire input series are aligned, indices cover full series length
+        # "partial" = only subsequences of the input series are aligned
+        #
+        # capability:feature_importance = can the estimator provide feature importance?
+        "capability:feature_importance": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, exposes feature importances via get_fitted_params
+        #
+        # capability:sample_weight = can the estimator handle sample weights in fit?
+        "capability:sample_weight": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:contractable = does estimator support a maximum fit time contract?
+        "capability:contractable": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, some parameter of the estimator can be used to limit max fit time
+        #
+        # capability:train_estimate = can estimator estimate performance on train set?
+        "capability:train_estimate": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, exposes a training performance estimate via get_fitted_params
+        #
+        # capability:random_state = does estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, estimator can be derandomized by setting random_state,
+        # producing the same result on every run (up to numerical precision)
+        #
+        # property:randomness = deterministic or stochastic behaviour?
+        "property:randomness": "deterministic",
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # "stochastic" = may produce different results on different runs
+        # "deterministic" = always produces the same result
+        # "derandomized" = stochastic unless random_state is set, then deterministic
+        #
+        # fit_is_empty = is fit empty and can be skipped?
+        "fit_is_empty": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, _fit is considered empty and calling it has no effect
     }
 
     # todo: add any hyper-parameters and components to constructor
