@@ -109,6 +109,6 @@ def test_timesfm_broadcasting_tags():
     """TimesFM broadcasting=True should apply the broadcasting tag set, see #10520."""
     est = TimesFMForecaster(broadcasting=True, ignore_deps=True)
 
-    assert est.get_tag("y_inner_mtype") == "pd.Series"
+    assert est.get_tag("y_inner_mtype") == "pd.DataFrame"
     assert est.get_tag("X_inner_mtype") == "pd.DataFrame"
     assert not est.get_tag("capability:global_forecasting")

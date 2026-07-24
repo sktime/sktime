@@ -5,21 +5,20 @@ __author__ = ["Faakhir30"]
 __all__ = ["FlowStateForecaster"]
 
 import numpy as np
-import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
+from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    FoundationModelSpec,
+    ModelHandle,
 )
 from sktime.utils.dependencies import _safe_import
-from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 
 
-class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
     """Zero-shot forecaster wrapping IBM FlowState via granite-tsfm.
 
     FlowState, developed by IBM Research, is an encoder-decoder architecture,
@@ -77,8 +76,6 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "transformers",
             "accelerate",
         ],
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
         "capability:multivariate": False,
         "capability:unequal_length": True,
@@ -87,7 +84,6 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "requires-fh-in-fit": False,
-        "tests:vm": True,
     }
 
     def __init__(
@@ -105,123 +101,87 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.config = config
         self.batch_first = batch_first
         self.prediction_type = prediction_type
-        self.model = None
-        super().__init__()
 
-    def __getstate__(self):
-        """Get state for pickling."""
-        state = self.__dict__.copy()
-        state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Set state for unpickling."""
-        self.__dict__.update(state)
-
-    def __post_init__(self):
-        """Post-initialization setup."""
-        self._config = {} if self.config is None else self.config.copy()
-        self._device = _resolve_device()
-
-    def _get_unique_model_key(self):
-        key_items = {
-            "model_path": self.model_path,
-            "revision": self.revision,
-            "batch_first": self.batch_first,
-            "prediction_type": self.prediction_type,
-            "device": self._device,
-            **self._config,
-        }
-        return str(sorted(key_items.items()))
+        model_spec = FoundationModelSpec(
+            model_path=model_path,
+            revision=revision,
+            config=config,
+            device="auto",
+            predict_extra_kwargs={
+                "scale_factor": scale_factor,
+                "batch_first": batch_first,
+                "prediction_type": prediction_type,
+            },
+        )
+        super().__init__(model_spec=model_spec)
 
     def _load_model(self):
-        return _CachedFlowState(
-            key=self._get_unique_model_key(),
-            forecaster=self,
-        ).load_from_checkpoint()
+        """Load a FlowState checkpoint into a cacheable model handle."""
+        from tsfm_public import FlowStateForPrediction
 
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        Loads the pretrained FlowState checkpoint and stores ``y`` as context
-        for zero-shot prediction.
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            Endogenous time series (univariate, one column).
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables. Ignored.
-        fh : ForecastingHorizon, optional (default=None)
-            Forecasting horizon.
-
-        Returns
-        -------
-        self
-        """
-        self._scale_factor = float(self.scale_factor)
-        self.model = self._load_model()
-        self.model.eval()
-        self._context = y
-        return self
-
-    def _run(self, pred_len):
-        if self.model is None:
-            self.model = self._load_model()
-        self.model.eval()
-        past = torch.tensor(
-            self._context.iloc[:, 0].to_numpy(dtype=np.float32).reshape(1, -1, 1),
-            dtype=self.model.dtype,
-            device=self.model.device,
+        model_spec = self.model_spec
+        model = FlowStateForPrediction.from_pretrained(
+            model_spec.model_path,
+            revision=model_spec.revision,
+            **(model_spec.config or {}),
+            **model_spec.load_extra_kwargs,
         )
-        with torch.inference_mode():
-            return self.model(
-                past_values=past,
-                prediction_length=pred_len,
-                batch_first=self.batch_first,
-                scale_factor=self._scale_factor,
-                prediction_type=self.prediction_type,
-            )
+        model = model.to(model_spec.device)
 
-    def _predict(self, fh, X=None):
-        if fh is None:
-            fh = self.fh
-        fh_rel = fh.to_relative(self.cutoff)
-        pred_len = int(np.max(fh_rel.to_numpy()))
-        out = self._run(pred_len)
-        values = out.prediction_outputs.detach().cpu().numpy()[0]
+        return ModelHandle(model=model)
+
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Run the FlowState forward pass and normalize its outputs."""
+        model = handle.model
+        predict_kwargs = self.model_spec.predict_extra_kwargs
+        past = torch.tensor(
+            context_y.iloc[:, 0].to_numpy(dtype=np.float32).reshape(1, -1, 1),
+            dtype=model.dtype,
+            device=model.device,
+        )
+        output = model(
+            past_values=past,
+            prediction_length=pred_len,
+            **predict_kwargs,
+        )
+
+        values = output.prediction_outputs.detach().cpu().numpy()[0]
         if values.ndim == 1:
             values = values[:, np.newaxis]
 
-        pred_len_out = values.shape[0]
-        index = (
-            ForecastingHorizon(range(1, pred_len_out + 1))
-            .to_absolute(self._cutoff)
-            ._values
-        )
-        pred_df = pd.DataFrame(values, index=index, columns=self._context.columns)
-        pred_df.index.names = self._context.index.names
-        pred_out = fh_rel.get_expected_pred_idx(self._context, cutoff=self.cutoff)
-        return pred_df.loc[pred_df.index.isin(pred_out)]
-
-    def _predict_quantiles(self, fh, X, alpha):
-        fh_rel = fh.to_relative(self.cutoff)
-        pred_len = int(np.max(fh_rel.to_numpy()))
-        out = self._run(pred_len)
-        q = out.quantile_outputs.detach().cpu().numpy()[0, :, :, 0]
-        model_q = np.asarray(self.model.config.quantiles, dtype=float)
-        rel_idx = (fh_rel.to_numpy() - 1).astype(int)
-
-        var_name = self._context.columns[0]
-        pred_index = fh.to_absolute(self.cutoff)._values
-        cols = pd.MultiIndex.from_product([[var_name], alpha])
-        pred_q = pd.DataFrame(index=pred_index, columns=cols)
-        for a in alpha:
-            pred_q[(var_name, a)] = np.array(
-                [np.interp(a, model_q, q[:, i]) for i in rel_idx]
+        quantiles = None
+        if alpha is not None:
+            native_quantiles = (
+                output.quantile_outputs.detach().cpu().numpy()[0, :, :, 0]
             )
-        pred_q.index.names = self._context.index.names
-        return pred_q
+            model_quantiles = np.asarray(model.config.quantiles, dtype=float)
+            quantiles = {
+                quantile: np.asarray(
+                    [
+                        np.interp(
+                            quantile,
+                            model_quantiles,
+                            native_quantiles[:, timepoint],
+                        )
+                        for timepoint in range(pred_len)
+                    ]
+                ).reshape(-1, 1)
+                for quantile in alpha
+            }
+
+        point_key = (
+            "median" if predict_kwargs["prediction_type"] == "median" else "mean"
+        )
+        return ForecastResult(**{point_key: values}, quantiles=quantiles)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -241,34 +201,3 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             {},
             {"scale_factor": 0.5},
         ]
-
-
-@_multiton
-class _CachedFlowState:
-    """Cached FlowState model; shared across forecaster instances with the same key."""
-
-    def __init__(self, key: str, forecaster: "FlowStateForecaster"):
-        self.key = key
-        self.forecaster = forecaster
-        self.model = None
-
-    def load_from_checkpoint(self):
-        if self.model is not None:
-            return self.model
-
-        from tsfm_public import FlowStateForPrediction
-
-        f = self.forecaster
-        kwargs = {"revision": f.revision, "batch_first": f.batch_first}
-        kwargs.update(f._config)
-        self.model = FlowStateForPrediction.from_pretrained(f.model_path, **kwargs)
-        return self.model.to(f._device)
-
-
-def _resolve_device():
-    if _check_soft_dependencies("torch", severity="none"):
-        if torch.cuda.is_available():
-            return "cuda"
-        if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            return "mps"
-    return "cpu"
