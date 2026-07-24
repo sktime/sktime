@@ -172,7 +172,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         updated at predict-time via ``self.model_.hparams.prediction_length``.
 
         The effective feature dimensions are read from the fitted attributes
-        ``_feat_dynamic_real_dim_`` / ``_past_feat_dynamic_real_dim_`` when
+        ``_num_feat_dynamic_real`` / ``_num_past_feat_dynamic_real`` when
         available (populated inside ``_fit``), falling back to the constructor
         parameters otherwise.  This ensures ``self.num_feat_dynamic_real``
         and ``self.num_past_feat_dynamic_real`` are never mutated.
@@ -253,14 +253,14 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # self.num_feat_dynamic_real / self.num_past_feat_dynamic_real stay as
         # the user set them (None means "infer from data").
         if self.num_feat_dynamic_real is None:
-            self._feat_dynamic_real_dim_ = X.shape[1] if X is not None else 0
+            self._num_feat_dynamic_real = X.shape[1] if X is not None else 0
         else:
-            self._feat_dynamic_real_dim_ = self.num_feat_dynamic_real
+            self._num_feat_dynamic_real = self.num_feat_dynamic_real
 
         if self.num_past_feat_dynamic_real is None:
-            self._past_feat_dynamic_real_dim_ = 0
+            self._num_past_feat_dynamic_real = 0
         else:
-            self._past_feat_dynamic_real_dim_ = self.num_past_feat_dynamic_real
+            self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
 
         # Lazy-init: load model on first access; reuse on subsequent fit() calls.
         self.model_ = self._init_model(prediction_length)
