@@ -177,26 +177,14 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         parameters otherwise.  This ensures ``self.num_feat_dynamic_real``
         and ``self.num_past_feat_dynamic_real`` are never mutated.
         """
-        _num_feat_dynamic_real = getattr(
-            self,
-            "_feat_dynamic_real_dim_",
-            self.num_feat_dynamic_real if self.num_feat_dynamic_real is not None else 0,
-        )
-        _num_past_feat_dynamic_real = getattr(
-            self,
-            "_past_feat_dynamic_real_dim_",
-            self.num_past_feat_dynamic_real
-            if self.num_past_feat_dynamic_real is not None
-            else 0,
-        )
         return {
             "checkpoint_path": self.checkpoint_path,
             "context_length": self.context_length,
             "patch_size": self.patch_size,
             "num_samples": self.num_samples,
             "target_dim": self.target_dim,
-            "feat_dynamic_real_dim": _num_feat_dynamic_real,
-            "past_feat_dynamic_real_dim": _num_past_feat_dynamic_real,
+            "feat_dynamic_real_dim": self._num_feat_dynamic_real,
+            "past_feat_dynamic_real_dim": self._num_past_feat_dynamic_real,
             "map_location": self.map_location,
             "use_source_package": self.use_source_package,
         }
