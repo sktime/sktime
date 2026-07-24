@@ -731,6 +731,14 @@ Domain agnostic foundation models
 
     SundialForecaster
 
+.. currentmodule:: sktime.forecasting.t0
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    T0Forecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
