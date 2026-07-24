@@ -6,6 +6,7 @@ This module provides an ``sktime`` forecaster wrapping the local Timer-S1
 
 - zero-shot prediction through :meth:`fit` + :meth:`predict`
 - quantile prediction through :meth:`predict_quantiles`
+- distributional prediction through :meth:`predict_proba`
 
 Model training and fine-tuning are not supported at the moment, though they may
 be added in future. Calling :meth:`fit` only loads the model and stores the
@@ -45,8 +46,13 @@ class TimerS1Forecaster(BaseForecaster):
     - Timer-S1 training is currently not supported, but may be added in future.
       The estimator performs only zero-shot forecasting from a loaded or
       randomly initialized model.
-    - Quantile prediction is only available for quantiles present in
-      ``model.config.quantiles``.
+    - Quantile prediction via ``predict_quantiles`` is only available for
+      quantiles present in ``model.config.quantiles``.
+    - Distributional prediction via ``predict_proba`` returns a ``skpro``
+      ``HistogramQPD`` parameterized by the native quantile grid
+      ``model.config.quantiles``: it interpolates linearly between adjacent
+      native quantiles, and (via ``tails="mass"``) clamps levels outside the
+      native grid to the nearest native quantile.
     - Loaded models are cached via a multiton helper keyed by model-loading
       inputs to avoid repeated model instantiation.
     - The default Timer-S1 checkpoint has 8 billion parameters. For most
@@ -174,7 +180,7 @@ class TimerS1Forecaster(BaseForecaster):
         "authors": ["WenWeiTHU", "geetu040"],
         # WenWeiTHU for bytedance-research/Timer-S1
         "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers[torch]>4.57.0,<5.0.0"],
+        "python_dependencies": ["transformers[torch]>4.57.0,<5.0.0", "skpro>=2.14"],
         "tests:vm": True,
     }
 
@@ -337,16 +343,9 @@ class TimerS1Forecaster(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        import torch
-        import transformers
-
-        if self.deterministic:
-            transformers.set_seed(42)
-
         self.model_ = self._load_model()
 
         quantiles = self.model_.config.quantiles
-        past_values = self.context_
 
         if fh is None:
             fh = self.fh
@@ -365,6 +364,44 @@ class TimerS1Forecaster(BaseForecaster):
             )
         quantiles_idx = np.array([quantiles.index(i) for i in alpha])
 
+        preds = self._predict_full_quantiles(horizon_length)
+        preds = preds[preds_idx]
+        preds = preds[:, quantiles_idx]
+
+        index = fh.to_absolute(self._cutoff)._values
+        name = self.context_.name if self.context_.name is not None else 0
+        columns = pd.MultiIndex.from_product([[name], alpha])
+        pred_quantiles = pd.DataFrame(
+            data=preds,
+            index=index,
+            columns=columns,
+        )
+
+        return pred_quantiles
+
+    def _predict_full_quantiles(self, horizon_length):
+        """Run the model forward pass and return full quantile forecasts.
+
+        Shared helper for ``_predict_quantiles`` and ``_predict_proba``.
+
+        Parameters
+        ----------
+        horizon_length : int
+            Number of forecast steps to generate (relative max index + 1).
+
+        Returns
+        -------
+        preds : 2D np.ndarray of shape (horizon_length, n_quantiles)
+            Forecasts at each native quantile level in
+            ``model.config.quantiles`` for horizon steps 1..horizon_length.
+        """
+        import torch
+        import transformers
+
+        if self.deterministic:
+            transformers.set_seed(42)
+
+        past_values = self.context_
         past_values = np.expand_dims(past_values, axis=0)
         past_values = torch.from_numpy(past_values)
         past_values = past_values.to(self.model_.dtype)
@@ -377,20 +414,55 @@ class TimerS1Forecaster(BaseForecaster):
 
         preds = output.squeeze(axis=0)
         preds = preds.T
-        preds = preds[preds_idx]
-        preds = preds[:, quantiles_idx]
         preds = preds.detach().float().cpu().numpy()
+        return preds
 
-        index = fh.to_absolute(self._cutoff)._values
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : sktime time series object, optional (default=None)
+            Exogeneous time series for the forecast
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution, ``HistogramQPD`` parameterized by the
+            native quantile grid ``model.config.quantiles``
+        """
+        from skpro.distributions import HistogramQPD
+
+        self.model_ = self._load_model()
+
+        quantiles = [round(i, 3) for i in self.model_.config.quantiles]
+
+        if fh is None:
+            fh = self.fh
+        fh = fh.to_relative(self.cutoff)
+        preds_idx = fh._values.values - 1
+        horizon_length = np.max(preds_idx) + 1
+
+        preds = self._predict_full_quantiles(horizon_length)
+        preds = preds[preds_idx]
+
+        pred_index = fh.to_absolute(self._cutoff)._values
         name = self.context_.name if self.context_.name is not None else 0
-        columns = pd.MultiIndex.from_product([[name], alpha])
-        pred_quantiles = pd.DataFrame(
-            data=preds,
-            index=index,
-            columns=columns,
-        )
+        columns = pd.Index([name])
 
-        return pred_quantiles
+        # rows of q_df are (quantile level, time index), see HistogramQPD docs
+        row_index = pd.MultiIndex.from_product([quantiles, pred_index])
+        data = preds.T.reshape(-1, 1)
+        q_df = pd.DataFrame(data, index=row_index, columns=columns)
+
+        return HistogramQPD(q_df, tails="mass", index=pred_index, columns=columns)
 
     def _load_model(self):
         """Load or retrieve a cached Timer-S1 model instance.
