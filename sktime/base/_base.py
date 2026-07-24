@@ -260,9 +260,13 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
 
         saved files are zip files with following contents:
 
-        * ``_metadata`` - contains class of self, i.e., ``type(self)``
+        * ``_metadata`` - contains metadata dictionary including class of self
+          (``type(self)``) and ``sktime_version``
         * ``_obj`` - serialized self. This class uses the default serialization
           (pickle).
+
+        Note: Estimator dumps are version-specific and are not guaranteed to be
+        compatible across different sktime versions.
 
         Parameters
         ----------
@@ -292,6 +296,13 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
 
         from skbase.utils.dependencies import _check_soft_dependencies
 
+        from sktime import __version__ as sktime_version
+
+        metadata = {
+            "class": type(self),
+            "sktime_version": sktime_version,
+        }
+
         if serialization_format not in SERIALIZATION_FORMATS:
             raise ValueError(
                 f"The provided `serialization_format`='{serialization_format}' "
@@ -313,19 +324,19 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             import cloudpickle
 
             if path is None:
-                return (type(self), cloudpickle.dumps(self))
+                return (metadata, cloudpickle.dumps(self))
 
             with open(path / "_metadata", "wb") as file:
-                cloudpickle.dump(type(self), file)
+                cloudpickle.dump(metadata, file)
             with open(path / "_obj", "wb") as file:
                 cloudpickle.dump(self, file)
 
         elif serialization_format == "pickle":
             if path is None:
-                return (type(self), pickle.dumps(self))
+                return (metadata, pickle.dumps(self))
 
             with open(path / "_metadata", "wb") as file:
-                pickle.dump(type(self), file)
+                pickle.dump(metadata, file)
             with open(path / "_obj", "wb") as file:
                 pickle.dump(self, file)
 
