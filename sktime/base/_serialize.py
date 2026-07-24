@@ -32,6 +32,13 @@ def load(serial):
     -------
     Deserialized self resulting in output `serial`, of `cls.save`
 
+    Warns
+    -----
+    UserWarning
+        If a file-based serialization includes a different sktime version than the
+        current environment. Serialized estimators are not guaranteed to be
+        compatible across sktime versions.
+
     Examples
     --------
     Example 1: saving an estimator in-memory and loading it back
@@ -105,8 +112,11 @@ def load(serial):
     >>> loaded_pred = loaded_est.predict(X_test)  # doctest: +SKIP
     """
     import pickle
+    import warnings
     from pathlib import Path
     from zipfile import ZipFile
+
+    from sktime import __version__ as SKTIME_VERSION
 
     if isinstance(serial, tuple):
         if len(serial) != 2:
@@ -123,6 +133,19 @@ def load(serial):
             raise FileNotFoundError(f"The given save location: {serial}\nwas not found")
         with ZipFile(path) as file:
             cls = pickle.loads(file.open("_metadata", "r").read())
+            try:
+                saved_version = file.read("_sktime_version").decode()
+            except KeyError:
+                saved_version = None
+
+        if saved_version is not None and saved_version != SKTIME_VERSION:
+            warnings.warn(
+                "The serialized estimator was created with sktime version "
+                f"{saved_version}, but the current version is {SKTIME_VERSION}. "
+                "Loading across sktime versions may be incompatible.",
+                UserWarning,
+                stacklevel=2,
+            )
         return cls.load_from_path(path)
     else:
         raise TypeError(
