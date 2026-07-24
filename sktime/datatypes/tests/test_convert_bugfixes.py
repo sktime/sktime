@@ -2,10 +2,14 @@
 
 __author__ = ["fkiraly", "ericjb"]
 
+import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.datatypes._series._convert import convert_MvS_to_UvS_as_Series
+from sktime.datatypes._series._convert import (
+    convert_MvS_to_UvS_as_Series,
+    convert_UvS_to_MvS_as_Series,
+)
 from sktime.tests.test_switch import run_test_module_changed
 
 
@@ -41,3 +45,15 @@ def test_convert_MvS_to_UvS_as_Series():
     w = convert_MvS_to_UvS_as_Series(z)
 
     assert y.name == w.name
+
+
+def test_series_name_roundtrip_none():
+    """Checks that Series with name=None round-trips correctly."""
+    s = pd.Series([1, 2, 3])
+    s.name = None
+
+    store = {}
+    df = convert_UvS_to_MvS_as_Series(s, store=store)
+    s2 = convert_MvS_to_UvS_as_Series(df, store=store)
+
+    assert s2.name is None, f"Expected Series.name=None but got {s2.name}"
