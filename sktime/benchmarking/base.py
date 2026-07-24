@@ -116,7 +116,11 @@ class BaseResults:
 
     def save(self):
         """Save results object as master file."""
-        NotImplementedError()
+        # Match the canonical pattern used by every other unimplemented method
+        # in this base class (lines 26, 75, 79, 83, 87, 91, 95, 106) — the
+        # missing ``raise`` here let ``BaseResults().save()`` return ``None``
+        # silently, which subclasses (HDDBaseResults, RAMResults) cannot detect.
+        raise NotImplementedError()
 
     def _iter(self):
         """Iterate over registry of results object."""
