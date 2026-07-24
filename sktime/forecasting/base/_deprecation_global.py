@@ -51,6 +51,9 @@ class _GlobalForecastingDeprecationMixin:
             self._y = old_y
             self._cutoff = old_cutoff
 
+    def _get_y(self, y):
+        return self._y
+
     def _warn_y_deprecated(self, method_name):
         from sktime.utils.warnings import warn
 

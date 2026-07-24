@@ -228,11 +228,11 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         from sktime.libs.momentfm import MOMENTPipeline
 
-        # keep a copy of y in case y is None in predict
-        self._y = y
-        self._y_index = self._y.index
-        self._y_cols = self._y.columns
-        self._y_shape = self._y.values.shape
+        self._y_index = y.index
+        self._y_cols = y.columns
+        self._y_shape = y.values.shape
+
+        self._cur_y = y
 
         self._pretrained_model_name_or_path = self._config.get(
             "pretrained_model_name_or_path", self.pretrained_model_name_or_path
@@ -384,7 +384,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         fh should not be passed here and
         must be the same length as the one used to fit the model.
         """
-        y = self._y
+        y = self._get_y(self._cur_y)
 
         index = self._fh.to_absolute_index(self.cutoff)
         from torch import from_numpy

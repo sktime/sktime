@@ -292,6 +292,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
 
         self.model = self._load_model(prediction_length)
+        self._cur_y = y
+        self._cur_X = X
 
     def _get_model_kwargs(self, prediction_length):
         """Return MOIRAI model kwargs from fitted estimator state."""
@@ -334,6 +336,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             model.to(self.map_location)
             return model
 
+        return self
+
     def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh
@@ -354,10 +358,12 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 "The MORAI adapter is not supporting insample predictions."
             )
 
-        _y = self._y.copy()
+        _y = self._get_y(self._cur_y)
         _X = None
-        if self._X is not None:
-            _X = self._X.copy()
+        training_X = self._get_X(self._cur_X)
+
+        if training_X is not None:
+            _X = training_X.copy()
 
         # Zero shot case with X and fit data as context
         _use_fit_data_as_context = X is not None

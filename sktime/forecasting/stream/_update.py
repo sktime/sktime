@@ -4,11 +4,86 @@
 
 __author__ = ["fkiraly"]
 
+from functools import partial
+
 import pandas as pd
 
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES, update_data
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
+
+
+def _remember_y_X(self, y, X=None, enforce_index_type=None):
+    """Update cutoff and remember all data seen on the stream compositor."""
+    from sktime.datatypes import VectorizedDF
+    from sktime.utils.validation.forecasting import check_X
+
+    if y is not None:
+        y_for_cutoff = y.X_multiindex if isinstance(y, VectorizedDF) else y
+        self._set_cutoff_from_y(y_for_cutoff)
+        y_store = y.X_multiindex if isinstance(y, VectorizedDF) else y
+        if self._y is None or not self.is_fitted:
+            self._y = y_store
+        else:
+            self._y = update_data(self._y, y_store)
+
+    if X is not None:
+        X = check_X(X, enforce_index_type=enforce_index_type)
+        if isinstance(X, VectorizedDF):
+            X = X.X_multiindex
+        if self._X is None or not self.is_fitted:
+            self._X = X
+        else:
+            self._X = update_data(self._X, X)
+
+    _propagate_pooled_data_to_inner(self)
+
+
+def _propagate_pooled_data_to_inner(compositor):
+    """Point inner clone's ``_get_y`` / ``_get_X`` at the compositor's data pool.
+
+    Called after every data ingestion and again after inner fit/refit, because
+    ``inner.fit()`` resets instance state and wipes dynamically attached attrs.
+    """
+    inner = getattr(compositor, "forecaster_", None)
+    if inner is None:
+        return
+
+    # hijack: instance attrs shadow BaseForecaster._get_y / _get_X
+    inner._get_y = compositor._get_y
+    inner._get_X = compositor._get_X
+
+    # TODO: remove after all forecasters use _get_y / _get_X instead of self._y
+    # temporary for estimators that still read self._y / self._X directly
+    inner._y = compositor._y
+    inner._X = compositor._X
+
+    _bind_vectorized_slices(inner)
+
+
+def _bind_vectorized_slices(inner):
+    """Hijack per-column ``_get_y`` on vectorized inner forecasters.
+
+    Only needed after fit/refit when ``_yvec`` is first (re)built; the top-level
+    inner is kept fresh by ``_remember_y_X`` on every ingestion.
+    """
+    if not getattr(inner, "_is_vectorized", False) or not hasattr(
+        inner, "forecasters_"
+    ):
+        return
+
+    yvec = getattr(inner, "_yvec", None)
+    if yvec is None:
+        return
+
+    for row_name, col_name, y_slice in yvec.items():
+        row_key = row_name if row_name is not None else "forecasters"
+        col_key = col_name if col_name is not None else "forecasters"
+        fcstr = inner.forecasters_.loc[row_key, col_key]
+        # binding y_slice via partial function so it is picklable
+        fcstr._get_y = partial(lambda y_slice, y=None: y_slice, y_slice)
+        # TODO: remove with temporary self._y attach above
+        fcstr._y = y_slice
 
 
 class UpdateRefitsEvery(_DelegatedForecaster):
@@ -97,6 +172,8 @@ class UpdateRefitsEvery(_DelegatedForecaster):
     ):
         self.forecaster = forecaster
         self.forecaster_ = forecaster.clone()
+        self._y = None
+        self._X = None
 
         self.refit_interval = refit_interval
         self.refit_window_size = refit_window_size
@@ -106,6 +183,19 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
+
+    def _update_y_X(self, y, X=None, enforce_index_type=None):
+        # coerce to the inner forecaster's y/X mtype so the pooled store matches
+        # what the delegate expects (compositor tags accept all mtypes)
+        inner = self._get_delegate()
+        X, y = inner._check_X_y(X=X, y=y)
+        _remember_y_X(self, y, X, enforce_index_type)
+
+    def _get_X(self, X=None):
+        return self._X
+
+    def _get_y(self, y=None):
+        return self._y
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -142,6 +232,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self.last_fit_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
         estimator.fit(y=y, fh=fh, X=X)
+        _propagate_pooled_data_to_inner(self)
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -193,7 +284,8 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         #   in that case, interpret any integers as iloc index differences
         #   and replace integers with timedelta quantities before proceeding
         if _is_time_difference(time_since_last_fit):
-            if isinstance(refit_window_lag, int):
+            # lag=0 must stay a zero-valued lag; ``_y.index[-0]`` is ``_y.index[0]``
+            if isinstance(refit_window_lag, int) and refit_window_lag != 0:
                 lag = min(refit_window_lag, len(_y))
                 refit_window_lag = self.cutoff[0] - _y.index[-lag]
             if isinstance(refit_window_size, int):
@@ -218,6 +310,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
                 X_win = _X
             fh = self._fh
             estimator.fit(y=y_win, X=X_win, fh=fh)
+            _propagate_pooled_data_to_inner(self)
 
             # remember that we just fitted the estimator
             self.last_fit_cutoff_ = self.cutoff[0]
@@ -317,6 +410,8 @@ class UpdateEvery(_DelegatedForecaster):
     def __init__(self, forecaster, update_interval=None):
         self.forecaster = forecaster
         self.forecaster_ = forecaster.clone()
+        self._y = None
+        self._X = None
 
         self.update_interval = update_interval
 
@@ -324,6 +419,13 @@ class UpdateEvery(_DelegatedForecaster):
 
         self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
+
+    def _update_y_X(self, y, X=None, enforce_index_type=None):
+        # coerce to the inner forecaster's y/X mtype so the pooled store matches
+        # what the delegate expects (compositor tags accept all mtypes)
+        inner = self._get_delegate()
+        X, y = inner._check_X_y(X=X, y=y)
+        _remember_y_X(self, y, X, enforce_index_type)
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -608,3 +710,17 @@ def _geq(a, b):
         return a.n >= b.n
     else:
         return a >= b
+
+
+def is_stream_update_estimator(estimator):
+    """Return whether ``estimator`` is a stream update estimator.
+
+    Parameters
+    ----------
+    estimator : estimator object
+
+    Returns
+    -------
+    bool : whether ``estimator`` is a stream update estimator
+    """
+    return isinstance(estimator, (UpdateRefitsEvery, UpdateEvery, DontUpdate))
