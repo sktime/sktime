@@ -162,9 +162,11 @@ class VAR(_StatsModelsAdapter):
             verbose=self.verbose,
             ic=self.ic,
         )
-
         n_lags = self._fitted_forecaster.k_ar
-        self._last_n_lags_of_y = y.values[-n_lags:]
+        # Python's ``-0`` slice returns the whole array, not an empty one.
+        # When k_ar=0 we store 1 row as a safe fallback used by
+        # _predict_k_ar_zero / _predict_interval_k_ar_zero.
+        self._last_n_lags_of_y = y.values[-max(1, n_lags) :]
         return self
 
     def _predict(self, fh, X):
@@ -192,11 +194,15 @@ class VAR(_StatsModelsAdapter):
 
         # out-sample predictions
         if fh_int.max() > 0:
-            y_pred_outsample = self._fitted_forecaster.forecast(
-                y=self._last_n_lags_of_y,
-                steps=fh_int[-1],
-                exog_future=exog_future,
-            )
+            if self._fitted_forecaster.k_ar == 0:
+                y_pred_outsample = self._predict_k_ar_zero(fh_int, exog_future)
+            else:
+                y_pred_outsample = self._fitted_forecaster.forecast(
+                    y=self._last_n_lags_of_y,
+                    steps=fh_int[-1],
+                    exog_future=exog_future,
+                )
+
         # in-sample prediction by means of residuals
         if fh_int.min() <= 0:
             y_pred_insample = self._y - self._fitted_forecaster.resid
@@ -277,9 +283,12 @@ class VAR(_StatsModelsAdapter):
             lower_cols = [f"{col} {alpha} lower" for col in y_cols_no_space]
             upper_cols = [f"{col} {alpha} upper" for col in y_cols_no_space]
 
-            fcast_interval = model.forecast_interval(
-                self._last_n_lags_of_y, steps=steps, alpha=alpha
-            )
+            if self._fitted_forecaster.k_ar == 0:
+                fcast_interval = self._predict_interval_k_ar_zero(steps, alpha)
+            else:
+                fcast_interval = model.forecast_interval(
+                    self._last_n_lags_of_y, steps=steps, alpha=alpha
+                )
             lower_int, upper_int = fcast_interval[1], fcast_interval[-1]
 
             # invert the "only_1s" column if it was added during fit
@@ -335,6 +344,71 @@ class VAR(_StatsModelsAdapter):
 
         return final_df
 
+    def _predict_k_ar_zero(self, fh_int, exog_future):
+        """Forecast for a VAR(0) model — statsmodels k_ar=0 workaround.
+
+        statsmodels crashes with an IndexError in ``forecast()`` when ``k_ar=0``
+        because it calls ``len(coefs[0])`` on an empty coefficient array.
+
+        Workaround: temporarily set ``k_ar=1`` with an all-zero coefficient
+        matrix. All-zero AR coefficients are mathematically equivalent to a
+        pure-trend VAR(0), so the forecasts are correct. The original state is
+        always restored in the ``finally`` block.
+
+        Parameters
+        ----------
+        fh_int : ForecastingHorizon
+            Relative integer forecasting horizon.
+        exog_future : np.ndarray or None
+            Exogenous future values.
+
+        Returns
+        -------
+        y_pred_outsample : np.ndarray of shape (steps, k)
+        """
+        k = self._fitted_forecaster.neqs
+        self._fitted_forecaster._results.k_ar = 1
+        self._fitted_forecaster._results.coefs = np.zeros((1, k, k))
+        try:
+            y_pred_outsample = self._fitted_forecaster.forecast(
+                y=self._last_n_lags_of_y,
+                steps=fh_int[-1],
+                exog_future=exog_future,
+            )
+        finally:
+            self._fitted_forecaster._results.k_ar = 0
+            self._fitted_forecaster._results.coefs = np.zeros((0, k, k))
+        return y_pred_outsample
+
+    def _predict_interval_k_ar_zero(self, steps, alpha):
+        """Forecast intervals for a VAR(0) model — statsmodels k_ar=0 workaround.
+
+        Same workaround as ``_predict_k_ar_zero`` but for ``forecast_interval()``.
+
+        Parameters
+        ----------
+        steps : int
+            Number of steps ahead to forecast.
+        alpha : float
+            Significance level for the prediction interval.
+
+        Returns
+        -------
+        fcast_interval : tuple
+            As returned by statsmodels ``VARResults.forecast_interval``.
+        """
+        k = self._fitted_forecaster.neqs
+        self._fitted_forecaster._results.k_ar = 1
+        self._fitted_forecaster._results.coefs = np.zeros((1, k, k))
+        try:
+            fcast_interval = self._fitted_forecaster.forecast_interval(
+                self._last_n_lags_of_y, steps=steps, alpha=alpha
+            )
+        finally:
+            self._fitted_forecaster._results.k_ar = 0
+            self._fitted_forecaster._results.coefs = np.zeros((0, k, k))
+        return fcast_interval
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -351,6 +425,9 @@ class VAR(_StatsModelsAdapter):
         """
         params1 = {"maxlags": 3}
 
-        params2 = {"trend": "ctt"}  # breaks with "ic": "aic"}, see #4055
+        params2 = {
+            "trend": "ctt",
+            "ic": "aic",
+        }  # was breaking with "ic": "aic", see #4055
 
         return [params1, params2]
