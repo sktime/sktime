@@ -509,7 +509,7 @@ def _index_equally_spaced(index):
     Parameters
     ----------
     index: pandas.Index. Must be one of:
-        pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex
+        pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex, or any integer index
 
     Returns
     -------
