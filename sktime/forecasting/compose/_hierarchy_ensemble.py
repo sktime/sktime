@@ -232,7 +232,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd-multiindex
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -756,7 +756,7 @@ def _level_fit(params, meta):
         hier_dict: dict
             The level dictionary as created by the get_hier_dict function
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to predict.
+            The forecasting horizon with the steps ahead to predict.
     """
     _, forecaster, level = params
     z = meta["z"]
@@ -792,7 +792,7 @@ def _node_fit(params, meta):
         fcstr_dict: dict
             The forecaster dictionary as created by the get_node_dict function
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to predict.
+            The forecasting horizon with the steps ahead to predict.
     """
     key, node = params
     z = meta["z"]
@@ -821,7 +821,7 @@ def _predict_one_forecaster(params, meta):
         X: pd.DataFrame, None
             The aggregated input data
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to predict.
+            The forecasting horizon with the steps ahead to predict.
     """
     X = meta["x"]
     fh = meta["fh"]
