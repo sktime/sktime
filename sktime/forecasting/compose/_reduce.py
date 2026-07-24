@@ -445,12 +445,16 @@ class _Reducer(_BaseWindowForecaster):
         # y_raw is a dataframe window_length forecasting steps into the past in order to
         # calculate the new X from y features based on the transformer provided
 
-        y_raw.update(self._y)
+        overlap = y_raw.index.intersection(self._y.index)
+        if len(overlap) > 0:
+            y_raw.loc[overlap] = self._y.loc[overlap]
         # Historical values are passed here for all time steps of y_raw that lie in
         # the past .
 
         if y_update is not None:
-            y_raw.update(y_update)
+            overlap_upd = y_raw.index.intersection(y_update.index)
+            if len(overlap_upd) > 0:
+                y_raw.loc[overlap_upd] = y_update.loc[overlap_upd]
         # The y_raw dataframe will is updated with recursively forecast values.
 
         if len(self.transformers_) == 1:
@@ -470,9 +474,13 @@ class _Reducer(_BaseWindowForecaster):
 
         if self._X is not None:
             X = _create_fcst_df([index_range[-1]], self._X)
-            X.update(self._X)
+            x_overlap = X.index.intersection(self._X.index)
+            if len(x_overlap) > 0:
+                X.loc[x_overlap] = self._X.loc[x_overlap]
             if X_update is not None:
-                X.update(X_update)
+                x_overlap_upd = X.index.intersection(X_update.index)
+                if len(x_overlap_upd) > 0:
+                    X.loc[x_overlap_upd] = X_update.loc[x_overlap_upd]
             X_cut = _cut_df(X)
             X = pd.concat([X_from_y_cut, X_cut], axis=1)
             # X_from_y_cut is added to X dataframe (no features need to be calculated).
@@ -1034,7 +1042,9 @@ class _RecursiveReducer(_Reducer):
                 y_pred_curr = _create_fcst_df(
                     [index_range[i]], self._y, fill=y_pred_vector
                 )
-                y_pred.update(y_pred_curr)
+                pred_overlap = y_pred.index.intersection(y_pred_curr.index)
+                if len(pred_overlap) > 0:
+                    y_pred.loc[pred_overlap] = y_pred_curr.loc[pred_overlap]
 
                 # # Update last window with previous prediction.
                 if i + 1 != fh_max:
