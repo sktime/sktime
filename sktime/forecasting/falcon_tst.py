@@ -146,6 +146,7 @@ class FalconTSTForecaster(BaseForecaster):
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers[torch]>=4.23.0,<5.0.0"],
         "tests:vm": True,
+        "serialization:skip": ("model_",),
     }
 
     def __init__(
@@ -239,7 +240,7 @@ class FalconTSTForecaster(BaseForecaster):
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
         preds_idx = fh._values.values - 1
-        forecast_horizon = np.max(preds_idx) + 1
+        forecast_horizon = int(np.max(preds_idx) + 1)
 
         past_values = self.context_.to_numpy()
         past_values = np.expand_dims(past_values, axis=0)

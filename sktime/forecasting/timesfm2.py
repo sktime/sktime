@@ -29,6 +29,8 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
 from sktime.utils.singleton import _multiton
 
+_DEFAULT_PEFT_CONFIG = object()
+
 
 class TimesFM2Forecaster(BaseForecaster):
     """TimesFM-2.x forecaster via Hugging Face ``transformers``.
@@ -256,6 +258,7 @@ class TimesFM2Forecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pretrain": True,
+        "serialization:skip": ("model_",),
         "authors": ["rajatsen91", "siriuz42", "geetu040"],
         # rajatsen91, siriuz42 for google-research/timesfm
         "maintainers": ["geetu040"],
@@ -293,6 +296,20 @@ class TimesFM2Forecaster(BaseForecaster):
 
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Set serialization tags conditional on model reconstruction."""
+        if (
+            self.model_path is None
+            or self.config is not None
+            or self.peft_config is not None
+        ):
+            self.set_tags(
+                **{
+                    "serialization:native_artifacts": ("model_",),
+                    "serialization:skip": (),
+                }
+            )
+
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain forecaster on panel/global data (first batch).
 
@@ -315,6 +332,12 @@ class TimesFM2Forecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self.set_tags(
+            **{
+                "serialization:native_artifacts": ("model_",),
+                "serialization:skip": (),
+            }
+        )
         self.model_ = self._load_model()
 
         context_length = self.model_.config.context_length
@@ -458,6 +481,7 @@ class TimesFM2Forecaster(BaseForecaster):
         import torch
 
         self.model_ = self._load_model()
+        self.model_.eval()
 
         fh, preds_idx = self._validate_predict_fh(fh)
 
@@ -518,6 +542,7 @@ class TimesFM2Forecaster(BaseForecaster):
         import torch
 
         self.model_ = self._load_model()
+        self.model_.eval()
 
         quantiles = self.model_.config.quantiles
         past_values = self.context_
@@ -585,7 +610,29 @@ class TimesFM2Forecaster(BaseForecaster):
 
         return self.model_
 
-    def _get_unique_key(self):
+    def _load_base_model_for_peft(self):
+        """Load the base TimesFM model needed to restore a PEFT adapter."""
+        return _CachedTimesFM2(
+            key=self._get_unique_key(peft_config=None),
+            model_path=self.model_path,
+            config=self.config,
+            device_map=self.device_map,
+            dtype=self.dtype,
+            quantization_config=self.quantization_config,
+            peft_config=None,
+        ).load()
+
+    def _get_native_artifact_load_kwargs(self, name):
+        """Return native artifact load kwargs."""
+        if (
+            name == "model_"
+            and self.model_path is not None
+            and self.peft_config is not None
+        ):
+            return {"model": self._load_base_model_for_peft()}
+        return {}
+
+    def _get_unique_key(self, peft_config=_DEFAULT_PEFT_CONFIG):
         """Build cache key for the multiton model loader.
 
         Returns
@@ -600,7 +647,9 @@ class TimesFM2Forecaster(BaseForecaster):
             "device_map": self.device_map,
             "dtype": self.dtype,
             "quantization_config": self.quantization_config,
-            "peft_config": self.peft_config,
+            "peft_config": (
+                self.peft_config if peft_config is _DEFAULT_PEFT_CONFIG else peft_config
+            ),
         }
         return str(sorted(key.items()))
 

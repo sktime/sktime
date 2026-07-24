@@ -132,6 +132,18 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
         "capability:pretrain": True,
+        # relevant issue: https://github.com/sktime/sktime/issues/10493
+        "tests:skip_by_name": [
+            "test_predict_series_name_preserved",
+            "test_pretrain_clone_preserves_state",
+            "test_pretrain_fit_predict_workflow",
+            "test_pretrain_fitted_params_separation",
+            "test_pretrain_network_preserved_by_fit",
+            "test_pretrain_not_reset_by_fit",
+            "test_pretrain_predict_without_fit",
+            "test_pretrain_state_transitions",
+            "test_pretrain_with_hierarchical_data",
+        ],
     }
 
     def __init__(

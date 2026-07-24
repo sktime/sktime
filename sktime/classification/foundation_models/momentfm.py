@@ -142,8 +142,9 @@ class MomentFMClassifier(BaseClassifier):
     For information regarding licensing and use of the momentfm model please visit:
     https://huggingface.co/AutonLab/MOMENT-1-large
 
-    pretrained_model_name_or_path : str
-        Path to the pretrained Momentfm model. Default is AutonLab/MOMENT-1-large
+    pretrained_model_name_or_path : str or None
+        Path to the pretrained Momentfm model. If ``None``, initialize a model
+        from ``config``. Default is AutonLab/MOMENT-1-large.
 
     head_dropout : float
         Dropout value of classification head of the model. Values range between
@@ -192,6 +193,9 @@ class MomentFMClassifier(BaseClassifier):
         that they wish to set in dictionary form, so that parameters do not need
         to be individually set. If a parameter inside a config is a
         duplicate of one already passed in individually, it will be overwritten.
+        Required if ``pretrained_model_name_or_path`` is ``None``.
+        For randomly initialized T5 backbones, ``transformer_config`` may be supplied
+        as a dictionary of ``transformers.T5Config`` parameters.
 
     to_cpu_after_fit : bool, default = False
         After fitting and training, will return the `momentfm` model to the cpu.
@@ -230,6 +234,7 @@ class MomentFMClassifier(BaseClassifier):
             "transformers",
         ],
         "python_version": ">= 3.10",
+        "serialization:native_artifacts": ("model",),
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -270,6 +275,23 @@ class MomentFMClassifier(BaseClassifier):
         self._config = config if config is not None else {}
         self.to_cpu_after_fit = to_cpu_after_fit
         super().__init__()
+
+    def _get_native_artifact_load_kwargs(self, name):
+        """Return kwargs needed to reload native artifacts from sktime bundles."""
+        if name != "model":
+            return {}
+
+        return {"model_kwargs": self._get_model_kwargs()}
+
+    def _get_model_kwargs(self):
+        """Return task-specific MOMENT model kwargs from fitted state."""
+        return {
+            "task_name": "classification",
+            "n_channels": getattr(self, "_n_channels", 1),
+            "num_class": self.n_classes_,
+            "dropout": self._config.get("head_dropout", self.head_dropout),
+            "device": getattr(self, "_device", "cpu"),
+        }
 
     def __getstate__(self):
         """Return state for pickling, excluding the unpicklable torch model.
@@ -323,6 +345,19 @@ class MomentFMClassifier(BaseClassifier):
         MOMENTPipeline
             Initialised pipeline ready for fine-tuning.
         """
+        if self._pretrained_model_name_or_path is None:
+            if self.config is None:
+                raise ValueError(
+                    "`config` must be provided when "
+                    "`pretrained_model_name_or_path=None`."
+                )
+            model = MOMENTPipeline(
+                self._config,
+                model_kwargs=self._get_model_kwargs(),
+            )
+            model.init()
+            return model
+
         key = self._get_momentfm_cache_key()
         return _CachedMomentFMPipeline(
             key=key,
@@ -367,17 +402,14 @@ class MomentFMClassifier(BaseClassifier):
         if self._device == "auto":
             self._device = accelerator.device
 
-        # store n_channels so _get_momentfm_cache_key can use it
-        self._n_channels = X.shape[1] if len(X.shape) == 3 else 1
-
         cur_epoch = 0
         max_epoch = self.epochs
+        self._n_channels = X.shape[1] if len(X.shape) == 3 else 1
 
         # Lazy init: load (or retrieve cached) MOMENTPipeline backbone.
         # Calling _load_model() ensures the expensive from_pretrained() call
         # is executed at most once per unique configuration (multiton pattern).
         self.model = self._load_model()
-
         # preparing the datasets
         y_train, y_test, X_train, X_test = temporal_train_test_split(
             y, X, train_size=1 - self.train_val_split, test_size=self.train_val_split
@@ -555,17 +587,43 @@ class MomentFMClassifier(BaseClassifier):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        params_set = []
-        params1 = {"to_cpu_after_fit": True, "train_val_split": 0.0, "batch_size": 64}
-        params_set.append(params1)
+        test_config = {
+            "seq_len": 512,
+            "patch_len": 8,
+            "patch_stride_len": 8,
+            "d_model": 8,
+            "transformer_backbone": "tiny-random-t5",
+            "transformer_type": "encoder_only",
+            "randomly_initialize_backbone": True,
+            "enable_gradient_checkpointing": False,
+            "dropout": 0.1,
+            "transformer_config": {
+                "d_model": 8,
+                "d_ff": 16,
+                "num_layers": 1,
+                "num_decoder_layers": 1,
+                "num_heads": 2,
+                "vocab_size": 32,
+            },
+        }
+        params1 = {
+            "pretrained_model_name_or_path": None,
+            "config": deepcopy(test_config),
+            "device": "cpu",
+            "to_cpu_after_fit": True,
+            "train_val_split": 0.0,
+            "batch_size": 64,
+        }
         params2 = {
+            "pretrained_model_name_or_path": None,
+            "config": deepcopy(test_config),
+            "device": "cpu",
             "batch_size": 128,
             "to_cpu_after_fit": True,
             "train_val_split": 0.0,
         }
-        params_set.append(params2)
 
-        return params_set
+        return [params1, params2]
 
 
 def _run_epoch(

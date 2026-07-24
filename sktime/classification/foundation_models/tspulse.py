@@ -235,11 +235,9 @@ class TSPulseClassifier(BaseClassifier):
         "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
         "capability:unequal_length": True,
+        "serialization:native_artifacts": ("_model",),
+        "serialization:skip": ("_pipeline",),
         "tests:vm": True,
-        "tests:skip_by_name": [
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
     }
 
     def __init__(
@@ -473,6 +471,7 @@ class TSPulseClassifier(BaseClassifier):
             )
             trainer.train()
 
+        model.eval()
         self._model = model
         self._pipeline = TimeSeriesClassificationPipeline(
             model,
@@ -487,12 +486,23 @@ class TSPulseClassifier(BaseClassifier):
         Column name ``{LABEL_COLUMN}`` is reserved for internal use.
         Please avoid having column with this name in ``X``.
         """
+        if not hasattr(self, "_pipeline") or self._pipeline is None:
+            from tsfm_public.toolkit.time_series_classification_pipeline import (
+                TimeSeriesClassificationPipeline,
+            )
+
+            self._pipeline = TimeSeriesClassificationPipeline(
+                self._model,
+                feature_extractor=self._preprocessor,
+                device=self._device,
+            )
 
         df = X.copy()
         df = df.reset_index(drop=True)
         if LABEL_COLUMN not in df.columns:
             df[LABEL_COLUMN] = self.classes_[0]
 
+        self._model.eval()
         out = self._pipeline(df)
         pred_col = f"{LABEL_COLUMN}_prediction"
         preds = out[pred_col].to_numpy()

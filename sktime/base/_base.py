@@ -65,16 +65,12 @@ from sklearn import clone
 from sklearn.base import BaseEstimator as _SklearnBaseEstimator
 
 from sktime import __version__ as SKTIME_VERSION
+from sktime.base._serialize import _SerializationMixin
 from sktime.utils._estimator_html_repr import _HTMLDocumentationLinkMixin
 from sktime.utils.random_state import set_random_state
 
-SERIALIZATION_FORMATS = {
-    "pickle",
-    "cloudpickle",
-}
 
-
-class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
+class BaseObject(_SerializationMixin, _HTMLDocumentationLinkMixin, _BaseObject):
     """Base class for parametric objects with tags in sktime.
 
     Base class for all parametric objects in sktime.
@@ -91,6 +87,9 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         # default property tags
         "property:randomness": "deterministic",
         "capability:random_state": False,
+        # default serialization tags
+        "serialization:native_artifacts": (),
+        "serialization:skip": (),
         # default tags for testing
         "tests:core": False,  # core objects have wider trigger conditions in testing
         "tests:vm": False,  # whether the object should be tested in its own VM
@@ -249,123 +248,6 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             cls.set_config.__doc__ = cls._get_set_config_doc()
         except Exception:  # noqa: S110
             pass
-
-    def save(self, path=None, serialization_format="pickle"):
-        """Save serialized self to bytes-like object or to (.zip) file.
-
-        Behaviour:
-
-        * if ``path`` is None, returns an in-memory serialized self
-        * if ``path`` is a file location, stores self at that location as a zip file
-
-        saved files are zip files with following contents:
-
-        * ``_metadata`` - contains class of self, i.e., ``type(self)``
-        * ``_obj`` - serialized self. This class uses the default serialization
-          (pickle).
-
-        Parameters
-        ----------
-        path : None or file location (str or Path)
-            if None, self is saved to an in-memory object
-            if file location, self is saved to that file location. If:
-
-            - path="estimator" then a zip file ``estimator.zip`` will be made at cwd.
-            - path="/home/stored/estimator" then a zip file ``estimator.zip`` will be
-            stored in ``/home/stored/``.
-
-        serialization_format: str, default = "pickle"
-            Module to use for serialization.
-            The available options are "pickle" and "cloudpickle".
-            Note that non-default formats might require
-            installation of other soft dependencies.
-
-        Returns
-        -------
-        if ``path`` is None - in-memory serialized self
-        if ``path`` is file location - ZipFile with reference to the file
-        """
-        import pickle
-        import shutil
-        from pathlib import Path
-        from zipfile import ZipFile
-
-        from skbase.utils.dependencies import _check_soft_dependencies
-
-        if serialization_format not in SERIALIZATION_FORMATS:
-            raise ValueError(
-                f"The provided `serialization_format`='{serialization_format}' "
-                "is not yet supported. The possible formats are: "
-                f"{SERIALIZATION_FORMATS}."
-            )
-
-        if path is not None and not isinstance(path, (str, Path)):
-            raise TypeError(
-                "`path` is expected to either be a string or a Path object "
-                f"but found of type:{type(path)}."
-            )
-        if path is not None:
-            path = Path(path) if isinstance(path, str) else path
-            path.mkdir()
-
-        if serialization_format == "cloudpickle":
-            _check_soft_dependencies("cloudpickle", severity="error")
-            import cloudpickle
-
-            if path is None:
-                return (type(self), cloudpickle.dumps(self))
-
-            with open(path / "_metadata", "wb") as file:
-                cloudpickle.dump(type(self), file)
-            with open(path / "_obj", "wb") as file:
-                cloudpickle.dump(self, file)
-
-        elif serialization_format == "pickle":
-            if path is None:
-                return (type(self), pickle.dumps(self))
-
-            with open(path / "_metadata", "wb") as file:
-                pickle.dump(type(self), file)
-            with open(path / "_obj", "wb") as file:
-                pickle.dump(self, file)
-
-        shutil.make_archive(base_name=path, format="zip", root_dir=path)
-        shutil.rmtree(path)
-        return ZipFile(path.with_name(f"{path.stem}.zip"))
-
-    @classmethod
-    def load_from_serial(cls, serial):
-        """Load object from serialized memory container.
-
-        Parameters
-        ----------
-        serial : 1st element of output of ``cls.save(None)``
-
-        Returns
-        -------
-        deserialized self resulting in output ``serial``, of ``cls.save(None)``
-        """
-        import pickle
-
-        return pickle.loads(serial)
-
-    @classmethod
-    def load_from_path(cls, serial):
-        """Load object from file location.
-
-        Parameters
-        ----------
-        serial : result of ZipFile(path).open("object)
-
-        Returns
-        -------
-        deserialized self resulting in output at ``path``, of ``cls.save(path)``
-        """
-        import pickle
-        from zipfile import ZipFile
-
-        with ZipFile(serial, "r") as file:
-            return pickle.loads(file.open("_obj").read())
 
 
 class TagAliaserMixin(_TagAliaserMixin):

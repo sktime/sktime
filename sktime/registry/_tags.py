@@ -107,6 +107,50 @@ for name, desc in get_obj_scitype_list(return_descriptions=True):
     object_type.__doc__ += f'\n    - ``"{name}"``: {desc}'
 
 
+class serialization_native_artifacts(_BaseTag):
+    """Attributes saved through native artifact backends.
+
+    - String name: ``"serialization:native_artifacts"``
+    - Private tag, developer and framework facing
+    - Values: list or tuple of attribute names
+    - Default: empty tuple
+
+    This tag identifies estimator attributes that should be omitted from the
+    pickled object state and saved in framework-native formats, such as
+    ``transformers`` ``save_pretrained`` artifacts.
+    """
+
+    _tags = {
+        "tag_name": "serialization:native_artifacts",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "attribute names saved through native serialization backends",
+        "user_facing": False,
+    }
+
+
+class serialization_skip(_BaseTag):
+    """Attributes skipped by estimator serialization.
+
+    - String name: ``"serialization:skip"``
+    - Private tag, developer and framework facing
+    - Values: list or tuple of attribute names
+    - Default: empty tuple
+
+    This tag identifies estimator attributes that should be omitted from the
+    pickled object state because they are caches or can be reconstructed from
+    other serialized estimator state.
+    """
+
+    _tags = {
+        "tag_name": "serialization:skip",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "attribute names skipped by estimator serialization",
+        "user_facing": False,
+    }
+
+
 class maintainers(_BaseTag):
     """Current maintainers of the object, GitHub IDs.
 

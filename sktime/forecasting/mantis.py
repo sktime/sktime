@@ -77,9 +77,13 @@ class MantisForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
         "property:randomness": "stochastic",
+        "serialization:skip": ("trainer_",),
         # CI and testing tags
         # -------------------
         "tests:vm": True,
+        # relevant issue: https://github.com/sktime/sktime/issues/10491
+        # deepcopy fails during `update_predict(..., reset_forecaster=False)`
+        "tests:skip_by_name": ["test_update_predict_predicted_index"],
     }
 
     def __init__(

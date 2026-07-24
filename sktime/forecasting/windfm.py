@@ -164,6 +164,7 @@ class WindFMForecaster(BaseForecaster):
         ],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.windfm"],
+        "serialization:skip": ("tokenizer_", "model_"),
     }
 
     _target_col = "power"
@@ -319,6 +320,9 @@ class WindFMForecaster(BaseForecaster):
 
     def _predict_samples(self, fh):
         """Generate WindFM sample paths for a future horizon."""
+        if not hasattr(self, "model_") or not hasattr(self, "tokenizer_"):
+            self.tokenizer_, self.model_ = self._load_windfm()
+
         df = self._make_windfm_frame()
 
         x_index = self.y_context_.index

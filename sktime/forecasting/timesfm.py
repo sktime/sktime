@@ -186,6 +186,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "serialization:skip": ("tfm",),
         # testing configuration
         # ---------------------
         "tests:vm": True,

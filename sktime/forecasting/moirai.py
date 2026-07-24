@@ -114,6 +114,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "property:randomness": "stochastic",
+        "serialization:skip": ("model",),
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -162,17 +163,6 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     "capability:global_forecasting": False,
                 }
             )
-
-    def __getstate__(self):
-        """Return state for pickling, excluding the unpickleable torch model."""
-        state = self.__dict__.copy()
-        if "model" in state:
-            state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface_hub"], severity="none"):
@@ -253,7 +243,12 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
             try:
                 import hf_xet  # noqa: F401
-            except Exception:
+            except BaseException as exc:
+                # PyO3 raises Rust panics as PanicException, which inherits
+                # directly from BaseException rather than Exception.
+                is_pyo3_panic = type(exc).__name__ == "PanicException"
+                if not isinstance(exc, Exception) and not is_pyo3_panic:
+                    raise
                 os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
                 if _check_soft_dependencies("huggingface_hub", severity="none"):
                     import huggingface_hub.constants as _hf_constants
