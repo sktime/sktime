@@ -527,8 +527,8 @@ def evaluate(
         * "refit" = forecaster is refitted to each training window
         * "update" = forecaster is updated with training window data,
           in sequence provided
-        * "no-update_params" = fit to first training window,
-          re-used without fit or update
+        * "no-update_params" = forecaster is updated via ``update``, with
+          ``update_params=False``, to the cutoff of each new training window
 
     scoring : subclass of sktime.performance_metrics.BaseMetric or list of same,
         default=None. Used to get a score function that takes y_pred and y_test
