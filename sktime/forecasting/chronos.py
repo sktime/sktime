@@ -466,7 +466,7 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         model_spec = self.model_spec
         _y = context_y.values.reshape(1, -1, 1)
 
-        model_config = self.model_pipeline.model.config
+        model_config = handle.pipeline.model.config
         # the ``context_length`` shortcut is only set on sktime's vendored
         # models; the source ``chronos`` package only exposes it nested
         # under ``chronos_config`` on the underlying HF model config
