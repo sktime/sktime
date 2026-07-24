@@ -500,6 +500,7 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         test_params.append(
             {
                 "model_path": "amazon/chronos-t5-tiny",
+                "seed": 42,
             }
         )
         test_params.append(

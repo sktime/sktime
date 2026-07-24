@@ -299,9 +299,24 @@ class TotoForecaster(BaseFoundationForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         test_params = [
-            {"num_samples": 2, "samples_per_batch": 2, "prediction_type": "median"},
-            {"num_samples": 2, "samples_per_batch": 1, "prediction_type": "mean"},
-            {"num_samples": 1, "samples_per_batch": 1, "prediction_type": "mean"},
+            {
+                "seed": 42,
+                "num_samples": 2,
+                "samples_per_batch": 2,
+                "prediction_type": "median",
+            },
+            {
+                "seed": 42,
+                "num_samples": 2,
+                "samples_per_batch": 1,
+                "prediction_type": "mean",
+            },
+            {
+                "seed": 42,
+                "num_samples": 1,
+                "samples_per_batch": 1,
+                "prediction_type": "mean",
+            },
         ]
 
         return test_params
