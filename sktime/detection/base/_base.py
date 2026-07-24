@@ -83,7 +83,7 @@ class BaseDetector(BaseEstimator):
         #
         # todo: distribution_type does not seem to be used - refactor or remove
         "distribution_type": "None",
-        "X_inner_mtype": "pd.DataFrame",
+        "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "fit_is_empty": False,
     }
 
@@ -184,6 +184,13 @@ class BaseDetector(BaseEstimator):
 
         # input checks and conversions for X
         X_inner = self._check_X(X)
+
+        # checking if X_inner is uni or multivariate
+        X_inner = check_series(
+            X_inner,
+            enforce_univariate=not self.get_tag("capability:multivariate"),
+            allow_numpy=True,
+        )
 
         # skip inner _fit if fit is empty
         # we also do not need to memorize data, since we do same in _update
