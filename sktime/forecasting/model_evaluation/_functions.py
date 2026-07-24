@@ -216,6 +216,19 @@ def _evaluate_window(x, meta):
     y_preds_cache = dict()
     old_naming = True
     old_name_mapping = {}
+    for scitype in scoring:
+        if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
+            scoring.get(scitype)
+        ):
+            old_naming = False
+        for metric in scoring.get(scitype):
+            pred_args = _get_pred_args_from_metric(scitype, metric)
+            if pred_args != {}:
+                argval = list(pred_args.values())[0]
+                old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
+                old_name_mapping[f"test_{metric.name}_{argval}"] = f"test_{metric.name}"
+                old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
+
     if fh is None:
         fh = _select_fh_from_y(y_true if global_mode else y_test)
 
@@ -240,10 +253,6 @@ def _evaluate_window(x, meta):
         # cache prediction from the first scitype and reuse it to compute other metrics
         for scitype in scoring:
             method = getattr(forecaster, pred_type[scitype])
-            if len(set(map(lambda metric: metric.name, scoring.get(scitype)))) != len(
-                scoring.get(scitype)
-            ):
-                old_naming = False
             for metric in scoring.get(scitype):
                 pred_args = _get_pred_args_from_metric(scitype, metric)
                 if pred_args == {}:
@@ -255,11 +264,6 @@ def _evaluate_window(x, meta):
                     time_key = f"{scitype}_{argval}_time"
                     result_key = f"test_{metric.name}_{argval}"
                     y_pred_key = f"y_{scitype}_{argval}"
-                    old_name_mapping[f"{scitype}_{argval}_time"] = f"{scitype}_time"
-                    old_name_mapping[f"test_{metric.name}_{argval}"] = (
-                        f"test_{metric.name}"
-                    )
-                    old_name_mapping[f"y_{scitype}_{argval}"] = f"y_{scitype}"
 
                 # make prediction
                 if y_pred_key not in y_preds_cache.keys():
@@ -296,18 +300,34 @@ def _evaluate_window(x, meta):
     except Exception as e:
         if error_score == "raise":
             raise e
-        else:  # assign default value when fitting failed
+        else:  # assign default value when fitting or predicting failed
             for scitype in scoring:
-                temp_result[f"{scitype}_time"] = [pred_time]
-                if return_data:
-                    temp_result[f"y_{scitype}"] = [y_pred]
                 for metric in scoring.get(scitype):
-                    temp_result[f"test_{metric.name}"] = [score]
+                    pred_args = _get_pred_args_from_metric(scitype, metric)
+                    if pred_args == {}:
+                        time_key = f"{scitype}_time"
+                        result_key = f"test_{metric.name}"
+                        y_pred_key = f"y_{scitype}"
+                    else:
+                        argval = list(pred_args.values())[0]
+                        time_key = f"{scitype}_{argval}_time"
+                        result_key = f"test_{metric.name}_{argval}"
+                        y_pred_key = f"y_{scitype}_{argval}"
+
+                    if time_key not in temp_result:
+                        temp_result[time_key] = [np.nan]
+                    if return_data and y_pred_key not in temp_result:
+                        temp_result[y_pred_key] = [pd.NA]
+                    if result_key not in temp_result:
+                        temp_result[result_key] = [error_score]
+
             warnings.warn(
                 f"""
-                In evaluate, fitting of forecaster {type(forecaster).__name__} failed,
+                In evaluate, fitting or predicting of forecaster
+                {type(forecaster).__name__} failed,
                 you can set error_score='raise' in evaluate to see
                 the exception message.
+                Exception: {e}
                 Fit failed for the {i}-th data split, on training data y_train with
                 cutoff {cutoff}, and len(y_train)={len(y_train)}.
                 The score will be set to {error_score}.
