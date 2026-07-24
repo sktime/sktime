@@ -61,7 +61,10 @@ def _box_norm(X, bounds, method):
         if bounds is not None:
             args = {"optimizer": optimizer}
         else:
-            args = {"brack": bounds}
+            # don't pass brack=None — scipy defaults to brack=(-2.0, 2.0)
+            # passing None overrides the default and causes BracketError
+            # see sktime issue #10301
+            args = {}
 
     return box_norm(X, method=method, **args)
 
