@@ -324,6 +324,15 @@ class ClaSPSegmentation(BaseDetector):
     def _run_clasp(self, X):
         X = check_series(X, enforce_univariate=True, allow_numpy=True)
 
+        if len(X) > 10000:
+            import warnings
+            warnings.warn(
+                f"Input time series has {len(X)} points. "
+                "ClaSPSegmentation may be slow on large time series. "
+                "Consider subsampling or reducing the input size.",
+                stacklevel=2,
+            )
+
         if isinstance(X, pd.Series):
             X = X.to_numpy()
 
