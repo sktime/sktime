@@ -70,7 +70,11 @@ class TestAllPanelTransformers(TransformerPairwisePanelFixtureGenerator, QuickTe
     def test_pairwise_transformers_panel(self, estimator_instance, scenario):
         """Main test function for pairwise transformers on tabular data."""
         trafo_name = type(estimator_instance).__name__
-        dist_mat = scenario.run(estimator_instance, method_sequence=["transform"])
+        if not estimator_instance.get_tag("fit_is_empty", True):
+            method_seq = ["fit", "transform"]
+        else:
+            method_seq = ["transform"]
+        dist_mat = scenario.run(estimator_instance, method_sequence=method_seq)
 
         X = scenario.args["transform"]["X"]
         len_X = len(scenario.args["transform"]["X"])
@@ -89,7 +93,11 @@ class TestAllPanelTransformers(TransformerPairwisePanelFixtureGenerator, QuickTe
     def test_transform_diag(self, estimator_instance, scenario):
         """Test expected output of transform_diag."""
         trafo_name = type(estimator_instance).__name__
-        diag_vec = scenario.run(estimator_instance, method_sequence=["transform_diag"])
+        if not estimator_instance.get_tag("fit_is_empty", True):
+            method_seq = ["fit", "transform_diag"]
+        else:
+            method_seq = ["transform_diag"]
+        diag_vec = scenario.run(estimator_instance, method_sequence=method_seq)
 
         len_X = len(scenario.args["transform"]["X"])
 
