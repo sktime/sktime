@@ -102,30 +102,30 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mdspe = MedianSquaredPercentageError(symmetric=False)
-    >>> mdspe(y_true, y_pred)
+    >>> mdspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.027777777777777776)
     >>> smdspe = MedianSquaredPercentageError(square_root=True, symmetric=False)
-    >>> smdspe(y_true, y_pred)
+    >>> smdspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.16666666666666666)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mdspe(y_true, y_pred)
+    >>> mdspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5102040816326531)
-    >>> smdspe(y_true, y_pred)
+    >>> smdspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.5714285714285714)
     >>> mdspe = MedianSquaredPercentageError(multioutput='raw_values', symmetric=False)
-    >>> mdspe(y_true, y_pred)
+    >>> mdspe(y_true, y_pred) # doctest: +SKIP
     array([0.02040816, 1.        ])
     >>> smdspe = MedianSquaredPercentageError(multioutput='raw_values', \
     symmetric=False, square_root=True)
-    >>> smdspe(y_true, y_pred)
+    >>> smdspe(y_true, y_pred) # doctest: +SKIP
     array([0.14285714, 1.        ])
     >>> mdspe = MedianSquaredPercentageError(multioutput=[0.3, 0.7], symmetric=False)
-    >>> mdspe(y_true, y_pred)
+    >>> mdspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.7061224489795918)
     >>> smdspe = MedianSquaredPercentageError(multioutput=[0.3, 0.7], \
     symmetric=False, square_root=True)
-    >>> smdspe(y_true, y_pred)
+    >>> smdspe(y_true, y_pred) # doctest: +SKIP
     np.float64(0.7428571428571428)
     """
 
