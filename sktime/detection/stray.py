@@ -268,6 +268,23 @@ class STRAY(BaseTransformer):
 
         return self.y_.astype(bool)
 
+    def predict(self, X, y=None):
+        """Predict anomalies in X.
+
+        Parameters
+        ----------
+        X : np.ArrayLike
+            Data for anomaly detection.
+        y : pd.Series, optional
+            Not used for this unsupervised method.
+
+        Returns
+        -------
+        y_pred : np.ArrayLike
+            Boolean array of predictions, True if anomalous.
+        """
+        return self.transform(X, y)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
