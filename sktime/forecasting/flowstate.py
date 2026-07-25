@@ -222,6 +222,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         var_name = self._context.columns[0]
         pred_index = fh.to_absolute(self.cutoff)._values
+        pred_index.names = self._context.index.names
         q_values = q[:, rel_idx]
         return model_q, q_values, pred_index, var_name
 
