@@ -746,7 +746,6 @@ class QuickTester:
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
     def _make_builtin_fixture_equivalents(self, name):
-        import io
         import logging
         import tempfile
         from pathlib import Path
@@ -843,9 +842,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if returncode != pytest.ExitCode.OK:
             err_msg = (
                 f"running specific tests failed for {estimator_class.__name__}, "
-                f"modules {modules_to_run}, return code {returncode}\n"
-                f"stdout:\n{stdout.getvalue().strip()}\n\n"
-                f"stderr:\n{stderr.getvalue().strip()}"
+                f"modules {modules_to_run}, return code {returncode}"
             )
             raise RuntimeError(err_msg)
 
