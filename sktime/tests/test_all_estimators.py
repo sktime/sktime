@@ -804,6 +804,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         ``tests:specific`` must be a list of importable module paths, e.g.,
         ``["sktime.forecasting.tests.test_dummy_global"]``.
         """
+        import subprocess
+
         from skbase.utils.stderr_mute import StderrMute
         from skbase.utils.stdout_mute import StdoutMute
 
@@ -836,15 +838,21 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if len(modules_to_run) == 0:
             return
 
-        raise ValueError(f"diagnostic raise of modules_to_run {modules_to_run}")
-
         with StderrMute(), StdoutMute():
-            returncode = pytest.main(["--pyargs", *modules_to_run])
+            result = subprocess.run(
+                [sys.executable, "-m", "pytest", "--pyargs", *modules_to_run],
+                capture_output=True,
+                text=True,
+            )
 
-        if returncode != pytest.ExitCode.OK:
+        returncode = result.returncode
+
+        if returncode != 0:
             err_msg = (
                 f"running specific tests failed for {estimator_class.__name__}, "
-                f"modules {modules_to_run}, return code {returncode}"
+                f"modules {modules_to_run}, return code {returncode}\n"
+                f"stdout:\n{result.stdout}\n"
+                f"stderr:\n{result.stderr}"
             )
             raise RuntimeError(err_msg)
 
