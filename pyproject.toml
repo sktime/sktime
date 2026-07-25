@@ -129,6 +129,7 @@ detection = [
 ]
 forecasting = [
   'arch>=5.6,<7.1; python_version < "3.13"',
+  'hypertrees-forecasting>=0.2,<0.3; python_version >= "3.11"',
   'pmdarima!=1.8.1,<2.2,>=1.8',
   'prophet<1.4,>=1.2; python_version < "3.13"',
   'skforecast<0.19,>=0.12.1; python_version < "3.14"',
@@ -196,7 +197,6 @@ tests = [
 # these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "skchange",
 ]
 cython_extras = [
   "mrseql < 0.0.3",
@@ -252,12 +252,16 @@ notebooks = [
   "lightning>=2.0,<2.7",
   "skpro",
   "statsforecast",
+  'numba<0.63; python_version < "3.14"',
 ]
 numpy1 = [
   "numpy<2.0.0",
 ]
 pandas1 = [
   "pandas<2.0.0",
+]
+skpro = [
+  "skpro",
 ]
 compatibility_tests = [
   'catboost; python_version < "3.13"',
