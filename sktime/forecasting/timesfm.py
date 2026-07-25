@@ -190,6 +190,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timesfm"],
+        "tests:specific": ["sktime.forecasting.tests.test_timesfm"],
     }
 
     def __init__(
