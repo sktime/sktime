@@ -339,7 +339,7 @@ class _ArpsDcaBase(BaseForecaster):
         t = self._index_to_float_array(fh_abs) - self.t0_
 
         y_pred = self._mc_forecast_samples(fh_abs, t)
-        quantile_values = np.quantile(y_pred, alpha, axis=0).T
+        quantile_values = np.quantile(y_pred, alpha, axis=0, method="inverted_cdf").T
 
         varnames = self._get_varnames()
         col_index = pd.MultiIndex.from_product([varnames, alpha])
