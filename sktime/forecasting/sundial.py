@@ -470,6 +470,43 @@ class SundialForecaster(BaseForecaster):
 
         return pred_quantiles
 
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic,
+            called from predict_proba
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+        X : ignored
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution built from the empirical sample paths
+        """
+        from skpro.distributions import Empirical
+
+        samples, fh, preds_idx = self._generate_samples(fh)
+
+        # samples shape: (n_series, n_samples, horizon)
+        # Select only the requested forecast time points
+        samples_sel = samples[:, :, preds_idx]  # (n_series, n_samples, n_t)
+        # Transpose to (n_t, n_series, n_samples) for Empirical
+        samples_sel = samples_sel.transpose(2, 0, 1)  # (n_t, n_series, n_samples)
+
+        pred_index = fh.to_absolute(self._cutoff)._values
+
+        return Empirical(
+            samples=samples_sel,
+            index=pred_index,
+            columns=self.context_.columns,
+        )
+
     def _generate_samples(self, fh):
         """Generate raw Sundial sample paths for prediction.
 
