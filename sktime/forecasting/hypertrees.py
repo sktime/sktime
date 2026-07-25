@@ -94,7 +94,7 @@ class HyperTreeNetARForecaster(BaseForecaster):
 
     def __init__(
         self,
-        network_params=None,
+        p=2,
         embedding_dimension=1,
         hidden_dim=128,
         dropout=0.1,
