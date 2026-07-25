@@ -196,7 +196,6 @@ tests = [
 # these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "skchange",
 ]
 cython_extras = [
   "mrseql < 0.0.3",
@@ -259,6 +258,9 @@ numpy1 = [
 ]
 pandas1 = [
   "pandas<2.0.0",
+]
+skpro = [
+  "skpro",
 ]
 compatibility_tests = [
   'catboost; python_version < "3.13"',
