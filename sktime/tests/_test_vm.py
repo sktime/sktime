@@ -84,8 +84,7 @@ def _get_estimator_specific_test_modules(cls_name):
         return None
 
     msg = (
-        f"{cls.__name__}.tests:specific must be a list of strings, "
-        f"found: {modules}"
+        f"{cls.__name__}.tests:specific must be a list of strings, found: {modules}"
     )
     assert isinstance(modules, list), msg
     assert all(isinstance(module, str) for module in modules), msg
@@ -95,13 +94,11 @@ def _get_estimator_specific_test_modules(cls_name):
     module_pat = re.compile(r"^sktime(?:\.[a-z_][a-z0-9_]*)*$")
     bad_modules = [module for module in modules if not module_pat.fullmatch(module)]
     assert len(bad_modules) == 0, (
-        f"{cls.__name__}.tests:specific contains invalid module paths: "
-        f"{bad_modules}"
+        f"{cls.__name__}.tests:specific contains invalid module paths: {bad_modules}"
     )
     missing_modules = [module for module in modules if find_spec(module) is None]
     assert len(missing_modules) == 0, (
-        f"{cls.__name__}.tests:specific contains missing modules: "
-        f"{missing_modules}"
+        f"{cls.__name__}.tests:specific contains missing modules: {missing_modules}"
     )
 
     modules_to_run = modules.copy()
