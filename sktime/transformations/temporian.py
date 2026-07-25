@@ -68,6 +68,7 @@ class TemporianTransformer(BaseTransformer):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_temporian"],
     }
 
     def __init__(self, function, compile=False):
