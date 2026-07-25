@@ -90,6 +90,7 @@ class HyperTreeNetARForecaster(BaseForecaster):
         # testing and CI tags
         # -------------------
         "tests:vm": True,
+    }
 
     def __init__(
         self,
