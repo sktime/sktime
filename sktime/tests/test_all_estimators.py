@@ -9,7 +9,6 @@ __author__ = ["mloning", "fkiraly", "achieveordie"]
 import io
 import numbers
 import os
-import re
 import sys
 import types
 from copy import deepcopy
