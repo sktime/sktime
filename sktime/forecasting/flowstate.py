@@ -82,7 +82,6 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "torch",
             "transformers",
             "accelerate",
-            "skpro>=2.14",
         ],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
