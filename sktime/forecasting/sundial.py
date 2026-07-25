@@ -456,7 +456,7 @@ class SundialForecaster(BaseForecaster):
             alpha = [0.1, 0.5, 0.9]
         alpha = [round(i, 3) for i in alpha]
 
-        preds = np.quantile(samples, q=alpha, axis=1)
+        preds = np.quantile(samples, q=alpha, axis=1, method="inverted_cdf")
         preds = np.moveaxis(preds, 0, -1)
         preds = preds[:, preds_idx, :]
         preds = preds.transpose(1, 0, 2).reshape(len(preds_idx), -1)
