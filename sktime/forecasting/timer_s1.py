@@ -343,9 +343,16 @@ class TimerS1Forecaster(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
+        import torch
+        import transformers
+
+        if self.deterministic:
+            transformers.set_seed(42)
+
         self.model_ = self._load_model()
 
         quantiles = self.model_.config.quantiles
+        past_values = self.context_
 
         if fh is None:
             fh = self.fh
@@ -364,44 +371,6 @@ class TimerS1Forecaster(BaseForecaster):
             )
         quantiles_idx = np.array([quantiles.index(i) for i in alpha])
 
-        preds = self._predict_full_quantiles(horizon_length)
-        preds = preds[preds_idx]
-        preds = preds[:, quantiles_idx]
-
-        index = fh.to_absolute(self._cutoff)._values
-        name = self.context_.name if self.context_.name is not None else 0
-        columns = pd.MultiIndex.from_product([[name], alpha])
-        pred_quantiles = pd.DataFrame(
-            data=preds,
-            index=index,
-            columns=columns,
-        )
-
-        return pred_quantiles
-
-    def _predict_full_quantiles(self, horizon_length):
-        """Run the model forward pass and return full quantile forecasts.
-
-        Shared helper for ``_predict_quantiles`` and ``_predict_proba``.
-
-        Parameters
-        ----------
-        horizon_length : int
-            Number of forecast steps to generate (relative max index + 1).
-
-        Returns
-        -------
-        preds : 2D np.ndarray of shape (horizon_length, n_quantiles)
-            Forecasts at each native quantile level in
-            ``model.config.quantiles`` for horizon steps 1..horizon_length.
-        """
-        import torch
-        import transformers
-
-        if self.deterministic:
-            transformers.set_seed(42)
-
-        past_values = self.context_
         past_values = np.expand_dims(past_values, axis=0)
         past_values = torch.from_numpy(past_values)
         past_values = past_values.to(self.model_.dtype)
@@ -414,8 +383,20 @@ class TimerS1Forecaster(BaseForecaster):
 
         preds = output.squeeze(axis=0)
         preds = preds.T
+        preds = preds[preds_idx]
+        preds = preds[:, quantiles_idx]
         preds = preds.detach().float().cpu().numpy()
-        return preds
+
+        index = fh.to_absolute(self._cutoff)._values
+        name = self.context_.name if self.context_.name is not None else 0
+        columns = pd.MultiIndex.from_product([[name], alpha])
+        pred_quantiles = pd.DataFrame(
+            data=preds,
+            index=index,
+            columns=columns,
+        )
+
+        return pred_quantiles
 
     def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
@@ -443,23 +424,15 @@ class TimerS1Forecaster(BaseForecaster):
         self.model_ = self._load_model()
 
         quantiles = [round(i, 3) for i in self.model_.config.quantiles]
+        preds = self._predict_quantiles(fh=fh, X=X, alpha=quantiles)
 
-        if fh is None:
-            fh = self.fh
-        fh = fh.to_relative(self.cutoff)
-        preds_idx = fh._values.values - 1
-        horizon_length = np.max(preds_idx) + 1
-
-        preds = self._predict_full_quantiles(horizon_length)
-        preds = preds[preds_idx]
-
-        pred_index = fh.to_absolute(self._cutoff)._values
+        pred_index = preds.index
         name = self.context_.name if self.context_.name is not None else 0
         columns = pd.Index([name])
 
         # rows of q_df are (quantile level, time index), see HistogramQPD docs
         row_index = pd.MultiIndex.from_product([quantiles, pred_index])
-        data = preds.T.reshape(-1, 1)
+        data = preds.to_numpy().T.reshape(-1, 1)
         q_df = pd.DataFrame(data, index=row_index, columns=columns)
 
         return HistogramQPD(q_df, tails="mass", index=pred_index, columns=columns)
