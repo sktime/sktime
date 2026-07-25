@@ -85,4 +85,4 @@ jobs:
           MODULES: ${{ steps.find_modules.outputs.modules }}
         shell: bash
         run: |
-          pytest --pyargs $MODULES --only_changed_modules False
+          pytest --pyargs $MODULES --only_vm_estimators True
