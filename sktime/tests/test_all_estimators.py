@@ -836,6 +836,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if len(modules_to_run) == 0:
             return
 
+        raise ValueError(f"diagnostic raise of modules_to_run {modules_to_run}")
+
         with StderrMute(), StdoutMute():
             returncode = pytest.main(["--pyargs", *modules_to_run])
 
