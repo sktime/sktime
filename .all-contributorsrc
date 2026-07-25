@@ -12,6 +12,17 @@
   "skipCi": true,
   "contributors": [
     {
+      "login": "Faareh-Ahmed",
+      "name": "Faareh Ahmed",
+      "avatar_url": "https://avatars.githubusercontent.com/Faareh-Ahmed",
+      "profile": "https://github.com/Faareh-Ahmed",
+      "contributions": [
+        "code",
+        "maintenance",
+        "test"
+      ]
+    },
+    {
       "login": "fkiraly",
       "name": "Franz Kiraly",
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
