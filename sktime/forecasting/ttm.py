@@ -377,6 +377,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_ttm"],
         "tests:libs": ["sktime.libs.granite_ttm"],
     }
 
