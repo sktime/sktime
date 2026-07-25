@@ -23,21 +23,21 @@ EXAMPLE_INSTANCES = [cls.create_test_instance() for cls in EXAMPLE_CLASSES]
     and not run_test_for_class(EXAMPLE_CLASSES),
     reason="Run if check_estimator or TestAll classes have changed.",
 )
-@pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
-def test_check_estimator_passed(estimator_class):
+@pytest.mark.parametrize("object_class", EXAMPLE_CLASSES)
+def test_check_estimator_passed(object_class):
     """Test that check_estimator returns only passed tests for examples we know pass.
 
     Tests may be skipped if they are not applicable to the estimator,
     in this case the test is marked as "SKIP", and we test
     that less than 10% of tests are skipped.
     """
-    estimator_instance = estimator_class.create_test_instance()
+    object_instance = object_class.create_test_instance()
 
-    result_class = check_estimator(estimator_class, verbose=False)
+    result_class = check_estimator(object_class, verbose=False)
 
     _check_none_failed_and_only_few_skipped(result_class)
 
-    result_instance = check_estimator(estimator_instance, verbose=False)
+    result_instance = check_estimator(object_instance, verbose=False)
 
     _check_none_failed_and_only_few_skipped(result_instance)
 
@@ -74,14 +74,14 @@ def _check_none_failed_and_only_few_skipped(result):
     # run_test_for_class will return True if TestAll has changed,
     # because test classes impacting EXAMPLE_CLASSES have changed
 )
-@pytest.mark.parametrize("estimator_class", EXAMPLE_CLASSES)
-def test_check_estimator_does_not_raise(estimator_class):
+@pytest.mark.parametrize("object_class", EXAMPLE_CLASSES)
+def test_check_estimator_does_not_raise(object_class):
     """Test that check_estimator does not raise exceptions on examples we know pass."""
-    estimator_instance = estimator_class.create_test_instance()
+    object_instance = object_class.create_test_instance()
 
-    check_estimator(estimator_class, raise_exceptions=True, verbose=False)
+    check_estimator(object_class, raise_exceptions=True, verbose=False)
 
-    check_estimator(estimator_instance, raise_exceptions=True, verbose=False)
+    check_estimator(object_instance, raise_exceptions=True, verbose=False)
 
 
 @pytest.mark.skipif(

@@ -53,16 +53,16 @@ def _method_logger(method):
 
 
 def make_mock_estimator(
-    estimator_class: BaseEstimator, method_regex: str = ".*"
+    object_class: BaseEstimator, method_regex: str = ".*"
 ) -> BaseEstimator:
     r"""Transform any estimator class into a mock estimator class.
 
-    The returned class will accept the original arguments passed in estimator_class
+    The returned class will accept the original arguments passed in object_class
     __init__ as a dictionary of kwargs.
 
     Parameters
     ----------
-    estimator_class : BaseEstimator
+    object_class : BaseEstimator
         any sktime estimator
     method_regex : str, optional
         regex to filter methods on, by default ".*"
@@ -82,14 +82,14 @@ def make_mock_estimator(
     >>> from sktime.utils.estimators import make_mock_estimator
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> mock_estimator_class = make_mock_estimator(NaiveForecaster)
-    >>> mock_estimator_instance = mock_estimator_class({"strategy": "last", "sp": 1})
-    >>> mock_estimator_instance.fit(y)
+    >>> mock_object_class = make_mock_estimator(NaiveForecaster)
+    >>> mock_object_instance = mock_object_class({"strategy": "last", "sp": 1})
+    >>> mock_object_instance.fit(y)
     _MockEstimator(...)
     """
     dunder_methods_regex = r"^__\w+__$"
 
-    class _MockEstimator(estimator_class, _MockEstimatorMixin):
+    class _MockEstimator(object_class, _MockEstimatorMixin):
         def __init__(self, estimator_kwargs=None):
             self.estimator_kwargs = estimator_kwargs
             if estimator_kwargs is not None:
@@ -97,7 +97,7 @@ def make_mock_estimator(
             else:
                 super().__init__()
 
-    for attr_name in dir(estimator_class):
+    for attr_name in dir(object_class):
         attr = getattr(_MockEstimator, attr_name)
         # exclude dunder methods (e.g. __eq__, __class__ etc.) and non callables
         # from logging

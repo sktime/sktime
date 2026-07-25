@@ -12,14 +12,14 @@ from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 
 
 @pytest.fixture(params=get_obj_scitype_list())
-def estimator_class(request):
+def object_class(request):
     lookup = get_base_class_lookup()
     return lookup[request.param]
 
 
-def test_get_scenarios_for_class(estimator_class):
+def test_get_scenarios_for_class(object_class):
     """Test retrieval of scenarios by class."""
-    scenarios = retrieve_scenarios(obj=estimator_class)
+    scenarios = retrieve_scenarios(obj=object_class)
 
     assert isinstance(scenarios, list), "return of retrieve_scenarios is not a list"
     assert np.all(isinstance(x, TestScenario) for x in scenarios), (

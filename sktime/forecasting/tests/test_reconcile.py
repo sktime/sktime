@@ -118,11 +118,11 @@ def test_reconcilerforecaster_exog(n_columns):
     X_test = get_window(X, window_length=2)
 
     forecaster = SARIMAX()
-    estimator_instance = ReconcilerForecaster(forecaster, method="mint_shrink")
+    object_instance = ReconcilerForecaster(forecaster, method="mint_shrink")
     fh = [1, 2]
-    estimator_instance.fit(y=y_train, X=X_train, fh=fh)
-    estimator_instance.predict(X=X_test)
-    estimator_instance.update(y=y_test, X=X_test)
+    object_instance.fit(y=y_train, X=X_train, fh=fh)
+    object_instance.predict(X=X_test)
+    object_instance.update(y=y_test, X=X_test)
 
 
 @pytest.mark.skipif(
@@ -162,12 +162,12 @@ def test_reconcilerforecaster_return_totals(method, return_totals):
     X_test = get_window(X, window_length=2)
 
     forecaster = YfromX.create_test_instance()
-    estimator_instance = ReconcilerForecaster(
+    object_instance = ReconcilerForecaster(
         forecaster, method=method, return_totals=return_totals
     )
     fh = [1, 2]
-    estimator_instance.fit(y=y_train, X=X_train, fh=fh)
-    y_pred = estimator_instance.predict(X=X_test)
+    object_instance.fit(y=y_train, X=X_train, fh=fh)
+    y_pred = object_instance.predict(X=X_test)
     if return_totals:
         # for hierarchy_levels=(m, n), len(y_pred) = len(y_test) + (1 + m) * 2
         assert len(y_pred) == (len(y_test) + (1 + m) * 2)

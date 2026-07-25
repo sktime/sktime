@@ -161,7 +161,7 @@ def test_method_logger():
     reason="Run test if estimators module has changed.",
 )
 @pytest.mark.parametrize(
-    "estimator_class, method_regex, logged_methods",
+    "object_class, method_regex, logged_methods",
     [
         (NaiveForecaster, r"(?!^_\w+)", ["fit"]),
         (NaiveForecaster, ".*", ["fit", "_fit"]),
@@ -169,9 +169,9 @@ def test_method_logger():
         (BoxCoxTransformer, ".*", ["fit", "_fit"]),
     ],
 )
-def test_make_mock_estimator(estimator_class, method_regex, logged_methods):
+def test_make_mock_estimator(object_class, method_regex, logged_methods):
     """Test that make_mock_estimator output logs the right methods."""
-    estimator = make_mock_estimator(estimator_class, method_regex)()
+    estimator = make_mock_estimator(object_class, method_regex)()
     estimator.fit(y_series)
     methods_called = [entry[0] for entry in estimator.log]
 
@@ -183,26 +183,26 @@ def test_make_mock_estimator(estimator_class, method_regex, logged_methods):
     reason="Run test if estimators module has changed.",
 )
 @pytest.mark.parametrize(
-    "estimator_class, estimator_kwargs",
+    "object_class, estimator_kwargs",
     [
         (NaiveForecaster, {"strategy": "last", "sp": 2, "window_length": None}),
         (NaiveForecaster, {"strategy": "mean", "sp": 1, "window_length": None}),
     ],
 )
-def test_make_mock_estimator_with_kwargs(estimator_class, estimator_kwargs):
+def test_make_mock_estimator_with_kwargs(object_class, estimator_kwargs):
     """Test that make_mock_estimator behaves like the passed estimator."""
-    mock_estimator = make_mock_estimator(estimator_class)
-    mock_estimator_instance = mock_estimator(estimator_kwargs)
-    estimator_instance = estimator_class(**estimator_kwargs)
-    mock_estimator_instance.fit(y_series)
-    estimator_instance.fit(y_series)
+    mock_estimator = make_mock_estimator(object_class)
+    mock_object_instance = mock_estimator(estimator_kwargs)
+    object_instance = object_class(**estimator_kwargs)
+    mock_object_instance.fit(y_series)
+    object_instance.fit(y_series)
 
     assert_series_equal(
-        estimator_instance.predict(fh=[1, 2, 3]),
-        mock_estimator_instance.predict(fh=[1, 2, 3]),
+        object_instance.predict(fh=[1, 2, 3]),
+        mock_object_instance.predict(fh=[1, 2, 3]),
     )
     assert (
-        (mock_estimator_instance.strategy == estimator_kwargs["strategy"])
-        and (mock_estimator_instance.sp == estimator_kwargs["sp"])
-        and (mock_estimator_instance.window_length == estimator_kwargs["window_length"])
+        (mock_object_instance.strategy == estimator_kwargs["strategy"])
+        and (mock_object_instance.sp == estimator_kwargs["sp"])
+        and (mock_object_instance.window_length == estimator_kwargs["window_length"])
     )

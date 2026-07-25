@@ -336,8 +336,8 @@ def test_est_fit_without_modulenotfound(estimator):
             return None
         else:
             scenario = scenarios[0]
-        estimator_instance = estimator.create_test_instance()
-        scenario.run(estimator_instance, method_sequence=["fit"])
+        object_instance = estimator.create_test_instance()
+        scenario.run(object_instance, method_sequence=["fit"])
     except ModuleNotFoundError as e:
         error_msg = str(e)
         raise RuntimeError(

@@ -38,19 +38,19 @@ def _get_type_tuple(estimator_scitype):
 
     Returns
     -------
-    estimator_classes : tuple of sktime base classes,
+    object_classes : tuple of sktime base classes,
         corresponding to scitype strings in estimator_scitypes
     """
     scitypes = _to_list(estimator_scitype)
     if estimator_scitype is not None:
         lookup = get_base_class_lookup(include_baseobjs=True)
-        estimator_classes = tuple(lookup[scitype] for scitype in scitypes)
+        object_classes = tuple(lookup[scitype] for scitype in scitypes)
     else:
         from skbase.base import BaseObject
 
-        estimator_classes = (BaseObject,)
+        object_classes = (BaseObject,)
 
-    return estimator_classes
+    return object_classes
 
 
 @pytest.mark.parametrize("return_names", [True, False])
@@ -62,7 +62,7 @@ def test_all_estimators_by_scitype(estimator_scitype, return_names):
         return_names=return_names,
     )
 
-    estimator_classes = _get_type_tuple(estimator_scitype)
+    object_classes = _get_type_tuple(estimator_scitype)
 
     assert isinstance(estimators, list)
     # there should be at least one estimator returned
@@ -75,11 +75,11 @@ def test_all_estimators_by_scitype(estimator_scitype, return_names):
         for estimator in estimators:
             assert isinstance(estimator, tuple) and len(estimator) == 2
             assert isinstance(estimator[0], str)
-            assert issubclass(estimator[1], estimator_classes)
+            assert issubclass(estimator[1], object_classes)
             assert estimator[0] == estimator[1].__name__
     else:
         for estimator in estimators:
-            assert issubclass(estimator, estimator_classes)
+            assert issubclass(estimator, object_classes)
 
 
 @pytest.mark.parametrize("estimator_scitype", estimator_scitype_fixture)

@@ -251,12 +251,12 @@ def test_hierarchy_ensemble_exog(forecasters):
     X_train = get_window(X, lag=2)
     X_test = get_window(X, window_length=2)
 
-    estimator_instance = HierarchyEnsembleForecaster(
+    object_instance = HierarchyEnsembleForecaster(
         forecasters=forecasters, default=NaiveForecaster()
     )
-    estimator_instance.fit(y=y_train, X=X_train, fh=[1, 2, 3])
-    estimator_instance.predict(X=X_test)
-    estimator_instance.update(y=y_test, X=X_test)
+    object_instance.fit(y=y_train, X=X_train, fh=[1, 2, 3])
+    object_instance.predict(X=X_test)
+    object_instance.update(y=y_test, X=X_test)
 
 
 @pytest.mark.skipif(
