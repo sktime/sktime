@@ -2520,6 +2520,41 @@ class capability__pairwise_parameter_estimation(_BaseTag):
     }
 
 
+# Benchmark analyzer tags
+# -----------------------
+
+
+class property__analyzer_type(_BaseTag):
+    """Property: type of analysis a benchmark analyzer performs.
+
+    - String name: ``"property:analyzer_type"``
+    - Public property tag
+    - Values: str, one of ``"omnibus"``, ``"pairwise"``, ``"plot"``, ``"ranking"``
+    - Example: ``"pairwise"``
+    - Default: ``None``
+
+    This tag applies to benchmark analyzers. It describes what the
+    analyzer *is* (its kind of analysis), which also fixes the shape of the output of
+    its ``evaluate`` method.
+
+    - ``"omnibus"``: ``evaluate()`` returns a single overall statistic and
+      p-value.
+    - ``"pairwise"``: ``evaluate()`` returns a comparative table/matrix between
+      ``estimator_1`` and ``estimator_2``.
+    - ``"plot"``: the primary modality is plotting (e.g. returning a matplotlib
+      ``(fig, ax)``).
+    - ``"ranking"``: ``evaluate()`` returns a per-model ranking table.
+    """
+
+    _tags = {
+        "tag_name": "property:analyzer_type",
+        "parent_type": "object",
+        "tag_type": ("str", ["omnibus", "pairwise", "plot", "ranking"]),
+        "short_descr": "type of analysis the benchmark analyzer performs",
+        "user_facing": True,
+    }
+
+
 # Metrics tags
 # ------------
 
