@@ -544,8 +544,8 @@ class tests__specific(_BaseTag):
 
     * testing the estimator is triggered whenever any listed module has changed,
       in addition to the other test trigger conditions
-    * ``TestAllObjects.test_run_specific_tests`` runs the listed pytest test modules
-      for that estimator
+    * ``test_est`` CI VM runs execute the listed pytest test modules for that estimator
+      (see ``sktime.tests._test_vm._get_estimator_specific_test_modules``)
 
     The ``tests:specific`` tag is not used in user facing checks, error messages,
     or recommended build processes otherwise.
