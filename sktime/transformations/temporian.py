@@ -65,6 +65,7 @@ class TemporianTransformer(BaseTransformer):
         "capability:inverse_transform": False,
         "capability:unequal_length": True,
         "capability:missing_values": False,
+        "capability:categorical_in_X": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
