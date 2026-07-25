@@ -20,3 +20,5 @@ def test_ARIMA_pred_quantiles_insample():
     forecaster = ARIMA(order=(1, 1, 0), seasonal_order=(0, 1, 0, 12))
     forecaster.fit(y)
     forecaster.predict_quantiles(fh=y.index, X=None, alpha=[0.05, 0.95])
+
+    raise ValueError("FAIL! FAIL! FAIL!")
