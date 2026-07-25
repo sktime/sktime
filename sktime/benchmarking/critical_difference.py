@@ -374,7 +374,7 @@ def plot_critical_difference(
             ]
             #
         else:
-            raise Exception("alpha must be 0.01, 0.05 or 0.1")
+            raise ValueError("alpha must be 0.01, 0.05 or 0.1")
 
         if cliques is None:
             # calculate critical difference with Nemenyi
