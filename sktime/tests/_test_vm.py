@@ -29,9 +29,10 @@ def run_test_vm(cls_name):
     Exception
         if the ``check_estimator`` fails, or if the estimator is not found.
     """
+    from skbase.utils.dependencies import _check_estimator_deps
+
     from sktime.registry import craft
     from sktime.utils import check_estimator
-    from sktime.utils.dependencies import _check_estimator_deps
 
     cls = craft(cls_name)
     if not _check_estimator_deps(cls, severity="none"):

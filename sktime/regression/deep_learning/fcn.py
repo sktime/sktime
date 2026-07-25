@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.fcn import FCNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class FCNRegressor(BaseDeepRegressor):
@@ -82,8 +81,6 @@ class FCNRegressor(BaseDeepRegressor):
         filter_sizes=(128, 256, 128),
         kernel_sizes=(8, 5, 3),
     ):
-        _check_dl_dependencies(severity="error")
-
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.callbacks = callbacks
@@ -101,6 +98,15 @@ class FCNRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         self._network = FCNNetwork(
             activation=self.activation_hidden,
             random_state=self.random_state,
@@ -209,7 +215,7 @@ class FCNRegressor(BaseDeepRegressor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,
