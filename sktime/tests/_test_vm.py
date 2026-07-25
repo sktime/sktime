@@ -83,7 +83,7 @@ def _get_estimator_specific_test_modules(cls_name):
     if modules is None:
         return None
 
-    msg = (f"{cls.__name__}.tests:specific must be a list of strings, found: {modules}")
+    msg = f"{cls.__name__}.tests:specific must be a list of strings, found: {modules}"
     assert isinstance(modules, list), msg
     assert all(isinstance(module, str) for module in modules), msg
     if len(modules) == 0:
