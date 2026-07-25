@@ -105,7 +105,6 @@ class MiniRocketMultivariateCython(BaseTransformer):
         # test and CI flags
         # -----------------
         "tests:vm": True,
-        "tests:specific": ["sktime.transformations.rocket.tests.test_MiniRocketMultivariateCython"],
     }
 
     def __init__(
