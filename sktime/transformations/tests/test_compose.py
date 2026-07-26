@@ -6,12 +6,14 @@ __all__ = []
 
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps
 from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_airline, load_unit_test
 from sktime.datatypes import get_examples
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.bootstrap import STLBootstrapTransformer
+from sktime.transformations.boxcox import LogTransformer
 from sktime.transformations.compose import (
     FeatureUnion,
     InvertTransform,
@@ -19,16 +21,14 @@ from sktime.transformations.compose import (
     OptionalPassthrough,
     TransformerPipeline,
 )
-from sktime.transformations.panel.padder import PaddingTransformer
-from sktime.transformations.series.boxcox import LogTransformer
-from sktime.transformations.series.exponent import ExponentTransformer
-from sktime.transformations.series.impute import Imputer
-from sktime.transformations.series.subset import ColumnSelect
-from sktime.transformations.series.summarize import SummaryTransformer
-from sktime.transformations.series.theta import ThetaLinesTransformer
+from sktime.transformations.exponent import ExponentTransformer
+from sktime.transformations.impute import Imputer
+from sktime.transformations.padder import PaddingTransformer
+from sktime.transformations.subset import ColumnSelect
+from sktime.transformations.summarize import SummaryTransformer
+from sktime.transformations.theta import ThetaLinesTransformer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
@@ -367,7 +367,7 @@ def test_input_output_series_panel_chain():
     Failure case of #5624.
     """
     from sktime.datasets import load_airline
-    from sktime.transformations.series.impute import Imputer
+    from sktime.transformations.impute import Imputer
 
     X = load_airline()
     bootstrap_trafo = STLBootstrapTransformer(4, sp=4) * Imputer(method="nearest")
@@ -387,7 +387,7 @@ def test_input_output_series_panel_chain():
 def test_requires_tags_trafopipe():
     """Test correct handling of requires_X tag, failure case in ."""
     from sktime.transformations.compose import TransformerPipeline, YtoX
-    from sktime.transformations.series.fourier import FourierFeatures
+    from sktime.transformations.fourier import FourierFeatures
 
     # data with no exogenous features
     X = load_airline()

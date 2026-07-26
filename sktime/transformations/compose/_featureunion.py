@@ -249,8 +249,8 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for FeatureUnion."""
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         # with name and estimator tuple, all transformers don't have fit
         TRANSFORMERS = [

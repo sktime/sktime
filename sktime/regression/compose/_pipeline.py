@@ -6,8 +6,6 @@ import numpy as np
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.datatypes import convert_to
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose import TransformerPipeline
 from sktime.utils.sklearn import is_sklearn_regressor
 
 __author__ = ["fkiraly"]
@@ -70,7 +68,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.regression.compose import RegressorPipeline
     >>> from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
@@ -108,11 +106,27 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
     def __init__(self, regressor, transformers):
         self.regressor = regressor
-        self.regressor_ = regressor.clone()
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        transformers = self.transformers
+        regressor = self.regressor
+
+        self.regressor_ = regressor.clone()
+
+        from sktime.transformations.compose import TransformerPipeline
+
+        self.transformers_ = TransformerPipeline(transformers)
 
         # can handle multivariate iff: both regressor and all transformers can
         multivariate = regressor.get_tag("capability:multivariate", False)
@@ -180,6 +194,8 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         -------
         RegressorPipeline object, concatenation of `other` (first) with `self` (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
@@ -293,9 +309,10 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.transformations.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
@@ -378,8 +395,8 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     >>> from sklearn.neighbors import KNeighborsRegressor
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.regression.compose import SklearnRegressorPipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
     >>> t1 = ExponentTransformer()
@@ -409,14 +426,30 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
     # no default tag values - these are set dynamically below
 
     def __init__(self, regressor, transformers):
-        from sklearn.base import clone
-
         self.regressor = regressor
-        self.regressor_ = clone(regressor)
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        transformers = self.transformers
+        regressor = self.regressor
+
+        from sklearn.base import clone
+
+        self.regressor_ = clone(regressor)
+
+        from sktime.transformations.compose import TransformerPipeline
+
+        self.transformers_ = TransformerPipeline(transformers)
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
@@ -474,6 +507,8 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         -------
         RegressorPipeline object, concatenation of `other` (first) with `self` (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
@@ -609,8 +644,8 @@ class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         """
         from sklearn.neighbors import KNeighborsRegressor
 
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         # example with series-to-series transformer before sklearn regressor
         t1 = ExponentTransformer(power=2)
