@@ -179,7 +179,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "OnlineEnsembleForecaster",
         "PAAlegacy",
         "PaddingTransformer",
-        "PlateauFinder",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
