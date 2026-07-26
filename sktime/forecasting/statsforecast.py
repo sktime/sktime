@@ -616,6 +616,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.1.0"],
+        "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
@@ -870,6 +871,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
+        "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_update_with_exogenous_variables"],
