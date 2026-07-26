@@ -222,7 +222,7 @@ class VARMAX(_StatsModelsAdapter):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "capability:exogenous": True,
         "capability:missing_values": False,
         "y_inner_mtype": "pd.DataFrame",
@@ -371,7 +371,7 @@ class VARMAX(_StatsModelsAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
