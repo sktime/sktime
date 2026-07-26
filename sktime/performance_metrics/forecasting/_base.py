@@ -831,8 +831,8 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
     """Adapter for numpy metrics."""
 
     # all descendants should have a func class attribute
-    #   of signature func(y_true: np.ndarray, y_pred: np.darray, multioutput: bool)
-    #   additional optional args: y_train: np.darray, y_pred_benchmark: np.darray
+    #   of signature func(y_true: np.ndarray, y_pred: np.ndarray, multioutput: bool)
+    #   additional optional args: y_train: np.ndarray, y_pred_benchmark: np.ndarray
     #                       further args that are parameters
     #       all np.ndarray should be 2D
     # func should return 1D np.ndarray if multioutput="raw_values", otherwise float
@@ -990,7 +990,9 @@ def make_forecasting_scorer(
     ----------
     func : callable
         Callable to convert to a forecasting scorer class.
-        Score function (or loss function) with signature ``func(y, y_pred, **kwargs)``.
+        Score function (or loss function) with signature
+        ``func(y_true, y_pred, **kwargs)``.
+        The arguments ``y_true`` and ``y_pred`` are passed as keyword arguments.
 
     name : str, default=None
         Name to use for the forecasting scorer loss class.

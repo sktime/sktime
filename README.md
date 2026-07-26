@@ -5,7 +5,7 @@
 
 > A unified interface for machine learning with time series
 
-:rocket: **Version 0.40.1 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
+:rocket: **Version 1.0.1 out now!** [Check out the release notes here](https://www.sktime.net/en/latest/changelog.html).
 
 sktime is a library for time series analysis in Python. It provides a unified interface for multiple time series learning tasks. Currently, this includes forecasting, time series classification, clustering, anomaly/changepoint detection, and other tasks. It comes with [time series algorithms](https://www.sktime.net/en/stable/estimator_overview.html) and [scikit-learn] compatible tools to build, tune, and validate time series models.
 
@@ -103,7 +103,7 @@ sktime also provides **interfaces to related libraries**, for example [scikit-le
 For troubleshooting and detailed installation instructions, see the [documentation](https://www.sktime.net/en/latest/installation.html).
 
 - **Operating system**: macOS X · Linux · Windows 8.1 or higher
-- **Python version**: Python 3.10, 3.11, 3.12, and 3.13 (only 64-bit)
+- **Python version**: Python 3.10, 3.11, 3.12, 3.13, and 3.14 (only 64-bit)
 - **Package managers**: [pip] · [conda] (via `conda-forge`)
 
 [pip]: https://pip.pypa.io/en/stable/
@@ -233,7 +233,7 @@ There are many ways to join the sktime community. We follow the [all-contributor
 Thanks to all our community for all your wonderful contributions, PRs, issues, ideas.
 
 <a href="https://github.com/sktime/sktime/graphs/contributors">
-<img src="https://opencollective.com/sktime/contributors.svg?width=600&button=false" />
+<img src="https://contrib.rocks/image?repo=sktime/sktime" />
 </a>
 <br>
 

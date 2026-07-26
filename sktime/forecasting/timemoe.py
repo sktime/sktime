@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
 from sktime.utils.singleton import _multiton
 
 
-class TimeMoEForecaster(_BaseGlobalForecaster):
+class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     """
     Interface for TimeMOE forecaster for zero-shot forecasting.
 
@@ -30,14 +30,15 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
 
         - A model ID from the HuggingFace Hub, e.g., "Maple728/TimeMoE-50M"
         - A local directory containing the model files, specified as an absolute or
-        relative path to the current working directory
-        The path should point to a directory containing the model weights and
-        configuration files in the format expected by the HuggingFace Transformers
-        library.
+          relative path to the current working directory
+          The path should point to a directory containing the model weights and
+          configuration files in the format expected by the HuggingFace Transformers
+          library.
     config: dict, optional
         A dictionary specifying the configuration of the TimeMOE model.
         The available configuration options include hyperparameters that control
         the prediction behavior, sampling, and hardware utilization.
+
         - input_size: int, default=1
             The size of the input time series.
         - hidden_size: int, default=4096
@@ -119,13 +120,9 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
-        "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "y_inner_mtype": [
-            "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
-        ],
-        "scitype:y": "univariate",
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "pd.DataFrame",
+        "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
@@ -143,21 +140,19 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
-        if not ignore_deps:
-            _check_soft_dependencies("torch", severity="error")
-            _check_soft_dependencies("transformers", severity="error")
         self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
-
         self.config = config
-        _config = self._get_default_config()
-        _config.update(config if config is not None else {})
-        self._config = _config
-
         self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
         elif self.use_source_package:
@@ -171,7 +166,20 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
                 ]
             )
 
-        super().__init__()
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+
+        _config = self._get_default_config()
+        _config.update(self.config if self.config is not None else {})
+        self._config = _config
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -263,12 +271,7 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         }
         return default_config
 
-    def _predict(
-        self,
-        fh,
-        X=None,
-        y=None,
-    ):
+    def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
         Private _predict containing the core logic, called from predict
@@ -297,18 +300,13 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
             prediction_length = 1
 
         _y = self._y.copy()
-        if y is not None:
-            _y = y.copy()
         _y_df = _y
 
         index_names = _y.index.names
-        if isinstance(_y.index, pd.MultiIndex):
-            _y = _frame2numpy(_y)
+        if isinstance(_y, pd.DataFrame):
+            _y = _y.values.reshape(1, -1, _y.shape[1])
         else:
-            if isinstance(_y, pd.DataFrame):
-                _y = _y.values.reshape(1, -1, _y.shape[1])
-            else:
-                _y = _y.values.reshape(1, -1, 1)
+            _y = _y.values.reshape(1, -1, 1)
 
         results = []
         for i in range(_y.shape[0]):
@@ -408,58 +406,6 @@ class TimeMoEForecaster(_BaseGlobalForecaster):
         )
 
         return test_params
-
-
-def _same_index(data):
-    """
-    Ensure that all series within a multi-indexed DataFrame share the same index.
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-        A multi-indexed DataFrame where the last level of the index should be the same
-        across all grouped series.
-
-    Returns
-    -------
-    pandas.Index, int
-        The common index found at the last level and the length of this index
-    """
-    data = data.groupby(level=list(range(len(data.index.levels) - 1))).apply(
-        lambda x: x.index.get_level_values(-1)
-    )
-    assert data.map(lambda x: x.equals(data.iloc[0])).all(), (
-        "All series must has the same index"
-    )
-    return data.iloc[0], len(data.iloc[0])
-
-
-def _frame2numpy(data):
-    """
-    Convert a multi-indexed DataFrame into a 3D NumPy array.
-
-    The function first ensures that all series in `data` share the same index at the
-    last level using `_same_index`, then reshapes the DataFrame values into a NumPy
-    array with dimensions `(batch_size, sequence_length, feature_dim)`.
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-        A multi-indexed DataFrame with consistent last-level indices across all series.
-
-    Returns
-    -------
-    numpy.ndarray
-        A 3D NumPy array of shape `(n_groups, sequence_length, n_features)`, where:
-        - `n_groups` is the number of unique index groups in `data`
-        - `sequence_length` is the length of the common index
-        - `n_features` is the number of columns in `data`.
-    """
-    idx, length = _same_index(data)
-    arr = np.array(data.values, dtype=np.float32).reshape(
-        (-1, length, len(data.columns))
-    )
-    return arr
 
 
 @_multiton

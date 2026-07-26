@@ -38,11 +38,11 @@ class MCDCNNNetworkTorch(NNModule):
         The type of padding to be applied to pooling layers.
     random_state : int, optional (default=0)
         The seed to any random action.
-    activation : str or None, optional (default=None)
+    activation : Callable or None, optional (default=None)
         The activation function to apply at the output.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
-    activation_hidden : string, default="relu"
+    activation_hidden : Callable or None, optional (default=None)
         Activation function used in the hidden layers.
         List of available activation functions:
         https://pytorch.org/docs/stable/nn.html#non-linear-activations-activation
@@ -69,21 +69,33 @@ class MCDCNNNetworkTorch(NNModule):
         pool_padding="same",
         random_state=0,
         activation=None,
-        activation_hidden="relu",
+        activation_hidden=None,
         use_bias=True,
         num_classes=1,
     ):
+        super().__init__()
         self.random_state = random_state
-        self.activation = activation
         self.use_bias = use_bias
-        self.activation_hidden = activation_hidden
         self.dense_units = dense_units
         self.num_classes = num_classes
-
-        super().__init__()
+        self.kernel_sizes = kernel_sizes
+        self.pool_size = pool_size
+        self.filter_sizes = filter_sizes
+        self.conv_padding = conv_padding
+        self.pool_padding = pool_padding
+        self.activation = activation
+        self.activation_hidden = activation_hidden
 
         nnConv1d = _safe_import("torch.nn.Conv1d")
         nnModuleList = _safe_import("torch.nn.ModuleList")
+
+        filter_sizes = self.filter_sizes
+        kernel_sizes = self.kernel_sizes
+        conv_padding = self.conv_padding
+        pool_size = self.pool_size
+        pool_padding = self.pool_padding
+        activation = self.activation
+        activation_hidden = self.activation_hidden
 
         self.conv_layers = nnModuleList()
         for i in range(len(filter_sizes)):
@@ -109,10 +121,6 @@ class MCDCNNNetworkTorch(NNModule):
         # Dense layer created lazily (depends on input length)
         self.fc = None
 
-        self._activation_hidden = self._instantiate_activation(activation_hidden)
-        if self.activation:
-            self._activation = self._instantiate_activation(activation)
-
     def forward(self, X):
         """Forward pass of the MCDCNNNetworkTorch.
 
@@ -135,7 +143,8 @@ class MCDCNNNetworkTorch(NNModule):
 
             for conv_layer in self.conv_layers:
                 x = conv_layer(x)
-                x = self._activation_hidden(x)
+                if self.activation_hidden is not None:
+                    x = self.activation_hidden(x)
                 x = self.pool(x)
 
             x = torchFlatten(x, start_dim=1)
@@ -154,47 +163,14 @@ class MCDCNNNetworkTorch(NNModule):
                 x.device
             )
 
-        x = self._activation_hidden(self.fc(x))
+        x = self.activation_hidden(self.fc(x))
 
         x = self.out(x)
         if self.activation:
-            x = self._activation(x)
+            x = self.activation(x)
 
         # regression: (n_instances, 1) -> (n_instances,)
         if self.num_classes == 1:
             return x.squeeze(-1)
 
         return x
-
-    def _instantiate_activation(self, activation):
-        """Instantiate the activation function to be applied on the output layer.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied on the output layer.
-        """
-        if isinstance(activation, NNModule):
-            return activation
-        elif isinstance(activation, str):
-            if activation.lower() == "sigmoid":
-                return _safe_import("torch.nn.Sigmoid")()
-            elif activation.lower() == "relu":
-                return _safe_import("torch.nn.ReLU")()
-            elif activation.lower() == "softmax":
-                return _safe_import("torch.nn.Softmax")(dim=1)
-            elif activation.lower() == "logsoftmax":
-                return _safe_import("torch.nn.LogSoftmax")(dim=1)
-            elif activation.lower() == "logsigmoid":
-                return _safe_import("torch.nn.LogSigmoid")()
-            else:
-                raise ValueError(
-                    "If `activation` is not None, it must be one of "
-                    "'sigmoid', 'logsigmoid', 'softmax' or 'logsoftmax'. "
-                    f"Found {activation}"
-                )
-        else:
-            raise TypeError(
-                "`activation` should either be of type str or torch.nn.Module. "
-                f"But found the type to be: {type(activation)}"
-            )
