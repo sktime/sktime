@@ -3,37 +3,43 @@
 __author__ = ["oguiza", "obaidsafi51"]
 __all__ = ["InceptionTimePlusClassifier"]
 
-
 from sktime.classification.deep_learning.tsai._base import BaseTsaiClassifier
+
 
 class InceptionTimePlusClassifier(BaseTsaiClassifier):
     """InceptionTime+ for time series classification, via tsai.
 
-    Wrap tsai's InceptionTimePlus architecture [1] _ behind the sktime classifier interface.
+    Wrap tsai's InceptionTimePlus architecture [1]_ behind the sktime
+    classifier interface.
 
-    Parameters 
+    Parameters
     ----------
-    n_epochs : int, default = 16
-    batch_size : int , default = 16
-    lr : float, default = 0.001
-    nf : int , default = 32
+    n_epochs : int, default=16
+        Number of epochs for fit_one_cycle.
+    batch_size : int, default=16
+        Batch size for training.
+    lr : float, default=0.001
+        Maximum learning rate for fit_one_cycle.
+    nf : int, default=32
         Number of filters per convolutional layer.
-    depth : int , default =6
+    depth : int, default=6
         Number of Inception modules.
-    valid_size : float , default = 0.2
-    random_state : int or None , default = None 
-    verbose :bool, default = False
+    valid_size : float, default=0.2
+        Fraction of training data used for internal validation.
+    random_state : int or None, default=None
+        Seed for reproducibility.
+    verbose : bool, default=False
+        Whether to print training progress.
 
-    References 
+    References
     ----------
+    .. [1] Ismail Fawaz et al., InceptionTime: Finding AlexNet for Time Series
+       Classification, Data Mining and Knowledge Discovery, 2020.
 
-    ..[1] Ismail Fawas et al. , InceptionTime: Finding AlextNet for Time Series Classification,
-    Data Mining and knowledge Discovery, 2020.
-
-        Examples
+    Examples
     --------
     >>> from sktime.classification.deep_learning.tsai.inceptiontimeplus import (
-    ...     InceptionTimePlusClassifier
+    ...     InceptionTimePlusClassifier,
     ... )
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
@@ -42,30 +48,28 @@ class InceptionTimePlusClassifier(BaseTsaiClassifier):
     >>> clf.fit(X_train, y_train)  # doctest: +SKIP
     InceptionTimePlusClassifier(...)
     """
-    
 
     _tags = {
-        "authors" : ["oguiza", "agolinski"],
-        "maintainers" : ["obaidsafi51"]
+        "authors": ["oguiza", "agolinski"],
+        "maintainers": ["obaidsafi51"],
     }
 
     def __init__(
         self,
-        n_epochs = 16,
-        batch_size = 16,
-        lr = 0.001,
-        nf = 32,
-        depth = 6,
-        valid_size = 0.2,
-        random_state = None,
-        verbose = False,
-        
+        n_epochs=16,
+        batch_size=16,
+        lr=0.001,
+        nf=32,
+        depth=6,
+        valid_size=0.2,
+        random_state=None,
+        verbose=False,
     ):
         self.nf = nf
         self.depth = depth
         super().__init__(
-            n_epochs= n_epochs,
-            batch_size= batch_size,
+            n_epochs=n_epochs,
+            batch_size=batch_size,
             lr=lr,
             valid_size=valid_size,
             random_state=random_state,
@@ -73,16 +77,50 @@ class InceptionTimePlusClassifier(BaseTsaiClassifier):
         )
 
     def _build_model(self, n_vars, n_classes):
+        """Instantiate and return the tsai model (nn.Module).
+
+        Parameters
+        ----------
+        n_vars : int
+            Number of dimensions/variables in X.
+        n_classes : int
+            Number of target classes.
+
+        Returns
+        -------
+        model : torch.nn.Module
+            An InceptionTimePlus model instance.
+        """
         from tsai.models.InceptionTimePlus import InceptionTimePlus
-        return InceptionTimePlus(n_vars, n_classes, nf = self.nf, depth= self.depth)
-    
-    def _get_arch_config(self): 
-        return {"nf" : self.nf, "depth" : self.depth}
-    
+
+        return InceptionTimePlus(n_vars, n_classes, nf=self.nf, depth=self.depth)
+
+    def _get_arch_config(self):
+        """Return architecture kwargs passed to TSClassifier arch_config.
+
+        Returns
+        -------
+        dict
+            Architecture keyword arguments.
+        """
+        return {"nf": self.nf, "depth": self.depth}
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined, returns a dictionary with
+            {"n_epochs": 1, ...}.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class.
+        """
         param1 = {
             "n_epochs": 1,
             "batch_size": 4,

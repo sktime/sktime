@@ -11,7 +11,7 @@
   "badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg)](#contributors)",
   "skipCi": true,
   "contributors": [
-    
+
     {
       "login": "fkiraly",
       "name": "Franz Kiraly",

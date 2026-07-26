@@ -3,63 +3,60 @@
 __author__ = ["obaidsafi51"]
 __all__ = ["BaseTsaiClassifier"]
 
+import abc
 
-import abc 
-import numpy as np 
-from sktime.utils.dependencies import _check_soft_dependencies
+import numpy as np
+
 from sktime.classification.base import BaseClassifier
-
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class BaseTsaiClassifier(BaseClassifier):
-    """
-    Abstract base class wrapping tsai models for sktime classification.
-    
-    Handles all data conversion , label encoding , training,loop and inference. Subclasses only need to implement 
+    """Abstract base class wrapping tsai models for sktime classification.
 
-    `` _build_model``.
+    Handles all data conversion, label encoding, training loop and inference.
+    Subclasses only need to implement ``_build_model``.
 
     Note: _DelegatedClassifier was considered but not used here because
     tsai's TSClassifier uses fastai's Learner API (get_X_preds, fit_one_cycle)
     which is not sklearn-compatible. Manual delegation is necessary to
     handle label encoding, binary prob shape correction, and vocab passing.
 
-    Parameters 
-
-    ------------
-
-    n_epoches : int , default = 16
+    Parameters
+    ----------
+    n_epochs : int, default=16
         Number of epochs for fit_one_cycle.
-    batch_size : int , default = 16
+    batch_size : int, default=16
         Batch size for training.
-    lr : float, default = 1e-3
+    lr : float, default=0.001
         Maximum learning rate for fit_one_cycle.
-    valid_size : float, default = 0.2 
+    valid_size : float, default=0.2
         Fraction of training data used for internal validation.
-    random_state : int or None , default = None
+    random_state : int or None, default=None
         Seed for reproducibility.
-    verbose : bool, default = False
-        Whether to print training progress
-
+    verbose : bool, default=False
+        Whether to print training progress.
     """
 
     _tags = {
-        "python_dependencies" : ["tsai", "fastai"],
-        "X_inner_mtype" : "numpy3D",
-        "y_inner_mtype" : "numpy1D",
-        "capability:multivariate" : True,
-        "capability:unequal_length" : False,
-        "capability:random_state": True, 
+        "authors": ["obaidsafi51"],
+        "maintainers": ["obaidsafi51"],
+        "python_dependencies": ["tsai", "fastai"],
+        "X_inner_mtype": "numpy3D",
+        "y_inner_mtype": "numpy1D",
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        "capability:random_state": True,
     }
 
     def __init__(
         self,
-        n_epochs = 16,
-        batch_size = 16,
-        lr = 0.001,
-        valid_size = 0.2,
-        random_state = None,
-        verbose = False,
+        n_epochs=16,
+        batch_size=16,
+        lr=0.001,
+        valid_size=0.2,
+        random_state=None,
+        verbose=False,
     ):
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -68,23 +65,23 @@ class BaseTsaiClassifier(BaseClassifier):
         self.random_state = random_state
         self.verbose = verbose
         super().__init__()
-    
-    def _fit(self,X,y):
-        """ Fit the classifier
 
-        Parameters 
+    def _fit(self, X, y):
+        """Fit the classifier.
 
-        -----------
+        Parameters
+        ----------
         X : np.ndarray of shape (n_instances, n_dims, n_timepoints)
-
-        y : np.ndarray of shape (n_instances,) - string or integer labels
+            Time series input instances.
+        y : np.ndarray of shape (n_instances,)
+            Target class labels (string or integer).
 
         Returns
         -------
-
-        self
+        self : Reference to self.
         """
         import random
+
         import torch
 
         # seed all sources of randomness for idempotent fit
@@ -98,12 +95,10 @@ class BaseTsaiClassifier(BaseClassifier):
             torch.backends.cudnn.benchmark = False
 
         _check_soft_dependencies("tsai", severity="error")
-        from tsai.all import TSClassifier, get_splits
         from sklearn.preprocessing import LabelEncoder
+        from tsai.all import TSClassifier, get_splits
 
-
-        # Endocing labels to integers
-
+        # Encoding labels to integers
         self._label_encoder = LabelEncoder()
         y_enc = self._label_encoder.fit_transform(y)
         self.classes_ = self._label_encoder.classes_
@@ -111,98 +106,99 @@ class BaseTsaiClassifier(BaseClassifier):
 
         # vocab forces tsai to use CrossEntropyLoss with n_classes outputs
         # without this, tsai uses BCELoss with 1 output for any integer-encoded y
-
         vocab = list(range(self.n_classes_))
 
-
-        # splits - tsai needs train/valid indices 
+        # splits - tsai needs train/valid indices
         random_state = self.random_state if self.random_state is not None else 42
-        splits  = get_splits(
+        splits = get_splits(
             y_enc,
-            valid_size = self.valid_size,
-            stratify = True,
-            random_state = random_state,
-            show_plot = False,
+            valid_size=self.valid_size,
+            stratify=True,
+            random_state=random_state,
+            show_plot=False,
         )
 
-        # X is already (n_instances, n_dims, n_timespoints) 
-        #tsai expects the same axis order - no transpose needed 
-
+        # X is already (n_instances, n_dims, n_timepoints)
+        # tsai expects the same axis order - no transpose needed
         X = X.astype(np.float32)
 
         model = self._build_model(
-            n_vars =X.shape[1],
-            n_classes = self.n_classes_,
+            n_vars=X.shape[1],
+            n_classes=self.n_classes_,
         )
 
         self.learn_ = TSClassifier(
             X,
             y_enc,
-            splits = splits,
-            arch = model.__class__,
-            arch_config = self._get_arch_config(),
-            batch_size = self.batch_size,
-            metrics = None,
-            vocab = vocab,
-            verbose = self.verbose,
+            splits=splits,
+            arch=model.__class__,
+            arch_config=self._get_arch_config(),
+            batch_size=self.batch_size,
+            metrics=None,
+            vocab=vocab,
+            verbose=self.verbose,
         )
 
-        self.learn_.fit_one_cycle(self.n_epochs, lr_max = self.lr)
+        self.learn_.fit_one_cycle(self.n_epochs, lr_max=self.lr)
         return self
-    
+
     def _predict_proba(self, X):
         """Return class probability estimates.
 
         Parameters
         ----------
         X : np.ndarray of shape (n_instances, n_dims, n_timepoints)
+            Time series input instances.
 
         Returns
         -------
         probs : np.ndarray of shape (n_instances, n_classes)
+            Predicted class probabilities.
         """
         X = X.astype(np.float32)
         probs, *_ = self.learn_.get_X_preds(X)
         probs = probs.numpy()
 
         if probs.shape[1] == 1:
-            probs = np.hstack([1-probs, probs])
+            probs = np.hstack([1 - probs, probs])
 
-        probs = probs / probs.sum(axis = 1, keepdims =True)
+        probs = probs / probs.sum(axis=1, keepdims=True)
 
         return probs
-    
+
     def _predict(self, X):
-        
         """Return predicted class labels.
 
         Parameters
         ----------
         X : np.ndarray of shape (n_instances, n_dims, n_timepoints)
+            Time series input instances.
 
         Returns
         -------
         y : np.ndarray of shape (n_instances,)
+            Predicted class labels.
         """
-
         probs = self._predict_proba(X)
-        indices = np.argmax(probs, axis = 1)
-        
+        indices = np.argmax(probs, axis=1)
+
         return self._label_encoder.inverse_transform(indices)
-    
-    
+
     @abc.abstractmethod
     def _build_model(self, n_vars, n_classes):
         """Instantiate and return the tsai model (nn.Module).
 
         Parameters
         ----------
-        n_vars : int - number of dimensions in X
-        n_classes : int - number of target classes
+        n_vars : int
+            Number of dimensions/variables in X.
+        n_classes : int
+            Number of target classes.
 
         Returns
         -------
-        model : a tsai/torch nn.Module instance
+        model : torch.nn.Module
+            A tsai/torch nn.Module instance.
         """
 
     def _get_arch_config(self):
@@ -213,9 +209,24 @@ class BaseTsaiClassifier(BaseClassifier):
         Returns
         -------
         dict
+            Architecture keyword arguments.
         """
         return {}
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        return  {"n_epochs" : 1, "batch_size": 4}
+        """Return testing parameter settings for the estimator.
 
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined, returns a dictionary with
+            {"n_epochs": 1, ...}.
+
+        Returns
+        -------
+        params : dict or list of dict
+            Parameters to create testing instances of the class.
+        """
+        return {"n_epochs": 1, "batch_size": 4}
