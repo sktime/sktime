@@ -165,6 +165,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
             "n_jobs": 1,
             "random_state": 1,
         }
+
         params1 = {
             "n_clusters": 3,
             "kernel": "gak",
