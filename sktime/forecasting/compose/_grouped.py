@@ -8,7 +8,6 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.registry import coerce_scitype
-from sktime.transformations.base import BaseTransformer
 
 __author__ = ["fkiraly", "felipeangelimvieira"]
 __all__ = ["ForecastByLevel", "GroupbyCategoryForecaster"]
@@ -60,7 +59,11 @@ class ForecastByLevel(_DelegatedForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fkiraly"],
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:multivariate": True,
@@ -81,13 +84,17 @@ class ForecastByLevel(_DelegatedForecaster):
         self.forecaster = forecaster
         self.groupby = groupby
 
-        self.forecaster_ = forecaster.clone()
-
         super().__init__()
 
-        self._set_delegated_tags(self.forecaster_)
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        self._set_delegated_tags(self.forecaster)
         self.set_tags(**{"fit_is_empty": False})
 
+        groupby = self.groupby
         if groupby == "local":
             scitypes = ["Series"]
         elif groupby == "global":
@@ -107,6 +114,20 @@ class ForecastByLevel(_DelegatedForecaster):
         # but vectorization/broadcasting happens at the level of groupby
         self.set_tags(**{"y_inner_mtype": mtypes})
         self.set_tags(**{"X_inner_mtype": mtypes})
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        self.forecaster_ = self.forecaster.clone()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -183,12 +204,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.forecasting.croston import Croston
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.adi_cv import ADICVTransformer
+    >>> from sktime.transformations.adi_cv import ADICVTransformer
 
     Importing the methods which can generate data of specific categories
     depending on their variance and average demand intervals.
 
-    >>> from sktime.transformations.series.tests.test_adi_cv import (
+    >>> from sktime.transformations.tests.test_adi_cv import (
     ...     _generate_erratic_series)
 
     The forecaster is defined which accepts a dictionary of forecasters,
@@ -227,6 +248,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         ],
         "capability:multivariate": True,
         "capability:exogenous": True,
+        "capability:unequal_length": False,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["felipeangelimvieira", "shlok191"],
@@ -241,21 +263,38 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         transformer=None,
         fallback_forecaster=None,
     ):
-        # saving arguments to object storage
-        if transformer is not None:
-            self.transformer = transformer
-
-        else:
-            from sktime.transformations.series.adi_cv import ADICVTransformer
-
-            self.transformer = ADICVTransformer(features=["class"])
+        self.transformer = transformer
 
         self.forecasters = forecasters
         self.fallback_forecaster = fallback_forecaster
 
-        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
-
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        transformer = self.transformer
+        forecasters = self.forecasters
+        fallback_forecaster = self.fallback_forecaster
+
+        # saving arguments to object storage
+        if transformer is not None:
+            _transformer = transformer.clone()
+
+        else:
+            from sktime.transformations.adi_cv import ADICVTransformer
+
+            _transformer = ADICVTransformer(features=["class"])
+
+        self.transformer_ = coerce_scitype(_transformer, "transformer").clone()
+
+        from sktime.transformations.base import BaseTransformer
 
         # validating passed arguments
         assert isinstance(self.transformer_, BaseTransformer)
@@ -430,7 +469,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
 
         X : sktime time series object, optional (default=None)
@@ -516,7 +555,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         from sktime.forecasting.croston import Croston
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
-        from sktime.transformations.series.adi_cv import ADICVTransformer
+        from sktime.transformations.adi_cv import ADICVTransformer
 
         param1 = {
             "forecasters": {
@@ -661,7 +700,7 @@ def _predict_interval(self, fh, X, coverage):
     Parameters
     ----------
     fh : guaranteed to be ForecastingHorizon
-        The forecasting horizon with the steps ahead to to predict.
+        The forecasting horizon with the steps ahead to predict.
     X :  sktime time series object, optional (default=None)
         guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
         Exogeneous time series for the forecast
@@ -696,7 +735,7 @@ def _predict_var(self, fh, X=None, cov=False):
     Parameters
     ----------
     fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-        The forecasting horizon with the steps ahead to to predict.
+        The forecasting horizon with the steps ahead to predict.
         If not passed in _fit, guaranteed to be passed here
     X :  sktime time series object, optional (default=None)
         guaranteed to be of an mtype in self.get_tag("X_inner_mtype")

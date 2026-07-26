@@ -51,21 +51,29 @@ class ForecastingOptCV(_DelegatedForecaster):
     cv : sktime BaseSplitter descendant
         determines split of ``y`` and possibly ``X`` into test and train folds
         y is always split according to ``cv``, see above
-        if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
-        if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
+
+        * if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
+        * if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
 
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
+        data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
-        "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update
+
+        * ``"refit"`` = a new copy of the forecaster is fitted to each training window
+        * ``"update"`` = forecaster is updated with training window data,
+          in sequence provided
+        * ``"no-update_params"`` = fit to first training window,
+          re-used without fit or update
 
     update_behaviour : str, optional, default = "full_refit"
         one of {"full_refit", "inner_only", "no_update"}
         behaviour of the forecaster when calling update
-        "full_refit" = both tuning parameters and inner estimator refit on all data seen
-        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
-        "no_update" = neither tuning parameters nor inner estimator are updated
+
+        * ``"full_refit"`` = both tuning parameters and inner estimator refit on
+          all data seen
+        * ``"inner_only"`` = tuning parameters are not re-tuned, inner estimator is
+          updated
+        * ``"no_update"`` = neither tuning parameters nor inner estimator are updated
 
     scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
         scoring metric to use in tuning the forecaster
@@ -87,10 +95,14 @@ class ForecastingOptCV(_DelegatedForecaster):
         * If None, defaults to MeanAbsolutePercentageError()
 
     refit : bool, optional (default=True)
-        True = refit the forecaster with the best parameters on the entire data in fit
-        False = no refitting takes place. The forecaster cannot be used to predict.
-        This is to be used to tune the hyperparameters, and then use the estimator
-        as a parameter estimator, e.g., via get_fitted_params or PluginParamsForecaster.
+        Whether to refit the forecaster with the best parameters on the entire data.
+
+        * True = refit the forecaster with the best parameters
+          on the entire data in ``fit``
+        * False = no refitting takes place. The forecaster cannot be used to predict.
+          This is to be used to tune the hyperparameters, and then use the estimator
+          as a parameter estimator, e.g.,
+          via ``get_fitted_params`` or ``PluginParamsForecaster``.
 
     error_score : "raise" or numeric, default=np.nan
         Value to assign to the score if an exception occurs in estimator fitting. If set

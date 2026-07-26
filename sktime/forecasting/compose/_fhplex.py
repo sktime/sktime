@@ -28,22 +28,30 @@ class FhPlexForecaster(BaseForecaster):
     forecaster : sktime compatible forecaster
     fh_params : dict, list, callable, or str that eval-defines a callable
         specifies forecaster to use per fh element
-        dict: keys = fh elements, values = param dict for forecaster
-        list: i-th entry is forecaster param dict for i-th fh element
-        callable: maps fh element to forecaster param dict
-        str: eval(fh_params) must define a lambda that maps fh element to param dict
+
+        * dict: keys = fh elements, values = param dict for forecaster
+        * list: i-th entry is forecaster param dict for i-th fh element
+        * callable: maps fh element to forecaster param dict
+        * str: eval(fh_params) must define a lambda that maps fh element to param dict
+
         param dict need not be complete, only overrides for ``forecaster`` params
+
     fh_lookup : str, one of "relative" (default), "absolute", or "as-is"
         specifies fh elements used in dict or callable
-        if "relative", fh will be coerced to relative ForecastingHorizon
-        if "absolute", fh will be coerced to absolute ForecastingHorizon
-        if "as-is", fh will be coerced to ForecastingHorizon (but not relative/absolute)
+
+        * if "relative", fh will be coerced to relative ``ForecastingHorizon``
+        * if "absolute", fh will be coerced to absolute ``ForecastingHorizon``
+        * if "as-is", fh will be coerced to ``ForecastingHorizon``
+          (but not relative/absolute)
+
     fh_contiguous : bool, default=False
         whether fh in inner loops are enforced to be contiguous
-        False: forecaster with fh_params[fN] is asked to forecast fN and only fN
-        True: forecaster with fh_params[fN] is asked to forecast 1, 2, ..., fN
-            and the output is then subset to the forecast of fN
-            this is required if the forecaster can only forecast contiguous horizons
+
+        * False: forecaster with fh_params[fN] is asked to forecast fN and only fN
+        * True: forecaster with fh_params[fN] is asked to forecast 1, 2, ..., fN
+          and the output is then subset to the forecast of fN
+          this is required if the forecaster can only forecast contiguous horizons
+
         CAUTION: if using grid search inside, then ``True`` will cause the
         tuning metric to be evaluated on horizons 1, 2, ..., fN, not just fN
 
@@ -83,7 +91,11 @@ class FhPlexForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
+        # estimator type
+        # --------------
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
         "capability:multivariate": True,
@@ -163,7 +175,7 @@ class FhPlexForecaster(BaseForecaster):
               the method should handle uni- and multivariate y appropriately
 
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -240,7 +252,7 @@ class FhPlexForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -325,7 +337,7 @@ class FhPlexForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -360,7 +372,7 @@ class FhPlexForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
@@ -391,7 +403,7 @@ class FhPlexForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -425,7 +437,7 @@ class FhPlexForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.

@@ -90,6 +90,7 @@ class Chronos2Forecaster(BaseForecaster):
         "capability:global_forecasting": True,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
         "tests:skip_by_name": [
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
@@ -118,10 +119,15 @@ class Chronos2Forecaster(BaseForecaster):
 
         self.model_pipeline = None
 
-        if ignore_deps:
-            self.set_tags(python_dependencies=[])
-
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.ignore_deps:
+            self.set_tags(python_dependencies=[])
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -130,7 +136,6 @@ class Chronos2Forecaster(BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
@@ -206,6 +211,7 @@ class Chronos2Forecaster(BaseForecaster):
         context = context.values.T
 
         self._context = context
+        self._y_index_names = y.index.names
         return self
 
     def _predict(self, fh, X=None):
@@ -274,14 +280,14 @@ class Chronos2Forecaster(BaseForecaster):
             .to_absolute(self._cutoff)
             ._values
         )
-        pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
 
         pred_df = pd.DataFrame(
             point_forecast.T,
             index=index,
-            columns=self._y.columns,
+            columns=self._get_varnames(),
         )
-        pred_df.index.names = self._y.index.names
+        pred_df.index.names = self._y_index_names
 
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
         return pred_df.loc[dateindex]

@@ -9,6 +9,7 @@ __all__ = [
     "EXCLUDED_TESTS",
     "MATRIXDESIGN",
     "ONLY_CHANGED_MODULES",
+    "ONLY_VM_ESTIMATORS",
 ]
 
 from sktime.registry import ESTIMATOR_TAG_LIST
@@ -24,6 +25,10 @@ MATRIXDESIGN = False
 # whether to test only estimators from modules that are changed w.r.t. main
 # default is False, can be set to True by pytest --only_changed_modules True flag
 ONLY_CHANGED_MODULES = False
+
+# whether to test only estimators from modules require a VM to test
+# default is False, can be set to True by pytest --only_vm_estimators True flag
+ONLY_VM_ESTIMATORS = False
 
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -41,7 +46,6 @@ EXCLUDE_ESTIMATORS = [
     "EditDist",
     "LSTMFCNClassifier",
     "MLPClassifier",
-    "MLPRegressor",
     "ResNetRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
@@ -86,10 +90,6 @@ EXCLUDED_TESTS = {
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    # sth is not quite right with the RowTransformer-s changing state,
-    #   but these are anyway on their path to deprecation, see #2370
-    "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
-    "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
     # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
@@ -106,9 +106,6 @@ EXCLUDED_TESTS = {
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAXlegacy": ["test_fit_transform_output"],
     "DynamicFactor": [
-        "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
-    "ARIMA": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
@@ -128,13 +125,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    "ClusterSegmenter": [
-        "test_doctest_examples",
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-        "test_output_type",
-    ],
     "GreedyGaussianSegmentation": [
         "test_predict_points",
         "test_predict_segments",
@@ -148,9 +138,6 @@ EXCLUDED_TESTS = {
         "test_multioutput",
         "test_classifier_on_unit_test_data",
     ],
-    "ARLagOrderSelector": [
-        "test_doctest_examples",  # doctest fails, see #8129
-    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -158,9 +145,7 @@ EXCLUDED_TESTS = {
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
-        "CAPA",
         "CNTCNetwork",
-        "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
         "ContractableBOSS",
@@ -171,7 +156,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
         "DistanceFeatures",
-        "DontUpdate",
         "DummyRegressor",
         "ElasticEnsemble",
         "FeatureSelection",
@@ -190,38 +174,26 @@ EXCLUDED_TESTS_BY_TEST = {
         "MCDCNNRegressor",
         "MLPNetwork",
         "MUSE",
-        "MVCAPA",
-        "MatrixProfile",
-        "MovingWindow",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
-        "OptionalPassthrough",
-        "PAA",
         "PAAlegacy",
-        "PCATransformer",
-        "PELT",
         "PaddingTransformer",
-        "PlateauFinder",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
         "RandomSamplesAugmenter",
-        "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
         "SFA",
         "SFAFast",
-        "SeededBinarySegmentation",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
-        "SlopeTransformer",
         "StackingForecaster",
-        "StatThresholdAnomaliser",
         "SummaryClassifier",
         "SupervisedTimeSeriesForest",
         "TEASER",

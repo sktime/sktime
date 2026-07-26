@@ -127,7 +127,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
               the method should handle uni- and multivariate y appropriately
 
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -345,7 +345,7 @@ class UpdateEvery(_DelegatedForecaster):
               the method should handle uni- and multivariate y appropriately
 
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -549,11 +549,13 @@ class DontUpdate(_DelegatedForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import TrendForecaster
 
-        forecaster = TrendForecaster.create_test_instance()
+        param1 = {"forecaster": TrendForecaster.create_test_instance()}
+        param2 = {"forecaster": NaiveForecaster()}
 
-        return {"forecaster": forecaster}
+        return [param1, param2]
 
 
 def _is_time_offset(obj):

@@ -124,7 +124,6 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self.freq = None
@@ -189,7 +188,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
 
