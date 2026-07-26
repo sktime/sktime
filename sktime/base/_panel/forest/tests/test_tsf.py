@@ -221,3 +221,68 @@ def test_get_intervals_should_produce_intervals_contained_in_inner_series_bins(
         <= (intervals[:, 0] // given_inner_series_length + 1)
         * given_inner_series_length
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.base._panel.forest"),
+    reason="skip test if required soft dependency not available",
+)
+def test_transform_multivariate_output_shape():
+    """Test _transform_multivariate returns correct shape."""
+    from sktime.base._panel.forest._tsf import _transform_multivariate
+
+    n_samples, n_channels, series_length = 10, 3, 50
+    n_intervals = 5
+    X = np.random.rand(n_samples, n_channels, series_length)
+    intervals = np.array([[i * 8, i * 8 + 8] for i in range(n_intervals)])
+    result = _transform_multivariate(X, intervals)
+    assert result.shape == (n_samples, 3 * n_intervals * n_channels)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.base._panel.forest"),
+    reason="skip test if required soft dependency not available",
+)
+def test_tsf_multivariate_fit_predict():
+    """Test TimeSeriesForestClassifier fits and predicts on multivariate data."""
+    from sktime.classification.interval_based import TimeSeriesForestClassifier
+
+    n_samples, n_channels, series_length = 20, 3, 30
+    X = np.random.rand(n_samples, n_channels, series_length)
+    y = np.array(["a"] * 10 + ["b"] * 10)
+
+    clf = TimeSeriesForestClassifier(n_estimators=3, use_multivariate="yes")
+    clf.fit(X, y)
+    preds = clf.predict(X)
+    assert preds.shape == (n_samples,)
+    assert set(preds).issubset({"a", "b"})
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.base._panel.forest"),
+    reason="skip test if required soft dependency not available",
+)
+def test_tsf_invalid_use_multivariate():
+    """Test TimeSeriesForestClassifier raises on invalid use_multivariate."""
+    from sktime.classification.interval_based import TimeSeriesForestClassifier
+
+    with pytest.raises(ValueError, match="use_multivariate must be one of"):
+        TimeSeriesForestClassifier(use_multivariate="invalid")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.base._panel.forest"),
+    reason="skip test if required soft dependency not available",
+)
+def test_tsf_univariate_unchanged():
+    """Test that univariate behavior is unchanged with use_multivariate=no."""
+    from sktime.classification.interval_based import TimeSeriesForestClassifier
+    from sktime.datasets import load_unit_test
+
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, _ = load_unit_test(split="test", return_X_y=True)
+
+    clf = TimeSeriesForestClassifier(n_estimators=3, use_multivariate="no")
+    clf.fit(X_train, y_train)
+    preds = clf.predict(X_test)
+    assert preds.shape == (X_test.shape[0],)
