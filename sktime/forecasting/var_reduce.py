@@ -10,29 +10,41 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
 class VARReduce(BaseForecaster):
-    """
-    A flexible VAR-like forecaster that combines tabularization with regression.
+    """Generalized VAR forecaster using tabularized regression.
 
-    The input data `Y_in` is a multivariate time series data containing `n` time series.
-    An example with `n` = 2:
+    As special cases, can be used to construct classical L1 (Lasso) or
+    elastic VAR forecasting models.
+
+    ``VARReduce`` is constructed with a tabular ``scikit-learn`` regressor
+    (e.g., Lasso, Ridge, etc.) and is designed to be used with
+    multivariate time series data.
+
+    The input data ``Y_in`` is a multivariate time series data containing ``n``
+    time series.
+    An example with ``n`` = 2:
 
     +---------+-----+-----+
     |  index  | ts1 | ts2 |
     +---------+-----+-----+
     |    1    | 11  | 6   |
+    +---------+-----+-----+
     |    2    | 12  | 7   |
+    +---------+-----+-----+
     |    3    | 13  | 8   |
+    +---------+-----+-----+
     |    4    | 14  | 9   |
+    +---------+-----+-----+
     |    5    | 15  | 10  |
     +---------+-----+-----+
 
     Fitting proceeds in two steps:
-    1. Tabularization:
-        For each time step and each time series within `Y_in`,
-        lagged values `X` are generated. The number of lagged values
-        are determined by the `lags` parameters.
 
-        Below is the `X` for the sample `Y_in` with `lags` = 2.
+    1. Tabularization:
+        For each time step and each time series within ``Y_in``,
+        lagged values ``X`` are generated. The number of lagged values
+        are determined by the ``lags`` parameters.
+
+        Below is the ``X`` for the sample ``Y_in`` with ``lags`` = 2.
         Note the absence of the earliest 2 timesteps as no
         corresponding lag value is available.
 
@@ -40,21 +52,23 @@ class VARReduce(BaseForecaster):
         |  index  | ts1_lag1 | ts2_lag1 | ts1_lag2 | ts2_lag2 |
         +---------+----------+----------+----------+----------+
         |    3    | 12       | 7        | 11       | 6        |
+        +---------+----------+----------+----------+----------+
         |    4    | 13       | 8        | 12       | 7        |
+        +---------+----------+----------+----------+----------+
         |    5    | 14       | 9        | 13       | 8        |
         +---------+----------+----------+----------+----------+
 
     2. Regression:
-        The chosen regressor is fitted with `Y_in` as a target
-        and `X` as predictors. Care is taken to first remove the
-        first `lags` data points in `Y_in` as they do not have
-        corresponding indices in `X` (i.e. the first two data
+        The chosen regressor is fitted with ```Y_in``` as a target
+        and ``X`` as predictors. Care is taken to first remove the
+        first ``lags`` data points in ```Y_in``` as they do not have
+        corresponding indices in ``X`` (i.e. the first two data
         points in the above example).
 
-    For forecasting, the last `lags` observations in `Y_in` are
-    reframed as lagged predictors `X_forecast` and passed to the
+    For forecasting, the last ``lags`` observations in ``Y_in`` are
+    reframed as lagged predictors ``X_forecast`` and passed to the
     trained regressor to obtain the forecasts.
-    `X_forecast` is shown below.
+    ``X_forecast`` is shown below.
 
     +---------+----------+----------+----------+----------+
     |  index  | ts1_lag1 | ts2_lag1 | ts1_lag2 | ts2_lag2 |
@@ -62,15 +76,19 @@ class VARReduce(BaseForecaster):
     |    6    | 15       | 10       | 14       | 9        |
     +---------+----------+----------+----------+----------+
 
-    By default, `LinearRegression` is used, yielding results equivalent to
-    a traditional VAR model. Alternatively, any scikit-learn compatible regressor can
+    By default, ``LinearRegression`` is used, yielding results equivalent to
+    a traditional VAR model.
+    Alternatively, any ``scikit-learn`` compatible regressor can
     be used to introduce regularization and/or non-linearity.
 
     For example:
-        - VARReduce(regressor = Ridge()) is equivalent to VAR with L2 regularization;
-        - VARReduce(regressor = Lasso()) is equivalent to VAR with L1 regularization.
 
-    These two models can be used to incorporate regularization and prevent overfitting
+    - ``VARReduce(regressor = Ridge())`` is equivalent to VAR with L2 regularization.
+    - ``VARReduce(regressor = Lasso())`` is equivalent to VAR with L1 regularization.
+    - ``VARReduce(regressor = ElasticNet())`` is equivalent to elastic VAR.
+
+    These specific models are well-known classical generalizations of VAR.
+    They can be used to incorporate regularization and prevent overfitting
     when the input data contain a large number of individual time series relative to
     data points.
 
@@ -107,24 +125,43 @@ class VARReduce(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "authors": ["meraldoantonio"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, lags=1, regressor=None):
-        from sklearn.base import clone
-        from sklearn.linear_model import LinearRegression
-
         self.regressor = regressor  # not used/modified
         self.lags = lags
-        if regressor is None:
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        if self.regressor is None:
+            from sklearn.linear_model import LinearRegression
+
             self.regressor_ = LinearRegression()
         else:
-            self.regressor_ = clone(regressor)
+            from sklearn.base import clone
+
+            self.regressor_ = clone(self.regressor)
 
         assert hasattr(self.regressor_, "fit"), "Regressor must have 'fit'"
         assert hasattr(self.regressor_, "predict"), "Regressor must have 'predict'"
@@ -133,7 +170,6 @@ class VARReduce(BaseForecaster):
         self.intercept_ = None
         self.num_series = None
         self.var_names = None
-        super().__init__()
 
     def _prepare_for_fit(self, data, return_as_ndarray=True):
         """
@@ -186,7 +222,7 @@ class VARReduce(BaseForecaster):
         """
         Prepare the data for VAR prediction through tabularization.
 
-        This function extracts the last `lags` rows of the provided data
+        This function extracts the last ``lags`` rows of the provided data
         and linearizes them into a single row suitable for input into the regressor.
         The number of lags is inferred from the `self.lags` attribute.
 
@@ -238,7 +274,7 @@ class VARReduce(BaseForecaster):
         y : pd.DataFrame
             Guaranteed to have a single column if scitype:y=="univariate".
         fh : ForecastingHorizon, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous time series to fit to; will be ignored
 
@@ -248,15 +284,16 @@ class VARReduce(BaseForecaster):
         """
         from sklearn.multioutput import MultiOutputRegressor
 
+        from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
+
         self.var_names = y.columns
         self.num_series = y.shape[1]
 
         X, Y = self._prepare_for_fit(y, return_as_ndarray=False)
 
-        native_multioutput_support = self.regressor_._get_tags().get(
-            "multioutput", False
-        )
-        if not native_multioutput_support:
+        capa_multioutput = get_sklearn_tag(self.regressor_, "capability:multioutput")
+
+        if not capa_multioutput:
             self.regressor_ = MultiOutputRegressor(self.regressor_)
         self.regressor_.fit(X, Y)
 
@@ -278,7 +315,7 @@ class VARReduce(BaseForecaster):
         Parameters
         ----------
         fh : ForecastingHorizon
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)

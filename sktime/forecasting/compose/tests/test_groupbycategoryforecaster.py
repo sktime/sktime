@@ -69,7 +69,7 @@ def test_predefined_output(timeseries):
     transform_output = pd.Series(["A"])
     transformer = PredefinedCategory(transform_output=transform_output)
 
-    # Should completly ignore the input and return the predefined output
+    # Should completely ignore the input and return the predefined output
     output = transformer.fit_transform(X=timeseries)
 
     assert output.equals(transform_output)
@@ -98,7 +98,7 @@ def test_predefined_output_groupby(timeseries, categories):
 
 def test_series_without_panel_level():
     from sktime.datasets import load_airline
-    from sktime.transformations.series.adi_cv import ADICVTransformer
+    from sktime.transformations.adi_cv import ADICVTransformer
 
     y = load_airline()
     X = pd.DataFrame(0, index=pd.date_range("2020-01-01", periods=10), columns=["B"])

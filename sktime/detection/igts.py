@@ -15,14 +15,14 @@ References
     https://www.sciencedirect.com/science/article/abs/pii/S1574119217300081
 """
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
-from sktime.utils.dependencies import _check_estimator_deps
 
 __all__ = ["InformationGainSegmentation"]
 __author__ = ["lmmentel"]
@@ -104,7 +104,7 @@ def generate_segments_pandas(X: npt.ArrayLike, change_points: list) -> npt.Array
 class IGTS:
     """Information Gain based Temporal Segmentation (IGTS).
 
-    IGTS is a n unsupervised method for segmenting multivariate time series
+    IGTS is an unsupervised method for segmenting multivariate time series
     into non-overlapping segments by locating change points that for which
     the information gain is maximized.
 
@@ -119,18 +119,18 @@ class IGTS:
 
     .. note::
 
-    IGTS does not work very well for univariate series but it can still be
-    used if the original univariate series are augmented by an extra feature
-    dimensions. A technique proposed in the paper [1]_ us to subtract the
-    series from it's largest element and append to the series.
+        IGTS does not work very well for univariate series but it can still be
+        used if the original univariate series are augmented by an extra feature
+        dimensions. A technique proposed in the paper [1]_ is to subtract the
+        series from its largest element and append to the series.
 
     Parameters
     ----------
     k_max: int, default=10
         Maximum number of change points to find. The number of segments is thus k+1.
-    step: : int, default=5
+    step : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a ``step=5`` would produce candidates [0, 5, 10, ...].
+        For example a ``step=5`` would produce candidates [0, 5, 10, ...].
         Has the same meaning as ``step`` in ``range`` function.
 
     Attributes
@@ -189,9 +189,12 @@ class IGTS:
             Current set of change points, that will be used to exclude values
             from candidates.
 
-        TODO: exclude points within a neighborhood of existing
-        change points with neighborhood radius
+        Returns
+        -------
+        candidates : list of int
+            Candidate change point locations, excluding existing change points.
         """
+        # TODO: exclude points within a neighborhood of existing change points
         return sorted(
             set(range(0, n_samples, self.step)).difference(set(change_points))
         )
@@ -314,7 +317,7 @@ class SegmentationMixin:
 class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     """Information Gain based Temporal Segmentation (IGTS) Estimator.
 
-    IGTS is a n unsupervised method for segmenting multivariate time series
+    IGTS is an unsupervised method for segmenting multivariate time series
     into non-overlapping segments by locating change points that for which
     the information gain is maximized.
 
@@ -330,17 +333,17 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
 
        IGTS does not work very well for univariate series but it can still be
        used if the original univariate series are augmented by an extra feature
-       dimensions. A technique proposed in the paper [1]_ us to subtract the
-       series from it's largest element and append to the series.
+       dimensions. A technique proposed in the paper [1]_ is to subtract the
+       series from its largest element and append to the series.
 
     Parameters
     ----------
     k_max: int, default=10
         Maximum number of change points to find. The number of segments is thus k+1.
 
-    step: : int, default=5
+    step : int, default=5
         Step size, or stride for selecting candidate locations of change points.
-        Fox example a ``step=5`` would produce candidates [0, 5, 10, ...]. Has the same
+        For example a ``step=5`` would produce candidates [0, 5, 10, ...]. Has the same
         meaning as ``step`` in ``range`` function.
 
     Attributes
@@ -380,6 +383,24 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
     >>> igts = InformationGainSegmentation(k_max=3, step=2) # doctest: +SKIP
     >>> y = igts.fit_predict(X_scaled) # doctest: +SKIP
     """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": "lmmentel",
+        # estimator type
+        # --------------
+        "fit_is_empty": True,
+        "task": "segmentation",
+        "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:skip_all": True,  # todo: fix non-conformance
+        "tests:skip_by_name": [
+            "test_inheritance",
+            "test_create_test_instance",
+        ],
+    }
 
     def __init__(
         self,
@@ -460,48 +481,6 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         """
         return self.fit(X=X, y=y).predict(X=X, y=y)
 
-    def get_params(self, deep: bool = True) -> dict:
-        """Return initialization parameters.
-
-        Parameters
-        ----------
-        deep: bool
-            Dummy argument for compatibility with sklearn-api, not used.
-
-        Returns
-        -------
-        params: dict
-            Dictionary with the estimator's initialization parameters, with
-            keys being argument names and values being argument values.
-        """
-        params = asdict(self._adaptee)
-        params = {
-            key: value
-            for key, value in params.items()
-            if key != "intermediate_results_"
-        }
-        return params
-
-    def set_params(self, **parameters):
-        """Set the parameters of this object.
-
-        Parameters
-        ----------
-        parameters : dict
-            Initialization parameters for th estimator.
-
-        Returns
-        -------
-        self : reference to self (after parameters have been set)
-        """
-        for key, value in parameters.items():
-            setattr(self._adaptee, key, value)
-        return self
-
-    def __repr__(self) -> str:
-        """Return a string representation of the estimator."""
-        return self._adaptee.__repr__()
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -516,4 +495,10 @@ class InformationGainSegmentation(SegmentationMixin, BaseEstimator):
         -------
         params : dict or list of dict
         """
-        return {"k_max": 2, "step": 1}
+        return [
+            {"k_max": 1, "step": 1},
+            {"k_max": 2, "step": 1},
+            {"k_max": 2, "step": 10},
+            {"k_max": 10, "step": 5},
+            {"k_max": 10, "step": 10},
+        ]

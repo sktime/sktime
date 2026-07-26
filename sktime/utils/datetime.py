@@ -6,7 +6,6 @@ __all__ = []
 
 import warnings
 from functools import singledispatch
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -18,9 +17,9 @@ from sktime.utils.warnings import _suppress_pd22_warning
 
 
 def _coerce_duration_to_int(
-    duration: Union[int, pd.Timedelta, pd.tseries.offsets.BaseOffset, pd.Index],
+    duration: int | pd.Timedelta | pd.tseries.offsets.BaseOffset | pd.Index,
     freq: str = None,
-) -> Union[int, pd.Index]:
+) -> int | pd.Index:
     """Coerce durations into integer representations for a given unit of duration.
 
     Parameters
@@ -129,7 +128,7 @@ def set_hier_freq(x):
 
 
 @singledispatch
-def infer_freq(y=None) -> Optional[str]:
+def infer_freq(y=None) -> str | None:
     """Infer frequency string from the time series object.
 
     Parameters
@@ -148,16 +147,16 @@ def infer_freq(y=None) -> Optional[str]:
 @infer_freq.register(pd.DataFrame)
 @infer_freq.register(pd.Series)
 @infer_freq.register(np.ndarray)
-def _(y) -> Optional[str]:
+def _(y) -> str | None:
     return _infer_freq_from_index(get_time_index(y))
 
 
 @infer_freq.register(VectorizedDF)
-def _(y) -> Optional[str]:
+def _(y) -> str | None:
     return _infer_freq_from_index(get_time_index(y.as_list()[0]))
 
 
-def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
+def _infer_freq_from_index(index: pd.Index) -> str | None:
     """Infer frequency string from the pandas index.
 
     Parameters

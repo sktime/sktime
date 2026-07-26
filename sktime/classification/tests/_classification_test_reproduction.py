@@ -19,7 +19,6 @@ from sktime.classification.feature_based import (
     Catch22Classifier,
     MatrixProfileClassifier,
     RandomIntervalClassifier,
-    SignatureClassifier,
     SummaryClassifier,
 )
 from sktime.classification.hybrid import HIVECOTEV1, HIVECOTEV2
@@ -34,12 +33,12 @@ from sktime.classification.kernel_based import Arsenal, RocketClassifier
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-from sktime.transformations.panel.catch22 import Catch22
-from sktime.transformations.panel.catch22wrapper import Catch22Wrapper
-from sktime.transformations.panel.random_intervals import RandomIntervals
-from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
-from sktime.transformations.panel.supervised_intervals import SupervisedIntervals
-from sktime.transformations.series.summarize import SummaryTransformer
+from sktime.transformations.catch22 import Catch22
+from sktime.transformations.catch22wrapper import Catch22Wrapper
+from sktime.transformations.random_intervals import RandomIntervals
+from sktime.transformations.shapelet_transform import RandomShapeletTransform
+from sktime.transformations.summarize import SummaryTransformer
+from sktime.transformations.supervised_intervals import SupervisedIntervals
 
 
 def _reproduce_classification_unit_test(estimator):
@@ -275,22 +274,6 @@ if __name__ == "__main__":
                 ),
                 estimator=RandomForestClassifier(n_estimators=10),
                 random_state=0,
-            )
-        ),
-    )
-    _print_array(
-        "SignatureClassifier - UnitTest",
-        _reproduce_classification_unit_test(
-            SignatureClassifier(
-                estimator=RandomForestClassifier(n_estimators=10), random_state=0
-            )
-        ),
-    )
-    _print_array(
-        "SignatureClassifier - BasicMotions",
-        _reproduce_classification_basic_motions(
-            SignatureClassifier(
-                estimator=RandomForestClassifier(n_estimators=10), random_state=0
             )
         ),
     )

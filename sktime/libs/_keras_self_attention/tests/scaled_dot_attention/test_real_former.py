@@ -3,10 +3,10 @@ import tempfile
 
 import numpy as np
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
 
 from sktime.libs._keras_self_attention import ResidualScaledDotProductAttention
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 keras = _safe_import("tensorflow.keras")
 

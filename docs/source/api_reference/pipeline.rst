@@ -1,4 +1,4 @@
-.. _regression_ref:
+.. _pipeline_ref:
 
 Pipeline
 =========

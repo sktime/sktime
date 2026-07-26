@@ -5,18 +5,18 @@
 __author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo", "hazrulakmal"]
 __all__ = ["evaluate"]
 
+import collections.abc
 import time
 import warnings
 from copy import deepcopy
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
@@ -282,7 +282,16 @@ def _evaluate_window(x, meta):
                 temp_result[result_key] = [score]
 
         # get cutoff
-        cutoff = forecaster.cutoff
+        if global_mode:
+            # in global mode, cutoff should reflect y_hist (per-fold history),
+            # not the global y_train which may span more timepoints
+            if isinstance(y_hist.index, pd.MultiIndex):
+                last_time = y_hist.index.get_level_values(-1).max()
+            else:
+                last_time = y_hist.index[-1]
+            cutoff = pd.Index([last_time])
+        else:
+            cutoff = forecaster.cutoff
 
     except Exception as e:
         if error_score == "raise":
@@ -352,20 +361,76 @@ def _evaluate_window(x, meta):
         return result
 
 
+def gen_y_X_train_test_global(y, X, cv, cv_X, cv_global, cv_global_temporal):
+    """Generate joint splits of y, X as per cv, cv_X.
+
+    If X is None, train/test splits of X are also None.
+
+    If cv_X is None, will default to
+    SameLocSplitter(TestPlusTrainSplitter(cv), y)
+    i.e., X splits have same loc index as y splits.
+
+    Yields
+    ------
+    y_train : i-th train split of y as per cv
+    y_hist : i-th test history value split of y as per cv
+    y_true : i-th test true value split of y as per cv
+    X_train : i-th train split of y as per cv_X. None if X was None.
+    X_test : i-th test split of y as per cv_X. None if X was None.
+    """
+    from sktime.split import InstanceSplitter, SingleWindowSplitter
+
+    if not isinstance(cv_global, InstanceSplitter):
+        cv_global = InstanceSplitter(cv_global)
+
+    if cv_global_temporal is not None:
+        assert isinstance(cv_global_temporal, SingleWindowSplitter)
+
+    geny = cv_global.split_series(y)
+    if X is None:
+        for y_train, y_test in geny:
+            if cv_global_temporal is not None:
+                y_train, _ = next(cv_global_temporal.split_series(y_train))
+                _, y_test = next(cv_global_temporal.split_series(y_test))
+            for y_hist, y_true in cv.split_series(y_test):
+                yield y_train, y_hist, y_true, None, None
+    else:
+        from sktime.split import SameLocSplitter, TestPlusTrainSplitter
+
+        genx = SameLocSplitter(cv_global, y).split_series(X)
+
+        for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
+            if cv_global_temporal is not None:
+                y_train, _ = next(cv_global_temporal.split_series(y_train))
+                X_train, _ = next(cv_global_temporal.split_series(X_train))
+                _, y_test = next(cv_global_temporal.split_series(y_test))
+                _, X_test = next(cv_global_temporal.split_series(X_test))
+            if cv_X is None:
+                _cv_X = TestPlusTrainSplitter(SameLocSplitter(cv, y_test))
+            else:
+                _cv_X = cv_X
+            for (y_hist, y_true), (_, X_future) in zip(
+                cv.split_series(y_test), _cv_X.split_series(X_test)
+            ):
+                # X_hist is not used in the evaluation
+                yield y_train, y_hist, y_true, X_train, X_future
+
+
 def evaluate(
     forecaster,
     cv,
     y,
     X=None,
     strategy: str = "refit",
-    scoring: Optional[Union[callable, list[callable]]] = None,
+    scoring: collections.abc.Callable | list[collections.abc.Callable] | None = None,
     return_data: bool = False,
-    error_score: Union[str, int, float] = np.nan,
-    backend: Optional[str] = None,
+    error_score: str | int | float = np.nan,
+    backend: str | None = None,
     cv_X=None,
-    backend_params: Optional[dict] = None,
+    backend_params: dict | None = None,
     return_model: bool = False,
     cv_global=None,
+    cv_global_temporal=None,
 ):
     r"""Evaluate forecaster using timeseries cross-validation.
 
@@ -374,7 +439,7 @@ def evaluate(
 
     The experiment run is the following:
 
-    In  case of non-global evaluation (cv_global=None):
+    In case of non-global evaluation (cv_global=None):
 
     Denote by :math:`y_{train, 1}, y_{test, 1}, \dots, y_{train, K}, y_{test, K}`
     the train/test folds produced by the generator ``cv.split_series(y)``.
@@ -385,7 +450,7 @@ def evaluate(
     1. Initialize the counter to ``i = 1``
     2. Fit the ``forecaster`` to :math:`y_{train, 1}`, :math:`X_{train, 1}`,
        with ``fh`` set to the absolute indices of :math:`y_{test, 1}`.
-    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogenous
         data :math:`X_{test, i}`. Predictions are made using either ``predict``,
         ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
     4. Compute the ``scoring`` function on ``y_pred`` versus :math:`y_{test, i}`
@@ -420,7 +485,7 @@ def evaluate(
     1. Initialize the counter to ``i = 1``
     2. Fit the ``forecaster`` to :math:`y_{train, i}`, :math:`X_{train, 1i`,
        with ``fh`` set to the absolute indices of :math:`y_{true, i}`.
-    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogeneous
+    3. Use the ``forecaster`` to make a prediction ``y_pred`` with the exogenous
         data :math:`X_{true, i}` and the historical values :math:`y{hist, i}`.
         Predictions are made using either ``predict``,
         ``predict_proba`` or ``predict_quantiles``, depending on ``scoring``.
@@ -443,20 +508,28 @@ def evaluate(
     ----------
     forecaster : sktime BaseForecaster descendant (concrete forecaster)
         sktime forecaster to benchmark
+
     cv : sktime BaseSplitter descendant
         determines split of ``y`` and possibly ``X`` into test and train folds
         y is always split according to ``cv``, see above
-        if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
-        if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
+
+        * if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
+        * if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
+
     y : sktime time series container
         Target (endogeneous) time series used in the evaluation experiment
     X : sktime time series container, of same mtype as y
         Exogenous time series used in the evaluation experiment
+
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = forecaster is refitted to each training window
-        "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update
+
+        * "refit" = forecaster is refitted to each training window
+        * "update" = forecaster is updated with training window data,
+          in sequence provided
+        * "no-update_params" = forecaster is updated via ``update``, with
+          ``update_params=False``, to the cutoff of each new training window
+
     scoring : subclass of sktime.performance_metrics.BaseMetric or list of same,
         default=None. Used to get a score function that takes y_pred and y_test
         arguments and accept y_train as keyword argument.
@@ -477,7 +550,7 @@ def evaluate(
         Parallelization backend to use for runs.
         Runs parallel evaluate if specified and ``strategy="refit"``.
 
-        - "None": executes loop sequentally, simple list comprehension
+        - "None": executes loop sequentially, simple list comprehension
         - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
         - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
         - "dask": uses ``dask``, requires ``dask`` package in environment
@@ -540,6 +613,14 @@ def evaluate(
                 forecaster.fit(y=y_train, fh=cv.fh)
                 y_pred = forecaster.predict(y=y_past)
                 metric(y_true, y_pred)
+
+        cv_global_temporal:  SingleWindowSplitter, default=None
+            ignored if cv_global is None. If passed, it splits the Panel temporally
+            before the instance split from cv_global is applied. This avoids
+            temporal leakage in the global evaluation across time series.
+            Has to be a SingleWindowSplitter.
+            cv is applied on the test set of the combined application of
+            cv_global and cv_global_temporal.
 
     Returns
     -------
@@ -715,56 +796,11 @@ def evaluate(
             for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
                 yield y_train, y_test, X_train, X_test
 
-    def gen_y_X_train_test_global(y, X, cv, cv_X, cv_global):
-        """Generate joint splits of y, X as per cv, cv_X.
-
-        If X is None, train/test splits of X are also None.
-
-        If cv_X is None, will default to
-        SameLocSplitter(TestPlusTrainSplitter(cv), y)
-        i.e., X splits have same loc index as y splits.
-
-        Yields
-        ------
-        y_train : i-th train split of y as per cv
-        y_hist : i-th test history value split of y as per cv
-        y_true : i-th test true value split of y as per cv
-        X_train : i-th train split of y as per cv_X. None if X was None.
-        X_test : i-th test split of y as per cv_X. None if X was None.
-        """
-        from sktime.split import InstanceSplitter, SingleWindowSplitter
-
-        if not isinstance(cv_global, InstanceSplitter):
-            cv_global = InstanceSplitter(cv_global)
-
-        if cv_X is not None:
-            assert isinstance(cv_X, SingleWindowSplitter), (
-                "cv_X must be an instance of sktime.split.SingleWindowSplitter"
-            )
-        assert isinstance(cv, SingleWindowSplitter), (
-            "cv must be an instance of sktime.split.SingleWindowSplitter"
-        )
-
-        geny = cv_global.split_series(y)
-        if X is None:
-            for y_train, y_test in geny:
-                y_hist, y_true = next(cv.split_series(y_test))
-                yield y_train, y_hist, y_true, None, None
-        else:
-            if cv_X is None:
-                from sktime.split import SameLocSplitter
-
-                cv_X = SameLocSplitter(cv, y)
-
-            genx = SameLocSplitter(cv_global, y).split_series(X)
-
-            for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
-                y_hist, y_true = next(cv.split_series(y_test))
-                yield y_train, y_hist, y_true, X_train, X_test
-
     # generator for y and X splits to iterate over below
     if cv_global is not None:
-        yx_splits = gen_y_X_train_test_global(y, X, cv, cv_X, cv_global=cv_global)
+        yx_splits = gen_y_X_train_test_global(
+            y, X, cv, cv_X, cv_global=cv_global, cv_global_temporal=cv_global_temporal
+        )
     else:
         yx_splits = gen_y_X_train_test(y, X, cv, cv_X)
 

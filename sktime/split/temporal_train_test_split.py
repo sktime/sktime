@@ -8,32 +8,27 @@ __all__ = [
 ]
 
 import math
-from typing import Optional
 
 import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import (
-    ACCEPTED_Y_TYPES,
-    FORECASTING_HORIZON_TYPES,
-    SPLIT_TYPE,
-    _split_by_fh,
-)
+from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_TYPE
+from sktime.split.fh import ForecastingHorizonSplitter
 
 
 def temporal_train_test_split(
     y: ACCEPTED_Y_TYPES,
-    X: Optional[pd.DataFrame] = None,
-    test_size: Optional[float] = None,
-    train_size: Optional[float] = None,
-    fh: Optional[FORECASTING_HORIZON_TYPES] = None,
+    X: pd.DataFrame | None = None,
+    test_size: float | None = None,
+    train_size: float | None = None,
+    fh=None,
     anchor: str = "start",
 ) -> SPLIT_TYPE:
     """Split time series data containers into a single train/test split.
 
     Creates a single train/test split of endogenous time series ``y``,
-    an optionally exogeneous time series ``X``.
+    an optionally exogenous time series ``X``.
 
     Splits time series ``y`` into a single temporally ordered train and test split.
     The split is based on ``test_size`` and ``train_size`` parameters,
@@ -114,7 +109,7 @@ def temporal_train_test_split(
     """
     # the code has two disjoint branches, one for fh and one for test_size/train_size
 
-    # branch 1: fh is not None, use fh to split
+    # case 1: fh is not None, use fh to split
     # this assumes (or enforces) that test_size and train_size are None
     if fh is not None:
         if test_size is not None or train_size is not None:
@@ -122,13 +117,13 @@ def temporal_train_test_split(
                 "If `fh` is given, `test_size` and `train_size` cannot "
                 "also be specified."
             )
-        return _split_by_fh(y, fh, X=X)
-
-    # branch 2: fh is None, use test_size and train_size to split
+        temporal_splitter = ForecastingHorizonSplitter(fh=fh)
+    # case 2: fh is None, use test_size and train_size to split
     # from the above, we know that fh is None
-    temporal_splitter = TemporalTrainTestSplitter(
-        test_size=test_size, train_size=train_size, anchor=anchor
-    )
+    else:
+        temporal_splitter = TemporalTrainTestSplitter(
+            test_size=test_size, train_size=train_size, anchor=anchor
+        )
 
     y_train, y_test = list(temporal_splitter.split_series(y))[0]
 
@@ -149,10 +144,39 @@ def temporal_train_test_split(
 class TemporalTrainTestSplitter(BaseSplitter):
     r"""Temporal train-test splitter, based on sample sizes of train or test set.
 
-    Cuts test and train sets from the start or end of available data,
-    based on ``test_size`` and ``train_size`` parameters,
-    which can signify fractions of total number of indices,
-    or an absolute number of integers to cut.
+    Splits time series into a single, temporally ordered train/test split.
+    The train and test sets are contiguous blocks of consecutive ``iloc``
+    positions, with sizes determined by ``train_size`` and ``test_size``.
+    If the original time index is irregular, the split is still based on
+    consecutive positions in the data, not on equally spaced time intervals.
+
+    If the time points in the data are :math:`(t_1, t_2, \ldots, t_N)`,
+    let :math:`m` be the number of training positions and :math:`q` be the
+    number of test positions after resolving ``train_size`` and ``test_size``.
+    Fractional ``train_size`` values are rounded down to :math:`m`, while
+    fractional ``test_size`` values are rounded up to :math:`q`.
+
+    With ``anchor="start"``, the split is taken from the beginning of the series:
+
+    .. math::
+
+        train = (t_1, \ldots, t_m), \quad
+        test = (t_{m+1}, \ldots, t_{m+q}).
+
+    With ``anchor="end"``, the split is taken from the end of the series:
+
+    .. math::
+
+        train = (t_{N-q-m+1}, \ldots, t_{N-q}), \quad
+        test = (t_{N-q+1}, \ldots, t_N).
+
+    If only ``test_size`` is supplied, ``anchor`` is treated as ``"end"``
+    and the training set is the complement before the test set. If only
+    ``train_size`` is supplied, ``anchor`` is treated as ``"start"`` and
+    the test set is the complement after the training set. If neither is
+    supplied, ``test_size`` defaults to ``0.25``.
+
+    This splitter yields exactly one split.
 
     If the data contains multiple time series (Panel or Hierarchical),
     fractions and train-test sets will be computed per individual time series.
@@ -184,6 +208,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
     >>> ts = np.arange(10)
     >>> splitter = TemporalTrainTestSplitter(test_size=0.3)
     >>> list(splitter.split(ts)) # doctest: +SKIP
+    [(array([0, 1, 2, 3, 4, 5, 6]), array([7, 8, 9]))]
     """
 
     _tags = {"split_hierarchical": False}
@@ -238,7 +263,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
 
         yield y_train_ix, y_test_ix
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         Since this splitter returns a single train/test split,

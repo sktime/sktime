@@ -176,16 +176,18 @@ def _has_capability(est, method: str) -> bool:
     """Check whether estimator has capability of method."""
 
     def get_tag(est, tag_name, tag_value_default=None):
-        if isclass(est):
+        if isclass(est) and hasattr(est, "get_class_tag"):
             return est.get_class_tag(
                 tag_name=tag_name, tag_value_default=tag_value_default
             )
-        else:
+        elif not isclass(est) and hasattr(est, "get_tag"):
             return est.get_tag(
                 tag_name=tag_name,
                 tag_value_default=tag_value_default,
                 raise_error=False,
             )
+        else:
+            return tag_value_default
 
     if not hasattr(est, method):
         return False

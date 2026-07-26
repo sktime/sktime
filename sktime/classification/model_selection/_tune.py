@@ -17,10 +17,8 @@ class TSCGridSearchCV(_DelegatedClassifier):
 
     Parameters
     ----------
-    estimator : estimator object
-        This is assumed to implement the scikit-learn estimator interface.
-        Either estimator needs to provide a ``score`` function,
-        or ``scoring`` must be passed.
+    estimator : sktime classifier, BaseClassifier instance or interface compatible
+        The classifier to tune, must implement the sktime classifier interface.
 
     param_grid : dict or list of dictionaries
         Dictionary with parameters names (``str``) as keys and lists of
@@ -246,6 +244,10 @@ class TSCGridSearchCV(_DelegatedClassifier):
         "capability:missing_values": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:categorical_in_X": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(

@@ -211,6 +211,10 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
 
         super().__init__()
 
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
+
     @property
     def feature_importances_(self):
         """Feature importance not supported for the RISE classifier."""

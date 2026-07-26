@@ -45,7 +45,7 @@ class FitInTransform(BaseTransformer):
     >>> from sktime.forecasting.compose import ForecastingPipeline
     >>> from sktime.split import temporal_train_test_split
     >>> from sktime.transformations.compose import FitInTransform
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.impute import Imputer
     >>> y, X = load_longley()
     >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     >>> fh = ForecastingHorizon(y_test.index, is_relative=False)
@@ -62,7 +62,12 @@ class FitInTransform(BaseTransformer):
     >>> y_pred = pipe.predict(fh=fh, X=X_test)
     """
 
-    _tags = {"authors": ["aiwalter", "fkiraly"]}
+    _tags = {
+        "authors": ["aiwalter", "fkiraly"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+    }
 
     def __init__(self, transformer, skip_inverse_transform=True):
         self.transformer = transformer
@@ -143,7 +148,7 @@ class FitInTransform(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
 
         params = [
             {"transformer": BoxCoxTransformer()},

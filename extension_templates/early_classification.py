@@ -17,13 +17,13 @@ How to use this implementation template to implement a new estimator:
 - more details:
   https://www.sktime.net/en/stable/developer_guide/add_estimators.html
 
-Mandatory implements:
+Mandatory methods to implement:
     fitting                 - _fit(self, X, y)
     predicting classes      - _predict(self, X)
     updating predictions    - _update_predict(self, X)
     performance metrics     - _score(X, y)
 
-Optional implements:
+Optional methods to implement:
     data conversion and capabilities tags - _tags
     fitted parameter inspection           - _get_fitted_params()
     predicting class probabilities        - _predict_proba(self, X)
@@ -113,7 +113,7 @@ class MyEarlyTimeSeriesClassifier(BaseEarlyClassifier):
         # if est.foo == 42:
         #   self.set_tags(handles-missing-data=True)
         # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "handles-missing-data"])
+        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory
     def _fit(self, X, y):
