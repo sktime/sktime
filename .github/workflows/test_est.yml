@@ -41,8 +41,8 @@ jobs:
         shell: pwsh
         run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
-      - name: Install sktime with dev dependencies
-        run: uv pip install .[dev]
+      - name: Install sktime with dev dependencies and skpro
+        run: uv pip install .[dev,skpro]
         env:
           UV_SYSTEM_PYTHON: 1
 
@@ -57,8 +57,32 @@ jobs:
       - name: Show dependencies
         run: uv pip list
 
-      - name: Run tests with ${{ matrix.flag }}
+      - name: Run general API conformance tests for ${{ matrix.flag }}
         env:
           FLAG: ${{ matrix.flag }}
         shell: bash
         run: python -c "from sktime.tests._test_vm import run_test_vm; run_test_vm('${{ matrix.flag }}')"
+
+      - name: Find object specific test modules for ${{ matrix.flag }}
+        id: find_modules
+        env:
+          FLAG: ${{ matrix.flag }}
+        shell: bash
+        run: |
+          MODULES=$(python -c "from sktime.tests._test_vm import _get_estimator_specific_test_modules; mods = _get_estimator_specific_test_modules('${{ matrix.flag }}'); print(' '.join(mods) if mods is not None else '')")
+
+          if [ -n "$MODULES" ]; then
+            echo "Found modules: $MODULES"
+            echo "modules=$MODULES" >> "$GITHUB_OUTPUT"
+          else
+            echo "No object specific tests found for $FLAG."
+            echo "modules=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run object specific tests for ${{ matrix.flag }}
+        if: steps.find_modules.outputs.modules != ''
+        env:
+          MODULES: ${{ steps.find_modules.outputs.modules }}
+        shell: bash
+        run: |
+          pytest --pyargs $MODULES --only_vm_estimators True

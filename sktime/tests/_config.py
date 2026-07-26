@@ -9,6 +9,7 @@ __all__ = [
     "EXCLUDED_TESTS",
     "MATRIXDESIGN",
     "ONLY_CHANGED_MODULES",
+    "ONLY_VM_ESTIMATORS",
 ]
 
 from sktime.registry import ESTIMATOR_TAG_LIST
@@ -24,6 +25,10 @@ MATRIXDESIGN = False
 # whether to test only estimators from modules that are changed w.r.t. main
 # default is False, can be set to True by pytest --only_changed_modules True flag
 ONLY_CHANGED_MODULES = False
+
+# whether to test only estimators from modules require a VM to test
+# default is False, can be set to True by pytest --only_vm_estimators True flag
+ONLY_VM_ESTIMATORS = False
 
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -151,7 +156,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
         "DistanceFeatures",
-        "DontUpdate",
         "DummyRegressor",
         "ElasticEnsemble",
         "FeatureSelection",
@@ -173,10 +177,8 @@ EXCLUDED_TESTS_BY_TEST = {
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
-        "OptionalPassthrough",
         "PAAlegacy",
         "PaddingTransformer",
-        "PlateauFinder",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
@@ -191,7 +193,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
-        "SlopeTransformer",
         "StackingForecaster",
         "SummaryClassifier",
         "SupervisedTimeSeriesForest",
