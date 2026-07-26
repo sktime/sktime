@@ -181,7 +181,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "OptionalPassthrough",
         "PAAlegacy",
         "PaddingTransformer",
-        "PlateauFinder",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
