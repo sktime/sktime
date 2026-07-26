@@ -2927,9 +2927,19 @@
       ]
     },
     {
+      "login": "michaelellis003",
+      "name": "Michael Ellis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24530417?v=4",
+      "profile": "https://github.com/michaelellis003",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "Vbhatt03",
       "name": "Vyomesh Bhatt",
-      "avatar_url": "https://avatars.githubusercontent.com/u/Vbhatt03",
+      "avatar_url": "https://avatars.githubusercontent.com/u/Vbhatt03?v=4",
+      "profile": "https://github.com/Vbhatt03",
       "contributions": [
         "code"
       ]
@@ -2974,6 +2984,15 @@
       "contributions": [
         "bug",
         "test"
+      ]
+    },
+    {
+      "login": "OfficialAbhinavSingh",
+      "name": "Abhinav Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/221158347?v=4",
+      "profile": "https://github.com/OfficialAbhinavSingh",
+      "contributions": [
+        "code"
       ]
     }
   ]
