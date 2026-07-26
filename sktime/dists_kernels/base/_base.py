@@ -109,6 +109,9 @@ class BasePairwiseTransformer(BaseEstimator):
         """
         _check_estimator_deps(self)
 
+        if not self.get_tag("fit_is_empty", True):
+            self.check_is_fitted()
+
         X = self._pairwise_table_x_check(X)
 
         if X2 is None:
@@ -140,11 +143,30 @@ class BasePairwiseTransformer(BaseEstimator):
         raise NotImplementedError
 
     def fit(self, X=None, X2=None):
-        """Fit method for interface compatibility (no logic inside)."""
-        # no fitting logic, but in case fit is called or expected
+        """Fit method for interface compatibility and fittable distances."""
         _check_estimator_deps(self)
         self.reset()
+        if not self.get_tag("fit_is_empty", True):
+            X = self._pairwise_table_x_check(X)
+            if X2 is not None:
+                X2 = self._pairwise_table_x_check(X2, var_name="X2")
+            self._fit(X=X, X2=X2)
         self._is_fitted = True
+        return self
+
+    def _fit(self, X=None, X2=None):
+        """Fit method core logic.
+
+        Parameters
+        ----------
+        X: pd.DataFrame of length n, or 2D np.array with n rows
+        X2: pd.DataFrame of length m, or 2D np.array with m rows, optional
+            default X2 = X
+
+        Returns
+        -------
+        self
+        """
         return self
 
     def _pairwise_table_x_check(self, X, var_name="X"):
@@ -425,6 +447,9 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         # solution: add tag for optional python dependencies and appropriate checks
         _check_estimator_deps(self, severity="warning")
 
+        if not self.get_tag("fit_is_empty", True):
+            self.check_is_fitted()
+
         X = self._pairwise_panel_x_check(X)
 
         if X2 is None:
@@ -487,6 +512,9 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         # solution: add tag for optional python dependencies and appropriate checks
         _check_estimator_deps(self, severity="warning")
 
+        if not self.get_tag("fit_is_empty", True):
+            self.check_is_fitted()
+
         import numpy as np
 
         from sktime.datatypes._vectorize import VectorizedDF
@@ -502,11 +530,30 @@ class BasePairwiseTransformerPanel(BaseEstimator):
         return diag
 
     def fit(self, X=None, X2=None):
-        """Fit method for interface compatibility (no logic inside)."""
+        """Fit method for interface compatibility and fittable distances."""
         _check_estimator_deps(self)
-        # no fitting logic, but in case fit is called or expected
         self.reset()
+        if not self.get_tag("fit_is_empty", True):
+            X = self._pairwise_panel_x_check(X)
+            if X2 is not None:
+                X2 = self._pairwise_panel_x_check(X2, var_name="X2")
+            self._fit(X=X, X2=X2)
         self._is_fitted = True
+        return self
+
+    def _fit(self, X=None, X2=None):
+        """Fit method core logic.
+
+        Parameters
+        ----------
+        X : guaranteed to be Series or Panel of mtype X_inner_mtype, n instances
+        X2 : guaranteed to be Series or Panel of mtype X_inner_mtype, m instances
+             default X2 = X
+
+        Returns
+        -------
+        self
+        """
         return self
 
     def _pairwise_panel_x_check(self, X, var_name="X"):

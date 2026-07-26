@@ -49,7 +49,7 @@ class TransformerPairwiseTransformSymm(TransformerPairwiseTestScenario):
         d = pd.DataFrame(d)
 
         return {
-            "fit": {"X": None, "X2": None},
+            "fit": {"X": d},
             "transform": {"X": d},
             "transform_diag": {"X": d},
         }
@@ -71,7 +71,7 @@ class TransformerPairwiseTransformAsymm(TransformerPairwiseTestScenario):
         d2 = pd.DataFrame(d2)
 
         return {
-            "fit": {"X": None, "X2": None},
+            "fit": {"X": d},
             "transform": {"X": d, "X2": d2},
             "transform_diag": {"X": d},
         }
@@ -100,7 +100,7 @@ class TransformerPairwiseTransformNumpy(TransformerPairwiseTestScenario):
         )
 
         return {
-            "fit": {"X": None, "X2": None},
+            "fit": {"X": X1_np},
             "transform": {"X": X1_np, "X2": X2_np},
             "transform_diag": {"X": X1_np},
         }
@@ -127,7 +127,7 @@ class TransformerPairwisePanelTransformSymm(TransformerPairwisePanelTestScenario
         X = [d, d]
 
         return {
-            "fit": {"X": None, "X2": None},
+            "fit": {"X": X},
             "transform": {"X": X},
             "transform_diag": {"X": X},
         }
@@ -148,7 +148,7 @@ class TransformerPairwisePanelTransformAsymm(TransformerPairwisePanelTestScenari
         X2 = [d, d, d]
 
         return {
-            "fit": {"X": None, "X2": None},
+            "fit": {"X": X},
             "transform": {"X": X, "X2": X2},
             "transform_diag": {"X": X},
         }
@@ -179,7 +179,7 @@ class TransformerPairwisePanelTransformListdf(TransformerPairwisePanelTestScenar
         )
 
         return {
-            "fit": {"X": None, "X2": None},
+            "fit": {"X": X1_list_df},
             "transform": {"X": X1_list_df, "X2": X2_list_df},
             "transform_diag": {"X": X1_list_df},
         }
@@ -213,7 +213,7 @@ class TransformerPairwisePanelTransformNumpy(TransformerPairwisePanelTestScenari
         X2_num_pan = convert_to(X2_list_df, to_type="numpy3D")
 
         return {
-            "fit": {"X": None, "X2": None},
+            "fit": {"X": X1_num_pan},
             "transform": {"X": X1_num_pan, "X2": X2_num_pan},
             "transform_diag": {"X": X1_num_pan},
         }
