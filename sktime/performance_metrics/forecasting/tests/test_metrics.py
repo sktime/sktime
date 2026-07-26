@@ -487,9 +487,9 @@ def test_evaluate_by_index_returns_correct_index():
     return a pd.Series/DataFrame whose index matches y_true's index.
     """
     from sktime.performance_metrics.forecasting import (
-        RMSEnormalizedByIQR,
         KLDivergenceNormal,
         MSEnormalizedBySD,
+        RMSEnormalizedByIQR,
         TheilU2,
     )
 
