@@ -9,6 +9,7 @@ __all__ = [
     "EXCLUDED_TESTS",
     "MATRIXDESIGN",
     "ONLY_CHANGED_MODULES",
+    "ONLY_VM_ESTIMATORS",
 ]
 
 from sktime.registry import ESTIMATOR_TAG_LIST
@@ -24,6 +25,10 @@ MATRIXDESIGN = False
 # whether to test only estimators from modules that are changed w.r.t. main
 # default is False, can be set to True by pytest --only_changed_modules True flag
 ONLY_CHANGED_MODULES = False
+
+# whether to test only estimators from modules require a VM to test
+# default is False, can be set to True by pytest --only_vm_estimators True flag
+ONLY_VM_ESTIMATORS = False
 
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -120,13 +125,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    "ClusterSegmenter": [
-        "test_doctest_examples",
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-        "test_output_type",
-    ],
     "GreedyGaussianSegmentation": [
         "test_predict_points",
         "test_predict_segments",
@@ -139,9 +137,6 @@ EXCLUDED_TESTS = {
     "MACNNClassifier": [
         "test_multioutput",
         "test_classifier_on_unit_test_data",
-    ],
-    "ARLagOrderSelector": [
-        "test_doctest_examples",  # doctest fails, see #8129
     ],
 }
 
@@ -161,7 +156,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
         "DistanceFeatures",
-        "DontUpdate",
         "DummyRegressor",
         "ElasticEnsemble",
         "FeatureSelection",
@@ -183,19 +177,14 @@ EXCLUDED_TESTS_BY_TEST = {
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
-        "OptionalPassthrough",
-        "PAA",
         "PAAlegacy",
-        "PCATransformer",
         "PaddingTransformer",
-        "PlateauFinder",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
         "RandomSamplesAugmenter",
-        "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
@@ -204,7 +193,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
-        "SlopeTransformer",
         "StackingForecaster",
         "SummaryClassifier",
         "SupervisedTimeSeriesForest",

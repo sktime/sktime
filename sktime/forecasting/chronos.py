@@ -358,14 +358,19 @@ class ChronosForecaster(BaseForecaster):
         self.config = config
         self.seed = seed
 
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
         elif self.use_source_package:
             self.set_tags(python_dependencies=["chronos"])
         else:
             self.set_tags(python_dependencies=["torch", "transformers", "accelerate"])
-
-        super().__init__()
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -591,10 +596,19 @@ class ChronosForecaster(BaseForecaster):
         index_names = _y.index.names
         _y = _y.values.reshape(1, -1, 1)
 
+        model_config = self.model_pipeline.model.config
+        # the ``context_length`` shortcut is only set on sktime's vendored
+        # models; the source ``chronos`` package only exposes it nested
+        # under ``chronos_config`` on the underlying HF model config
+        context_length = (
+            getattr(model_config, "context_length", None)
+            or model_config.chronos_config["context_length"]
+        )
+
         results = []
         for i in range(_y.shape[0]):
             _y_i = _y[i, :, 0]
-            _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
+            _y_i = _y_i[-context_length:]
 
             values = self.model_strategy.predict(
                 self.model_pipeline, torch.Tensor(_y_i), prediction_length, self._config

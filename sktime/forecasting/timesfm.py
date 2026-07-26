@@ -190,6 +190,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timesfm"],
+        "tests:specific": ["sktime.forecasting.tests.test_timesfm"],
     }
 
     def __init__(
@@ -227,6 +228,13 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if not self.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
@@ -250,8 +258,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     "capability:global_forecasting": False,
                 }
             )
-
-        super().__init__()
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable TimesFM model."""
