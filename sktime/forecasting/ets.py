@@ -514,14 +514,14 @@ class AutoETS(_StatsModelsAdapter):
 
         Parameters
         ----------
-        parameter_set : str , default = "default"
+        parameter_set : str, default = "default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
         -------
-        params :dict or list of dict , default = {}
+        params : dict or list of dict , default = {}
             arameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
