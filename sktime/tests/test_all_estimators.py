@@ -6,8 +6,10 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
+import io
 import numbers
 import os
+import sys
 import types
 from copy import deepcopy
 from inspect import getfullargspec, signature
@@ -66,7 +68,6 @@ def subsample_by_version_os(x):
     Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
     """
     import platform
-    import sys
 
     ix = sys.version_info.minor % 3
     os_str = platform.system()
@@ -368,6 +369,7 @@ class BaseFixtureGenerator(_BaseFixtureGenerator):
 
 class QuickTester(_QuickTester):
     """Mixin class which adds the run_tests method to run tests on one estimator."""
+
 
 class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
     """Package level tests for all sktime objects."""
