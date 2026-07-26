@@ -18,6 +18,7 @@ __author__ = [
     "dsask",
     "othmaneabou",
     "daniellekutner",
+    "siddharth7113",
 ]
 __all__ = ["TotoForecaster"]
 
@@ -40,6 +41,13 @@ class TotoForecaster(BaseForecaster):
     of observability data. Generate both point forecasts and uncertainty estimates using
     a Student-T mixture model. Support for variable prediction horizons and context
     lengths.
+
+    Known-future exogenous variables ``X`` are supported via Toto's native
+    exogenous mechanism: the columns of ``X`` are appended after the target
+    channels as exogenous variates. When ``X`` is used, it must be supplied for
+    every step of the forecast horizon, i.e. for all steps ``1 .. max(fh)`` ahead
+    of the cutoff (no gaps), since Toto consumes the known future values at each
+    autoregressive step.
 
     Parameters
     ----------
@@ -73,13 +81,23 @@ class TotoForecaster(BaseForecaster):
     >>> model.fit(y)
     TotoForecaster()
     >>> forecast = model.predict(fh=[1,2,5])
+
+    With known-future exogenous variables:
+
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> X, y = load_longley()
+    >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+    >>> model = TotoForecaster()
+    >>> model.fit(y_train, X=X_train)  # doctest: +SKIP
+    TotoForecaster()
+    >>> forecast = model.predict(fh=[1, 2, 3], X=X_test)  # doctest: +SKIP
     """
 
     _tags = {
         "y_inner_mtype": ["pd.DataFrame"],
-        "X_inner_mtype": "None",
+        "X_inner_mtype": ["pd.DataFrame"],
         "capability:multivariate": True,
-        "capability:exogenous": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -87,6 +105,7 @@ class TotoForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:non_contiguous_X": False,
         # contribution and dependency tags
         "authors": [
             "JATAYU000",
@@ -103,10 +122,11 @@ class TotoForecaster(BaseForecaster):
             "dsask",
             "othmaneabou",
             "daniellekutner",
+            "siddharth7113",
         ],
         "maintainers": ["JATAYU000"],
         "python_version": ">= 3.10",
-        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3"],
+        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3", "setuptools<82"],
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on own VM?
@@ -220,10 +240,19 @@ class TotoForecaster(BaseForecaster):
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
             self._device = self.device
-        self.input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
-            self._device
-        )
+        if X is not None:
+            combined = pd.concat([y, X], axis=1)
+            self.input_series = torch.tensor(combined.values.T, dtype=torch.float32).to(
+                self._device
+            )
+            self._num_exog_ = X.shape[1]
+        else:
+            self.input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
+                self._device
+            )
+            self._num_exog_ = 0
 
+        self._n_targets_ = y.shape[1]
         self._id_mask = torch.zeros_like(self.input_series).to(self._device)
         self._padding_mask = torch.full_like(
             self.input_series, True, dtype=torch.bool
@@ -241,6 +270,7 @@ class TotoForecaster(BaseForecaster):
             id_mask=self._id_mask,
             timestamp_seconds=self.timestamp_seconds,
             time_interval_seconds=self.time_interval_seconds,
+            num_exogenous_variables=self._num_exog_,
         )
 
         return self
@@ -280,6 +310,8 @@ class TotoForecaster(BaseForecaster):
 
         prediction_length = max(fh.to_relative(self._cutoff))
 
+        future_exog = self._build_future_exog(X, prediction_length)
+
         forecaster = _CachedTotoForecaster(
             key=self._get_toto_key(),
             toto_kwargs=self._get_toto_kwargs(),
@@ -291,12 +323,14 @@ class TotoForecaster(BaseForecaster):
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
+            future_exogenous_variables=future_exog,
         )
         if self.prediction_type.lower() == "median":
             all_predictions = forecast.median.cpu().squeeze(0).numpy().T
         else:
             all_predictions = forecast.mean.cpu().squeeze(0).numpy().T
 
+        all_predictions = all_predictions[:, : self._n_targets_]
         pred_index = fh.to_absolute(self._cutoff)._values
         relative_indices = fh.to_relative(self._cutoff) - 1
         selected_predictions = all_predictions[relative_indices]
@@ -343,6 +377,8 @@ class TotoForecaster(BaseForecaster):
 
         prediction_length = max(fh.to_relative(self._cutoff))
 
+        future_exog = self._build_future_exog(X, prediction_length)
+
         forecaster = _CachedTotoForecaster(
             key=self._get_toto_key(),
             toto_kwargs=self._get_toto_kwargs(),
@@ -354,6 +390,7 @@ class TotoForecaster(BaseForecaster):
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
+            future_exogenous_variables=future_exog,
         )
         var_names = self._y.columns
         cols_idx = pd.MultiIndex.from_product([var_names, alpha])
@@ -374,6 +411,61 @@ class TotoForecaster(BaseForecaster):
                 selected_quantiles = quantile_values[j, i, relative_indices]
                 pred_quantiles[(var_name, a)] = selected_quantiles
         return pred_quantiles
+
+    def _build_future_exog(self, X, prediction_length):
+        """Build the future exogenous tensor for Toto's ``forecast`` call.
+
+        Toto rolls out a contiguous block of ``prediction_length`` steps and, for
+        each step, replaces the exogenous channels with the known future values.
+        It therefore needs ``X`` for **every** step ``1 .. prediction_length``
+        ahead of the cutoff, shaped ``(batch, num_exogenous, future_time_steps)``.
+
+        Parameters
+        ----------
+        X : pd.DataFrame or None
+            Future exogenous values passed to ``predict``.
+        prediction_length : int
+            Number of contiguous steps Toto will forecast.
+
+        Returns
+        -------
+        torch.Tensor or None
+            Tensor of shape ``(1, num_exogenous, prediction_length)`` if the
+            forecaster was fitted with exogenous variables, else ``None``.
+        """
+        if self._num_exog_ == 0:
+            return None
+
+        import torch
+
+        from sktime.forecasting.base import ForecastingHorizon
+
+        if X is None:
+            raise ValueError(
+                "TotoForecaster was fitted with exogenous variables X, so X must "
+                "also be passed to predict, covering the full forecast horizon."
+            )
+
+        # contiguous absolute index for steps 1 .. prediction_length
+        full_fh = ForecastingHorizon(range(1, prediction_length + 1), is_relative=True)
+        future_index = full_fh.to_absolute(self._cutoff)._values
+
+        # align user X onto every step Toto rolls through; gaps become NaN
+        X_future = X.reindex(future_index)
+        if X_future.isnull().values.any():
+            raise ValueError(
+                "TotoForecaster requires exogenous X for every step in the "
+                "forecast horizon. Provide X covering all steps from 1 to "
+                f"{prediction_length} ahead of the cutoff (no gaps)."
+            )
+
+        # shape (time, n_exog) -> (n_exog, time) -> (1, n_exog, time)
+        future_exog = (
+            torch.tensor(X_future.values.T, dtype=torch.float32)
+            .unsqueeze(0)
+            .to(self._device)
+        )
+        return future_exog
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
