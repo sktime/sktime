@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Benchmark results classes."""
 
 __all__ = ["HDDResults", "RAMResults"]
@@ -8,7 +7,6 @@ import os
 
 import numpy as np
 import pandas as pd
-from joblib import load
 
 from sktime.benchmarking.base import BaseResults, HDDBaseResults, _PredictionsWrapper
 
@@ -18,7 +16,7 @@ class RAMResults(BaseResults):
 
     def __init__(self):
         self.results = {}
-        super(RAMResults, self).__init__()
+        super().__init__()
 
     def save_predictions(
         self,
@@ -50,7 +48,7 @@ class RAMResults(BaseResults):
         y_proba : numpy array
             array of probabilities associated with the predicted values
         index : numpy array
-            dataset indeces of the y_true data points
+            dataset indices of the y_true data points
         fit_estimator_start_time : pandas timestamp (default=None)
             timestamp when fitting the estimator began
         fit_estimator_end_time : pandas timestamp (default=None)
@@ -59,7 +57,6 @@ class RAMResults(BaseResults):
             timestamp when the estimator began making predictions
         predict_estimator_end_time : pandas timestamp (default=None)
             timestamp when the estimator finished making predictions
-
         """
         key = self._generate_key(strategy_name, dataset_name, cv_fold, train_or_test)
         index = np.asarray(index)
@@ -107,9 +104,11 @@ class RAMResults(BaseResults):
         return False
 
     def save(self):
-        """Save self. Method present for interface consistency."""
+        """Save self.
+
+        Method present for interface consistency.
+        """
         # in-memory results are currently not persisted (i.e saved to the disk)
-        pass
 
     def _generate_key(self, strategy_name, dataset_name, cv_fold, train_or_test):
         """Get paths for files, encapsulates the storage logic of the class."""
@@ -149,7 +148,7 @@ class HDDResults(HDDBaseResults):
         y_proba : numpy array
             array of probabilities associated with the predicted values
         index : numpy array
-            dataset indeces of the y_true data points
+            dataset indices of the y_true data points
         fit_estimator_start_time : pandas timestamp (default=None)
             timestamp when fitting the estimator began
         fit_estimator_end_time : pandas timestamp (default=None)
@@ -223,6 +222,8 @@ class HDDResults(HDDBaseResults):
 
     def load_fitted_strategy(self, strategy_name, dataset_name, cv_fold):
         """Load saved (fitted) strategy."""
+        from joblib import load
+
         for strategy_name, dataset_name in self._iter():
             key = (
                 self._generate_key(

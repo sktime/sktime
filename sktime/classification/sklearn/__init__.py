@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Vector sklearn classifiers."""
+
 __all__ = [
     "RotationForest",
     "ContinuousIntervalTree",

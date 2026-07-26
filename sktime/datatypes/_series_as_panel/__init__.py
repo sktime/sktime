@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Module exports: Series/Panel conversions."""
 
 from sktime.datatypes._series_as_panel._convert import (

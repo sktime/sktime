@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Pipeline making utility."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
 __author__ = ["fkiraly"]
@@ -21,30 +21,28 @@ def make_pipeline(*steps):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
-    >>> y = load_airline()
-
     Example 1: forecaster pipeline
-    >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
+
     >>> from sktime.pipeline import make_pipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> y = load_airline()
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> pipe = make_pipeline(ExponentTransformer(), PolynomialTrendForecaster())
     >>> type(pipe).__name__
     'TransformedTargetForecaster'
 
     Example 2: classifier pipeline
-    >>> from sktime.classification.feature_based import Catch22Classifier
+
     >>> from sktime.pipeline import make_pipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> pipe = make_pipeline(ExponentTransformer(), Catch22Classifier())
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
+    >>> pipe = make_pipeline(ExponentTransformer(), KNeighborsTimeSeriesClassifier())
     >>> type(pipe).__name__
     'ClassifierPipeline'
 
     Example 3: transformer pipeline
+
     >>> from sktime.pipeline import make_pipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> pipe = make_pipeline(ExponentTransformer(), ExponentTransformer())
     >>> type(pipe).__name__
     'TransformerPipeline'

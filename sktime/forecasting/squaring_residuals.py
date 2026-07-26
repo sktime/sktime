@@ -1,34 +1,33 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements the probabilistic Squaring Residuals forecaster."""
 
 __all__ = ["SquaringResiduals"]
 __author__ = ["kcc-lion"]
 
-from warnings import warn
-
 import pandas as pd
 
 from sktime.datatypes._convert import convert_to
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.forecasting.model_selection import ExpandingWindowSplitter
 from sktime.forecasting.naive import NaiveForecaster
+from sktime.split import ExpandingWindowSplitter
+from sktime.utils.warnings import warn
 
 
 class SquaringResiduals(BaseForecaster):
     r"""Compute the prediction variance based on a separate forecaster.
 
-    Wraps a `forecaster` with another `residual_forecaster` object that
+    Wraps a ``forecaster`` with another ``residual_forecaster`` object that
     allows for quantile and interval estimation by fitting the
-    `residual_forecaster` to the rolling residuals.
+    ``residual_forecaster`` to the rolling residuals.
 
     Fitting proceeds as follows:
     Let :math:`t_1, \dots, t_N` be the train set.
-    Let `steps_ahead` be a positive integer indicating the steps ahead
-    we want to forecast the residuals. Let `initial_window` be
+    Let ``steps_ahead`` be a positive integer indicating the steps ahead
+    we want to forecast the residuals. Let ``initial_window`` be
     the minimal number of observations to which the forecaster is fitted.
 
     1. For :math:`i = initial\_window, \dots, N - steps\_ahead`
+
         a. Train/Update forecaster A on :math:`y(t_1), \dots, y(t_i)`
         b. Make point prediction for :math:`t_{i+steps\_ahead}` to get
            :math:`\hat{y}(t_{i+steps\_ahead})`
@@ -37,13 +36,14 @@ class SquaringResiduals(BaseForecaster):
            - \hat{y}(t_{i+steps\_ahead})`
         d. Compute :math:`e(t_{i+steps\_ahead}) := h(r(t_{i+steps\_ahead}))`
            where :math:`h(x)` is given by :math:`strategy`
-    2. Train `residual_forecaster` on
+
+    2. Train ``residual_forecaster`` on
        :math:`e(t_{initial\_window+steps\_ahead}), \dots, e(t_{N})`
 
     Prediction for :math:`t_{N+steps\_ahead}` is done as follows:
 
-    1. Use `forecaster` to predict location param :math:`\hat{y}(t_{N+steps\_ahead})`
-    2. Use `residual_forecaster` to predict scale param :math:`e(t_{N+steps\_ahead})`
+    1. Use ``forecaster`` to predict location param :math:`\hat{y}(t_{N+steps\_ahead})`
+    2. Use ``residual_forecaster`` to predict scale param :math:`e(t_{N+steps\_ahead})`
     3. Calculate prediction intervals based on e.g. normal assumption
        :math:`N(\hat{y}(t_{N+steps\_ahead}),  e(t_{N+steps\_ahead}))`
 
@@ -51,8 +51,10 @@ class SquaringResiduals(BaseForecaster):
     ----------
     forecaster : sktime forecaster, BaseForecaster descendant, optional
         Estimator to which probabilistic forecasts are being added
+        Default = NaiveForecaster()
     residual_forecaster : sktime forecaster, BaseForecaster descendant, optional
         Estimator which is fitted to the residuals of forecaster
+        Default = NaiveForecaster()
     initial_window : int, optional, default=2
         Size of initial_window to which forecaster is fitted
     steps_ahead : int, optional, default=1
@@ -63,6 +65,11 @@ class SquaringResiduals(BaseForecaster):
         Distributional assumption (["norm", "laplace", "t", "cauchy"])
     distr_kwargs : dict, optional
         Additional arguments required by the distribution
+
+    Attributes
+    ----------
+    forecaster_ : sktime forecaster, BaseForecaster descendant
+        Fitted estimator to which probabilistic forecasts are being added
 
     Examples
     --------
@@ -82,16 +89,32 @@ class SquaringResiduals(BaseForecaster):
     """
 
     _tags = {
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": True,  # does estimator ignore the exogeneous X?
-        "handles-missing-data": False,  # can estimator handle missing data?
+        # packaging info
+        # --------------
+        "authors": ["kcc-lion", "fkiraly"],
+        "maintainers": ["kcc-lion"],
+        # estimator type
+        # --------------
+        "capability:multivariate": False,  # which y are fine? False/True
+        "capability:exogenous": False,  # does estimator ignore the exogenous X?
+        "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
         "X-y-must-have-same-index": True,  # can estimator handle different X/y index?
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
+        "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
-        "python_version": None,  # PEP 440 python version specifier to limit versions
+        "capability:pred_int:insample": False,
+        # test skip config:
+        "tests:skip_by_name": [
+            # issue when prediction intervals, see #3479 and #4504
+            # known issue with prediction intervals that needs fixing, tracked in #4181
+            "test_predict_time_index",
+            "test_predict_residuals",
+            "test_predict_interval",
+            "test_predict_time_index_with_X",  # separate - refer to #4765
+        ],
     }
 
     def __init__(
@@ -109,20 +132,36 @@ class SquaringResiduals(BaseForecaster):
         self.initial_window = initial_window
         self.distr = distr
         self.distr_kwargs = distr_kwargs
-        super(SquaringResiduals, self).__init__()
+        super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
         assert self.distr in ["norm", "laplace", "t", "cauchy"]
         assert self.strategy in ["square", "abs"]
         assert self.initial_window >= 1, (
-            "Initial window should be larger or equal" " to one"
+            "Initial window should be larger or equal to one"
         )
 
         if self.forecaster is None:
-            self.forecaster = NaiveForecaster()
+            self._forecaster = NaiveForecaster()
+        else:
+            self._forecaster = self.forecaster
         if self.residual_forecaster is None:
-            self.residual_forecaster = NaiveForecaster()
+            self._residual_forecaster = NaiveForecaster()
+        else:
+            self._residual_forecaster = self.residual_forecaster.clone()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit forecaster to training data.
 
         private _fit containing the core logic, called from fit
@@ -132,15 +171,17 @@ class SquaringResiduals(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -153,13 +194,12 @@ class SquaringResiduals(BaseForecaster):
         """
         fh_rel = fh.to_relative(self.cutoff)
         self._res_forecasters = {}
-        self._residual_forecaster_ = self.residual_forecaster.clone()
-        self._forecaster_ = self.forecaster.clone()
+        self.forecaster_ = self._forecaster.clone()
 
         y = convert_to(y, "pd.Series")
         cv = ExpandingWindowSplitter(initial_window=self.initial_window, fh=fh_rel)
-        self._forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
-        y_pred = self._forecaster_.update_predict(y=y, cv=cv, X=X, update_params=True)
+        self.forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
+        y_pred = self.forecaster_.update_predict(y=y, cv=cv, X=X, update_params=True)
 
         for step_ahead in fh_rel:
             if isinstance(y.index, pd.DatetimeIndex):
@@ -173,7 +213,7 @@ class SquaringResiduals(BaseForecaster):
                 y_pred_current = []
                 y_pred_current_index = []
                 for col in y_pred.columns:
-                    fh_current_abs = fh_current.to_absolute(col)
+                    fh_current_abs = fh_current.to_absolute_index(col)
                     y_pred_current.append(y_pred.at[fh_current_abs[0], col])
                     y_pred_current_index.append(fh_current_abs[0])
                 y_pred_current = pd.Series(
@@ -192,12 +232,12 @@ class SquaringResiduals(BaseForecaster):
                 residuals = residuals.asfreq(y.index.freq)
 
             # fit to residuals
-            res_step_forecaster_ = self.residual_forecaster.clone()
+            res_step_forecaster_ = self._residual_forecaster.clone()
             res_step_forecaster_.fit(y=residuals)
             self._res_forecasters[step_ahead] = res_step_forecaster_
         return self
 
-    def _predict(self, fh, X=None):
+    def _predict(self, fh, X):
         """Forecast time series at future horizon.
 
         private _predict containing the core logic, called from predict
@@ -212,7 +252,7 @@ class SquaringResiduals(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -224,7 +264,8 @@ class SquaringResiduals(BaseForecaster):
             Point predictions
         """
         fh_abs = fh.to_absolute(self.cutoff)
-        y_pred = self._forecaster_.predict(X=X, fh=fh_abs)
+        y_pred = self.forecaster_.predict(X=X, fh=fh_abs)
+        y_pred.name = self._y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -245,13 +286,15 @@ class SquaringResiduals(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
+            Time series to which to fit the forecaster.
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -262,12 +305,12 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
-        self._forecaster_.update(X=X, y=y, update_params=update_params)
+        self.forecaster_.update(X=X, y=y, update_params=update_params)
         for forecaster in self._res_forecasters.values():
             forecaster.update(X=X, y=y, update_params=update_params)
         return self
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -283,7 +326,7 @@ class SquaringResiduals(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -300,23 +343,29 @@ class SquaringResiduals(BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        eval(f"exec('from scipy.stats import {self.distr}')")
+        from scipy import stats
+
+        dist_fun = getattr(stats, self.distr)
+
         fh_abs = fh.to_absolute(self.cutoff)
-        y_pred = self._forecaster_.predict(fh=fh_abs, X=X)
+        y_pred = self.forecaster_.predict(fh=fh_abs, X=X)
         pred_var = self._predict_var(fh=fh, X=X)
         if self.distr_kwargs is not None:
-            z_scores = eval(self.distr).ppf(alpha, **self.distr_kwargs)
+            z_scores = dist_fun.ppf(alpha, **self.distr_kwargs)
         else:
-            z_scores = eval(self.distr).ppf(alpha)
+            z_scores = dist_fun.ppf(alpha)
 
         errors = [pred_var * z for z in z_scores]
 
-        index = pd.MultiIndex.from_product([["Quantiles"], alpha])
+        var_names = self._get_varnames()
+        var_name = var_names[0]
+
+        index = pd.MultiIndex.from_product([var_names, alpha])
         pred_quantiles = pd.DataFrame(columns=index)
         for a, error in zip(alpha, errors):
-            pred_quantiles[("Quantiles", a)] = y_pred + error
+            pred_quantiles[(var_name, a)] = y_pred + error
 
-        pred_quantiles.index = fh_abs
+        pred_quantiles.index = fh_abs.to_pandas()
 
         return pred_quantiles
 
@@ -344,15 +393,20 @@ class SquaringResiduals(BaseForecaster):
                 a square matrix of size len(fh) with predictive covariance matrix.
         """
         if cov:
-            warn(f"cov={cov} is not supported. Defaulting to cov=False instead.")
+            warn(
+                f"cov={cov} is not supported in SquaringResiduals. "
+                "Defaulting to cov=False instead.",
+                obj=self,
+            )
         fh_abs = fh.to_absolute(self.cutoff)
         fh_rel = fh.to_relative(self.cutoff)
-        pred_var = pd.Series(index=fh_rel)
+        fh_rel_index = fh_rel.to_pandas()
+        pred_var = pd.Series(index=fh_rel_index, dtype="float64")
         for el in fh_rel:
-            pred_var.at[el] = self._res_forecasters[el].predict(fh=el)[0]
+            pred_var.at[el] = self._res_forecasters[el].predict(fh=el)
         if self.strategy == "square":
             pred_var = pred_var**0.5
-        pred_var.index = fh_abs
+        pred_var.index = fh_abs.to_pandas()
         return pred_var
 
     @classmethod
@@ -363,7 +417,7 @@ class SquaringResiduals(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             There are currently no reserved values for forecasters.
 
         Returns
@@ -371,8 +425,9 @@ class SquaringResiduals(BaseForecaster):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.forecasting.croston import Croston
         from sktime.forecasting.naive import NaiveForecaster

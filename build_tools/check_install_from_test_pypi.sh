@@ -18,7 +18,7 @@ echo "Creating test environment ..."
 
 # shellcheck disable=SC1091
 source "$(conda info --base)"/etc/profile.d/conda.sh  # set up conda
-conda create -n sktime_testenv python=3.7
+conda create -n sktime_testenv python=3.8
 conda activate sktime_testenv
 
 # Install from test PyPI

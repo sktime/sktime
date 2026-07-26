@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for aligners.
 
 Contains TestScenario concrete children to run in tests for alignment algorithms.
@@ -20,8 +19,6 @@ RAND_SEED = 42
 class AlignerTestScenario(TestScenario, BaseObject):
     """Generic test scenario for aligners."""
 
-    pass
-
 
 class AlignerPairwiseMultivariateEqual(AlignerTestScenario):
     """Align multivariate series, pairwise alignment, equal length."""
@@ -33,14 +30,17 @@ class AlignerPairwiseMultivariateEqual(AlignerTestScenario):
         "is_enabled": True,
     }
 
-    args = {
-        "fit": {
-            "X": [
-                _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED),
-                _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED),
-            ],
-        },
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": [
+                    _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED),
+                    _make_series(n_timepoints=20, n_columns=2, random_state=RAND_SEED),
+                ],
+            },
+        }
+
     default_method_sequence = ["fit"]
 
 
@@ -54,14 +54,17 @@ class AlignerPairwiseUnivariateUnequal(AlignerTestScenario):
         "is_enabled": False,
     }
 
-    args = {
-        "fit": {
-            "X": [
-                _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED),
-                _make_series(n_timepoints=30, n_columns=1, random_state=RAND_SEED),
-            ],
-        },
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": [
+                    _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED),
+                    _make_series(n_timepoints=30, n_columns=1, random_state=RAND_SEED),
+                ],
+            },
+        }
+
     default_method_sequence = ["fit"]
 
 
@@ -75,15 +78,18 @@ class AlignerMultipleUnivariateUnequal(AlignerTestScenario):
         "is_enabled": False,
     }
 
-    args = {
-        "fit": {
-            "X": [
-                _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED),
-                _make_series(n_timepoints=30, n_columns=1, random_state=RAND_SEED),
-                _make_series(n_timepoints=25, n_columns=1, random_state=RAND_SEED),
-            ],
-        },
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": [
+                    _make_series(n_timepoints=20, n_columns=1, random_state=RAND_SEED),
+                    _make_series(n_timepoints=30, n_columns=1, random_state=RAND_SEED),
+                    _make_series(n_timepoints=25, n_columns=1, random_state=RAND_SEED),
+                ],
+            },
+        }
+
     default_method_sequence = ["fit"]
 
 

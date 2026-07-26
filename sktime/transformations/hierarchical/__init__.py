@@ -1,2 +1,1 @@
-# -*- coding: utf-8 -*-
-"""Implements hierarchical transfromations to predictions."""
+"""Implements hierarchical transformations to predictions."""

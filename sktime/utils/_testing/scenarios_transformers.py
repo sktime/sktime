@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Test scenarios for transformers.
 
 Contains TestScenario concrete children to run in tests for transformers.
@@ -16,17 +15,11 @@ import pandas as pd
 
 from sktime.base import BaseObject
 from sktime.datatypes import mtype_to_scitype
-from sktime.transformations.base import _PanelToPanelTransformer
 from sktime.utils._testing.estimator_checks import _make_primitives, _make_tabular_X
 from sktime.utils._testing.forecasting import _make_series
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_classification_y, _make_panel_X
 from sktime.utils._testing.scenarios import TestScenario
-
-OLD_MIXINS = (_PanelToPanelTransformer,)
-
-OLD_PANEL_MIXINS = (_PanelToPanelTransformer,)
-
 
 # random seed for generating data to keep scenarios exactly reproducible
 RAND_SEED = 42
@@ -70,9 +63,6 @@ class TransformerTestScenario(TestScenario, BaseObject):
         # pre-refactor classes can't deal with Series *and* Panel both
         X_scitype = self.get_tag("X_scitype")
         y_scitype = self.get_tag("y_scitype", None, raise_error=False)
-
-        if _is_child_of(obj, OLD_PANEL_MIXINS) and X_scitype != "Panel":
-            return False
 
         # if transformer requires y, the scenario also must pass y
         has_y = self.get_tag("has_y")
@@ -144,13 +134,10 @@ class TransformerTestScenario(TestScenario, BaseObject):
 
             # determine output by X_out_scitype
             #   until transformer refactor is complete, use the old classes, too
-            if _is_child_of(obj, OLD_MIXINS):
-                p2p = _is_child_of(obj, _PanelToPanelTransformer)
-            else:
-                s2s = X_scitype == "Series" and X_out_series
-                s2p = X_scitype == "Series" and X_out_prim
-                p2t = X_scitype == "Panel" and X_out_prim
-                p2p = X_scitype == "Panel" and X_out_series
+            s2s = X_scitype == "Series" and X_out_series
+            s2p = X_scitype == "Series" and X_out_prim
+            p2t = X_scitype == "Panel" and X_out_prim
+            p2p = X_scitype == "Panel" and X_out_series
 
             # expected input type of inverse_transform is expected output of transform
             if s2p:
@@ -181,12 +168,6 @@ class TransformerTestScenario(TestScenario, BaseObject):
         return args
 
 
-X_series = _make_series(n_timepoints=N_T, random_state=RAND_SEED)
-X_panel = _make_panel_X(
-    n_instances=7, n_columns=1, n_timepoints=N_T, random_state=RAND_SEED
-)
-
-
 class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
     """Fit/transform, univariate Series X."""
 
@@ -197,11 +178,16 @@ class TransformerFitTransformSeriesUnivariate(TransformerTestScenario):
         "is_enabled": True,
     }
 
-    args = {
-        "fit": {"X": _make_series(n_timepoints=N_T + 1, random_state=RAND_SEED)},
-        "transform": {"X": _make_series(n_timepoints=N_T + 1, random_state=RAND_SEED2)},
-        # "inverse_transform": {"X": _make_series(n_timepoints=N_T)},
-    }
+    @property
+    def args(self):
+        X_fit = _make_series(n_timepoints=N_T + 1, random_state=RAND_SEED)
+        X_trafo = _make_series(n_timepoints=N_T + 1, random_state=RAND_SEED2)
+        return {
+            "fit": {"X": X_fit},
+            "transform": {"X": X_trafo},
+            # "inverse_transform": {"X": _make_series(n_timepoints=N_T)},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -215,14 +201,12 @@ class TransformerFitTransformSeriesMultivariate(TransformerTestScenario):
         "is_enabled": True,
     }
 
-    args = {
-        "fit": {
-            "X": _make_series(n_columns=2, n_timepoints=N_T, random_state=RAND_SEED),
-        },
-        "transform": {
-            "X": _make_series(n_columns=2, n_timepoints=N_T, random_state=RAND_SEED)
-        },
-    }
+    @property
+    def args(self):
+        X_fit = _make_series(n_columns=2, n_timepoints=N_T, random_state=RAND_SEED)
+        X_trafo = _make_series(n_columns=2, n_timepoints=N_T, random_state=RAND_SEED)
+        return {"fit": {"X": X_fit}, "transform": {"X": X_trafo}}
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -237,36 +221,18 @@ class TransformerFitTransformSeriesUnivariateWithY(TransformerTestScenario):
         "y_scitype": "Series",
     }
 
-    args = {
-        "fit": {
-            "X": _make_series(n_columns=1, n_timepoints=N_T, random_state=RAND_SEED),
-            "y": _make_series(n_columns=1, n_timepoints=N_T, random_state=RAND_SEED),
-        },
-        "transform": {
-            "X": _make_series(n_columns=1, n_timepoints=N_T, random_state=RAND_SEED),
-            "y": _make_series(n_columns=1, n_timepoints=N_T, random_state=RAND_SEED),
-        },
-    }
+    @property
+    def args(self):
+        X_fit = _make_series(n_columns=1, n_timepoints=N_T, random_state=RAND_SEED)
+        y_fit = _make_series(n_columns=1, n_timepoints=N_T, random_state=RAND_SEED)
+        X_trafo = _make_series(n_columns=1, n_timepoints=N_T, random_state=RAND_SEED)
+        t_trafo = _make_series(n_columns=1, n_timepoints=N_T, random_state=RAND_SEED)
+        return {
+            "fit": {"X": X_fit, "y": y_fit},
+            "transform": {"X": X_trafo, "y": t_trafo},
+        }
+
     default_method_sequence = ["fit", "transform"]
-
-
-y3 = _make_classification_y(n_instances=9, n_classes=3)
-X_np = _make_panel_X(
-    n_instances=9,
-    n_columns=1,
-    n_timepoints=N_T,
-    all_positive=True,
-    return_numpy=True,
-    random_state=RAND_SEED,
-)
-X_test_np = _make_panel_X(
-    n_instances=9,
-    n_columns=1,
-    n_timepoints=N_T,
-    all_positive=True,
-    return_numpy=True,
-    random_state=RAND_SEED2,
-)
 
 
 class TransformerFitTransformPanelUnivariateNumpyWithClassYOnlyFit(
@@ -282,10 +248,31 @@ class TransformerFitTransformPanelUnivariateNumpyWithClassYOnlyFit(
         "y_scitype": "Table",
     }
 
-    args = {
-        "fit": {"y": y3, "X": X_np},
-        "transform": {"X": X_test_np},
-    }
+    @property
+    def args(self):
+        y3 = _make_classification_y(n_instances=9, n_classes=3, random_state=RAND_SEED)
+        X_np = _make_panel_X(
+            n_instances=9,
+            n_columns=1,
+            n_timepoints=N_T,
+            all_positive=True,
+            return_numpy=True,
+            random_state=RAND_SEED,
+        )
+        X_test_np = _make_panel_X(
+            n_instances=9,
+            n_columns=1,
+            n_timepoints=N_T,
+            all_positive=True,
+            return_numpy=True,
+            random_state=RAND_SEED2,
+        )
+
+        return {
+            "fit": {"y": y3, "X": X_np},
+            "transform": {"X": X_test_np},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -299,18 +286,21 @@ class TransformerFitTransformPanelUnivariate(TransformerTestScenario):
         "is_enabled": False,
     }
 
-    args = {
-        "fit": {
-            "X": _make_panel_X(
-                n_instances=7, n_columns=1, n_timepoints=N_T, random_state=RAND_SEED
-            )
-        },
-        "transform": {
-            "X": _make_panel_X(
-                n_instances=7, n_columns=1, n_timepoints=N_T, random_state=RAND_SEED
-            )
-        },
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": _make_panel_X(
+                    n_instances=7, n_columns=1, n_timepoints=N_T, random_state=RAND_SEED
+                )
+            },
+            "transform": {
+                "X": _make_panel_X(
+                    n_instances=7, n_columns=1, n_timepoints=N_T, random_state=RAND_SEED
+                )
+            },
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -324,18 +314,21 @@ class TransformerFitTransformPanelMultivariate(TransformerTestScenario):
         "is_enabled": False,
     }
 
-    args = {
-        "fit": {
-            "X": _make_panel_X(
-                n_instances=7, n_columns=2, n_timepoints=N_T, random_state=RAND_SEED
-            )
-        },
-        "transform": {
-            "X": _make_panel_X(
-                n_instances=7, n_columns=2, n_timepoints=N_T, random_state=RAND_SEED
-            )
-        },
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": _make_panel_X(
+                    n_instances=7, n_columns=2, n_timepoints=N_T, random_state=RAND_SEED
+                )
+            },
+            "transform": {
+                "X": _make_panel_X(
+                    n_instances=7, n_columns=2, n_timepoints=N_T, random_state=RAND_SEED
+                )
+            },
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -350,28 +343,39 @@ class TransformerFitTransformPanelUnivariateWithClassY(TransformerTestScenario):
         "y_scitype": "Table",
     }
 
-    args = {
-        "fit": {
-            "X": _make_panel_X(
-                n_instances=7,
-                n_columns=1,
-                n_timepoints=N_T + 1,
-                all_positive=True,
-                random_state=RAND_SEED,
-            ),
-            "y": _make_classification_y(n_instances=7, n_classes=2),
-        },
-        "transform": {
-            "X": _make_panel_X(
-                n_instances=7,
-                n_columns=1,
-                n_timepoints=N_T + 1,
-                all_positive=True,
-                random_state=RAND_SEED,
-            ),
-            "y": _make_classification_y(n_instances=7, n_classes=2),
-        },
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": _make_panel_X(
+                    n_instances=7,
+                    n_columns=1,
+                    n_timepoints=N_T + 1,
+                    all_positive=True,
+                    random_state=RAND_SEED,
+                ),
+                "y": _make_classification_y(
+                    n_instances=7,
+                    n_classes=2,
+                    random_state=RAND_SEED,
+                ),
+            },
+            "transform": {
+                "X": _make_panel_X(
+                    n_instances=7,
+                    n_columns=1,
+                    n_timepoints=N_T + 1,
+                    all_positive=True,
+                    random_state=RAND_SEED + 1,
+                ),
+                "y": _make_classification_y(
+                    n_instances=7,
+                    n_classes=2,
+                    random_state=RAND_SEED + 1,
+                ),
+            },
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -386,13 +390,17 @@ class TransformerFitTransformPanelUnivariateWithClassYOnlyFit(TransformerTestSce
         "y_scitype": "Table",
     }
 
-    args = {
-        "fit": {
-            "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=N_T),
-            "y": _make_classification_y(n_instances=7, n_classes=2),
-        },
-        "transform": {"X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=N_T)},
-    }
+    @property
+    def args(self):
+        X_trafo = _make_panel_X(n_instances=7, n_columns=1, n_timepoints=N_T)
+        return {
+            "fit": {
+                "X": _make_panel_X(n_instances=7, n_columns=1, n_timepoints=N_T),
+                "y": _make_classification_y(n_instances=7, n_classes=2),
+            },
+            "transform": {"X": X_trafo},
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -402,14 +410,27 @@ class TransformerFitTransformHierarchicalUnivariate(TransformerTestScenario):
     _tags = {
         "X_scitype": "Hierarchical",
         "X_univariate": True,
-        "is_enabled": False,
+        "is_enabled": True,
         "has_y": False,
     }
 
-    args = {
-        "fit": {"X": _make_hierarchical(random_state=RAND_SEED)},
-        "transform": {"X": _make_hierarchical(random_state=RAND_SEED + 1)},
-    }
+    @property
+    def args(self):
+        return {
+            "fit": {
+                "X": _make_hierarchical(
+                    hierarchy_levels=(2, 2),
+                    random_state=RAND_SEED,
+                )
+            },
+            "transform": {
+                "X": _make_hierarchical(
+                    hierarchy_levels=(2, 2),
+                    random_state=RAND_SEED + 1,
+                )
+            },
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
@@ -419,20 +440,36 @@ class TransformerFitTransformHierarchicalMultivariate(TransformerTestScenario):
     _tags = {
         "X_scitype": "Hierarchical",
         "X_univariate": False,
-        "is_enabled": False,
+        "is_enabled": True,
         "has_y": False,
     }
 
-    args = {
-        "fit": {"X": _make_hierarchical(random_state=RAND_SEED, n_columns=2)},
-        "transform": {"X": _make_hierarchical(random_state=RAND_SEED + 1, n_columns=2)},
-    }
+    @property
+    def args(self):
+        X_trafo = {
+            "X": _make_hierarchical(
+                hierarchy_levels=(2, 2),
+                random_state=RAND_SEED + 1,
+                n_columns=2,
+            )
+        }
+        return {
+            "fit": {
+                "X": _make_hierarchical(
+                    hierarchy_levels=(2, 2),
+                    random_state=RAND_SEED,
+                    n_columns=2,
+                )
+            },
+            "transform": X_trafo,
+        }
+
     default_method_sequence = ["fit", "transform"]
 
 
 # todo: scenario for Panel X
 #   where test and training set has different n_instances or n_timepoints
-#   may need a tag that tells us whethe transformer can cope with this
+#   may need a tag that tells us whether transformer can cope with this
 
 
 scenarios_transformers = [

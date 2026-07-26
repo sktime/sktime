@@ -10,18 +10,21 @@ Distances and kernel functions are treated the same, as they have the same forma
 
 Below, we list separately pairwise transformers for time series, and pairwise transformers for tabular data.
 
-.. automodule:: sktime.dists_kernels
-   :no-members:
-   :no-inherited-members:
-
-All time series distances and kernels in ``sktime``can be listed using the ``sktime.registry.all_estimators`` utility,
+All time series distances and kernels in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
 using ``estimator_types="transformer-pairwise-panel"``, optionally filtered by tags.
 Valid tags can be listed using ``sktime.registry.all_tags``.
 
 Distances and kernels for vector-valued features can be listed using ``estimator_types="transformer-pairwise"``.
 
+Standalone, performant ``numba`` distance functions are available in the :mod:`sktime.distance` module.
+These are not wrapped in the ``sktime`` ``BaseObject`` interface and can therefore
+be used within other ``numba`` compiled functions for end-to-end compilation.
+
 Time series distances/kernels
 -----------------------------
+
+Distances or kernels between time series, following the
+pairwise panel transformer interface of ``BasePairwiseTransformerPanel``.
 
 Composition
 ~~~~~~~~~~~
@@ -42,6 +45,14 @@ Composition
 
     CombinedDistance
 
+.. currentmodule:: sktime.dists_kernels.indep
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    IndepDist
+
 .. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
 
 .. autosummary::
@@ -59,6 +70,39 @@ Composition
 
     DistFromAligner
 
+.. currentmodule:: sktime.dists_kernels.dist_to_kern
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KernelFromDist
+    DistFromKernel
+
+.. currentmodule:: sktime.dists_kernels.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ConstantPwTrafoPanel
+
+Simple Time Series Distances
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Simple time series distance, including flat/vector distance, bag-of-value distance, or
+mean pairwise distance can be obtained by applying ``AggrDist`` or ``FlatDist``
+to pairwise distances in ``ScipyDist``. See docstring of ``AggrDist`` and ``FlatDist``.
+
+.. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AggrDist
+    FlatDist
+
 Dynamic Time Warping Distances
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -69,6 +113,39 @@ Dynamic Time Warping Distances
     :template: class.rst
 
     DtwDist
+    DtwPythonDist
+    DtwDistTslearn
+    SoftDtwDistTslearn
+    DtwDtaidistUniv
+    DtwDtaidistMultiv
+
+.. currentmodule:: sktime.dists_kernels.ctw
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CtwDistTslearn
+
+.. currentmodule:: sktime.dists_kernels.lucky
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LuckyDtwDist
+
+Time warping distances can also be obtained by composing ``DistFromAligner`` with
+a time warping aligner, see docstring of ``DistFromAligner``:
+
+.. currentmodule:: sktime.dists_kernels.compose_from_align
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DistFromAligner
+
 
 Edit Distances
 ~~~~~~~~~~~~~~
@@ -81,8 +158,68 @@ Edit Distances
 
     EditDist
 
+.. currentmodule:: sktime.dists_kernels.lcss
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    LcssTslearn
+
+Time Series Kernels
+~~~~~~~~~~~~~~~~~~~
+
+Simple time series kernels, including flat/vector kernels, bag-of-value kernels, or
+mean pairwise kernels can be obtained by applying ``AggrDist`` or ``FlatDist``
+to kernels from ``sklearn.gaussian_process.kernels``.
+See docstring of ``AggrDist`` and ``FlatDist``.
+
+.. currentmodule:: sktime.dists_kernels.compose_tab_to_panel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AggrDist
+    FlatDist
+
+Advanced time series kernels that cannot be expressed as aggregates or flat applicates:
+
+.. currentmodule:: sktime.dists_kernels.gak
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    GAKernel
+
+.. currentmodule:: sktime.dists_kernels.signature_kernel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SignatureKernel
+
+Base class
+~~~~~~~~~~
+
+.. currentmodule:: sktime.dists_kernels
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BasePairwiseTransformerPanel
+
 Tabular distances/kernels
 -------------------------
+
+Distances or kernels between tabular vectors or data frame rows, following the
+pairwise transformer interface of ``BasePairwiseTransformer``.
+
+Distance metrics from ``scipy``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.dists_kernels.scipy_dist
 
@@ -91,3 +228,14 @@ Tabular distances/kernels
     :template: class.rst
 
     ScipyDist
+
+Base class
+~~~~~~~~~~
+
+.. currentmodule:: sktime.dists_kernels
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BasePairwiseTransformer

@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
 """Dummy regressor."""
+
 __all__ = [
     "DummyRegressor",
 ]

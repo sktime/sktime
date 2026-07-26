@@ -1,54 +1,62 @@
-# -*- coding: utf-8 -*-
-"""Fully Connected Neural Network (CNN) for classification."""
+"""Fully Convolutional Network (FCN) for classification."""
 
-__author__ = ["James-Large", "AurumnPegasus"]
 __all__ = ["FCNClassifier"]
+
+from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.fcn import FCNNetwork
-from sktime.utils.validation._dependencies import _check_dl_dependencies
-
-_check_dl_dependencies(severity="warning")
 
 
 class FCNClassifier(BaseDeepClassifier):
-    """Fully Connected Neural Network (FCN), as described in [1]_.
+    """Fully Convolutional Network (FCN), as described in [1]_.
 
-    Parameters
-    ----------
-    should inherited fields be listed here?
-    n_epochs       : int, default = 2000
-        the number of epochs to train the model
-    batch_size      : int, default = 16
-        the number of samples per gradient update.
-    random_state    : int or None, default=None
-        Seed for random number generation.
-    verbose         : boolean, default = False
-        whether to output extra information
-    loss            : string, default="mean_squared_error"
-        fit parameter for the keras model
-    optimizer       : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics         : list of strings, default=["accuracy"],
-    activation      : string or a tf callable, default="sigmoid"
-        Activation function used in the output linear layer.
-        List of available activation functions:
-        https://keras.io/api/layers/activations/
-    use_bias        : boolean, default = True
-        whether the layer uses a bias vector.
-    optimizer       : keras.optimizers object, default = Adam(lr=0.01)
-        specify the optimizer and the learning rate to be used.
-
-    Notes
-    -----
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
 
+    Parameters
+    ----------
+    n_epochs : int, default = 2000
+        the number of epochs to train the model
+    batch_size : int, default = 16
+        the number of samples per gradient update.
+    callbacks : list of keras.callbacks.Callback, optional (default=None)
+        List of Keras callbacks to apply during model training.
+    random_state : int or None, default=None
+        Seed for random number generation.
+    verbose : boolean, default = False
+        whether to output extra information
+    loss : string, default="mean_squared_error"
+        fit parameter for the keras model
+    optimizer : keras.optimizer, default=keras.optimizers.Adam(),
+    metrics : list of strings, default=["accuracy"],
+    activation : string or a tf callable, default="sigmoid"
+        Activation function used in the output layer.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    activation_hidden : string or a tf callable, default="relu"
+        Activation function used in the hidden layers.
+        List of available activation functions:
+        https://keras.io/api/layers/activations/
+    use_bias : boolean, default = True
+        whether the layer uses a bias vector.
+    optimizer : keras.optimizers object, default = Adam(lr=0.01)
+        specify the optimizer and the learning rate to be used.
+    filter_sizes : list or tuple of int , default = (128,256,128)
+        number of filters for each convolutional layer.
+        must have length equal to kernel_sizes.
+    kernel_sizes : list or tuple of int , default = (8,5,3)
+        kernel size for each convolutional layer.
+        must have length equal to filter_sizes.
+
+
     References
     ----------
-    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
-    Journal of Systems Engineering and Electronics, 28(1):2017.
+    .. [1] Wang et al, Time series classification from scratch with
+    deep neural networks: A strong baseline.
+    2017 International Joint Conference on Neural Networks (IJCNN)
 
     Examples
     --------
@@ -61,6 +69,16 @@ class FCNClassifier(BaseDeepClassifier):
     FCNClassifier(...)
     """
 
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "noxthot"],
+        # hfawaz for dl-4-tsc
+        "maintainers": ["James-Large", "AurumnPegasus"],
+        # estimator type handled by parent class
+        "tests:skip_all": True,
+    }
+
     def __init__(
         self,
         n_epochs=2000,
@@ -71,11 +89,12 @@ class FCNClassifier(BaseDeepClassifier):
         metrics=None,
         random_state=None,
         activation="sigmoid",
+        activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        filter_sizes=(128, 256, 128),
+        kernel_sizes=(8, 5, 3),
     ):
-        _check_dl_dependencies(severity="error")
-        super(FCNClassifier, self).__init__()
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -84,10 +103,32 @@ class FCNClassifier(BaseDeepClassifier):
         self.metrics = metrics
         self.random_state = random_state
         self.activation = activation
+        self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
         self.history = None
-        self._network = FCNNetwork()
+        self.filter_sizes = filter_sizes
+        self.kernel_sizes = kernel_sizes
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        self._network = FCNNetwork(
+            activation=self.activation_hidden,
+            random_state=self.random_state,
+            filter_sizes=self.filter_sizes,
+            kernel_sizes=self.kernel_sizes,
+        )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -151,10 +192,7 @@ class FCNClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        if self.callbacks is None:
-            self._callbacks = []
-
-        y_onehot = self.convert_y_to_keras(y)
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
@@ -169,7 +207,7 @@ class FCNClassifier(BaseDeepClassifier):
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self._callbacks,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
@@ -181,7 +219,7 @@ class FCNClassifier(BaseDeepClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -192,9 +230,12 @@ class FCNClassifier(BaseDeepClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
+
         param1 = {
             "n_epochs": 10,
             "batch_size": 4,
@@ -205,6 +246,29 @@ class FCNClassifier(BaseDeepClassifier):
             "n_epochs": 12,
             "batch_size": 6,
             "use_bias": True,
+            "filter_sizes": [64, 128],
+            "kernel_sizes": [5, 3],
         }
 
-        return [param1, param2]
+        # to check for tuple
+        params3 = {
+            "n_epochs": 8,
+            "batch_size": 4,
+            "use_bias": False,
+            "filter_sizes": (64, 128),
+            "kernel_sizes": (5, 3),
+        }
+
+        test_params = [param1, param2, params3]
+
+        if _check_soft_dependencies("keras", severity="none"):
+            from keras.callbacks import LambdaCallback
+
+            test_params.append(
+                {
+                    "n_epochs": 2,
+                    "callbacks": [LambdaCallback()],
+                }
+            )
+
+        return test_params

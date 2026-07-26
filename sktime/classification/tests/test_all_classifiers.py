@@ -1,12 +1,14 @@
-# -*- coding: utf-8 -*-
 """Unit tests for classifier/regressor input output."""
 
 __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 
 import numpy as np
+import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
+from sktime.base import BaseObject
 from sktime.classification.tests._expected_outputs import (
     basic_motions_proba,
     unit_test_proba,
@@ -104,9 +106,14 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
             X_train = scenario.args["fit"]["X"]
             _, _, X_train_metadata = check_is_scitype(
-                X_train, "Panel", return_metadata=True
+                X_train, "Panel", return_metadata=["n_instances"]
             )
             X_train_len = X_train_metadata["n_instances"]
+
+            # temp hack until _get_train_probs is implemented for all mtypes
+            if hasattr(X_train_len, "index"):
+                if isinstance(X_train_len.index, pd.MultiIndex):
+                    return None
 
             train_proba = estimator_instance._get_train_probs(X_train, y_train)
 
@@ -119,17 +126,24 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         # we only use the first estimator instance for testing
         classname = estimator_class.__name__
 
-        # retrieve expected predict_proba output, and skip test if not available
+        # if numba is not installed, some estimators may still try to construct
+        # numba dependent estimators in results_comparison
+        # if that is the case, we skip the test
         if classname in unit_test_proba.keys():
-            expected_probas = unit_test_proba[classname]
+            parameter_set = "results_comparison"
         else:
-            # skip test if no expected probas are registered
-            return None
+            parameter_set = "default"
+        try:
+            # we only use the first estimator instance for testing
+            estimator_instance = estimator_class.create_test_instance(
+                parameter_set=parameter_set
+            )
+        except ModuleNotFoundError as e:
+            if not _check_soft_dependencies("numba", severity="none"):
+                return None
+            else:
+                raise e
 
-        # we only use the first estimator instance for testing
-        estimator_instance = estimator_class.create_test_instance(
-            parameter_set="results_comparison"
-        )
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
@@ -141,10 +155,18 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
         # train classifier and predict probas
         estimator_instance.fit(X_train, y_train)
+
+        y_pred = estimator_instance.predict(X_test.iloc[indices])
+        assert y_pred.dtype == y_train.dtype
+        assert set(y_train).issuperset(set(y_pred))
+
         y_proba = estimator_instance.predict_proba(X_test.iloc[indices])
 
-        # assert probabilities are the same
-        _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
+        # retrieve expected predict_proba output, and skip test if not available
+        if classname in unit_test_proba.keys():
+            expected_probas = unit_test_proba[classname]
+            # assert probabilities are the same
+            _assert_array_almost_equal(y_proba, expected_probas, decimal=2)
 
     def test_classifier_on_basic_motions(self, estimator_class):
         """Test classifier on basic motions data."""
@@ -158,10 +180,23 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
             # skip test if no expected probas are registered
             return None
 
-        # we only use the first estimator instance for testing
+        # if numba is not installed, some estimators may still try to construct
+        # numba dependent estimators in results_comparison
+        # if that is the case, we skip the test
+        if not _check_estimator_deps(estimator_class, severity="none"):
+            return None
+
         estimator_instance = estimator_class.create_test_instance(
             parameter_set="results_comparison"
         )
+
+        if estimator_instance.is_composite():
+            # if the estimator is a composite, we set random state for all components
+            for sub_estimator in estimator_instance.get_params(deep=True).values():
+                if isinstance(sub_estimator, BaseObject):
+                    if not _check_estimator_deps(sub_estimator, severity="none"):
+                        return None
+
         # set random seed if possible
         if "random_state" in estimator_instance.get_params().keys():
             estimator_instance.set_params(random_state=0)
@@ -181,13 +216,60 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
     def test_handles_single_class(self, estimator_instance):
         """Test that estimator handles fit when only single class label is seen.
 
-        This is important for compatibility with ensembles that sub-sample,
-        as sub-sampling stochastically produces training sets with single class label.
+        This is important for compatibility with ensembles that sub-sample, as sub-
+        sampling stochastically produces training sets with single class label.
         """
         X, y = make_classification_problem()
         y[:] = 42
 
-        error_msg = "single class label"
+        error_msg = "single label"
 
         with pytest.warns(UserWarning, match=error_msg):
             estimator_instance.fit(X, y)
+
+    def test_multioutput(self, estimator_instance):
+        """Test multioutput classification for all classifiers.
+
+        All classifiers should follow the same interface,
+        those that do not genuinely should vectorize/broadcast over y.
+        """
+        n_instances = 20
+        X, y = make_classification_problem(n_instances=n_instances)
+        y_mult = pd.DataFrame({"a": y, "b": y})
+
+        estimator_instance.fit(X, y_mult)
+        y_pred = estimator_instance.predict(X)
+
+        assert isinstance(y_pred, pd.DataFrame)
+        assert y_pred.shape == y_mult.shape
+
+        # the estimator vectorizes iff it does not have the multioutput capability
+        vectorized = not estimator_instance.get_tag("capability:multioutput")
+        if vectorized:
+            assert hasattr(estimator_instance, "classifiers_")
+            assert isinstance(estimator_instance.classifiers_, pd.DataFrame)
+            assert estimator_instance.classifiers_.shape == (1, 2)
+
+    def test_class_weight(self, estimator_instance, scenario):
+        """Test that classifiers with class_weight handle it correctly."""
+        # Check if the estimator supports class_weight
+        if not estimator_instance.get_tag("capability:class_weight"):
+            return None
+
+        # Get training data from scenario
+        X_train = scenario.args["fit"]["X"]
+        y_train = scenario.args["fit"]["y"]
+
+        # Compute class weights (e.g. normalized inverse frequency)
+        unique, counts = np.unique(y_train, return_counts=True)
+        inv_freq = np.array([1.0 / count for count in counts])
+        norm_inv_freq = inv_freq / inv_freq.sum()
+        class_weight = {cls: w for cls, w in zip(unique, norm_inv_freq)}
+
+        # Set class_weight param
+        estimator_instance.set_params(class_weight=class_weight)
+
+        # Fit and predict to check no error is raised
+        estimator_instance.fit(X_train, y_train)
+        y_pred = estimator_instance.predict(X_train)
+        assert set(np.unique(y_pred)).issubset(set(unique))

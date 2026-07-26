@@ -1,42 +1,60 @@
-# -*- coding: utf-8 -*-
+"""Tests for scipy interface."""
+
 import numpy as np
+import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.utils._testing.panel import make_transformer_problem
 from sktime.dists_kernels.scipy_dist import ScipyDist
+from sktime.tests.test_switch import run_test_for_class
+from sktime.utils._testing.panel import make_transformer_problem
 
-X1 = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
-    n_timepoints=5,
-    random_state=1,
-    return_numpy=True,
-    panel=False,
-)
-X2 = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
-    n_timepoints=5,
-    random_state=2,
-    return_numpy=True,
-    panel=False,
-)
 
-X1_df = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
-    n_timepoints=5,
-    random_state=1,
-    return_numpy=False,
-    panel=False,
-)
-X2_df = make_transformer_problem(
-    n_instances=5,
-    n_columns=5,
-    n_timepoints=5,
-    random_state=2,
-    return_numpy=False,
-    panel=False,
-)
+@pytest.fixture
+def X1():
+    return make_transformer_problem(
+        n_instances=5,
+        n_columns=5,
+        n_timepoints=5,
+        random_state=1,
+        return_numpy=True,
+        panel=False,
+    )
+
+
+@pytest.fixture
+def X2():
+    return make_transformer_problem(
+        n_instances=5,
+        n_columns=5,
+        n_timepoints=5,
+        random_state=2,
+        return_numpy=True,
+        panel=False,
+    )
+
+
+@pytest.fixture
+def X1_df():
+    return make_transformer_problem(
+        n_instances=5,
+        n_columns=5,
+        n_timepoints=5,
+        random_state=1,
+        return_numpy=False,
+        panel=False,
+    )
+
+
+@pytest.fixture
+def X2_df():
+    return make_transformer_problem(
+        n_instances=5,
+        n_columns=5,
+        n_timepoints=5,
+        random_state=2,
+        return_numpy=False,
+        panel=False,
+    )
 
 
 # potential parameters
@@ -52,7 +70,6 @@ METRIC_VALUES = [
     "hamming",
     "jaccard",
     "jensenshannon",
-    "kulsinski",
     "mahalanobis",
     "matching",
     "minkowski",
@@ -68,7 +85,19 @@ P_VALUES = [1, 2, 5, 10]
 COLALIGN_VALUES = ["intersect", "force-align", "none"]
 
 
-def test_scipydist():
+if _check_soft_dependencies("scipy<1.11.0", severity="none"):
+    METRIC_VALUES.append("kulsinski")
+elif _check_soft_dependencies("scipy<1.17.0", severity="none"):
+    METRIC_VALUES.append("kulczynski1")
+# kulsinski distance is no longer present after scipy 1.17
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ScipyDist),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_scipydist(X1, X2, X1_df, X2_df):
+    """Test runner for numpy and dataframe tests."""
     # test numpy
     _run_scipy_dist_test(X1, X2)
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Adapter for using HCrystalBall forecastsers in sktime."""
@@ -9,9 +8,6 @@ import pandas as pd
 from sklearn.base import clone
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.validation._dependencies import _check_soft_dependencies
-
-_check_soft_dependencies("hcrystalball", severity="warning")
 
 
 def _check_fh(fh, cutoff):
@@ -98,10 +94,10 @@ def _adapt_y_pred(y_pred):
 
 
 class HCrystalBallAdapter(BaseForecaster):
-    """Adapter for using `hcrystalball` forecasters in sktime.
+    """Adapter for using ``hcrystalball`` forecasters in sktime.
 
-    Adapter class - wraps any forecaster from `hcrystalball`
-    and allows using it as an `sktime` `BaseForecaster`.
+    Adapter class - wraps any forecaster from ``hcrystalball``
+    and allows using it as an ``sktime`` ``BaseForecaster``.
 
     Parameters
     ----------
@@ -109,18 +105,31 @@ class HCrystalBallAdapter(BaseForecaster):
     """
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        # packaging info
+        # --------------
+        "authors": "MichalChromcak",
+        "maintainers": "MichalChromcak",
+        "python_dependencies": ["hcrystalball", "setuptools<82"],
+        "tests:python_dependencies": ["statsmodels"],
+        # estimator type
+        # --------------
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
-        "python_dependencies": "hcrystalball",
+        "capability:missing_values": False,
+        "capability:unequal_length": False,
+        # test and CI flags
+        # -----------------
+        # "tests:vm": True,  # skip all tests temporarily, issue tracked in #10083
+        "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
+        # "tests:skip_by_name": ["test_get_test_params_coverage"],
+        # old package with secondary dependencies
     }
 
     def __init__(self, model):
-
         self.model = model
-        super(HCrystalBallAdapter, self).__init__()
+        super().__init__()
 
-    def _fit(self, y, X=None, fh=None):
+    def _fit(self, y, X, fh):
         """Fit to training data.
 
         Parameters
@@ -157,7 +166,7 @@ class HCrystalBallAdapter(BaseForecaster):
         y_pred : pd.Series
             Point predictions for the forecast
         """
-        X_pred = _get_X_pred(X, index=fh.to_absolute(self.cutoff).to_pandas())
+        X_pred = _get_X_pred(X, index=fh.to_absolute_index(self.cutoff))
         y_pred = self.model_.predict(X=X_pred)
         return _adapt_y_pred(y_pred)
 
@@ -169,18 +178,17 @@ class HCrystalBallAdapter(BaseForecaster):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
 
         Returns
         -------
         params : dict or list of dict
         """
-        if _check_soft_dependencies("hcrystalball", severity="none"):
+        from skbase.utils.dependencies import _check_soft_dependencies
+
+        if _check_soft_dependencies(["hcrystalball", "statsmodels"], severity="none"):
             from hcrystalball.wrappers import HoltSmoothingWrapper
 
-            params = {"model": HoltSmoothingWrapper()}
+            return {"model": HoltSmoothingWrapper()}
 
-        else:
-            params = {"model": 42}
-
-        return params
+        return {"model": 42}

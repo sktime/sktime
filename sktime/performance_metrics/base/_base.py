@@ -1,9 +1,11 @@
-# -*- coding: utf-8 -*-
 """Implements base class for defining performance metric in sktime."""
+
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 __author__ = ["rnkuhns", "fkiraly"]
 __all__ = ["BaseMetric"]
+
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseObject
 
@@ -14,9 +16,31 @@ class BaseMetric(BaseObject):
     Extends sktime BaseObject.
     """
 
-    def __init__(self):
+    _tags = {
+        "object_type": "metric",
+        "authors": "sktime developers",  # author(s) of the object
+        "maintainers": "sktime developers",  # current maintainer(s) of the object
+    }
 
-        super(BaseMetric, self).__init__()
+    def __init__(self):
+        super().__init__()
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def __call__(self, y_true, y_pred, **kwargs):
         """Calculate metric value using underlying metric function.

@@ -16,7 +16,7 @@ The high-level steps to implement ``sktime`` compatible estimators are as follow
 1.  identify the type of the estimator: forecaster, classifier, etc
 2.  copy the extension template for that kind of estimator to its intended location
 3.  complete the extension template
-4.  run the ``sktime`` test suite and/or the ``check_estimator`` utility (see `here <https://www.sktime.org/en/latest/developer_guide/add_estimators.html#using-the-check-estimator-utility>`__)
+4.  run the ``sktime`` test suite and/or the ``check_estimator`` utility (see `here <https://www.sktime.net/en/latest/developer_guide/add_estimators.html#using-the-check-estimator-utility>`__)
 5.  if the test suite highlights bugs or issues, fix them and go to 4
 
 For more guidance on how to implement your own estimator, see this `tutorial at pydata <https://github.com/sktime/sktime-workshop-pydata-london-2022>`__ on testing interface conformance.
@@ -39,7 +39,7 @@ directory of ``sktime``.
 Usually, the scitype of a given estimator is directly determined by what the estimator does.
 This is also, often, explicitly signposted in publications related to the estimator.
 For instance, most textbooks mention ARIMA in the context of forecasting, so in that hypothetical situation
-it makeas sense to consider the "forecaster" template.
+it makes sense to consider the "forecaster" template.
 Then, inspect the template and check whether the methods of the class map clearly onto routines of the estimator.
 If not, another template might be more appropriate.
 
@@ -144,7 +144,7 @@ Example: ``'test_repr[NaiveForecaster-2]'``, where ``test_repr`` is the test nam
 
 Values of the return ``dict`` are either the string ``"PASSED"``, if the test succeeds, or the exception that the test would raise at failure.
 ``check_estimator`` does not raise exceptions by default, the default is returning them as dictionary values.
-To raise the exceptions instead, e.g., for debugging, use the argument ``return_exceptions=False``,
+To raise the exceptions instead, e.g., for debugging, use the argument ``raise_exceptions=True``,
 which will raise the exceptions instead of returning them as dictionary values.
 In that case, there will be at most one exception raised, namely the first exception encountered in the test execution order.
 
@@ -176,7 +176,7 @@ A useful workflow for using ``check_estimator`` to debug an estimator is as foll
 
 1. Run ``check_estimator(MyEstimator)`` to find failing tests
 2. Subset to failing tests or fixtures using ``fixtures_to_run`` or ``tests_to_run``
-3. If the failure is not obvious, set ``return_exceptions=False`` to raise the exception and inspecet the traceback.
+3. If the failure is not obvious, set ``raise_exceptions=True`` to raise the exception and inspect the traceback.
 4. If the failure is still not clear, use advanced debuggers on the line of code with ``check_estimator``.
 
 Running the test suite in a repository clone
@@ -193,7 +193,7 @@ and are identical with the test-fixture-strings returned by ``check_estimator``.
 
 To run tests only for a given estimator from the console, the command ``pytest -k "EstimatorName"`` can be used.
 This will typically have the same effect as using ``check_estimator(EstimatorName)``, only via direct ``pytest`` call.
-When using Visual Studio Code or pycharm, tests can also be sub-setted using GUI filter
+When using Visual Studio Code or pycharm, tests can also be sub-set using GUI filter
 functionality - for this, refer to the respecetive IDE documentation on test integration.
 
 To identify codebase locations of tests applying to a specific estimator,
@@ -204,13 +204,30 @@ Testing within a third party extension package
 
 For third party extension packages to ``sktime`` (open or closed),
 or third party modules that aim for interface compliance with ``sktime``,
-the ``sktime`` test suite can be imported and extended in two ways:
+the ``sktime`` test suite can be imported and extended in the following ways:
 
-*   importing ``check_estimator``, this will carry out the tests defined in ``sktime``
+* importing ``check_estimator``, this will carry out the tests defined in ``sktime``
+  in a single go. ``check_estimator`` can be run within any test framework, including
+  ``unittest`` and ``pytest``.
+
+* importing ``parametrize_with_checks`` from ``sktime.utils.estimator_checks``.
+  When used in a ``pytest`` test suite, this will parametrize a test function with
+  all tests defined in ``sktime`` for a list of estimator classes or instances,
+  running each estimator-test combination as a separate test case.
+  This pattern requires adding the following test function to the test suite:
+
+    .. code-block:: python
+
+        from sktime.utils.estimator_checks import parametrize_with_checks
+
+        @parametrize_with_checks(OBJS_TO_TEST)
+        def test_sktime_api_compliance(obj, test_name):
+            check_estimator(obj, tests_to_run=test_name, raise_exceptions=True)
 
 *   importing test classes, e.g., ``test_all_estimators.TestAllEstimators`` or
     ``test_all_forecasters.TestAllForecasters``. The imports will be discovered directly
     by ``pytest``. The test suite also be extended by inheriting from the test classes.
+
 
 Adding an ``sktime`` compatible estimator to ``sktime``
 =======================================================
@@ -221,7 +238,7 @@ additional things need to be done:
 *   ensure that code also meets ``sktime's`` :ref:`documentation <developer_guide_documentation>` standards.
 *   add the estimator to the ``sktime`` API reference. This is done by adding a reference to the estimator in the
     correct ``rst`` file inside ``docs/source/api_reference``.
-*   authors of the estimator should add themselves to ``CODEOWNERS``, as owners of the contributed estimator.
+*   authors of the estimator should add themselves to the ``"authors"`` and ``"maintainers"`` tag of the estimator, as owners of the contributed estimator.
 *   if the estimator relies on soft dependencies, or adds new soft dependencies, the steps in the :ref:`"dependencies"
     developer guide <dependencies>` should be followed
 *   ensure that the estimator passes the entire local test suite of ``sktime``, with the estimator in its target location.
@@ -232,3 +249,63 @@ additional things need to be done:
 Don't panic - when contributing to ``sktime``, core developers will give helpful pointers on the above in their PR reviews.
 
 It is recommended to open a draft PR to get feedback early.
+
+Estimators dependent on cython
+------------------------------
+
+To add an estimator to ``sktime`` that depends on cython, additional steps are needed.
+
+There are two options for adding estimators with cython dependencies to ``sktime``:
+
+*   direct addition to ``sktime`` via the ``sktime-cython`` package.
+    This is the preferred option for ``sktime`` native estimators.
+*   addition via a third party package, which is then added as a soft dependency to ``sktime``.
+    This is the preferred option for third party estimators with maintainers who
+    would like to maintain the estimator in their own package.
+
+``sktime`` native estimators with cython dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For ``sktime`` native estimators with cython dependencies, the following steps should be followed:
+
+*   C code should be added to the ``sktime-cython`` package,
+    which is a separate package on ``pypi``.
+    No cython dependent code should be added directly to ``sktime``.
+*   Additionally, thin python bindings for ``cython`` code should be added in
+    ``sktime-cython``, without inheritance from ``sktime`` base classes,
+    or ``sktime`` imports.
+*   The thin python bindings should be tested inside ``sktime-cython`` directly.
+    No ``check_estimator`` tests are needed in ``sktime-cython``,
+    since the thin python bindings do not inherit from ``sktime`` base classes.
+*   In ``sktime``, a full interface to the algorithm should be added,
+    inheriting from the appropriate ``sktime`` base class, and importing
+    the thin python bindings from ``sktime-cython``.
+*   The ``python_dependencies`` tag should be set to the string ``"sktime-cython"``,
+    or contain ``"sktime-cython"`` if additional other dependencies are needed.
+    The tag ``tests:vm`` should be set to ``True`` to ensure testing
+    in a virtual machine with all dependencies installed.
+
+For a full set of up-to-date instructions, see the readme of the ``sktime-cython`` package,
+link here: `sktime-cython <https://github.com/sktime/sktime-cython>`_.
+
+Third party estimators with cython dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For third party estimators with cython dependencies, the following steps should be followed:
+
+*   all cython code should be present in a separate package on ``pypi`` and/or ``conda-forge``.
+    No cython dependent code should be added directly to ``sktime``.
+    Below, we call this separate package ``home-package``, for simplicity of reference.
+*   In ``home-package``, it is recommended to test the estimator via ``check_estimator``,
+    on the same test matrix as ``sktime``: all supported python versions; MacOS, Linux, Windows.
+*   In ``sktime``, a forwarding interface to the algorithm should be added.
+    If the algorithm is kept up-to-date with the latest ``sktime`` interface,
+    this should use the ``_placeholder_record`` template,
+    see for example ``Prophetverse``.
+    If the algorithm in ``home-package`` is not fully API compliant,
+    or only thin python bindings are present,
+    a delegator pattern can be used instead, see, e.g., ``MrSQM`` for an example.
+*   For the ``sktime`` interface,
+    the ``python_dependencies`` tag should be set to the string ``"home-package"``,
+    and the tag ``tests:vm`` should be set to ``True`` to ensure testing
+    in a virtual machine with all dependencies installed.

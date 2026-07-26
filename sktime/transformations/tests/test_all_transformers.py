@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Unit tests common to all transformers."""
 
@@ -6,8 +5,9 @@ __author__ = ["mloning", "fkiraly"]
 __all__ = []
 
 import pandas as pd
+import pytest
 
-from sktime.datatypes import check_is_scitype
+from sktime.datatypes import check_is_scitype, convert_to
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 
@@ -59,7 +59,7 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     def _expected_trafo_output_scitype(self, X_scitype, trafo_input, trafo_output):
         """Return expected output scitype, given X scitype and input/output.
 
-        Paramaters
+        Parameters
         ----------
         X_scitype : str, scitype of the input to transform
         trafo_input : str, scitype of "instance"
@@ -79,6 +79,12 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
                 return "Panel"
             if X_scitype in ["Panel", "Hierarchical"]:
                 return "Hierarchical"
+        if trafo_input == "Panel" and trafo_output == "Series":
+            if X_scitype == "Hierarchical":
+                # Could be Hierarchical or Panel, depending on the
+                # depth of the hierarchy
+                return ["Panel", "Hierarchical"]
+            return "Series"
 
     def test_fit_transform_output(self, estimator_instance, scenario):
         """Test that transform output is of expected scitype."""
@@ -139,10 +145,6 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
             if X_scitype == "Series" and Xt_scitype == "Series":
                 if estimator_instance.get_tag("transform-returns-same-time-index"):
                     assert X.shape[0] == Xt.shape[0]
-            if X_scitype == "Panel" and Xt_scitype == "Panel":
-                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
-            if X_scitype == "Hierarchical" and Xt_scitype == "Hierarchical":
-                assert X_metadata["n_instances"] == Xt_metadata["n_instances"]
 
         # panel-to-panel transformers
         if trafo_input == "Panel" and trafo_output == "Panel":
@@ -168,13 +170,84 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         if estimator_instance.get_tag("skip-inverse-transform", False):
             return None
 
+        # skip this test if inverse_transform is not assumed an exact inverse
+        if not estimator_instance.get_tag("capability:inverse_transform:exact", True):
+            return None
+
         X = scenario.args["transform"]["X"]
         Xt = scenario.run(estimator_instance, method_sequence=["fit", "transform"])
         Xit = estimator_instance.inverse_transform(Xt)
-        if estimator_instance.get_tag("transform-returns-same-time-index"):
+
+        # if inversion produces more indices, we subset to the original X indices
+        if not estimator_instance.get_tag("transform-returns-same-time-index"):
+            if isinstance(X, pd.DataFrame):
+                X = X.loc[Xit.index]
+
+        # check that the inverse transform is indeed the inverse
+        # we check this only on entries within range of invertibility, if specified
+        inv_range = estimator_instance.get_tag("capability:inverse_transform:range")
+        if inv_range is None:
             _assert_array_almost_equal(X, Xit)
-        elif isinstance(X, pd.DataFrame):
-            _assert_array_almost_equal(X.loc[Xit.index], Xit)
+        else:
+            # convert to pd.DataFrame so that we can use masks
+            df_types = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
+            X = convert_to(X, df_types)
+            Xit = convert_to(Xit, df_types)
+
+            # mask entries of X outside range of invertibility
+            # then compare for identity
+            inside_mask = (X >= inv_range[0]) * (X <= inv_range[1])
+            _assert_array_almost_equal(X[inside_mask], Xit[inside_mask])
+
+    def test_categorical_X_raises_error(self, estimator_instance):
+        """Test that error is raised when categorical is not supported in X."""
+        X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
+        y = pd.DataFrame({"var_0": [i + 3 for i in range(17)]})
+
+        # SFAFast transformer requires nested dataframe for X.
+        # so testing all transformers apart from it.
+        if not estimator_instance.get_tag("capability:categorical_in_X"):
+            with pytest.raises(TypeError, match=r"categorical"):
+                estimator_instance.fit_transform(X, y)
+
+    def test_categorical_y_raises_error(self, estimator_instance):
+        """Test that error is raised when categorical data is passed in y."""
+        X = pd.DataFrame({"var_0": [i + 3 for i in range(17)]})
+        y = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
+
+        requires_y = estimator_instance.get_tag("requires_y")
+        uses_y = estimator_instance.get_tag("y_inner_mtype") not in ["None", None]
+        if requires_y or uses_y:
+            if not estimator_instance.get_tag("capability:categorical_in_y"):
+                with pytest.raises(TypeError, match=r"categorical"):
+                    estimator_instance.fit_transform(X, y)
+        # otherwise, passing categorical y should pass (because it is ignored)
+        # we skip composites since the support for categoricals may depend on components
+        elif not estimator_instance.is_composite():
+            estimator_instance.fit_transform(X, y)
+
+    def test_categorical_X_passes(self, estimator_instance):
+        """Test that error is not raised when categorical is supported in X.
+
+        Not testing composites such as pipelines as they may raise error if estimators
+        used within do not support categorical.
+        """
+        X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
+        y = pd.DataFrame({"var_1": [i for i in range(17)]})
+
+        if (
+            estimator_instance.get_tag("capability:categorical_in_X")
+            and not estimator_instance.is_composite()
+        ):
+            try:
+                estimator_instance.fit_transform(X, y)
+            except Exception as e:
+                raise RuntimeError(
+                    f"{estimator_instance} fails when passing categorical X, "
+                    "but has the capability:categorical_in_X set to True. "
+                    "Please set the tag to False if the estimator does not support "
+                    f"categorical data in X. Exception: {e}"
+                )
 
 
 # todo: add testing of inverse_transform

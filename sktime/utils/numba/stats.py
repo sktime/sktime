@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
-"""Numba statistic utilities."""
+"""Numba statistics utilities."""
 
-import numpy as np
-from numba import njit
+import numpy as np  # noqa E402
 
-import sktime.utils.numba.general as general_numba
+import sktime.utils.numba.general as general_numba  # noqa E402
+from sktime.utils.numba.njit import njit  # noqa E402
 
 
 @njit(fastmath=True, cache=True)

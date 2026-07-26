@@ -45,6 +45,12 @@ pip-log.txt
 pip-delete-this-directory.txt
 pip-wheel-metadata/
 
+# Training logs
+lightning_logs/
+
+# Model Checkpoints
+checkpoints/
+
 # folder created by `make test`
 testdir/
 
@@ -165,3 +171,8 @@ sktime/_contrib/temp/
 
 # example mlflow runs
 examples/local/
+
+# py-spy profiler output
+profile.svg
+test_output/*
+mlruns/*

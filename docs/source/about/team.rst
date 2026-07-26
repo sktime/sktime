@@ -9,17 +9,23 @@ A list of all contributors can be found `here <contributors.md>`_.
 
 Community Council
 -----------------
+
 .. list-table::
    :header-rows: 1
 
    * - Name
      - GitHub ID
+   * - Felix Hirwa Nshuti
+     - :user:`fnhirwa`
    * - Franz Király
      - :user:`fkiraly`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
-   * - Martin Walter
-     - :user:`aiwalter`
+   * - Marc Rovira
+     - :user:`marrov`
+   * - Ugochukwu Onyeka
+     - :user:`onyekaugochukwu`
+
+For further information on past and future council elections,
+refer to the `elections repository <https://www.github.com/sktime/elections>`_.
 
 Community Council Observers
 ---------------------------
@@ -29,10 +35,16 @@ Community Council Observers
 
    * - Name
      - GitHub ID
-   * - Leonidas Tsaprounis
-     - :user:`ltsaprounis`
-   * - Lovkush Agarwal
-     - :user:`lovkush-a`
+   * - Benedikt Heidrich
+     - :user:`benheid`
+   * - Felipe Angelim Vieira
+     - :user:`felipeangelimvieira`
+   * - Jana Schmidberger
+     - :user:`janasberger`
+   * - Jigyasu
+     - :user:`jgyasu`
+   * - Kiril Ralinovski
+     - :user:`kirilral`
 
 Code of Conduct Committee
 -------------------------
@@ -44,6 +56,8 @@ Code of Conduct Committee
      - GitHub ID
    * - Franz Király
      - :user:`fkiraly`
+   * - Marc Rovira
+     - :user:`marrov`
 
 Core Developers
 ---------------
@@ -53,38 +67,52 @@ Core Developers
 
    * - Name
      - GitHub ID
-   * - Chris Holder
-     - :user:`chrisholder`
-   * - Daniel Bartling
-     - :user:`danbartl`
+   * - Alex Gregory
+     - :user:`Alex-JG3`
+   * - Anirban Ray
+     - :user:`yarnabrina`
+   * - Armaghan Shakir
+     - :user:`geetu040`
+   * - Aryan Saini
+     - :user:`phoeenniixx`
+   * - Benedikt Heidrich
+     - :user:`benheid`
+   * - Eric J Berger
+     - :user:`ericjb`
+   * - Felipe Angelim Vieira
+     - :user:`felipeangelimvieira`
+   * - Felix Hirwa Nshuti
+     - :user:`fnhirwa`
    * - Franz Király
      - :user:`fkiraly`
-   * - Freddy A Boulton
-     - :user:`freddyaboulton`
-   * - Guzal Bulatova
-     - :user:`GuzalBulatova`
-   * - Leonidas Tsaprounis
-     - :user:`ltsaprounis`
-   * - Lovkush Agarwal
-     - :user:`lovkush-a`
-   * - Łukasz Mentel
-     - :user:`lmmentel`
-   * - Markus Löning
-     - :user:`mloning`
-   * - Martin Walter
-     - :user:`aiwalter`
-   * - Mirae Parker
-     - :user:`miraep8`
-   * - Patrick Schäfer
-     - :user:`patrickzib`
-   * - Ryan Kuhns
-     - :user:`rnkuhns`
-   * - Sagar Mishra
-     - :user:`achieveordie`
-   * - Stanislav Khrapov
-     - :user:`khrapovs`
+   * - Jan Beitner
+     - :user:`jdb78`
+   * - Julian Fong
+     - :user:`julianfong`
+   * - Hazrul Akmal
+     - :user:`hazrulakmal`
+   * - Jigyasu
+     - :user:`jgyasu`
+   * - Kiril Ralinovski
+     - :user:`kirilral`
+   * - Marc Rovira
+     - :user:`marrov`
+   * - Mateusz Kasprowicz
+     - :user:`mateuszkasprowicz `
+   * - Pranav Bhat
+     - :user:`PranavBhatP`
+   * - Pranav Prajapati
+     - :user:`pranavvp16`
+   * - Sai Revanth Gowravajhala
+     - :user:`SaiRevanth25`
+   * - Simon Blanke
+     - :user:`SimonBlanke`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
+   * - Ugochukwu Onyeka
+     - :user:`onyekaugochukwu`
+   * - Xinyu Wu
+     - :user:`XinyuWuu`
 
 Former Core Developers
 ----------------------
@@ -100,21 +128,51 @@ Former Core Developers
      - :user:`TonyBagnall`
    * - Ayushmaan Seth
      - :user:`ayushmaanseth`
+   * - Christopher Holder
+     - :user:`chrisholder`
+   * - Daniel Bartling
+     - :user:`danbartl`
+   * - Freddy A Boulton
+     - :user:`freddyaboulton`
    * - George Oastler
      - :user:`goastler`
+   * - Guzal Bulatova
+     - :user:`GuzalBulatova`
    * - Hongyi Yang
      - :user:`hyang1996`
    * - James Large
      - :user:`james-large`
    * - Jason Lines
      - :user:`jasonlines`
+   * - Jonathan Bechtel
+     - :user:`jonathanbechtel`
+   * - Leonidas Tsaprounis
+     - :user:`ltsaprounis`
+   * - Lovkush Agarwal
+     - :user:`lovkush-a`
+   * - Łukasz Mentel
+     - :user:`lmmentel`
+   * - Markus Löning
+     - :user:`mloning`
+   * - Martin Walter
+     - :user:`aiwalter`
    * - Mathew Smith
      - :user:`matteogales`
    * - Matthew Middlehurst
      - :user:`mattewmiddlehurst`
+   * - Mirae Parker
+     - :user:`miraep8`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
+   * - Patrick Schäfer
+     - :user:`patrickzib`
+   * - Ryan Kuhns
+     - :user:`rnkuhns`
+   * - Sagar Mishra
+     - :user:`achieveordie`
    * - Sajaysurya Ganesh
      - :user:`sajaysurya`
+   * - Stanislav Khrapov
+     - :user:`khrapovs`
    * - Anonymous upon contributor's request
      - :user:`big-o`

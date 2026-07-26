@@ -55,11 +55,11 @@ String identifiers refer to strings beginning with ``@`` in the file.
       See :ref:`subsection on metadata block <metadata description>` for further details.
 3. A dataset block.
       It contains list of float values that represent the dataset. In the simplest case (when timestamps are absent),
-      the values for a series are expressed in a comma-seperated list and the index of each value is relative to its
+      the values for a series are expressed in a comma-separated list and the index of each value is relative to its
       position in the list (0, 1, ..., m). An instance may contain 1 to many dimensions, where instances are
       line-delimited and dimensions within an instance are colon-delimited (:). In case timestamps are present,
       individual data of the series is enclosed within round brackets as ``(YYYY-MM-DD HH:mm:ss,<value>)``.
-      The response variable is at the end of each instance and is seperated via a colon.
+      The response variable is at the end of each instance and is separated via a colon.
       To understand data representation, visit `loading data`_.
 
 Here is an extract from `Basic Motion.ts`_ that shows all three blocks:
@@ -189,7 +189,7 @@ Here is a short description of every column found in the table:
     * - ``@classlabel``
       - Whether class labels are present.
       - ``false`` / ``true`` ``<string-1> <string-2> ..``
-      - Exclusive to classification data; when ``true``, also contains space-seperated int/strings as labels.
+      - Exclusive to classification data; when ``true``, also contains space-separated int/strings as labels.
       - ``true Standing Running Walking Badminton``
     * - ``@data``
       - Marks the beginning of data.
@@ -203,7 +203,7 @@ This section provides full set of instructions to create a format specification 
 for your dataset that is compatible with ``sktime``.
 
 Remember that this begins with the assumption that you have the dataset readily available in
-expected `format <https://github.com/alan-turing-institute/sktime/blob/main/examples/loading_data.ipynb>`_.
+expected `format <https://github.com/sktime/sktime/blob/main/examples/data/loading_data.ipynb>`_.
 
 Few points to keep in mind while creating the dataset:
 
@@ -237,7 +237,7 @@ Few points to keep in mind while creating the dataset:
 
    b. Classification-based: add ``@classlabel`` identifier.
       If there is no response variable it will have a value of ``false``. If ``true``, you can optionally provide the class labels
-      in space seperated manner:
+      in space separated manner:
 
       - eg: Three string labels: ``@classlabel true good bad neutral``
       - eg: Two integer labels:  ``@classlabel true 0 1``
@@ -343,9 +343,9 @@ The sample dataset that we will use for this is as shown
 This concludes how to create string identifiers for ``.ts``  format. To learn more about ``sktime``, visit
 `tutorials`_ page.
 
-.. _loading data: https://github.com/alan-turing-institute/sktime/blob/main/examples/loading_data.ipynb
-.. _Basic Motion.ts: https://github.com/alan-turing-institute/sktime/blob/main/sktime/datasets/data/BasicMotions/BasicMotions_TEST.ts
-.. _issue: https://github.com/alan-turing-institute/sktime/issues
+.. _loading data: https://github.com/sktime/sktime/blob/main/examples/data/loading_data.ipynb
+.. _Basic Motion.ts: https://github.com/sktime/sktime/blob/main/sktime/datasets/data/BasicMotions/BasicMotions_TEST.ts
+.. _issue: https://github.com/sktime/sktime/issues
 .. _tsregression: http://tseregression.org/
 .. _timeseriesclassification.com: http://www.timeseriesclassification.com/index.php
-.. _tutorials: https://www.sktime.org/en/stable/tutorials.html
+.. _tutorials: https://www.sktime.net/en/stable/tutorials.html

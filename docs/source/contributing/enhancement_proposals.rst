@@ -11,7 +11,7 @@ Description
 An sktime enhancement proposal (STEP) is a software design document providing information to the sktime community.
 The proposal should provide a rationale and concise technical specification of proposed design.
 
-We collect and discuss proposals in sktime’s STEP `repository`_.
+We collect and discuss proposals in sktime's STEP `repository`_.
 
 .. _repository: https://github.com/sktime/enhancement-proposals
 

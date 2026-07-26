@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Testing utility to play back usage scenarios for estimators.
 
 Contains TestScenario class which applies method/args subsequently
@@ -11,8 +10,6 @@ __all__ = ["TestScenario"]
 
 from copy import deepcopy
 from inspect import isclass
-
-import numpy as np
 
 
 class TestScenario:
@@ -242,8 +239,8 @@ def _check_list_of_str(obj, name="obj"):
     ------
     TypeError if obj is not list of str
     """
-    if not isinstance(obj, list) or not np.all([isinstance(x, str) for x in obj]):
-        raise TypeError(f"{obj} must be a list of str")
+    if not isinstance(obj, list) or not all(isinstance(x, str) for x in obj):
+        raise TypeError(f"{name} must be a list of str")
     return obj
 
 
@@ -263,11 +260,10 @@ def _check_dict_of_dict(obj, name="obj"):
     ------
     TypeError if obj is not dict of dict, with str keys
     """
-    msg = f"{obj} must be a dict of dict, with str keys"
-    if not isinstance(obj, dict):
-        raise TypeError(msg)
-    if not np.all([isinstance(x, dict) for x in obj.values()]):
-        raise TypeError(msg)
-    if not np.all([isinstance(x, str) for x in obj.keys()]):
-        raise TypeError(msg)
+    if not (
+        isinstance(obj, dict)
+        and all(isinstance(x, dict) for x in obj.values())
+        and all(isinstance(x, str) for x in obj.keys())
+    ):
+        raise TypeError(f"{name} must be a dict of dict, with str keys")
     return obj

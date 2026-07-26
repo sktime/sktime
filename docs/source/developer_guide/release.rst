@@ -31,7 +31,7 @@ The release cycle process is as follows:
 1. 1 week before release date, update the release board.
 2. for major releases or substantial features, optionally extend the release cycle
 3. feature freeze 1 day before release date. Only release managers should merge at this point.
-  The feature freeze should be announced on the core dev channel (on slack) 1 week before, and 1 day before it comes into action.
+  The feature freeze should be announced on the core dev channel 1 week before, and 1 day before it comes into action.
   Any delays and extensions to the feature freeze should also be announced.
 4. if "must have" are not merged by planned release date: either delay release date and extend freeze period, or deprioritize.
 
@@ -43,7 +43,8 @@ The release process is as follows, on high-level:
 1. ensure deprecation actions are carried out.
   Deprecation actions for a version should be marked by "version number" annotated comments in the code.
   E.g., for the release 0.12.0, search for the string 0.12.0 in the code and carry out described deprecation actions.
-  Collect list of deprecation actions in an issue, as they will have to go in the release notes.
+  It is recommended to collect the list of deprecation actions in or multiple separate PR,
+  as they will have to go in the release notes.
   Deprecation actions should be merged only by release managers.
 
 2. create a "release" pull request (ideally from a branch following the naming pattern ``release/v0.x.y``). This should make changes to the version numbers and have complete release notes.
@@ -68,11 +69,11 @@ The release process is as follows, on high-level:
   new releases of dependencies that happen in the ca one day period between release PR and release.
 
 7. once release CI/CD has passed, check ``sktime`` version on ``pypi``, this should be the new version.
-  It should be checked that all wheels have been uploaded, `here <https://pypi.org/simple/sktime/>`__.
+  It should be checked that all wheels have been uploaded, `on pypi, here <https://pypi.org/simple/sktime/>`__.
   A validatory install of ``sktime`` in a new ``python`` environment should be carried out (one arbitrary version/OS),
   according to the install instructions.
   If the install does not succeed or wheels have not been uploaded, urgent action to diagnose and remedy must be taken.
-  All core developers should be urgently informed of such a situation through mail-all in the core developer channel on slack.
+  All core developers should be urgently informed of such a situation through mail-all in the core developer channel.
   In the most common case, the install instructions need to be updated.
   If wheel upload has failed, the tag in 5. needs to be deleted and recreated.
   The tag can be deleted using the ``git`` command ``git push --delete origin tagname`` from a local repo.
@@ -81,10 +82,11 @@ The release process is as follows, on high-level:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 8. If the release on ``pypi`` has succeeded, there should be an automated release PR created
-  against the sktime conda-forge repo: https://github.com/conda-forge/sktime-feedstock.
+against the sktime conda-forge repo: https://github.com/conda-forge/sktime-feedstock.
 
-  .. note:: Manual creation of release pull request
-     In cases where the release PR is not created automatically it can be created and submitted manually. For general
+  .. note:: Manual creation of release pull request:
+
+     In cases where the `conda-forge` release PR is not created automatically it can be created and submitted manually. For general
      guidelines related to maintaining conda feedstcok packages see `conda-forge package<https://conda-forge.org/docs/maintainer/updating_pkgs.html>`_.
 
      After forking and cloning the repo, edit the ``meta.yml`` file and

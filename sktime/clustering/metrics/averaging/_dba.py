@@ -1,14 +1,9 @@
-# -*- coding: utf-8 -*-
 __author__ = ["chrisholder"]
 
-from typing import Tuple
-
 import numpy as np
-from numba import njit
 
 from sktime.clustering.metrics.medoids import medoids
-from sktime.distances import distance_alignment_path_factory
-from sktime.distances.base import DistanceAlignmentPathCallable
+from sktime.dists_kernels._numba_distances import distance_alignment_path_factory
 
 
 def dba(
@@ -23,27 +18,26 @@ def dba(
 ) -> np.ndarray:
     """Compute the dtw barycenter average of time series.
 
-    This implements the'petitjean' version (orginal) DBA algorithm [1]_.
-
+    This implements the 'petitjean' version (original) DBA algorithm [1]_.
 
     Parameters
     ----------
     X : np.ndarray (3d array of shape (n, m, p) where n is number of instances, m
-                    is the dimensions and p is the timepoints))
+                    is the dimensions and p is the timepoints)
         Time series instances compute average from.
-    max_iters: int, defaults = 30
+    max_iters: int, default=30
         Maximum number iterations for dba to update over.
-    tol : float (default: 1e-5)
+    tol : float (default=1e-5)
         Tolerance to use for early stopping: if the decrease in cost is lower
         than this value, the Expectation-Maximization procedure stops.
-    averaging_distance_metric: str, defaults = 'dtw'
+    averaging_distance_metric: str, default='dtw'
         String that is the distance metric to derive the distance alignment path.
-    medoids_distance_metric: str, defaults = 'euclidean'
+    medoids_distance_metric: str, default='euclidean'
         String that is the distance metric to use with medoids
     precomputed_medoids_pairwise_distance: np.ndarray (of shape (len(X), len(X)),
-                defulats = None
+                default=None
         Precomputed medoids pairwise.
-    verbose: bool, defaults = False
+    verbose: bool, default=False
         Boolean that controls the verbosity.
 
     Returns
@@ -58,6 +52,8 @@ def dba(
        for dynamic time warping, with applications to clustering. Pattern
        Recognition, Elsevier, 2011, Vol. 44, Num. 3, pp. 678-693
     """
+    from sktime.clustering.metrics.averaging._dba_numba import _dba_update
+
     if len(X) <= 1:
         return X
 
@@ -83,44 +79,5 @@ def dba(
             cost_prev = cost
 
         if verbose is True:
-            print(f"[DBA sktime] epoch {i}, cost {cost}")  # noqa: T001
+            print(f"[DBA sktime] epoch {i}, cost {cost}")  # noqa: T201
     return center
-
-
-@njit(fastmath=True)
-def _dba_update(
-    center: np.ndarray, X: np.ndarray, path_callable: DistanceAlignmentPathCallable
-) -> Tuple[np.ndarray, float]:
-    """Perform an update iteration for dba.
-
-    Parameters
-    ----------
-    center: np.ndarray (2d array of shape (m, p) where m is the number of dimensions
-                        and p is the number of time point)
-        Time series that is the current center (or average).
-    X : np.ndarray (3d array of shape (n, m, p) where n is number of instances, m
-                    is the dimensions and p is the timepoints))
-        Time series instances compute average from.
-    path_callable: Callable[Union[np.ndarray, np.ndarray], tuple[list[tuple], float]]
-        Callable that returns the distance path.
-
-    Returns
-    -------
-    np.ndarray (2d array of shape (m, p) where m is the number of dimensions and p is
-                the number of time points.)
-        The time series that is the computed average series.
-    """
-    X_size, X_dims, X_timepoints = X.shape
-    sum = np.zeros((X_timepoints))
-
-    alignment = np.zeros((X_dims, X_timepoints))
-    cost = 0.0
-    for i in range(X_size):
-        curr_ts = X[i]
-        curr_alignment, _ = path_callable(curr_ts, center)
-        for j, k in curr_alignment:
-            alignment[:, k] += curr_ts[:, j]
-            sum[k] += 1
-            cost += np.linalg.norm(curr_ts[:, j] - center[:, k]) ** 2
-
-    return alignment / sum, cost / X_timepoints

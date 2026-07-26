@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Martrix Profile classifier.
 
 Pipeline classifier using the Matrix Profile transformer and an estimator.
@@ -12,7 +11,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.matrix_profile import MatrixProfile
+from sktime.transformations.matrix_profile import MatrixProfileFeatures
 
 
 class MatrixProfileClassifier(BaseClassifier):
@@ -29,7 +28,7 @@ class MatrixProfileClassifier(BaseClassifier):
         An sklearn estimator to be built using the transformed data. Defaults to a
         1-nearest neighbour classifier.
     n_jobs : int, default=1
-        The number of jobs to run in parallel for both `fit` and `predict`.
+        The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors. Currently available for the classifier
         portion only.
     random_state : int or None, default=None
@@ -58,15 +57,26 @@ class MatrixProfileClassifier(BaseClassifier):
     >>> from sktime.classification.feature_based import MatrixProfileClassifier
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> clf = MatrixProfileClassifier()
-    >>> clf.fit(X_train, y_train)
-    MatrixProfileClassifier(...)
-    >>> y_pred = clf.predict(X_test)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)  # doctest: +SKIP
+    >>> clf = MatrixProfileClassifier()  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    MatrixProfileClassifier(...)  # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["MatthewMiddlehurst"],
+        # sklearn 1.3.0 has a bug which causes predict_proba to fail
+        # see scikit-learn#26768 and sktime#4778
+        "python_dependencies": "scikit-learn!=1.3.0",
+        # estimator type
+        # --------------
         "capability:multithreading": True,
+        "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "distance",
     }
 
@@ -86,7 +96,11 @@ class MatrixProfileClassifier(BaseClassifier):
         self._transformer = None
         self._estimator = None
 
-        super(MatrixProfileClassifier, self).__init__()
+        super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Fit a pipeline on cases (X,y), where y is the target variable.
@@ -108,11 +122,13 @@ class MatrixProfileClassifier(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self._transformer = MatrixProfile(m=self.subsequence_length)
+        self._transformer = MatrixProfileFeatures(m=self.subsequence_length)
         self._estimator = _clone_estimator(
-            KNeighborsClassifier(n_neighbors=1)
-            if self.estimator is None
-            else self.estimator,
+            (
+                KNeighborsClassifier(n_neighbors=1)
+                if self.estimator is None
+                else self.estimator
+            ),
             self.random_state,
         )
 
@@ -171,7 +187,7 @@ class MatrixProfileClassifier(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -182,7 +198,11 @@ class MatrixProfileClassifier(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {"subsequence_length": 4}
+        return [
+            {"subsequence_length": 4},
+            {"subsequence_length": 6, "estimator": KNeighborsClassifier(n_neighbors=3)},
+        ]

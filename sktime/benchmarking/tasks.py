@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Unified high-level interface for various time series related learning tasks."""
 
 from inspect import signature
@@ -179,8 +178,7 @@ class BaseTask(BaseObject):
 
 
 class TSCTask(BaseTask):
-    """
-    Time series classification task.
+    """Time series classification task.
 
     A task encapsulates metadata information such as the feature and target
     variable
@@ -201,12 +199,11 @@ class TSCTask(BaseTask):
 
     def __init__(self, target, features=None, metadata=None):
         self._case = "TSC"
-        super(TSCTask, self).__init__(target, features=features, metadata=metadata)
+        super().__init__(target, features=features, metadata=metadata)
 
 
 class TSRTask(BaseTask):
-    """
-    Time series regression task.
+    """Time series regression task.
 
     A task encapsulates metadata information such as the feature and target
     variable
@@ -227,4 +224,4 @@ class TSRTask(BaseTask):
 
     def __init__(self, target, features=None, metadata=None):
         self._case = "TSR"
-        super(TSRTask, self).__init__(target, features=features, metadata=metadata)
+        super().__init__(target, features=features, metadata=metadata)

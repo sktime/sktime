@@ -4,7 +4,7 @@
 #
 #9 Japanese-male speakers were recorded saying the vowels 'a' and 'e'. A '12-degree linear prediction analysis' is applied to the raw recordings to obtain time-series with 12 dimensions and series lengths between 7 and 29. The classification task is to predict the speaker. Therefore, each instance is a transformed utterance, 12*29 values with a single class label attached, [1...9].
 #
-#The given training set is comprised of 30 utterances for each speaker, however the test set has a varied distribution based on external factors of timing and experimenal availability, between 24 and 88 instances per speaker.
+#The given training set is comprised of 30 utterances for each speaker, however the test set has a varied distribution based on external factors of timing and experimental availability, between 24 and 88 instances per speaker.
 @problemName JapaneseVowels
 @timeStamps false
 @missing false

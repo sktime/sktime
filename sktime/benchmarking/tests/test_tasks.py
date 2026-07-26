@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
 """Tests for benchmarking tasks."""
 
-__author__ = "mloning"
+__author__ = ["mloning"]
 
 import pytest
 from pytest import raises
 
 from sktime.benchmarking.tasks import BaseTask, TSCTask, TSRTask
 from sktime.datasets import load_gunpoint, load_shampoo_sales
+from sktime.tests.test_switch import run_test_module_changed
 
 TASKS = (TSCTask, TSRTask)
 
@@ -18,6 +18,10 @@ BASE_READONLY_ATTRS = ("target", "features", "metadata")
 
 
 # Test read-only attributes of base task
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 @pytest.mark.parametrize("attr", BASE_READONLY_ATTRS)
 def test_readonly_attributes(attr):
     """Test read-only attributes."""
@@ -27,6 +31,10 @@ def test_readonly_attributes(attr):
 
 
 # Test data compatibility checks
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 @pytest.mark.parametrize("task", TASKS)
 def test_check_data_compatibility(task):
     """Check data compatibility."""
@@ -49,6 +57,10 @@ def check_set_metadata(task, target, metadata):
         task.set_metadata(metadata)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
 @pytest.mark.parametrize("task", [TSRTask, TSCTask])
 def test_set_metadata_supervised(task):
     """Test check_set_metadata."""

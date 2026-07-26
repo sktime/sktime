@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Implementation of a SignatureClassifier.
 
 Utilises the signature method of feature extraction.
@@ -7,16 +6,17 @@ and methodologies described in the paper:
     "A Generalised Signature Method for Time Series"
     [arxiv](https://arxiv.org/pdf/2006.00873.pdf).
 """
+
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.signature_based._checks import (
+from sktime.transformations.signature_based._checks import (
     _handle_sktime_signatures,
 )
-from sktime.transformations.panel.signature_based._signature_method import (
+from sktime.transformations.signature_based._signature_method import (
     SignatureTransformer,
 )
 
@@ -33,9 +33,11 @@ class SignatureClassifier(BaseClassifier):
 
     Note that the final classifier used on the UEA datasets involved tuning
     the hyper-parameters:
-        - `depth` over [1, 2, 3, 4, 5, 6]
-        - `window_depth` over [2, 3, 4]
-        - RandomForestClassifier hyper-parameters.
+
+    - ``depth`` over [1, 2, 3, 4, 5, 6]
+    - ``window_depth`` over [2, 3, 4]
+    - ``RandomForestClassifier`` hyper-parameters.
+
     as these were found to be the most dataset dependent hyper-parameters.
 
     Thus, we recommend always tuning *at least* these parameters to any given
@@ -50,7 +52,7 @@ class SignatureClassifier(BaseClassifier):
     window_name: str, default="dyadic"
         The name of the window transform to apply.
     window_depth: int, default=3
-        The depth of the dyadic window. (Active only if `window_name == 'dyadic']`.
+        The depth of the dyadic window. (Active only if ``window_name == 'dyadic']``.
     window_length: int, default=None
         The length of the sliding/expanding window. (Active only if `window_name in
         ['sliding, 'expanding'].
@@ -72,7 +74,7 @@ class SignatureClassifier(BaseClassifier):
     signature_method: sklearn.Pipeline
         An sklearn pipeline that performs the signature feature extraction step.
     pipeline: sklearn.Pipeline
-        The classifier appended to the `signature_method` pipeline to make a
+        The classifier appended to the ``signature_method`` pipeline to make a
         classification pipeline.
     n_classes_ : int
         Number of classes. Extracted from the data.
@@ -91,10 +93,26 @@ class SignatureClassifier(BaseClassifier):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": "jambo6",
+        "maintainers": "jambo6",
+        "python_dependencies": ["esig"],
+        # estimator type
+        # --------------
         "capability:multivariate": True,
+        "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "deterministic",
         "classifier_type": "feature",
-        "python_dependencies": "esig",
-        "python_version": "<3.10",
+        # testing configuration
+        # ---------------------
+        "tests:libs": ["sktime.transformations.signature_based"],
+        "tests:skip_by_name": [  # tagged in issue #2490
+            "test_classifier_on_unit_test_data",
+            "test_classifier_on_basic_motions",
+        ],
+        "tests:vm": True,
     }
 
     def __init__(
@@ -121,17 +139,26 @@ class SignatureClassifier(BaseClassifier):
         self.depth = depth
         self.random_state = random_state
 
-        super(SignatureClassifier, self).__init__()
+        super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         self.signature_method = SignatureTransformer(
-            augmentation_list,
-            window_name,
-            window_depth,
-            window_length,
-            window_step,
-            rescaling,
-            sig_tfm,
-            depth,
+            self.augmentation_list,
+            self.window_name,
+            self.window_depth,
+            self.window_length,
+            self.window_step,
+            self.rescaling,
+            self.sig_tfm,
+            self.depth,
         ).signature_method
         self.pipeline = None
 
@@ -211,7 +238,7 @@ class SignatureClassifier(BaseClassifier):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return ``"default"`` set.
             For classifiers, a "default" set of parameters should be provided for
             general testing, and a "results_comparison" set for comparing against
             previously recorded results if the general set does not produce suitable
@@ -222,15 +249,18 @@ class SignatureClassifier(BaseClassifier):
         params : dict or list of dict, default={}
             Parameters to create testing instances of the class.
             Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`.
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         if parameter_set == "results_comparison":
             return {"estimator": RandomForestClassifier(n_estimators=10)}
-        else:
-            return {
-                "estimator": RandomForestClassifier(n_estimators=2),
-                "augmentation_list": ("basepoint", "addtime"),
-                "depth": 1,
-                "window_name": "global",
-            }
+
+        params0 = {}
+        params1 = {
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "augmentation_list": ("basepoint", "addtime"),
+            "depth": 1,
+            "window_name": "global",
+        }
+        return [params0, params1]
