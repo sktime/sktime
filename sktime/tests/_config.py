@@ -178,7 +178,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
         "PAAlegacy",
-        "PaddingTransformer",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
