@@ -6,7 +6,6 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
-import io
 import numbers
 import os
 import sys
