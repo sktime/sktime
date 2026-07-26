@@ -10,7 +10,7 @@ from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMet
 
 
 class RMSEnormalizedByIQR(BaseForecastingErrorMetric):
-    r"""Interquartile range error (IQR).
+    r"""RMSE normalized by interquartile range (IQR).
 
     Normalizes the root mean squared error (RMSE) by the interquartile range
     (IQR) of the true values, making it location-scale invariant. Output is

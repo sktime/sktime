@@ -58,7 +58,6 @@ Percentage errors
 Scaled errors
 ^^^^^^^^^^^^^
 
-
 .. autosummary::
     :toctree: auto_generated/
     :template: class_with_call.rst
@@ -92,8 +91,8 @@ Geometric errors
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
 
-Normalized and divergence-based errors
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Normalized errors
+^^^^^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: auto_generated/
@@ -101,6 +100,14 @@ Normalized and divergence-based errors
 
     MSEnormalizedBySD
     RMSEnormalizedByIQR
+
+Divergence based point prediction errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
     KLDivergenceNormal
     KLDivergenceDoubleExponential
     KLDivergenceSingleExponential
