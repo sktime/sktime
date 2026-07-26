@@ -177,7 +177,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MUSE",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
-        "OnlineEnsembleForecaster",
         "OptionalPassthrough",
         "PAAlegacy",
         "PaddingTransformer",
