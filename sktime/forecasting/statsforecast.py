@@ -14,13 +14,13 @@ __all__ = [
 ]
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
@@ -507,10 +507,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     >>> forecaster = StatsForecastAutoETS(  # doctest: +SKIP
     ...     season_length=12, model="AAN", damped=True
     ... )
-    >>> forecaster.fit(y)  # doctest: +SKIP
-    StatsForecastAutoETS(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
-    """
 
     _tags = {
         # packaging info
@@ -623,9 +620,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.statsforecast import StatsForecastAutoCES
     >>> y = load_airline()
-    >>> forecaster = StatsForecastAutoCES(  # doctest: +SKIP
-    ...     season_length=12, model="S"
-    ... )
+    >>> forecaster = StatsForecastAutoCES(season_length=12)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     StatsForecastAutoCES(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
@@ -652,6 +647,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.1.0"],
+        "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
@@ -918,6 +914,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
+        "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_update_with_exogenous_variables"],
@@ -993,7 +990,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon or None
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         y : pd.Series
             The time series data used for fitting.
 
@@ -1018,7 +1015,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon or None
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         y : pd.Series
             The time series data used for fitting.
         """
