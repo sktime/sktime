@@ -32,7 +32,7 @@ __all__ = [
 ]
 
 
-from sktime.dists_kernels._numba_distances._distance import
+from sktime.dists_kernels._numba_distances._distance import (
     DISTANCES_SUPPORTED,
     ddtw_alignment_path,
     ddtw_distance,
