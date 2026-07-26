@@ -281,4 +281,4 @@ class MovingWindow(BaseDetector):
             {"bandwidth": 10},
             {"change_score": L2Cost(), "bandwidth": 5, "penalty": 20},
             {"change_score": GaussianCost(), "bandwidth": 5, "penalty": 30},
-        }
+        ]
