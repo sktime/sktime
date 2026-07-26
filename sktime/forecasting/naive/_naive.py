@@ -674,11 +674,13 @@ class NaiveVariance(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster, NaiveVariance
     >>> y = load_airline()
-    >>> forecaster = NaiveForecaster(strategy="drift")
-    >>> variance_forecaster = NaiveVariance(forecaster)
-    >>> variance_forecaster.fit(y)
-    NaiveVariance(...)
-    >>> var_pred = variance_forecaster.predict_var(fh=[1,2,3])
+    >>> base_model = NaiveForecaster(strategy="drift")
+    >>> model = NaiveVariance(base_model)
+    >>> model.fit(y)
+    >>> fh = [1, 2, 3]
+    >>> y_pred = model.predict(fh=fh)
+    >>> var_pred = model.predict_var(fh=fh)
+    >>> q_pred = model.predict_quantiles(fh=fh, alpha=[0.1, 0.9])
     """
 
     _tags = {
