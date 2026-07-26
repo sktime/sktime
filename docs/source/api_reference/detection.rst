@@ -3,7 +3,7 @@
 Time series detection tasks
 ===========================
 
-The :mod:`sktime.annotation` module contains algorithms and tools
+The :mod:`sktime.detection` module contains algorithms and tools
 for time series detection tasks, including:
 
 * anomaly or outlier detection
@@ -13,105 +13,61 @@ for time series detection tasks, including:
 The tasks include unsupervised and semi-supervised variants, and can batch or
 stream/online detection.
 
+All detectors in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="detector"``, optionally filtered by tags.
 
-Time Series Segmentation
-------------------------
+Valid tags are listed in :ref:`the detector tags API reference <detector_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
 
-.. currentmodule:: sktime.annotation.clasp
+Composition
+-----------
 
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ClaSPSegmentation
-
-.. currentmodule:: sktime.annotation.eagglo
+.. currentmodule:: sktime.detection.compose
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    EAgglo
+    DetectorPipeline
+    DetectorAsTransformer
 
-.. currentmodule:: sktime.annotation.hmm_learn.gaussian
 
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
+Change Point Detection
+----------------------
 
-    GaussianHMM
-
-.. currentmodule:: sktime.annotation.hmm_learn.gmm
+.. currentmodule:: sktime.detection
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    GMMHMM
+    crops.CROPS
+    moving_window.MovingWindow
+    pelt.PELT
+    seeded_binseg.SeededBinarySegmentation
 
-.. currentmodule:: sktime.annotation.ggs
+Naive Baselines
+^^^^^^^^^^^^^^^
 
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    GreedyGaussianSegmentation
-
-.. currentmodule:: sktime.annotation.hmm
+.. currentmodule:: sktime.detection.dummy
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    HMM
+    DummyRegularChangePoints
+    ZeroChangePoints
 
-.. currentmodule:: sktime.annotation.igts
 
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
+Time Series Point Anomaly Detection
+-----------------------------------
 
-    InformationGainSegmentation
-
-.. currentmodule:: sktime.annotation.hmm_learn.poisson
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    PoissonHMM
-
-.. currentmodule:: sktime.annotation.stray
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    STRAY
-
-.. currentmodule:: sktime.annotation.clust
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    ClusterSegmenter
-
-.. currentmodule:: sktime.annotation.bs.BinarySegmentation
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    BinarySegmentation
-
-Time Series Anomaly Detection
------------------------------
+Point anomaly detectors identify single anomalous indices.
 
 Window-based Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. currentmodule:: sktime.annotation.lof
+.. currentmodule:: sktime.detection.lof
 
 .. autosummary::
     :toctree: auto_generated/
@@ -119,21 +75,211 @@ Window-based Anomaly Detection
 
     SubLOF
 
-Reduction to Tabular Anomaly Detection
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. currentmodule:: sktime.annotation.adapters
+.. currentmodule:: sktime.detection.hampel
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    PyODAnnotator
+    HampelDetector
+
+Foundation Models for Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Anomaly detection using foundational models.
+
+.. currentmodule:: sktime.detection.momentfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMAnomalyDetector
+
+.. currentmodule:: sktime.detection.tspulse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSPulseAnomalyDetector
+
+Reduction to Tabular Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.adapters
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PyODDetector
+
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    DummyRegularAnomalies
+    ZeroAnomalies
+
+.. currentmodule:: sktime.detection.naive
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThresholdDetector
+
+Time Series Segment Anomaly Detection
+-------------------------------------
+
+Segment anomaly detectors identify anomalous segment.
+
+.. currentmodule:: sktime.detection
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    capa.CAPA
+    circular_binseg.CircularBinarySegmentation
+    stat_threshold.StatThresholdAnomaliser
+
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ZeroSegments
+
+.. currentmodule:: sktime.detection.naive
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ThresholdDetector
+
+Time Series Segmentation
+------------------------
+
+.. currentmodule:: sktime.detection.clasp
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClaSPSegmentation
+
+.. currentmodule:: sktime.detection.eagglo
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EAgglo
+
+.. currentmodule:: sktime.detection.hmm_learn.gaussian
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    GaussianHMM
+
+.. currentmodule:: sktime.detection.hmm_learn.gmm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    GMMHMM
+
+.. currentmodule:: sktime.detection.ggs
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    GreedyGaussianSegmentation
+
+.. currentmodule:: sktime.detection.hmm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HMM
+
+.. currentmodule:: sktime.detection.igts
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    InformationGainSegmentation
+
+.. currentmodule:: sktime.detection.hmm_learn.poisson
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PoissonHMM
+
+.. currentmodule:: sktime.detection.stray
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    STRAY
+
+.. currentmodule:: sktime.detection.bs
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    BinarySegmentation
 
 
-Data Generation
----------------
+Reduction to clustering
+^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: sktime.annotation.datagen
-    :no-members:
-    :no-inherited-members:
+.. currentmodule:: sktime.detection.clust
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ClusterSegmenter
+
+.. currentmodule:: sktime.detection.wclust
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindowSegmenter
+
+
+Naive Baselines
+^^^^^^^^^^^^^^^
+
+.. currentmodule:: sktime.detection.dummy
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ZeroSegments

@@ -286,7 +286,7 @@ univariate_equal_length = [
     "SmoothSubspace",
     "SonyAIBORobotSurface1",
     "SonyAIBORobotSurface2",
-    "StarlightCurves",
+    "StarLightCurves",
     "Strawberry",
     "SwedishLeaf",
     "Symbols",

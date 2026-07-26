@@ -115,6 +115,11 @@ class TimeSeriesSVC(BaseClassifier):
         "capability:predict_proba": True,
         "X_inner_mtype": ["pd-multiindex", "numpy3D"],
         "classifier_type": "kernel",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     DELEGATED_PARAMS = [

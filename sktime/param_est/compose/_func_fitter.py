@@ -52,6 +52,7 @@ class FunctionParamFitter(BaseParamFitter):
     :class:`~sktime.param_est.plugin.PluginParamsForecaster`.
 
     >>> import numpy as np
+    >>> from sktime.param_est.compose import FunctionParamFitter
     >>> param_est = FunctionParamFitter(
     ...     param="selected_forecaster",
     ...     func=(
@@ -160,7 +161,15 @@ class FunctionParamFitter(BaseParamFitter):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params = [
-            {"param": "param", "func": lambda X: "foo"},
-            {"param": "param", "func": lambda X, kwarg: "foo", "kw_args": {"kwarg": 1}},
+            {"param": "param", "func": _lambda_test_simple},
+            {"param": "param", "func": _lambda_test_kwarg, "kw_args": {"kwarg": 1}},
         ]
         return params
+
+
+def _lambda_test_simple(X):
+    return "foo"
+
+
+def _lambda_test_kwarg(X, kwarg):
+    return "foo"

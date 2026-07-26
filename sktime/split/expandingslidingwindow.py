@@ -13,7 +13,6 @@ from sktime.split.base._common import (
     DEFAULT_FH,
     DEFAULT_STEP_LENGTH,
     DEFAULT_WINDOW_LENGTH,
-    FORECASTING_HORIZON_TYPES,
     SPLIT_GENERATOR_TYPE,
 )
 from sktime.utils.validation import (
@@ -65,8 +64,12 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     >>> import numpy as np
     >>> from sktime.split import ExpandingSlidingWindowSplitter
     >>> ts = np.arange(10)
-    >>> splitter = ExpandingSlidingWindowSplitter(fh=[1, 2], step_length=1,
-        initial_window=1, max_expanding_window_length=5)
+    >>> splitter = ExpandingSlidingWindowSplitter(
+    ...     fh=[1, 2],
+    ...     step_length=3,
+    ...     initial_window=1,
+    ...     max_expanding_window_length=5,
+    ... )
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([0]), array([1, 2])), (array([0, 1]), array([2, 3])),
       (array([0, 1, 2]), array([3, 4])), (array([0, 1, 2, 3]), array([4, 5])),
@@ -76,8 +79,12 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     >>> import numpy as np
     >>> from sktime.split import ExpandingSlidingWindowSplitter
     >>> ts = np.arange(10)
-    >>> splitter = ExpandingSlidingWindowSplitter(fh=[1, 2], step_length=3,
-        initial_window=2, max_expanding_window_length=5)
+    >>> splitter = ExpandingSlidingWindowSplitter(
+    ...     fh=[1, 2],
+    ...     step_length=3,
+    ...     initial_window=2,
+    ...     max_expanding_window_length=5,
+    ... )
     >>> list(splitter.split(ts)) # doctest: +SKIP
     [(array([0, 1]), array([2, 3])), (array([0, 1, 2, 3, 4]), array([5, 6])),
       (array([3, 4, 5, 6, 7]), array([8, 9]))]
@@ -85,7 +92,7 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
 
     def __init__(
         self,
-        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
+        fh=DEFAULT_FH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         max_expanding_window_length: ACCEPTED_WINDOW_LENGTH_TYPES = float("inf"),

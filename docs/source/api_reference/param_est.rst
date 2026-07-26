@@ -48,8 +48,8 @@ Composition
     PluginParamsForecaster
     PluginParamsTransformer
 
-Naive
-~~~~~
+Naive parameter estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.fixed
 
@@ -72,8 +72,8 @@ Seasonality estimators
     SeasonalityACFqstat
     SeasonalityPeriodogram
 
-Stationarity estimators
-~~~~~~~~~~~~~~~~~~~~~~
+Stationarity tests
+~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.param_est.stationarity
 
@@ -89,3 +89,50 @@ Stationarity estimators
     StationarityKPSSArch
     StationarityZivotAndrews
     StationarityVarianceRatio
+    BreakvarHeteroskedasticityTest
+
+Lag and autocorrelation estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.lag
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ARLagOrderSelector
+    AcorrLjungbox
+
+Residual tests and estimators
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.residuals
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    JarqueBera
+
+Cointegration
+~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.cointegration
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    JohansenCointegration
+
+
+Impulse and Shock Response Estimation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.param_est.impulse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ImpulseResponseFunction

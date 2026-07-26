@@ -6,13 +6,13 @@ __all__ = ["BaseClusterer"]
 import time
 
 import numpy as np
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
 from sktime.datatypes._dtypekind import DtypeKind
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
-from sktime.utils.validation import check_n_jobs
+from sktime.utils.warnings import warn
 
 
 class BaseClusterer(BaseEstimator):
@@ -43,10 +43,30 @@ class BaseClusterer(BaseEstimator):
     def __init__(self, n_clusters: int = None):
         self.fit_time_ = 0
         self._class_dictionary = {}
-        self._threads_to_use = 1
-        self.n_clusters = n_clusters
+
+        # defensive programming in case subclass does set n_clusters
+        # but does not pass it to super().__init__
+        if not hasattr(self, "n_clusters"):
+            self.n_clusters = n_clusters
+
         super().__init__()
-        _check_estimator_deps(self)
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
@@ -65,9 +85,9 @@ class BaseClusterer(BaseEstimator):
         (last).
         """
         from sktime.clustering.compose import ClustererPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # behaviour is implemented only if other inherits from BaseTransformer
         #  in that case, distinctions arise from whether self or other is a pipeline
@@ -124,19 +144,12 @@ class BaseClusterer(BaseEstimator):
         -------
         self : Reference to self.
         """
+        _check_estimator_deps(self)
+
         # reset estimator at the start of fit
         self.reset()
 
         X = self._check_clusterer_input(X)
-
-        multithread = self.get_tag("capability:multithreading")
-        if multithread:
-            try:
-                self._threads_to_use = check_n_jobs(self.n_jobs)
-            except NameError:
-                raise AttributeError(
-                    "self.n_jobs must be set if capability:multithreading is True"
-                )
 
         start = int(round(time.time() * 1000))
         self._fit(X)
@@ -306,9 +319,11 @@ class BaseClusterer(BaseEstimator):
             n_clusters = self.n_clusters
         else:
             n_clusters = max(preds) + 1
-        dists = np.zeros((X.shape[0], n_clusters))
+        dists = np.zeros((n_instances, n_clusters))
         for i in range(n_instances):
-            dists[i, preds[i]] = 1
+            # preds[i] can be -1, in this case there is no cluster for this instance
+            if preds[i] > -1:
+                dists[i, preds[i]] = 1
         return dists
 
     def _score(self, X, y=None):
@@ -428,6 +443,26 @@ class BaseClusterer(BaseEstimator):
         ValueError
             If y or X is invalid input data type, or there is not enough data.
         """
+        # remember hash for determining in predict whether data is the same as in fit
+        # only needed if out_of_sample tag is False, then all X must be the same
+        if not self.get_tag("capability:out_of_sample"):
+            # if first seen in fit: store hash
+            if not hasattr(self, "_X_hash"):
+                self._X_hash = hash(str(X))
+            else:  # in predict: check if hash is the same
+                X_fit_hash = self._X_hash
+                X_predict_hash = hash(str(X))
+                if not X_fit_hash != X_predict_hash:
+                    warn(
+                        f"This instance of {type(self).__name__} does not support "
+                        "different X in fit and predict, "
+                        "but a new X was passed in predict. "
+                        "This may result in an exception, or incorrect results. "
+                        "Please use the same X in fit and predict to avoid this "
+                        "warning, and possible subsequent exceptions.",
+                        obj=self,
+                    )
+
         X = self._initial_conversion(X)
 
         ALLOWED_SCITYPES = [
@@ -451,6 +486,7 @@ class BaseClusterer(BaseEstimator):
         X_valid, _, X_metadata = check_is_scitype(
             X, scitype=ALLOWED_SCITYPES, return_metadata=X_metadata_required
         )
+        self._X_metadata = X_metadata
         if not X_valid:
             raise TypeError(
                 "X must be in a sktime compatible format, of scitype: "

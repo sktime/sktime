@@ -20,51 +20,18 @@ def get_test_class_registry():
         test class registry
         keys are scitypes, values are test classes TestAll[Scitype]
     """
-    from sktime.alignment.tests.test_all_aligners import TestAllAligners
-    from sktime.annotation.tests.test_all_annotators import TestAllAnnotators
-    from sktime.classification.early_classification.tests.test_all_early_classifiers import (  # noqa E501
-        TestAllEarlyClassifiers,
-    )
-    from sktime.classification.tests.test_all_classifiers import TestAllClassifiers
-    from sktime.dists_kernels.tests.test_all_dist_kernels import (
-        TestAllPairwiseTransformers,
-        TestAllPanelTransformers,
-    )
-    from sktime.forecasting.tests.test_all_forecasters import (
-        TestAllForecasters,
-        TestAllGlobalForecasters,
-    )
-    from sktime.param_est.tests.test_all_param_est import TestAllParamFitters
-    from sktime.proba.tests.test_all_distrs import TestAllDistributions
-    from sktime.regression.tests.test_all_regressors import TestAllRegressors
-    from sktime.split.tests.test_all_splitters import TestAllSplitters
-    from sktime.tests.test_all_estimators import TestAllEstimators, TestAllObjects
-    from sktime.transformations.tests.test_all_transformers import TestAllTransformers
+    from sktime.registry._base_classes import _get_base_classes
 
-    testclass_dict = dict()
-    # every object in sktime inherits from BaseObject
-    # "object" tests are run for all objects
-    testclass_dict["object"] = TestAllObjects
-    # fittable objects inherit from BaseEstimator
-    # "estimator" tests are run for all estimators
-    # estimators are also objects
-    testclass_dict["estimator"] = TestAllEstimators
-    # more specific base classes
-    # these inherit either from BaseEstimator or BaseObject,
-    # so also imply estimator and object tests, or only object tests
-    testclass_dict["aligner"] = TestAllAligners
-    testclass_dict["classifier"] = TestAllClassifiers
-    testclass_dict["distribution"] = TestAllDistributions
-    testclass_dict["early_classifier"] = TestAllEarlyClassifiers
-    testclass_dict["forecaster"] = TestAllForecasters
-    testclass_dict["global_forecaster"] = TestAllGlobalForecasters
-    testclass_dict["param_est"] = TestAllParamFitters
-    testclass_dict["regressor"] = TestAllRegressors
-    testclass_dict["series-annotator"] = TestAllAnnotators
-    testclass_dict["splitter"] = TestAllSplitters
-    testclass_dict["transformer"] = TestAllTransformers
-    testclass_dict["transformer-pairwise"] = TestAllPairwiseTransformers
-    testclass_dict["transformer-pairwise-panel"] = TestAllPanelTransformers
+    base_classes = _get_base_classes()
+
+    testclass_dict = {}
+
+    for base_class in base_classes:
+        scitype_str = base_class.get_class_tag("scitype_name")
+        test_class = base_class.get_test_class()
+
+        if test_class is not None:
+            testclass_dict[scitype_str] = test_class
 
     return testclass_dict
 

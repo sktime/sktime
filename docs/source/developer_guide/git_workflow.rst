@@ -10,15 +10,29 @@ GitHub, clone, and develop on a new branch.
 
 The workflow consists of two main parts:
 
-* **Creating a fork**: This sets up your own copy of the ``sktime`` repository on GitHub.
-  This needs to be done only once, when you start contributing to ``sktime``.
-* **Developing a feature**: This is the process of developing a new feature, e.g.,
-  a bugfix or new estimator.
-  This is done every time you want to contribute a new feature.
+* **First-time setup: Creating a fork and cloning the repository**: This section will help you set up your own forked copy of the ``sktime``
+repository on GitHub and a local copy of the forked repository on your machine. This needs to be done only once, when you
+start contributing to ``sktime``.
+
+* **Every-time workflow: Developing a feature**: This is the process of developing a new feature, e.g., a bugfix or new estimator.
+This is done every time you want to contribute a new feature.
 
 
-Creating a fork - Initial one time setup
-----------------------------------------
+.. note::
+
+    GUI-based solutions to carry out the below workflow steps are also available.
+    For example, to manage branches and commits, you can use:
+
+    * `GitHub Desktop <https://desktop.github.com/>`_. This is the official GitHub GUI client and also integrates with your browser.
+    * `Visual Studio Code <https://code.visualstudio.com/>`_, with suitable git extensions.
+    * `pycharm <https://www.jetbrains.com/pycharm/>`_ (native installation).
+
+    These solutions will carry out the same steps under the hood, but with a graphical interface.
+    Even if you use a GUI, we recommended to understand the underlying commands, and try them out in the terminal at least once.
+
+
+Creating a fork and cloning the repository - initial one time setup
+-------------------------------------------------------------------
 
 1.  Fork the `project
     repository <https://github.com/sktime/sktime>`__ by
@@ -56,9 +70,19 @@ Creating a fork - Initial one time setup
        > upstream  https://github.com/sktime/sktime.git (fetch)
        > upstream  https://github.com/sktime/sktime.git (push)
 
+.. note::
 
-Contributing a feature - for every new feature
-----------------------------------------------
+    Step 1 needs to be done once per GitHub account, and need to be repeated
+    only if you are using a second GitHub account, or if you are intentionally
+    resetting your fork.
+
+    Steps 2-4 need to be done once per local machine, and need to be repeated
+    only if you are working on a new machine, or after a reset of your local setup,
+    e.g., after an operating system reinstall.
+
+
+Developing a feature - repeat for every new feature
+---------------------------------------------------
 
 1.  `Sync <https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/syncing-a-fork>`_
     the ``main`` branch of your fork with the upstream repository:
@@ -139,6 +163,15 @@ Contributing a feature - for every new feature
     ``main`` branch of the sktime repo, and then update your feature branch with those
     changes. If there are any merge conflicts, you will need to resolve them manually.
 
+.. note::
+
+    We strongly, emphatically, recommend to never use ``rebase`` for updating your
+    feature branch when contributing to ``sktime``.
+    ``rebase`` can lead to states that are very hard to recover from,
+    because it rewrites history. **Always use ``merge`` to update your feature branch.**
+    We squash all pull requests to a single commit on ``main``,
+    so the history of your feature branch is not important.
+
 
 Managing Branches - Advanced Guide
 ----------------------------------
@@ -156,19 +189,33 @@ We strongly recommend to not use the same branch for multiple tasks,
 as it will make the history of the branch messy and harder to review,
 and substantially increases the risk of bugs and conflicts.
 
-Working on a chain of dependent tasks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Working on a chain of dependent tasks - pull request stacking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For more complex tasks, it may be useful to limit complexity by
-chaining tasks after another.
+stacking pull requests. Stacking pull requests is useful for chains of dependent
+tasks, where the next task depends on the previous task being merged in the ``main``
+branch of the sktime repo, but the PR from the previous task is not merged yet.
 
-For instance, working on an estimator that first requires a bugfix to be merged.
+For instance, working on an estimator that first requires a bugfix to be merged;
+or, fixing a bug where test coverage was masked by a bug in the test framework,
+and the fix requires first fixing the test code, and then fixing the bug.
 
-In this case, create a new branch from the branch of the previous task, and continue
+Whenever a complex task can be broken down into a chain of dependent tasks,
+it is recommended to stack pull requests,
+and work on each task in a separate branch, with a separate pull request.
+
+This makes it easier to review and merge the changes quickly;
+stacking also makes it easier to complete the task, because smaller changes
+are easier to manage, test, and complete.
+
+Mechanically, stacking pull requests works as follows:
+
+For setup, create a new branch from the branch of the previous task, and continue
 your development from there. For such cases, please remember to specify in the PR
 description that this PR depends on the previous PR.
 
-Further, whenever making changes to the previous branch, ensure to update
+Whenever making changes to a previous branch, ensure to update
 the dependent branch with the latest changes from the previous branch.
 
 The general workflow for ensuring that all branches in the chain are up-to-date,

@@ -37,9 +37,9 @@ class TestAllPairwiseTransformers(TransformerPairwiseFixtureGenerator, QuickTest
         X2 = scenario.args["transform"].get("X2", X)
         len_X2 = len(X2)
 
-        assert isinstance(
-            dist_mat, np.ndarray
-        ), f"Type of matrix returned by transform is wrong for {trafo_name}"
+        assert isinstance(dist_mat, np.ndarray), (
+            f"Type of matrix returned by transform is wrong for {trafo_name}"
+        )
         assert (
             # this is only true as long as fixture are of mtypes where len = n_instances
             # should that change, use check_is_mtype to get n_instances metadata
@@ -77,9 +77,9 @@ class TestAllPanelTransformers(TransformerPairwisePanelFixtureGenerator, QuickTe
         X2 = scenario.args["transform"].get("X2", X)
         len_X2 = len(X2)
 
-        assert isinstance(
-            dist_mat, np.ndarray
-        ), f"Type of matrix returned by transform is wrong for {trafo_name}"
+        assert isinstance(dist_mat, np.ndarray), (
+            f"Type of matrix returned by transform is wrong for {trafo_name}"
+        )
         assert (
             # this is only true as long as fixture are of mtypes where len = n_instances
             # should that change, use check_is_mtype to get n_instances metadata
@@ -93,9 +93,9 @@ class TestAllPanelTransformers(TransformerPairwisePanelFixtureGenerator, QuickTe
 
         len_X = len(scenario.args["transform"]["X"])
 
-        assert isinstance(
-            diag_vec, np.ndarray
-        ), f"Type of matrix returned by transform is wrong for {trafo_name}"
+        assert isinstance(diag_vec, np.ndarray), (
+            f"Type of matrix returned by transform is wrong for {trafo_name}"
+        )
         assert (
             # this is only true as long as fixture are of mtypes where len = n_instances
             # should that change, use check_is_mtype to get n_instances metadata

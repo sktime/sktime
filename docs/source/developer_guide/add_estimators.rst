@@ -39,7 +39,7 @@ directory of ``sktime``.
 Usually, the scitype of a given estimator is directly determined by what the estimator does.
 This is also, often, explicitly signposted in publications related to the estimator.
 For instance, most textbooks mention ARIMA in the context of forecasting, so in that hypothetical situation
-it makeas sense to consider the "forecaster" template.
+it makes sense to consider the "forecaster" template.
 Then, inspect the template and check whether the methods of the class map clearly onto routines of the estimator.
 If not, another template might be more appropriate.
 
@@ -176,7 +176,7 @@ A useful workflow for using ``check_estimator`` to debug an estimator is as foll
 
 1. Run ``check_estimator(MyEstimator)`` to find failing tests
 2. Subset to failing tests or fixtures using ``fixtures_to_run`` or ``tests_to_run``
-3. If the failure is not obvious, set ``raise_exceptions=True`` to raise the exception and inspecet the traceback.
+3. If the failure is not obvious, set ``raise_exceptions=True`` to raise the exception and inspect the traceback.
 4. If the failure is still not clear, use advanced debuggers on the line of code with ``check_estimator``.
 
 Running the test suite in a repository clone
@@ -253,22 +253,59 @@ It is recommended to open a draft PR to get feedback early.
 Estimators dependent on cython
 ------------------------------
 
-To add an estimator to ``sktime`` that depends on cython, the following additional steps are needed:
+To add an estimator to ``sktime`` that depends on cython, additional steps are needed.
+
+There are two options for adding estimators with cython dependencies to ``sktime``:
+
+*   direct addition to ``sktime`` via the ``sktime-cython`` package.
+    This is the preferred option for ``sktime`` native estimators.
+*   addition via a third party package, which is then added as a soft dependency to ``sktime``.
+    This is the preferred option for third party estimators with maintainers who
+    would like to maintain the estimator in their own package.
+
+``sktime`` native estimators with cython dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For ``sktime`` native estimators with cython dependencies, the following steps should be followed:
+
+*   C code should be added to the ``sktime-cython`` package,
+    which is a separate package on ``pypi``.
+    No cython dependent code should be added directly to ``sktime``.
+*   Additionally, thin python bindings for ``cython`` code should be added in
+    ``sktime-cython``, without inheritance from ``sktime`` base classes,
+    or ``sktime`` imports.
+*   The thin python bindings should be tested inside ``sktime-cython`` directly.
+    No ``check_estimator`` tests are needed in ``sktime-cython``,
+    since the thin python bindings do not inherit from ``sktime`` base classes.
+*   In ``sktime``, a full interface to the algorithm should be added,
+    inheriting from the appropriate ``sktime`` base class, and importing
+    the thin python bindings from ``sktime-cython``.
+*   The ``python_dependencies`` tag should be set to the string ``"sktime-cython"``,
+    or contain ``"sktime-cython"`` if additional other dependencies are needed.
+    The tag ``tests:vm`` should be set to ``True`` to ensure testing
+    in a virtual machine with all dependencies installed.
+
+For a full set of up-to-date instructions, see the readme of the ``sktime-cython`` package,
+link here: `sktime-cython <https://github.com/sktime/sktime-cython>`_.
+
+Third party estimators with cython dependencies
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For third party estimators with cython dependencies, the following steps should be followed:
 
 *   all cython code should be present in a separate package on ``pypi`` and/or ``conda-forge``.
     No cython dependent code should be added directly to ``sktime``.
     Below, we call this separate package ``home-package``, for simplicity of reference.
 *   In ``home-package``, it is recommended to test the estimator via ``check_estimator``,
     on the same test matrix as ``sktime``: all supported python versions; MacOS, Linux, Windows.
-*   In ``sktime``, an interface to the algorithm should be added.
-    This can be a simple import from ``home-package``,
-    if the algorithm in ``home-package`` already passes ``check_estimator``.
-*   Alternatively, the algorithm can be interfaced via a delegator as a delegate,
-    tags and method overrides can be added in the delegator. See, e.g., ``MrSQM`` for this.
-*   For the ``sktime`` interface, the ``requires_cython`` tag should be set to ``True``,
-    and the ``python_dependencies`` tag should be set to the string ``"home-package"``.
-
-If all has been setup correctly, the estimator will be tested in ``sktime`` by the
-CI element ``test-cython-estimators``.
-Note that this CI element does not cover the full test matrix
-of python version and operating systems, this should be done in the upstream package.
+*   In ``sktime``, a forwarding interface to the algorithm should be added.
+    If the algorithm is kept up-to-date with the latest ``sktime`` interface,
+    this should use the ``_placeholder_record`` template,
+    see for example ``Prophetverse``.
+    If the algorithm in ``home-package`` is not fully API compliant,
+    or only thin python bindings are present,
+    a delegator pattern can be used instead, see, e.g., ``MrSQM`` for an example.
+*   For the ``sktime`` interface,
+    the ``python_dependencies`` tag should be set to the string ``"home-package"``,
+    and the tag ``tests:vm`` should be set to ``True`` to ensure testing
+    in a virtual machine with all dependencies installed.

@@ -66,7 +66,9 @@ def test_all_estimators_by_scitype(estimator_scitype, return_names):
 
     assert isinstance(estimators, list)
     # there should be at least one estimator returned
-    assert len(estimators) > 0
+    # global_forecaster is deprecated with no concrete implementations
+    if estimator_scitype != "global_forecaster":
+        assert len(estimators) > 0
 
     # checks return type specification (see docstring)
     if return_names:
@@ -91,6 +93,9 @@ def test_all_tags(estimator_scitype):
     assert len(tags) > 0
 
     VALID_SCITYPES_SET = set(get_obj_scitype_list() + get_obj_scitype_list(mixin=True))
+
+    # stepout for "distribution" due to silent copy of Normal in sktime
+    VALID_SCITYPES_SET.add("distribution")
 
     # checks return type specification (see docstring)
     for tag in tags:
@@ -158,7 +163,7 @@ def _get_tag_fixture():
     # just picked a few valid tags to try out as valid str return_tags args:
     test_str_as_arg = [
         "X-y-must-have-same-index",
-        "capability:pred_var",
+        "capability:pred_int",
         "skip-inverse-transform",
     ]
 
@@ -216,31 +221,39 @@ def test_all_estimators_return_tags_bad_arg(return_tags):
         _ = all_estimators(return_tags=return_tags)
 
 
-@pytest.mark.parametrize("pred_int", [True, False])
-def test_all_estimators_tag_filter(pred_int):
+@pytest.mark.parametrize(
+    "tag_name", ["capability:pred_int", "capability:missing_values"]
+)
+@pytest.mark.parametrize("tag_value", [True, False])
+def test_all_estimators_tag_filter(tag_value, tag_name):
     """Test that tag filtering returns estimators as expected."""
-    NOPROBA_EXAMPLE = "TrendForecaster"
-    PROBA_EXAMPLE = "ARIMA"
+    FALSE_EXAMPLE = "TrendForecaster"  # tag_value known False for both tag_name
+    TRUE_EXAMPLE = "ARIMA"  # tag_value known True for both tag_name
 
-    res = all_estimators("forecaster", filter_tags={"capability:pred_int": pred_int})
+    res = all_estimators("forecaster", filter_tags={tag_name: tag_value})
     names, ests = zip(*res)
 
-    if pred_int:
-        assert PROBA_EXAMPLE in names
-        assert NOPROBA_EXAMPLE not in names
-        assert [est.get_class_tag("capability:pred_int") for est in ests]
+    if tag_value:
+        assert TRUE_EXAMPLE in names
+        assert FALSE_EXAMPLE not in names
+        assert [est.get_class_tag(tag_name) for est in ests]
     else:
-        assert PROBA_EXAMPLE not in names
-        assert NOPROBA_EXAMPLE in names
-        assert [not est.get_class_tag("capability:pred_int") for est in ests]
+        assert TRUE_EXAMPLE not in names
+        assert FALSE_EXAMPLE in names
+        assert [not est.get_class_tag(tag_name) for est in ests]
+
+    for est in ests:  # not done as comprehension to make this easier to read
+        est_type = scitype(est, force_single_scitype=False, coerce_to_list=True)
+        assert "forecaster" in est_type
 
 
 @pytest.mark.parametrize("estimator_scitype", BASE_CLASS_SCITYPE_LIST)
 def test_scitype_inference(estimator_scitype):
     """Check that scitype inverts _check_estimator_types."""
     base_class = _check_estimator_types(estimator_scitype)[0]
-    inferred_scitype = scitype(base_class)
+    all_scitypes = scitype(base_class, force_single_scitype=False, coerce_to_list=True)
+    inferred_scitype = all_scitypes[0]
 
-    assert (
-        inferred_scitype == estimator_scitype
-    ), "one of scitype, _check_estimator_types is incorrect, these should be inverses"
+    assert inferred_scitype == estimator_scitype, (
+        "one of scitype, _check_estimator_types is incorrect, these should be inverses"
+    )

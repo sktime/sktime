@@ -7,7 +7,6 @@ __author__ = ["tch", "RNKuhns"]
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.api.types import is_numeric_dtype
 
 from sktime.performance_metrics.forecasting import (
     GeometricMeanRelativeAbsoluteError,
@@ -501,6 +500,13 @@ def test_univariate_metric_function_class_equality(metric_func_name, random_stat
     )
 
 
+def _is_numeric_scalar(value):
+    """Check if value is a numeric scalar."""
+    is_num = isinstance(value, (int, float, np.integer, np.floating))
+    is_scalar = np.isscalar(value)
+    return is_num and is_scalar
+
+
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
@@ -519,9 +525,7 @@ def test_univariate_function_output_type(metric_func_name, random_state):
         y_true, y_pred, y_train=y_train, y_pred_benchmark=y_pred_benchmark
     )
 
-    is_num = is_numeric_dtype(function_loss)
-    is_scalar = np.isscalar(function_loss)
-    assert is_num and is_scalar, " ".join(
+    assert _is_numeric_scalar(function_loss), " ".join(
         ["Loss function with univariate input should return scalar number"]
     )
 
@@ -628,15 +632,11 @@ def test_sample_weight_generator_has_no_effect_on_metric_function(
         sample_weight=weight_generator,
     )
 
-    is_num = is_numeric_dtype(function_loss)
-    is_scalar = np.isscalar(function_loss)
-    assert is_num and is_scalar, " ".join(
+    assert _is_numeric_scalar(function_loss), " ".join(
         ["Loss function with univariate input should return scalar number"]
     )
 
-    is_num = is_numeric_dtype(function_loss_with_weights)
-    is_scalar = np.isscalar(function_loss_with_weights)
-    assert is_num and is_scalar, " ".join(
+    assert _is_numeric_scalar(function_loss_with_weights), " ".join(
         ["Loss function with sample weight generator should return scalar number"]
     )
 

@@ -74,7 +74,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.clustering.k_means import TimeSeriesKMeans
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import ClustererPipeline
@@ -105,6 +105,9 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         "capability:train_estimate": False,
         "capability:contractable": False,
         "capability:multithreading": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # no default tag values - these are set dynamically below
@@ -119,13 +122,15 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
         # can handle multivariate iff: both clusterer and all transformers can
         multivariate = clusterer.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both clusterer and all transformers can,
         #   *or* transformer chain removes missing data
         missing = clusterer.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -163,6 +168,16 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
     @_transformers.setter
     def _transformers(self, value):
         self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.clusterer)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.clusterer_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
@@ -317,10 +332,11 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.transformations.exponent import ExponentTransformer
 
         params = []
 
@@ -410,8 +426,8 @@ class SklearnClustererPipeline(ClustererPipeline):
     Examples
     --------
     >>> from sklearn.cluster import KMeans
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import SklearnClustererPipeline
     >>> X_train, y_train = load_unit_test(split="train")
@@ -451,11 +467,11 @@ class SklearnClustererPipeline(ClustererPipeline):
 
         # can handle multivariate iff all transformers can
         # sklearn transformers always support multivariate
-        multivariate = not self.transformers_.get_tag("univariate-only", True)
+        multivariate = self.transformers_.get_tag("capability:multivariate", False)
         # can handle missing values iff transformer chain removes missing data
         # sklearn clusterers might be able to handle missing data (but no tag there)
         # so better set the tag liberally
-        missing = self.transformers_.get_tag("handles-missing-data", False)
+        missing = self.transformers_.get_tag("capability:missing_values", False)
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -472,6 +488,24 @@ class SklearnClustererPipeline(ClustererPipeline):
             "capability:multithreading": False,
         }
         self.set_tags(**tags_to_set)
+
+    @property
+    def _transformers(self):
+        return self.transformers_._steps
+
+    @_transformers.setter
+    def _transformers(self, value):
+        self.transformers_._steps = value
+
+    @property
+    def _steps(self):
+        return self._check_estimators(self.transformers) + [
+            self._coerce_estimator_tuple(self.clusterer)
+        ]
+
+    @property
+    def steps_(self):
+        return self._transformers + [self._coerce_estimator_tuple(self.clusterer_)]
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClustererPipeline, transformers on left.
@@ -627,8 +661,8 @@ class SklearnClustererPipeline(ClustererPipeline):
         """
         from sklearn.cluster import KMeans
 
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         # example with series-to-series transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)

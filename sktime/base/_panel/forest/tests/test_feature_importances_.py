@@ -8,14 +8,19 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.classification.ensemble._ctsf import ComposableTimeSeriesForestClassifier
-from sktime.transformations.panel.segment import IntervalSegmenter
-from sktime.transformations.panel.summarize._extract import (
+from sktime.tests.test_switch import run_test_module_changed
+from sktime.transformations.adapt import TabularToSeriesAdaptor
+from sktime.transformations.segment import IntervalSegmenter
+from sktime.transformations.summarize._extract import (
     RandomIntervalFeatureExtractor,
 )
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 from sktime.utils._testing.panel import make_classification_problem
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.base._panel.forest"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.xfail(reason="array dimension mismatch since 1.2.0, see #3930")
 def test_feature_importances_single_feature_interval_and_estimator():
     """Test feature importances for single feature interval and estimator.
@@ -72,6 +77,10 @@ def test_feature_importances_single_feature_interval_and_estimator():
     np.testing.assert_array_equal(fi_actual, fi_expected)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.base._panel.forest"),
+    reason="skip test if required soft dependency not available",
+)
 @pytest.mark.xfail(reason="array dimension mismatch since 1.2.0, see #3930")
 @pytest.mark.parametrize("n_intervals", [1])
 @pytest.mark.parametrize("n_estimators", [1, 2])

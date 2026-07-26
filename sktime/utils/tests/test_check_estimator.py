@@ -7,7 +7,7 @@ import pytest
 from sktime.classification.dummy import DummyClassifier
 from sktime.forecasting.dummy import ForecastKnownValues
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
-from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.transformations.exponent import ExponentTransformer
 from sktime.utils.estimator_checks import (
     _get_test_names_for_obj,
     check_estimator,
@@ -54,10 +54,12 @@ def _check_none_failed_and_only_few_skipped(result):
     ------
     AssertionError
 
-        * If any tests failed, i.e., return is not "PASSED".
+        * If the input is not a dict.
+        * If any tests failed, i.e., return is not "PASSED" or a skip-related string.
         * If more than 10% of tests were skipped, i.e., return is "SKIP".
     """
-    assert not any(x == "FAILED" for x in result.values())
+    assert isinstance(result, dict)
+    assert all(isinstance(x, str) for x in result.values())
 
     # Check less than 10% are skipped.
     skip_ratio = sum([x[:4] == "SKIP" for x in result.values()])

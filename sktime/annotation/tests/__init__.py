@@ -1,1 +1,0 @@
-"""Time series annotation tests."""

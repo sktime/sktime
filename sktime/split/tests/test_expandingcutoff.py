@@ -116,7 +116,7 @@ def test_expandingcutoff_splitloc_004():
     not run_test_for_class(ExpandingCutoffSplitter),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_expandingcutoff_hiearchical_splitloc_005():
+def test_expandingcutoff_hierarchical_splitloc_005():
     """Test hierarchical splitloc with datetime"""
     y = _make_hierarchical(
         min_timepoints=6,
@@ -156,7 +156,7 @@ def test_expandingcutoff_hiearchical_splitloc_005():
     not run_test_for_class(ExpandingCutoffSplitter),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_expandingcutoff_hiearchical_forecastbylevel_006():
+def test_expandingcutoff_hierarchical_forecastbylevel_006():
     """Test hierarchical with forecast by level"""
     from sktime.forecasting.compose import ForecastByLevel
     from sktime.forecasting.model_selection import ForecastingGridSearchCV

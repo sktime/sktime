@@ -15,7 +15,7 @@
 
 import abc
 from functools import cached_property
-from typing import Any, Optional
+from typing import Any
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -61,9 +61,9 @@ class RotaryProjection(Projection):
         base: int = 10000,
     ):
         super().__init__(proj_width, num_heads, num_groups)
-        assert (
-            self.proj_width % 2 == 0
-        ), f"proj_width must be even, got {self.proj_width}"
+        assert self.proj_width % 2 == 0, (
+            f"proj_width must be even, got {self.proj_width}"
+        )
         self.register_buffer(
             "theta",
             1.0
@@ -111,16 +111,16 @@ class QueryKeyProjection(nn.Module):
         num_heads: int,
         num_groups: int,
         proj_layer: type[Projection],
-        kwargs: Optional[dict[str, Any]] = None,
-        key_proj_layer: Optional[type[Projection]] = None,
-        key_kwargs: Optional[dict[str, Any]] = None,
-        partial_factor: Optional[tuple[float, float]] = None,
+        kwargs: dict[str, Any] | None = None,
+        key_proj_layer: type[Projection] | None = None,
+        key_kwargs: dict[str, Any] | None = None,
+        partial_factor: tuple[float, float] | None = None,
     ):
         super().__init__()
         if partial_factor is not None:
-            assert (
-                0.0 <= partial_factor[0] < partial_factor[1] <= 1.0
-            ), f"got {partial_factor[0]}, {partial_factor[1]}"
+            assert 0.0 <= partial_factor[0] < partial_factor[1] <= 1.0, (
+                f"got {partial_factor[0]}, {partial_factor[1]}"
+            )
         assert num_heads > 0 and dim % num_heads == 0
         assert (num_heads % num_groups == 0) and (num_heads >= num_groups)
 

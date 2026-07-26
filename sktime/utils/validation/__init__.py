@@ -24,17 +24,17 @@ import pandas as pd
 ACCEPTED_DATETIME_TYPES = np.datetime64, pd.Timestamp
 ACCEPTED_TIMEDELTA_TYPES = pd.Timedelta, timedelta, np.timedelta64
 ACCEPTED_DATEOFFSET_TYPES = pd.DateOffset
-ACCEPTED_WINDOW_LENGTH_TYPES = Union[
-    int, float, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
-]
-NON_FLOAT_WINDOW_LENGTH_TYPES = Union[
-    int, Union[ACCEPTED_TIMEDELTA_TYPES], Union[ACCEPTED_DATEOFFSET_TYPES]
-]
+ACCEPTED_WINDOW_LENGTH_TYPES = (
+    int | float | pd.Timedelta | timedelta | np.timedelta64 | pd.DateOffset
+)
+NON_FLOAT_WINDOW_LENGTH_TYPES = (
+    int | pd.Timedelta | timedelta | np.timedelta64 | pd.DateOffset
+)
 
 
 def is_array(x) -> bool:
     """Check if x is either a list or np.ndarray."""
-    return isinstance(x, (list, np.ndarray))
+    return isinstance(x, list | np.ndarray)
 
 
 def is_int(x) -> bool:
@@ -185,8 +185,7 @@ def check_window_length(
         # Check `n_timepoints`.
         if not is_int(n_timepoints) or n_timepoints < 2:
             raise ValueError(
-                f"`n_timepoints` must be a positive integer, but found:"
-                f" {n_timepoints}."
+                f"`n_timepoints` must be a positive integer, but found: {n_timepoints}."
             )
 
         # Compute fraction relative to `n_timepoints`.

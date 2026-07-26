@@ -17,7 +17,7 @@ e.g., metadata such as column names are missing.
 Types of tests that can be performed with these examples:
 
 * the mtype and scitype of the example should be correctly inferred by checkers.
-* the metadata of hte example should be correctly inferred by checkers.
+* the metadata of the example should be correctly inferred by checkers.
 * conversions from non-lossy representations to any other ones
   should yield the element exactly, identically, for examples of the same index.
 """
@@ -42,6 +42,7 @@ class _AlignmentSimpleAlignment(_AlignmentSimple):
         "mtype": "alignment",
         "python_dependencies": None,
         "lossy": False,
+        "metadata": {"is_multiple": False},
     }
 
     def build(self):
@@ -53,6 +54,7 @@ class _AlignmentSimpleAlignmentLoc(_AlignmentSimple):
         "mtype": "alignment_loc",
         "python_dependencies": None,
         "lossy": False,
+        "metadata": {"is_multiple": False},
     }
 
     def build(self):

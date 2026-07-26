@@ -4,7 +4,7 @@
 
 __all__ = ["BaseHMMLearn", "GaussianHMM", "GMMHMM", "PoissonHMM"]
 
-from sktime.annotation.hmm_learn.base import BaseHMMLearn
-from sktime.annotation.hmm_learn.gaussian import GaussianHMM
-from sktime.annotation.hmm_learn.gmm import GMMHMM
-from sktime.annotation.hmm_learn.poisson import PoissonHMM
+from sktime.detection.hmm_learn.base import BaseHMMLearn
+from sktime.detection.hmm_learn.gaussian import GaussianHMM
+from sktime.detection.hmm_learn.gmm import GMMHMM
+from sktime.detection.hmm_learn.poisson import PoissonHMM

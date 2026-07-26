@@ -11,8 +11,11 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
 
     Returns
     -------
-    gluonts.dataset.common.ListDataset
-        A gluonTS ListDataset formed from `pd_dataframe`
+    list_dataset: list
+        A list of dict where each dict represents a time series with the following keys:
+
+        - "start": The starting timestamp.
+        - "target": The values of the time series, as a numpy array.
 
     Examples
     --------
@@ -36,15 +39,15 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
     >>> from sktime.datatypes._adapter.gluonts import convert_pandas_to_listDataset
     >>> X_list_dataset = convert_pandas_to_listDataset(X)
     """
-    from gluonts.dataset.common import ListDataset
-    from gluonts.dataset.field_names import FieldName
+    # use numpy to implement abstraction of gluonTS ListDataset
+    import numpy as np
 
     # For non-multiindexed DataFrames
     if not isinstance(pd_dataframe.index, pd.MultiIndex):
         start_datetime = pd_dataframe.index[0]
 
-        target_columns = pd_dataframe.columns[:]
-        target_values = pd_dataframe[target_columns]
+        target_columns = pd_dataframe.columns.difference(["instances", "timepoints"])
+        target_values = pd_dataframe[target_columns].to_numpy().astype(np.float32)
 
         if isinstance(pd_dataframe.index, pd.DatetimeIndex):
             freq = pd_dataframe.index.inferred_freq
@@ -56,37 +59,14 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
             start_datetime = pd.Timestamp(start_datetime)
             freq = "D"
 
-        return ListDataset(
-            [{FieldName.START: start_datetime, FieldName.TARGET: target_values}],
-            freq=freq,
-            one_dim_target=False,
-        )
-
-    dataset = []
-
-    # By maintaining 2 levels in the DataFrame's indices
-    # we can access each series and its timestep values with ease!
-    for _, data in pd_dataframe.groupby(level=0):
-        data = data.reset_index(level=0, drop=True)
-
-        # Getting the starting time for each series
-        start_datetime = data.index[0]
-
-        if not isinstance(data.index, (pd.DatetimeIndex, pd.PeriodIndex)):
-            start_datetime = pd.Timestamp(start_datetime)
-
-        # Isolating multivariate values for each time series
-        target_column = data.columns[:]
-
-        target_values = data[target_column]
-        target_values = target_values.reset_index(drop=True)
-
-        dataset.append(
+        return [
             {
-                FieldName.START: start_datetime,
-                FieldName.TARGET: target_values,
+                "start": pd.Period(start_datetime, freq),
+                "target": target_values,
             }
-        )
+        ]
+
+    list_dataset = []
 
     # Obtain the total amount of timesteps to assist with inferring frequency
     time_index = pd_dataframe.index.get_level_values(1)
@@ -101,12 +81,28 @@ def convert_pandas_to_listDataset(pd_dataframe: pd.DataFrame):
     if freq is None:
         freq = "D"
 
-    # Converting the dataset to a GluonTS ListDataset
-    list_dataset = ListDataset(
-        dataset,
-        freq=freq,
-        one_dim_target=False,
-    )
+    # By maintaining 2 levels in the DataFrame's indices
+    # we can access each series and its timestep values with ease!
+    for _, data in pd_dataframe.groupby(level=0):
+        data = data.reset_index(level=0, drop=True)
+
+        # Getting the starting time for each series
+        start_datetime = data.index[0]
+
+        if not isinstance(data.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+            start_datetime = pd.Timestamp(start_datetime)
+
+        # Isolating multivariate values for each time series
+        target_column = data.columns.difference(["instances"])
+
+        target_values = data[target_column].to_numpy().astype(np.float32)
+
+        list_dataset.append(
+            {
+                "start": pd.Period(start_datetime, freq),
+                "target": target_values,
+            }
+        )
 
     return list_dataset
 
