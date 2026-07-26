@@ -15,6 +15,11 @@ def _fit_linear_trend(time_steps, values):
     centered_t = time_steps - mean_t
     mean_v = np.mean(values)
     denominator = np.sum(np.square(centered_t))
+    if denominator == 0:
+        raise ValueError(
+            "The time column has zero variance. Cannot fit a linear trend. "
+            "The time column must have non-zero variance."
+        )
     numerator = np.sum(centered_t * (values - mean_v))
     slope = numerator / denominator
     intercept = mean_v - slope * mean_t
