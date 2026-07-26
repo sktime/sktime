@@ -150,7 +150,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ClearSky",
         "ContractableBOSS",
         "DOBIN",
-        "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
