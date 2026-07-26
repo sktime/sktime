@@ -103,7 +103,7 @@ class KLDivergenceNormal(BaseForecastingErrorMetric):
     See Also
     --------
     KLDivergenceDoubleExponential
-    NormalizedMeanSquaredError
+    MSEnormalizedBySD
 
     References
     ----------

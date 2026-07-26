@@ -238,16 +238,16 @@ def test_msmape_class():
     reason="Run if performance_metrics module has changed.",
 )
 def test_nmse_class():
-    """Test NormalizedMeanSquaredError (NMSE).
+    """Test MSEnormalizedBySD (NMSE).
 
     Hand-computed expected values for basic, constant-series, and multivariate cases.
     """
-    from sktime.performance_metrics.forecasting import NormalizedMeanSquaredError
+    from sktime.performance_metrics.forecasting import MSEnormalizedBySD
 
     # --- basic case ---
     y_true = np.array([3, -0.5, 2, 7, 2])
     y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    metric = NormalizedMeanSquaredError()
+    metric = MSEnormalizedBySD()
     assert np.allclose(metric(y_true, y_pred), 0.2630806138733395)
 
     # --- perfect forecast ---
@@ -266,13 +266,13 @@ def test_nmse_class():
     y_pred_mv = pd.DataFrame(
         {"A": [2.5, 0.0, 2, 8, 1.25], "B": [1.5, 2.5, 2.5, 3.5, 5.5]}
     )
-    metric_raw = NormalizedMeanSquaredError(multioutput="raw_values")
+    metric_raw = MSEnormalizedBySD(multioutput="raw_values")
     result = metric_raw(y_true_mv, y_pred_mv)
     expected = np.array([0.2630806138733395, 0.3535533905932738])
     assert np.allclose(result, expected)
 
     # --- uniform_average multivariate ---
-    metric_avg = NormalizedMeanSquaredError()
+    metric_avg = MSEnormalizedBySD()
     result = metric_avg(y_true_mv, y_pred_mv)
     assert np.allclose(result, 0.3083170022333066)
 
@@ -282,16 +282,16 @@ def test_nmse_class():
     reason="Run if performance_metrics module has changed.",
 )
 def test_iqre_class():
-    """Test InterQuartileRangeError (IQR).
+    """Test RMSEnormalizedByIQR (IQR).
 
     Hand-computed expected values for basic, constant-series, and multivariate cases.
     """
-    from sktime.performance_metrics.forecasting import InterQuartileRangeError
+    from sktime.performance_metrics.forecasting import RMSEnormalizedByIQR
 
     # --- basic case ---
     y_true = np.array([3, -0.5, 2, 7, 2])
     y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    metric = InterQuartileRangeError()
+    metric = RMSEnormalizedByIQR()
     assert np.allclose(metric(y_true, y_pred), 0.6422616289332564)
 
     # --- perfect forecast ---
@@ -310,7 +310,7 @@ def test_iqre_class():
     y_pred_mv = pd.DataFrame(
         {"A": [2.5, 0.0, 2, 8, 1.25], "B": [1.5, 2.5, 2.5, 3.5, 5.5]}
     )
-    metric_raw = InterQuartileRangeError(multioutput="raw_values")
+    metric_raw = RMSEnormalizedByIQR(multioutput="raw_values")
     result = metric_raw(y_true_mv, y_pred_mv)
     expected = np.array([0.6422616289332564, 0.25])
     assert np.allclose(result, expected)
@@ -487,9 +487,9 @@ def test_evaluate_by_index_returns_correct_index():
     return a pd.Series/DataFrame whose index matches y_true's index.
     """
     from sktime.performance_metrics.forecasting import (
-        InterQuartileRangeError,
+        RMSEnormalizedByIQR,
         KLDivergenceNormal,
-        NormalizedMeanSquaredError,
+        MSEnormalizedBySD,
         TheilU2,
     )
 
@@ -498,8 +498,8 @@ def test_evaluate_by_index_returns_correct_index():
     y_pred = pd.DataFrame({"a": [3.0, 5.0, 3.0, 6.0, 5.0, 5.5]}, index=idx)
 
     for MetricCls in [
-        NormalizedMeanSquaredError,
-        InterQuartileRangeError,
+        MSEnormalizedBySD,
+        RMSEnormalizedByIQR,
         KLDivergenceNormal,
     ]:
         metric = MetricCls()

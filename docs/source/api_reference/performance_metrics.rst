@@ -99,8 +99,8 @@ Normalized and divergence-based errors
     :toctree: auto_generated/
     :template: class_with_call.rst
 
-    NormalizedMeanSquaredError
-    InterQuartileRangeError
+    MSEnormalizedBySD
+    RMSEnormalizedByIQR
     KLDivergenceNormal
     KLDivergenceDoubleExponential
     KLDivergenceSingleExponential

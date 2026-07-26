@@ -16,7 +16,7 @@ __all__ = [
     "GeometricMeanSquaredError",
     "GeometricMeanRelativeAbsoluteError",
     "GeometricMeanRelativeSquaredError",
-    "InterQuartileRangeError",
+    "RMSEnormalizedByIQR",
     "KLDivergenceDoubleExponential",
     "KLDivergenceNormal",
     "KLDivergenceSingleExponential",
@@ -40,7 +40,7 @@ __all__ = [
     "MedianSquaredError",
     "MedianSquaredPercentageError",
     "MedianSquaredScaledError",
-    "NormalizedMeanSquaredError",
+    "MSEnormalizedBySD",
     "OverallWeightedAverage",
     "RelativeLoss",
     "TheilU2",
@@ -102,7 +102,7 @@ from sktime.performance_metrics.forecasting._gmrelse import (
     GeometricMeanRelativeSquaredError,
 )
 from sktime.performance_metrics.forecasting._gmse import GeometricMeanSquaredError
-from sktime.performance_metrics.forecasting._iqre import InterQuartileRangeError
+from sktime.performance_metrics.forecasting._iqre import RMSEnormalizedByIQR
 from sktime.performance_metrics.forecasting._klde1 import (
     KLDivergenceSingleExponential,
 )
@@ -135,7 +135,7 @@ from sktime.performance_metrics.forecasting._msep import MeanSquaredErrorPercent
 from sktime.performance_metrics.forecasting._msle import MeanSquaredLogError
 from sktime.performance_metrics.forecasting._mspe import MeanSquaredPercentageError
 from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
-from sktime.performance_metrics.forecasting._nmse import NormalizedMeanSquaredError
+from sktime.performance_metrics.forecasting._nmse import MSEnormalizedBySD
 from sktime.performance_metrics.forecasting._owa import OverallWeightedAverage
 from sktime.performance_metrics.forecasting._rell import RelativeLoss
 from sktime.performance_metrics.forecasting._theilu2 import TheilU2

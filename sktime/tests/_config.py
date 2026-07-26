@@ -227,11 +227,11 @@ EXCLUDED_TESTS_BY_TEST = {
         # on higher version, prints np.float64(0.123456)
         # therefore these doctests will fail either on lower or higher versions
         "MedianSquaredScaledError",
-        "InterQuartileRangeError",
+        "RMSEnormalizedByIQR",
         "KLDivergenceDoubleExponential",
         "KLDivergenceNormal",
         "KLDivergenceSingleExponential",
-        "NormalizedMeanSquaredError",
+        "MSEnormalizedBySD",
         "GeometricMeanAbsoluteError",
         "MedianRelativeAbsoluteError",
         "MeanSquaredScaledError",

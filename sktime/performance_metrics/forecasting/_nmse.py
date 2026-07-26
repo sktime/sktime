@@ -9,7 +9,7 @@ import numpy as np
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 
 
-class NormalizedMeanSquaredError(BaseForecastingErrorMetric):
+class MSEnormalizedBySD(BaseForecastingErrorMetric):
     r"""Normalized mean squared error (NMSE).
 
     NMSE normalizes the root mean squared error by the standard deviation
@@ -86,7 +86,7 @@ class NormalizedMeanSquaredError(BaseForecastingErrorMetric):
     See Also
     --------
     MeanSquaredError
-    InterQuartileRangeError
+    RMSEnormalizedByIQR
 
     References
     ----------
@@ -96,10 +96,10 @@ class NormalizedMeanSquaredError(BaseForecastingErrorMetric):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.performance_metrics.forecasting import NormalizedMeanSquaredError
+    >>> from sktime.performance_metrics.forecasting import MSEnormalizedBySD
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> nmse = NormalizedMeanSquaredError()
+    >>> nmse = MSEnormalizedBySD()
     >>> nmse(y_true, y_pred)
     np.float64(0.2630806138733395)
     """
