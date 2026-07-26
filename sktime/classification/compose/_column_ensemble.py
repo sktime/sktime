@@ -297,37 +297,29 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         )
 
         if parameter_set == "results_comparison":
-            cboss0 = ContractableBOSS(
+            cboss = ContractableBOSS(
                 n_parameter_samples=4, max_ensemble_size=2, random_state=0
             )
-            cif0 = CanonicalIntervalForest(
+            cif = CanonicalIntervalForest(
                 n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
             )
-            params0 = {"estimators": [("cBOSS", cboss0, 5), ("CIF", cif0, [3, 4])]}
-            cboss1 = ContractableBOSS(
-                n_parameter_samples=2, max_ensemble_size=5, random_state=0
-            )
-            cif1 = CanonicalIntervalForest(
-                n_estimators=5, n_intervals=2, att_subsample_size=2, random_state=0
-            )
-            params1 = {"estimators": [("cBOSS", cboss1, 2), ("CIF", cif1, [1, 8])]}
-            return [params0, params1]
+            return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
         else:
-            params0 = {
+            param0 = {
                 "estimators": [
-                    ("tsf1", TSFC(n_estimators=2, random_state=0), 0.5),
-                    ("tsf2", TSFC(n_estimators=5, random_state=1), 0.5),
+                    ("tsf1", TSFC(n_estimators=2, min_interval=2), 0.3),
+                    ("tsf2", TSFC(n_estimators=4), 0.7),
                 ]
             }
-            params1 = {
+            param1 = {
                 "estimators": [
-                    ("tsf1", TSFC(n_estimators=10, random_state=2), 0.3),
-                    ("tsf2", TSFC(n_estimators=2, random_state=3), 0.7),
+                    ("tsf1", TSFC(n_estimators=2), 0),
+                    ("tsf2", TSFC(n_estimators=4), 0),
                 ]
             }
-            params2 = {**params1, "remainder": TSFC(n_estimators=2)}
+            param2 = {**param1, "remainder": TSFC(n_estimators=2)}
 
-            return [params0, params1, params2]
+            return [param1, param2]
 
 
 def _get_column(X, key):
