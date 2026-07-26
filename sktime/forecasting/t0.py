@@ -62,12 +62,12 @@ class T0Forecaster(BaseForecaster):
     ----------
     model_path : str or None, default="theforecastingcompany/t0-alpha"
         Path to the T0 HuggingFace model checkpoint. The default checkpoint is a
-        gated model on the HuggingFace Hub, so using it requires accepting the
-        vendor's license (see ``license_accepted``) and authenticating with a
+        gated model on the HuggingFace Hub, so downloading it requires accepting
+        the vendor's terms on the model page and authenticating with a
         HuggingFace token. If ``None``, a small randomly-initialized T0 model is
-        built locally instead of downloading any checkpoint - this produces
-        untrained (meaningless) forecasts and is intended only for testing or
-        offline use where the gated checkpoint is unavailable.
+        built locally (from the ``tfc-t0`` model code) instead of downloading any
+        checkpoint - this produces untrained (meaningless) forecasts and is
+        intended only for testing or offline use.
     device : str or None, default=None
         Device for inference, e.g., "cpu", "cuda", or "mps". If None, uses "cuda"
         when a CUDA device is available, otherwise "cpu".
@@ -80,11 +80,12 @@ class T0Forecaster(BaseForecaster):
         global RNG untouched. T0's inference is deterministic, so this does not
         change the forecast; it is accepted for interface consistency.
     license_accepted : bool, optional, default=False
-        Whether the user has read and accepted the license terms of the model at
-        ``model_path``. The default checkpoint is gated and licensed by The
-        Forecasting Company, so ``license_accepted`` must be set to ``True`` to
-        load a real checkpoint; otherwise ``fit`` raises. Ignored when
-        ``model_path`` is ``None`` (the local random model needs no license).
+        Whether the user has read and accepted the license terms of the ``tfc-t0``
+        package and the T0 models, licensed by The Forecasting Company. Must be
+        set to ``True`` to use ``T0Forecaster``; otherwise ``fit`` raises. To
+        view the license, call ``T0Forecaster.print_license()``; the model card
+        and gated-access terms are at
+        https://huggingface.co/theforecastingcompany/t0-alpha.
     ignore_deps : bool, optional, default=False
         If True, dependency checks are skipped.
 
@@ -261,26 +262,19 @@ class T0Forecaster(BaseForecaster):
                 print(text)
 
     def _check_license(self):
-        """Guard loading of a gated checkpoint behind explicit license acceptance.
+        """Raise unless the user has accepted the T0 license.
 
-        Raises if a real checkpoint is requested (``model_path`` is not ``None``)
-        but the user has not set ``license_accepted=True``. The local random
-        model (``model_path=None``) needs no license and is exempt.
+        ``license_accepted`` must be ``True`` to use the forecaster.
         """
-        if self.model_path is not None and not self.license_accepted:
+        if not self.license_accepted:
             raise ValueError(
-                f"Use of the T0 checkpoint '{self.model_path}' is subject to the "
-                "license and access terms of its vendor, The Forecasting Company. "
-                "The default checkpoint is a gated model on the HuggingFace Hub: "
-                "access requires accepting the vendor's terms on the model page "
-                "and authenticating with a HuggingFace token. You must read and "
-                "accept those terms to use it. "
-                "To confirm that you have read and accepted the license terms, set "
-                "the `license_accepted` parameter to True. "
-                "To print and view the license shipped with the t0 package, call "
-                "`T0Forecaster.print_license()`. "
-                "Alternatively, set `model_path=None` to build a small "
-                "randomly-initialized model locally (untrained; for testing only)."
+                "Use of T0Forecaster is subject to the license terms of the "
+                "`tfc-t0` package and the T0 models, licensed by The Forecasting "
+                "Company. You must read and accept these terms to use the "
+                "forecaster. To confirm acceptance, set the `license_accepted` "
+                "parameter to True. To view the license, call "
+                "`T0Forecaster.print_license()`; the model card and gated-access "
+                "terms are at https://huggingface.co/theforecastingcompany/t0-alpha ."
             )
 
     def _fit(self, y, X, fh):
@@ -525,8 +519,8 @@ class T0Forecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         return [
-            {"model_path": None},
-            {"model_path": None, "random_state": 42},
+            {"model_path": None, "license_accepted": True},
+            {"model_path": None, "random_state": 42, "license_accepted": True},
         ]
 
 
