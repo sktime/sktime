@@ -278,6 +278,8 @@ class MovingWindow(BaseDetector):
         from sktime.detection.costs._l2_cost import L2Cost
 
         return [
+            {"bandwidth": 10},
+            {"bandwidth": 20, "threshold_scale": 1.0, "level": 0.05},
             {"change_score": L2Cost(), "bandwidth": 5, "penalty": 20},
             {"change_score": GaussianCost(), "bandwidth": 5, "penalty": 30},
-        ]
+        }
