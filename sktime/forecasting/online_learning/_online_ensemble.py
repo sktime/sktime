@@ -125,7 +125,10 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         """Return testing parameter settings for the estimator."""
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.online_learning._hedge_expert import HedgeExpert
-        params1 = {"forecasters": [("f1", NaiveForecaster()), ("f2", NaiveForecaster())]}
+
+        params1 = {
+            "forecasters": [("f1", NaiveForecaster()), ("f2", NaiveForecaster())]
+        }
 
         params2 = {
             "forecasters": [("f1", NaiveForecaster()), ("f2", NaiveForecaster())],
