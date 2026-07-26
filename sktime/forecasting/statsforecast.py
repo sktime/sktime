@@ -507,7 +507,10 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     >>> forecaster = StatsForecastAutoETS(  # doctest: +SKIP
     ...     season_length=12, model="AAN", damped=True
     ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoETS(...)
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    """
 
     _tags = {
         # packaging info
