@@ -941,9 +941,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         y_train, _, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
 
-        y_pred = object_instance.fit_predict(
-            y=y_train, X=X_train, fh=fh, X_pred=X_test
-        )
+        y_pred = object_instance.fit_predict(y=y_train, X=X_train, fh=fh, X_pred=X_test)
 
         cutoff = get_cutoff(y_train, return_index=True)
         _assert_correct_pred_time_index(y_pred.index, cutoff, fh)
@@ -1045,8 +1043,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # Pretrain should change state to "pretrained"
         object_instance.pretrain(y_panel, fh=fh)
         assert object_instance.state == "pretrained", (
-            f"State after pretrain should be 'pretrained', "
-            f"got {object_instance.state}"
+            f"State after pretrain should be 'pretrained', got {object_instance.state}"
         )
 
         # Should be able to pretrain again (incremental)
