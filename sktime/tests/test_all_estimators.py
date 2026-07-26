@@ -6,8 +6,10 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
+import io
 import numbers
 import os
+import sys
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -62,7 +64,6 @@ def subsample_by_version_os(x):
     Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
     """
     import platform
-    import sys
 
     ix = sys.version_info.minor % 3
     os_str = platform.system()
@@ -743,7 +744,6 @@ class QuickTester:
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
     def _make_builtin_fixture_equivalents(self, name):
-        import io
         import logging
         import tempfile
         from pathlib import Path

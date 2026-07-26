@@ -496,7 +496,7 @@ class tests__libs(_BaseTag):
     - Example: ``["sktime.libs.chronos"]``
     - Default: ``None``
 
-    ``sktime``'s CI framework regularly tests estimators in pull request,
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
     usually only estimators that have changed.
 
     The ``tests:libs`` tag of an object is a list of strings,
@@ -519,6 +519,43 @@ class tests__libs(_BaseTag):
         "parent_type": "object",
         "tag_type": "list",
         "short_descr": "Core libraries used by the estimator, to trigger tests.",
+        "user_facing": False,
+    }
+
+
+class tests__specific(_BaseTag):
+    """Modules containing estimator specific tests, for test triggers and execution.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:specific"``
+    - Private tag, developer and framework facing
+    - Values: list of str, or None
+    - Example: ``["sktime.forecasting.tests.test_croston"]``
+    - Default: ``None``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed.
+
+    The ``tests:specific`` tag of an object is a list of strings,
+    it specifies modules that contain estimator specific pytest tests.
+
+    Setting this tag has two effects:
+
+    * testing the estimator is triggered whenever any listed module has changed,
+      in addition to the other test trigger conditions, e.g., via ``tests:libs``.
+    * ``test_est`` CI VM runs execute the listed pytest test modules for that estimator
+      (see ``sktime.tests._test_vm._get_estimator_specific_test_modules``)
+
+    The ``tests:specific`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:specific",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "Estimator specific pytest modules for trigger and execution.",
         "user_facing": False,
     }
 
