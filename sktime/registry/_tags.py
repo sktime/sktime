@@ -496,7 +496,7 @@ class tests__libs(_BaseTag):
     - Example: ``["sktime.libs.chronos"]``
     - Default: ``None``
 
-    ``sktime``'s CI framework regularly tests estimators in pull request,
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
     usually only estimators that have changed.
 
     The ``tests:libs`` tag of an object is a list of strings,
@@ -534,7 +534,7 @@ class tests__specific(_BaseTag):
     - Example: ``["sktime.forecasting.tests.test_croston"]``
     - Default: ``None``
 
-    ``sktime``'s CI framework regularly tests estimators in pull request,
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
     usually only estimators that have changed.
 
     The ``tests:specific`` tag of an object is a list of strings,
@@ -543,7 +543,7 @@ class tests__specific(_BaseTag):
     Setting this tag has two effects:
 
     * testing the estimator is triggered whenever any listed module has changed,
-      in addition to the other test trigger conditions
+      in addition to the other test trigger conditions, e.g., via ``tests:libs``.
     * ``test_est`` CI VM runs execute the listed pytest test modules for that estimator
       (see ``sktime.tests._test_vm._get_estimator_specific_test_modules``)
 
