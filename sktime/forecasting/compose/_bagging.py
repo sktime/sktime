@@ -425,7 +425,6 @@ class BaggingForecaster(BaseForecaster):
             MovingBlockBootstrapTransformer,
             RandomBlockBootstrapTransformer,
         )
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6, n_series=3)
         fcst = YfromX.create_test_instance()
