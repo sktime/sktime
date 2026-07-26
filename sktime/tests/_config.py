@@ -145,10 +145,6 @@ EXCLUDED_TESTS = {
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
-        "Arsenal",
-        "BOSSEnsemble",
-        "BinarySegmentation",
-        "CNTCClassifier",
         "CNTCNetwork",
         "ClaSPTransformer",
         "ClearSky",
