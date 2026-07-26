@@ -64,12 +64,12 @@ class MyForecaster(BaseForecaster):
 
     # todo: fill in the scitype:y tag for univariate/multivariate
     _tags = {
-        # scitype:y controls whether internal y can be univariate/multivariate
+        # capability:multivariate controls whether inner y can be multivariate
         # if multivariate is not valid, applies vectorization over variables
-        "scitype:y": "univariate",
-        # fill in "univariate" or "both"
-        #   "univariate": inner _fit, _predict, receives only single-column DataFrame
-        #   "both": inner _predict gets pd.DataFrame series with any number of columns
+        "capability:multivariate": False,
+        # valid values: True, False
+        #   False: inner _fit, _predict, etc, receive only univariate series
+        #   True: inner methods work with series with any number of variables
         #
         # specify one or multiple authors and maintainers, only for sktime contribution
         "authors": ["author1", "author2"],  # authors, GitHub handles
@@ -101,7 +101,22 @@ class MyForecaster(BaseForecaster):
         # leave this as is
         super().__init__()
 
-        # todo: optional, parameter checking logic (if applicable) should happen here
+        # do not put anything else in __init__,
+        # use __post_init__ for any further initialization logic
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        # todo: optional, parameter checking or coercion should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc
         # instead, write to self._parama, self._newparam (starting with _)
 
@@ -117,9 +132,12 @@ class MyForecaster(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to have a single column
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle single-column and multi-column y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
             The forecasting horizon with the steps ahead to to predict.
             Required (non-optional) here.
@@ -184,9 +202,9 @@ class MyForecaster(BaseForecaster):
         # below code guarantees the right row and column index
         #
         # row_idx = fh.to_absolute_index(self.cutoff)
-        # col_idx = self._y.index
+        # col_idx = self._get_varnames()
         #
-        # y_pred = pd.DataFrame(values, index=row_ind, columns=col_idx)
+        # y_pred = pd.DataFrame(values, index=row_idx, columns=col_idx)
 
         # IMPORTANT: avoid side effects to X, fh
 

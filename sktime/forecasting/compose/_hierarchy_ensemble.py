@@ -10,7 +10,6 @@ import pandas as pd
 from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 from sktime.utils.parallel import parallelize
 from sktime.utils.warnings import warn
 
@@ -140,9 +139,13 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["VyomkeshVyas", "sanskarmodi8"],
         "maintainers": ["VyomkeshVyas"],
-        "scitype:y": "both",
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
         "capability:exogenous": True,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
@@ -168,6 +171,12 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self.backend_params = backend_params
         super().__init__(forecasters=None)
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        forecasters = self.forecasters
         if isinstance(forecasters, BaseForecaster):
             tags_to_clone = [
                 "requires-fh-in-fit",
@@ -223,7 +232,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd-multiindex
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -231,6 +240,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         # Creating aggregated levels in data
         if _check_index_no_total(y):
             z = self._aggregate(y)
@@ -404,6 +415,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : an instance of self.
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         z = y
         if _check_index_no_total(y):
             z = self._aggregate(y)
@@ -438,7 +451,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
@@ -448,6 +461,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Point predictions
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         if X is not None:
             if _check_index_no_total(X):
                 X = self._aggregate(X)
@@ -741,7 +756,7 @@ def _level_fit(params, meta):
         hier_dict: dict
             The level dictionary as created by the get_hier_dict function
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
     """
     _, forecaster, level = params
     z = meta["z"]
@@ -777,7 +792,7 @@ def _node_fit(params, meta):
         fcstr_dict: dict
             The forecaster dictionary as created by the get_node_dict function
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
     """
     key, node = params
     z = meta["z"]
@@ -806,7 +821,7 @@ def _predict_one_forecaster(params, meta):
         X: pd.DataFrame, None
             The aggregated input data
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
     """
     X = meta["x"]
     fh = meta["fh"]

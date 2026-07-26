@@ -5,7 +5,10 @@ Objects compared can have one of the following valid types:
     pd.Series, pd.DataFrame, np.ndarray
     lists, tuples, or dicts of a valid type (recursive)
     polars.DataFrame, polars.LazyFrame
+    torchmetrics.Metric instances
 """
+
+import inspect
 
 from skbase.utils.deep_equals._common import _make_ret
 from skbase.utils.deep_equals._deep_equals import deep_equals as _deep_equals
@@ -64,6 +67,7 @@ def deep_equals(x, y, return_msg=False, plugins=None):
         _fh_equals_plugin,
         _polars_equals_plugin,
         _gluonts_PandasDataset_equals_plugin,
+        _torchmetrics_metric_equals_plugin,
     ]
 
     if plugins is not None:
@@ -172,7 +176,7 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     if not hasattr(x, "compute"):
         return None
 
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     dask_available = _check_soft_dependencies("dask", severity="none")
 
@@ -221,7 +225,7 @@ def _gluonts_PandasDataset_equals_plugin(x, y, return_msg=False, deep_equals=Non
     if not hasattr(x, "_data_entries"):
         return None
 
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     gluonts_available = _check_soft_dependencies("gluonts", severity="none")
 
@@ -256,7 +260,7 @@ def _polars_equals_plugin(x, y, return_msg=False):
         if unequal, returns string
     returns None if this function does not apply, i.e., x is not polars
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     polars_available = _check_soft_dependencies("polars", severity="none")
 
@@ -279,3 +283,70 @@ def _polars_equals_plugin(x, y, return_msg=False):
         return ret(x.collect().equals(y.collect()), ".polars_equals")
 
     return None
+
+
+def _torchmetrics_metric_equals_plugin(x, y, return_msg=False, deep_equals=None):
+    """Test two torchmetrics Metric instances for equality.
+
+    torchmetrics overrides ``==`` / ``!=`` to return ``CompositionalMetric`` tensors,
+    which breaks generic comparisons used by ``deep_equals``.
+
+    Parameters
+    ----------
+    x, y : torchmetrics.Metric
+    return_msg : bool, optional, default=False
+        whether to return informative message about what is not equal
+    deep_equals : callable, optional
+        parent deep_equals for recursive comparisons
+
+    Returns
+    -------
+    is_equal : bool or None
+        None if this plugin does not apply.
+    msg : str, optional
+        reason for inequality if return_msg=True
+    """
+    from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
+
+    if not _check_soft_dependencies("torchmetrics", severity="none"):
+        return None
+
+    if not (
+        hasattr(x, "_defaults")
+        and hasattr(x, "reset")
+        and hasattr(type(x), "__module__")
+        and type(x).__module__.startswith("torchmetrics")
+    ):
+        return None
+
+    ret = _make_ret(return_msg)
+
+    if x is y:
+        return ret(True, "")
+
+    if type(x) is not type(y):
+        return ret(False, f".type, {type(x)} != {type(y)}")
+
+    torch = _safe_import("torch")
+
+    sig = inspect.signature(type(x).__init__)
+    for param in sig.parameters.values():
+        if param.name in ("self", "kwargs"):
+            continue
+        xv = getattr(x, param.name)
+        yv = getattr(y, param.name)
+        if isinstance(xv, (int, float, str, bool, type(None))):
+            if xv != yv:
+                return ret(False, f".{param.name}")
+        else:
+            is_equal, msg = deep_equals(xv, yv, return_msg=True)
+            if not is_equal:
+                return ret(False, f".{param.name}" + msg)
+
+    for key in x._defaults:
+        if key not in y._defaults:
+            return ret(False, f".defaults missing key {key!r}")
+        if not torch.equal(x._defaults[key], y._defaults[key]):
+            return ret(False, f".defaults[{key!r}]")
+
+    return ret(True, "")
