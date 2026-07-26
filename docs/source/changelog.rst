@@ -23,10 +23,10 @@ Version 1.0.2 - 2026-07-07
 Highlights
 ~~~~~~~~~~
 
-* multiple forecasting models for forecasting added:
+* multiple foundation models for forecasting added:
 
   * Aurora multimodal foundation model forecaster (:pr:`10417`) :user:`Faakhir30`
-  * Cisco TSFM forecaster  (:pr:`10444`) :user:`vedantag17`
+  * Cisco TSFM forecaster (:pr:`10444`) :user:`vedantag17`
   * Falcon-X forecaster (:pr:`10430`) :user:`vedantag17`
   * MIRA medical time series foundation model(:pr:`10398`) :user:`Faakhir30`
   * Moirai 2.0 foundation model forecasters (:pr:`9678`, :pr:`10333`) :user:`ubermensch19`, :user:`vedantag17`
