@@ -321,22 +321,6 @@ function populateCheckboxes() {
         checkboxContainer.appendChild(checkboxWrapper);
     }
 }
-
-function go2URL(primaryUrl, fallbackUrl, event) {
-    event.preventDefault(); // Stop the link from navigating directly.
-    fetch(primaryUrl)
-        .then(response => {
-            if (response.ok) {
-                window.location.href = primaryUrl; // If primary URL is valid, go there.
-            } else {
-                window.location.href = fallbackUrl; // Otherwise, use the fallback URL.
-            }
-        })
-        .catch(() => {
-            window.location.href = fallbackUrl; // In case of any fetch error, use fallback.
-        });
-}
-
 </script>
 
 <!-- ```{include} estimator_overview_table.html

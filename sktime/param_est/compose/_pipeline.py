@@ -75,7 +75,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
     --------
     >>> from sktime.param_est.compose import ParamFitterPipeline
     >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>> from sktime.transformations.series.difference import Differencer
+    >>> from sktime.transformations.difference import Differencer
     >>> from sktime.datasets import load_airline
     >>>
     >>> X = load_airline()
@@ -112,13 +112,15 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
 
         # can handle multivariate iff: both estimator and all transformers can
         multivariate = param_est.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both estimator and all transformers can,
         #   *or* transformer chain removes missing data
         missing = param_est.get_tag("capability:missing_values", False)
-        missing = missing and self.transformers_.get_tag("handles-missing-data", False)
+        missing = missing and self.transformers_.get_tag(
+            "capability:missing_values", False
+        )
         missing = missing or self.transformers_.get_tag(
             "capability:missing_values:removes", False
         )
@@ -300,10 +302,11 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # imports
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.transformations.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)

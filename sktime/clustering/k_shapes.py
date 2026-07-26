@@ -1,7 +1,5 @@
 """Time series kshapes."""
 
-from typing import Union
-
 import numpy as np
 from numpy.random import RandomState
 
@@ -62,6 +60,8 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
         "capability:out_of_sample": True,
         "capability:predict": True,
         "capability:predict_proba": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     # defines the name of the attribute containing the tslearn estimator
@@ -70,12 +70,12 @@ class TimeSeriesKShapes(_TslearnAdapter, BaseClusterer):
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, np.ndarray] = "random",
+        init_algorithm: str | np.ndarray = "random",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-4,
         verbose: bool = False,
-        random_state: Union[int, RandomState] = None,
+        random_state: int | RandomState = None,
     ):
         self.init_algorithm = init_algorithm
         self.n_init = n_init

@@ -42,22 +42,35 @@ __all__ = [
     "write_tabular_transformation_to_arff",
     "load_tecator",
     "load_fpp3",
+    "_load_fpp3",
     "DATASET_NAMES_FPP3",
     "BaseDataset",
     "Airline",
     "Longley",
     "Lynx",
     "Macroeconomic",
+    "PBS",
     "ShampooSales",
     "Solar",
     "USChange",
+    "ForecastingData",
+    "M5Dataset",
+    "ACSF1",
+    "ArrowHead",
+    "BasicMotions",
+    "GunPoint",
+    "ItalyPowerDemand",
+    "JapaneseVowels",
+    "OSULeaf",
+    "PLAID",
+    "UCRUEADataset",
 ]
 
 from sktime.datasets._data_io import (
     generate_example_long_table,
     make_multi_index_dataframe,
 )
-from sktime.datasets._fpp3_loaders import DATASET_NAMES_FPP3, load_fpp3
+from sktime.datasets._fpp3_loaders import DATASET_NAMES_FPP3, _load_fpp3, load_fpp3
 from sktime.datasets._hierarchical_demo import load_hierarchical_sales_toydata
 from sktime.datasets._readers_writers.arff import (
     load_from_arff_to_dataframe,
@@ -102,10 +115,24 @@ from sktime.datasets._single_problem_loaders import (
     load_uschange,
 )
 from sktime.datasets.base import BaseDataset
+from sktime.datasets.classification import (
+    ACSF1,
+    PLAID,
+    ArrowHead,
+    BasicMotions,
+    GunPoint,
+    ItalyPowerDemand,
+    JapaneseVowels,
+    OSULeaf,
+    UCRUEADataset,
+)
 from sktime.datasets.forecasting import (
+    PBS,
     Airline,
+    ForecastingData,
     Longley,
     Lynx,
+    M5Dataset,
     Macroeconomic,
     ShampooSales,
     Solar,

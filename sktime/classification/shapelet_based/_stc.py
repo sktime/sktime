@@ -13,7 +13,7 @@ from sklearn.model_selection import cross_val_predict
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn import RotationForest
-from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
+from sktime.transformations.shapelet_transform import RandomShapeletTransform
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -138,6 +138,8 @@ class ShapeletTransformClassifier(BaseClassifier):
         "capability:contractable": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "shapelet",
     }
 
@@ -180,6 +182,10 @@ class ShapeletTransformClassifier(BaseClassifier):
         self._classifier_limit_in_minutes = 0
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Fit ShapeletTransformClassifier to training data.

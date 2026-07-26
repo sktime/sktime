@@ -33,11 +33,25 @@ __all__ = [
     "convert_dict",
 ]
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.datatypes._panel._registry import MTYPE_LIST_PANEL
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.pandas import df_map
+
+# this needs to be refactored with the convert module
+MTYPE_LIST_PANEL = [
+    "nested_univ",
+    "numpy3D",
+    "numpyflat",
+    "pd-multiindex",
+    "pd-wide",
+    "pd-long",
+    "df-list",
+    "gluonts_ListDataset_panel",
+    "gluonts_PandasDataset_panel",
+    "polars_panel",
+]
 
 # dictionary indexed by triples of types
 #  1st element = convert from - type
@@ -111,8 +125,8 @@ def _check_equal_index(X):
 
     Returns
     -------
-    indexes : list of indixes
-        List of indixes with one index for each column
+    indexes : list of indexes
+        List of indexes with one index for each column
     """
     # TODO handle 1d series, not only 2d dataframes
     # TODO assumes columns are typed (i.e. all rows for a given column have
@@ -236,8 +250,7 @@ def from_nested_to_2d_array(X, return_numpy=False):
 
     else:
         raise ValueError(
-            f"Expected input is pandas Series or pandas DataFrame, "
-            f"but found: {type(X)}"
+            f"Expected input is pandas Series or pandas DataFrame, but found: {type(X)}"
         )
 
     if return_numpy:
@@ -558,7 +571,7 @@ def from_long_to_nested_adp(obj, store=None):
     return from_long_to_nested(X_long=obj)
 
 
-convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
+convert_dict[("pd-long", "nested_univ", "Panel")] = from_long_to_nested_adp
 
 
 def from_multiindex_to_long(obj, store=None):

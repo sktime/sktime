@@ -3,10 +3,10 @@
 """Implements outlier detection from pyOD."""
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 
 from sktime.detection.base import BaseDetector
-from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["mloning", "satya-pattnaik", "fkiraly"]
 
@@ -24,14 +24,18 @@ class PyODDetector(BaseDetector):
 
     Examples
     --------
+    >>> import pandas as pd
     >>> from sktime.detection.datagen import piecewise_normal_multivariate
     >>> X = pd.DataFrame(piecewise_normal_multivariate(
-    ...     means=[[1, 3], [4, 5]], lengths=[3, 4], random_state=10))
+    ...     means=[[1, 3], [4, 5]],
+    ...     lengths=[3, 4],
+    ...     random_state=10),
+    ... )
     >>> from sktime.detection.adapters._pyod import PyODDetector
     >>> from pyod.models.ecod import ECOD
     >>> model = PyODDetector(ECOD())
     >>> model.fit_transform(X)
-           labels
+       labels
     0       0
     1       1
     2       0
@@ -51,6 +55,9 @@ class PyODDetector(BaseDetector):
         "python_dependencies": "pyod",
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, estimator, labels="indicator"):
@@ -69,7 +76,7 @@ class PyODDetector(BaseDetector):
         X : pd.DataFrame
             training data to fit model to, time series
         Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            ground truth detections for training if detector is supervised
 
         Returns
         -------
@@ -129,7 +136,7 @@ class PyODDetector(BaseDetector):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
-            There are currently no reserved values for annotators.
+            There are currently no reserved values for detectors.
 
         Returns
         -------
@@ -149,7 +156,3 @@ class PyODDetector(BaseDetector):
             params0 = {"estimator": "foo"}
             params1 = {"estimator": "bar"}
         return [params0, params1]
-
-
-# todo 1.0.0 - remove alias, i.e., remove this line
-PyODAnnotator = PyODDetector

@@ -66,10 +66,8 @@ class ClustererTestScenario(TestScenario, BaseObject):
             else:
                 return obj.get_tag(tag_name)
 
-        # applicable only if obj inherits from BaseClassifier, BaseEarlyClassifier or
-        #   BaseRegressor. currently we test both classifiers and regressors using these
-        #   scenarios
-        if is_scitype(obj, "clusterer"):
+        # applicable only if obj inherits from BaseClusterer
+        if not is_scitype(obj, "clusterer"):
             return False
 
         # if X is multivariate, applicable only if can handle multivariate

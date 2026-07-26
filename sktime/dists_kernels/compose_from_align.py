@@ -22,6 +22,9 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         "authors": ["fkiraly"],
         "symmetric": True,  # all the distances are symmetric
         "capability:unequal_length": True,  # aligners can usually handle unequal length
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, aligner=None):
@@ -86,8 +89,9 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for DistFromAligner."""
         # importing inside to avoid circular dependencies
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.alignment.dtw_python import AlignerDTW
-        from sktime.utils.dependencies import _check_estimator_deps
 
         if _check_estimator_deps(AlignerDTW, severity="none"):
             return {"aligner": AlignerDTW()}

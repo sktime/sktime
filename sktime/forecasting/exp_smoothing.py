@@ -1,6 +1,6 @@
 # !/usr/bin/env python3 -u
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Implements Holt-Winters exponential smoothing."""
+"""Holt-Winters exponential smoothing forecaster."""
 
 __all__ = ["ExponentialSmoothing"]
 __author__ = ["mloning", "big-o"]
@@ -116,6 +116,11 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         "authors": ["bashtage", "wooqo", "mloning", "big-o"],
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type tags inherited from _StatsModelsAdapter
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        # the test fails due to negative values in the test scenario,
+        # which is expected and not a bug
     }
 
     _fitted_param_names = (

@@ -3,7 +3,7 @@ __all__ = []
 
 from sklearn.utils import check_random_state
 
-from sktime.annotation.datagen import piecewise_poisson
+from sktime.detection.datagen import piecewise_poisson
 from sktime.utils._testing.series import _make_series
 
 

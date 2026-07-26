@@ -9,7 +9,6 @@ __all__ = [
     "CutoffFhSplitter",
 ]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -20,7 +19,6 @@ from sktime.split.base._common import (
     ACCEPTED_Y_TYPES,
     DEFAULT_FH,
     DEFAULT_WINDOW_LENGTH,
-    FORECASTING_HORIZON_TYPES,
     SPLIT_GENERATOR_TYPE,
     _check_fh,
     _check_inputs_for_compatibility,
@@ -70,9 +68,7 @@ def _check_cutoffs_and_y(cutoffs: VALID_CUTOFF_TYPES, y: ACCEPTED_Y_TYPES) -> No
         raise TypeError("Unsupported type of `cutoffs`")
 
 
-def _check_cutoffs_fh_y(
-    cutoffs: VALID_CUTOFF_TYPES, fh: FORECASTING_HORIZON_TYPES, y: pd.Index
-) -> None:
+def _check_cutoffs_fh_y(cutoffs: VALID_CUTOFF_TYPES, fh, y: pd.Index) -> None:
     """Check that combination of inputs is compatible.
 
     Currently, only two cases are allowed:
@@ -158,7 +154,7 @@ class CutoffSplitter(BaseSplitter):
     def __init__(
         self,
         cutoffs: VALID_CUTOFF_TYPES,
-        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
+        fh=DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
         _check_inputs_for_compatibility([fh, cutoffs, window_length])
@@ -182,7 +178,7 @@ class CutoffSplitter(BaseSplitter):
                 test_window = y.get_indexer(test_window[test_window >= y.min()])
             yield training_window, test_window
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
 
         For this splitter the number is trivially equal to
@@ -200,7 +196,7 @@ class CutoffSplitter(BaseSplitter):
         """
         return len(self.cutoffs)
 
-    def get_cutoffs(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> np.ndarray:
+    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         This method trivially returns the cutoffs given during instance initialization,

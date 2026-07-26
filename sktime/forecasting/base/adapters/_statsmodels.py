@@ -26,9 +26,14 @@ class _StatsModelsAdapter(BaseForecaster):
         "python_dependencies": "statsmodels",
         # estimator type
         # --------------
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
-        "handles-missing-data": False,
+        "capability:missing_values": False,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._statsmodels"],
     }
 
     def __init__(self, random_state=None):
@@ -45,7 +50,7 @@ class _StatsModelsAdapter(BaseForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -53,10 +58,16 @@ class _StatsModelsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
-        # save info needed for _predict: should these be saved to self._y_metdata?
+        # save info needed for _predict: should these be saved to self._y_metadata?
         self._y_len = len(y)
         self._y_first_index = y.index[0]
         self._set_cutoff_from_y(y)
+
+        self._y_was_series = isinstance(y, pd.Series)
+        if isinstance(y, pd.Series):
+            self._y_name = y.name
+
+        self._y_index0 = y.index[0]
 
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
@@ -88,7 +99,9 @@ class _StatsModelsAdapter(BaseForecaster):
                 )
                 if index_diff.isin(y.index).all():
                     y = y.loc[index_diff]
-                self._fitted_forecaster = self._fitted_forecaster.append(y)
+                    X = X.loc[index_diff].set_index(y.index) if X is not None else None
+
+                self._fitted_forecaster = self._fitted_forecaster.append(y, exog=X)
 
     def _predict(self, fh, X):
         """Make forecasts.
@@ -96,7 +109,7 @@ class _StatsModelsAdapter(BaseForecaster):
         Parameters
         ----------
         fh : ForecastingHorizon
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
@@ -135,7 +148,8 @@ class _StatsModelsAdapter(BaseForecaster):
         y_pred = y_pred.iloc[fh_int]
         # ensure that name is not added nor removed
         # otherwise this may upset conversion to pd.DataFrame
-        y_pred.name = self._get_varnames()[0]
+        if self._y_was_series:
+            y_pred.name = self._y_name
         return y_pred
 
     @staticmethod
@@ -172,7 +186,7 @@ class _StatsModelsAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.

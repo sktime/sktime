@@ -22,6 +22,18 @@ class AlignerNaive(BaseAligner):
         start: aligns starts (lowest index), does no squeezing/stretching
         end: aligns ends (highest index), no squeezing/stretching
         start-end: aligns starts and ends, stretches linearly and rounds
+
+    Example
+    -------
+    >>> import pandas as pd
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.alignment.naive import AlignerNaive
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_list = [pd.DataFrame({"value": ts}) for ts in X_train.iloc[:, 0]]
+    >>> aligner = AlignerNaive(strategy="start-end")
+    >>> aligner.fit(X_list)
+    AlignerNaive(...)
+    >>> alignment = aligner.get_alignment()
     """
 
     _tags = {
@@ -32,6 +44,9 @@ class AlignerNaive(BaseAligner):
         # --------------
         "capability:multiple-alignment": True,  # can align more than two sequences?
         "capability:unequal_length": True,  # can align sequences of unequal length?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, strategy="start-end"):

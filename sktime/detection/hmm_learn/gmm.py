@@ -101,7 +101,7 @@ class GMMHMM(BaseHMMLearn):
     Examples
     --------
     >>> from sktime.detection.hmm_learn import GMMHMM
-    >>> from sktime.detection.datagen import piecewise_normal # doctest: +SKIP
+    >>> from sktime.detection.datagen import piecewise_normal
     >>> data = piecewise_normal(
     ...    means=[2, 4, 1], lengths=[10, 35, 40], random_state=7
     ...    ).reshape((-1, 1))

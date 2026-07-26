@@ -6,6 +6,7 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes import check_is_mtype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
 # Pairs of message and lambda function to check the tags
@@ -58,20 +59,37 @@ class TestAllForecastingDatasets(ForecastingDatasetFixtureGenerator, QuickTester
         elif isinstance(y, np.ndarray):
             is_one_series = y.ndim == 1 or y.shape[1] == 1
         else:
-            raise ValueError(f'Unexpeced type "{type(y)}" for y')
+            raise ValueError(f'Unexpected type "{type(y)}" for y')
         assert is_one_series == expected
 
     def test_tag_n_panels(self, estimator_instance):
         expected = estimator_instance.get_tag("n_panels")
         y = estimator_instance.load("y")
 
-        n_panels = y.index.droplevel(-1).nunique() if y.index.nlevels > 1 else 1
+        if check_is_mtype(y, "pd-multiindex"):
+            n_panels = 1
+
+        elif check_is_mtype(y, "pd_multiindex_hier"):
+            n_panels = len(y.index.droplevel(-1).drop_duplicates())
+
+        else:
+            n_panels = 1
+
         assert n_panels == expected
 
     def test_tag_n_hierarchy_levels(self, estimator_instance):
         expected = estimator_instance.get_tag("n_hierarchy_levels")
         y = estimator_instance.load("y")
         n_hierarchy_levels = y.index.nlevels - 1
+        if check_is_mtype(y, "pd.Series") or check_is_mtype(y, "pd-multiindex"):
+            n_hierarchy_levels = 0
+
+        elif check_is_mtype(y, "pd_multiindex_hier"):
+            n_hierarchy_levels = y.index.nlevels - 1
+
+        else:
+            n_hierarchy_levels = 0
+
         assert n_hierarchy_levels == expected
 
     def test_tag_constraints(self, estimator_instance):

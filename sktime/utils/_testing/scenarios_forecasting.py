@@ -49,15 +49,7 @@ class ForecasterTestScenario(TestScenario, BaseObject):
                 return obj.get_tag(tag_name)
 
         # applicable only if obj inherits from BaseForecaster
-        if is_scitype(obj, "forecaster"):
-            return False
-
-        # applicable only if number of variables in y complies with scitype:y
-        # only rule: multivariate forecasters cannot deal with univariate data
-        # univariate forecasters can deal with multivariate data by vectorization
-        is_univariate = self.get_tag("univariate_y")
-
-        if is_univariate and get_tag(obj, "scitype:y") == "multivariate":
+        if not is_scitype(obj, "forecaster"):
             return False
 
         # applicable only if fh is not passed later than it needs to be

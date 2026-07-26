@@ -13,7 +13,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -72,7 +72,7 @@ class NormalFixedScaleOutput(DistributionOutput):
     def _distribution(
         self,
         distr_params,
-        validate_args: Optional[bool] = None,
+        validate_args: bool | None = None,
     ) -> Normal:
         loc = distr_params["loc"]
         distr_params["scale"] = torch.as_tensor(

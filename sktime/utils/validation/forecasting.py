@@ -16,7 +16,6 @@ __all__ = [
 __author__ = ["mloning", "big-o", "khrapovs"]
 
 from datetime import timedelta
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -32,8 +31,7 @@ from sktime.utils.validation import (
 )
 from sktime.utils.validation.series import check_equal_time_index, check_series
 
-ACCEPTED_CUTOFF_TYPES = list, np.ndarray, pd.Index
-VALID_CUTOFF_TYPES = Union[ACCEPTED_CUTOFF_TYPES]
+VALID_CUTOFF_TYPES = list | np.ndarray | pd.Index
 
 
 def check_y_X(
@@ -178,7 +176,7 @@ def check_cv(cv, enforce_start_with_window=False):
     return cv
 
 
-def check_step_length(step_length) -> Optional[int]:
+def check_step_length(step_length) -> int | None:
     """Validate window length.
 
     Parameters
@@ -201,7 +199,7 @@ def check_step_length(step_length) -> Optional[int]:
     elif is_int(step_length):
         if step_length < 1:
             raise ValueError(
-                f"`step_length` must be a integer >= 1, " f"but found: {step_length}"
+                f"`step_length` must be a integer >= 1, but found: {step_length}"
             )
         else:
             return step_length
@@ -209,8 +207,7 @@ def check_step_length(step_length) -> Optional[int]:
     elif is_timedelta(step_length):
         if step_length <= timedelta(0):
             raise ValueError(
-                f"`step_length` must be a positive timedelta, "
-                f"but found: {step_length}"
+                f"`step_length` must be a positive timedelta, but found: {step_length}"
             )
         else:
             return step_length
@@ -370,7 +367,7 @@ def check_cutoffs(cutoffs: VALID_CUTOFF_TYPES) -> np.ndarray:
         If cutoffs is not a instance of np.array or pd.Index
         If cutoffs array is empty.
     """
-    if not isinstance(cutoffs, ACCEPTED_CUTOFF_TYPES):
+    if not isinstance(cutoffs, VALID_CUTOFF_TYPES):
         raise ValueError(
             f"`cutoffs` must be a np.array or pd.Index, but found: {type(cutoffs)}"
         )

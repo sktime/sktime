@@ -2,11 +2,10 @@
 
 __author__ = ["fkiraly"]
 
-from typing import Union
 
 import numpy as np
 
-from sktime.distances import pairwise_distance
+from sktime.dists_kernels._numba_distances import pairwise_distance
 from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
 
@@ -131,8 +130,8 @@ class EditDist(BasePairwiseTransformerPanel):
     def __init__(
         self,
         distance: str = "lcss",
-        window: Union[int, None] = None,
-        itakura_max_slope: Union[float, None] = None,
+        window: int | None = None,
+        itakura_max_slope: float | None = None,
         bounding_matrix: np.ndarray = None,
         epsilon: float = 1.0,
         g: float = 0.0,

@@ -10,13 +10,13 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline, load_arrow_head, load_longley
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.multiindex import flatten_multiindex
 
 if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="none"):
@@ -26,6 +26,30 @@ if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="non
 
 if not sys.platform.startswith("linux"):
     pytest.skip("Skipping MLflow tests for Windows and macOS", allow_module_level=True)
+
+
+@pytest.fixture(autouse=True)
+def mlflow_tracking_uri(tmp_path, monkeypatch):
+    """Set up isolated MLflow tracking URI for each test to avoid database conflicts."""
+    if _check_soft_dependencies("mlflow", severity="none"):
+        import logging
+
+        import mlflow
+
+        # Use a unique temporary directory for MLflow tracking
+        tracking_uri = str(tmp_path / "mlruns")
+        monkeypatch.setenv("MLFLOW_TRACKING_URI", tracking_uri)
+        # Also set it directly in mlflow to ensure it's used
+        mlflow.set_tracking_uri(tracking_uri)
+        yield tracking_uri
+        # Clean up: end any active runs
+        try:
+            mlflow.end_run()
+        except Exception as e:
+            # Ignore errors if no run is active (common in test teardown)
+            logging.debug(f"mlflow.end_run() failed (expected if no active run): {e}")
+    else:
+        yield None
 
 
 @pytest.fixture
@@ -55,10 +79,6 @@ def mock_s3_bucket():
         yield bucket_name
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
-)
 @pytest.fixture
 def sktime_custom_env(tmp_path):
     """Create a conda environment and returns path to conda environment yml file."""
@@ -91,10 +111,6 @@ def test_data_arrow_head():
     return y_train.astype(int), y_test.astype(int), X_train, X_test
 
 
-@pytest.mark.skipif(
-    not run_test_for_class(AutoARIMA),
-    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
-)
 @pytest.fixture(scope="module")
 def auto_arima_model(test_data_airline):
     """Create instance of fitted auto arima model."""
@@ -103,10 +119,6 @@ def auto_arima_model(test_data_airline):
     )
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("tensorflow", severity="none"),
-    reason="skip test if required soft dependency is not available.",
-)
 @pytest.fixture(scope="module")
 def cnn_model(test_data_arrow_head):
     """Create an instance of fitted ResNet Classifier model."""
@@ -605,15 +617,30 @@ def test_log_model(auto_arima_model, tmp_path, should_start_run, serialization_f
             conda_env=str(conda_env),
             serialization_format=serialization_format,
         )
-        model_uri = f"runs:/{mlflow.active_run().info.run_id}/{artifact_path}"
-        assert model_info.model_uri == model_uri
+
+        if _check_soft_dependencies("mlflow<3.0", severity="none"):
+            # MLflow 2.x format
+            assert model_info.model_uri.startswith("runs:/")
+            # Check format: runs:/run_id/artifact_path
+            uri_parts = model_info.model_uri.split("/")
+            assert len(uri_parts) >= 3
+            assert uri_parts[0] == "runs:"
+            assert uri_parts[2] == artifact_path
+        else:
+            # MLflow 3.x format
+            assert model_info.model_uri.startswith("models:/m-")
+            # Check format: models:/m-model_id
+            assert model_info.model_uri.count("/") == 1
+            assert len(model_info.model_uri) > len("models:/m-")
         reloaded_model = mlflow_sktime.load_model(
-            model_uri=model_uri,
+            model_uri=model_info.model_uri,
         )
         np.testing.assert_array_equal(
             auto_arima_model.predict(), reloaded_model.predict()
         )
-        model_path = Path(_download_artifact_from_uri(artifact_uri=model_uri))
+        model_path = Path(
+            _download_artifact_from_uri(artifact_uri=model_info.model_uri)
+        )
         model_config = Model.load(str(model_path.joinpath("MLmodel")))
         assert pyfunc.FLAVOR_NAME in model_config.flavors
     finally:
