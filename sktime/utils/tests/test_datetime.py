@@ -7,6 +7,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline
 from sktime.datatypes import VectorizedDF
@@ -19,7 +20,6 @@ from sktime.utils.datetime import (
     infer_freq,
     set_hier_freq,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

@@ -195,7 +195,7 @@ class AlignerEditNumba(BaseAligner):
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
         """
-        from sktime.distances import distance_alignment_path
+        from sktime.dists_kernels._numba_distances import distance_alignment_path
 
         X1 = X[0]
         X2 = X[1]
