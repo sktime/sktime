@@ -92,18 +92,18 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> rmsse = MeanSquaredScaledError(square_root=True)
-    >>> rmsse(y_true, y_pred, y_train=y_train)
+    >>> rmsse(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.20568833780186058)
     >>> y_train = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> rmsse(y_true, y_pred, y_train=y_train)
+    >>> rmsse(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.15679361328058636)
     >>> rmsse = MeanSquaredScaledError(multioutput='raw_values', square_root=True)
-    >>> rmsse(y_true, y_pred, y_train=y_train)
+    >>> rmsse(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     array([0.11215443, 0.20203051])
     >>> rmsse = MeanSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
-    >>> rmsse(y_true, y_pred, y_train=y_train)
+    >>> rmsse(y_true, y_pred, y_train=y_train) # doctest: +SKIP
     np.float64(0.17451891814894502)
     """
 

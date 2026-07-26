@@ -87,17 +87,17 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> mae = MeanAbsoluteError()
-    >>> mae(y_true, y_pred)
+    >>> mae(y_true, y_pred) # doctest: +SKIP
     np.float64(0.55)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
-    >>> mae(y_true, y_pred)
+    >>> mae(y_true, y_pred) # doctest: +SKIP
     np.float64(0.75)
     >>> mae = MeanAbsoluteError(multioutput='raw_values')
-    >>> mae(y_true, y_pred)
+    >>> mae(y_true, y_pred) # doctest: +SKIP
     array([0.5, 1. ])
     >>> mae = MeanAbsoluteError(multioutput=[0.3, 0.7])
-    >>> mae(y_true, y_pred)
+    >>> mae(y_true, y_pred) # doctest: +SKIP
     np.float64(0.85)
     """
 

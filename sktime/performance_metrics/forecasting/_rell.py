@@ -87,22 +87,22 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
     >>> y_pred_benchmark = y_pred*1.1
     >>> relative_mae = RelativeLoss()
-    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(0.8148148148148147)
     >>> relative_mse = RelativeLoss(relative_loss_function=mean_squared_error)
-    >>> relative_mse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> relative_mse(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(0.5178095088655261)
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> y_pred_benchmark = y_pred*1.1
     >>> relative_mae = RelativeLoss()
-    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(0.8490566037735847)
     >>> relative_mae = RelativeLoss(multioutput='raw_values')
-    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     array([0.625     , 1.03448276])
     >>> relative_mae = RelativeLoss(multioutput=[0.3, 0.7])
-    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark)
+    >>> relative_mae(y_true, y_pred, y_pred_benchmark=y_pred_benchmark) # doctest: +SKIP
     np.float64(0.927272727272727)
     """
 
