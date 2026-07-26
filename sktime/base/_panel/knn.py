@@ -5,7 +5,7 @@ __all__ = ["_BaseKnnTimeSeriesEstimator"]
 
 import numpy as np
 
-from sktime.distances import DISTANCES_SUPPORTED
+from sktime.dists_kernels._numba_distances import DISTANCES_SUPPORTED
 
 
 class _BaseKnnTimeSeriesEstimator:
