@@ -17,6 +17,11 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         Length of the input sequence.
         Ensure seq_len is divisible by 2^num_levels.
 
+    pred_len : int, optional
+        Length of prediction (forecast horizon). Required for pretraining if fh
+        is not passed to pretrain(). If None, will be determined from fh during
+        fit() or pretrain().
+
     num_epochs : int, default=16
         Number of epochs to train the model.
 
@@ -126,11 +131,13 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["Sohaib-Ahmed21"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "capability:pretrain": True,
     }
 
     def __init__(
         self,
         seq_len,
+        pred_len=None,
         *,
         num_epochs=16,
         batch_size=8,
@@ -155,6 +162,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         RIN=False,
     ):
         self.seq_len = seq_len
+        self.pred_len = pred_len
         self.criterion = criterion
         self.optimizer = optimizer
         self.criterion_kwargs = criterion_kwargs
@@ -186,25 +194,34 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        import torch
+
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def _build_network(self, fh):
         # Define the SCINet-based network
@@ -243,20 +260,27 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        # seq_len + pred_len must not exceed the shortest series used by the
+        # generic forecaster/pretrain test suite (10 timepoints), otherwise
+        # the training dataloader ends up with zero samples, see #10493, #10279
         params = [
             {
-                "seq_len": 8,
+                "seq_len": 4,
+                "pred_len": 2,
+                "num_levels": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
             },
             {
-                "seq_len": 16,
+                "seq_len": 4,
+                "pred_len": 3,
+                "num_levels": 1,
                 "lr": 0.001,
                 "optimizer": "Adam",
-                "batch_size": 4,
-                "num_epochs": 2,
+                "batch_size": 1,
+                "num_epochs": 1,
             },
         ]
 

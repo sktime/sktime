@@ -38,9 +38,9 @@ __all__ = [
 from copy import deepcopy
 
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.base import BaseEstimator, BaseObject
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 # Fixture class for testing tag system
