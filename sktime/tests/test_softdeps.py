@@ -15,12 +15,12 @@ from importlib import import_module
 from unittest.mock import patch
 
 import pytest
+from skbase.utils.dependencies import _check_python_version, _check_soft_dependencies
 
 from sktime.registry import all_estimators
 from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
-from sktime.utils.dependencies import _check_python_version, _check_soft_dependencies
 
 # list of soft dependencies used
 # excludes estimators, only for soft dependencies used in non-estimator modules
@@ -199,42 +199,65 @@ est_pyok_without_soft_dep = [est for est in est_without_soft_dep if _python_comp
 @pytest.mark.parametrize("estimator", est_python_incompatible)
 def test_python_error(estimator):
     """Test that estimators raise error if python version is wrong."""
-    try:
-        estimator.create_test_instance()
-    except ModuleNotFoundError as e:
-        error_msg = str(e)
+    import warnings
 
-        # Check if appropriate exception with useful error message is raised as
-        # defined in the `_check_python` function
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+
+        # Should NOT raise anymore
+        estimator.create_test_instance()
+
+        # Ensure a warning was raised
+        if not w:
+            pyspec = estimator.get_class_tag("python_version", None)
+            raise RuntimeError(
+                f"Estimator {estimator.__name__} has python version bound "
+                f"{pyspec} according to tags, but does not raise a warning for "
+                f"incompatible python environments."
+            )
+
+        # Check warning message content
         expected_error_msg = "requires python version to be"
-        if expected_error_msg not in error_msg:
+        messages = [str(warning.message) for warning in w]
+        if not any(expected_error_msg in msg for msg in messages):
             pyspec = estimator.get_class_tag("python_version", None)
             raise RuntimeError(
                 f"Estimator {estimator.__name__} has python version bound "
                 f"{pyspec} according to tags, but does not raise an appropriate "
-                f"error message on __init__ for incompatible python environments. "
+                f"warning message for incompatible python environments. "
                 f"Likely reason is that __init__ does not call super().__init__."
-            ) from e
+            )
 
 
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
 def test_softdep_error(estimator):
     """Test that estimators raise error if required soft dependencies are missing."""
+    import warnings
+
     softdeps = _get_soft_deps(estimator)
     if not _is_in_env(softdeps):
-        try:
-            estimator.create_test_instance()
-        except ModuleNotFoundError as e:
-            error_msg = str(e)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
 
-            if not is_soft_dep_missing_message(error_msg):
+            # This should NOT raise anymore
+            estimator.create_test_instance()
+
+            # Check that at least one warning was raised
+            if not w:
+                raise RuntimeError(
+                    f"Estimator {estimator.__name__} has soft dependency requirements "
+                    f"{softdeps} according to tags, but does not raise a warning when "
+                    f"those requirements are unmet."
+                )
+
+            # Optionally validate warning message content
+            messages = [str(warning.message) for warning in w]
+            if not any(is_soft_dep_missing_message(msg) for msg in messages):
                 raise RuntimeError(
                     f"Estimator {estimator.__name__} has soft dependency requirements, "
                     f"{softdeps} according to tags, but does not raise an appropriate "
-                    f"error message on __init__, when those requirements are unmet. "
-                    f"Likely reason is that __init__ does not call super().__init__,"
-                    f" or imports super().__init__ only after an attempted import."
-                ) from e
+                    f"warning message when those requirements are unmet."
+                )
 
 
 @pytest.mark.parametrize("estimator", est_pyok_with_soft_dep)
@@ -326,7 +349,7 @@ def test_est_fit_without_modulenotfound(estimator):
         ) from e
 
 
-@patch("sktime.utils.dependencies._dependencies.sys")
+@patch("skbase.utils.dependencies._dependencies.sys")
 @pytest.mark.parametrize(
     "mock_release_version, prereleases, expect_exception",
     [

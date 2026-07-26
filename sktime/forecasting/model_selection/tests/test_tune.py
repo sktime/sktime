@@ -9,6 +9,7 @@ from functools import reduce
 
 import numpy as np
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.model_selection import ParameterGrid, ParameterSampler
 
 from sktime.datasets import load_airline, load_longley
@@ -38,10 +39,9 @@ from sktime.performance_metrics.forecasting import (
 from sktime.performance_metrics.forecasting.probabilistic import CRPS, PinballLoss
 from sktime.split import SingleWindowSplitter, SlidingWindowSplitter
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.detrend import Detrender
-from sktime.transformations.series.impute import Imputer
+from sktime.transformations.detrend import Detrender
+from sktime.transformations.impute import Imputer
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 TEST_METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanSquaredError()]
@@ -106,7 +106,8 @@ def _create_hierarchical_data(n_columns=1):
 # estimator fixtures used for tuning
 # set_tags in NaiveForecaster ensures that it is univariate and broadcasts
 # this is currently the case, but a future improved NaiveForecaster may reduce coverage
-NAIVE = NaiveForecaster(strategy="mean").set_tags(**{"scitype:y": "univariate"})
+capability_multivariate_tag = {"capability:multivariate": False}
+NAIVE = NaiveForecaster(strategy="mean").set_tags(**capability_multivariate_tag)
 NAIVE_GRID = {"window_length": TEST_WINDOW_LENGTHS_INT}
 PIPE = TransformedTargetForecaster(
     [
@@ -352,9 +353,7 @@ def optuna_param_grids():
 
 
 def optuna_samplers():
-    try:
-        _check_soft_dependencies("optuna", severity="error")
-    except ModuleNotFoundError:
+    if not _check_soft_dependencies("optuna", severity="none"):
         return [None]
     else:
         import optuna
@@ -363,9 +362,8 @@ def optuna_samplers():
             None,
             optuna.samplers.NSGAIISampler(seed=42),
             optuna.samplers.QMCSampler(seed=42),
+            # optuna.samplers.CmaEsSampler(seed=42),
         ]
-        if hasattr(optuna.samplers, "CmaEsSampler"):
-            samplers.append(optuna.samplers.CmaEsSampler(seed=42))
         return samplers
 
 

@@ -7,7 +7,7 @@ import pytest
 from numpy import array_equal
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.hpfilter import HPFilter
+from sktime.transformations.hpfilter import HPFilter
 
 
 @pytest.mark.skipif(

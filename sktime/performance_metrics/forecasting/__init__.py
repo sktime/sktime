@@ -41,6 +41,7 @@ __all__ = [
     "MedianSquaredPercentageError",
     "MedianSquaredScaledError",
     "NormalizedMeanSquaredError",
+    "OverallWeightedAverage",
     "RelativeLoss",
     "TheilU2",
     "mean_absolute_scaled_error",
@@ -135,5 +136,6 @@ from sktime.performance_metrics.forecasting._msle import MeanSquaredLogError
 from sktime.performance_metrics.forecasting._mspe import MeanSquaredPercentageError
 from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
 from sktime.performance_metrics.forecasting._nmse import NormalizedMeanSquaredError
+from sktime.performance_metrics.forecasting._owa import OverallWeightedAverage
 from sktime.performance_metrics.forecasting._rell import RelativeLoss
 from sktime.performance_metrics.forecasting._theilu2 import TheilU2

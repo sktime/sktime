@@ -18,7 +18,8 @@ class TimeSeriesDBSCAN(BaseClusterer):
     Time series distances are passed as the ``distance argument``, which can be:
 
     * a string. This will substitute a hard-coded distance metric
-      from ``sktime.distances``. These default distances are intended to be
+      from ``sktime.dists_kernels._numba_distances``.
+      These default distances are intended to be
       performant, but cannot deal with unequal length or multivariate series.
     * a ``sktime`` pairwise transformer.
       These are available in ``sktime.dists_kernels``, and can be discovered
@@ -38,7 +39,8 @@ class TimeSeriesDBSCAN(BaseClusterer):
         * if str, must be one of the following strings:
           'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
           'lcss', 'edr', 'erp', 'msm', 'twe'
-          this will substitute a hard-coded distance metric from ``sktime.distances``
+          this will substitute a hard-coded distance metric
+          from ``sktime.dists_kernels._numba_distances``.
         * if ``sktime`` pairwise transformer,
           must implement the ``pairwise-transformer`` interface.
           ``sktime`` transformers are available in ``sktime.dists_kernels``,

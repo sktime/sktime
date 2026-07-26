@@ -75,6 +75,7 @@ These tags are typically used for typing, packaging and documentation purposes.
     python_dependencies
     env_marker
     requires_cython
+    r_dependencies
 
 
 .. _forecaster_tags:
@@ -92,10 +93,11 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     :template: function.rst
     :nosignatures:
 
-    capability__exogeneous
+    capability__exogenous
     capability__insample
     capability__pred_int
     capability__pred_int__insample
+    capability__pretrain
     capability__missing_values
     capability__categorical_in_X
     capability__random_state
@@ -278,3 +280,4 @@ They are primarily useful for developers managing CI behaviour of individual obj
     tests__vm
     tests__skip_all
     tests__skip_by_name
+    tests__specific
