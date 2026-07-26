@@ -14,6 +14,39 @@ from sktime.utils.dependencies import _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 
+LC_TO_UC_ACTIVATIONS = {
+    "elu": "ELU",
+    "hardshrink": "Hardshrink",
+    "hardsigmoid": "Hardsigmoid",
+    "hardtanh": "Hardtanh",
+    "hardswish": "Hardswish",
+    "leakyrelu": "LeakyReLU",
+    "logsigmoid": "LogSigmoid",
+    "multiheadattention": "MultiheadAttention",
+    "prelu": "PReLU",
+    "relu": "ReLU",
+    "relu6": "ReLU6",
+    "rrelu": "RReLU",
+    "selu": "SELU",
+    "celu": "CELU",
+    "gelu": "GELU",
+    "sigmoid": "Sigmoid",
+    "silu": "SiLU",
+    "mish": "Mish",
+    "softplus": "Softplus",
+    "softshrink": "Softshrink",
+    "softsign": "Softsign",
+    "tanh": "Tanh",
+    "tanhshrink": "Tanhshrink",
+    "threshold": "Threshold",
+    "glu": "GLU",
+    "softmin": "Softmin",
+    "softmax": "Softmax",
+    "softmax2d": "Softmax2d",
+    "logsoftmax": "LogSoftmax",
+    "adaptivelogsoftmaxwithloss": "AdaptiveLogSoftmaxWithLoss",
+}
+
 
 class BaseDeepRegressorTorch(BaseRegressor):
     """Abstract base class for the PyTorch neural network regressors.
@@ -51,6 +84,12 @@ class BaseDeepRegressorTorch(BaseRegressor):
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, default = 0.001
         The learning rate to be used in the optimizer.
     verbose : bool, default = True
@@ -72,6 +111,20 @@ class BaseDeepRegressorTorch(BaseRegressor):
         "tests:vm": True,
     }
 
+    # _instantiate_activation_vars is an iterable of attribute names of activations
+    # to instantiate. In case activation attributes in subclasses are different than
+    # the default ones (activation and activation_hidden), this variable should
+    # be overridden.
+    _instantiate_activation_vars = ("activation", "activation_hidden")
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.metrics is not None:
+            self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
+
     def __init__(
         self: "BaseDeepRegressorTorch",
         num_epochs: int = 16,
@@ -82,6 +135,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         optimizer_kwargs: dict = None,
         callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         verbose: bool = True,
         random_state: int | None = None,
@@ -94,16 +148,31 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self.optimizer_kwargs = optimizer_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         # set random seed for torch
         if self.random_state is not None:
             torchManual_seed = _safe_import("torch.manual_seed")
             torchManual_seed(self.random_state)
+
+        activation_map = {}
+        for var in self._instantiate_activation_vars:
+            activation_map[var] = getattr(self, var, None)
+        self._callable_activations = self._instantiate_activations(activation_map)
 
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
@@ -111,6 +180,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self._all_optimizers = None
         self._all_criterions = None
         self._all_callbacks = None
+        self._metrics_objects = None
 
     def _fit(self, X, y):
         self.network = self._build_network(X)
@@ -120,6 +190,8 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self._optimizer = self._instantiate_optimizer()
         # instantiate callbacks (learning rate schedulers)
         self._schedulers = self._instantiate_schedulers()
+        # instantiate metrics
+        self._metrics_objects = self._instantiate_metrics(self.metrics)
         # build dataloader
         dataloader = self._build_dataloader(X, y)
 
@@ -129,6 +201,8 @@ class BaseDeepRegressorTorch(BaseRegressor):
 
     def _run_epoch(self, epoch, dataloader):
         losses = []
+        metric_values = {name: [] for name in (self._metrics_objects or {})}
+
         for inputs, outputs in dataloader:
             y_pred = self.network(**inputs)
             loss = self._criterion(y_pred, outputs)
@@ -136,7 +210,28 @@ class BaseDeepRegressorTorch(BaseRegressor):
             loss.backward()
             self._optimizer.step()
             losses.append(loss.item())
+
+            # Compute metrics if any
+            if self._metrics_objects:
+                import torch
+
+                # # Some networks output shape (batch_size, 1) while sktime targets are
+                # # (batch_size,). Metrics expect y_pred to be in the same shape
+                # # as outputs.
+                if (
+                    y_pred.ndim == 2
+                    and y_pred.shape[1] == 1
+                    and outputs.ndim == 1
+                    and y_pred.shape[0] == outputs.shape[0]
+                ):
+                    y_pred = y_pred.squeeze(-1)
+                with torch.no_grad():
+                    for metric_name, metric_obj in self._metrics_objects.items():
+                        metric_value = metric_obj(y_pred, outputs)
+                        metric_values[metric_name].append(metric_value.item())
+
         epoch_loss = np.average(losses)
+
         # step the schedulers, if any
         if self._schedulers:
             for scheduler in self._schedulers:
@@ -147,9 +242,62 @@ class BaseDeepRegressorTorch(BaseRegressor):
                     scheduler.step(epoch_loss)
                 else:
                     scheduler.step()
-        # print loss for the epoch, if verbose is True
+
         if self.verbose:
-            print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
+            msg = f"Epoch {epoch + 1}: Loss: {epoch_loss}"
+            if metric_values:
+                for metric_name, values in metric_values.items():
+                    avg_metric = np.average(values)
+                    msg += f", {metric_name}: {avg_metric:.4f}"
+            print(msg)
+
+    def _instantiate_activations(
+        self, activations: dict[str, str | Callable | None]
+    ) -> dict[str, object | None]:
+        """Instantiate PyTorch activations from string or module specifications.
+
+        Parameters
+        ----------
+        activations : dict[str, str | Callable | None]
+            A mapping where each key is the name of an activation attribute, and the
+            value is either the activation specified by the user or a default provided
+            by the estimator.
+
+        Returns
+        -------
+        callable_activations : dict[str, torch.nn.Module | None]
+            A dictionary of activation functions, keyed by the attribute name.
+        """
+        import torch
+
+        callable_activations: dict[str, torch.nn.Module | None] = {}
+        for activation_var, activation in activations.items():
+            if activation is None:
+                callable_activations[activation_var] = None
+                continue
+            if isinstance(activation, torch.nn.Module):
+                callable_activations[activation_var] = activation
+                continue
+            elif not isinstance(activation, str):
+                raise TypeError(
+                    f"Activation '{activation}' should be string or a torch.nn.Module. "
+                    f"But got {type(activation)} instead."
+                )
+
+            uc_activation = LC_TO_UC_ACTIVATIONS.get(activation, activation)
+            if not _safe_import(f"torch.nn.{uc_activation}"):
+                raise ValueError(
+                    f"Activation '{uc_activation}' is not a valid PyTorch activation"
+                    "function in torch.nn module. Please pass a valid PyTorch"
+                    "activation function in torch.nn module. Refer "
+                    "https://pytorch.org/docs/stable/nn.html#non-linear-activations-"
+                    "weighted-sum-nonlinearity for list of valid activation functions."
+                )
+
+            callable_activations[activation_var] = _safe_import(
+                f"torch.nn.{uc_activation}"
+            )()
+        return callable_activations
 
     def _instantiate_schedulers(self):
         """Instantiate the schedulers to be used during training.
@@ -339,6 +487,96 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 "https://pytorch.org/docs/stable/nn.html#loss-functions "
                 f"But got {type(self.criterion)} instead."
             )
+
+    def _instantiate_metric(self, metric, torchmetrics):
+        """Instantiate a single regression metric from torchmetrics.
+
+        Parameters
+        ----------
+        metric : str or Callable
+            Metric name from torchmetrics or a metric instance.
+        torchmetrics : module
+            The torchmetrics module.
+
+        Returns
+        -------
+        metric_name : str
+            Name to use as the key in the metrics dictionary.
+        metric_instance : Callable
+            The instantiated metric object.
+
+        Raises
+        ------
+        ValueError
+            If an unknown metric name is passed.
+        TypeError
+            If metric is neither a string nor a callable.
+        """
+        if isinstance(metric, str):
+            if not hasattr(torchmetrics, metric):
+                raise ValueError(
+                    f"Error in constructing torch based regressor "
+                    f"{type(self).__name__}, "
+                    f"unknown metric: {metric}. Please pass one of the available "
+                    f"metrics from torchmetrics or check the metric name. "
+                    f"See https://lightning.ai/docs/torchmetrics/stable/"
+                )
+            metric_class = getattr(torchmetrics, metric)
+            return metric, metric_class()
+        if isinstance(metric, Callable):
+            return metric.__class__.__name__, metric
+        raise TypeError(
+            "`metrics` can either be None, a str or a tuple of str "
+            "representing metrics from torchmetrics, or an instance of a "
+            f"torchmetrics metric. But got {type(metric)} instead."
+        )
+
+    def _instantiate_metrics(self, metrics):
+        """Instantiate metrics to be computed during training.
+
+        Metrics are computed from the torchmetrics library. If no metrics are passed,
+        returns None.
+
+        Parameters
+        ----------
+        metrics : None or str or Callable or tuple of str and/or Callable
+            Metrics to compute during training. If None, no metrics are computed beyond
+            the loss. Metrics are computed from torchmetrics library.
+            If a string/Callable is passed, it must be one of the metrics defined in
+            https://lightning.ai/docs/torchmetrics/stable/
+            Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
+
+        Returns
+        -------
+        metrics_dict : dict or None
+            A dictionary mapping metric names to metric objects from torchmetrics.
+            If no metrics are provided, returns None.
+
+        Raises
+        ------
+        ValueError
+            If an unknown metric name is passed.
+        TypeError
+            If metric is neither a string nor a callable.
+        """
+        if metrics is None:
+            return None
+
+        torchmetrics = _safe_import("torchmetrics")
+
+        if not isinstance(metrics, tuple):
+            metrics_list = (metrics,)
+        else:
+            metrics_list = metrics
+
+        metrics_dict = {}
+        for metric in metrics_list:
+            metric_name, metric_instance = self._instantiate_metric(
+                metric, torchmetrics
+            )
+            metrics_dict[metric_name] = metric_instance
+
+        return metrics_dict if metrics_dict else None
 
     @abc.abstractmethod
     def _build_network(self):
