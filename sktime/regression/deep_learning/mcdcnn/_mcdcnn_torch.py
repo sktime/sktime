@@ -205,7 +205,6 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         if len(self.filter_sizes) != len(self.kernel_sizes):

@@ -280,3 +280,4 @@ They are primarily useful for developers managing CI behaviour of individual obj
     tests__vm
     tests__skip_all
     tests__skip_by_name
+    tests__specific
