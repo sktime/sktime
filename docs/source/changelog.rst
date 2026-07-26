@@ -28,7 +28,7 @@ Highlights
   * Aurora multimodal foundation model forecaster (:pr:`10417`) :user:`Faakhir30`
   * Cisco TSFM forecaster (:pr:`10444`) :user:`vedantag17`
   * Falcon-X forecaster (:pr:`10430`) :user:`vedantag17`
-  * MIRA medical time series foundation model(:pr:`10398`) :user:`Faakhir30`
+  * MIRA medical time series foundation model (:pr:`10398`) :user:`Faakhir30`
   * Moirai 2.0 foundation model forecasters (:pr:`9678`, :pr:`10333`) :user:`ubermensch19`, :user:`vedantag17`
   * Thuml Sundial forecasting foundation model (:pr:`10428`) :user:`geetu040`
   * WindFM forecasting foundation model (:pr:`10384`) :user:`geetu040`
