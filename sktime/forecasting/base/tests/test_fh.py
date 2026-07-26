@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 from numpy.testing._private.utils import assert_array_equal
 from pytest import raises
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.datasets import load_airline
 from sktime.datatypes._utilities import get_cutoff
@@ -41,7 +42,6 @@ from sktime.utils.datetime import (
     _shift,
     infer_freq,
 )
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
@@ -745,11 +745,9 @@ def test_exponential_smoothing_case_with_naive():
 
 
 # TODO: Replace this long running test with fast unit test
-# todo 9: check whether numpy 2 bound is still necessary
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
-    or not _check_estimator_deps(AutoARIMA, severity="none")
-    or _check_soft_dependencies("numpy>=2.0", severity="none"),
+    or not _check_estimator_deps(AutoARIMA, severity="none"),
     reason="run only if base module has changed or datatypes module has changed",
 )
 def test_auto_arima():

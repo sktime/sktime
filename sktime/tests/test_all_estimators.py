@@ -6,8 +6,10 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
+import io
 import numbers
 import os
+import sys
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -16,6 +18,7 @@ from tempfile import TemporaryDirectory
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.base import BaseEstimator, BaseObject, load
 from sktime.classification.deep_learning.base import BaseDeepClassifier
@@ -48,7 +51,6 @@ from sktime.utils._testing.estimator_checks import (
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.deep_equals import deep_equals
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 
@@ -62,7 +64,6 @@ def subsample_by_version_os(x):
     Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
     """
     import platform
-    import sys
 
     ix = sys.version_info.minor % 3
     os_str = platform.system()
@@ -743,7 +744,6 @@ class QuickTester:
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
     def _make_builtin_fixture_equivalents(self, name):
-        import io
         import logging
         import tempfile
         from pathlib import Path
@@ -1149,6 +1149,12 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
         if hasattr(est_clone, "is_fitted"):
             assert not est_clone.is_fitted
 
+    def test_deepcopy(self, estimator_instance):
+        """Check that an unfitted estimator instance can be deepcopied."""
+        est_copy = deepcopy(estimator_instance)
+        assert isinstance(est_copy, type(estimator_instance))
+        assert est_copy is not estimator_instance
+
     def test_repr(self, estimator_instance):
         """Check that __repr__ call to instance does not raise exceptions."""
         estimator = estimator_instance
@@ -1265,6 +1271,11 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         for tag in estimator_class._get_class_flags(flag_attr_name="_tags"):
             if tag in ALIAS_DICT:
+                # todo 1.1.0: remove this exception once forecaster tag deprecation done
+                object_type = estimator_class.get_class_tag("object_type")
+                # special case: "scitype:y" deprecated only for forecasters
+                if tag == "scitype:y" and not object_type == "forecaster":
+                    continue
                 msg = (
                     f"{estimator_class} has deprecated tag: {tag!r} - "
                     f"please follow deprecation guide from sktime release notes "
@@ -1288,6 +1299,12 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
             if tag in ALIAS_DICT:
+                # todo 1.1.0: remove this exception once forecaster tag deprecation done
+                # specifically, deprecation of the capability:multivariate aliasing
+                object_type = estimator_instance.get_tag("object_type")
+                # special case: "scitype:y" deprecated only for forecasters
+                if tag == "scitype:y" and not object_type == "forecaster":
+                    break
                 msg = (
                     f"{estimator_instance} has deprecated tag: {tag!r} - "
                     f"please follow deprecation guide from sktime release notes "
@@ -1479,7 +1496,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # fixed the random_state params recursively to be integer seeds.
             msg = (
                 "Estimator %s should not change or mutate "
-                " the parameter %s from %s to %s during fit."
+                "the parameter %s from %s to %s during fit."
                 % (estimator.__class__.__name__, param_name, original_value, new_value)
             )
             # joblib.hash has problems with pandas objects, so we use deep_equals then
@@ -1679,6 +1696,36 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
                 decimal=6,
                 err_msg=msg,
             )
+
+    def test_deepcopy_fitted(self, estimator_instance, scenario):
+        """Check that a fitted estimator instance can be deepcopied."""
+        estimator = estimator_instance
+        set_random_state(estimator)
+        scenario.run(estimator, method_sequence=["fit"])
+
+        est_copy = deepcopy(estimator)
+        assert isinstance(est_copy, type(estimator))
+        assert est_copy is not estimator
+
+    def test_deepcopy_fitted_predict(
+        self, estimator_instance, scenario, method_nsc_arraylike
+    ):
+        """Check that a fitted estimator can still predict after deepcopy."""
+        estimator = estimator_instance
+        set_random_state(estimator)
+        scenario.run(estimator, method_sequence=["fit"])
+
+        est_copy = deepcopy(estimator)
+
+        # skip test if vectorization would be necessary and method predict_proba
+        # this is since vectorization is not implemented for predict_proba
+        if method_nsc_arraylike in ["predict_proba", "predict_var"]:
+            with ValidProbaErrors() as handler:
+                scenario.run(est_copy, method_sequence=[method_nsc_arraylike])
+            if handler.skipped:
+                return None
+        else:
+            scenario.run(est_copy, method_sequence=[method_nsc_arraylike])
 
     def test_multiprocessing_idempotent(
         self, estimator_instance, scenario, method_nsc_arraylike

@@ -21,9 +21,9 @@ class SkforecastAutoreg(BaseForecaster):
     lags : int, list, numpy ndarray, range
         Lags used as predictors. Index starts at 1, so lag 1 is equal to t-1.
 
-            - ``int``: include lags from 1 to ``lags`` (included).
-            - ``list``, ``1d numpy ndarray`` or ``range``: include only lags present in
-            ``lags``, all elements must be int.
+        - ``int``: include lags from 1 to ``lags`` (included).
+        - ``list``, ``1d numpy ndarray`` or ``range``: include only lags present in
+          ``lags``, all elements must be int.
 
     transformer_y : object transformer (preprocessor), default ``None``
         An instance of a transformer (preprocessor) compatible with the scikit-learn
@@ -156,6 +156,18 @@ class SkforecastAutoreg(BaseForecaster):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
         self._regressor = None
         self._forecaster = None
         self._transformer_y = None
@@ -272,7 +284,7 @@ class SkforecastAutoreg(BaseForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here.
         X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
@@ -327,7 +339,7 @@ class SkforecastAutoreg(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
 
@@ -376,7 +388,7 @@ class SkforecastAutoreg(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -460,8 +472,6 @@ class SkforecastAutoreg(BaseForecaster):
         return [param1, param2]
 
 
-# TODO: SkforecastRecursive has significant duplication with SkforecastAutoreg
-# https://github.com/sktime/sktime/issues/7451
 class SkforecastRecursive(BaseForecaster):
     """Adapter for ``skforecast.recursive.ForecasterRecursive`` class [1]_.
 
@@ -598,10 +608,7 @@ class SkforecastRecursive(BaseForecaster):
         "capability:categorical_in_X": True,
         "python_version": ">=3.9",
         "python_dependencies": ["skforecast>=0.14"],
-        # CI and testing
-        # --------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],
-        # skforecast requires contiguous X for prediction, see issue #8787
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
@@ -637,9 +644,7 @@ class SkforecastRecursive(BaseForecaster):
 
         self._clone_estimators()
 
-        # Dynamically set the capability tag based on store_in_sample_residuals
-        if self.store_in_sample_residuals:
-            self.set_tags(**{"capability:pred_int:insample": True})
+        self.set_tags(**{"capability:pred_int": self.store_in_sample_residuals})
 
     def _clone_estimators(self: "SkforecastRecursive"):
         """Clone the regressor and transformers."""
@@ -751,7 +756,7 @@ class SkforecastRecursive(BaseForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here.
         X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
@@ -769,7 +774,11 @@ class SkforecastRecursive(BaseForecaster):
         y_new = self._make_index_compatible(y, "y")
         X_new = self._make_index_compatible(X, "X")
 
-        self._forecaster.fit(y_new, exog=self._coerce_column_names(X_new))
+        self._forecaster.fit(
+            y_new,
+            exog=self._coerce_column_names(X_new),
+            store_in_sample_residuals=self.store_in_sample_residuals,
+        )
 
         return self
 
@@ -808,7 +817,7 @@ class SkforecastRecursive(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
 
@@ -857,7 +866,7 @@ class SkforecastRecursive(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast

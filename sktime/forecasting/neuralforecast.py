@@ -3,11 +3,12 @@
 
 import functools
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.forecasting.base.adapters._neuralforecast import (
     _SUPPORTED_LOCAL_SCALAR_TYPES,
     _NeuralForecastAdapter,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 
@@ -177,8 +178,10 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(
@@ -256,6 +259,18 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             broadcasting=broadcasting,
         )
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
         # initiate internal variables to avoid AttributeError in future
         self._trainer_kwargs = None
         self._loss = None
@@ -302,7 +317,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -354,10 +371,9 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -570,8 +586,10 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(
@@ -692,7 +710,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -739,10 +759,9 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         """
         del parameter_set
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -960,8 +979,10 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(
@@ -1083,7 +1104,9 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "encoder_n_layers": self.encoder_n_layers,
             "encoder_hidden_size": self.encoder_hidden_size,
@@ -1134,10 +1157,9 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -1361,8 +1383,10 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(
@@ -1487,7 +1511,9 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "cell_type": self.cell_type,
             "dilations": self._dilations,
@@ -1538,10 +1564,9 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",
@@ -1760,8 +1785,10 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
-        "python_dependencies": ["neuralforecast>=1.6.4"],
+        "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(
@@ -1886,7 +1913,9 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
             self._valid_loss = self.valid_loss
 
         return {
-            "input_size": self.input_size,
+            "input_size": self._get_validated_input_size(
+                self.input_size, self.inference_input_size
+            ),
             "inference_input_size": self.inference_input_size,
             "kernel_size": self.kernel_size,
             "dilations": self._dilations,
@@ -1937,10 +1966,9 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         """
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 
-        try:
-            _check_soft_dependencies("neuralforecast", severity="error")
-            _check_soft_dependencies("torch", severity="error")
-        except ModuleNotFoundError:
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
             params = [
                 {
                     "freq": "auto",

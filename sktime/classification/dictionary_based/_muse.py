@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.transformations.dictionary_based import SFAFast
 from sktime.utils.warnings import warn
 
 

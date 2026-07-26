@@ -9,6 +9,7 @@ __all__ = [
     "EXCLUDED_TESTS",
     "MATRIXDESIGN",
     "ONLY_CHANGED_MODULES",
+    "ONLY_VM_ESTIMATORS",
 ]
 
 from sktime.registry import ESTIMATOR_TAG_LIST
@@ -25,30 +26,27 @@ MATRIXDESIGN = False
 # default is False, can be set to True by pytest --only_changed_modules True flag
 ONLY_CHANGED_MODULES = False
 
+# whether to test only estimators from modules require a VM to test
+# default is False, can be set to True by pytest --only_vm_estimators True flag
+ONLY_VM_ESTIMATORS = False
+
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_all INSTEAD
 EXCLUDE_ESTIMATORS = [
-    # PlateauFinder seems to be broken, see #2259
-    "PlateauFinder",
     # below are removed due to mac failures we don't fully understand, see #3103
     "HIVECOTEV1",
     "HIVECOTEV2",
     "RandomIntervalSpectralEnsemble",
-    "RandomIntervalSegmenter",
     "RandomIntervalFeatureExtractor",
     # tapnet based estimators fail stochastically for unknown reasons, see #3525
     "TapNetRegressor",
     "LSTMFCNClassifier",  # unknown cause, see bug report #4033
     # DL classifier suspected to cause hangs and memouts, see #4610
     "EditDist",
-    "CNNClassifier",
     "LSTMFCNClassifier",
     "MLPClassifier",
-    "MLPRegressor",
-    "CNNRegressor",
     "ResNetRegressor",
-    "FCNRegressor",
     "LSTMFCNRegressor",
     # splitters excluded with undiagnosed failures, see #6194
     # these are temporarily skipped to allow merging of the base test framework
@@ -78,8 +76,6 @@ EXCLUDE_ESTIMATORS = [
     "FreshPRINCE",
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
-    "VARMAX",
-    "SARIMAX",
     "SCINetForecaster",  # known bug #7871
     "MAPAForecaster",  # known bug #8039
 ]
@@ -89,50 +85,11 @@ EXCLUDE_ESTIMATORS = [
 # ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
 EXCLUDED_TESTS = {
     # known issue when X is passed, wrong time indices are returned, #1364
-    "StackingForecaster": ["test_predict_time_index_with_X"],
-    # pickling problem with local method see #2490
-    "ProximityStump": [
-        "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_save_estimators_to_file",
-    ],
-    "ProximityTree": [
-        "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_save_estimators_to_file",
-        "test_multiprocessing_idempotent",  # see 5658
-        "test_fit_idempotent",  # see 6637
-    ],
-    "ProximityForest": [
-        "test_persistence_via_pickle",
-        "test_fit_does_not_overwrite_hyper_params",
-        "test_save_estimators_to_file",
-        "test_fit_idempotent",  # see 6201
-        "test_multiprocessing_idempotent",  # see 6637
-    ],
     "TapNetRegressor": [
         "test_fit_idempotent",
         "test_persistence_via_pickle",
         "test_save_estimators_to_file",
     ],
-    "SimpleRNNClassifier": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-        "test_multioutput",  # see 6201
-        "test_classifier_on_unit_test_data",  # see 6201
-    ],
-    "SimpleRNNRegressor": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
-    # sth is not quite right with the RowTransformer-s changing state,
-    #   but these are anyway on their path to deprecation, see #2370
-    "SeriesToPrimitivesRowTransformer": ["test_methods_do_not_change_state"],
-    "SeriesToSeriesRowTransformer": ["test_methods_do_not_change_state"],
-    # ColumnTransformer still needs to be refactored, see #2537
-    "ColumnTransformer": ["test_methods_do_not_change_state"],
     # Early classifiers intentionally retain information from previous predict calls
     #   for #1.
     # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
@@ -151,16 +108,9 @@ EXCLUDED_TESTS = {
     "DynamicFactor": [
         "test_predict_time_index_in_sample_full",  # refer to #4765
     ],
-    "ARIMA": [
-        "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
-    "VECM": [
-        "test_hierarchical_with_exogeneous",  # refer to #4743
-    ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
-    "PyKANForecaster": ["test_predict_time_index_in_sample_full"],
     "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
     # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
     "StatsForecastMSTL": ["test_pred_int_tag"],
@@ -175,13 +125,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    "ClusterSegmenter": [
-        "test_doctest_examples",
-        "test_predict_points",
-        "test_predict_segments",
-        "test_transform_output_type",
-        "test_output_type",
-    ],
     "GreedyGaussianSegmentation": [
         "test_predict_points",
         "test_predict_segments",
@@ -190,25 +133,10 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    # see PR 7921
-    "RocketClassifier": ["test_classifier_on_basic_motions"],
     # see bug report #6465 and #7958
     "MACNNClassifier": [
         "test_multioutput",
         "test_classifier_on_unit_test_data",
-    ],
-    "MCDCNNClassifier": [
-        "test_persistence_via_pickle",
-        "test_multioutput",
-        "test_classifier_on_unit_test_data",
-        "test_fit_idempotent",  # not part of bug reports but due to randomness
-    ],
-    "ARLagOrderSelector": [
-        "test_doctest_examples",  # doctest fails, see #8129
-    ],
-    "ESRNNForecaster": [  # pickling problem, see #8135
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
     ],
 }
 
@@ -217,30 +145,21 @@ EXCLUDED_TESTS = {
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
-        "BOSSEnsemble",
-        "CAPA",
         "CNTCNetwork",
-        "CanonicalIntervalForest",
-        "CircularBinarySegmentation",
         "ClaSPTransformer",
         "ClearSky",
-        "ColumnEnsembleClassifier",
-        "ColumnwiseTransformer",
         "ContractableBOSS",
         "DOBIN",
-        "DWTTransformer",
         "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
         "DistanceFeatures",
-        "DontUpdate",
         "DummyRegressor",
         "ElasticEnsemble",
         "FeatureSelection",
         "FreshPRINCE",
-        "GreedyGaussianSegmentation",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",
@@ -249,62 +168,40 @@ EXCLUDED_TESTS_BY_TEST = {
         "InceptionTimeNetwork",
         "IndividualBOSS",
         "IndividualTDE",
-        "InformationGainSegmentation",
-        "LogTransformer",
         "M5Dataset",
         "MCDCNNClassifier",
         "MCDCNNNetwork",
         "MCDCNNRegressor",
         "MLPNetwork",
         "MUSE",
-        "MVCAPA",
-        "MatrixProfile",
-        "MovingWindow",
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
-        "OptionalPassthrough",
-        "PAA",
         "PAAlegacy",
-        "PCATransformer",
-        "PELT",
         "PaddingTransformer",
-        "PlateauFinder",
-        "Prophet",
-        "ProphetPiecewiseLinearTrendForecaster",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
         "RandomSamplesAugmenter",
-        "RandomShapeletTransform",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
-        "ReducerTransform",
         "SAXlegacy",
         "SFA",
         "SFAFast",
-        "SeededBinarySegmentation",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
-        "SlopeTransformer",
         "StackingForecaster",
-        "StatThresholdAnomaliser",
         "SummaryClassifier",
         "SupervisedTimeSeriesForest",
         "TEASER",
         "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
-        "TimeBinner",
         "TimeSeriesKMedoids",
-        "TimeSeriesKernelKMeans",
-        "TruncationTransformer",
-        "UnobservedComponents",
         "WEASEL",
-        "WhiteNoiseAugmenter",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them
         "BaggingForecaster",
@@ -338,9 +235,9 @@ EXCLUDED_TESTS_BY_TEST = {
         "MedianSquaredPercentageError",
         "MedianAbsoluteScaledError",
         "MedianSquaredError",
+        "MeanAbsoluteError",
         "MeanAbsolutePercentageError",
         "MeanAbsoluteScaledError",
-        "MeanAbsoluteError",
         "MedianAbsoluteError",
         "MeanSquaredPercentageError",
         "MedianAbsolutePercentageError",

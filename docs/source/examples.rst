@@ -40,6 +40,7 @@ Forecasting
     examples/01a_forecasting_sklearn.ipynb
     examples/01b_forecasting_proba.ipynb
     examples/01c_forecasting_hierarchical_global.ipynb
+    examples/forecasting/pretraining.ipynb
 
 Time Series Classification, Regression, Clustering
 ==================================================
@@ -90,5 +91,6 @@ Benchmarking
 .. nbgallery::
     :glob:
 
-    examples/04_benchmarking.ipynb
-    examples/04_benchmarking_v2.ipynb
+    examples/04_benchmarking_classifiers.ipynb
+    examples/04_benchmarking_forecasters.ipynb
+    examples/04_benchmarking_legacy.ipynb

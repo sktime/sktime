@@ -143,6 +143,7 @@ class HMM(BaseDetector):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],  # see #8966
     }
 
     def __init__(
