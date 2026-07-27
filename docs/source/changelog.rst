@@ -50,7 +50,6 @@ Estimator Tags for multiple estimator types
   ``ignores-exogeneous-X`` and ``univariate-only`` tags, respectively.
   Values ``False`` and ``True`` map to ``True`` and ``False``, respectively.
 
-
 Forecasters
 ^^^^^^^^^^^
 
@@ -67,6 +66,7 @@ Forecasters
   The ``capability:global_forecasting`` tag is deprecated and will be removed entirely
   in version 1.2.0. Users should use the ``capability:pretrain`` tag instead.
   Tag queries will not be redirected due to simultaneous presence of both tags.
+
 
 Version 1.0.2 - 2026-07-26
 --------------------------
