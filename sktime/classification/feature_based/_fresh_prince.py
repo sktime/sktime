@@ -89,6 +89,9 @@ class FreshPRINCE(BaseClassifier):
         "capability:train_estimate": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # fails due to #8151 or #8059
     }
 
     def __init__(

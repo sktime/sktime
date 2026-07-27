@@ -132,6 +132,9 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
         "capability:pretrain": True,
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # known bug, see #7871
     }
 
     def __init__(

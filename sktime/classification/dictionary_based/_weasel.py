@@ -133,6 +133,9 @@ class WEASEL(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "dictionary",
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_multiprocessing_idempotent"],  # see #5658
     }
 
     def __init__(

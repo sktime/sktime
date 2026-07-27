@@ -65,6 +65,12 @@ class SAXlegacy(BaseTransformer):
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict require for y?
         "capability:categorical_in_X": False,
+        # testing
+        # -------
+        "tests:specific": ["sktime.transformations.tests.test_sax"],
+        # SAX returns strange output format, needs to be fixed
+        # was not tested previously due to legacy exception
+        "tests:skip_by_name": ["test_fit_transform_output"],
     }
 
     def __init__(

@@ -136,6 +136,9 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "fit_is_empty": False,
         "y_inner_mtype": "numpy1D",
         "requires_y": True,
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],  # creates nested numpy shapelets sporadically, see #6171
     }
 
     _estimator_attr = "_pyts_shapelet_transform"

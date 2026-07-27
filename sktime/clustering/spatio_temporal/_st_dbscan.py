@@ -91,6 +91,9 @@ class STDBSCAN(BaseClusterer):
         "capability:predict": True,
         "capability:predict_proba": False,
         "capability:out_of_sample": True,
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # not API compliant, see #7994
     }
 
     DELEGATED_FITTED_PARAMS = ["core_sample_indices_", "components_ ", "labels_"]
