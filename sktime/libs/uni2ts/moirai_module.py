@@ -64,11 +64,29 @@ def encode_distr_output(
     return _encode(distr_output)
 
 
+def _use_vendor_module_paths(config):
+    """Point upstream uni2ts config targets at sktime's vendored modules."""
+    if isinstance(config, dict):
+        mapped = {}
+        for key, value in config.items():
+            if (
+                key == "_target_"
+                and isinstance(value, str)
+                and value.startswith("uni2ts.")
+            ):
+                value = f"sktime.libs.{value}"
+            mapped[key] = _use_vendor_module_paths(value)
+        return mapped
+    if isinstance(config, list):
+        return [_use_vendor_module_paths(value) for value in config]
+    return config
+
+
 def decode_distr_output(config) -> DistributionOutput:
     """Deserialize function for DistributionOutput."""
     from hydra.utils import instantiate
 
-    return instantiate(config, _convert_="all")
+    return instantiate(_use_vendor_module_paths(config), _convert_="all")
 
 
 class MoiraiModule(

@@ -148,32 +148,9 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 }
             )
 
-    def _instantiate_patched_model(self, model_kwargs):
-        """Instantiate the model from the local sktime uni2ts copy."""
-        import sys
-
-        import sktime.libs.uni2ts as _uni2ts_mod
-
-        sys.modules.setdefault("uni2ts", _uni2ts_mod)
-        # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch when
-        # hf_xet was compiled for an older CPython than the current runtime).
-        # huggingface_hub reads HF_HUB_DISABLE_XET from constants.py at
-        # import time, and file_download.py accesses it as
-        # `constants.HF_HUB_DISABLE_XET` at call time. We must therefore
-        # patch huggingface_hub.constants directly (not file_download) so
-        # that _download_to_tmp_and_move skips xet_get for this session.
-        import os
-
+    def _instantiate_vendor_model(self, model_kwargs):
+        """Instantiate the model from sktime's vendored uni2ts package."""
         from sktime.libs.uni2ts.moirai2_forecast import Moirai2Forecast
-
-        try:
-            import hf_xet  # noqa: F401
-        except Exception:
-            os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
-            if _check_soft_dependencies("huggingface_hub", severity="none"):
-                import huggingface_hub.constants as _hf_constants
-
-                _hf_constants.HF_HUB_DISABLE_XET = True
 
         if self.checkpoint_path.startswith("Salesforce"):
             from sktime.libs.uni2ts.moirai2_module import Moirai2Module
@@ -235,7 +212,7 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     self.model = Moirai2Forecast.load_from_checkpoint(**model_kwargs)
                     self.model.to(self.map_location)
         else:
-            self.model = self._instantiate_patched_model(model_kwargs)
+            self.model = self._instantiate_vendor_model(model_kwargs)
             self.model.to(self.map_location)
 
     def _predict(self, fh, X=None):
