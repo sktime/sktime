@@ -1255,6 +1255,13 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 else:
                     assert param_value == param.default, param.name
 
+    LEGACY_DEPRECATED_TAGS = [
+        "univariate-only",
+        "ignores-exogeneous-X",
+        "python_dependencies_alias",
+        "univariate-metric",
+    ]
+
     def test_valid_estimator_class_tags(self, estimator_class):
         """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_class.get_class_tags().keys():
@@ -1267,15 +1274,20 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         from sktime.base._base import TagAliaserMixin
 
-        ALIAS_DICT = TagAliaserMixin.alias_dict
+        ALIAS_DICT = TagAliaserMixin.alias_dict.copy()
+
+        forbidden_tags = self.LEGACY_DEPRECATED_TAGS + list(ALIAS_DICT.keys())
 
         for tag in estimator_class._get_class_flags(flag_attr_name="_tags"):
-            if tag in ALIAS_DICT:
+            if tag in forbidden_tags:
                 msg = (
                     f"{estimator_class} has deprecated tag: {tag!r} - "
-                    f"please follow deprecation guide from sktime release notes "
-                    f"and replace with {ALIAS_DICT[tag]!r}"
+                    f"please follow deprecation guide from sktime release notes"
                 )
+                if tag in ALIAS_DICT:
+                    msg += f" and replace with {ALIAS_DICT[tag]!r}"
+                else:
+                    msg += "."
                 raise AssertionError(msg)
 
     def test_valid_estimator_tags(self, estimator_instance):
@@ -1290,15 +1302,20 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         from sktime.base._base import TagAliaserMixin
 
-        ALIAS_DICT = TagAliaserMixin.alias_dict
+        ALIAS_DICT = TagAliaserMixin.alias_dict.copy()
+
+        forbidden_tags = self.LEGACY_DEPRECATED_TAGS + list(ALIAS_DICT.keys())
 
         for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
-            if tag in ALIAS_DICT:
+            if tag in forbidden_tags:
                 msg = (
                     f"{estimator_instance} has deprecated tag: {tag!r} - "
-                    f"please follow deprecation guide from sktime release notes "
-                    f"and replace with {ALIAS_DICT[tag]!r}"
+                    f"please follow deprecation guide from sktime release notes"
                 )
+                if tag in ALIAS_DICT:
+                    msg += f" and replace with {ALIAS_DICT[tag]!r}"
+                else:
+                    msg += "."
                 raise AssertionError(msg)
 
     def test_random_tags(self, estimator_class):
