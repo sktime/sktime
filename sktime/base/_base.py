@@ -421,6 +421,9 @@ class TagAliaserMixin(_TagAliaserMixin):
     preferably at CI time and as exceptions.
     """
 
+    # when removing tags from here,
+    # add to LEGACY_DEPRECATED_TAGS in TestAllObjects
+    # (permanent graveyard to check for legacy tags in CI)
     alias_dict = {"capability:global_forecasting": ""}
     deprecate_dict = {"capability:global_forecasting": "1.2.0"}
 
