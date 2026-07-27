@@ -371,6 +371,18 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     See Also
     --------
     ThetaForecaster
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoTheta
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoTheta(  # doctest: +SKIP
+    ...     season_length=12, decomposition_type="additive", model="OTM"
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoTheta(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -486,6 +498,18 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     See Also
     --------
     AutoETS
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoETS
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoETS(  # doctest: +SKIP
+    ...     season_length=12, model="AAN", damped=True
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoETS(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -593,6 +617,16 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     References
     ----------
     .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autoces
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoCES
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoCES(season_length=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoCES(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -616,6 +650,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.1.0"],
+        "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
@@ -704,6 +739,18 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     References
     ----------
     .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotbats
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoTBATS
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoTBATS(  # doctest: +SKIP
+    ...     seasonal_periods=12, use_trend=True, use_arma_errors=False
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoTBATS(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -870,6 +917,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
+        "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_update_with_exogenous_variables"],

@@ -128,6 +128,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:skip_all": True,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
     def __init__(
@@ -414,6 +415,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
         "tests:skip_by_name": [
             "test_pred_int_tag",
         ],
@@ -719,6 +721,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
     def __init__(
@@ -1001,6 +1004,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
     def __init__(

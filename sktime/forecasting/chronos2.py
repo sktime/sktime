@@ -91,6 +91,7 @@ class Chronos2Forecaster(BaseForecaster):
         "capability:non_contiguous_X": False,
         "serialization:skip": ("model_pipeline",),
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
     }
 
     _default_config = {
