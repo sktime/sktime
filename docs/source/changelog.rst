@@ -17,7 +17,13 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
-Version 1.0.2 - 2026-07-07
+Version 1.1.0 - 2026-07-28
+--------------------------
+
+Minor release with scheduled deprecations and changes.
+
+
+Version 1.0.2 - 2026-07-26
 --------------------------
 
 Highlights
