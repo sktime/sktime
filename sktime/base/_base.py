@@ -489,7 +489,6 @@ class TagAliaserMixin(_TagAliaserMixin):
             new_tag_name = tag_name
 
         tag_changed = new_tag_name != old_tag_name
-        new_tag_queried = tag_name == new_tag_name
         old_tag_queried = tag_name == old_tag_name and tag_changed
 
         if tag_changed:
@@ -579,7 +578,6 @@ class TagAliaserMixin(_TagAliaserMixin):
             new_tag_name = tag_name
 
         tag_changed = new_tag_name != old_tag_name
-        new_tag_queried = tag_name == new_tag_name
         old_tag_queried = tag_name == old_tag_name and tag_changed
 
         if tag_changed:
