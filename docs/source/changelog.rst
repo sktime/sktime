@@ -64,8 +64,9 @@ Forecasters
 * The deprecated legacy API for global forecasting (``y`` in ``predict``) has been removed.
   Users should use the new global forecasting API through ``pretrain``.
   The ``capability:global_forecasting`` tag is deprecated and will be removed entirely
-  in version 1.2.0. Users should use the ``capability:pretrain`` tag instead.
-  Tag queries will not be redirected due to simultaneous presence of both tags.
+  in version 1.2.0, until then access will raise a arning.
+  Users should use the ``capability:pretrain`` tag instead.
+  Tag queries will not be redirected due to simultaneous presence of both tags in versions prior.
 
 
 Version 1.0.2 - 2026-07-26
