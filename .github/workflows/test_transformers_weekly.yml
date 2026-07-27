@@ -18,7 +18,7 @@ jobs:
       transformers: ${{ steps.get.outputs.transformers }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
@@ -68,7 +68,7 @@ jobs:
         transformer: ${{ fromJson(needs.collect-transformers.outputs.transformers) }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
