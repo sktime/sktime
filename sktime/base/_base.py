@@ -369,6 +369,8 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             return pickle.loads(file.open("_obj").read())
 
 
+# todo 1.2.0: remove this class from inheritance in BaseObject
+# or bump removal version if new tags get deprecated
 class TagAliaserMixin(_TagAliaserMixin):
     """Mixin class for tag aliasing and deprecation of old tags.
 
