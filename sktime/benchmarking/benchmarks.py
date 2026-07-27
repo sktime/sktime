@@ -26,7 +26,7 @@ _METRIC_SCITYPES = {
     "metric_detection",
 }
 _SPLITTER_SCITYPES = {"splitter", "splitter_tabular"}
-_ESTIMATOR_SCITYPES = {"classifier", "forecaster", "detector"}
+_ESTIMATOR_SCITYPES = {"classifier", "forecaster", "regressor", "detector"}
 
 # Maps scitype → which collection to add to (for single objects)
 _SCTYPE_TO_COLLECTION = {
