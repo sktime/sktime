@@ -421,18 +421,8 @@ class TagAliaserMixin(_TagAliaserMixin):
     preferably at CI time and as exceptions.
     """
 
-    alias_dict = {
-        "handles-missing-data": "capability:missing_values",
-        "ignores-exogeneous-X": "capability:exogenous",
-        "univariate-only": "capability:multivariate",
-        "scitype:y": "capability:multivariate",
-    }
-    deprecate_dict = {
-        "handles-missing-data": "1.1.0",
-        "ignores-exogeneous-X": "1.1.0",
-        "univariate-only": "1.1.0",
-        "scitype:y": "1.1.0",
-    }
+    alias_dict = {}
+    deprecate_dict = {}
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
@@ -714,8 +704,6 @@ class TagAliaserMixin(_TagAliaserMixin):
 
     # package name used for deprecation warnings
     _package_name = "sktime"
-
-    FLIPPED_TAGS = ["ignores-exogeneous-X", "univariate-only"]
 
 
 class BaseEstimator(_BaseEstimator, BaseObject):
