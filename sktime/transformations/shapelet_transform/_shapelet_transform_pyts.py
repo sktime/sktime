@@ -138,6 +138,7 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "requires_y": True,
         "capability:random_state": True,
         "property:randomness": "stochastic",
+        "capability:categorical_in_X": False,
     }
 
     _estimator_attr = "_pyts_shapelet_transform"
