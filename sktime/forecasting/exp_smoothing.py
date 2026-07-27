@@ -179,9 +179,20 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         super().__init__(random_state=random_state)
 
     def _fit_forecaster(self, y, X=None):
+        import pandas as pd
         from statsmodels.tsa.holtwinters import (
             ExponentialSmoothing as _ExponentialSmoothing,
         )
+
+        from sktime.forecasting.base._fh import _normalize_period_freq
+
+        # statsmodels cannot handle DatetimeIndex with start/end-of-period
+        # offsets (e.g. MonthBegin/"MS"); convert to PeriodIndex first.
+        if isinstance(y.index, pd.DatetimeIndex) and y.index.freq is not None:
+            normalized = _normalize_period_freq(y.index.freq)
+            if normalized is not y.index.freq:
+                y = y.copy()
+                y.index = y.index.to_period(normalized)
 
         self._forecaster = _ExponentialSmoothing(
             y,

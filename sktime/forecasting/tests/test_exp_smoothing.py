@@ -1,6 +1,6 @@
 """Test exponential smoothing forecasters."""
 
-__author__ = ["mloning", "big-o", "ciaran-g"]
+__author__ = ["mloning", "big-o", "ciaran-g", "mahesh-sadupalli"]
 __all__ = ["test_set_params"]
 
 import pandas as pd
@@ -88,3 +88,38 @@ def check_panel_with_freq():
     y_pred = forecaster.predict(fh=fh)
 
     assert y_pred.equals(y_pred_update), "Expected same predictions after update"
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExponentialSmoothing),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "datetime_freq, expected_period_freq",
+    [
+        ("MS", "M"),
+        ("ME", "M"),
+        ("QS", "Q"),
+        ("QE", "Q"),
+        ("YS", "Y"),
+        ("YE", "Y"),
+    ],
+)
+def test_exponential_smoothing_datetime_start_of_period_freqs(
+    datetime_freq, expected_period_freq
+):
+    """Regression test for DatetimeIndex with start/end-of-period offset aliases.
+
+    statsmodels cannot infer a PeriodIndex from offsets such as MonthBegin ("MS");
+    sktime should convert transparently before fitting.
+    See https://github.com/sktime/sktime/issues/10480
+    """
+    n = 24
+    index = pd.date_range("2020-01", periods=n, freq=datetime_freq)
+    y = pd.Series(range(n), index=index, dtype=float, name="y")
+
+    forecaster = ExponentialSmoothing(trend="add")
+    forecaster.fit(y)
+    preds = forecaster.predict(fh=[1, 2, 3])
+
+    assert len(preds) == 3
