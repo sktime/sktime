@@ -71,6 +71,9 @@ class StationarityPhillipsPerron(BaseParamFitter):
         # --------------
         "X_inner_mtype": ["pd.Series", "np.ndarray"],
         "scitype:X": "Series",
+        # testing configuration
+        # ---------------------
+        "tests:vm": True,  # run in VM due to dependency requirement arch
     }
 
     def __init__(
