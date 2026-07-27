@@ -64,9 +64,7 @@ class GreykiteForecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:multivariate": False,  # Handles univariate targets here.
-        # Exogenous variables are NOT supported: greykite's exogenous feature
-        # pipeline is memory-intensive and causes OOM in CI
-        "capability:exogenous": False,
+        "capability:exogenous": True,
         "capability:missing_values": True,  # Handles missing data.
         "y_inner_mtype": "pd.Series",  # Expected input type for y.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
@@ -213,6 +211,15 @@ class GreykiteForecaster(BaseForecaster):
         # Preserve the series name so _predict can return a named Series.
         self._y_name_ = y.name
 
+        # Store training data and exogenous column names.
+        # greykite's forecast_pipeline does fit+predict atomically and requires
+        # future regressor values in the input DataFrame.  When exogenous
+        # variables are used, we re-run the pipeline at predict time with the
+        # future X appended (see _rerun_with_future_X).
+        self._y_train_ = y
+        self._X_train_ = X
+        self._X_cols_ = list(X.columns) if X is not None else []
+
         # Build the greykite DataFrame without mutating y.index.
         # IMPORTANT: never do y.index = y.index.to_timestamp() in-place.
         if isinstance(y.index, pd.PeriodIndex):
@@ -220,6 +227,11 @@ class GreykiteForecaster(BaseForecaster):
         else:
             ts_index = y.index
         df = pd.DataFrame({"ts": ts_index, "y": y.values})
+
+        # Add exogenous columns to the training DataFrame.
+        if X is not None:
+            for col in X.columns:
+                df[col] = X[col].values
 
         # Create the forecast configuration if not already provided.
         # Use a shallow copy so that setting forecast_horizon does not mutate
@@ -252,10 +264,56 @@ class GreykiteForecaster(BaseForecaster):
         """Generate forecasts.
 
         Uses the stored results and returns predictions as a pandas Series.
+        If exogenous variables were used in training and ``X`` is provided,
+        re-runs the pipeline with future regressor values appended because
+        greykite's ``forecast_pipeline`` requires future regressor values in
+        the input DataFrame.
         """
         if fh is None:
             fh = self._fh
-        forecast_df = self._forecaster.forecast.df_test
+
+        # If exogenous columns were used in training and future X is provided,
+        # re-run the pipeline so greykite can use the future regressor values.
+        if self._X_cols_ and X is not None:
+            # Rebuild training DataFrame.
+            if isinstance(self._y_train_.index, pd.PeriodIndex):
+                ts_index = self._y_train_.index.to_timestamp()
+            else:
+                ts_index = self._y_train_.index
+            train_df = pd.DataFrame({"ts": ts_index, "y": self._y_train_.values})
+            if self._X_train_ is not None:
+                for col in self._X_train_.columns:
+                    train_df[col] = self._X_train_[col].values
+
+            # Build future rows: timestamps from fh, y=NaN, X columns filled.
+            abs_idx = fh.to_absolute(self.cutoff).to_pandas()
+            if isinstance(abs_idx, pd.PeriodIndex):
+                abs_idx = abs_idx.to_timestamp()
+
+            future_df = pd.DataFrame({"ts": abs_idx, "y": np.nan})
+            for col in self._X_cols_:
+                if col in X.columns:
+                    future_df[col] = X[col].values
+
+            full_df = pd.concat([train_df, future_df], ignore_index=True)
+
+            fc = copy.copy(self._create_forecast_config(self._y_train_))
+            steps = np.array(fh.to_relative(self.cutoff).to_numpy(), dtype=int)
+            fc.forecast_horizon = int(steps.max())
+
+            import matplotlib as _mpl
+            import matplotlib.cm as _mpl_cm
+
+            if not hasattr(_mpl_cm, "get_cmap"):
+                _mpl_cm.get_cmap = _mpl.colormaps.__getitem__
+
+            from greykite.framework.templates.forecaster import Forecaster
+
+            forecaster = Forecaster().run_forecast_config(full_df, fc)
+        else:
+            forecaster = self._forecaster
+
+        forecast_df = forecaster.forecast.df_test
         # Convert fh to relative integer steps (handles both relative and
         # Period-based absolute fh) then map to 0-based positions.
         steps = np.array(fh.to_relative(self.cutoff).to_numpy(), dtype=int)
