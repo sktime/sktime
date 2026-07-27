@@ -22,6 +22,51 @@ Version 1.1.0 - 2026-07-28
 
 Minor release with scheduled deprecations and changes.
 
+Users should note completed deprecations and consult notes below.
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Estimator Tags for multiple estimator types
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* The deprecated ``ignores-exogeneous-X`` tag for forecasters has been removed.
+  It has been replaced by ``capability:exogenous``.
+  The logic of the tag is flipped, i.e., if ``capability:exogenous=True``,
+  the estimator can handle exogenous variables.
+  Users and maintainers of third party estimators should update their
+  code and estimators to use the new tag.
+
+* The deprecated ``univariate-only`` tag present in multiple estimator types has been removed.
+  It has been renamed to ``capability:multivariate``,
+  with boolean flip. If ``capability:multivariate=True``, the estimator
+  can handle multivariate data.
+  Users and maintainers of third party estimators
+  should update their code and estimators to use the new tag.
+
+* forecaster and transformation capability tags for exogenous variables and
+  multivariate data,
+  ``capability:exogenous`` and ``capability:multivariate``, replace the
+  ``ignores-exogeneous-X`` and ``univariate-only`` tags, respectively.
+  Values ``False`` and ``True`` map to ``True`` and ``False``, respectively.
+
+
+Forecasters
+^^^^^^^^^^^
+
+* The deprecated ``scitype:y`` tag present in forecasters has been removed.
+  It is renamed to ``capability:multivariate``.
+  If ``capability:multivariate=True``, the estimator
+  can handle multivariate data, if ``False``, it cannot.
+  Values of the old tag map as follows onto the new tag:
+  ``"univariate"`` maps onto ``False``, ``"multivariate"`` and ``"both"``
+  map onto ``True``.
+
+* The deprecated legacy API for global forecasting (``y`` in ``predict``) has been removed.
+  Users should use the new global forecasting API through ``pretrain``.
+  The ``capability:global_forecasting`` tag is deprecated and will be removed entirely
+  in version 1.2.0. Users should use the ``capability:pretrain`` tag instead.
+  Tag queries will not be redirected due to simultaneous presence of both tags.
 
 Version 1.0.2 - 2026-07-26
 --------------------------
