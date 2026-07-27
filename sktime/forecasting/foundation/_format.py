@@ -1,7 +1,8 @@
 """Convert model-neutral numeric forecasts to sktime pandas output.
 
-Adapters should remove native batch, sample, and distribution dimensions before
-creating a ``ForecastResult``. These helpers handle horizon row selection and the
+Adapters should remove native batch and distribution dimensions before creating
+a ``ForecastResult``. Sample-producing adapters should normalize their paths to
+``(time, samples, targets)``. These helpers handle horizon row selection and the
 final time-by-variable layout; they do not interpret backend-specific shapes.
 """
 
@@ -16,7 +17,7 @@ def format_point_result(result, request, y) -> pd.DataFrame:
     ----------
     result : ForecastResult
         Normalized native output. Point values are selected in mean, median,
-        0.5-quantile precedence order.
+        0.5-quantile, empirical-sample-mean precedence order.
     request : ForecastRequest
         Relative horizon steps and absolute output index.
     y : pd.DataFrame
@@ -48,7 +49,8 @@ def format_quantile_result(result, request, y, alpha) -> pd.DataFrame:
     Parameters
     ----------
     result : ForecastResult
-        Normalized output containing every requested quantile.
+        Normalized output containing every requested quantile explicitly or
+        enough sample paths to compute it empirically.
     request : ForecastRequest
         Relative horizon steps and absolute output index.
     y : pd.DataFrame
@@ -97,27 +99,43 @@ def _as_tuple(values) -> tuple:
 
 
 def _get_point_values(result):
-    """Return point values using mean, median, then 0.5-quantile precedence."""
+    """Return point values using summaries before the empirical sample mean."""
     if result.mean is not None:
         return np.asarray(result.mean)
     if result.median is not None:
         return np.asarray(result.median)
     if result.quantiles is not None and 0.5 in result.quantiles:
         return np.asarray(result.quantiles[0.5])
+    if result.samples is not None:
+        return np.mean(_as_sample_array(result.samples), axis=1)
     raise ValueError("ForecastResult does not contain a point forecast.")
 
 
 def _get_quantile_values(result, alpha: float):
-    """Return one quantile, tolerating small float representation differences."""
-    if result.quantiles is None:
-        raise ValueError("ForecastResult does not contain quantile forecasts.")
-    if alpha in result.quantiles:
-        return np.asarray(result.quantiles[alpha])
-    rounded = round(alpha, 12)
-    for key, value in result.quantiles.items():
-        if round(key, 12) == rounded:
-            return np.asarray(value)
+    """Return an explicit or empirical quantile for one probability."""
+    if result.quantiles is not None:
+        if alpha in result.quantiles:
+            return np.asarray(result.quantiles[alpha])
+        rounded = round(alpha, 12)
+        for key, value in result.quantiles.items():
+            if round(key, 12) == rounded:
+                return np.asarray(value)
+    if result.samples is not None:
+        return np.quantile(_as_sample_array(result.samples), q=alpha, axis=1)
     raise ValueError(f"ForecastResult does not contain quantile alpha={alpha}.")
+
+
+def _as_sample_array(samples):
+    """Normalize sample paths to ``(time, samples, targets)``."""
+    samples = np.asarray(samples)
+    if samples.ndim == 2:
+        return samples[:, :, np.newaxis]
+    if samples.ndim != 3:
+        raise ValueError(
+            "ForecastResult.samples must have shape (time, samples, targets), "
+            "with the final target axis optional for univariate forecasts."
+        )
+    return samples
 
 
 def _select_requested_rows(values, request):

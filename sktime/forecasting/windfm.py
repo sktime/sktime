@@ -284,6 +284,7 @@ class WindFMForecaster(BaseFoundationForecaster):
         return ForecastResult(
             median=np.median(samples, axis=1).reshape(-1, 1),
             quantiles=quantiles,
+            samples=samples[:, :, np.newaxis],
         )
 
     def _make_predictor(self, handle, max_context, device, clip):

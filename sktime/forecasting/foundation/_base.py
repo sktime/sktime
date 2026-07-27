@@ -125,12 +125,13 @@ class BaseFoundationForecaster(BaseForecaster):
     represent a model's native output contract.
 
     ``_inference`` receives pandas ``DataFrame`` context and should return numeric
-    arrays with time on axis 0 and target variables on axis 1. It may return a
-    complete future horizon of shape ``(pred_len, n_targets)``; the base class then
-    selects sparse requested steps. Alternatively, it may return exactly
-    ``len(fh)`` rows in requested horizon order, which is useful for backends that
-    natively support sparse, in-sample, or mixed horizons. Univariate output may
-    be one-dimensional.
+    summary arrays with time on axis 0 and target variables on axis 1. Sample
+    paths use ``(time, samples, targets)``; univariate adapters may omit the final
+    target axis. An adapter may return a complete future horizon with
+    ``pred_len`` rows, from which the base class selects sparse requested steps,
+    or exactly ``len(fh)`` rows in requested horizon order. The latter is useful
+    for backends that natively support sparse, in-sample, or mixed horizons.
+    Univariate summary output may be one-dimensional.
 
     Loaded handles are process-local shared state. Treat the model, tokenizer,
     and pipeline in a handle as read-only during prediction. Per-fit or per-series

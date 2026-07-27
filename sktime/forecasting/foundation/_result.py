@@ -63,20 +63,32 @@ class ForecastResult:
         Median point forecast, used when ``mean`` is absent.
     quantiles : Mapping[float, array-like] or None, default=None
         Map from quantile probability to forecast values.
+    samples : array-like or None, default=None
+        Sample paths with canonical shape
+        ``(n_output_timepoints, n_samples, n_targets)``. For a univariate
+        forecast, the final target axis may be omitted, giving
+        ``(n_output_timepoints, n_samples)``.
 
     Notes
     -----
-    Every supplied array uses time on axis 0 and target variables on axis 1:
-    ``(n_output_timepoints, n_targets)``. A one-dimensional array is accepted for
-    one target. ``n_output_timepoints`` may be the dense ``pred_len`` horizon or
-    exactly ``len(fh)`` rows in requested order. All populated summaries must use
-    the same convention.
+    Summary arrays use time on axis 0 and target variables on axis 1:
+    ``(n_output_timepoints, n_targets)``. A one-dimensional summary is accepted
+    for one target. Sample paths retain time on axis 0, insert samples on axis 1,
+    and place targets on axis 2. Thus ``samples[:, i, :]`` is the complete
+    ``i``-th point-forecast path.
+
+    ``n_output_timepoints`` may be the dense ``pred_len`` horizon or exactly
+    ``len(fh)`` rows in requested order. All populated summaries and samples must
+    use the same time convention.
 
     Point formatting prefers ``mean``, then ``median``, then quantile ``0.5``.
-    Quantile prediction requires an entry for every requested alpha (keys equal up
-    to 12 decimal places are accepted).
+    If none is present, it uses the empirical sample mean. Quantile formatting
+    prefers an explicitly supplied quantile and otherwise computes the empirical
+    quantile from samples. Explicit quantile keys equal up to 12 decimal places
+    are accepted.
     """
 
     mean: Any | None = None
     median: Any | None = None
     quantiles: Mapping[float, Any] | None = None
+    samples: Any | None = None

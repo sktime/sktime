@@ -59,6 +59,47 @@ def test_format_point_result_accepts_requested_rows_directly(forecast_request, y
     pd.testing.assert_frame_equal(actual, expected)
 
 
+def test_format_point_result_uses_sample_mean(forecast_request, y):
+    """Sample-only results use the empirical mean as their point forecast."""
+    result = ForecastResult(
+        samples=[
+            [[1, 10], [3, 30]],
+            [[3, 30], [5, 50]],
+            [[5, 50], [7, 70]],
+        ]
+    )
+
+    actual = format_point_result(result=result, request=forecast_request, y=y)
+    expected = pd.DataFrame(
+        [[2.0, 20.0], [6.0, 60.0]],
+        index=pd.Index([10, 12]),
+        columns=["a", "b"],
+    )
+
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_format_point_result_accepts_univariate_samples_without_target_axis(
+    forecast_request,
+):
+    """Univariate samples may use the compact ``(time, samples)`` shape."""
+    result = ForecastResult(samples=[[1, 3], [3, 5], [5, 7]])
+    univariate_y = pd.DataFrame({"a": [1.0]})
+
+    actual = format_point_result(
+        result=result,
+        request=forecast_request,
+        y=univariate_y,
+    )
+    expected = pd.DataFrame(
+        [[2.0], [6.0]],
+        index=pd.Index([10, 12]),
+        columns=["a"],
+    )
+
+    pd.testing.assert_frame_equal(actual, expected)
+
+
 def test_format_quantile_result_tolerates_float_key_rounding(forecast_request, y):
     """Numerically equivalent alpha keys are matched after rounding."""
     result = ForecastResult(
@@ -78,6 +119,55 @@ def test_format_quantile_result_tolerates_float_key_rounding(forecast_request, y
         [[1, 7, 2, 8], [5, 11, 6, 12]],
         index=pd.Index([10, 12]),
         columns=pd.MultiIndex.from_product([["a", "b"], [0.1, 0.9]]),
+    )
+
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_format_quantile_result_uses_samples_when_quantile_is_absent(
+    forecast_request, y
+):
+    """Sample paths supply empirical quantiles not explicitly populated."""
+    result = ForecastResult(
+        samples=[
+            [[1, 10], [3, 30], [5, 50]],
+            [[3, 30], [5, 50], [7, 70]],
+            [[5, 50], [7, 70], [9, 90]],
+        ]
+    )
+
+    actual = format_quantile_result(
+        result=result,
+        request=forecast_request,
+        y=y,
+        alpha=[0.5],
+    )
+    expected = pd.DataFrame(
+        [[3.0, 30.0], [7.0, 70.0]],
+        index=pd.Index([10, 12]),
+        columns=pd.MultiIndex.from_product([["a", "b"], [0.5]]),
+    )
+
+    pd.testing.assert_frame_equal(actual, expected)
+
+
+def test_explicit_quantile_takes_precedence_over_samples(forecast_request, y):
+    """A native quantile is retained when sample paths are also available."""
+    result = ForecastResult(
+        quantiles={0.5: [[1, 2], [3, 4], [5, 6]]},
+        samples=np.full((3, 2, 2), 100.0),
+    )
+
+    actual = format_quantile_result(
+        result=result,
+        request=forecast_request,
+        y=y,
+        alpha=[0.5],
+    )
+    expected = pd.DataFrame(
+        [[1, 2], [5, 6]],
+        index=pd.Index([10, 12]),
+        columns=pd.MultiIndex.from_product([["a", "b"], [0.5]]),
     )
 
     pd.testing.assert_frame_equal(actual, expected)
