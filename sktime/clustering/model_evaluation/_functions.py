@@ -221,7 +221,10 @@ def _evaluate_fold(x, meta):
                             f"unsupervised clustering evaluation, or provide y."
                         )
                     # Flatten y_test to 1D — sklearn metrics expect 1D arrays
-                    y_test_1d = y_test.values.ravel() if hasattr(y_test, "values") else np.asarray(y_test).ravel()
+                    if hasattr(y_test, "values"):
+                        y_test_1d = y_test.values.ravel()
+                    else:
+                        y_test_1d = np.asarray(y_test).ravel()
                     score = metric(y_test_1d, y_pred)
                 temp_result[result_key] = [score]
 
