@@ -9,11 +9,11 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
 
-class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class TimeMoEForecaster(BaseForecaster):
     """
     Interface for TimeMOE forecaster for zero-shot forecasting.
 
