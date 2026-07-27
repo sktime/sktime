@@ -1284,7 +1284,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                     f"{estimator_class} has deprecated tag: {tag!r} - "
                     f"please follow deprecation guide from sktime release notes"
                 )
-                if tag in ALIAS_DICT:
+                if tag in ALIAS_DICT and ALIAS_DICT[tag] != "":
                     msg += f" and replace with {ALIAS_DICT[tag]!r}"
                 else:
                     msg += "."
@@ -1312,7 +1312,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                     f"{estimator_instance} has deprecated tag: {tag!r} - "
                     f"please follow deprecation guide from sktime release notes"
                 )
-                if tag in ALIAS_DICT:
+                if tag in ALIAS_DICT and ALIAS_DICT[tag] != "":
                     msg += f" and replace with {ALIAS_DICT[tag]!r}"
                 else:
                     msg += "."
