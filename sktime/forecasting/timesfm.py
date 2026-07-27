@@ -191,6 +191,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timesfm"],
+        "tests:specific": ["sktime.forecasting.tests.test_timesfm"],
     }
     _uses_torch_inference_context = False
 

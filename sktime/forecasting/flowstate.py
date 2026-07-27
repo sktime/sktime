@@ -5,6 +5,7 @@ __author__ = ["Faakhir30"]
 __all__ = ["FlowStateForecaster"]
 
 import numpy as np
+import pandas as pd
 
 from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
 from sktime.forecasting.foundation import (
@@ -41,6 +42,12 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
         ``past_values`` layout for the model.
     prediction_type : {"mean", "median"}, default="mean"
         Point forecast type passed to the model.
+
+    Notes
+    -----
+    ``predict_proba`` returns a ``skpro`` ``HistogramQPD`` built from FlowState's
+    native quantile grid. Quantiles between grid points are linearly interpolated,
+    while levels outside the grid are clamped to the nearest native quantile.
 
     References
     ----------
@@ -182,6 +189,33 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationFore
             "median" if predict_kwargs["prediction_type"] == "median" else "mean"
         )
         return ForecastResult(**{point_key: values}, quantiles=quantiles)
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Return a distribution based on FlowState's native quantile grid."""
+        from skpro.distributions import HistogramQPD
+
+        handle = self._get_or_load_model_handle()
+        model_quantiles = list(handle.model.config.quantiles)
+        predictions = self._predict_quantiles(
+            fh=fh,
+            X=X,
+            alpha=model_quantiles,
+        )
+
+        pred_index = predictions.index
+        columns = self.context_y_.columns
+        row_index = pd.MultiIndex.from_product([model_quantiles, pred_index])
+        quantile_frame = pd.DataFrame(
+            predictions.to_numpy().T.reshape(-1, len(columns)),
+            index=row_index,
+            columns=columns,
+        )
+        return HistogramQPD(
+            quantile_frame,
+            tails="mass",
+            index=pred_index,
+            columns=columns,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

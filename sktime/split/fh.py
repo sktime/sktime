@@ -60,12 +60,12 @@ class ForecastingHorizonSplitter(BaseSplitter):
 
         if fh.is_relative:
             min_step, max_step = idx.min(), idx.max()
-            steps = fh.to_indexer()
+            steps = np.asarray(idx) - min_step
 
-            last_train_ix_minus_one = len(y) - max_step - 1
-            first_test_ix = last_train_ix_minus_one + min(0, min_step - 1)
+            n_train = len(y) - max_step
+            first_test_ix = n_train - 1 + min_step
 
-            train_ix = np.arange(last_train_ix_minus_one)
+            train_ix = np.arange(n_train)
             test_ix = (np.arange(first_test_ix, len(y)))[steps]
 
         else:

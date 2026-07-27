@@ -6,6 +6,7 @@ This module provides an ``sktime`` forecaster wrapping the local Timer-S1
 
 - zero-shot prediction through :meth:`fit` + :meth:`predict`
 - quantile prediction through :meth:`predict_quantiles`
+- distributional prediction through :meth:`predict_proba`
 
 Model training and fine-tuning are not supported at the moment, though they may
 be added in future. Calling :meth:`fit` only loads the model and stores the
@@ -21,6 +22,7 @@ from copy import deepcopy
 from warnings import warn
 
 import numpy as np
+import pandas as pd
 
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
@@ -48,8 +50,13 @@ class TimerS1Forecaster(BaseFoundationForecaster):
     - Timer-S1 training is currently not supported, but may be added in future.
       The estimator performs only zero-shot forecasting from a loaded or
       randomly initialized model.
-    - Quantile prediction is only available for quantiles present in
-      ``model.config.quantiles``.
+    - Quantile prediction via ``predict_quantiles`` is only available for
+      quantiles present in ``model.config.quantiles``.
+    - Distributional prediction via ``predict_proba`` returns a ``skpro``
+      ``HistogramQPD`` parameterized by the native quantile grid
+      ``model.config.quantiles``. It interpolates linearly between adjacent
+      native quantiles and clamps levels outside the grid to the nearest native
+      quantile through ``tails="mass"``.
     - Loaded models are shared through the foundation-model cache, keyed by
       model-loading inputs to avoid repeated model instantiation.
     - The default Timer-S1 checkpoint has 8 billion parameters. For most
@@ -264,6 +271,30 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         return ForecastResult(
             mean=point_values.reshape(-1, 1),
             quantiles=result_quantiles,
+        )
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Return a distribution based on Timer-S1's native quantile grid."""
+        from skpro.distributions import HistogramQPD
+
+        handle = self._get_or_load_model_handle()
+        quantiles = sorted(round(value, 3) for value in handle.model.config.quantiles)
+        predictions = self._predict_quantiles(fh=fh, X=X, alpha=quantiles)
+
+        pred_index = predictions.index
+        columns = self.context_y_.columns
+        row_index = pd.MultiIndex.from_product([quantiles, pred_index])
+        quantile_frame = pd.DataFrame(
+            predictions.to_numpy().T.reshape(-1, len(columns)),
+            index=row_index,
+            columns=columns,
+        )
+
+        return HistogramQPD(
+            quantile_frame,
+            tails="mass",
+            index=pred_index,
+            columns=columns,
         )
 
     def _load_model(self):
