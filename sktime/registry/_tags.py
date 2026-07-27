@@ -943,7 +943,7 @@ class property__randomness(_BaseTag):
 class capability__exogenous(_BaseTag):
     """Capability: the forecaster can use exogenous data.
 
-    ``False`` = does use exogenous data, ``True`` = does not use exogenous data.
+    ``True`` = does use exogenous data, ``False`` = does not use exogenous data.
 
     - String name: ``"capability:exogenous"``
     - Public capability tag
