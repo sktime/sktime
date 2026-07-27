@@ -128,7 +128,7 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         # johannfaouzi is author of upstream pyts code
         "python_dependencies": "pyts",
         # capability:multivariate controls whether internal X can be multivariate
-        # if True (only univariate), always applies vectorization over variables
+        # if False (only univariate), always applies vectorization over variables
         "capability:multivariate": False,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
