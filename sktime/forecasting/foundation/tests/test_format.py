@@ -83,6 +83,32 @@ def test_format_quantile_result_tolerates_float_key_rounding(forecast_request, y
     pd.testing.assert_frame_equal(actual, expected)
 
 
+def test_format_quantile_result_uses_available_levels_when_alpha_is_none(
+    forecast_request, y
+):
+    """A missing alpha formats every quantile supplied by the adapter."""
+    result = ForecastResult(
+        quantiles={
+            0.1: [[1, 2], [3, 4], [5, 6]],
+            0.9: [[7, 8], [9, 10], [11, 12]],
+        }
+    )
+
+    actual = format_quantile_result(
+        result=result,
+        request=forecast_request,
+        y=y,
+        alpha=None,
+    )
+    expected = pd.DataFrame(
+        [[1, 7, 2, 8], [5, 11, 6, 12]],
+        index=pd.Index([10, 12]),
+        columns=pd.MultiIndex.from_product([["a", "b"], [0.1, 0.9]]),
+    )
+
+    pd.testing.assert_frame_equal(actual, expected)
+
+
 def test_format_point_result_requires_point_values(forecast_request, y):
     """Missing point summaries produce an actionable error."""
     with pytest.raises(ValueError, match="does not contain a point forecast"):

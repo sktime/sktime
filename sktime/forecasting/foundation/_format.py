@@ -53,8 +53,10 @@ def format_quantile_result(result, request, y, alpha) -> pd.DataFrame:
         Relative horizon steps and absolute output index.
     y : pd.DataFrame
         Fitted target context. Its columns define variable order.
-    alpha : float or sequence of float
-        Requested quantile probabilities. Input order is preserved.
+    alpha : float, sequence of float, or None
+        Requested quantile probabilities. Input order is preserved. If ``None``,
+        all quantile levels available in ``result.quantiles`` are formatted in
+        their existing order.
 
     Returns
     -------
@@ -62,7 +64,12 @@ def format_quantile_result(result, request, y, alpha) -> pd.DataFrame:
         Quantile forecasts with row index ``request.absolute_index`` and
         ``(variable, alpha)`` MultiIndex columns.
     """
-    alpha = _as_tuple(alpha)
+    if alpha is None:
+        if not result.quantiles:
+            raise ValueError("ForecastResult does not contain quantile forecasts.")
+        alpha = tuple(result.quantiles)
+    else:
+        alpha = _as_tuple(alpha)
     names = _get_variable_names(y)
     index = pd.Index(request.absolute_index)
 

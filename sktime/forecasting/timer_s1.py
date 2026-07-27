@@ -233,13 +233,9 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         model = handle.model
         predict_kwargs = self.model_spec.predict_extra_kwargs
         model_quantiles = [round(value, 3) for value in model.config.quantiles]
-        requested = None if alpha is None else list(alpha)
-        requested_rounded = (
-            None if requested is None else [round(value, 3) for value in requested]
-        )
-        if requested_rounded is not None and not set(requested_rounded).issubset(
-            model_quantiles
-        ):
+        requested = sorted(model_quantiles) if alpha is None else list(alpha)
+        requested_rounded = [round(value, 3) for value in requested]
+        if not set(requested_rounded).issubset(model_quantiles):
             raise ValueError(
                 "Requested quantiles are not all available in model config: "
                 f"requested={requested_rounded}, available={model_quantiles}."
@@ -261,12 +257,10 @@ class TimerS1Forecaster(BaseFoundationForecaster):
 
         quantile_values = output.squeeze(axis=0).detach().float().cpu().numpy()
         point_values = np.average(quantile_values, weights=weights, axis=0)
-        result_quantiles = None
-        if requested is not None:
-            result_quantiles = {
-                value: quantile_values[model_quantiles.index(rounded)].reshape(-1, 1)
-                for value, rounded in zip(requested, requested_rounded)
-            }
+        result_quantiles = {
+            value: quantile_values[model_quantiles.index(rounded)].reshape(-1, 1)
+            for value, rounded in zip(requested, requested_rounded)
+        }
 
         return ForecastResult(
             mean=point_values.reshape(-1, 1),
@@ -277,12 +271,11 @@ class TimerS1Forecaster(BaseFoundationForecaster):
         """Return a distribution based on Timer-S1's native quantile grid."""
         from skpro.distributions import HistogramQPD
 
-        handle = self._get_or_load_model_handle()
-        quantiles = sorted(round(value, 3) for value in handle.model.config.quantiles)
-        predictions = self._predict_quantiles(fh=fh, X=X, alpha=quantiles)
+        predictions = self._predict_quantiles(fh=fh, X=X, alpha=None)
 
         pred_index = predictions.index
         columns = self.context_y_.columns
+        quantiles = predictions.columns.get_level_values(1).unique().tolist()
         row_index = pd.MultiIndex.from_product([quantiles, pred_index])
         quantile_frame = pd.DataFrame(
             predictions.to_numpy().T.reshape(-1, len(columns)),
