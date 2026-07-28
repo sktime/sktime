@@ -318,9 +318,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
 
     training_args : dict or None, default={}
         Training arguments to use for the model. See ``transformers.TrainingArguments``
-        for details.
+        for details [11]_.
         Note that the ``output_dir`` argument is required.
-        https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
 
     compute_metrics : list, default=[]
         List of metrics to compute during training. See ``transformers.Trainer``
@@ -373,6 +372,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
     .. [8] https://huggingface.co/collections/geetu040/tinytimemixer
     .. [9] https://huggingface.co/collections/ibm-granite/granite-time-series
     .. [10] https://huggingface.co/collections/ibm-research/time-series-models
+    .. [11] https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
 
     Examples
     --------

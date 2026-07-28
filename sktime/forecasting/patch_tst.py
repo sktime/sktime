@@ -221,8 +221,8 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     training_args : dict, optional, default = None
         Training arguments to use for the model. If this is passed,
-        the remaining applicable training arguments will be ignored
-        https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
+        the remaining applicable training arguments will be ignored.
+        See [3]_ for details.
     compute_metrics : list or function, default = None
         List of metrics or function to use during training
     callbacks: list or function, default = None
@@ -235,6 +235,7 @@ class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         Paper: https://arxiv.org/abs/2211.14730
     [2] HuggingFace PatchTST Page:
         https://huggingface.co/docs/transformers/en/model_doc/patchtst
+    [3] https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
 
     Examples
     --------

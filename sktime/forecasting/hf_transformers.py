@@ -168,23 +168,26 @@ class HFTransformersForecaster(BaseForecaster):
             The number of blocks in the model.
 
     training_args : dict, default={}
-        Training arguments to use for the model. See `transformers.TrainingArguments`
-        for details.
-        https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
-        Note that the `output_dir` argument is required.
+        Training arguments to use for the model. See
+        ``transformers.TrainingArguments`` for details [1]_.
+        Note that the ``output_dir`` argument is required.
     compute_metrics : list, default=None
-        List of metrics to compute during training. See `transformers.Trainer`
+        List of metrics to compute during training. See ``transformers.Trainer``
         for details.
     deterministic : bool, default=False
         Whether the predictions should be deterministic or not.
     callbacks : list, default=[]
-        List of callbacks to use during training. See `transformers.Trainer`
+        List of callbacks to use during training. See ``transformers.Trainer``
     peft_config : peft.PeftConfig, default=None
         Configuration for Parameter-Efficient Fine-Tuning.
-        When `fit_strategy` is set to "peft",
+        When ``fit_strategy`` is set to "peft",
         this will be used to set up PEFT parameters for the model.
-        See the `peft` documentation for details.
-        https://huggingface.co/docs/peft/en/package_reference/config#peft.PeftConfig
+        See the ``peft`` documentation for details [2]_.
+
+    References
+    ----------
+    .. [1] https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
+    .. [2] https://huggingface.co/docs/peft/en/package_reference/config#peft.PeftConfig
 
     Examples
     --------

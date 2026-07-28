@@ -163,8 +163,7 @@ class TimesFM2Forecaster(BaseForecaster):
         If provided, wraps the loaded pretrained base model with PEFT using
         ``peft.get_peft_model``. Applied only when ``model_path`` is not
         ``None``; ignored for config-only initialization with
-        ``model_path=None``.
-        https://huggingface.co/docs/peft/en/package_reference/config#peft.PeftConfig
+        ``model_path=None``. See [9]_.
     validation_split : float or None, default=0.2
         Fraction of data reserved for evaluation when :meth:`pretrain` is used.
         If ``None``, no evaluation dataset is created.
@@ -197,6 +196,8 @@ class TimesFM2Forecaster(BaseForecaster):
        https://huggingface.co/docs/transformers/en/main_classes/trainer
     .. [8] Quantization docs:
        https://huggingface.co/docs/transformers/en/main_classes/quantization
+    .. [9] PEFT documentation:
+       https://huggingface.co/docs/peft/en/package_reference/config#peft.PeftConfig
 
     Examples
     --------
