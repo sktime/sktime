@@ -61,8 +61,8 @@ class FalconTSTForecaster(BaseForecaster):
         ``dict``, it is converted with ``FalconTSTConfig.from_dict``. If
         ``None`` and ``model_path=None``, the default ``FalconTSTConfig`` is
         used. This path creates random weights; the estimator does not provide
-        training for those weights.
-        Possible keys:
+        training for those weights. Possible keys:
+
         hidden_size (`int`, *optional*, defaults to 1024):
             Dimensionality of the encoder layers and the pooler layer.
         ffn_hidden_size (`int`, *optional*, defaults to 4096):

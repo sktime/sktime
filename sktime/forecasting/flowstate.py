@@ -37,6 +37,7 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     scale_factor : float, default=1.0
         Temporal scaling passed to the model at predict time.
     config : dict, optional, default=None
+
         context_length (`int`, *optional*, defaults to 2048)
             The context/history length of the input sequence.
         batch_first (`bool`):
