@@ -95,6 +95,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         "tests:core": False,  # core objects have wider trigger conditions in testing
         "tests:vm": False,  # whether the object should be tested in its own VM
         "tests:libs": None,  # required libraries, for change conditional testing
+        "tests:specific": None,  # modules with estimator specific tests
         "tests:skip_all": False,  # whether all tests for the object should be skipped
         "tests:skip_by_name": None,  # list of test names to skip for this object
     }
