@@ -10,7 +10,7 @@ __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class MOIRAIForecaster(BaseForecaster):
     """MOIRAI Forecasters.
 
     Parameters
