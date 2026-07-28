@@ -80,6 +80,17 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         These keys initialize the model architecture when ``model_path=None``
         (from-scratch). When loading a pretrained checkpoint they are ignored.
 
+        Do not pass ``torch_dtype`` or ``device_map`` here; use the dedicated
+        constructor parameters instead.
+
+    device_map : str, dict, int, or torch.device, default="cpu"
+        Device placement following the ``transformers`` ``device_map`` naming
+        convention, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
+
+    torch_dtype : torch.dtype, optional (default=torch.float32)
+        Torch dtype used when loading the model and preparing prediction
+        inputs. Defaults to ``torch.float32``.
+
     seed: int, optional (default=None)
         Seed for reproducibility.
 
@@ -203,6 +214,8 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self,
         model_path: str | None = "Maple728/TimeMoE-50M",
         config: dict = None,
+        device_map="cpu",
+        torch_dtype=None,
         seed: int = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
@@ -212,6 +225,8 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     ):
         self.seed = seed
         self.config = config
+        self.device_map = device_map
+        self.torch_dtype = torch_dtype
         self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
@@ -248,7 +263,13 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
+        import torch
+
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+
+        self._torch_dtype = (
+            torch.float32 if self.torch_dtype is None else self.torch_dtype
+        )
 
         _config = self._get_default_config()
         _config.update(self.config if self.config is not None else {})
@@ -332,8 +353,8 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         """Get the kwargs for TimeMoE model."""
         kwargs = {
             "pretrained_model_name_or_path": self.model_path,
-            "torch_dtype": self._config["torch_dtype"],
-            "device_map": self._config["device_map"],
+            "torch_dtype": self._torch_dtype,
+            "device_map": self.device_map,
         }
 
         return kwargs
@@ -356,8 +377,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         dict
             The default configuration for TimeMoE model.
         """
-        import torch
-
         default_config = {
             "input_size": 1,
             "hidden_size": 4096,
@@ -379,8 +398,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "apply_aux_loss": True,
             "router_aux_loss_factor": 0.02,
             "tie_word_embeddings": False,
-            "torch_dtype": torch.float32,
-            "device_map": "cpu",
         }
         return default_config
 
@@ -427,9 +444,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             for j in range(_y.shape[2]):
                 _y_i = _y[i, :, j]
 
-                input_tensor = torch.tensor(
-                    _y_i, dtype=self._config["torch_dtype"]
-                ).unsqueeze(0)
+                input_tensor = torch.tensor(_y_i, dtype=self._torch_dtype).unsqueeze(0)
 
                 attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
 
@@ -520,7 +535,6 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             "max_position_embeddings": 32,
             "use_dense": False,
             "apply_aux_loss": True,
-            "device_map": "cpu",
         }
         training_args = {
             "max_steps": 1,
@@ -534,6 +548,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             {  # from-scratch model
                 "model_path": None,
                 "config": tiny_config,
+                "device_map": "cpu",
                 "context_length": 8,
                 "stride": 1,
                 "training_args": training_args,
@@ -546,6 +561,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     "use_dense": True,
                     "apply_aux_loss": False,
                 },
+                "device_map": "cpu",
                 "context_length": 8,
                 "stride": 1,
                 "training_args": training_args,
@@ -553,6 +569,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             {  # pretrained model
                 "model_path": "Maple728/TimeMoE-50M",
                 "config": tiny_config,  # ignored
+                "device_map": "cpu",
                 "context_length": 8,
                 "stride": 1,
                 "training_args": training_args,
