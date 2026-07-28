@@ -1,7 +1,5 @@
 """Adapter for using MOIRAI Forecasters."""
 
-from unittest.mock import patch
-
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -242,6 +240,110 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         """Restore state; model_ will be reloaded lazily on next predict."""
         self.__dict__.update(state)
         self.model_ = None
+
+    # Apply a patch for redirecting imports to sktime.libs.uni2ts
+    if _check_soft_dependencies(["lightning", "huggingface_hub"], severity="none"):
+
+        def _instantiate_patched_model(self, model_kwargs):
+            """Instantiate the model from the vendor package."""
+            import sys
+
+            import torch
+
+            import sktime.libs.uni2ts as _uni2ts_mod
+
+            sys.modules.setdefault("uni2ts", _uni2ts_mod)
+
+            from sktime.libs.uni2ts.distribution.log_normal import LogNormalOutput
+            from sktime.libs.uni2ts.distribution.mixture import MixtureOutput
+            from sktime.libs.uni2ts.distribution.negative_binomial import (
+                NegativeBinomialOutput,
+            )
+            from sktime.libs.uni2ts.distribution.normal import (
+                NormalFixedScaleOutput,
+                NormalOutput,
+            )
+            from sktime.libs.uni2ts.distribution.student_t import StudentTOutput
+            from sktime.libs.uni2ts.forecast import MoiraiForecast
+            from sktime.libs.uni2ts.loss.packed.distribution import PackedNLLLoss
+
+            # PyTorch 2.6+ defaults weights_only=True in torch.load, blocking
+            # unpickling of custom classes unless registered as safe globals.
+            # The checkpoint stores classes under "uni2ts.*" module paths, but
+            # sktime vendors them under "sktime.libs.uni2ts.*".
+            #
+            # PyTorch 2.12+ stores safe globals in a set and resolves
+            # cls.__module__ at unpickling time (not at add-time), so the
+            # tuple form (cls, "uni2ts.path.ClassName") must be used to
+            # specify the exact path stored in the checkpoint.
+            # PyTorch 2.6-2.11 resolves cls.__module__ at add-time, so we
+            # temporarily patch __module__ before calling add_safe_globals.
+            if hasattr(torch.serialization, "add_safe_globals"):
+                import torch._weights_only_unpickler as _wou
+
+                _cls_path_pairs = [
+                    (MixtureOutput, "uni2ts.distribution.mixture.MixtureOutput"),
+                    (NormalOutput, "uni2ts.distribution.normal.NormalOutput"),
+                    (
+                        NormalFixedScaleOutput,
+                        "uni2ts.distribution.normal.NormalFixedScaleOutput",
+                    ),
+                    (LogNormalOutput, "uni2ts.distribution.log_normal.LogNormalOutput"),
+                    (
+                        NegativeBinomialOutput,
+                        "uni2ts.distribution.negative_binomial.NegativeBinomialOutput",
+                    ),
+                    (StudentTOutput, "uni2ts.distribution.student_t.StudentTOutput"),
+                    (
+                        PackedNLLLoss,
+                        "uni2ts.loss.packed.distribution.PackedNLLLoss",
+                    ),
+                ]
+                # Use tuple form if supported (PyTorch 2.12+)
+                if hasattr(_wou, "_get_user_allowed_globals"):
+                    torch.serialization.add_safe_globals(_cls_path_pairs)
+                else:
+                    # Fallback for PyTorch 2.6-2.11: patch __module__ at add-time
+                    _safe_classes = [cls for cls, _ in _cls_path_pairs]
+                    _orig_modules = {cls: cls.__module__ for cls in _safe_classes}
+                    for cls, path in _cls_path_pairs:
+                        cls.__module__ = ".".join(path.split(".")[:-1])
+                    torch.serialization.add_safe_globals(_safe_classes)
+                    for cls in _safe_classes:
+                        cls.__module__ = _orig_modules[cls]
+
+            # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch when
+            # hf_xet was compiled for an older CPython than the current runtime).
+            # huggingface_hub reads HF_HUB_DISABLE_XET from constants.py at
+            # import time, and file_download.py accesses it as
+            # `constants.HF_HUB_DISABLE_XET` at call time. We must therefore
+            # patch huggingface_hub.constants directly (not file_download) so
+            # that _download_to_tmp_and_move skips xet_get for this session.
+            import os
+
+            try:
+                import hf_xet  # noqa: F401
+            except Exception:
+                os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+                if _check_soft_dependencies("huggingface_hub", severity="none"):
+                    import huggingface_hub.constants as _hf_constants
+
+                    _hf_constants.HF_HUB_DISABLE_XET = True
+
+            if self.checkpoint_path.startswith("Salesforce"):
+                from sktime.libs.uni2ts.moirai_module import MoiraiModule
+
+                model_kwargs["module"] = MoiraiModule.from_pretrained(
+                    self.checkpoint_path
+                )
+                return MoiraiForecast(**model_kwargs)
+            else:
+                from huggingface_hub import hf_hub_download
+
+                model_kwargs["checkpoint_path"] = hf_hub_download(
+                    repo_id=self.checkpoint_path, filename="model.ckpt"
+                )
+                return MoiraiForecast.load_from_checkpoint(**model_kwargs)
 
     def _fit(self, y, X=None, fh=None):
         if fh is not None:
