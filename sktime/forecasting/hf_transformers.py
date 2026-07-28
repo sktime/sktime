@@ -306,6 +306,7 @@ class HFTransformersForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_hf_transformers_forecaster"],
         "tests:python_dependencies": ["peft"],
     }
 
