@@ -232,6 +232,7 @@ class TotoForecaster(BaseForecaster):
             id_mask=self._id_mask,
             timestamp_seconds=self.timestamp_seconds,
             time_interval_seconds=self.time_interval_seconds,
+            num_exogenous_variables=self._num_exog_,
         )
 
     def _fit(self, y, X=None, fh=None):
