@@ -3,7 +3,7 @@
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
@@ -958,6 +958,8 @@ class _CachedMoirai:
             # Use the sktime-vendored uni2ts package with sys.modules patched
             # so that ``import uni2ts`` inside MoiraiForecast resolves to
             # ``sktime.libs.uni2ts``.
+            from unittest.mock import patch
+
             import sktime
             from sktime.libs.uni2ts.forecast import MoiraiForecast
 
