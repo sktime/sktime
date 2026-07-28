@@ -829,6 +829,11 @@ class _CachedMoirai:
         if kwargs["use_source_package"]:
             if _check_soft_dependencies("uni2ts", severity="none"):
                 from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
+            else:
+                raise RuntimeError(
+                    "use_source_package=True requires the 'uni2ts' package, "
+                    "but it was not found."
+                )
 
                 if kwargs["checkpoint_path"].startswith("Salesforce"):
                     model_kwargs["module"] = MoiraiModule.from_pretrained(
