@@ -77,8 +77,8 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         - tie_word_embeddings: bool, default=False
             Whether to tie word embeddings in the TimeMOE model.
 
-        Architecture keys are used when ``model_path=None`` (from-scratch) and
-        ignored otherwise.
+        These keys initialize the model architecture when ``model_path=None``
+        (from-scratch). When loading a pretrained checkpoint they are ignored.
 
     seed: int, optional (default=None)
         Seed for reproducibility.
@@ -96,8 +96,8 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         the installation of required packages manually. If False, the class will enforce
         the default dependencies required for Chronos.
 
-    context_length : int, optional (default=None)
-        Sliding-window length for ``pretrain``. Defaults to ``1024`` when ``None``.
+    context_length : int, optional (default=1024)
+        Sliding-window length for ``pretrain``.
         For small datasets, use a shorter length with ``stride=1``.
 
     stride : int, optional (default=None)
@@ -105,8 +105,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
     training_args : dict, optional (default=None)
         Keyword arguments used for training.
-        Supports all arguments by ``transformers.TrainingArguments`` availble at
-        https://huggingface.co/docs/transformers/en/main_classes/trainer#transformers.TrainingArguments.
+        Supports all arguments by ``transformers.TrainingArguments`` [3]_.
 
         Additionally, the following arguments are supported:
         - min_learning_rate: float, default=0
@@ -117,6 +116,8 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     .. [1] https://github.com/Time-MoE/Time-MoE
     .. [2] Xiaoming Shi, Shiyu Wang, Yuqi Nie, Dianqi Li, Zhou Ye and others
     Time-MoE: Billion-Scale Time Series Foundation Models with Mixture of Experts
+    .. [3] Trainer/TrainingArguments docs:
+       https://huggingface.co/docs/transformers/en/main_classes/trainer#transformers.TrainingArguments
 
     Examples
     --------
@@ -205,7 +206,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         seed: int = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
-        context_length: int = None,
+        context_length: int = 1024,
         stride: int = None,
         training_args: dict = None,
     ):
@@ -264,12 +265,9 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         self.model_ = self._load_model()
 
-        context_length = (
-            self.context_length if self.context_length is not None else 1024
-        )
         train_ds = TimeMoEWindowDataset(
             SeriesListDataset(_prepare_series_list(y)),
-            context_length=context_length,
+            context_length=self.context_length,
             prediction_length=0,
             stride=self.stride,
         )
