@@ -17,13 +17,16 @@ __author__ = ["PewterZz"]
 __all__ = ["TimerForecaster"]
 
 import numpy as np
-import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster
-from sktime.utils.singleton import _multiton
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    FoundationModelSpec,
+    ModelHandle,
+)
 
 
-class TimerForecaster(BaseForecaster):
+class TimerForecaster(BaseFoundationForecaster):
     """Timer foundation model forecaster.
 
     Wraps the Timer generative pre-trained Transformer for zero-shot
@@ -33,8 +36,8 @@ class TimerForecaster(BaseForecaster):
     The model is pre-trained on the Unified Time Series Dataset (UTSD)
     covering diverse domains and temporal patterns.
 
-    The model is cached using the multiton pattern to avoid reloading
-    weights when multiple forecaster instances share the same model.
+    The model is cached by the shared foundation-model lifecycle to avoid
+    reloading weights when multiple forecaster instances share the same model.
 
     Parameters
     ----------
@@ -85,8 +88,6 @@ class TimerForecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:multivariate": False,
-        "y_inner_mtype": "pd.Series",
-        "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
@@ -106,136 +107,67 @@ class TimerForecaster(BaseForecaster):
         self.context_length = context_length
         self.device = device
 
-        super().__init__()
-
-    def _get_unique_key(self):
-        """Get unique key for Timer model to use in multiton cache."""
-        return str(
-            sorted(
-                {
-                    "model_name": self.model_name,
-                    "device": self.device,
-                }.items()
-            )
+        model_spec = FoundationModelSpec(
+            model_path=model_name,
+            device=device,
+            predict_extra_kwargs={"context_length": context_length},
         )
+        super().__init__(model_spec=model_spec)
 
     def _load_model(self):
-        """Load model via multiton cache."""
-        cached = _CachedTimer(
-            key=self._get_unique_key(),
-            model_name=self.model_name,
-            device=self.device,
+        """Load a Timer checkpoint into a cacheable model handle."""
+        from sktime.libs.timer import TimerForPrediction
+
+        model_spec = self.model_spec
+        model = TimerForPrediction.from_pretrained(
+            model_spec.model_path, **model_spec.load_extra_kwargs
         )
-        return cached.load()
+        model = model.to(model_spec.device)
+        return ModelHandle(model=model)
 
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable model."""
-        state = self.__dict__.copy()
-        if "model_" in state:
-            state["model_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state, model will be reloaded on next use."""
-        self.__dict__.update(state)
-
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        Loads the pre-trained Timer model and stores the training series
-        as context for prediction. The Timer model is pre-trained and does
-        not require task-specific training for zero-shot forecasting.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Training time series.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables. Ignored.
-        fh : ForecastingHorizon, optional (default=None)
-            Forecasting horizon.
-
-        Returns
-        -------
-        self
-        """
-        self._y_train = y.values.astype(np.float32)
-        self.model_ = self._load_model()
-
-        # Timer requires at least input_token_len observations.
-        # If the input is too short, we pad it with zeros at the beginning
-        # to satisfy the model's structural requirements (e.g., for testing).
-        min_len = self.model_.config.input_token_len
-        if len(self._y_train) < min_len:
-            pad_len = min_len - len(self._y_train)
-            pad_arr = np.zeros(pad_len, dtype=np.float32)
-            self._y_train = np.concatenate([pad_arr, self._y_train])
-
-        return self
-
-    def _predict(self, fh, X=None):
-        """Make forecasts for the given forecasting horizon.
-
-        Uses autoregressive generation to produce forecasts. Timer generates
-        continuous-valued time series tokens, not discrete tokens.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-            Forecasting horizon, relative or absolute.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables. Ignored.
-
-        Returns
-        -------
-        y_pred : pd.Series
-            Forecasted values indexed by the forecasting horizon.
-        """
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Run Timer autoregressive generation and normalize its output."""
         import torch
 
-        # Reload model if it was lost during pickling
-        if self.model_ is None:
-            self.model_ = self._load_model()
+        model = handle.model
+        model_spec = self.model_spec
+        context_length = model_spec.predict_extra_kwargs["context_length"]
+        context = context_y.iloc[:, 0].to_numpy(dtype=np.float32)
 
-        fh_relative = fh.to_relative(self.cutoff)
-        max_h = max(fh_relative)
+        if context_length <= 0:
+            raise ValueError("context_length must be a positive integer.")
 
-        # Prepare context: use most recent context_length observations
-        context = self._y_train
-        if len(context) > self.context_length:
-            context = context[-self.context_length :]
+        token_len = model.config.input_token_len
+        if len(context) > context_length:
+            context = context[-context_length:]
 
-        # Timer requires input length to be a multiple of input_token_len
-        token_len = self.model_.config.input_token_len
+        # Timer requires at least one complete input token and accepts only
+        # whole tokens. Preserve the most recent observations when aligning.
         usable_len = (len(context) // token_len) * token_len
-        context = context[-usable_len:]
+        if usable_len == 0:
+            context = np.pad(context, (token_len - len(context), 0))
+        else:
+            context = context[-usable_len:]
 
         # Timer expects shape (batch_size, seq_len)
         input_tensor = torch.tensor(
-            context, dtype=torch.float32, device=self.device
+            context, dtype=torch.float32, device=model_spec.device
         ).unsqueeze(0)
 
-        with torch.no_grad():
-            output = self.model_.generate(input_tensor, max_new_tokens=max_h)
+        output = model.generate(input_tensor, max_new_tokens=pred_len)
 
         # output shape: (batch_size, max_h) -- Timer returns only the forecast
         forecast_values = output[0].cpu().numpy()
-
-        # Select only the requested horizon indices
-        fh_idx = np.array(fh_relative) - 1  # convert to 0-indexed
-        valid_idx = fh_idx[fh_idx < len(forecast_values)]
-
-        if len(valid_idx) < len(fh_relative):
-            y_pred_values = np.full(len(fh_relative), np.nan)
-            y_pred_values[: len(valid_idx)] = forecast_values[valid_idx]
-        else:
-            y_pred_values = forecast_values[fh_idx]
-
-        # Build output index
-        fh_abs = fh.to_absolute(self.cutoff)
-        index = fh_abs.to_pandas()
-
-        return pd.Series(y_pred_values, index=index, name=self._y.name)
+        return ForecastResult(mean=forecast_values.reshape(-1, 1))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -262,32 +194,3 @@ class TimerForecaster(BaseForecaster):
             "device": "cpu",
         }
         return [params1, params2]
-
-
-@_multiton
-class _CachedTimer:
-    """Cached Timer model to ensure only one instance exists in memory.
-
-    Timer is a zero-shot model and immutable during inference, so there
-    are no side effects from sharing the same instance across multiple uses.
-    """
-
-    def __init__(self, key, model_name, device):
-        self.key = key
-        self.model_name = model_name
-        self.device = device
-        self._model = None
-
-    def load(self):
-        """Load or return cached Timer model."""
-        if self._model is not None:
-            return self._model
-
-        from sktime.libs.timer import TimerForPrediction
-
-        self._model = TimerForPrediction.from_pretrained(self.model_name)
-
-        self._model.to(self.device)
-        self._model.eval()
-
-        return self._model

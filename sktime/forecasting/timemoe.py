@@ -9,11 +9,16 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
-from sktime.utils.singleton import _multiton
+from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    FoundationModelSpec,
+    ModelHandle,
+)
 
 
-class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
     """
     Interface for TimeMOE forecaster for zero-shot forecasting.
 
@@ -120,15 +125,12 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         # testing configuration
         # ---------------------
-        "tests:vm": True,
         "tests:libs": ["sktime.libs.timemoe"],
     }
 
@@ -140,22 +142,31 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
-        self.seed = seed
-        self.config = config
         self.model_path = model_path
+        self.config = config
+        self.seed = seed
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
-        super().__init__()
+        model_spec = FoundationModelSpec(
+            model_path=model_path,
+            device="cpu",
+            dtype="torch.bfloat16",
+            random_state=seed,
+            ignore_deps=ignore_deps,
+            load_extra_kwargs={"use_source_package": use_source_package},
+        )
+        super().__init__(model_spec=model_spec)
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values condition on parameters.
 
         This method should be used for setting dynamic tags only.
         """
-        if self.ignore_deps:
-            self.set_tags(python_dependencies=[])
-        elif self.use_source_package:
+        super().__dynamic_tags__()
+        if self.model_spec.ignore_deps:
+            return
+        if self.model_spec.load_extra_kwargs["use_source_package"]:
             self.set_tags(python_dependencies=["timemoe"])
         else:
             self.set_tags(
@@ -166,176 +177,70 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 ]
             )
 
-    def __post_init__(self):
-        """Post-init constructor logic, can be used by inheriting classes.
-
-        This method should be used for:
-
-        * parameter validation
-        * initialization logic beyond self.param = param
-        * any soft dependency imports in the constructor
-        """
-        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
-
-        _config = self._get_default_config()
-        _config.update(self.config if self.config is not None else {})
-        self._config = _config
-
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        Parameters
-        ----------
-        y : pd.Series
-            Target time series to which to fit the forecaster.
-        fh : ForecastingHorizon, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        config = self._config
-        if isinstance(y, pd.DataFrame) and y.shape[1] > 1:
-            config["input_size"] = y.shape[1]
+    def _load_model(self):
+        """Load vendored or source-package TimeMoE into a model handle."""
+        model_spec = self.model_spec
+        if model_spec.load_extra_kwargs["use_source_package"]:
+            if not _check_soft_dependencies("timemoe", severity="none"):
+                raise ImportError(
+                    "To use TimeMoE with use_source_package=True, "
+                    "you must install the TimeMoE package from "
+                    "https://github.com/Time-MoE/Time-MoE"
+                )
+            from timemoe.models.modeling_timemoe import TimeMoeForPrediction
         else:
-            config["input_size"] = 1
-        self._config = config
-        self.model = _CachedTimeMoE(
-            key=self._get_unique_timemoe_key(),
-            timemoe_kwargs=self._get_timemoe_kwargs(),
-            use_source_package=self.use_source_package,
-        ).load_from_checkpoint()
+            from sktime.libs.timemoe import TimeMoeForPrediction
 
-        return self
+        model = TimeMoeForPrediction.from_pretrained(
+            model_spec.model_path,
+            torch_dtype=model_spec.dtype,
+            device_map=model_spec.device,
+        )
+        return ModelHandle(model=model)
 
-    def _get_timemoe_kwargs(self):
-        """Get the kwargs for TimeMoE model."""
-        kwargs = {
-            "pretrained_model_name_or_path": self.model_path,
-            "torch_dtype": self._config["torch_dtype"],
-            "device_map": self._config["device_map"],
-        }
-
-        return kwargs
-
-    def _get_unique_timemoe_key(self):
-        """Get a unique key for TimeMoE model."""
-        model_path = self.model_path
-        use_source_package = self.use_source_package
-        kwargs = self._get_timemoe_kwargs()
-
-        kwargs_plus_model_path = {
-            **kwargs,
-            "model_path": model_path,
-            "use_source_package": use_source_package,
-        }
-
-        return str(sorted(kwargs_plus_model_path.items()))
-
-    def _get_default_config(self):
-        """Return the default configuration for TimeMoE model.
-
-        Returns
-        -------
-        dict
-            The default configuration for TimeMoE model.
-        """
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Run channel-wise autoregressive TimeMoE inference."""
         import torch
 
-        default_config = {
-            "input_size": 1,
-            "hidden_size": 4096,
-            "intermediate_size": 22016,
-            "horizon_lengths": [1],
-            "num_hidden_layers": 32,
-            "num_attention_heads": 32,
-            "num_key_value_heads": None,
-            "hidden_act": "silu",
-            "num_experts_per_tok": 2,
-            "num_experts": 1,
-            "max_position_embeddings": 32768,
-            "initializer_range": 0.02,
-            "rms_norm_eps": 1e-6,
-            "use_cache": True,
-            "use_dense": False,
-            "rope_theta": 10000,
-            "attention_dropout": 0.0,
-            "apply_aux_loss": True,
-            "router_aux_loss_factor": 0.02,
-            "tie_word_embeddings": False,
-            "torch_dtype": torch.bfloat16,
-            "device_map": "cpu",
-        }
-        return default_config
+        model = handle.model
+        dtype = self.model_spec.dtype
 
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        Private _predict containing the core logic, called from predict
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-        X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored.
-        y : pd.Series, optional (default=None)
-            Optional series to use instead of the series passed in fit.
-
-        Returns
-        -------
-        y_pred : pd.DataFrame
-            Predicted forecasts.
-        """
-        import torch
-        import transformers
-
-        transformers.set_seed(self._seed)
-        if fh is not None:
-            prediction_length = int(max(fh.to_relative(self.cutoff)))
+        y_values = context_y.copy()
+        if isinstance(y_values, pd.DataFrame):
+            y_values = y_values.values.reshape(1, -1, y_values.shape[1])
         else:
-            prediction_length = 1
-
-        _y = self._y.copy()
-        _y_df = _y
-
-        index_names = _y.index.names
-        if isinstance(_y, pd.DataFrame):
-            _y = _y.values.reshape(1, -1, _y.shape[1])
-        else:
-            _y = _y.values.reshape(1, -1, 1)
+            y_values = y_values.values.reshape(1, -1, 1)
 
         results = []
-        for i in range(_y.shape[0]):
+        for i in range(y_values.shape[0]):
             current_results = []
-            for j in range(_y.shape[2]):
-                _y_i = _y[i, :, j]
+            for j in range(y_values.shape[2]):
+                channel = y_values[i, :, j]
 
-                input_tensor = torch.tensor(
-                    _y_i, dtype=self._config["torch_dtype"]
-                ).unsqueeze(0)
+                input_tensor = torch.tensor(channel, dtype=dtype).unsqueeze(0)
 
                 attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
 
-                with torch.no_grad():
-                    output = self.model(
-                        input_tensor,
-                        attention_mask,
-                        max_horizon_length=prediction_length,
-                        use_cache=True,
-                        return_dict=True,
-                    )
+                output = model(
+                    input_tensor,
+                    attention_mask,
+                    max_horizon_length=pred_len,
+                    use_cache=True,
+                    return_dict=True,
+                )
 
                 predictions = output.logits.squeeze(0).to(torch.float).cpu().numpy()
-                final_predictions = predictions[-prediction_length:]
-                final_predictions = final_predictions.reshape(
-                    prediction_length, self._config["input_size"]
-                )
-                selected_indices = [h - 1 for h in fh.to_relative(self.cutoff)]
-                final_predictions = final_predictions[selected_indices]
+                final_predictions = predictions[-pred_len:]
+                final_predictions = final_predictions.reshape(pred_len, 1)
                 current_results.append(final_predictions)
             combined_results = np.concatenate(current_results, axis=1)
             results.append(combined_results)
@@ -345,41 +250,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         else:
             combined_results = results[0]
 
-        forecast_index = fh.to_absolute(self.cutoff)
-
-        if hasattr(forecast_index, "to_numpy"):
-            forecast_index = forecast_index.to_numpy()
-        else:
-            forecast_index = list(forecast_index)
-
-        if isinstance(_y_df.index, pd.MultiIndex):
-            # creates a a time index which replaces the existing tiume index with
-            # the forecast index.
-            idx = pd.MultiIndex.from_product(
-                [
-                    _y_df.index.get_level_values(i).unique()
-                    for i in range(len(_y_df.index.names) - 1)
-                ]
-                + [forecast_index],
-                names=index_names,
-            )
-
-            y_pred = pd.DataFrame(
-                combined_results.reshape(-1, self._config["input_size"]),
-                index=idx,
-                columns=_y_df.columns if isinstance(_y_df, pd.DataFrame) else None,
-            )
-            y_pred.index.names = _y_df.index.names
-        else:
-            # this is for univariate data.
-            y_pred = pd.DataFrame(
-                combined_results,
-                index=forecast_index,
-                columns=_y_df.columns if isinstance(_y_df, pd.DataFrame) else None,
-            )
-            y_pred.index.names = _y_df.index.names
-
-        return y_pred
+        return ForecastResult(mean=combined_results)
 
     @classmethod
     def get_test_params(cls, parameter_default="default"):
@@ -406,40 +277,3 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         )
 
         return test_params
-
-
-@_multiton
-class _CachedTimeMoE:
-    """Cached TimeMoE model to ensure only one instance exists in memory.
-
-    TimeMoE is a zero-shot model and immutable, hence there will not be
-    any side effects of sharing the same instance across multiple uses.
-    This caching mechanism uses the _multiton decorator to ensure
-    that models with the same configuration are reused, preventing
-    duplicate models in memory when handling multivariate data.
-    """
-
-    def __init__(self, key, timemoe_kwargs, use_source_package):
-        self.key = key
-        self.timemoe_kwargs = timemoe_kwargs
-        self.use_source_package = use_source_package
-        self.model = None
-
-    def load_from_checkpoint(self):
-        """Load the model from checkpoint."""
-        if self.use_source_package:
-            if not _check_soft_dependencies("timemoe", severity="none"):
-                raise ImportError(
-                    "To use TimeMoE with use_source_package=True, "
-                    "you must install the TimeMoE package from "
-                    "https://github.com/Time-MoE/Time-MoE"
-                )
-            from timemoe.models.modeling_timemoe import TimeMoeForPrediction
-
-            model = TimeMoeForPrediction.from_pretrained(**self.timemoe_kwargs)
-        else:
-            from sktime.libs.timemoe import TimeMoeForPrediction
-
-            model = TimeMoeForPrediction.from_pretrained(**self.timemoe_kwargs)
-
-        return model

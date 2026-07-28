@@ -6,16 +6,18 @@ __author__ = ["KimMeen", "jgyasu"]
 
 from types import SimpleNamespace
 
-import pandas as pd
-
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    FoundationModelSpec,
+    ModelHandle,
+)
 from sktime.utils.dependencies import _safe_import
-from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 
 
-class TimeLLMForecaster(BaseForecaster):
+class TimeLLMForecaster(BaseFoundationForecaster):
     """
     Interface to the Time-LLM.
 
@@ -121,158 +123,77 @@ class TimeLLMForecaster(BaseForecaster):
         self.dropout = dropout
         self.device = device
         self.prompt_domain = prompt_domain
-
-        super().__init__()
-
-    def _fit(self, y, X=None, fh=None):
-        """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
-        """
-        self.device_ = (
-            "cuda" if self.device is None and torch.cuda.is_available() else "cpu"
+        model_spec = FoundationModelSpec(
+            device="auto" if device is None else device,
+            dtype="torch.bfloat16",
+            load_extra_kwargs={
+                "task_name": task_name,
+                "pred_len": pred_len,
+                "seq_len": seq_len,
+                "llm_model": llm_model,
+                "llm_layers": llm_layers,
+                "llm_dim": llm_dim,
+                "patch_len": patch_len,
+                "stride": stride,
+                "d_model": d_model,
+                "d_ff": d_ff,
+                "n_heads": n_heads,
+                "dropout": dropout,
+                "prompt_domain": prompt_domain,
+            },
         )
+        super().__init__(model_spec=model_spec)
 
-        self.fh_ = fh
-
-        if isinstance(fh, int):
-            self._pred_len = fh
-        elif hasattr(fh, "__len__"):
-            self._pred_len = len(fh)
+    def _update_attrs_in_fit(self, y, X=None, fh=None):
+        """Set the data-dependent Time-LLM architecture parameters."""
+        load_extra_kwargs = dict(self.model_spec.load_extra_kwargs)
+        if fh is None:
+            self._pred_len = load_extra_kwargs["pred_len"]
         else:
-            self._pred_len = self.pred_len
+            relative_fh = fh.to_relative(self.cutoff).to_pandas()
+            if all(value > 0 for value in relative_fh):
+                self._pred_len = int(max(relative_fh))
+            else:
+                self._pred_len = len(relative_fh)
 
         self._enc_in = y.shape[1]
-        self.model_ = self._load_model()
-
-        self.last_values = y
+        load_extra_kwargs.update(pred_len=self._pred_len, enc_in=self._enc_in)
+        self._update_model_spec(
+            load_extra_kwargs=load_extra_kwargs,
+        )
 
     def _load_model(self):
-        """Load Time-LLM model via multiton cache."""
-        if hasattr(self, "model_") and self.model_ is not None:
-            return self.model_
+        """Construct Time-LLM and return its shared model handle."""
+        from sktime.libs.time_llm.TimeLLM import Model
 
-        model = _CachedTimeLLM(
-            key=self._get_unique_time_llm_key(),
-            time_llm_kwargs=self._get_time_llm_kwargs(),
-        ).load_model()
+        model_spec = self.model_spec
+        configs = SimpleNamespace(**model_spec.load_extra_kwargs)
+        model = Model(configs)
+        model = model.to(model_spec.device)
+        model = model.to(model_spec.dtype)
+        return ModelHandle(model=model)
 
-        model = model.to(self.device_)
-        model = model.to(torch.bfloat16)
-        self.model_ = model
-
-        return self.model_
-
-    def _get_time_llm_kwargs(self):
-        """Get the kwargs for Time-LLM model."""
-        return {
-            "task_name": self.task_name,
-            "pred_len": self._pred_len,
-            "seq_len": self.seq_len,
-            "llm_model": self.llm_model,
-            "llm_layers": self.llm_layers,
-            "llm_dim": self.llm_dim,
-            "patch_len": self.patch_len,
-            "stride": self.stride,
-            "d_model": self.d_model,
-            "d_ff": self.d_ff,
-            "n_heads": self.n_heads,
-            "dropout": self.dropout,
-            "enc_in": self._enc_in,
-            "prompt_domain": self.prompt_domain,
-        }
-
-    def _get_unique_time_llm_key(self):
-        """Get unique key for Time-LLM model to use in multiton."""
-        config_dict = {
-            "task_name": self.task_name,
-            "pred_len": self._pred_len,
-            "seq_len": self.seq_len,
-            "llm_model": self.llm_model,
-            "llm_layers": self.llm_layers,
-            "llm_dim": self.llm_dim,
-            "patch_len": self.patch_len,
-            "stride": self.stride,
-            "d_model": self.d_model,
-            "d_ff": self.d_ff,
-            "n_heads": self.n_heads,
-            "dropout": self.dropout,
-            "device": self.device,
-            "prompt_domain": self.prompt_domain,
-        }
-        return str(sorted(config_dict.items()))
-
-    def _predict(self, fh, X=None, y=None):
-        """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-            (for_global)
-            If ``y`` is not passed (not performing global forecasting), ``X`` should
-            only contain the time points to be predicted.
-            If ``y`` is passed (performing global forecasting), ``X`` must contain
-            all historical values and the time points to be predicted.
-        y : sktime time series object, optional (default=None) (for_global)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed.
-            Only pass the historical values not the time points to be predicted.
-
-
-        Returns
-        -------
-        y_pred : pd.DataFrame
-            Point predictions
-        """
-        self.model_ = self._load_model()
-        self.model_.eval()
-
-        X_tensor = (
-            torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
-        )
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Run Time-LLM inference and return normalized point forecasts."""
+        device = self.model_spec.device
+        X_tensor = torch.tensor(context_y.values).reshape(1, -1, 1).to(device)
         X_tensor = X_tensor.to(torch.float32)
 
-        with torch.no_grad():
-            res = self.model_.forward(
-                X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
-            )
-
-        forecast_index = fh.to_absolute(self.cutoff).to_pandas()
-
-        y_pred = pd.DataFrame(
-            data=res.detach().cpu().numpy().flatten(),
-            index=forecast_index,
-            columns=self.last_values.columns,
+        res = handle.model.forward(
+            X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
         )
-
-        y_pred = y_pred.astype("float64")
-
-        return y_pred
-
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable TimeLLM model."""
-        state = self.__dict__.copy()
-
-        if "model_" in state:
-            state["model_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state, TimeLLM model will be reloaded on next use."""
-        self.__dict__.update(state)
+        values = res.detach().to(torch.float32).cpu().numpy().astype("float64")
+        values = values.reshape(-1, context_y.shape[1])
+        return ForecastResult(mean=values)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -304,28 +225,3 @@ class TimeLLMForecaster(BaseForecaster):
         ]
 
         return params_list
-
-
-@_multiton
-class _CachedTimeLLM:
-    """Cached Time-LLM model to ensure only one instance per configuration exists.
-
-    Time-LLM is immutable and hence multiple instances with the same config can
-    share the same model without any side effects.
-    """
-
-    def __init__(self, key, time_llm_kwargs):
-        self.key = key
-        self.time_llm_kwargs = time_llm_kwargs
-        self.model_pipeline = None
-
-    def load_model(self):
-        """Load Time-LLM model from checkpoint if not already loaded."""
-        if self.model_pipeline is not None:
-            return self.model_pipeline
-
-        from sktime.libs.time_llm.TimeLLM import Model
-
-        configs = SimpleNamespace(**self.time_llm_kwargs)
-        self.model_pipeline = Model(configs)
-        return self.model_pipeline
