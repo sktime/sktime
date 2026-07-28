@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "1.0.1"
+version = "1.0.2"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -196,7 +196,6 @@ tests = [
 # these are for special uses and may be changed or removed at any time
 binder = [
   "jupyter",
-  "skchange",
 ]
 cython_extras = [
   "mrseql < 0.0.3",
@@ -252,12 +251,16 @@ notebooks = [
   "lightning>=2.0,<2.7",
   "skpro",
   "statsforecast",
+  'numba<0.63; python_version < "3.14"',
 ]
 numpy1 = [
   "numpy<2.0.0",
 ]
 pandas1 = [
   "pandas<2.0.0",
+]
+skpro = [
+  "skpro",
 ]
 compatibility_tests = [
   'catboost; python_version < "3.13"',
