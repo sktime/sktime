@@ -4,7 +4,6 @@
 __author__ = ["vedantag17"]
 
 import copy
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -23,15 +22,16 @@ class GreykiteForecaster(BaseForecaster):
 
     Parameters
     ----------
-    forecast_config : ForecastConfig, optional
-        Configuration object for Greykite's forecasting pipeline.
-        If None, a default configuration is created.
     date_format : str, optional
         Format of the timestamp in the data. If None, it is inferred.
     model_template : str, optional
         Name of the model template to use (default: "SILVERKITE").
     coverage : float, optional
         Intended coverage of the prediction bands (0.0 to 1.0).
+    cv_max_splits : int or None, optional
+        Maximum number of cross-validation splits used by greykite's
+        internal pipeline.  Set to ``0`` to skip CV entirely.
+        If ``None``, greykite's default (3) is used.
 
     Attributes
     ----------
@@ -92,15 +92,15 @@ class GreykiteForecaster(BaseForecaster):
 
     def __init__(
         self,
-        forecast_config: Optional["GreykiteForecaster.ForecastConfig"] = None,
         date_format: str | None = None,
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
+        cv_max_splits: int | None = None,
     ):
-        self.forecast_config = forecast_config
         self.date_format = date_format
         self.model_template = model_template
         self.coverage = coverage
+        self.cv_max_splits = cv_max_splits
 
         super().__init__()
 
@@ -129,23 +129,18 @@ class GreykiteForecaster(BaseForecaster):
         self._X = None
 
     def _create_forecast_config(self, y=None):
-        """Create a ForecastConfig object if one wasn't provided.
+        """Create a ForecastConfig from the constructor parameters.
 
         The resolved config is stored in ``self._forecast_config_`` so that
-        ``self.forecast_config`` (the user-supplied hyperparameter) is never
-        mutated during ``fit``, as required by sktime's estimator contract.
+        constructor hyperparameters are never mutated during ``fit``, as
+        required by sktime's estimator contract.
         """
-        if self.forecast_config is not None:
-            # User supplied a config; store a reference but do not mutate.
-            self._forecast_config_ = self.forecast_config
-            return self._forecast_config_
-
         # If frequency is not provided, try to infer it from the index.
         # pd.infer_freq only supports DatetimeIndex / PeriodIndex; for integer
         # or other index types we leave freq as None.
         if y is not None:
             if isinstance(y.index, pd.PeriodIndex):
-                freq = y.index.freqstr
+                freq = pd.infer_freq(y.index.to_timestamp())
             elif isinstance(y.index, pd.DatetimeIndex):
                 freq = pd.infer_freq(y.index)
             else:
@@ -190,7 +185,9 @@ class GreykiteForecaster(BaseForecaster):
             model_template=self.model_template,
             coverage=self.coverage,
             evaluation_metric_param=EvaluationMetricParam(),
-            evaluation_period_param=EvaluationPeriodParam(),
+            evaluation_period_param=EvaluationPeriodParam(
+                cv_max_splits=self.cv_max_splits,
+            ),
             computation_param=ComputationParam(),
             forecast_one_by_one=False,
         )
@@ -211,11 +208,6 @@ class GreykiteForecaster(BaseForecaster):
         # Preserve the series name so _predict can return a named Series.
         self._y_name_ = y.name
 
-        # Store training data and exogenous column names.
-        # greykite's forecast_pipeline does fit+predict atomically and requires
-        # future regressor values in the input DataFrame.  When exogenous
-        # variables are used, we re-run the pipeline at predict time with the
-        # future X appended (see _rerun_with_future_X).
         self._y_train_ = y
         self._X_train_ = X
         self._X_cols_ = list(X.columns) if X is not None else []
@@ -355,48 +347,21 @@ class GreykiteForecaster(BaseForecaster):
 
         Returns
         -------
-        params : dict
-            A dictionary containing parameters to construct a valid test instance of
-            the GreykiteForecaster. The dictionary includes:
-                - model_template: str
-                    Name of the model template to use (default is 'SILVERKITE').
-                - date_format: str or None
-                    Format of the time column (default is None, allowing inference).
+        params : list of dict
+            Each dictionary contains parameters to construct a valid test
+            instance of GreykiteForecaster.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
-
-        if _check_soft_dependencies("greykite", severity="none"):
-            from greykite.framework.templates.autogen.forecast_config import (
-                EvaluationPeriodParam,
-                ForecastConfig,
-                MetadataParam,
-            )
-
-            # SILVERKITE_EMPTY: no hyperparameter grid search
-            # cv_max_splits=0: skips the internal CV loop (default is 3 splits,
-            #   each 2+ GB on airline data) to prevent OOM kills on CI runners.
-            _test_config = ForecastConfig(
-                metadata_param=MetadataParam(time_col="ts", value_col="y"),
-                model_template="SILVERKITE_EMPTY",
-                evaluation_period_param=EvaluationPeriodParam(cv_max_splits=0),
-            )
-
-            _test_config2 = ForecastConfig(
-                metadata_param=MetadataParam(time_col="ts", value_col="y"),
-                model_template="SILVERKITE_EMPTY",
-                evaluation_period_param=EvaluationPeriodParam(cv_max_splits=0),
-                coverage=0.9,
-            )
-
-            return [
-                {"forecast_config": _test_config},
-                {"forecast_config": _test_config2},
-            ]
-
+        # SILVERKITE_EMPTY: no hyperparameter grid search.
+        # cv_max_splits=0: skips the internal CV loop (default is 3 splits,
+        #   each 2+ GB on airline data) to prevent OOM kills on CI runners.
         return [
             {
                 "model_template": "SILVERKITE_EMPTY",
-                "date_format": None,
-                "coverage": 0.95,
+                "cv_max_splits": 1,
+            },
+            {
+                "model_template": "SILVERKITE_EMPTY",
+                "cv_max_splits": 1,
+                "coverage": 0.9,
             },
         ]
