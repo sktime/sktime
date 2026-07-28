@@ -33,112 +33,11 @@ ONLY_VM_ESTIMATORS = False
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_all INSTEAD
-EXCLUDE_ESTIMATORS = [
-    # below are removed due to mac failures we don't fully understand, see #3103
-    "HIVECOTEV1",
-    "HIVECOTEV2",
-    "RandomIntervalSpectralEnsemble",
-    "RandomIntervalFeatureExtractor",
-    # tapnet based estimators fail stochastically for unknown reasons, see #3525
-    "TapNetRegressor",
-    "LSTMFCNClassifier",  # unknown cause, see bug report #4033
-    # DL classifier suspected to cause hangs and memouts, see #4610
-    "EditDist",
-    "LSTMFCNClassifier",
-    "MLPClassifier",
-    "ResNetRegressor",
-    "LSTMFCNRegressor",
-    # splitters excluded with undiagnosed failures, see #6194
-    # these are temporarily skipped to allow merging of the base test framework
-    "SameLocSplitter",
-    "TestPlusTrainSplitter",
-    "Repeat",
-    "CutoffFhSplitter",
-    # sporadic timeouts, see #6344
-    "ShapeletLearningClassifierTslearn",
-    # models with large weights
-    "MomentFMForecaster",
-    # Large datasets
-    "M5Dataset",
-    # Test estimators
-    "_TransformChangeNInstances",
-    # ptf global models fail the tests, see #7997
-    "PytorchForecastingNBeats",
-    "PytorchForecastingNHiTS",
-    "PytorchForecastingDeepAR",
-    # STDBSCAN is not API compliant, see #7994
-    "STDBSCAN",
-    # Temporarily remove RRF from tests, while #7380 is not merged
-    "RecursiveReductionForecaster",
-    # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
-    "TimeSeriesKvisibility",
-    # fails due to #8151 or #8059
-    "FreshPRINCE",
-    # multiple timeouts and sporadic failures reported related to VARMAX
-    # 2997, 3176, 7985
-    "SCINetForecaster",  # known bug #7871
-    "MAPAForecaster",  # known bug #8039
-]
-
+EXCLUDE_ESTIMATORS = []
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
-EXCLUDED_TESTS = {
-    # known issue when X is passed, wrong time indices are returned, #1364
-    "TapNetRegressor": [
-        "test_fit_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
-    # Early classifiers intentionally retain information from previous predict calls
-    #   for #1.
-    # #2 amd #3 are due to predict/predict_proba returning two items and that breaking
-    #   assert_array_equal
-    "TEASER": [
-        "test_non_state_changing_method_contract",
-        "test_fit_idempotent",
-        "test_multiprocessing_idempotent",
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-    ],
-    "CNNNetwork": "test_inheritance",  # not a registered base class, WiP, see #3028
-    # SAX returns strange output format
-    # this needs to be fixed, was not tested previously due to legacy exception
-    "SAXlegacy": ["test_fit_transform_output"],
-    "DynamicFactor": [
-        "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
-    "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
-    # networks do not support negative fh
-    "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
-    "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
-    # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
-    "StatsForecastMSTL": ["test_pred_int_tag"],
-    # KNeighborsTimeSeriesClassifierTslearn crashes in parallel mode
-    "KNeighborsTimeSeriesClassifierTslearn": ["test_multiprocessing_idempotent"],
-    # ShapeletTransformPyts creates nested numpy shapelets sporadically, see #6171
-    "ShapeletTransformPyts": ["test_non_state_changing_method_contract"],
-    # ShapeletLearningClassifier is non-pickleable due to DL dependencies
-    "ShapeletLearningClassifierTslearn": [
-        "test_persistence_via_pickle",
-        "test_save_estimators_to_file",
-        "test_fit_idempotent",
-    ],
-    "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    "GreedyGaussianSegmentation": [
-        "test_predict_points",
-        "test_predict_segments",
-        "test_output_type",
-        "test_transform_output_type",
-        "test_inheritance",
-        "test_create_test_instance",
-    ],
-    # see bug report #6465 and #7958
-    "MACNNClassifier": [
-        "test_multioutput",
-        "test_classifier_on_unit_test_data",
-    ],
-}
+EXCLUDED_TESTS = {}
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
