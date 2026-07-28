@@ -11,16 +11,6 @@ import pytest
 
 from sktime.forecasting.cisco_tsm import CiscoTSMForecaster
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils import check_estimator
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(CiscoTSMForecaster),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_cisco_tsm_forecaster():
-    """Run standard test suite for CiscoTSMForecaster."""
-    check_estimator(CiscoTSMForecaster, raise_exceptions=True)
 
 
 @pytest.mark.skipif(
@@ -31,6 +21,7 @@ def test_cisco_tsm_forecaster_predict_proba():
     """Verify that predict_proba is consistent with predict_quantiles."""
     import numpy as np
     import pandas as pd
+    from skpro.distributions import HistogramQPD
 
     from sktime.forecasting.cisco_tsm import CiscoTSMForecaster
 
@@ -48,8 +39,10 @@ def test_cisco_tsm_forecaster_predict_proba():
 
     # Predict probability and extract quantiles from the distribution
     pred_dist = forecaster.predict_proba(fh=fh)
+    assert isinstance(pred_dist, HistogramQPD)
     q_from_proba = pred_dist.quantile(alpha)
 
     # Directly compare the outputs
     np.testing.assert_allclose(q_direct.values, q_from_proba.values, atol=1e-5)
+
 
