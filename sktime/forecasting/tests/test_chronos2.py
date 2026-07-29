@@ -69,6 +69,7 @@ def test_chronos2_airline_predictions_match_source_reference(
     forecaster = Chronos2Forecaster(
         model_path=model_path,
         config={"device_map": "cpu", "context_length": context_length},
+        seed=1,
     )
 
     y_pred = forecaster.fit(y_train, fh=fh).predict(fh=fh)
@@ -95,6 +96,7 @@ def test_chronos2_multivariate_cross_learning_matches_source_reference():
     forecaster = Chronos2Forecaster(
         model_path="amazon/chronos-2",
         config={"device_map": "cpu", "cross_learning": True},
+        seed=1,
     )
     fh = np.arange(1, prediction_length + 1)
     y_pred = forecaster.fit(y, fh=fh).predict(fh=fh)
@@ -135,7 +137,9 @@ def test_chronos2_covariates_match_source_reference():
     X_future.index = range(T, T + prediction_length)
 
     forecaster = Chronos2Forecaster(
-        model_path="amazon/chronos-2", config={"device_map": "cpu"}
+        model_path="amazon/chronos-2",
+        config={"device_map": "cpu"},
+        seed=1,
     )
     fh = np.arange(1, prediction_length + 1)
     forecaster.fit(y, X=X_train, fh=fh)
