@@ -420,13 +420,9 @@ def scitype_to_mtype(scitype: str, softdeps: str = "exclude"):
             f'"{scitype}" is not a valid scitype string, see datatypes.SCITYPE_REGISTER'
         )
 
-    soft_deps_arg = softdeps if softdeps in ["exclude", "present"] else "all"
-    mtypes = [
-        k[0] for k in generate_mtype_register(scitype=scitype, soft_deps=soft_deps_arg)
-    ]
-
-    if len(mtypes) == 0:
+    if len(generate_mtype_list(scitype=scitype, soft_deps="all")) == 0:
         # if there are no mtypes, this must have been reached by mistake/bug
         raise RuntimeError("no mtypes defined for scitype " + scitype)
 
-    return mtypes
+    soft_deps_arg = softdeps if softdeps in ["exclude", "present"] else "all"
+    return generate_mtype_list(scitype=scitype, soft_deps=soft_deps_arg)

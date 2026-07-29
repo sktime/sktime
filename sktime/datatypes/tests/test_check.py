@@ -16,10 +16,10 @@ from sktime.datatypes._check import (
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._check import scitype as infer_scitype
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes._registry import SCITYPE_LIST, scitype_to_mtype
+from sktime.datatypes._registry import generate_scitype_list, scitype_to_mtype
 from sktime.tests.test_switch import run_test_module_changed
 
-SCITYPES = SCITYPE_LIST
+SCITYPES = generate_scitype_list()
 
 # scitypes where mtype inference is not unique
 # alignment is excluded since mtypes can be ambiguous
@@ -438,7 +438,7 @@ def test_mtype_infer(scitype, mtype, fixture_index):
 # exclude these scitypes in inference of scitype test
 #  would lead to ambiguous results
 SKIP_SCITYPES = ["Alignment", "Table", "Proba"]
-SCITYPES_FOR_INFER_TEST = list(set(SCITYPE_LIST).difference(SKIP_SCITYPES))
+SCITYPES_FOR_INFER_TEST = list(set(SCITYPES).difference(SKIP_SCITYPES))
 
 
 @pytest.mark.skipif(
