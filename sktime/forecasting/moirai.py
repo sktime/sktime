@@ -3,13 +3,13 @@
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import BaseForecaster
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class MOIRAIForecaster(BaseForecaster):
     """MOIRAI Forecasters.
 
     Parameters

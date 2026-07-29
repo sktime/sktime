@@ -10,11 +10,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.stdout_mute import StdoutMute
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 from sktime.utils.singleton import _multiton
@@ -37,7 +33,7 @@ _FREQUENCY_TOKEN_MAP = {
 }
 
 
-class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class TinyTimeMixerForecaster(BaseForecaster):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 

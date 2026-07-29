@@ -5,11 +5,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
@@ -18,7 +14,7 @@ empty_cache = _safe_import("torch.cuda.empty_cache")
 Dataset = _safe_import("torch.utils.data.Dataset")
 
 
-class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class MomentFMForecaster(BaseForecaster):
     """
     Interface for forecasting with the deep learning time series model momentfm.
 
@@ -136,7 +132,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = MomentFMForecaster(seq_len = 2)
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict(y = y) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 
     _tags = {

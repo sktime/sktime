@@ -15,11 +15,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
@@ -33,7 +29,7 @@ Trainer = _safe_import("transformers.Trainer")
 TrainingArguments = _safe_import("transformers.TrainingArguments")
 
 
-class PatchTSTForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class PatchTSTForecaster(BaseForecaster):
     """Interface for the PatchTST forecaster.
 
     This forecaster interfaces the Huggingface library's PatchTST model for
