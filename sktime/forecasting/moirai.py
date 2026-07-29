@@ -929,26 +929,26 @@ class _CachedMoirai:
         }
 
         if kwargs["use_source_package"]:
-            if _check_soft_dependencies("uni2ts"):
-                from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
+            _check_soft_dependencies("uni2ts")
+            from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
 
-                if kwargs["checkpoint_path"].startswith("Salesforce"):
-                    model_kwargs["module"] = MoiraiModule.from_pretrained(
-                        kwargs["checkpoint_path"]
-                    )
-                    self.model = MoiraiForecast(**model_kwargs)
-                else:
-                    from huggingface_hub import hf_hub_download
+            if kwargs["checkpoint_path"].startswith("Salesforce"):
+                model_kwargs["module"] = MoiraiModule.from_pretrained(
+                    kwargs["checkpoint_path"]
+                )
+                self.model = MoiraiForecast(**model_kwargs)
+            else:
+                from huggingface_hub import hf_hub_download
 
-                    model_kwargs["checkpoint_path"] = hf_hub_download(
-                        repo_id=kwargs["checkpoint_path"], filename="model.ckpt"
-                    )
-                    # weights_only=False: PyTorch>=2.6 changed the default to True,
-                    # but MOIRAI checkpoints contain trusted uni2ts globals that
-                    # cannot be loaded with weights_only=True.
-                    self.model = MoiraiForecast.load_from_checkpoint(
-                        **model_kwargs, weights_only=False
-                    )
+                model_kwargs["checkpoint_path"] = hf_hub_download(
+                    repo_id=kwargs["checkpoint_path"], filename="model.ckpt"
+                )
+                # weights_only=False: PyTorch>=2.6 changed the default to True,
+                # but MOIRAI checkpoints contain trusted uni2ts globals that
+                # cannot be loaded with weights_only=True.
+                self.model = MoiraiForecast.load_from_checkpoint(
+                    **model_kwargs, weights_only=False
+                )
         else:
             # Use the sktime-vendored uni2ts package with sys.modules patched
             # so that ``import uni2ts`` inside MoiraiForecast resolves to
