@@ -562,11 +562,11 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         if fh is None:
             fh = self._fh
         if len(fh) < self.sample_dim:
-            index = pd.Index(list(fh.to_absolute(self.cutoff))).union(self._y.index)
+            index = pd.Index(list(fh.to_absolute(self.cutoff))).union(self._cur_y.index)
         else:
             index = list(fh.to_absolute(self.cutoff))
         if X is not None:
-            X = X.combine_first(self._X).loc[index]
+            X = X.combine_first(self._cur_X).loc[index]
         if self.deterministic:
             np.random.seed(42)
         z = np.random.normal(self.z_mean_, self.z_std_, (len(index), self.sample_dim))
@@ -583,9 +583,9 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             res.reshape((len(res), 1, self.sample_dim))
         )
 
-        return pd.Series(result.values.reshape(-1), index=index, name=self._y.name).loc[
-            list(fh.to_absolute(self.cutoff))
-        ]
+        return pd.Series(
+            result.values.reshape(-1), index=index, name=self._cur_y.name
+        ).loc[list(fh.to_absolute(self.cutoff))]
 
     def _prepare_data(self, yz, X, z=None):
         cal_features = self.fourier_features.transform(yz)

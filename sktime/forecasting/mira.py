@@ -162,6 +162,8 @@ class MIRAForecaster(BaseForecaster):
         -------
         self
         """
+        self._cur_y = y
+        self._cur_X = X
         self.model = self._load_model()
         self.model.eval()
         return self
@@ -177,7 +179,7 @@ class MIRAForecaster(BaseForecaster):
         pred_len = int(np.max(fh_rel.to_numpy()))
 
         values, times = _prepare_context(
-            y=self._y,
+            y=self._cur_y,
             pred_len=pred_len,
             cutoff=self.cutoff,
             context_length=self.context_length,
@@ -219,9 +221,9 @@ class MIRAForecaster(BaseForecaster):
             .to_absolute(self._cutoff)
             ._values
         )
-        pred_df = pd.DataFrame(values_out, index=index, columns=self._y.columns)
-        pred_df.index.names = self._y.index.names
-        pred_out = fh_rel.get_expected_pred_idx(self._y, cutoff=self.cutoff)
+        pred_df = pd.DataFrame(values_out, index=index, columns=self._cur_y.columns)
+        pred_df.index.names = self._cur_y.index.names
+        pred_out = fh_rel.get_expected_pred_idx(self._cur_y, cutoff=self.cutoff)
         return pred_df.loc[pred_df.index.isin(pred_out)]
 
     @classmethod

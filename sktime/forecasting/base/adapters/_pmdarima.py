@@ -59,6 +59,8 @@ class _PmdArimaAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         if X is not None:
             X = X.loc[y.index]
         self._forecaster = self._instantiate_model()
@@ -165,7 +167,7 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred = pd.Series(index=fh_abs_full, dtype="float64")
 
         # for in-sample predictions, pmdarima requires zero-based integer indices
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(self._cur_y.index[0], self.cutoff)[[0, -1]]
         if start < 0:
             # Can't forecasts earlier to train starting point
             raise ValueError("Can't make predictions earlier to train starting point")

@@ -235,7 +235,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         import torch
         from torch.utils.data import DataLoader, TensorDataset
 
-        self._y = y.copy()
+        self._cur_y = y.copy()
         self._y_len = len(y)
 
         if isinstance(y, pd.Series):
@@ -295,11 +295,11 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         """
         import torch
 
-        fh_abs = fh.to_absolute(self._y.index[-1]).to_numpy()
+        fh_abs = fh.to_absolute(self._cur_y.index[-1]).to_numpy()
         n_steps = len(fh_abs)
         predictions = np.zeros(n_steps)
 
-        last_window = self._y[-self.window_length :].copy()
+        last_window = self._cur_y[-self.window_length :].copy()
         current_window = self.scaler.transform(last_window.values.reshape(-1, 1))
 
         self.network.eval()
@@ -326,7 +326,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
                     current_window = np.roll(current_window, -1, axis=0)
                     current_window[-1] = pred_scaled.ravel()[0]
 
-        return pd.Series(predictions, index=fh_abs, name=self._y.name)
+        return pd.Series(predictions, index=fh_abs, name=self._cur_y.name)
 
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain the RBF network on panel data.
@@ -349,7 +349,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         ref_series = all_series[0]
         if isinstance(ref_series, pd.DataFrame) and ref_series.shape[1] > 1:
             ref_series = ref_series.iloc[:, 0]
-        self._y = ref_series
+        self._cur_y = ref_series
         self._y_len = len(ref_series)
         self._fh_length = pred_len if self.mode == "direct" else 1
 

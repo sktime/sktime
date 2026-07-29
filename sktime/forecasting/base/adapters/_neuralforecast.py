@@ -374,6 +374,9 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         # | Index                   | B2.2.1    |
         # | Index (Missing)         | B2.2.2    |
         # | Other                   | unreached |
+        self._cur_y = y
+        self._cur_X = X
+
         y_time_index = y.index.get_level_values(-1)
         if self.freq != "auto":  # A: freq is given as non-auto
             self._freq = self.freq
@@ -514,7 +517,7 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         del fh  # to avoid being detected as unused by ``vulture`` etc.
 
         predict_parameters: dict = {"verbose": self.verbose_predict}
-        y = self._y
+        y = self._cur_y
 
         if self.futr_exog_list and X is None:
             raise ValueError("Missing exogenous data, 'futr_exog_list' is non-empty.")

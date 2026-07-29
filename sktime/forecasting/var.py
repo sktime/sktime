@@ -199,7 +199,7 @@ class VAR(_StatsModelsAdapter):
             )
         # in-sample prediction by means of residuals
         if fh_int.min() <= 0:
-            y_pred_insample = self._y - self._fitted_forecaster.resid
+            y_pred_insample = self._cur_y - self._fitted_forecaster.resid
             y_pred_insample = y_pred_insample.values
 
         if y_pred_insample is not None and y_pred_outsample is not None:
@@ -317,7 +317,7 @@ class VAR(_StatsModelsAdapter):
         final_columns = list(
             itertools.product(
                 *[
-                    self._y.columns,
+                    self._cur_y.columns,
                     coverage,
                     pre_output_df_2.columns.get_level_values(2).unique(),
                 ]
@@ -330,7 +330,7 @@ class VAR(_StatsModelsAdapter):
         )
 
         index = fh.to_absolute_index(self.cutoff)
-        index.name = self._y.index.name
+        index.name = self._cur_y.index.name
         final_df.index = index
 
         return final_df

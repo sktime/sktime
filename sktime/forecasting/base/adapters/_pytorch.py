@@ -94,6 +94,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         """
         fh = fh.to_relative(self.cutoff)
 
+        self._cur_y = y
+        self._cur_X = X
         self._y_len = len(y)
 
         # Validate fh against pretrained network's output dimension
@@ -145,7 +147,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         all_series = _get_series_from_panel(y)
 
         # Use first series as reference for network dimensions
-        self._y = all_series[0]
+        self._cur_y = all_series[0]
         self._y_len = len(all_series[0])
 
         self.network = self._build_network(pred_len)
@@ -378,7 +380,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             )
 
         if X is None:
-            dataloader = self.build_pytorch_pred_dataloader(self._y, fh)
+            dataloader = self.build_pytorch_pred_dataloader(self._cur_y, fh)
         else:
             dataloader = self.build_pytorch_pred_dataloader(X, fh)
 
@@ -389,7 +391,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
         y_pred = y_pred[fh._values.values - 1]
         y_pred = pd.DataFrame(
-            y_pred, columns=self._y.columns, index=fh.to_absolute_index(self.cutoff)
+            y_pred, columns=self._cur_y.columns, index=fh.to_absolute_index(self.cutoff)
         )
 
         return y_pred

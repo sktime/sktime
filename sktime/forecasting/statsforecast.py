@@ -1030,7 +1030,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     def check_fh(self, fh):
         """Check the fh to ensure consistency with `inner_fh` of trend forecaster."""
         inner_fh = getattr(self._trend_forecaster, "_inner_fh", None)
-        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._y)
+        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._cur_y)
 
         msg = (
             f"This is because fitting of the "

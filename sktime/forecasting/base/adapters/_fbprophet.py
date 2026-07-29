@@ -74,6 +74,8 @@ class _ProphetAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         self._instantiate_model()
         self._check_changepoints()
 

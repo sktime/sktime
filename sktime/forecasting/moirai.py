@@ -277,6 +277,8 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 return MoiraiForecast.load_from_checkpoint(**model_kwargs)
 
     def _fit(self, y, X=None, fh=None):
+        self._cur_y = y
+        self._cur_X = X
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
         else:
@@ -355,10 +357,10 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 "The MORAI adapter is not supporting insample predictions."
             )
 
-        _y = self._y.copy()
+        _y = self._cur_y.copy()
         _X = None
-        if self._X is not None:
-            _X = self._X.copy()
+        if self._cur_X is not None:
+            _X = self._cur_X.copy()
 
         # Zero shot case with X and fit data as context
         _use_fit_data_as_context = X is not None
@@ -382,7 +384,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         if _X is not None:
             feat_dynamic_real = [
-                f"feat_dynamic_real_{i}" for i in range(self._X.shape[1])
+                f"feat_dynamic_real_{i}" for i in range(self._cur_X.shape[1])
             ]
             _X.columns = feat_dynamic_real
 

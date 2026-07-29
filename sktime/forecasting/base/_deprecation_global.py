@@ -35,20 +35,20 @@ class _GlobalForecastingDeprecationMixin:
 
     @contextmanager
     def _temporary_y_swap(self, X, y):
-        """Temporarily replace self._y and cutoff with passed y data.
+        """Temporarily replace self._cur_y and cutoff with passed y data.
 
         Preserves old global forecasting behavior during the deprecation period,
         so that _predict sees the passed y instead of the fit-time y.
         """
-        old_y = self._y
+        old_y = self._cur_y
         old_cutoff = self._cutoff
         _, y_inner = self._check_X_y(X=X, y=y)
-        self._y = y_inner
+        self._cur_y = y_inner
         self._set_cutoff_from_y(y_inner)
         try:
             yield
         finally:
-            self._y = old_y
+            self._cur_y = old_y
             self._cutoff = old_cutoff
 
     def _warn_y_deprecated(self, method_name):
@@ -324,7 +324,7 @@ class _BaseGlobalForecaster(BaseForecaster):
           compatibility with the ``y`` parameter in ``predict()``
         * Update ``_fit`` signature to ``_fit(self, y, X=None, fh=None)``
         * Update ``_predict`` signature to ``_predict(self, fh, X=None)``
-          (remove ``y`` parameter, use ``self._y`` instead)
+          (remove ``y`` parameter, use ``self._cur_y`` instead)
         * Remove usage of ``self._global_forecasting`` flag
 
     The base forecaster specifies the methods and method signatures that all
@@ -432,7 +432,7 @@ class _BaseGlobalForecaster(BaseForecaster):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # this also updates cutoff from y
-        # be cautious, in fit self._X and self._y is also updated but not here!
+        # be cautious, in fit self._cur_X and self._cur_y is also updated but not here!
         if y_inner is not None:
             self._set_cutoff_from_y(y_inner)
 
@@ -591,7 +591,7 @@ class _BaseGlobalForecaster(BaseForecaster):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # this also updates cutoff from y
-        # be cautious, in fit self._X and self._y is also updated but not here!
+        # be cautious, in fit self._cur_X and self._cur_y is also updated but not here!
         if y_inner is not None:
             self._set_cutoff_from_y(y_inner)
 
@@ -717,7 +717,7 @@ class _BaseGlobalForecaster(BaseForecaster):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # this also updates cutoff from y
-        # be cautious, in fit self._X and self._y is also updated but not here!
+        # be cautious, in fit self._cur_X and self._cur_y is also updated but not here!
         if y_inner is not None:
             self._set_cutoff_from_y(y_inner)
 
@@ -841,7 +841,7 @@ class _BaseGlobalForecaster(BaseForecaster):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # this also updates cutoff from y
-        # be cautious, in fit self._X and self._y is also updated but not here!
+        # be cautious, in fit self._cur_X and self._cur_y is also updated but not here!
         if y_inner is not None:
             self._set_cutoff_from_y(y_inner)
 
@@ -951,7 +951,7 @@ class _BaseGlobalForecaster(BaseForecaster):
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
         # this also updates cutoff from y
-        # be cautious, in fit self._X and self._y is also updated but not here!
+        # be cautious, in fit self._cur_X and self._cur_y is also updated but not here!
         if y_inner is not None:
             self._set_cutoff_from_y(y_inner)
 

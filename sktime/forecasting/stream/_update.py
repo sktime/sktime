@@ -6,12 +6,43 @@ __author__ = ["fkiraly"]
 
 import pandas as pd
 
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES, VectorizedDF, update_data
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
-class UpdateRefitsEvery(_DelegatedForecaster):
+class _StreamDataPoolMixin:
+    """Pool training data as ``_y`` / ``_X`` on stream compositors.
+
+    BaseForecaster does not retain fit/update data. Stream wrappers that need
+    a pooled history (for periodic refit / interval logic) own that storage.
+    """
+
+    def _init_stream_data_pool(self):
+        self._y = None
+        self._X = None
+
+    def _update_y_X(self, y, X=None, enforce_index_type=None):
+        """Append ``y`` / ``X`` to the stream pool and update cutoff."""
+        if y is not None:
+            if isinstance(y, VectorizedDF):
+                y = y.X_multiindex
+            if self._y is None or not self.is_fitted:
+                self._y = y
+            else:
+                self._y = update_data(self._y, y)
+            self._set_cutoff_from_y(y)
+
+        if X is not None:
+            if isinstance(X, VectorizedDF):
+                X = X.X_multiindex
+            if self._X is None or not self.is_fitted:
+                self._X = X
+            else:
+                self._X = update_data(self._X, X)
+
+
+class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     """Refits periodically when update is called.
 
     If update is called with ``update_params=True`` and ``refit_interval`` or more has
@@ -103,6 +134,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self.refit_window_lag = refit_window_lag
 
         super().__init__()
+        self._init_stream_data_pool()
 
         self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
@@ -141,7 +173,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         # we need to remember the time we last fit, to compare to it in _update
         self.last_fit_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
-        estimator.fit(y=y, fh=fh, X=X)
+        estimator.fit(y=self._y, fh=self._fh, X=self._X)
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -193,7 +225,8 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         #   in that case, interpret any integers as iloc index differences
         #   and replace integers with timedelta quantities before proceeding
         if _is_time_difference(time_since_last_fit):
-            if isinstance(refit_window_lag, int):
+            # refit_window_lag=0 must stay 0: _y.index[-0] is _y.index[0] in Python
+            if isinstance(refit_window_lag, int) and refit_window_lag != 0:
                 lag = min(refit_window_lag, len(_y))
                 refit_window_lag = self.cutoff[0] - _y.index[-lag]
             if isinstance(refit_window_size, int):
@@ -249,7 +282,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         return [param1, param2]
 
 
-class UpdateEvery(_DelegatedForecaster):
+class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     """Update only periodically when update is called.
 
     If ``update`` is called, behaves like ``update_params=False``,
@@ -321,6 +354,7 @@ class UpdateEvery(_DelegatedForecaster):
         self.update_interval = update_interval
 
         super().__init__()
+        self._init_stream_data_pool()
 
         self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
@@ -359,7 +393,7 @@ class UpdateEvery(_DelegatedForecaster):
         # we need to remember the time we last fit, to compare to it in _update
         self.last_update_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
-        estimator.fit(y=y, fh=fh, X=X)
+        estimator.fit(y=self._y, fh=self._fh, X=self._X)
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -447,6 +481,8 @@ class UpdateEvery(_DelegatedForecaster):
         return [param1, param2]
 
 
+# I think following class becomes redundant, as this becomes the
+# default behavior of BaseForecaster.
 class DontUpdate(_DelegatedForecaster):
     """Turns off updates, i.e., ensures that forecaster is only fit and never updated.
 

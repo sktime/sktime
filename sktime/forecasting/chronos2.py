@@ -197,6 +197,8 @@ class Chronos2Forecaster(BaseForecaster):
         -------
         self
         """
+        self._cur_y = y
+        self._cur_X = X
         self.model_pipeline = self._load_pipeline()
 
         context_length = self._config["context_length"]
@@ -242,15 +244,15 @@ class Chronos2Forecaster(BaseForecaster):
         context = self._context
         input_dict = {"target": context}
 
-        if self._X is not None:
+        if self._cur_X is not None:
             actual_len = context.shape[1]
-            past_X = self._X.values[-actual_len:]
+            past_X = self._cur_X.values[-actual_len:]
             input_dict["past_covariates"] = {
-                col: past_X[:, i] for i, col in enumerate(self._X.columns)
+                col: past_X[:, i] for i, col in enumerate(self._cur_X.columns)
             }
 
         if X is not None:
-            if self._X is None:
+            if self._cur_X is None:
                 raise ValueError(
                     "X was not provided in fit but is provided in predict. "
                     "To use future covariates, provide past covariate values "

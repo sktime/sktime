@@ -480,6 +480,8 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         return self._fit_or_pretrain(y=y, X=X, fh=fh)
 
     def _fit_or_pretrain(self, y, X=None, fh=None):
@@ -671,7 +673,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
                 "prediction_length, or provide a compatible config."
             )
 
-        _y = self._y
+        _y = self._cur_y
 
         hist = np.expand_dims(_y.values, axis=0)
 

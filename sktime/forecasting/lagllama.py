@@ -623,6 +623,8 @@ class LagLlamaForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         # Store the inner column names seen during fit.
         # For pd.Series input, sktime converts to pd.DataFrame with:
         # - column 0 if Series.name is None
@@ -839,9 +841,9 @@ class LagLlamaForecaster(BaseForecaster):
                 "in-sample forecasting is not supported by LagLlamaForecaster"
             )
 
-        # Use self._y (stored during fit)
-        y = self._y
-        _y = self._y.copy()
+        # Use self._cur_y (stored during fit)
+        y = self._cur_y
+        _y = self._cur_y.copy()
 
         _y = self._extend_df(_y, fh)
 
@@ -992,8 +994,8 @@ class LagLlamaForecaster(BaseForecaster):
         if alpha is None:
             alpha = [0.1, 0.25, 0.5, 0.75, 0.9]
 
-        # Use self._y (stored during fit)
-        y = self._y
+        # Use self._cur_y (stored during fit)
+        y = self._cur_y
         _y = y.copy()
 
         _y = self._extend_df(_y, fh)

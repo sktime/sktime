@@ -130,7 +130,7 @@ class GreykiteForecaster(BaseForecaster):
         """
         self._forecaster = None
         self._forecast = None
-        self._X = None
+        self._cur_X = None
 
     def _create_forecast_config(self, y=None):
         """Create a ForecastConfig object if one wasn't provided."""
@@ -188,6 +188,8 @@ class GreykiteForecaster(BaseForecaster):
         Converts the input series into a DataFrame with columns "ts" and "y"
         and then runs the forecast_pipeline using the ForecastConfig.
         """
+        self._cur_y = y
+        self._cur_X = X
         # Ensure fh (forecasting horizon) is provided.
         if fh is None:
             raise ValueError(
@@ -203,7 +205,7 @@ class GreykiteForecaster(BaseForecaster):
         if X is not None:
             for col in X.columns:
                 df[col] = X[col].values
-            self._X = X.copy()
+            self._cur_X = X.copy()
 
         # Create the forecast configuration if not already provided.
         fc = self._create_forecast_config(y)

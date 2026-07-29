@@ -225,6 +225,8 @@ class HFTransformersForecaster(BaseForecaster):
         self.peft_config = peft_config
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         from transformers import AutoConfig, PreTrainedModel, Trainer, TrainingArguments
 
         if isinstance(self.model_path, PreTrainedModel):
@@ -377,10 +379,10 @@ class HFTransformersForecaster(BaseForecaster):
         self.model.eval()
         from torch import from_numpy
 
-        hist = self._y.values.reshape((1, -1))
+        hist = self._cur_y.values.reshape((1, -1))
         if X is not None:
-            hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-            x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+            hist_x = self._cur_X.values.reshape((1, -1, self._cur_X.shape[-1]))
+            x_ = X.values.reshape((1, -1, self._cur_X.shape[-1]))
             if x_.shape[1] < self.model.config.prediction_length:
                 # TODO raise exception here?
                 x_ = np.resize(
@@ -424,8 +426,8 @@ class HFTransformersForecaster(BaseForecaster):
             index=ForecastingHorizon(range(len(pred)))
             .to_absolute(self._cutoff)
             ._values,
-            # columns=self._y.columns
-            name=self._y.name,
+            # columns=self._cur_y.columns
+            name=self._cur_y.name,
         )
         return pred.loc[fh.to_absolute(self.cutoff)._values]
 

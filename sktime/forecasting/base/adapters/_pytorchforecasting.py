@@ -231,6 +231,8 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
+        self._cur_y = _y
+        self._cur_X = _X
         # convert data to pytorch-forecasting datasets
         if getattr(self, "deterministic", False):
             import torch
@@ -447,11 +449,11 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         return output.loc[dateindex]
 
     def _Xy_precheck(self, X):
-        y = deepcopy(self._y)
+        y = deepcopy(self._cur_y)
         if X is None:
-            X = deepcopy(self._X)
-        elif self._X is not None:
-            X = pd.concat([deepcopy(self._X), X])
+            X = deepcopy(self._cur_X)
+        elif self._cur_X is not None:
+            X = pd.concat([deepcopy(self._cur_X), X])
         return X, y
 
     def _Xy_to_dataset(

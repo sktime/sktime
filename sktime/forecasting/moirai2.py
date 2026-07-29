@@ -189,6 +189,8 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             return Moirai2Forecast.load_from_checkpoint(**model_kwargs)
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
         else:
@@ -250,14 +252,14 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 "The Moirai2 adapter is not supporting insample predictions."
             )
 
-        _y = self._y.copy()
+        _y = self._cur_y.copy()
         _X = None
-        if self._X is not None:
-            _X = self._X.copy()
+        if self._cur_X is not None:
+            _X = self._cur_X.copy()
 
         # Zero shot case with X and fit data as context.
         # The _GlobalForecastingDeprecationMixin handles the legacy y parameter
-        # by temporarily swapping self._y before calling _predict, so here we
+        # by temporarily swapping self._cur_y before calling _predict, so here we
         # only need to detect whether predict-time X was supplied.
         _use_fit_data_as_context = X is not None
 
