@@ -261,6 +261,7 @@ class TimesFM2Forecaster(BaseForecaster):
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers[torch]>=4.52.0"],
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_timesfm2"],
     }
 
     def __init__(
