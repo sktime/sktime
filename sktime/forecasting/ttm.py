@@ -10,11 +10,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.stdout_mute import StdoutMute
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 from sktime.utils.singleton import _multiton
@@ -37,7 +33,7 @@ _FREQUENCY_TOKEN_MAP = {
 }
 
 
-class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class TinyTimeMixerForecaster(BaseForecaster):
     """
     TinyTimeMixer Forecaster for Zero-Shot Forecasting of Multivariate Time Series.
 
@@ -377,6 +373,7 @@ class TinyTimeMixerForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_ttm"],
         "tests:libs": ["sktime.libs.granite_ttm"],
     }
 
@@ -841,7 +838,8 @@ def _pad_truncate(data, seq_len, pad_value=0):
     Returns
     -------
     - padded_data: array padded or truncated to (batch_size, seq_len, n_dims)
-    - mask: mask indicating padded elements (1 for existing; 0 for missing)
+    - mask: observed-value mask matching Granite-TSFM preprocessing. Both
+      existing values and synthetic zero-padding positions are marked observed.
     """
     batch_size, original_seq_len, n_dims = data.shape
 
@@ -856,8 +854,12 @@ def _pad_truncate(data, seq_len, pad_value=0):
             mode="constant",
             constant_values=pad_value,
         )
-        mask = np.zeros_like(truncated_data)
-        mask[:, -original_seq_len:, :] = 1
+        # Granite-TSFM pads the input dataframe with numeric zeros and then
+        # constructs ``past_observed_mask`` using ``~np.isnan``. Consequently,
+        # its synthetic padding is observed by the model. Match that behavior
+        # so short-history forecasts have the same scaling and predictions as
+        # the source pipeline.
+        mask = np.ones_like(truncated_data)
 
     return truncated_data, mask
 
