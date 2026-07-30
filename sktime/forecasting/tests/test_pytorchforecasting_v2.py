@@ -21,10 +21,10 @@ PTF_V2_DEPS = ["pytorch-forecasting>=1.0.0", "torch", "lightning"]
 _ptf_v2_available = _check_soft_dependencies(*PTF_V2_DEPS, severity="none")
 
 # Version check alone is insufficient — some builds of pytorch-forecasting>=1.0.0
-# lack the v2 D2 data pipeline (TslibDataModule). Verify the actual submodule.
+# lack the v2 D2 data pipeline. Verify the actual submodule.
 if _ptf_v2_available:
     try:
-        import pytorch_forecasting.data.data_module._tslib_data_module  # noqa: F401
+        import pytorch_forecasting.data.data_module._encoder_decoder_data_module  # noqa: F401, E501
     except (ImportError, ModuleNotFoundError):
         _ptf_v2_available = False
 
@@ -167,7 +167,6 @@ def test_tft_v2_fit_predict_hierarchical():
             "context_length": 5,
             "batch_size": 2,
         },
-        random_log_path=True,
     )
 
     model.fit(y=y, fh=fh)
@@ -209,7 +208,6 @@ def test_tft_v2_fit_predict_univariate():
             "context_length": 5,
             "batch_size": 2,
         },
-        random_log_path=True,
     )
 
     model.fit(y=y, fh=fh)

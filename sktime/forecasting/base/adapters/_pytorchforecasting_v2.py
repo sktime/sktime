@@ -2,15 +2,16 @@
 """Implements adapter for pytorch-forecasting v2 models.
 
 This module provides a base adapter class for pytorch-forecasting v2 models,
-which use the new D1/D2 data layer (TimeSeries + TslibDataModule) and the
-TslibBaseModel model hierarchy.
+which use the new D1/D2 data layer (TimeSeries + DataModule) and the
+BaseModel / TslibBaseModel model hierarchy.
 
 This is a parallel track to the existing v1 adapter in
 ``_pytorchforecasting.py`` and does NOT modify or replace it.
 
 Key differences from v1:
 - Uses ``TimeSeries`` (D1) instead of ``TimeSeriesDataSet``
-- Uses ``TslibDataModule`` (D2) instead of manual dataloader creation
+- Uses ``EncoderDecoderTimeSeriesDataModule`` or ``TslibDataModule`` (D2)
+  instead of manual dataloader creation
 - Models are constructed directly (not via ``from_dataset``)
 - Training uses ``trainer.fit(model, datamodule=...)`` pattern
 - Parameter layering uses ``data_module_params`` instead of
@@ -19,7 +20,6 @@ Key differences from v1:
 
 import abc
 import functools
-from copy import deepcopy
 
 import numpy as np
 import pandas as pd
@@ -50,10 +50,10 @@ def _series_to_frame(data):
     converted = False
     if data is not None:
         if isinstance(data, pd.Series):
-            _data = deepcopy(data).to_frame(name=data.name)
+            _data = data.copy().to_frame(name=data.name)
             converted = True
         else:
-            _data = deepcopy(data)
+            _data = data.copy()
     else:
         _data = None
     return _data, converted
@@ -192,19 +192,15 @@ def _sktime_to_ptf_v2_timeseries(
     unknown = []
 
     # Create TimeSeries D1 object
-    import warnings
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        timeseries = TimeSeries(
-            data=data,
-            time=time_col,
-            target=[target_col],
-            group=new_group_cols if new_group_cols != ["_auto_group"] else None,
-            num=feature_cols if feature_cols else None,
-            known=known if known else None,
-            unknown=unknown if unknown else None,
-        )
+    timeseries = TimeSeries(
+        data=data,
+        time=time_col,
+        target=[target_col],
+        group=new_group_cols if new_group_cols != ["_auto_group"] else None,
+        num=feature_cols if feature_cols else None,
+        known=known if known else None,
+        unknown=unknown if unknown else None,
+    )
 
     return timeseries, conversion_meta
 
@@ -213,7 +209,7 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
     """Base adapter class for pytorch-forecasting v2 models.
 
     This adapter targets PTF v2's D1/D2 data pipeline (``TimeSeries`` +
-    ``TslibDataModule``) and ``TslibBaseModel`` model hierarchy.
+    ``DataModule``) and ``BaseModel`` / ``TslibBaseModel`` model hierarchy.
 
     It is a **parallel** adapter to ``_PytorchForecastingAdapter`` (v1) and
     does not modify or replace it.
@@ -224,13 +220,12 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         Parameters passed to the PTF v2 model constructor.
         Example: ``{"moving_avg": 25, "individual": False}`` for DLinear.
     data_module_params : dict[str, Any] or None, default=None
-        Parameters for ``TslibDataModule``.
-        ``context_length`` and ``prediction_length`` will be inferred from data
-        and ``fh`` if not provided.
+        Parameters for the DataModule (``EncoderDecoderTimeSeriesDataModule``
+        or ``TslibDataModule``, depending on the model).
         ``time_series_dataset`` is constructed automatically from sktime data.
         **NOTE**: This replaces the v1 three-way split of ``dataset_params``,
         ``train_to_dataloader_params``, and ``validation_to_dataloader_params``
-        because v2's ``TslibDataModule`` manages both datasets and dataloaders
+        because v2's DataModule manages both datasets and dataloaders
         internally as a ``LightningDataModule``.
     trainer_params : dict[str, Any] or None, default=None
         Parameters for ``lightning.pytorch.Trainer``.
@@ -294,16 +289,16 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         self.trainer_params = trainer_params
         self.broadcasting = broadcasting
 
-        # Internal deep copies to avoid mutation
-        self._model_params = deepcopy(model_params) if model_params else {}
+        # Internal shallow copies to avoid mutation of user-supplied dicts
+        self._model_params = dict(model_params) if model_params else {}
         self._data_module_params = (
-            deepcopy(data_module_params) if data_module_params else {}
+            dict(data_module_params) if data_module_params else {}
         )
         self._model_loss = self._model_params.pop("loss", None)
         self._callbacks = (
-            deepcopy(trainer_params).pop("callbacks", None) if trainer_params else None
+            trainer_params.get("callbacks", None) if trainer_params else None
         )
-        self._trainer_params = deepcopy(trainer_params) if trainer_params else {}
+        self._trainer_params = dict(trainer_params) if trainer_params else {}
         # Remove callbacks from trainer_params copy (will be passed separately)
         self._trainer_params.pop("callbacks", None)
 
@@ -327,6 +322,7 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         else normally.
         """
         import io
+        from copy import deepcopy
 
         import torch
 
@@ -371,6 +367,19 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
             keyword arguments for the underlying algorithm class
         """
 
+    @functools.cached_property
+    @abc.abstractmethod
+    def data_module_class(self):
+        """Import the DataModule class used by this model.
+
+        Subclasses must return the appropriate DataModule class
+
+        Returns
+        -------
+        class
+            A ``LightningDataModule`` class from pytorch-forecasting.
+        """
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -405,7 +414,7 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         # Convert sktime data to PTF v2 TimeSeries (D1)
         timeseries, self._conversion_meta = _sktime_to_ptf_v2_timeseries(_y, _X)
 
-        # Build TslibDataModule (D2)
+        # Build DataModule (D2)
         self._data_module = self._build_data_module(
             timeseries, context_length, self._max_prediction_length
         )
@@ -417,38 +426,14 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         self._forecaster = self._instantiate_model(self._data_module)
 
         # Instantiate trainer
-        import logging
-
         import lightning.pytorch as pl
 
-        trainer_kwargs = deepcopy(self._trainer_params)
-        # Suppress logging and progress bar during fit to reduce output in tests
-        # User can override by explicitly setting these in trainer_params
-        if "logger" not in trainer_kwargs:
-            trainer_kwargs["logger"] = False
-        if "enable_progress_bar" not in trainer_kwargs:
-            trainer_kwargs["enable_progress_bar"] = False
-        if "enable_model_summary" not in trainer_kwargs:
-            trainer_kwargs["enable_model_summary"] = False
-
-        # Silence PyTorch Lightning's internal console logging
-        _pl_loggers = [
-            logging.getLogger("lightning.pytorch"),
-            logging.getLogger("pytorch_lightning"),
-            logging.getLogger("lightning"),
-        ]
-        _prev_levels = [lg.level for lg in _pl_loggers]
-        for lg in _pl_loggers:
-            lg.setLevel(logging.WARNING)
+        trainer_kwargs = dict(self._trainer_params)
 
         self._trainer = pl.Trainer(callbacks=self._callbacks, **trainer_kwargs)
 
         # Train
         self._trainer.fit(self._forecaster, datamodule=self._data_module)
-
-        # Restore logger levels
-        for lg, lvl in zip(_pl_loggers, _prev_levels):
-            lg.setLevel(lvl)
 
         self.best_model = self._forecaster
         return self
@@ -468,6 +453,8 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         y_pred : pd.DataFrame or pd.Series
             Point predictions.
         """
+        from copy import deepcopy
+
         # For prediction, we need to rebuild the data with the full
         # history plus the prediction window
         y = deepcopy(self._y)
@@ -491,38 +478,24 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         pred_data_module.setup(stage="predict")
 
         # Get predictions
-        import logging
-
         import lightning.pytorch as pl
 
-        trainer_kwargs = deepcopy(self._trainer_params)
-        trainer_kwargs["logger"] = False
-        trainer_kwargs["enable_progress_bar"] = False
-        trainer_kwargs["enable_model_summary"] = False
-
-        # Silence PyTorch Lightning's internal console logging
-        _pl_loggers = [
-            logging.getLogger("lightning.pytorch"),
-            logging.getLogger("pytorch_lightning"),
-            logging.getLogger("lightning"),
-        ]
-        _prev_levels = [lg.level for lg in _pl_loggers]
-        for lg in _pl_loggers:
-            lg.setLevel(logging.WARNING)
+        trainer_kwargs = dict(self._trainer_params)
 
         pred_trainer = pl.Trainer(**trainer_kwargs)
         predictions = pred_trainer.predict(self.best_model, datamodule=pred_data_module)
-
-        # Restore logger levels
-        for lg, lvl in zip(_pl_loggers, _prev_levels):
-            lg.setLevel(lvl)
 
         # Convert predictions back to sktime format
         output = self._predictions_to_dataframe(predictions, fh)
         return output
 
     def _build_data_module(self, timeseries, context_length, prediction_length):
-        """Build a TslibDataModule from a TimeSeries D1 dataset.
+        """Build a DataModule from a TimeSeries D1 dataset.
+
+        The DataModule class is determined by ``self.data_module_class``.
+        Parameter names are automatically mapped to the correct format
+        for the chosen DataModule (e.g. ``context_length`` vs
+        ``max_encoder_length``).
 
         Parameters
         ----------
@@ -535,28 +508,38 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
 
         Returns
         -------
-        data_module : TslibDataModule
+        data_module : LightningDataModule
             The D2 data module ready for setup().
         """
-        import warnings
-
-        from pytorch_forecasting.data.data_module._tslib_data_module import (
-            TslibDataModule,
+        from pytorch_forecasting.data.data_module._encoder_decoder_data_module import (
+            EncoderDecoderTimeSeriesDataModule,
         )
 
-        dm_params = deepcopy(self._data_module_params)
-        # Override context_length and prediction_length
-        dm_params["context_length"] = context_length
-        dm_params["prediction_length"] = prediction_length
+        dm_cls = self.data_module_class
+        dm_params = dict(self._data_module_params)
         dm_params["time_series_dataset"] = timeseries
+
+        # Map context/prediction length to the DataModule's parameter names
+        if issubclass(dm_cls, EncoderDecoderTimeSeriesDataModule):
+            dm_params["max_encoder_length"] = context_length
+            dm_params["max_prediction_length"] = prediction_length
+            # Remove TslibDataModule-specific keys if present
+            dm_params.pop("context_length", None)
+            dm_params.pop("prediction_length", None)
+        else:
+            # TslibDataModule uses context_length / prediction_length
+            dm_params["context_length"] = context_length
+            dm_params["prediction_length"] = prediction_length
 
         # Set sensible defaults for training efficiency
         dm_params.setdefault("batch_size", 32)
         dm_params.setdefault("num_workers", 0)
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            data_module = TslibDataModule(**dm_params)
+        # TslibDataModule, has no special handling for small datasets,
+        # Avoids ValueError. Since sktime handles splitting externally
+        dm_params.setdefault("train_val_test_split", (1.0, 0.0, 0.0))
+
+        data_module = dm_cls(**dm_params)
 
         return data_module
 
@@ -565,17 +548,17 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
 
         Parameters
         ----------
-        data_module : TslibDataModule
+        data_module : LightningDataModule
             The data module providing metadata.
 
         Returns
         -------
-        model : TslibBaseModel subclass
+        model : BaseModel subclass
             The instantiated model.
         """
         from pytorch_forecasting.metrics import MAE
 
-        model_params = deepcopy(self._model_params)
+        model_params = dict(self._model_params)
         model_params.update(self.algorithm_parameters)
 
         # Set loss — default to MAE if none provided
@@ -584,34 +567,9 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
             loss = MAE()
         model_params["loss"] = loss
 
-        # Enrich metadata from data module with encoder/decoder feature counts
-        # so all v2 models receive a complete metadata dict automatically.
-        metadata = dict(data_module.metadata)
-        feature_names = metadata.get("feature_names", {})
-        n_features = metadata.get("n_features", {})
-        continuous_names = set(feature_names.get("continuous", []))
-        categorical_names = set(feature_names.get("categorical", []))
-        known_names = set(feature_names.get("known", []))
+        model_params["metadata"] = dict(data_module.metadata)
 
-        n_targets = n_features.get("target", 1)
-        metadata["encoder_cont"] = n_features.get("continuous", 0) + n_targets
-        metadata["encoder_cat"] = n_features.get("categorical", 0)
-        metadata["decoder_cont"] = len(continuous_names & known_names)
-        metadata["decoder_cat"] = len(categorical_names & known_names)
-        metadata["max_encoder_length"] = metadata.get("context_length", 3)
-        metadata["max_prediction_length"] = metadata.get("prediction_length", 1)
-        metadata["static_categorical_features"] = n_features.get(
-            "static_categorical", 0
-        )
-        metadata["static_continuous_features"] = n_features.get("static_continuous", 0)
-
-        model_params["metadata"] = metadata
-
-        import warnings
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            model = self.algorithm_class(**model_params)
+        model = self.algorithm_class(**model_params)
 
         return model
 
