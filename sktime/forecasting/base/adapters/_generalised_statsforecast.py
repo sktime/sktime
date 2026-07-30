@@ -583,7 +583,7 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        fitted = self.estimator.predict(self.estimator._y.index)[:, 0]
+        fitted = self.estimator.predict(self.estimator._cur_y.index)[:, 0]
 
         if level is None:
             return {"fitted": fitted}
@@ -591,7 +591,9 @@ class StatsForecastBackAdapter:
         level = sorted(level)
         coverage = [round(_l / 100, 2) for _l in level]
         pred_int = self.estimator.predict_interval(
-            fh=self.estimator._y.index, X=self.estimator._X, coverage=coverage
+            fh=self.estimator._cur_y.index,
+            X=self.estimator._cur_X,
+            coverage=coverage,
         )
         return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
 

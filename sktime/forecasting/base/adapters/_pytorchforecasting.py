@@ -227,8 +227,10 @@ class _PytorchForecastingAdapter(BaseForecaster):
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
-        self._cur_y = _y
-        self._cur_X = _X
+        # _Xy_to_dataset renames columns and index levels in place,
+        # so the snapshot must be a copy, to keep the original names
+        self._cur_y = deepcopy(_y)
+        self._cur_X = deepcopy(_X)
         # convert data to pytorch-forecasting datasets
         if getattr(self, "deterministic", False):
             import torch

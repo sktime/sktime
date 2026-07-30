@@ -230,7 +230,8 @@ class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
                 lag = min(refit_window_lag, len(_y))
                 refit_window_lag = self.cutoff[0] - _y.index[-lag]
             if isinstance(refit_window_size, int):
-                _y_lag = get_window(_y, lag=refit_window_lag)
+                # get_window treats lag=None as "no lag"; int 0 breaks Timestamp - 0
+                _y_lag = get_window(_y, lag=_lag_arg(refit_window_lag))
                 window_size = min(refit_window_size + 1, len(_y_lag))
                 refit_window_size = self.cutoff[0] - _y_lag.index[-window_size]
             if isinstance(refit_interval, int):
@@ -241,10 +242,14 @@ class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
         if _geq(time_since_last_fit, refit_interval) and update_params:
             if refit_window_size is not None or refit_window_lag != 0:
                 y_win = get_window(
-                    _y, window_length=refit_window_size, lag=refit_window_lag
+                    _y,
+                    window_length=refit_window_size,
+                    lag=_lag_arg(refit_window_lag),
                 )
                 X_win = get_window(
-                    _X, window_length=refit_window_size, lag=refit_window_lag
+                    _X,
+                    window_length=refit_window_size,
+                    lag=_lag_arg(refit_window_lag),
                 )
             else:
                 y_win = _y
@@ -592,6 +597,11 @@ class DontUpdate(_DelegatedForecaster):
         param2 = {"forecaster": NaiveForecaster()}
 
         return [param1, param2]
+
+
+def _lag_arg(lag):
+    """Map lag=0 to None for ``get_window`` (``Timestamp - 0`` is invalid)."""
+    return None if lag == 0 else lag
 
 
 def _is_time_offset(obj):

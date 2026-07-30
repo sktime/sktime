@@ -406,7 +406,7 @@ def test_predict_residuals():
     forecaster.fit(y_train, fh=fh)
 
     y_pred_1 = forecaster.predict()
-    y_resid = forecaster.predict_residuals(y_test)
+    y_resid = forecaster.predict_residuals(y=y_train)
     y_pred_2 = forecaster.predict()
     assert_series_equal(y_pred_1, y_pred_2)
     assert y_resid.index.equals(y_train.index)
