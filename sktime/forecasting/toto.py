@@ -462,8 +462,6 @@ class TotoForecaster(BaseForecaster):
         # Push the fine-tuned model into the multiton cache so that
         # _load_forecaster() returns it on all subsequent fit/predict calls.
         lightning_module.model.eval()
-        # Compile the fine-tuned backbone for optimised inference, matching
-        lightning_module.model.compile()
         cached = _CachedTotoForecaster(
             key=self._get_toto_key(),
             toto_kwargs=self._get_toto_kwargs(),
