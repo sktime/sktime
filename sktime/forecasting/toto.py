@@ -131,12 +131,6 @@ class TotoForecaster(BaseForecaster):
         # -----------------
         "capability:pretrain": True,
         "tests:vm": True,
-        "tests:skip_by_name": [
-            "test_hierarchical_with_exogenous",
-            "test_predict_time_index_in_sample_full",
-            "test_predict_time_index_with_X",
-            "test_predict_time_index",
-        ],
     }
 
     def __init__(
@@ -692,8 +686,7 @@ class TotoForecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         test_params = [
-            {"num_samples": 2, "samples_per_batch": 2, "prediction_type": "median"},
-            {"num_samples": 2, "samples_per_batch": 1, "prediction_type": "mean"},
+            {"num_samples": 1, "samples_per_batch": 1, "prediction_type": "median"},
             {"num_samples": 1, "samples_per_batch": 1, "prediction_type": "mean"},
         ]
 
