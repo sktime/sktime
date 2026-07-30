@@ -150,8 +150,7 @@ class ThetaForecaster(ExponentialSmoothing):
         -------
         self : returns an instance of self.
         """
-        self._cur_y = y
-        self._cur_X = X
+        y_seasonal = y
         deseasonalize = self.deseasonalize
         if isinstance(deseasonalize, bool) and deseasonalize:
             from sktime.transformations.detrend import Deseasonalizer
@@ -181,6 +180,11 @@ class ThetaForecaster(ExponentialSmoothing):
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
         super()._fit(y, X=None, fh=fh)
+        # the parent snapshots the deseasonalized y passed above, but the snapshot
+        # must hold the data as seen in fit: `_update` deseasonalizes it again,
+        # and a refit passes it through `_fit`, which deseasonalizes as well
+        self._cur_y = y_seasonal
+        self._cur_X = X
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute and store historical residual standard error

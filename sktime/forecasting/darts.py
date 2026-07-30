@@ -326,9 +326,6 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         # ---------------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_darts"],
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
-        # flaky test case: poisson likelihood test case does not work
-        # on negative valued data
     }
 
     def __init__(

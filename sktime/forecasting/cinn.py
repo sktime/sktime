@@ -224,6 +224,9 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                 f"({len(y)})."
             )
 
+        self._cur_y = y
+        self._cur_X = X
+
         # Fit the rolling mean forecaster
         rolling_mean = WindowSummarizer(
             lag_feature={

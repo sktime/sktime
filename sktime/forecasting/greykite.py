@@ -7,6 +7,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from skbase._exceptions import NotFittedError
 
 from sktime.forecasting.base import BaseForecaster
 
@@ -249,7 +250,9 @@ class GreykiteForecaster(BaseForecaster):
     def get_fitted_params(self):
         """Return fitted parameters."""
         if self._forecaster is None:
-            raise ValueError("Forecaster has not been fitted yet. Call 'fit' first.")
+            raise NotFittedError(
+                "Forecaster has not been fitted yet. Call 'fit' first."
+            )
         return {
             "model": self._forecaster.model,
             "forecast_config": self.forecast_config,

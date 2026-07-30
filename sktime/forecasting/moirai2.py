@@ -240,6 +240,23 @@ class Moirai2Forecaster(BaseForecaster):
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
+    def _update(self, y, X=None, update_params=True):
+        """Extend the context series that ``_predict`` conditions on.
+
+        Appending is required for the predictions to line up with the cutoff,
+        which advances in ``update``: the forecast starts right after the last
+        context timepoint.
+
+        ``update_params`` has no effect, the model is used zero-shot: ``_fit``
+        does not train, it loads the pretrained module.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        return self
+
     def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh

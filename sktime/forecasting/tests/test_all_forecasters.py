@@ -747,7 +747,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_data = {}
             np.random.seed(42)
             for i in range(n_columns):
-                y_data[f"y_{i}"] = np.random.randn(25)
+                # offset to be all-positive, as in the univariate case above,
+                # since some estimators use count losses, e.g. Poisson
+                y_data[f"y_{i}"] = np.random.randn(25) + 10
             y = pd.DataFrame(y_data, index=index)
 
         # Create X data (exogenous variables)
