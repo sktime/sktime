@@ -860,6 +860,9 @@ class _MultioutputReducer(_Reducer):
 
         # Iterate over estimators/forecast horizon
         y_pred = self.estimator_.predict(X_pred)
+        # sktime time-series regressors return a pd.DataFrame, sklearn ones an ndarray
+        if isinstance(y_pred, pd.DataFrame):
+            y_pred = y_pred.to_numpy()
         return y_pred.ravel()
 
 
