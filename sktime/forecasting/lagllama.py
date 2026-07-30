@@ -257,6 +257,7 @@ class LagLlamaForecaster(BaseForecaster):
             "huggingface_hub",
         ],
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_lagllama"],
     }
 
     def __init__(
