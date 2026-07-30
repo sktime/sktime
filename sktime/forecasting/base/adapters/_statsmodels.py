@@ -82,6 +82,16 @@ class _StatsModelsAdapter(BaseForecaster):
         """Log used internally in fit."""
         raise NotImplementedError("abstract method")
 
+    def _coerce_y_to_statsmodels(self, y):
+        """Coerce y to the shape the wrapped statsmodels model was fitted with.
+
+        Descendants that reshape y inside ``_fit_forecaster`` should override this.
+        ``_cur_y`` retains the shape seen in ``fit``, so that refitting passes
+        through ``_fit_forecaster`` again, while data passed directly to the
+        fitted statsmodels object must be reshaped the same way as in fit.
+        """
+        return y
+
     def _append_fit_data(self, y, X=None):
         """Append new observations to estimator-owned fit data."""
         from sktime.datatypes import update_data
@@ -144,7 +154,9 @@ class _StatsModelsAdapter(BaseForecaster):
                     y = y.loc[index_diff]
                     X = X.loc[index_diff].set_index(y.index) if X is not None else None
 
-                self._fitted_forecaster = self._fitted_forecaster.append(y, exog=X)
+                self._fitted_forecaster = self._fitted_forecaster.append(
+                    self._coerce_y_to_statsmodels(y), exog=X
+                )
 
     def _predict(self, fh, X):
         """Make forecasts.

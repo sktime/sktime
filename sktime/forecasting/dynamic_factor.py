@@ -354,12 +354,9 @@ class DynamicFactor(_StatsModelsAdapter):
         )
 
         # if y is single column DataFrame, duplicate the column to make it multivariate
-        if y.shape[1] == 1:
-            y = pd.concat([y, y], axis=1)
-            y.columns = [f"{y.columns[0]}{i}" for i in ["", "__1"]]
-            self._was_univariate = True
-        else:
-            self._was_univariate = False
+        self._was_univariate = y.shape[1] == 1
+        if self._was_univariate:
+            y = self._duplicate_column(y)
 
         self._forecaster = _DynamicFactor(
             endog=y,
@@ -391,13 +388,17 @@ class DynamicFactor(_StatsModelsAdapter):
             low_memory=self.low_memory,
         )
 
-    def _update(self, y, X=None, update_params=True):
-        """Update used internally in update."""
+    def _duplicate_column(self, y):
+        """Duplicate the single column of y, statsmodels requires 2 or more."""
+        y = pd.concat([y, y], axis=1)
+        y.columns = [f"{y.columns[0]}{i}" for i in ["", "__1"]]
+        return y
+
+    def _coerce_y_to_statsmodels(self, y):
+        """Coerce y to the shape the wrapped statsmodels model was fitted with."""
         if self._was_univariate:
-            y = pd.concat([y, y], axis=1)
-            y.columns = [f"{y.columns[0]}{i}" for i in ["", "__1"]]
-        super()._update(y, X, update_params=update_params)
-        return self
+            return self._duplicate_column(y)
+        return y
 
     def summary(self):
         """Get a summary of the fitted forecaster."""

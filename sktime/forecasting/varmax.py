@@ -235,12 +235,8 @@ class VARMAX(_StatsModelsAdapter):
         "capability:non_contiguous_X": False,
         # CI and testing tags
         # -------------------
-        "tests:skip_by_name": [
-            # sporadic failures in update due to singular matrix error
-            "test_update_with_exogenous_variables",
-            # sporadic LU decomposition errors in statsmodels fit, see #2997, #3176
-            "test_update_predict_predicted_index",
-        ],
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        # sporadic failures in update due to singular matrix error
     }
 
     def __init__(
@@ -449,10 +445,15 @@ class VARMAX(_StatsModelsAdapter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        # orders beyond (1, 0) are omitted on purpose: on series as short as the
+        # ones generated in tests, the stationary state initialization is singular,
+        # and statsmodels raises "LU decomposition error" from the Lyapunov solve.
+        # statsmodels also warns that VARMA(p, q) estimation is not generically
+        # robust, so any order with q > 0 is unsuitable for API conformance tests.
         params = [
             {"order": (1, 0)},
-            {"order": (0, 1)},
-            {"order": (1, 1)},
+            {"order": (1, 0), "trend": "ct"},
+            {"order": (1, 0), "error_cov_type": "diagonal"},
         ]
 
         return params

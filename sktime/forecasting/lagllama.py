@@ -722,6 +722,21 @@ class LagLlamaForecaster(BaseForecaster):
         }
         return str(sorted(config.items()))
 
+    def _update(self, y, X=None, update_params=True):
+        """Update forecaster with new data, i.e., extend the context series.
+
+        LagLlama is used in zero-shot mode, so no parameters are updated,
+        but new observations extend the context that ``_predict`` conditions on.
+        Appending is required for ``_extend_df`` to produce a contiguous index,
+        since the cutoff advances in ``update``.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        return self
+
     def infer_freq(self, index):
         """
         Infer frequency of the index.

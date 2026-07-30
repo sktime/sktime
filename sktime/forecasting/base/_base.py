@@ -2467,8 +2467,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         """
         if update_params:
             # default: no param update — BaseForecaster does not retain training data.
-            # Use forecasting.stream compositors (e.g. UpdateRefitsEvery) to pool data
-            # and refit, or implement a custom _update.
+            # Leaf estimators that need a current snapshot should override `_update`
+            # to append to their own `_cur_y` / `_cur_X`. To pool and refit, use
+            # forecasting.stream compositors (e.g. UpdateRefitsEvery).
             warn(
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
@@ -2477,7 +2478,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 "forecasting.stream module, e.g., UpdateRefitsEvery.",
                 obj=self,
             )
-
         # if there are components, update their cutoffs
         if self.is_composite():
             # default to calling component _updates if update is not implemented

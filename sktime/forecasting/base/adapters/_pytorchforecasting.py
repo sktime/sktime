@@ -224,13 +224,13 @@ class _PytorchForecastingAdapter(BaseForecaster):
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
+        # snapshot y and X as passed, since _Xy_to_dataset renames columns
+        # and index levels in place, on the frames from _series_to_frame below
+        self._cur_y = y
+        self._cur_X = X
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
-        # _Xy_to_dataset renames columns and index levels in place,
-        # so the snapshot must be a copy, to keep the original names
-        self._cur_y = deepcopy(_y)
-        self._cur_X = deepcopy(_X)
         # convert data to pytorch-forecasting datasets
         if getattr(self, "deterministic", False):
             import torch
