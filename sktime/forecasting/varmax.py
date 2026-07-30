@@ -235,8 +235,12 @@ class VARMAX(_StatsModelsAdapter):
         "capability:non_contiguous_X": False,
         # CI and testing tags
         # -------------------
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
-        # sporadic failures in update due to singular matrix error
+        "tests:skip_by_name": [
+            # sporadic failures in update due to singular matrix error
+            "test_update_with_exogenous_variables",
+            # sporadic LU decomposition errors in statsmodels fit, see #2997, #3176
+            "test_update_predict_predicted_index",
+        ],
     }
 
     def __init__(
