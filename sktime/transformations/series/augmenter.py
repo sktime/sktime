@@ -97,7 +97,7 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
         from scipy.stats import norm
 
         if self.scale in self._allowed_statistics:
-            scale = self.scale(X)
+            scale = self.scale(X.iloc[:, 0])
         elif isinstance(self.scale, (int, float)):
             scale = self.scale
         else:
