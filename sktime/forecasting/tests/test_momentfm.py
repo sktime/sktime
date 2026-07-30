@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-import torch
 from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.datasets import load_airline
@@ -33,6 +32,8 @@ _MOMENTFM_REFERENCE_HEAD = [
 
 
 def _set_deterministic_head(model, seed=123):
+    import torch
+
     g = torch.Generator().manual_seed(seed)
     w = model.head.linear.weight
     b = model.head.linear.bias
@@ -45,6 +46,8 @@ def _set_deterministic_head(model, seed=123):
 
 def test_momentfm_airline_predictions_match_source_reference():
     """MomentFM predictions match the original momentfm pipeline outputs."""
+    import torch
+
     y = load_airline()
     y_train = y.iloc[:-16]
     fh = np.arange(1, 17)
