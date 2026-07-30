@@ -109,7 +109,10 @@ def test_forecaster_regression(method):
 
     pipe = Differencer() * f
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
-    result = getattr(pipe, method)(X=X_test)
+    params = {"X": X_test}
+    if method == "predict_interval":
+        params["y"] = y_test  # explicitly pass y to predict_interval
+    result = getattr(pipe, method)(**params)
     differencer = Differencer()
 
     general_pipeline = Pipeline(

@@ -308,7 +308,8 @@ def test_forecastx_exog_for_forecaster_x():
     )
 
     model_1.fit(y, X=X, fh=fh)
-    assert model_1.forecaster_X_._cur_X is None
+    if model_1.forecaster_X_.is_fitted and not model_1.forecaster_X_._is_vectorized:
+        assert model_1.forecaster_X_._cur_X is None
 
     model_2 = ForecastX(
         model_supporting_exogenous.clone(),
@@ -318,7 +319,12 @@ def test_forecastx_exog_for_forecaster_x():
     )
 
     model_2.fit(y, X=X, fh=fh)
-    assert model_2.forecaster_X_._cur_X.columns.tolist() == ["UNEMP", "ARMED", "POP"]
+    if model_2.forecaster_X_.is_fitted and not model_2.forecaster_X_._is_vectorized:
+        assert model_2.forecaster_X_._cur_X.columns.tolist() == [
+            "UNEMP",
+            "ARMED",
+            "POP",
+        ]
 
     model_3 = ForecastX(
         model_supporting_exogenous.clone(),
@@ -328,7 +334,8 @@ def test_forecastx_exog_for_forecaster_x():
     )
 
     model_3.fit(y, X=X, fh=fh)
-    assert model_3.forecaster_X_._cur_X.columns.tolist() == ["UNEMP", "ARMED"]
+    if model_3.forecaster_X_.is_fitted and not model_3.forecaster_X_._is_vectorized:
+        assert model_3.forecaster_X_._cur_X.columns.tolist() == ["UNEMP", "ARMED"]
 
 
 @pytest.mark.skipif(

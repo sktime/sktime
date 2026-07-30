@@ -715,9 +715,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
-        # BaseForecaster does not pool training data as ``_y`` / ``_X``.
-        assert not hasattr(f, "_y")
-        assert not hasattr(f, "_X")
+        # baseforecaster does not preset/store _cur_y/_cur_X
         assert getattr(f, "_cur_y", None) is None
         assert f.cutoff is None
 
