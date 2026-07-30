@@ -80,9 +80,7 @@ def test_toto_exogenous_predictions_match_source_reference():
     fh = np.arange(1, prediction_length + 1)
     y_pred = forecaster.fit(y, X=X, fh=fh).predict(fh=fh, X=X_future)
 
-    expected_head = np.asarray(
-        [-0.58857954, -0.11110885, 0.6686021], dtype=np.float32
-    )
+    expected_head = np.asarray([-0.58857954, -0.11110885, 0.6686021], dtype=np.float32)
     np.testing.assert_allclose(
         y_pred.iloc[:3].to_numpy().flatten(),
         expected_head,
