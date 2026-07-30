@@ -165,6 +165,7 @@ class MomentFMForecaster(BaseForecaster):
         # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
         "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
         "tests:libs": ["sktime.libs.momentfm"],
+        "tests:specific": ["sktime.forecasting.tests.test_momentfm"],
     }
 
     def __init__(
