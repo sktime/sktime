@@ -725,10 +725,13 @@ class LagLlamaForecaster(BaseForecaster):
     def _update(self, y, X=None, update_params=True):
         """Update forecaster with new data, i.e., extend the context series.
 
-        LagLlama is used in zero-shot mode, so no parameters are updated,
-        but new observations extend the context that ``_predict`` conditions on.
+        New observations extend the context that ``_predict`` conditions on.
         Appending is required for ``_extend_df`` to produce a contiguous index,
         since the cutoff advances in ``update``.
+
+        ``update_params`` has no effect: the model is used zero-shot, and ``_fit``
+        does not train, it loads the pretrained predictor. Fine-tuning on new data
+        is only available via ``pretrain``.
         """
         from sktime.datatypes import update_data
 

@@ -122,6 +122,31 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
 
+    def _update(self, y, X=None, update_params=True):
+        """Update the network with new data.
+
+        The data seen so far is kept in ``_cur_y`` / ``_cur_X``: ``_predict``
+        reads the most recent observations from there, and appending keeps them
+        contiguous with the cutoff, which advances in ``update``.
+
+        If ``update_params`` is True, training continues on the data seen so far.
+        ``_fit`` retains an already built network, so the weights are not
+        re-initialized, and training resumes from the current state.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        # descendants ignoring X may not keep a snapshot of it
+        cur_X = getattr(self, "_cur_X", None)
+        if X is not None:
+            cur_X = update_data(cur_X, X) if cur_X is not None else X
+            self._cur_X = cur_X
+        self._y_len = len(self._cur_y)
+
+        if update_params:
+            self._fit(y=self._cur_y, fh=self._fh, X=cur_X)
+        return self
+
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain the neural network on panel data.
 

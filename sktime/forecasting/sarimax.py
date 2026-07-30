@@ -240,6 +240,7 @@ class SARIMAX(_StatsModelsAdapter):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:random_state": True,
         "tests:skip_all": True,  # Unkown reason
     }
 
