@@ -504,8 +504,26 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         Xtt_initial = lag_plus_init.fit_transform(Xt_initial)
         y_plus_one_init = lag_plus_init.fit_transform(self._y)
 
-        first_predict_idx = y_plus_one_init.iloc[[-1]].index.get_level_values(-1)[0]
-        Xtt_template = slice_at_ix(Xtt_initial, first_predict_idx)
+        if isinstance(y_plus_one_init.index, pd.MultiIndex):
+            instance_levels = list(range(y_plus_one_init.index.nlevels - 1))
+            next_idx = (
+                y_plus_one_init.groupby(level=instance_levels, sort=False).tail(1).index
+            )
+            first_predict_idx = next_idx.get_level_values(-1).max()
+
+            # Unequal-length series have different next local time points. Use the
+            # lag features at each series' own cutoff, but align their row indices
+            # to the common global prediction time used by BaseForecaster.
+            Xtt_template = Xtt_initial.loc[next_idx].copy()
+            template_arrays = [
+                next_idx.get_level_values(level) for level in instance_levels
+            ] + [np.repeat(first_predict_idx, len(next_idx))]
+            Xtt_template.index = pd.MultiIndex.from_arrays(
+                template_arrays, names=next_idx.names
+            )
+        else:
+            first_predict_idx = y_plus_one_init.index[-1]
+            Xtt_template = slice_at_ix(Xtt_initial, first_predict_idx)
 
         return Xtt_template, Xtt_template.index, first_predict_idx
 

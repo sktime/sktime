@@ -317,6 +317,39 @@ def test_hierarchical_global_pooling():
     not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
     reason="skpro required, and run only if forecaster changed",
 )
+def test_hierarchical_global_pooling_with_unequal_lengths():
+    """Test global pooling when hierarchical series have unequal cutoffs."""
+    y = _make_hierarchical(
+        hierarchy_levels=(2, 3),
+        min_timepoints=15,
+        max_timepoints=36,
+        n_columns=1,
+        index_type="range",
+        random_state=42,
+        same_cutoff=False,
+    )
+    fh = ForecastingHorizon([1, 2], is_relative=True)
+
+    forecaster = MCRecursiveProbaReductionForecaster(
+        estimator=_make_probabilistic_regressor(),
+        window_length=3,
+        n_samples=5,
+        pooling="global",
+        random_state=42,
+    )
+
+    y_pred = forecaster.fit(y, fh=fh).predict()
+
+    assert isinstance(y_pred, pd.DataFrame)
+    assert len(y_pred) == 2 * 6
+    assert y_pred.index.nlevels == 3
+    assert not y_pred.isna().any().any()
+
+
+@pytest.mark.skipif(
+    not SKPRO_INSTALLED or not run_test_for_class(MCRecursiveProbaReductionForecaster),
+    reason="skpro required, and run only if forecaster changed",
+)
 def test_non_contiguous_horizon():
     """Test with non-contiguous forecasting horizon (e.g., fh=[1, 3, 5])."""
     y = load_airline()[:50]
