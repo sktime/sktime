@@ -135,8 +135,10 @@ class GreykiteForecaster(BaseForecaster):
 
     def _create_forecast_config(self, y=None):
         """Create a ForecastConfig object if one wasn't provided."""
+        from copy import deepcopy
+
         if self.forecast_config is not None:
-            return self.forecast_config
+            return deepcopy(self.forecast_config)
 
         # If frequency is not provided, try to infer it from the index.
         if y is not None:
@@ -171,7 +173,7 @@ class GreykiteForecaster(BaseForecaster):
         model_components_param = ModelComponentsParam()
 
         # Create the ForecastConfig using Greykite's parameters.
-        self.forecast_config = ForecastConfig(
+        return ForecastConfig(
             metadata_param=metadata_param,
             model_components_param=model_components_param,
             model_template=self.model_template,
@@ -181,7 +183,6 @@ class GreykiteForecaster(BaseForecaster):
             computation_param=ComputationParam(),
             forecast_one_by_one=False,
         )
-        return self.forecast_config
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -215,6 +216,7 @@ class GreykiteForecaster(BaseForecaster):
         else:
             steps = np.array(list(fh), dtype=int)
         fc.forecast_horizon = int(steps.max())
+        self._forecast_config = fc
 
         # Fit the model using Greykite's forecast_pipeline.
         from greykite.framework.templates.forecaster import Forecaster
@@ -255,7 +257,7 @@ class GreykiteForecaster(BaseForecaster):
             )
         return {
             "model": self._forecaster.model,
-            "forecast_config": self.forecast_config,
+            "forecast_config": self._forecast_config,
         }
 
     @classmethod
