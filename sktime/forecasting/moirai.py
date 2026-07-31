@@ -244,23 +244,29 @@ class MOIRAIForecaster(BaseForecaster):
                     for cls in _safe_classes:
                         cls.__module__ = _orig_modules[cls]
 
-            # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch when
-            # hf_xet was compiled for an older CPython than the current runtime).
-            # huggingface_hub reads HF_HUB_DISABLE_XET from constants.py at
-            # import time, and file_download.py accesses it as
-            # `constants.HF_HUB_DISABLE_XET` at call time. We must therefore
-            # patch huggingface_hub.constants directly (not file_download) so
-            # that _download_to_tmp_and_move skips xet_get for this session.
+            # Disable the hf_xet accelerated download backend. Besides known
+            # PyO3 ABI mismatches (hf_xet compiled for an older CPython than
+            # the current runtime), hf_xet's content-addressed chunk transfer
+            # has documented failure modes where a download silently
+            # completes without error but with corrupted or incomplete data
+            # (e.g. huggingface/huggingface_hub#4223,
+            # huggingface/xet-core#895) -- unlike the plain HTTP path, this
+            # does not raise, so a checkpoint can load "successfully" with
+            # wrong weights. This is most likely to bite in CI/cloud
+            # environments with less reliable networking than a local dev
+            # machine. huggingface_hub reads HF_HUB_DISABLE_XET from
+            # constants.py at import time, and file_download.py accesses it
+            # as `constants.HF_HUB_DISABLE_XET` at call time. We must
+            # therefore patch huggingface_hub.constants directly (not
+            # file_download) so that _download_to_tmp_and_move skips
+            # xet_get for this session.
             import os
 
-            try:
-                import hf_xet  # noqa: F401
-            except Exception:
-                os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
-                if _check_soft_dependencies("huggingface_hub", severity="none"):
-                    import huggingface_hub.constants as _hf_constants
+            os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+            if _check_soft_dependencies("huggingface_hub", severity="none"):
+                import huggingface_hub.constants as _hf_constants
 
-                    _hf_constants.HF_HUB_DISABLE_XET = True
+                _hf_constants.HF_HUB_DISABLE_XET = True
 
             if self.checkpoint_path.startswith("Salesforce"):
                 from sktime.libs.uni2ts.moirai_module import MoiraiModule
