@@ -9,10 +9,10 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 from scipy.stats import ranksums, ttest_ind
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.benchmarking.base import BaseResults
 from sktime.exceptions import NotEvaluatedError
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class Evaluator:
@@ -609,7 +609,7 @@ class Evaluator:
                       3.846]
             # fmt: on
         else:
-            raise Exception("alpha must be 0.01, 0.05 or 0.1")
+            raise ValueError("alpha must be 0.01, 0.05 or 0.1")
 
         cd = qalpha[n_strategies - 1] * np.sqrt(
             n_strategies * (n_strategies + 1) / (6 * n_datasets)

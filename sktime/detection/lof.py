@@ -133,8 +133,11 @@ class SubLOF(BaseDetector):
         # --------------
         "task": "anomaly_detection",
         "learning_type": "unsupervised",
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
@@ -183,8 +186,6 @@ class SubLOF(BaseDetector):
             "novelty": self.novelty,
             "n_jobs": self.n_jobs,
         }
-        if isinstance(X, pd.Series):
-            X = X.to_frame()
 
         intervals = self._split_into_intervals(X.index, self.window_size)
         self.models = {
@@ -230,6 +231,7 @@ class SubLOF(BaseDetector):
         """
         if isinstance(X, pd.Series):
             X = X.to_frame()
+        X = X.copy()
         X["__id"] = pd.RangeIndex(len(X))
 
         y_all = []

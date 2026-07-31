@@ -4,6 +4,7 @@
 
 __all__ = [
     "ForecastingGridSearchCV",
+    "ForecastingOptCV",
     "ForecastingRandomizedSearchCV",
     "ForecastingSkoptSearchCV",
     "ForecastingOptunaSearchCV",
@@ -12,15 +13,16 @@ __all__ = [
     "temporal_train_test_split",
 ]
 
-from sktime.forecasting.model_selection._tune import (
-    ForecastingGridSearchCV,
-    ForecastingOptunaSearchCV,
+from sktime.forecasting.model_selection._gridsearch import ForecastingGridSearchCV
+from sktime.forecasting.model_selection._hyperactive import ForecastingOptCV
+from sktime.forecasting.model_selection._optuna import ForecastingOptunaSearchCV
+from sktime.forecasting.model_selection._randomsearch import (
     ForecastingRandomizedSearchCV,
-    ForecastingSkoptSearchCV,
 )
+from sktime.forecasting.model_selection._skopt import ForecastingSkoptSearchCV
 
 
-# todo 0.38.0 - check whether we should remove, otherwise bump
+# todo 2.0.0 - check whether we should remove, otherwise bump
 # still used in blog posts and old tutorials
 def temporal_train_test_split(
     y, X=None, test_size=None, train_size=None, fh=None, anchor="start"
@@ -47,7 +49,7 @@ def temporal_train_test_split(
     )
 
 
-# todo 0.38.0 - check whether we should remove, otherwise bump
+# todo 2.0.0 - check whether we should remove, otherwise bump
 # still used in blog posts and old tutorials
 def ExpandingWindowSplitter(fh=1, initial_window=10, step_length=1):
     """Legacy export of Expanding window splitter.
@@ -70,14 +72,14 @@ def ExpandingWindowSplitter(fh=1, initial_window=10, step_length=1):
     return _EWSplitter(fh=fh, initial_window=initial_window, step_length=step_length)
 
 
-# todo 0.38.0 - check whether we should remove, otherwise bump
+# todo 2.0.0 - check whether we should remove, otherwise bump
 # still used in blog posts and old tutorials
 def SlidingWindowSplitter(
     fh=1, window_length=10, step_length=1, initial_window=None, start_with_window=True
 ):
     """Legacy export of Sliding window splitter.
 
-    DEPRECATED - use sktime.split.ExpandingWindowSplitter instead.
+    DEPRECATED - use sktime.split.SlidingWindowSplitter instead.
     """
     from warnings import warn
 

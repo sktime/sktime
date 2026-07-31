@@ -87,6 +87,9 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:unequal_length": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # defines the name of the attribute containing the tslearn estimator

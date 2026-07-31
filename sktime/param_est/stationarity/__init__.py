@@ -10,6 +10,7 @@ __all__ = [
     "StationarityKPSSArch",
     "StationarityZivotAndrews",
     "StationarityVarianceRatio",
+    "BreakvarHeteroskedasticityTest",
 ]
 
 from sktime.param_est.stationarity._arch import (
@@ -20,4 +21,8 @@ from sktime.param_est.stationarity._arch import (
     StationarityVarianceRatio,
     StationarityZivotAndrews,
 )
-from sktime.param_est.stationarity._statsmodels import StationarityADF, StationarityKPSS
+from sktime.param_est.stationarity._sm_breakvar import BreakvarHeteroskedasticityTest
+from sktime.param_est.stationarity._statsmodels import (
+    StationarityADF,
+    StationarityKPSS,
+)

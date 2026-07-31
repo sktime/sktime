@@ -3,10 +3,6 @@
 import numpy as np
 
 from sktime.classification.deep_learning._pytorch import BaseDeepClassifierPytorch
-from sktime.utils.dependencies import _check_soft_dependencies
-
-if _check_soft_dependencies("torch", severity="none"):
-    from sktime.networks.gru import GRU, GRUFCNN
 
 
 class GRUClassifier(BaseDeepClassifierPytorch):
@@ -56,7 +52,6 @@ class GRUClassifier(BaseDeepClassifierPytorch):
 
     References
     ----------
-
     .. [1] Cho, Kyunghyun, et al. "Learning phrase representations
         using RNN encoder-decoder for statistical machine translation."
         arXiv preprint arXiv:1406.1078 (2014).
@@ -64,14 +59,23 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling.
         arXiv preprint arXiv:1412.3555 (2014).
     .. [3] https://pytorch.org/docs/stable/generated/torch.nn.GRU.html
-
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fnhirwa"],
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
+        # estimator type
+        # --------------
+        # remaining tags handled by BaseDeepClassifierPytorch
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
+        # testing configuration
+        # ---------------------
+        "tests:libs": ["sktime.networks.gru"],
     }
 
     def __init__(
@@ -133,6 +137,8 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         self.criterions = {}
 
     def _build_network(self, X, y):
+        from sktime.networks.gru import GRU
+
         # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
@@ -270,10 +276,20 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
     """
 
     _tags = {
-        "authors": ["fnhirwa"],
+        # packaging info
+        # --------------
+        "authors": ["NellyElsayed", "fnhirwa"],
         "maintainers": ["fnhirwa"],
         "python_version": ">=3.9",
         "python_dependencies": "torch",
+        # estimator type
+        # --------------
+        # remaining tags handled by BaseDeepClassifierPytorch
+        "property:randomness": "stochastic",
+        "capability:random_state": True,
+        # testing configuration
+        # ---------------------
+        "tests:libs": ["sktime.networks.gru"],
     }
 
     def __init__(
@@ -339,6 +355,8 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.criterions = {}
 
     def _build_network(self, X, y):
+        from sktime.networks.gru import GRUFCNN
+
         # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape

@@ -14,9 +14,10 @@
 #  limitations under the License.
 
 import math
+import sys
 from contextlib import contextmanager
 from copy import deepcopy
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -41,19 +42,21 @@ if _check_soft_dependencies("torch", severity="none"):
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce, repeat
 
-Input = _safe_import("gluonts.model.Input")
-InputSpec = _safe_import("gluonts.model.InputSpec")
-
-PyTorchPredictor = _safe_import("gluonts.torch.PyTorchPredictor")
-
-AddObservedValuesIndicator = _safe_import(
-    "gluonts.transform.AddObservedValuesIndicator"
-)
-AsNumpyArray = _safe_import("gluonts.transform.AsNumpyArray")
-ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
-TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
-
-TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
+if sys.version_info < (3, 14):
+    Input = _safe_import("gluonts.model.Input")
+    InputSpec = _safe_import("gluonts.model.InputSpec")
+    PyTorchPredictor = _safe_import("gluonts.torch.PyTorchPredictor")
+    AddObservedValuesIndicator = _safe_import(
+        "gluonts.transform.AddObservedValuesIndicator"
+    )
+    AsNumpyArray = _safe_import("gluonts.transform.AsNumpyArray")
+    ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
+    TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
+    TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
+else:
+    Input = InputSpec = PyTorchPredictor = None
+    AddObservedValuesIndicator = AsNumpyArray = ExpandDimArray = None
+    TestSplitSampler = TFTInstanceSplitter = None
 
 
 from sktime.libs.uni2ts.common.torch_util import safe_div
@@ -96,7 +99,7 @@ class MoiraiForecast(L.LightningModule):
         feat_dynamic_real_dim: int,
         past_feat_dynamic_real_dim: int,
         context_length: int,
-        module_kwargs: Optional[dict[str, Any]] = None,
+        module_kwargs: dict[str, Any] | None = None,
         module=None,
         patch_size="auto",
         num_samples: int = 100,
@@ -112,13 +115,13 @@ class MoiraiForecast(L.LightningModule):
     @contextmanager
     def hparams_context(
         self,
-        prediction_length: Optional[int] = None,
-        target_dim: Optional[int] = None,
-        feat_dynamic_real_dim: Optional[int] = None,
-        past_feat_dynamic_real_dim: Optional[int] = None,
-        context_length: Optional[int] = None,
+        prediction_length: int | None = None,
+        target_dim: int | None = None,
+        feat_dynamic_real_dim: int | None = None,
+        past_feat_dynamic_real_dim: int | None = None,
+        context_length: int | None = None,
         patch_size=None,
-        num_samples: Optional[int] = None,
+        num_samples: int | None = None,
     ):
         kwargs = {
             "prediction_length": prediction_length,
@@ -263,7 +266,7 @@ class MoiraiForecast(L.LightningModule):
         observed_feat_dynamic_real=None,
         past_feat_dynamic_real=None,
         past_observed_feat_dynamic_real=None,
-        num_samples: Optional[int] = None,
+        num_samples: int | None = None,
     ):
         if self.hparams.patch_size == "auto":
             val_loss = []
@@ -462,7 +465,7 @@ class MoiraiForecast(L.LightningModule):
         x,
         dim: int,
         left: bool = True,
-        value: Optional[float] = None,
+        value: float | None = None,
     ):
         if dim >= 0:
             dim = -x.ndim + dim

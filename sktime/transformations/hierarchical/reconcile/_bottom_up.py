@@ -30,6 +30,12 @@ class BottomUpReconciler(_ReconcilerTransformer):
     >>> y_pred = pipe.predict(fh=[1, 2, 3])
     """
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+    }
+
     def _fit_reconciler(self, X, y=None):
         """
         Fit the reconciler.

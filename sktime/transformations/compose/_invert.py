@@ -5,7 +5,7 @@
 __author__ = ["fkiraly"]
 __all__ = ["InvertTransform"]
 
-from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.transformations.base import _DelegatedTransformer
 from sktime.utils.warnings import warn
 
 
@@ -30,7 +30,7 @@ class InvertTransform(_DelegatedTransformer):
     --------
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import InvertTransform
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>>
     >>> inverse_exponent = InvertTransform(ExponentTransformer(power=3))
     >>> X = load_airline()
@@ -47,9 +47,12 @@ class InvertTransform(_DelegatedTransformer):
         "X_inner_mtype": ["pd.DataFrame", "pd.Series"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "univariate-only": False,
+        "capability:multivariate": True,
         "fit_is_empty": False,
         "capability:inverse_transform": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, transformer):
@@ -159,8 +162,8 @@ class InvertTransform(_DelegatedTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         # ExponentTransformer skips fit
         params1 = {"transformer": ExponentTransformer()}

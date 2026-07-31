@@ -2,7 +2,7 @@
 """Implements compositors for performing transformations by group."""
 
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
-from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.transformations.base import _DelegatedTransformer
 from sktime.utils.warnings import warn
 
 __author__ = ["fkiraly"]
@@ -66,6 +66,9 @@ class TransformByLevel(_DelegatedTransformer):
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "fit_is_empty": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     # attribute for _DelegatedTransformer, which then delegates
@@ -129,7 +132,7 @@ class TransformByLevel(_DelegatedTransformer):
         -------
         params : dict or list of dict
         """
-        from sktime.transformations.series.time_since import TimeSince
+        from sktime.transformations.time_since import TimeSince
 
         groupbys = ["local", "panel", "global"]
 

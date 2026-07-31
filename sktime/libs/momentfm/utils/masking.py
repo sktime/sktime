@@ -1,7 +1,5 @@
 """Masking module for momentfm."""
 
-from typing import Optional
-
 from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies(["torch"], severity="none"):
@@ -14,7 +12,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             self,
             mask_ratio: float = 0.3,
             patch_len: int = 8,
-            stride: Optional[int] = None,
+            stride: int | None = None,
         ):
             """Masking class for momentfm.
 
@@ -26,7 +24,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
 
         @staticmethod
         def convert_seq_to_patch_view(
-            mask: torch.Tensor, patch_len: int = 8, stride: Optional[int] = None
+            mask: torch.Tensor, patch_len: int = 8, stride: int | None = None
         ):
             """Convert sequence to patch function.
 
@@ -55,7 +53,7 @@ if _check_soft_dependencies(["torch"], severity="none"):
             return mask.repeat_interleave(patch_len, dim=-1)
 
         def generate_mask(
-            self, x: torch.Tensor, input_mask: Optional[torch.Tensor] = None
+            self, x: torch.Tensor, input_mask: torch.Tensor | None = None
         ):
             """Generate Mask Function.
 

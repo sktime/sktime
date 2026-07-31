@@ -53,7 +53,7 @@ class Solar(_ForecastingDatasetFromLoader):
         "is_empty": False,
         "has_nans": False,  # May depend on API data quality
         "has_exogenous": False,  # The series itself is standalone
-        "n_instances": None,  # Only one series is returned
+        "n_instances": 1,  # Only one series is returned
         "n_timepoints": None,  # Dynamic depending on the time range
         "frequency": "30min",  # Half-hourly data
         "n_dimensions": 1,
@@ -87,7 +87,6 @@ class Solar(_ForecastingDatasetFromLoader):
         self.set_tags(
             **{
                 "n_timepoints": n_timepoints,
-                "n_instances": n_timepoints,
                 "n_dimensions": n_dimensions,
                 "is_univariate": n_dimensions == 1,
             }

@@ -3,6 +3,7 @@ import itertools
 import pandas as pd
 import pytest
 
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.transformations.hierarchical.reconcile._topdown import (
     SqueezeHierarchy,
 )
@@ -24,6 +25,10 @@ def hierarchical_data():
     return data
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations.hierarchical.reconcile"),
+    reason="run test only if module has changed",
+)
 def create_redundant_hierarchical_indexes(
     n_hier_levels, n_redundant, n_instances_per_level
 ):
@@ -57,6 +62,10 @@ def create_redundant_hierarchical_indexes(
     ).sort_index()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SqueezeHierarchy),
+    reason="run test only if class has changed and softdeps are present",
+)
 @pytest.mark.parametrize(
     "n_redundant,n_hier_levels", [(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
 )
@@ -77,6 +86,10 @@ def test_fit(n_redundant, n_hier_levels, n_instances_per_level=2):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SqueezeHierarchy),
+    reason="run test only if class has changed and softdeps are present",
+)
 @pytest.mark.parametrize(
     "n_redundant,n_hier_levels", [(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
 )
@@ -97,6 +110,10 @@ def test_transform(n_redundant, n_hier_levels, n_instances_per_level=2):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SqueezeHierarchy),
+    reason="run test only if class has changed and softdeps are present",
+)
 @pytest.mark.parametrize(
     "n_redundant,n_hier_levels", [(1, 2), (1, 3), (1, 4), (2, 3), (2, 4), (3, 4)]
 )
@@ -116,6 +133,10 @@ def test_inverse_transform(n_redundant, n_hier_levels, n_instances_per_level=2):
     )
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(SqueezeHierarchy),
+    reason="run test only if class has changed and softdeps are present",
+)
 def test_no_hierarchy_handling():
     """Test the transformer with a non-hierarchical DataFrame."""
     non_hierarchical_data = pd.DataFrame({"value": [1, 2, 3]}, index=[0, 1, 2])

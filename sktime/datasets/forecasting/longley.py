@@ -55,7 +55,7 @@ class Longley(_ForecastingDatasetFromLoader):
         "is_empty": False,
         "has_nans": False,
         "has_exogenous": True,
-        "n_instances": 16,
+        "n_instances": 1,
         "n_timepoints": 16,
         "frequency": "Y",
         "n_dimensions": 1,

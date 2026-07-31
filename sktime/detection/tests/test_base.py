@@ -69,6 +69,10 @@ def test_sparse_to_dense(y_sparse, y_dense_expected, index):
                 index=pd.IntervalIndex.from_arrays([3, 6], [5, 6], closed="left"),
             ),
         ),
+        # regression test for bug #9890: DataFrame input was mishandled because
+        # the extracted first column was assigned to y_sparse instead of y_dense,
+        # leaving y_dense still a DataFrame and causing a ValueError downstream
+        (pd.DataFrame({"col": [0, 1, 0, 1]}), pd.Series([1, 3])),
     ],
 )
 def test_dense_to_sparse(y_dense, y_sparse_expected):

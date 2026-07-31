@@ -14,7 +14,6 @@
 #  limitations under the License.
 
 from functools import reduce
-from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -53,7 +52,7 @@ class Mixture(Distribution):
         self,
         weights: Categorical,
         components: list[Distribution],
-        validate_args: Optional[bool] = None,
+        validate_args: bool | None = None,
     ):
         for comp in components:
             comp._validate_args = False
@@ -198,7 +197,7 @@ class MixtureOutput(DistributionOutput):
     def _distribution(
         self,
         distr_params,
-        validate_args: Optional[bool] = None,
+        validate_args: bool | None = None,
     ):
         return self.distr_cls(
             weights=Categorical(

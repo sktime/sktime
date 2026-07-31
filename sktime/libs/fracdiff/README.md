@@ -118,7 +118,7 @@ For example, 0.5th differentiation of S&P 500 historical price looks like this:
 ![spx](./examples/fig/spx.png)
 
 [`Fracdiff`](https://fracdiff.github.io/fracdiff/#id1) is compatible with scikit-learn API.
-One can imcorporate it into a pipeline.
+One can incorporate it into a pipeline.
 
 ```python
 from sklearn.linear_model import LinearRegression
@@ -137,7 +137,7 @@ pipeline.fit(X, y)
 
 #### Fractional differentiation while preserving memory
 
-A transformer class [`FracdiffStat`](https://fracdiff.github.io/fracdiff/#fracdiffstat) finds the minumum order of fractional differentiation that makes time-series stationary.
+A transformer class [`FracdiffStat`](https://fracdiff.github.io/fracdiff/#fracdiffstat) finds the minimum order of fractional differentiation that makes time-series stationary.
 Differentiated time-series with this order is obtained by subsequently applying `transform` method.
 This series is interpreted as a stationary time-series keeping the maximum memory of the original time-series.
 

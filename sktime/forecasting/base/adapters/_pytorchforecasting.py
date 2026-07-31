@@ -6,22 +6,21 @@ import functools
 import inspect
 import os
 import time
-import typing
 from copy import deepcopy
 from random import randint
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from sktime.forecasting.base import ForecastingHorizon, _BaseGlobalForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
 
 
-class _PytorchForecastingAdapter(_BaseGlobalForecaster):
+class _PytorchForecastingAdapter(BaseForecaster):
     """Base adapter class for pytorch-forecasting models.
 
     Parameters
@@ -74,23 +73,32 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             "pd_multiindex_hier",
             "pd.DataFrame",
         ],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._pytorchforecasting"],
+        "tests:skip_by_name": [
+            "test_save_estimators_to_file",
+            "test_persistence_via_pickle",
+        ],
     }
 
     def __init__(
         self: "_PytorchForecastingAdapter",
-        model_params: Optional[dict[str, Any]] = None,
-        dataset_params: Optional[dict[str, Any]] = None,
-        train_to_dataloader_params: Optional[dict[str, Any]] = None,
-        validation_to_dataloader_params: Optional[dict[str, Any]] = None,
-        trainer_params: Optional[dict[str, Any]] = None,
-        model_path: Optional[str] = None,
+        model_params: dict[str, Any] | None = None,
+        dataset_params: dict[str, Any] | None = None,
+        train_to_dataloader_params: dict[str, Any] | None = None,
+        validation_to_dataloader_params: dict[str, Any] | None = None,
+        trainer_params: dict[str, Any] | None = None,
+        model_path: str | None = None,
         random_log_path: bool = False,
         broadcasting: bool = False,
     ) -> None:
@@ -100,9 +108,13 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         self.train_to_dataloader_params = train_to_dataloader_params
         self.validation_to_dataloader_params = validation_to_dataloader_params
         self.model_path = model_path
-        self._model_params = deepcopy(model_params) if model_params is not None else {}
         self._dataset_params = (
             deepcopy(dataset_params) if dataset_params is not None else {}
+        )
+        self._model_loss = model_params.pop("loss", None) if model_params else None
+        self._model_params = deepcopy(model_params) if model_params else {}
+        self._callbacks = (
+            trainer_params.pop("callbacks", None) if trainer_params else None
         )
         self._trainer_params = (
             deepcopy(trainer_params) if trainer_params is not None else {}
@@ -148,6 +160,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
+        if self._model_loss is not None:
+            self._model_params["loss"] = self._model_loss
         algorithm_instance = self.algorithm_class.from_dataset(
             data,
             **self.algorithm_parameters,
@@ -161,7 +175,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
                     self._random_log_dir = self._gen_random_log_dir(data)
                     self._trainer_params["default_root_dir"] = self._random_log_dir
 
-        trainer_instance = pl.Trainer(**self._trainer_params)
+        trainer_instance = pl.Trainer(callbacks=self._callbacks, **self._trainer_params)
         return algorithm_instance, trainer_instance
 
     def _gen_random_log_dir(self, data=None):
@@ -177,8 +191,8 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
     def _fit(
         self: "_PytorchForecastingAdapter",
         y: pd.DataFrame,
-        X: typing.Optional[pd.DataFrame],
-        fh: ForecastingHorizon,
+        X: pd.DataFrame | None = None,
+        fh: ForecastingHorizon | None = None,
     ) -> "_PytorchForecastingAdapter":
         """Fit forecaster to training data.
 
@@ -192,7 +206,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         y : sktime time series object
             guaranteed to have a single column/variable
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : sktime time series object, optional (default=None)
             guaranteed to have at least one column/variable
             Exogeneous time series to fit to.
@@ -214,6 +228,12 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
         # convert data to pytorch-forecasting datasets
+        if getattr(self, "deterministic", False):
+            import torch
+
+            torch_state = torch.get_rng_state()
+            torch.manual_seed(0)
+
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
@@ -244,13 +264,16 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
+        if getattr(self, "deterministic", False):
+            import torch
+
+            torch.set_rng_state(torch_state)
         return self
 
     def _predict(
         self: "_PytorchForecastingAdapter",
-        fh: typing.Optional[ForecastingHorizon],
-        X: typing.Optional[pd.DataFrame],
-        y: typing.Optional[pd.DataFrame],
+        fh: ForecastingHorizon | None,
+        X: pd.DataFrame | None = None,
     ) -> pd.Series:
         """Forecast time series at future horizon.
 
@@ -266,40 +289,18 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
-            If ``y`` is not passed (not performing global forecasting), ``X`` should
-            only contain the time points to be predicted.
-            If ``y`` is passed (performing global forecasting), ``X`` must contain
-            all historical values and the time points to be predicted.
-        y : sktime time series object, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed.
-            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
         y_pred : sktime time series object
             guaranteed to have a single column/variable
             Point predictions
-
-        Notes
-        -----
-        If ``y`` is not None, global forecast will be performed.
-        In global forecast mode,
-        ``X`` should contain all historical values and the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
-
-        If ``y`` is None, non global forecast will be performed.
-        In non global forecast mode,
-        ``X`` should only contain the time points to be predicted,
-        while ``y`` should only contain historical values
-        not the time points to be predicted.
         """
-        X, y = self._Xy_precheck(X, y)
+        X, y = self._Xy_precheck(X)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -307,6 +308,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         _y = self._extend_y(_y, fh)
         # check if dummy X is needed
         _X = self._dummy_X(_X, _y)
+        _origin_time_idx_backup = self._origin_time_idx
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -340,14 +342,14 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length
         )
-
+        self._origin_time_idx = _origin_time_idx_backup
         absolute_horizons = self.fh.to_absolute_index(self.cutoff)
         dateindex = output.index.get_level_values(-1).map(
             lambda x: x in absolute_horizons
         )
         return output.loc[dateindex]
 
-    def _predict_quantiles(self, fh, X, alpha, y=None):
+    def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
 
         private _predict_quantiles containing the core logic,
@@ -356,18 +358,12 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series to predict from.
-            If ``y`` is passed (performing global forecasting), ``X`` must contain
-            all historical values and the time points to be predicted.
         alpha : list of float, optional (default=[0.5])
             A list of probabilities at which quantile forecasts are computed.
-        y : time series in ``sktime`` compatible format, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed.
-            Only pass the historical values not the time points to be predicted.
 
         Returns
         -------
@@ -387,14 +383,14 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         ]
         if "to_quantiles" not in methods_list:
             raise NotImplementedError(
-                "To perform probabilistic forcast, QuantileLoss or other loss"
+                "To perform probabilistic forecast, QuantileLoss or other loss"
                 "metrics that support to_quantiles function has to be used in fit."
                 f"With {self.best_model.loss}, it doesn't support probabilistic"
-                "forcast. Details can be found:"
+                "forecast. Details can be found:"
                 "https://pytorch-forecasting.readthedocs.io/en/stable/metrics.html"
             )
 
-        X, y = self._Xy_precheck(X, y)
+        X, y = self._Xy_precheck(X)
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -402,6 +398,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         _y = self._extend_y(_y, fh)
         # check if dummy X is needed
         _X = self._dummy_X(_X, _y)
+        _origin_time_idx_backup = self._origin_time_idx
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -437,6 +434,7 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length, alpha=alpha
         )
+        self._origin_time_idx = _origin_time_idx_backup
 
         absolute_horizons = self.fh.to_absolute_index(self.cutoff)
         dateindex = output.index.get_level_values(-1).map(
@@ -444,13 +442,12 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
         )
         return output.loc[dateindex]
 
-    def _Xy_precheck(self, X, y):
-        if y is None:
-            y = deepcopy(self._y)
+    def _Xy_precheck(self, X):
+        y = deepcopy(self._y)
         if X is None:
             X = deepcopy(self._X)
-        if X is not None and not self._global_forecasting:
-            X = pd.concat([self._X, X])
+        elif self._X is not None:
+            X = pd.concat([deepcopy(self._X), X])
         return X, y
 
     def _Xy_to_dataset(
@@ -507,7 +504,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
             data = deepcopy(y)
         # if fh is not continuous, there will be NaN after extend_y in prediect
         data = data.copy()
-        data["_target_column"] = data["_target_column"].fillna(0)
+        data["_target_column"] = data["_target_column"].fillna(0).astype(float)
+        for c in time_varying_known_reals:
+            data[c] = data[c].astype(float)
         # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
             time_idx = (
@@ -587,9 +586,9 @@ class _PytorchForecastingAdapter(_BaseGlobalForecaster):
 
         # set the instance columns to multi index
         data.set_index(index_names, inplace=True)
-        self._origin_time_idx.set_index(index_names, inplace=True)
+        _origin_time_idx_indexed = self._origin_time_idx.set_index(index_names)
         # add origin time_idx column to data
-        data = data.join(self._origin_time_idx, on=index_names)
+        data = data.join(_origin_time_idx_indexed, on=index_names)
         # drop _auto_time_idx column
         data.reset_index(level=list(range(len(index_names))), inplace=True)
         data.drop("_auto_time_idx", axis=1, inplace=True)

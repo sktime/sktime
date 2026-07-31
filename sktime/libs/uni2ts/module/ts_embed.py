@@ -194,3 +194,92 @@ class MultiOutSizeLinear(nn.Module):
             f"bias={self.bias is not None}, "
             f"dtype={self.weight.dtype}"
         )
+
+
+class FeatLinear(nn.Module):
+    def __init__(
+        self,
+        in_features_ls: tuple,
+        out_features: int,
+        bias: bool = True,
+        dtype=None,
+    ):
+        super().__init__()
+        self.in_features_ls = in_features_ls
+        self.out_features = out_features
+
+        self.weight = nn.Parameter(
+            torch.empty((len(in_features_ls), out_features, out_features), dtype=dtype)
+        )
+
+        if bias:
+            self.bias = nn.Parameter(
+                torch.empty((len(in_features_ls), out_features), dtype=dtype)
+            )
+        else:
+            self.register_parameter("bias", None)
+
+        self.reset_parameters()
+
+        self.register_buffer(
+            "in_features_buffer",
+            torch.tensor(in_features_ls),
+            persistent=False,
+        )
+
+    def reset_parameters(self):
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        if self.bias is not None:
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight)
+            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+            nn.init.uniform_(self.bias, -bound, bound)
+
+    def forward(self, x, in_feat_size):
+        out = 0
+        for idx, feat_size in enumerate(self.in_features_ls):
+            weight = self.weight[idx]
+            bias = self.bias[idx] if self.bias is not None else 0
+            out = out + (
+                torch.eq(in_feat_size, feat_size).unsqueeze(-1)
+                * (einsum(weight, x, "out inp, ... inp -> ... out") + bias)
+            )
+        return out
+
+    def extra_repr(self) -> str:
+        return (
+            f"in_features_ls={self.in_features_ls}, "
+            f"out_features={self.out_features}, "
+            f"bias={self.bias is not None}, "
+            f"dtype={self.weight.dtype}"
+        )
+
+
+class ResidualBlock(nn.Module):
+    def __init__(self, input_dims, hidden_dims, output_dims):
+        super().__init__()
+        self.input_dims = input_dims
+        self.hidden_dims = hidden_dims
+        self.output_dims = output_dims
+
+        self.hidden_layer = nn.Linear(input_dims, hidden_dims)
+        self.silu = nn.SiLU()
+        self.output_layer = nn.Linear(hidden_dims, output_dims)
+        self.residual_layer = nn.Linear(input_dims, output_dims)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for m in self.children():
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_uniform_(m.weight, a=math.sqrt(5))
+                if m.bias is not None:
+                    fan_in, _ = nn.init._calculate_fan_in_and_fan_out(m.weight)
+                    bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+                    nn.init.uniform_(m.bias, -bound, bound)
+
+    def forward(self, x):
+        hidden = self.hidden_layer(x)
+        hidden = self.silu(hidden)
+        output = self.output_layer(hidden)
+        residual = self.residual_layer(x)
+        return output + residual

@@ -1,7 +1,5 @@
 """USChange dataset for forecasting growth rates of consumption and income."""
 
-import functools
-
 from sktime.datasets._single_problem_loaders import load_uschange
 from sktime.datasets.forecasting._base import _ForecastingDatasetFromLoader
 
@@ -15,7 +13,6 @@ class USChange(_ForecastingDatasetFromLoader):
     ----------
     y_name : str, optional (default="Consumption")
         Name of the target variable (y).
-
 
     Examples
     --------
@@ -46,25 +43,30 @@ class USChange(_ForecastingDatasetFromLoader):
     _tags = {
         "name": "uschange",
         "n_splits": 0,  # No splits available
-        "is_univariate": False,
+        "is_univariate": True,
         "is_one_series": True,
         "is_one_panel": True,
         "is_equally_spaced": True,
         "is_empty": False,
         "has_nans": False,
         "has_exogenous": True,
-        "n_instances": 187,
+        "n_instances": 1,
         "n_timepoints": 187,
         "frequency": "Q",
-        "n_dimensions": 5,  # 5 explanatory variables
+        "n_dimensions": 1,  # 1 endogenous and 4 exogenous variables
         "n_panels": 1,
         "n_hierarchy_levels": 0,
     }
 
-    loader_func = functools.partial(
-        load_uschange,
-        y_name=["Consumption", "Income", "Production", "Savings", "Unemployment"],
-    )
+    loader_func = load_uschange
 
-    def __init__(self):
+    def __init__(self, y_name="Consumption"):
+        self.y_name = y_name
         super().__init__()
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameters."""
+        param0 = {}
+        param1 = {"y_name": "Income"}
+        return [param0, param1]

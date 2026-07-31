@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 from pandas.testing import assert_frame_equal
 
+from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.transformations.hierarchical.reconcile import (
     BottomUpReconciler,
@@ -40,6 +41,12 @@ def _generate_hier_data(flatten_single_levels, no_levels, no_bottom_nodes=5):
     return prds
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [BottomUpReconciler, TopdownReconciler, MiddleOutReconciler]
+    ),
+    reason="run test only if class has changed and softdeps are present",
+)
 @pytest.mark.parametrize(
     "reconciler, expected_immutable_level",
     [
@@ -98,6 +105,10 @@ def test_reconcilers_keep_immutable_levels(
         assert not y_reconc.equals(y)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(OptimalReconciler),
+    reason="run test only if class has changed and softdeps are present",
+)
 def test_optimal_reconciliation_ols():
     """Test optimal reconciliation with OLS.
 

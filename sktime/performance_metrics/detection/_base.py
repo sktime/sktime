@@ -22,6 +22,9 @@ class BaseDetectionMetric(BaseMetric):
         "requires_X": False,
         "requires_y_true": True,  # if False, is unsupervised metric
         "lower_is_better": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __call__(self, y_true=None, y_pred=None, X=None):
