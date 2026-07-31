@@ -669,7 +669,7 @@ class TotoForecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         test_params = [
-            {"num_samples": 1, "samples_per_batch": 1, "prediction_type": "median"},
+            {"num_samples": 2, "samples_per_batch": 1, "prediction_type": "median"},
             {"num_samples": 1, "samples_per_batch": 1, "prediction_type": "mean"},
         ]
 
