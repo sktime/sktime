@@ -27,6 +27,10 @@ class _StatsModelsAdapter(BaseForecaster):
         # estimator type
         # --------------
         "capability:exogenous": False,
+        # statsmodels ``predict(start, end, exog=...)`` needs exog for every
+        # step from ``start`` to ``end``, so gapped forecasting horizons are
+        # not supported when exogenous variables are present
+        "capability:non_contiguous_X": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         # CI and testing tags
