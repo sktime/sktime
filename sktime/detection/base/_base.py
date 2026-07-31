@@ -927,7 +927,10 @@ class BaseDetector(BaseEstimator):
             y_sparse and 0 otherwise.
         """
         y_dense = pd.Series(np.zeros(len(index)), index=index, dtype="int64")
-        y_dense[y_sparse.values.flatten()] = 1
+        # Use .iloc for position-based assignment: y_sparse contains iloc positions
+        # (integers), not index labels. Label-based indexing via [] raises KeyError
+        # when `index` is a DatetimeIndex or any non-integer index.
+        y_dense.iloc[y_sparse.values.flatten()] = 1
         return y_dense
 
     @staticmethod
