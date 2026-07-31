@@ -15,7 +15,8 @@ from sktime.forecasting.moirai import MOIRAIForecaster
 # resolves to CUDA on a GPU-equipped machine, and CUDA sampling uses a
 # different RNG (Philox) than CPU (Mersenne Twister) even for the same
 # torch.manual_seed(...). These values were generated on CPU -- if
-# regenerating on a machine with a GPU, run with CUDA_VISIBLE_DEVICES=-1.
+# regenerating on a machine with a GPU, run with CUDA_VISIBLE_DEVICES=-1
+# or set `map_location='cpu'` when doing inference.
 _MOIRAI_REFERENCE_CASES = [
     pytest.param(
         "Salesforce/moirai-1.0-R-small",
@@ -57,6 +58,7 @@ def test_moirai_airline_predictions_match_uni2ts_reference(
         checkpoint_path=checkpoint_path,
         deterministic=True,
         use_source_package=False,
+        map_location="cpu",
     )
 
     y_pred = forecaster.fit(y_train, fh=fh).predict(fh=fh)
