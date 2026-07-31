@@ -67,23 +67,29 @@ class _PmdArimaAdapter(BaseForecaster):
         return self
 
     def _update(self, y, X=None, update_params=True):
-        """Update model with data.
+        """Update model with new data.
 
         Parameters
         ----------
         y : pd.Series
-            Target time series to which to fit the forecaster.
+            Target time series used to update the forecaster.
         X : pd.DataFrame, optional (default=None)
-            Exogenous variables are ignored
+            Exogenous variables. If provided, sliced to match the index of y.
+        update_params : bool, optional (default=True)
+            If True, model parameters are re-estimated from the updated data.
+            If False, new observations are appended to the model's internal
+            state without refitting parameters (maxiter=0).
 
         Returns
         -------
-        self : returns an instance of self.
+        self : reference to self.
         """
+        if X is not None:
+            X = X.loc[y.index]
         if update_params:
-            if X is not None:
-                X = X.loc[y.index]
             self._forecaster.update(y, X=X)
+        else:
+            self._forecaster.update(y, X=X, maxiter=0)
         return self
 
     def _predict(self, fh, X):
