@@ -504,10 +504,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            self._fit(y=self._y, X=self._X, fh=self.fh)
+            self._fit(y=self._y, X=self._X, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("fit", y=self._y, X=self._X, fh=self.fh)
+            self._vectorize("fit", y=self._y, X=self._X, fh=fh)
 
         # this should happen last
         self._state = "fitted"
@@ -675,10 +675,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            self._fit(y=self._y, X=self._X, fh=self.fh)
+            self._fit(y=self._y, X=self._X, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("fit", y=self._y, X=self._X, fh=self.fh)
+            self._vectorize("fit", y=self._y, X=self._X, fh=fh)
 
         self._state = "fitted"
         # call the public predict to avoid duplicating output conversions
