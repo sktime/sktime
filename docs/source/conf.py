@@ -56,6 +56,7 @@ extensions = [
     "sphinx_design",
     "sphinx_issues",
     "sphinx.ext.doctest",
+    "redirects",  # generates redirect pages for moved estimators, see redirects.py
 ]
 
 # Recommended by sphinx_design when using the MyST Parser
