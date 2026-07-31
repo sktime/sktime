@@ -214,21 +214,6 @@ class TotoForecaster(BaseForecaster):
         """Restore state from the unpickled state dictionary."""
         self.__dict__.update(state)
 
-    def __deepcopy__(self, memo):
-        """Handle deepcopy by avoiding deepcopying the unpickleable forecaster_."""
-        import copy
-
-        cls = self.__class__
-        result = cls.__new__(cls)
-        memo[id(self)] = result
-        for k, v in self.__dict__.items():
-            if k == "forecaster_":
-                # Do not deepcopy the PyTorch forecaster; it can be reloaded
-                setattr(result, k, None)
-            else:
-                setattr(result, k, copy.deepcopy(v, memo))
-        return result
-
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
