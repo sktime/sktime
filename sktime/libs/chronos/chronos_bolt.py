@@ -35,9 +35,9 @@ _TRANSFORMERS_V5 = _check_soft_dependencies("transformers>=5.0", severity="none"
 # the guarded init functions (which no-op on already-initialized parameters)
 # instead of unconditionally overwriting parameters with fresh random values
 if _TRANSFORMERS_V5:
-    from transformers import initialization as init
+    init = _safe_import("transformers.initialization")
 else:
-    from torch.nn import init
+    init = _safe_import("torch.nn.init")
 
 
 # workaround condition for the case where ModelOutput cannot be imported
