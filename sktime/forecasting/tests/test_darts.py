@@ -82,6 +82,42 @@ def _darts_to_series(obj):
     return getattr(obj, to_ser_name)()
 
 
+def _load_weather_pressure_head(n_timepoints=100):
+    """Load the first ``n_timepoints`` of WeatherDataset atmospheric pressure.
+
+    ``WeatherDataset().load()`` parses the entire CSV. A truncated download can
+    fail mid-file at a fixed offset (CI has seen ``time data "10"`` at row
+    23251 — the start of ``10.06.2020 ...``). This helper still uses darts'
+    download + MD5 check, but only date-parses the leading rows we need. If a
+    previous run cached a truncated file, the hash check fails and we re-download.
+    """
+    from darts import TimeSeries
+    from darts.datasets import WeatherDataset
+    from darts.datasets.dataset_loaders import DatasetLoadingException
+
+    dataset = WeatherDataset()
+    # trigger download and integrity check without parsing the full CSV
+    if not dataset._is_already_downloaded():
+        dataset._download_dataset()
+    try:
+        dataset._check_dataset_integrity_or_raise()
+    except DatasetLoadingException:
+        # common CI failure mode: partial download left on disk
+        path = dataset._get_path_dataset()
+        path.unlink(missing_ok=True)
+        dataset._download_dataset()
+        dataset._check_dataset_integrity_or_raise()
+
+    path = dataset._get_path_dataset()
+    df = pd.read_csv(path, nrows=n_timepoints)
+    df["Date Time"] = pd.to_datetime(
+        df["Date Time"], format="%d.%m.%Y %H:%M:%S", errors="raise"
+    )
+    y = df.set_index("Date Time")["p (mbar)"]
+    y.name = "p (mbar)"
+    return TimeSeries.from_series(y), y
+
+
 @pytest.mark.parametrize("model", [DartsXGBModel, DartsLinearRegressionModel])
 @pytest.mark.skipif(
     not run_test_for_class([DartsXGBModel, DartsLinearRegressionModel]),
@@ -89,19 +125,12 @@ def _darts_to_series(obj):
 )
 def test_darts_regression_models_with_weather_dataset(model):
     """Test with weather dataset."""
-    from darts.datasets import WeatherDataset
-
     kwargs = model_kwargs.get(model, {})
     model_to_import = import_mappings.get(model)
     # Create and fit the model
     imported_model = getattr(importlib.import_module("darts.models"), model_to_import)
     darts_model = imported_model(lags=12, output_chunk_length=6, **kwargs)
-    # Load the dataset
-    series = WeatherDataset().load()
-
-    # Predicting atmospheric pressure
-    target = series["p (mbar)"][:100]
-    target_df = _darts_to_series(target)
+    target, target_df = _load_weather_pressure_head()
 
     darts_model.fit(target)
     # Make a prediction for the next 6 time steps
@@ -159,21 +188,15 @@ def test_darts_regression_model_with_X(model):
 )
 def test_darts_regression_with_weather_dataset(model):
     """Test with weather dataset."""
-    from darts.datasets import WeatherDataset
     from sklearn.ensemble import RandomForestRegressor
 
     model_to_import = import_mappings.get(model)
     # Create and fit the model
     imported_model = getattr(importlib.import_module("darts.models"), model_to_import)
     darts_model = imported_model(
-        lags=12, output_chunk_length=6, model=RandomForestRegressor()
+        lags=12, output_chunk_length=6, model=RandomForestRegressor(random_state=0)
     )
-    # Load the dataset
-    series = WeatherDataset().load()
-
-    # Predicting atmospheric pressure
-    target = series["p (mbar)"][:100]
-    target_df = _darts_to_series(target)
+    target, target_df = _load_weather_pressure_head()
 
     darts_model.fit(target)
 
@@ -183,7 +206,7 @@ def test_darts_regression_with_weather_dataset(model):
     sktime_model = model(
         lags=12,
         output_chunk_length=6,
-        model=RandomForestRegressor(),
+        model=RandomForestRegressor(random_state=0),
     )
     sktime_model.fit(target_df)
     fh = list(range(1, 7))
