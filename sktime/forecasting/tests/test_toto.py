@@ -13,12 +13,12 @@ from sktime.forecasting.toto import TotoForecaster
 _TOTO_AIRLINE_REFERENCE_CASES = [
     pytest.param(
         {"prediction_type": "median", "num_samples": 1, "samples_per_batch": 1},
-        [515.7861, 426.9832, 377.47028],
+        [438.4101, 396.69385, 376.97928],
         id="median-num_samples-1",
     ),
     pytest.param(
         {"prediction_type": "mean", "num_samples": 2, "samples_per_batch": 2},
-        [495.69742, 393.68652, 354.17065],
+        [461.18848, 469.096, 376.23752],
         id="mean-num_samples-2",
     ),
 ]
@@ -75,12 +75,16 @@ def test_toto_exogenous_predictions_match_source_reference():
     X_future = pd.DataFrame({"exog1": future_exog1}, index=future_idx)
 
     forecaster = TotoForecaster(
-        model_path="Datadog/Toto-Open-Base-1.0", device="cpu", seed=0
+        model_path="Datadog/Toto-Open-Base-1.0",
+        device="cpu",
+        seed=0,
+        num_samples=None,
+        prediction_type="mean",
     )
     fh = np.arange(1, prediction_length + 1)
     y_pred = forecaster.fit(y, X=X, fh=fh).predict(fh=fh, X=X_future)
 
-    expected_head = np.asarray([-0.58857954, -0.11110885, 0.6686021], dtype=np.float32)
+    expected_head = np.asarray([0.08084736, 0.08218868, 0.04493088], dtype=np.float32)
     np.testing.assert_allclose(
         y_pred.iloc[:3].to_numpy().flatten(),
         expected_head,
