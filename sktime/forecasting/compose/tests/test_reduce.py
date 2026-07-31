@@ -399,6 +399,48 @@ def test_consistent_data_passing_to_component_estimators_in_fit_and_predict(
     not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
     reason="run test only if reduce module has changed",
 )
+@pytest.mark.parametrize("strategy", ["direct", "recursive", "multioutput"])
+def test_feature_layout_passed_to_estimator(strategy):
+    """Test the feature layout documented in the reducer class docstrings.
+
+    The class docstrings state that each row of the feature matrix passed to the
+    wrapped estimator is the concatenation of one block of ``window_length``
+    values per variable, in the order ``y``, then the columns of ``X``, with the
+    values inside a block in chronological order, oldest observation first.
+    """
+    y = pd.Series(np.arange(9, dtype=float))
+    X = pd.DataFrame({"x1": y + 100, "x2": y + 200})
+
+    forecaster = make_reduction(
+        _TestTabularRegressor(), window_length=2, strategy=strategy
+    )
+    forecaster.fit(y, X=X, fh=ForecastingHorizon([1], is_relative=True))
+
+    if strategy == "direct":
+        estimator_ = forecaster.estimators_[0]
+    else:
+        estimator_ = forecaster.estimator_
+
+    # blocks of length 2, in the order y, x1, x2, each block oldest value first
+    X_fit_expected = np.array(
+        [
+            [0.0, 1.0, 100.0, 101.0, 200.0, 201.0],
+            [1.0, 2.0, 101.0, 102.0, 201.0, 202.0],
+            [2.0, 3.0, 102.0, 103.0, 202.0, 203.0],
+            [3.0, 4.0, 103.0, 104.0, 203.0, 204.0],
+            [4.0, 5.0, 104.0, 105.0, 204.0, 205.0],
+            [5.0, 6.0, 105.0, 106.0, 205.0, 206.0],
+            [6.0, 7.0, 106.0, 107.0, 206.0, 207.0],
+        ]
+    )
+
+    np.testing.assert_array_equal(estimator_.X_fit, X_fit_expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
 @pytest.mark.parametrize("scitype, strategy, klass", _REGISTRY)
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 def test_make_reduction_construct_instance(scitype, strategy, klass, window_length):
