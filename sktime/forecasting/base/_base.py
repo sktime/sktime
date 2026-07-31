@@ -159,7 +159,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         super().__init__()
 
-        if self.get_config("remember_data"):
+        if self.get_config()["remember_data"]:
             self._y = None
             self._X = None
 
