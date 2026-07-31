@@ -99,6 +99,42 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if X passed has more than one variable
         #
+        # capability:pairwise = does estimator support pairwise parameter estimation?
+        "capability:pairwise": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # property:randomness = deterministic or stochastic behaviour?
+        "property:randomness": "deterministic",
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # "derandomized" = stochastic unless random_state is set, see below
+        #
+        # capability:random_state = does estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, estimator can be derandomized by setting random_state
+        #
+        # fit_is_empty = is fit empty and can be skipped?
+        "fit_is_empty": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:sample_weight = can the estimator handle sample weights in fit?
+        "capability:sample_weight": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:contractable = does estimator support a maximum fit time contract?
+        "capability:contractable": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:train_estimate = can estimator estimate performance on train set?
+        "capability:train_estimate": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, exposes a training performance estimate via get_fitted_params
+        #
+        # capability:feature_importance = can the estimator provide feature importance?
+        "capability:feature_importance": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, exposes feature importances via get_fitted_params
+        #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
         # ----------------------------------------------------------------------------

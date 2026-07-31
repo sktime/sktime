@@ -85,6 +85,38 @@ class MyMetric(BaseDetectionMetric):
         "requires_X": False,
         "requires_y_true": True,  # if False, is unsupervised metric
         "lower_is_better": True,
+        #
+        # requires-y-train = does the metric require y_train to be passed in evaluate?
+        "requires-y-train": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # requires-y-pred-benchmark = does the metric require a benchmark prediction
+        #   y_pred_benchmark to be passed in evaluate?
+        "requires-y-pred-benchmark": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:multivariate = does the metric support multivariate (multi-column)
+        #   inputs?
+        "capability:multivariate": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:sample_weight = can the metric handle sample weights in evaluate?
+        "capability:sample_weight": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:random_state = does the metric have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, metric can be derandomized by setting random_state,
+        # producing the same result on every run (up to numerical precision)
+        #
+        # property:randomness = does the metric behave deterministically or
+        #   stochastically?
+        "property:randomness": "deterministic",
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # "stochastic" = may produce different results on different runs
+        # "deterministic" = always produces the same result
+        # "derandomized" = stochastic unless random_state is set, then deterministic
     }
 
     # todo: add any hyper-parameters and components to constructor

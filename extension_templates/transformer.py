@@ -174,6 +174,39 @@ class MyTransformer(BaseTransformer):
         # valid values: True = _fit is considered empty and skipped, False = No
         # CAUTION: default is "True", i.e., _fit will be skipped even if implemented
         #
+        # property:randomness = deterministic or stochastic behaviour?
+        "property:randomness": "deterministic",
+        # valid values: "deterministic", "stochastic", "derandomized"
+        # "derandomized" = stochastic unless random_state is set, see below
+        #
+        # capability:random_state = does estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, estimator can be derandomized by setting random_state
+        #
+        # capability:sample_weight = can the estimator handle sample weights in fit?
+        "capability:sample_weight": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:contractable = does estimator support a maximum fit time contract?
+        "capability:contractable": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:train_estimate = can estimator estimate performance on train set?
+        "capability:train_estimate": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, exposes a training performance estimate via get_fitted_params
+        #
+        # capability:feature_importance = can the estimator provide feature importance?
+        "capability:feature_importance": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, exposes feature importances via get_fitted_params
+        #
+        # capability:update = can the estimator be run in stream or on-line mode?
+        "capability:update": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, implements a non-default update method for incremental learning
+        #
         # X-y-must-have-same-index = can estimator handle different X/y index?
         "X-y-must-have-same-index": False,
         # valid values: boolean True (yes), False (no)
@@ -231,6 +264,30 @@ class MyTransformer(BaseTransformer):
         # valid values: boolean True (yes), False (no)
         # applicable only if scitype:transform-output is not "Primitives"
         # used for search index and validity checking, does not raise direct exception
+        #
+        # capability:unequal_length:adds = may transformer produce unequal length
+        #   series output from equal length series input?
+        "capability:unequal_length:adds": False,
+        # valid values: boolean True (yes), False (no)
+        # only meaningful if scitype:transform-output is "Series" or "Panel"
+        #
+        # capability:categorical_in_X = can transformer handle categorical data in X?
+        "capability:categorical_in_X": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:categorical_in_y = can transformer handle categorical data in y?
+        "capability:categorical_in_y": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:hierarchical_reconciliation = does transformer reconcile
+        #   hierarchical series, e.g., ensure forecasts sum correctly across hierarchy?
+        "capability:hierarchical_reconciliation": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:bootstrap_index = is the transformer a bootstrap transformer that
+        #   can return the iloc indices of bootstrapped series via return_indices?
+        "capability:bootstrap_index": False,
+        # valid values: boolean True (yes), False (no)
         #
         # handles-missing-data = can the transformer handle missing data (np or pd.NA)?
         "capability:missing_values": False,  # can estimator handle missing data?
