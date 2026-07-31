@@ -12,6 +12,11 @@ from sktime.forecasting.toto import TotoForecaster
 # toto.inference.forecaster.TotoForecaster.forecast() directly (toto-ts>=0.1.3)
 _TOTO_AIRLINE_REFERENCE_CASES = [
     pytest.param(
+        {"prediction_type": "mean", "num_samples": None},
+        [488.28717, 417.58038, 376.97644],
+        id="mean-num_samples-None",
+    ),
+    pytest.param(
         {"prediction_type": "median", "num_samples": 1, "samples_per_batch": 1},
         [438.4101, 396.69385, 376.97928],
         id="median-num_samples-1",
