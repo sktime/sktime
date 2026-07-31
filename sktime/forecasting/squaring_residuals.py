@@ -7,6 +7,7 @@ __author__ = ["kcc-lion"]
 import pandas as pd
 
 from sktime.datatypes._convert import convert_to
+from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingWindowSplitter
@@ -316,9 +317,19 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
-        self.forecaster_.update(X=X, y=y, update_params=update_params)
+        # Residual forecasters are fitted on transformed residuals, not on y.
+        # Updating them with raw y corrupts their remembered history (NaNs from
+        # column/name mismatch) and is semantically wrong.
+        self._cur_y = update_data(self._cur_y, y)
+        self._cur_X = update_data(self._cur_X, X)
+
+        if update_params:
+            # Rebuild point + residual models on pooled history (same as fit).
+            return self._fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
+
+        self.forecaster_.update(X=X, y=y, update_params=False)
         for forecaster in self._res_forecasters.values():
-            forecaster.update(X=X, y=y, update_params=update_params)
+            forecaster._set_cutoff_from_y(y)
         return self
 
     def _predict_quantiles(self, fh, X, alpha):
