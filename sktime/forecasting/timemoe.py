@@ -77,19 +77,12 @@ class TimeMoEForecaster(BaseForecaster):
         - tie_word_embeddings: bool, default=False
             Whether to tie word embeddings in the TimeMOE model.
 
-        These keys initialize the model architecture when ``model_path=None``
-        (from-scratch). When loading a pretrained checkpoint they are ignored.
-
-        Do not pass ``torch_dtype`` or ``device_map`` here; use the dedicated
-        constructor parameters instead.
-
-    device_map : str, dict, int, or torch.device, default="cpu"
-        Device placement following the ``transformers`` ``device_map`` naming
-        convention, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
-
-    torch_dtype : torch.dtype, optional (default=torch.float32)
-        Torch dtype used when loading the model and preparing prediction
-        inputs. Defaults to ``torch.float32``.
+        When ``model_path=None``, these keys initialize the model architecture
+        from scratch (random weights). When ``model_path`` is set, user-provided
+        keys override the checkpoint config. Shape-changing overrides cause
+        mismatched weights to be reinitialized randomly; those layers need
+        ``pretrain`` / fine-tuning before they are useful. If ``config`` is
+        omitted with a pretrained path, the checkpoint config is used as-is.
 
     seed: int, optional (default=None)
         Seed for reproducibility.
@@ -121,6 +114,16 @@ class TimeMoEForecaster(BaseForecaster):
         Additionally, the following arguments are supported:
         - min_learning_rate: float, default=0
             Minimum learning rate for cosine_schedule
+
+    device : str, dict, int, or torch.device, default="cpu"
+        Device placement following the ``transformers`` ``device_map`` naming
+        convention, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
+
+    dtype : torch.dtype, optional (default=None)
+        Torch dtype used when loading the model and preparing prediction
+        inputs. ``None`` keeps the checkpoint's native dtype for
+        ``from_pretrained`` (and the initialized dtype for from-scratch
+        models); prediction inputs then follow the loaded model dtype.
 
     References
     ----------
@@ -213,25 +216,25 @@ class TimeMoEForecaster(BaseForecaster):
         self,
         model_path: str | None = "Maple728/TimeMoE-50M",
         config: dict = None,
-        device_map="cpu",
-        torch_dtype=None,
         seed: int = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
         context_length: int = 1024,
         stride: int = None,
         training_args: dict = None,
+        device="cpu",
+        dtype=None,
     ):
         self.seed = seed
         self.config = config
-        self.device_map = device_map
-        self.torch_dtype = torch_dtype
         self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
         self.context_length = context_length
         self.stride = stride
         self.training_args = training_args
+        self.device = device
+        self.dtype = dtype
 
         super().__init__()
 
@@ -262,17 +265,16 @@ class TimeMoEForecaster(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        import torch
-
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
 
-        self._torch_dtype = (
-            torch.float32 if self.torch_dtype is None else self.torch_dtype
-        )
-
-        _config = self._get_default_config()
-        _config.update(self.config if self.config is not None else {})
-        self._config = _config
+        if self.model_path is None:
+            # from-scratch: defaults + user overrides
+            _config = self._get_default_config()
+            _config.update(self.config if self.config is not None else {})
+            self._config = _config
+        else:
+            # pretrained: only user overrides (merged onto checkpoint at load)
+            self._config = dict(self.config) if self.config is not None else {}
 
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain / fine-tune using upstream Time-MoE Trainer + window dataset."""
@@ -352,9 +354,10 @@ class TimeMoEForecaster(BaseForecaster):
         """Get the kwargs for TimeMoE model."""
         kwargs = {
             "pretrained_model_name_or_path": self.model_path,
-            "torch_dtype": self._torch_dtype,
-            "device_map": self.device_map,
+            "device_map": self.device,
         }
+        if self.dtype is not None:
+            kwargs["torch_dtype"] = self.dtype
 
         return kwargs
 
@@ -443,7 +446,8 @@ class TimeMoEForecaster(BaseForecaster):
             for j in range(_y.shape[2]):
                 _y_i = _y[i, :, j]
 
-                input_tensor = torch.tensor(_y_i, dtype=self._torch_dtype).unsqueeze(0)
+                dtype = self.dtype or self.model_.dtype
+                input_tensor = torch.tensor(_y_i, dtype=dtype).unsqueeze(0)
 
                 attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
 
@@ -547,7 +551,7 @@ class TimeMoEForecaster(BaseForecaster):
             {  # from-scratch model
                 "model_path": None,
                 "config": tiny_config,
-                "device_map": "cpu",
+                "device": "cpu",
                 "context_length": 8,
                 "stride": 1,
                 "training_args": training_args,
@@ -560,15 +564,14 @@ class TimeMoEForecaster(BaseForecaster):
                     "use_dense": True,
                     "apply_aux_loss": False,
                 },
-                "device_map": "cpu",
+                "device": "cpu",
                 "context_length": 8,
                 "stride": 1,
                 "training_args": training_args,
             },
             {  # pretrained model
                 "model_path": "Maple728/TimeMoE-50M",
-                "config": tiny_config,  # ignored
-                "device_map": "cpu",
+                "device": "cpu",
                 "context_length": 8,
                 "stride": 1,
                 "training_args": training_args,
@@ -584,7 +587,7 @@ class _CachedTimeMoE:
         self.key = key
         self.timemoe_kwargs = timemoe_kwargs
         self.use_source_package = use_source_package
-        self.config = config
+        self.config = config or {}
         self.model = None
 
     def load_from_checkpoint(self):
@@ -623,19 +626,44 @@ class _CachedTimeMoE:
         return TimeMoeConfig
 
     def _load_pretrained(self):
-        return self._get_model_class().from_pretrained(**self.timemoe_kwargs)
+        """Load checkpoint, optionally merging user config overrides.
+
+        User overrides are applied on top of the checkpoint config. Shape
+        mismatches are allowed so changed heads/layers reinitialize; those
+        need fine-tuning via ``pretrain``.
+        """
+        ModelClass = self._get_model_class()
+        path = self.timemoe_kwargs["pretrained_model_name_or_path"]
+        load_kwargs = {
+            k: v
+            for k, v in self.timemoe_kwargs.items()
+            if k != "pretrained_model_name_or_path"
+        }
+
+        if self.config:
+            ConfigClass = self._get_config_class()
+            base = ConfigClass.from_pretrained(path)
+            cfg_dict = base.to_dict()
+            cfg_dict.update(self.config)
+            config = ConfigClass.from_dict(cfg_dict)
+            return ModelClass.from_pretrained(
+                path,
+                config=config,
+                ignore_mismatched_sizes=True,
+                **load_kwargs,
+            )
+
+        return ModelClass.from_pretrained(path, **load_kwargs)
 
     def _load_from_config(self):
-        import torch
-
         config = self._get_config_class()(**(self.config or {}))
         model = self._get_model_class()(config)
-        torch_dtype = self.timemoe_kwargs.get("torch_dtype", torch.float32)
-        device_map = self.timemoe_kwargs.get("device_map", "cpu")
-        if torch_dtype is not None:
-            model = model.to(dtype=torch_dtype)
-        if device_map is not None and device_map != "auto":
-            model = model.to(device_map)
+        dtype = self.timemoe_kwargs.get("dtype", None)
+        device = self.timemoe_kwargs.get("device", "cpu")
+        if dtype is not None:
+            model = model.to(dtype=dtype)
+        if device is not None and device != "auto":
+            model = model.to(device)
         return model
 
 
