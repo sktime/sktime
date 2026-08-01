@@ -1,8 +1,6 @@
 name: weekly classifiers test
 
 on:
-  pull_request:
-
   schedule:
     # Runs every Saturday at 03:00 UTC
     - cron: "0 5 * * 6"

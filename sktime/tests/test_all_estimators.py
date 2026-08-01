@@ -12,7 +12,6 @@ import os
 import sys
 import types
 from copy import deepcopy
-from importlib.metadata import metadata
 from inspect import getfullargspec, isclass, signature
 from tempfile import TemporaryDirectory
 
@@ -787,29 +786,24 @@ class QuickTester:
         return values
 
 
-@pytest.mark.parametrize(
-    "estimator_class",
-    all_estimators(return_names=False),
-    ids=lambda estimator_class: estimator_class.__name__,
-)
-def test_python_version_is_compatible_with_sktime(estimator_class):
-    """Check that estimator and sktime Python constraints overlap."""
-    compatible_version = _get_lowest_compatible_python_version(estimator_class)
-
-    estimator_spec = estimator_class.get_class_tag("python_version")
-    sktime_spec = metadata("sktime")["Requires-Python"]
-    msg = (
-        f"{estimator_class.__name__} has python_version={estimator_spec!r}, which "
-        f"does not overlap with sktime Requires-Python={sktime_spec!r}."
-    )
-
-    assert compatible_version is not None, msg
-
-
 class TestAllObjects(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime objects."""
 
     estimator_type_filter = "object"
+
+    def test_python_version_compatible_with_sktime(self, estimator_class):
+        """Check that estimator python_version tag overlaps with sktime bounds."""
+        from importlib.metadata import metadata
+
+        compatible = _get_lowest_compatible_python_version(estimator_class)
+
+        est_spec = estimator_class.get_class_tag("python_version")
+        sktime_spec = metadata("sktime")["Requires-Python"]
+
+        assert compatible is not None, (
+            f"{estimator_class.__name__} has python_version={est_spec!r}, "
+            f"which does not overlap with sktime Requires-Python={sktime_spec!r}."
+        )
 
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
