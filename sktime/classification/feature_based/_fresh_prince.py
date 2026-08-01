@@ -254,9 +254,15 @@ class FreshPRINCE(BaseClassifier):
                 "n_estimators": 10,
                 "default_fc_parameters": "minimal",
             }
-        else:
-            return {
-                "n_estimators": 2,
-                "default_fc_parameters": "minimal",
-                "save_transformed_data": True,
-            }
+
+        params1 = {
+            "n_estimators": 2,
+            "default_fc_parameters": "minimal",
+            "save_transformed_data": True,
+        }
+        params2 = {
+            "n_estimators": 3,
+            "default_fc_parameters": "efficient",
+            "save_transformed_data": False,
+        }
+        return [params1, params2]
