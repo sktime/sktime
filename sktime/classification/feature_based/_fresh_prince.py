@@ -88,6 +88,8 @@ class FreshPRINCE(BaseClassifier):
         "capability:train_estimate": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # test and CI flags
         # -----------------
         "tests:vm": True,
