@@ -164,11 +164,13 @@ class FreshPRINCE(BaseClassifier):
             disable_progressbar=self.verbose < 1,
         )
 
-        X_t = self._tsfresh.fit_transform(X, y)
-        self._rotf.fit(X_t, y)
+        Xt = self._tsfresh.fit_transform(X, y)
+        self._rotf.fit(Xt, y)
+
+        self._Xt_cols = Xt.columns
 
         if self.save_transformed_data:
-            self.transformed_data_ = X_t
+            self.transformed_data_ = Xt
 
         return self
 
@@ -185,7 +187,9 @@ class FreshPRINCE(BaseClassifier):
         y : array-like, shape = [n_instances]
             Predicted class labels.
         """
-        return self._rotf.predict(self._tsfresh.transform(X))
+        Xt = self._tsfresh.transform(X)
+        Xt = Xt.reindex(columns=self._Xt_cols, fill_value=0)
+        return self._rotf.predict(Xt)
 
     def _predict_proba(self, X) -> np.ndarray:
         """Predict class probabilities for n instances in X.
@@ -200,7 +204,9 @@ class FreshPRINCE(BaseClassifier):
         y : array-like, shape = [n_instances, n_classes_]
             Predicted probabilities using the ordering in classes_.
         """
-        return self._rotf.predict_proba(self._tsfresh.transform(X))
+        Xt = self._tsfresh.transform(X)
+        Xt = Xt.reindex(columns=self._Xt_cols, fill_value=0)
+        return self._rotf.predict_proba(Xt)
 
     def _get_train_probs(self, X, y) -> np.ndarray:
         from sktime.datatypes import convert_to
