@@ -80,7 +80,6 @@ class FreshPRINCE(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst"],
-        "python_version": "<3.10",
         "python_dependencies": "tsfresh",
         # estimator type
         # --------------
