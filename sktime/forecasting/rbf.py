@@ -249,11 +249,14 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             self._fh_length = 1
 
         has_network = getattr(self, "network", None) is not None
-        # a network sized by `pretrain` counts steps, one output per step, so fh
-        # must fit into it; one built below is sized by the number of fh points,
-        # for the same fh, e.g. when `_update` continues training, so it is kept
+        # Two ways a network can already exist here:
+        # - pretrain: pred_len = max(fh) (steps); architecture is frozen, so
+        #   re-entering with a larger max(fh) must raise.
+        # - normal _fit (e.g. via _update warm-start): pred_len = len(fh)
+        #   (points). Reuse the weights; do not apply the max(fh) guard —
+        #   that would false-fail, e.g. fh=[2, 5] → pred_len=2, max(fh)=5.
+        # _pretrain_pred_len is set only by pretrain, so it distinguishes them.
         if has_network and hasattr(self, "_pretrain_pred_len"):
-            # Pretrained network exists: validate fh for direct mode only
             # AR mode has no fh constraint (iterates step-by-step)
             if self.mode == "direct" and fh is not None:
                 fh_rel = fh.to_relative(self.cutoff)
