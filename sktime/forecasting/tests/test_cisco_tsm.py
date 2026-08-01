@@ -44,5 +44,3 @@ def test_cisco_tsm_forecaster_predict_proba():
 
     # Directly compare the outputs
     np.testing.assert_allclose(q_direct.values, q_from_proba.values, atol=1e-5)
-
-
