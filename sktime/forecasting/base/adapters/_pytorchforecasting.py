@@ -282,17 +282,14 @@ class _PytorchForecastingAdapter(BaseForecaster):
         ``_predict`` encodes the most recent observations from ``_cur_y``, so
         appending keeps them contiguous with the cutoff, which advances in
         ``update``.
-
-        ``update_params`` has no effect: ``_fit`` builds and trains a new model
-        from scratch, rather than resuming from the current weights, so refitting
-        on every update is prohibitively expensive. To refit on pooled data, use
-        the wrappers in the ``forecasting.stream`` module, e.g. ``UpdateEvery``.
         """
         from sktime.datatypes import update_data
 
         self._cur_y = update_data(self._cur_y, y)
         if X is not None:
             self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        if update_params:
+            self._fit(y=self._cur_y, fh=self._fh, X=self._cur_X)
         return self
 
     def _predict(
