@@ -1116,10 +1116,13 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             _check_soft_dependencies("statsmodels")
             from sktime.forecasting.theta import ThetaForecaster
 
+            # MSTL already decomposes seasonality; the trend forecaster must be
+            # non-seasonal. Default ThetaForecaster uses multiplicative
+            # deseasonalization, which fails on signed test series.
             params = [
                 {
                     "season_length": [3, 12],
-                    "trend_forecaster": ThetaForecaster(),
+                    "trend_forecaster": ThetaForecaster(deseasonalize=False),
                 },
                 {
                     "season_length": 4,
