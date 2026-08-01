@@ -108,6 +108,7 @@ class Toto2Forecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_toto2"],
     }
 
     def __init__(
