@@ -155,7 +155,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DirRecTimeSeriesRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
-        "DistanceFeatures",
         "DummyRegressor",
         "ElasticEnsemble",
         "FeatureSelection",
