@@ -80,7 +80,7 @@ class FreshPRINCE(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["MatthewMiddlehurst"],
-        "python_dependencies": "tsfresh",
+        "python_dependencies": ["tsfresh", ["tsfresh>=0.21", "scipy<1.15"]],
         # estimator type
         # --------------
         "capability:multivariate": True,
