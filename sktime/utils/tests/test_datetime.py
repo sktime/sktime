@@ -16,10 +16,18 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
 from sktime.utils.datetime import (
     _coerce_duration_to_int,
+    _get_duration,
     _get_freq,
     infer_freq,
     set_hier_freq,
 )
+
+# frequencies of non-fixed duration, i.e., not expressible as a pd.Timedelta
+# the "XE" aliases are not available in pandas < 2.1
+NON_FIXED_FREQ_STRS = ["W-WED", "MS", "QS-OCT", "YS-JAN"]
+
+if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
+    NON_FIXED_FREQ_STRS += ["ME", "2ME", "QE-DEC", "YE-DEC", "YE-MAR"]
 
 
 @pytest.mark.skipif(
@@ -77,6 +85,36 @@ def test_coerce_duration_to_int() -> None:
         _coerce_duration_to_int(duration=duration, freq="25T"),
         pd.Index([3, 4], dtype=int),
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils", "sktime.datatypes"]),
+    reason="Run if utils or datatypes module has changed.",
+)
+@pytest.mark.parametrize("freqstr", NON_FIXED_FREQ_STRS)
+def test_get_duration_non_fixed_freq(freqstr) -> None:
+    """Test _get_duration on DatetimeIndex of non-fixed freq, see issue #7883."""
+    index = pd.date_range(start="2000-01-31", periods=9, freq=freqstr)
+    unit = _get_freq(index)
+
+    # index and index element interface must both return the number of intervals
+    assert _get_duration(index, coerce_to_int=True) == 8
+    assert _get_duration(index[-1], index[0], coerce_to_int=True, unit=unit) == 8
+
+    # durations are signed
+    assert _get_duration(index[0], index[-1], coerce_to_int=True, unit=unit) == -8
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils", "sktime.datatypes"]),
+    reason="Run if utils or datatypes module has changed.",
+)
+def test_get_duration_freq_without_period() -> None:
+    """Test informative error if freq has no period equivalent, see issue #7883."""
+    index = pd.date_range(start="2000-01-01", periods=9, freq=pd.offsets.SemiMonthEnd())
+
+    with pytest.raises(ValueError, match="no equivalent period frequency"):
+        _get_duration(index, coerce_to_int=True)
 
 
 @pytest.mark.skipif(
