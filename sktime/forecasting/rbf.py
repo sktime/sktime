@@ -117,7 +117,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         centers=None,
         gamma=1.0,
         rbf_type="gaussian",
-        hidden_layers=[64, 32],
+        hidden_layers=None,
         optimizer="adam",
         lr=0.01,
         epochs=100,
@@ -135,7 +135,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self.centers = centers
         self.gamma = gamma
         self.rbf_type = rbf_type
-        self.hidden_layers = hidden_layers
+        self.hidden_layers = hidden_layers if hidden_layers is not None else [64, 32]
         self.optimizer = optimizer
         self.lr = lr
         self.epochs = epochs

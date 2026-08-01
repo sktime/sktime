@@ -331,7 +331,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
-        self.optimizer_kwargs = {"betas": (0.9, 0.999)} if optimizer == "Adam" else {}
+        self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
