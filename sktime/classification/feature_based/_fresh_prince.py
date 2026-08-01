@@ -88,6 +88,9 @@ class FreshPRINCE(BaseClassifier):
         "capability:train_estimate": True,
         "capability:predict_proba": True,
         "classifier_type": "feature",
+        # test and CI flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
