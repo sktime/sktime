@@ -216,7 +216,10 @@ class VECM(_StatsModelsAdapter):
         if fh_int.min() <= 0:
             # .resid returns np.ndarray
             # both values need to be pd DataFrame for subtraction
-            y_pred_insample = self._y - pd.DataFrame(self._fitted_forecaster.resid)
+            # Use .values to avoid index/column alignment issues
+            y_pred_insample = (
+                self._y.values - pd.DataFrame(self._fitted_forecaster.resid).values
+            )
             y_pred_insample = y_pred_insample.values
 
         if y_pred_insample is not None and y_pred_outsample is not None:
