@@ -11,7 +11,6 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.forecasting.base import (
     BaseForecaster,
     ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
 )
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.singleton import _multiton
@@ -19,7 +18,7 @@ from sktime.utils.singleton import _multiton
 torch = _safe_import("torch")
 
 
-class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class FlowStateForecaster(BaseForecaster):
     """Zero-shot forecaster wrapping IBM FlowState via granite-tsfm.
 
     FlowState, developed by IBM Research, is an encoder-decoder architecture,
