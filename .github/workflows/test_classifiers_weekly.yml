@@ -1,6 +1,8 @@
 name: weekly classifiers test
 
 on:
+  pull_request:
+
   schedule:
     # Runs every Saturday at 03:00 UTC
     - cron: "0 5 * * 6"
@@ -32,6 +34,7 @@ jobs:
         run: |
           python - <<EOF
           import json
+          import sys
           from sktime.registry import all_estimators
 
           from sktime.utils.dependencies._dependencies import _get_lowest_compatible_python_version
@@ -41,6 +44,8 @@ jobs:
           matrix_data = []
           for name, est_class in classifiers:
               py_ver = _get_lowest_compatible_python_version(est_class)
+              if py_ver is None:
+                  py_ver = f"{sys.version_info.major}.{sys.version_info.minor}"
 
               matrix_data.append({
                   "name": name,
