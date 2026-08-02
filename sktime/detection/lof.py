@@ -231,6 +231,7 @@ class SubLOF(BaseDetector):
         """
         if isinstance(X, pd.Series):
             X = X.to_frame()
+        X = X.copy()
         X["__id"] = pd.RangeIndex(len(X))
 
         y_all = []

@@ -305,6 +305,7 @@ class ChronosForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers", "accelerate"],
         # estimator type
         # --------------
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -312,14 +313,16 @@ class ChronosForecaster(BaseForecaster):
         "capability:pred_int": False,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "capability:unequal_length": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.chronos"],
+        "tests:specific": ["sktime.forecasting.tests.test_chronos"],
         "tests:skip_by_name": [  # pickling problems
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
@@ -353,20 +356,16 @@ class ChronosForecaster(BaseForecaster):
         self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
-
-        # set random seed
-        self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
-
-        # initialize model_strategy as None, will be set correctly after loading config.
-        self.model_strategy = None
-
-        # set config
         self.config = config
-        self._config = None
+        self.seed = seed
 
-        self.context = None
+        super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
         elif self.use_source_package:
@@ -374,7 +373,24 @@ class ChronosForecaster(BaseForecaster):
         else:
             self.set_tags(python_dependencies=["torch", "transformers", "accelerate"])
 
-        super().__init__()
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+
+        # initialize model_strategy as None, will be set correctly after loading config.
+        self.model_strategy = None
+
+        # set config
+        self._config = None
+
+        self.context = None
 
         self._initialize_model_type()
 
@@ -423,11 +439,8 @@ class ChronosForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self.model_pipeline = self.model_strategy.create_pipeline(
-            key=self._get_unique_chronos_key(),
-            kwargs=self._get_chronos_kwargs(),
-            use_source_package=self.use_source_package,
-        ).load_from_checkpoint()
+        self.model_pipeline = self._load_pipeline()
+        self._context = y
         return self
 
     def _get_chronos_kwargs(self):
@@ -449,6 +462,37 @@ class ChronosForecaster(BaseForecaster):
             "use_source_package": use_source_package,
         }
         return str(sorted(kwargs_plus_model_path.items()))
+
+    def __getstate__(self):
+        """Return state for pickling, handling unpickleable model pipeline."""
+        state = self.__dict__.copy()
+        if hasattr(self, "model_pipeline"):
+            state["model_pipeline"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state dictionary."""
+        self.__dict__.update(state)
+
+    def _ensure_model_pipeline_loaded(self):
+        """Ensure model pipeline is loaded, recreating if needed after unpickling."""
+        if not hasattr(self, "model_pipeline") or self.model_pipeline is None:
+            if hasattr(self, "_is_fitted") and self._is_fitted:
+                self.model_pipeline = self._load_pipeline()
+
+    def _load_pipeline(self):
+        """Load the model pipeline using the multiton pattern.
+
+        Returns
+        -------
+        pipeline : ChronosPipeline or ChronosBoltPipeline
+            The loaded model pipeline ready for predictions.
+        """
+        return self.model_strategy.create_pipeline(
+            key=self._get_unique_chronos_key(),
+            kwargs=self._get_chronos_kwargs(),
+            use_source_package=self.use_source_package,
+        ).load_from_checkpoint()
 
     def predict(self, fh=None, X=None, y=None):
         """Forecast time series at future horizon.
@@ -536,6 +580,8 @@ class ChronosForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Predicted forecasts.
         """
+        self._ensure_model_pipeline_loaded()
+
         transformers.set_seed(self._seed)
         if fh is not None:
             # needs to be integer not np.int64
@@ -543,7 +589,7 @@ class ChronosForecaster(BaseForecaster):
         else:
             prediction_length = 1
 
-        _y = self._y.copy()
+        _y = self._context.copy()
         if y is not None:
             _y = y.copy()
         _y_df = _y
@@ -551,10 +597,19 @@ class ChronosForecaster(BaseForecaster):
         index_names = _y.index.names
         _y = _y.values.reshape(1, -1, 1)
 
+        model_config = self.model_pipeline.model.config
+        # the ``context_length`` shortcut is only set on sktime's vendored
+        # models; the source ``chronos`` package only exposes it nested
+        # under ``chronos_config`` on the underlying HF model config
+        context_length = (
+            getattr(model_config, "context_length", None)
+            or model_config.chronos_config["context_length"]
+        )
+
         results = []
         for i in range(_y.shape[0]):
             _y_i = _y[i, :, 0]
-            _y_i = _y_i[-self.model_pipeline.model.config.context_length :]
+            _y_i = _y_i[-context_length:]
 
             values = self.model_strategy.predict(
                 self.model_pipeline, torch.Tensor(_y_i), prediction_length, self._config

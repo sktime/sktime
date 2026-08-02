@@ -49,11 +49,13 @@ __all__ = [
     "Longley",
     "Lynx",
     "Macroeconomic",
+    "PBS",
     "ShampooSales",
     "Solar",
     "USChange",
     "ForecastingData",
     "M5Dataset",
+    "ACSF1",
     "ArrowHead",
     "BasicMotions",
     "GunPoint",
@@ -114,6 +116,7 @@ from sktime.datasets._single_problem_loaders import (
 )
 from sktime.datasets.base import BaseDataset
 from sktime.datasets.classification import (
+    ACSF1,
     PLAID,
     ArrowHead,
     BasicMotions,
@@ -124,6 +127,7 @@ from sktime.datasets.classification import (
     UCRUEADataset,
 )
 from sktime.datasets.forecasting import (
+    PBS,
     Airline,
     ForecastingData,
     Longley,

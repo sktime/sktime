@@ -48,14 +48,15 @@ Percentage errors
     :template: class_with_call.rst
 
     MeanAbsolutePercentageError
+    MeanAbsolutePercentageErrorStabilized
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
     MedianSquaredPercentageError
     MeanSquaredErrorPercentage
+    MeanArctangentAbsolutePercentageError
 
 Scaled errors
 ^^^^^^^^^^^^^
-
 
 .. autosummary::
     :toctree: auto_generated/
@@ -76,6 +77,7 @@ Relative errors
     MeanRelativeAbsoluteError
     MedianRelativeAbsoluteError
     RelativeLoss
+    TheilU2
 
 Geometric errors
 ^^^^^^^^^^^^^^^^
@@ -88,6 +90,36 @@ Geometric errors
     GeometricMeanSquaredError
     GeometricMeanRelativeAbsoluteError
     GeometricMeanRelativeSquaredError
+
+Normalized errors
+^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    MSEnormalizedBySD
+    RMSEnormalizedByIQR
+
+Divergence based point prediction errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    KLDivergenceNormal
+    KLDivergenceDoubleExponential
+    KLDivergenceSingleExponential
+
+Benchmark errors
+^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    OverallWeightedAverage
 
 Under- and over-prediction errors
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -204,19 +236,3 @@ Segment detection
     :template: function.rst
 
     RandIndex
-
-
-Legacy detection metrics
-------------------------
-
-These metrics do not follow the standard API and will be deprecated in the future.
-
-.. currentmodule:: sktime.performance_metrics.annotation
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    count_error
-    hausdorff_error
-    prediction_ratio
