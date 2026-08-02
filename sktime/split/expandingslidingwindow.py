@@ -13,7 +13,6 @@ from sktime.split.base._common import (
     DEFAULT_FH,
     DEFAULT_STEP_LENGTH,
     DEFAULT_WINDOW_LENGTH,
-    FORECASTING_HORIZON_TYPES,
     SPLIT_GENERATOR_TYPE,
 )
 from sktime.utils.validation import (
@@ -93,7 +92,7 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
 
     def __init__(
         self,
-        fh: FORECASTING_HORIZON_TYPES = DEFAULT_FH,
+        fh=DEFAULT_FH,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
         max_expanding_window_length: ACCEPTED_WINDOW_LENGTH_TYPES = float("inf"),

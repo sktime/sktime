@@ -66,6 +66,7 @@ Deep learning
     :template: class.rst
 
     convtimenet.ConvTimeNetClassifier
+    convtran.ConvTranClassifierTorch
     cnn.CNNClassifier
     cnn.CNNClassifierTorch
     cntc.CNTCClassifier
@@ -77,7 +78,7 @@ Deep learning
     lstmfcn.LSTMFCNClassifier
     lstmfcn.LSTMFCNClassifierTorch
     macnn.MACNNClassifier
-    macnn.MACCNNClassifierTorch
+    macnn.MACNNClassifierTorch
     mcdcnn.MCDCNNClassifier
     mcdcnn.MCDCNNClassifierTorch
     mlp.MLPClassifier
@@ -87,6 +88,8 @@ Deep learning
     rnn.SimpleRNNClassifierTorch
     tapnet.TapNetClassifier
     tapnet.TapNetClassifierTorch
+    tsai.inceptiontimeplus.InceptionTimePlusClassifier
+
 
 Foundation models
 -----------------

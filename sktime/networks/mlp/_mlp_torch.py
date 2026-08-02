@@ -32,16 +32,14 @@ class MLPNetworkTorch(NNModule):
         Number of features in the hidden state
     n_layers : int, default = 4
         Number of hidden layers.
-    activation : str or None or an instance of activation functions defined in
-        torch.nn, default = None
-        Activation function used in the fully connected output layer. List of supported
-        activation functions: ['sigmoid', 'softmax', 'logsoftmax', 'logsigmoid'].
+    activation : Callable or None, optional (default=None)
+        Activation function used in the fully connected output layer. Recommended
+        Callable instance of 'Sigmoid', 'Softmax', 'LogSoftmax', 'LogSigmoid', None
         If None, then no activation function is applied.
-    activation_hidden : str or None or an instance of activation functions defined in
-        torch.nn, default = "relu"
+    activation_hidden : Callable or None, optional (default=None)
         The activation function applied inside the hidden layers of the MLP.
-        Can be any of "relu", "leakyrelu", "elu", "prelu", "gelu", "selu",
-        "rrelu", "celu", "tanh", "hardtanh".
+        Recommended Callable instance of 'ReLU', 'LeakyReLU', 'ELU', 'PReLU', 'GELU',
+        'SELU', 'RReLU', 'CELU', 'Tanh', 'Hardtanh', None
     bias : bool, default = True
         If False, then the layer does not use bias weights.
     dropout : float or tuple of floats, default = (0.1, 0.2, 0.2, 0.3)
@@ -83,19 +81,18 @@ class MLPNetworkTorch(NNModule):
         num_classes: int,
         hidden_dim: int = 500,
         n_layers: int = 4,
-        activation: str | None | Callable = None,
-        activation_hidden: str | None | Callable = "relu",
+        activation: Callable | None = None,
+        activation_hidden: Callable | None = None,
         bias: bool = True,
         dropout: float | tuple[float, ...] = (0.1, 0.2, 0.2, 0.3),
         fc_dropout: float = 0.0,
         random_state: int = 0,
     ):
+        super().__init__()
         self.input_shape = input_shape
         self.num_classes = num_classes
         self.hidden_dim = hidden_dim
         self.n_layers = n_layers
-        self.activation = activation
-        self.activation_hidden = activation_hidden
         self.bias = bias
         self.dropout = dropout
         # dropout type checking
@@ -113,7 +110,8 @@ class MLPNetworkTorch(NNModule):
             )
         self.fc_dropout = fc_dropout
         self.random_state = random_state
-        super().__init__()
+        self.activation = activation
+        self.activation_hidden = activation_hidden
 
         # Checking input dimensions
         if isinstance(self.input_shape, tuple):
@@ -139,6 +137,7 @@ class MLPNetworkTorch(NNModule):
         layers.append(nnFlatten())
 
         prev_dim = in_features
+
         # defining the hidden layers
         nnLinear = _safe_import("torch.nn.Linear")
         nnDropout = _safe_import("torch.nn.Dropout")
@@ -156,7 +155,7 @@ class MLPNetworkTorch(NNModule):
                 )
             )
             if self.activation_hidden:
-                layers.append(self._instantiate_activation(layer="hidden"))
+                layers.append(self.activation_hidden)
             prev_dim = self.hidden_dim
 
         # defining the model
@@ -172,7 +171,7 @@ class MLPNetworkTorch(NNModule):
             bias=self.bias,
         )
         if self.activation:
-            self._activation = self._instantiate_activation(layer="output")
+            self.activation = self.activation
 
     def forward(self, X):
         """Forward pass through the network.
@@ -198,79 +197,5 @@ class MLPNetworkTorch(NNModule):
             out = self.out_dropout(out)
         out = self.fc(out)
         if self.activation:
-            out = self._activation(out)
+            out = self.activation(out)
         return out
-
-    def _instantiate_activation(self, layer):
-        """Instantiate the activation function to be applied within the MLP.
-
-        Parameters
-        ----------
-        layer : str
-            The name of the layer for which to instantiate the activation function.
-            Can be either 'output' or 'hidden'.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied on the output layer.
-        """
-        if layer == "hidden":
-            if isinstance(self.activation_hidden, NNModule):
-                return self.activation_hidden
-            elif isinstance(self.activation_hidden, str):
-                if self.activation_hidden.lower() == "relu":
-                    return _safe_import("torch.nn.ReLU")()
-                elif self.activation_hidden.lower() == "leakyrelu":
-                    return _safe_import("torch.nn.LeakyReLU")()
-                elif self.activation_hidden.lower() == "elu":
-                    return _safe_import("torch.nn.ELU")()
-                elif self.activation_hidden.lower() == "prelu":
-                    return _safe_import("torch.nn.PReLU")()
-                elif self.activation_hidden.lower() == "gelu":
-                    return _safe_import("torch.nn.GELU")()
-                elif self.activation_hidden.lower() == "selu":
-                    return _safe_import("torch.nn.SELU")()
-                elif self.activation_hidden.lower() == "rrelu":
-                    return _safe_import("torch.nn.RReLU")()
-                elif self.activation_hidden.lower() == "celu":
-                    return _safe_import("torch.nn.CELU")()
-                elif self.activation_hidden.lower() == "tanh":
-                    return _safe_import("torch.nn.Tanh")()
-                elif self.activation_hidden.lower() == "hardtanh":
-                    return _safe_import("torch.nn.Hardtanh")()
-                else:
-                    raise ValueError(
-                        "If `activation_hidden` is not None, it must be one of "
-                        "'relu', 'leakyrelu', 'elu', 'prelu', 'gelu', 'selu', "
-                        "'rrelu', 'celu', 'tanh', 'hardtanh'. "
-                        f"But found {self.activation_hidden}"
-                    )
-            else:
-                raise TypeError(
-                    "`activation_hidden` should either be of type torch.nn.Module or"
-                    f" str. But found the type to be: {type(self.activation_hidden)}"
-                )
-        elif layer == "output":
-            if isinstance(self.activation, NNModule):
-                return self.activation
-            elif isinstance(self.activation, str):
-                if self.activation.lower() == "sigmoid":
-                    return _safe_import("torch.nn.Sigmoid")()
-                elif self.activation.lower() == "softmax":
-                    return _safe_import("torch.nn.Softmax")(dim=1)
-                elif self.activation.lower() == "logsoftmax":
-                    return _safe_import("torch.nn.LogSoftmax")(dim=1)
-                elif self.activation.lower() == "logsigmoid":
-                    return _safe_import("torch.nn.LogSigmoid")()
-                else:
-                    raise ValueError(
-                        "If `activation` is not None, it must be one of "
-                        "'sigmoid', 'logsigmoid', 'softmax' or 'logsoftmax'. "
-                        f"Found {self.activation}"
-                    )
-            else:
-                raise TypeError(
-                    "`activation` should either be of type str or torch.nn.Module. "
-                    f"But found the type to be: {type(self.activation)}"
-                )

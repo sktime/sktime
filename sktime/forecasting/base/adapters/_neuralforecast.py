@@ -9,13 +9,9 @@ from typing import Literal
 
 import numpy as np
 import pandas
+from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
@@ -26,7 +22,7 @@ _SUPPORTED_LOCAL_SCALAR_TYPES = Literal[
 ]
 
 
-class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class _NeuralForecastAdapter(BaseForecaster):
     """Base adapter class for NeuralForecast models.
 
     Parameters
@@ -410,7 +406,7 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
             self.target_col: y.to_numpy().flatten(),
         }
         if self.futr_exog_list and X is None:
-            raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
+            raise ValueError("Missing exogenous data, 'futr_exog_list' is non-empty.")
 
         if self.futr_exog_list:
             for column in self.futr_exog_list:
@@ -517,7 +513,7 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         y = self._y
 
         if self.futr_exog_list and X is None:
-            raise ValueError("Missing exogeneous data, 'futr_exog_list' is non-empty.")
+            raise ValueError("Missing exogenous data, 'futr_exog_list' is non-empty.")
 
         if self.futr_exog_list:
             X_time_index = X.index.get_level_values(-1)

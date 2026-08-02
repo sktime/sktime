@@ -70,7 +70,7 @@ class MyDetector(BaseDetector):
         # valid values: "unsupervised", "supervised", "semi_supervised"
         #
         # capability:multivariate controls whether internal X can be multivariate
-        # if True (only univariate), always applies vectorization over variables
+        # if False (only univariate), always applies vectorization over variables
         "capability:multivariate": False,
         # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
@@ -96,7 +96,7 @@ class MyDetector(BaseDetector):
         #   in that case, X/y are passed through without conversion if on the list
         #   if not on the list, converted to the first entry of the same scitype
         #
-        "distribution_type": "None",  # Tag to determine test in test_all_annotators
+        "distribution_type": "None",  # Tag to determine test in test_all_detectors
         #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
@@ -317,7 +317,7 @@ class MyDetector(BaseDetector):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for annotators.
+            There are currently no reserved values for detectors.
 
         Returns
         -------

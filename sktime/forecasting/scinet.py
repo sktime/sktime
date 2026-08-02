@@ -260,22 +260,27 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         -------
         params : dict or list of dict
         """
+        # seq_len + pred_len must not exceed the shortest series used by the
+        # generic forecaster/pretrain test suite (10 timepoints), otherwise
+        # the training dataloader ends up with zero samples, see #10493, #10279
         params = [
             {
-                "seq_len": 8,
-                "pred_len": 3,
+                "seq_len": 4,
+                "pred_len": 2,
+                "num_levels": 1,
                 "lr": 0.005,
                 "optimizer": "Adam",
                 "batch_size": 1,
                 "num_epochs": 1,
             },
             {
-                "seq_len": 16,
-                "pred_len": 4,
+                "seq_len": 4,
+                "pred_len": 3,
+                "num_levels": 1,
                 "lr": 0.001,
                 "optimizer": "Adam",
-                "batch_size": 4,
-                "num_epochs": 2,
+                "batch_size": 1,
+                "num_epochs": 1,
             },
         ]
 

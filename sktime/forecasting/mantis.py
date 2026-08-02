@@ -8,11 +8,11 @@ from copy import deepcopy
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.linear_model import Ridge
 from sklearn.multioutput import MultiOutputRegressor
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.singleton import _multiton
 
 
@@ -104,10 +104,15 @@ class MantisForecaster(BaseForecaster):
 
         self.trainer_ = None
 
-        if ignore_deps:
-            self.set_tags(python_dependencies=[])
-
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.ignore_deps:
+            self.set_tags(python_dependencies=[])
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable trainer."""

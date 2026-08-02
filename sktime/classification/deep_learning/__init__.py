@@ -4,9 +4,13 @@ __all__ = [
     "CNNClassifier",
     "CNNClassifierTorch",
     "CNTCClassifier",
+    "ConvTimeNetClassifier",
     "FCNClassifier",
+    "GRUClassifier",
+    "GRUFCNNClassifier",
     "InceptionTimeClassifier",
     "InceptionTimeClassifierTorch",
+    "InceptionTimePlusClassifier",
     "LSTMFCNClassifier",
     "MACNNClassifier",
     "MACNNClassifierTorch",
@@ -19,10 +23,6 @@ __all__ = [
     "SimpleRNNClassifierTorch",
     "TapNetClassifier",
     "TapNetClassifierTorch",
-    "GRUClassifier",
-    "GRUFCNNClassifier",
-    "ConvTimeNetClassifier",
-    "InceptionTimePlusClassifier"
 ]
 
 from sktime.classification.deep_learning.cnn import (
