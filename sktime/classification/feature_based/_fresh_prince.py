@@ -271,6 +271,6 @@ class FreshPRINCE(BaseClassifier):
         params2 = {
             "n_estimators": 3,
             "default_fc_parameters": "efficient",
-            "save_transformed_data": False,
+            "save_transformed_data": True,
         }
         return [params1, params2]
