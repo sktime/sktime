@@ -263,7 +263,7 @@ def _roc_auc_score(y_score, y_true):
         else:
             return np.nan
 
-    if _check_soft_dependencies("numpy<2"):
+    if _check_soft_dependencies("numpy<2", severity="none"):
         trapz = np.trapz
     else:
         trapz = np.trapezoid
