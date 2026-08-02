@@ -6,8 +6,10 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
+import io
 import numbers
 import os
+import sys
 import types
 from copy import deepcopy
 from inspect import getfullargspec, isclass, signature
@@ -62,7 +64,6 @@ def subsample_by_version_os(x):
     Currently assumes that matrix includes py3.8-3.10, and win/ubuntu/mac.
     """
     import platform
-    import sys
 
     ix = sys.version_info.minor % 3
     os_str = platform.system()
@@ -743,7 +744,6 @@ class QuickTester:
         return fixture_vars_return, fixture_prod_return, fixture_names_return
 
     def _make_builtin_fixture_equivalents(self, name):
-        import io
         import logging
         import tempfile
         from pathlib import Path
@@ -1255,6 +1255,13 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 else:
                     assert param_value == param.default, param.name
 
+    LEGACY_DEPRECATED_TAGS = [
+        "univariate-only",
+        "ignores-exogeneous-X",
+        "python_dependencies_alias",
+        "univariate-metric",
+    ]
+
     def test_valid_estimator_class_tags(self, estimator_class):
         """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
         for tag in estimator_class.get_class_tags().keys():
@@ -1267,20 +1274,24 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         from sktime.base._base import TagAliaserMixin
 
-        ALIAS_DICT = TagAliaserMixin.alias_dict
+        ALIAS_DICT = TagAliaserMixin.alias_dict.copy()
+
+        forbidden_tags = self.LEGACY_DEPRECATED_TAGS + list(ALIAS_DICT.keys())
+
+        # todo 1.2.0: remove the exception for capability:global_forecasting
+        # for now, the tag is still fine due to special deprecation process
+        forbidden_tags.remove("capability:global_forecasting")
 
         for tag in estimator_class._get_class_flags(flag_attr_name="_tags"):
-            if tag in ALIAS_DICT:
-                # todo 1.1.0: remove this exception once forecaster tag deprecation done
-                object_type = estimator_class.get_class_tag("object_type")
-                # special case: "scitype:y" deprecated only for forecasters
-                if tag == "scitype:y" and not object_type == "forecaster":
-                    continue
+            if tag in forbidden_tags:
                 msg = (
                     f"{estimator_class} has deprecated tag: {tag!r} - "
-                    f"please follow deprecation guide from sktime release notes "
-                    f"and replace with {ALIAS_DICT[tag]!r}"
+                    f"please follow deprecation guide from sktime release notes"
                 )
+                if tag in ALIAS_DICT and ALIAS_DICT[tag] != "":
+                    msg += f" and replace with {ALIAS_DICT[tag]!r}"
+                else:
+                    msg += "."
                 raise AssertionError(msg)
 
     def test_valid_estimator_tags(self, estimator_instance):
@@ -1295,21 +1306,24 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
         from sktime.base._base import TagAliaserMixin
 
-        ALIAS_DICT = TagAliaserMixin.alias_dict
+        ALIAS_DICT = TagAliaserMixin.alias_dict.copy()
+
+        forbidden_tags = self.LEGACY_DEPRECATED_TAGS + list(ALIAS_DICT.keys())
+
+        # todo 1.2.0: remove the exception for capability:global_forecasting
+        # for now, the tag is still fine due to special deprecation process
+        forbidden_tags.remove("capability:global_forecasting")
 
         for tag in estimator_instance._get_flags(flag_attr_name="_tags"):
-            if tag in ALIAS_DICT:
-                # todo 1.1.0: remove this exception once forecaster tag deprecation done
-                # specifically, deprecation of the capability:multivariate aliasing
-                object_type = estimator_instance.get_tag("object_type")
-                # special case: "scitype:y" deprecated only for forecasters
-                if tag == "scitype:y" and not object_type == "forecaster":
-                    break
+            if tag in forbidden_tags:
                 msg = (
                     f"{estimator_instance} has deprecated tag: {tag!r} - "
-                    f"please follow deprecation guide from sktime release notes "
-                    f"and replace with {ALIAS_DICT[tag]!r}"
+                    f"please follow deprecation guide from sktime release notes"
                 )
+                if tag in ALIAS_DICT and ALIAS_DICT[tag] != "":
+                    msg += f" and replace with {ALIAS_DICT[tag]!r}"
+                else:
+                    msg += "."
                 raise AssertionError(msg)
 
     def test_random_tags(self, estimator_class):
