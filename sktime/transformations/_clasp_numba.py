@@ -205,6 +205,9 @@ def _binary_f1_score(y_true, y_pred):
     return np.mean(f1_scores)
 
 
+NUMPY1 = _check_soft_dependencies("numpy<2", severity="none")
+
+
 @njit(fastmath=True, cache=True)
 def _roc_auc_score(y_score, y_true):
     """Compute roc-auc score.
@@ -263,7 +266,7 @@ def _roc_auc_score(y_score, y_true):
         else:
             return np.nan
 
-    if _check_soft_dependencies("numpy<2", severity="none"):
+    if NUMPY1:
         trapz = np.trapz
     else:
         trapz = np.trapezoid
