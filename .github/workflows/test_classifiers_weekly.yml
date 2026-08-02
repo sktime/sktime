@@ -18,9 +18,9 @@ jobs:
       classifiers: ${{ steps.get.outputs.classifiers }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -68,9 +68,9 @@ jobs:
         classifier: ${{ fromJson(needs.collect-classifiers.outputs.classifiers) }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.classifier.python_version }}
 

@@ -70,7 +70,7 @@ class MyDetector(BaseDetector):
         # valid values: "unsupervised", "supervised", "semi_supervised"
         #
         # capability:multivariate controls whether internal X can be multivariate
-        # if True (only univariate), always applies vectorization over variables
+        # if False (only univariate), always applies vectorization over variables
         "capability:multivariate": False,
         # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
