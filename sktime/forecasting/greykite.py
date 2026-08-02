@@ -90,6 +90,7 @@ class GreykiteForecaster(BaseForecaster):
             "test_save_estimators_to_file",
             "test_update_predict_predicted_index",
             "test_deepcopy_fitted_predict",
+            "test_deepcopy_fitted",
         ],
         "tests:python_dependencies": ["prophet", "setuptools<82"],
     }
