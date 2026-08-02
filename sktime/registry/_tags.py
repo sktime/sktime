@@ -3728,7 +3728,7 @@ ESTIMATOR_TAG_REGISTER = [
     ),
     (
         "remember_data",
-        ["forecaster", "transformer"],
+        ["transformer"],
         "bool",
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),

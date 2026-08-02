@@ -481,13 +481,8 @@ def test_range_fh_in_predict():
     assert var_predictions.shape == (10 * 2, 5)
 
 
-from sktime.forecasting.base import BaseForecaster
-
-
 @pytest.mark.skipif(
-    # legacy default is not depricated yet
-    BaseForecaster().get_config()["remember_data"]
-    or not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
 def test_base_forecaster_does_not_store_y_X():
