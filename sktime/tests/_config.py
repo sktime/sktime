@@ -144,7 +144,6 @@ EXCLUDED_TESTS = {
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "CNTCNetwork",
-        "ClaSPTransformer",
         "ClearSky",
         "ContractableBOSS",
         "DOBIN",
