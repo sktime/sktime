@@ -17,6 +17,10 @@ class GreykiteForecaster(BaseForecaster):
     This forecaster wraps Greykite forecast_pipeline (configured via a ForecastConfig)
     and exposes a sktime-compatible API.
 
+    Data passed in ``y`` and ``X`` should have a ``pandas.DatetimeIndex``. If a
+    non-datetime index is passed, a default daily ``DatetimeIndex`` starting at
+    ``2000-01-01`` is created for Greykite internally.
+
     WARNING: the ``greykite`` package has very restrictive dependencies that typically
     prevent installation together with other packages. For this reason, this estimator
     is also not covered by regular tests. We therefore recommend to run
@@ -49,7 +53,7 @@ class GreykiteForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.greykite import GreykiteForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> y = load_airline()
+    >>> y = load_airline().to_timestamp()
     >>> fh = ForecastingHorizon([1, 2, 3])
     >>> forecaster = GreykiteForecaster()
     >>> forecaster.fit(y=y, fh=fh)  # doctest: +SKIP
@@ -133,6 +137,15 @@ class GreykiteForecaster(BaseForecaster):
         self._forecast = None
         self._X = None
 
+    @staticmethod
+    def _ensure_datetime_index(y):
+        """Ensure ``y`` has a DatetimeIndex; otherwise create a default daily one."""
+        if y is None or isinstance(y.index, pd.DatetimeIndex):
+            return y
+        y = y.copy()
+        y.index = pd.date_range("2000-01-01", periods=len(y), freq="D")
+        return y
+
     def _create_forecast_config(self, y=None):
         """Create a ForecastConfig object if one wasn't provided."""
         from copy import deepcopy
@@ -140,16 +153,7 @@ class GreykiteForecaster(BaseForecaster):
         if self.forecast_config is not None:
             return deepcopy(self.forecast_config)
 
-        # If frequency is not provided, try to infer it from the index.
-        if y is not None:
-            if isinstance(y.index, pd.PeriodIndex):
-                freq = y.index.freqstr
-            else:
-                freq = pd.infer_freq(y.index)
-        else:
-            freq = None
-
-        # Set train_end_date explicitly using the maximum timestamp in y
+        freq = pd.infer_freq(y.index) if y is not None else None
         train_end_date = y.index.max() if y is not None else None
 
         from greykite.framework.templates.autogen.forecast_config import (
@@ -196,8 +200,9 @@ class GreykiteForecaster(BaseForecaster):
                 "The forecasting horizon `fh` must be provided in the `fit` method."
             )
 
-        if isinstance(y.index, pd.PeriodIndex):
-            y.index = y.index.to_timestamp()
+        y = self._ensure_datetime_index(y)
+        X = self._ensure_datetime_index(X)
+
         # Convert y into a DataFrame with columns "ts" and "y".
         df = pd.DataFrame({"ts": y.index, "y": y.values})
 
@@ -209,11 +214,8 @@ class GreykiteForecaster(BaseForecaster):
 
         # Create the forecast configuration if not already provided.
         fc = self._create_forecast_config(y)
-        if hasattr(fh, "to_numpy"):
-            steps = fh.to_numpy()
-        else:
-            steps = np.array(list(fh), dtype=int)
-        fc.forecast_horizon = int(steps.max())
+        steps = fh.to_relative(self.cutoff).to_numpy()
+        fc.forecast_horizon = int(np.max(steps))
         self._forecast_config = fc
 
         # Fit the model using Greykite's forecast_pipeline.
@@ -231,21 +233,10 @@ class GreykiteForecaster(BaseForecaster):
         if fh is None:
             fh = self._fh
         forecast_df = self._forecaster.forecast.df_test
-        if hasattr(fh, "to_numpy"):
-            steps = fh.to_numpy()
-        else:
-            steps = np.array(list(fh), dtype=int)
-        # compute zero-based positions
+        steps = fh.to_relative(self.cutoff).to_numpy()
         positions = (steps - 1).astype(int)
-
-        time_col = self._forecaster.forecast.time_col
-        times = forecast_df[time_col].values
-        preds = forecast_df["forecast"].values
-        selected_times = times[positions]
-        selected_preds = preds[positions]
-
-        y_pred = pd.Series(selected_preds, index=selected_times)
-        return y_pred
+        selected_preds = forecast_df["forecast"].values[positions]
+        return pd.Series(selected_preds, index=fh.to_absolute_index(self.cutoff))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
