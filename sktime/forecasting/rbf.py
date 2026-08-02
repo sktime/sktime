@@ -206,7 +206,9 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             Prediction length (output dimension for direct mode, ignored for AR).
         """
         output_size = fh if self.mode == "direct" else 1
-        hidden_layers = self.hidden_layers if self.hidden_layers is not None else [64, 32]
+        hidden_layers = (
+            self.hidden_layers if self.hidden_layers is not None else [64, 32]
+        )
 
         return RBFNetwork(
             input_size=self.window_length,

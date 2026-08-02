@@ -376,8 +376,12 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
-        conv_layers = self.conv_layers if self.conv_layers is not None else [128, 256, 128]
-        kernel_sizes = self.kernel_sizes if self.kernel_sizes is not None else [7, 5, 3]
+        conv_layers = (
+            self.conv_layers if self.conv_layers is not None else [128, 256, 128]
+        )
+        kernel_sizes = (
+            self.kernel_sizes if self.kernel_sizes is not None else [7, 5, 3]
+        )
         return GRUFCNN(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
