@@ -133,12 +133,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         #  "dask": uses `dask`, requires `dask` package in environment
         #  "ray": uses `ray`, requires `ray` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
-        "remember_data": True,  # whether to remember data in fit - self._X, self._y
+        "remember_data": False,  # whether to remember data in fit - self._X, self._y
     }
 
     _config_doc = {
         "remember_data": """
-        remember_data : bool, default=True
+        remember_data : bool, default=False
             whether self._X and self._y are stored in fit, and updated
             in update. If True, self._X and self._y are stored and updated.
             If False, self._X and self._y are not stored and updated.
