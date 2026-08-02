@@ -138,6 +138,7 @@ class VmdTransformer(BaseTransformer):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:libs": ["sktime.libs.vmdpy"],
+        "tests:specific": ["sktime.transformations.tests.test_vmd"],
     }
 
     def __init__(

@@ -5,11 +5,7 @@ import warnings
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
 
@@ -18,7 +14,7 @@ empty_cache = _safe_import("torch.cuda.empty_cache")
 Dataset = _safe_import("torch.utils.data.Dataset")
 
 
-class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class MomentFMForecaster(BaseForecaster):
     """
     Interface for forecasting with the deep learning time series model momentfm.
 
@@ -136,7 +132,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = MomentFMForecaster(seq_len = 2)
     >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
-    >>> y_pred = forecaster.predict(y = y) # doctest: +SKIP
+    >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 
     _tags = {
@@ -169,6 +165,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # "tests:vm": True, # skip all tests temporarily, issue tracked in #10083
         "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
         "tests:libs": ["sktime.libs.momentfm"],
+        "tests:specific": ["sktime.forecasting.tests.test_momentfm"],
     }
 
     def __init__(
@@ -423,6 +420,8 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             )
         else:  # this means sequence_length = self._seq_len == 512
             input_mask = _create_mask(self._moment_seq_len)
+        # broadcast the per-timestep mask to all instances in the batch
+        input_mask = input_mask.unsqueeze(0).repeat(num_instances, 1)
         if num_channels != self._y_shape[1]:
             raise ValueError(
                 "The number of multivariate time series "
@@ -436,7 +435,7 @@ class MomentFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # returns a timeseriesoutput object
         y_torch_input = from_numpy(y_).float().to(self._device)
         input_mask = input_mask.to(self._device)
-        output = self.model(x_enc=y_torch_input, mask=input_mask)
+        output = self.model(x_enc=y_torch_input, input_mask=input_mask)
         forecast_output = output.forecast
         # forecast_output = forecast_output.squeeze(0)
 
@@ -580,7 +579,7 @@ def _run_epoch(
         input_mask = data["input_mask"]
         forecast = data["future_y"]
         with torch.cuda.amp.autocast():
-            output = model(x_enc=timeseries, mask=input_mask)
+            output = model(x_enc=timeseries, input_mask=input_mask)
         loss = criterion(output.forecast, forecast)
 
         accelerator.backward(loss)
@@ -612,7 +611,7 @@ def _run_epoch(
                 forecast = data["future_y"]
 
                 with torch.cuda.amp.autocast():
-                    output = model(x_enc=timeseries, mask=input_mask)
+                    output = model(x_enc=timeseries, input_mask=input_mask)
 
                 loss = criterion(output.forecast, forecast)
                 losses.append(loss.item())
