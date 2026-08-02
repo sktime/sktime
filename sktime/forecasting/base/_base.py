@@ -514,7 +514,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            self._fit(y=self._y, X=self._X, fh=fh)
+            if self.get_config()["remember_data"]:
+                self._fit(y=self._y, X=self._X, fh=fh)
+            else:
+                self._fit(y=y_inner, X=X_inner, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
@@ -685,7 +688,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
-            self._fit(y=self._y, X=self._X, fh=fh)
+            if self.get_config()["remember_data"]:
+                self._fit(y=self._y, X=self._X, fh=fh)
+            else:
+                self._fit(y=y_inner, X=X_inner, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
