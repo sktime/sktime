@@ -238,7 +238,7 @@ def _evaluate_window(x, meta):
             forecaster.fit(y=y_train, X=X_train, fh=fh)
         else:  # if strategy in ["update", "no-update_params"]:
             update_params = strategy == "update"
-            forecaster.update(y_hist, X_hist, update_params=update_params)
+            forecaster.update(y_train, X_train, update_params=update_params)
         fit_time = time.perf_counter() - start_fit
 
         # predict based on metrics
