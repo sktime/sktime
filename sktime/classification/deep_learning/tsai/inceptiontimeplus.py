@@ -47,6 +47,9 @@ class InceptionTimePlusClassifier(BaseTsaiClassifier):
     _tags = {
         "authors" : ["oguiza", "agolinski"],
         "maintainers" : ["obaidsafi51"]
+        # ci and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
