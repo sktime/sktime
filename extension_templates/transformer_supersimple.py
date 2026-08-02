@@ -76,7 +76,7 @@ class MyTransformer(BaseTransformer):
     and so on
     """
 
-    # todo: fill in univariate-only tag
+    # todo: fill in capability:multivariate tag
     _tags = {
         # capability:multivariate controls whether internal X can be multivariate
         # if False (only univariate), always applies vectorization over variables
