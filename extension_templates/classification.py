@@ -107,6 +107,14 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:class_weight": False,  # ability to handle class weights
+        #
+        # capability:random_state: does the classifier accept/use random_state?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # property:randomness: type of randomness in the classifier
+        "property:randomness": "none",
+        # valid values: "none", "free", "fixed"
     }
 
     # todo: add any hyper-parameters and components to constructor
