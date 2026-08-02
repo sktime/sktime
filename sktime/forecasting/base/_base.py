@@ -162,6 +162,16 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         if self.get_config()["remember_data"]:
             self._y = None
             self._X = None
+            warn(
+                "``remember_data`` is deprecated and will be removed in a future "
+                "version. In future, ``BaseForecaster`` will no longer store "
+                "incremental data in ``_X`` and ``_y`` attributes."
+                "Turn off this warning by setting ``remember_data=False`` in your"
+                " forecaster's config and use ``UpdateRefitsEvery`` with "
+                "``refit_interval=0`` instead to store incremental data and refit "
+                "on every update.",
+                FutureWarning,
+            )
 
         # this block has a double purpose:
         # - emit a warning if dependencies are not met, but allow instantiation
