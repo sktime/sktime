@@ -135,7 +135,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         self.centers = centers
         self.gamma = gamma
         self.rbf_type = rbf_type
-        self.hidden_layers = hidden_layers if hidden_layers is not None else [64, 32]
+        self.hidden_layers = hidden_layers
         self.optimizer = optimizer
         self.lr = lr
         self.epochs = epochs
@@ -206,6 +206,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             Prediction length (output dimension for direct mode, ignored for AR).
         """
         output_size = fh if self.mode == "direct" else 1
+        hidden_layers = self.hidden_layers if self.hidden_layers is not None else [64, 32]
 
         return RBFNetwork(
             input_size=self.window_length,
@@ -214,7 +215,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
             centers=self.centers,
             gamma=self.gamma,
             rbf_type=self.rbf_type,
-            hidden_layers=self.hidden_layers,
+            hidden_layers=hidden_layers,
             mode=self.mode,
             activation=self.activation,
             dropout_rate=self.dropout_rate,
