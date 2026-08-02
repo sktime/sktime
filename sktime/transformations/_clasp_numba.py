@@ -4,6 +4,7 @@ __author__ = ["ermshaua", "patrickzib"]
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.transformations.matrix_profile._mp_features import _sliding_dot_products
 from sktime.utils.numba.njit import njit
@@ -262,7 +263,12 @@ def _roc_auc_score(y_score, y_true):
         else:
             return np.nan
 
-    area = direction * np.trapz(tpr, fpr)
+    if _check_soft_dependencies("numpy<2"):
+        trapz = np.trapz
+    else:
+        trapz = np.trapezoid
+
+    area = direction * trapz(tpr, fpr)
     return area
 
 

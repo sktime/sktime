@@ -74,6 +74,10 @@ class ClaSPTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:multivariate": False,
         "fit_is_empty": True,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.transformations._clasp_numba"],
     }
 
     def __init__(
