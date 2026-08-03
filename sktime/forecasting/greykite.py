@@ -236,7 +236,11 @@ class GreykiteForecaster(BaseForecaster):
         steps = fh.to_relative(self.cutoff).to_numpy()
         positions = (steps - 1).astype(int)
         selected_preds = forecast_df["forecast"].values[positions]
-        return pd.Series(selected_preds, index=fh.to_absolute_index(self.cutoff))
+        return pd.Series(
+            selected_preds,
+            index=fh.to_absolute_index(self.cutoff),
+            name=self._y.name,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
