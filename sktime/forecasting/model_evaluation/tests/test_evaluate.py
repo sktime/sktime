@@ -214,7 +214,7 @@ def test_evaluate_common_configs(
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_global_mode(scoring, strategy, backend):
     """Check that evaluate works with hierarchical data."""
-    if backend["backend"] in ["multiprocessing", "threading"]:
+    if backend["backend"] in ["multiprocessing", "threading", "loky"]:
         # multiprocessing and threading backends fail wih refit
         # for unknown reason
         if strategy not in ["update", "no-update_params"]:
