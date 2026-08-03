@@ -9,6 +9,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.split import temporal_train_test_split
 from sktime.utils.singleton import _multiton
 
 
@@ -114,6 +115,10 @@ class TimeMoEForecaster(BaseForecaster):
         Additionally, the following arguments are supported:
         - min_learning_rate: float, default=0
             Minimum learning rate for cosine_schedule
+
+    validation_split : float or None, default=0.2
+        Fraction of data reserved for evaluation when :meth:`pretrain` is used.
+        If ``None``, no evaluation dataset is created.
 
     device : str, dict, int, or torch.device, default="cpu"
         Device placement following the ``transformers`` ``device_map`` naming
@@ -222,6 +227,7 @@ class TimeMoEForecaster(BaseForecaster):
         context_length: int = 1024,
         stride: int = None,
         training_args: dict = None,
+        validation_split: float | None = 0.2,
         device="cpu",
         dtype=None,
     ):
@@ -232,6 +238,7 @@ class TimeMoEForecaster(BaseForecaster):
         self.ignore_deps = ignore_deps
         self.context_length = context_length
         self.stride = stride
+        self.validation_split = validation_split
         self.training_args = training_args
         self.device = device
         self.dtype = dtype
@@ -287,12 +294,29 @@ class TimeMoEForecaster(BaseForecaster):
 
         self.model_ = self._load_model()
 
+        if self.validation_split is not None:
+            y_train, y_eval = temporal_train_test_split(
+                y, test_size=self.validation_split
+            )
+        else:
+            y_train = y
+            y_eval = None
+
         train_ds = TimeMoEWindowDataset(
-            SeriesListDataset(_prepare_series_list(y)),
+            SeriesListDataset(_prepare_series_list(y_train)),
             context_length=self.context_length,
             prediction_length=0,
             stride=self.stride,
         )
+
+        eval_dataset = None
+        if self.validation_split is not None:
+            eval_dataset = TimeMoEWindowDataset(
+                SeriesListDataset(_prepare_series_list(y_eval)),
+                context_length=self.context_length,
+                prediction_length=0,
+                stride=self.stride,
+            )
 
         training_args = (
             deepcopy(self.training_args) if self.training_args is not None else {}
@@ -305,6 +329,7 @@ class TimeMoEForecaster(BaseForecaster):
             model=self.model_,
             args=training_args,
             train_dataset=train_ds,
+            eval_dataset=eval_dataset,
         )
         trainer.train()
 
@@ -554,6 +579,7 @@ class TimeMoEForecaster(BaseForecaster):
                 "device": "cpu",
                 "context_length": 8,
                 "stride": 1,
+                "validation_split": 0.2,
                 "training_args": training_args,
             },
             {  # from-scratch model with dense attention
@@ -567,6 +593,7 @@ class TimeMoEForecaster(BaseForecaster):
                 "device": "cpu",
                 "context_length": 8,
                 "stride": 1,
+                "validation_split": None,
                 "training_args": training_args,
             },
             {  # pretrained model
@@ -574,6 +601,7 @@ class TimeMoEForecaster(BaseForecaster):
                 "device": "cpu",
                 "context_length": 8,
                 "stride": 1,
+                "validation_split": None,
                 "training_args": training_args,
             },
         ]
