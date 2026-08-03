@@ -129,7 +129,7 @@ class TotoForecaster(BaseForecaster):
         "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3", "setuptools<82"],
         # CI and test flags
         # -----------------
-        "capability:pretrain": True,       
+        "capability:pretrain": True,
         "tests:vm": True,  # run tests on own VM?
         "tests:specific": ["sktime.forecasting.tests.test_toto"],
     }
