@@ -485,7 +485,7 @@ class MOIRAIForecaster(BaseForecaster):
             pred_df, target, feat_dynamic_real, future_length, _target_name
         )
 
-        predictor = self.model.create_predictor(
+        predictor = self.model_.create_predictor(
             batch_size=self.batch_size,
             device=self.map_location or "auto",
         )
