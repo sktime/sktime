@@ -8,6 +8,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.benchmarking._benchmarking_dataclasses import (
+    FoldResults,
     ResultObject,
     TaskObject,
 )
@@ -123,6 +124,15 @@ class FailedExperimentRecord:
     exception_message: str
 
 
+def _is_failed_result(result: ResultObject) -> bool:
+    """Return whether a result is a placeholder for a failed validation run."""
+    if not result.folds:
+        return True
+    first_fold = next(iter(result.folds.values()))
+    fit_time = first_fold.scores.get("fit_time")
+    return fit_time is not None and pd.isna(fit_time)
+
+
 @dataclass
 class _BenchmarkingResults:
     """In-memory container for benchmark results.
@@ -206,7 +216,9 @@ class _BenchmarkingResults:
             exists in the in-memory result list.
         """
         return any(
-            result.task_id == task_id and result.model_id == model_id
+            result.task_id == task_id
+            and result.model_id == model_id
+            and not _is_failed_result(result)
             for result in self.results
         )
 
@@ -638,6 +650,7 @@ class BaseBenchmark:
                     failure.exception_type,
                     failure.exception_message,
                 )
+                results.update(self._make_failed_result(task_id, estimator_id, task))
                 continue
 
             results.update(
@@ -720,6 +733,32 @@ class BaseBenchmark:
             Summary of benchmark run for all completed experiments.
         """
         return self._run(output_file, force_rerun)
+
+    def _task_type_for_data(self) -> str:
+        """Return the task type string passed to ``TaskObject.get_y_X``."""
+        # We can infer the type automatically from the tag for dataloader classes,
+        # but earlier data loaders were functions, and people still use them.
+        raise NotImplementedError("This method must be implemented by a subclass.")
+
+    def _failed_result_score_keys(self, task: TaskObject) -> list[str]:
+        """Return score keys used in fold results for the given task."""
+        raise NotImplementedError("This method must be implemented by a subclass.")
+
+    def _make_failed_result(
+        self, task_id: str, model_id: str, task: TaskObject
+    ) -> ResultObject:
+        """Build a placeholder result with NaN scores for a failed validation run."""
+        score_keys = self._failed_result_score_keys(task)
+        xy = task.get_y_X(self._task_type_for_data())
+        split_data = xy["X"] if xy.get("X") is not None else xy["y"]
+        n_folds = task.cv_splitter.get_n_splits(split_data)
+
+        nan = float("nan")
+        folds = {
+            fold_idx: FoldResults(scores=dict.fromkeys(score_keys, nan))
+            for fold_idx in range(n_folds)
+        }
+        return ResultObject(task_id=task_id, model_id=model_id, folds=folds)
 
     def _run_validation(self, task: TaskObject, estimator: BaseEstimator):
         """Run validation for a single task and estimator."""

@@ -189,6 +189,15 @@ class ForecastingBenchmark(BaseBenchmark):
             TaskObject(**task_kwargs),
         )
 
+    # We need this because older dataloaders were functions without tags
+    def _task_type_for_data(self) -> str:
+        return "forecasting"
+
+    def _failed_result_score_keys(self, task: TaskObject) -> list[str]:
+        keys = [scorer.name for scorer in task.scorers]
+        keys.extend(["fit_time", "pred_time"])
+        return keys
+
     def _run_validation(self, task: TaskObject, estimator: BaseForecaster):
         cv_splitter = task.cv_splitter
         scorers = task.scorers
