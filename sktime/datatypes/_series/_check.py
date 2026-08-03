@@ -890,6 +890,35 @@ class SeriesPolarsEager(ScitypeSeries):
 class SeriesGluontsList(ScitypeSeries):
     """Data type: gluonts ListDataset based specification of single time series.
 
+    Name: ``"gluonts_ListDataset_series"``
+
+    Short description:
+    A GluonTS ``ListDataset``-style representation of a single time series,
+    stored as a list of dictionaries with a ``"target"`` entry.
+
+    Long description:
+    The ``"gluonts_ListDataset_series"`` :term:`mtype` is a concrete
+    specification of the ``Series`` :term:`scitype`, which represents a single
+    time series.
+
+    An object ``obj: list`` follows the specification iff:
+
+    * structure convention: ``obj`` is a list of dictionaries containing a
+      ``"target"`` key.
+    * target values: the ``"target"`` value is array-like and contains the
+      observed values of the series.
+    * variables: columns of the ``"target"`` array correspond to variables.
+    * variable names: feature names are assigned as ``"value_{k}"``,
+      where ``k`` is the feature column index.
+    * time index: GluonTS represents timing through the start date and
+      frequency metadata rather than an explicit index on each observation.
+
+    Capabilities:
+
+    * can represent univariate and multivariate series.
+    * can represent equally spaced series.
+    * can represent missing values.
+
     Parameters
     ----------
     is_univariate: bool
