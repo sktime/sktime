@@ -392,6 +392,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         device="cpu",
         freq=None,
         verbose=False,
+        padding_mask="observed",
     ):
         super().__init__()
         self.model_path = model_path
@@ -411,6 +412,26 @@ class TinyTimeMixerForecaster(BaseForecaster):
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
+        self.padding_mask = padding_mask
+
+        if self.padding_mask not in ("observed", "unobserved"):
+            raise ValueError(
+                "padding_mask must be one of 'observed' or 'unobserved', "
+                f"but found {self.padding_mask!r}."
+            )
+
+        if self.padding_mask == "unobserved" and self.fit_strategy == "zero-shot":
+            raise ValueError(
+                "padding_mask='unobserved' requires fine-tuning the model, "
+                "because pretrained TinyTimeMixer checkpoints were trained "
+                "with synthetic padding marked as observed (Granite-TSFM "
+                "semantics). Using 'unobserved' padding with fit_strategy="
+                "'zero-shot' would shift inference preprocessing away from "
+                "training preprocessing and produce incorrect forecasts. "
+                "Set fit_strategy to 'minimal' or 'full' to fine-tune the "
+                "model under the new mask semantics, or use "
+                "padding_mask='observed' (the default)."
+            )
 
         if self.broadcasting:
             self.set_tags(
