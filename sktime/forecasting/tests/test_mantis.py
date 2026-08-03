@@ -12,7 +12,7 @@ from sktime.forecasting.mantis import MantisForecaster
 # mantis.trainer.MantisTrainer directly (rolling windows, resizing to the
 # model's seq_len, embedding extraction, Ridge regression, recursive
 # multi-step prediction), mirroring MantisForecaster's internal logic without
-# importing sktime. See ``_/scripts/golden-mantis.py`` (mantis-tsfm==1.0.0).
+# importing sktime.
 _MANTIS_REFERENCE_CASES = [
     pytest.param(
         "paris-noah/MantisV2",
