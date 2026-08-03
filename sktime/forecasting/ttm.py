@@ -675,7 +675,9 @@ class TinyTimeMixerForecaster(BaseForecaster):
 
         # truncate or pad to match sequence length
         past_values, observed_mask = _pad_truncate(
-            hist, self.model_.config.context_length
+            hist,
+            self.model_.config.context_length,
+            mark_padding_observed=(self.padding_mask == "observed"),
         )
 
         past_values = (
