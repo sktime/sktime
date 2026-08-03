@@ -842,6 +842,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
                 "model_path": None,
                 "validation_split": 0.1,
                 "fit_strategy": "full",
+                "padding_mask": "unobserved",
                 **common_params,
             },
         ]
