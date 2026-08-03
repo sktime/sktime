@@ -456,7 +456,7 @@ class SundialForecaster(BaseForecaster):
             alpha = [0.1, 0.5, 0.9]
         alpha = [round(i, 3) for i in alpha]
 
-        preds = np.quantile(samples, q=alpha, axis=1)
+        preds = np.quantile(samples, q=alpha, axis=1, method="inverted_cdf")
         preds = np.moveaxis(preds, 0, -1)
         preds = preds[:, preds_idx, :]
         preds = preds.transpose(1, 0, 2).reshape(len(preds_idx), -1)
@@ -469,6 +469,57 @@ class SundialForecaster(BaseForecaster):
         )
 
         return pred_quantiles
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts from generated samples.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : skpro.distributions.empirical.Empirical
+            predictive distribution from generated sample paths
+        """
+        from skpro.distributions.empirical import Empirical
+
+        samples, fh, preds_idx = self._generate_samples(fh)
+
+        preds = samples[:, :, preds_idx]
+        pred_index = fh.to_absolute_index(self.cutoff)
+        n_series, n_samples, _ = preds.shape
+        sample_index = pd.MultiIndex.from_product(
+            [range(n_samples), pred_index],
+            names=["sample", *pred_index.names],
+        )
+        samples_df = pd.DataFrame(
+            preds.transpose(1, 2, 0).reshape(-1, n_series),
+            index=sample_index,
+            columns=self.context_.columns,
+        )
+
+        return Empirical(
+            samples_df,
+            time_indep=marginal,
+            index=pred_index,
+            columns=self.context_.columns,
+        )
 
     def _generate_samples(self, fh):
         """Generate raw Sundial sample paths for prediction.
@@ -499,6 +550,7 @@ class SundialForecaster(BaseForecaster):
         from sklearn.utils import check_random_state
 
         self.model_ = self._load_model()
+        self.model_.eval()
 
         if fh is None:
             fh = self.fh
