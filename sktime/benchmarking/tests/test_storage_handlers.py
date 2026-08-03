@@ -5,6 +5,7 @@ from sktime.benchmarking._benchmarking_dataclasses import FoldResults, ResultObj
 from sktime.benchmarking._storage_handlers import (
     CSVStorageHandler,
     JSONStorageHandler,
+    PickleStorageHandler,
     # ParquetStorageHandler,
 )
 
@@ -48,6 +49,7 @@ RESULT_OBJECT_LISTS = [
     [
         (JSONStorageHandler, ".json"),
         (CSVStorageHandler, ".csv"),
+        (PickleStorageHandler, ".pkl"),
         # (ParquetStorageHandler, ".parquet"),
     ],
 )
@@ -92,6 +94,7 @@ def test_store_load_results(tmp_path, storage_handler, file_extension, sample_re
     [
         (JSONStorageHandler, ".json"),
         (CSVStorageHandler, ".csv"),
+        (PickleStorageHandler, ".pkl"),
         # (ParquetStorageHandler, ".parquet"),
     ],
 )
@@ -126,3 +129,43 @@ def test_store_load_results_empty_training(tmp_path, storage_handler, file_exten
     assert results[0].folds[0].ground_truth is None
     assert results[0].folds[0].predictions is None
     assert results[0].folds[0].train_data is None
+
+
+def test_pickle_preserves_non_default_index(tmp_path):
+    """Test the pickle handler round-trips returned data with a non-default index.
+
+    The tabular backends (parquet, csv) serialize the returned ``ground_truth``,
+    ``predictions`` and ``train_data`` frames via an intermediate dict
+    representation that does not handle ``pandas`` index types such as
+    ``PeriodIndex`` (the index used by ``load_airline`` and many other sktime
+    datasets). The pickle backend serializes the result objects directly and
+    therefore preserves the index losslessly.
+    """
+    index = pd.period_range("2000-01", periods=3, freq="M")
+    ground_truth = pd.DataFrame({"data": [1.0, 0.0, 1.0]}, index=index)
+    predictions = pd.DataFrame({"data": [1.0, 0.0, 1.0]}, index=index)
+    train_data = pd.DataFrame({"data": [0.0, 1.0, 0.0]}, index=index)
+
+    sample_results = [
+        ResultObject(
+            model_id="model_1",
+            task_id="val_1",
+            folds={
+                0: FoldResults(
+                    scores={"accuracy": 0.9},
+                    ground_truth=ground_truth,
+                    predictions=predictions,
+                    train_data=train_data,
+                )
+            },
+        )
+    ]
+
+    handler = PickleStorageHandler(tmp_path / "results.pkl")
+    handler.save(sample_results)
+    results = handler.load()
+
+    assert len(results) == 1
+    pd.testing.assert_frame_equal(results[0].folds[0].ground_truth, ground_truth)
+    pd.testing.assert_frame_equal(results[0].folds[0].predictions, predictions)
+    pd.testing.assert_frame_equal(results[0].folds[0].train_data, train_data)
