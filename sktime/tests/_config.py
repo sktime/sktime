@@ -9,6 +9,7 @@ __all__ = [
     "EXCLUDED_TESTS",
     "MATRIXDESIGN",
     "ONLY_CHANGED_MODULES",
+    "ONLY_VM_ESTIMATORS",
 ]
 
 from sktime.registry import ESTIMATOR_TAG_LIST
@@ -24,6 +25,10 @@ MATRIXDESIGN = False
 # whether to test only estimators from modules that are changed w.r.t. main
 # default is False, can be set to True by pytest --only_changed_modules True flag
 ONLY_CHANGED_MODULES = False
+
+# whether to test only estimators from modules require a VM to test
+# default is False, can be set to True by pytest --only_vm_estimators True flag
+ONLY_VM_ESTIMATORS = False
 
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
@@ -67,8 +72,6 @@ EXCLUDE_ESTIMATORS = [
     "RecursiveReductionForecaster",
     # TimeSeriesKvisibility is not API compliant, see #8026 and #8072
     "TimeSeriesKvisibility",
-    # fails due to #8151 or #8059
-    "FreshPRINCE",
     # multiple timeouts and sporadic failures reported related to VARMAX
     # 2997, 3176, 7985
     "SCINetForecaster",  # known bug #7871
@@ -141,21 +144,17 @@ EXCLUDED_TESTS = {
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "CNTCNetwork",
-        "ClaSPTransformer",
         "ClearSky",
         "ContractableBOSS",
         "DOBIN",
-        "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
         "DistFromAligner",
         "DistanceFeatures",
-        "DontUpdate",
         "DummyRegressor",
         "ElasticEnsemble",
         "FeatureSelection",
-        "FreshPRINCE",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",
@@ -173,10 +172,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MultioutputTabularRegressionForecaster",
         "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
-        "OptionalPassthrough",
         "PAAlegacy",
-        "PaddingTransformer",
-        "PlateauFinder",
         "Prophetverse",
         "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
@@ -191,7 +187,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
-        "SlopeTransformer",
         "StackingForecaster",
         "SummaryClassifier",
         "SupervisedTimeSeriesForest",
@@ -226,6 +221,11 @@ EXCLUDED_TESTS_BY_TEST = {
         # on higher version, prints np.float64(0.123456)
         # therefore these doctests will fail either on lower or higher versions
         "MedianSquaredScaledError",
+        "RMSEnormalizedByIQR",
+        "KLDivergenceDoubleExponential",
+        "KLDivergenceNormal",
+        "KLDivergenceSingleExponential",
+        "MSEnormalizedBySD",
         "GeometricMeanAbsoluteError",
         "MedianRelativeAbsoluteError",
         "MeanSquaredScaledError",
@@ -236,6 +236,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MedianSquaredError",
         "MeanAbsoluteError",
         "MeanAbsolutePercentageError",
+        "MeanAbsolutePercentageErrorStabilized",
         "MeanAbsoluteScaledError",
         "MedianAbsoluteError",
         "MeanSquaredPercentageError",
@@ -243,6 +244,7 @@ EXCLUDED_TESTS_BY_TEST = {
         "MeanSquaredError",
         "PinballLoss",
         "RelativeLoss",
+        "TheilU2",
         "MeanRelativeAbsoluteError",
     ],
 }

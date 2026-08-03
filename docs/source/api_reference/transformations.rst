@@ -627,7 +627,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    fABBA
+    FABBA
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
