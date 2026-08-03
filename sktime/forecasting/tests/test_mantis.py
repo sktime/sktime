@@ -60,9 +60,15 @@ def test_mantis_airline_predictions_match_source_reference(
 
     y_pred = forecaster.fit(y_train, fh=fh).predict(fh=fh)
 
+    # Mantis's transformer backbone is not bitwise-reproducible across BLAS
+    # backends (OpenBLAS/Linux, Accelerate/macOS, MKL/Windows), and the
+    # recursive multi-step prediction compounds that float32 noise across
+    # steps. Observed cross-platform deviations top out around 0.02 absolute
+    # / 5e-5 relative on this reference case; these tolerances leave headroom
+    # over that while still catching real regressions.
     np.testing.assert_allclose(
         y_pred.iloc[:3].to_numpy(),
         np.asarray(expected_head, dtype=np.float32),
-        rtol=1e-5,
-        atol=1e-4,
+        rtol=1e-4,
+        atol=3e-2,
     )
