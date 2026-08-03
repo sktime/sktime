@@ -3,7 +3,6 @@
 
 from copy import deepcopy
 
-from skbase.base._base import BaseObject
 from skbase.base._clone_plugins import BaseCloner, _default_clone
 
 
@@ -33,10 +32,6 @@ class _PretrainedCloner(BaseCloner):
         - Runtime checks alone could trigger on non-pretrain estimators if
           ``_pretrained_attrs`` somehow got set incorrectly
         """
-        # recursive clone can attempt checking of object passed as parameter not
-        # inheriting from BaseObject e.g., sklearn.linear_model.LinearRegression
-        if not isinstance(obj, BaseObject):
-            return False
         has_pretrain_capability = obj.get_tag(
             "capability:pretrain", tag_value_default=False, raise_error=False
         )
