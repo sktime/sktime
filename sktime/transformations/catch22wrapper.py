@@ -93,6 +93,7 @@ class Catch22Wrapper(BaseTransformer):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_catch22"],
     }
 
     def __init__(

@@ -113,8 +113,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer._tft.TemporalFusionTransformer.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer.TemporalFusionTransformer.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
@@ -128,6 +128,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:skip_all": True,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
     def __init__(
@@ -403,8 +404,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats.NBeats.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
@@ -414,6 +415,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
         "tests:skip_by_name": [
             "test_pred_int_tag",
             "test_save_estimators_to_file",
@@ -710,8 +712,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.deepar.DeepAR.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
@@ -721,6 +723,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
     def __init__(
@@ -992,8 +995,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nhits.NHiTS.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
@@ -1003,6 +1006,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
     def __init__(

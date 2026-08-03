@@ -2824,6 +2824,15 @@
       ]
     },
     {
+      "login": "AYUSH27112021",
+      "name": "Ayush Kumar Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/90300049?v=4",
+      "profile": "https://github.com/AYUSH27112021",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "SpitFire19",
       "name": "Yaroslav Kudrevych",
       "avatar_url": "https://avatars.githubusercontent.com/u/75171097?v=4",
@@ -2918,6 +2927,24 @@
       ]
     },
     {
+      "login": "michaelellis003",
+      "name": "Michael Ellis",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24530417?v=4",
+      "profile": "https://github.com/michaelellis003",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Vbhatt03",
+      "name": "Vyomesh Bhatt",
+      "avatar_url": "https://avatars.githubusercontent.com/u/Vbhatt03?v=4",
+      "profile": "https://github.com/Vbhatt03",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "kerimkarakan",
       "name": "Kerim Karakan",
       "avatar_url": "https://avatars.githubusercontent.com/u/152054183?v=4",
@@ -2936,6 +2963,36 @@
         "code",
         "maintenance",
         "test"
+      ]
+    },
+    {
+      "login": "loulanyue",
+      "name": "Rafli Surya Wijaya",
+      "avatar_url": "https://avatars.githubusercontent.com/u/17882510?v=4",
+      "profile": "https://github.com/loulanyue",
+      "contributions": [
+        "code",
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "joshdunnlime",
+      "name": "Josh Dunn",
+      "avatar_url": "https://avatars.githubusercontent.com/u/89857735?v=4",
+      "profile": "https://github.com/joshdunnlime",
+      "contributions": [
+        "bug",
+        "test"
+      ]
+    },
+    {
+      "login": "OfficialAbhinavSingh",
+      "name": "Abhinav Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/221158347?v=4",
+      "profile": "https://github.com/OfficialAbhinavSingh",
+      "contributions": [
+        "code"
       ]
     }
   ]
