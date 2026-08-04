@@ -21,7 +21,6 @@ For a list of object and estimator types, see :ref:`estimator_types_ref`.
     :maxdepth: 1
 
     api_reference/data_format
-    api_reference/model_serialization
     api_reference/forecasting
     api_reference/transformations
     api_reference/classification
@@ -37,6 +36,7 @@ For a list of object and estimator types, see :ref:`estimator_types_ref`.
     api_reference/deployment
     api_reference/utils
     api_reference/base
+    api_reference/model_serialization
     api_reference/exceptions
     api_reference/tags
     api_reference/estimator_types
