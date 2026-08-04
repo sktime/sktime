@@ -290,6 +290,10 @@ class Catch22(BaseTransformer):
         "y_inner_mtype": "None",
         "fit_is_empty": True,
         "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.transformations._catch22_numba"],
     }
 
     def __init__(
