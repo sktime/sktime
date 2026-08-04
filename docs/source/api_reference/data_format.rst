@@ -164,4 +164,3 @@ Specifications for file formats specific to ``sktime`` are provided below:
     :maxdepth: 1
 
     file_specifications/ts
-    file_specifications/model_serialization
