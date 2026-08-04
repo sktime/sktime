@@ -272,7 +272,10 @@ class GreykiteForecaster(BaseForecaster):
                 "date_format": None,
                 "coverage": 0.95,
             },
-            # the "PROPHET" template is not covered in tests: it needs a working
-            # prophet stan backend, which is frequently missing in CI images,
-            # surfacing as `'Prophet' object has no attribute 'stan_backend'`
+            {
+                "model_template": "PROPHET",
+                "date_format": "%Y-%m-%d",
+                "forecast_config": None,
+                "coverage": 0.75,
+            },
         ]
