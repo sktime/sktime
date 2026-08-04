@@ -178,7 +178,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
-        "RandomSamplesAugmenter",
         "RecursiveTabularRegressionForecaster",
         "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
