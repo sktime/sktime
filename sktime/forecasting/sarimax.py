@@ -242,6 +242,7 @@ class SARIMAX(_StatsModelsAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "tests:skip_all": True,  # Unkown reason
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
