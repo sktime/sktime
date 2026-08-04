@@ -17,9 +17,10 @@ class GreykiteForecaster(BaseForecaster):
     This forecaster wraps Greykite forecast_pipeline (configured via a ForecastConfig)
     and exposes a sktime-compatible API.
 
-    Data passed in ``y`` and ``X`` should have a ``pandas.DatetimeIndex``. If a
-    non-datetime index is passed, a default daily ``DatetimeIndex`` starting at
-    ``2000-01-01`` is created for Greykite internally.
+    The time index of ``y`` and ``X`` can be any format recognized by
+    ``pandas.to_datetime``. If conversion fails, a default daily
+    ``DatetimeIndex`` starting at ``2000-01-01`` is created for Greykite
+    internally.
 
     WARNING: the ``greykite`` package has very restrictive dependencies that typically
     prevent installation together with other packages. For this reason, this estimator
@@ -139,11 +140,18 @@ class GreykiteForecaster(BaseForecaster):
 
     @staticmethod
     def _ensure_datetime_index(y):
-        """Ensure ``y`` has a DatetimeIndex; otherwise create a default daily one."""
+        """Ensure ``y`` has a DatetimeIndex for Greykite.
+
+        Tries ``pandas.to_datetime`` on the index; if that fails, falls back to a
+        default daily ``DatetimeIndex`` starting at ``2000-01-01``.
+        """
         if y is None or isinstance(y.index, pd.DatetimeIndex):
             return y
         y = y.copy()
-        y.index = pd.date_range("2000-01-01", periods=len(y), freq="D")
+        try:
+            y.index = pd.to_datetime(y.index)
+        except (TypeError, ValueError, OverflowError):
+            y.index = pd.date_range("2000-01-01", periods=len(y), freq="D")
         return y
 
     def _create_forecast_config(self, y=None):
