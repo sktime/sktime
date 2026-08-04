@@ -3,12 +3,12 @@
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import BaseForecaster
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "priyanshuharshbodhi1"]
 
 
-class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class Moirai2Forecaster(BaseForecaster):
     """
     Adapter for using MOIRAI 2.0 Forecasters.
 
@@ -109,6 +109,7 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.uni2ts"],
+        "tests:specific": ["sktime.forecasting.tests.test_moirai2"],
     }
 
     def __init__(
@@ -256,9 +257,6 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             _X = self._X.copy()
 
         # Zero shot case with X and fit data as context.
-        # The _GlobalForecastingDeprecationMixin handles the legacy y parameter
-        # by temporarily swapping self._y before calling _predict, so here we
-        # only need to detect whether predict-time X was supplied.
         _use_fit_data_as_context = X is not None
 
         if isinstance(_y, pd.Series):
