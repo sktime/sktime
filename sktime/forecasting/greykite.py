@@ -68,7 +68,7 @@ class GreykiteForecaster(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "python_dependencies": ["greykite>=1.0.0", "prophet>=1.2.1"],
+        "python_dependencies": ["greykite>=1.0.0"],
         # estimator type
         # --------------
         "capability:multivariate": False,  # Handles univariate targets here.
@@ -96,7 +96,7 @@ class GreykiteForecaster(BaseForecaster):
             "test_deepcopy_fitted_predict",
             "test_deepcopy_fitted",
         ],
-        "tests:python_dependencies": ["prophet", "setuptools<82"],
+        "tests:python_dependencies": ["prophet>1.2.1", "setuptools<82"],
     }
 
     def __init__(
@@ -119,9 +119,7 @@ class GreykiteForecaster(BaseForecaster):
         This method should be used for setting dynamic tags only.
         """
         if self.model_template == "PROPHET":
-            self.set_tags(
-                **{"python_dependencies": ["greykite>=1.0.0", "prophet>=1.2.1"]}
-            )
+            self.set_tags(**{"python_dependencies": ["greykite>=1.0.0", "prophet"]})
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
