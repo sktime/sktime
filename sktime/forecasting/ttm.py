@@ -205,6 +205,26 @@ class TinyTimeMixerForecaster(BaseForecaster):
           performance but requires more computational power and time. Allows
           model path to be *None*.
 
+    padding_mask : str, default="observed"
+        Controls how synthetic zero-padding is masked when the input history
+        is shorter than the model's ``context_length``. This can be one of
+        the following:
+
+        - "observed": Marks padded positions as observed, matching
+          Granite-TSFM's preprocessing (``past_observed_mask`` built with
+          ``~np.isnan``). Pretrained TinyTimeMixer checkpoints were trained
+          under these semantics, so this is required to reproduce
+          Granite-TSFM's forecasts and is the only valid option when
+          ``fit_strategy="zero-shot"``.
+
+        - "unobserved": Marks padded positions as unobserved. This was
+          sktime's original behavior. It is conceptually cleaner, since the
+          synthetic padding is not part of the observed series, but it does
+          not match how public checkpoints were pretrained. Only valid when
+          ``fit_strategy`` is ``"minimal"`` or ``"full"``, so the model can
+          be fine-tuned under these mask semantics; otherwise a ValueError
+          is raised.
+
     References
     ----------
     .. [1] https://github.com/ibm-granite/granite-tsfm/
@@ -392,6 +412,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         device="cpu",
         freq=None,
         verbose=False,
+        padding_mask="observed",
     ):
         super().__init__()
         self.model_path = model_path
@@ -411,6 +432,26 @@ class TinyTimeMixerForecaster(BaseForecaster):
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
+        self.padding_mask = padding_mask
+
+        if self.padding_mask not in ("observed", "unobserved"):
+            raise ValueError(
+                "padding_mask must be one of 'observed' or 'unobserved', "
+                f"but found {self.padding_mask!r}."
+            )
+
+        if self.padding_mask == "unobserved" and self.fit_strategy == "zero-shot":
+            raise ValueError(
+                "padding_mask='unobserved' requires fine-tuning the model, "
+                "because pretrained TinyTimeMixer checkpoints were trained "
+                "with synthetic padding marked as observed (Granite-TSFM "
+                "semantics). Using 'unobserved' padding with fit_strategy="
+                "'zero-shot' would shift inference preprocessing away from "
+                "training preprocessing and produce incorrect forecasts. "
+                "Set fit_strategy to 'minimal' or 'full' to fine-tune the "
+                "model under the new mask semantics, or use "
+                "padding_mask='observed' (the default)."
+            )
 
         if self.broadcasting:
             self.set_tags(
@@ -675,7 +716,9 @@ class TinyTimeMixerForecaster(BaseForecaster):
 
         # truncate or pad to match sequence length
         past_values, observed_mask = _pad_truncate(
-            hist, self.model_.config.context_length
+            hist,
+            self.model_.config.context_length,
+            mark_padding_observed=(self.padding_mask == "observed"),
         )
 
         past_values = (
@@ -819,13 +862,14 @@ class TinyTimeMixerForecaster(BaseForecaster):
                 "model_path": None,
                 "validation_split": 0.1,
                 "fit_strategy": "full",
+                "padding_mask": "unobserved",
                 **common_params,
             },
         ]
         return test_params
 
 
-def _pad_truncate(data, seq_len, pad_value=0):
+def _pad_truncate(data, seq_len, pad_value=0, mark_padding_observed=True):
     """
     Pad or truncate a numpy array.
 
@@ -834,12 +878,16 @@ def _pad_truncate(data, seq_len, pad_value=0):
     - data: numpy array of shape (batch_size, original_seq_len, n_dims)
     - seq_len: sequence length to pad or truncate to
     - pad_value: value to use for padding
+    - mark_padding_observed: if True, synthetic padding positions are marked
+      observed in the returned mask, matching Granite-TSFM preprocessing
+      (``past_observed_mask`` built with ``~np.isnan``). If False, padding
+      positions are marked unobserved, which was sktime's original behavior
+      before padding-mask semantics were aligned with Granite-TSFM.
 
     Returns
     -------
     - padded_data: array padded or truncated to (batch_size, seq_len, n_dims)
-    - mask: observed-value mask matching Granite-TSFM preprocessing. Both
-      existing values and synthetic zero-padding positions are marked observed.
+    - mask: mask indicating which positions are observed (1) or unobserved (0)
     """
     batch_size, original_seq_len, n_dims = data.shape
 
@@ -854,12 +902,16 @@ def _pad_truncate(data, seq_len, pad_value=0):
             mode="constant",
             constant_values=pad_value,
         )
-        # Granite-TSFM pads the input dataframe with numeric zeros and then
-        # constructs ``past_observed_mask`` using ``~np.isnan``. Consequently,
-        # its synthetic padding is observed by the model. Match that behavior
-        # so short-history forecasts have the same scaling and predictions as
-        # the source pipeline.
-        mask = np.ones_like(truncated_data)
+        if mark_padding_observed:
+            # Granite-TSFM pads the input dataframe with numeric zeros and
+            # then constructs ``past_observed_mask`` using ``~np.isnan``.
+            # Consequently, its synthetic padding is observed by the model.
+            # Match that behavior so short-history forecasts have the same
+            # scaling and predictions as the source pipeline.
+            mask = np.ones_like(truncated_data)
+        else:
+            mask = np.zeros_like(truncated_data)
+            mask[:, -original_seq_len:, :] = 1
 
     return truncated_data, mask
 
