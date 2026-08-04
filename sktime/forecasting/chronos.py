@@ -323,6 +323,7 @@ class ChronosForecaster(BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.chronos"],
+        "tests:specific": ["sktime.forecasting.tests.test_chronos"],
     }
 
     _default_chronos_config = {

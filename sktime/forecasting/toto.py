@@ -139,6 +139,7 @@ class TotoForecaster(BaseForecaster):
             "test_fit_idempotent",
             "test_update_predict_predicted_index",
         ],
+        "tests:specific": ["sktime.forecasting.tests.test_toto"],
     }
 
     def __init__(
@@ -329,15 +330,15 @@ class TotoForecaster(BaseForecaster):
         """
         import torch
 
-        torch.manual_seed(self._seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self._seed)
-
         prediction_length = max(fh.to_relative(self._cutoff))
 
         future_exog = self._build_future_exog(X, prediction_length)
 
         self.forecaster_ = self._load_model()
+
+        torch.manual_seed(self._seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self._seed)
 
         forecast = self.forecaster_.forecast(
             self._get_series(),
@@ -401,6 +402,10 @@ class TotoForecaster(BaseForecaster):
         future_exog = self._build_future_exog(X, prediction_length)
 
         self.forecaster_ = self._load_model()
+
+        torch.manual_seed(self._seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self._seed)
 
         forecast = self.forecaster_.forecast(
             self._get_series(),

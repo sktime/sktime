@@ -3,13 +3,13 @@
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import BaseForecaster
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
 
 
-class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class MOIRAIForecaster(BaseForecaster):
     """MOIRAI Forecasters.
 
     Parameters
@@ -117,6 +117,7 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.uni2ts"],
+        "tests:specific": ["sktime.forecasting.tests.test_moirai"],
     }
 
     def __init__(
@@ -445,7 +446,10 @@ class MOIRAIForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             pred_df, target, feat_dynamic_real, future_length, _target_name
         )
 
-        predictor = self.model.create_predictor(batch_size=self.batch_size)
+        predictor = self.model.create_predictor(
+            batch_size=self.batch_size,
+            device=self.map_location or "auto",
+        )
         forecasts = predictor.predict(ds_test)
         forecast_it = iter(forecasts)
         predictions = self._get_prediction_df(forecast_it, df_config)
