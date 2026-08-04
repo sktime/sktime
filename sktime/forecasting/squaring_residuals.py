@@ -96,7 +96,7 @@ class SquaringResiduals(BaseForecaster):
         # estimator type
         # --------------
         "capability:multivariate": False,  # which y are fine? False/True
-        "capability:exogenous": False,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": False,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
@@ -106,10 +106,11 @@ class SquaringResiduals(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
-        # test skip config:
+        # testing and CI flags
+        # --------------------
+        # issue when prediction intervals, see #3479 and #4504
+        # known issue with prediction intervals that needs fixing, tracked in #4181
         "tests:skip_by_name": [
-            # issue when prediction intervals, see #3479 and #4504
-            # known issue with prediction intervals that needs fixing, tracked in #4181
             "test_predict_time_index",
             "test_predict_residuals",
             "test_predict_interval",

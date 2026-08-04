@@ -184,7 +184,7 @@ class HCrystalBallAdapter(BaseForecaster):
         -------
         params : dict or list of dict
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies(["hcrystalball", "statsmodels"], severity="none"):
             from hcrystalball.wrappers import HoltSmoothingWrapper

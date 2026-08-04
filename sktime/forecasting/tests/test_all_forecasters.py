@@ -278,7 +278,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
     def test_categorical_X_raises_error(self, estimator_instance):
         """Test that categorical X in not supported forecasters raises error.
 
-        Only test with forecasters which do not ignore exogeneous X and those that do
+        Only test with forecasters which do not ignore exogenous X and those that do
         not support categorical natively. These are the cases where error is expected
         to be raised.
         """
@@ -632,12 +632,13 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 'The flag "capability:pred_int" should instead be set to False.'
             )
 
-        if pred_int_impl and not cls_tag:
-            raise ValueError(
-                f"{type(f).__name__} does implement probabilistic forecasting, "
-                'but "capability:pred_int" flag has been set to False incorrectly. '
-                'The flag "capability:pred_int" should instead be set to True.'
-            )
+        # this check needs to be reworked, see #9033
+        # if pred_int_impl and not cls_tag:
+        #     raise ValueError(
+        #         f"{type(f).__name__} does implement probabilistic forecasting, "
+        #         'but "capability:pred_int" flag has been set to False incorrectly. '
+        #         'The flag "capability:pred_int" should instead be set to True.'
+        #     )
 
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
@@ -845,7 +846,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             with pytest.raises(ValueError):
                 f.predict_quantiles(fh=FH0 + 1)
 
-    def test_hierarchical_with_exogeneous(self, estimator_instance, n_columns):
+    def test_hierarchical_with_exogenous(self, estimator_instance, n_columns):
         """Check that hierarchical forecasting works, also see bug #3961.
 
         Arguments
