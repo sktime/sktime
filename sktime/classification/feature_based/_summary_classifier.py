@@ -224,7 +224,15 @@ class SummaryClassifier(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"estimator": RandomForestClassifier(n_estimators=10)}
         else:
-            return {
+            # summary functions with default quantiles
+            params1 = {
                 "estimator": RandomForestClassifier(n_estimators=2),
                 "summary_functions": ("mean", "min", "max"),
             }
+            # different summary functions, and quantile calculation switched off
+            params2 = {
+                "estimator": RandomForestClassifier(n_estimators=2),
+                "summary_functions": ("median", "std"),
+                "summary_quantiles": None,
+            }
+            return [params1, params2]
