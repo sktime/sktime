@@ -20,53 +20,91 @@ while creating the archive is removed before ``save`` returns.
 The base implementation writes the following members to the archive:
 
 .. list-table::
-    :widths: 20 30 50
+    :widths: 20 80
     :header-rows: 1
 
     * - Member
-      - Serialization
       - Contents
     * - ``_metadata``
-      - ``pickle`` or ``cloudpickle``
-      - The estimator class, used by :func:`sktime.base.load` to select its
-        loading implementation.
+      - The type of the estimator object, i.e., ``type(self)``. Used by
+        :func:`sktime.base.load` to select the loading implementation.
     * - ``_obj``
-      - ``pickle`` or ``cloudpickle``
       - The serialized estimator instance, including its fitted state when the
         estimator was fitted before saving.
 
-The ``serialization_format`` argument of ``save`` selects ``"pickle"``
+Both members are written with the same serializer. The
+``serialization_format`` argument of ``save`` selects ``"pickle"``
 (the default) or ``"cloudpickle"``. ``cloudpickle`` is an optional dependency.
-The selected format is used for both members of archives written by the base
-implementation.
+
+The archive is flat, with the two members at its root:
+
+.. code-block:: text
+
+    model.zip
+    ├── _metadata
+    └── _obj
 
 To restore an archive, pass either the original string path without the
 ``.zip`` suffix or a :class:`pathlib.Path` pointing to the archive to
-:func:`sktime.base.load`:
+:func:`sktime.base.load`. The loader reads ``_metadata`` first and delegates
+the remainder of the work to the class method ``load_from_path`` of the stored
+estimator class.
+
+The following example saves a fitted forecaster, inspects the archive, and
+loads it back:
 
 .. code-block:: python
 
     from pathlib import Path
+    from zipfile import ZipFile
 
     from sktime.base import load
+    from sktime.datasets import load_airline
+    from sktime.forecasting.naive import NaiveForecaster
 
+    y = load_airline()
+    forecaster = NaiveForecaster(strategy="mean")
+    forecaster.fit(y, fh=[1, 2, 3])
+
+    # creates model.zip in the current working directory
+    forecaster.save("model")
+
+    ZipFile("model.zip").namelist()
+    # ['_metadata', '_obj']
+
+    # both are equivalent
     restored_from_string = load("model")
     restored_from_path = load(Path("model.zip"))
 
-The loader reads ``_metadata`` first and delegates the remainder of the work to
-the class method ``load_from_path`` of the stored estimator class.
+    restored_from_path.predict()
 
 In-memory container
 -------------------
 
 Calling ``estimator.save()`` without a path returns a two-element tuple:
 
-1. the estimator class;
+1. the type of the estimator object, i.e., ``type(self)``;
 2. a bytes object containing the serialized estimator instance.
 
 Pass this tuple directly to :func:`sktime.base.load` to restore the estimator.
 The loader delegates to the class method ``load_from_serial`` of the class in
-the first tuple element.
+the first tuple element, passing it the second element:
+
+.. code-block:: python
+
+    from sktime.base import load
+    from sktime.datasets import load_airline
+    from sktime.forecasting.naive import NaiveForecaster
+
+    y = load_airline()
+    forecaster = NaiveForecaster(strategy="mean")
+    forecaster.fit(y, fh=[1, 2, 3])
+
+    serial = forecaster.save()
+    # (<class 'sktime.forecasting.naive._naive.NaiveForecaster'>, b'\x80\x05...')
+
+    restored = load(serial)
+    restored.predict()
 
 Extension points
 ----------------
@@ -77,9 +115,21 @@ object. Estimators with additional resources can override ``save``,
 members while retaining ``_metadata`` and ``_obj`` so that the generic loader
 can identify the estimator class and dispatch to its loading hook.
 
-For example, deep learning estimators may store model weights or training
-history alongside the base members. Consumers of serialized estimators should
-therefore use the public :meth:`~sktime.base.BaseObject.save` and
+For example, the deep learning estimators store the ``keras`` model and the
+training history alongside the base members, so their archives look as follows:
+
+.. code-block:: text
+
+    model.zip
+    ├── _metadata
+    ├── _obj
+    ├── history
+    └── keras/
+        └── model.keras
+
+Their in-memory container remains a two-element tuple, with the additional
+state nested inside the second element. Consumers of serialized estimators
+should therefore use the public :meth:`~sktime.base.BaseObject.save` and
 :func:`sktime.base.load` interfaces rather than depending on archive members
 other than those documented above.
 
