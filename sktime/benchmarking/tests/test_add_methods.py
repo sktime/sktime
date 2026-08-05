@@ -1,6 +1,6 @@
 """Tests for add API in benchmarking."""
 
-__author__ = ["jgyasu", "yash-sangwan"]
+__author__ = ["jgyasu"]
 
 import pytest
 from sklearn.metrics import accuracy_score
