@@ -1,0 +1,54 @@
+name: diagnose-evaluate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+        operating-system:
+          - ubuntu-latest
+          - ubuntu-22.04-arm
+          - macos-latest
+          - windows-latest
+
+    runs-on: ${{ matrix.operating-system }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install OSX packages
+        if: runner.os == 'macOS'
+        run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
+
+      - name: Install sktime
+        run: uv pip install sktime==0.41
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Run single test
+        run: |
+          python -m pytest \
+            sktime/forecasting/model_evaluation/tests/test_evaluate.py::test_evaluate_global_mode \
+            -vv -s
