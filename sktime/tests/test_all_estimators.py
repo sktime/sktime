@@ -152,14 +152,14 @@ class BaseFixtureGenerator:
     object_type_filter = None
 
     # which sequence the conditional fixtures are generated in
-    # todo 1.2.0: remove the deprecated "estimator_class", "estimator_instance" aliases
+    # todo 1.3.0: remove the deprecated "estimator_class", "estimator_instance" aliases
     #   each alias is placed directly after the name it aliases, so that fixture id
     #   ordering is identical for tests using the old and the new names
     fixture_sequence = [
         "object_class",
-        "estimator_class",  # todo 1.2.0: remove alias
+        "estimator_class",  # todo 1.3.0: remove alias
         "object_instance",
-        "estimator_instance",  # todo 1.2.0: remove alias
+        "estimator_instance",  # todo 1.3.0: remove alias
         "scenario",
         "method_nsc",
         "method_nsc_arraylike",
@@ -168,14 +168,14 @@ class BaseFixtureGenerator:
     # which fixtures are indirect, e.g., have an additional pytest.fixture block
     #   to generate an indirect fixture at runtime. Example: object_instance
     #   warning: direct fixtures retain state changes within the same test
-    # todo 1.2.0: remove "estimator_instance"
+    # todo 1.3.0: remove "estimator_instance"
     indirect_fixtures = ["object_instance", "estimator_instance"]
 
-    # todo 1.2.0: remove __init_subclass__
+    # todo 1.3.0: remove __init_subclass__
     def __init_subclass__(cls, **kwargs):
         """Raise a directive error if a descendant sets the renamed class attribute.
 
-        ``estimator_type_filter`` was renamed to ``object_type_filter`` in 1.1.0,
+        ``estimator_type_filter`` was renamed to ``object_type_filter`` in 1.2.0,
         to align with ``skbase``. An alias is not possible, as the attribute is
         read via ``getattr``, so a silently ignored ``estimator_type_filter``
         would cause the descendant to test all object types instead of one.
@@ -185,7 +185,7 @@ class BaseFixtureGenerator:
             raise TypeError(
                 f"Error in {cls.__name__}: the class attribute "
                 "estimator_type_filter of BaseFixtureGenerator descendants "
-                "was renamed to object_type_filter in sktime 1.1.0. "
+                "was renamed to object_type_filter in sktime 1.2.0. "
                 f"Please rename the attribute in {cls.__name__} to "
                 "object_type_filter. Setting estimator_type_filter no longer "
                 "has any effect."
@@ -346,8 +346,8 @@ class BaseFixtureGenerator:
         # object_instance is cloned at the start of every test
         return request.param.clone()
 
-    # todo 1.2.0: remove the four members below, they are deprecation aliases
-    #   for the fixtures renamed in 1.1.0, estimator_class -> object_class
+    # todo 1.3.0: remove the four members below, they are deprecation aliases
+    #   for the fixtures renamed in 1.2.0, estimator_class -> object_class
     #   and estimator_instance -> object_instance.
     #   Removing them also requires removing the aliases in fixture_sequence
     #   and indirect_fixtures, above.
@@ -356,9 +356,9 @@ class BaseFixtureGenerator:
         """Warn that fixture variable named old is deprecated in favour of new."""
         warnings.warn(
             f"The test fixture {old} of sktime BaseFixtureGenerator descendants "
-            f"has been renamed to {new} in sktime 1.1.0, to align with the "
+            f"has been renamed to {new} in sktime 1.2.0, to align with the "
             f"scikit-base test framework. The alias {old} is deprecated and will "
-            "be removed in sktime 1.2.0. To avoid this warning, rename the "
+            "be removed in sktime 1.3.0. To avoid this warning, rename the "
             f"argument {old} to {new} in your test functions.",
             DeprecationWarning,
             stacklevel=2,
@@ -396,7 +396,7 @@ class BaseFixtureGenerator:
         first key of kwargs among object_class, object_instance,
         preferring object_class; None if neither is present
         """
-        # todo 1.2.0: remove the estimator_class, estimator_instance alias keys,
+        # todo 1.3.0: remove the estimator_class, estimator_instance alias keys,
         #   each is checked directly after the name it aliases
         for key in [
             "object_class",
@@ -638,7 +638,7 @@ class QuickTester:
         else:
             temp_generator_dict["object_instance"] = _generate_object_instance_cls
 
-        # todo 1.2.0: remove the overrides of the deprecated alias keys.
+        # todo 1.3.0: remove the overrides of the deprecated alias keys.
         #   Without these, a test using the deprecated fixture names would range
         #   over all objects in the package, instead of only over estimator.
         for _old, _new in [

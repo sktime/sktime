@@ -1,14 +1,14 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for the deprecation shim of the renamed test framework fixtures.
 
-In sktime 1.1.0, the fixture variables of ``BaseFixtureGenerator`` descendants
+In sktime 1.2.0, the fixture variables of ``BaseFixtureGenerator`` descendants
 were renamed, to align with the ``scikit-base`` test framework:
 
 * ``estimator_class`` -> ``object_class``
 * ``estimator_instance`` -> ``object_instance``
 * ``estimator_type_filter`` -> ``object_type_filter`` (no alias, see below)
 
-The old fixture names remain available as deprecated aliases until 1.2.0.
+The old fixture names remain available as deprecated aliases until 1.3.0.
 """
 
 __author__ = ["yash-sangwan"]
@@ -18,7 +18,7 @@ import pytest
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
-# todo 1.2.0: remove this module together with the deprecation aliases
+# todo 1.3.0: remove this module together with the deprecation aliases
 #   in sktime.tests.test_all_estimators.BaseFixtureGenerator
 
 
@@ -44,10 +44,15 @@ class _NewStyle(BaseFixtureGenerator, QuickTester):
 
 def test_estimator_type_filter_raises():
     """Check that setting the renamed class attribute raises a directive error."""
+    # constructed via type, not a class statement: __init_subclass__ raises during
+    # class creation, so the class name is never bound and would only ever be an
+    # unused local
     with pytest.raises(TypeError, match="renamed to object_type_filter"):
-
-        class _Bad(BaseFixtureGenerator):
-            estimator_type_filter = "forecaster"
+        type(
+            "_Bad",
+            (BaseFixtureGenerator,),
+            {"estimator_type_filter": "forecaster"},
+        )
 
 
 def test_generator_dict_has_aliases():
