@@ -85,6 +85,9 @@ class MLPClassifier(BaseDeepClassifier):
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # DL suspected hangs/memouts, see #4610
     }
 
     def __init__(

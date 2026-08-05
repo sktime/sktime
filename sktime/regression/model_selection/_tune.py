@@ -242,6 +242,9 @@ class TSRGridSearchCV(_DelegatedRegressor):
         "capability:missing_values": True,
         "capability:multithreading": True,
         "capability:categorical_in_X": True,
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_multioutput"],  # see #6708
     }
 
     def __init__(

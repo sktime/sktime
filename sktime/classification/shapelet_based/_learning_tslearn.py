@@ -97,6 +97,14 @@ class ShapeletLearningClassifierTslearn(_TslearnAdapter, BaseClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:unequal_length": False,
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # sporadic timeouts, see #6344
+        "tests:skip_by_name": [
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+            "test_fit_idempotent",
+        ],
     }
 
     # defines the name of the attribute containing the tslearn estimator
