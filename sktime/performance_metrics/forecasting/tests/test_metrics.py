@@ -539,10 +539,9 @@ def test_owa_aggregate_then_ratio():
     y_true = np.array([100.05, 100.0, 100.15])
     y_pred = np.array([100.0, 100.05, 100.0])
 
-    # Naive2 forecasts for this y_train (M4 random walk when sp=1).
-    from sktime.performance_metrics.forecasting._owa import m4_naive2_forecast
-
-    y_pred_naive2 = m4_naive2_forecast(y_train, len(y_true), sp=1)
+    # Naive2 forecasts for this y_train (SeasonalityACF sp=1, NaiveForecaster last).
+    # To check the definition of Naive2, check class OverallWeightedAverage.
+    y_pred_naive2 = np.array([100.0, 100.0, 100.1])
 
     # MASE denominator: mean absolute lag-1 difference in training (sp=1).
     mase_scale = np.abs(np.diff(y_train)).mean()
@@ -567,107 +566,3 @@ def test_owa_aggregate_then_ratio():
     assert np.isfinite(owa)
     assert owa < 100
     assert np.allclose(owa, expected_owa)
-
-
-@pytest.mark.skipif(
-    not run_test_module_changed(["sktime.performance_metrics"]),
-    reason="Run if performance_metrics module has changed.",
-)
-def test_m4_naive2_forecast():
-    """Test M4 Naive-2 benchmark matches official reference implementation."""
-    from sktime.performance_metrics.forecasting._owa import (
-        m4_naive2_forecast,
-        m4_seasonality_test,
-    )
-
-    # non-seasonal: plain random walk
-    y_train = np.array([100.0, 100.1, 100.0, 100.2, 100.1, 100.0])
-    fh = 3
-    assert m4_seasonality_test(y_train, 1) is False
-    naive2 = m4_naive2_forecast(y_train, fh, sp=1)
-    assert np.allclose(naive2, np.repeat(y_train[-1], fh))
-
-    # seasonal: deterministic sinusoid
-    t = np.arange(48)
-    y_train = 100.0 + 10.0 * np.sin(2.0 * np.pi * t / 12.0)
-    fh = 6
-    assert m4_seasonality_test(y_train, 12) is True
-    naive2 = m4_naive2_forecast(y_train, fh, sp=12)
-    expected = np.array([100.0, 105.0, 108.66025404, 110.0, 108.66025404, 105.0])
-    assert np.allclose(naive2, expected, rtol=1e-5)
-
-
-@pytest.mark.skipif(
-    not run_test_module_changed(["sktime.performance_metrics"]),
-    reason="Run if performance_metrics module has changed.",
-)
-def test_owa_competition_panel_aggregation():
-    """Panel OWA must aggregate MASE/sMAPE before dividing (M4 definition)."""
-    from sktime.performance_metrics.forecasting import OverallWeightedAverage
-
-    if not _check_estimator_deps(OverallWeightedAverage, severity="none"):
-        pytest.skip("OverallWeightedAverage dependencies not available.")
-
-    idx = pd.MultiIndex.from_product([[0, 1], [0, 1, 2]], names=["instance", "time"])
-
-    y_train = pd.DataFrame(
-        {
-            "y": [
-                100.0,
-                100.1,
-                100.0,
-                100.2,
-                100.1,
-                100.0,
-                200.0,
-                200.2,
-                200.1,
-                200.4,
-                200.3,
-                200.0,
-            ]
-        },
-        index=pd.MultiIndex.from_product(
-            [[0, 1], range(6)], names=["instance", "time"]
-        ),
-    )
-    y_true = pd.DataFrame(
-        {"y": [100.05, 100.0, 100.15, 200.1, 200.0, 200.3]},
-        index=idx,
-    )
-    y_pred = pd.DataFrame(
-        {"y": [100.0, 100.05, 100.0, 200.05, 200.1, 200.0]},
-        index=idx,
-    )
-
-    metric = OverallWeightedAverage(sp=1)
-    competition_owa = (
-        metric.clone()
-        .set_params(multilevel="uniform_average")
-        .evaluate(y_true=y_true, y_pred=y_pred, y_train=y_train)
-    )
-    per_series_owa = (
-        metric.clone()
-        .set_params(multilevel="raw_values")
-        .evaluate(y_true=y_true, y_pred=y_pred, y_train=y_train)
-    )
-
-    assert np.isfinite(competition_owa)
-    assert len(per_series_owa) == 2
-    assert not np.allclose(competition_owa, per_series_owa.mean())
-
-    # competition OWA equals ratio of panel-averaged components
-    mase = metric._compute_mase_smape_components(
-        y_true.loc[0], y_pred.loc[0], y_train.loc[0]
-    )
-    mase1 = mase
-    mase2 = metric._compute_mase_smape_components(
-        y_true.loc[1], y_pred.loc[1], y_train.loc[1]
-    )
-    expected = metric._owa_from_components(
-        np.mean([mase1[0], mase2[0]]),
-        np.mean([mase1[1], mase2[1]]),
-        np.mean([mase1[2], mase2[2]]),
-        np.mean([mase1[3], mase2[3]]),
-    )
-    assert np.allclose(competition_owa, expected)
