@@ -263,6 +263,7 @@ class LagLlamaForecaster(BaseForecaster):
         # test and CI flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_lagllama"],
         "tests:libs": ["sktime.libs.lag_llama"],
     }
 
