@@ -8,7 +8,7 @@ class M4CompetitionCatalogueDaily(_BaseM4CompetitionCatalogue):
     forecast accuracy across multiple temporal granularities.
 
     This catalogue binds the M4 daily dataset with the standard set of
-    classical forecasters and evaluates them using OWA with sp=7.
+    classical forecasters and evaluates them using OWA with sp=1.
     """
 
     _tags = {
@@ -20,7 +20,7 @@ class M4CompetitionCatalogueDaily(_BaseM4CompetitionCatalogue):
 
     _dataset_name = "m4_daily_dataset"
     _metric_name = [
-        "OverallWeightedAverage(sp=7)",
+        "OverallWeightedAverage(sp=1)",
         "MeanAbsolutePercentageError(symmetric=True)",
         "MeanAbsoluteScaledError()",
     ]

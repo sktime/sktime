@@ -20,6 +20,7 @@ from sktime.performance_metrics.forecasting import (
     MeanAbsoluteError,
     MeanAbsolutePercentageError,
     MeanSquaredPercentageError,
+    OverallWeightedAverage,
 )
 from sktime.split import ExpandingWindowSplitter, InstanceSplitter, SingleWindowSplitter
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
@@ -175,6 +176,31 @@ def test_forecastingbenchmark(tmp_path, expected_results_df, scorers):
     pd.testing.assert_frame_equal(
         expected_results_df, results_df, check_exact=False, atol=0, rtol=0.001
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_forecastingbenchmark_owa(tmp_path):
+    """Test benchmarking with OverallWeightedAverage (requires y_train)."""
+    from skbase.utils.dependencies import _check_estimator_deps
+
+    if not _check_estimator_deps(OverallWeightedAverage, severity="none"):
+        pytest.skip("OverallWeightedAverage dependencies not available.")
+
+    benchmark = ForecastingBenchmark()
+    benchmark.add_estimator(NaiveForecaster(strategy="last"))
+    benchmark.add_task(
+        data_loader_simple,
+        ExpandingWindowSplitter(initial_window=2, step_length=1, fh=1),
+        [OverallWeightedAverage(sp=1)],
+    )
+
+    results_df = benchmark.run(tmp_path / "owa_results.csv")
+
+    assert "OverallWeightedAverage_mean" in results_df.columns
+    assert np.isfinite(results_df["OverallWeightedAverage_mean"].iloc[0])
 
 
 @pytest.mark.xfail(reason="currently unfixed failure, see #10555")
