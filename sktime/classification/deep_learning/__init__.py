@@ -4,9 +4,14 @@ __all__ = [
     "CNNClassifier",
     "CNNClassifierTorch",
     "CNTCClassifier",
+    "ConvTimeNetClassifier",
+    "ConvTranClassifierTorch",
     "FCNClassifier",
+    "GRUClassifier",
+    "GRUFCNNClassifier",
     "InceptionTimeClassifier",
     "InceptionTimeClassifierTorch",
+    "InceptionTimePlusClassifier",
     "LSTMFCNClassifier",
     "MACNNClassifier",
     "MACNNClassifierTorch",
@@ -19,9 +24,6 @@ __all__ = [
     "SimpleRNNClassifierTorch",
     "TapNetClassifier",
     "TapNetClassifierTorch",
-    "GRUClassifier",
-    "GRUFCNNClassifier",
-    "ConvTimeNetClassifier",
 ]
 
 from sktime.classification.deep_learning.cnn import (
@@ -30,6 +32,7 @@ from sktime.classification.deep_learning.cnn import (
 )
 from sktime.classification.deep_learning.cntc import CNTCClassifier
 from sktime.classification.deep_learning.convtimenet import ConvTimeNetClassifier
+from sktime.classification.deep_learning.convtran import ConvTranClassifierTorch
 from sktime.classification.deep_learning.fcn import FCNClassifier
 from sktime.classification.deep_learning.gru import (
     GRUClassifier,
@@ -60,4 +63,7 @@ from sktime.classification.deep_learning.rnn import (
 from sktime.classification.deep_learning.tapnet import (
     TapNetClassifier,
     TapNetClassifierTorch,
+)
+from sktime.classification.deep_learning.tsai.inceptiontimeplus import (
+    InceptionTimePlusClassifier,
 )
