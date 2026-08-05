@@ -45,11 +45,9 @@ EXCLUDED_TESTS = {}
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "CNTCNetwork",
-        "ClaSPTransformer",
         "ClearSky",
         "ContractableBOSS",
         "DOBIN",
-        "DilationMappingTransformer",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
@@ -58,7 +56,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DummyRegressor",
         "ElasticEnsemble",
         "FeatureSelection",
-        "FreshPRINCE",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",

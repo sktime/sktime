@@ -113,8 +113,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer._tft.TemporalFusionTransformer.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.temporal_fusion_transformer.TemporalFusionTransformer.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
@@ -404,8 +404,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats.NBeats.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
@@ -713,8 +713,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.deepar.DeepAR.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
@@ -999,8 +999,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nbeats._nbeats.NBeats.html  # noqa: E501
-    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html  # noqa: E501
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.models.nhits.NHiTS.html  # noqa: E501
+    .. [2] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html  # noqa: E501
     """  # noqa: E501
 
     _tags = {
