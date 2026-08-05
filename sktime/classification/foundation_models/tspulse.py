@@ -8,7 +8,7 @@ import tempfile
 from copy import deepcopy
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils.dependencies import _safe_import
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
@@ -462,6 +462,11 @@ class TSPulseClassifier(BaseClassifier):
             }
             if self._device == "cpu":
                 train_args["dataloader_pin_memory"] = False
+            # ``overwrite_output_dir`` was removed from ``TrainingArguments`` in
+            # transformers 5.0, so drop it when running on a version that no
+            # longer accepts it. Kept as-is for transformers<5.0.
+            if not _check_soft_dependencies("transformers<5.0", severity="none"):
+                train_args.pop("overwrite_output_dir", None)
             args = TrainingArguments(**train_args)
             trainer = Trainer(
                 model=model,
