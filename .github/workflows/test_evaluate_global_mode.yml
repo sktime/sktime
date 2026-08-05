@@ -1,0 +1,85 @@
+name: test evaluate global mode (sktime 0.40)
+
+on:
+  workflow_dispatch:
+    inputs:
+      sktime-ref:
+        description: "Git ref for sktime (tag, branch, or commit)"
+        required: false
+        default: "v0.40.0"
+        type: string
+      python-version:
+        description: "Python version"
+        required: false
+        default: "3.11"
+        type: string
+      os:
+        description: "Runner OS"
+        required: false
+        default: "ubuntu-latest"
+        type: choice
+        options:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+          - ubuntu-22.04-arm
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.os }}-${{ inputs.python-version }}
+  cancel-in-progress: true
+
+env:
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
+
+jobs:
+  test-evaluate-global-mode:
+    name: test_evaluate_global_mode (${{ inputs.sktime-ref }})
+    runs-on: ${{ inputs.os }}
+
+    steps:
+      - name: Checkout sktime
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.sktime-ref }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ inputs.python-version }}
+
+      - name: Display Python version
+        run: python -c "import sys; print(sys.version)"
+
+      - name: Install OSX packages
+        if: ${{ inputs.os == 'macos-latest' }}
+        run: ./.github/scripts/install_osx_dependencies.sh
+
+      - name: Force non-GUI Matplotlib backend (Windows)
+        if: ${{ inputs.os == 'windows-latest' }}
+        shell: pwsh
+        run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
+
+      - name: Install sktime and dependencies
+        shell: bash
+        run: uv pip install .[dev,dl,forecasting] --no-cache-dir
+        env:
+          UV_SYSTEM_PYTHON: 1
+
+      - name: Show dependencies
+        run: uv pip list
+
+      - name: Run test_evaluate_global_mode
+        shell: bash
+        run: >-
+          python -m pytest
+          sktime/forecasting/model_evaluation/tests/test_evaluate.py::test_evaluate_global_mode
+          -v
+          --showlocals
+          --matrixdesign False
+          --only_changed_modules False
+          --timeout=600
