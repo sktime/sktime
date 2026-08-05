@@ -21,16 +21,22 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Checkout v0.40.0
+        run: git checkout v0.40.0
+
       - uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Install sktime 0.40.0
+      - name: Install sktime
         run: |
-          pip install "sktime==0.40.0" pytest "pytorch-forecasting>=1.0.0" torch lightning
+          python -m pip install --upgrade pip
+          pip install -e .[dev]
+          pip install "pytorch-forecasting>=1.0.0" torch lightning
 
       - name: Run isolated pytest
         run: |
