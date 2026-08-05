@@ -156,6 +156,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         # --------------
         "capability:random_state": True,
         "capability:pretrain": True,
+        "capability:pretrain_update": True,
         "property:randomness": "derandomized",
         # CI and testing
         # --------------
