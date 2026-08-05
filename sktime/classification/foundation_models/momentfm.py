@@ -287,6 +287,7 @@ class MomentFMClassifier(BaseClassifier):
         """Return task-specific MOMENT model kwargs from fitted state."""
         return {
             "task_name": "classification",
+            "init_task_head": True,
             "n_channels": getattr(self, "_n_channels", 1),
             "num_class": self.n_classes_,
             "dropout": self._config.get("head_dropout", self.head_dropout),

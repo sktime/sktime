@@ -217,6 +217,29 @@ class MomentFMForecaster(BaseForecaster):
         self._moment_seq_len = 512
         self.return_model_to_cpu = return_model_to_cpu
 
+    def _get_model_kwargs(self, init_task_head=False):
+        """Return MOMENT model kwargs describing the fitted forecasting model."""
+        return {
+            "task_name": "forecasting",
+            "init_task_head": init_task_head,
+            "dropout": self._dropout,
+            "head_dropout": self._head_dropout,
+            "freeze_encoder": self._freeze_encoder,
+            "freeze_embedder": self._freeze_embedder,
+            "seq_len": 512,  # forced to be hard coded
+            "freeze_head": self._freeze_head,
+            "device": self._device,
+            "transformer_backbone": self._transformer_backbone,
+            "forecast_horizon": self._model_fh,
+        }
+
+    def _get_native_artifact_load_kwargs(self, name):
+        """Return kwargs needed to reload native artifacts from sktime bundles."""
+        if name != "model":
+            return {}
+
+        return {"model_kwargs": self._get_model_kwargs(init_task_head=True)}
+
     def _fit(self, y, X=None, fh=None):
         """Assumes y is a single or multivariate time series."""
         from accelerate import Accelerator
@@ -286,18 +309,7 @@ class MomentFMForecaster(BaseForecaster):
 
         self.model = MOMENTPipeline.from_pretrained(
             self._pretrained_model_name_or_path,
-            model_kwargs={
-                "task_name": "forecasting",
-                "dropout": self._dropout,
-                "head_dropout": self._head_dropout,
-                "freeze_encoder": self._freeze_encoder,
-                "freeze_embedder": self._freeze_embedder,
-                "seq_len": 512,  # forced to be hard coded
-                "freeze_head": self._freeze_head,
-                "device": self._device,
-                "transformer_backbone": self._transformer_backbone,
-                "forecast_horizon": self._model_fh,
-            },
+            model_kwargs=self._get_model_kwargs(),
         )
         self.model.init()
         # preparing the datasets
