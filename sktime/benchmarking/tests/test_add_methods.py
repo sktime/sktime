@@ -1,6 +1,6 @@
 """Tests for add API in benchmarking."""
 
-__author__ = ["jgyasu"]
+__author__ = ["jgyasu", "yash-sangwan"]
 
 import pytest
 from sklearn.metrics import accuracy_score
@@ -251,3 +251,70 @@ class TestBenchmarkAddMethods:
 
         benchmark.add(KFold(n_splits=3))
         assert len(benchmark.tasks.entities) == 1
+
+    @pytest.mark.parametrize(
+        "omitted, expected",
+        [
+            ("cv_splitter", "missing cv_splitter"),
+            ("metric", "missing metric"),
+            ("dataset", "missing dataset"),
+        ],
+    )
+    def test_run_raises_if_task_component_missing(self, omitted, expected):
+        """Test run raises and names the component when a task is incomplete.
+
+        Regression test for #8871: an incomplete task specification used to
+        register zero tasks and return an empty DataFrame silently.
+        """
+        components = {
+            "dataset": ArrowHead(),
+            "metric": accuracy_score,
+            "cv_splitter": KFold(n_splits=3),
+        }
+        del components[omitted]
+
+        benchmark = ClassificationBenchmark()
+        benchmark.add(DummyClassifier())
+        for component in components.values():
+            benchmark.add(component)
+
+        assert len(benchmark.tasks.entities) == 0
+        with pytest.raises(ValueError, match=expected):
+            benchmark.run()
+
+    def test_run_raises_if_no_estimators(self):
+        """Test run raises when a task is complete but no estimator was added."""
+        benchmark = ClassificationBenchmark()
+        benchmark.add((ArrowHead(), accuracy_score, KFold(n_splits=3)))
+
+        assert len(benchmark.tasks.entities) == 1
+        with pytest.raises(ValueError, match="no estimators registered"):
+            benchmark.run()
+
+    def test_run_raises_if_nothing_added(self):
+        """Test run reports estimators and every task component as missing."""
+        benchmark = ClassificationBenchmark()
+
+        with pytest.raises(ValueError) as excinfo:
+            benchmark.run()
+
+        message = str(excinfo.value)
+        assert "no estimators registered" in message
+        assert "missing dataset, metric, cv_splitter" in message
+
+    def test_run_not_blocked_when_task_added_directly(self):
+        """Test the ``add_task`` path is unaffected by the completeness check.
+
+        ``add_task`` registers a task without populating the component
+        collections, which must not be mistaken for an incomplete benchmark.
+        """
+        benchmark = ClassificationBenchmark()
+        benchmark.add_estimator(DummyClassifier())
+        benchmark.add_task(ArrowHead(), KFold(n_splits=3), [accuracy_score])
+
+        assert benchmark._datasets == []
+        assert benchmark._metrics == []
+        assert benchmark._cv_splitters == []
+
+        results_df = benchmark.run()
+        self._assert_standard_metrics(results_df)
