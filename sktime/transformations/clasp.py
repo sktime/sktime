@@ -74,6 +74,10 @@ class ClaSPTransformer(BaseTransformer):
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
         "capability:multivariate": False,
         "fit_is_empty": True,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.transformations._clasp_numba"],
     }
 
     def __init__(
@@ -167,4 +171,7 @@ class ClaSPTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"window_length": 5}
+        param1 = {"window_length": 5}
+        param2 = {"window_length": 8, "exclusion_radius": 0.1}
+
+        return [param1, param2]
