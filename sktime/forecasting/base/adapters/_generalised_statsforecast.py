@@ -164,6 +164,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         self : reference to self
         """
         del fh  # avoid being detected as unused by ``vulture`` like tools
+        self._cur_y = y
+        self._cur_X = X
         self._forecaster = self._instantiate_model()
 
         y_fit_input = y.to_numpy(copy=False)
@@ -309,7 +311,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             point_predictions.append(out_of_sample_point_predictions)
 
         final_point_predictions = pandas.concat(point_predictions, copy=False)
-        final_point_predictions.name = self._y.name
+        final_point_predictions.name = self._cur_y.name
 
         return final_point_predictions
 
@@ -581,7 +583,7 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        fitted = self.estimator.predict(self.estimator._y.index)[:, 0]
+        fitted = self.estimator.predict(self.estimator._cur_y.index)[:, 0]
 
         if level is None:
             return {"fitted": fitted}
@@ -589,7 +591,9 @@ class StatsForecastBackAdapter:
         level = sorted(level)
         coverage = [round(_l / 100, 2) for _l in level]
         pred_int = self.estimator.predict_interval(
-            fh=self.estimator._y.index, X=self.estimator._X, coverage=coverage
+            fh=self.estimator._cur_y.index,
+            X=self.estimator._cur_X,
+            coverage=coverage,
         )
         return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
 

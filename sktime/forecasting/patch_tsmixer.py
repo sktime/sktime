@@ -236,6 +236,8 @@ class PatchTSMixerForecaster(BaseForecaster):
         )
 
     def _fit(self, y, X=None, fh=None):
+        self._cur_y = y
+        self._cur_X = X
         from tsfm_public.toolkit.dataset import ForecastDFDataset
         from tsfm_public.toolkit.time_series_preprocessor import TimeSeriesPreprocessor
 
@@ -385,7 +387,7 @@ class PatchTSMixerForecaster(BaseForecaster):
             fh = self.fh
         fh_rel = fh.to_relative(self.cutoff)
 
-        batch = self._inference_batch(self._y)
+        batch = self._inference_batch(self._cur_y)
         out = self._forward_window(batch)
         pred = self._point_predictions(out).detach().cpu().numpy()[0]
         n_cols = len(self._target_columns)
@@ -396,7 +398,7 @@ class PatchTSMixerForecaster(BaseForecaster):
 
         index = fh.to_absolute(self._cutoff)._values
         pred_df = pd.DataFrame(values, index=index, columns=self._target_columns)
-        pred_df.index.names = self._y.index.names
+        pred_df.index.names = self._cur_y.index.names
         return pred_df
 
     @classmethod

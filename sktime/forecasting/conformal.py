@@ -182,6 +182,8 @@ class ConformalIntervals(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         self.fh_early_ = fh is not None
         self.forecaster_ = clone(self.forecaster)
         self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -288,8 +290,8 @@ class ConformalIntervals(BaseForecaster):
             residuals_matrix = self.residuals_matrix_
         else:
             residuals_matrix = self._compute_sliding_residuals(
-                y=self._y,
-                X=self._X,
+                y=self._cur_y,
+                X=self._cur_X,
                 forecaster=self.forecaster,
                 initial_window=self.initial_window,
                 sample_frac=self.sample_frac,

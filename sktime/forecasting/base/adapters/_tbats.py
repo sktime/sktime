@@ -26,6 +26,10 @@ class _TbatsAdapter(BaseForecaster):
         "capability:missing_values": False,
         # todo 1.2.0: check whether numpy and scipy bounds are still needed
         "python_dependencies": ["tbats", "numpy<2", "scipy<1.16"],
+        # Numpy built with MINGW-W64 on Windows 64 bits is experimental,
+        # and only available for testing, fails with seg fault on windows with
+        # python 3.13
+        "env_marker": 'platform_system != "Windows" or python_version < "3.13"',
         # CI and testing tags
         # -------------------
         "tests:vm": True,
@@ -103,6 +107,8 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         self._create_model_class()
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
@@ -129,15 +135,19 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : reference to self
         """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+
         if update_params:
             # update model state and refit parameters
             # _fit re-runs model instantiation which triggers refit
-            self._fit(y=self._y, X=None, fh=self._fh)
+            self._fit(y=self._cur_y, X=None, fh=self._fh)
 
         else:
             # update model state without refitting parameters
             # out-of-box fit tbats method will not refit parameters
-            self._forecaster.fit(y=self._y)
+            self._forecaster.fit(y=self._cur_y)
 
         return self
 

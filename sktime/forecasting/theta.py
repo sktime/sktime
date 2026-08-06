@@ -150,6 +150,7 @@ class ThetaForecaster(ExponentialSmoothing):
         -------
         self : returns an instance of self.
         """
+        y_seasonal = y
         deseasonalize = self.deseasonalize
         if isinstance(deseasonalize, bool) and deseasonalize:
             from sktime.transformations.detrend import Deseasonalizer
@@ -179,6 +180,11 @@ class ThetaForecaster(ExponentialSmoothing):
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
         super()._fit(y, X=None, fh=fh)
+        # the parent snapshots the deseasonalized y passed above, but the snapshot
+        # must hold the data as seen in fit: `_update` deseasonalizes it again,
+        # and a refit passes it through `_fit`, which deseasonalizes as well
+        self._cur_y = y_seasonal
+        self._cur_X = X
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute and store historical residual standard error
@@ -230,7 +236,7 @@ class ThetaForecaster(ExponentialSmoothing):
             drift = self.trend_ * fh
         else:
             # Calculate drift from SES parameters
-            n_timepoints = len(self._y)
+            n_timepoints = len(self._cur_y)
             drift = self.trend_ * (
                 fh
                 + (1 - (1 - self.initial_level_) ** n_timepoints) / self.initial_level_
@@ -327,7 +333,7 @@ class ThetaForecaster(ExponentialSmoothing):
         super()._update(y, X, update_params=False)  # use custom update_params routine
         if update_params:
             if self.deseasonalize:
-                y = self.deseasonalizer_.transform(self._y)  # use updated y
+                y = self.deseasonalizer_.transform(self._cur_y)  # use updated y
             self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y)
         return self
@@ -535,6 +541,8 @@ class ThetaModularForecaster(BaseForecaster):
         return _forecasters
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         self.pipe_.fit(y=y, X=X, fh=fh)
         return self
 
@@ -543,7 +551,7 @@ class ThetaModularForecaster(BaseForecaster):
         # because of output conversion
         Y_pred = self.pipe_.steps_[-1][-1].predict(fh, X)
         y_pred = _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):

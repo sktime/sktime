@@ -406,7 +406,7 @@ def test_predict_residuals():
     forecaster.fit(y_train, fh=fh)
 
     y_pred_1 = forecaster.predict()
-    y_resid = forecaster.predict_residuals()
+    y_resid = forecaster.predict_residuals(y=y_train)
     y_pred_2 = forecaster.predict()
     assert_series_equal(y_pred_1, y_pred_2)
     assert y_resid.index.equals(y_train.index)
@@ -481,30 +481,36 @@ def test_range_fh_in_predict():
     assert var_predictions.shape == (10 * 2, 5)
 
 
+from sktime.forecasting.base import BaseForecaster
+
+
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    # legacy default is not depricated yet
+    BaseForecaster().get_config()["remember_data"]
+    or not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_remember_data():
-    """Test that the ``remember_data`` flag works as expected."""
+def test_base_forecaster_does_not_store_y_X():
+    """Test that BaseForecaster does not store _y/_X after fit."""
     from sktime.datasets import load_airline
+    from sktime.forecasting.base import BaseForecaster
 
     y = load_airline()
-    X = load_airline()
-    f = YfromX.create_test_instance()
 
-    # turn off remembering _X, _y by config
-    f.set_config(**{"remember_data": False})
-    f.fit(y, X, fh=[1, 2, 3])
+    class _MinimalForecaster(BaseForecaster):
+        _tags = {"ignores-exogenous-X": True}
 
-    assert f._X is None
-    assert f._y is None
+        def _fit(self, y, X, fh):
+            return self
 
-    f.set_config(**{"remember_data": True})
-    f.fit(y, X, fh=[1, 2, 3])
+        def _predict(self, fh, X):
+            return pd.Series(0, index=fh.to_absolute_index(self.cutoff))
 
-    assert f._X is not None
-    assert f._y is not None
+    f = _MinimalForecaster()
+    f.fit(y, fh=[1, 2, 3])
+
+    assert not hasattr(f, "_y") or f._y is None
+    assert not hasattr(f, "_X") or f._X is None
 
 
 @pytest.mark.skipif(

@@ -107,7 +107,7 @@ class _ArpsDcaBase(BaseForecaster):
 
     def _get_varnames(self):
         """Return variable names from the training series."""
-        return self._y.columns.tolist()
+        return self._cur_y.columns.tolist()
 
     @staticmethod
     def _index_to_float_array(index):
@@ -191,6 +191,8 @@ class _ArpsDcaBase(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         self._pred_int_available_ = True
 
         t_all = self._index_to_float_array(y.index)

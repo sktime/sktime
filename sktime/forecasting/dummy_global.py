@@ -185,6 +185,8 @@ class DummyGlobalForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         # Store last value for "last" strategy
         if isinstance(y, pd.DataFrame):
             self.last_value_ = y.iloc[-1].values
@@ -235,8 +237,8 @@ class DummyGlobalForecaster(BaseForecaster):
             )
 
         # Check if we're dealing with multivariate data
-        if isinstance(self._y, pd.DataFrame):
-            n_cols = len(self._y.columns)
+        if isinstance(self._cur_y, pd.DataFrame):
+            n_cols = len(self._cur_y.columns)
             if isinstance(pred_value, np.ndarray):
                 # Repeat the last value for each time point
                 data = np.tile(pred_value, (len(fh_abs), 1))
@@ -244,12 +246,12 @@ class DummyGlobalForecaster(BaseForecaster):
                 # Single value - broadcast to all columns
                 data = np.full((len(fh_abs), n_cols), pred_value)
 
-            return pd.DataFrame(data, index=fh_abs, columns=self._y.columns)
+            return pd.DataFrame(data, index=fh_abs, columns=self._cur_y.columns)
         else:
             # Univariate
             if isinstance(pred_value, np.ndarray):
                 pred_value = pred_value[0]
-            return pd.Series(pred_value, index=fh_abs, name=self._y.name)
+            return pd.Series(pred_value, index=fh_abs, name=self._cur_y.name)
 
     def _predict_mean_by_index(self, fh_abs):
         """Predict using mean by index strategy.
@@ -270,8 +272,8 @@ class DummyGlobalForecaster(BaseForecaster):
         mean_idx = self.mean_by_index_.index
 
         # Check if we're dealing with multivariate data
-        if isinstance(self._y, pd.DataFrame):
-            n_cols = len(self._y.columns)
+        if isinstance(self._cur_y, pd.DataFrame):
+            n_cols = len(self._cur_y.columns)
             data = np.full((len(fh_abs), n_cols), self.global_mean_)
 
             for i, idx in enumerate(fh_abs):
@@ -281,7 +283,7 @@ class DummyGlobalForecaster(BaseForecaster):
                     else:
                         data[i, :] = self.mean_by_index_.loc[idx]
 
-            return pd.DataFrame(data, index=fh_abs, columns=self._y.columns)
+            return pd.DataFrame(data, index=fh_abs, columns=self._cur_y.columns)
         else:
             # Univariate
             pred_values = []
@@ -291,7 +293,7 @@ class DummyGlobalForecaster(BaseForecaster):
                 else:
                     pred_values.append(self.global_mean_)
 
-            return pd.Series(pred_values, index=fh_abs, name=self._y.name)
+            return pd.Series(pred_values, index=fh_abs, name=self._cur_y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

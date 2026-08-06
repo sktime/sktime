@@ -247,6 +247,8 @@ class BaggingForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         self._y_ix_names = y.index.names
 
         # random state handling passed into input estimators
@@ -391,14 +393,14 @@ class BaggingForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        # Need to construct a completely new y out of old self._y and y and then
+        # Need to construct a completely new y out of old self._cur_y and y and then
         # fit_treansform the transformer and re-fit the forecaster.
-        _y = update_data(self._y, y)
+        _y = update_data(self._cur_y, y)
 
         y_bootstraps = self.bootstrap_transformer_.fit_transform(X=_y)
 
         # generate replicates of exogenous data for bootstrap
-        _X = update_data(self._X, X)
+        _X = update_data(self._cur_X, X)
         X_inner = self._gen_X_bootstraps(_X)
 
         self.forecaster_.update(y=y_bootstraps, X=X_inner, update_params=update_params)

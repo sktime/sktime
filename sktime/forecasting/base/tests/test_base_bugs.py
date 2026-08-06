@@ -76,6 +76,6 @@ def test_predict_residuals_conversion():
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
     pipe = Differencer() * NaiveForecaster()
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
-    result = pipe.predict_residuals()
+    result = pipe.predict_residuals(y_train)
 
     assert type(result) is type(y_train)

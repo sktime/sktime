@@ -94,6 +94,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         """
         fh = fh.to_relative(self.cutoff)
 
+        self._cur_y = y
+        self._cur_X = X
         self._y_len = len(y)
 
         # Validate fh against pretrained network's output dimension
@@ -120,6 +122,31 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
 
+    def _update(self, y, X=None, update_params=True):
+        """Update the network with new data.
+
+        The data seen so far is kept in ``_cur_y`` / ``_cur_X``: ``_predict``
+        reads the most recent observations from there, and appending keeps them
+        contiguous with the cutoff, which advances in ``update``.
+
+        If ``update_params`` is True, training continues on the data seen so far.
+        ``_fit`` retains an already built network, so the weights are not
+        re-initialized, and training resumes from the current state.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        # descendants ignoring X may not keep a snapshot of it
+        cur_X = getattr(self, "_cur_X", None)
+        if X is not None:
+            cur_X = update_data(cur_X, X) if cur_X is not None else X
+            self._cur_X = cur_X
+        self._y_len = len(self._cur_y)
+
+        if update_params:
+            self._fit(y=self._cur_y, fh=self._fh, X=cur_X)
+        return self
+
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain the neural network on panel data.
 
@@ -145,7 +172,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         all_series = _get_series_from_panel(y)
 
         # Use first series as reference for network dimensions
-        self._y = all_series[0]
+        self._cur_y = all_series[0]
         self._y_len = len(all_series[0])
 
         self.network = self._build_network(pred_len)
@@ -378,7 +405,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
             )
 
         if X is None:
-            dataloader = self.build_pytorch_pred_dataloader(self._y, fh)
+            dataloader = self.build_pytorch_pred_dataloader(self._cur_y, fh)
         else:
             dataloader = self.build_pytorch_pred_dataloader(X, fh)
 
@@ -389,7 +416,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         y_pred = cat(y_pred, dim=0).view(-1, y_pred[0].shape[-1]).numpy()
         y_pred = y_pred[fh._values.values - 1]
         y_pred = pd.DataFrame(
-            y_pred, columns=self._y.columns, index=fh.to_absolute_index(self.cutoff)
+            y_pred, columns=self._cur_y.columns, index=fh.to_absolute_index(self.cutoff)
         )
 
         return y_pred
