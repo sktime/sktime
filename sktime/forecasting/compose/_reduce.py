@@ -348,11 +348,14 @@ class _Reducer(_BaseWindowForecaster):
         params = [{"estimator": est, "window_length": 3}]
 
         # second parameter set: a different regressor and a different window
-        # length. The regressor is a shallow decision tree rather than a linear
-        # model, so the two sets cover both a linear and a non-linear reduction
+        # length. The regressor is a decision tree rather than a linear model,
+        # so the two sets cover both a linear and a non-linear reduction
         # estimator, and the differing window length varies the number of lag
-        # features the reduction produces.
-        est2 = DecisionTreeRegressor(max_depth=2, random_state=0)
+        # features the reduction produces. The tree depth is left unrestricted
+        # so that recursive forecasts vary across the horizon; a shallow tree
+        # reaches a fixed point after few steps, which would weaken tests that
+        # catch horizon or index bugs.
+        est2 = DecisionTreeRegressor(random_state=0)
         if "TimeSeries" in cls.__name__:
             est2 = make_pipeline(Tabularizer(), est2)
 
