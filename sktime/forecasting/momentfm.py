@@ -8,10 +8,99 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _safe_import
+from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 empty_cache = _safe_import("torch.cuda.empty_cache")
 Dataset = _safe_import("torch.utils.data.Dataset")
+
+
+@_multiton
+class _CachedMomentFMForecastPipeline:
+    """Cached MOMENTPipeline loader for forecasting task.
+
+    MomentFM loads large pretrained weights from HuggingFace. By wrapping the
+    pipeline in a multiton, successive ``fit()`` calls with identical parameters
+    skip the expensive ``from_pretrained()`` download/load and reuse the already-
+    initialised pipeline instead.
+
+    Parameters
+    ----------
+    key : str
+        Unique cache key produced by :func:`_momentfm_forecast_cache_key`.
+    pretrained_model_name_or_path : str
+        HuggingFace model identifier or local path.
+    dropout : float
+        Dropout probability.
+    head_dropout : float
+        Dropout probability for the forecasting head.
+    forecast_horizon : int
+        Number of steps to forecast.
+    freeze_encoder : bool
+        Whether the encoder is frozen.
+    freeze_embedder : bool
+        Whether the embedder is frozen.
+    freeze_head : bool
+        Whether the forecasting head is frozen.
+    transformer_backbone : str
+        Transformer backbone model identifier.
+    device : str
+        Device string used by the pipeline.
+    """
+
+    def __init__(
+        self,
+        key,
+        pretrained_model_name_or_path,
+        dropout,
+        head_dropout,
+        forecast_horizon,
+        freeze_encoder,
+        freeze_embedder,
+        freeze_head,
+        transformer_backbone,
+        device,
+    ):
+        self.key = key
+        self.pretrained_model_name_or_path = pretrained_model_name_or_path
+        self.dropout = dropout
+        self.head_dropout = head_dropout
+        self.forecast_horizon = forecast_horizon
+        self.freeze_encoder = freeze_encoder
+        self.freeze_embedder = freeze_embedder
+        self.freeze_head = freeze_head
+        self.transformer_backbone = transformer_backbone
+        self.device = device
+        self._pipeline = None
+
+    def load(self):
+        """Load (or return cached) MOMENTPipeline for this configuration.
+
+        Returns
+        -------
+        MOMENTPipeline
+            The initialised pipeline, ready for fine-tuning.
+        """
+        if self._pipeline is None:
+            from sktime.libs.momentfm import MOMENTPipeline
+
+            self._pipeline = MOMENTPipeline.from_pretrained(
+                self.pretrained_model_name_or_path,
+                model_kwargs={
+                    "task_name": "forecasting",
+                    "dropout": self.dropout,
+                    "head_dropout": self.head_dropout,
+                    "freeze_encoder": self.freeze_encoder,
+                    "freeze_embedder": self.freeze_embedder,
+                    "seq_len": 512,
+                    "freeze_head": self.freeze_head,
+                    "device": self.device,
+                    "transformer_backbone": self.transformer_backbone,
+                    "forecast_horizon": self.forecast_horizon,
+                },
+            )
+            self._pipeline.init()
+        return self._pipeline
 
 
 class MomentFMForecaster(BaseForecaster):
@@ -216,14 +305,53 @@ class MomentFMForecaster(BaseForecaster):
         self._moment_seq_len = 512
         self.return_model_to_cpu = return_model_to_cpu
 
+    def _get_momentfm_cache_key(self):
+        """Build a unique cache key for the current model configuration."""
+        parts = [
+            str(self._pretrained_model_name_or_path),
+            str(self._dropout),
+            str(self._head_dropout),
+            str(self._model_fh),
+            str(self._freeze_encoder),
+            str(self._freeze_embedder),
+            str(self._freeze_head),
+            str(self._transformer_backbone),
+            str(self._device),
+        ]
+        return "_".join(parts)
+
+    def _load_model(self):
+        """Lazily load (or retrieve cached) MOMENTPipeline.
+
+        Uses the multiton pattern so that the call is
+        executed at most once per unique combination of model path, dropout,
+        forecast horizon, device, and other model parameters.
+
+        Returns
+        -------
+        MOMENTPipeline
+            Initialised pipeline ready for fine-tuning.
+        """
+        key = self._get_momentfm_cache_key()
+        return _CachedMomentFMForecastPipeline(
+            key=key,
+            pretrained_model_name_or_path=self._pretrained_model_name_or_path,
+            dropout=self._dropout,
+            head_dropout=self._head_dropout,
+            forecast_horizon=self._model_fh,
+            freeze_encoder=self._freeze_encoder,
+            freeze_embedder=self._freeze_embedder,
+            freeze_head=self._freeze_head,
+            transformer_backbone=self._transformer_backbone,
+            device=self._device,
+        ).load()
+
     def _fit(self, y, X=None, fh=None):
         """Assumes y is a single or multivariate time series."""
         from accelerate import Accelerator
         from torch.optim import Adam
         from torch.optim.lr_scheduler import OneCycleLR
         from torch.utils.data import DataLoader
-
-        from sktime.libs.momentfm import MOMENTPipeline
 
         # keep a copy of y in case y is None in predict
         self._y = y
@@ -283,22 +411,7 @@ class MomentFMForecaster(BaseForecaster):
         # revert self._fh back to fh to pass checks
         self._fh = fh
 
-        self.model = MOMENTPipeline.from_pretrained(
-            self._pretrained_model_name_or_path,
-            model_kwargs={
-                "task_name": "forecasting",
-                "dropout": self._dropout,
-                "head_dropout": self._head_dropout,
-                "freeze_encoder": self._freeze_encoder,
-                "freeze_embedder": self._freeze_embedder,
-                "seq_len": 512,  # forced to be hard coded
-                "freeze_head": self._freeze_head,
-                "device": self._device,
-                "transformer_backbone": self._transformer_backbone,
-                "forecast_horizon": self._model_fh,
-            },
-        )
-        self.model.init()
+        self.model = self._load_model()
         # preparing the datasets
         y_train, y_test = temporal_train_test_split(
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
