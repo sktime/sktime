@@ -268,6 +268,7 @@ class PatchTSTForecaster(BaseForecaster):
         "capability:global_forecasting": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
+        "serialization:skip": ("model",),
         # Tests and CI tags
         # -----------------
         "tests:vm": True,
@@ -302,6 +303,16 @@ class PatchTSTForecaster(BaseForecaster):
 
         if self.model_path is None and self.fit_strategy != "full":
             raise ValueError(f"model_path={model_path} requires fit_strategy=='full'")
+
+    def __dynamic_tags__(self):
+        """Set serialization tags conditional on fit strategy."""
+        if self.fit_strategy != "zero-shot":
+            self.set_tags(
+                **{
+                    "serialization:native_artifacts": ("model",),
+                    "serialization:skip": (),
+                }
+            )
 
     def _fit(self, y, X=None, fh=None):
         """Fits the model.
@@ -364,6 +375,12 @@ class PatchTSTForecaster(BaseForecaster):
 
             elif self.fit_strategy == "minimal":
                 if len(info["mismatched_keys"]) == 0 and len(info["missing_keys"]) == 0:
+                    self.set_tags(
+                        **{
+                            "serialization:native_artifacts": (),
+                            "serialization:skip": ("model",),
+                        }
+                    )
                     return  # No need to fit
 
                 # Freeze all loaded parameters

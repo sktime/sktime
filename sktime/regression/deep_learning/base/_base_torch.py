@@ -109,6 +109,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         "capability:random_state": True,
         "property:randomness": "stochastic",
         "tests:vm": True,
+        "serialization:native_artifacts": ("network",),
     }
 
     # _instantiate_activation_vars is an iterable of attribute names of activations
@@ -183,6 +184,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self._metrics_objects = None
 
     def _fit(self, X, y):
+        self._network_input_shape_ = X.shape
         self.network = self._build_network(X)
 
         # instantiate loss function and optimizer
@@ -198,6 +200,14 @@ class BaseDeepRegressorTorch(BaseRegressor):
         self.network.train()
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
+
+    def _create_torch_artifact(self, name):
+        """Construct the fitted network architecture for deserialization."""
+        if name != "network":
+            raise ValueError(f"Unknown torch artifact {name!r}.")
+
+        X = np.broadcast_to(np.empty(1), self._network_input_shape_)
+        return self._build_network(X)
 
     def _run_epoch(self, epoch, dataloader):
         losses = []

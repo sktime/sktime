@@ -73,6 +73,8 @@ class XLSTMForecaster(BaseForecaster):
         # CI and testing tags
         # -------------------
         "tests:vm": True,
+        "serialization:native_artifacts": ("model",),
+        "serialization:skip": ("optimizer", "loss_fn"),
     }
 
     def __init__(
@@ -108,8 +110,6 @@ class XLSTMForecaster(BaseForecaster):
         _check_soft_dependencies("torch", severity="error")
         import torch
 
-        from sktime.libs.xlstm_time.xlstm_time import xLSTM
-
         y = check_y(y)
 
         # Keep track if input was a Series for prediction output
@@ -141,23 +141,7 @@ class XLSTMForecaster(BaseForecaster):
 
         self.device_ = self.device or ("cuda" if torch.cuda.is_available() else "cpu")
 
-        # Resolve block_types if None
-        _block_types = self.block_types
-        if _block_types is None:
-            _block_types = ["slstm"] * self.num_layers
-
-        # Use actual input size from data
-        actual_input_size = y_normalized.shape[1]
-
-        self.model = xLSTM(
-            input_size=actual_input_size,
-            hidden_size=self.hidden_size,
-            num_layers=self.num_layers,
-            block_types=_block_types,
-            num_heads=self.num_heads,
-            dropout=self.dropout,
-            output_size=actual_input_size,
-        ).to(self.device_)
+        self.model = self._build_model()
 
         # Setup optimizer and loss
         self.optimizer = torch.optim.Adam(
@@ -202,6 +186,30 @@ class XLSTMForecaster(BaseForecaster):
         self._last_sequence = y_normalized[-self.sequence_length :].copy()
 
         return self
+
+    def _build_model(self):
+        """Construct the xLSTM architecture from estimator state."""
+        from sktime.libs.xlstm_time.xlstm_time import xLSTM
+
+        block_types = self.block_types
+        if block_types is None:
+            block_types = ["slstm"] * self.num_layers
+
+        return xLSTM(
+            input_size=self._n_outputs,
+            hidden_size=self.hidden_size,
+            num_layers=self.num_layers,
+            block_types=block_types,
+            num_heads=self.num_heads,
+            dropout=self.dropout,
+            output_size=self._n_outputs,
+        ).to(self.device_)
+
+    def _create_torch_artifact(self, name):
+        """Construct the fitted xLSTM architecture for deserialization."""
+        if name != "model":
+            raise ValueError(f"Unknown torch artifact {name!r}.")
+        return self._build_model()
 
     def _predict(self, fh, X=None):
         """Generate forecasts for the given forecasting horizon."""

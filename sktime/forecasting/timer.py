@@ -91,6 +91,7 @@ class TimerForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:insample": False,
+        "serialization:skip": ("model_",),
         # CI and test tags
         # ----------------
         "tests:vm": True,
@@ -127,17 +128,6 @@ class TimerForecaster(BaseForecaster):
             device=self.device,
         )
         return cached.load()
-
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable model."""
-        state = self.__dict__.copy()
-        if "model_" in state:
-            state["model_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state, model will be reloaded on next use."""
-        self.__dict__.update(state)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -194,7 +184,7 @@ class TimerForecaster(BaseForecaster):
         import torch
 
         # Reload model if it was lost during pickling
-        if self.model_ is None:
+        if not hasattr(self, "model_") or self.model_ is None:
             self.model_ = self._load_model()
 
         fh_relative = fh.to_relative(self.cutoff)

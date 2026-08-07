@@ -106,12 +106,11 @@ class CNTCClassifier(BaseDeepClassifier):
         "tests:libs": ["sktime.networks.cntc"],
         "tests:skip_by_name": [
             "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
         ],
         # Run tests in a dedicated VM due to sporadic crashes and possible
         # memory leaks (see #8518)
         "tests:vm": True,
+        "serialization:native_artifacts": ("model_", "input_model_"),
     }
 
     def __init__(
@@ -204,6 +203,46 @@ class CNTCClassifier(BaseDeepClassifier):
         )
         return model
 
+    def build_input_model(self, input_shape):
+        """Construct the Keras model used for CNTC input preprocessing."""
+        from tensorflow import keras
+
+        n_timepoints, n_dimensions = input_shape
+        input_layers = []
+        output_layers = []
+
+        for _ in range(n_dimensions):
+            input_layer = keras.layers.Input((2 * n_timepoints,))
+            output_layer = keras.layers.Dense(n_timepoints)(input_layer)
+            output_layer = keras.layers.Reshape((n_timepoints, 1))(output_layer)
+            input_layers.append(input_layer)
+            output_layers.append(output_layer)
+
+        if n_dimensions == 1:
+            output_layer = output_layers[0]
+        else:
+            output_layer = keras.layers.Concatenate(axis=2)(output_layers)
+
+        return keras.models.Model(inputs=input_layers, outputs=output_layer)
+
+    def _prepare_window_input(self, X):
+        """Prepare rolling-window inputs for the CNTC preprocessing model."""
+        import numpy as np
+        import pandas as pd
+
+        window_inputs = []
+
+        for i in range(X.shape[2]):
+            trainX1 = X[:, :, i]
+            pd_trainX = pd.DataFrame(trainX1)
+
+            window = pd_trainX.rolling(window=3).mean()
+            window = window.fillna(0)
+
+            window_inputs.append(np.concatenate((trainX1, window), axis=1))
+
+        return window_inputs
+
     def prepare_input(self, X):
         """
         Prepare input for the CLSTM arm of the model.
@@ -227,47 +266,12 @@ class CNTCClassifier(BaseDeepClassifier):
         trainX: tuple,
             The input to be fed to the two arms of CNTC.
         """
-        import numpy as np
-        import pandas as pd
-        from tensorflow import keras
-
-        if X.shape[2] == 1:
-            # Converting data to pandas
-            trainX1 = X.reshape([X.shape[0], X.shape[1]])
-            pd_trainX = pd.DataFrame(trainX1)
-
-            # Taking rolling window
-            window = pd_trainX.rolling(window=3).mean()
-            window = window.fillna(0)
-
-            trainX2 = np.concatenate((trainX1, window), axis=1)
-            trainX2 = keras.backend.variable(trainX2)
-            trainX2 = keras.layers.Dense(
-                trainX1.shape[1], input_shape=(trainX2.shape[1:])
-            )(trainX2)
-            trainX2 = keras.backend.eval(trainX2)
-            trainX = trainX2.reshape((trainX2.shape[0], trainX2.shape[1], 1))
-        else:
-            trainXs = []
-            for i in range(X.shape[2]):
-                trainX1 = X[:, :, i]
-                pd_trainX = pd.DataFrame(trainX1)
-
-                window = pd_trainX.rolling(window=3).mean()
-                window = window.fillna(0)
-
-                trainX2 = np.concatenate((trainX1, window), axis=1)
-                trainX2 = keras.backend.variable(trainX2)
-                trainX2 = keras.layers.Dense(
-                    trainX1.shape[1], input_shape=(trainX2.shape[1:])
-                )(trainX2)
-                trainX2 = keras.backend.eval(trainX2)
-
-                trainX = trainX2.reshape((trainX2.shape[0], trainX2.shape[1], 1))
-                trainXs.append(trainX)
-
-            trainX = np.concatenate(trainXs, axis=2)
-        return trainX
+        window_inputs = self._prepare_window_input(X)
+        return self.input_model_.predict(
+            window_inputs,
+            batch_size=self.batch_size,
+            verbose=0,
+        )
 
     def _fit(self, X, y):
         """Fit the classifier on the training set (X, y).
@@ -288,6 +292,7 @@ class CNTCClassifier(BaseDeepClassifier):
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
+        self.input_model_ = self.build_input_model(self.input_shape)
         X2 = self.prepare_input(X)
         if self.verbose:
             self.model_.summary()
@@ -385,3 +390,10 @@ class CNTCClassifier(BaseDeepClassifier):
             params.append(param_callbacks)
 
         return params
+
+    @staticmethod
+    def get_custom_objects():
+        """Return the custom objects needed for loading the model."""
+        from sktime.libs._keras_self_attention import SeqSelfAttention
+
+        return SeqSelfAttention.get_custom_objects()

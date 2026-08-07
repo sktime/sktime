@@ -105,6 +105,7 @@ class TotoForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "serialization:skip": ("forecaster_", "_series"),
         "capability:non_contiguous_X": False,
         # contribution and dependency tags
         "authors": [
@@ -130,6 +131,14 @@ class TotoForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on own VM?
+        # relevant issue: https://github.com/sktime/sktime/issues/10491
+        # deepcopy fails during `update_predict(..., reset_forecaster=False)`
+        "tests:skip_by_name": [
+            "test_deepcopy_fitted",
+            "test_deepcopy_fitted_predict",
+            "test_fit_idempotent",
+            "test_update_predict_predicted_index",
+        ],
         "tests:specific": ["sktime.forecasting.tests.test_toto"],
     }
 
@@ -203,6 +212,30 @@ class TotoForecaster(BaseForecaster):
             "scale_factor_exponent": self.scale_factor_exponent,
         }
 
+    def _load_model(self):
+        """Load the cached zero-shot Toto forecaster."""
+        return _CachedTotoForecaster(
+            key=self._get_toto_key(),
+            toto_kwargs=self._get_toto_kwargs(),
+            device=self._device,
+        ).load_from_checkpoint()
+
+    def _get_series(self):
+        """Return Toto masked time series, rebuilding skipped wrapper if needed."""
+        if hasattr(self, "_series") and self._series is not None:
+            return self._series
+
+        from toto.data.util.dataset import MaskedTimeseries
+
+        return MaskedTimeseries(
+            series=self.input_series,
+            padding_mask=self._padding_mask,
+            id_mask=self._id_mask,
+            timestamp_seconds=self.timestamp_seconds,
+            time_interval_seconds=self.time_interval_seconds,
+            num_exogenous_variables=self._num_exog_,
+        )
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -235,7 +268,6 @@ class TotoForecaster(BaseForecaster):
         self : reference to self
         """
         import torch
-        from toto.data.util.dataset import MaskedTimeseries
 
         if self.device is None:
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -265,14 +297,7 @@ class TotoForecaster(BaseForecaster):
             (self.input_series.shape[0],), 60 * 15, dtype=torch.float32
         ).to(self._device)
 
-        self._series = MaskedTimeseries(
-            series=self.input_series,
-            padding_mask=self._padding_mask,
-            id_mask=self._id_mask,
-            timestamp_seconds=self.timestamp_seconds,
-            time_interval_seconds=self.time_interval_seconds,
-            num_exogenous_variables=self._num_exog_,
-        )
+        self.forecaster_ = self._load_model()
 
         return self
 
@@ -309,18 +334,14 @@ class TotoForecaster(BaseForecaster):
 
         future_exog = self._build_future_exog(X, prediction_length)
 
-        forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
-            toto_kwargs=self._get_toto_kwargs(),
-            device=self._device,
-        ).load_from_checkpoint()
+        self.forecaster_ = self._load_model()
 
         torch.manual_seed(self._seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(self._seed)
 
-        forecast = forecaster.forecast(
-            self._series,
+        forecast = self.forecaster_.forecast(
+            self._get_series(),
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
@@ -380,18 +401,14 @@ class TotoForecaster(BaseForecaster):
 
         future_exog = self._build_future_exog(X, prediction_length)
 
-        forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
-            toto_kwargs=self._get_toto_kwargs(),
-            device=self._device,
-        ).load_from_checkpoint()
+        self.forecaster_ = self._load_model()
 
         torch.manual_seed(self._seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(self._seed)
 
-        forecast = forecaster.forecast(
-            self._series,
+        forecast = self.forecaster_.forecast(
+            self._get_series(),
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,

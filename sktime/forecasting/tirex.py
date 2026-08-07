@@ -118,6 +118,7 @@ class TiRexForecaster(BaseForecaster):
         "capability:multivariate": False,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
+        "serialization:skip": ("model_",),
         # CI and test flags
         # -----------------
         "tests:vm": True,
@@ -221,6 +222,11 @@ class TiRexForecaster(BaseForecaster):
             Point forecasts, same type as seen in _fit (as in "y_inner_mtype" tag).
         """
         # implement here
+        if not hasattr(self, "model_") or self.model_ is None:
+            key = _tirex_cache_key(self.model, self.device)
+            self.model_ = _cached_TiRex(
+                key=key, model=self.model, device=self.device
+            ).load()
 
         y = self._y
         context_values = y.to_numpy()[None, :]

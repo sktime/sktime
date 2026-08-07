@@ -418,8 +418,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
         "tests:skip_by_name": [
             "test_pred_int_tag",
-            "test_save_estimators_to_file",
-            "test_persistence_via_pickle",
         ],
     }
 

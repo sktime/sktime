@@ -89,12 +89,9 @@ class Chronos2Forecaster(BaseForecaster):
         "capability:insample": False,
         "capability:global_forecasting": True,
         "capability:non_contiguous_X": False,
+        "serialization:skip": ("model_pipeline",),
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
-        "tests:skip_by_name": [
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
     }
 
     _default_config = {
@@ -147,17 +144,6 @@ class Chronos2Forecaster(BaseForecaster):
 
         if self.config is not None:
             self._config.update(self.config)
-
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable model pipeline."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_pipeline"):
-            state["model_pipeline"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
 
     def _get_pipeline_kwargs(self):
         return {
