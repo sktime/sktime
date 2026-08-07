@@ -51,6 +51,7 @@ from sktime.utils._testing.estimator_checks import (
 )
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 from sktime.utils.deep_equals import deep_equals
+from sktime.utils.dependencies import _get_lowest_compatible_python_version
 from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 
@@ -789,6 +790,20 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime objects."""
 
     estimator_type_filter = "object"
+
+    def test_python_version_compatible_with_sktime(self, estimator_class):
+        """Check that estimator python_version tag overlaps with sktime bounds."""
+        from importlib.metadata import metadata
+
+        compatible = _get_lowest_compatible_python_version(estimator_class)
+
+        est_spec = estimator_class.get_class_tag("python_version")
+        sktime_spec = metadata("sktime")["Requires-Python"]
+
+        assert compatible is not None, (
+            f"{estimator_class.__name__} has python_version={est_spec!r}, "
+            f"which does not overlap with sktime Requires-Python={sktime_spec!r}."
+        )
 
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
