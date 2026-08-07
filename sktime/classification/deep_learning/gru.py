@@ -303,8 +303,8 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         dropout: float = 0.0,
         gru_dropout: float = 0.0,
         bidirectional: bool = False,
-        conv_layers: list = [128, 256, 128],
-        kernel_sizes: list = [7, 5, 3],
+        conv_layers: list = None,
+        kernel_sizes: list = None,
         # base classifier specific
         num_epochs: int = 10,
         batch_size: int = 8,
@@ -331,7 +331,7 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         self.criterion = criterion
         self.criterion_kwargs = criterion_kwargs
         self.optimizer = optimizer
-        self.optimizer_kwargs = {"betas": (0.9, 0.999)} if optimizer == "Adam" else {}
+        self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
@@ -354,12 +354,34 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
 
         self.criterions = {}
 
+    def _instantiate_optimizer(self):
+        """Instantiate optimizer, applying default Adam betas if needed.
+
+        Overrides the base class to apply the default Adam betas
+        ``(0.9, 0.999)`` when ``optimizer="Adam"`` and ``optimizer_kwargs``
+        is ``None`` or empty.
+        """
+        if self.optimizer and self.optimizer == "Adam":
+            kwargs = self.optimizer_kwargs if self.optimizer_kwargs else {}
+            if "betas" not in kwargs:
+                kwargs = {**kwargs, "betas": (0.9, 0.999)}
+            return self.optimizers[self.optimizer](
+                self.network.parameters(), lr=self.lr, **kwargs
+            )
+        return super()._instantiate_optimizer()
+
     def _build_network(self, X, y):
         from sktime.networks.gru import GRUFCNN
 
         # n_instances, n_dims, n_timesteps = X.shape
         self.numclasses = len(np.unique(y))
         _, self.input_size, _ = X.shape
+        conv_layers = (
+            self.conv_layers if self.conv_layers is not None else [128, 256, 128]
+        )
+        kernel_sizes = (
+            self.kernel_sizes if self.kernel_sizes is not None else [7, 5, 3]
+        )
         return GRUFCNN(
             input_size=self.input_size,
             hidden_dim=self.hidden_dim,
@@ -371,8 +393,8 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
             dropout=self.dropout,
             gru_dropout=self.gru_dropout,
             bidirectional=self.bidirectional,
-            conv_layers=self.conv_layers,
-            kernel_sizes=self.kernel_sizes,
+            conv_layers=conv_layers,
+            kernel_sizes=kernel_sizes,
         )
 
     @classmethod

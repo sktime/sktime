@@ -177,19 +177,20 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         self.optimizer = self.optim
         self.optimizer_kwargs = self.optim_kwargs
 
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+        # Compute effective optimizer values for super().__init__()
+        # without mutating the stored parameters
+        effective_optimizer = self.optim if self.optim is not None else "SGD"
+        effective_optimizer_kwargs = self.optim_kwargs
+        if self.optim is None and self.optim_kwargs is None:
+            effective_optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         super().__init__(
             num_epochs=self.n_epochs,
             batch_size=self.batch_size,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
-            optimizer=self.optimizer,
-            optimizer_kwargs=self.optimizer_kwargs,
+            optimizer=effective_optimizer,
+            optimizer_kwargs=effective_optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
             lr=self.lr,
