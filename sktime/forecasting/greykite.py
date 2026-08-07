@@ -103,59 +103,106 @@ class GreykiteForecaster(BaseForecaster):
         corrected before fitting. Maps to ``MetadataParam.anomaly_info``.
     model_components_param : dict, ModelComponentsParam, list, or None, default=None
         Model structure and tuning options passed to Greykite
-        ``ModelComponentsParam``. If None, template defaults are used.
+        ``ModelComponentsParam``. If None, an empty ``ModelComponentsParam``
+        is used and the chosen ``model_template`` supplies component defaults.
         When a dict (or list of dicts for grid search), recognized keys are:
 
-        * ``growth`` - trend / growth terms
-        * ``seasonality`` - seasonal Fourier or dummy terms
-        * ``events`` - holidays and other event effects
-        * ``changepoints`` - trend changepoint placement and strength
-        * ``autoregression`` - lagged value terms
-        * ``regressors`` - contemporaneous exogenous regressors
-        * ``lagged_regressors`` - lagged exogenous regressors
-        * ``uncertainty`` - prediction-interval / uncertainty model
-        * ``custom`` - template-specific extra options
-        * ``hyperparameter_override`` - dict (or list of dicts) applied on
-          top of the template hyperparameter grid for full customization
+        * ``growth`` : dict, default=None
+            Trend / growth terms. Template default if omitted.
+        * ``seasonality`` : dict, default=None
+            Seasonal Fourier or dummy terms. Template default if omitted.
+        * ``events`` : dict, default=None
+            Holidays and other event effects. Template default if omitted.
+        * ``changepoints`` : dict, default=None
+            Trend changepoint placement and strength. Template default if
+            omitted.
+        * ``autoregression`` : dict, default=None
+            Lagged value terms. Template default if omitted.
+        * ``regressors`` : dict, default=None
+            Contemporaneous exogenous regressors. Template default if omitted.
+        * ``lagged_regressors`` : dict, default=None
+            Lagged exogenous regressors. Template default if omitted.
+        * ``uncertainty`` : dict, default=None
+            Prediction-interval / uncertainty model. Template default if
+            omitted.
+        * ``custom`` : dict, default=None
+            Template-specific extra options. Template default if omitted.
+        * ``hyperparameter_override`` : dict or list of dict, default=None
+            Applied on top of the template hyperparameter grid for full
+            customization. No override if omitted.
 
     evaluation_metric_param : dict, EvaluationMetricParam, or None, default=None
         Metrics used for CV reporting and model selection. Passed to
-        Greykite ``EvaluationMetricParam``. When a dict, recognized keys are:
+        Greykite ``EvaluationMetricParam``. If None, an empty param object
+        is used and Greykite pipeline defaults apply. When a dict, recognized
+        keys are:
 
-        * ``cv_selection_metric`` - metric name used to pick the best CV model
-        * ``cv_report_metrics`` - extra metric name(s) reported during CV
-        * ``agg_periods`` / ``agg_func`` - optional aggregation of the series
-          before computing the metric (period count and aggregation function)
-        * ``null_model_params`` - configuration for Greykite's null model
-          baseline comparison
-        * ``relative_error_tolerance`` - relative error threshold used by
-          some Greykite diagnostics
+        * ``cv_selection_metric`` : str, default="MeanAbsolutePercentError"
+            Metric name used to pick the best CV model
+            (``EvaluationMetricEnum`` member name).
+        * ``cv_report_metrics`` : str or list of str, default="ALL"
+            Extra metric name(s) reported during CV. ``"ALL"`` computes all
+            ``EvaluationMetricEnum`` metrics.
+        * ``agg_periods`` : int, default=None
+            Optional number of periods to aggregate before scoring. No
+            aggregation if None.
+        * ``agg_func`` : callable, default=None
+            Aggregation function used with ``agg_periods`` (e.g. ``np.sum``).
+            Ignored if ``agg_periods`` is None.
+        * ``null_model_params`` : dict, default=None
+            Configuration for Greykite's null model baseline comparison
+            (``DummyRegressor`` keys such as ``strategy``). If None,
+            ``R2_null_model_score`` is not computed.
+        * ``relative_error_tolerance`` : float, default=None
+            Relative error threshold for the outside-tolerance metric
+            (e.g. ``0.05`` for 5%). If None, that metric is not computed.
 
     evaluation_period_param : dict, EvaluationPeriodParam, or None, default=None
         Train/test and cross-validation split configuration. Passed to
-        Greykite ``EvaluationPeriodParam``. When a dict, recognized keys are:
+        Greykite ``EvaluationPeriodParam``. If None, an empty param object
+        is used and Greykite pipeline defaults apply. When a dict, recognized
+        keys are:
 
-        * ``test_horizon`` - holdout length at the end of the series
-        * ``periods_between_train_test`` - gap between train and test
-        * ``cv_horizon`` - forecast horizon used inside each CV fold
-        * ``cv_max_splits`` - maximum number of CV splits
-        * ``cv_min_train_periods`` - minimum training length per split
-        * ``cv_periods_between_splits`` - step size between CV split starts
-        * ``cv_periods_between_train_test`` - gap between CV train and test
-        * ``cv_expanding_window`` - if True, use expanding rather than
-          sliding training windows
-        * ``cv_use_most_recent_splits`` - if True, prefer recent splits when
-          capping ``cv_max_splits``
+        * ``test_horizon`` : int, default=forecast horizon
+            Holdout length at the end of the series. Set to ``0`` to skip
+            backtest. Greykite default when unset is the forecast horizon.
+        * ``periods_between_train_test`` : int, default=0
+            Gap between train and test. Greykite default when unset is ``0``.
+        * ``cv_horizon`` : int, default=forecast horizon
+            Forecast horizon used inside each CV fold. Set to ``0`` (or
+            ``cv_max_splits=0``) to skip CV. Greykite default when unset is
+            the forecast horizon.
+        * ``cv_max_splits`` : int, default=3
+            Maximum number of CV splits. ``None`` uses all splits.
+        * ``cv_min_train_periods`` : int, default=2 * cv_horizon
+            Minimum training length per split. Greykite default when unset
+            is ``2 * cv_horizon``.
+        * ``cv_periods_between_splits`` : int, default=cv_horizon
+            Step size between CV split starts. Greykite default when unset
+            is ``cv_horizon``.
+        * ``cv_periods_between_train_test`` : int, default=periods_between_train_test
+            Gap between CV train and test. Greykite default when unset
+            mirrors ``periods_between_train_test``.
+        * ``cv_expanding_window`` : bool, default=True
+            If True, use expanding rather than sliding training windows.
+        * ``cv_use_most_recent_splits`` : bool, default=False
+            If True, prefer recent splits when capping ``cv_max_splits``.
+            Greykite default when unset is ``False``.
 
     computation_param : dict, ComputationParam, or None, default=None
         Runtime / parallelization options. Passed to Greykite
-        ``ComputationParam``. When a dict, recognized keys are:
+        ``ComputationParam``. If None, an empty param object is used and
+        Greykite pipeline defaults apply. When a dict, recognized keys are:
 
-        * ``n_jobs`` - parallel jobs for hyperparameter search (``-1`` uses
-          all processors)
-        * ``hyperparameter_budget`` - max hyperparameter combinations to
-          evaluate (None means the full grid)
-        * ``verbose`` - verbosity level for fitting and CV logs
+        * ``n_jobs`` : int, default=1
+            Parallel jobs for hyperparameter search (``-1`` uses all
+            processors).
+        * ``hyperparameter_budget`` : int, default=None
+            Max hyperparameter combinations to evaluate. None means full
+            grid search when the grid is discrete, or 10 samples when any
+            value is a distribution.
+        * ``verbose`` : int, default=1
+            Verbosity level for fitting and CV logs.
 
     Attributes
     ----------
