@@ -3,6 +3,7 @@
 __author__ = ["felipeangelimvieira"]
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
@@ -28,6 +29,7 @@ class ClassificationDatasetFixtureGenerator(BaseFixtureGenerator):
     estimator_type_filter = "dataset_classification"
 
 
+@pytest.mark.datadownload
 class TestAllClassificationDatasets(ClassificationDatasetFixtureGenerator, QuickTester):
     """Module level tests for all sktime regressors."""
 

@@ -40,6 +40,7 @@ class DatasetFixtureGenerator(BaseFixtureGenerator):
     estimator_type_filter = "dataset"
 
 
+@pytest.mark.datadownload
 class TestAllDatasets(DatasetFixtureGenerator, QuickTester):
     """Module level tests for all sktime datasets."""
 

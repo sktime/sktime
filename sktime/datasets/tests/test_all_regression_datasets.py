@@ -2,6 +2,8 @@
 
 __author__ = ["felipeangelimvieira"]
 
+import pytest
+
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 
 
@@ -22,6 +24,7 @@ class RegressionDatasetFixtureGenerator(BaseFixtureGenerator):
     estimator_type_filter = "dataset_regression"
 
 
+@pytest.mark.datadownload
 class TestAllRegressionDatasets(RegressionDatasetFixtureGenerator, QuickTester):
     """Module level tests for all sktime regression datasets"""
 

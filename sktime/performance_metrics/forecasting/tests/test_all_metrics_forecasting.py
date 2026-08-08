@@ -99,9 +99,7 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
 
     @pytest.mark.parametrize("n_columns", [1, 2])
     @pytest.mark.parametrize("multioutput", MULTIOUTPUT)
-    def test_metric_output_by_instance(
-        self, object_instance, multioutput, n_columns
-    ):
+    def test_metric_output_by_instance(self, object_instance, multioutput, n_columns):
         """Test output of evaluate_by_index for type, dependent on multioutput."""
         # create numpy weights based on n_columns
         if multioutput == "numpy":

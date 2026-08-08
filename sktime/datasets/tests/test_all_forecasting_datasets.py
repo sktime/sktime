@@ -5,6 +5,7 @@ __author__ = ["mloning", "TonyBagnall", "fkiraly"]
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from sktime.datatypes import check_is_mtype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
@@ -47,6 +48,7 @@ class ForecastingDatasetFixtureGenerator(BaseFixtureGenerator):
     estimator_type_filter = "dataset_forecasting"
 
 
+@pytest.mark.datadownload
 class TestAllForecastingDatasets(ForecastingDatasetFixtureGenerator, QuickTester):
     """Module level tests for all sktime regressors."""
 
