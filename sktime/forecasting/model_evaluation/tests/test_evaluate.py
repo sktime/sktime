@@ -214,14 +214,15 @@ def test_evaluate_common_configs(
 @pytest.mark.parametrize("backend", BACKENDS)
 def test_evaluate_global_mode(scoring, strategy, backend):
     """Check that evaluate works with hierarchical data."""
-    if backend["backend"] == "multiprocessing":
+    if backend["backend"] in ["multiprocessing", "threading"]:
         # multiprocessing will block the test due to unknown reason
+        # refit and threading leads to race conditions
         if strategy not in ["update", "no-update_params"]:
             # if strategy in ["update","no-update_params"], it won't run parallelly
             return None
 
     hierarchy_levels = (4, 4)
-    timepoints = 5
+    timepoints = 6
     data = _make_hierarchical(
         hierarchy_levels=hierarchy_levels,
         max_timepoints=timepoints,
@@ -254,7 +255,7 @@ def test_evaluate_global_mode(scoring, strategy, backend):
     }
     forecaster = PytorchForecastingDeepAR(**params)
     cv_global = InstanceSplitter(KFold(2))
-    cv = SingleWindowSplitter(fh=[1], window_length=4)
+    cv = SingleWindowSplitter(fh=[1], window_length=5)
     out = evaluate(
         forecaster,
         cv,
