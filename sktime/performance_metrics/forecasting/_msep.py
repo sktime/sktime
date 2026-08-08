@@ -75,6 +75,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         square_root=False,
         by_index=False,
+        sample_weight=None,
     ):
         self.square_root = square_root
         self.multioutput = multioutput
@@ -83,6 +84,7 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     def _evaluate(self, y_true, y_pred, **kwargs):

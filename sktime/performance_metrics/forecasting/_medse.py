@@ -141,12 +141,14 @@ class MedianSquaredError(BaseForecastingErrorMetricFunc):
         multilevel="uniform_average",
         square_root=False,
         by_index=False,
+        sample_weight=None,
     ):
         self.square_root = square_root
         super().__init__(
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
