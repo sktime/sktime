@@ -192,8 +192,8 @@ class TSPulseClassifier(BaseClassifier):
         ``0.0`` uses all training data.
     device : str, default="auto"
         PyTorch device (``"auto"``, ``"cpu"``, ``"cuda"``, ``"mps"``).
-    seed : int, default=42
-        Random seed for training.
+    random_state : int, default=42
+        Random state for training.
 
     References
     ----------
@@ -235,6 +235,8 @@ class TSPulseClassifier(BaseClassifier):
         "y_inner_mtype": "numpy1D",
         "capability:multivariate": True,
         "capability:unequal_length": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "tests:vm": True,
         "tests:skip_by_name": [
             "test_persistence_via_pickle",
@@ -255,7 +257,7 @@ class TSPulseClassifier(BaseClassifier):
         freeze_backbone=True,
         train_val_split=0.0,
         device="auto",
-        seed=42,
+        random_state=42,
     ):
         self.model_path = model_path
         self.revision = revision
@@ -268,7 +270,7 @@ class TSPulseClassifier(BaseClassifier):
         self.freeze_backbone = freeze_backbone
         self.train_val_split = train_val_split
         self.device = device
-        self.seed = seed
+        self.random_state = random_state
         super().__init__()
 
     def __getstate__(self):
@@ -396,7 +398,7 @@ class TSPulseClassifier(BaseClassifier):
             TimeSeriesClassificationPreprocessor,
         )
 
-        set_seed(self.seed)
+        set_seed(self.random_state)
         self._y_dtype = y.dtype
         self._device = _resolve_device(self.device)
 
@@ -460,7 +462,7 @@ class TSPulseClassifier(BaseClassifier):
                 "save_strategy": "no",
                 "logging_strategy": "no",
                 "report_to": "none",
-                "seed": self.seed,
+                "seed": self.random_state,
             }
             if self._device == "cpu":
                 train_args["dataloader_pin_memory"] = False
