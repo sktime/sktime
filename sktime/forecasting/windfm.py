@@ -278,11 +278,11 @@ class WindFMForecaster(BaseForecaster):
         point_pred = pred_df.median(axis=1).to_numpy()
         return pd.Series(point_pred, index=y_index, name=self.y_name_)
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Compute/return prediction quantiles for a forecast.
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Compute/return fully probabilistic forecasts.
 
-        private _predict_quantiles containing the core logic,
-            called from predict_quantiles and possibly predict_interval
+        private _predict_proba containing the core logic,
+            called from predict_proba and probabilistic prediction methods
 
         State required:
             Requires state to be "fitted".
@@ -298,24 +298,30 @@ class WindFMForecaster(BaseForecaster):
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
-        alpha : list of float (guaranteed not None and floats in [0,1] interval)
-            A list of probabilities at which quantile forecasts are computed.
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
 
         Returns
         -------
-        quantiles : pd.DataFrame
-            Column has multi-index: first level is variable name from y in fit,
-                second level being the values of alpha passed to the function.
-            Row index is fh, with additional (upper) levels equal to instance levels,
-                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
-            Entries are quantile forecasts, for var in col index,
-                at quantile probability in second col index, for the row index.
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
         """
+        from skpro.distributions import Empirical
+
         pred_df, y_index = self._predict_samples(fh)
 
-        quantiles = np.quantile(pred_df.to_numpy(), q=alpha, axis=1).T
-        columns = pd.MultiIndex.from_product([self._get_varnames(), alpha])
-        return pd.DataFrame(quantiles, index=y_index, columns=columns)
+        sample_index = pd.MultiIndex.from_product(
+            [pred_df.columns, y_index], names=["sample", y_index.name]
+        )
+        samples = pd.DataFrame(
+            pred_df.to_numpy().T.reshape(-1, 1),
+            index=sample_index,
+            columns=self._get_varnames(),
+        )
+
+        return Empirical(samples, time_indep=marginal)
 
     def _predict_samples(self, fh):
         """Generate WindFM sample paths for a future horizon."""
