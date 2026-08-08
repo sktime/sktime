@@ -890,6 +890,12 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
 class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
     """Class for defining forecasting error metrics from a function dynamically."""
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
+
     def __init__(
         self,
         func,
