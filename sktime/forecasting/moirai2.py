@@ -109,6 +109,7 @@ class Moirai2Forecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.uni2ts"],
+        "tests:specific": ["sktime.forecasting.tests.test_moirai2"],
     }
 
     def __init__(

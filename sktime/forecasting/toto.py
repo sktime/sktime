@@ -130,6 +130,7 @@ class TotoForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run tests on own VM?
+        "tests:specific": ["sktime.forecasting.tests.test_toto"],
     }
 
     def __init__(
@@ -306,10 +307,6 @@ class TotoForecaster(BaseForecaster):
         """
         import torch
 
-        torch.manual_seed(self._seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self._seed)
-
         prediction_length = max(fh.to_relative(self._cutoff))
 
         future_exog = self._build_future_exog(X, prediction_length)
@@ -319,6 +316,10 @@ class TotoForecaster(BaseForecaster):
             toto_kwargs=self._get_toto_kwargs(),
             device=self._device,
         ).load_from_checkpoint()
+
+        torch.manual_seed(self._seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self._seed)
 
         forecast = forecaster.forecast(
             self._series,
@@ -386,6 +387,10 @@ class TotoForecaster(BaseForecaster):
             toto_kwargs=self._get_toto_kwargs(),
             device=self._device,
         ).load_from_checkpoint()
+
+        torch.manual_seed(self._seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self._seed)
 
         forecast = forecaster.forecast(
             self._series,
