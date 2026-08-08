@@ -888,13 +888,21 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
 
 
 class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
-    """Class for defining forecasting error metrics from a function dynamically."""
+    """Class for defining forecasting error metrics from a function dynamically.
 
-    _tags = {
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
-    }
+    Example
+    -------
+    >>> from sktime.performance_metrics.forecasting import make_forecasting_scorer
+    >>> from sktime.performance_metrics.forecasting import mean_squared_error
+    >>>
+    >>> my_metric = make_forecasting_scorer(
+    >>>     func=mean_squared_error,
+    >>>     name="my_mse",
+    >>>     greater_is_better=False,
+    >>>     multioutput="uniform_average",
+    >>>     multilevel="uniform_average",
+    >>> )
+    """
 
     def __init__(
         self,
