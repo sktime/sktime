@@ -890,6 +890,8 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
 class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
     """Class for defining forecasting error metrics from a function dynamically.
 
+    Returned by ``make_forecasting_scorer``, in adaptation use cases.
+
     Example
     -------
     >>> from sktime.performance_metrics.forecasting import make_forecasting_scorer
