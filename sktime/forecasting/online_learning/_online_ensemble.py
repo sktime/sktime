@@ -17,6 +17,10 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     ----------
     ensemble_algorithm : ensemble algorithm
 
+        Optional, default=None. The ensemble algorithm to use for combining forecasters.
+        Possible values are instances of ``NNLSEnsemble``, ``NormalHedgeEnsemble``,
+        from ``sktime.forecasting.online_learning``.
+
     forecasters : list of estimator, (str, estimator), or (str, estimator, count) tuples
         Estimators to apply to the input series.
 
@@ -28,6 +32,30 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         The number of jobs to run in parallel for fit. None means 1 unless
         in a joblib.parallel_backend context.
         -1 means using all processors.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.online_learning import NNLSEnsemble
+    >>> from sktime.forecasting.online_learning import OnlineEnsembleForecaster
+    >>> forecasters = [
+    ...     ("f1", NaiveForecaster()), ("f2", NaiveForecaster(strategy="drift"))
+    ... ]
+    >>> ensemble_algorithm = NNLSEnsemble()
+    >>> forecaster = OnlineEnsembleForecaster(
+    ...     forecasters=forecasters, ensemble_algorithm=ensemble_algorithm
+    ... )
+    >>> forecaster.fit(y=pd.Series([1, 2, 3, 4, 5]), fh=3)
+    >>>
+    >>> # make predictions
+    >>> y_pred = forecaster.predict()
+    >>>
+    >>> # online/stream update
+    >>> forecaster.update(y=pd.Series([6, 7, 8, 9, 10]))
+    >>>
+    >>> # make predictions after update
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
@@ -130,7 +158,6 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
 
-
         Returns
         -------
         params : dict or list of dict
@@ -138,5 +165,14 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         from sktime.forecasting.naive import NaiveForecaster
 
         FORECASTER = NaiveForecaster()
-        params = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
-        return params
+        FORECASTER2 = NaiveForecaster(strategy="drift")
+        params1 = {"forecasters": [("f1", FORECASTER), ("f2", FORECASTER)]}
+
+        from sktime.forecasting.online_learning import NNLSEnsemble
+
+        params2 = {
+            "forecasters": [("f1", FORECASTER), ("f2", FORECASTER2)],
+            "ensemble_algorithm": NNLSEnsemble(),
+        }
+
+        return [params1, params2]
