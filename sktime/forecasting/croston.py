@@ -133,6 +133,55 @@ class Croston(BaseForecaster):
                 f[t + 1] = f[t]
                 p += 1
         self._f = f
+        self._last_p = p
+        self._last_q = q[-1]
+        self._last_a = a[-1]
+
+        return self
+    
+    def _update(self, y, X=None, update_params=True):
+        """Update Croston model with new observations.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            New observations to update the model with.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables, ignored.
+        update_params : bool, optional (default=True)
+            If True, updates the smoothing state with new observations.
+            If False, no update is performed.
+
+        Returns
+        -------
+        self : reference to self.
+        """
+        if not update_params:
+            return self
+
+        smoothing = self.smoothing
+        y_new = y.to_numpy().flatten()
+        n_timepoints = len(y_new)
+
+        q = self._last_q
+        a = self._last_a
+        p = self._last_p
+
+        f_last = self._f[-1]
+
+        for t in range(0, n_timepoints):
+            if y_new[t] > 0:
+                q = smoothing * y_new[t] + (1 - smoothing) * q
+                a = smoothing * p + (1 - smoothing) * a
+                f_last = q / a
+                p = 1
+            else:
+                p += 1
+
+        self._last_q = q
+        self._last_a = a
+        self._last_p = p
+        self._f = np.append(self._f, f_last)
 
         return self
 
