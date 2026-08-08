@@ -1,4 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+from __future__ import annotations
 """Base class template for transformers.
 
     class name: BaseTransformer
@@ -67,20 +68,22 @@ from sktime.utils.sklearn import (
     is_sklearn_transformer,
 )
 
+from typing import Union
+
 # single/multiple primitives
-Primitive = np.integer | int | float | str
+Primitive = Union[np.integer, int, float, str]
 Primitives = np.ndarray
 
 # tabular/cross-sectional data
-Tabular = pd.DataFrame | np.ndarray  # 2d arrays
+Tabular = Union[pd.DataFrame, np.ndarray]  # 2d arrays
 
 # univariate/multivariate series
-UnivariateSeries = pd.Series | np.ndarray
-MultivariateSeries = pd.DataFrame | np.ndarray
-Series = UnivariateSeries | MultivariateSeries
+UnivariateSeries = Union[pd.Series, np.ndarray]
+MultivariateSeries = Union[pd.DataFrame, np.ndarray]
+Series = Union[UnivariateSeries, MultivariateSeries]
 
 # panel/longitudinal/series-as-features data
-Panel = pd.DataFrame | np.ndarray  # 3d or nested array
+Panel = Union[pd.DataFrame, np.ndarray]  # 3d or nested array
 
 
 def _coerce_to_list(obj):

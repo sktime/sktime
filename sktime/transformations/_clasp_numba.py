@@ -205,7 +205,15 @@ def _binary_f1_score(y_true, y_pred):
     return np.mean(f1_scores)
 
 
-NUMPY1 = _check_soft_dependencies("numpy<2", severity="none")
+@njit(fastmath=True)
+def _trapz(y, x):
+    n = y.shape[0]
+    if n < 2:
+        return 0.0
+    val = 0.0
+    for i in range(n - 1):
+        val += 0.5 * (y[i + 1] + y[i]) * (x[i + 1] - x[i])
+    return val
 
 
 @njit(fastmath=True, cache=True)
@@ -266,12 +274,7 @@ def _roc_auc_score(y_score, y_true):
         else:
             return np.nan
 
-    if NUMPY1:
-        trapz = np.trapz
-    else:
-        trapz = np.trapezoid
-
-    area = direction * trapz(tpr, fpr)
+    area = direction * _trapz(tpr, fpr)
     return area
 
 

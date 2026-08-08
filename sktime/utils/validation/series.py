@@ -1,4 +1,5 @@
 #!/usr/bin/env python3 -u
+from __future__ import annotations
 """Functions for checking input data."""
 
 __author__ = ["mloning", "Dbhasin1", "khrapovs"]

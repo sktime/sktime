@@ -1,4 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
+from __future__ import annotations
 """Machine type converters for scitypes.
 
 Exports
