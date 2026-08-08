@@ -38,8 +38,8 @@ def _evaluator():
 
 # one entry per deprecated v1 public entry point; the value constructs / calls it
 V1_ENTRY_POINTS = {
-    "BaseResults": lambda: BaseResults(),
-    "RAMResults": lambda: RAMResults(),
+    "BaseResults": BaseResults,
+    "RAMResults": RAMResults,
     "HDDResults": lambda: HDDResults(path="nonexistent_v1_results"),
     "BaseDataset": lambda: BaseDataset("d"),
     "RAMDataset": lambda: RAMDataset(pd.DataFrame({"a": [1]}), "d"),

@@ -9,9 +9,9 @@ from warnings import warn
 import pandas as pd
 
 from sktime.benchmarking.base import (
+    _V1_DEPRECATION_MSG,
     BaseDataset,
     HDDBaseDataset,
-    _V1_DEPRECATION_MSG,
 )
 from sktime.datasets import load_from_tsfile_to_dataframe
 

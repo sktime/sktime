@@ -12,7 +12,7 @@ from scipy import stats
 from scipy.stats import ranksums, ttest_ind
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.benchmarking.base import BaseResults, _V1_DEPRECATION_MSG
+from sktime.benchmarking.base import _V1_DEPRECATION_MSG, BaseResults
 from sktime.exceptions import NotEvaluatedError
 
 

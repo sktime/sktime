@@ -7,7 +7,7 @@ from warnings import warn
 
 import numpy as np
 
-from sktime.benchmarking.base import BaseMetric, _V1_DEPRECATION_MSG
+from sktime.benchmarking.base import _V1_DEPRECATION_MSG, BaseMetric
 
 
 class PairwiseMetric(BaseMetric):
