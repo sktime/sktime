@@ -35,6 +35,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
 
     Examples
     --------
+    >>> import pandas as pd
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.forecasting.online_learning import NNLSEnsemble
     >>> from sktime.forecasting.online_learning import OnlineEnsembleForecaster
