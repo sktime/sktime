@@ -431,3 +431,141 @@ class TiRex2Forecaster(BaseForecaster):
 
         levels = np.asarray([round(float(q), 6) for q in model.quantiles])
         return values, levels
+
+    def _predict_native_quantile_grid(self, fh, X):
+        """Forecast, and return the native quantile grid on the requested ``fh``.
+
+        Shared by ``_predict``, ``_predict_quantiles`` and ``_predict_proba``.
+        The model is queried over the dense horizon ``1 .. max(fh)``, and the
+        result is then subset to the steps actually requested.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon.
+        X : pd.DataFrame or None
+            Exogenous data covering the forecast horizon.
+
+        Returns
+        -------
+        levels : np.ndarray, shape (n_quantiles,)
+            Native quantile levels of the model, ascending.
+        q_values : np.ndarray, shape (n_targets, n_quantiles, n_fh)
+            Quantile forecasts at the requested horizon steps.
+        pred_index : pd.Index
+            Absolute index expected in the returned forecasts.
+        var_names : pd.Index
+            Column names of ``y`` as seen in ``fit``.
+        """
+        values, levels = self._forecast_raw(fh, X)
+
+        # values cover the dense horizon 1 .. max(fh), so step k sits at k - 1
+        rel_idx = fh.to_relative(self.cutoff).to_numpy().astype(int) - 1
+        q_values = values[:, :, rel_idx]
+
+        pred_index = fh.to_absolute(self.cutoff).to_pandas()
+        pred_index.names = self._y_index_names
+
+        return levels, q_values, pred_index, self._y_columns
+
+    def _predict(self, fh, X=None):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data covering the forecast horizon.
+
+        Returns
+        -------
+        y_pred : pd.DataFrame
+            Point forecasts, one column per target variate.
+        """
+        levels, q_values, pred_index, var_names = self._predict_native_quantile_grid(
+            fh, X
+        )
+
+        # TiRex-2 emits quantiles only, so the median is the point forecast
+        median_idx = int(np.argmin(np.abs(levels - 0.5)))
+        point = q_values[:, median_idx, :]
+
+        return pd.DataFrame(point.T, index=pred_index, columns=var_names)
+
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return quantile forecasts.
+
+        Requested levels are linearly interpolated onto the model's native
+        quantile grid. ``np.interp`` saturates outside the grid, so levels
+        beyond the native range are clamped to the nearest native quantile.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data covering the forecast horizon.
+        alpha : list of float
+            Probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has a multi-index: first level is the variable name from
+            ``y`` in fit, second level are the values of ``alpha``.
+            Row index is ``fh``. Entries are quantile forecasts.
+        """
+        levels, q_values, pred_index, var_names = self._predict_native_quantile_grid(
+            fh, X
+        )
+
+        # interpolate along the quantile axis, giving (n_targets, n_alpha, n_fh)
+        interpolated = np.apply_along_axis(
+            lambda col: np.interp(alpha, levels, col), 1, q_values
+        )
+
+        columns = pd.MultiIndex.from_product([var_names, alpha])
+        values = interpolated.reshape(len(var_names) * len(alpha), -1).T
+        return pd.DataFrame(values, index=pred_index, columns=columns)
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        Returns a ``skpro`` ``HistogramQPD`` built from the model's native
+        quantile grid. ``tails="mass"`` places the remaining tail mass as point
+        masses at the outermost native quantiles, matching ``FlowStateForecaster``.
+        As the native grid spans 0.1 to 0.9, this puts 10% of the mass in an atom
+        at each end, so the distribution is mixed rather than continuous.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous data covering the forecast horizon.
+        marginal : bool, optional (default=True)
+            Whether the returned distribution is marginal by time index.
+
+        Returns
+        -------
+        pred_dist : skpro BaseDistribution
+            Predictive distribution, with same index and columns as ``_predict``.
+        """
+        from skpro.distributions import HistogramQPD
+
+        levels, q_values, pred_index, var_names = self._predict_native_quantile_grid(
+            fh, X
+        )
+
+        # HistogramQPD expects rows indexed by (quantile level, time), so move
+        # the quantile axis first and flatten it together with the time axis
+        stacked = np.transpose(q_values, (1, 2, 0)).reshape(
+            len(levels) * len(pred_index), len(var_names)
+        )
+        row_index = pd.MultiIndex.from_product([levels, pred_index])
+        quantile_df = pd.DataFrame(stacked, index=row_index, columns=var_names)
+
+        return HistogramQPD(
+            quantile_df, tails="mass", index=pred_index, columns=var_names
+        )
