@@ -569,3 +569,27 @@ class TiRex2Forecaster(BaseForecaster):
         return HistogramQPD(
             quantile_df, tails="mass", index=pred_index, columns=var_names
         )
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Both parameter sets use the default, ungated checkpoint and differ only
+        in ``tta_diff``, which is a prediction-time option. They therefore share
+        one cache entry, and the checkpoint is downloaded only once per session.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"``
+            set. There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : list of dict
+            Parameters to create testing instances of the class.
+        """
+        params1 = {"model_path": "NX-AI/TiRex-2", "device": "cpu"}
+        params2 = {"model_path": "NX-AI/TiRex-2", "device": "cpu", "tta_diff": False}
+        return [params1, params2]
