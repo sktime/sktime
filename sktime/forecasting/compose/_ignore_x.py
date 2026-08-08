@@ -28,6 +28,18 @@ class IgnoreX(_DelegatedForecaster):
     ----------
     forecaster_ : clone of forecaster
         The fitted forecaster.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.compose import IgnoreX, YfromX
+    >>> from sklearn.linear_model import LinearRegression
+    >>> y, X = load_longley()
+    >>> y_train, X_train = y.iloc[:-3], X.iloc[:-3]
+    >>> X_pred = X.iloc[-3:]
+    >>> forecaster = IgnoreX(YfromX(LinearRegression()))
+    >>> _ = forecaster.fit(y=y_train, X=X_train)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_pred)
     """
 
     # attribute for _DelegatedForecaster, which then delegates
