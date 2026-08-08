@@ -790,6 +790,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
 
     estimator_type_filter = "object"
 
+    def test_class_has_doctest_example(self, object_class):
+        """Check that the class has a docstring, with doctest example in it."""
+        docstring = object_class.__doc__
+
+        assert docstring is not None, f"{object_class.__name__} has no docstring"
+        msg = f"{object_class.__name__} docstring has no doctest example"
+        assert ">>>" in docstring, msg
+
     def test_doctest_examples(self, estimator_class):
         """Runs doctests for estimator class."""
         from skbase.utils.doctest_run import run_doctest
