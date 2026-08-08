@@ -1188,6 +1188,17 @@ def test_load_tsf_to_dataframe(input_path, return_type, output_df):
         assert check_is_mtype(obj=df, mtype=return_type, msg_return_dict="list")
 
 
+def test_load_tsf_to_dataframe_invalid_return_type():
+    """Test load_tsf_to_dataframe raises on unsupported return_type values."""
+    data_path = os.path.join(
+        os.path.dirname(sktime.__file__),
+        "datasets/data/UnitTest/UnitTest_Tsf_Loader.tsf",
+    )
+
+    with pytest.raises(ValueError, match="return_type must be one of"):
+        load_tsf_to_dataframe(data_path, return_type="tsf_default")
+
+
 @pytest.mark.parametrize("freq", [None, "YS"])
 def test_convert_tsf_to_multiindex(freq):
     input_df = pd.DataFrame(
