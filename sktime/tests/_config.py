@@ -154,7 +154,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DistanceFeatures",
         "DummyRegressor",
         "ElasticEnsemble",
-        "FeatureSelection",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",
