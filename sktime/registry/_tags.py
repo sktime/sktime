@@ -496,7 +496,7 @@ class tests__libs(_BaseTag):
     - Example: ``["sktime.libs.chronos"]``
     - Default: ``None``
 
-    ``sktime``'s CI framework regularly tests estimators in pull request,
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
     usually only estimators that have changed.
 
     The ``tests:libs`` tag of an object is a list of strings,
@@ -534,7 +534,7 @@ class tests__specific(_BaseTag):
     - Example: ``["sktime.forecasting.tests.test_croston"]``
     - Default: ``None``
 
-    ``sktime``'s CI framework regularly tests estimators in pull request,
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
     usually only estimators that have changed.
 
     The ``tests:specific`` tag of an object is a list of strings,
@@ -543,7 +543,7 @@ class tests__specific(_BaseTag):
     Setting this tag has two effects:
 
     * testing the estimator is triggered whenever any listed module has changed,
-      in addition to the other test trigger conditions
+      in addition to the other test trigger conditions, e.g., via ``tests:libs``.
     * ``test_est`` CI VM runs execute the listed pytest test modules for that estimator
       (see ``sktime.tests._test_vm._get_estimator_specific_test_modules``)
 
@@ -679,10 +679,6 @@ class tests__python_dependencies(_BaseTag):
 
 # These tags are applicable to a wide range of objects,
 # most tags in this group apply to estimators
-
-# "capability:missing_values" is same as "handles-missing-data" tag.
-# They are kept distinct intentionally for easier TSC refactoring.
-# Will be merged after refactor completion.
 
 
 class capability__missing_values(_BaseTag):
@@ -947,16 +943,13 @@ class property__randomness(_BaseTag):
 class capability__exogenous(_BaseTag):
     """Capability: the forecaster can use exogenous data.
 
-    The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
-
-    ``False`` = does use exogenous data, ``True`` = does not use exogenous data.
+    ``True`` = does use exogenous data, ``False`` = does not use exogenous data.
 
     - String name: ``"capability:exogenous"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: boolean negation of ``"ignores-exogeneous-X"`` (legacy)
 
     Exogenous data are additional time series,
     that can be used to improve forecasting accuracy.
@@ -3840,22 +3833,6 @@ ESTIMATOR_TAG_REGISTER = [
         "int",
         "max iters for bisection method in ppf",
     ),
-    # ---------------------
-    # to be renamed/aliased
-    # ---------------------
-    # the following tags are to be renamed or aliased
-    (
-        "univariate-only",  # -> capability:multivariate, invert
-        "transformer",
-        "bool",
-        "can transformer handle multivariate series? True = no",
-    ),
-    (
-        "handles-missing-data",  # -> capability:missing_values
-        "estimator",
-        "bool",
-        "can the estimator handle missing data (NA, np.nan) in inputs?",
-    ),
     # ---------------------------
     # to be deprecated or removed
     # ---------------------------
@@ -3865,12 +3842,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["forecaster"],
         "bool",
         "can the estimator make global forecasting?",
-    ),
-    (
-        "ignores-exogeneous-X",
-        "forecaster",
-        "bool",
-        "deprecated tag for exogenous capability",
     ),
 ]
 
