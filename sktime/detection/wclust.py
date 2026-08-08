@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
-from sktime.clustering.dbscan import TimeSeriesDBSCAN
 from sktime.detection.base import BaseDetector
 from sktime.dists_kernels import DtwDist
 from sktime.utils.sklearn import is_sklearn_clusterer
@@ -191,6 +190,8 @@ class WindowSegmenter(BaseDetector):
         self.step_size = step_size
         self.return_segments = return_segments
         if self.clusterer is None:
+            from sktime.clustering.dbscan import TimeSeriesDBSCAN
+
             self._clusterer = TimeSeriesDBSCAN(distance=DtwDist())
         else:
             self._clusterer = self.clusterer
@@ -290,6 +291,8 @@ class WindowSegmenter(BaseDetector):
         -------
         params : dict or list of dict, default = {}
         """
+        from sktime.clustering.dbscan import TimeSeriesDBSCAN
+
         params1 = {"clusterer": TimeSeriesDBSCAN(distance=DtwDist()), "window_size": 2}
         params2 = {}
         return [params1, params2]

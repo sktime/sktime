@@ -609,7 +609,7 @@ class Evaluator:
                       3.846]
             # fmt: on
         else:
-            raise Exception("alpha must be 0.01, 0.05 or 0.1")
+            raise ValueError("alpha must be 0.01, 0.05 or 0.1")
 
         cd = qalpha[n_strategies - 1] * np.sqrt(
             n_strategies * (n_strategies + 1) / (6 * n_datasets)

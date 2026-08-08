@@ -75,12 +75,12 @@ class Filter(BaseTransformer):
         self.filter_kwargs = filter_kwargs
         if not (
             isinstance(sfreq, (int, float))
-            & isinstance(l_freq, (int, float, type(None)))
-            & isinstance(h_freq, (int, float, type(None)))
+            and isinstance(l_freq, (int, float, type(None)))
+            and isinstance(h_freq, (int, float, type(None)))
         ):
             raise TypeError
-        elif (l_freq is not None) & (h_freq is not None):
-            if not ((l_freq > 0) & (h_freq > 0)):
+        elif (l_freq is not None) and (h_freq is not None):
+            if not ((l_freq > 0) and (h_freq > 0)):
                 raise ValueError("Negative values not supported")
             if l_freq > h_freq:
                 raise ValueError("High frequency must be higher than low frequency")

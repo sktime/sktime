@@ -58,9 +58,24 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         The number of epochs to train the model
     batch_size : int, default = 8
         The size of each mini-batch during training
-    activation : str or None or an instance of activation functions defined in
-        torch.nn, default = None
-        Activation function used in the fully connected output layer.
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
     criterion : case insensitive str or an instance of a loss function
         defined in PyTorch, default = None
         The loss function to be used in training the neural network.
@@ -168,7 +183,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # set random seed for torch
@@ -278,7 +292,9 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         Parameters
         ----------
         activations : dict[str, str | Callable | None]
-            Mapping from activation attribute names to activation specifications.
+            A mapping where each key is the name of an activation attribute, and the
+            value is either the activation specified by the user or a default provided
+            by the estimator.
 
         Returns
         -------

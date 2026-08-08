@@ -8,15 +8,11 @@ __author__ = ["rajatsen91", "geetu040"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 
-class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class TimesFMForecaster(BaseForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model
@@ -190,6 +186,7 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timesfm"],
+        "tests:specific": ["sktime.forecasting.tests.test_timesfm"],
     }
 
     def __init__(
@@ -227,10 +224,17 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         if not self.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
-                # todo 1.1.0: Regularly check whether timesfm version can be updated
+                # todo 1.2.0: Regularly check whether timesfm version can be updated
                 # if changed, also needs to be changed in docstring
                 self.set_tags(python_dependencies=["timesfm<1.2.0"])
         else:
@@ -250,8 +254,6 @@ class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                     "capability:global_forecasting": False,
                 }
             )
-
-        super().__init__()
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable TimesFM model."""
