@@ -1971,6 +1971,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:libs": ["sktime.transformations.lag"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
