@@ -58,8 +58,8 @@ class Hidalgo(BaseTransformer):
         prior parameters of p, the probability that point belongs to manifold k
     f : np.ArrayLike, optional, default=None
         parameters of zeta
-    seed : int, optional, default = 1
-        generate random numbers with seed
+    random_state : int, optional, default = 1
+        generate random numbers with random_state
 
     References
     ----------
@@ -76,7 +76,7 @@ class Hidalgo(BaseTransformer):
     >>> X = np.random.rand(10,3)
     >>> X[:6, 1:] += 10
     >>> X[6:, 1:] = 0
-    >>> model = Hidalgo(K=2, burn_in=0.8, n_iter=100, seed=10)
+    >>> model = Hidalgo(K=2, burn_in=0.8, n_iter=100, random_state=10)
     >>> fitted_model = model.fit(X)
     >>> Z = fitted_model.transform(X)
     >>> Z.tolist()
@@ -93,6 +93,8 @@ class Hidalgo(BaseTransformer):
         "capability:multivariate": True,
         "capability:categorical_in_X": False,
         "fit_is_empty": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -112,7 +114,7 @@ class Hidalgo(BaseTransformer):
         b=None,
         c=None,
         f=None,
-        seed=1,
+        random_state=1,
     ):
         self.metric = metric
         self.K = K
@@ -129,7 +131,7 @@ class Hidalgo(BaseTransformer):
         self.b = b
         self.c = c
         self.f = f
-        self.seed = seed
+        self.random_state = random_state
 
         super().__init__()
 
@@ -583,9 +585,9 @@ class Hidalgo(BaseTransformer):
         n_iter = self.n_iter
         sampling_rate = self.sampling_rate
         burn_in = self.burn_in
-        seed = self.seed
+        random_state = self.random_state
 
-        _rng = check_random_state(seed)
+        _rng = check_random_state(random_state)
 
         N, mu, Iin, Iout, Iout_count, Iout_track = self._get_neighbourhood_params(X)
         V, NN, a1, b1, c1, Z, f1, N_in = self._initialise_params(N, mu, Iin, _rng)
@@ -705,7 +707,7 @@ class Hidalgo(BaseTransformer):
             "b": None,
             "c": None,
             "f": None,
-            "seed": 1,
+            "random_state": 1,
         }
 
 
