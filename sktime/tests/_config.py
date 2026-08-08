@@ -189,7 +189,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "SlidingWindowSegmenter",
         "StackingForecaster",
         "SummaryClassifier",
-        "SupervisedTimeSeriesForest",
         "TEASER",
         "TSFreshClassifier",
         "TapNetNetwork",
