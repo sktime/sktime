@@ -90,6 +90,21 @@ class RBFTransformer(BaseTransformer):
 
     torch_available_ : bool
         Indicates if PyTorch is available. This is checked during fit.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.basisfunction import RBFTransformer
+    >>> X = pd.DataFrame({
+    ...     "series": [
+    ...         pd.Series([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]),
+    ...         pd.Series([2.0, 3.0, 4.0, 5.0, 6.0, 7.0]),
+    ...     ]
+    ... })
+    >>> transformer = RBFTransformer()
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.shape
+    (2, 10)
     """
 
     _tags = {
