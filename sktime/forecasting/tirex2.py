@@ -1,7 +1,15 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements TiRex-2 forecaster."""
 
-__author__ = ["yash-sangwan"]
+__author__ = [
+    "yash-sangwan",
+    "danilyef",
+    "lukfischer",
+    "Tigxy",
+    "Suad0",
+    "danieleb1861",
+    "martinloretzzz",
+]
 __all__ = ["TiRex2Forecaster"]
 
 import warnings
@@ -117,7 +125,15 @@ class TiRex2Forecaster(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["yash-sangwan"],
+        "authors": [
+            "yash-sangwan",
+            "danilyef",
+            "lukfischer",
+            "Tigxy",
+            "Suad0",
+            "danieleb1861",
+            "martinloretzzz",
+        ],
         "maintainers": ["yash-sangwan"],
         "python_version": ">=3.11",
         "python_dependencies": ["tirex-2", "torch"],
