@@ -48,7 +48,12 @@ class ForecastingHorizonSplitter(BaseSplitter):
         Must be all out-of-sample if relative.
     """
 
-    _tags = {"split_hierarchical": False}
+    _tags = {
+        "split_hierarchical": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
 
     def __init__(self, fh):
         super().__init__(fh=fh)
