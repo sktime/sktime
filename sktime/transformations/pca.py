@@ -72,6 +72,21 @@ class PCATransformer(BaseTransformer):
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.pca import PCATransformer
+    >>> X = np.array([
+    ...     [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]],
+    ...     [[2.0, 3.0, 4.0], [5.0, 6.0, 7.0]],
+    ... ])
+    >>> transformer = PCATransformer(n_components=1, random_state=42)
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.shape
+    (2, 2, 3)
+    >>> transformer.pca.n_components_
+    1
     """
 
     _tags = {
