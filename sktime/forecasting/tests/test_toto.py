@@ -134,7 +134,7 @@ def test_toto_predict_proba_quantiles_match_direct_quantiles():
     y = load_airline()
     y_train = y.iloc[:-16]
     fh = np.arange(1, 4)
-    alpha = [0.25, 0.5, 0.75]
+    alpha = [0.1, 0.33, 0.6, 0.9]
     forecaster = TotoForecaster(
         model_path="Datadog/Toto-Open-Base-1.0",
         device="cpu",
