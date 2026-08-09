@@ -38,7 +38,7 @@ class _StubModel:
 def _fitted_stub(y, X=None):
     """Fit a forecaster against ``_StubModel``, avoiding a checkpoint download."""
     forecaster = TiRex2Forecaster()
-    forecaster._load_model = lambda: _StubModel()
+    forecaster._load_model = _StubModel
     forecaster.fit(y, X=X, fh=[1, 2, 3])
     return forecaster
 
