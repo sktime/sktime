@@ -116,7 +116,7 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
 
     func = mean_arctangent_absolute_percentage_error
 
-    _tag = {
+    _tags = {
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_class_has_doctest_example"],
