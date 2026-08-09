@@ -16,6 +16,17 @@ class ConstantPwTrafoPanel(BasePairwiseTransformerPanel):
     ----------
     constant : float, optional, default = 0
         the constant value that this transformer returns
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.dists_kernels import ConstantPwTrafoPanel
+    >>> X = np.arange(12).reshape(3, 1, 4)
+    >>> transformer = ConstantPwTrafoPanel(constant=2)
+    >>> transformer.transform(X)
+    array([[2., 2., 2.],
+           [2., 2., 2.],
+           [2., 2., 2.]])
     """
 
     _tags = {
@@ -27,7 +38,6 @@ class ConstantPwTrafoPanel(BasePairwiseTransformerPanel):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, constant=0):
