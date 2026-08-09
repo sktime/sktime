@@ -2994,6 +2994,16 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "coding-cosmos",
+      "name": "Sujal",
+      "avatar_url": "https://avatars.githubusercontent.com/coding-cosmos",
+      "profile": "https://github.com/coding-cosmos",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ]
 }
