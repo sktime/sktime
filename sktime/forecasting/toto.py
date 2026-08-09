@@ -599,10 +599,12 @@ class TotoForecaster(BaseForecaster):
         samples = samples[:, relative_indices, :]
         return samples.permute(2, 1, 0), pred_index
 
-    def _predict_proba(self, fh, X, marginal=True):
+    def _predict_proba(self, marginal=True, **kwargs):
         """Compute a probabilistic forecast from Toto's generated samples."""
         from skpro.distributions.empirical import Empirical
 
+        fh = kwargs["fh"]
+        X = kwargs.get("X")
         samples, pred_index = self._get_forecast_samples(fh, X)
         samples_df_values = samples.reshape(-1, self._n_targets_).cpu().numpy()
 
