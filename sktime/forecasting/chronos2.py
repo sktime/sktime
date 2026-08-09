@@ -82,7 +82,7 @@ class Chronos2Forecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": False,
         "capability:missing_values": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -287,6 +287,84 @@ class Chronos2Forecaster(BaseForecaster):
             index=index,
             columns=self._get_varnames(),
         )
+        pred_df.index.names = self._y_index_names
+
+        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
+        return pred_df.loc[dateindex]
+
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+        alpha : list of float, optional (default=[0.5])
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+        """
+        import transformers
+
+        if alpha is None:
+            alpha = [0.5]
+
+        self._ensure_model_pipeline_loaded()
+        transformers.set_seed(self._seed)
+
+        prediction_length = int(max(fh.to_relative(self.cutoff)))
+
+        context_length = self._config["context_length"]
+        if context_length is None:
+            context_length = self.model_pipeline.model_context_length
+
+        context = self._context
+        input_dict = {"target": context}
+
+        if self._X is not None:
+            actual_len = context.shape[1]
+            past_X = self._X.values[-actual_len:]
+            input_dict["past_covariates"] = {
+                col: past_X[:, i] for i, col in enumerate(self._X.columns)
+            }
+
+        if X is not None:
+            future_vals = X.values[:prediction_length]
+            input_dict["future_covariates"] = {
+                col: future_vals[:, i] for i, col in enumerate(X.columns)
+            }
+
+        predictions = self.model_pipeline.predict(
+            [input_dict],
+            prediction_length=prediction_length,
+            batch_size=self._config["batch_size"],
+            context_length=context_length,
+            cross_learning=self._config["cross_learning"],
+            limit_prediction_length=self._config["limit_prediction_length"],
+        )
+
+        pred_tensor = predictions[0]
+        model_quantiles = self.model_pipeline.quantiles
+
+        index = (
+            ForecastingHorizon(range(1, prediction_length + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
+        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
+
+        dfs = []
+        for a in alpha:
+            idx = (np.abs(np.array(model_quantiles) - a)).argmin()
+            q_forecast = pred_tensor[:, idx, :].numpy()
+
+            df_a = pd.DataFrame(q_forecast.T, index=index, columns=self._get_varnames())
+            dfs.append(df_a)
+
+        pred_df = pd.concat(dfs, axis=1, keys=alpha)
+        pred_df = pred_df.swaplevel(0, 1, axis=1).sort_index(axis=1)
+        pred_df.columns.names = ["variable", "alpha"]
         pred_df.index.names = self._y_index_names
 
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
