@@ -29,6 +29,12 @@ def test_X():
     assert isinstance(X, np.ndarray), "X should be a numpy array"
     assert len(np.shape(X)) == 2, "X should be a two-dimensional numpy array"
 
+def test_seed_deprecation():
+    """Test deprecated seed parameter."""
+    with pytest.warns(DeprecationWarning, match="parameter 'seed'"):
+        model = Hidalgo(seed=10)
+
+    assert model._random_state == 10
 
 @pytest.mark.skipif(
     not run_test_for_class(Hidalgo),

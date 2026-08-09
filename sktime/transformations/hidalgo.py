@@ -11,7 +11,7 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.validation import check_random_state
 
 from sktime.transformations.base import BaseTransformer
-
+from sktime.utils.warnings import warn
 
 class Hidalgo(BaseTransformer):
     """Heteregeneous Intrinsic Dimensionality Algorithm (Hidalgo) model.
@@ -114,6 +114,7 @@ class Hidalgo(BaseTransformer):
         b=None,
         c=None,
         f=None,
+        seed="deprecated",
         random_state=1,
     ):
         self.metric = metric
@@ -131,7 +132,24 @@ class Hidalgo(BaseTransformer):
         self.b = b
         self.c = c
         self.f = f
+        self.seed = seed
         self.random_state = random_state
+
+        # TODO 1.2.0: remove the 'seed' argument from the signature,
+        # move 'random_state' to the position of 'seed', and remove
+        # the following warning and if/else block.
+        if seed != "deprecated":
+            warn(
+                "In `Hidalgo`, parameter 'seed' will be renamed to "
+                "'random_state' in version 1.2.0. To keep current "
+                "behaviour and to silence this warning, use "
+                "'random_state' instead of 'seed'.",
+                category=DeprecationWarning,
+                obj=self,
+            )
+            self._random_state = seed
+        else:
+            self._random_state = random_state
 
         super().__init__()
 
@@ -585,7 +603,7 @@ class Hidalgo(BaseTransformer):
         n_iter = self.n_iter
         sampling_rate = self.sampling_rate
         burn_in = self.burn_in
-        random_state = self.random_state
+        random_state = self._random_state
 
         _rng = check_random_state(random_state)
 
@@ -707,6 +725,7 @@ class Hidalgo(BaseTransformer):
             "b": None,
             "c": None,
             "f": None,
+            "seed": "deprecated",
             "random_state": 1,
         }
 
