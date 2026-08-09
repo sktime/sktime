@@ -96,3 +96,85 @@ def test_toto_exogenous_predictions_match_source_reference():
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(TotoForecaster, severity="none"),
+    reason="run test only if TotoForecaster soft dependencies are present",
+)
+def test_toto_predict_proba_returns_empirical_samples():
+    """Toto's empirical distribution preserves samples and forecast axes."""
+    from skpro.distributions.empirical import Empirical
+
+    y = load_airline()
+    y_train = y.iloc[:-16]
+    fh = np.array([1, 3, 5])
+    forecaster = TotoForecaster(
+        model_path="Datadog/Toto-Open-Base-1.0",
+        device="cpu",
+        seed=0,
+        num_samples=9,
+        samples_per_batch=9,
+    ).fit(y_train, fh=fh)
+
+    pred_dist = forecaster.predict_proba(fh=fh, marginal=False)
+
+    assert isinstance(pred_dist, Empirical)
+    assert pred_dist.time_indep is False
+    assert pred_dist.spl.index.names == ["sample", "time"]
+    assert pred_dist.spl.index.get_level_values("sample").nunique() == 9
+    assert pred_dist.spl.index.get_level_values("time").unique().equals(pred_dist.index)
+    assert pred_dist.spl.columns.equals(pred_dist.columns)
+
+
+def test_toto_predict_proba_quantiles_match_direct_quantiles():
+    """Toto's empirical quantiles agree with its direct quantile forecasts."""
+    from skpro.distributions.empirical import Empirical
+
+    y = load_airline()
+    y_train = y.iloc[:-16]
+    fh = np.arange(1, 4)
+    alpha = [0.25, 0.5, 0.75]
+    forecaster = TotoForecaster(
+        model_path="Datadog/Toto-Open-Base-1.0",
+        device="cpu",
+        seed=0,
+        num_samples=9,
+        samples_per_batch=9,
+    ).fit(y_train, fh=fh)
+
+    pred_dist = forecaster.predict_proba(fh=fh)
+    pred_quantiles = forecaster.predict_quantiles(fh=fh, alpha=alpha)
+
+    assert isinstance(pred_dist, Empirical)
+    np.testing.assert_allclose(
+        pred_dist.quantile(alpha).to_numpy(),
+        pred_quantiles.to_numpy(),
+        rtol=1e-5,
+        atol=1e-4,
+    )
+
+
+def test_toto_predict_proba_mean_matches_mean_prediction():
+    """Toto's empirical mean agrees with its mean point forecast."""
+    y = load_airline()
+    y_train = y.iloc[:-16]
+    fh = np.arange(1, 4)
+    forecaster = TotoForecaster(
+        model_path="Datadog/Toto-Open-Base-1.0",
+        device="cpu",
+        seed=0,
+        num_samples=9,
+        samples_per_batch=9,
+        prediction_type="mean",
+    ).fit(y_train, fh=fh)
+
+    pred_dist = forecaster.predict_proba(fh=fh)
+    pred_mean = forecaster.predict(fh=fh)
+
+    np.testing.assert_allclose(
+        pred_dist.mean().to_numpy(),
+        pred_mean.to_frame().to_numpy(),
+        rtol=1e-5,
+        atol=1e-4,
+    )
