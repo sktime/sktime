@@ -206,6 +206,21 @@ class MatrixProfileFeatures(BaseTransformer):
     Xt is the transformed X, i.e., a pandas DataFrame with the same number
     of rows as X, but each row has the matrix profile for the
     corresponding time series.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.matrix_profile._mp_features import MatrixProfileFeatures
+    >>> X = pd.DataFrame({
+    ...     "series": [
+    ...         pd.Series([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]),
+    ...         pd.Series([2.0, 3.0, 4.0, 5.0, 6.0, 7.0]),
+    ...     ]
+    ... })
+    >>> transformer = MatrixProfileFeatures(m=3)
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.shape
+    (2, 4)
     """
 
     _tags = {
