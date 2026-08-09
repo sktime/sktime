@@ -116,6 +116,12 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
 
     func = mean_arctangent_absolute_percentage_error
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
