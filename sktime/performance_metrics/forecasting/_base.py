@@ -898,12 +898,12 @@ class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
     >>> from sktime.performance_metrics.forecasting import mean_squared_error
     >>>
     >>> my_metric = make_forecasting_scorer(
-    >>>     func=mean_squared_error,
-    >>>     name="my_mse",
-    >>>     greater_is_better=False,
-    >>>     multioutput="uniform_average",
-    >>>     multilevel="uniform_average",
-    >>> )
+    ...     func=mean_squared_error,
+    ...     name="my_mse",
+    ...     greater_is_better=False,
+    ...     multioutput="uniform_average",
+    ...     multilevel="uniform_average",
+    ... )
     """
 
     def __init__(
