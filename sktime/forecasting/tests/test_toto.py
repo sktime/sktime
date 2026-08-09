@@ -178,3 +178,26 @@ def test_toto_predict_proba_mean_matches_mean_prediction():
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(TotoForecaster, severity="none"),
+    reason="run test only if TotoForecaster soft dependencies are present",
+)
+def test_toto_predict_proba_requires_samples():
+    """Probabilistic forecasts reject Toto's point-only sample setting."""
+    pytest.importorskip("skpro")
+
+    y = load_airline()
+    y_train = y.iloc[:-16]
+    fh = np.arange(1, 4)
+    forecaster = TotoForecaster(
+        model_path="Datadog/Toto-Open-Base-1.0",
+        device="cpu",
+        seed=0,
+        num_samples=None,
+        prediction_type="mean",
+    ).fit(y_train, fh=fh)
+
+    with pytest.raises(ValueError, match="num_samples"):
+        forecaster.predict_proba(fh=fh)

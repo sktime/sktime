@@ -587,6 +587,11 @@ class TotoForecaster(BaseForecaster):
         import torch
 
         forecast, pred_index, relative_indices = self._forecast(fh, X)
+        if forecast.samples is None:
+            raise ValueError(
+                "TotoForecaster probabilistic predictions require num_samples "
+                "to be set to an integer."
+            )
         samples = forecast.samples.squeeze(0)[: self._n_targets_]
         relative_indices = torch.as_tensor(
             relative_indices, device=samples.device, dtype=torch.long
