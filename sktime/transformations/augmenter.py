@@ -228,6 +228,21 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     ----------
 
         [1]: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rv_continuous.random_state.html
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.augmenter import RandomSamplesAugmenter
+    >>> X = pd.DataFrame({
+    ...     "series": [
+    ...         pd.Series([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]),
+    ...         pd.Series([2.0, 3.0, 4.0, 5.0, 6.0, 7.0]),
+    ...     ]
+    ... })
+    >>> transformer = RandomSamplesAugmenter(n=2, random_state=42)
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.shape
+    (2, 1)
     """  # noqa: E501
 
     _tags = {
