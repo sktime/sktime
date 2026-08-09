@@ -122,9 +122,11 @@ def test_toto_predict_proba_returns_empirical_samples():
     ).fit(y_train, fh=fh)
 
     pred_dist = forecaster.predict_proba(fh=fh, marginal=False)
+    expected_index = forecaster.fh.to_absolute(y_train.index[-1])._values
 
     assert isinstance(pred_dist, Empirical)
     assert pred_dist.time_indep is False
+    assert pred_dist.index.equals(expected_index)
     assert pred_dist.spl.index.names == ["sample", "time"]
     assert pred_dist.spl.index.get_level_values("sample").nunique() == 9
     assert pred_dist.spl.index.get_level_values("time").unique().equals(pred_dist.index)
@@ -246,9 +248,11 @@ def test_toto_predict_proba_multivariate_targets():
 
     pred_dist = forecaster.predict_proba(fh=fh)
     pred_mean = forecaster.predict(fh=fh)
+    expected_index = forecaster.fh.to_absolute(y_train.index[-1])._values
 
     assert pred_dist.columns.equals(y_train.columns)
     assert pred_dist.spl.columns.equals(y_train.columns)
+    assert pred_dist.index.equals(expected_index)
     assert pred_dist.spl.index.get_level_values("sample").nunique() == 9
     assert pred_dist.spl.index.get_level_values("time").unique().equals(pred_dist.index)
     np.testing.assert_allclose(
