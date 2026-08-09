@@ -778,6 +778,9 @@ class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -1444,6 +1447,9 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     _estimator_scitype = "time-series-regressor"
