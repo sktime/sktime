@@ -23,6 +23,22 @@ class Tabularizer(BaseTransformer):
     dataframe with only primitives in cells. This is useful for transforming time-
     series/panel data into a format that is accepted by standard validation learning
     algorithms (as in sklearn).
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.reduce import Tabularizer
+    >>> X = pd.DataFrame({
+    ...     "series": [
+    ...         pd.Series([1.0, 2.0, 3.0, 4.0, 5.0, 6.0]),
+    ...         pd.Series([2.0, 3.0, 4.0, 5.0, 6.0, 7.0]),
+    ...         pd.Series([3.0, 4.0, 5.0, 6.0, 7.0, 8.0]),
+    ...     ]
+    ... })
+    >>> transformer = Tabularizer()
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.shape
+    (3, 6)
     """
 
     _tags = {
