@@ -269,7 +269,7 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
 
     # if columns are being iterated over, length is multiplied by no columns iterated
     if iterate_cols:
-        true_length = true_length * len(X_vect.X_multiindex.columns)
+        true_length = true_length * len(X_vect.X_mi_columns)
 
     # check length against n_instances metadata field
     assert len(X_vect) == true_length, (
@@ -305,7 +305,7 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
-    # testing list comprehension works with indexing
+    # testing list comprehension works with indexing (schema keys only without X)
     X_iter1 = [X_vect[i] for i in range(len(X_vect))]
     assert isinstance(X_iter1, list)
 
@@ -316,6 +316,9 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     # testing that as_list method works
     X_iter3 = X_vect.as_list()
     assert isinstance(X_iter3, list)
+
+    X_slices = X_vect.as_list(X=fixture)
+    assert all(s is not None for s in X_slices)
 
     # check that these are all the same
     assert deep_equals(X_iter1, X_iter2)
@@ -350,7 +353,7 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
     )
 
     # get list of iterated elements - we've tested above that this works
-    X_list = list(X_vect)
+    X_list = X_vect.as_list(X=fixture)
 
     # right mtype depends on scitype
     if iterate_as == "Series":
@@ -408,11 +411,11 @@ def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as, iterat
     )
 
     # get list of iterated elements - we've tested above that this yields correct result
-    X_list = list(X_vect)
+    X_list = X_vect.as_list(X=fixture)
 
     # reconstructed fixture should equal multiindex fixture if not convert_back
     eq, msg = deep_equals(
-        X_vect.reconstruct(X_list), X_vect.X_multiindex, return_msg=True
+        X_vect.reconstruct(X_list), X_vect.as_multiindex(fixture), return_msg=True
     )
     assert eq, msg
 
@@ -502,12 +505,14 @@ def test_vectorize_est(
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
-    kwargs = {"fh": [1, 2], "X": X_vect}
+    kwargs = {"fh": [1, 2], "X": X_vect, "X_data": fixture}
 
     if varname_used:
         kwargs["varname_of_self"] = "y"
+        kwargs["data"] = fixture
     else:
         kwargs["y"] = X_vect
+        kwargs["y_data"] = fixture
 
     kwargs.update(backend)
 
