@@ -26,10 +26,6 @@ class _TbatsAdapter(BaseForecaster):
         "capability:missing_values": False,
         # todo 1.2.0: check whether numpy and scipy bounds are still needed
         "python_dependencies": ["tbats", "numpy<2", "scipy<1.16"],
-        # Numpy built with MINGW-W64 on Windows 64 bits is experimental,
-        # and only available for testing, fails with seg fault on windows with
-        # python 3.13
-        "env_marker": 'platform_system != "Windows" or python_version < "3.13"',
         # CI and testing tags
         # -------------------
         "tests:vm": True,
