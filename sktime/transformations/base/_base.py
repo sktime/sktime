@@ -55,6 +55,7 @@ from sktime.datatypes import (
     check_is_scitype,
     convert,
     convert_to,
+    get_VectorizedDF_X,
     mtype_to_scitype,
     update_data,
 )
@@ -511,7 +512,7 @@ class BaseTransformer(BaseEstimator):
 
         # memorize X as self._X, if remember_data tag is set to True
         if self.get_tag("remember_data", False):
-            self._X = update_data(None, X_new=X_inner)
+            self._X = update_data(None, X_new=get_VectorizedDF_X(X_inner, X))
 
         # skip the rest if fit_is_empty is True
         if self.get_tag("fit_is_empty"):
@@ -527,7 +528,7 @@ class BaseTransformer(BaseEstimator):
             self._fit(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("fit", X=X_inner, y=y_inner)
+            self._vectorize("fit", X=X_inner, y=y_inner, X_data=X, y_data=y, data=X)
 
         # this should happen last: fitted state is set to True
         self._is_fitted = True
@@ -645,7 +646,9 @@ class BaseTransformer(BaseEstimator):
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
-            Xt = self._vectorize("transform", X=X_inner, y=y_inner)
+            Xt = self._vectorize(
+                "transform", X=X_inner, y=y_inner, X_data=X, y_data=y, data=X
+            )
 
         # obtain configs to control input and output control
         configs = self.get_config()
@@ -820,12 +823,13 @@ class BaseTransformer(BaseEstimator):
             # in this case the check_X_y will convert to VectorizedDF,
             # but inverse_transform expects a DataFrame
             # example: time series decomposition algorithms
-            if isinstance(X_inner, VectorizedDF):
-                X_inner = X_inner.X_multiindex
+            X_inner = get_VectorizedDF_X(X_inner, X)
             Xt = self._inverse_transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
-            Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
+            Xt = self._vectorize(
+                "inverse_transform", X=X_inner, y=y_inner, X_data=X, y_data=y, data=X
+            )
 
         # convert to output mtype
         configs = self.get_config()
@@ -898,7 +902,7 @@ class BaseTransformer(BaseEstimator):
 
         # update memory of X, if remember_data tag is set to True
         if self.get_tag("remember_data", False):
-            self._X = update_data(None, X_new=X_inner)
+            self._X = update_data(None, X_new=get_VectorizedDF_X(X_inner, X))
 
         # skip everything if update_params is False
         # skip everything if fit_is_empty is True
@@ -913,7 +917,7 @@ class BaseTransformer(BaseEstimator):
             self._update(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("update", X=X_inner, y=y_inner)
+            self._vectorize("update", X=X_inner, y=y_inner, X_data=X, y_data=y, data=X)
 
         return self
 
