@@ -337,8 +337,8 @@ class CNTCRegressor(BaseDeepRegressor):
         return test_params
 
     @staticmethod
-    def get_custom_objects():
-        """Return the custom objects needed for loading the model.
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
 
         Returns
         -------
