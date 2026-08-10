@@ -100,17 +100,25 @@ class VectorizedDF:
         self.X_mi_nlevels = X_multiindex.index.nlevels
         self.iter_indices = self._iter_indices_from_index(X_multiindex.index)
         self.shape = self._iter_shape()
-        # schema metadata only — first slice, then discard values
-        first = next((g for _, _, g in self.items(X=X)), None)
-        if first is None:
-            self.freq = None
-        elif getattr(first.index, "freqstr", None):
-            self.freq = first.index.freqstr
+        self.freq = self._infer_freq(X_multiindex)
+
+    def _infer_freq(self, X_multiindex):
+        """Infer frequency from the time index."""
+        if len(X_multiindex) == 0:
+            return None
+
+        idx = X_multiindex.index
+        if isinstance(idx, pd.MultiIndex):
+            time_idx = X_multiindex.xs(idx.droplevel(-1)[0]).index
         else:
-            try:
-                self.freq = pd.infer_freq(first.index)
-            except (TypeError, ValueError):
-                self.freq = None
+            time_idx = idx
+
+        if getattr(time_idx, "freqstr", None):
+            return time_idx.freqstr
+        try:
+            return pd.infer_freq(time_idx)
+        except (TypeError, ValueError):
+            return None
 
     def _check_iterate_cols(self, iterate_cols):
         if iterate_cols not in [True, False]:
