@@ -11,7 +11,6 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.forecasting.base import (
     BaseForecaster,
     ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
 )
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.singleton import _multiton
@@ -19,7 +18,7 @@ from sktime.utils.singleton import _multiton
 torch = _safe_import("torch")
 
 
-class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class FlowStateForecaster(BaseForecaster):
     """Zero-shot forecaster wrapping IBM FlowState via granite-tsfm.
 
     FlowState, developed by IBM Research, is an encoder-decoder architecture,
@@ -42,6 +41,12 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         ``past_values`` layout for the model.
     prediction_type : {"mean", "median"}, default="mean"
         Point forecast type passed to the model.
+
+    Notes
+    -----
+    ``predict_proba`` returns a ``skpro`` ``HistogramQPD`` built from FlowState's
+    native quantile grid. Quantiles between grid points are linearly interpolated,
+    while levels outside the grid are clamped to the nearest native quantile.
 
     References
     ----------
@@ -204,7 +209,8 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         pred_out = fh_rel.get_expected_pred_idx(self._context, cutoff=self.cutoff)
         return pred_df.loc[pred_df.index.isin(pred_out)]
 
-    def _predict_quantiles(self, fh, X, alpha):
+    def _predict_native_quantile_grid(self, fh):
+        """Return native FlowState quantile levels and values on ``fh``."""
         fh_rel = fh.to_relative(self.cutoff)
         pred_len = int(np.max(fh_rel.to_numpy()))
         out = self._run(pred_len)
@@ -214,14 +220,31 @@ class FlowStateForecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
 
         var_name = self._context.columns[0]
         pred_index = fh.to_absolute(self.cutoff)._values
+        pred_index.names = self._context.index.names
+        q_values = q[:, rel_idx]
+        return model_q, q_values, pred_index, var_name
+
+    def _predict_quantiles(self, fh, X, alpha):
+        model_q, q_values, pred_index, var_name = self._predict_native_quantile_grid(fh)
         cols = pd.MultiIndex.from_product([[var_name], alpha])
         pred_q = pd.DataFrame(index=pred_index, columns=cols)
         for a in alpha:
             pred_q[(var_name, a)] = np.array(
-                [np.interp(a, model_q, q[:, i]) for i in rel_idx]
+                [np.interp(a, model_q, values) for values in q_values.T]
             )
         pred_q.index.names = self._context.index.names
         return pred_q
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Return a distribution based on FlowState's native quantile grid."""
+        from skpro.distributions import HistogramQPD
+
+        model_q, q_values, pred_index, var_name = self._predict_native_quantile_grid(fh)
+        row_index = pd.MultiIndex.from_product([model_q, pred_index])
+        q_df = pd.DataFrame(
+            q_values.reshape(-1, 1), index=row_index, columns=[var_name]
+        )
+        return HistogramQPD(q_df, tails="mass", index=pred_index, columns=[var_name])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -62,7 +62,7 @@ class MyForecaster(BaseForecaster):
     and so on
     """
 
-    # todo: fill in the scitype:y tag for univariate/multivariate
+    # todo: fill in the capability:multivariate tag
     _tags = {
         # capability:multivariate controls whether inner y can be multivariate
         # if multivariate is not valid, applies vectorization over variables
