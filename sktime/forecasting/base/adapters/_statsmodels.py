@@ -110,37 +110,7 @@ class _StatsModelsAdapter(BaseForecaster):
         self._append_fit_data(y, X)
 
         if update_params or self.is_composite():
-            if update_params:
-                # default: refit on pooled data owned by this adapter
-                warn(
-                    f"NotImplementedWarning: {self.__class__.__name__} "
-                    f"does not have a custom `update` method implemented. "
-                    f"{self.__class__.__name__} will be refit each time "
-                    f"`update` is called with update_params=True. "
-                    "To refit less often, use the wrappers in the "
-                    "forecasting.stream module, e.g., UpdateEvery.",
-                    obj=self,
-                )
-                mtype_last_seen = self._y_mtype_last_seen
-                y_metadata = self._y_metadata
-                _converter_store_y = self._converter_store_y
-                self.fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
-                self._y_mtype_last_seen = mtype_last_seen
-                self._y_metadata = y_metadata
-                self._converter_store_y = _converter_store_y
-            elif self.is_composite():
-                warn(
-                    f"NotImplementedWarning: {self.__class__.__name__} "
-                    f"does not have a custom `update` method implemented. "
-                    f"{self.__class__.__name__} will update all component cutoffs "
-                    f"each time `update` is called with update_params=False.",
-                    obj=self,
-                )
-                from sktime.forecasting.base import BaseForecaster
-
-                comp_forecasters = self._components(base_class=BaseForecaster)
-                for comp in comp_forecasters.values():
-                    comp.update(y=y, X=X, update_params=False)
+            super()._update(y, X, update_params=update_params)
         else:
             if not hasattr(self._fitted_forecaster, "append"):
                 warn(
