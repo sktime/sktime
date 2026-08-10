@@ -188,7 +188,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
         "StackingForecaster",
-        "SummaryClassifier",
         "SupervisedTimeSeriesForest",
         "TEASER",
         "TSFreshClassifier",
