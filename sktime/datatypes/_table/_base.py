@@ -62,6 +62,7 @@ class ScitypeTable(BaseDatatype):
 
     _tags = {
         "scitype": "Table",
+        "description": "data table with primitive column types",
         "name": None,  # any string
         "name_python": None,  # lower_snake_case
         "name_aliases": [],
