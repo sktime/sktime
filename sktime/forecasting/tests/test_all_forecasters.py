@@ -708,9 +708,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         actual = y_pred.index
         np.testing.assert_array_equal(actual, expected)
 
-    def test_cutoff_and_cur_y(self, estimator_instance, n_columns):
+    def test_cutoff_and_cur_y(self, object_instance, n_columns):
         """Check cutoff; and ``_cur_y`` when the estimator keeps a fit snapshot."""
-        f = estimator_instance
+        f = object_instance
 
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
@@ -774,16 +774,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         assert object_instance.cutoff == y_test.index[-1]
         assert object_instance._is_fitted
 
-    def test_cur_y_when_refitting(self, estimator_instance, n_columns):
+    def test_cur_y_when_refitting(self, object_instance, n_columns):
         """Test that ``_cur_y`` is replaced when forecaster is refitted."""
         y_train = _make_series(n_columns=n_columns)
-        estimator_instance.fit(y_train, fh=FH0)
-        if getattr(estimator_instance, "_cur_y", None) is None:
+        object_instance.fit(y_train, fh=FH0)
+        if getattr(object_instance, "_cur_y", None) is None:
             return
-        estimator_instance.fit(y_train[3:], fh=FH0)
+        object_instance.fit(y_train[3:], fh=FH0)
         # using np.squeeze to make the test flexible to shape differences like
         # (50,) and (50, 1)
-        assert np.all(np.squeeze(estimator_instance._cur_y) == np.squeeze(y_train[3:]))
+        assert np.all(np.squeeze(object_instance._cur_y) == np.squeeze(y_train[3:]))
 
     def test_fh_attribute(self, object_instance, n_columns):
         """Check fh attribute and error handling if two different fh are passed."""
