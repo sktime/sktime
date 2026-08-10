@@ -69,14 +69,6 @@ class VectorizedDF:
         is_scitype="Panel",
         iterate_cols=False,
     ):
-        if is_scitype is None:
-            _, _, metadata = check_is_scitype(
-                X, scitype=self.SERIES_SCITYPES, return_metadata=True
-            )
-            is_scitype = metadata["scitype"]
-            X_orig_mtype = metadata["mtype"]
-        else:
-            X_orig_mtype = mtype(X, as_scitype=is_scitype)
         if is_scitype is not None and is_scitype not in self.SERIES_SCITYPES:
             raise ValueError(
                 'is_scitype must be None, "Hierarchical", "Panel", or "Series" ',
@@ -84,13 +76,21 @@ class VectorizedDF:
             )
 
         self.is_scitype = is_scitype
-        self.X_orig_mtype = X_orig_mtype
-
         self._check_iterate_as(iterate_as)
         self.iterate_as = iterate_as
 
         self._check_iterate_cols(iterate_cols)
         self.iterate_cols = iterate_cols
+
+        if is_scitype is None:
+            _, _, metadata = check_is_scitype(
+                X, scitype=self.SERIES_SCITYPES, return_metadata=True
+            )
+            self.is_scitype = metadata["scitype"]
+            self.X_orig_mtype = metadata["mtype"]
+            self._check_iterate_as(iterate_as)
+        else:
+            self.X_orig_mtype = mtype(X, as_scitype=is_scitype)
 
         self.converter_store = dict()
 
