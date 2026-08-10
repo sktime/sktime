@@ -59,6 +59,7 @@ from sktime.datatypes import (
     check_is_scitype,
     convert_to,
     get_cutoff,
+    get_VectorizedDF_X,
     mtype_to_scitype,
     scitype_to_mtype,
     update_data,
@@ -492,7 +493,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(
+            get_VectorizedDF_X(y_inner, y),
+            get_VectorizedDF_X(X_inner, X),
+        )
 
         # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh)
@@ -506,7 +510,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             self._fit(y=y_inner, X=X_inner, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
+            self._vectorize("fit", y=y_inner, X=X_inner, y_data=y, X_data=X, fh=fh)
 
         # this should happen last
         self._state = "fitted"
@@ -568,7 +572,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             y_pred = self._predict(fh=fh, X=X_inner)
         else:
             # otherwise we call the vectorized version of predict
-            y_pred = self._vectorize("predict", X=X_inner, fh=fh)
+            y_pred = self._vectorize("predict", X=X_inner, X_data=X, fh=fh)
 
         # convert to output mtype, identical with last y mtype seen
         y_out = convert_to(
@@ -664,7 +668,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         # set internal X/y to the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(
+            get_VectorizedDF_X(y_inner, y),
+            get_VectorizedDF_X(X_inner, X),
+        )
 
         # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
@@ -677,12 +684,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             self._fit(y=y_inner, X=X_inner, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
+            self._vectorize("fit", y=y_inner, X=X_inner, y_data=y, X_data=X, fh=fh)
 
         self._state = "fitted"
-        # call the public predict to avoid duplicating output conversions
-        #  input conversions are skipped since we are using X_inner
-        return self.predict(fh=fh, X=X_inner)
+        # public predict reconverts X; pass original so schema-only wrappers
+        # are not fed back into _check_X
+        return self.predict(fh=fh, X=X)
 
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
@@ -774,6 +781,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 "predict_quantiles",
                 fh=fh,
                 X=X_inner,
+                X_data=X,
                 alpha=alpha,
             )
 
@@ -869,6 +877,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 "predict_interval",
                 fh=fh,
                 X=X_inner,
+                X_data=X,
                 coverage=coverage,
             )
 
@@ -954,7 +963,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             pred_var = self._predict_var(fh=fh, X=X_inner, cov=cov)
         else:
             # otherwise we call the vectorized version of predict_interval
-            pred_var = self._vectorize("predict_var", fh=fh, X=X_inner, cov=cov)
+            pred_var = self._vectorize(
+                "predict_var", fh=fh, X=X_inner, X_data=X, cov=cov
+            )
 
         return pred_var
 
@@ -1345,13 +1356,23 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         # update internal X/y with the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(
+            get_VectorizedDF_X(y_inner, y),
+            get_VectorizedDF_X(X_inner, X),
+        )
 
         # checks and conversions complete, pass to inner fit
         if not self._is_vectorized:
             self._update(y=y_inner, X=X_inner, update_params=update_params)
         else:
-            self._vectorize("update", y=y_inner, X=X_inner, update_params=update_params)
+            self._vectorize(
+                "update",
+                y=y_inner,
+                X=X_inner,
+                y_data=y,
+                X_data=X,
+                update_params=update_params,
+            )
 
         return self
 
@@ -1478,9 +1499,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         cv = check_cv(cv)
 
         return self._predict_moving_cutoff(
-            y=y_inner,
+            y=get_VectorizedDF_X(y_inner, y),
             cv=cv,
-            X=X_inner,
+            X=get_VectorizedDF_X(X_inner, X),
             update_params=update_params,
             reset_forecaster=reset_forecaster,
         )
@@ -1576,7 +1597,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         # update internal _X/_y with the new X/y
         # this also updates cutoff from y
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(
+            get_VectorizedDF_X(y_inner, y),
+            get_VectorizedDF_X(X_inner, X),
+        )
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
@@ -1591,6 +1615,8 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 "update_predict_single",
                 y=y_inner,
                 X=X_inner,
+                y_data=y,
+                X_data=X,
                 fh=fh,
                 update_params=update_params,
             )
@@ -2108,9 +2134,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             Exogeneous time series
         """
         if y is not None and self.get_config()["remember_data"]:
-            # unwrap y if VectorizedDF
-            if isinstance(y, VectorizedDF):
-                y = y.X_multiindex
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
@@ -2121,9 +2144,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             self._set_cutoff_from_y(y)
 
         if X is not None and self.get_config()["remember_data"]:
-            # unwrap X if VectorizedDF
-            if isinstance(X, VectorizedDF):
-                X = X.X_multiindex
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
@@ -2339,6 +2359,8 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # retrieve data arguments
         X = kwargs.pop("X", None)
         y = kwargs.get("y", None)
+        # X_data = kwargs.pop("X_data", None)
+        # y_data = kwargs.pop("y_data", None)
 
         # add some common arguments to kwargs
         kwargs["args_rowvec"] = {"X": X}
@@ -2629,11 +2651,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # set cutoff to time point before data
         y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
         self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
-
-        if isinstance(y, VectorizedDF):
-            y = y.X
-        if isinstance(X, VectorizedDF):
-            X = X.X
 
         # iterate over data
         for new_window, _ in cv.split(y):

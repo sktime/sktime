@@ -20,7 +20,7 @@ from sktime.datatypes._registry import (
     scitype_to_mtype,
 )
 from sktime.datatypes._utilities import get_cutoff, update_data
-from sktime.datatypes._vectorize import VectorizedDF
+from sktime.datatypes._vectorize import VectorizedDF, get_VectorizedDF_X
 
 __all__ = [
     "ALL_TIME_SERIES_MTYPES",
@@ -33,6 +33,7 @@ __all__ = [
     "mtype",
     "get_cutoff",
     "get_examples",
+    "get_VectorizedDF_X",
     "mtype_to_scitype",
     "MTYPE_REGISTER",
     "MTYPE_LIST_HIERARCHICAL",
