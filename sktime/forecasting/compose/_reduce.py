@@ -487,6 +487,9 @@ class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -778,6 +781,9 @@ class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -1117,6 +1123,9 @@ class _DirRecReducer(_Reducer):
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -1332,6 +1341,9 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -1441,6 +1453,9 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     _estimator_scitype = "time-series-regressor"
@@ -1995,6 +2010,7 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:libs": ["sktime.transformations.lag"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(

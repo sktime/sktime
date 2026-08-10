@@ -803,6 +803,14 @@ Domain agnostic foundation models
 
     TiRexForecaster
 
+.. currentmodule:: sktime.forecasting.tirex2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TiRex2Forecaster
+
 .. currentmodule:: sktime.forecasting.toto
 
 .. autosummary::
