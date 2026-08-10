@@ -28,7 +28,7 @@ import numpy as np
 from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BasePanelMixin
-from sktime.datatypes import VectorizedDF
+from sktime.datatypes import VectorizedDF, convert
 from sktime.utils.sklearn import is_sklearn_transformer
 
 
@@ -235,7 +235,15 @@ class BaseRegressor(BasePanelMixin):
         self._is_vectorized = isinstance(y, VectorizedDF)
 
         if self._is_vectorized:
-            self._vectorize("fit", X=X, y=y, y_data=y_orig, data=y_orig)
+            # schema was built from df-list ``[y_df]``; pass the same container
+            y_df = convert(
+                y_orig,
+                from_type=y_metadata["mtype"],
+                to_type="pd_DataFrame_Table",
+                as_scitype="Table",
+                store=self._converter_store_y,
+            )
+            self._vectorize("fit", X=X, y=y, y_data=[y_df])
             # fit timer end
             self.fit_time_ = int(round(time.time() * 1000)) - start
             # this should happen last: fitted state is set to True
