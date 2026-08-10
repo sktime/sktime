@@ -320,7 +320,7 @@ class OverallWeightedAverage(BaseForecastingErrorMetric):
 
     def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
         """Evaluate OWA with M4 competition aggregation across series."""
-        if self.multilevel == "raw_values":
+        if self.multilevel in ["raw_values", "uniform_average_time"]:
             return super()._evaluate_vectorized(y_true, y_pred, **kwargs)
 
         backend = {}
