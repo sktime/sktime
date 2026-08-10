@@ -496,7 +496,7 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         diag = np.zeros(len(X_spl))
 
-        for i, X_instance in enumerate(X_spl):
+        for i, (_, _, X_instance) in enumerate(X_spl.items(X=X)):
             diag[i] = self.transform(X=X_instance)[0, 0]
 
         return diag
