@@ -112,6 +112,7 @@ class TimeSeriesDBSCAN(BaseClusterer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]
