@@ -22,6 +22,9 @@ class GreykiteForecaster(BaseForecaster):
 
     Parameters
     ----------
+    forecast_config : ForecastConfig, optional
+        Configuration object for Greykite's forecasting pipeline.
+        If None, a default configuration is created.
     date_format : str, optional
         Format of the timestamp in the data. If None, it is inferred.
     model_template : str, optional
@@ -92,11 +95,13 @@ class GreykiteForecaster(BaseForecaster):
 
     def __init__(
         self,
+        forecast_config=None,
         date_format: str | None = None,
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
         cv_max_splits: int | None = None,
     ):
+        self.forecast_config = forecast_config
         self.date_format = date_format
         self.model_template = model_template
         self.coverage = coverage
@@ -129,12 +134,11 @@ class GreykiteForecaster(BaseForecaster):
         self._X = None
 
     def _create_forecast_config(self, y=None):
-        """Create a ForecastConfig from the constructor parameters.
+        """Create a ForecastConfig object if one wasn't provided."""
+        if self.forecast_config is not None:
+            self._forecast_config_ = copy.copy(self.forecast_config)
+            return self._forecast_config_
 
-        The resolved config is stored in ``self._forecast_config_`` so that
-        constructor hyperparameters are never mutated during ``fit``, as
-        required by sktime's estimator contract.
-        """
         # If frequency is not provided, try to infer it from the index.
         # pd.infer_freq only supports DatetimeIndex / PeriodIndex; for integer
         # or other index types we leave freq as None.
@@ -335,17 +339,18 @@ class GreykiteForecaster(BaseForecaster):
             Each dictionary contains parameters to construct a valid test
             instance of GreykiteForecaster.
         """
-        # SILVERKITE_EMPTY: no hyperparameter grid search.
-        # cv_max_splits=0: skips the internal CV loop (default is 3 splits,
-        #   each 2+ GB on airline data) to prevent OOM kills on CI runners.
+        # PROPHET template is excluded because greykite pins holidays==0.13
+        # while prophet requires holidays>=0.41, making them incompatible.
         return [
             {
                 "model_template": "SILVERKITE_EMPTY",
+                "date_format": None,
                 "cv_max_splits": 1,
             },
             {
                 "model_template": "SILVERKITE_EMPTY",
+                "date_format": None,
                 "cv_max_splits": 1,
-                "coverage": 0.9,
+                "coverage": 0.95,
             },
         ]
