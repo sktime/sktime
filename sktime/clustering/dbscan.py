@@ -112,6 +112,7 @@ class TimeSeriesDBSCAN(BaseClusterer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     DELEGATED_PARAMS = ["eps", "min_samples", "algorithm", "leaf_size", "n_jobs"]
@@ -137,8 +138,18 @@ class TimeSeriesDBSCAN(BaseClusterer):
 
         super().__init__()
 
-        # Import the the list of supported distances
-        from sktime.base._panel.knn import DISTANCES_SUPPORTED
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        distance = self.distance
+
+        from sktime.dists_kernels._numba_distances import DISTANCES_SUPPORTED
 
         # Input check for supported distance strings, as in _BaseKnnTimeSeriesEstimator
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:

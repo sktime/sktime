@@ -104,10 +104,15 @@ class MantisForecaster(BaseForecaster):
 
         self.trainer_ = None
 
-        if ignore_deps:
-            self.set_tags(python_dependencies=[])
-
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.ignore_deps:
+            self.set_tags(python_dependencies=[])
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable trainer."""

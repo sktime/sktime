@@ -482,9 +482,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # check y is not None
         assert y is not None, "y cannot be None, but found None"
 
-        # if fit is called, estimator is reset, including fitted state
+        # skip reset on the first fit after pretrain; on refit, discard
+        # task-specific fitted state while retaining pretrained state
         if not self._state == "pretrained":
-            self.reset()
+            self._reset_at("pretrained")
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
@@ -914,6 +915,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
 
+        cov : bool, optional (default=False)
+            currently unused, present for downwards compatibility and future extension
+
         Returns
         -------
         pred_var : pd.DataFrame, format dependent on ``cov`` variable
@@ -1147,6 +1151,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
         pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
 
+        prior_attrs = {
+            a for a in dir(self) if a.endswith("_") and not a.startswith("_")
+        }
+
         # pretrain accepts multivariate panel data even for univariate forecasters,
         # because _pretrain can split columns into separate univariate series.
         # Pass multivariate=True to prevent column vectorization.
@@ -1183,6 +1191,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             if a.endswith("_")
             and not a.startswith("_")
             and a not in self._pretrained_attrs
+            and a not in prior_attrs
         ]
         self._pretrained_attrs.extend(new_attrs)
 
