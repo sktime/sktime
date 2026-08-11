@@ -2520,41 +2520,43 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         -------
         self : reference to self
         """
-        if update_params:
-            # default: no param update — BaseForecaster does not retain training data.
-            # Leaf estimators that need a current snapshot should override `_update`
-            # to append to their own `_cur_y` / `_cur_X`. To pool and refit, use
-            # forecasting.stream compositors (e.g. UpdateRefitsEvery).
+        # silent no-op - no param update if remember_data is False
+        # Leaf estimators that need a current snapshot should override `_update`
+        # to append to their own `_cur_y` / `_cur_X`. To pool and refit, use
+        # forecasting.stream compositors (e.g. UpdateRefitsEvery).
+        if update_params and self.get_config()["remember_data"]:
+            # default to re-fitting if update is not implemented
             warn(
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
-                f"`update` with update_params=True only updates the cutoff. "
-                "To refit on pooled data, use the wrappers in the "
-                "forecasting.stream module, e.g., UpdateRefitsEvery.",
+                f"{self.__class__.__name__} will be refit each time "
+                f"`update` is called with update_params=True. "
+                "To refit less often, use the wrappers in the "
+                "forecasting.stream module, e.g., UpdateEvery.",
                 obj=self,
             )
-            if self.get_config()["remember_data"]:
-                # we need to overwrite the mtype last seen and converter store,
-                # since the _y may have been converted
-                mtype_last_seen = self._y_mtype_last_seen
-                y_metadata = self._y_metadata
-                _converter_store_y = self._converter_store_y
-                # refit with updated data, not only passed data
-                self.fit(y=self._y, X=self._X, fh=self._fh)
-                # todo: should probably be self._fit, not self.fit
-                # but looping to self.fit for now to avoid interface break
-                self._y_mtype_last_seen = mtype_last_seen
-                self._y_metadata = y_metadata
-                self._converter_store_y = _converter_store_y
+            # we need to overwrite the mtype last seen and converter store, since the _y
+            #    may have been converted
+            mtype_last_seen = self._y_mtype_last_seen
+            y_metadata = self._y_metadata
+            _converter_store_y = self._converter_store_y
+            # refit with updated data, not only passed data
+            self.fit(y=self._y, X=self._X, fh=self._fh)
+            # todo: should probably be self._fit, not self.fit
+            # but looping to self.fit for now to avoid interface break
+            self._y_mtype_last_seen = mtype_last_seen
+            self._y_metadata = y_metadata
+            self._converter_store_y = _converter_store_y
 
-        # if there are components, update their cutoffs
-        if self.is_composite():
+        # if update_params=False, and there are no components, do nothing
+        # if update_params=False, and there are components, we update cutoffs
+        elif self.is_composite():
             # default to calling component _updates if update is not implemented
             warn(
                 f"NotImplementedWarning: {self.__class__.__name__} "
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will update all component cutoffs each time"
-                f" `update` is called.",
+                f" `update` is called with update_params=False.",
                 obj=self,
             )
             comp_forecasters = self._components(base_class=BaseForecaster)
