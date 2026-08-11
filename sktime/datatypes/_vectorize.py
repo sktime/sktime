@@ -85,13 +85,14 @@ class VectorizedDF:
             )
 
         self.is_scitype = is_scitype
-        self.X_orig_mtype = X_orig_mtype or mtype(X, as_scitype=is_scitype)
 
         self._check_iterate_as(iterate_as)
         self.iterate_as = iterate_as
 
         self._check_iterate_cols(iterate_cols)
         self.iterate_cols = iterate_cols
+
+        self.X_orig_mtype = X_orig_mtype or mtype(X, as_scitype=is_scitype)
 
         self.converter_store = dict()
 
