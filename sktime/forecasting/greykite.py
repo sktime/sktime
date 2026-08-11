@@ -236,16 +236,6 @@ class GreykiteForecaster(BaseForecaster):
         fc.forecast_horizon = int(steps.max())
 
         # Fit the model using Greykite's forecast_pipeline.
-        # greykite internally calls matplotlib.cm.get_cmap which was removed in
-        # matplotlib 3.9 (deprecated since 3.7).  Restore the attribute from the
-        # new matplotlib.colormaps API before importing Forecaster so that any
-        # eager imports inside greykite don't raise ImportError / AttributeError.
-        import matplotlib as _mpl
-        import matplotlib.cm as _mpl_cm
-
-        if not hasattr(_mpl_cm, "get_cmap"):
-            _mpl_cm.get_cmap = _mpl.colormaps.__getitem__
-
         from greykite.framework.templates.forecaster import Forecaster
 
         result = Forecaster().run_forecast_config(df, fc)
@@ -292,12 +282,6 @@ class GreykiteForecaster(BaseForecaster):
             fc = copy.copy(self._create_forecast_config(self._y_train_))
             steps = np.array(fh.to_relative(self.cutoff).to_numpy(), dtype=int)
             fc.forecast_horizon = int(steps.max())
-
-            import matplotlib as _mpl
-            import matplotlib.cm as _mpl_cm
-
-            if not hasattr(_mpl_cm, "get_cmap"):
-                _mpl_cm.get_cmap = _mpl.colormaps.__getitem__
 
             from greykite.framework.templates.forecaster import Forecaster
 
