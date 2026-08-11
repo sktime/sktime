@@ -3638,6 +3638,27 @@ class info__source(_BaseTag):
     }
 
 
+class learning_type(_BaseTag):
+    """Type of learning for detector objects.
+
+    - String name: ``"learning_type"``
+    - Public metadata tag
+    - Values: string (e.g., ``"supervised"``, ``"unsupervised"``)
+    - Default: None
+
+    Specifies the learning paradigm of a time series detector object,
+    e.g., anomaly detector or segmentation algorithm.
+    """
+
+    _tags = {
+        "tag_name": "learning_type",
+        "parent_type": "detector",
+        "tag_type": "str",
+        "short_descr": "type of learning, e.g., 'supervised', 'unsupervised'",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
     (
         "sktime_version",
@@ -3743,12 +3764,6 @@ ESTIMATOR_TAG_REGISTER = [
         "detector",
         "str",
         "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
-    ),
-    (
-        "learning_type",
-        "detector",
-        "str",
-        "type of learning, e.g., 'supervised', 'unsupervised'",
     ),
     (
         "reserved_params",
