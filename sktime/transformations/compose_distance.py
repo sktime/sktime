@@ -29,8 +29,9 @@ class DistanceFeatures(BaseTransformer):
         mtype that distance expects for X and X2, if a callable
         only set this if distance is not BasePairwiseTransformerPanel descendant
     flatten_hierarchy : bool, optional, default=False.
-        whether column hierarchy in `transform` return is flattened (using `__` concat),
-        in case of a hierarchical series index seen in `fit`.
+        whether index and column hierarchy in `transform` return are flattened
+        (using `__` concat), in case of a hierarchical series index seen in
+        `fit` (columns) or `transform` (index).
 
     Examples
     --------
@@ -64,14 +65,14 @@ class DistanceFeatures(BaseTransformer):
         "capability:unequal_length:removes": False,
         "capability:missing_values": True,
         "capability:missing_values:removes": False,
+        # pairwise transformers do not support categorical features
+        "capability:categorical_in_X": False,
         # we leave remember_data as False, since updating self._X in update
         # would increase the number of columns in the transform return
         "remember_data": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        # DistanceFeatures does ont work for hierarchical data, see #8077
-        "tests:skip_all": True,
     }
 
     def __init__(self, distance=None, distance_mtype=None, flatten_hierarchy=False):
@@ -136,12 +137,21 @@ class DistanceFeatures(BaseTransformer):
         X_ind = X.index.droplevel(-1).unique()
 
         def _coerce_to_panel(x):
-            """Coerce hierarchical or pandel x to panel."""
-            nlevels = x.index.nlevels
-            if nlevels > 2:
-                return x.droplevel(list(range(nlevels - 2)))
-            else:
+            """Coerce hierarchical or panel x to panel.
+
+            Hierarchy levels are replaced by a single integer instance level.
+            Dropping them instead would collapse distinct series that share the
+            same lower level index, see bug #8077.
+            """
+            if x.index.nlevels <= 2:
                 return x
+            inst_codes = x.index.droplevel(-1).factorize()[0]
+            x = x.copy()
+            x.index = pd.MultiIndex.from_arrays(
+                [inst_codes, x.index.get_level_values(-1)],
+                names=["instances", x.index.names[-1]],
+            )
+            return x
 
         X = _coerce_to_panel(X)
         X_train = _coerce_to_panel(X_train)
@@ -149,8 +159,31 @@ class DistanceFeatures(BaseTransformer):
         distmat = distance(X, X_train)
 
         if self.flatten_hierarchy:
-            X_ind = flatten_multiindex(X_ind)
+            if isinstance(X_ind, pd.MultiIndex):
+                X_ind = flatten_multiindex(X_ind)
+            if isinstance(X_train_ind, pd.MultiIndex):
+                X_train_ind = flatten_multiindex(X_train_ind)
 
         Xt = pd.DataFrame(distmat, columns=X_train_ind, index=X_ind)
 
         return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+        """
+        params1 = {}
+        params2 = {"distance": "cityblock", "flatten_hierarchy": True}
+
+        return [params1, params2]
