@@ -64,11 +64,13 @@ def test_mantis_airline_predictions_match_source_reference(
     # backends (OpenBLAS/Linux, Accelerate/macOS, MKL/Windows), and the
     # recursive multi-step prediction compounds that float32 noise across
     # steps. Observed cross-platform deviations top out around 0.02 absolute
-    # / 5e-5 relative on this reference case; these tolerances leave headroom
-    # over that while still catching real regressions.
+    # / 5e-5 relative on this reference case.
+    # final values are calculated using:
+    # 6 * sqrt(sum(x ** 2 for x in diffs) / len(diffs))
+    # where diffs is the observed abs/rel difference across the runs in CI.
     np.testing.assert_allclose(
         y_pred.iloc[:3].to_numpy(),
         np.asarray(expected_head, dtype=np.float32),
-        rtol=1e-4,
-        atol=3e-2,
+        rtol=2e-4,
+        atol=8e-2,
     )
