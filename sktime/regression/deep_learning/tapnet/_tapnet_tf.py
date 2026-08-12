@@ -88,6 +88,16 @@ class TapNetRegressor(BaseDeepRegressor):
     The Implementation of TapNet found at https://github.com/kdd2019-tapnet/tapnet
     Currently does not implement custom distance matrix loss function
     or class  based self attention.
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.tapnet import TapNetRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
+    >>> reg = TapNetRegressor(n_epochs=20, batch_size=4)  # doctest: +SKIP
+    >>> reg.fit(X_train, y_train)  # doctest: +SKIP
+    TapNetRegressor(...)
     """
 
     _tags = {
@@ -97,6 +107,10 @@ class TapNetRegressor(BaseDeepRegressor):
         "maintainers": ["jnrusson1"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # deepcopy of a fitted instance loses model_, see #10712
+        "tests:skip_by_name": [
+            "test_deepcopy_fitted_predict",
+        ],
     }
 
     def __init__(
@@ -234,8 +248,8 @@ class TapNetRegressor(BaseDeepRegressor):
         return model
 
     @staticmethod
-    def get_custom_objects():
-        """Return the custom objects needed for loading the model.
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
 
         Returns
         -------

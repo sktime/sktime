@@ -103,13 +103,9 @@ class TapNetClassifier(BaseDeepClassifier):
         "maintainers": ["jnrusson1", "achieveordie"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
-        # TapNet fails due to Lambda layer and stochastic failures,
-        # see #3539, #3616, #3525
-        "tests:skip_all": True,
+        # deepcopy of a fitted instance loses model_, see #10712
         "tests:skip_by_name": [
-            "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
+            "test_deepcopy_fitted_predict",
         ],
         # Run tests in a dedicated VM due to sporadic crashes and possible
         # memory leaks (see #8518)
@@ -256,8 +252,8 @@ class TapNetClassifier(BaseDeepClassifier):
         return model
 
     @staticmethod
-    def get_custom_objects():
-        """Return the custom objects needed for loading the model.
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
 
         Returns
         -------
