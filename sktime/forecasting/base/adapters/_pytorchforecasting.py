@@ -14,17 +14,13 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
 
 
-class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class _PytorchForecastingAdapter(BaseForecaster):
     """Base adapter class for pytorch-forecasting models.
 
     Parameters
@@ -52,7 +48,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
     """  # noqa: E501
 
     _tags = {

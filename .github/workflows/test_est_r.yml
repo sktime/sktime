@@ -42,8 +42,8 @@ jobs:
         shell: pwsh
         run: echo "MPLBACKEND=Agg" >> $env:GITHUB_ENV
 
-      - name: Install sktime with dev dependencies
-        run: uv pip install .[dev]
+      - name: Install sktime with dev dependencies and skpro
+        run: uv pip install .[dev,skpro]
         env:
           UV_SYSTEM_PYTHON: 1
 
