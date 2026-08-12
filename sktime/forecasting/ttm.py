@@ -217,13 +217,12 @@ class TinyTimeMixerForecaster(BaseForecaster):
           Granite-TSFM's forecasts and is the only valid option when
           ``fit_strategy="zero-shot"``.
 
-        - "unobserved": Marks padded positions as unobserved. This was
-          sktime's original behavior. It is conceptually cleaner, since the
-          synthetic padding is not part of the observed series, but it does
-          not match how public checkpoints were pretrained. Only valid when
-          ``fit_strategy`` is ``"minimal"`` or ``"full"``, so the model can
-          be fine-tuned under these mask semantics; otherwise a ValueError
-          is raised.
+        - "unobserved": Marks padded positions as unobserved, so synthetic
+          padding is treated as not part of the observed series. This does
+          not match how public checkpoints were pretrained, and is only
+          valid when ``fit_strategy`` is ``"minimal"`` or ``"full"``, so
+          the model can be fine-tuned under these mask semantics;
+          otherwise a ValueError is raised.
 
     References
     ----------
@@ -881,8 +880,7 @@ def _pad_truncate(data, seq_len, pad_value=0, mark_padding_observed=True):
     - mark_padding_observed: if True, synthetic padding positions are marked
       observed in the returned mask, matching Granite-TSFM preprocessing
       (``past_observed_mask`` built with ``~np.isnan``). If False, padding
-      positions are marked unobserved, which was sktime's original behavior
-      before padding-mask semantics were aligned with Granite-TSFM.
+      positions are marked unobserved.
 
     Returns
     -------
