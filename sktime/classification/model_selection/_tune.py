@@ -1,19 +1,515 @@
-"""Tuning for time series classifiers."""
+"""Tuning for time series classifiers.
 
-__author__ = ["fkiraly", "achieveordie"]
+Also contains the grid search engine shared by the classification and regression
+tuners. The regression tuner imports it with a function level import, as sibling
+type modules must not cross-import at module level, see
+``sktime/tests/test_cross_module_imports.py``.
+"""
+
+__author__ = ["fkiraly", "achieveordie", "yash-sangwan"]
+
+import time
+from collections.abc import Sequence
 
 import numpy as np
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import ParameterGrid
 
 from sktime.classification._delegate import _DelegatedClassifier
+from sktime.classification.model_evaluation import evaluate
+from sktime.exceptions import NotFittedError
+from sktime.utils.parallel import parallelize
+from sktime.utils.sklearn._scoring import _resolve_scoring
+
+
+def _check_param_grid(param_grid):
+    """Validate param_grid, from sklearn 1.0.2, before it was removed."""
+    if hasattr(param_grid, "items"):
+        param_grid = [param_grid]
+
+    for p in param_grid:
+        for name, v in p.items():
+            if isinstance(v, np.ndarray) and v.ndim > 1:
+                raise ValueError("Parameter array should be one-dimensional.")
+
+            if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
+                raise ValueError(
+                    f"Parameter grid for parameter ({name}) needs to"
+                    f" be a list or numpy array, but got ({type(v)})."
+                    " Single values need to be wrapped in a list"
+                    " with one element."
+                )
+
+            if len(v) == 0:
+                raise ValueError(
+                    f"Parameter values for parameter ({name}) need "
+                    "to be a non-empty sequence."
+                )
+
+
+class _FixedSplitter:
+    """Cross-validation splitter with pre-computed splits.
+
+    Ensures that all parameter candidates are backtested on identical folds,
+    also if the splitter passed by the user shuffles without a random state.
+
+    Parameters
+    ----------
+    splits : list of pairs of 1D np.ndarray
+        the (train, test) index pairs to yield from ``split``
+    """
+
+    def __init__(self, splits):
+        self.splits = splits
+
+    def split(self, X=None, y=None, groups=None):
+        """Yield the pre-computed (train, test) splits."""
+        return iter(self.splits)
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        """Return the number of splits."""
+        return len(self.splits)
+
+
+def _coerce_y(y):
+    """Coerce y to 1D np.ndarray if it has a single output, else leave 2D."""
+    y = np.asarray(y)
+    if y.ndim == 2 and y.shape[1] == 1:
+        y = y.flatten()
+    return y
+
+
+def _resolve_backend(backend, backend_params, n_jobs):
+    """Resolve the parallelization backend, with legacy n_jobs as a fallback.
+
+    ``n_jobs`` is used only if no ``backend`` is passed, and maps to ``loky``.
+    ``n_jobs`` of None or 1 means no parallelization.
+    """
+    if backend is not None:
+        return backend, backend_params
+    if n_jobs in (None, 1):
+        return None, backend_params
+
+    backend_params = dict(backend_params) if backend_params else {}
+    backend_params["n_jobs"] = n_jobs
+    return "loky", backend_params
+
+
+def _resolve_cv(cv, y, estimator_type):
+    """Resolve cv to a splitter with fixed splits.
+
+    ``int`` and ``None`` are resolved as in sklearn ``check_cv``, i.e., to
+    ``StratifiedKFold`` for classifiers with binary or multiclass ``y``,
+    and to ``KFold`` otherwise, both with ``shuffle=False``.
+
+    Splits are materialised once, so that all parameter candidates
+    are backtested on the same folds.
+
+    Parameters
+    ----------
+    cv : int, cross-validation generator, iterable of splits, or None
+    y : 1D or 2D np.ndarray, target values, used for stratification
+    estimator_type : str, one of "classifier" or "regressor"
+
+    Returns
+    -------
+    _FixedSplitter, with the materialised splits
+    """
+    from sklearn.model_selection import check_cv
+
+    cv = check_cv(cv, y, classifier=estimator_type == "classifier")
+
+    instance_idx = np.arange(len(y))
+    try:
+        splits = list(cv.split(instance_idx, y))
+    except TypeError:  # splitters that do not accept y
+        splits = list(cv.split(instance_idx))
+
+    if len(splits) == 0:
+        raise ValueError(
+            "Error in grid search tuner, the cross-validation splitter "
+            f"{cv} produced no splits."
+        )
+
+    return _FixedSplitter(splits)
+
+
+def _score_times(results):
+    """Sum the prediction times of an evaluate result, per fold."""
+    cols = [c for c in results.columns if c.endswith("_time") and c != "fit_time"]
+    if len(cols) == 0:
+        return np.zeros(len(results), dtype=float)
+    return results[cols].sum(axis=1).to_numpy(dtype=float)
+
+
+def _fit_and_score(params, meta):
+    """Backtest one parameter candidate, via native evaluate.
+
+    Root level function for parallelization, called from
+    ``_run_grid_search``, within ``parallelize``.
+    """
+    estimator = meta["estimator"].clone().set_params(**params)
+    scoring = meta["scoring"]
+
+    # scoring is always passed explicitly, so the default of evaluate never applies,
+    # and the same call is correct for classifiers and regressors alike
+    results = evaluate(
+        estimator,
+        cv=meta["cv"],
+        X=meta["X"],
+        y=meta["y"],
+        scoring=[entry.metric for entry in scoring],
+        error_score=meta["error_score"],
+    )
+
+    scores = {}
+    for entry in scoring:
+        fold_scores = results[f"test_{entry.metric.__name__}"].to_numpy(dtype=float)
+        scores[entry.name] = entry.sign * fold_scores
+
+    return {
+        "params": params,
+        "scores": scores,
+        "fit_time": results["fit_time"].to_numpy(dtype=float),
+        "score_time": _score_times(results),
+    }
+
+
+def _param_columns(params):
+    """Build the ``param_<name>`` columns of cv_results_, as masked arrays."""
+    names = sorted({name for candidate in params for name in candidate})
+
+    columns = {}
+    for name in names:
+        column = np.ma.MaskedArray(np.empty(len(params)), mask=True, dtype=object)
+        for i, candidate in enumerate(params):
+            if name in candidate:
+                column[i] = candidate[name]
+        columns[f"param_{name}"] = column
+    return columns
+
+
+def _rank_scores(mean_scores, greater_is_better):
+    """Rank mean scores, 1 is best, ties get the minimum rank, NaN ranks last."""
+    from scipy.stats import rankdata
+
+    scores = np.asarray(mean_scores, dtype=float)
+    worst = -np.inf if greater_is_better else np.inf
+    scores = np.where(np.isnan(scores), worst, scores)
+    if greater_is_better:
+        scores = -scores
+    return np.asarray(rankdata(scores, method="min"), dtype=np.int32)
+
+
+def _make_cv_results(candidates, scoring, multimetric):
+    """Assemble sklearn style cv_results_ from the candidate backtesting results.
+
+    Parameters
+    ----------
+    candidates : list of dict, the returns of ``_fit_and_score``, one per candidate
+    scoring : list of _ResolvedMetric, the metrics evaluated
+    multimetric : bool
+        whether multiple metrics were requested. If False, score keys are suffixed
+        with ``"score"``, if True, with the name of the respective metric.
+
+    Returns
+    -------
+    dict, with str keys, the ``cv_results_`` attribute of the tuner
+    """
+    params = [candidate["params"] for candidate in candidates]
+
+    results = {"params": params}
+    results.update(_param_columns(params))
+
+    for key in ["fit_time", "score_time"]:
+        times = np.array([candidate[key] for candidate in candidates], dtype=float)
+        results[f"mean_{key}"] = np.mean(times, axis=1)
+        results[f"std_{key}"] = np.std(times, axis=1)
+
+    for entry in scoring:
+        suffix = entry.name if multimetric else "score"
+        scores = np.array(
+            [candidate["scores"][entry.name] for candidate in candidates], dtype=float
+        )
+
+        for i in range(scores.shape[1]):
+            results[f"split{i}_test_{suffix}"] = scores[:, i]
+
+        mean_scores = np.mean(scores, axis=1)
+        results[f"mean_test_{suffix}"] = mean_scores
+        results[f"std_test_{suffix}"] = np.std(scores, axis=1)
+        results[f"rank_test_{suffix}"] = _rank_scores(
+            mean_scores, entry.greater_is_better
+        )
+
+    return results
+
+
+def _check_refit(refit, scoring, multimetric):
+    """Check that refit selects one of the metrics, raise ValueError if not."""
+    if not multimetric or not isinstance(refit, str):
+        return
+
+    names = [entry.name for entry in scoring]
+    if refit not in names:
+        raise ValueError(
+            "Error in grid search tuner, for multi-metric scoring, a string refit "
+            f"must be one of the metric names {names}, but found {refit!r}"
+        )
+
+
+def _select_best_index(cv_results, scoring, multimetric, refit, estimator):
+    """Select the best candidate, and the cv_results_ key of its score.
+
+    Parameters
+    ----------
+    cv_results : dict, as returned by ``_make_cv_results``
+    scoring : list of _ResolvedMetric, the metrics evaluated
+    multimetric : bool, whether multiple metrics were requested
+    refit : bool, str, or callable
+        if callable, is applied to ``cv_results`` to obtain the best index.
+        If a str and ``multimetric``, names the metric to select by.
+        Otherwise, the first metric in ``scoring`` is used to select.
+    estimator : the estimator tuned, used in the error message only
+
+    Returns
+    -------
+    best_index : int, index of the best candidate in ``cv_results``
+    score_key : str or None, key of the best score, None if ``refit`` is callable
+    """
+    if callable(refit):
+        return int(refit(cv_results)), None
+
+    if multimetric:
+        suffix = refit if isinstance(refit, str) else scoring[0].name
+    else:
+        suffix = "score"
+
+    score_key = f"mean_test_{suffix}"
+    if np.isnan(cv_results[score_key]).all():
+        raise NotFittedError(
+            "Error in grid search tuner, all fits of the estimator failed, "
+            "set error_score='raise' to see the exceptions. "
+            f"Failed estimator: {estimator}"
+        )
+
+    return int(np.argmin(cv_results[f"rank_test_{suffix}"])), score_key
+
+
+def _run_grid_search(
+    estimator,
+    param_grid,
+    X,
+    y,
+    estimator_type,
+    cv=None,
+    scoring=None,
+    greater_is_better="auto",
+    refit=True,
+    error_score=np.nan,
+    backend=None,
+    backend_params=None,
+    verbose=0,
+):
+    """Run grid search over param_grid, by backtesting via native evaluate.
+
+    Each parameter candidate in ``param_grid`` is backtested via
+    ``model_evaluation.evaluate``, on identical folds, and the candidate with the
+    best mean test score is selected. Candidates are evaluated in parallel,
+    as per ``backend`` and ``backend_params``.
+
+    Parameters
+    ----------
+    estimator : sktime classifier or regressor, the estimator to tune
+    param_grid : dict or list of dict, the parameter grid to search over
+    X : sktime compatible panel data, the training features
+    y : 1D or 2D np.ndarray, the training targets
+    estimator_type : str, one of "classifier" or "regressor"
+    cv : int, cross-validation generator, iterable of splits, or None
+    scoring : None, str, callable, sklearn scorer, or list or dict of these
+    greater_is_better : "auto", bool, optional, default="auto"
+    refit : bool, str, or callable, optional, default=True
+    error_score : "raise" or numeric, optional, default=np.nan
+    backend : str, optional, parallelization backend, see ``utils.parallel``
+    backend_params : dict, optional, parameters passed to the backend
+    verbose : int, optional, default=0, if positive, prints the number of fits
+
+    Returns
+    -------
+    dict, the fitted attributes to write to the tuner, with keys
+    ``cv_results_``, ``best_index_``, ``best_params_``, ``n_splits_``,
+    ``scorer_``, ``multimetric_``, and ``best_score_`` unless ``refit``
+    is a callable
+    """
+    multimetric = isinstance(scoring, (list, tuple, dict))
+    resolved = _resolve_scoring(scoring, estimator_type, greater_is_better)
+    _check_refit(refit, resolved, multimetric)
+
+    _check_param_grid(param_grid)
+    candidate_params = list(ParameterGrid(param_grid))
+    if len(candidate_params) == 0:
+        raise ValueError(
+            "Error in grid search tuner, no parameter candidates to evaluate, "
+            "param_grid is empty."
+        )
+
+    y = _coerce_y(y)
+    cv = _resolve_cv(cv, y, estimator_type)
+    n_splits = cv.get_n_splits()
+
+    if verbose > 0:
+        print(
+            f"Fitting {n_splits} folds for each of {len(candidate_params)} candidates,"
+            f" totalling {len(candidate_params) * n_splits} fits"
+        )
+
+    meta = {
+        "estimator": estimator,
+        "X": X,
+        "y": y,
+        "cv": cv,
+        "scoring": resolved,
+        "error_score": error_score,
+    }
+
+    candidates = parallelize(
+        fun=_fit_and_score,
+        iter=candidate_params,
+        meta=meta,
+        backend=backend,
+        backend_params=backend_params,
+    )
+
+    cv_results = _make_cv_results(candidates, resolved, multimetric)
+    best_index, score_key = _select_best_index(
+        cv_results, resolved, multimetric, refit, estimator
+    )
+
+    if multimetric:
+        scorer = {entry.name: entry.metric for entry in resolved}
+    else:
+        scorer = resolved[0].metric
+
+    fitted_params = {
+        "cv_results_": cv_results,
+        "best_index_": best_index,
+        "best_params_": cv_results["params"][best_index],
+        "n_splits_": n_splits,
+        "scorer_": scorer,
+        "multimetric_": multimetric,
+    }
+    if score_key is not None:
+        fitted_params["best_score_"] = cv_results[score_key][best_index]
+
+    return fitted_params
+
+
+def _fit_and_time(estimator, X, y):
+    """Fit estimator to the full data, and return the seconds taken."""
+    start = time.perf_counter()
+    estimator.fit(X=X, y=_coerce_y(y))
+    return time.perf_counter() - start
+
+
+def _fit_tuner(tuner, X, y, estimator_type):
+    """Run the grid search for a tuner, and write the results to it.
+
+    Shared ``_fit`` logic of ``TSCGridSearchCV`` and ``TSRGridSearchCV``.
+
+    Parameters
+    ----------
+    tuner : TSCGridSearchCV or TSRGridSearchCV instance
+    X : sktime compatible panel data, the training features
+    y : 1D or 2D np.ndarray, the training targets
+    estimator_type : str, one of "classifier" or "regressor"
+
+    Returns
+    -------
+    tuner : reference to ``tuner``, with the fitted attributes written
+    """
+    backend, backend_params = _resolve_backend(
+        tuner.backend, tuner.backend_params, tuner.n_jobs
+    )
+
+    results = _run_grid_search(
+        estimator=tuner.estimator,
+        param_grid=tuner.param_grid,
+        X=X,
+        y=y,
+        estimator_type=estimator_type,
+        cv=tuner.cv,
+        scoring=tuner.scoring,
+        greater_is_better=tuner.greater_is_better,
+        refit=tuner.refit,
+        error_score=tuner.error_score,
+        backend=backend,
+        backend_params=backend_params,
+        verbose=tuner.verbose,
+    )
+    for name, value in results.items():
+        setattr(tuner, name, value)
+
+    tuner.best_estimator_ = tuner.estimator.clone().set_params(**tuner.best_params_)
+    if tuner.refit:
+        tuner.refit_time_ = _fit_and_time(tuner.best_estimator_, X, y)
+
+    return tuner
+
+
+def _check_refit_for_predict(tuner):
+    """Raise a RuntimeError if the tuner cannot predict, because refit is False."""
+    if not tuner.refit:
+        name = type(tuner).__name__
+        raise RuntimeError(
+            f"In {name}, refit must be True to make predictions, but found "
+            f"refit=False. If refit=False, {name} can be used only to tune "
+            "hyper-parameters, as a parameter estimator."
+        )
+
+
+def _coerce_prediction(y_pred):
+    """Coerce a prediction of the tuned estimator to 2D np.ndarray."""
+    if hasattr(y_pred, "to_numpy"):
+        y_pred = y_pred.to_numpy()
+    y_pred = np.asarray(y_pred)
+    if y_pred.ndim == 1:
+        y_pred = y_pred.reshape(-1, 1)
+    return y_pred
+
+
+def _tuner_fitted_params(tuner):
+    """Get the fitted parameters of a tuner.
+
+    The best parameters, and the fitted parameters of ``best_estimator_``
+    if available, the former taking precedence.
+    """
+    fitted_params = {}
+    try:
+        fitted_params = tuner.best_estimator_.get_fitted_params()
+    except (NotFittedError, NotImplementedError):
+        pass
+
+    fitted_params = {**fitted_params, **tuner.best_params_}
+    fitted_params.update(tuner._get_fitted_params_default())
+
+    return fitted_params
 
 
 class TSCGridSearchCV(_DelegatedClassifier):
-    """Exhaustive search over specified parameter values for an estimator.
+    """Exhaustive search over specified parameter values for a classifier.
 
-    Adapts sklearn GridSearchCV for sktime time series classifiers
+    Optimizes hyper-parameters of ``estimator`` by exhaustive grid search, using
+    ``sktime`` native backtesting via
+    ``classification.model_evaluation.evaluate``.
 
-    Optimizes hyper-parameters of ``estimators`` by exhaustive grid search.
+    In ``fit``, each parameter combination in ``param_grid`` is backtested on the
+    data passed, using the cross-validation scheme ``cv`` and the metric
+    ``scoring``. All candidates are evaluated on identical folds.
+
+    The parameter combination with the best mean test score is set as
+    ``best_params_``, and a clone of ``estimator`` with those parameters is set as
+    ``best_estimator_``. If ``refit`` is not False, ``best_estimator_`` is fitted
+    to the entire data, and ``predict`` and ``predict``-like methods of the tuner
+    call the respective method of ``best_estimator_``.
 
     Parameters
     ----------
@@ -27,97 +523,62 @@ class TSCGridSearchCV(_DelegatedClassifier):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : str, callable, list, tuple or dict, default=None
-        Strategy to evaluate the performance of the cross-validated model on
-        the test set.
+    scoring : None, str, callable, sklearn scorer, or list or dict of these
+        Metric or metrics to evaluate the cross-validated model with.
 
-        If `scoring` represents a single score, one can use:
-
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
-
-        If `scoring` represents multiple scores, one can use:
-
-        - a list or tuple of unique strings;
-        - a callable returning a dictionary where the keys are the metric
-          names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        - a callable must have signature ``(y_true, y_pred) -> float``, e.g.,
+          ``accuracy_score`` from ``sklearn.metrics``. Its value is reported as is
+        - a string must name a scikit-learn scorer, e.g., ``"accuracy"``. Values
+          are reported with the sign convention of the scorer, so values of
+          ``"neg_log_loss"`` are negative
+        - a list or dict selects multiple metrics. The first is used to rank
+          candidates, unless ``refit`` names another. Dict keys are used as the
+          metric names in ``cv_results_``
+        - if None, defaults to ``accuracy_score``
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        Number of jobs to run in parallel over the parameter candidates, via the
+        ``loky`` backend of ``joblib``. ``None`` or 1 means no parallelization,
+        ``-1`` means using all processors. Retained for backwards compatibility,
+        and ignored if ``backend`` is passed. For finer control of
+        parallelization, use ``backend`` and ``backend_params`` instead.
 
     refit : bool, str, or callable, default=True
-        Refit an estimator using the best found parameters on the whole
-        dataset. If ``False``, the ``predict`` and ``predict_proba`` will not work.
+        Refit ``best_estimator_`` using the best found parameters on the whole
+        dataset. If False, ``predict`` and ``predict``-like methods raise, and
+        the tuner can be used only to tune hyper-parameters, e.g., as a
+        parameter estimator via ``get_fitted_params``.
 
-        For multiple metric evaluation, this needs to be a ``str`` denoting the
-        scorer that would be used to find the best parameters for refitting
-        the estimator at the end.
+        For multi-metric evaluation, this can be a ``str`` naming the metric to
+        select the best parameters by.
 
-        Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given ``cv_results_``. In that
-        case, the ``best_estimator_`` and ``best_params_`` will be set
-        according to the returned ``best_index_`` while the ``best_score_``
-        attribute will not be available.
+        Where there are considerations other than the best score in choosing the
+        best parameters, ``refit`` can be a callable, which is applied to
+        ``cv_results_`` and returns the selected ``best_index_``. In that case
+        ``best_score_`` is not available.
 
-        The refitted estimator is made available at the ``best_estimator_``
-        attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
-
-        Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_params_`` will only be available if
-        ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer.
-
-        See ``scoring`` parameter to know more about multiple metric
-        evaluation.
-
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable of splits, or None, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
+        - None, to use the default 5-fold cross-validation,
         - integer, to specify the number of folds in a ``(Stratified)KFold``,
-        - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - a cross-validation splitter with a ``split`` method,
+        - an iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if the estimator is a classifier and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used. These splitters are instantiated
-        with ``shuffle=False`` so the splits will be the same across calls.
+        For integer and None inputs, ``StratifiedKFold`` is used if ``y`` is
+        binary or multiclass, and ``KFold`` otherwise. Both are instantiated with
+        ``shuffle=False``, so the splits are the same across calls.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
-        cross-validation strategies that can be used here.
+        Splits are computed once, before the search, so that all parameter
+        candidates are evaluated on the same folds.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
-
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+    verbose : int, default=0
+        Controls the verbosity. If positive, the number of fits is printed.
 
     pre_dispatch : int, or str, default='2*n_jobs'
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        Retained for backwards compatibility, this parameter is ignored.
+        Parallelization is controlled via ``backend`` and ``backend_params``.
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -126,13 +587,8 @@ class TSCGridSearchCV(_DelegatedClassifier):
         step, which will always raise the error.
 
     return_train_score : bool, default=False
-        If ``False``, the ``cv_results_`` attribute will not include training
-        scores.
-        Computing training scores is used to get insights on how different
-        parameter settings impact the overfitting/underfitting trade-off.
-        However computing the scores on the training set can be computationally
-        expensive and is not strictly required to select the parameters that
-        yield the best generalization performance.
+        Retained for backwards compatibility, this parameter is ignored.
+        Train scores are not computed, ``cv_results_`` holds test scores only.
 
     tune_by_variable : bool, optional (default=False)
         Whether to tune parameter by each time series variable separately,
@@ -143,97 +599,106 @@ class TSCGridSearchCV(_DelegatedClassifier):
         Has the same effect as applying ColumnEnsembleClassifier wrapper to self.
         If False, the same best parameter is selected for all variables.
 
+    greater_is_better : "auto", bool, optional, default="auto"
+        Whether higher values of the reported metric are better, used to rank
+        the parameter candidates.
+
+        - "auto" determines the direction from the metric. Scikit-learn scorers
+          are higher-is-better by their sign convention. For metric callables,
+          the direction is inferred from the metric, e.g., ``accuracy_score`` is
+          higher-is-better, and ``log_loss`` is lower-is-better
+        - True or False set the direction explicitly, for all metrics
+
+    backend : str, optional, default=None
+        Parallelization backend for the search over parameter candidates.
+
+        - None: executes loop sequentially, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
+
+        Recommendation: use "dask" or "loky" for parallel grid search.
+        "threading" is unlikely to see speed ups due to the GIL.
+
+    backend_params : dict, optional
+        Additional parameters passed to the backend as config, directly passed
+        to ``utils.parallel.parallelize``. Valid keys depend on ``backend``,
+        see there for details.
+
     Attributes
     ----------
-    cv_results_ : dict of numpy (masked) ndarrays
+    cv_results_ : dict of str to numpy (masked) ndarray
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``.
+        imported into a pandas ``DataFrame``. Contains ``params``, one
+        ``param_<name>`` column per searched parameter, fit and score timings,
+        and per metric the per-fold scores ``split<i>_test_<name>``, their mean
+        ``mean_test_<name>``, standard deviation ``std_test_<name>``, and rank
+        ``rank_test_<name>``, 1 being the best.
 
-        For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
-        above. ('split0_test_precision', 'mean_train_precision' etc.)
+        For a single metric, ``<name>`` is ``score``, e.g., ``mean_test_score``.
+        For multiple metrics, ``<name>`` is the name of the respective metric.
 
     best_estimator_ : estimator
-        Estimator that was chosen by the search, i.e. estimator
-        which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
-
-        See ``refit`` parameter for more information on allowed values.
+        Clone of ``estimator`` with the best found parameters set.
+        Fitted to the entire data if ``refit`` is not False, otherwise unfitted.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator
-
-        For multi-metric evaluation, this is present only if ``refit`` is
-        specified.
-
-        This attribute is not available if ``refit`` is a function.
+        Mean cross-validated score of ``best_estimator_``.
+        Not available if ``refit`` is a callable.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-        For multi-metric evaluation, this is present only if ``refit`` is
-        specified.
-
     best_index_ : int
-        The index (of the ``cv_results_`` arrays) which corresponds to the best
+        The index in the ``cv_results_`` arrays which corresponds to the best
         candidate parameter setting.
 
-        The dict at ``search.cv_results_['params'][search.best_index_]`` gives
-        the parameter setting for the best model, that gives the highest
-        mean score (``search.best_score_``).
-
-        For multi-metric evaluation, this is present only if ``refit`` is
-        specified.
-
-    scorer_ : function or a dict
-        Scorer function used on the held out data to choose the best
-        parameters for the model.
-
-        For multi-metric evaluation, this attribute holds the validated
-        ``scoring`` dict which maps the scorer key to the scorer callable.
+    scorer_ : callable or dict of callable
+        Metric used on the held out data to choose the best parameters.
+        For multi-metric evaluation, a dict of metric name to metric.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
 
     refit_time_ : float
         Seconds used for refitting the best model on the whole dataset.
-
         This is present only if ``refit`` is not False.
 
     multimetric_ : bool
-        Whether or not the scorers compute several metrics.
+        Whether multiple metrics were passed in ``scoring``.
 
     classes_ : ndarray of shape (n_classes,)
-        The classes labels. This is present only if ``refit`` is specified and
-        the underlying estimator is a classifier.
-
-    n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if
-        ``best_estimator_`` is defined (see the documentation for the ``refit``
-        parameter for more details) and that ``best_estimator_`` exposes
-        ``n_features_in_`` when fit.
-
-    feature_names_in_ : ndarray of shape (``n_features_in_``,)
-        Names of features seen during :term:`fit`. Only defined if
-        ``best_estimator_`` is defined (see the documentation for the ``refit``
-        parameter for more details) and that ``best_estimator_`` exposes
-        ``feature_names_in_`` when fit.
+        The class labels seen in ``fit``.
 
     See Also
     --------
     ParameterGrid : Generates all the combinations of a hyperparameter grid.
-    train_test_split : Utility function to split the data into a development
-        set usable for fitting a GridSearchCV instance and an evaluation set
-        for its final evaluation.
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
+    sktime.classification.model_evaluation.evaluate : Backtesting used internally.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import accuracy_score
+    >>> from sktime.classification.dummy import DummyClassifier
+    >>> from sktime.classification.model_selection import TSCGridSearchCV
+    >>> from sktime.datasets import load_unit_test
+    >>>
+    >>> X, y = load_unit_test(split="train")
+    >>> tuned = TSCGridSearchCV(
+    ...     DummyClassifier(),
+    ...     param_grid={"strategy": ["most_frequent", "prior"]},
+    ...     scoring=accuracy_score,
+    ...     cv=2,
+    ... )
+    >>> tuned = tuned.fit(X, y)
+    >>> y_pred = tuned.predict(X)
+    >>> best_params = tuned.best_params_
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["fkiraly", "achieveordie"],
+        "authors": ["fkiraly", "achieveordie", "yash-sangwan"],
         # estimator type
         # --------------
         "X_inner_mtype": ["nested_univ", "numpy3D"],
@@ -248,8 +713,12 @@ class TSCGridSearchCV(_DelegatedClassifier):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
+
+    # attribute for _DelegatedClassifier, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedClassifier docstring
+    _delegate_name = "best_estimator_"
 
     def __init__(
         self,
@@ -264,6 +733,9 @@ class TSCGridSearchCV(_DelegatedClassifier):
         error_score=np.nan,
         return_train_score=False,
         tune_by_variable=False,
+        greater_is_better="auto",
+        backend=None,
+        backend_params=None,
     ):
         self.estimator = estimator
         self.param_grid = param_grid
@@ -276,25 +748,11 @@ class TSCGridSearchCV(_DelegatedClassifier):
         self.error_score = error_score
         self.return_train_score = return_train_score
         self.tune_by_variable = tune_by_variable
+        self.greater_is_better = greater_is_better
+        self.backend = backend
+        self.backend_params = backend_params
 
         super().__init__()
-
-        DELEGATED_PARAMS = [
-            "estimator",
-            "param_grid",
-            "scoring",
-            "n_jobs",
-            "refit",
-            "cv",
-            "verbose",
-            "pre_dispatch",
-            "error_score",
-            "return_train_score",
-        ]
-
-        gcsvargs = {k: getattr(self, k) for k in DELEGATED_PARAMS}
-
-        self.estimator_ = GridSearchCV(**gcsvargs)
 
         if self.tune_by_variable:
             self.set_tags(**{"capability:multioutput": False})
@@ -312,48 +770,17 @@ class TSCGridSearchCV(_DelegatedClassifier):
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
             if self.get_tag("X_inner_mtype") = "numpy3D":
             3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
-            pd.DataFrame with columns = variables,
-            index = pd.MultiIndex with first level = instance indices,
-            second level = time indices
+            if self.get_tag("X_inner_mtype") = "nested_univ":
+            pd.DataFrame with each column a dimension, each cell a pd.Series
             for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
-            class labels for fitting
-            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
-            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
+            2D np.ndarray of shape [n_instances, n_outputs], class labels
 
         Returns
         -------
         self : Reference to self.
         """
-        if y.shape[1] == 1:
-            y = y.flatten()
-
-        estimator = self._get_delegate()
-        estimator.fit(X=X, y=y)
-
-        fitted_param_names = [
-            "cv_results_",
-            "best_estimator_",
-            "best_score_",
-            "best_params_",
-            "best_index_",
-            "scorer_",
-            "n_splits_",
-            "refit_time_",
-            "multimetric_",
-            "classes_",
-        ]
-
-        for p in fitted_param_names:
-            if hasattr(estimator, p):
-                val = getattr(estimator, p)
-                setattr(self, p, val)
-
-        return self
+        return _fit_tuner(self, X, y, estimator_type="classifier")
 
     def _predict(self, X):
         """Predict labels for sequences in X.
@@ -369,27 +796,36 @@ class TSCGridSearchCV(_DelegatedClassifier):
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
-            indices correspond to instance indices in X
+        y : 2D np.ndarray of shape [n_instances, n_outputs], predicted class labels
         """
-        estimator = self._get_delegate()
-        y_pred = estimator.predict(X=X)
-        if y_pred.ndim == 1:
-            y_pred = y_pred.reshape(-1, 1)
-        return y_pred
+        _check_refit_for_predict(self)
+        return _coerce_prediction(self._get_delegate().predict(X=X))
 
-    # the delegate is an sklearn estimator and it does not have get_fitted_params
-    # therefore we have to override _get_fitted_params from the delegator,
-    # which would otherwise call it
+    def _predict_proba(self, X):
+        """Predict class probabilities for sequences in X.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+
+        Returns
+        -------
+        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+        """
+        _check_refit_for_predict(self)
+        return super()._predict_proba(X)
+
     def _get_fitted_params(self):
         """Get fitted parameters.
 
@@ -401,9 +837,10 @@ class TSCGridSearchCV(_DelegatedClassifier):
         Returns
         -------
         fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
+            The best hyper-parameters, and the fitted parameters of
+            ``best_estimator_`` if available, the former taking precedence.
         """
-        return {}
+        return _tuner_fitted_params(self)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -440,12 +877,14 @@ class TSCGridSearchCV(_DelegatedClassifier):
         param1 = {
             "estimator": TimeSeriesSVC(kernel=mean_rbf_tskernel, probability=True),
             "param_grid": {"C": [0.1, 1]},
+            "cv": 2,
         }
 
         param2 = {
             "estimator": TimeSeriesSVC(kernel=mean_eucl_tskernel, probability=True),
             "param_grid": {"kernel__transformer": [DotProduct(), RBF()]},
             "scoring": accuracy_score,
+            "cv": 2,
         }
 
         return [param1, param2]
