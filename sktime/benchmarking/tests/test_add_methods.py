@@ -251,3 +251,22 @@ class TestBenchmarkAddMethods:
 
         benchmark.add(KFold(n_splits=3))
         assert len(benchmark.tasks.entities) == 1
+
+    def test_add_keeps_distinct_metrics_of_equal_params(self):
+        """Test distinct metrics are not deduplicated when their params are equal.
+
+        Regression test for bug #10780: ``_add_unique`` deduplicates via ``__eq__``,
+        which compared parameters only. ``OverallWeightedAverage(sp=1)`` and
+        ``MeanAbsoluteScaledError()`` have identical params, so the latter was
+        silently dropped from ``M4CompetitionCatalogueYearly``.
+        """
+        from sktime.benchmarking.forecasting import ForecastingBenchmark
+        from sktime.catalogues.forecasting import M4CompetitionCatalogueYearly
+
+        metrics = M4CompetitionCatalogueYearly().get("metric", as_object=True)
+
+        benchmark = ForecastingBenchmark()
+        for metric in metrics:
+            benchmark.add(metric)
+
+        assert len(benchmark._metrics) == len(metrics)
