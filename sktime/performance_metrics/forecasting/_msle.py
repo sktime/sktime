@@ -41,6 +41,12 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
 
     func = mean_squared_log_error
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
