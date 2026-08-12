@@ -183,14 +183,14 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
-        Returns True iff result of get_params(deep=False) results in equal parameter
-        sets.
+        Returns True iff ``self`` and ``other`` are of the same class, and the
+        results of get_params(deep=False) are equal parameter sets.
 
         Nested BaseObject descendants from get_params are compared via __eq__ as well.
         """
         from sktime.utils.deep_equals import deep_equals
 
-        if not isinstance(other, BaseObject):
+        if type(self) is not type(other):
             return False
 
         self_params = self.get_params(deep=False)
