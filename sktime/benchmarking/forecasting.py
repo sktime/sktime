@@ -74,7 +74,15 @@ class ForecastingBenchmark(BaseBenchmark):
 
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
+    isolated : bool, optional (default=False)
+        If ``True``, run each task-estimator pair in its own ``uv`` environment.
+    envs_dir : str or path-like, optional (default=None)
+        Directory for isolated ``uv`` environments when ``isolated=True``.
+    python : str, optional (default=None)
+        Python interpreter passed to ``uv venv --python`` for isolated environments.
     """
+
+    _benchmark_kind = "forecasting"
 
     def add_task(
         self,

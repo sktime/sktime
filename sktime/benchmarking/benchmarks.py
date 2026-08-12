@@ -319,7 +319,20 @@ class BaseBenchmark:
 
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
+    isolated : bool, optional (default=False)
+        If ``True``, each task-estimator pair is executed in its own ``uv``
+        virtual environment via a subprocess launched with that environment's
+        Python interpreter. Environments are created (or reused) per dependency
+        set and never activated in the parent process.
+    envs_dir : str or path-like, optional (default=None)
+        Directory for storing ``uv`` virtual environments when ``isolated=True``.
+        Defaults to ``".benchmark_envs"`` in the current working directory.
+    python : str, optional (default=None)
+        Python interpreter specification passed to ``uv venv --python`` when
+        creating isolated environments.
     """
+
+    _benchmark_kind: str = ""
 
     def __init__(
         self,
@@ -327,11 +340,17 @@ class BaseBenchmark:
         backend=None,
         backend_params=None,
         return_data=False,
+        isolated=False,
+        envs_dir=None,
+        python=None,
     ):
         self.id_format = id_format
         self.backend = backend
         self.backend_params = backend_params
         self.return_data = return_data
+        self.isolated = isolated
+        self.envs_dir = envs_dir
+        self.python = python
         self.estimators = _SktimeRegistry(id_format)
         self.tasks = _SktimeRegistry(id_format)
 
@@ -340,6 +359,7 @@ class BaseBenchmark:
         self._metrics = []
 
         self._failed_experiments: list[FailedExperimentRecord] = []
+        self._env_manager = None
 
     def add_estimator(
         self,
@@ -622,7 +642,10 @@ class BaseBenchmark:
 
             logger.info(f"Running validation - model: {task_id} - {estimator_id}")
             try:
-                folds = self._run_validation(task, estimator)
+                if self.isolated:
+                    folds = self._run_validation_isolated(task, estimator)
+                else:
+                    folds = self._run_validation(task, estimator)
             except Exception as exc:
                 failure = FailedExperimentRecord(
                     task_id=task_id,
@@ -724,3 +747,33 @@ class BaseBenchmark:
     def _run_validation(self, task: TaskObject, estimator: BaseEstimator):
         """Run validation for a single task and estimator."""
         raise NotImplementedError("This method must be implemented by a subclass.")
+
+    def _get_env_manager(self):
+        """Return the cached ``UvEnvironmentManager`` for isolated execution."""
+        if self._env_manager is None:
+            from sktime.benchmarking._uv_env import UvEnvironmentManager
+
+            self._env_manager = UvEnvironmentManager(
+                envs_dir=self.envs_dir,
+                python=self.python,
+            )
+        return self._env_manager
+
+    def _run_validation_isolated(self, task: TaskObject, estimator: BaseEstimator):
+        """Run validation for one pair in an isolated ``uv`` subprocess."""
+        if not self._benchmark_kind:
+            raise NotImplementedError(
+                f"{type(self).__name__} must set _benchmark_kind for isolated execution"
+            )
+
+        from sktime.benchmarking._isolated_runner import run_isolated_validation
+
+        return run_isolated_validation(
+            benchmark_kind=self._benchmark_kind,
+            task=task,
+            estimator=estimator,
+            backend=self.backend,
+            backend_params=self.backend_params,
+            return_data=self.return_data,
+            env_manager=self._get_env_manager(),
+        )
