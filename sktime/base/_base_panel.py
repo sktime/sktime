@@ -354,16 +354,16 @@ class BasePanelMixin(BaseEstimator):
         """
         from sktime.datatypes import (
             MTYPE_LIST_TABLE,
-            VectorizedDF,
             check_is_error_msg,
             check_is_scitype,
             convert,
+            prepare_VectorizedDF,
         )
         from sktime.datatypes._dtypekind import DtypeKind
 
         if y is None:
             if return_to_mtype:
-                return None, None, None
+                return None, None, None, None
             else:
                 return None, None
 
@@ -408,9 +408,15 @@ class BasePanelMixin(BaseEstimator):
                 as_scitype="Table",
                 store=self._converter_store_y,
             )
-            y_vec = VectorizedDF([y_df], iterate_cols=True)
+            y_vec, y_data = prepare_VectorizedDF(
+                [y_df],
+                iterate_as="Series",
+                is_scitype="Panel",
+                iterate_cols=True,
+                store=self._converter_store_y,
+            )
             if return_to_mtype:
-                return y_vec, y_metadata, "pd_DataFrame_Table"
+                return y_vec, y_metadata, "pd_DataFrame_Table", y_data
             else:
                 return y_vec, y_metadata
 
@@ -424,7 +430,7 @@ class BasePanelMixin(BaseEstimator):
         )
 
         if return_to_mtype:
-            return y_inner, y_metadata, y_inner_mtype
+            return y_inner, y_metadata, y_inner_mtype, y_inner
         else:
             return y_inner, y_metadata
 

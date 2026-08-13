@@ -17,24 +17,144 @@ from sktime.datatypes._convert import convert_to
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.parallel import parallelize
 
+SERIES_SCITYPES = ["Series", "Panel", "Hierarchical"]
+
+_PANDAS_MTYPE_BY_SCITYPE = {
+    "Series": "pd.DataFrame",
+    "Panel": "pd-multiindex",
+    "Hierarchical": "pd_multiindex_hier",
+    None: ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
+}
+
+
+def coerce_to_multiindex(
+    X,
+    is_scitype=None,
+    store=None,
+    store_behaviour=None,
+):
+    """Convert ``X`` to pandas multiindex format used for vectorization.
+
+    Parameters
+    ----------
+    X : object in sktime compatible Series, Panel, or Hierarchical format
+    is_scitype : str ("Series", "Panel", "Hierarchical") or None
+        scitype of ``X``; if None, inferred via ``check_is_scitype``
+    store : dict or None
+        converter store for bidirectional conversion
+    store_behaviour : str or None
+        passed to ``convert_to``
+
+    Returns
+    -------
+    X_mi : pd.DataFrame
+        ``X`` in pandas multiindex format for the scitype
+    is_scitype : str
+        resolved scitype of ``X``
+    X_orig_mtype : str
+        original mtype of ``X`` before conversion
+    store : dict
+        converter store (new dict if ``store`` was None)
+    """
+    if store is None:
+        store = dict()
+
+    if is_scitype is not None and is_scitype not in SERIES_SCITYPES:
+        raise ValueError(
+            'is_scitype must be None, "Hierarchical", "Panel", or "Series" ',
+            f"found: {is_scitype}",
+        )
+
+    if is_scitype is None:
+        _, _, metadata = check_is_scitype(
+            X, scitype=SERIES_SCITYPES, return_metadata=True
+        )
+        is_scitype = metadata["scitype"]
+        X_orig_mtype = metadata["mtype"]
+    else:
+        X_orig_mtype = mtype(X, as_scitype=is_scitype)
+
+    X_mi = convert_to(
+        X,
+        to_type=_PANDAS_MTYPE_BY_SCITYPE[is_scitype],
+        as_scitype=is_scitype,
+        store=store,
+        store_behaviour=store_behaviour,
+    )
+    return X_mi, is_scitype, X_orig_mtype, store
+
+
+def prepare_VectorizedDF(
+    X,
+    iterate_as="Series",
+    is_scitype="Panel",
+    iterate_cols=False,
+    store=None,
+    store_behaviour=None,
+):
+    """Convert ``X`` once and build a ``VectorizedDF`` schema.
+
+    This is the preprocessing entry point for vectorization: conversion to the
+    pandas multiindex format happens here, then ``VectorizedDF`` is constructed
+    from the already-converted frame.
+
+    Parameters
+    ----------
+    X : object in sktime compatible Series, Panel, or Hierarchical format
+    iterate_as : str ("Series", "Panel", "Hierarchical"), default="Series"
+        scitype of the iteration slices
+    is_scitype : str ("Series", "Panel", "Hierarchical") or None, default="Panel"
+        scitype of ``X``; if None, inferred
+    iterate_cols : bool, default=False
+        whether to iterate over columns
+    store : dict or None
+        converter store for bidirectional conversion
+    store_behaviour : str or None
+        passed to ``convert_to``
+
+    Returns
+    -------
+    vec : VectorizedDF
+        vectorization schema (no retained data copy beyond index metadata)
+    X_mi : pd.DataFrame
+        ``X`` converted to pandas multiindex format (single conversion)
+    """
+    X_mi, is_scitype, X_orig_mtype, store = coerce_to_multiindex(
+        X,
+        is_scitype=is_scitype,
+        store=store,
+        store_behaviour=store_behaviour,
+    )
+    vec = VectorizedDF(
+        X=X_mi,
+        iterate_as=iterate_as,
+        is_scitype=is_scitype,
+        iterate_cols=iterate_cols,
+        X_orig_mtype=X_orig_mtype,
+        converter_store=store,
+    )
+    return vec, X_mi
+
 
 class VectorizedDF:
     """Schema for vectorization/iteration over instances.
 
     Stores iteration metadata only (instance keys, columns, mtype).
     Does not retain an iterable ``X`` or a converted multiindex copy.
-    Pass data into ``items``, ``as_list``, or ``vectorize_est(..., data=)``
-    to slice at call time.
+    Pass already-converted multiindex data into ``items``, ``as_list``, or
+    ``vectorize_est(..., data=)`` to slice at call time.
+
+    Construct via ``prepare_VectorizedDF`` (preferred), which converts once, or
+    pass an already-converted multiindex ``X`` with resolved ``is_scitype``.
 
     Parameters
     ----------
-    X : object in sktime compatible Panel or Hierarchical format
-        used once to infer the vectorization schema, then discarded
+    X : pd.DataFrame in sktime pandas multiindex format for ``is_scitype``.
+        Used once to infer the vectorization schema, then discarded.
+        Must already be converted; use ``prepare_VectorizedDF`` for conversion.
     y : placeholder argument, not used currently
-    is_scitype : str ("Panel", "Hierarchical") or None, default = "Panel"
-        scitype of X, if known; if None, will be inferred
-        provide to constructor if known to avoid superfluous checks
-            Caution: will not conduct checks if provided, assumes checks done
+    is_scitype : str ("Panel", "Hierarchical", "Series"), default = "Panel"
+        scitype of X; must be resolved (not None)
     iterate_as : str ("Series", "Panel"), optional, default="Series
         scitype of the iteration
         for instance, if X is Panel and iterate_as is "Series"
@@ -44,22 +164,24 @@ class VectorizedDF:
                 (Panel = flat/non-hierarchical collection of Series)
     iterate_cols : boolean, optional, default=False
         whether to iterate over columns, if true, the class will iterate over columns
+    X_orig_mtype : str or None, optional
+        original mtype before conversion; used by ``reconstruct(convert_back=True)``
+    converter_store : dict or None, optional
+        converter store for ``reconstruct(convert_back=True)``
 
     Methods
     -------
     len(self) or self.__len__()
         returns number of Series/Panels in X
     items(X=None) / as_list(X=None)
-        Iterate slices of ``X`` (converted at call time). Without ``X``,
-        yields schema keys with ``None`` slices.
-    as_multiindex(X)
-        Convert ``X`` to the pandas multiindex frame used for iteration.
+        Iterate slices of ``X``. Without ``X``, yields schema keys with ``None`` slices.
+        With ``X``, expects already-converted multiindex frame.
     reconstruct(df_list, convert_back=False)
         Takes iterable df_list and returns as an object of is_scitype.
         Used to obtain original format after applying operations to self iterated
     """
 
-    SERIES_SCITYPES = ["Series", "Panel", "Hierarchical"]
+    SERIES_SCITYPES = SERIES_SCITYPES
 
     def __init__(
         self,
@@ -68,19 +190,12 @@ class VectorizedDF:
         iterate_as="Series",
         is_scitype="Panel",
         iterate_cols=False,
+        X_orig_mtype=None,
+        converter_store=None,
     ):
-        if is_scitype is None:
-            _, _, metadata = check_is_scitype(
-                X, scitype=self.SERIES_SCITYPES, return_metadata=True
-            )
-            is_scitype = metadata["scitype"]
-            X_orig_mtype = metadata["mtype"]
-        else:
-            X_orig_mtype = None
-
-        if is_scitype is not None and is_scitype not in self.SERIES_SCITYPES:
+        if is_scitype is None or is_scitype not in self.SERIES_SCITYPES:
             raise ValueError(
-                'is_scitype must be None, "Hierarchical", "Panel", or "Series" ',
+                'is_scitype must be "Hierarchical", "Panel", or "Series" ',
                 f"found: {is_scitype}",
             )
 
@@ -93,25 +208,25 @@ class VectorizedDF:
         self.iterate_cols = iterate_cols
 
         self.X_orig_mtype = X_orig_mtype or mtype(X, as_scitype=is_scitype)
+        self.converter_store = (
+            converter_store if converter_store is not None else dict()
+        )
 
-        self.converter_store = dict()
-
-        X_multiindex = self._init_conversion(X)
-        self.X_mi_columns = X_multiindex.columns
-        self.X_mi_index_names = list(X_multiindex.index.names)
-        self.X_mi_nlevels = X_multiindex.index.nlevels
-        self.iter_indices = self._iter_indices_from_index(X_multiindex.index)
+        self.X_mi_columns = X.columns
+        self.X_mi_index_names = list(X.index.names)
+        self.X_mi_nlevels = X.index.nlevels
+        self.iter_indices = self._iter_indices_from_index(X.index)
         self.shape = self._iter_shape()
-        self.freq = self._infer_freq(X_multiindex)
+        self.freq = self._infer_freq(X)
 
-    def _infer_freq(self, X_multiindex):
-        """Infer frequency from the time index."""
-        if len(X_multiindex) == 0:
+    def _infer_freq(self, X):
+        """Infer frequency from the time index of multiindex ``X``."""
+        if len(X) == 0:
             return None
 
-        idx = X_multiindex.index
+        idx = X.index
         if isinstance(idx, pd.MultiIndex):
-            time_idx = X_multiindex.xs(idx.droplevel(-1)[0]).index
+            time_idx = X.xs(idx.droplevel(-1)[0]).index
         else:
             time_idx = idx
 
@@ -143,31 +258,19 @@ class VectorizedDF:
 
     def _coerce_to_df(self, obj, scitype=None, store=None, store_behaviour=None):
         """Coerce obj to a pandas multiindex format."""
-        pandas_dict = {
-            "Series": "pd.DataFrame",
-            "Panel": "pd-multiindex",
-            "Hierarchical": "pd_multiindex_hier",
-            None: ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        }
-
-        if scitype not in pandas_dict.keys():
+        if scitype not in _PANDAS_MTYPE_BY_SCITYPE.keys():
             raise RuntimeError(
                 f"unexpected value found for attribute scitype: {scitype}"
-                f"must be one of {pandas_dict.keys()}"
+                f"must be one of {_PANDAS_MTYPE_BY_SCITYPE.keys()}"
             )
 
         return convert_to(
             obj,
-            to_type=pandas_dict[scitype],
+            to_type=_PANDAS_MTYPE_BY_SCITYPE[scitype],
             as_scitype=scitype,
             store=store,
             store_behaviour=store_behaviour,
         )
-
-    def _init_conversion(self, X):
-        """Convert X to a pandas multiindex format."""
-        is_scitype = self.is_scitype
-        return self._coerce_to_df(X, is_scitype, store=self.converter_store)
 
     def _iter_indices_from_index(self, X_ix):
         """Initialize indices that are iterated over in vectorization."""
@@ -193,10 +296,6 @@ class VectorizedDF:
             col_ix = None
 
         return row_ix, col_ix
-
-    def as_multiindex(self, X):
-        """Convert ``X`` to the pandas multiindex frame used for iteration."""
-        return self._init_conversion(X)
 
     def get_iter_indices(self):
         """Get indices that are iterated over in vectorization.
@@ -242,8 +341,8 @@ class VectorizedDF:
 
         Parameters
         ----------
-        X : sktime data container, optional, default=None
-            data to convert and slice. If None, yields schema keys with ``None``
+        X : pd.DataFrame in pandas multiindex format, optional, default=None
+            already-converted data to slice. If None, yields schema keys with ``None``
             instances (no values stored on this object).
         iterate_as : str ("Series", "Panel"), optional, default=self.iterate_as
             scitype of the iteration
@@ -293,18 +392,16 @@ class VectorizedDF:
                     yield group_name, col_name, None
             return
 
-        X_multiindex = self.as_multiindex(X)
-
         iter_levels = self._iter_levels(iterate_as)
         is_self_iter = len(iter_levels) == self.X_mi_nlevels
 
         if is_self_iter:
-            yield from _iter_cols(X_multiindex)
+            yield from _iter_cols(X)
         else:
             if isinstance(iter_levels, (list, tuple)) and len(iter_levels) == 1:
                 # single level, groupby expects scalar
                 iter_levels = iter_levels[0]
-            for name, group in X_multiindex.groupby(level=iter_levels, sort=False):
+            for name, group in X.groupby(level=iter_levels, sort=False):
                 yield from _iter_cols(group.droplevel(iter_levels), group_name=name)
 
     def _iter_levels(self, iterate_as):
@@ -361,9 +458,9 @@ class VectorizedDF:
 
         Parameters
         ----------
-        X : sktime data container, optional, default=None
-            If passed, convert and return slices of ``X``. If None, return
-            schema-only ``None`` slices.
+        X : pd.DataFrame in pandas multiindex format, optional, default=None
+            If passed, return slices of ``X``. If None, return schema-only
+            ``None`` slices.
         """
         return [
             group
@@ -558,10 +655,10 @@ class VectorizedDF:
             used as index name of single column if no column vectorization is performed
         varname_of_self : str, optional, default=None
             if not None, self will be passed as kwarg under name "varname_of_self"
-        data : sktime data container, optional, default=None
+        data : already-converted multiindex frame, optional, default=None
             passed to ``items`` so ``varname_of_self`` receives slices of ``data``.
             Ideally should be same as of ``X`` passed at construction.
-        X_data, y_data, <name>_data : sktime data container, optional
+        X_data, y_data, <name>_data : already-converted multiindex frame, optional
             call-time values sliced when the matching arg is a ``VectorizedDF``.
             ``X_data`` is used for arg ``X``, ``y_pred_data`` for ``y_pred``, etc.
 
@@ -742,27 +839,6 @@ class VectorizedDF:
             col_name = colname_default
 
         return (group_name, col_name, est_i_result)
-
-
-def get_VectorizedDF_X(inner, orig):
-    """Return data for ``inner``, converting ``orig`` if ``inner`` is a schema.
-
-    Parameters
-    ----------
-    inner : VectorizedDF or data container
-        Typically the result of ``_check_X_y`` / ``_check_ys``.
-    orig : data container or None
-        Original data used to create the VectorizedDF.
-
-    Returns
-    -------
-    data : same type as ``inner``, or pd.DataFrame
-        ``inner.as_multiindex(orig)`` if ``inner`` is ``VectorizedDF``,
-        otherwise ``inner``.
-    """
-    if isinstance(inner, VectorizedDF):
-        return inner.as_multiindex(orig)
-    return inner
 
 
 def _enforce_index_freq(item: pd.Series) -> pd.Series:

@@ -9,7 +9,11 @@ import pytest
 from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
 from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
 from sktime.datatypes._examples import get_examples
-from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
+from sktime.datatypes._vectorize import (
+    VectorizedDF,
+    _enforce_index_freq,
+    prepare_VectorizedDF,
+)
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
 from sktime.utils.pandas import df_map
@@ -162,7 +166,7 @@ def pytest_generate_tests(metafunc):
 def test_construct_vectorizeddf(
     scitype, mtype, fixture_index, iterate_cols, iterate_as
 ):
-    """Test that VectorizedDF constructs with valid arguments.
+    """Test that prepare_VectorizedDF / VectorizedDF construct with valid arguments.
 
     Fixtures parameterized
     ----------------------
@@ -178,12 +182,14 @@ def test_construct_vectorizeddf(
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # iterate as Series, without automated identification of scitype
-    VectorizedDF(
+    vec, X_mi = prepare_VectorizedDF(
         X=fixture, iterate_as=iterate_as, is_scitype=scitype, iterate_cols=iterate_cols
     )
+    assert isinstance(vec, VectorizedDF)
+    assert isinstance(X_mi, pd.DataFrame)
 
     # iterate as Series, with automated identification of scitype
-    VectorizedDF(
+    prepare_VectorizedDF(
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
@@ -203,19 +209,25 @@ def test_construct_vectorizeddf_errors(scitype, mtype, fixture_index):
     """
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+    # convert once so VectorizedDF sees multiindex input
+    _, X_mi = prepare_VectorizedDF(X=fixture, is_scitype=scitype)
 
     # if both iterate_as and as_scitype are "Panel", should raise an error
     with pytest.raises(ValueError, match=r'is_scitype is "Panel"'):
-        VectorizedDF(X=fixture, iterate_as="Hierarchical", is_scitype="Panel")
+        VectorizedDF(X=X_mi, iterate_as="Hierarchical", is_scitype="Panel")
 
     # invalid argument to iterate_as
     with pytest.raises(ValueError, match=r"iterate_as must be"):
-        VectorizedDF(X=fixture, iterate_as="Pumuckl", is_scitype="Panel")
+        VectorizedDF(X=X_mi, iterate_as="Pumuckl", is_scitype="Panel")
 
     # invalid argument to is_scitype
     with pytest.raises(ValueError, match=r"is_scitype must be"):
-        VectorizedDF(X=fixture, iterate_as="Panel", is_scitype="Pumuckl")
+        VectorizedDF(X=X_mi, iterate_as="Panel", is_scitype="Pumuckl")
     # we may have to change this if we introduce a "Pumuckl" scitype, but seems unlikely
+
+    # prepare_VectorizedDF also rejects invalid is_scitype
+    with pytest.raises(ValueError, match=r"is_scitype must be"):
+        prepare_VectorizedDF(X=fixture, iterate_as="Panel", is_scitype="Pumuckl")
 
 
 @pytest.mark.skipif(
@@ -263,7 +275,7 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
         true_length = metadata["n_panels"]
 
     # construct VectorizedDF - we've tested above that this works
-    X_vect = VectorizedDF(
+    X_vect, _ = prepare_VectorizedDF(
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
@@ -301,7 +313,7 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # construct VectorizedDF - we've tested above that this works
-    X_vect = VectorizedDF(
+    X_vect, X_mi = prepare_VectorizedDF(
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
@@ -317,7 +329,7 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     X_iter3 = X_vect.as_list()
     assert isinstance(X_iter3, list)
 
-    X_slices = X_vect.as_list(X=fixture)
+    X_slices = X_vect.as_list(X=X_mi)
     assert all(s is not None for s in X_slices)
 
     # check that these are all the same
@@ -348,12 +360,12 @@ def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_co
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # construct VectorizedDF - we've tested above that this works
-    X_vect = VectorizedDF(
+    X_vect, X_mi = prepare_VectorizedDF(
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
     # get list of iterated elements - we've tested above that this works
-    X_list = X_vect.as_list(X=fixture)
+    X_list = X_vect.as_list(X=X_mi)
 
     # right mtype depends on scitype
     if iterate_as == "Series":
@@ -406,17 +418,15 @@ def test_reconstruct_identical(scitype, mtype, fixture_index, iterate_as, iterat
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
 
     # construct VectorizedDF - we've tested above that this works
-    X_vect = VectorizedDF(
+    X_vect, X_mi = prepare_VectorizedDF(
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
     # get list of iterated elements - we've tested above that this yields correct result
-    X_list = X_vect.as_list(X=fixture)
+    X_list = X_vect.as_list(X=X_mi)
 
     # reconstructed fixture should equal multiindex fixture if not convert_back
-    eq, msg = deep_equals(
-        X_vect.reconstruct(X_list), X_vect.as_multiindex(fixture), return_msg=True
-    )
+    eq, msg = deep_equals(X_vect.reconstruct(X_list), X_mi, return_msg=True)
     assert eq, msg
 
     # reconstructed fixture should equal original fixture if convert_back
@@ -501,18 +511,18 @@ def test_vectorize_est(
 
     # retrieve fixture for checking
     fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
-    X_vect = VectorizedDF(
+    X_vect, X_mi = prepare_VectorizedDF(
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
-    kwargs = {"fh": [1, 2], "X": X_vect, "X_data": fixture}
+    kwargs = {"fh": [1, 2], "X": X_vect, "X_data": X_mi}
 
     if varname_used:
         kwargs["varname_of_self"] = "y"
-        kwargs["data"] = fixture
+        kwargs["data"] = X_mi
     else:
         kwargs["y"] = X_vect
-        kwargs["y_data"] = fixture
+        kwargs["y_data"] = X_mi
 
     kwargs.update(backend)
 

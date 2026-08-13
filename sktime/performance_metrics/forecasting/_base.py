@@ -17,7 +17,6 @@ from sktime.datatypes import (
     VectorizedDF,
     check_is_scitype,
     convert_to,
-    get_VectorizedDF_X,
 )
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._coerce import (
@@ -302,18 +301,17 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         multilevel = self.multilevel
 
-        # keep originals for passing at vectorize_est
-        y_train = kwargs.get("y_train")
-        y_pred_benchmark = kwargs.get("y_pred_benchmark")
-
         # Input checks and conversions
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
 
+        y_true_mi = kwargs.pop("_y_true_mi")
+        y_pred_mi = kwargs.pop("_y_pred_mi")
+
         kwargs = self._apply_sample_weight_to_kwargs(
-            y_true=get_VectorizedDF_X(y_true_inner, y_true),
-            y_pred=get_VectorizedDF_X(y_pred_inner, y_pred),
+            y_true=y_true_mi,
+            y_pred=y_pred_mi,
             **kwargs,
         )
 
@@ -322,12 +320,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             # pass to inner function
             out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
         else:
-            kwargs["data"] = y_true
-            kwargs["y_pred_data"] = y_pred
-            if y_train is not None:
-                kwargs["y_train_data"] = y_train
-            if y_pred_benchmark is not None:
-                kwargs["y_pred_benchmark_data"] = y_pred_benchmark
+            kwargs["data"] = y_true_mi
+            kwargs["y_pred_data"] = y_pred_mi
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
@@ -538,17 +532,17 @@ class BaseForecastingErrorMetric(BaseMetric):
         multioutput = self.multioutput
         multilevel = self.multilevel
 
-        y_train = kwargs.get("y_train")
-        y_pred_benchmark = kwargs.get("y_pred_benchmark")
-
         # Input checks and conversions
         y_true_inner, y_pred_inner, multioutput, multilevel, kwargs = self._check_ys(
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
 
+        y_true_mi = kwargs.pop("_y_true_mi")
+        y_pred_mi = kwargs.pop("_y_pred_mi")
+
         kwargs = self._apply_sample_weight_to_kwargs(
-            y_true=get_VectorizedDF_X(y_true_inner, y_true),
-            y_pred=get_VectorizedDF_X(y_pred_inner, y_pred),
+            y_true=y_true_mi,
+            y_pred=y_pred_mi,
             **kwargs,
         )
 
@@ -559,12 +553,8 @@ class BaseForecastingErrorMetric(BaseMetric):
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
         else:
-            kwargs["data"] = y_true
-            kwargs["y_pred_data"] = y_pred
-            if y_train is not None:
-                kwargs["y_train_data"] = y_train
-            if y_pred_benchmark is not None:
-                kwargs["y_pred_benchmark_data"] = y_pred_benchmark
+            kwargs["data"] = y_true_mi
+            kwargs["y_pred_data"] = y_pred_mi
             out_df = self._evaluate_by_index_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
@@ -759,11 +749,19 @@ class BaseForecastingErrorMetric(BaseMetric):
 
         ignore_index = multilevel == "uniform_average_time"
         if scitype in ["Panel", "Hierarchical"] and not ignore_index:
-            y_true = VectorizedDF(y_true, is_scitype=scitype)
-            y_pred = VectorizedDF(y_pred, is_scitype=scitype)
+            y_true_mi = y_true
+            y_pred_mi = y_pred
+            y_true = VectorizedDF(y_true_mi, is_scitype=scitype)
+            y_pred = VectorizedDF(y_pred_mi, is_scitype=scitype)
             for k in ("y_train", "y_pred_benchmark"):
                 if k in kwargs:
+                    kwargs[f"{k}_data"] = kwargs[k]
                     kwargs[k] = VectorizedDF(kwargs[k], is_scitype=scitype)
+            kwargs["_y_true_mi"] = y_true_mi
+            kwargs["_y_pred_mi"] = y_pred_mi
+        else:
+            kwargs["_y_true_mi"] = y_true
+            kwargs["_y_pred_mi"] = y_pred
 
         return y_true, y_pred, multioutput, multilevel, kwargs
 

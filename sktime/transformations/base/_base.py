@@ -55,8 +55,8 @@ from sktime.datatypes import (
     check_is_scitype,
     convert,
     convert_to,
-    get_VectorizedDF_X,
     mtype_to_scitype,
+    prepare_VectorizedDF,
     update_data,
 )
 from sktime.datatypes._dtypekind import DtypeKind
@@ -508,11 +508,11 @@ class BaseTransformer(BaseEstimator):
             raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
 
         # check and convert X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        X_inner, y_inner, X_data, y_data = self._check_X_y(X=X, y=y)
 
         # memorize X as self._X, if remember_data tag is set to True
         if self.get_tag("remember_data", False):
-            self._X = update_data(None, X_new=get_VectorizedDF_X(X_inner, X))
+            self._X = update_data(None, X_new=X_data)
 
         # skip the rest if fit_is_empty is True
         if self.get_tag("fit_is_empty"):
@@ -528,7 +528,14 @@ class BaseTransformer(BaseEstimator):
             self._fit(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("fit", X=X_inner, y=y_inner, X_data=X, y_data=y, data=X)
+            self._vectorize(
+                "fit",
+                X=X_inner,
+                y=y_inner,
+                X_data=X_data,
+                y_data=y_data,
+                data=X_data,
+            )
 
         # this should happen last: fitted state is set to True
         self._is_fitted = True
@@ -633,7 +640,9 @@ class BaseTransformer(BaseEstimator):
         self.check_is_fitted()
 
         # input check and conversion for X/y
-        X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+        X_inner, y_inner, metadata, X_data, y_data = self._check_X_y(
+            X=X, y=y, return_metadata=True
+        )
 
         # check if we need to vectorize
         if getattr(self, "_is_vectorized", "unknown") == "unknown":
@@ -647,7 +656,12 @@ class BaseTransformer(BaseEstimator):
         else:
             # otherwise we call the vectorized version of predict
             Xt = self._vectorize(
-                "transform", X=X_inner, y=y_inner, X_data=X, y_data=y, data=X
+                "transform",
+                X=X_inner,
+                y=y_inner,
+                X_data=X_data,
+                y_data=y_data,
+                data=X_data,
             )
 
         # obtain configs to control input and output control
@@ -808,7 +822,9 @@ class BaseTransformer(BaseEstimator):
         self.check_is_fitted()
 
         # input check and conversion for X/y
-        X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+        X_inner, y_inner, metadata, X_data, y_data = self._check_X_y(
+            X=X, y=y, return_metadata=True
+        )
 
         # check if we need to vectorize
         if getattr(self, "_is_vectorized", "unknown") == "unknown":
@@ -823,12 +839,16 @@ class BaseTransformer(BaseEstimator):
             # in this case the check_X_y will convert to VectorizedDF,
             # but inverse_transform expects a DataFrame
             # example: time series decomposition algorithms
-            X_inner = get_VectorizedDF_X(X_inner, X)
-            Xt = self._inverse_transform(X=X_inner, y=y_inner)
+            Xt = self._inverse_transform(X=X_data, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
             Xt = self._vectorize(
-                "inverse_transform", X=X_inner, y=y_inner, X_data=X, y_data=y, data=X
+                "inverse_transform",
+                X=X_inner,
+                y=y_inner,
+                X_data=X_data,
+                y_data=y_data,
+                data=X_data,
             )
 
         # convert to output mtype
@@ -898,11 +918,11 @@ class BaseTransformer(BaseEstimator):
             raise ValueError(f"{self.__class__.__name__} requires `y` in `update`.")
 
         # check and convert X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        X_inner, y_inner, X_data, y_data = self._check_X_y(X=X, y=y)
 
         # update memory of X, if remember_data tag is set to True
         if self.get_tag("remember_data", False):
-            self._X = update_data(None, X_new=get_VectorizedDF_X(X_inner, X))
+            self._X = update_data(None, X_new=X_data)
 
         # skip everything if update_params is False
         # skip everything if fit_is_empty is True
@@ -917,7 +937,14 @@ class BaseTransformer(BaseEstimator):
             self._update(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("update", X=X_inner, y=y_inner, X_data=X, y_data=y, data=X)
+            self._vectorize(
+                "update",
+                X=X_inner,
+                y=y_inner,
+                X_data=X_data,
+                y_data=y_data,
+                data=X_data,
+            )
 
         return self
 
@@ -1043,16 +1070,16 @@ class BaseTransformer(BaseEstimator):
         """
         if X is None:
             if return_metadata:
-                return X, y, {}
+                return X, y, {}, None, None
             else:
-                return X, y
+                return X, y, None, None
 
         # skip conversion if it is turned off
         if self.get_config()["input_conversion"] != "on":
             if return_metadata:
-                return X, y, None
+                return X, y, None, X, y
             else:
-                return X, y
+                return X, y, X, y
 
         metadata = dict()
         metadata["_converter_store_X"] = dict()
@@ -1251,40 +1278,44 @@ class BaseTransformer(BaseEstimator):
                 )
             else:
                 y_inner = None
+            X_data = X_inner
+            y_data = y_inner
 
         # case 3. scitype of X is not supported, only lower complexity one is
         #   then apply vectorization, loop method execution over series/panels
         # elif case == "case 3: requires vectorization":
         else:  # if requires_vectorization
             iterate_X = _most_complex_scitype(X_inner_scitype, X_scitype)
-            X_inner = VectorizedDF(
+            X_inner, X_data = prepare_VectorizedDF(
                 X=X,
                 iterate_as=iterate_X,
                 is_scitype=X_scitype,
                 iterate_cols=req_vec_because_cols,
+                store=metadata["_converter_store_X"],
+                store_behaviour="reset",
             )
             # we also assume that y must be vectorized in this case
             if y_inner_mtype != ["None"] and y is not None:
-                # raise ValueError(
-                #     f"{type(self).__name__} does not support Panel X if y is not "
-                #     f"None, since {type(self).__name__} supports only Series. "
-                #     "Auto-vectorization to extend Series X to Panel X can only be "
-                #     'carried out if y is None, or "y_inner_mtype" tag is "None". '
-                #     "Consider extending _fit and _transform to handle the following "
-                #     "input types natively: Panel X and non-None y."
-                # )
                 iterate_y = _most_complex_scitype(y_inner_scitype, y_scitype)
-                y_inner = VectorizedDF(X=y, iterate_as=iterate_y, is_scitype=y_scitype)
+                y_inner, y_data = prepare_VectorizedDF(
+                    X=y, iterate_as=iterate_y, is_scitype=y_scitype
+                )
             else:
                 y_inner = None
+                y_data = None
 
         if return_metadata:
-            return X_inner, y_inner, metadata
+            return X_inner, y_inner, metadata, X_data, y_data
         else:
-            return X_inner, y_inner
+            return X_inner, y_inner, X_data, y_data
 
     def _check_X(self, X=None):
-        """Shorthand for _check_X_y with one argument X, see _check_X_y."""
+        """Shorthand for _check_X_y with one argument X, see _check_X_y.
+
+        Returns
+        -------
+        X_inner : converted X or VectorizedDF schema
+        """
         return self._check_X_y(X=X)[0]
 
     def _convert_output(self, X, metadata, inverse=False):
