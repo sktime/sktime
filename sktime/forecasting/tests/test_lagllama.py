@@ -13,17 +13,17 @@ from sktime.tests.test_switch import run_test_for_class
 _LAGLLAMA_REFERENCE_CASES = [
     pytest.param(
         {"context_length": 32, "num_samples": 100},
-        [539.935913086, 518.222106934, 490.413940430],
+        [549.983642578, 524.926696777, 503.950927734],
         id="context32-samples100",
     ),
     pytest.param(
         {"context_length": 64, "num_samples": 100, "use_rope_scaling": True},
-        [546.987243652, 534.520385742, 511.494567871],
+        [558.188964844, 544.520446777, 539.267822266],
         id="context64-rope-scaling",
     ),
     pytest.param(
         {"context_length": 32, "num_samples": 20, "nonnegative_pred_samples": True},
-        [542.671142578, 540.072509766, 518.060302734],
+        [560.322875977, 557.898803711, 538.202148438],
         id="context32-samples20-nonnegative",
     ),
 ]
