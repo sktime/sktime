@@ -433,6 +433,16 @@ class TinyTimeMixerForecaster(BaseForecaster):
         self.fit_strategy = fit_strategy
         self.padding_mask = padding_mask
 
+        if self.broadcasting:
+            self.set_tags(
+                **{
+                    "y_inner_mtype": "pd.DataFrame",
+                    "X_inner_mtype": "pd.DataFrame",
+                    "capability:global_forecasting": False,
+                }
+            )
+
+    def __post_init__(self):
         if self.padding_mask not in ("observed", "unobserved"):
             raise ValueError(
                 "padding_mask must be one of 'observed' or 'unobserved', "
@@ -450,15 +460,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
                 "Set fit_strategy to 'minimal' or 'full' to fine-tune the "
                 "model under the new mask semantics, or use "
                 "padding_mask='observed' (the default)."
-            )
-
-        if self.broadcasting:
-            self.set_tags(
-                **{
-                    "y_inner_mtype": "pd.DataFrame",
-                    "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
-                }
             )
 
     def _pretrain(self, y, X=None, fh=None):
