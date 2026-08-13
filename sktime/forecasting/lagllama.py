@@ -121,6 +121,8 @@ class _CachedLagLlama:
         finally:
             torch.load = original_load
 
+        self.predictor_.to(self.device)
+
         return self.estimator_, self.predictor_
 
 
@@ -586,6 +588,8 @@ class LagLlamaForecaster(BaseForecaster):
                 )
         finally:
             torch.load = original_load
+
+        self.predictor_.to(self.device_)
 
         return self
 
