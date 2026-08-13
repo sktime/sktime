@@ -206,19 +206,19 @@ class TinyTimeMixerForecaster(BaseForecaster):
           model path to be *None*.
 
     padding_mask : str, default="observed"
-        Controls how synthetic zero-padding is masked when the input history
-        is shorter than the model's ``context_length``. This can be one of
-        the following:
+        Controls how synthetic padding is masked when the input history
+        is shorter than the model's ``context_length``. Missing history is
+        left-padded with zeros. This can be one of the following:
 
-        - "observed": Marks padded positions as observed, matching
+        - "observed": Marks the padded zeros as observed, matching
           Granite-TSFM's preprocessing (``past_observed_mask`` built with
-          ``~np.isnan``). Pretrained TinyTimeMixer checkpoints were trained
-          under these semantics, so this is required to reproduce
-          Granite-TSFM's forecasts and is the only valid option when
-          ``fit_strategy="zero-shot"``.
+          ``~np.isnan``, so numeric zeros count as observed). Pretrained
+          TinyTimeMixer checkpoints were trained under these semantics,
+          so this is required to reproduce Granite-TSFM's forecasts and
+          is the only valid option when ``fit_strategy="zero-shot"``.
 
-        - "unobserved": Marks padded positions as unobserved, so synthetic
-          padding is treated as not part of the observed series. This does
+        - "unobserved": Marks the padded zeros as unobserved, so they
+          are not treated as part of the observed series. This does
           not match how public checkpoints were pretrained, and is only
           valid when ``fit_strategy`` is ``"minimal"`` or ``"full"``, so
           the model can be fine-tuned under these mask semantics;
