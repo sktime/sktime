@@ -413,7 +413,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
         verbose=False,
         padding_mask="observed",
     ):
-        super().__init__()
         self.model_path = model_path
         self.revision = revision
         self.device = device
@@ -432,6 +431,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         self.use_source_package = use_source_package
         self.fit_strategy = fit_strategy
         self.padding_mask = padding_mask
+        super().__init__()
 
         if self.broadcasting:
             self.set_tags(
