@@ -443,6 +443,14 @@ class TinyTimeMixerForecaster(BaseForecaster):
             )
 
     def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         if self.padding_mask not in ("observed", "unobserved"):
             raise ValueError(
                 "padding_mask must be one of 'observed' or 'unobserved', "
