@@ -241,8 +241,6 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         "maintainers": ["vedantag17"],
         "python_dependencies": [
             "pytorch-forecasting>=1.8.0",
-            "torch",
-            "lightning",
         ],
         # estimator type
         # --------------
@@ -269,11 +267,6 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         "tests:vm": False,
         "tests:libs": [
             "sktime.forecasting.base.adapters._pytorchforecasting_v2",
-        ],
-        "tests:skip_by_name": [
-            "test_save_estimators_to_file",
-            "test_persistence_via_pickle",
-            "test_hierarchical_with_exogenous",
         ],
     }
 
@@ -475,7 +468,6 @@ class _PytorchForecastingAdapterV2(BaseForecaster):
         pred_data_module = self._build_data_module(
             timeseries, self._context_length, self._max_prediction_length
         )
-        pred_data_module.setup(stage="predict")
 
         # Get predictions
         import lightning.pytorch as pl
