@@ -14,7 +14,20 @@ from sktime.transformations.compose._common import CORE_MTYPES
 
 
 class Id(BaseTransformer):
-    """Identity transformer, returns data unchanged in transform/inverse_transform."""
+    """Identity transformer, returns data unchanged in transform/inverse_transform.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.compose import Id
+    >>> X = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    >>> transformer = Id()
+    >>> transformer.fit_transform(X)
+       a  b
+    0  1  4
+    1  2  5
+    2  3  6
+    """
 
     _tags = {
         "authors": "fkiraly",
