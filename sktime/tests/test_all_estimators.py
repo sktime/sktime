@@ -102,7 +102,44 @@ class ValidProbaErrors:
         return False  # Propagate any other exceptions
 
 
-class BaseFixtureGenerator:
+class PackageConfig:
+    """Contains package config variables for test classes.
+
+    Collects the package level settings that the test framework needs, in the
+    attribute names used by the ``scikit-base`` test framework. Descendants can
+    override any of these, e.g., to restrict a test suite to a subset of objects.
+
+    Attributes
+    ----------
+    package_name : str
+        name of the package to search for objects, relative to python env root
+    exclude_objects : list of str
+        names of object classes to exclude from all tests
+    excluded_tests : dict of list of str
+        keys are object class names, values are names of tests to exclude
+    valid_tags : tuple of str
+        tags that are valid for objects in the package
+    filter_tags : dict
+        tag filter applied when retrieving objects, see ``all_estimators``
+    """
+
+    # name of the package to search for objects in
+    package_name = "sktime"
+
+    # list of object class names to exclude from all tests
+    exclude_objects = EXCLUDE_ESTIMATORS
+
+    # dict of object class name -> list of test names to exclude
+    excluded_tests = EXCLUDED_TESTS
+
+    # tags that are valid for objects in the package
+    valid_tags = VALID_ESTIMATOR_TAGS
+
+    # tag filter applied when retrieving the objects to test
+    filter_tags = {"tests:skip_all": False}
+
+
+class BaseFixtureGenerator(PackageConfig):
     """Fixture generator for base testing functionality in sktime.
 
     Test classes inheriting from this and not overriding pytest_generate_tests
@@ -119,10 +156,11 @@ class BaseFixtureGenerator:
                 to be used in test with name test_name
             can optionally use values for fixtures earlier in fixture_sequence,
                 these must be input as kwargs in a call
-        is_excluded: static method (test_name: str, est: class) -> bool
+        is_excluded: object method (test_name: str, est: class) -> bool
             whether test with name test_name should be excluded for estimator est
                 should be used only for encoding general rules, not individual skips
-                individual skips should go on the EXCLUDED_TESTS list in _config
+                individual skips should go on the excluded_tests dict, see
+                PackageConfig, which defaults to EXCLUDED_TESTS in _config
             requires _generate_object_class and _generate_object_instance as is
         _excluded_scenario: static method (test_name: str, scenario) -> bool
             whether scenario should be skipped in test with test_name test_name
@@ -227,18 +265,13 @@ class BaseFixtureGenerator:
             indirect=indirect_vars,
         )
 
-    def _all_estimators(self):
-        """Retrieve list of all estimator classes of type self.object_type_filter."""
-        # TODO(fangelim): refactor this _all_estimators
-        # to make it possible to set custom tags to filter
-        # as class attributes, similar to `object_type_filter`
-        filter_tags = {"tests:skip_all": False}
-
+    def _all_objects(self):
+        """Retrieve list of all object classes of type self.object_type_filter."""
         est_list = all_estimators(
             estimator_types=getattr(self, "object_type_filter", None),
             return_names=False,
-            exclude_estimators=EXCLUDE_ESTIMATORS,
-            filter_tags=filter_tags,
+            exclude_estimators=self.exclude_objects,
+            filter_tags=self.filter_tags,
         )
         # subsample estimators by OS & python version
         # this ensures that only a 1/3 of estimators are tested for a given combination
@@ -276,13 +309,12 @@ class BaseFixtureGenerator:
 
         return generator_dict
 
-    @staticmethod
-    def is_excluded(test_name, est):
+    def is_excluded(self, test_name, est):
         """Shorthand to check whether test test_name is excluded for estimator est."""
         # there are two conditions for exclusion:
-        # 1. the estimator is excluded in the legacy EXCLUDED_TESTS list
+        # 1. the estimator is excluded in the legacy excluded_tests list
         # 2. the excluded test appears in the "tests:skip_by_name" tag
-        cond1 = test_name in EXCLUDED_TESTS.get(est.__name__, [])
+        cond1 = test_name in self.excluded_tests.get(est.__name__, [])
         excl_tag = est.get_class_tag("tests:skip_by_name", [])
         if excl_tag is None:
             excl_tag = []
@@ -305,9 +337,7 @@ class BaseFixtureGenerator:
             ranges over all estimator classes not excluded by EXCLUDED_TESTS
         """
         estimator_classes_to_test = [
-            est
-            for est in self._all_estimators()
-            if not self.is_excluded(test_name, est)
+            est for est in self._all_objects() if not self.is_excluded(test_name, est)
         ]
 
         estimator_names = [est.__name__ for est in estimator_classes_to_test]
@@ -596,16 +626,16 @@ class QuickTester:
         from skbase.utils.stderr_mute import StderrMute
         from skbase.utils.stdout_mute import StdoutMute
 
-        tests_to_run = self._check_None_str_or_list_of_str(
+        tests_to_run = self._check_none_str_or_list_of_str(
             tests_to_run, var_name="tests_to_run"
         )
-        fixtures_to_run = self._check_None_str_or_list_of_str(
+        fixtures_to_run = self._check_none_str_or_list_of_str(
             fixtures_to_run, var_name="fixtures_to_run"
         )
-        tests_to_exclude = self._check_None_str_or_list_of_str(
+        tests_to_exclude = self._check_none_str_or_list_of_str(
             tests_to_exclude, var_name="tests_to_exclude"
         )
-        fixtures_to_exclude = self._check_None_str_or_list_of_str(
+        fixtures_to_exclude = self._check_none_str_or_list_of_str(
             fixtures_to_exclude, var_name="fixtures_to_exclude"
         )
 
@@ -752,7 +782,7 @@ class QuickTester:
         return results
 
     @staticmethod
-    def _check_None_str_or_list_of_str(obj, var_name="obj"):
+    def _check_none_str_or_list_of_str(obj, var_name="obj"):
         """Check that obj is None, str, or list of str, and coerce to list of str."""
         if obj is not None:
             msg = f"{var_name} must be None, str, or list of str"
@@ -1085,9 +1115,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
             )
             assert isinstance(tags, dict), msg
             assert len(tags) > 0, f"_tags dict of class {object_class} is empty"
-            invalid_tags = [
-                tag for tag in tags.keys() if tag not in VALID_ESTIMATOR_TAGS
-            ]
+            invalid_tags = [tag for tag in tags.keys() if tag not in self.valid_tags]
             assert len(invalid_tags) == 0, (
                 f"_tags of {object_class} contains invalid tags: {invalid_tags}. "
                 "For a list of valid tags, see registry.all_tags, or registry._tags. "
@@ -1365,14 +1393,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
     ]
 
     def test_valid_estimator_class_tags(self, object_class):
-        """Check that Estimator class tags are in VALID_ESTIMATOR_TAGS."""
+        """Check that Estimator class tags are in valid_tags."""
         for tag in object_class.get_class_tags().keys():
             msg = (
                 f"{object_class} has invalid tag: {tag!r} - "
                 "please check for spelling mistakes and if the tag exists "
                 "in the sktime API reference, or in registry.all_tags."
             )
-            assert tag in VALID_ESTIMATOR_TAGS, msg
+            assert tag in self.valid_tags, msg
 
         from sktime.base._base import TagAliaserMixin
 
@@ -1397,14 +1425,14 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 raise AssertionError(msg)
 
     def test_valid_estimator_tags(self, object_instance):
-        """Check that Estimator tags are in VALID_ESTIMATOR_TAGS."""
+        """Check that Estimator tags are in valid_tags."""
         for tag in object_instance.get_tags().keys():
             msg = (
                 f"{object_instance} has invalid tag: {tag!r} - "
                 "please check for spelling mistakes and if the tag exists "
                 "in the sktime API reference, or in registry.all_tags."
             )
-            assert tag in VALID_ESTIMATOR_TAGS, msg
+            assert tag in self.valid_tags, msg
 
         from sktime.base._base import TagAliaserMixin
 
