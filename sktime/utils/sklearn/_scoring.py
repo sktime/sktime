@@ -150,6 +150,7 @@ class _MetricAdapter:
         try:
             self.__signature__ = signature(metric)
         except (TypeError, ValueError):
+            # no introspectable signature, callers then see that of __call__
             pass
 
     def __call__(self, y_true, y_pred, **kwargs):

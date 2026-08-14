@@ -486,6 +486,7 @@ def _tuner_fitted_params(tuner):
     try:
         fitted_params = tuner.best_estimator_.get_fitted_params()
     except (NotFittedError, NotImplementedError):
+        # unfitted if refit=False, or the estimator has no fitted params to report
         pass
 
     fitted_params = {**fitted_params, **tuner.best_params_}
