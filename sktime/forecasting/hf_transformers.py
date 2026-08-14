@@ -249,7 +249,7 @@ class HFTransformersForecaster(BaseForecaster):
 
             if fh is not None:
                 _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
+                    *fh.to_relative(self._cutoff)._values,
                     _config.get("prediction_length", 0),
                 )
 
@@ -327,7 +327,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         # Handle fine-tuning strategy
         if self.fit_strategy == "minimal":
-            if self.model is None and len(self.info["mismatched_keys"]) == 0:
+            if not any(param.requires_grad for param in self.model.parameters()):
                 return
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
@@ -421,7 +421,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         pred = pd.Series(
             pred.reshape((-1,)),
-            index=ForecastingHorizon(range(len(pred)))
+            index=ForecastingHorizon(range(1, len(pred) + 1))
             .to_absolute(self._cutoff)
             ._values,
             # columns=self._y.columns
