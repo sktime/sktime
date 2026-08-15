@@ -474,20 +474,17 @@ jobs:
   test-historical-deps:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
+    name: test-historical-deps-${{ matrix.year }}
 
     strategy:
-      name: test-historical-deps-${{ matrix.year }}
       matrix:
         include:
-          - year: 2023
+          - exclude-newer: "2023-07-01"
             python-version: "3.11"
-            exclude-newer: "2023-07-01"
-          - year: 2024
+          - exclude-newer: "2024-09-01"
             python-version: "3.12"
-            exclude-newer: "2024-09-01"
-          - year: 2025
+          - exclude-newer: "2025-09-01"
             python-version: "3.13"
-            exclude-newer: "2025-09-01"
 
     steps:
       - uses: actions/checkout@v7
