@@ -476,6 +476,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
+      name: test-historical-deps-${{ matrix.year }}
       matrix:
         include:
           - year: 2023
