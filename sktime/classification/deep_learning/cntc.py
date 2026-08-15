@@ -104,11 +104,7 @@ class CNTCClassifier(BaseDeepClassifier):
         # testing configuration
         # ---------------------
         "tests:libs": ["sktime.networks.cntc"],
-        "tests:skip_by_name": [
-            "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
-        ],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
         # Run tests in a dedicated VM due to sporadic crashes and possible
         # memory leaks (see #8518)
         "tests:vm": True,
