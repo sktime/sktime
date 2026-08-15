@@ -144,15 +144,12 @@ EXCLUDED_TESTS = {
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "CNTCNetwork",
-        "ClearSky",
         "ContractableBOSS",
         "DOBIN",
         "DirRecTabularRegressionForecaster",
         "DirRecTimeSeriesRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
-        "DistFromAligner",
         "DistanceFeatures",
-        "ElasticEnsemble",
         "FeatureSelection",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
