@@ -33,6 +33,7 @@ __all__ = [
     "test_nested_set_params_and_alias",
     "test_get_fitted_params",
     "test_eq_dunder",
+    "test_set_params_rollback_on_error",
 ]
 
 from copy import deepcopy
@@ -566,3 +567,23 @@ def test_eq_dunder_checks_class():
 
     # comparison against a non-BaseObject must not raise, and must be unequal
     assert unrelated_1 != 42
+
+def test_set_params_rollback_on_error():
+    """Tests that failed set_params leaves estimator unchanged.
+
+    Regression test for issue #10695.
+
+    Raises
+    ------
+    AssertionError if set_params mutates estimator on error
+    """
+    from sktime.transformations.dilation_mapping import DilationMappingTransformer
+
+    transformer = DilationMappingTransformer(dilation=2)
+    original_dilation = transformer.dilation
+
+    with pytest.raises(ValueError, match="Dilation must be greater than 0"):
+        transformer.set_params(dilation=0)
+
+    assert transformer.dilation == original_dilation
+

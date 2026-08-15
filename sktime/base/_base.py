@@ -180,6 +180,30 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         super().__init__()
         self.__dynamic_tags__()
 
+    def set_params(self, **params):
+        """Set the parameters of this object.
+
+        Parameters
+        ----------
+        **params : dict
+            BaseObject parameters.
+
+        Returns
+        -------
+        self : reference to self (after parameters have been set)
+        """
+        if not params:
+            return self
+
+        original_params = self.get_params(deep=False)
+        original_config = self.get_config()
+        try:
+            return super().set_params(**params)
+        except Exception:
+            self.__init__(**original_params)
+            self.set_config(**original_config)
+            raise
+
     def __eq__(self, other):
         """Equality dunder. Checks equal class and parameters.
 
