@@ -3004,6 +3004,26 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "yash-sangwan",
+      "name": "Yash Sangwan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/149103017?v=4",
+      "profile": "https://github.com/yash-sangwan",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
+    },
+    {
+      "login": "baremetaldevx86",
+      "name": "Vedant Chauhan",
+      "avatar_url": "https://avatars.githubusercontent.com/baremetaldevx86?v=4",
+      "profile": "https://github.com/baremetaldevx86",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }

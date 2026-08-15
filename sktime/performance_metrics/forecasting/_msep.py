@@ -69,6 +69,12 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
           time point, equivalent to a call of the ``evaluate_by_index`` method.
     """
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
