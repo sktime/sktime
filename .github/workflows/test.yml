@@ -474,7 +474,6 @@ jobs:
   test-historical-deps:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
-    name: test-historical-deps-${{ matrix.year }}
 
     strategy:
       matrix:
