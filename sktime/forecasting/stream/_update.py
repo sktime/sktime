@@ -22,8 +22,8 @@ class _StreamDataPoolMixin:
         self._y = None
         self._X = None
 
-    def _update_y_X(self, y, X=None, enforce_index_type=None):
-        """Append ``y`` / ``X`` to the stream pool and update cutoff."""
+    def _update_stream_data_pool(self, y, X=None):
+        """Append ``y`` / ``X`` to the stream pool."""
         if y is not None:
             if isinstance(y, VectorizedDF):
                 y = y.X_multiindex
@@ -31,7 +31,6 @@ class _StreamDataPoolMixin:
                 self._y = y
             else:
                 self._y = update_data(self._y, y)
-            self._set_cutoff_from_y(y)
 
         if X is not None:
             if isinstance(X, VectorizedDF):
@@ -170,6 +169,7 @@ class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
         -------
         self : reference to self
         """
+        self._update_stream_data_pool(y, X)
         # we need to remember the time we last fit, to compare to it in _update
         self.last_fit_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
@@ -212,6 +212,7 @@ class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
         -------
         self : reference to self
         """
+        self._update_stream_data_pool(y, X)
         estimator = self._get_delegate()
         time_since_last_fit = self.cutoff[0] - self.last_fit_cutoff_
         refit_interval = self.refit_interval
@@ -395,6 +396,7 @@ class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
         -------
         self : reference to self
         """
+        self._update_stream_data_pool(y, X)
         # we need to remember the time we last fit, to compare to it in _update
         self.last_update_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
@@ -437,6 +439,7 @@ class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
         -------
         self : reference to self
         """
+        self._update_stream_data_pool(y, X)
         estimator = self._get_delegate()
         time_since_last_update = self.cutoff[0] - self.last_update_cutoff_
         update_interval = self.update_interval
@@ -486,8 +489,6 @@ class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
         return [param1, param2]
 
 
-# I think following class becomes redundant, as this becomes the
-# default behavior of BaseForecaster.
 class DontUpdate(_DelegatedForecaster):
     """Turns off updates, i.e., ensures that forecaster is only fit and never updated.
 

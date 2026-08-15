@@ -159,18 +159,21 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         super().__init__()
 
+        # todo 1.2.0: change default of remember_data to False and remove this warning
         if self.get_config()["remember_data"]:
             self._y = None
             self._X = None
             warn(
-                "``remember_data`` is deprecated and will be removed in a future "
-                "version. In future, ``BaseForecaster`` will no longer store "
-                "incremental data in ``_X`` and ``_y`` attributes."
-                "Turn off this warning by setting ``remember_data=False`` in your"
-                " forecaster's config and use ``UpdateRefitsEvery`` with "
-                "``refit_interval=0`` instead to store incremental data and refit "
-                "on every update.",
+                "The default of config ``remember_data`` will change from ``True`` "
+                "to ``False`` in sktime 1.2.0. After 1.2.0, ``BaseForecaster`` will "
+                "no longer store incremental data in ``_X`` and ``_y`` by default. "
+                "To silence this warning and adopt the new default early, set "
+                "``remember_data=False`` via ``set_config``. "
+                "To keep storing incremental data and refitting on every update "
+                "after the default change, set ``remember_data=True`` explicitly, "
+                "or use ``UpdateRefitsEvery`` with ``refit_interval=0``.",
                 FutureWarning,
+                self,
             )
 
         # this block has a double purpose:
@@ -2094,10 +2097,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
     def _update_y_X(self, y, X=None, enforce_index_type=None):
         """Update cutoff from newly seen training data.
-
-        BaseForecaster does not retain ``y`` / ``X``. Stream compositors that
-        need a pooled history should override this method to store and append
-        data, then call ``super()._update_y_X(...)`` (or set the cutoff).
 
         Writes to self:
         cutoff : is set to latest index seen in y
