@@ -75,7 +75,9 @@ class Catch22Wrapper(BaseTransformer):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.transformations.catch22wrapper import Catch22Wrapper  # doctest: +SKIP
+    >>> from sktime.transformations.catch22wrapper import (
+    ...     Catch22Wrapper
+    ... )  # doctest: +SKIP
     >>> X = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])  # doctest: +SKIP
     >>> transformer = Catch22Wrapper()  # doctest: +SKIP
     >>> Xt = transformer.fit_transform(X)  # doctest: +SKIP
