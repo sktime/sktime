@@ -150,7 +150,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "DirRecTimeSeriesRegressionForecaster",
         "DirectTimeSeriesRegressionForecaster",
         "DistanceFeatures",
-        "FeatureSelection",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",
