@@ -136,6 +136,7 @@ class CiscoTSMForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_cisco_tsm"],
     }
 
     def __init__(
