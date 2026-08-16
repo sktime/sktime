@@ -275,21 +275,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         with pytest.raises(TypeError, match=r"type"):
             object_instance.fit(y_train, X, fh=FH0)
 
-    def test_categorical_X_raises_error(self, object_instance):
+    def test_categorical_X_raises_error(self, estimator_instance):
         """Test that categorical X in not supported forecasters raises error.
 
         Only test with forecasters which do not ignore exogenous X and those that do
         not support categorical natively. These are the cases where error is expected
         to be raised.
         """
-        if object_instance.get_tag(
+        if estimator_instance.get_tag(
             "capability:exogenous"
-        ) and not object_instance.get_tag("capability:categorical_in_X"):
+        ) and not estimator_instance.get_tag("capability:categorical_in_X"):
             X_train = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c"]})
             y_train = _make_series(n_timepoints=6, n_columns=2)
 
             with pytest.raises(TypeError, match=r"categorical"):
-                object_instance.fit(y_train, X_train, fh=FH0)
+                estimator_instance.fit(y_train, X_train, fh=FH0)
 
     def test_categorical_y_raises_error(self, object_instance):
         """Test that categorical y in forecasters raises error.
