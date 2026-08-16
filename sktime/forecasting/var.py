@@ -25,8 +25,9 @@ class VAR(_StatsModelsAdapter):
     maxlags: int or None (default=None)
         Maximum number of lags to check for order selection,
         defaults to 12 * (nobs/100.)**(1./4)
-    method : str (default="ols")
-        Estimation method to use
+    method : str {"ols"} (default="ols")
+        Estimation method to use.
+        ``"ols"`` is the only estimation method offered by ``statsmodels``.
     verbose : bool (default=False)
         Print order selection output to the screen
     trend : str {"c", "ct", "ctt", "n"} (default="c")
@@ -37,13 +38,31 @@ class VAR(_StatsModelsAdapter):
         * "n" - co constant, no trend
 
         Note that these are prepended to the columns of the dataset.
-    missing: str, optional (default='none')
-        A string specifying if data is missing
-    freq: str, tuple, datetime.timedelta, DateOffset or None, optional (default=None)
+    missing : str {"none", "drop", "raise"} (default="none")
+        A string specifying how missing values are handled.
+
+        * ``"none"`` - no nan checking is done
+        * ``"drop"`` - any observations with nans are dropped
+        * ``"raise"`` - an error is raised if nans are present
+
+    freq : str, tuple, datetime.timedelta, DateOffset or None, optional (default=None)
         A frequency specification for either ``dates`` or the row labels from
         the endog / exog data.
-    dates: array_like, optional (default=None)
-        An array like object containing dates.
+        A pandas offset, or one of the strings
+
+        * ``"B"`` - business day
+        * ``"D"`` - calendar day
+        * ``"W"`` - weekly
+        * ``"M"`` - monthly
+        * ``"A"`` - annual
+        * ``"Q"`` - quarterly
+
+        This is optional if ``dates`` are provided.
+    dates : array_like of datetime, optional (default=None)
+        An array like object containing ``datetime`` objects,
+        which must match the number of rows of the endogenous data.
+        If a pandas object with a ``DatetimeIndex`` is passed as data,
+        that index is used, and this argument can be left as ``None``.
     ic: One of {'aic', 'fpe', 'hqic', 'bic', None} (default=None)
         Information criterion to use for VAR order selection.
 
@@ -138,7 +157,7 @@ class VAR(_StatsModelsAdapter):
         y : pd.DataFrame
             Target time series to which to fit the forecaster.
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
 
         Returns
@@ -173,7 +192,7 @@ class VAR(_StatsModelsAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
@@ -238,7 +257,7 @@ class VAR(_StatsModelsAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast

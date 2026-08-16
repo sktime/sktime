@@ -18,7 +18,8 @@ class TimeSeriesDBSCAN(BaseClusterer):
     Time series distances are passed as the ``distance argument``, which can be:
 
     * a string. This will substitute a hard-coded distance metric
-      from ``sktime.distances``. These default distances are intended to be
+      from ``sktime.dists_kernels._numba_distances``.
+      These default distances are intended to be
       performant, but cannot deal with unequal length or multivariate series.
     * a ``sktime`` pairwise transformer.
       These are available in ``sktime.dists_kernels``, and can be discovered
@@ -38,7 +39,8 @@ class TimeSeriesDBSCAN(BaseClusterer):
         * if str, must be one of the following strings:
           'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
           'lcss', 'edr', 'erp', 'msm', 'twe'
-          this will substitute a hard-coded distance metric from ``sktime.distances``
+          this will substitute a hard-coded distance metric
+          from ``sktime.dists_kernels._numba_distances``.
         * if ``sktime`` pairwise transformer,
           must implement the ``pairwise-transformer`` interface.
           ``sktime`` transformers are available in ``sktime.dists_kernels``,
@@ -90,6 +92,31 @@ class TimeSeriesDBSCAN(BaseClusterer):
     labels_ : ndarray of shape (n_samples)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.clustering.dbscan import TimeSeriesDBSCAN
+
+    >>> X = np.array([
+    ...     [[1.0, 2.0, 3.0, 4.0]],
+    ...     [[1.1, 2.1, 3.1, 4.1]],
+    ...     [[0.9, 1.9, 2.9, 3.9]],
+    ...     [[10.0, 11.0, 12.0, 13.0]],
+    ...     [[10.1, 11.1, 12.1, 13.1]],
+    ...     [[9.9, 10.9, 11.9, 12.9]],
+    ... ])
+
+    >>> clusterer = TimeSeriesDBSCAN(
+    ...     distance="dtw",
+    ...     eps=0.5,
+    ...     min_samples=2,
+    ... )
+    >>> clusterer.fit(X)
+    TimeSeriesDBSCAN(...)
+
+    >>> clusterer.labels_
+    array([0, 0, 0, 1, 1, 1])
     """
 
     _tags = {
@@ -135,8 +162,18 @@ class TimeSeriesDBSCAN(BaseClusterer):
 
         super().__init__()
 
-        # Import the the list of supported distances
-        from sktime.base._panel.knn import DISTANCES_SUPPORTED
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        distance = self.distance
+
+        from sktime.dists_kernels._numba_distances import DISTANCES_SUPPORTED
 
         # Input check for supported distance strings, as in _BaseKnnTimeSeriesEstimator
         if isinstance(distance, str) and distance not in DISTANCES_SUPPORTED:
