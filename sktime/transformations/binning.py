@@ -132,16 +132,19 @@ class TimeBinAggregate(BaseTransformer):
 
         if self.return_index == "range":
             Xt = Xt.reset_index(drop=True)
+
         elif self.return_index == "bin_start":
             if isinstance(bins, pd.IntervalIndex):
                 Xt.index = [x.left for x in Xt.index]
             else:
                 Xt.index = bins[:-1]
+
         elif self.return_index == "bin_end":
             if isinstance(bins, pd.IntervalIndex):
                 Xt.index = [x.right for x in Xt.index]
             else:
                 Xt.index = bins[1:]
+
         elif self.return_index == "bin_mid":
             if isinstance(bins, pd.IntervalIndex):
                 Xt_ix = [(x.left + x.right) / 2 for x in Xt.index]
@@ -152,8 +155,6 @@ class TimeBinAggregate(BaseTransformer):
             if np.sum(np.abs(remainder)) < 1e-10:
                 Xt_ix = np.array(Xt_ix, dtype=int)
             Xt.index = Xt_ix
-
-
 
         elif self.return_index == "bin":
             Xt.index = self._bins
