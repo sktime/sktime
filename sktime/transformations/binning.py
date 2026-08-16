@@ -149,7 +149,7 @@ class TimeBinAggregate(BaseTransformer):
                 Xt_ix = (np.array(bins[:-1]) + np.array(bins[1:])) / 2
             # if all integer, coerce to integer
             remainder = np.mod(Xt_ix, 1)
-            if np.sum(remainder) < 1e-10:
+            if np.sum(np.abs(remainder)) < 1e-10:
                 Xt_ix = np.array(Xt_ix, dtype=int)
             Xt.index = Xt_ix
 
