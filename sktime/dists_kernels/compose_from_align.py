@@ -62,7 +62,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         #   since aligner distances are always symmetric,
         #   we know it's the case for sure if X equals X2
         if X2 is None:
-            X = X2
+            X2 = X
             symm = True
         else:
             symm = False
