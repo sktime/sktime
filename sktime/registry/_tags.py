@@ -207,6 +207,9 @@ class sktime_version(_BaseTag):
 
     The tag is used for packaging metadata and provenance tracking
     of the object.
+
+    IMPORTANT: this tag is automatically set by the base classes.
+    It should not be manually set by developers.
     """
 
     _tags = {
