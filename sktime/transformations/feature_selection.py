@@ -218,4 +218,8 @@ class FeatureSelection(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"method": "all"}
+        return [
+            {"method": "all"},
+            {"method": "random", "n_columns": 1, "random_state": 0},
+            {"method": "feature-importances", "n_columns": 2},
+        ]

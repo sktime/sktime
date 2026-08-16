@@ -56,24 +56,138 @@ class HFTransformersForecaster(BaseForecaster):
     validation_split : float, default=0.2
         Fraction of the data to use for validation
     config : dict, default={}
-        Configuration to use for the model. See the `transformers`
-        documentation for details.
+        Configuration to use for the model. Configuration objects inherit from
+        ``PreTrainedConfig`` and can be used to control the model outputs and
+        architecture. Refer to the individual model config for particular
+        model-specific config params.
+
+        ``PreTrainedConfig`` is the base class for all configuration classes.
+        It handles a few parameters common to all models' configurations as
+        well as methods for loading/downloading/saving configurations. A
+        configuration file can be loaded and saved to disk. Loading the
+        configuration file and using this file to initialize a model does not
+        load the model weights. It only affects the model's configuration.
+
+        Keys supported by ``PreTrainedConfig`` include:
+
+        name_or_path : str, optional, default=""
+            Store the string that was passed to
+            ``PreTrainedModel.from_pretrained()`` as
+            ``pretrained_model_name_or_path`` if the configuration was created
+            with such a method.
+        output_hidden_states : bool, optional, default=False
+            Whether or not the model should return all hidden-states.
+        output_attentions : bool, optional, default=False
+            Whether or not the model should return all attentions.
+        return_dict : bool, optional, default=True
+            Whether or not the model should return a ``ModelOutput`` instead of
+            a plain tuple.
+        is_encoder_decoder : bool, optional, default=False
+            Whether the model is used as an encoder/decoder or not.
+        chunk_size_feed_forward : int, optional, default=0
+            The chunk size of all feed forward layers in the residual attention
+            blocks. A chunk size of ``0`` means that the feed forward layer is
+            not chunked. A chunk size of ``n`` means that the feed forward layer
+            processes ``n < sequence_length`` embeddings at a time.
+        per_layer_config : dict, optional
+            A sparse mapping from layer indices to configuration attribute
+            overrides. Each key is a layer index, and each value contains the
+            attributes that differ from the global config for that layer.
+
+        Parameters for fine-tuning tasks:
+
+        architectures : list of str, optional
+            Model architectures that can be used with the model pretrained
+            weights.
+        id2label : dict of int to str, optional
+            A map from index (for instance prediction index, or target index)
+            to label.
+        label2id : dict of str to int, optional
+            A map from label to index for the model.
+        num_labels : int, optional
+            Number of labels to use in the last layer added to the model,
+            typically for a classification task.
+        problem_type : str, optional
+            Problem type for ``XxxForSequenceClassification`` models. Can be
+            one of ``"regression"``, ``"single_label_classification"`` or
+            ``"multi_label_classification"``.
+
+        PyTorch specific parameters:
+
+        dtype : str, optional
+            The dtype of the weights. This attribute can be used to initialize
+            the model to a non-default dtype (which is normally ``float32``)
+            and thus allow for optimal storage allocation. For example, if the
+            saved model is ``float16``, ideally we want to load it back using
+            the minimal amount of memory needed to load ``float16`` weights.
+
+        Class attributes (overridden by derived classes):
+
+        model_type : str
+            An identifier for the model type, serialized into the JSON file,
+            and used to recreate the correct object in ``AutoConfig``.
+        has_no_defaults_at_init : bool
+            Whether the config class can be initialized without providing input
+            arguments. Some configurations require inputs to be defined at init
+            and have no default values, usually these are composite configs
+            (but not necessarily) such as ``EncoderDecoderConfig`` or
+            ``RagConfig``. They have to be initialized from two or more configs
+            of type ``PreTrainedConfig``.
+        keys_to_ignore_at_inference : list of str
+            A list of keys to ignore by default when looking at dictionary
+            outputs of the model during inference.
+        attribute_map : dict of str to str
+            A dict that maps model specific attribute names to the standardized
+            naming of attributes.
+        base_model_tp_plan : dict
+            A dict that maps sub-modules FQNs of a base model to a tensor
+            parallel plan applied to the sub-module when
+            ``model.tensor_parallel`` is called.
+        base_model_fsdp_plan : dict
+            A dict that maps sub-modules of a base model to an FSDP2 sharding
+            strategy (e.g. ``"free_full_weight"`` / ``"keep_full_weight"``).
+            Keys can be wildcard module paths (e.g. ``"layers.*"``) or tuples
+            of paths (grouped into a single ``fully_shard`` call).
+        base_model_pp_plan : dict of str to tuple of list of str
+            A dict that maps child-modules of a base model to a pipeline
+            parallel plan that enables users to place the child-module on the
+            appropriate device.
+
+        Common attributes (present in all subclasses):
+
+        vocab_size : int
+            The number of tokens in the vocabulary, which is also the first
+            dimension of the embeddings matrix (this attribute may be missing
+            for models that don't have a text modality like ViT).
+        hidden_size : int
+            The hidden size of the model.
+        num_attention_heads : int
+            The number of attention heads used in the multi-head attention
+            layers of the model.
+        num_hidden_layers : int
+            The number of blocks in the model.
+
     training_args : dict, default={}
-        Training arguments to use for the model. See `transformers.TrainingArguments`
-        for details.
-        Note that the `output_dir` argument is required.
+        Training arguments to use for the model. See
+        ``transformers.TrainingArguments`` for details [1]_.
+        Note that the ``output_dir`` argument is required.
     compute_metrics : list, default=None
-        List of metrics to compute during training. See `transformers.Trainer`
+        List of metrics to compute during training. See ``transformers.Trainer``
         for details.
     deterministic : bool, default=False
         Whether the predictions should be deterministic or not.
     callbacks : list, default=[]
-        List of callbacks to use during training. See `transformers.Trainer`
+        List of callbacks to use during training. See ``transformers.Trainer``
     peft_config : peft.PeftConfig, default=None
         Configuration for Parameter-Efficient Fine-Tuning.
-        When `fit_strategy` is set to "peft",
+        When ``fit_strategy`` is set to "peft",
         this will be used to set up PEFT parameters for the model.
-        See the `peft` documentation for details.
+        See the ``peft`` documentation for details [2]_.
+
+    References
+    ----------
+    .. [1] https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
+    .. [2] https://huggingface.co/docs/peft/en/package_reference/config#peft.PeftConfig
 
     Examples
     --------
@@ -249,7 +363,7 @@ class HFTransformersForecaster(BaseForecaster):
 
             if fh is not None:
                 _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
+                    *fh.to_relative(self._cutoff)._values,
                     _config.get("prediction_length", 0),
                 )
 
@@ -327,7 +441,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         # Handle fine-tuning strategy
         if self.fit_strategy == "minimal":
-            if self.model is None and len(self.info["mismatched_keys"]) == 0:
+            if not any(param.requires_grad for param in self.model.parameters()):
                 return
         elif self.fit_strategy == "full":
             for param in self.model.parameters():
@@ -421,7 +535,7 @@ class HFTransformersForecaster(BaseForecaster):
 
         pred = pd.Series(
             pred.reshape((-1,)),
-            index=ForecastingHorizon(range(len(pred)))
+            index=ForecastingHorizon(range(1, len(pred) + 1))
             .to_absolute(self._cutoff)
             ._values,
             # columns=self._y.columns
