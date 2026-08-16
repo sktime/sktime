@@ -11,8 +11,6 @@ from sktime.datatypes._registry import generate_scitype_list
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
 
-SCITYPES = generate_scitype_list()
-
 # scitypes which have no conversions defined
 # should be listed here to avoid false positive test errors
 SCITYPES_NO_CONVERSIONS = ["Alignment"]
@@ -23,7 +21,7 @@ def _generate_fixture_tuples():
     # collect fixture tuples here
     fixture_tuples = []
 
-    for scitype in SCITYPES:
+    for scitype in generate_scitype_list():
         # if we know there are no conversions defined, skip this scitype
         if scitype in SCITYPES_NO_CONVERSIONS:
             continue
