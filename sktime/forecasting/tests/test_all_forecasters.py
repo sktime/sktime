@@ -279,8 +279,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Test that categorical X in supported forecasters pass.
 
         Only test with forecasters which do not ignore exogenous X and those that do
-        not support categorical natively. These are the cases where error is expected
-        to be raised.
+        support categorical natively.
         """
         if estimator_instance.get_tag(
             "capability:exogenous"
