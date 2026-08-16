@@ -38,21 +38,24 @@ class TimeBinAggregate(BaseTransformer):
         Should have signature 1D -> float and defaults
         to mean if None
     return_index : str, one of the below; optional, default="range"
-        "range" = RangeIndex with bins indexed in same order as in ``bins``
-        "bin_start" = transformed pd.DataFrame will be indexed by bin starts
-        "bin_end" = transformed pd.DataFrame will be indexed by bin starts
-        "bin_mid" = transformed pd.DataFrame will be indexed by bin midpoints
-        "bin" = transformed pd.DataFrame will have ``bins`` as ``IntervalIndex``
+
+        * ``"range"`` = ``RangeIndex`` with bins indexed in same order as in ``bins``
+        * ``"bin_start"`` = transformed pd.DataFrame will be indexed by bin starts
+        * ``"bin_end"`` = transformed pd.DataFrame will be indexed by bin ends
+        * ``"bin_mid"`` = transformed pd.DataFrame will be indexed by bin midpoints
+        * ``"bin"`` = transformed pd.DataFrame will have ``bins`` as ``IntervalIndex``
 
     Examples
     --------
-    from sktime.datatypes import get_examples
-    from sktime.transformations.series.binning import TimeBinAggregate
-
-    bins = [0, 2, 4]
-    X = get_examples("pd.DataFrame")[0]
-
-    t = TimeBinAggregate([-1, 2, 10])
+    >>> import pandas as pd
+    >>> from sktime.datatypes import get_examples
+    >>> from sktime.transformations.binning import TimeBinAggregate
+    >>>
+    >>> bins = [0, 2, 4]
+    >>> X = pd.DataFrame({"a": [1, 2, 3, 4]}, index=[0, 1, 2, 3])
+    >>>
+    >>> t = TimeBinAggregate(bins=bins)
+    >>> Xt = t.fit_transform(X)
     """
 
     _tags = {
@@ -174,4 +177,9 @@ class TimeBinAggregate(BaseTransformer):
         params1 = {"bins": [0, 1]}
 
         params2 = {"bins": [0, 2, 4], "aggfunc": np.sum, "return_index": "bin_start"}
-        return [params1, params2]
+
+        params3 = {"bins": [0, 2, 4], "aggfunc": np.sum, "return_index": "bin_end"}
+
+        params4 = {"bins": [0, 2, 4], "aggfunc": np.sum, "return_index": "bin_mid"}
+
+        return [params1, params2, params3, params4]
