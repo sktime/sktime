@@ -8,7 +8,6 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.registry import coerce_scitype
-from sktime.transformations.base import BaseTransformer
 
 __author__ = ["fkiraly", "felipeangelimvieira"]
 __all__ = ["ForecastByLevel", "GroupbyCategoryForecaster"]
@@ -124,6 +123,9 @@ class ForecastByLevel(_DelegatedForecaster):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         self.forecaster_ = self.forecaster.clone()
 
@@ -202,12 +204,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.forecasting.croston import Croston
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.adi_cv import ADICVTransformer
+    >>> from sktime.transformations.adi_cv import ADICVTransformer
 
     Importing the methods which can generate data of specific categories
     depending on their variance and average demand intervals.
 
-    >>> from sktime.transformations.series.tests.test_adi_cv import (
+    >>> from sktime.transformations.tests.test_adi_cv import (
     ...     _generate_erratic_series)
 
     The forecaster is defined which accepts a dictionary of forecasters,
@@ -246,6 +248,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         ],
         "capability:multivariate": True,
         "capability:exogenous": True,
+        "capability:unequal_length": False,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "authors": ["felipeangelimvieira", "shlok191"],
@@ -260,21 +263,38 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         transformer=None,
         fallback_forecaster=None,
     ):
-        # saving arguments to object storage
-        if transformer is not None:
-            self.transformer = transformer
-
-        else:
-            from sktime.transformations.series.adi_cv import ADICVTransformer
-
-            self.transformer = ADICVTransformer(features=["class"])
+        self.transformer = transformer
 
         self.forecasters = forecasters
         self.fallback_forecaster = fallback_forecaster
 
-        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
-
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        transformer = self.transformer
+        forecasters = self.forecasters
+        fallback_forecaster = self.fallback_forecaster
+
+        # saving arguments to object storage
+        if transformer is not None:
+            _transformer = transformer.clone()
+
+        else:
+            from sktime.transformations.adi_cv import ADICVTransformer
+
+            _transformer = ADICVTransformer(features=["class"])
+
+        self.transformer_ = coerce_scitype(_transformer, "transformer").clone()
+
+        from sktime.transformations.base import BaseTransformer
 
         # validating passed arguments
         assert isinstance(self.transformer_, BaseTransformer)
@@ -535,7 +555,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         from sktime.forecasting.croston import Croston
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import PolynomialTrendForecaster
-        from sktime.transformations.series.adi_cv import ADICVTransformer
+        from sktime.transformations.adi_cv import ADICVTransformer
 
         param1 = {
             "forecasters": {

@@ -142,34 +142,45 @@ class TimeLLMForecaster(BaseForecaster):
         else:
             self._pred_len = self.pred_len
 
-        # Create a unique key for the current model configuration
-        key = self._get_unique_time_llm_key()
-
-        # Load or reuse cached model with the same key
-        self.model_ = _CachedTimeLLM(
-            key=key,
-            time_llm_kwargs={
-                "task_name": self.task_name,
-                "pred_len": self._pred_len,
-                "seq_len": self.seq_len,
-                "llm_model": self.llm_model,
-                "llm_layers": self.llm_layers,
-                "llm_dim": self.llm_dim,
-                "patch_len": self.patch_len,
-                "stride": self.stride,
-                "d_model": self.d_model,
-                "d_ff": self.d_ff,
-                "n_heads": self.n_heads,
-                "dropout": self.dropout,
-                "enc_in": y.shape[1],
-                "prompt_domain": self.prompt_domain,
-            },
-        ).load_model()
-
-        self.model_ = self.model_.to(self.device_)
-        self.model_ = self.model_.to(torch.bfloat16)
+        self._enc_in = y.shape[1]
+        self.model_ = self._load_model()
 
         self.last_values = y
+
+    def _load_model(self):
+        """Load Time-LLM model via multiton cache."""
+        if hasattr(self, "model_") and self.model_ is not None:
+            return self.model_
+
+        model = _CachedTimeLLM(
+            key=self._get_unique_time_llm_key(),
+            time_llm_kwargs=self._get_time_llm_kwargs(),
+        ).load_model()
+
+        model = model.to(self.device_)
+        model = model.to(torch.bfloat16)
+        self.model_ = model
+
+        return self.model_
+
+    def _get_time_llm_kwargs(self):
+        """Get the kwargs for Time-LLM model."""
+        return {
+            "task_name": self.task_name,
+            "pred_len": self._pred_len,
+            "seq_len": self.seq_len,
+            "llm_model": self.llm_model,
+            "llm_layers": self.llm_layers,
+            "llm_dim": self.llm_dim,
+            "patch_len": self.patch_len,
+            "stride": self.stride,
+            "d_model": self.d_model,
+            "d_ff": self.d_ff,
+            "n_heads": self.n_heads,
+            "dropout": self.dropout,
+            "enc_in": self._enc_in,
+            "prompt_domain": self.prompt_domain,
+        }
 
     def _get_unique_time_llm_key(self):
         """Get unique key for Time-LLM model to use in multiton."""
@@ -226,13 +237,18 @@ class TimeLLMForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point predictions
         """
+        self.model_ = self._load_model()
+        self.model_.eval()
+
         X_tensor = (
             torch.tensor(self.last_values.values).reshape(1, -1, 1).to(self.device_)
         )
         X_tensor = X_tensor.to(torch.float32)
-        res = self.model_.forward(
-            X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
-        )
+
+        with torch.no_grad():
+            res = self.model_.forward(
+                X_tensor, x_mark_enc=None, x_mark_dec=None, x_dec=None
+            )
 
         forecast_index = fh.to_absolute(self.cutoff).to_pandas()
 
@@ -246,57 +262,44 @@ class TimeLLMForecaster(BaseForecaster):
 
         return y_pred
 
+    def __getstate__(self):
+        """Return state for pickling, excluding unpickleable TimeLLM model."""
+        state = self.__dict__.copy()
+
+        if "model_" in state:
+            state["model_"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state, TimeLLM model will be reloaded on next use."""
+        self.__dict__.update(state)
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
+        minimal_params = {
+            "pred_len": 1,
+            "seq_len": 5,
+            "llm_model": "TINY_RANDOM",
+            "llm_layers": 1,
+            "llm_dim": 1,
+            "patch_len": 5,
+            "stride": 5,
+            "d_model": 1,
+            "d_ff": 1,
+            "n_heads": 1,
+            "dropout": 0.0,
+            "device": "cpu",
+            "prompt_domain": False,
+        }
         params_list = [
             {
+                **minimal_params,
                 "task_name": "long_term_forecast",
-                "pred_len": 24,
-                "seq_len": 96,
-                "llm_model": "GPT2",
-                "llm_layers": 3,
-                "llm_dim": 768,
-                "patch_len": 16,
-                "stride": 8,
-                "d_model": 128,
-                "d_ff": 128,
-                "n_heads": 4,
-                "dropout": 0.1,
-                "device": None,
-                "prompt_domain": False,
             },
             {
+                **minimal_params,
                 "task_name": "short_term_forecast",
-                "pred_len": 24,
-                "seq_len": 96,
-                "llm_model": "GPT2",
-                "llm_layers": 3,
-                "llm_dim": 768,
-                "patch_len": 16,
-                "stride": 8,
-                "d_model": 128,
-                "d_ff": 128,
-                "n_heads": 4,
-                "dropout": 0.1,
-                "device": None,
-                "prompt_domain": False,
-            },
-            {
-                "task_name": "short_term_forecast",
-                "pred_len": 24,
-                "seq_len": 96,
-                "llm_model": "GPT2",
-                "llm_layers": 3,
-                "llm_dim": 768,
-                "patch_len": 16,
-                "stride": 8,
-                "d_model": 128,
-                "d_ff": 128,
-                "n_heads": 4,
-                "dropout": 0.1,
-                "device": None,
-                "prompt_domain": False,
             },
         ]
 
