@@ -74,6 +74,7 @@ These tags are typically used for typing, packaging and documentation purposes.
     python_version
     python_dependencies
     env_marker
+    sktime_version
     requires_cython
     r_dependencies
 
