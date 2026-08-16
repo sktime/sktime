@@ -167,6 +167,7 @@ transform a single time series object (``"transformer"`` type).
     capability__bootstrap_index
     fit_is_empty
     transform_returns_same_time_index
+    skip_inverse_transform
     property__randomness
 
 
