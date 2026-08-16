@@ -281,9 +281,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         Only test with forecasters which do not ignore exogenous X and those that do
         support categorical natively.
         """
-        if object_instance.get_tag(
-            "capability:exogenous"
-        ) and object_instance.get_tag("capability:categorical_in_X"):
+        if object_instance.get_tag("capability:exogenous") and object_instance.get_tag(
+            "capability:categorical_in_X"
+        ):
             y_train = _make_series(n_timepoints=6, n_columns=2)
             X_train = pd.DataFrame(
                 {"col_0": ["a", "b", "c", "a", "b", "c"]}, index=y_train.index
