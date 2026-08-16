@@ -3794,12 +3794,6 @@ ESTIMATOR_TAG_REGISTER = [
         "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
     ),
     (
-        "learning_type",
-        "detector",
-        "str",
-        "type of learning, e.g., 'supervised', 'unsupervised'",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
