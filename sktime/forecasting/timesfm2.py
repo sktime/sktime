@@ -251,16 +251,23 @@ class TimesFM2Forecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["rajatsen91", "siriuz42", "geetu040"],
+        # rajatsen91, siriuz42 for google-research/timesfm
+        "maintainers": ["geetu040"],
+        "python_dependencies": ["transformers[torch]>=4.52.0"],
+        # estimator type
+        # --------------
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pretrain": True,
-        "authors": ["rajatsen91", "siriuz42", "geetu040"],
-        # rajatsen91, siriuz42 for google-research/timesfm
-        "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers[torch]>=4.52.0"],
+        # test and CI flags
+        # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_timesfm2"],
     }
 
     def __init__(
