@@ -866,7 +866,11 @@ class _MultioutputReducer(_Reducer):
 
         # Iterate over estimators/forecast horizon
         y_pred = self.estimator_.predict(X_pred)
-        return y_pred.ravel()
+        # ``.ravel()`` is an ndarray method; some time-series regressors
+        # return a pd.DataFrame for multioutput targets instead of an
+        # ndarray, which has no ``.ravel``. Coerce to an ndarray first so
+        # both cases are handled, see #10829.
+        return np.asarray(y_pred).ravel()
 
 
 class _RecursiveReducer(_Reducer):

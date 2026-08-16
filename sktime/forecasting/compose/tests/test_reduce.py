@@ -32,6 +32,7 @@ from sktime.forecasting.compose._reduce import _sliding_window_transform
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
+from sktime.regression.dummy import DummyRegressor as TimeSeriesDummyRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.split.tests.test_split import _get_windows
@@ -613,6 +614,30 @@ def test_reductions_airline_data(forecaster, expected):
     actual = forecaster.fit(y_train, fh=fh).predict(fh)
 
     np.testing.assert_almost_equal(actual, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_multioutput_time_series_regressor_returning_dataframe():
+    """Test multioutput reduction with a regressor that predicts a DataFrame.
+
+    Some time series regressors (e.g. sktime's own ``DummyRegressor``) return a
+    ``pd.DataFrame`` from ``predict`` for multioutput targets, unlike sklearn
+    tabular regressors which always return an ``ndarray``. ``_MultioutputReducer``
+    used to call ``.ravel()`` unconditionally on the regressor's prediction,
+    which raised ``AttributeError: 'DataFrame' object has no attribute 'ravel'``
+    for such regressors. See #10829.
+    """
+    y = load_airline()
+    forecaster = MultioutputTimeSeriesRegressionForecaster(TimeSeriesDummyRegressor())
+
+    forecaster.fit(y, fh=[1, 2, 3])
+    y_pred = forecaster.predict()
+
+    assert isinstance(y_pred, pd.Series)
+    assert len(y_pred) == 3
 
 
 @pytest.mark.skipif(
