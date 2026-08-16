@@ -47,15 +47,38 @@ class TimeBinAggregate(BaseTransformer):
 
     Examples
     --------
+    Basic usage:
+
     >>> import pandas as pd
-    >>> from sktime.datatypes import get_examples
     >>> from sktime.transformations.binning import TimeBinAggregate
-    >>>
-    >>> bins = [0, 2, 4]
-    >>> X = pd.DataFrame({"a": [1, 2, 3, 4]}, index=[0, 1, 2, 3])
-    >>>
-    >>> t = TimeBinAggregate(bins=bins)
-    >>> Xt = t.fit_transform(X)
+    >>> X = pd.DataFrame(
+    ...     {"a": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}, index=list(range(10))
+    ... )
+    >>> t = TimeBinAggregate(bins=[-1, 2, 5, 10])
+    >>> t.fit_transform(X)
+          0
+    -1  2.0
+     2  5.0
+     5  8.5
+
+    Using ``return_index="range"`` to get a plain sequential index instead of
+    bin starts:
+
+    >>> t2 = TimeBinAggregate(bins=[-1, 2, 5, 10], return_index="range")
+    >>> t2.fit_transform(X)
+         0
+    0  2.0
+    1  5.0
+    2  8.5
+
+    Using ``return_index="bin_end"`` to index by the end of each bin instead:
+
+    >>> t3 = TimeBinAggregate(bins=[-1, 2, 5, 10], return_index="bin_end")
+    >>> t3.fit_transform(X)
+          0
+    2   2.0
+    5   5.0
+    10  8.5
     """
 
     _tags = {
