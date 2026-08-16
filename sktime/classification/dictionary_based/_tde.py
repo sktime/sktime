@@ -1025,6 +1025,43 @@ class IndividualTDE(BaseClassifier):
 
         return nn
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        # first set: default parameters, identical to the previous test instance.
+        # second set: smaller window and word length, per-window z-normalisation,
+        # two spatial pyramid levels, information gain binning, and bigrams
+        # switched off, covering the branches the default configuration
+        # never reaches.
+        return [
+            {},
+            {
+                "window_size": 6,
+                "word_length": 4,
+                "norm": True,
+                "levels": 2,
+                "igb": True,
+                "bigrams": False,
+                "random_state": 0,
+            },
+        ]
+
 
 def histogram_intersection(first, second):
     """Find the distance between two histograms using the histogram intersection.
