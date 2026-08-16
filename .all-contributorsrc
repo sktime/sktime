@@ -3034,6 +3034,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "maxelliotmingail-afk",
+      "name": "Max Mingail",
+      "avatar_url": "https://avatars.githubusercontent.com/u/305037288?v=4",
+      "profile": "https://github.com/maxelliotmingail-afk",
+      "contributions": [
+        "code",
+        "test"
+      ]
     }
   ]
 }
