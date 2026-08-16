@@ -157,6 +157,12 @@ class Pipeline(BaseEstimator):
     }
     """
 
+    _tags = {
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_inheritance"],  # does not inherit from intermediate base classes
+    }
+
     def __init__(self, steps=None):
         warnings.warn(
             "This generalised graphical pipeline is experimental, "

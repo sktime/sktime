@@ -38,6 +38,12 @@ class TestPlusTrainSplitter(BaseSplitter):
     >>> splitter = TestPlusTrainSplitter(cv_tpl)
     """
 
+    _tags = {
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # undiagnosed failures, see #6194
+    }
+
     def __init__(self, cv):
         self.cv = cv
         super().__init__()

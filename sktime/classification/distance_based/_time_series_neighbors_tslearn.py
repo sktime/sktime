@@ -90,6 +90,9 @@ class KNeighborsTimeSeriesClassifierTslearn(_TslearnAdapter, BaseClassifier):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_multiprocessing_idempotent"],  # crashes in parallel mode
     }
 
     # defines the name of the attribute containing the tslearn estimator

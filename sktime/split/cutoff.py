@@ -274,6 +274,9 @@ class CutoffFhSplitter(BaseSplitter):
     _tags = {
         "split_hierarchical": False,
         "split_series_uses": "loc",
+        # testing
+        # -------
+        "tests:specific": ["sktime.split.tests.test_cutoff"],
     }
 
     def __init__(self, cutoff, fh=None):

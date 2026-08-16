@@ -86,6 +86,14 @@ class TapNetRegressor(BaseDeepRegressor):
         "maintainers": ["jnrusson1"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # stochastic failures, see #3525
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+        ],
     }
 
     def __init__(

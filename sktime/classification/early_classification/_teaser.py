@@ -109,6 +109,22 @@ class TEASER(BaseEarlyClassifier):
         "capability:multithreading": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # testing
+        # -------
+        "tests:specific": [
+            "sktime.classification.early_classification.tests.test_teaser"
+        ],
+        # Early classifiers intentionally retain information from previous predict calls
+        # for #1.
+        # #2 and #3 are due to predict/predict_proba returning two items and that
+        # breaking assert_array_equal
+        "tests:skip_by_name": [
+            "test_non_state_changing_method_contract",
+            "test_fit_idempotent",
+            "test_multiprocessing_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+        ],
     }
 
     def __init__(

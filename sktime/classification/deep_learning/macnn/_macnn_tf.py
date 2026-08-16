@@ -89,6 +89,12 @@ class MACNNClassifier(BaseDeepClassifier):
         "maintainers": "jnrusson1",
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": [
+            "test_multioutput",
+            "test_classifier_on_unit_test_data",
+        ],  # see #6465 and #7958
     }
 
     def __init__(

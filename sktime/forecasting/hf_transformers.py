@@ -308,6 +308,9 @@ class HFTransformersForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_hf_transformers_forecaster"],
         "tests:python_dependencies": ["peft"],
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],  # networks do not support negative fh
     }
 
     def __init__(
