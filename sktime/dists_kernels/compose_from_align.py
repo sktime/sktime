@@ -25,6 +25,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, aligner=None):
@@ -89,10 +90,17 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for DistFromAligner."""
         # importing inside to avoid circular dependencies
-        from sktime.alignment.dtw_python import AlignerDTW
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
+        from sktime.alignment.dtw_python import AlignerDTW
+        from sktime.alignment.lucky import AlignerLuckyDtw
+
+        # two unconditional sets: a dependency-free aligner, and the
+        # default None aligner, which returns the zero distance matrix
+        params = [{"aligner": AlignerLuckyDtw()}, {}]
+
+        # additional set with AlignerDTW, if dtw-python is installed
         if _check_estimator_deps(AlignerDTW, severity="none"):
-            return {"aligner": AlignerDTW()}
-        else:
-            return {}
+            params.append({"aligner": AlignerDTW()})
+
+        return params

@@ -10,12 +10,12 @@ import os
 from abc import abstractmethod
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.utils import check_random_state
 
 from sktime.base._base import SERIALIZATION_FORMATS
 from sktime.classification.base import BaseClassifier
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class BaseDeepClassifier(BaseClassifier):

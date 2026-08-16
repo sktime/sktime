@@ -235,6 +235,19 @@ class LagLlamaForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["pranavvp16"],
+        "maintainers": ["pranavvp16"],
+        "python_version": "<3.14",
+        "python_dependencies": [
+            "gluonts>=0.14.0",
+            "torch",
+            "lightning>=2.0",
+            "huggingface_hub",
+        ],
+        # estimator type
+        # --------------
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:exogenous": False,
         "capability:multivariate": False,  # LagLlama is univariate only
@@ -246,16 +259,11 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pretrain": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
-        "authors": ["pranavvp16"],
-        "maintainers": ["pranavvp16"],
-        "python_version": "<3.14",
-        "python_dependencies": [
-            "gluonts>=0.14.0",
-            "torch",
-            "lightning>=2.0",
-            "huggingface_hub",
-        ],
+        "capability:unequal_length": False,
+        # test and CI flags
+        # -----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.lag_llama"],
     }
 
     def __init__(
@@ -295,7 +303,6 @@ class LagLlamaForecaster(BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         import torch
