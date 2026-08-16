@@ -19,7 +19,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.transformations.series.binning import TimeBinAggregate
+from sktime.tests.test_switch import run_test_for_class
+from sktime.transformations.binning import TimeBinAggregate
 
 
 def _toy_df():
@@ -27,6 +28,10 @@ def _toy_df():
     return pd.DataFrame({"y": np.arange(8.0)})
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeBinAggregate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_bin_mid_does_not_raise_indexerror():
     """``return_index='bin_mid'`` must not crash on the last iteration.
 
@@ -40,6 +45,10 @@ def test_bin_mid_does_not_raise_indexerror():
     assert list(out.index) == [1.0, 3.0, 5.0, 7.0]
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TimeBinAggregate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize(
     "return_index,expected_index",
     [
@@ -55,3 +64,17 @@ def test_return_index_modes_have_consistent_length(return_index, expected_index)
     out = transformer._transform(_toy_df(), y=None)
     assert len(out.index) == 4
     assert list(out.index) == expected_index
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimeBinAggregate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_time_bin_aggregate_bin_mid_uses_midpoints():
+    """Test that return_index='bin_mid' uses bin midpoints as output index."""
+    X = pd.DataFrame({"y": [1, 2, 3, 4]}, index=[0, 1, 2, 3])
+
+    transformer = TimeBinAggregate(bins=[0, 2, 4], return_index="bin_mid")
+    Xt = transformer.fit_transform(X)
+
+    assert list(Xt.index) == [1, 3]
