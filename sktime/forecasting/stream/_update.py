@@ -458,7 +458,8 @@ class DontUpdate(_DelegatedForecaster):
     Parameters
     ----------
     forecaster : an sktime forecaster
-        the forecaster for which ``update`` is turned off
+        the forecaster for which ``update`` is called with ``update_params=False``
+        always, i.e., never updates.
 
     Examples
     --------
