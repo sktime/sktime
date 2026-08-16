@@ -153,7 +153,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "FeatureSelection",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
-        "HIVECOTEV2",
         "Hidalgo",
         "HierarchicalProphet",
         "InceptionTimeNetwork",
