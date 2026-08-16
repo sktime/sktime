@@ -111,23 +111,28 @@ class ForecastingBenchmark(BaseBenchmark):
         cv_global:  sklearn splitter, or sktime instance splitter, default=None
             If ``cv_global`` is passed, then global benchmarking is applied, as follows:
 
-            1. the ``cv_global`` splitter is used to split data at instance level,
-            into a global training set ``y_train``,
-            and a global test set ``y_test_global``.
-            2. The estimator is pretrained on the global training set ``y_train``.
-            3. ``cv_splitter`` then splits the global test set ``y_test_global``
-            temporally, to obtain temporal splits ``y_past``, ``y_true``.
-            4. The estimator is fitted on ``y_past`` and predicts ``y_true``.
+            1. The ``cv_global`` splitter is used to split data at instance level,
+            into a global pretrain set ``y_pretrain``,
+            and a global test set ``y_test_global``. This is index ``j``.
+            2. ``cv_splitter`` then splits the global test set ``y_test_global``
+            temporally, to obtain temporal splits ``y_train``, ``y_test``.
+            This is index ``i``.
+            3. If ``i == 0`` or ``strategy == "refit"``, the estimator is
+            cloned, pretrained on ``y_pretrain``, and fitted on ``y_train``.
+            Otherwise it is updated on ``y_train`` according to ``strategy``.
+            4. The estimator predicts ``y_test``.
 
-            Overall, with ``y_train``, ``y_past``, ``y_true`` as above,
-            the following evaluation will be applied:
+            Overall, with ``y_pretrain``, ``y_train``, ``y_test`` as above,
+            the following evaluation will be applied at the start of each
+            instance fold (``i == 0``) and on every fold if
+            ``strategy == "refit"``:
 
             .. code-block:: python
 
-                forecaster.pretrain(y=y_train, fh=cv.fh)
-                forecaster.fit(y=y_past, fh=cv.fh)
+                forecaster.pretrain(y=y_pretrain, fh=cv.fh)
+                forecaster.fit(y=y_train, fh=cv.fh)
                 y_pred = forecaster.predict()
-                metric(y_true, y_pred)
+                metric(y_test, y_pred)
 
         error_score : "raise" or numeric, default="raise"
             Value to assign to the score if an exception occurs in estimator fitting.
