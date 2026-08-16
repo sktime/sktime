@@ -2966,6 +2966,16 @@
       ]
     },
     {
+      "login": "Saswatsusmoy",
+      "name": "Saswat Susmoy",
+      "avatar_url": "https://avatars.githubusercontent.com/u/72549122?v=4",
+      "profile": "https://github.com/Saswatsusmoy",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
       "login": "loulanyue",
       "name": "Rafli Surya Wijaya",
       "avatar_url": "https://avatars.githubusercontent.com/u/17882510?v=4",
@@ -2996,6 +3006,16 @@
       ]
     },
     {
+      "login": "coding-cosmos",
+      "name": "Sujal",
+      "avatar_url": "https://avatars.githubusercontent.com/coding-cosmos",
+      "profile": "https://github.com/coding-cosmos",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
       "login": "yash-sangwan",
       "name": "Yash Sangwan",
       "avatar_url": "https://avatars.githubusercontent.com/u/149103017?v=4",
@@ -3004,6 +3024,15 @@
         "code",
         "doc",
         "test"
+      ]
+    },
+    {
+      "login": "baremetaldevx86",
+      "name": "Vedant Chauhan",
+      "avatar_url": "https://avatars.githubusercontent.com/baremetaldevx86?v=4",
+      "profile": "https://github.com/baremetaldevx86",
+      "contributions": [
+        "doc"
       ]
     }
   ]

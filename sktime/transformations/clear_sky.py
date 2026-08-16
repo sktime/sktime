@@ -285,14 +285,21 @@ class ClearSky(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = {
+        params1 = {
             "quantile_prob": 0.95,
             "bw_diurnal": 100,
             "bw_annual": 10,
             "min_thresh": None,
         }
 
-        return params
+        params2 = {
+            "quantile_prob": 0.50,
+            "bw_diurnal": 50,
+            "bw_annual": 5,
+            "min_thresh": 0.1,
+        }
+
+        return [params1, params2]
 
 
 def _clearskypower(y, q, tod_i, doy_i, tod_vec, doy_vec, bw_tod, bw_doy):

@@ -106,7 +106,8 @@ class TestAllRegressors(RegressorFixtureGenerator, QuickTester):
         assert isinstance(y_pred, pd.DataFrame)
         assert y_pred.shape == y_mult.shape
 
-        vectorized = object_instance.get_tag("capability:multioutput")
+        # the estimator vectorizes iff it does not have the multioutput capability
+        vectorized = not object_instance.get_tag("capability:multioutput")
         if vectorized:
             assert hasattr(object_instance, "regressors_")
             assert isinstance(object_instance.regressors_, pd.DataFrame)
