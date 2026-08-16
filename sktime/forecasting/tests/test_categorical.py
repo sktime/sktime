@@ -13,12 +13,15 @@ import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.linear_model import LinearRegression
 
 from sktime.forecasting.compose import SkforecastAutoreg
 from sktime.forecasting.compose._reduce import YfromX
 from sktime.forecasting.dummy import ForecastKnownValues
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 
+from sktime.datasets import load_airline
+from sktime.forecasting.compose import make_reduction
 
 def test_dummy_est_with_categorical_capability():
     """Test that categorical data works when native support is available.
@@ -39,10 +42,30 @@ def test_dummy_est_with_categorical_capability():
     yt = y[:6]
     X = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c", "a", "b", "c"]})
     Xt = X[:6]
-
     est.fit(yt, Xt, fh=[1, 2, 3])
     est.predict(X=X[6:])
     est.update(y[6:], X[6:])
+
+
+def test_reduction_est_with_categorical_capability():
+    """Test that categorical data works when native support is available.
+
+    This test uses the dummy forecaster with modified tags to imitate a forecaster
+    which supports categorical natively in exogenous X for checking whether
+    categorical data passes through the boilerplate checks without error.
+    """
+    breakpoint()
+    y = load_airline()[:60]
+    fh = [1, 2, 3]
+    future_idx = pd.period_range(y.index[-1] + 1, periods=3, freq=y.index.freqstr)
+    cats = np.array(["a", "b", "c"] * 21)[: len(y) + 3]
+    X_all = pd.DataFrame({"cat": cats}, index=y.index.append(future_idx))
+    X_fit = X_all.iloc[: len(y)]
+    est = LinearRegression()
+    f = make_reduction(est, strategy="recursive", window_length=5)
+    f.fit(y, X=X_fit, fh=fh)
+    pred = f.predict(fh=fh, X=X_all)
+
 
 
 def create_mixed_dtype_df():
@@ -65,11 +88,13 @@ def create_mixed_dtype_df():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_skforecast_with_categorical():
+    breakpoint()
     y_train, X_train, X_test = create_mixed_dtype_df()
 
     regressor = HistGradientBoostingRegressor(categorical_features=["categorical"])
     forecaster = SkforecastAutoreg(regressor, 3)
 
+    breakpoint()
     forecaster.fit(y_train, X_train)
     forecaster.predict(10, X_test)
 
