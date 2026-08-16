@@ -221,4 +221,5 @@ class FeatureSelection(BaseTransformer):
         return [
             {"method": "all"},
             {"method": "random", "n_columns": 1, "random_state": 0},
+            {"method": "feature-importances", "n_columns": 2},
         ]
