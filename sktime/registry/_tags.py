@@ -191,17 +191,25 @@ class authors(_BaseTag):
 
 
 class sktime_version(_BaseTag):
-    """sktime version from which the estimator class originates.
+    """Version of ``sktime`` from which the object originates.
 
     Part of packaging metadata for the object.
 
     - String name: ``"sktime_version"``
     - Private tag, developer and framework facing
-    - Values: string
+    - Values: string, ``sktime`` version identifier
     - Example: ``"0.30.0"``
+    - Default: no restriction
 
-    The ``sktime_version`` tag records the sktime version from which an estimator
-    class originates.
+    The ``sktime_version`` tag of an object is a string specifying the
+    ``sktime`` version from which the estimator class originates,
+    i.e., the version in which the class was first added to ``sktime``.
+
+    The tag is used for packaging metadata and provenance tracking
+    of the object.
+
+    IMPORTANT: this tag is automatically set by the base classes.
+    It should not be manually set by developers.
     """
 
     _tags = {
