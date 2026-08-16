@@ -1015,6 +1015,32 @@ def _check_cutoff(cutoff, index):
         assert isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex))
 
 
+def _normalize_period_freq(freq):
+    """Map start/end-of-period offset aliases to their period-compatible equivalent.
+
+    pandas DatetimeIndex offsets such as MonthBegin ("MS") and QuarterBegin
+    ("QS-JAN") have no direct ``to_period()`` mapping.  This function returns
+    the nearest period frequency alias ("M", "Q", "Y") so callers can convert
+    without a ValueError.
+    """
+    try:
+        from pandas.tseries import offsets as _offsets
+
+        _offset_map = {
+            _offsets.MonthBegin: "M",
+            _offsets.MonthEnd: "M",
+            _offsets.QuarterBegin: "Q",
+            _offsets.QuarterEnd: "Q",
+            _offsets.YearBegin: "Y",
+            _offsets.YearEnd: "Y",
+        }
+        if type(freq) in _offset_map:
+            return _offset_map[type(freq)]
+    except ImportError:
+        pass
+    return freq
+
+
 def _coerce_to_period(x, freq=None):
     """Coerce pandas time index to a alternative pandas time index.
 
@@ -1038,6 +1064,10 @@ def _coerce_to_period(x, freq=None):
         raise ValueError(
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
+    # Start-of-period and end-of-period offsets (e.g. MonthBegin/"MS",
+    # QuarterBegin/"QS-JAN") have no direct to_period() mapping; normalise
+    # them to the nearest period-compatible alias before converting.
+    freq = _normalize_period_freq(freq)
     return x.to_period(freq)
 
 
