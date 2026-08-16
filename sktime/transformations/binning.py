@@ -78,10 +78,7 @@ class TimeBinAggregate(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": [
-            "test_categorical_X_passes",
-            "test_class_has_doctest_example",
-        ],
+        "tests:skip_by_name": ["test_categorical_X_passes"],
         # fails for standard aggfuncs that are tested,
         # but works if categorical aggfunc would be used,
         # so "capability:categorical_in_X" should be the default, True
@@ -147,9 +144,16 @@ class TimeBinAggregate(BaseTransformer):
                 Xt.index = bins[1:]
         elif self.return_index == "bin_mid":
             if isinstance(bins, pd.IntervalIndex):
-                Xt.index = [(x.left + x.right) / 2 for x in Xt.index]
+                Xt_ix = [(x.left + x.right) / 2 for x in Xt.index]
             else:
-                Xt.index = (np.array(bins[:-1]) + np.array(bins[1:])) / 2
+                Xt_ix = (np.array(bins[:-1]) + np.array(bins[1:])) / 2
+            # if all integer, coerce to integer
+            remainder = np.mod(Xt_ix, 1)
+            if np.sum(remainder) < 1e-10:
+                Xt_ix = np.array(Xt_ix, dtype=int)
+            Xt.index = Xt_ix
+
+
 
         elif self.return_index == "bin":
             Xt.index = self._bins
