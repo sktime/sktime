@@ -13,18 +13,11 @@ from pandas import Timedelta
 from pandas.tseries.frequencies import to_offset
 from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.forecasting.base._fh_types import ALL_NORMALIZERS
 from sktime.utils.datetime import _coerce_duration_to_int
-from sktime.utils.validation import (
-    array_is_int,
-    array_is_timedelta_or_date_offset,
-    is_array,
-    is_int,
-    is_timedelta_or_date_offset,
-)
 from sktime.utils.validation.series import (
     VALID_INDEX_TYPES,
     is_in_valid_absolute_index_types,
-    is_in_valid_index_types,
     is_in_valid_relative_index_types,
     is_integer_index,
 )
@@ -72,7 +65,7 @@ def _delegator(method):
     return delegated
 
 
-def _check_values(values) -> pd.Index:
+def _check_values(values):
     """Validate forecasting horizon values.
 
     Validation checks validity and also converts forecasting horizon values
@@ -92,43 +85,21 @@ def _check_values(values) -> pd.Index:
     -------
     values : pd.Index
         Sorted and validated forecasting horizon values.
+    np_values : np.ndarray, 1D array of integers or floats
+        Normalized forecasting horizon values as a 1D numpy array of integers or floats.
     """
-    # if values are one of the supported pandas index types, we don't have
-    # to do
-    # anything as the forecasting horizon directly wraps the index, note that
-    # isinstance() does not work here, because index types inherit from each
-    # other,
-    # hence we check for type equality here
-    if is_in_valid_index_types(values):
-        pass
-
-    # convert single positive integer to range index 1 ... integer,
-    # no further checks needed
-    elif is_int(values) and values > 0:
-        values = pd.Index(range(1, values + 1), dtype=int)
-
-    # convert single non-positive integer to index with one value,
-    # no further checks needed
-    elif is_int(values) and values <= 0:
-        values = pd.Index([values], dtype=int)
-
-    # convert range object to pandas.RangeIndex
-    # range has to be for integers, no need to separate check
-    elif isinstance(values, range):
-        values = pd.Index(values)
-
-    elif is_timedelta_or_date_offset(values):
-        values = pd.Index([values])
-
-    # convert np.array or list to pandas index
-    elif is_array(values) and array_is_int(values):
-        values = pd.Index(values, dtype=int)
-
-    elif is_array(values) and array_is_timedelta_or_date_offset(values):
-        values = pd.Index(values)
+    normalizer_found = False
+    for norm_cls in ALL_NORMALIZERS:
+        norm = norm_cls()
+        if norm._is_applicable(values):
+            values_pd = norm._normalize_pd_index_legacy(values)
+            values_np = norm._normalize(values)
+            normalizer_found = True
+            values = values_pd
+            break
 
     # otherwise, raise type error
-    else:
+    if not normalizer_found:
         valid_types = (
             "int",
             "range",
@@ -150,7 +121,7 @@ def _check_values(values) -> pd.Index:
         )
 
     # return sorted values
-    return values.sort_values()
+    return values.sort_values(), np.sort(values_np)
 
 
 def _check_freq(obj):
@@ -311,8 +282,9 @@ class ForecastingHorizon:
         # coercing inputs
 
         # values to pd.Index self._values
-        values = _check_values(values)
-        self._values = values
+        values_pd, values_np = _check_values(values)
+        self._values = values_pd
+        self._values_np = values_np
 
         # infer freq from values, if available
         # if not, infer from freq argument, if available
@@ -332,17 +304,17 @@ class ForecastingHorizon:
         # types inherit from each other, hence we check for type equality
         error_msg = f"`values` type is not compatible with `is_relative={is_relative}`."
         if is_relative is None:
-            if is_in_valid_relative_index_types(values):
+            if is_in_valid_relative_index_types(values_pd):
                 is_relative = True
-            elif is_in_valid_absolute_index_types(values):
+            elif is_in_valid_absolute_index_types(values_pd):
                 is_relative = False
             else:
-                raise TypeError(f"{type(values)} is not a supported fh index type")
+                raise TypeError(f"{type(values_pd)} is not a supported fh index type")
         if is_relative:
-            if not is_in_valid_relative_index_types(values):
+            if not is_in_valid_relative_index_types(values_pd):
                 raise TypeError(error_msg)
         else:
-            if not is_in_valid_absolute_index_types(values):
+            if not is_in_valid_absolute_index_types(values_pd):
                 raise TypeError(error_msg)
         self._is_relative = is_relative
 
