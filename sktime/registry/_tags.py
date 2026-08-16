@@ -190,6 +190,29 @@ class authors(_BaseTag):
     }
 
 
+class sktime_version(_BaseTag):
+    """sktime version from which the estimator class originates.
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"sktime_version"``
+    - Private tag, developer and framework facing
+    - Values: string
+    - Example: ``"0.30.0"``
+
+    The ``sktime_version`` tag records the sktime version from which an estimator
+    class originates.
+    """
+
+    _tags = {
+        "tag_name": "sktime_version",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "sktime version from which this estimator class originates",
+        "user_facing": False,
+    }
+
+
 class python_version(_BaseTag):
     """Python version requirement specifier for the object (PEP 440).
 
@@ -3639,12 +3662,6 @@ class info__source(_BaseTag):
 
 
 ESTIMATOR_TAG_REGISTER = [
-    (
-        "sktime_version",
-        "object",
-        "str",
-        "sktime version from which this estimator class originates",
-    ),
     (
         "skip-inverse-transform",
         "transformer",
