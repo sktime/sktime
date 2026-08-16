@@ -141,9 +141,7 @@ class DerivativeSlopeTransformer(BaseTransformer):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.transformations.summarize._extract import (
-    ...     DerivativeSlopeTransformer,
-    ... )
+    >>> from sktime.transformations.summarize import DerivativeSlopeTransformer
     >>> X = pd.DataFrame({"a": [10, 12, 15, 20, 22]})
     >>> t = DerivativeSlopeTransformer()
     >>> t.fit_transform(X)
