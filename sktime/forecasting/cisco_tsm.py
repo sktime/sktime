@@ -365,7 +365,7 @@ class CiscoTSMForecaster(BaseForecaster):
 
         return pred_quantiles
 
-    def _predict_proba(self, fh=None, X=None, marginal=True):
+    def _predict_proba(self, fh, X, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
         private _predict_proba containing the core logic, called from predict_proba

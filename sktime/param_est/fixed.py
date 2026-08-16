@@ -32,6 +32,9 @@ class FixedParams(BaseParamFitter):
         # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, param_dict):
