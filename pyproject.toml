@@ -263,7 +263,13 @@ datasets = [
   "requests",
 ]
 dl = [
-  'neuralforecast>=1.6.4,<3.2',
+  # Python 3.10 keeps the historical bound: neuralforecast pulls ray[tune], and ray did not
+  # ship a 3.11 wheel until 2.9.0 / a 3.12 wheel until 2.40.0, so the old cap is what has
+  # actually been exercised on the oldest supported Python.
+  'neuralforecast<1.8.0,>=1.6.4; python_version < "3.11"',
+  # 3.11+ widens to the v3 line (v3 requires a positive int input_size for recurrent models,
+  # handled by _get_validated_input_size in sktime/forecasting/neuralforecast.py).
+  'neuralforecast<3.2,>=1.6.4; python_version >= "3.11"',
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
   "torch; (sys_platform != 'darwin' or python_version < '3.13')",
