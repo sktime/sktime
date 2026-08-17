@@ -694,6 +694,30 @@ def evaluate(
     >>> cv = ExpandingWindowSplitter(initial_window=12, step_length=6, fh=[1, 2, 3])
     >>> results = evaluate(forecaster=forecaster, y=y, cv=cv)
 
+    To do global evaluation, provide ``cv_global`` and use forecasters supporting
+    pretraining.
+
+    >>> from sklearn.model_selection import KFold
+    >>> from sktime.datasets import ForecastingData
+    >>> from sktime.forecasting.model_evaluation import evaluate
+    >>> from sktime.forecasting.ttm import TinyTimeMixerForecaster
+    >>> from sktime.split import InstanceSplitter, SingleWindowSplitter
+
+    >>> data = ForecastingData(   # doctest: +SKIP
+    ...     "australian_electricity_demand_dataset"
+    ... ).load("y")
+
+    >>> cv = SingleWindowSplitter(fh=range(1, 48))
+
+    >>> results = evaluate(  # doctest: +SKIP
+    ...     TinyTimeMixerForecaster(),
+    ...     y=data,
+    ...     cv=cv,
+    ...     cv_global=InstanceSplitter(KFold(5)),
+    ...     cv_global_temporal=SingleWindowSplitter(fh=range(48 * 24)),
+    ...     strategy="update",
+    ... )
+
     Optionally, users may select other metrics that can be supplied
     by ``scoring`` argument. These can be forecast metrics of any kind as stated `here
 
