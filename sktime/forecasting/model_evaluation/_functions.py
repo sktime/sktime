@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements functions to be used in evaluating forecasting models."""
 
-__author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo", "hazrulakmal"]
+__author__ = ["aiwalter", "mloning", "fkiraly", "topher-lo", "hazrulakmal", "jgyasu"]
 __all__ = ["evaluate"]
 
 import collections.abc
@@ -485,9 +485,9 @@ def evaluate(
     There are two running indices: ``j`` for the instance splitter
     ``cv_global``, and ``i`` for the temporal splitter ``cv``.
 
-    :math:`y_{pretrain, j}, y_{test, j}` are produced by
+    :math:`y_{pretrain, j}, y_{global_test, j}` are produced by
     ``cv_global.split_series(y)`` and are different time series.
-    :math:`y_{test, j}` is further split into
+    :math:`y_{global_test, j}` is further split into
     :math:`y_{train, i, j}, y_{test, i, j}` by
     ``cv.split_series(y_test)``.
     Exogenous folds :math:`X_{pretrain, j}`, :math:`X_{train, i, j}`,
