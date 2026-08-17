@@ -351,6 +351,10 @@ class BasePanelMixin(BaseEstimator):
             metadata of y, returned by check_is_scitype
         y_mtype : str, only returned if return_to_mtype=True
             mtype of y_inner, after convert
+        y_data : pd.DataFrame
+            only returned if requires_vectorization=True
+            and return_to_mtype=True
+            multiindex df used for creating VectorizedDF
         """
         from sktime.datatypes import (
             MTYPE_LIST_TABLE,
@@ -363,7 +367,7 @@ class BasePanelMixin(BaseEstimator):
 
         if y is None:
             if return_to_mtype:
-                return None, None, None, None
+                return None, None, None
             else:
                 return None, None
 

@@ -55,6 +55,8 @@ def coerce_to_multiindex(
         original mtype of ``X`` before conversion
     store : dict
         converter store (new dict if ``store`` was None)
+    freq : str or None
+        frequency of the time index of ``X``
     """
     if store is None:
         store = dict()
@@ -81,7 +83,26 @@ def coerce_to_multiindex(
         store=store,
         store_behaviour=store_behaviour,
     )
-    return X_mi, is_scitype, X_orig_mtype, store
+
+    def infer_freq(X):
+        """Infer frequency from the time index of multiindex ``X``."""
+        if len(X) == 0:
+            return None
+
+        idx = X.index
+        if isinstance(idx, pd.MultiIndex):
+            time_idx = X.xs(idx.droplevel(-1)[0]).index
+        else:
+            time_idx = idx
+
+        if getattr(time_idx, "freqstr", None):
+            return time_idx.freqstr
+        try:
+            return pd.infer_freq(time_idx)
+        except (TypeError, ValueError):
+            return None
+
+    return X_mi, is_scitype, X_orig_mtype, store, infer_freq(X_mi)
 
 
 def prepare_VectorizedDF(
@@ -119,7 +140,7 @@ def prepare_VectorizedDF(
     X_mi : pd.DataFrame
         ``X`` converted to pandas multiindex format (single conversion)
     """
-    X_mi, is_scitype, X_orig_mtype, store = coerce_to_multiindex(
+    X_mi, is_scitype, X_orig_mtype, store, freq = coerce_to_multiindex(
         X,
         is_scitype=is_scitype,
         store=store,
@@ -132,6 +153,7 @@ def prepare_VectorizedDF(
         iterate_cols=iterate_cols,
         X_orig_mtype=X_orig_mtype,
         converter_store=store,
+        freq=freq,
     )
     return vec, X_mi
 
@@ -168,6 +190,8 @@ class VectorizedDF:
         original mtype before conversion; used by ``reconstruct(convert_back=True)``
     converter_store : dict or None, optional
         converter store for ``reconstruct(convert_back=True)``
+    freq : str or None, optional
+        frequency of the time index of ``X``
 
     Methods
     -------
@@ -192,6 +216,7 @@ class VectorizedDF:
         iterate_cols=False,
         X_orig_mtype=None,
         converter_store=None,
+        freq=None,
     ):
         if is_scitype is None or is_scitype not in self.SERIES_SCITYPES:
             raise ValueError(
@@ -217,25 +242,7 @@ class VectorizedDF:
         self.X_mi_nlevels = X.index.nlevels
         self.iter_indices = self._iter_indices_from_index(X.index)
         self.shape = self._iter_shape()
-        self.freq = self._infer_freq(X)
-
-    def _infer_freq(self, X):
-        """Infer frequency from the time index of multiindex ``X``."""
-        if len(X) == 0:
-            return None
-
-        idx = X.index
-        if isinstance(idx, pd.MultiIndex):
-            time_idx = X.xs(idx.droplevel(-1)[0]).index
-        else:
-            time_idx = idx
-
-        if getattr(time_idx, "freqstr", None):
-            return time_idx.freqstr
-        try:
-            return pd.infer_freq(time_idx)
-        except (TypeError, ValueError):
-            return None
+        self.freq = freq
 
     def _check_iterate_cols(self, iterate_cols):
         if iterate_cols not in [True, False]:
@@ -313,22 +320,6 @@ class VectorizedDF:
     def __len__(self):
         """Return number of indices to iterate over."""
         return np.prod(self.shape)
-
-    def __iter__(self):
-        """Iterate over schema groups without data (slices are ``None``).
-
-        Pass ``X`` to ``items`` or ``as_list`` to iterate converted slices.
-        """
-        return (
-            group
-            for _, _, group in self.items(
-                iterate_as=self.iterate_as, iterate_cols=self.iterate_cols
-            )
-        )
-
-    def __getitem__(self, i: int):
-        """Return the i-th element iterated over in vectorization."""
-        return next(itertools.islice(self, i, None))
 
     def items(self, X=None, iterate_as=None, iterate_cols=None):
         """Iterate over (group name, column name, instance) tuples.

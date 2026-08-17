@@ -295,7 +295,9 @@ def test_item_len(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
-    """Tests __getitem__ returns pd-multiindex mtype if iterate_as="Series".
+    """Tests as_list returns schema keys without X and slices with X.
+
+    VectorizedDF is not iterable; use as_list/items instead of for-in or [i].
 
     Fixtures parameterized
     ----------------------
@@ -317,24 +319,14 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
-    # testing list comprehension works with indexing (schema keys only without X)
-    X_iter1 = [X_vect[i] for i in range(len(X_vect))]
-    assert isinstance(X_iter1, list)
-
-    # testing that iterator comprehension works
-    X_iter2 = [X_idx for X_idx in X_vect]
-    assert isinstance(X_iter2, list)
-
-    # testing that as_list method works
-    X_iter3 = X_vect.as_list()
-    assert isinstance(X_iter3, list)
+    X_keys = X_vect.as_list()
+    assert isinstance(X_keys, list)
+    assert len(X_keys) == len(X_vect)
 
     X_slices = X_vect.as_list(X=X_mi)
+    assert isinstance(X_slices, list)
+    assert len(X_slices) == len(X_vect)
     assert all(s is not None for s in X_slices)
-
-    # check that these are all the same
-    assert deep_equals(X_iter1, X_iter2)
-    assert deep_equals(X_iter2, X_iter3)
 
 
 @pytest.mark.skipif(
@@ -342,7 +334,7 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
 def test_series_item_mtype(scitype, mtype, fixture_index, iterate_as, iterate_cols):
-    """Tests __getitem__ returns correct pd-multiindex mtype.
+    """Tests as_list(X=...) returns the correct pandas mtype for iterate_as.
 
     Fixtures parameterized
     ----------------------
