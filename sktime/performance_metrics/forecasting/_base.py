@@ -396,8 +396,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         Parameters
         ----------
         y_true : VectorizedDF
+            schema only; slices come from ``data`` in ``kwargs``
         y_pred : VectorizedDF
-        non-time-like instances of y_true, y_pred must be identical
+            schema only; slices come from ``y_pred_data`` in ``kwargs``
+        kwargs : must include ``data`` and ``y_pred_data`` (converted multiindex frames)
         """
         backend = dict()
         backend["backend"] = self.get_config()["backend:parallel"]
@@ -434,8 +436,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         Parameters
         ----------
         y_true : VectorizedDF
+            schema only; slices come from ``data`` in ``kwargs``
         y_pred : VectorizedDF
-        non-time-like instances of y_true, y_pred must be identical
+            schema only; slices come from ``y_pred_data`` in ``kwargs``
+        kwargs : must include ``data`` and ``y_pred_data`` (converted multiindex frames)
         """
         backend = dict()
         backend["backend"] = self.get_config()["backend:parallel"]

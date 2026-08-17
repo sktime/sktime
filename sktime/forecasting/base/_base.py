@@ -1824,6 +1824,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             Time series to check.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series.
+        y_inner_mtype : str, list of str, or None, optional (default=None)
+            inner mtype(s) to convert y to; if None, uses ``y_inner_mtype`` tag
+        multivariate : None, True or False, optional (default=None)
+            if not-None, overrides the capability tag ``capability:multivariate``
+            in internal behaviour. Overridden currently from: the ``pretrain`` method.
 
         Returns
         -------
@@ -1843,15 +1848,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                     (complexity order: Hierarchical > Panel > Series)
             Case 3: None if y was None
         X_data : same as X_inner when not vectorized; multiindex frame when vectorized
-            Already-converted data to pass into vectorization / remember_data paths.
+            Already-converted data for ``vectorize_est`` slices and ``remember_data``.
             None if X was None.
         y_data : same as y_inner when not vectorized; multiindex frame when vectorized
-            Already-converted data to pass into vectorization / remember_data paths.
+            Already-converted data for ``vectorize_est`` slices and ``remember_data``.
             None if y was None.
-        multivariate : None, True or False
-            if not-None, overrides the capability tag "capability:multivariate"
-            in internal behaviour.
-            Overridden currently from: the ``pretrain`` method.
 
         Raises
         ------

@@ -1,7 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Wrapper for easy vectorization/iteration of time series data.
 
-Contains VectorizedDF class.
+Contains ``VectorizedDF`` (iteration schema) and ``prepare_VectorizedDF``
+(convert once, then construct the schema).
 """
 
 __author__ = ["fkiraly", "hoesler"]
@@ -161,10 +162,10 @@ def prepare_VectorizedDF(
 class VectorizedDF:
     """Schema for vectorization/iteration over instances.
 
-    Stores iteration metadata only (instance keys, columns, mtype).
-    Does not retain an iterable ``X`` or a converted multiindex copy.
-    Pass already-converted multiindex data into ``items``, ``as_list``, or
-    ``vectorize_est(..., data=)`` to slice at call time.
+    Stores iteration metadata only (instance keys, columns, mtype, freq).
+    Does not retain data and is not iterable. Pass already-converted
+    multiindex data into ``items``, ``as_list``, or
+    ``vectorize_est(..., data=)`` / ``*_data`` kwargs to slice at call time.
 
     Construct via ``prepare_VectorizedDF`` (preferred), which converts once, or
     pass an already-converted multiindex ``X`` with resolved ``is_scitype``.
@@ -177,7 +178,7 @@ class VectorizedDF:
     y : placeholder argument, not used currently
     is_scitype : str ("Panel", "Hierarchical", "Series"), default = "Panel"
         scitype of X; must be resolved (not None)
-    iterate_as : str ("Series", "Panel"), optional, default="Series
+    iterate_as : str ("Series", "Panel", "Hierarchical"), optional, default="Series"
         scitype of the iteration
         for instance, if X is Panel and iterate_as is "Series"
             then the class will iterate over individual Series in X
@@ -451,7 +452,13 @@ class VectorizedDF:
         ----------
         X : pd.DataFrame in pandas multiindex format, optional, default=None
             If passed, return slices of ``X``. If None, return schema-only
-            ``None`` slices.
+            ``None`` slices (this object is not iterable).
+
+        Returns
+        -------
+        list
+            Slice frames of ``X``, in the same order as ``items``.
+            If ``X`` is None, a list of ``None`` with length ``len(self)``.
         """
         return [
             group
@@ -471,9 +478,9 @@ class VectorizedDF:
 
         Parameters
         ----------
-        df_list : iterable of objects of same type and sequence as __iter__ returns.
-            can be self, but will in general be another object to be useful.
-            Example: [some_operation(df) for df in self] that leaves types the same
+        df_list : iterable of slice frames in the same order as ``as_list(X)``
+            typically produced by applying an operation to each ``as_list`` slice
+            Example: ``[some_operation(df) for df in vec.as_list(X=X_mi)]``
         convert_back : bool, optional, default = False
             whether to convert output back to mtype of X in __init__
             if False, the return will be a pandas.DataFrame with Index or multiIndex
@@ -591,9 +598,9 @@ class VectorizedDF:
     ):
         """Vectorize application of estimator method, return results DataFrame or list.
 
-        This function returns a `pd.DataFrame` with `estimator` fitted on
-        vectorization slices of `self`. Row and column indices are the
-        same as obtained from `get_iter_indices`.
+        This function returns a `pd.DataFrame` with `estimator` applied to
+        vectorization slices of ``data`` / ``*_data``, using the schema in `self`.
+        Row and column indices are the same as obtained from `get_iter_indices`.
 
         This function:
 
@@ -603,7 +610,8 @@ class VectorizedDF:
 
         If `estimator` is a single estimator, it is broadcast to a `pd.DataFrame`.
         Elements of `args`, `args_rowvec` can be `VectorizedDF`, in which case
-        they are broadcast in the application step 2.
+        they are broadcast in the application step 2, sliced from the matching
+        ``<name>_data`` kwarg (e.g. ``X_data`` for arg ``X``).
 
         For a row and column of the return,
         the entry is `estimator` at the same entry (if `DataFrame`) or `estimator`,
@@ -639,16 +647,16 @@ class VectorizedDF:
         return_type : str, one of "pd.DataFrame" or "list"
             the return will be of this type;
             if `pd.DataFrame`, with row/col indices being `self.get_iter_indices()`
-            if `list`, entries in sequence corresponding to `self__iter__`
+            if `list`, entries in the same sequence as ``items`` / ``as_list``
         rowname_default : str, optional, default="estimators"
             used as index name of single row if no row vectorization is performed
         colname_default : str, optional, default="estimators"
             used as index name of single column if no column vectorization is performed
         varname_of_self : str, optional, default=None
-            if not None, self will be passed as kwarg under name "varname_of_self"
+            if not None, each slice of ``data`` is passed as kwarg under this name
         data : already-converted multiindex frame, optional, default=None
             passed to ``items`` so ``varname_of_self`` receives slices of ``data``.
-            Ideally should be same as of ``X`` passed at construction.
+            Should be the converted frame that this schema was built from.
         X_data, y_data, <name>_data : already-converted multiindex frame, optional
             call-time values sliced when the matching arg is a ``VectorizedDF``.
             ``X_data`` is used for arg ``X``, ``y_pred_data`` for ``y_pred``, etc.

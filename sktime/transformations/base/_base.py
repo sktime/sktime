@@ -1060,6 +1060,17 @@ class BaseTransformer(BaseEstimator):
                 "case 2: higher scitype supported"
                 "case 3: requires vectorization"
 
+        X_data : same as X_inner when not vectorized; multiindex frame when vectorized
+            Already-converted data for ``vectorize_est`` slices and ``remember_data``.
+            None if X was None.
+        y_data : same as y_inner when not vectorized; multiindex frame when vectorized
+            Already-converted data for ``vectorize_est`` slices.
+            None if y was None.
+
+        Always returns ``X_inner, y_inner, X_data, y_data``.
+        If ``return_metadata=True``, returns
+        ``X_inner, y_inner, metadata, X_data, y_data``.
+
         Raises
         ------
         TypeError if X is None
