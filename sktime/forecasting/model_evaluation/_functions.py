@@ -613,7 +613,7 @@ def evaluate(
             3. If ``i == 0`` or ``strategy == "refit"``, the estimator is
             cloned, pretrained on ``y_pretrain``, and fitted on ``y_train``.
             Otherwise it is updated on ``y_train`` according to ``strategy``.
-            4. The estimator predicts ``y_test``.
+            4. The estimator produces predictions``y_pred``, of ``y_test``.
 
             Overall, with ``y_pretrain``, ``y_train``, ``y_test`` as above,
             the following evaluation will be applied at the start of each
