@@ -581,6 +581,51 @@ class BaseBenchmark:
                     TaskObject(**task_kwargs),
                 )
 
+    def _check_ready_to_run(self):
+        """Check that the benchmark defines at least one experiment to run.
+
+        Estimators and task components may be added incrementally, via
+        ``add``, ``add_estimator`` and ``add_task``, so completeness can only
+        be established immediately before the run.
+
+        Raises
+        ------
+        ValueError
+            If no estimators are registered, or if no tasks are registered.
+            The message names the missing component(s).
+        """
+        missing = []
+
+        if not self.estimators.entities:
+            missing.append(
+                "no estimators registered, add one via `add` or `add_estimator`"
+            )
+
+        if not self.tasks.entities:
+            # Tasks are either registered directly via ``add_task``, or
+            # assembled from components by ``register_stored_tasks``. The
+            # component collections are only informative in the latter case;
+            # an ``add_task`` user leaves them empty by design, but already
+            # has tasks and so never reaches this branch.
+            absent = [
+                name
+                for name, collection in (
+                    ("dataset", self._datasets),
+                    ("metric", self._metrics),
+                    ("cv_splitter", self._cv_splitters),
+                )
+                if not collection
+            ]
+            detail = f", missing {', '.join(absent)}" if absent else ""
+            missing.append(
+                f"no tasks registered{detail}. A task requires a dataset, a "
+                "metric and a cv_splitter; add the missing component(s) via "
+                "`add`, or register a complete task via `add_task`"
+            )
+
+        if missing:
+            raise ValueError("Benchmark cannot run: " + "; ".join(missing) + ".")
+
     def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
         """Run benchmarking for all registered tasks and estimators.
 
@@ -604,7 +649,15 @@ class BaseBenchmark:
         -------
         pandas.DataFrame
             Summary of benchmark run.
+
+        Raises
+        ------
+        ValueError
+            If no estimators or no tasks are registered, see
+            ``_check_ready_to_run``.
         """
+        self._check_ready_to_run()
+
         results = _BenchmarkingResults(path=results_path)
         self._failed_experiments = []
 
@@ -718,6 +771,13 @@ class BaseBenchmark:
         -------
         pandas.DataFrame
             Summary of benchmark run for all completed experiments.
+
+        Raises
+        ------
+        ValueError
+            If the benchmark defines no experiments to run, i.e. if no
+            estimators are registered, or if no tasks are registered because
+            a dataset, metric or cv_splitter is missing.
         """
         return self._run(output_file, force_rerun)
 
