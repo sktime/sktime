@@ -507,22 +507,6 @@ class GreedyGaussianSegmentation(BaseDetector):
             labels[start:stop] = i
         return labels
 
-    def fit_predict(self, X) -> npt.ArrayLike:
-        """Perform segmentation.
-
-        Parameters
-        ----------
-        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
-            1D array of time series values, or 2D array with index along the first
-            dimension and columns representing features of the time series.
-
-        Returns
-        -------
-        y_pred : array_like
-            1D array of segment labels indexed by segment
-        """
-        return self.fit(X, None).predict(X)
-
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
