@@ -124,54 +124,6 @@ def _get_column_order_and_datatype(
     return metrics_metadata.copy()
 
 
-# should we remove _split since this is no longer being used?
-def _split(
-    y,
-    X,
-    train,
-    test,
-    freq=None,
-):
-    # split data according to cv
-    y_train, y_test = y.iloc[train], y.iloc[test]
-    X_train, X_test = None, None
-
-    if X is not None:
-        # For X_test, we select the full range of test/train values.
-        # for those transformers that change the size of input.
-        test_plus_train = np.append(train, test)
-        X_train, X_test = (
-            X.iloc[train].sort_index(),
-            X.iloc[test_plus_train].sort_index(),
-        )  # Defensive sort
-
-    # Defensive assignment of freq
-    if freq is not None:
-        try:
-            if y_train.index.nlevels == 1:
-                y_train.index.freq = freq
-                y_test.index.freq = freq
-            else:
-                # See: https://github.com/pandas-dev/pandas/issues/33647
-                y_train.index.levels[-1].freq = freq
-                y_test.index.levels[-1].freq = freq
-        except AttributeError:  # Can't set attribute for range or period index
-            pass
-
-        if X is not None:
-            try:
-                if X.index.nlevels == 1:
-                    X_train.index.freq = freq
-                    X_test.index.freq = freq
-                else:
-                    X_train.index.levels[-1].freq = freq
-                    X_test.index.levels[-1].freq = freq
-            except AttributeError:  # Can't set attribute for range or period index
-                pass
-
-    return y_train, y_test, X_train, X_test
-
-
 def _select_fh_from_y(y):
     # create forecasting horizon
     # if cv object has fh, we use that
@@ -199,6 +151,66 @@ def _get_pred_args_from_metric(scitype, metric):
 
 
 def _evaluate_window(x, meta):
+    """Evaluate forecaster on a single temporal CV fold.
+
+    Called once per temporal train/test split produced by ``evaluate``
+    (one row of the output ``DataFrame``). Fits or updates the forecaster,
+    makes predictions, computes metrics, and returns a one-row results
+    ``DataFrame``.
+
+    Parameters
+    ----------
+    x : tuple
+        Split index and fold data. Always has the form ``(i, split)``, where
+        ``i`` is the temporal fold index passed in from ``evaluate``.
+        In global mode, ``i`` resets to ``0`` at the start of each instance
+        fold; in local mode, ``i`` is simply the index of the temporal split.
+
+        If ``meta["global_mode"]`` is ``False``, ``split`` is
+        ``(y_train, y_test, X_train, X_test)``.
+
+        If ``meta["global_mode"]`` is ``True``, ``split`` is
+        ``(y_pretrain, y_train, y_test, X_pretrain, X_train, X_test)``.
+        Series are named after the forecaster method they are passed to:
+
+        - ``y_pretrain``, ``X_pretrain``:  ``pretrain``
+        - ``y_train``, ``X_train``: ``fit`` / ``update``
+        - ``y_test``: scoring; ``X_test``: ``predict``
+
+    meta : dict
+        Evaluation configuration, assembled by ``evaluate``. Expected keys:
+
+        - ``global_mode`` : bool, whether global evaluation is active
+        - ``fh`` : forecasting horizon; if ``None``, inferred from ``y_test``
+        - ``forecaster`` : forecaster instance to evaluate
+        - ``strategy`` : {"refit", "update", "no-update_params"}
+        - ``scoring`` : dict of metrics grouped by prediction scitype
+        - ``return_data`` : bool, include fold data columns in result
+        - ``return_model`` : bool, include fitted forecaster in result
+        - ``error_score`` : value assigned on fit/predict failure, or ``"raise"``
+        - ``cutoff_dtype`` : dtype string for the cutoff column
+
+    Returns
+    -------
+    result : pd.DataFrame
+        One-row DataFrame with metric scores, runtimes, cutoff, and optional
+        fold data or fitted forecaster columns.
+    forecaster : BaseForecaster, optional
+        Returned only if ``strategy == "update"``, or if
+        ``strategy == "no-update_params"`` and ``i == 0``. The fitted forecaster
+        is passed to the next temporal fold when ``evaluate`` runs sequentially.
+
+    Notes
+    -----
+    Each call handles exactly one temporal fold with a fixed ``i``. The fit
+    branch is taken when ``i == 0`` (first temporal fold of an instance fold,
+    or first split overall) or when ``strategy == "refit"``: clone the
+    forecaster, optionally ``pretrain`` in global mode, then ``fit``.
+    Otherwise ``update`` is called on ``y_train``.
+
+    Predictions are cached per prediction scitype so multiple metrics sharing
+    the same scitype reuse a single predict call.
+    """
     global_mode = meta["global_mode"]
     # unpack args
     if global_mode:
