@@ -190,6 +190,37 @@ class authors(_BaseTag):
     }
 
 
+class sktime_version(_BaseTag):
+    """Version of ``sktime`` from which the object originates.
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"sktime_version"``
+    - Private tag, developer and framework facing
+    - Values: string, ``sktime`` version identifier
+    - Example: ``"0.30.0"``
+    - Default: no restriction
+
+    The ``sktime_version`` tag of an object is a string specifying the
+    ``sktime`` version from which the estimator class originates,
+    i.e., the version in which the class was first added to ``sktime``.
+
+    The tag is used for packaging metadata and provenance tracking
+    of the object.
+
+    IMPORTANT: this tag is automatically set by the base classes.
+    It should not be manually set by developers.
+    """
+
+    _tags = {
+        "tag_name": "sktime_version",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "sktime version from which this estimator class originates",
+        "user_facing": False,
+    }
+
+
 class python_version(_BaseTag):
     """Python version requirement specifier for the object (PEP 440).
 
@@ -2062,6 +2093,36 @@ class capability__inverse_transform__exact(_BaseTag):
     }
 
 
+class skip_inverse_transform(_BaseTag):
+    """Behaviour flag: skips inverse transform when called.
+
+    - String name: ``"skip-inverse-transform"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer skips the inverse transform
+    when used in a pipeline.
+
+    This tag specifies whether the inverse transform should be skipped
+    when the transformer is used in a pipeline.
+
+    If the tag is ``False``, the inverse transform is carried out normally,
+    provided that the transformer supports inverse transformation.
+    """
+
+    _tags = {
+        "tag_name": "skip-inverse-transform",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "behaviour flag: skips inverse_transform when called yes/no",
+        "user_facing": True,
+    }
+
+
 class transform_returns_same_time_index(_BaseTag):
     """Property: transformer returns same time index as input.
 
@@ -3640,18 +3701,6 @@ class info__source(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "sktime_version",
-        "object",
-        "str",
-        "sktime version from which this estimator class originates",
-    ),
-    (
-        "skip-inverse-transform",
-        "transformer",
-        "bool",
-        "behaviour flag: skips inverse_transform when called yes/no",
-    ),
-    (
         "X-y-must-have-same-index",
         ["forecaster", "regressor", "transformer"],
         "bool",
@@ -3743,12 +3792,6 @@ ESTIMATOR_TAG_REGISTER = [
         "detector",
         "str",
         "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
-    ),
-    (
-        "learning_type",
-        "detector",
-        "str",
-        "type of learning, e.g., 'supervised', 'unsupervised'",
     ),
     (
         "reserved_params",
