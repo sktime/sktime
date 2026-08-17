@@ -132,6 +132,7 @@ these types of objects.
     capability__feature_importance
     capability__contractable
     capability__train_estimate
+    capability__multithreading
     capability__random_state
     property__randomness
 

@@ -860,6 +860,33 @@ class capability__train_estimate(_BaseTag):
     }
 
 
+class capability__multithreading(_BaseTag):
+    """Capability: the classifier can use multiple threads.
+
+    - String name: ``"capability:multithreading"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to classifiers and early classifiers.
+
+    If the tag is ``True``, the classifier exposes an ``n_jobs`` parameter that
+    can be used to run supported operations with multiple threads.
+
+    If the tag is ``False``, the classifier does not expose this standard
+    multithreading configuration.
+    """
+
+    _tags = {
+        "tag_name": "capability:multithreading",
+        "parent_type": ["classifier", "early_classifier"],
+        "tag_type": "bool",
+        "short_descr": "can the classifier set n_jobs to use multiple threads?",
+        "user_facing": True,
+    }
+
+
 class capability__random_state(_BaseTag):
     """Capability: the estimator can be derandomized using a random_state.
 
@@ -3750,12 +3777,6 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "is the transformer result guaranteed to have no missing values?",
-    ),
-    (
-        "capability:multithreading",
-        ["classifier", "early_classifier"],
-        "bool",
-        "can the classifier set n_jobs to use multiple threads?",
     ),
     (
         "classifier_type",
