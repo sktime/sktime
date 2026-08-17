@@ -113,6 +113,77 @@ class TSB(BaseForecaster):
 
         self._f = f
 
+        # terminal state of the recursion, so that ``_update`` can continue it
+        # incrementally instead of refitting from scratch. Unlike Croston, TSB
+        # needs no periods-since-last-demand counter: ``p`` is smoothed every
+        # period, towards 1 on demand periods and towards 0 otherwise, so the
+        # elapsed-gap information is already carried in ``p`` itself.
+        self._d_last = d[-1]
+        self._p_last = p[-1]
+        self._seen_demand = bool(np.any(y > 0))
+
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters on new data.
+
+        Continues the TSB recursion from the state persisted by ``_fit``,
+        rather than refitting on the full history.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Time series with which to update the forecaster. Contains only the
+            new observations, not the full history.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if not update_params:
+            return self
+
+        y = y.to_numpy()
+        n_new = len(y)
+        if n_new == 0:
+            return self
+
+        # If ``_fit`` saw no non-zero demand, ``argmax(y > 0)`` returned 0 and
+        # the demand size was initialized to ``y[0] == 0``, which then
+        # propagates unchanged through zero periods. That is not the state a
+        # fit on the concatenated series would reach, so refit on accumulated
+        # history instead. Note this affects ``d`` only: ``p`` is initialized
+        # to the constant 0.5, independently of ``first_occurrence``.
+        if not self._seen_demand and np.any(y > 0):
+            return self._fit(y=self._y, X=X, fh=None)
+
+        alpha = self.alpha
+        beta = self.beta
+
+        d, p, f = np.full((3, n_new + 1), np.nan)
+        d[0] = self._d_last
+        p[0] = self._p_last
+        f[0] = self._f[-1]
+
+        for t in range(0, n_new):
+            if y[t] > 0:
+                d[t + 1] = alpha * y[t] + (1 - alpha) * d[t]
+                p[t + 1] = beta * 1 + (1 - beta) * p[t]
+                f[t + 1] = d[t + 1] * p[t + 1]
+            else:
+                d[t + 1] = d[t]
+                p[t + 1] = (1 - beta) * p[t]
+                f[t + 1] = d[t + 1] * p[t + 1]
+
+        self._f = np.concatenate([self._f, f[1:]])
+        self._d_last = d[-1]
+        self._p_last = p[-1]
+        self._seen_demand = self._seen_demand or bool(np.any(y > 0))
+
         return self
 
     def _predict(
