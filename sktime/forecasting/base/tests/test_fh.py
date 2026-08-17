@@ -407,18 +407,24 @@ def test_get_duration(n_timepoints, index_type):
             _make_index(n_timepoints, index_type)
 
 
-FIXED_FREQUENCY_STRINGS = ["10min", "H", "D", "2D"]
-NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
+FIXED_FREQUENCY_STRINGS = ["10min", "h", "D", "2D"]
+NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT"]
 FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
 
 def _get_expected_freqstr(freqstr):
-    # special case for 10min, T is being deprecated and replaced by min
-    if _check_soft_dependencies("pandas<2.2.0", severity="none"):
+    """Return the canonical freqstr for the installed pandas version.
+
+    On pandas<2.1.0, 'ME'/'YE' do not exist; we map back to the old alias.
+    On pandas>=2.1.0, modern aliases are used ('ME' instead of 'M', etc.).
+    """
+    pandas_lt_21 = _check_soft_dependencies("pandas<2.1.0", severity="none")
+    if pandas_lt_21:
+        # pandas<2.1.0: "10min" is represented as "10T"
         if freqstr == "10min":
             return "10T"
         return freqstr
-    # on more recent pandas versions, >=2.2.0
+    # pandas>=2.1.0: modern aliases are canonical
     if freqstr == "H":
         return "h"
     if freqstr == "M":
@@ -433,7 +439,8 @@ def _get_expected_freqstr(freqstr):
 @pytest.mark.parametrize("freqstr", FREQUENCY_STRINGS)
 def test_to_absolute_freq(freqstr):
     """Test conversion when anchorings included in frequency."""
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    dt_freqstr = _get_expected_freqstr(freqstr)
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=dt_freqstr, periods=3))
     cutoff = get_cutoff(train, return_index=True)
     fh = ForecastingHorizon([1, 2, 3])
 
@@ -449,7 +456,8 @@ def test_to_absolute_freq(freqstr):
 def test_absolute_to_absolute_with_integer_horizon(freqstr):
     """Test converting between absolute and relative with integer horizon."""
     # Converts from absolute to relative and back to absolute
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    dt_freqstr = _get_expected_freqstr(freqstr)
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=dt_freqstr, periods=3))
     cutoff = get_cutoff(train, return_index=True)
     fh = ForecastingHorizon([1, 2, 3])
     abs_fh = fh.to_absolute(cutoff)
@@ -490,7 +498,8 @@ def test_absolute_to_absolute_with_timedelta_horizon(freqstr):
 def test_relative_to_relative_with_integer_horizon(freqstr):
     """Test converting between relative and absolute with integer horizons."""
     # Converts from relative to absolute and back to relative
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freqstr, periods=3))
+    dt_freqstr = _get_expected_freqstr(freqstr)
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=dt_freqstr, periods=3))
     cutoff = get_cutoff(train, return_index=True)
     fh = ForecastingHorizon([1, 2, 3])
     abs_fh = fh.to_absolute(cutoff)
@@ -530,7 +539,7 @@ def test_to_relative(freq: str):
     Fixes bug in
     https://github.com/sktime/sktime/issues/1935#issue-1114814142
     """
-    freq = "2H"
+    freq = "2h"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
     cutoff = get_cutoff(t, return_index=True, reverse_order=True)
     fh_abs = ForecastingHorizon(t, is_relative=False)
@@ -547,7 +556,8 @@ def test_to_relative(freq: str):
 def test_to_absolute_int(idx: int, freq: str):
     """Test converting between relative and absolute."""
     # Converts from relative to absolute and back to relative
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
+    dt_freq = _get_expected_freqstr(freq)
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=dt_freq, periods=5))
     fh = ForecastingHorizon([1, 2, 3])
     cutoff = train.index[[idx]]
     cutoff.freq = train.index.freq
@@ -564,7 +574,8 @@ def test_to_absolute_int(idx: int, freq: str):
 def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
     """Test converting between relative and absolute, freq passed to fh."""
     # Converts from relative to absolute and back to relative
-    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=freq, periods=5))
+    dt_freq = _get_expected_freqstr(freq)
+    train = pd.Series(1, index=pd.date_range("2021-10-06", freq=dt_freq, periods=5))
     fh = ForecastingHorizon([1, 2, 3], freq=freq)
     cutoff = train.index[idx]
     absolute_int = fh.to_absolute_int(start=train.index[0], cutoff=cutoff)
@@ -621,7 +632,7 @@ def test_error_with_incorrect_string_frequency(freq: str):
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-@pytest.mark.parametrize("freqstr", ["M", "D"])
+@pytest.mark.parametrize("freqstr", ["ME", "D"])
 def test_frequency_setter(freqstr):
     """Test frequency setter."""
     fh = ForecastingHorizon([1, 2, 3])
@@ -645,7 +656,7 @@ def test_auto_ets():
 
     https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
-    freq = "30T"
+    freq = "30min"
     _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
     t = pd.date_range("2021-09-19", periods=50, freq=freq)
     y = pd.Series(_y, index=t)
@@ -670,7 +681,7 @@ def test_auto_ets_case_with_naive():
 
     https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
-    freq = "30T"
+    freq = "30min"
     _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
     t = pd.date_range("2021-09-19", periods=50, freq=freq)
     y = pd.Series(_y, index=t)
@@ -697,7 +708,7 @@ def test_exponential_smoothing():
     """
     y = load_airline()
     # Change index to 10 min interval
-    freq = "10Min"
+    freq = "10min"
     time_range = pd.date_range(
         pd.to_datetime("2019-01-01 00:00"),
         pd.to_datetime("2019-01-01 23:55"),
@@ -727,7 +738,7 @@ def test_exponential_smoothing_case_with_naive():
     """
     y = load_airline()
     # Change index to 10 min interval
-    freq = "10Min"
+    freq = "10min"
     time_range = pd.date_range(
         pd.to_datetime("2019-01-01 00:00"),
         pd.to_datetime("2019-01-01 23:55"),
@@ -858,8 +869,15 @@ def test_extract_freq_from_inputs() -> None:
 )
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_extract_freq_from_cutoff(freq: str) -> None:
-    """Test extract frequency from cutoff."""
-    assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == freq
+    """Test extract frequency from cutoff.
+
+    Compares the canonical freqstr of the extracted offset against the
+    modern alias. On pandas>=2.2.0, comparing a pandas offset object directly
+    with a deprecated alias string (e.g. MonthEnd() == "M") emits a
+    FutureWarning, so we use .freqstr and the modern alias form instead.
+    """
+    freq_obj = _extract_freq_from_cutoff(pd.Period("2020", freq=freq))
+    assert freq_obj.freqstr == _get_expected_freqstr(freq)
 
 
 @pytest.mark.skipif(
@@ -1006,8 +1024,13 @@ def test_tz_preserved():
     assert fh_absolute[0].tz == cutoff.tz
 
 
-# the "XE" frequencies are not supported by pandas 1 or 2.0.X
-FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
+# The "XE" / modern-alias frequencies ("YE", "ME", etc.) require pandas>=2.1.0.
+# The deprecated aliases "Y", "M", "2Y", "3M" still work on all of pandas 2.x
+# (they emit a FutureWarning on >=2.2.0, but are not removed until pandas 3.0).
+# We test both the deprecated and modern forms on pandas 2.x to ensure backward
+# compatibility, and only exclude the deprecated aliases on pandas>=3 where they
+# are removed entirely.  There is NO 2.2.0-based distinction here.
+FREQ_STR_FOR_PD22 = []
 
 if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
     FREQ_STR_FOR_PD22 += [
@@ -1023,6 +1046,10 @@ if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
         "3YS",
     ]
 
+# Deprecated aliases: still valid on pandas<3, removed on pandas>=3.
+if _check_soft_dependencies("pandas<3", severity="none"):
+    FREQ_STR_FOR_PD22 += ["Y", "2Y", "M", "3M"]
+
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
@@ -1033,15 +1060,23 @@ def test_pandas22_freq(freq):
     """Test that to_absolute and to_relative conversions work with all freqs.
 
     Failure case in bug #6499.
+    Tests both deprecated aliases (on pandas<3) and modern aliases (on pandas>=2.1).
+    Deprecated aliases emit FutureWarning on pandas>=2.2; we accept that warning here
+    because we are specifically testing that the deprecated form still functions
+    correctly on pandas 2.x before removal in pandas 3.0.
     """
+    import warnings
+
     fh = ForecastingHorizon([1, 2, 3])
 
-    datetime_ = pd.date_range("1/1/1870", periods=20, freq=freq)
-    cutoff = datetime_[[-1]]
-    cutoff.freq = datetime_.freq
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", FutureWarning)
+        datetime_ = pd.date_range("1/1/1870", periods=20, freq=freq)
+        cutoff = datetime_[[-1]]
+        cutoff.freq = datetime_.freq
 
-    fh.to_absolute(cutoff)  # failure 1
-    fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
+        fh.to_absolute(cutoff)  # failure 1
+        fh.to_absolute(cutoff).to_relative(cutoff)  # failure 2
 
 
 @pytest.mark.skipif(
