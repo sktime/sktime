@@ -131,14 +131,14 @@ class ForecastingBenchmark(BaseBenchmark):
             full evaluation algorithm.
 
             1. The ``cv_global`` splitter is used to split data at instance level,
-            into a global pretrain set ``y_pretrain``,
-            and a global test set ``y_test_global``. This is index ``j``.
+               into a global pretrain set ``y_pretrain``,
+               and a global test set ``y_test_global``. This is index ``j``.
             2. ``cv_splitter`` then splits the global test set ``y_test_global``
-            temporally, to obtain temporal splits ``y_train``, ``y_test``.
-            This is index ``i``.
+               temporally, to obtain temporal splits ``y_train``, ``y_test``.
+               This is index ``i``.
             3. If ``i == 0`` or ``strategy == "refit"``, the estimator is
-            cloned, pretrained on ``y_pretrain``, and fitted on ``y_train``.
-            Otherwise it is updated on ``y_train`` according to ``strategy``.
+               cloned, pretrained on ``y_pretrain``, and fitted on ``y_train``.
+               Otherwise it is updated on ``y_train`` according to ``strategy``.
             4. The estimator produces predictions ``y_pred``, of ``y_test``.
 
             Overall, with ``y_pretrain``, ``y_train``, ``y_test`` as above,
