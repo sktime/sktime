@@ -223,6 +223,7 @@ class _ArpsDcaBase(BaseForecaster):
         self.params_cov_ = pcov
 
         t_last = t[-1]
+        self.t_last_ = t_last
         q_last_obs = q[-1]
         q_last_model = self._rate_func(t_last, *popt)
 
@@ -249,11 +250,25 @@ class _ArpsDcaBase(BaseForecaster):
 
         return self
 
-    def _apply_forecast_transforms(self, y_pred):
-        """Apply anchoring and cumulative offset to raw model predictions."""
+    def _apply_forecast_transforms(self, y_pred, cum_baseline_raw=None):
+        """Apply anchoring and cumulative offset to raw model predictions.
+
+        Parameters
+        ----------
+        y_pred : np.ndarray
+            Raw model output (rate or cumulative) at the forecast horizon,
+            for the same parameter values used to compute ``cum_baseline_raw``.
+        cum_baseline_raw : np.ndarray or float, default=None
+            Raw (pre-anchor) cumulative-function value evaluated at the
+            cutoff (``t_last_``), using the same parameters as ``y_pred``.
+            Must be passed whenever ``self.output == "cumulative"``; it is
+            unused, and the default applies, when ``self.output == "rate"``.
+            Anchors the cumulative curve to ``base_np`` *at the cutoff*
+            rather than at the first requested forecast horizon point.
+        """
         y_pred = y_pred * self.anchor_scale_ + self.anchor_shift_
         if self.output == "cumulative":
-            baseline = y_pred[0] if y_pred.ndim == 1 else y_pred[:, [0]]
+            baseline = cum_baseline_raw * self.anchor_scale_ + self.anchor_shift_
             y_pred = (y_pred - baseline) + self.base_np
         return y_pred
 
@@ -275,7 +290,14 @@ class _ArpsDcaBase(BaseForecaster):
         fh_abs = fh.to_absolute_index(self.cutoff)
         t = self._index_to_float_array(fh_abs) - self.t0_
         func = self._rate_func if self.output == "rate" else self._cum_func
-        y_pred = self._apply_forecast_transforms(func(t, *self.params_))
+        cum_baseline_raw = (
+            self._cum_func(self.t_last_, *self.params_)
+            if self.output == "cumulative"
+            else None
+        )
+        y_pred = self._apply_forecast_transforms(
+            func(t, *self.params_), cum_baseline_raw
+        )
 
         cols = self._get_varnames()
         y_arr = np.asarray(y_pred).reshape(-1, len(cols))
@@ -297,7 +319,14 @@ class _ArpsDcaBase(BaseForecaster):
                 RuntimeWarning,
                 stacklevel=3,
             )
-            y_point = self._apply_forecast_transforms(func(t, *self.params_))
+            cum_baseline_raw = (
+                self._cum_func(self.t_last_, *self.params_)
+                if self.output == "cumulative"
+                else None
+            )
+            y_point = self._apply_forecast_transforms(
+                func(t, *self.params_), cum_baseline_raw
+            )
             return np.asarray(y_point).reshape(1, -1)
 
         rng = np.random.default_rng(self.random_state)
@@ -312,11 +341,15 @@ class _ArpsDcaBase(BaseForecaster):
             ) from e
 
         param_samples = self._clip_param_samples(param_samples)
+        sample_params = [param_samples[:, [i]] for i in range(param_samples.shape[1])]
 
-        y_pred = func(
-            t, *[param_samples[:, [i]] for i in range(param_samples.shape[1])]
+        y_pred = func(t, *sample_params)
+        cum_baseline_raw = (
+            self._cum_func(self.t_last_, *sample_params)
+            if self.output == "cumulative"
+            else None
         )
-        return self._apply_forecast_transforms(y_pred)
+        return self._apply_forecast_transforms(y_pred, cum_baseline_raw)
 
     def _predict_quantiles(self, fh, X, alpha):
         """Compute prediction quantiles via Monte Carlo parameter sampling.
