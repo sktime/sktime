@@ -19,6 +19,7 @@ from sktime.classification.model_evaluation import evaluate
 from sktime.exceptions import NotFittedError
 from sktime.utils.parallel import parallelize
 from sktime.utils.sklearn._scoring import _resolve_scoring
+from sktime.utils.warnings import warn
 
 
 def _check_param_grid(param_grid):
@@ -76,22 +77,6 @@ def _coerce_y(y):
     if y.ndim == 2 and y.shape[1] == 1:
         y = y.flatten()
     return y
-
-
-def _resolve_backend(backend, backend_params, n_jobs):
-    """Resolve the parallelization backend, with legacy n_jobs as a fallback.
-
-    ``n_jobs`` is used only if no ``backend`` is passed, and maps to ``loky``.
-    ``n_jobs`` of None or 1 means no parallelization.
-    """
-    if backend is not None:
-        return backend, backend_params
-    if n_jobs in (None, 1):
-        return None, backend_params
-
-    backend_params = dict(backend_params) if backend_params else {}
-    backend_params["n_jobs"] = n_jobs
-    return "loky", backend_params
 
 
 def _resolve_cv(cv, y, estimator_type):
@@ -410,6 +395,21 @@ def _fit_and_time(estimator, X, y):
     return time.perf_counter() - start
 
 
+def _check_n_jobs(tuner):
+    """Warn if the deprecated n_jobs parameter of a tuner is set."""
+    # todo 2.0.0: check if this is still necessary
+    # n_jobs is deprecated, left due to use in tutorials, books, blog posts
+    if tuner.n_jobs != "deprecated":
+        warn(
+            f"Parameter n_jobs of {type(tuner).__name__} has been removed "
+            "in sktime 1.2.0 and is no longer used. It is ignored when passed. "
+            "Instead, the backend and backend_params parameters should be used "
+            "to pass n_jobs or other parallelization parameters.",
+            obj=tuner,
+            stacklevel=2,
+        )
+
+
 def _fit_tuner(tuner, X, y, estimator_type):
     """Run the grid search for a tuner, and write the results to it.
 
@@ -426,9 +426,7 @@ def _fit_tuner(tuner, X, y, estimator_type):
     -------
     tuner : reference to ``tuner``, with the fitted attributes written
     """
-    backend, backend_params = _resolve_backend(
-        tuner.backend, tuner.backend_params, tuner.n_jobs
-    )
+    _check_n_jobs(tuner)
 
     results = _run_grid_search(
         estimator=tuner.estimator,
@@ -441,8 +439,8 @@ def _fit_tuner(tuner, X, y, estimator_type):
         greater_is_better=tuner.greater_is_better,
         refit=tuner.refit,
         error_score=tuner.error_score,
-        backend=backend,
-        backend_params=backend_params,
+        backend=tuner.backend,
+        backend_params=tuner.backend_params,
         verbose=tuner.verbose,
     )
     for name, value in results.items():
@@ -536,13 +534,6 @@ class TSCGridSearchCV(_DelegatedClassifier):
           candidates, unless ``refit`` names another. Dict keys are used as the
           metric names in ``cv_results_``
         - if None, defaults to ``accuracy_score``
-
-    n_jobs : int, default=None
-        Number of jobs to run in parallel over the parameter candidates, via the
-        ``loky`` backend of ``joblib``. ``None`` or 1 means no parallelization,
-        ``-1`` means using all processors. Retained for backwards compatibility,
-        and ignored if ``backend`` is passed. For finer control of
-        parallelization, use ``backend`` and ``backend_params`` instead.
 
     refit : bool, str, or callable, default=True
         Refit ``best_estimator_`` using the best found parameters on the whole
@@ -708,7 +699,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         "capability:multioutput": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
-        "capability:multithreading": True,
+        "capability:multithreading": False,
         "capability:predict_proba": True,
         "capability:categorical_in_X": True,
         # CI and test flags
@@ -726,7 +717,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         estimator,
         param_grid,
         scoring=None,
-        n_jobs=None,
+        n_jobs="deprecated",
         refit=True,
         cv=None,
         verbose=0,

@@ -48,13 +48,6 @@ class TSRGridSearchCV(_DelegatedRegressor):
           metric names in ``cv_results_``
         - if None, defaults to ``r2_score``
 
-    n_jobs : int, default=None
-        Number of jobs to run in parallel over the parameter candidates, via the
-        ``loky`` backend of ``joblib``. ``None`` or 1 means no parallelization,
-        ``-1`` means using all processors. Retained for backwards compatibility,
-        and ignored if ``backend`` is passed. For finer control of
-        parallelization, use ``backend`` and ``backend_params`` instead.
-
     refit : bool, str, or callable, default=True
         Refit ``best_estimator_`` using the best found parameters on the whole
         dataset. If False, ``predict`` raises, and the tuner can be used only to
@@ -213,7 +206,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
         "capability:multioutput": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
-        "capability:multithreading": True,
+        "capability:multithreading": False,
         "capability:categorical_in_X": True,
     }
 
@@ -227,7 +220,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
         estimator,
         param_grid,
         scoring=None,
-        n_jobs=None,
+        n_jobs="deprecated",
         refit=True,
         cv=None,
         verbose=0,

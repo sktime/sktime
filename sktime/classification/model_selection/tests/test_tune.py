@@ -145,18 +145,24 @@ def test_get_fitted_params_contains_best_params():
     assert "best_estimator" in fitted_params
 
 
-def test_n_jobs_and_backend_give_same_result():
+def test_backend_gives_same_result():
     """Parallelization over candidates does not change the result."""
     sequential, _, _ = _fit_tuner()
-    via_n_jobs, _, _ = _fit_tuner(n_jobs=2)
-    via_backend, _, _ = _fit_tuner(backend="loky", backend_params={"n_jobs": 2})
+    parallel, _, _ = _fit_tuner(backend="loky", backend_params={"n_jobs": 2})
 
-    for parallel in [via_n_jobs, via_backend]:
-        np.testing.assert_allclose(
-            sequential.cv_results_["mean_test_score"],
-            parallel.cv_results_["mean_test_score"],
-        )
-        assert parallel.best_params_ == sequential.best_params_
+    np.testing.assert_allclose(
+        sequential.cv_results_["mean_test_score"],
+        parallel.cv_results_["mean_test_score"],
+    )
+    assert parallel.best_params_ == sequential.best_params_
+
+
+def test_n_jobs_is_deprecated():
+    """n_jobs is ignored, and warns when passed."""
+    with pytest.warns(UserWarning, match="n_jobs"):
+        tuner, _, _ = _fit_tuner(n_jobs=2)
+
+    assert tuner.best_params_ in tuner.cv_results_["params"]
 
 
 def test_inert_params_are_accepted():
