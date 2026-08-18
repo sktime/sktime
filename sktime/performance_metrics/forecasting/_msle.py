@@ -37,15 +37,19 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
     by_index : bool, default=False
         If True, return the metric value at each time point.
         If False, return the aggregate metric value.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import MeanSquaredLogError
+    >>> y_true = np.array([1.0, 2.0, 3.0])
+    >>> y_pred = np.array([1.0, 2.0, 4.0])
+    >>> msle = MeanSquaredLogError()
+    >>> round(float(msle(y_true, y_pred)), 3)
+    0.017
     """
 
     func = mean_squared_log_error
-
-    _tags = {
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
-    }
 
     def __init__(
         self,
