@@ -135,6 +135,15 @@ def test_get_fitted_params_contains_best_params():
     assert "best_estimator" in fitted_params
 
 
+def test_get_fitted_params_without_refit():
+    """With refit=False there are no fitted params, but no exception either."""
+    tuner, _, _ = _fit_tuner(refit=False)
+    fitted_params = tuner.get_fitted_params()
+
+    assert isinstance(fitted_params, dict)
+    assert fitted_params["constant"] == tuner.best_params_["constant"]
+
+
 def test_no_sklearn_gridsearch_delegate():
     """The tuner does not wrap a sklearn GridSearchCV."""
     from sklearn.model_selection import GridSearchCV

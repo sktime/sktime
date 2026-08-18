@@ -320,9 +320,15 @@ class TSRGridSearchCV(_DelegatedRegressor):
             The best hyper-parameters, and the fitted parameters of
             ``best_estimator_`` if available, the former taking precedence.
         """
-        from sktime.classification.model_selection._tune import _tuner_fitted_params
+        fitted_params = {}
+        # best_estimator_ is fitted only if refit is not False
+        if self.refit:
+            fitted_params = self.best_estimator_.get_fitted_params()
 
-        return _tuner_fitted_params(self)
+        fitted_params = {**fitted_params, **self.best_params_}
+        fitted_params.update(self._get_fitted_params_default())
+
+        return fitted_params
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

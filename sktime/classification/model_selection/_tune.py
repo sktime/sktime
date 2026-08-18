@@ -474,25 +474,6 @@ def _coerce_prediction(y_pred):
     return y_pred
 
 
-def _tuner_fitted_params(tuner):
-    """Get the fitted parameters of a tuner.
-
-    The best parameters, and the fitted parameters of ``best_estimator_``
-    if available, the former taking precedence.
-    """
-    fitted_params = {}
-    try:
-        fitted_params = tuner.best_estimator_.get_fitted_params()
-    except (NotFittedError, NotImplementedError):
-        # unfitted if refit=False, or the estimator has no fitted params to report
-        pass
-
-    fitted_params = {**fitted_params, **tuner.best_params_}
-    fitted_params.update(tuner._get_fitted_params_default())
-
-    return fitted_params
-
-
 class TSCGridSearchCV(_DelegatedClassifier):
     """Exhaustive search over specified parameter values for a classifier.
 
@@ -830,7 +811,15 @@ class TSCGridSearchCV(_DelegatedClassifier):
             The best hyper-parameters, and the fitted parameters of
             ``best_estimator_`` if available, the former taking precedence.
         """
-        return _tuner_fitted_params(self)
+        fitted_params = {}
+        # best_estimator_ is fitted only if refit is not False
+        if self.refit:
+            fitted_params = self.best_estimator_.get_fitted_params()
+
+        fitted_params = {**fitted_params, **self.best_params_}
+        fitted_params.update(self._get_fitted_params_default())
+
+        return fitted_params
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

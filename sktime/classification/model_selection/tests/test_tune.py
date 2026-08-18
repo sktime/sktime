@@ -145,6 +145,15 @@ def test_get_fitted_params_contains_best_params():
     assert "best_estimator" in fitted_params
 
 
+def test_get_fitted_params_without_refit():
+    """With refit=False there are no fitted params, but no exception either."""
+    tuner, _, _ = _fit_tuner(refit=False)
+    fitted_params = tuner.get_fitted_params()
+
+    assert isinstance(fitted_params, dict)
+    assert fitted_params["strategy"] == tuner.best_params_["strategy"]
+
+
 def test_backend_gives_same_result():
     """Parallelization over candidates does not change the result."""
     sequential, _, _ = _fit_tuner()
