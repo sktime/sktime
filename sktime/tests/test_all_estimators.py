@@ -6,19 +6,20 @@ adapted from scikit-learn's estimator_checks
 
 __author__ = ["mloning", "fkiraly", "achieveordie"]
 
-import io
 import numbers
 import os
 import sys
 import types
 import warnings
 from copy import deepcopy
-from inspect import getfullargspec, isclass, signature
+from inspect import getfullargspec, signature
 from tempfile import TemporaryDirectory
 
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.testing import BaseFixtureGenerator as _BaseFixtureGenerator
+from skbase.testing import QuickTester as _QuickTester
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.base import BaseEstimator, BaseObject, load
@@ -40,9 +41,6 @@ from sktime.tests._config import (
     VALID_ESTIMATOR_TAGS,
 )
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils._testing._conditional_fixtures import (
-    create_conditional_fixtures_and_names,
-)
 from sktime.utils._testing.estimator_checks import (
     _assert_array_almost_equal,
     _assert_array_equal,
@@ -139,7 +137,7 @@ class PackageConfig:
     filter_tags = {"tests:skip_all": False}
 
 
-class BaseFixtureGenerator(PackageConfig):
+class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
     """Fixture generator for base testing functionality in sktime.
 
     Test classes inheriting from this and not overriding pytest_generate_tests
@@ -229,42 +227,6 @@ class BaseFixtureGenerator(PackageConfig):
                 "has any effect."
             )
 
-    def pytest_generate_tests(self, metafunc):
-        """Test parameterization routine for pytest.
-
-        This uses create_conditional_fixtures_and_names and generator_dict to create the
-        fixtures for a mark.parametrize decoration of all tests.
-        """
-        # get name of the test
-        test_name = metafunc.function.__name__
-
-        fixture_sequence = self.fixture_sequence
-
-        fixture_vars = getfullargspec(metafunc.function)[0]
-
-        (
-            fixture_param_str,
-            fixture_prod,
-            fixture_names,
-        ) = create_conditional_fixtures_and_names(
-            test_name=test_name,
-            fixture_vars=fixture_vars,
-            generator_dict=self.generator_dict(),
-            fixture_sequence=fixture_sequence,
-            raise_exceptions=True,
-        )
-
-        # determine indirect variables for the parametrization block
-        #   this is intersection of self.indirect_vixtures with args in fixture_vars
-        indirect_vars = list(set(fixture_vars).intersection(self.indirect_fixtures))
-
-        metafunc.parametrize(
-            fixture_param_str,
-            fixture_prod,
-            ids=fixture_names,
-            indirect=indirect_vars,
-        )
-
     def _all_objects(self):
         """Retrieve list of all object classes of type self.object_type_filter."""
         est_list = all_estimators(
@@ -287,28 +249,6 @@ class BaseFixtureGenerator(PackageConfig):
 
         return est_list
 
-    def generator_dict(self):
-        """Return dict with methods _generate_[variable] collected in a dict.
-
-        The returned dict is the one required by create_conditional_fixtures_and_names,
-            used in this _conditional_fixture plug-in to pytest_generate_tests, above.
-
-        Returns
-        -------
-        generator_dict : dict, with keys [variable], where
-            [variable] are all strings such that self has a static method
-                named _generate_[variable](test_name: str, **kwargs)
-            value at [variable] is a reference to _generate_[variable]
-        """
-        gens = [attr for attr in dir(self) if attr.startswith("_generate_")]
-        vars = [gen.replace("_generate_", "") for gen in gens]
-
-        generator_dict = dict()
-        for var, gen in zip(vars, gens):
-            generator_dict[var] = getattr(self, gen)
-
-        return generator_dict
-
     def is_excluded(self, test_name, est):
         """Shorthand to check whether test test_name is excluded for estimator est."""
         # there are two conditions for exclusion:
@@ -327,54 +267,6 @@ class BaseFixtureGenerator(PackageConfig):
     # function with name _generate_[fixture_var] returns list of values for fixture_var
     #   where fixture_var is a fixture variable used in tests
     # the list is conditional on values of other fixtures which can be passed in kwargs
-
-    def _generate_object_class(self, test_name, **kwargs):
-        """Return estimator class fixtures.
-
-        Fixtures parametrized
-        ---------------------
-        object_class: estimator inheriting from BaseObject
-            ranges over all estimator classes not excluded by EXCLUDED_TESTS
-        """
-        estimator_classes_to_test = [
-            est for est in self._all_objects() if not self.is_excluded(test_name, est)
-        ]
-
-        estimator_names = [est.__name__ for est in estimator_classes_to_test]
-
-        return estimator_classes_to_test, estimator_names
-
-    def _generate_object_instance(self, test_name, **kwargs):
-        """Return estimator instance fixtures.
-
-        Fixtures parametrized
-        ---------------------
-        object_instance: instance of estimator inheriting from BaseObject
-            ranges over all estimator classes not excluded by EXCLUDED_TESTS
-            instances are generated by create_test_instance class method
-        """
-        # call _generate_object_class to get all the classes
-        estimator_classes_to_test, _ = self._generate_object_class(test_name=test_name)
-
-        # create instances from the classes
-        estimator_instances_to_test = []
-        estimator_instance_names = []
-        # retrieve all estimator parameters if multiple, construct instances
-        for est in estimator_classes_to_test:
-            all_instances_of_est, instance_names = est.create_test_instances_and_names()
-            estimator_instances_to_test += all_instances_of_est
-            estimator_instance_names += instance_names
-
-        return estimator_instances_to_test, estimator_instance_names
-
-    # this is executed before each test instance call
-    #   if this were not executed, object_instance would keep state changes
-    #   within executions of the same test with different parameters
-    @pytest.fixture(scope="function")
-    def object_instance(self, request):
-        """object_instance fixture definition for indirect use."""
-        # object_instance is cloned at the start of every test
-        return request.param.clone()
 
     # todo 1.3.0: remove the four members below, they are deprecation aliases
     #   for the fixtures renamed in 1.2.0, estimator_class -> object_class
@@ -527,18 +419,20 @@ class BaseFixtureGenerator(PackageConfig):
         return list(nsc_list_arraylike)
 
 
-class QuickTester:
+class QuickTester(_QuickTester):
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
+    # todo 1.3.0: remove the estimator arg, and the deprecation branch below
     def run_tests(
         self,
-        estimator,
+        obj=None,
         raise_exceptions=False,
         tests_to_run=None,
         fixtures_to_run=None,
         tests_to_exclude=None,
         fixtures_to_exclude=None,
         verbose=False,
+        estimator=None,
     ):
         """Run all tests on one single estimator.
 
@@ -558,7 +452,8 @@ class QuickTester:
 
         Parameters
         ----------
-        estimator : estimator class or estimator instance
+        obj : object class or object instance
+            the object to run tests on
 
         raise_exceptions : bool, optional, default=False
             whether to return exceptions/failures in the results dict, or raise them
@@ -582,6 +477,9 @@ class QuickTester:
         fixtures_to_exclude : str or list of str, fixtures to exclude. default = None
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
+
+        estimator : object class or object instance, optional
+            deprecated alias of ``obj``, will be removed in 1.3.0
 
         verbose : int or bool, optional, default=1.
             verbosity level for printouts from tests run.
@@ -622,168 +520,61 @@ class QuickTester:
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
         """
-        from _pytest.outcomes import Skipped
         from skbase.utils.stderr_mute import StderrMute
-        from skbase.utils.stdout_mute import StdoutMute
 
-        tests_to_run = self._check_none_str_or_list_of_str(
-            tests_to_run, var_name="tests_to_run"
-        )
-        fixtures_to_run = self._check_none_str_or_list_of_str(
-            fixtures_to_run, var_name="fixtures_to_run"
-        )
-        tests_to_exclude = self._check_none_str_or_list_of_str(
-            tests_to_exclude, var_name="tests_to_exclude"
-        )
-        fixtures_to_exclude = self._check_none_str_or_list_of_str(
-            fixtures_to_exclude, var_name="fixtures_to_exclude"
-        )
+        # todo 1.3.0: remove this block
+        if estimator is not None:
+            warnings.warn(
+                "The estimator argument of QuickTester.run_tests is deprecated "
+                "and will be removed in sktime 1.3.0. Use obj instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if obj is not None:
+                raise TypeError("pass either obj or estimator, not both")
+            obj = estimator
 
-        # retrieve tests from self
-        test_names = [attr for attr in dir(self) if attr.startswith("test")]
+        # skbase mutes stdout only, sktime also mutes stderr, so that
+        # deep learning backends do not flood the test log
+        with StderrMute(active=int(verbose) < 2):
+            return super().run_tests(
+                obj=obj,
+                raise_exceptions=raise_exceptions,
+                tests_to_run=tests_to_run,
+                fixtures_to_run=fixtures_to_run,
+                tests_to_exclude=tests_to_exclude,
+                fixtures_to_exclude=fixtures_to_exclude,
+                verbose=verbose,
+            )
 
-        # we override the generator_dict, by replacing it with temp_generator_dict:
-        #  the only estimator (class or instance) is est, this is overridden
-        #  the remaining fixtures are generated conditionally, without change
-        temp_generator_dict = deepcopy(self.generator_dict())
+    @staticmethod
+    def _subset_generator_dict(obj, generator_dict):
+        """Subset generator dict to obj, retaining deprecated fixture aliases.
 
-        if isclass(estimator):
-            object_class = estimator
-        else:
-            object_class = type(estimator)
+        Extends the ``skbase`` implementation by the deprecated fixture name
+        aliases. Without these, a test using a deprecated fixture name would
+        range over all objects in the package, instead of only over ``obj``.
+        """
+        generator_dict = _QuickTester._subset_generator_dict(obj, generator_dict)
 
-        def _generate_object_class(test_name, **kwargs):
-            return [object_class], [object_class.__name__]
-
-        def _generate_object_instance(test_name, **kwargs):
-            return [estimator.clone()], [object_class.__name__]
-
-        def _generate_object_instance_cls(test_name, **kwargs):
-            return object_class.create_test_instances_and_names()
-
-        temp_generator_dict["object_class"] = _generate_object_class
-
-        if not isclass(estimator):
-            temp_generator_dict["object_instance"] = _generate_object_instance
-        else:
-            temp_generator_dict["object_instance"] = _generate_object_instance_cls
-
-        # todo 1.3.0: remove the overrides of the deprecated alias keys.
-        #   Without these, a test using the deprecated fixture names would range
-        #   over all objects in the package, instead of only over estimator.
+        # todo 1.3.0: remove the overrides of the deprecated alias keys
         for _old, _new in [
             ("estimator_class", "object_class"),
             ("estimator_instance", "object_instance"),
         ]:
-            if _old in temp_generator_dict:
-                temp_generator_dict[_old] = temp_generator_dict[_new]
-        # override of generator_dict end, temp_generator_dict is now prepared
+            if _old in generator_dict:
+                generator_dict[_old] = generator_dict[_new]
 
-        # sub-setting to specific tests to run, if tests or fixtures were specified
-        if tests_to_run is None and fixtures_to_run is None:
-            test_names_subset = test_names
-        else:
-            test_names_subset = []
-            if tests_to_run is not None:
-                test_names_subset += list(set(test_names).intersection(tests_to_run))
-            if fixtures_to_run is not None:
-                # fixture codes contain the test as substring until the first "["
-                tests_from_fixt = [fixt.split("[")[0] for fixt in fixtures_to_run]
-                test_names_subset += list(set(test_names).intersection(tests_from_fixt))
-            test_names_subset = list(set(test_names_subset))
-
-        # sub-setting by removing all tests from tests_to_exclude
-        if tests_to_exclude is not None:
-            test_names_subset = list(
-                set(test_names_subset).difference(tests_to_exclude)
-            )
-
-        # the below loops run all the tests and collect the results here:
-        results = dict()
-        # loop A: we loop over all the tests
-        for test_name in test_names_subset:
-            test_fun = getattr(self, test_name)
-            fixture_sequence = self.fixture_sequence
-
-            # all arguments except the first one (self)
-            test_fun_vars = getfullargspec(test_fun)[0][1:]
-            fixture_vars = [var for var in fixture_sequence if var in test_fun_vars]
-
-            # this call retrieves the conditional fixtures
-            #  for the test test_name, and the estimator
-            _, fixture_prod, fixture_names = create_conditional_fixtures_and_names(
-                test_name=test_name,
-                fixture_vars=fixture_vars,
-                generator_dict=temp_generator_dict,
-                fixture_sequence=fixture_sequence,
-                raise_exceptions=raise_exceptions,
-            )
-
-            # if function is decorated with mark.parametrize, add variable settings
-            # NOTE: currently this works only with single-variable mark.parametrize
-            if hasattr(test_fun, "pytestmark"):
-                if len([x for x in test_fun.pytestmark if x.name == "parametrize"]) > 0:
-                    # get the three lists from pytest
-                    (
-                        pytest_fixture_vars,
-                        pytest_fixture_prod,
-                        pytest_fixture_names,
-                    ) = self._get_pytest_mark_args(test_fun)
-                    # add them to the three lists from conditional fixtures
-                    fixture_vars, fixture_prod, fixture_names = self._product_fixtures(
-                        fixture_vars,
-                        fixture_prod,
-                        fixture_names,
-                        pytest_fixture_vars,
-                        pytest_fixture_prod,
-                        pytest_fixture_names,
-                    )
-
-            def print_if_verbose(msg):
-                if int(verbose) > 0:
-                    print(msg)  # noqa: T001, T201
-
-            # loop B: for each test, we loop over all fixtures
-            for params, fixt_name in zip(fixture_prod, fixture_names):
-                # this is needed because pytest unwraps 1-tuples automatically
-                # but subsequent code assumes params is k-tuple, no matter what k is
-                if len(fixture_vars) == 1:
-                    params = (params,)
-                key = f"{test_name}[{fixt_name}]"
-                args = dict(zip(fixture_vars, params))
-
-                for f in test_fun_vars:
-                    if f not in args:
-                        args[f] = self._make_builtin_fixture_equivalents(f)
-
-                # we subset to test-fixtures to run by this, if given
-                #  key is identical to the pytest test-fixture string identifier
-                if fixtures_to_run is not None and key not in fixtures_to_run:
-                    continue
-                if fixtures_to_exclude is not None and key in fixtures_to_exclude:
-                    continue
-
-                print_if_verbose(f"{key}")
-
-                try:
-                    with StderrMute(active=verbose < 2), StdoutMute(active=verbose < 2):
-                        test_fun(**deepcopy(args))
-                    results[key] = "PASSED"
-                    print_if_verbose("PASSED")
-                except Skipped as err:
-                    results[key] = f"SKIPPED: {err.msg}"
-                    print_if_verbose(f"SKIPPED: {err.msg}")
-                except Exception as err:
-                    results[key] = err
-                    print_if_verbose(f"FAILED: {err}")
-                    if raise_exceptions:
-                        raise err
-
-        return results
+        return generator_dict
 
     @staticmethod
     def _check_none_str_or_list_of_str(obj, var_name="obj"):
-        """Check that obj is None, str, or list of str, and coerce to list of str."""
+        """Check that obj is None, str, or list of str, and coerce to list of str.
+
+        Retained locally to prevent a bug with generator expressions in
+        ``np.all`` (present in ``skbase <= 1.0.2``). Pending upstream
+        ``skbase`` fix.
+        """
         if obj is not None:
             msg = f"{var_name} must be None, str, or list of str"
             if isinstance(obj, str):
@@ -793,119 +584,6 @@ class QuickTester:
             if not np.all([isinstance(x, str) for x in obj]):
                 raise ValueError(msg)
         return obj
-
-    # todo: surely there is a pytest method that can be called instead of this?
-    #   find and replace if it exists
-    @staticmethod
-    def _get_pytest_mark_args(fun):
-        """Get args from pytest mark annotation of function.
-
-        Parameters
-        ----------
-        fun: callable, any function
-
-        Returns
-        -------
-        pytest_fixture_vars: list of str
-            names of args participating in mark.parametrize marks, in pytest order
-        pytest_fixt_list: list of tuple
-            list of value tuples from the mark parameterization
-            i-th value in each tuple corresponds to i-th arg name in pytest_fixture_vars
-        pytest_fixt_names: list of str
-            i-th element is display name for i-th fixture setting in pytest_fixt_list
-        """
-        from itertools import product
-
-        marks = [x for x in fun.pytestmark if x.name == "parametrize"]
-
-        def to_str(obj):
-            return [str(x) for x in obj]
-
-        def get_id(mark):
-            if "ids" in mark.kwargs.keys():
-                return mark.kwargs["ids"]
-            else:
-                return to_str(range(len(mark.args[1])))
-
-        pytest_fixture_vars = [x.args[0] for x in marks]
-        pytest_fixt_raw = [x.args[1] for x in marks]
-        pytest_fixt_list = product(*pytest_fixt_raw)
-        pytest_fixt_names_raw = [get_id(x) for x in marks]
-        pytest_fixt_names = product(*pytest_fixt_names_raw)
-        pytest_fixt_names = ["-".join(x) for x in pytest_fixt_names]
-
-        return pytest_fixture_vars, pytest_fixt_list, pytest_fixt_names
-
-    @staticmethod
-    def _product_fixtures(
-        fixture_vars,
-        fixture_prod,
-        fixture_names,
-        pytest_fixture_vars,
-        pytest_fixture_prod,
-        pytest_fixture_names,
-    ):
-        """Compute products of two sets of fixture vars, values, names."""
-        from itertools import product
-
-        # product of fixture variable names = concatenation
-        fixture_vars_return = fixture_vars + pytest_fixture_vars
-
-        # this is needed because pytest unwraps 1-tuples automatically
-        # but subsequent code assumes params is k-tuple, no matter what k is
-        if len(fixture_vars) == 1:
-            fixture_prod = [(x,) for x in fixture_prod]
-
-        # product of fixture products = Cartesian product plus append tuples
-        fixture_prod_return = product(fixture_prod, pytest_fixture_prod)
-        fixture_prod_return = [sum(x, ()) for x in fixture_prod_return]
-
-        # product of fixture names = Cartesian product plus concat
-        fixture_names_return = product(fixture_names, pytest_fixture_names)
-        fixture_names_return = ["-".join(x) for x in fixture_names_return]
-
-        return fixture_vars_return, fixture_prod_return, fixture_names_return
-
-    def _make_builtin_fixture_equivalents(self, name):
-        import logging
-        import tempfile
-        from pathlib import Path
-
-        values = {}
-        if "tmp_path" == name:
-            return Path(tempfile.mkdtemp())
-        if "capsys" == name:
-            # crude emulation using StringIO
-            return type(
-                "Capsys",
-                (),
-                {
-                    "out": io.StringIO(),
-                    "err": io.StringIO(),
-                    "readouterr": lambda x: (x.out.getvalue(), x.err.getvalue()),
-                },
-            )()
-
-        if "monkeypatch" == name:
-            from _pytest.monkeypatch import MonkeyPatch
-
-            return MonkeyPatch()
-
-        if "caplog" == name:
-
-            class Caplog:
-                def __init__(self):
-                    self.records = []
-                    self.handler = logging.Handler()
-                    self.handler.emit = self.records.append
-                    logging.getLogger().addHandler(self.handler)
-
-                def clear(self):
-                    self.records.clear()
-
-            return Caplog()
-
-        return values
 
 
 class TestAllObjects(BaseFixtureGenerator, QuickTester):
