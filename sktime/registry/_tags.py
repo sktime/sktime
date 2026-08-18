@@ -2393,7 +2393,7 @@ class learning_type(_BaseTag):
 
     - String name: ``"learning_type"``
     - Public property tag
-    - Values: string, one of ``"supervised"``, ``"unsupervised"``
+    - Values: string, one of ``"supervised"``, ``"unsupervised"``, ``"semi_supervised"``
     - Example: ``"unsupervised"``
     - Default: ``"None"`` (placeholder, concrete detectors must set the tag)
 
@@ -2403,6 +2403,8 @@ class learning_type(_BaseTag):
 
     * ``"supervised"``: The detector learns from labelled data.
     * ``"unsupervised"``: The detector learns from unlabelled data.
+    * If ``semi_supervised``, the detector learns from a combination of labelled and
+      unlabelled data.
     """
 
     _tags = {
