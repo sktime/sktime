@@ -132,6 +132,7 @@ class BaggingForecaster(BaseForecaster):
         tags_to_clone = [
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
+            "capability:categorical_in_X",  # can the estimator handle categorical X?
         ]
         if self.forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)

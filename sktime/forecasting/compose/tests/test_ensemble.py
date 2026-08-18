@@ -150,3 +150,21 @@ def test_invalid_aggfuncs(forecasters, aggfunc):
     forecaster.fit(y, fh=[1, 2])
     with pytest.raises(ValueError, match=r"not recognized"):
         forecaster.predict()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(EnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_categorical_in_x_tag_delegation():
+    """Test that capability:categorical_in_X is True iff all components have it."""
+    from sktime.forecasting.compose import ForecastX
+
+    fcst_cat = NaiveForecaster()  # capability:categorical_in_X is True
+    fcst_no_cat = ForecastX(NaiveForecaster(), NaiveForecaster())  # tag is False
+
+    ens1 = EnsembleForecaster([("a", fcst_cat), ("b", NaiveForecaster())])
+    ens2 = EnsembleForecaster([("a", fcst_cat), ("b", fcst_no_cat)])
+
+    assert ens1.get_tag("capability:categorical_in_X")
+    assert not ens2.get_tag("capability:categorical_in_X")

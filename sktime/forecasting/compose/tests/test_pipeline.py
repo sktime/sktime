@@ -16,6 +16,7 @@ from sktime.datatypes import get_examples
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.compose import (
     ForecastingPipeline,
+    ForecastX,
     TransformedTargetForecaster,
     YfromX,
     make_reduction,
@@ -852,3 +853,65 @@ def test_transformed_target_forecaster_predict_proba_dunder():
     quantiles = dist.quantile([0.1, 0.5, 0.9])
     assert not quantiles.isnull().any().any()
     assert quantiles.shape[0] == len(fh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [ForecastingPipeline, TransformedTargetForecaster, ForecastX]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_categorical_in_x_tag_delegation():
+    """Test that pipelines set capability:categorical_in_X from their components.
+
+    ForecastingPipeline passes X through all transformers and then to the forecaster,
+    so the tag is True iff all steps have it True.
+
+    TransformedTargetForecaster passes X to the forecaster, and to transformers
+    as their y, so the tag is True iff the forecaster has it True and all
+    transformers that use y have capability:categorical_in_y True.
+    """
+    from sktime.transformations.base import BaseTransformer
+
+    fcst_cat = NaiveForecaster()  # capability:categorical_in_X is True
+    fcst_no_cat = ForecastX(NaiveForecaster(), NaiveForecaster())  # tag is False
+    trafo_cat = Imputer()  # capability:categorical_in_X is True
+    trafo_no_cat = ExponentTransformer()  # capability:categorical_in_X is False
+
+    assert fcst_cat.get_tag("capability:categorical_in_X")
+    assert not fcst_no_cat.get_tag("capability:categorical_in_X")
+    assert trafo_cat.get_tag("capability:categorical_in_X")
+    assert not trafo_no_cat.get_tag("capability:categorical_in_X")
+
+    # ForecastingPipeline: all steps must support categorical X
+    pipe1 = ForecastingPipeline([trafo_cat, fcst_cat])
+    pipe2 = ForecastingPipeline([trafo_no_cat, fcst_cat])
+    pipe3 = ForecastingPipeline([trafo_cat, fcst_no_cat])
+
+    assert pipe1.get_tag("capability:categorical_in_X")
+    assert not pipe2.get_tag("capability:categorical_in_X")
+    assert not pipe3.get_tag("capability:categorical_in_X")
+
+    # TransformedTargetForecaster: transformers receive X as y
+    class _TrafoUsesYNoCat(BaseTransformer):
+        _tags = {
+            "y_inner_mtype": "pd.DataFrame",
+            "capability:categorical_in_y": False,
+            "fit_is_empty": True,
+        }
+
+        def _transform(self, X, y=None):
+            return X
+
+    class _TrafoIgnoresYNoCat(_TrafoUsesYNoCat):
+        _tags = {"y_inner_mtype": "None"}
+
+    ttf1 = TransformedTargetForecaster([Detrender(), fcst_cat])
+    ttf2 = TransformedTargetForecaster([Detrender(), fcst_no_cat])
+    ttf3 = TransformedTargetForecaster([_TrafoIgnoresYNoCat(), fcst_cat])
+    ttf4 = TransformedTargetForecaster([_TrafoUsesYNoCat(), fcst_cat])
+
+    assert ttf1.get_tag("capability:categorical_in_X")
+    assert not ttf2.get_tag("capability:categorical_in_X")
+    assert ttf3.get_tag("capability:categorical_in_X")
+    assert not ttf4.get_tag("capability:categorical_in_X")

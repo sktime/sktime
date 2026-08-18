@@ -83,3 +83,20 @@ def test_calculate_data_quantiles():
 
     calc_output = f._calculate_data_quantiles(df, alpha)
     pd.testing.assert_frame_equal(calc_output, output_df)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(BaggingForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_categorical_in_x_tag_delegation():
+    """Test that capability:categorical_in_X is cloned from the wrapped forecaster."""
+    from sktime.forecasting.compose import ForecastX
+
+    fcst_cat = NaiveForecaster()  # capability:categorical_in_X is True
+    fcst_no_cat = ForecastX(NaiveForecaster(), NaiveForecaster())  # tag is False
+
+    assert BaggingForecaster(forecaster=fcst_cat).get_tag("capability:categorical_in_X")
+    assert not BaggingForecaster(forecaster=fcst_no_cat).get_tag(
+        "capability:categorical_in_X"
+    )

@@ -455,6 +455,9 @@ class ForecastingPipeline(_Pipeline):
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
+        # X is passed through all transformers and then to the forecaster,
+        # so categorical X is supported only if all steps support it
+        self._anytagis_then_set("capability:categorical_in_X", False, True, self.steps_)
 
     @property
     def forecaster_(self):
@@ -913,6 +916,7 @@ class TransformedTargetForecaster(_Pipeline):
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
+            "capability:categorical_in_X",  # can the estimator handle categorical X?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -935,6 +939,15 @@ class TransformedTargetForecaster(_Pipeline):
 
         if any_t_use_y:
             self.set_tags(**{"capability:exogenous": True})
+
+        # transformers receive X as their y (see fit_transform(X=y, y=X) calls),
+        # so a transformer that uses y must also support categorical y,
+        # otherwise the pipeline cannot support categorical X
+        for _, est in pre_ts + post_ts:
+            uses_y = est.get_tag("y_inner_mtype") != "None"
+            if uses_y and not est.get_tag("capability:categorical_in_y"):
+                self.set_tags(**{"capability:categorical_in_X": False})
+                break
 
     @property
     def forecaster_(self):
@@ -1536,6 +1549,7 @@ class ForecastX(BaseForecaster):
         "X-y-must-have-same-index": False,
         "fit_is_empty": False,
         "capability:exogenous": True,
+        "capability:categorical_in_X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:missing_values": True,
