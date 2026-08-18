@@ -166,12 +166,20 @@ def test_backend_gives_same_result():
     assert parallel.best_params_ == sequential.best_params_
 
 
-def test_n_jobs_is_deprecated():
-    """n_jobs is ignored, and warns when passed."""
-    with pytest.warns(UserWarning, match="n_jobs"):
-        tuner, _, _ = _fit_tuner(n_jobs=2)
+# todo 1.3.0: remove this test together with the n_jobs and pre_dispatch parameters
+@pytest.mark.parametrize("param", ["n_jobs", "pre_dispatch"])
+def test_deprecated_parallel_params(param):
+    """n_jobs and pre_dispatch warn, and still parallelize as before."""
+    via_backend, _, _ = _fit_tuner(backend="loky", backend_params={param: 2})
 
-    assert tuner.best_params_ in tuner.cv_results_["params"]
+    with pytest.warns(DeprecationWarning, match="sktime 1.3.0"):
+        deprecated, _, _ = _fit_tuner(**{param: 2})
+
+    np.testing.assert_allclose(
+        via_backend.cv_results_["mean_test_score"],
+        deprecated.cv_results_["mean_test_score"],
+    )
+    assert deprecated.best_params_ == via_backend.best_params_
 
 
 def test_inert_params_are_accepted():

@@ -395,19 +395,73 @@ def _fit_and_time(estimator, X, y):
     return time.perf_counter() - start
 
 
-def _check_n_jobs(tuner):
-    """Warn if the deprecated n_jobs parameter of a tuner is set."""
-    # todo 2.0.0: check if this is still necessary
-    # n_jobs is deprecated, left due to use in tutorials, books, blog posts
-    if tuner.n_jobs != "deprecated":
+# backends of parallelize that take joblib.Parallel keyword arguments
+_JOBLIB_BACKENDS = ["loky", "multiprocessing", "threading", "joblib"]
+
+
+# todo 1.3.0: remove this function, and use tuner.backend and tuner.backend_params
+# directly in _fit_tuner, together with removal of the n_jobs and pre_dispatch
+# parameters of TSCGridSearchCV and TSRGridSearchCV
+def _resolve_deprecated_parallel(tuner):
+    """Resolve the deprecated n_jobs and pre_dispatch parameters of a tuner.
+
+    Values passed are forwarded to the joblib backend via ``backend_params``,
+    overriding values present there, so that they keep working as before.
+    If no ``backend`` is set, the ``loky`` backend is selected, as the
+    parameters have no effect on the sequential default.
+
+    Parameters
+    ----------
+    tuner : TSCGridSearchCV or TSRGridSearchCV instance
+
+    Returns
+    -------
+    backend : str or None, backend to pass to ``parallelize``
+    backend_params : dict or None, backend parameters to pass to ``parallelize``
+    """
+    backend = tuner.backend
+    backend_params = tuner.backend_params
+
+    deprecated = {
+        name: getattr(tuner, name)
+        for name in ["n_jobs", "pre_dispatch"]
+        if getattr(tuner, name) != "deprecated"
+    }
+    if len(deprecated) == 0:
+        return backend, backend_params
+
+    cls_name = type(tuner).__name__
+    passed = ", ".join(f"{name}={value!r}" for name, value in deprecated.items())
+
+    if backend is not None and backend not in _JOBLIB_BACKENDS:
         warn(
-            f"Parameter n_jobs of {type(tuner).__name__} has been removed "
-            "in sktime 1.2.0 and is no longer used. It is ignored when passed. "
-            "Instead, the backend and backend_params parameters should be used "
-            "to pass n_jobs or other parallelization parameters.",
+            f"Parameters n_jobs and pre_dispatch of {cls_name} are deprecated "
+            "and will be removed in sktime 1.3.0. The values passed "
+            f"({passed}) apply to joblib backends only, and are ignored for "
+            f"backend={backend!r}. Pass parallelization parameters in "
+            "backend_params instead.",
+            DeprecationWarning,
             obj=tuner,
-            stacklevel=2,
         )
+        return backend, backend_params
+
+    warn(
+        f"Parameters n_jobs and pre_dispatch of {cls_name} are deprecated and "
+        "will be removed in sktime 1.3.0. The values passed "
+        f"({passed}) are forwarded to the joblib backend for now. To retain "
+        "current behaviour and silence this warning, pass them via backend and "
+        f"backend_params instead, e.g., backend='loky', "
+        f"backend_params={deprecated!r}.",
+        DeprecationWarning,
+        obj=tuner,
+    )
+
+    backend_params = dict(backend_params) if backend_params else {}
+    backend_params.update(deprecated)
+    if backend is None:
+        backend = "loky"
+
+    return backend, backend_params
 
 
 def _fit_tuner(tuner, X, y, estimator_type):
@@ -426,7 +480,7 @@ def _fit_tuner(tuner, X, y, estimator_type):
     -------
     tuner : reference to ``tuner``, with the fitted attributes written
     """
-    _check_n_jobs(tuner)
+    backend, backend_params = _resolve_deprecated_parallel(tuner)
 
     results = _run_grid_search(
         estimator=tuner.estimator,
@@ -439,8 +493,8 @@ def _fit_tuner(tuner, X, y, estimator_type):
         greater_is_better=tuner.greater_is_better,
         refit=tuner.refit,
         error_score=tuner.error_score,
-        backend=tuner.backend,
-        backend_params=tuner.backend_params,
+        backend=backend,
+        backend_params=backend_params,
         verbose=tuner.verbose,
     )
     for name, value in results.items():
@@ -474,6 +528,9 @@ def _coerce_prediction(y_pred):
     return y_pred
 
 
+# todo 1.3.0: remove the n_jobs and pre_dispatch parameters, from the
+# signature and the docstring, and remove the call to
+# _resolve_deprecated_parallel in _fit_tuner
 class TSCGridSearchCV(_DelegatedClassifier):
     """Exhaustive search over specified parameter values for a classifier.
 
@@ -516,6 +573,14 @@ class TSCGridSearchCV(_DelegatedClassifier):
           metric names in ``cv_results_``
         - if None, defaults to ``accuracy_score``
 
+    n_jobs : int, optional, default="deprecated"
+        Number of jobs to run in parallel over the parameter candidates.
+
+        Deprecated, and will be removed in sktime 1.3.0. If passed, the value is
+        written to ``backend_params``, and ``backend`` defaults to ``"loky"``,
+        so behaviour is unchanged. To retain the behaviour after removal, pass
+        ``backend="loky"`` and ``backend_params={"n_jobs": ...}`` instead.
+
     refit : bool, str, or callable, default=True
         Refit ``best_estimator_`` using the best found parameters on the whole
         dataset. If False, ``predict`` and ``predict``-like methods raise, and
@@ -552,6 +617,15 @@ class TSCGridSearchCV(_DelegatedClassifier):
     pre_dispatch : int, or str, default='2*n_jobs'
         Retained for backwards compatibility, this parameter is ignored.
         Parallelization is controlled via ``backend`` and ``backend_params``.
+
+    pre_dispatch : int or str, optional, default="deprecated"
+        Number of jobs dispatched during parallel execution, a ``joblib``
+        parameter.
+
+        Deprecated, and will be removed in sktime 1.3.0. If passed, the value is
+        written to ``backend_params``, and ``backend`` defaults to ``"loky"``,
+        so behaviour is unchanged. To retain the behaviour after removal, pass
+        ``backend="loky"`` and ``backend_params={"pre_dispatch": ...}`` instead.
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -680,7 +754,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         "capability:multioutput": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
-        "capability:multithreading": False,
+        "capability:multithreading": True,
         "capability:predict_proba": True,
         "capability:categorical_in_X": True,
         # CI and test flags
@@ -702,7 +776,7 @@ class TSCGridSearchCV(_DelegatedClassifier):
         refit=True,
         cv=None,
         verbose=0,
-        pre_dispatch="2*n_jobs",
+        pre_dispatch="deprecated",
         error_score=np.nan,
         return_train_score=False,
         tune_by_variable=False,

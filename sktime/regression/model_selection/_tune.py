@@ -7,6 +7,9 @@ import numpy as np
 from sktime.regression._delegate import _DelegatedRegressor
 
 
+# todo 1.3.0: remove the n_jobs and pre_dispatch parameters, from the
+# signature and the docstring, and remove the call to
+# _resolve_deprecated_parallel in _fit_tuner
 class TSRGridSearchCV(_DelegatedRegressor):
     """Exhaustive search over specified parameter values for a regressor.
 
@@ -48,6 +51,14 @@ class TSRGridSearchCV(_DelegatedRegressor):
           metric names in ``cv_results_``
         - if None, defaults to ``r2_score``
 
+    n_jobs : int, optional, default="deprecated"
+        Number of jobs to run in parallel over the parameter candidates.
+
+        Deprecated, and will be removed in sktime 1.3.0. If passed, the value is
+        written to ``backend_params``, and ``backend`` defaults to ``"loky"``,
+        so behaviour is unchanged. To retain the behaviour after removal, pass
+        ``backend="loky"`` and ``backend_params={"n_jobs": ...}`` instead.
+
     refit : bool, str, or callable, default=True
         Refit ``best_estimator_`` using the best found parameters on the whole
         dataset. If False, ``predict`` raises, and the tuner can be used only to
@@ -83,6 +94,15 @@ class TSRGridSearchCV(_DelegatedRegressor):
     pre_dispatch : int, or str, default='2*n_jobs'
         Retained for backwards compatibility, this parameter is ignored.
         Parallelization is controlled via ``backend`` and ``backend_params``.
+
+    pre_dispatch : int or str, optional, default="deprecated"
+        Number of jobs dispatched during parallel execution, a ``joblib``
+        parameter.
+
+        Deprecated, and will be removed in sktime 1.3.0. If passed, the value is
+        written to ``backend_params``, and ``backend`` defaults to ``"loky"``,
+        so behaviour is unchanged. To retain the behaviour after removal, pass
+        ``backend="loky"`` and ``backend_params={"pre_dispatch": ...}`` instead.
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -206,7 +226,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
         "capability:multioutput": True,
         "capability:unequal_length": True,
         "capability:missing_values": True,
-        "capability:multithreading": False,
+        "capability:multithreading": True,
         "capability:categorical_in_X": True,
     }
 
@@ -224,7 +244,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
         refit=True,
         cv=None,
         verbose=0,
-        pre_dispatch="2*n_jobs",
+        pre_dispatch="deprecated",
         error_score=np.nan,
         return_train_score=False,
         tune_by_variable=False,
