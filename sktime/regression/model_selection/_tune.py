@@ -207,7 +207,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
         "authors": ["ksharma6", "yash-sangwan"],
         # estimator type
         # --------------
-        "X_inner_mtype": ["nested_univ", "numpy3D"],
+        "X_inner_mtype": "pd-multiindex",
         "y_inner_mtype": ["numpy2D"],
         "capability:multivariate": True,
         "capability:multioutput": True,
@@ -270,11 +270,9 @@ class TSRGridSearchCV(_DelegatedRegressor):
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-            pd.DataFrame with each column a dimension, each cell a pd.Series
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            pd.DataFrame with columns = variables,
+            index = pd.MultiIndex with first level = instance indices,
+            second level = time indices
         y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
             2D np.ndarray of shape [n_instances, n_outputs], target values
 
