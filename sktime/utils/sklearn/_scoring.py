@@ -5,59 +5,14 @@ Turns the ``scoring`` argument of the sktime tuners into metric callables that
 direction needed to select the best parameter candidate.
 """
 # copyright/attribution hyperactive developers, MIT License
-# _guess_greater_is_better is a port of _guess_sign_of_sklmetric from
-# hyperactive.experiment.integrations._skl_metrics, returning a bool instead of a sign
+# _guess_sign_of_sklmetric is a copy of the function of the same name from
+# hyperactive.experiment.integrations._skl_metrics
 
 __author__ = ["fkiraly", "yash-sangwan"]
-__all__ = ["_ResolvedMetric", "_guess_greater_is_better", "_resolve_scoring"]
+__all__ = ["_ResolvedMetric", "_guess_sign_of_sklmetric", "_resolve_scoring"]
 
 from collections import namedtuple
 from inspect import signature
-
-_HIGHER_IS_BETTER = {
-    # classification
-    "accuracy_score": True,
-    "auc": True,
-    "average_precision_score": True,
-    "balanced_accuracy_score": True,
-    "brier_score_loss": False,
-    "class_likelihood_ratios": False,
-    "cohen_kappa_score": True,
-    "d2_log_loss_score": True,
-    "dcg_score": True,
-    "f1_score": True,
-    "fbeta_score": True,
-    "hamming_loss": False,
-    "hinge_loss": False,
-    "jaccard_score": True,
-    "log_loss": False,
-    "matthews_corrcoef": True,
-    "ndcg_score": True,
-    "precision_score": True,
-    "recall_score": True,
-    "roc_auc_score": True,
-    "top_k_accuracy_score": True,
-    "zero_one_loss": False,
-    # regression
-    "d2_absolute_error_score": True,
-    "d2_pinball_score": True,
-    "d2_tweedie_score": True,
-    "explained_variance_score": True,
-    "max_error": False,
-    "mean_absolute_error": False,
-    "mean_absolute_percentage_error": False,
-    "mean_gamma_deviance": False,
-    "mean_pinball_loss": False,
-    "mean_poisson_deviance": False,
-    "mean_squared_error": False,
-    "mean_squared_log_error": False,
-    "mean_tweedie_deviance": False,
-    "median_absolute_error": False,
-    "r2_score": True,
-    "root_mean_squared_error": False,
-    "root_mean_squared_log_error": False,
-}
-
 
 _ResolvedMetric = namedtuple(
     "_ResolvedMetric", ["name", "metric", "sign", "greater_is_better"]
@@ -76,34 +31,82 @@ greater_is_better : bool
 """
 
 
-def _guess_greater_is_better(metric):
-    """Guess whether higher values of a sklearn metric are better.
+def _guess_sign_of_sklmetric(scorer):
+    """Guess the sign of a sklearn metric scorer.
 
     Parameters
     ----------
-    metric : callable
-        sklearn metric function to guess the direction for.
+    scorer : callable
+        The sklearn metric scorer to guess the sign for.
 
     Returns
     -------
-    bool
-        True if higher values are better, False if lower values are better.
+    int
+        1 if higher scores are better, -1 if lower scores are better.
     """
-    metric_name = getattr(metric, "__name__", None)
+    HIGHER_IS_BETTER = {
+        # Classification
+        "accuracy_score": True,
+        "auc": True,
+        "average_precision_score": True,
+        "balanced_accuracy_score": True,
+        "brier_score_loss": False,
+        "class_likelihood_ratios": False,
+        "cohen_kappa_score": True,
+        "d2_log_loss_score": True,
+        "dcg_score": True,
+        "f1_score": True,
+        "fbeta_score": True,
+        "hamming_loss": False,
+        "hinge_loss": False,
+        "jaccard_score": True,
+        "log_loss": False,
+        "matthews_corrcoef": True,
+        "ndcg_score": True,
+        "precision_score": True,
+        "recall_score": True,
+        "roc_auc_score": True,
+        "top_k_accuracy_score": True,
+        "zero_one_loss": False,
+        # Regression
+        "d2_absolute_error_score": True,
+        "d2_pinball_score": True,
+        "d2_tweedie_score": True,
+        "explained_variance_score": True,
+        "max_error": False,
+        "mean_absolute_error": False,
+        "mean_absolute_percentage_error": False,
+        "mean_gamma_deviance": False,
+        "mean_pinball_loss": False,
+        "mean_poisson_deviance": False,
+        "mean_squared_error": False,
+        "mean_squared_log_error": False,
+        "mean_tweedie_deviance": False,
+        "median_absolute_error": False,
+        "r2_score": True,
+        "root_mean_squared_error": False,
+        "root_mean_squared_log_error": False,
+    }
 
-    if hasattr(metric, "greater_is_better"):
-        return bool(metric.greater_is_better)
-    if metric_name is None:
-        # no name available, conservatively assume lower is better
-        return False
-    if metric_name in _HIGHER_IS_BETTER:
-        return _HIGHER_IS_BETTER[metric_name]
-    if metric_name.endswith("_score"):
-        return True
-    if metric_name.endswith(("_loss", "_deviance", "_error")):
-        return False
-    # if the direction cannot be determined, assume lower is better
-    return False
+    scorer_name = getattr(scorer, "__name__", None)
+
+    if hasattr(scorer, "greater_is_better"):
+        return 1 if scorer.greater_is_better else -1
+    if scorer_name is None:
+        # no name available; conservatively assume lower is better
+        return -1
+    if scorer_name in HIGHER_IS_BETTER:
+        return 1 if HIGHER_IS_BETTER[scorer_name] else -1
+    if scorer_name.endswith("_score"):
+        # If the scorer name ends with "_score", we assume higher is better
+        return 1
+    if scorer_name.endswith("_loss") or scorer_name.endswith("_deviance"):
+        # If the scorer name ends with "_loss"/"_deviance", assume lower is better
+        return -1
+    if scorer_name.endswith("_error"):
+        return -1
+    # If we cannot determine the sign, assume lower is better
+    return -1
 
 
 def _default_metric(estimator_type):
@@ -257,7 +260,7 @@ def _resolve_scoring(scoring, estimator_type, greater_is_better="auto"):
 
     greater_is_better : "auto", bool, optional, default="auto"
         whether higher values of the reported metric are better.
-        If "auto", is determined from the metric, via ``_guess_greater_is_better``
+        If "auto", is determined from the metric, via ``_guess_sign_of_sklmetric``
         for metric callables, and from the sign convention for sklearn scorers.
 
     Returns
@@ -294,7 +297,7 @@ def _resolve_scoring(scoring, estimator_type, greater_is_better="auto"):
         name, metric, sign, from_scorer = _resolve_one(entry, estimator_type)
         if greater_is_better == "auto":
             # scorers are higher-is-better by construction, after their sign
-            direction = True if from_scorer else _guess_greater_is_better(metric)
+            direction = from_scorer or _guess_sign_of_sklmetric(metric) == 1
         else:
             direction = greater_is_better
         resolved.append(_ResolvedMetric(key or name, metric, sign, direction))

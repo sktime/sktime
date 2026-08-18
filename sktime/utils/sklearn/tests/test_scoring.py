@@ -18,7 +18,7 @@ from sklearn.metrics import (
 )
 
 from sktime.utils.sklearn._scoring import (
-    _guess_greater_is_better,
+    _guess_sign_of_sklmetric,
     _resolve_scoring,
 )
 
@@ -29,13 +29,13 @@ TABLE_LOWER = [mean_squared_error, log_loss, max_error]
 @pytest.mark.parametrize("metric", TABLE_HIGHER)
 def test_guess_direction_table_higher(metric):
     """Metrics in the lookup table with higher-is-better are recognized."""
-    assert _guess_greater_is_better(metric)
+    assert _guess_sign_of_sklmetric(metric) == 1
 
 
 @pytest.mark.parametrize("metric", TABLE_LOWER)
 def test_guess_direction_table_lower(metric):
     """Metrics in the lookup table with lower-is-better are recognized."""
-    assert not _guess_greater_is_better(metric)
+    assert _guess_sign_of_sklmetric(metric) == -1
 
 
 def test_guess_direction_table_without_suffix():
@@ -45,13 +45,13 @@ def test_guess_direction_table_without_suffix():
     """
     from sklearn.metrics import class_likelihood_ratios, matthews_corrcoef
 
-    assert _guess_greater_is_better(matthews_corrcoef)
-    assert not _guess_greater_is_better(class_likelihood_ratios)
+    assert _guess_sign_of_sklmetric(matthews_corrcoef) == 1
+    assert _guess_sign_of_sklmetric(class_likelihood_ratios) == -1
 
 
 @pytest.mark.parametrize(
     "suffix, expected",
-    [("_score", True), ("_loss", False), ("_deviance", False), ("_error", False)],
+    [("_score", 1), ("_loss", -1), ("_deviance", -1), ("_error", -1)],
 )
 def test_guess_direction_suffix(suffix, expected):
     """Metrics outside the lookup table are classified by their name suffix."""
@@ -60,7 +60,7 @@ def test_guess_direction_suffix(suffix, expected):
         return 0.0
 
     metric.__name__ = f"custom{suffix}"
-    assert _guess_greater_is_better(metric) == expected
+    assert _guess_sign_of_sklmetric(metric) == expected
 
 
 def test_guess_direction_unknown_name():
@@ -70,7 +70,7 @@ def test_guess_direction_unknown_name():
         return 0.0
 
     metric.__name__ = "my_metric"
-    assert not _guess_greater_is_better(metric)
+    assert _guess_sign_of_sklmetric(metric) == -1
 
 
 def test_guess_direction_no_name():
@@ -80,11 +80,11 @@ def test_guess_direction_no_name():
         def __call__(self, y_true, y_pred):
             return 0.0
 
-    assert not _guess_greater_is_better(NamelessMetric())
+    assert _guess_sign_of_sklmetric(NamelessMetric()) == -1
 
 
-@pytest.mark.parametrize("greater_is_better", [True, False])
-def test_guess_direction_attribute(greater_is_better):
+@pytest.mark.parametrize("greater_is_better, sign", [(True, 1), (False, -1)])
+def test_guess_direction_attribute(greater_is_better, sign):
     """An explicit greater_is_better attribute takes precedence over the name."""
 
     def metric(y_true, y_pred):
@@ -92,7 +92,7 @@ def test_guess_direction_attribute(greater_is_better):
 
     metric.__name__ = "mean_squared_error"
     metric.greater_is_better = greater_is_better
-    assert _guess_greater_is_better(metric) == greater_is_better
+    assert _guess_sign_of_sklmetric(metric) == sign
 
 
 def test_resolve_default_classifier():
