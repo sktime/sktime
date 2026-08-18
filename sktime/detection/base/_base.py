@@ -48,13 +48,11 @@ class BaseDetector(BaseEstimator):
         * If ``anomaly_detection``, the detector finds points that differ significantly
         from the normal statistical properties of the timeseries.
 
-    learning_type : str {"supervised", "unsupervised", "semi_supervised"}
+    learning_type : str {"supervised", "unsupervised"}
         Detection learning type:
 
         * If ``supervised``, the detector learns from labelled data.
         * If ``unsupervised``, the detector learns from unlabelled data.
-        * If ``semi_supervised``, the detector learns from a combination of labelled
-          and unlabelled data.
 
     Notes
     -----
@@ -156,7 +154,7 @@ class BaseDetector(BaseEstimator):
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
               or ranges to indices of ``X``, as below.
-            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+            * ``"label"`` - if the task, by tags, is supervised
               segmentation with labels, or segment clustering.
 
             The meaning of entries in the ``"ilocs"`` column and ``"labels"``
@@ -232,7 +230,7 @@ class BaseDetector(BaseEstimator):
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
               or ranges to indices of ``X``, as below.
-            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+            * ``"label"`` - if the task, by tags, is supervised
               segmentation with labels, or segment clustering.
 
             The meaning of entries in the ``"ilocs"`` column and ``"labels"``
@@ -382,7 +380,7 @@ class BaseDetector(BaseEstimator):
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
               or ranges to indices of ``X``, as below.
-            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+            * ``"label"`` - if the task, by tags, is supervised
               segmentation with labels, or segment clustering.
 
             The meaning of entries in the ``"ilocs"`` column and ``"labels"``
@@ -407,7 +405,7 @@ class BaseDetector(BaseEstimator):
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
               or ranges to indices of ``X``, as below.
-            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+            * ``"label"`` - if the task, by tags, is supervised
               segmentation, or segment clustering.
 
             The meaning of entries in the ``"ilocs"`` column and ``"labels"``
@@ -448,7 +446,7 @@ class BaseDetector(BaseEstimator):
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
               or ranges to indices of ``X``, as below.
-            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+            * ``"label"`` - if the task, by tags, is supervised
               segmentation with labels, or segment clustering.
 
             The meaning of entries in the ``"ilocs"`` column and ``"labels"``
@@ -473,7 +471,7 @@ class BaseDetector(BaseEstimator):
             * ``"ilocs"`` - always. Values encode where/when the event takes place,
               via ``iloc`` references to indices of ``X``,
               or ranges to indices of ``X``, as below.
-            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+            * ``"label"`` - if the task, by tags, is supervised
               segmentation with labels, or segment clustering.
 
             The meaning of entries in the ``"ilocs"`` column and ``"labels"``
@@ -733,7 +731,7 @@ class BaseDetector(BaseEstimator):
             * ``"ilocs"`` - always. Values are left-closed intervals with
               left/right values being ``iloc`` references to indices of ``X``,
               signifying segments.
-            * ``"labels"`` - if the task, by tags, is supervised or semi-supervised
+            * ``"labels"`` - if the task, by tags, is supervised
               segmentation, or segment clustering.
 
             The meaning of segments in the ``"ilocs"`` column and ``"labels"``
@@ -777,7 +775,7 @@ class BaseDetector(BaseEstimator):
 
             * ``"ilocs"`` - always. Values are integers, ``iloc``
               references to indices of ``X``, signifying points of interest.
-            * ``"labels"`` - if the task, by tags, is supervised or semi-supervised
+            * ``"labels"`` - if the task, by tags, is supervised
               segmentation, or anomaly clustering.
 
             The meaning of segments in the ``"ilocs"`` column and ``"labels"``

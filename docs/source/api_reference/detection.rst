@@ -10,7 +10,7 @@ for time series detection tasks, including:
 * change point detection
 * time series segmentation and segment detection
 
-The tasks include unsupervised and semi-supervised variants, and can batch or
+The tasks include unsupervised and supervised variants, and can batch or
 stream/online detection.
 
 All detectors in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
