@@ -876,14 +876,12 @@ class TSCGridSearchCV(_DelegatedClassifier):
         param1 = {
             "estimator": TimeSeriesSVC(kernel=mean_rbf_tskernel, probability=True),
             "param_grid": {"C": [0.1, 1]},
-            "cv": 2,
         }
 
         param2 = {
             "estimator": TimeSeriesSVC(kernel=mean_eucl_tskernel, probability=True),
             "param_grid": {"kernel__transformer": [DotProduct(), RBF()]},
             "scoring": accuracy_score,
-            "cv": 2,
         }
 
         return [param1, param2]

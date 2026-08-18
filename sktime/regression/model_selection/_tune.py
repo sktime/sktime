@@ -364,14 +364,12 @@ class TSRGridSearchCV(_DelegatedRegressor):
         param1 = {
             "estimator": KNeighborsTimeSeriesRegressor(distance=mean_eucl_tsdist),
             "param_grid": {"n_neighbors": [1, 3, 5]},
-            "cv": 2,
         }
 
         param2 = {
             "estimator": KNeighborsTimeSeriesRegressor(distance=mean_cb_tsdist),
             "param_grid": {"distance__metric": ["euclidean", "cityblock"]},
             "scoring": r2_score,
-            "cv": 2,
         }
 
         return [param1, param2]
