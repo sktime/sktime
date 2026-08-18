@@ -225,6 +225,7 @@ class AutoTS(BaseForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_autots_custom"],
         "tests:python_dependencies": ["matplotlib"],
     }
 
