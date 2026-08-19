@@ -13,6 +13,7 @@
   "badgeTemplate": "[![All Contributors](https://img.shields.io/badge/all_contributors-<%= contributors.length %>-orange.svg)](#contributors)",
   "skipCi": true,
   "contributors": [
+
     {
       "login": "fkiraly",
       "name": "Franz Kiraly",
@@ -55,6 +56,13 @@
         "test",
         "tutorial"
       ]
+    },
+    {
+      "login": "obaidsafi51",
+      "name": "Obaid Safi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/134671014?v=4",
+      "profile": "https://github.com/obaidsafi51",
+      "contributions": ["code"]
     },
     {
       "login": "Tomiiwa",
