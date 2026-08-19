@@ -142,8 +142,24 @@ class Croston(BaseForecaster):
         self._a_last = a[-1]
         self._p = p
         self._seen_demand = bool(np.any(y > 0))
+        self._set_fitted_params()
 
         return self
+
+    def _set_fitted_params(self):
+        """Publish the recursion state under the trailing-underscore convention.
+
+        ``get_fitted_params`` collects attributes whose names end in an
+        underscore, so the recursion state is mirrored here rather than
+        renamed, leaving every existing attribute untouched.
+
+        Called from both ``_fit`` and ``_update`` so the published values
+        cannot drift from the state they mirror.
+        """
+        self.demand_level_ = self._q_last
+        self.demand_interval_ = self._a_last
+        self.periods_since_demand_ = self._p
+        self.forecast_ = self._f[-1]
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters on new data.
@@ -203,6 +219,7 @@ class Croston(BaseForecaster):
         self._a_last = a[-1]
         self._p = p
         self._seen_demand = self._seen_demand or bool(np.any(y > 0))
+        self._set_fitted_params()
 
         return self
 
