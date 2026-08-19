@@ -112,6 +112,9 @@ class TSB(BaseForecaster):
                 f[t + 1] = d[t + 1] * p[t + 1]
 
         self._f = f
+        self._demand_size = d[-1]
+        self._demand_probability = p[-1]
+        self._forecast = f[-1]
 
         return self
 

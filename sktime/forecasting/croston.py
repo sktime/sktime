@@ -133,6 +133,9 @@ class Croston(BaseForecaster):
                 f[t + 1] = f[t]
                 p += 1
         self._f = f
+        self._demand_level = q[-1]
+        self._demand_interval = a[-1]
+        self._forecast = f[-1]
 
         return self
 
