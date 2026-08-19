@@ -3,9 +3,6 @@
 
 __author__ = ["ericjb"]
 
-import io
-import sys
-
 import numpy as np
 import pandas as pd
 from pandas.tseries.frequencies import to_offset
@@ -94,7 +91,7 @@ class PyFableARIMA(BaseForecaster):
         # --------------
         "authors": ["ericjb"],
         "maintainers": ["ericjb"],
-        "python_dependencies": ["rpy2==3.6.1"],
+        "python_dependencies": ["rpy2"],
         "r_dependencies": [
             "fable",
             "fabletools",
@@ -402,20 +399,13 @@ class PyFableARIMA(BaseForecaster):
         """Call the R function report on the ARIMA fit and return the output."""
         import rpy2.robjects as robjects
 
-        # Capture the R output
-        report_output = io.StringIO()
-        sys_stdout = sys.stdout
-        sys.stdout = report_output
-
-        try:
-            robjects.r["fabletools::report"](self._fit_auto_arima_)
-        finally:
-            sys.stdout = sys_stdout
-
-        # Get the captured output
-        report_str = report_output.getvalue()
-
-        return report_str
+        # ``robjects.r[...]`` looks up a symbol in R's global environment, so it
+        # cannot resolve namespace-qualified names such as ``fabletools::report``.
+        # Evaluate the R expression instead, and use R's capture.output because
+        # redirecting Python's stdout does not capture R console output.
+        robjects.globalenv["fit_aut_arima"] = self._fit_auto_arima_
+        report_output = robjects.r("capture.output(fabletools::report(fit_aut_arima))")
+        return "\n".join(str(line) for line in report_output)
 
     def PyFableARIMA_report(self):
         """Call the report method which calls the R report() on the ARIMA fit.

@@ -1,3 +1,6 @@
+import sys
+from types import ModuleType
+
 import pandas as pd
 
 from sktime.forecasting.pyfable_arima import PyFableARIMA
@@ -37,3 +40,30 @@ def test_pyfablearima_formula_immutability(monkeypatch):
     f2.fit(y, fh=[1])
     assert f2.formula == "series ~ 1"
     assert f2._resolved_formula == "series ~ 1"
+
+
+def test_pyfablearima_report_evaluates_r_namespace_expression(monkeypatch):
+    """Report uses an R expression, not a global-environment symbol lookup."""
+    rpy2_module = ModuleType("rpy2")
+    robjects_module = ModuleType("rpy2.robjects")
+    r_calls = []
+
+    def fake_r(expression):
+        r_calls.append(expression)
+        return ["ARIMA report", "Model: ARIMA(1,0,0)"]
+
+    robjects_module.r = fake_r
+    robjects_module.globalenv = {}
+    rpy2_module.robjects = robjects_module
+    monkeypatch.setitem(sys.modules, "rpy2", rpy2_module)
+    monkeypatch.setitem(sys.modules, "rpy2.robjects", robjects_module)
+
+    estimator = PyFableARIMA()
+    fitted_model = object()
+    estimator._fit_auto_arima_ = fitted_model
+
+    report = estimator.report()
+
+    assert robjects_module.globalenv["fit_aut_arima"] is fitted_model
+    assert r_calls == ["capture.output(fabletools::report(fit_aut_arima))"]
+    assert report == "ARIMA report\nModel: ARIMA(1,0,0)"
