@@ -9,7 +9,6 @@ type modules must not cross-import at module level, see
 __author__ = ["fkiraly", "achieveordie", "yash-sangwan"]
 
 import time
-from collections.abc import Sequence
 
 import numpy as np
 from sklearn.model_selection import ParameterGrid
@@ -18,33 +17,9 @@ from sktime.classification._delegate import _DelegatedClassifier
 from sktime.classification.model_evaluation import evaluate
 from sktime.exceptions import NotFittedError
 from sktime.utils.parallel import parallelize
+from sktime.utils.sklearn._model_selection import _check_param_grid
 from sktime.utils.sklearn._scoring import _resolve_scoring
 from sktime.utils.warnings import warn
-
-
-def _check_param_grid(param_grid):
-    """Validate param_grid, from sklearn 1.0.2, before it was removed."""
-    if hasattr(param_grid, "items"):
-        param_grid = [param_grid]
-
-    for p in param_grid:
-        for name, v in p.items():
-            if isinstance(v, np.ndarray) and v.ndim > 1:
-                raise ValueError("Parameter array should be one-dimensional.")
-
-            if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
-                raise ValueError(
-                    f"Parameter grid for parameter ({name}) needs to"
-                    f" be a list or numpy array, but got ({type(v)})."
-                    " Single values need to be wrapped in a list"
-                    " with one element."
-                )
-
-            if len(v) == 0:
-                raise ValueError(
-                    f"Parameter values for parameter ({name}) need "
-                    "to be a non-empty sequence."
-                )
 
 
 class _FixedSplitter:

@@ -13,7 +13,6 @@ from sklearn.model_selection import KFold, ParameterGrid, StratifiedKFold
 from sktime.classification.dummy import DummyClassifier
 from sktime.classification.model_evaluation import evaluate
 from sktime.classification.model_selection._tune import (
-    _check_param_grid,
     _resolve_cv,
     _run_grid_search,
 )
@@ -354,17 +353,3 @@ def test_error_score_is_used_for_failed_fits():
         ]
 
     assert all(score == -1.0 for score in cv_results["mean_test_score"])
-
-
-@pytest.mark.parametrize(
-    "param_grid, match",
-    [
-        ({"strategy": "prior"}, "needs to be a list"),
-        ({"strategy": []}, "non-empty sequence"),
-        ({"strategy": np.zeros((2, 2))}, "one-dimensional"),
-    ],
-)
-def test_check_param_grid_raises(param_grid, match):
-    """Malformed parameter grids raise informative errors."""
-    with pytest.raises(ValueError, match=match):
-        _check_param_grid(param_grid)
