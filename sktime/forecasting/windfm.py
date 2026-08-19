@@ -278,6 +278,48 @@ class WindFMForecaster(BaseForecaster):
         point_pred = pred_df.median(axis=1).to_numpy()
         return pd.Series(point_pred, index=y_index, name=self.y_name_)
 
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles and possibly predict_interval
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X : sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance levels,
+                    from y seen in fit, if y_inner_mtype is Panel or Hierarchical.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index, for the row index.
+        """
+        pred_df, y_index = self._predict_samples(fh)
+
+        samples = np.sort(pred_df.to_numpy(), axis=1)
+        cumulative_probability = np.arange(1, samples.shape[1] + 1) / samples.shape[1]
+        quantile_indices = np.searchsorted(cumulative_probability, np.asarray(alpha))
+        quantiles = samples[:, quantile_indices]
+        columns = pd.MultiIndex.from_product([self._get_varnames(), alpha])
+        return pd.DataFrame(quantiles, index=y_index, columns=columns)
+
     def _predict_proba(self, fh, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
 
