@@ -589,10 +589,6 @@ class TSCGridSearchCV(_DelegatedClassifier):
     verbose : int, default=0
         Controls the verbosity. If positive, the number of fits is printed.
 
-    pre_dispatch : int, or str, default='2*n_jobs'
-        Retained for backwards compatibility, this parameter is ignored.
-        Parallelization is controlled via ``backend`` and ``backend_params``.
-
     pre_dispatch : int or str, optional, default="deprecated"
         Number of jobs dispatched during parallel execution, a ``joblib``
         parameter.
