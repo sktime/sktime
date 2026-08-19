@@ -206,6 +206,69 @@ def test_tsb_update_no_demand_in_fit():
     not run_test_for_class(TSB),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.parametrize("n_leading_zeros", [1, 5, 17, 40])
+def test_tsb_delayed_initialization_across_several_updates(n_leading_zeros):
+    """Test that zeros accumulated over several updates still match a full fit.
+
+    When no demand has been seen the recursion cannot initialize, and the only
+    thing the history determines is how many zeros preceded the first demand.
+    That count is carried across an arbitrary number of update calls, so
+    chunking the leading zeros must not change the result.
+    """
+    values = [0.0] * n_leading_zeros + [4.0, 0.0, 0.0, 7.0, 0.0, 2.0]
+    idx = pd.date_range("2020-01-01", periods=len(values), freq="D")
+    y = pd.Series(values, index=idx)
+    fh = [1, 2]
+
+    # feed the leading zeros in several separate chunks, then the rest
+    incremental = TSB(0.4, 0.05).fit(y.iloc[:1])
+    pos = 1
+    while pos < n_leading_zeros:
+        step = min(3, n_leading_zeros - pos)
+        incremental.update(y.iloc[pos : pos + step])
+        pos += step
+    incremental.update(y.iloc[pos:])
+
+    full = TSB(0.4, 0.05).fit(y)
+
+    np.testing.assert_allclose(
+        incremental.predict(fh=fh), full.predict(fh=fh), rtol=1e-12
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSB),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_tsb_update_does_not_retain_history():
+    """Test that the delayed-initialization path stores a count, not the data.
+
+    The point of ``_update`` is constant memory; falling back to a refit on
+    accumulated history would defeat it. Only the number of zeros seen is kept.
+    """
+    idx = pd.date_range("2020-01-01", periods=60, freq="D")
+    y = pd.Series([0.0] * 55 + [3.0, 0.0, 5.0, 0.0, 1.0], index=idx)
+
+    forecaster = TSB(0.4, 0.05).fit(y.iloc[:20])
+    assert forecaster._n_zeros == 20
+    forecaster.update(y.iloc[20:40])
+    assert forecaster._n_zeros == 40
+    assert not forecaster._seen_demand
+
+    forecaster.update(y.iloc[40:])
+    assert forecaster._seen_demand
+    assert forecaster._n_zeros == 0
+
+    full = TSB(0.4, 0.05).fit(y)
+    np.testing.assert_allclose(
+        forecaster.predict(fh=[1]), full.predict(fh=[1]), rtol=1e-12
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSB),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_tsb_update_params_false_does_not_change_forecast():
     """Test that update(update_params=False) leaves fitted parameters alone."""
     y = load_PBS_dataset()
