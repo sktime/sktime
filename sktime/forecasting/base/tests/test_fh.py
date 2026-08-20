@@ -628,10 +628,10 @@ def test_frequency_setter(freqstr):
     assert fh.freq is None
 
     fh.freq = freqstr
-    assert fh.freq == freqstr
+    assert fh.freq == _get_expected_freqstr(freqstr)
 
     fh = ForecastingHorizon([1, 2, 3], freq=freqstr)
-    assert fh.freq == freqstr
+    assert fh.freq == _get_expected_freqstr(freqstr)
 
 
 # TODO: Replace this long running test with fast unit test
