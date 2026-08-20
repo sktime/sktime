@@ -13,7 +13,7 @@ from pandas import Timedelta
 from pandas.tseries.frequencies import to_offset
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.datetime import _coerce_duration_to_int, _to_offset_compat
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
@@ -175,9 +175,7 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        with _suppress_pd22_warning():
-            offset = to_offset(obj)
-        return offset
+        return _to_offset_compat(obj)
     else:
         return None
 
