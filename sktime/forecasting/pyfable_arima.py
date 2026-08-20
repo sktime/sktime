@@ -127,14 +127,10 @@ class PyFableARIMA(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:update": False,
+        "capability:non_contiguous_X": False,
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": [
-            # If fh has gaps then X will have gaps and ARIMA cannot handle that
-            "test_predict_time_index_with_X",
-            "test_update_predict_single",
-            "test_update_predict_predicted_index",
-        ],
+        "tests:specific": ["sktime.forecasting.tests.test_pyfable_arima"],
         "tests:vm": True,  # run on separate VM to rpy2 in extras dep set
     }
 
