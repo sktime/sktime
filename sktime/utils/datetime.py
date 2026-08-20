@@ -74,7 +74,7 @@ def _to_offset_compat(freq):
             # monthly PeriodIndex reports as freqstr; PeriodDtype resolves these
             try:
                 return pd.PeriodDtype(freq).freq
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
             raise
 
