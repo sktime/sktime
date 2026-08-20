@@ -34,7 +34,7 @@ class ConvTimeNet_backbone(nn.Module):
         patch_len: int,
         stride: int,
         n_layers: int = 6,
-        dw_ks=[9, 11, 15, 21, 29, 39],
+        dw_ks=None,
         d_model=64,
         d_ff: int = 256,
         norm: str = "batch",
@@ -56,6 +56,8 @@ class ConvTimeNet_backbone(nn.Module):
         from ._revin import RevIN
 
         super().__init__()
+        if dw_ks is None:
+            dw_ks = [9, 11, 15, 21, 29, 39]
 
         # RevIn
         self.revin = revin
