@@ -46,9 +46,23 @@ class ForecastingHorizonSplitter(BaseSplitter):
     fh : ForecastingHorizon or compatible input
         Forecasting horizon that defines the test set.
         Must be all out-of-sample if relative.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.split import ForecastingHorizonSplitter
+    >>> y = pd.Series(range(8))
+    >>> splitter = ForecastingHorizonSplitter(fh=[1, 2])
+    >>> train, test = next(splitter.split(y))
+    >>> train.tolist()
+    [0, 1, 2, 3, 4, 5]
+    >>> test.tolist()
+    [6, 7]
     """
 
-    _tags = {"split_hierarchical": False}
+    _tags = {
+        "split_hierarchical": False,
+    }
 
     def __init__(self, fh):
         super().__init__(fh=fh)
@@ -60,12 +74,12 @@ class ForecastingHorizonSplitter(BaseSplitter):
 
         if fh.is_relative:
             min_step, max_step = idx.min(), idx.max()
-            steps = fh.to_indexer()
+            steps = np.asarray(idx) - min_step
 
-            last_train_ix_minus_one = len(y) - max_step - 1
-            first_test_ix = last_train_ix_minus_one + min(0, min_step - 1)
+            n_train = len(y) - max_step
+            first_test_ix = n_train - 1 + min_step
 
-            train_ix = np.arange(last_train_ix_minus_one)
+            train_ix = np.arange(n_train)
             test_ix = (np.arange(first_test_ix, len(y)))[steps]
 
         else:
