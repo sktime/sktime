@@ -1036,6 +1036,10 @@ def _coerce_to_period(x, freq=None):
     # MonthBegin offset in to_period - use the equivalent period alias instead
     if isinstance(freq, pd.offsets.MonthBegin):
         freq = f"{freq.n}M"
+    elif isinstance(freq, pd.offsets.QuarterBegin):
+        freq = f"{freq.n}Q"
+    elif isinstance(freq, pd.offsets.YearBegin):
+        freq = f"{freq.n}Y"
     return x.to_period(freq)
 
 
