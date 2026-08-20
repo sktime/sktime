@@ -12,13 +12,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
+
 jobs:
   code-quality:
     name: code-quality
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -26,7 +29,7 @@ jobs:
           enable-cache: true
 
       - name: python environment step
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -36,7 +39,7 @@ jobs:
           UV_SYSTEM_PYTHON: 1
 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -72,7 +75,7 @@ jobs:
     outputs:
       notebooks: ${{ steps.check.outputs.notebooks }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Needed to access the full git history
 
@@ -95,7 +98,7 @@ jobs:
     if: ${{ needs.detect-notebooks-change.outputs.notebooks == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -103,7 +106,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.11
 
@@ -124,7 +127,7 @@ jobs:
     if: ${{ needs.detect-notebooks-change.outputs.notebooks == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -132,7 +135,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.11
 
@@ -161,7 +164,7 @@ jobs:
       r_vm_changed_classes_length: ${{ steps.get-change-list.outputs.r_vm_changed_classes_length }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: git remote set-branches origin 'main'
 
@@ -173,7 +176,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -283,7 +286,7 @@ jobs:
 
   test-est:
     needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
-    if: ${{ needs.detect-changed-classes.outputs.vm_chunks != '[]' }}
+    if: ${{ needs.prepare-chunks.outputs.vm_chunks != '[]' }}
 
     strategy:
       fail-fast: false
@@ -293,10 +296,11 @@ jobs:
     uses: ./.github/workflows/test_est.yml
     with:
       flags: ${{ toJson(matrix.chunk) }}
+    secrets: inherit
 
   test-est-r:
     needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
-    if: ${{ needs.detect-changed-classes.outputs.r_vm_chunks != '[]' }}
+    if: ${{ needs.prepare-chunks.outputs.r_vm_chunks != '[]' }}
 
     strategy:
       fail-fast: false
@@ -306,6 +310,7 @@ jobs:
     uses: ./.github/workflows/test_est_r.yml
     with:
       flags: ${{ toJson(matrix.chunk) }}
+    secrets: inherit
 
   detect-package-change:
     needs: code-quality
@@ -316,7 +321,7 @@ jobs:
     outputs:
       sktime: ${{ steps.check.outputs.sktime }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Needed to access the full git history
 
@@ -338,7 +343,7 @@ jobs:
     needs: detect-package-change
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -346,7 +351,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.11
 
@@ -367,7 +372,7 @@ jobs:
     if: ${{ needs.detect-package-change.outputs.sktime == 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -375,7 +380,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.11
 
@@ -397,7 +402,7 @@ jobs:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: git remote set-branches origin 'main'
 
@@ -409,7 +414,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.11
 
@@ -435,7 +440,7 @@ jobs:
         mlflow-version: ['2.9.2', '3.latest']
     name: test-mlflow-${{ matrix.mlflow-version }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -443,7 +448,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.11
 
@@ -452,7 +457,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          if [[ "${{ matrix.mlflow-version }}" == "2.9.2'" ]]; then
+          if [[ "${{ matrix.mlflow-version }}" == "2.9.2" ]]; then
             uv pip install .[all_extras,dev,mlflow_tests,mlflow2] --no-cache-dir
           else
             uv pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
@@ -466,11 +471,22 @@ jobs:
       - name: Run tests
         run: make test_mlflow
 
-  test-deps-2023:
+  test-historical-deps:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - exclude-newer: "2023-07-01"
+            python-version: "3.11"
+          - exclude-newer: "2024-09-01"
+            python-version: "3.12"
+          - exclude-newer: "2025-09-01"
+            python-version: "3.13"
+
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: git remote set-branches origin 'main'
 
@@ -482,49 +498,9 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
-          python-version: 3.11
-
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install sktime and dependencies
-        # We require `scikit-base>=0.6.1` which was released after the 2023 cutoff
-        # so we bump its date later
-        run: >
-          uv pip install .[dev]
-          --exclude-newer-package "scikit-base=false"
-          --exclude-newer-package "setuptools=false"
-        env:
-          UV_SYSTEM_PYTHON: 1
-          UV_EXCLUDE_NEWER: "2023-07-01"
-
-      - name: Show dependencies
-        run: uv pip list
-
-      - name: Run tests
-        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
-
-  test-deps-2024:
-    needs: test-nosoftdeps
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - run: git remote set-branches origin 'main'
-
-      - run: git fetch --depth 1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: 3.12
+          python-version: ${{ matrix['python-version'] }}
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
@@ -536,7 +512,7 @@ jobs:
           --exclude-newer-package "scikit-base=false"
         env:
           UV_SYSTEM_PYTHON: 1
-          UV_EXCLUDE_NEWER: "2024-09-01"
+          UV_EXCLUDE_NEWER: ${{ matrix['exclude-newer'] }}
 
       - name: Show dependencies
         run: uv pip list
@@ -554,17 +530,40 @@ jobs:
       datasets: ${{ steps.filter.outputs.datasets }}
       pyproject: ${{ steps.filter.outputs.pyproject }}
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: dorny/paths-filter@v3
-        id: filter
+      - uses: actions/checkout@v7
         with:
-          filters: |
-            datasets:
-              - sktime/base/**
-              - sktime/datasets/**
-            pyproject:
-              - pyproject.toml
+          fetch-depth: 0
+
+      - id: filter
+        name: Detect changed files
+        shell: bash
+        run: |
+          # Get the merge base with the target branch
+          BASE=$(git merge-base HEAD origin/${{ github.base_ref }})
+
+          echo "Comparing against $BASE"
+
+          changed_files=$(git diff --name-only "$BASE" HEAD)
+
+          echo "Changed files:"
+          echo "$changed_files"
+
+          datasets=false
+          pyproject=false
+
+          if echo "$changed_files" | grep -qE '^sktime/(base|datasets)/'; then
+            datasets=true
+          fi
+
+          if echo "$changed_files" | grep -qE '^pyproject\.toml$'; then
+            pyproject=true
+          fi
+
+          echo "datasets=$datasets" >> "$GITHUB_OUTPUT"
+          echo "pyproject=$pyproject" >> "$GITHUB_OUTPUT"
+
+          echo "datasets=$datasets"
+          echo "pyproject=$pyproject"
 
   test-datasets:
     needs: detect
@@ -584,7 +583,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: git remote set-branches origin 'main'
 
@@ -596,7 +595,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 

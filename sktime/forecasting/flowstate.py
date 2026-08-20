@@ -8,7 +8,10 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import (
+    BaseForecaster,
+    ForecastingHorizon,
+)
 from sktime.utils.dependencies import _safe_import
 from sktime.utils.singleton import _multiton
 
@@ -33,11 +36,65 @@ class FlowStateForecaster(BaseForecaster):
     scale_factor : float, default=1.0
         Temporal scaling passed to the model at predict time.
     config : dict, optional, default=None
-        Extra kwargs for ``FlowStateForPrediction.from_pretrained``.
+
+        context_length (`int`, *optional*, defaults to 2048)
+            The context/history length of the input sequence.
+        batch_first (`bool`):
+            Indicates whether the `batch_size` or the `seq_length` is the
+            first dimension of `past_values`.
+        scale_factor (`float`):
+            The scaling factor to adjust the parameter `Delta` of the S5
+            block and the Functional Basis Decoder.
+        prediction_length (`int`, *optional*):
+            Number of time steps to forecast for a forecasting task. Also
+            known as the Forecast Horizon. If not provided, or < 0, one
+            forecasting patch is returned.
+
+        embedding_feature_dim (`int`, *optional*, defaults to 512):
+            Feature dimension of the linear input embedding. Recommended
+            range is 128-512.
+
+        encoder_num_layers (`int`, *optional*, defaults to 6):
+            Number of encoder layers to use. I.e., number of S5 Layers in
+            the FlowState encoder. Recommended range is 3-15. Larger value
+            indicates more complex model.
+        encoder_state_dim (`int`, *optional*, defaults to 512):
+            State dimension of the S5 block. Recommended range is 128-1024.
+            Larger value indicates more complex model.
+        encoder_num_hippo_blocks (`int`, *optional*, defaults to 8):
+            Number of HiPPo blocks to use for initialization for the A
+            matrices of the S5 blocks. The `encoder_state_dim` needs to be
+            divisible by `encoder_num_hippo_blocks`.
+
+        decoder_prediction_length (`int`, *optional*):
+            Number of time steps to forecast for a forecasting task. Also
+            known as the Forecast Horizon. If not provided, or < 0, one
+            forecasting patch is returned.
+        decoder_patch_len (`int`, *optional*, defaults to 24)
+            The patch length used by the decoder when producing the
+            forecasts.
+        decoder_dim (`int`, *optional*, defaults to 256)
+            Dimension of the produced forecast, e.g., number of expected
+            output channels.
+        decoder_type (`string`, *optional*, defaults to legS)
+            The type of decoder used in the Functional Basis Decoder. The
+            type of the decoder determines which basis functions are used.
+            Possible choices are: ['legs', 'hlegs', 'four']
+
+        quantiles (`list[float]`, *optional*, defaults to
+            [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
+            The quantiles used to compute the decoder output.
+
     batch_first : bool, default=True
         ``past_values`` layout for the model.
     prediction_type : {"mean", "median"}, default="mean"
         Point forecast type passed to the model.
+
+    Notes
+    -----
+    ``predict_proba`` returns a ``skpro`` ``HistogramQPD`` built from FlowState's
+    native quantile grid. Quantiles between grid points are linearly interpolated,
+    while levels outside the grid are clamped to the nearest native quantile.
 
     References
     ----------
@@ -161,57 +218,6 @@ class FlowStateForecaster(BaseForecaster):
         self._context = y
         return self
 
-    def predict(self, fh=None, X=None, y=None):
-        """Forecast time series at future horizon.
-
-        State required:
-            Requires state to be "fitted", i.e., ``self.is_fitted=True``.
-
-        Accesses in self:
-
-            * Fitted model attributes ending in "_".
-            * ``self.cutoff``, ``self.is_fitted``
-
-        Writes to self:
-            Stores ``fh`` to ``self.fh`` if ``fh`` is passed and has not been passed
-            previously.
-
-        Parameters
-        ----------
-        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
-            The forecasting horizon encoding the time stamps to forecast at.
-            Should not be passed if has already been passed in ``fit``.
-            If has not been passed in fit, must be passed, not optional
-
-        X : time series in ``sktime`` compatible format, optional (default=None)
-            Exogenous time series. Ignored; ``capability:exogenous`` is ``False``.
-
-        y : time series in ``sktime`` compatible format, optional (default=None)
-            Historical values of the time series that should be predicted.
-            If not None, global forecasting will be performed via ``fit_predict``,
-            reloading context from ``y`` before forecasting.
-            Only pass the historical values, not the time points to be predicted.
-
-        Returns
-        -------
-        y_pred : time series in sktime compatible data container format
-            Point forecasts at ``fh``, with same index as ``fh``.
-            ``y_pred`` has same type as the ``y`` that has been passed most recently:
-            ``Series``, ``Panel``, ``Hierarchical`` scitype, same format (see above)
-
-        Notes
-        -----
-        If ``y`` is not None, global forecast will be performed: the estimator refits
-        on the extended history in ``y``, then predicts at ``fh``.
-
-        If ``y`` is None, non-global forecast will be performed using the series seen
-        in ``fit``.
-        """
-        if y is not None:
-            _fh = fh if self._fh is None and fh is not None else self._fh
-            return self.fit_predict(fh=_fh, X=X, y=y)
-        return super().predict(fh=fh, X=X)
-
     def _run(self, pred_len):
         if self.model is None:
             self.model = self._load_model()
@@ -251,7 +257,8 @@ class FlowStateForecaster(BaseForecaster):
         pred_out = fh_rel.get_expected_pred_idx(self._context, cutoff=self.cutoff)
         return pred_df.loc[pred_df.index.isin(pred_out)]
 
-    def _predict_quantiles(self, fh, X, alpha):
+    def _predict_native_quantile_grid(self, fh):
+        """Return native FlowState quantile levels and values on ``fh``."""
         fh_rel = fh.to_relative(self.cutoff)
         pred_len = int(np.max(fh_rel.to_numpy()))
         out = self._run(pred_len)
@@ -261,14 +268,31 @@ class FlowStateForecaster(BaseForecaster):
 
         var_name = self._context.columns[0]
         pred_index = fh.to_absolute(self.cutoff)._values
+        pred_index.names = self._context.index.names
+        q_values = q[:, rel_idx]
+        return model_q, q_values, pred_index, var_name
+
+    def _predict_quantiles(self, fh, X, alpha):
+        model_q, q_values, pred_index, var_name = self._predict_native_quantile_grid(fh)
         cols = pd.MultiIndex.from_product([[var_name], alpha])
         pred_q = pd.DataFrame(index=pred_index, columns=cols)
         for a in alpha:
             pred_q[(var_name, a)] = np.array(
-                [np.interp(a, model_q, q[:, i]) for i in rel_idx]
+                [np.interp(a, model_q, values) for values in q_values.T]
             )
         pred_q.index.names = self._context.index.names
         return pred_q
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Return a distribution based on FlowState's native quantile grid."""
+        from skpro.distributions import HistogramQPD
+
+        model_q, q_values, pred_index, var_name = self._predict_native_quantile_grid(fh)
+        row_index = pd.MultiIndex.from_product([model_q, pred_index])
+        q_df = pd.DataFrame(
+            q_values.reshape(-1, 1), index=row_index, columns=[var_name]
+        )
+        return HistogramQPD(q_df, tails="mass", index=pred_index, columns=[var_name])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

@@ -495,8 +495,24 @@ Structural time series models
 
     GreykiteForecaster
 
+Decline curve analysis forecasts
+--------------------------------
+
+.. currentmodule:: sktime.forecasting.arps_dca
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ArpsExponential
+    ArpsHyperbolic
+    ArpsHarmonic
+
 Deep learning based forecasters
 -------------------------------
+
+Deep learning forecasters, excluding pre-trained models and foundation models.
+See next section for foundation models.
 
 .. currentmodule:: sktime.forecasting.ltsf
 
@@ -509,15 +525,21 @@ Deep learning based forecasters
     LTSFNLinearForecaster
     LTSFTransformerForecaster
 
-.. currentmodule:: sktime.forecasting.neuralprophet
 .. currentmodule:: sktime.forecasting.xlstm
 
 .. autosummary::
     :toctree: auto_generated/
     :template: class.rst
 
-    NeuralProphet
     XLSTMForecaster
+
+.. currentmodule:: sktime.forecasting.neuralprophet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    NeuralProphet
 
 .. currentmodule:: sktime.forecasting.scinet
 
@@ -574,6 +596,14 @@ Deep learning based forecasters
 
     PyKANForecaster
 
+.. currentmodule:: sktime.forecasting.hypertrees
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HyperTreeNetARForecaster
+
 .. currentmodule:: sktime.forecasting.rbf
 
 .. autosummary::
@@ -590,7 +620,11 @@ Deep learning based forecasters
 
     ESRNNForecaster
 
+
 Pre-trained and foundation models
+---------------------------------
+
+Domain agnostic foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.forecasting.chronos
@@ -609,6 +643,14 @@ Pre-trained and foundation models
 
     Chronos2Forecaster
 
+.. currentmodule:: sktime.forecasting.cisco_tsm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    CiscoTSMForecaster
+
 .. currentmodule:: sktime.forecasting.falcon_tst
 
 .. autosummary::
@@ -616,6 +658,14 @@ Pre-trained and foundation models
     :template: class.rst
 
     FalconTSTForecaster
+
+.. currentmodule:: sktime.forecasting.falcon_x
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FalconXForecaster
 
 .. currentmodule:: sktime.forecasting.flowstate
 
@@ -632,14 +682,6 @@ Pre-trained and foundation models
     :template: class.rst
 
     HFTransformersForecaster
-
-.. currentmodule:: sktime.forecasting.kronos
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    KronosForecaster
 
 .. currentmodule:: sktime.forecasting.lagllama
 
@@ -664,7 +706,6 @@ Pre-trained and foundation models
     :template: class.rst
 
     MOIRAIForecaster
-
 
 .. currentmodule:: sktime.forecasting.moirai2
 
@@ -697,6 +738,22 @@ Pre-trained and foundation models
     :template: class.rst
 
     PatchTSTForecaster
+
+.. currentmodule:: sktime.forecasting.sundial
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SundialForecaster
+
+.. currentmodule:: sktime.forecasting.t0
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    T0Forecaster
 
 .. currentmodule:: sktime.forecasting.time_llm
 
@@ -738,7 +795,7 @@ Pre-trained and foundation models
 
     TimesFMForecaster
 
-.. currentmodule:: sktime.forecasting.timesfm2_forecaster
+.. currentmodule:: sktime.forecasting.timesfm2
 
 .. autosummary::
     :toctree: auto_generated/
@@ -754,6 +811,22 @@ Pre-trained and foundation models
 
     TinyTimeMixerForecaster
 
+.. currentmodule:: sktime.forecasting.tirex
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TiRexForecaster
+
+.. currentmodule:: sktime.forecasting.tirex2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TiRex2Forecaster
+
 .. currentmodule:: sktime.forecasting.toto
 
 .. autosummary::
@@ -762,6 +835,59 @@ Pre-trained and foundation models
 
     TotoForecaster
 
+.. currentmodule:: sktime.forecasting.toto2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    Toto2Forecaster
+
+
+Multimodal foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The multimodal foundation models below are domain-agnostic, but can also
+use multimodal input, e.g., additional text or image data.
+
+.. currentmodule:: sktime.forecasting.aurora
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    AuroraForecaster
+
+
+Domain specific foundation models
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Domain specific foundation models are intended for specific domains,
+e.g., energy, weather, or specific finance tasks.
+
+.. currentmodule:: sktime.forecasting.kronos
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    KronosForecaster
+
+.. currentmodule:: sktime.forecasting.mira
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MIRAForecaster
+
+.. currentmodule:: sktime.forecasting.windfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WindFMForecaster
 
 Intermittent time series forecasters
 ------------------------------------
