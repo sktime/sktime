@@ -180,8 +180,8 @@ def _check_freq(obj):
         return None
 
 
-def _extract_freq_from_cutoff(x) -> str | None:
-    """Extract frequency string from cutoff.
+def _extract_freq_from_cutoff(x) -> pd.offsets.BaseOffset | None:
+    """Extract frequency offset from cutoff.
 
     Parameters
     ----------
@@ -189,7 +189,7 @@ def _extract_freq_from_cutoff(x) -> str | None:
 
     Returns
     -------
-    str : Frequency string or None
+    pandas offset, or None if x carries no frequency information
     """
     if isinstance(x, (pd.Period, pd.PeriodIndex, pd.DatetimeIndex)):
         return x.freq
