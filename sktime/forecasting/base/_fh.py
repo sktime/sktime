@@ -1034,6 +1034,10 @@ def _coerce_to_period(x, freq=None):
         raise ValueError(
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
+    # periods have no start/end variant, and pandas 3 no longer accepts a
+    # MonthBegin offset in to_period - use the equivalent period alias instead
+    if isinstance(freq, pd.offsets.MonthBegin):
+        freq = f"{freq.n}M"
     return x.to_period(freq)
 
 
