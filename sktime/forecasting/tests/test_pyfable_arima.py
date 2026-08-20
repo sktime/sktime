@@ -3,6 +3,7 @@ from types import ModuleType
 
 import pandas as pd
 
+import sktime.forecasting.base._base as forecasting_base
 from sktime.forecasting.pyfable_arima import PyFableARIMA
 
 
@@ -10,6 +11,11 @@ def test_pyfablearima_formula_immutability(monkeypatch):
     # small monthly series
     idx = pd.period_range("2020-01", periods=6, freq="M")
     y = pd.Series([1, 2, 3, 4, 5, 6], index=idx, name="series")
+
+    # bypass the hard rpy2 dependency check for this isolated unit test
+    monkeypatch.setattr(
+        forecasting_base, "_check_estimator_deps", lambda *args, **kwargs: True
+    )
 
     # monkeypatch R interaction methods to avoid requiring actual R runtime here
     def dummy_prepare(self, Z, is_regular=True):
@@ -25,7 +31,6 @@ def test_pyfablearima_formula_immutability(monkeypatch):
 
     # Case 1: formula None, should remain None after fit, resolved stored
     f1 = PyFableARIMA(formula=None)
-    f1.set_tags(python_dependencies=[])
     assert f1.formula is None
     f1.fit(y, fh=[1])
     assert f1.formula is None, "formula attribute should remain None (immutable)"
@@ -35,7 +40,6 @@ def test_pyfablearima_formula_immutability(monkeypatch):
 
     # Case 2: user-specified formula preserved
     f2 = PyFableARIMA(formula="series ~ 1")
-    f2.set_tags(python_dependencies=[])
     f2.fit(y, fh=[1])
     assert f2.formula == "series ~ 1"
     assert f2._resolved_formula == "series ~ 1"
