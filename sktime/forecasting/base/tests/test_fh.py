@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 from numpy.testing._private.utils import assert_array_equal
 from pytest import raises
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.datasets import load_airline
 from sktime.datatypes._utilities import get_cutoff
@@ -41,7 +42,6 @@ from sktime.utils.datetime import (
     _shift,
     infer_freq,
 )
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 

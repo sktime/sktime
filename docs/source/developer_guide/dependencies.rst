@@ -44,13 +44,16 @@ Estimators with a soft dependency need to ensure the following:
 
 *  imports of the soft dependency only happen inside the estimator,
    e.g., in ``_fit`` or ``__init__`` methods of the estimator.
-   In ``__init__``, imports should happen only after calls to ``super(cls).__init__``.
+   During constructor calls, imports should happen only in ``__post_init__``, never in ``__init__``.
 *  the packaging tags of the estimator are populated, i.e., ``python_dependencies``
    with PEP 440 compliant dependency specifier strings such as ``pandas>=2.0.1``, and optionally
    ``python_version`` and ``env_marker`` if specific markers are needed.
    Exceptions will automatically be raised when constructing the estimator
    in an environment where the requirements are not met.
    For further details, see the tag API reference, :ref:`packaging_tags`.
+*  the tag ``tests:vm`` of the estimator is set to ``True``. This automatically ensures
+   that the estimator is tested in a virtual machine with all dependencies installed.
+   If the tag is not set, the estimator will automatically fail compliance.
 *  Decorate all ``pytest`` tests that import soft dependencies with a ``@pytest.mark.skipif(...)`` conditional on a soft dependency check.
    If the test is specific to a single estimator or object, use ``run_test_for_class`` from ``sktime.tests.test_switch``
    to mediate the condition through the class tags.
@@ -65,11 +68,16 @@ Estimators with a soft dependency need to ensure the following:
    ``run_test_for_class`` usage to decorate a test. See ``utils.tests.test_plotting``
    for an example of ``_check_soft_dependencies`` usage.
 
-Informative warnings or error messages for missing soft dependencies should be raised, in a situation where a user would need them.
-Usually, such warnings are automatically raised in ``__init__`` of the respective estimator by the base framework, via ``BaseObject``,
-and do not need to be added manually.
+For estimators, no additional warnings or error messages should be raised for missing soft dependencies,
+as the base framework will automatically raise default exceptions, based on populated tags (see above),
+when the estimator is used in an environment where the requirements are not met.
+Adding additional warnings or error messages is not necessary, and will usually cause test failures.
 
-In case a step-out is needed, the ``_check_soft_dependencies`` utility
+To manage soft dependencies that are contingent on specific parameter settings of the estimator,
+use the ``__dynamic_tags__`` dunder of the estimator, as outlined in the extension templates.
+
+In case a step-out is needed from the above rules, it should be clearly justified
+in the pull request description. In such a case, the ``_check_soft_dependencies`` utility
 `here <https://github.com/sktime/sktime/blob/main/sktime/utils/dependencies/_dependencies.py>`__ can be used.
 
 Isolating soft dependencies at module level
@@ -122,14 +130,16 @@ the following need to be updated:
    add the dependency or update version bounds in the ``all_extras`` dependency set.
    Following the `PEP 621 <https://www.python.org/dev/peps/pep-0621/>`_ convention, all dependencies
    including build time dependencies and optional dependencies are specified in ``pyproject.toml``.
-*  Soft dependencies compatible with ``pandas 2`` should also be added/updated in the
-   ``all_extras_pandas2`` dependency set in ``pyproject.toml``. This dependency set
-   is used only in testing.
+*  Important: only the most important soft dependencies should be added to the ``all_extras``
+   dependency set. Soft dependencies required only be one estimator or a small number of estimators
+   should not be added to ``all_extras``, to avoid dependency bloat.
+   For testing purposes, the ``tests:vm``
+   tag of the estimator should be set, to ensure a VM with the specific soft dependencies
+   is spun up regularly.
 
-It should be checked that new soft dependencies do not imply
+It shhould be checked that new soft dependencies added to ``all_extras`` do not imply
 upper bounds on ``sktime`` core dependencies, or severe limitations to the user
 installation workflow.
-In such a case, it is strongly suggested not to add the soft dependency.
 
 For maintenance purposes, it has been decided that all soft-dependencies will have lower
 and upper bounds specified mandatorily. The soft-dependencies will be specified in

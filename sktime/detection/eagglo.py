@@ -29,7 +29,7 @@ class EAgglo(BaseTransformer):
     Parameters
     ----------
     member : array_like (default=None)
-        Assigns points to to the initial cluster membership, therefore the first
+        Assigns points to the initial cluster membership, therefore the first
         dimension should be the same as for data. If ``None`` it will be initialized
         to dummy vector where each point is assigned to separate cluster.
     alpha : float (default=1.0)
@@ -401,7 +401,7 @@ class EAgglo(BaseTransformer):
                 self.distances[K + 1, k] = val
                 self.distances[k, K + 1] = val
 
-    def _get_penalty_func(self) -> Callable:  # sourcery skip: raise-specific-error
+    def _get_penalty_func(self) -> Callable:
         """Define penalty function given (possibly string) input."""
         PENALTIES = {"len_penalty": len_penalty, "mean_diff_penalty": mean_diff_penalty}
 
@@ -412,7 +412,7 @@ class EAgglo(BaseTransformer):
             if self.penalty in PENALTIES:
                 return PENALTIES[self.penalty]
 
-        raise Exception(
+        raise ValueError(
             f"'penalty' must be callable or {PENALTIES.keys()}, got {self.penalty}"
         )
 
