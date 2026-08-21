@@ -418,7 +418,7 @@ class PyFableARIMA(BaseForecaster):
 
         fitted_values = robjects.r["fitted"](self._fit_auto_arima_)
         fitted_values_df = robjects.pandas2ri.rpy2py(fitted_values)
-        fitted_values_df.index = self._y.index
+        fitted_values_df.index = self._fit_index_
         series = fitted_values_df[".fitted"].squeeze()
         series.name = self._y.name
 
@@ -506,7 +506,7 @@ class PyFableARIMA(BaseForecaster):
             raise ValueError("internal error: expected absolute ForecastingHorizon")
 
         if self.int_index_to_annual:
-            iV = fh.to_relative(cutoff=self._y.index[-1]).to_numpy()
+            iV = fh.to_relative(cutoff=self._fit_index_[-1]).to_numpy()
             fh_rel = ForecastingHorizon(iV, is_relative=True, freq="Y")
             fh = fh_rel.to_absolute(cutoff=self._fit_index_alt_[-1])
 
@@ -762,6 +762,7 @@ class PyFableARIMA(BaseForecaster):
             fh = ForecastingHorizon(fh)
 
         cutoff = self._y.index[-1]
+        model_cutoff = self._fit_index_[-1]
         abs_fh = fh.to_absolute_index(cutoff=cutoff)
 
         # Get fitted values for in-sample support and also for freq
@@ -786,10 +787,18 @@ class PyFableARIMA(BaseForecaster):
         # Out-of-sample values: use _predict_special
         if len(out_sample_index) > 0:
             fh_out = ForecastingHorizon(out_sample_index, is_relative=False)
+            # fable requires new_data to start one step after the end of the
+            # R model's training data. This can precede the data-memory cutoff
+            # after update(..., update_params=False).
             abs_fh_consecutive = PyFableARIMA._get_fh_consecutive(
-                fh_out, cutoff, freq=freq
+                fh_out, model_cutoff, freq=freq
             )
-            y_pred_out, _ = self._predict_special(abs_fh_consecutive, X=X)
+            X_forecast = X
+            if X is not None and self._X is not None:
+                forecast_index = abs_fh_consecutive.to_absolute_index()
+                X_forecast = self._X.reindex(forecast_index)
+                X_forecast.update(X)
+            y_pred_out, _ = self._predict_special(abs_fh_consecutive, X=X_forecast)
             y_pred_out = y_pred_out.loc[out_sample_index].copy()
             y_pred_parts.append(y_pred_out)
 
