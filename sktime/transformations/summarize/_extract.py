@@ -137,6 +137,21 @@ class DerivativeSlopeTransformer(BaseTransformer):
 
     where n is the length of the time series, and indices
     range from 0 to n-1.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.summarize._extract import (
+    ...     DerivativeSlopeTransformer,
+    ... )
+    >>> X = pd.DataFrame({"a": [1, 2, 3, 4]})
+    >>> transformer = DerivativeSlopeTransformer()
+    >>> transformer.fit_transform(X)
+         a
+    0  1.0
+    1  1.0
+    2  1.0
+    3  1.0
     """
 
     _tags = {
@@ -201,6 +216,20 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         - If RandomState instance, random_state is the random number generator;
         - If None, the random number generator is the RandomState instance used
         by ``np.random``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.transformations.summarize import RandomIntervalFeatureExtractor
+    >>> X = pd.DataFrame({
+    ...     "ts": [pd.Series([1, 2, 3, 4, 5])]
+    ... })
+    >>> transformer = RandomIntervalFeatureExtractor(
+    ...     n_intervals=1, features=[np.mean], random_state=42
+    ... )
+    >>> float(transformer.fit_transform(X).iloc[0, 0])
+    4.0
     """
 
     _tags = {
