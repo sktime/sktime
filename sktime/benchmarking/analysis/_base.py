@@ -171,15 +171,12 @@ class BaseBenchmarkAnalyzer(BaseObject):
         if isinstance(results, pd.DataFrame):
             return results
 
-        # treat as a path to a storage-handler artifact; reconstruct the flat
-        # ``ResultObject.to_dataframe`` schema by reusing the storage handlers.
-        from sktime.benchmarking._storage_handlers import get_storage_backend
+        from sktime.benchmarking._storage_handlers import load_results_to_dataframe
 
-        handler_cls = get_storage_backend(results)
-        result_objects = handler_cls(results).load()
-        if len(result_objects) == 0:
+        df = load_results_to_dataframe(results)
+        if df.empty:
             raise ValueError(f"No benchmark results found at '{results}'.")
-        return pd.concat([r.to_dataframe() for r in result_objects], ignore_index=True)
+        return df
 
     def _resolve_metric(self, df):
         """Resolve the metric name, inferring it if a single one is present."""

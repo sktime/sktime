@@ -469,6 +469,62 @@ STORAGE_HANDLERS = [
 ]
 
 
+def results_to_dataframe(results: list[ResultObject]) -> pd.DataFrame:
+    """Convert benchmark result objects to a summary pandas DataFrame.
+
+    Produces the same flat table schema as ``BaseBenchmark.run()`` and
+    ``ResultObject.to_dataframe`` (one row per task-model pair, with
+    ``{metric}_mean`` / ``{metric}_std`` columns and optional timing fields).
+
+    Parameters
+    ----------
+    results : list of ResultObject
+        Benchmark results to convert.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Aggregated benchmark metrics. Empty when ``results`` is empty.
+    """
+    if not results:
+        return pd.DataFrame()
+    results_df = [result.to_dataframe() for result in results]
+    df = pd.concat(results_df, axis=0, ignore_index=True)
+    if {"pred_time_mean", "fit_time_mean"}.issubset(df.columns):
+        df["runtime_secs"] = df["pred_time_mean"] + df["fit_time_mean"]
+    return df
+
+
+def load_results_to_dataframe(path: str | Path) -> pd.DataFrame:
+    """Load persisted benchmark results into a summary pandas DataFrame.
+
+    Reads a completed results file (``.json``, ``.csv``, or ``.parquet``).
+    When the final file is absent, partial checkpoints from an interrupted
+    run are loaded from ``{path}.parts/`` if present.
+
+    Parameters
+    ----------
+    path : str or pathlib.Path
+        Path to the benchmark results file. Must refer to a file, not a
+        directory. Supported extensions are ``.json``, ``.csv``, and
+        ``.parquet``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Aggregated benchmark metrics per task-model pair. Empty when no
+        results are found at ``path`` or in its checkpoint directory.
+
+    Raises
+    ------
+    ValueError
+        If no storage handler supports the file extension of ``path``.
+    """
+    from sktime.benchmarking._results_persistence import BenchmarkResultsPersistence
+
+    return results_to_dataframe(BenchmarkResultsPersistence(str(path)).load())
+
+
 def get_storage_backend(path: str | Path) -> BaseStorageHandler:
     """Return the storage handler for a results file path.
 

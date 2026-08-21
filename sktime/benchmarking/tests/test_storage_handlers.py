@@ -5,6 +5,8 @@ from sktime.benchmarking._benchmarking_dataclasses import FoldResults, ResultObj
 from sktime.benchmarking._storage_handlers import (
     CSVStorageHandler,
     JSONStorageHandler,
+    load_results_to_dataframe,
+    results_to_dataframe,
     # ParquetStorageHandler,
 )
 
@@ -126,3 +128,36 @@ def test_store_load_results_empty_training(tmp_path, storage_handler, file_exten
     assert results[0].folds[0].ground_truth is None
     assert results[0].folds[0].predictions is None
     assert results[0].folds[0].train_data is None
+
+
+@pytest.mark.parametrize(
+    "storage_handler,file_extension",
+    [
+        (JSONStorageHandler, ".json"),
+        (CSVStorageHandler, ".csv"),
+    ],
+)
+@pytest.mark.parametrize("sample_results", RESULT_OBJECT_LISTS)
+def test_load_results_to_dataframe(
+    tmp_path, storage_handler, file_extension, sample_results
+):
+    path = tmp_path / f"results{file_extension}"
+    storage_handler(path).save(sample_results)
+
+    loaded_df = load_results_to_dataframe(path)
+    expected_df = results_to_dataframe(sample_results)
+
+    pd.testing.assert_frame_equal(loaded_df, expected_df)
+
+
+def test_load_results_to_dataframe_missing_file(tmp_path):
+    path = tmp_path / "results.csv"
+    loaded_df = load_results_to_dataframe(path)
+    assert loaded_df.empty
+
+
+def test_load_results_to_dataframe_unsupported_extension(tmp_path):
+    path = tmp_path / "results.txt"
+    path.touch()
+    with pytest.raises(ValueError, match="No storage handler found"):
+        load_results_to_dataframe(path)

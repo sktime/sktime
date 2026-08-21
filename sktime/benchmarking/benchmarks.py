@@ -4,14 +4,13 @@ import logging
 import warnings
 from dataclasses import dataclass, field
 
-import pandas as pd
-
 from sktime.base import BaseEstimator
 from sktime.benchmarking._benchmarking_dataclasses import (
     ResultObject,
     TaskObject,
 )
 from sktime.benchmarking._results_persistence import BenchmarkResultsPersistence
+from sktime.benchmarking._storage_handlers import results_to_dataframe
 from sktime.benchmarking._utils import _check_id_format
 from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
@@ -219,12 +218,7 @@ class _BenchmarkingResults:
             Aggregated benchmark metrics per task-model pair. Empty when
             no results are stored.
         """
-        if not self.results:
-            return pd.DataFrame()
-        results_df = [result.to_dataframe() for result in self.results]
-        df = pd.concat(results_df, axis=0, ignore_index=True)
-        df["runtime_secs"] = df["pred_time_mean"] + df["fit_time_mean"]
-        return df
+        return results_to_dataframe(self.results)
 
 
 class _SktimeRegistry:
