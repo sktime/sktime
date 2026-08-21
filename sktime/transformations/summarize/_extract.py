@@ -387,6 +387,22 @@ class FittedParamExtractor(BaseTransformer):
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
+    
+    Example
+    --------
+    >>> import pandas as pd
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>> from sktime.transformations.summarize import FittedParamExtractor
+    >>> X = pd.DataFrame({"y": [1, 2, 3, 4]})
+    >>> forecaster = TrendForecaster()
+    >>> transformer = FittedParamExtractor(
+    ...     forecaster=forecaster,
+    ...     param_names="regressor__intercept",
+    ... )
+    >>> transformer.fit_transform(X)
+       regressor__intercept
+    0                   1.0
+
     """
 
     _tags = {
