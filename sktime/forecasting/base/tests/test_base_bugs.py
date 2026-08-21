@@ -3,6 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.forecasting.compose import ForecastByLevel, TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -12,10 +13,9 @@ from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.transformations.difference import Differencer
 from sktime.transformations.hierarchical.aggregate import Aggregator
-from sktime.transformations.series.difference import Differencer
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(

@@ -15,6 +15,39 @@ from sktime.utils.dependencies import _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 
+LC_TO_UC_ACTIVATIONS = {
+    "elu": "ELU",
+    "hardshrink": "Hardshrink",
+    "hardsigmoid": "Hardsigmoid",
+    "hardtanh": "Hardtanh",
+    "hardswish": "Hardswish",
+    "leakyrelu": "LeakyReLU",
+    "logsigmoid": "LogSigmoid",
+    "multiheadattention": "MultiheadAttention",
+    "prelu": "PReLU",
+    "relu": "ReLU",
+    "relu6": "ReLU6",
+    "rrelu": "RReLU",
+    "selu": "SELU",
+    "celu": "CELU",
+    "gelu": "GELU",
+    "sigmoid": "Sigmoid",
+    "silu": "SiLU",
+    "mish": "Mish",
+    "softplus": "Softplus",
+    "softshrink": "Softshrink",
+    "softsign": "Softsign",
+    "tanh": "Tanh",
+    "tanhshrink": "Tanhshrink",
+    "threshold": "Threshold",
+    "glu": "GLU",
+    "softmin": "Softmin",
+    "softmax": "Softmax",
+    "softmax2d": "Softmax2d",
+    "logsoftmax": "LogSoftmax",
+    "adaptivelogsoftmaxwithloss": "AdaptiveLogSoftmaxWithLoss",
+}
+
 
 class BaseDeepClassifierPytorch(BaseClassifier):
     """Abstract base class for the Pytorch neural network classifiers.
@@ -25,9 +58,24 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         The number of epochs to train the model
     batch_size : int, default = 8
         The size of each mini-batch during training
-    activation : str or None or an instance of activation functions defined in
-        torch.nn, default = None
-        Activation function used in the fully connected output layer.
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
     criterion : case insensitive str or an instance of a loss function
         defined in PyTorch, default = None
         The loss function to be used in training the neural network.
@@ -55,6 +103,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
+    metrics : None or str or Callable or tuple of str and/or Callable, default = None
+        Metrics to compute during training. If None, no metrics are computed beyond
+        the loss. Metrics are computed from torchmetrics library.
+        If a string/Callable is passed, it must be one of the metrics defined in
+        https://lightning.ai/docs/torchmetrics/stable/
+        Examples: "Accuracy", "F1Score", "Precision", "Recall"
     lr : float, default = 0.001
         The learning rate to be used in the optimizer.
     verbose : bool, default = True
@@ -76,6 +130,20 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "tests:vm": True,
     }
 
+    # _instantiate_activation_vars is an iterable of attribute names of activations
+    # to instantiate. In case activation attributes in subclasses are different than
+    # the default ones (activation and activation_hidden), this variable should
+    # be overridden.
+    _instantiate_activation_vars = ("activation", "activation_hidden")
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.metrics is not None:
+            self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
+
     def __init__(
         self: "BaseDeepClassifierPytorch",
         num_epochs: int = 16,
@@ -87,6 +155,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         optimizer_kwargs: dict | None = None,
         callbacks: None | str | tuple[str, ...] = None,
         callback_kwargs: dict | None = None,
+        metrics: None | str | Callable | tuple[str | Callable, ...] = None,
         lr: float = 0.001,
         verbose: bool = True,
         random_state: int | None = None,
@@ -100,14 +169,22 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self.optimizer_kwargs = optimizer_kwargs
         self.callbacks = callbacks
         self.callback_kwargs = callback_kwargs
+        self.metrics = metrics
         self.lr = lr
         self.verbose = verbose
         self.random_state = random_state
 
-        # use this when y has str
-        self.label_encoder = None
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         # set random seed for torch
         if self.random_state is not None:
             torchManual_seed = _safe_import("torch.manual_seed")
@@ -115,10 +192,16 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         # validate activation function w.r.t. criterion specified
         self._validate_activation_criterion()
+
         # post this function call,
         # self._validated_criterion and self._validated_activation are used
         # and self.criterion and self.activation are ignored
-
+        activation_map = {}
+        for var in self._instantiate_activation_vars:
+            activation_map[var] = getattr(self, var, None)
+            if var == "activation":
+                activation_map[var] = self._validated_activation
+        self._callable_activations = self._instantiate_activations(activation_map)
         # optimizers, criterions, callbacks will be instantiated in
         # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
         # methods respectively
@@ -126,7 +209,16 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._all_criterions = None
         self._all_callbacks = None
 
+        # use this when y has str
+        self.label_encoder = None
+        self._metrics_objects = None
+
     def _fit(self, X, y):
+        if self.random_state is not None:
+            import torch
+
+            torch.manual_seed(self.random_state)
+
         y = self._encode_y(y)
 
         self.network = self._build_network(X, y)
@@ -136,6 +228,13 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         self._optimizer = self._instantiate_optimizer()
         # instantiate callbacks (learning rate schedulers)
         self._schedulers = self._instantiate_schedulers()
+        # ensure num_classes is set before instantiating metrics
+        # as classification metrics require num_classes as an argument
+        self.num_classes = len(np.unique(y))
+        # instantiate metrics
+        self._metrics_objects = self._instantiate_metrics(
+            self.metrics, self.num_classes
+        )
         # build dataloader
         dataloader = self._build_dataloader(X, y)
 
@@ -145,6 +244,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
     def _run_epoch(self, epoch, dataloader):
         losses = []
+        metric_values = {name: [] for name in (self._metrics_objects or {})}
+
         for inputs, outputs in dataloader:
             y_pred = self.network(**inputs)
             loss = self._criterion(y_pred, outputs)
@@ -152,6 +253,16 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             loss.backward()
             self._optimizer.step()
             losses.append(loss.item())
+
+            # Compute metrics if any
+            if self._metrics_objects:
+                import torch
+
+                with torch.no_grad():
+                    for metric_name, metric_obj in self._metrics_objects.items():
+                        metric_value = metric_obj(y_pred, outputs)
+                        metric_values[metric_name].append(metric_value.item())
+
         epoch_loss = np.average(losses)
         # step the schedulers, if any
         if self._schedulers:
@@ -163,9 +274,63 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     scheduler.step(epoch_loss)
                 else:
                     scheduler.step()
-        # print loss for the epoch, if verbose is True
+
+        # print loss and metrics(if any) for the epoch, if verbose is True
         if self.verbose:
-            print(f"Epoch {epoch + 1}: Loss: {epoch_loss}")
+            msg = f"Epoch {epoch + 1}: Loss: {epoch_loss}"
+            if metric_values:
+                for metric_name, values in metric_values.items():
+                    avg_metric = np.average(values)
+                    msg += f", {metric_name}: {avg_metric:.4f}"
+            print(msg)
+
+    def _instantiate_activations(
+        self, activations: dict[str, str | Callable | None]
+    ) -> dict[str, Callable | None]:
+        """Instantiate PyTorch activations from string or module specifications.
+
+        Parameters
+        ----------
+        activations : dict[str, str | Callable | None]
+            A mapping where each key is the name of an activation attribute, and the
+            value is either the activation specified by the user or a default provided
+            by the estimator.
+
+        Returns
+        -------
+        callable_activations : dict[str, torch.nn.Module | None]
+            A dictionary of activation functions, keyed by the attribute name.
+        """
+        import torch
+
+        callable_activations: dict[str, torch.nn.Module | None] = {}
+        for activation_var, activation in activations.items():
+            if activation is None:
+                callable_activations[activation_var] = None
+                continue
+            if isinstance(activation, torch.nn.Module):
+                callable_activations[activation_var] = activation
+                continue
+            elif not isinstance(activation, str):
+                raise TypeError(
+                    f"Activation '{activation}' should be string or a torch.nn.Module. "
+                    f"But got {type(activation)} instead."
+                )
+
+            uc_activation = LC_TO_UC_ACTIVATIONS.get(activation, activation)
+            if not _safe_import(f"torch.nn.{uc_activation}"):
+                raise ValueError(
+                    f"Activation '{uc_activation}' is not a valid PyTorch activation"
+                    "function in torch.nn module. Please pass a valid PyTorch"
+                    "activation function in torch.nn module. Refer "
+                    "https://pytorch.org/docs/stable/nn.html#non-linear-activations-"
+                    "weighted-sum-nonlinearity for list of valid activation functions."
+                )
+
+            callable_activations[activation_var] = _safe_import(
+                f"torch.nn.{uc_activation}"
+            )()
+        return callable_activations
 
     def _validate_activation_criterion(self):
         """Validate activation function in the output layer w.r.t. criterion specified.
@@ -193,12 +358,12 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         Sets
         ------
-        self.validated_criterion : str or Callable
+        self._validated_criterion : str or Callable
             The validated criterion to be used in training the neural network.
             This will either be the same as self.criterion, or "crossentropyloss"
             if a functionally equivalent combination of criterion and activation
             function is detected.
-        self.validated_activation : str or Callable or None
+        self._validated_activation : str or Callable or None
             The validated activation function to be used in the output layer.
             This will either be the same as self.activation, or None if a
             functionally equivalent combination is detected.
@@ -516,6 +681,104 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 f"But got {type(self._validated_criterion)} instead."
             )
 
+    def _instantiate_metric(self, metric, torchmetrics, num_classes):
+        """Instantiate a single classification metric from torchmetrics.
+
+        Parameters
+        ----------
+        metric : str or Callable
+            Metric name from torchmetrics or a metric instance.
+        torchmetrics : module
+            The torchmetrics module.
+        num_classes : int
+            The number of classes in the dataset.
+
+        Returns
+        -------
+        metric_name : str
+            Name to use as the key in the metrics dictionary.
+        metric_instance : Callable
+            The instantiated metric object.
+
+        Raises
+        ------
+        ValueError
+            If an unknown metric name is passed.
+        TypeError
+            If metric is neither a string nor a callable.
+        """
+        if isinstance(metric, str):
+            if not hasattr(torchmetrics, metric):
+                raise ValueError(
+                    f"Error in constructing torch based classifier "
+                    f"{type(self).__name__}, "
+                    f"unknown metric: {metric}. Please pass one of the available "
+                    f"classification metrics from torchmetrics or check the metric "
+                    f"name. See https://lightning.ai/docs/torchmetrics/stable/"
+                )
+            metric_class = getattr(torchmetrics, metric)
+            kwargs = {"task": "multiclass", "num_classes": num_classes}
+            if metric in ("F1Score", "Precision", "Recall"):
+                kwargs["average"] = "macro"
+            return metric, metric_class(**kwargs)
+        if isinstance(metric, Callable):
+            return metric.__class__.__name__, metric
+        raise TypeError(
+            "`metrics` can either be None, a str or a tuple of str "
+            "representing metrics from torchmetrics, or an instance of a "
+            f"torchmetrics metric. But got {type(metric)} instead."
+        )
+
+    def _instantiate_metrics(self, metrics, num_classes):
+        """Instantiate metrics to be computed during training.
+
+        Metrics are computed from the torchmetrics library. If no metrics are passed,
+        returns None.
+
+        Parameters
+        ----------
+        metrics : None or str or Callable or tuple of str and/or Callable
+            Metrics to compute during training. If None, no metrics are computed beyond
+            the loss. Metrics are computed from torchmetrics library.
+            If a string/Callable is passed, it must be one of the metrics defined in
+            https://lightning.ai/docs/torchmetrics/stable/
+            Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
+        num_classes : int
+            The number of classes in the dataset.
+            This is required for classification metrics.
+
+        Returns
+        -------
+        metrics_dict : dict or None
+            A dictionary mapping metric names to metric objects from torchmetrics.
+            If no metrics are provided, returns None.
+
+        Raises
+        ------
+        ValueError
+            If an unknown metric name is passed.
+        TypeError
+            If metric is neither a string nor a callable.
+        """
+        if metrics is None:
+            return None
+
+        torchmetrics = _safe_import("torchmetrics")
+
+        if not isinstance(metrics, tuple):
+            metrics_list = (metrics,)
+        else:
+            metrics_list = metrics
+
+        metrics_dict = {}
+        for metric in metrics_list:
+            metric_name, metric_instance = self._instantiate_metric(
+                metric, torchmetrics, num_classes
+            )
+            metrics_dict[metric_name] = metric_instance
+
+        return metrics_dict if metrics_dict else None
+
     @abc.abstractmethod
     def _build_network(self):
         pass
@@ -602,7 +865,13 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                 y_pred.append(self.network(**inputs).detach())
         y_pred = cat(y_pred, dim=0)
         # (batch_size, num_outputs)
-        y_pred = Fsoftmax(y_pred, dim=-1)
+
+        # if we had self._validated_activation, then it has already been applied
+        # in forward pass of the network. If not, we apply softmax here to convert
+        # logits to probabilities.
+        if self._validated_activation is None:
+            y_pred = Fsoftmax(y_pred, dim=-1)
+
         y_pred = y_pred.numpy()
         return y_pred
 

@@ -1,7 +1,8 @@
 """KNN time series classification.
 
 This class is a KNN classifier which supports time series distance measures. The class
-has hardcoded string references to numba based distances in sktime.distances. It can
+has hardcoded string references to numba based distances in
+sktime.dists_kernels._numba_distances. It can
 also be used with callables, or sktime (pairwise transformer) estimators.
 
 This is a direct wrap or sklearn KNeighbors, with added functionality that allows time
@@ -35,7 +36,8 @@ class KNeighborsTimeSeriesClassifier(_BaseKnnTimeSeriesEstimator, BaseClassifier
     Time series distances are passed as the ``distance argument``, which can be:
 
     * a string. This will substitute a hard-coded distance metric
-      from ``sktime.distances``. These default distances are intended to be
+      from ``sktime.dists_kernels._numba_distances``.
+      These default distances are intended to be
       performant, but cannot deal with unequal length or multivariate series.
     * a ``sktime`` pairwise transformer.
       These are available in ``sktime.dists_kernels``, and can be discovered
@@ -89,7 +91,8 @@ class KNeighborsTimeSeriesClassifier(_BaseKnnTimeSeriesEstimator, BaseClassifier
         * if str, must be one of the following strings:
           'euclidean', 'squared', 'dtw', 'ddtw', 'wdtw', 'wddtw',
           'lcss', 'edr', 'erp', 'msm', 'twe'
-          this will substitute a hard-coded distance metric from ``sktime.distances``
+          this will substitute a hard-coded distance metric from
+          ``sktime.dists_kernels._numba_distances``.
         * if ``sktime`` pairwise transformer,
           must implement the ``pairwise-transformer`` interface.
           ``sktime`` transformers are available in ``sktime.dists_kernels``,
