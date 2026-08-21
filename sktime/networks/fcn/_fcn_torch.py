@@ -46,6 +46,19 @@ class FCNNetworkTorch(NNModule):
     random_state : int, default = 0
         Seed for reproducibility.
 
+    Example
+    -------
+    >>> from sktime.networks.fcn import FCNNetworkTorch
+    >>> model = FCNNetworkTorch(
+    ...     input_size=1,
+    ...     num_classes=10,
+    ...     filter_sizes=(128, 256, 128),
+    ...     kernel_sizes=(8, 5, 3),
+    ...     activation_hidden="relu",
+    ...     activation="softmax",
+    ...     init_weights="kaiming_uniform",
+    ...     random_state=42,
+    ... )
     """
 
     def __init__(
