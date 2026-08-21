@@ -524,6 +524,8 @@ class ForecastingPipeline(_Pipeline):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         # skip transformers if X is ignored
         # condition 1 for ignoring X: X is None and required in fit of 1st transformer
         first_trafo = self.steps_[0][1]
@@ -737,7 +739,7 @@ class ForecastingPipeline(_Pipeline):
                 # we create a zero-column y from the forecasting horizon
                 requires_y = transformer.get_tag("requires_y", False)
                 if isinstance(y, ForecastingHorizon) and requires_y:
-                    y_index = y.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+                    y_index = y.get_expected_pred_idx(y=self._cur_y, cutoff=self.cutoff)
                     y = pd.DataFrame(index=y_index)
                 elif isinstance(y, ForecastingHorizon) and not requires_y:
                     y = None
@@ -1633,6 +1635,8 @@ class ForecastX(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         if self.fh_X is None:
             fh_X = fh
         else:
@@ -1699,9 +1703,9 @@ class ForecastX(BaseForecaster):
         # either columns explicitly specified through the `columns` argument
         # or all columns in the `X` argument passed in `fit` call are future-unknown
         if self.columns is None or len(self.columns) == 0:
-            # `self._X` is guaranteed to exist and be a DataFrame at this point
+            # `self._cur_X` is guaranteed to exist and be a DataFrame at this point
             # ensured by `self.X_was_None_` check in `_get_forecaster_X_prediction`
-            unknown_columns = self._X.columns
+            unknown_columns = self._cur_X.columns
         else:
             unknown_columns = self.columns
 
@@ -1714,7 +1718,7 @@ class ForecastX(BaseForecaster):
 
         If behaviour = "update": uses self.forecaster_X_, this is already fitted.
         If behaviour = "refitted", uses a local clone of self.forecaster_X,
-            after fitting it to self._X, i.e., all exogenous data seen so far.
+            after fitting it to self._cur_X, i.e., all exogenous data seen so far.
 
         Parameters
         ----------
@@ -1746,8 +1750,8 @@ class ForecastX(BaseForecaster):
             if self.fh_X_ is not None:
                 fh = self.fh_X_
             forecaster = self.forecaster_X_c.clone()
-            X_for_fcX = self._get_X_for_fcX(self._X)
-            forecaster.fit(y=self._get_Xcols(self._X), fh=fh, X=X_for_fcX)
+            X_for_fcX = self._get_X_for_fcX(self._cur_X)
+            forecaster.fit(y=self._get_Xcols(self._cur_X), fh=fh, X=X_for_fcX)
 
         X_for_fcX = self._get_X_for_fcX(X)
         X_pred = getattr(forecaster, method)(fh=fh, X=X_for_fcX)
@@ -1755,7 +1759,7 @@ class ForecastX(BaseForecaster):
             X_pred = X_pred.combine_first(X)
 
         # order columns so they are in the same order as in X seen
-        X_cols_ordered = [col for col in self._X.columns if col in X_pred.columns]
+        X_cols_ordered = [col for col in self._cur_X.columns if col in X_pred.columns]
         X_pred = X_pred[X_cols_ordered]
 
         return X_pred

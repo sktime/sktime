@@ -1030,7 +1030,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     def check_fh(self, fh):
         """Check the fh to ensure consistency with `inner_fh` of trend forecaster."""
         inner_fh = getattr(self._trend_forecaster, "_inner_fh", None)
-        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._y)
+        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._cur_y)
 
         msg = (
             f"This is because fitting of the "
@@ -1116,10 +1116,13 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             _check_soft_dependencies("statsmodels")
             from sktime.forecasting.theta import ThetaForecaster
 
+            # MSTL already decomposes seasonality; the trend forecaster must be
+            # non-seasonal. Default ThetaForecaster uses multiplicative
+            # deseasonalization, which fails on signed test series.
             params = [
                 {
                     "season_length": [3, 12],
-                    "trend_forecaster": ThetaForecaster(),
+                    "trend_forecaster": ThetaForecaster(deseasonalize=False),
                 },
                 {
                     "season_length": 4,

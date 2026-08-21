@@ -267,6 +267,8 @@ class ARCH(BaseForecaster):
         -------
         self : returns an instance of self
         """
+        self._cur_y = y
+        self._cur_X = X
         from arch import arch_model as _ARCH
         from arch.__future__ import reindexing
 
@@ -320,7 +322,7 @@ class ARCH(BaseForecaster):
         ArchResultObject : ARCH result object, full_range, abs_idx in a tuple
             mean, variance forecasts, full_range, abs_idx
         """
-        abs_idx = fh.to_absolute_int(self._y.index[-1], self.cutoff)
+        abs_idx = fh.to_absolute_int(self._cur_y.index[-1], self.cutoff)
         end = abs_idx[-1]
 
         # all fh are in-sample
@@ -424,9 +426,9 @@ class ARCH(BaseForecaster):
         std_err = np.sqrt(self._predict_var(fh=fh, X=X).values)
         mean_forecast = self._predict(fh=fh, X=X).values
 
-        abs_idx = fh.to_absolute_int(self._y.index[-1], self.cutoff)
+        abs_idx = fh.to_absolute_int(self._cur_y.index[-1], self.cutoff)
 
-        y_col_name = self._y.name
+        y_col_name = self._cur_y.name
         df_list = []
         for confidence in coverage:
             alpha = 1 - confidence
@@ -536,13 +538,13 @@ class ARCH(BaseForecaster):
             y_pred = pd.Series(
                 ArchResultObject.mean.values[-1],
                 index=full_range,
-                name=self._y.name,
+                name=self._cur_y.name,
             )
         elif type == "variance":
             y_pred = pd.Series(
                 ArchResultObject.variance.values[-1],
                 index=full_range,
-                name=self._y.name,
+                name=self._cur_y.name,
             )
         y_pred = y_pred.loc[abs_idx.to_pandas()]
         y_pred.index = fh.to_absolute_index(self.cutoff)
@@ -567,7 +569,7 @@ class ARCH(BaseForecaster):
             Returns series of predicted values.
         """
         if type == "mean":
-            y_pred = self._y - self._fitted_forecaster.resid
+            y_pred = self._cur_y - self._fitted_forecaster.resid
         if type == "variance":
             y_pred = (self._fitted_forecaster.conditional_volatility) ** 2
         y_pred = y_pred.loc[fh.to_absolute_index(self.cutoff)]

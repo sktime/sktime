@@ -229,7 +229,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
 
         return SCINet(
             seq_len=self.seq_len,
-            input_dim=self._y.shape[-1],
+            input_dim=self._cur_y.shape[-1],
             pred_len=fh,
             hid_size=self.hid_size,
             num_stacks=self.hid_size,

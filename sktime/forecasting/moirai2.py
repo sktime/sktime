@@ -190,6 +190,8 @@ class Moirai2Forecaster(BaseForecaster):
             return Moirai2Forecast.load_from_checkpoint(**model_kwargs)
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
         else:
@@ -239,6 +241,23 @@ class Moirai2Forecaster(BaseForecaster):
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
+    def _update(self, y, X=None, update_params=True):
+        """Extend the context series that ``_predict`` conditions on.
+
+        Appending is required for the predictions to line up with the cutoff,
+        which advances in ``update``: the forecast starts right after the last
+        context timepoint.
+
+        ``update_params`` has no effect, the model is used zero-shot: ``_fit``
+        does not train, it loads the pretrained module.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        return self
+
     def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh
@@ -251,10 +270,10 @@ class Moirai2Forecaster(BaseForecaster):
                 "The Moirai2 adapter is not supporting insample predictions."
             )
 
-        _y = self._y.copy()
+        _y = self._cur_y.copy()
         _X = None
-        if self._X is not None:
-            _X = self._X.copy()
+        if self._cur_X is not None:
+            _X = self._cur_X.copy()
 
         # Zero shot case with X and fit data as context.
         _use_fit_data_as_context = X is not None

@@ -143,15 +143,14 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             in update. If True, self._X and self._y are stored and updated.
             If False, self._X and self._y are not stored and updated.
             This reduces serialization size when using save,
-            but the update will default to "do nothing" rather than
-            "refit to all data seen".
+            but the default ``update`` with ``update_params=True`` will not
+            refit (only the cutoff advances) and will warn; use
+            ``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` to pool
+            and refit explicitly.
         """,
     }
 
     def __init__(self):
-        self._y = None
-        self._X = None
-
         # forecasting horizon
         self._fh = None
         self._cutoff = None  # reference point for relative fh
@@ -161,6 +160,23 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self._state = "new"
 
         super().__init__()
+
+        # todo 1.2.0: change default of remember_data to False and remove this warning
+        if self.get_config()["remember_data"]:
+            self._y = None
+            self._X = None
+            warn(
+                "The default of config ``remember_data`` will change from ``True`` "
+                "to ``False`` in sktime 1.2.0. After 1.2.0, ``BaseForecaster`` will "
+                "no longer store incremental data in ``_X`` and ``_y`` by default. "
+                "To silence this warning and adopt the new default early, set "
+                "``remember_data=False`` via ``set_config``. "
+                "To keep storing incremental data and refitting on every update "
+                "after the default change, set ``remember_data=True`` explicitly, "
+                "or use ``UpdateRefitsEvery`` with ``refit_interval=0``.",
+                FutureWarning,
+                self,
+            )
 
         # this block has a double purpose:
         # - emit a warning if dependencies are not met, but allow instantiation
@@ -490,8 +506,8 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # set internal X/y to the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y (subclasses may also pool data here, e.g. streams)
+        # if remember_data is True, update internal X/y also
         self._update_y_X(y_inner, X_inner)
 
         # check forecasting horizon and coerce to ForecastingHorizon object
@@ -662,8 +678,8 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # set internal X/y to the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y (subclasses may also pool data here, e.g. streams)
+        # if remember_data is True, update internal X/y also
         self._update_y_X(y_inner, X_inner)
 
         # check fh and coerce to ForecastingHorizon
@@ -1343,8 +1359,8 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # update internal X/y with the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y (subclasses may also pool data here, e.g. streams)
+        # if remember_data is True, update internal X/y also
         self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
@@ -1504,12 +1520,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         Accesses in self:
             Fitted model attributes ending in "_".
-            Pointers to seen data, self._y and self.X
             self.cutoff, self._is_fitted
             If update_params=True, model attributes ending in "_".
 
         Writes to self:
-            Update self._y and self._X with ``y`` and ``X``, by appending rows.
             Updates self.cutoff and self._cutoff to last index seen in ``y``.
             If update_params=True,
                 updates fitted model attributes ending in "_".
@@ -1574,8 +1588,8 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # update internal _X/_y with the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y (subclasses may also pool data here, e.g. streams)
+        # if remember_data is True, update internal X/y also
         self._update_y_X(y_inner, X_inner)
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
@@ -1631,10 +1645,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             Time series with ground truth observations, to compute residuals to.
             Must have same type, dimension, and indices as expected return of predict.
 
-            If None, the y seen so far (self._y) are used, in particular:
-
-            * if preceded by a single fit call, then in-sample residuals are produced
-            * if fit requires ``fh``, it must have pointed to index of y in fit
+            Required; ground truth observations to compute residuals against.
 
         X : time series in sktime compatible format, optional (default=None)
             Exogeneous time series for updating and forecasting
@@ -1662,6 +1673,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # if no y is passed, the so far observed y is used
         if y is None and self.get_config()["remember_data"]:
             y = self._y
+        if y is None:
+            raise ValueError(
+                "y must be passed to predict_residuals; BaseForecaster does not "
+                "retain training data. Pass the observations to compute residuals "
+                "against."
+            )
 
         # we want residuals, so fh must be the index of y
         # if data frame: take directly from y
@@ -2081,41 +2098,30 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             self._X = update_data(self._X, X)
 
     def _update_y_X(self, y, X=None, enforce_index_type=None):
-        """Update internal memory of seen training data.
-
-        Accesses in self:
-        _y : only if exists, then assumed same type as y and same cols
-        _X : only if exists, then assumed same type as X and same cols
-            these assumptions should be guaranteed by calls
+        """Update cutoff from newly seen training data.
 
         Writes to self:
-        _y : same type as y - new rows from y are added to current _y
-            if _y does not exist, stores y as _y
-        _X : same type as X - new rows from X are added to current _X
-            if _X does not exist, stores X as _X
-            this is only done if X is not None
         cutoff : is set to latest index seen in y
-
-        _y and _X are guaranteed to be one of mtypes:
-            pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
-            pd_multiindex_hier
 
         Parameters
         ----------
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Endogenous time series
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
-            Exogeneous time series
+            Exogeneous time series (ignored by the base implementation)
+        enforce_index_type : type, optional (default=None)
+            Ignored by the base implementation; kept for subclass overrides.
         """
-        if y is not None and self.get_config()["remember_data"]:
+        if y is not None:
             # unwrap y if VectorizedDF
             if isinstance(y, VectorizedDF):
                 y = y.X_multiindex
-            # if _y does not exist yet, initialize it with y
-            if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
-                self._y = y
-            else:
-                self._y = update_data(self._y, y)
+            if self.get_config()["remember_data"]:
+                # if _y does not exist yet, initialize it with y
+                if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
+                    self._y = y
+                else:
+                    self._y = update_data(self._y, y)
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)
@@ -2204,7 +2210,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         Writes fh to self._fh if does not exist.
         Checks equality of fh with self._fh if exists, raises error if not equal.
-        Assigns the frequency inferred from self._y
+        Assigns the frequency inferred from the cutoff
         to the returned forecasting horizon object.
 
         Parameters
@@ -2515,29 +2521,52 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         -------
         self : reference to self
         """
-        if update_params and self.get_config()["remember_data"]:
-            # default to re-fitting if update is not implemented
-            warn(
-                f"NotImplementedWarning: {self.__class__.__name__} "
-                f"does not have a custom `update` method implemented. "
-                f"{self.__class__.__name__} will be refit each time "
-                f"`update` is called with update_params=True. "
-                "To refit less often, use the wrappers in the "
-                "forecasting.stream module, e.g., UpdateEvery.",
-                obj=self,
-            )
-            # we need to overwrite the mtype last seen and converter store, since the _y
-            #    may have been converted
-            mtype_last_seen = self._y_mtype_last_seen
-            y_metadata = self._y_metadata
-            _converter_store_y = self._converter_store_y
-            # refit with updated data, not only passed data
-            self.fit(y=self._y, X=self._X, fh=self._fh)
-            # todo: should probably be self._fit, not self.fit
-            # but looping to self.fit for now to avoid interface break
-            self._y_mtype_last_seen = mtype_last_seen
-            self._y_metadata = y_metadata
-            self._converter_store_y = _converter_store_y
+        # Leaf estimators that need a current snapshot should override `_update`
+        # to append to their own `_cur_y` / `_cur_X`. To pool and refit, use
+        # forecasting.stream compositors (e.g. UpdateRefitsEvery).
+        if update_params:
+            if self.get_config()["remember_data"]:
+                # default to re-fitting if update is not implemented
+                warn(
+                    f"NotImplementedWarning: {self.__class__.__name__} "
+                    f"does not have a custom `update` method implemented. "
+                    f"{self.__class__.__name__} will be refit each time "
+                    f"`update` is called with update_params=True. "
+                    "To pool data and control refit frequency, wrap with "
+                    "``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` "
+                    "(e.g. ``refit_interval=0`` to refit every update, or a "
+                    "larger interval / ``UpdateEvery`` to refit less often).",
+                    obj=self,
+                )
+                # we need to overwrite the mtype last seen and converter store,
+                # since the _y may have been converted
+                mtype_last_seen = self._y_mtype_last_seen
+                y_metadata = self._y_metadata
+                _converter_store_y = self._converter_store_y
+                # refit with updated data, not only passed data
+                self.fit(y=self._y, X=self._X, fh=self._fh)
+                # todo: should probably be self._fit, not self.fit
+                # but looping to self.fit for now to avoid interface break
+                self._y_mtype_last_seen = mtype_last_seen
+                self._y_metadata = y_metadata
+                self._converter_store_y = _converter_store_y
+            else:
+                # cutoff was already advanced by public ``update``; parameters
+                # are intentionally left unchanged when there is no base data
+                # pool and no leaf ``_update`` override
+                warn(
+                    f"NotImplementedWarning: {type(self).__name__} "
+                    "does not have a custom `update` method implemented, "
+                    "and ``remember_data=False``, so `update` with "
+                    "update_params=True leaves model parameters unchanged "
+                    "(only the cutoff advances). "
+                    "To pool history and refit on update, wrap with "
+                    "``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` "
+                    "with ``refit_interval=0`` to refit every update. "
+                    "To keep the legacy base data pool while it exists, set "
+                    "``remember_data=True`` via ``set_config``.",
+                    obj=self,
+                )
 
         # if update_params=False, and there are no components, do nothing
         # if update_params=False, and there are components, we update cutoffs

@@ -131,6 +131,8 @@ class PyKANForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         from kan import KAN
 
         output_size = max(fh.to_relative(self.cutoff)._values)
@@ -230,16 +232,16 @@ class PyKANForecaster(BaseForecaster):
         if X is not None:
             input_ = torch.cat(
                 [
-                    torch.from_numpy(self._y.values[-self._input_layer_size :]).reshape(
-                        (1, -1)
-                    ),
+                    torch.from_numpy(
+                        self._cur_y.values[-self._input_layer_size :]
+                    ).reshape((1, -1)),
                     torch.from_numpy(X.values).reshape((1, -1)),
                 ],
                 dim=-1,
             ).type(torch.float32)
         else:
             input_ = (
-                torch.from_numpy(self._y.values[-self._input_layer_size :])
+                torch.from_numpy(self._cur_y.values[-self._input_layer_size :])
                 .reshape((1, -1))
                 .type(torch.float32)
             )
@@ -247,7 +249,9 @@ class PyKANForecaster(BaseForecaster):
         prediction = model(input_).detach().numpy().reshape((-1,))
         index = list(fh.to_absolute(self.cutoff))
         return pd.Series(
-            prediction[fh.to_relative(self._cutoff) - 1], index=index, name=self._y.name
+            prediction[fh.to_relative(self._cutoff) - 1],
+            index=index,
+            name=self._cur_y.name,
         )
 
     @classmethod

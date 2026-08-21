@@ -708,36 +708,31 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         actual = y_pred.index
         np.testing.assert_array_equal(actual, expected)
 
-    def test__y_and_cutoff(self, object_instance, n_columns):
-        """Check cutoff and _y."""
-        # check _y and cutoff is None after construction
+    def test_cutoff_and_cur_y(self, object_instance, n_columns):
+        """Check cutoff; and ``_cur_y`` when the estimator keeps a fit snapshot."""
         f = object_instance
 
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
-        # check that _y and cutoff are empty when estimator is constructed
-        assert f._y is None
+        # baseforecaster does not preset/store _cur_y/_cur_X
+        assert getattr(f, "_cur_y", None) is None
         assert f.cutoff is None
 
-        # check that _y and cutoff is updated during fit
         f.fit(y_train, fh=FH0)
-        # assert isinstance(f._y, pd.Series)
-        # action:uncomments the line above
-        # why: fails for multivariates cause they are DataFrames
-        # solution: look for a general solution for Series and DataFrames
-        assert len(f._y) > 0
         assert f.cutoff == y_train.index[-1]
 
-        # check data pointers
-        np.testing.assert_array_equal(f._y.index, y_train.index)
+        # Leaf estimators that need history store it as ``_cur_y`` / ``_cur_X``.
+        if getattr(f, "_cur_y", None) is not None:
+            assert len(f._cur_y) > 0
+            np.testing.assert_array_equal(f._cur_y.index, y_train.index)
 
-        # check that _y and cutoff is updated during update
         f.update(y_test, update_params=False)
-        np.testing.assert_array_equal(
-            f._y.index, np.append(y_train.index, y_test.index)
-        )
         assert f.cutoff == y_test.index[-1]
+        # Note on why not assert _cur_y.index == append(y_train.index, y_test.index):
+        # ``_cur_y`` is a fit snapshot thing. estimators relying on defualt _update
+        # does not refresh it on update
+        # e.g. window/reducer dont require append for all subclasses having `_cur_y`
 
     def test_update_with_exogenous_variables(
         self, object_instance, n_columns, update_params
@@ -752,7 +747,9 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
             y_data = {}
             np.random.seed(42)
             for i in range(n_columns):
-                y_data[f"y_{i}"] = np.random.randn(25)
+                # offset to be all-positive, as in the univariate case above,
+                # since some estimators use count losses, e.g. Poisson
+                y_data[f"y_{i}"] = np.random.randn(25) + 10
             y = pd.DataFrame(y_data, index=index)
 
         # Create X data (exogenous variables)
@@ -777,14 +774,16 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         assert object_instance.cutoff == y_test.index[-1]
         assert object_instance._is_fitted
 
-    def test__y_when_refitting(self, object_instance, n_columns):
-        """Test that _y is updated when forecaster is refitted."""
+    def test_cur_y_when_refitting(self, object_instance, n_columns):
+        """Test that ``_cur_y`` is replaced when forecaster is refitted."""
         y_train = _make_series(n_columns=n_columns)
         object_instance.fit(y_train, fh=FH0)
+        if getattr(object_instance, "_cur_y", None) is None:
+            return
         object_instance.fit(y_train[3:], fh=FH0)
         # using np.squeeze to make the test flexible to shape differences like
         # (50,) and (50, 1)
-        assert np.all(np.squeeze(object_instance._y) == np.squeeze(y_train[3:]))
+        assert np.all(np.squeeze(object_instance._cur_y) == np.squeeze(y_train[3:]))
 
     def test_fh_attribute(self, object_instance, n_columns):
         """Check fh attribute and error handling if two different fh are passed."""

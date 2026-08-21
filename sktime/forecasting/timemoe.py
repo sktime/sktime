@@ -196,6 +196,8 @@ class TimeMoEForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         config = self._config
         if isinstance(y, pd.DataFrame) and y.shape[1] > 1:
             config["input_size"] = y.shape[1]
@@ -298,7 +300,7 @@ class TimeMoEForecaster(BaseForecaster):
         else:
             prediction_length = 1
 
-        _y = self._y.copy()
+        _y = self._cur_y.copy()
         _y_df = _y
 
         index_names = _y.index.names

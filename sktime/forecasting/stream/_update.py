@@ -6,12 +6,42 @@ __author__ = ["fkiraly"]
 
 import pandas as pd
 
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES, VectorizedDF, update_data
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 
 
-class UpdateRefitsEvery(_DelegatedForecaster):
+class _StreamDataPoolMixin:
+    """Pool training data as ``_y`` / ``_X`` on stream compositors.
+
+    BaseForecaster does not retain fit/update data. Stream wrappers that need
+    a pooled history (for periodic refit / interval logic) own that storage.
+    """
+
+    def _init_stream_data_pool(self):
+        self._y = None
+        self._X = None
+
+    def _update_stream_data_pool(self, y, X=None):
+        """Append ``y`` / ``X`` to the stream pool."""
+        if y is not None:
+            if isinstance(y, VectorizedDF):
+                y = y.X_multiindex
+            if self._y is None or not self.is_fitted:
+                self._y = y
+            else:
+                self._y = update_data(self._y, y)
+
+        if X is not None:
+            if isinstance(X, VectorizedDF):
+                X = X.X_multiindex
+            if self._X is None or not self.is_fitted:
+                self._X = X
+            else:
+                self._X = update_data(self._X, X)
+
+
+class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     """Refits periodically when update is called.
 
     If update is called with ``update_params=True`` and ``refit_interval`` or more has
@@ -103,6 +133,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         self.refit_window_lag = refit_window_lag
 
         super().__init__()
+        self._init_stream_data_pool()
 
         self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
@@ -138,10 +169,11 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         -------
         self : reference to self
         """
+        self._update_stream_data_pool(y, X)
         # we need to remember the time we last fit, to compare to it in _update
         self.last_fit_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
-        estimator.fit(y=y, fh=fh, X=X)
+        estimator.fit(y=self._y, fh=self._fh, X=self._X)
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -180,6 +212,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         -------
         self : reference to self
         """
+        self._update_stream_data_pool(y, X)
         estimator = self._get_delegate()
         time_since_last_fit = self.cutoff[0] - self.last_fit_cutoff_
         refit_interval = self.refit_interval
@@ -193,11 +226,13 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         #   in that case, interpret any integers as iloc index differences
         #   and replace integers with timedelta quantities before proceeding
         if _is_time_difference(time_since_last_fit):
-            if isinstance(refit_window_lag, int):
+            # refit_window_lag=0 must stay 0: _y.index[-0] is _y.index[0] in Python
+            if isinstance(refit_window_lag, int) and refit_window_lag != 0:
                 lag = min(refit_window_lag, len(_y))
                 refit_window_lag = self.cutoff[0] - _y.index[-lag]
             if isinstance(refit_window_size, int):
-                _y_lag = get_window(_y, lag=refit_window_lag)
+                # get_window treats lag=None as "no lag"; int 0 breaks Timestamp - 0
+                _y_lag = get_window(_y, lag=_lag_arg(refit_window_lag))
                 window_size = min(refit_window_size + 1, len(_y_lag))
                 refit_window_size = self.cutoff[0] - _y_lag.index[-window_size]
             if isinstance(refit_interval, int):
@@ -208,10 +243,14 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         if _geq(time_since_last_fit, refit_interval) and update_params:
             if refit_window_size is not None or refit_window_lag != 0:
                 y_win = get_window(
-                    _y, window_length=refit_window_size, lag=refit_window_lag
+                    _y,
+                    window_length=refit_window_size,
+                    lag=_lag_arg(refit_window_lag),
                 )
                 X_win = get_window(
-                    _X, window_length=refit_window_size, lag=refit_window_lag
+                    _X,
+                    window_length=refit_window_size,
+                    lag=_lag_arg(refit_window_lag),
                 )
             else:
                 y_win = _y
@@ -249,7 +288,7 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         return [param1, param2]
 
 
-class UpdateEvery(_DelegatedForecaster):
+class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     """Update only periodically when update is called.
 
     If ``update`` is called, behaves like ``update_params=False``,
@@ -321,6 +360,7 @@ class UpdateEvery(_DelegatedForecaster):
         self.update_interval = update_interval
 
         super().__init__()
+        self._init_stream_data_pool()
 
         self._set_delegated_tags(self.forecaster_)
         self.set_tags(**{"fit_is_empty": False})
@@ -356,10 +396,11 @@ class UpdateEvery(_DelegatedForecaster):
         -------
         self : reference to self
         """
+        self._update_stream_data_pool(y, X)
         # we need to remember the time we last fit, to compare to it in _update
         self.last_update_cutoff_ = self.cutoff[0]
         estimator = self._get_delegate()
-        estimator.fit(y=y, fh=fh, X=X)
+        estimator.fit(y=self._y, fh=self._fh, X=self._X)
         return self
 
     def _update(self, y, X=None, update_params=True):
@@ -398,6 +439,7 @@ class UpdateEvery(_DelegatedForecaster):
         -------
         self : reference to self
         """
+        self._update_stream_data_pool(y, X)
         estimator = self._get_delegate()
         time_since_last_update = self.cutoff[0] - self.last_update_cutoff_
         update_interval = self.update_interval
@@ -567,6 +609,11 @@ class DontUpdate(_DelegatedForecaster):
         param2 = {"forecaster": NaiveForecaster()}
 
         return [param1, param2]
+
+
+def _lag_arg(lag):
+    """Map lag=0 to None for ``get_window`` (``Timestamp - 0`` is invalid)."""
+    return None if lag == 0 else lag
 
 
 def _is_time_offset(obj):
