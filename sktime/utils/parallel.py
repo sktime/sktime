@@ -16,6 +16,8 @@ New parallelization or iteration backends can be added easily as follows:
 
 __author__ = ["fkiraly"]
 
+import warnings
+
 
 def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
     """Parallelize loop over iter via backend.
@@ -111,6 +113,29 @@ def _parallelize_none(fun, iter, meta, backend, backend_params):
 para_dict["none"] = _parallelize_none
 
 
+def _run_and_capture_warnings(fun, x, meta):
+    """Run ``fun(x, meta=meta)``, capturing any warnings it raises.
+
+    Used by ``_parallelize_joblib`` so that warnings raised inside a worker
+    job survive the trip back to the calling process. For process-based
+    joblib backends (``"loky"``, ``"multiprocessing"``), only the return
+    value of a ``delayed`` call is passed back to the caller; anything a
+    worker does with the ``warnings`` module happens in that worker's own
+    process and is otherwise lost. Threading and sequential execution share
+    the caller's process, so they were never affected.
+
+    Returns
+    -------
+    result : the return value of ``fun(x, meta=meta)``
+    record : list of ``warnings.WarningMessage``, the warnings raised while
+        ``fun`` was running, to be re-emitted by the caller.
+    """
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        result = fun(x, meta=meta)
+    return result, record
+
+
 def _parallelize_joblib(fun, iter, meta, backend, backend_params):
     """Parallelize loop via joblib Parallel."""
     from joblib import Parallel, delayed
@@ -143,7 +168,20 @@ def _parallelize_joblib(fun, iter, meta, backend, backend_params):
     if "n_jobs" not in par_params:
         par_params["n_jobs"] = -1
 
-    ret = Parallel(**par_params)(delayed(fun)(x, meta=meta) for x in iter)
+    raw = Parallel(**par_params)(
+        delayed(_run_and_capture_warnings)(fun, x, meta) for x in iter
+    )
+
+    # re-emit warnings captured in worker jobs in the calling process, so
+    # that they are visible regardless of backend, see bug #5307. Emitting
+    # via warn_explicit (rather than warn) preserves the original warning's
+    # message, category and source location, and lets the caller's own
+    # warning filters (e.g. "once per location") apply normally.
+    ret = []
+    for result, record in raw:
+        for w in record:
+            warnings.warn_explicit(w.message, w.category, w.filename, w.lineno)
+        ret.append(result)
     return ret
 
 
