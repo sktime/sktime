@@ -560,7 +560,7 @@ def get_storage_backend(path: str | Path) -> BaseStorageHandler:
 
 def _get_folds(row, extract_data=True):
     fold_infos = list(filter(lambda x: x.startswith("folds."), row.index))
-    fold_ids = set(map(lambda x: x.split(".")[1], fold_infos))
+    fold_ids = sorted({x.split(".")[1] for x in fold_infos}, key=int)
     folds = {}
     for fold_id in fold_ids:
         fold_scores = row.filter(regex=f"folds.{fold_id}.scores.*")
@@ -570,7 +570,7 @@ def _get_folds(row, extract_data=True):
 
         scores = {}
 
-        unique_score = set(list(map(lambda x: x.split(".")[3], fold_scores.keys())))
+        unique_score = sorted({x.split(".")[3] for x in fold_scores.keys()})
 
         for score_name in unique_score:
             score_vals = row.filter(regex=f"folds.{fold_id}.scores.{score_name}.*")
