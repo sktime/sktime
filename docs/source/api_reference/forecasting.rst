@@ -338,6 +338,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
     SARIMAX
 
+.. currentmodule:: sktime.forecasting.pyfable_arima
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PyFableARIMA
+
 .. currentmodule:: sktime.forecasting.var
 
 .. autosummary::
@@ -487,6 +495,19 @@ Structural time series models
 
     GreykiteForecaster
 
+Decline curve analysis forecasts
+--------------------------------
+
+.. currentmodule:: sktime.forecasting.arps_dca
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ArpsExponential
+    ArpsHyperbolic
+    ArpsHarmonic
+
 Deep learning based forecasters
 -------------------------------
 
@@ -575,6 +596,14 @@ See next section for foundation models.
 
     PyKANForecaster
 
+.. currentmodule:: sktime.forecasting.hypertrees
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HyperTreeNetARForecaster
+
 .. currentmodule:: sktime.forecasting.rbf
 
 .. autosummary::
@@ -629,6 +658,14 @@ Domain agnostic foundation models
     :template: class.rst
 
     FalconTSTForecaster
+
+.. currentmodule:: sktime.forecasting.falcon_x
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FalconXForecaster
 
 .. currentmodule:: sktime.forecasting.flowstate
 
@@ -710,6 +747,14 @@ Domain agnostic foundation models
 
     SundialForecaster
 
+.. currentmodule:: sktime.forecasting.t0
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    T0Forecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
@@ -773,6 +818,14 @@ Domain agnostic foundation models
     :template: class.rst
 
     TiRexForecaster
+
+.. currentmodule:: sktime.forecasting.tirex2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TiRex2Forecaster
 
 .. currentmodule:: sktime.forecasting.toto
 

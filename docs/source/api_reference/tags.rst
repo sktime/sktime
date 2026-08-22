@@ -74,6 +74,7 @@ These tags are typically used for typing, packaging and documentation purposes.
     python_version
     python_dependencies
     env_marker
+    sktime_version
     requires_cython
     r_dependencies
 
@@ -166,7 +167,26 @@ transform a single time series object (``"transformer"`` type).
     capability__bootstrap_index
     fit_is_empty
     transform_returns_same_time_index
+    skip_inverse_transform
     property__randomness
+
+
+.. _pairwise_transformer_tags:
+
+Tags for pairwise transformers
+------------------------------
+
+This section lists tags applying to pairwise transformers, i.e., objects that
+transform pairs of time series (``"transformer-pairwise"`` and ``"transformer-pairwise-panel"`` types).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    symmetric
 
 
 .. _detector_tags:
@@ -237,6 +257,25 @@ This section lists tags applying to time series aligners (``"aligner"`` type).
     property__alignment_type
 
 
+.. _param_est_tags:
+
+Tags for parameter estimators
+------------------------------
+
+This section lists tags applying to parameter estimators (``"param_est"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    scitype__X
+    capability__multivariate
+    capability__pairwise
+
+
 Common developer tags
 ---------------------
 
@@ -280,3 +319,4 @@ They are primarily useful for developers managing CI behaviour of individual obj
     tests__vm
     tests__skip_all
     tests__skip_by_name
+    tests__specific

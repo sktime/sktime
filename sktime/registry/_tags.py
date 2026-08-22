@@ -190,6 +190,37 @@ class authors(_BaseTag):
     }
 
 
+class sktime_version(_BaseTag):
+    """Version of ``sktime`` from which the object originates.
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"sktime_version"``
+    - Private tag, developer and framework facing
+    - Values: string, ``sktime`` version identifier
+    - Example: ``"0.30.0"``
+    - Default: no restriction
+
+    The ``sktime_version`` tag of an object is a string specifying the
+    ``sktime`` version from which the estimator class originates,
+    i.e., the version in which the class was first added to ``sktime``.
+
+    The tag is used for packaging metadata and provenance tracking
+    of the object.
+
+    IMPORTANT: this tag is automatically set by the base classes.
+    It should not be manually set by developers.
+    """
+
+    _tags = {
+        "tag_name": "sktime_version",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "sktime version from which this estimator class originates",
+        "user_facing": False,
+    }
+
+
 class python_version(_BaseTag):
     """Python version requirement specifier for the object (PEP 440).
 
@@ -496,7 +527,7 @@ class tests__libs(_BaseTag):
     - Example: ``["sktime.libs.chronos"]``
     - Default: ``None``
 
-    ``sktime``'s CI framework regularly tests estimators in pull request,
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
     usually only estimators that have changed.
 
     The ``tests:libs`` tag of an object is a list of strings,
@@ -519,6 +550,43 @@ class tests__libs(_BaseTag):
         "parent_type": "object",
         "tag_type": "list",
         "short_descr": "Core libraries used by the estimator, to trigger tests.",
+        "user_facing": False,
+    }
+
+
+class tests__specific(_BaseTag):
+    """Modules containing estimator specific tests, for test triggers and execution.
+
+    Part of packaging metadata for the object, used only in ``sktime`` CI.
+
+    - String name: ``"tests:specific"``
+    - Private tag, developer and framework facing
+    - Values: list of str, or None
+    - Example: ``["sktime.forecasting.tests.test_croston"]``
+    - Default: ``None``
+
+    ``sktime``'s CI framework regularly tests estimators in pull requests,
+    usually only estimators that have changed.
+
+    The ``tests:specific`` tag of an object is a list of strings,
+    it specifies modules that contain estimator specific pytest tests.
+
+    Setting this tag has two effects:
+
+    * testing the estimator is triggered whenever any listed module has changed,
+      in addition to the other test trigger conditions, e.g., via ``tests:libs``.
+    * ``test_est`` CI VM runs execute the listed pytest test modules for that estimator
+      (see ``sktime.tests._test_vm._get_estimator_specific_test_modules``)
+
+    The ``tests:specific`` tag is not used in user facing checks, error messages,
+    or recommended build processes otherwise.
+    """
+
+    _tags = {
+        "tag_name": "tests:specific",
+        "parent_type": "object",
+        "tag_type": "list",
+        "short_descr": "Estimator specific pytest modules for trigger and execution.",
         "user_facing": False,
     }
 
@@ -642,10 +710,6 @@ class tests__python_dependencies(_BaseTag):
 
 # These tags are applicable to a wide range of objects,
 # most tags in this group apply to estimators
-
-# "capability:missing_values" is same as "handles-missing-data" tag.
-# They are kept distinct intentionally for easier TSC refactoring.
-# Will be merged after refactor completion.
 
 
 class capability__missing_values(_BaseTag):
@@ -910,16 +974,13 @@ class property__randomness(_BaseTag):
 class capability__exogenous(_BaseTag):
     """Capability: the forecaster can use exogenous data.
 
-    The tag is currently named ``ignores-exogeneous-X``, and will be renamed.
-
-    ``False`` = does use exogenous data, ``True`` = does not use exogenous data.
+    ``True`` = does use exogenous data, ``False`` = does not use exogenous data.
 
     - String name: ``"capability:exogenous"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
     - Default: ``False``
-    - Alias: boolean negation of ``"ignores-exogeneous-X"`` (legacy)
 
     Exogenous data are additional time series,
     that can be used to improve forecasting accuracy.
@@ -2032,6 +2093,36 @@ class capability__inverse_transform__exact(_BaseTag):
     }
 
 
+class skip_inverse_transform(_BaseTag):
+    """Behaviour flag: skips inverse transform when called.
+
+    - String name: ``"skip-inverse-transform"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer skips the inverse transform
+    when used in a pipeline.
+
+    This tag specifies whether the inverse transform should be skipped
+    when the transformer is used in a pipeline.
+
+    If the tag is ``False``, the inverse transform is carried out normally,
+    provided that the transformer supports inverse transformation.
+    """
+
+    _tags = {
+        "tag_name": "skip-inverse-transform",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "behaviour flag: skips inverse_transform when called yes/no",
+        "user_facing": True,
+    }
+
+
 class transform_returns_same_time_index(_BaseTag):
     """Property: transformer returns same time index as input.
 
@@ -2194,6 +2285,31 @@ class capability__unequal_length__adds(_BaseTag):
         "parent_type": "transformer",
         "tag_type": "bool",
         "short_descr": "can outputs be unequal length even if inputs are equal length?",
+        "user_facing": True,
+    }
+
+
+class symmetric(_BaseTag):
+    """Property: pairwise transformer is symmetric.
+
+    - String name: ``"symmetric"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to pairwise transformers.
+
+    The tag specifies whether the pairwise transformer is symmetric,
+    i.e., whether the transformation is the same when the two input series
+    are swapped: ``t(x, y) = t(y, x)`` for all pairs ``(x, y)``.
+    """
+
+    _tags = {
+        "tag_name": "symmetric",
+        "parent_type": ["transformer-pairwise", "transformer-pairwise-panel"],
+        "tag_type": "bool",
+        "short_descr": "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
         "user_facing": True,
     }
 
@@ -2493,7 +2609,7 @@ class property__alignment_type(_BaseTag):
 # ------------------------
 
 
-class capability__pairwise_parameter_estimation(_BaseTag):
+class capability__pairwise(_BaseTag):
     """Capability: parameter estimator supports pairwise parameter estimation.
 
     - String name: ``"capability:pairwise"``
@@ -2516,6 +2632,29 @@ class capability__pairwise_parameter_estimation(_BaseTag):
         "parent_type": "param_est",
         "tag_type": "bool",
         "short_descr": "does the estimator support pairwise parameter estimation?",
+        "user_facing": True,
+    }
+
+
+class scitype__X(_BaseTag):
+    """Scitypes internally supported by parameter estimator input X.
+
+    - String name: ``"scitype:X"``
+    - Public scitype tag
+    - Values: string, name(s) of scitype(s) supported
+    - Example: ``"Series"``
+
+    This tag applies to parameter estimators.
+
+    The tag specifies which scitype(s) of ``X`` the parameter estimator
+    internally supports, e.g. ``"Series"``, ``"Panel"`` or ``"Hierarchical"``.
+    """
+
+    _tags = {
+        "tag_name": "scitype:X",
+        "parent_type": "param_est",
+        "tag_type": "str",
+        "short_descr": "which scitypes does X internally support?",
         "user_facing": True,
     }
 
@@ -3610,18 +3749,6 @@ class info__source(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "sktime_version",
-        "object",
-        "str",
-        "sktime version from which this estimator class originates",
-    ),
-    (
-        "skip-inverse-transform",
-        "transformer",
-        "bool",
-        "behaviour flag: skips inverse_transform when called yes/no",
-    ),
-    (
         "X-y-must-have-same-index",
         ["forecaster", "regressor", "transformer"],
         "bool",
@@ -3634,22 +3761,10 @@ ESTIMATOR_TAG_REGISTER = [
         "passed to input checks, input conversion index type to enforce",
     ),
     (
-        "symmetric",
-        ["transformer-pairwise", "transformer-pairwise-panel"],
-        "bool",
-        "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
-    ),
-    (
         "pwtrafo_type",
         ["transformer-pairwise", "transformer-pairwise-panel"],
         ("str", ["distance", "kernel", "other"]),
         "mathematical type of pairwise transformer - distance, kernel, or other",
-    ),
-    (
-        "scitype:X",
-        "param_est",
-        "str",
-        "which scitypes does X internally support?",
     ),
     (
         "scitype:y",
@@ -3703,24 +3818,6 @@ ESTIMATOR_TAG_REGISTER = [
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
-    (
-        "task",
-        "detector",
-        "str",
-        "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
-    ),
-    (
-        "learning_type",
-        "detector",
-        "str",
-        "type of learning, e.g., 'supervised', 'unsupervised'",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
@@ -3749,12 +3846,6 @@ ESTIMATOR_TAG_REGISTER = [
     # -------------------------
     # these tags will be moved to skpro
     # some to be converted to configs, see skpro issue #269
-    (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
     (
         "capabilities:exact",
         "distribution",
@@ -3803,22 +3894,6 @@ ESTIMATOR_TAG_REGISTER = [
         "int",
         "max iters for bisection method in ppf",
     ),
-    # ---------------------
-    # to be renamed/aliased
-    # ---------------------
-    # the following tags are to be renamed or aliased
-    (
-        "univariate-only",  # -> capability:multivariate, invert
-        "transformer",
-        "bool",
-        "can transformer handle multivariate series? True = no",
-    ),
-    (
-        "handles-missing-data",  # -> capability:missing_values
-        "estimator",
-        "bool",
-        "can the estimator handle missing data (NA, np.nan) in inputs?",
-    ),
     # ---------------------------
     # to be deprecated or removed
     # ---------------------------
@@ -3828,12 +3903,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["forecaster"],
         "bool",
         "can the estimator make global forecasting?",
-    ),
-    (
-        "ignores-exogeneous-X",
-        "forecaster",
-        "bool",
-        "deprecated tag for exogenous capability",
     ),
 ]
 
