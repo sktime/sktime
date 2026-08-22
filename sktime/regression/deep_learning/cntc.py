@@ -6,7 +6,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.cntc import CNTCNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class CNTCRegressor(BaseDeepRegressor):
@@ -88,6 +87,7 @@ class CNTCRegressor(BaseDeepRegressor):
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
         "tests:skip_by_name": [
+            "test_class_has_doctest_example",
             "test_fit_idempotent",  # fails with `AssertionError`, see #3616
             "test_persistence_via_pickle",  # fails with `AssertionError`, see #8059
             "test_save_estimators_to_file",
@@ -114,8 +114,6 @@ class CNTCRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         activation_attention="sigmoid",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.activation_attention = activation_attention
@@ -135,12 +133,23 @@ class CNTCRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         self._network = CNTCNetwork(
             activation=self.activation_hidden,
             activation_attention=self.activation_attention,
             random_state=self.random_state,
             dropout=self.dropout,
         )
+
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -329,8 +338,8 @@ class CNTCRegressor(BaseDeepRegressor):
         return test_params
 
     @staticmethod
-    def get_custom_objects():
-        """Return the custom objects needed for loading the model.
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
 
         Returns
         -------

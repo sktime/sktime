@@ -52,6 +52,8 @@ class DtwPythonDist(_DelegatedPairwiseTransformerPanel):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:vm": True,  # should tests run in their own VM?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(

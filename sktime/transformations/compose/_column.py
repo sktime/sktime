@@ -90,8 +90,8 @@ class ColumnEnsembleTransformer(
 
         >>> import pandas as pd
         >>> from sktime.transformations.compose import ColumnEnsembleTransformer
-        >>> from sktime.transformations.series.detrend import Detrender
-        >>> from sktime.transformations.series.difference import Differencer
+        >>> from sktime.transformations.detrend import Detrender
+        >>> from sktime.transformations.difference import Differencer
         >>> from sktime.datasets import load_longley
 
     Using integers (column iloc references) for indexing:
@@ -353,8 +353,8 @@ class ColumnEnsembleTransformer(
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         TRANSFORMERS = [
             ("transformer1", ExponentTransformer()),
@@ -416,7 +416,7 @@ class ColumnwiseTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.datasets import load_longley
-    >>> from sktime.transformations.series.detrend import Detrender
+    >>> from sktime.transformations.detrend import Detrender
     >>> from sktime.transformations.compose import ColumnwiseTransformer
     >>> _, X = load_longley()
     >>> transformer = ColumnwiseTransformer(Detrender())
@@ -610,7 +610,7 @@ class ColumnwiseTransformer(BaseTransformer):
         """
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.transformations.series.detrend import Detrender
+        from sktime.transformations.detrend import Detrender
 
         params1 = {"transformer": Detrender()}
         params2 = {"transformer": StandardScaler()}

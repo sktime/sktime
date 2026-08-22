@@ -16,10 +16,10 @@ class DummyGlobalForecaster(BaseForecaster):
     of all time series in the pretrain set, then predicts that
     mean for all future time points.
 
-    Useful for:
+    Useful as:
 
-    - Testing the pretraining API
-    - Baseline comparisons for global forecasting models
+    - Simple baseline for global forecasting
+    - Test case for the pretraining API
     - Educational examples
 
     Parameters
@@ -27,10 +27,10 @@ class DummyGlobalForecaster(BaseForecaster):
     strategy : str, one of {"mean", "last", "mean_by_index"}, default="mean"
         Strategy for prediction:
 
-        - "mean": predict mean of all values in pretrain set
-        - "last": predict last value from fit data
-        - "mean_by_index": predict mean computed per time index across pretrain series.
-          Useful for cold start scenarios where pattern by index matters.
+        - ``"mean"``: predict mean of all values in pretrain set
+        - ``"last"``: predict last value from fit data
+        - ``"mean_by_index"``: predict mean computed per time index across pretraining
+          series. Useful for cold start scenarios where pattern by index matters.
 
     Attributes
     ----------
@@ -70,12 +70,25 @@ class DummyGlobalForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["SimonBlanke"],
+        # estimator type
+        # --------------
+        "capability:multivariate": True,
         "capability:pretrain": True,
-        "scitype:y": "both",
-        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
-        "requires-fh-in-fit": False,
         "capability:pred_int": False,
         "capability:insample": False,
+        "pretrain:fitted_params": [
+            "global_mean_",
+            "global_std_",
+            "n_pretrain_instances_",
+            "n_pretrain_timepoints_",
+            "mean_by_index_",
+        ],
+        "y_inner_mtype": ["pd.Series", "pd.DataFrame"],
+        "requires-fh-in-fit": False,
+        "tests:specific": ["sktime.forecasting.tests.test_dummy_global"],
     }
 
     def __init__(self, strategy="mean"):
@@ -123,19 +136,13 @@ class DummyGlobalForecaster(BaseForecaster):
 
             if self.strategy == "mean_by_index":
                 time_level = y.index.nlevels - 1
-                if isinstance(y, pd.DataFrame):
-                    self.mean_by_index_ = y.groupby(level=time_level).mean()
-                else:
-                    self.mean_by_index_ = y.groupby(level=time_level).mean()
+                self.mean_by_index_ = y.groupby(level=time_level).mean()
         else:
             self.n_pretrain_instances_ = 1
             self.n_pretrain_timepoints_ = len(y)
 
             if self.strategy == "mean_by_index":
-                if isinstance(y, pd.DataFrame):
-                    self.mean_by_index_ = y.copy()
-                else:
-                    self.mean_by_index_ = y.copy()
+                self.mean_by_index_ = y.copy()
 
         return self
 
@@ -193,10 +200,7 @@ class DummyGlobalForecaster(BaseForecaster):
             self.global_mean_ = float(np.nanmean(values))
 
         if self.strategy == "mean_by_index" and not hasattr(self, "mean_by_index_"):
-            if isinstance(y, pd.DataFrame):
-                self.mean_by_index_ = y.copy()
-            else:
-                self.mean_by_index_ = y.copy()
+            self.mean_by_index_ = y.copy()
 
         return self
 
