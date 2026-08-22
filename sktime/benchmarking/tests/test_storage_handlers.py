@@ -2,10 +2,10 @@ import pandas as pd
 import pytest
 
 from sktime.benchmarking._benchmarking_dataclasses import FoldResults, ResultObject
+from sktime.benchmarking._results_persistence import load_results_to_dataframe
 from sktime.benchmarking._storage_handlers import (
     CSVStorageHandler,
     JSONStorageHandler,
-    load_results_to_dataframe,
     results_to_dataframe,
     # ParquetStorageHandler,
 )

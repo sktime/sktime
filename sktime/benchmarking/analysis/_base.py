@@ -171,7 +171,7 @@ class BaseBenchmarkAnalyzer(BaseObject):
         if isinstance(results, pd.DataFrame):
             return results
 
-        from sktime.benchmarking._storage_handlers import load_results_to_dataframe
+        from sktime.benchmarking._results_persistence import load_results_to_dataframe
 
         df = load_results_to_dataframe(results)
         if df.empty:
