@@ -254,6 +254,8 @@ This section lists tags applying to parameter estimators (``"param_est"`` type).
     :nosignatures:
 
     scitype__X
+    capability__multivariate
+    capability__pairwise_parameter_estimation
 
 
 Common developer tags
