@@ -86,8 +86,6 @@ class TapNetNetwork(BaseDeepNetwork):
         lstm_dropout=0.8,
         fc_dropout=0.0,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.activation_hidden = activation_hidden
         self.random_state = random_state
         self.kernel_size = kernel_size
