@@ -24,6 +24,7 @@ class _PmdArimaAdapter(BaseForecaster):
         # estimator type
         # --------------
         "capability:exogenous": True,
+        "capability:categorical_in_X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
