@@ -239,6 +239,23 @@ This section lists tags applying to time series aligners (``"aligner"`` type).
     property__alignment_type
 
 
+.. _param_est_tags:
+
+Tags for parameter estimators
+------------------------------
+
+This section lists tags applying to parameter estimators (``"param_est"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    scitype__X
+
+
 Common developer tags
 ---------------------
 
