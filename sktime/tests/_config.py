@@ -103,9 +103,6 @@ EXCLUDED_TESTS = {
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAXlegacy": ["test_fit_transform_output"],
-    "DynamicFactor": [
-        "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],

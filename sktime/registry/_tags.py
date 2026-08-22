@@ -2611,6 +2611,29 @@ class capability__pairwise_parameter_estimation(_BaseTag):
     }
 
 
+class scitype__X(_BaseTag):
+    """Scitypes internally supported by parameter estimator input X.
+
+    - String name: ``"scitype:X"``
+    - Public scitype tag
+    - Values: string, name(s) of scitype(s) supported
+    - Example: ``"Series"``
+
+    This tag applies to parameter estimators.
+
+    The tag specifies which scitype(s) of ``X`` the parameter estimator
+    internally supports, e.g. ``"Series"``, ``"Panel"`` or ``"Hierarchical"``.
+    """
+
+    _tags = {
+        "tag_name": "scitype:X",
+        "parent_type": "param_est",
+        "tag_type": "str",
+        "short_descr": "which scitypes does X internally support?",
+        "user_facing": True,
+    }
+
+
 # Benchmark analyzer tags
 # -----------------------
 
@@ -3725,12 +3748,6 @@ ESTIMATOR_TAG_REGISTER = [
         "mathematical type of pairwise transformer - distance, kernel, or other",
     ),
     (
-        "scitype:X",
-        "param_est",
-        "str",
-        "which scitypes does X internally support?",
-    ),
-    (
         "scitype:y",
         # the scitype:y tag should be kept but for separate use,
         # a list of the internal scitypes supported by the estimator
@@ -3782,18 +3799,6 @@ ESTIMATOR_TAG_REGISTER = [
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
-    (
-        "task",
-        "detector",
-        "str",
-        "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
@@ -3822,12 +3827,6 @@ ESTIMATOR_TAG_REGISTER = [
     # -------------------------
     # these tags will be moved to skpro
     # some to be converted to configs, see skpro issue #269
-    (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
     (
         "capabilities:exact",
         "distribution",
