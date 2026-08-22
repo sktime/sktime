@@ -720,7 +720,6 @@ def evaluate(
 
     Optionally, users may select other metrics that can be supplied
     by ``scoring`` argument. These can be forecast metrics of any kind as stated `here
-
     <https://www.sktime.net/en/stable/api_reference/performance_metrics.html?highlight=metrics>`_
     i.e., point forecast metrics, interval metrics, quantile forecast metrics.
     To evaluate estimators using a specific metric, provide them to the scoring arg.
