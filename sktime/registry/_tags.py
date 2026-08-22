@@ -3782,18 +3782,6 @@ ESTIMATOR_TAG_REGISTER = [
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
-    (
-        "task",
-        "detector",
-        "str",
-        "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
@@ -3822,12 +3810,6 @@ ESTIMATOR_TAG_REGISTER = [
     # -------------------------
     # these tags will be moved to skpro
     # some to be converted to configs, see skpro issue #269
-    (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
     (
         "capabilities:exact",
         "distribution",
