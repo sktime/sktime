@@ -534,14 +534,6 @@ Filtering and denoising
 
     Bollinger
 
-.. currentmodule:: sktime.transformations.savitzky_golay
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: class.rst
-
-    SavitzkyGolayTransformer
-
 .. currentmodule:: sktime.transformations.hilbert
 
 .. autosummary::
@@ -549,6 +541,14 @@ Filtering and denoising
     :template: class.rst
 
     HilbertTransformer
+
+.. currentmodule:: sktime.transformations.savitzky_golay
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SavitzkyGolayTransformer
 
 
 Differencing, slope, kinematics

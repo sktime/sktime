@@ -13,7 +13,7 @@ from sktime.transformations.base import BaseTransformer
 
 
 class WaveletPacketTransformer(BaseTransformer):
-    """Extract features from time series via Wavelet Packet Decomposition.
+    """Wavelet Packet Decomposition transformer.
 
     Unlike the standard DWT which only decomposes the approximation branch
     at each level, wavelet packet decomposition recursively decomposes
