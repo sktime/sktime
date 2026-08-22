@@ -244,10 +244,22 @@ class BaseDeepRegressor(BaseRegressor):
         return ZipFile(path.with_name(f"{path.stem}.zip"))
 
     @staticmethod
-    def get_custom_objects():
-        """Return the custom objects needed for loading the model.
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
 
-        Will be overridden in child classes if necessary.
+        Passed as the ``custom_objects`` argument to ``keras.models.load_model``
+        when reloading ``model_`` from a saved ``.keras``/h5 file. Only needs to
+        be overridden by child classes whose ``build_model`` uses custom Keras
+        layers, losses, metrics, or other objects that Keras cannot resolve by
+        name on its own (e.g., classes not registered via
+        ``keras.saving.register_keras_serializable``).
+
+        Returns
+        -------
+        dict of str to type, or None
+            Mapping from the custom object's registered name (as stored in the
+            saved model config) to the Python class/function implementing it.
+            ``None`` if the model does not use any custom Keras objects.
         """
         return None
 
@@ -299,7 +311,7 @@ class BaseDeepRegressor(BaseRegressor):
 
                 cls.model_ = load_model(
                     tmpfilepath,
-                    custom_objects=cls.get_custom_objects(),
+                    custom_objects=cls._get_keras_custom_objects(),
                 )
 
                 os.remove(tmpfilepath)
@@ -337,9 +349,15 @@ class BaseDeepRegressor(BaseRegressor):
         keras_location_legacy = temp_unzip_loc / "keras"
         keras_location = temp_unzip_loc / "keras" / "model.keras"
         if keras_location.exists():
-            cls.model_ = keras.models.load_model(keras_location)
+            cls.model_ = keras.models.load_model(
+                keras_location,
+                custom_objects=cls._get_keras_custom_objects(),
+            )
         elif keras_location_legacy.exists():
-            cls.model_ = keras.models.load_model(keras_location_legacy)
+            cls.model_ = keras.models.load_model(
+                keras_location_legacy,
+                custom_objects=cls._get_keras_custom_objects(),
+            )
         else:
             cls.model_ = None
 
