@@ -63,9 +63,6 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         activation_inception="linear",
     ):
         """Initialize InceptionTime network."""
-        _check_dl_dependencies(severity="error")
-        super().__init__()
-
         self.activation = activation
         self.activation_inception = activation_inception
         self.n_filters = n_filters
