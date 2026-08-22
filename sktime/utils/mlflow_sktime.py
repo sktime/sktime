@@ -455,11 +455,11 @@ def load_model(model_uri, dst_path=None):
     model_uri : str
         The location, in URI format, of the MLflow model. For example:
 
-                    - ``/Users/me/path/to/local/model``
-                    - ``relative/path/to/local/model``
-                    - ``s3://my_bucket/path/to/model``
-                    - ``runs:/<mlflow_run_id>/run-relative/path/to/model``
-                    - ``mlflow-artifacts:/path/to/model``
+        - ``/Users/me/path/to/local/model``
+        - ``relative/path/to/local/model``
+        - ``s3://my_bucket/path/to/model``
+        - ``runs:/<mlflow_run_id>/run-relative/path/to/model``
+        - ``mlflow-artifacts:/path/to/model``
 
         For more information about supported URI schemes, see
         `Referencing Artifacts <https://www.mlflow.org/docs/latest/tracking.html#
