@@ -62,7 +62,7 @@ class MyForecaster(BaseForecaster):
     and so on
     """
 
-    # todo: fill in the scitype:y tag for univariate/multivariate
+    # todo: fill in the capability:multivariate tag
     _tags = {
         # capability:multivariate controls whether inner y can be multivariate
         # if multivariate is not valid, applies vectorization over variables
@@ -112,6 +112,9 @@ class MyForecaster(BaseForecaster):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         # todo: optional, parameter checking or coercion should happen here
         # if writes derived values to self, should *not* overwrite self.parama etc

@@ -27,8 +27,14 @@ class _StatsModelsAdapter(BaseForecaster):
         # estimator type
         # --------------
         "capability:exogenous": False,
+        "capability:categorical_in_X": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._statsmodels"],
     }
 
     def __init__(self, random_state=None):

@@ -62,16 +62,21 @@ Deep learning
     :template: class.rst
 
     cnn.CNNRegressor
+    cnn.CNNRegressorTorch
     cntc.CNTCRegressor
+    convtran.ConvTranRegressorTorch
     fcn.FCNRegressor
+    fcn.FCNRegressorTorch
     inceptiontime.InceptionTimeRegressor
     inceptiontime.InceptionTimeRegressorTorch
     lstmfcn.LSTMFCNRegressor
     lstmfcn.LSTMFCNRegressorTorch
     macnn.MACNNRegressor
+    macnn.MACNNRegressorTorch
     mcdcnn.MCDCNNRegressor
     mcdcnn.MCDCNNRegressorTorch
     mlp.MLPRegressor
+    mlp.MLPRegressorTorch
     resnet.ResNetRegressor
     rnn.SimpleRNNRegressor
     rnn.SimpleRNNRegressorTorch

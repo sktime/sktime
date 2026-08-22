@@ -28,6 +28,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
+        "capability:categorical_in_X": False,
         "requires-fh-in-fit": False,
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
@@ -630,9 +631,10 @@ class StatsForecastBackAdapter:
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.forecasting.theta import ThetaForecaster
         from sktime.forecasting.var import VAR
-        from sktime.utils.dependencies import _check_estimator_deps
 
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 

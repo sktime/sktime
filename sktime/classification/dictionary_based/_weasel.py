@@ -15,7 +15,7 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
+from sktime.transformations.dictionary_based import SFAFast
 
 
 class WEASEL(BaseClassifier):
@@ -169,7 +169,6 @@ class WEASEL(BaseClassifier):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self.norm_options = [False]

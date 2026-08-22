@@ -34,7 +34,7 @@ class ConvTimeNet_backbone(nn.Module):
         patch_len: int,
         stride: int,
         n_layers: int = 6,
-        dw_ks=[9, 11, 15, 21, 29, 39],
+        dw_ks=None,
         d_model=64,
         d_ff: int = 256,
         norm: str = "batch",
@@ -56,6 +56,8 @@ class ConvTimeNet_backbone(nn.Module):
         from ._revin import RevIN
 
         super().__init__()
+        if dw_ks is None:
+            dw_ks = [9, 11, 15, 21, 29, 39]
 
         # RevIn
         self.revin = revin
@@ -159,7 +161,7 @@ class ConviEncoder(nn.Module):  # i means channel-independent
         self,
         patch_num,
         patch_len,
-        kernel_size=[11, 15, 21, 29, 39, 51],
+        kernel_size=None,
         n_layers=6,
         d_model=128,
         d_ff=256,
@@ -172,6 +174,8 @@ class ConviEncoder(nn.Module):  # i means channel-independent
         device="cuda:0",
     ):
         super().__init__()
+        if kernel_size is None:
+            kernel_size = [11, 15, 21, 29, 39, 51]
 
         self.patch_num = patch_num
         self.patch_len = patch_len

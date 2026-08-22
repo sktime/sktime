@@ -19,13 +19,18 @@ class _ProphetAdapter(BaseForecaster):
         "authors": ["bletham", "tcuongd", "mloning", "aiwalter", "fkiraly"],
         # bletham and tcuongd for prophet/fbprophet
         "capability:exogenous": True,
+        "capability:categorical_in_X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "y_inner_mtype": "pd.DataFrame",
         "python_dependencies": "prophet",
-        "tests:vm": True,  # all estimators depending on prophet are tested in VM
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._fbprophet"],
     }
 
     def _convert_int_to_date(self, y):

@@ -11,7 +11,6 @@ from sklearn.utils import check_random_state
 
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
-from sktime.transformations.base import BaseTransformer
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
@@ -87,7 +86,7 @@ class BaggingForecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:multivariate": True,  # which y are fine? True/False
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": True,  # can estimator handle missing data?
         "y_inner_mtype": PANDAS_MTYPES,
         # which types do _fit, _predict, assume for y?
@@ -105,7 +104,7 @@ class BaggingForecaster(BaseForecaster):
 
     def __init__(
         self,
-        bootstrap_transformer: BaseTransformer = None,
+        bootstrap_transformer=None,
         forecaster: BaseForecaster = None,
         sp: int = 2,
         random_state: int | np.random.RandomState = None,
@@ -145,6 +144,9 @@ class BaggingForecaster(BaseForecaster):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         bootstrap_transformer = self.bootstrap_transformer
         self.bootstrap_transformer_ = self._check_transformer(bootstrap_transformer)
@@ -415,9 +417,10 @@ class BaggingForecaster(BaseForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
+
         from sktime.forecasting.compose import YfromX
         from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         mbb = MovingBlockBootstrapTransformer(block_length=6, n_series=3)
         fcst = YfromX.create_test_instance()

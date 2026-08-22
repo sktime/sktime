@@ -18,7 +18,7 @@ class _StatsForecastAdapter(BaseForecaster):
         "authors": ["AzulGarza"],
         "maintainers": ["AzulGarza"],
         "capability:multivariate": False,  # which y are fine? False/True
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
@@ -31,6 +31,8 @@ class _StatsForecastAdapter(BaseForecaster):
         # CI and test dependencies
         # ------------------------
         "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._statsforecast"],
     }
 
     def __init__(self):

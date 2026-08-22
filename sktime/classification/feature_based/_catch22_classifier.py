@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sktime.base._base import _clone_estimator
 from sktime.classification._delegate import _DelegatedClassifier
 from sktime.pipeline import make_pipeline
-from sktime.transformations.panel.catch22 import Catch22
+from sktime.transformations.catch22 import Catch22
 
 
 class Catch22Classifier(_DelegatedClassifier):
