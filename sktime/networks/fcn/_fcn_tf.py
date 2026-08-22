@@ -39,6 +39,13 @@ class FCNNetwork(BaseDeepNetwork):
       year={2017},
       organization={IEEE}
     }
+
+    Examples
+    --------
+    >>> from sktime.networks.fcn import FCNNetwork
+    >>> network = FCNNetwork(
+    ...     random_state=42, filter_sizes=[64, 128], kernel_sizes=[5, 3]
+    ... )
     """
 
     _tags = {

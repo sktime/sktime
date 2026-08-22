@@ -172,6 +172,7 @@ class ARCH(BaseForecaster):
         "capability:missing_values": False,
         "capability:pred_int": True,
         "capability:exogenous": True,
+        "capability:categorical_in_X": False,
         "capability:non_contiguous_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
