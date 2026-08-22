@@ -3779,6 +3779,15 @@
       ]
     },
     {
+      "login": "kajal-jotwani",
+      "name": "Kajal Jotwani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/130732790?v=4",
+      "profile": "https://github.com/kajal-jotwani",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "srupat",
       "name": "Srujan Patwardhan",
       "avatar_url": "https://avatars.githubusercontent.com/u/131141745?v=4",
@@ -4063,6 +4072,15 @@
       "profile": "https://github.com/DebojitNath",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "JamesBoardman27",
+      "name": "James Boardman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77696811?v=4",
+      "profile": "https://github.com/JamesBoardman27",
+      "contributions": [
+        "doc"
       ]
     }
   ]
