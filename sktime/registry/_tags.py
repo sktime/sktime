@@ -190,6 +190,37 @@ class authors(_BaseTag):
     }
 
 
+class sktime_version(_BaseTag):
+    """Version of ``sktime`` from which the object originates.
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"sktime_version"``
+    - Private tag, developer and framework facing
+    - Values: string, ``sktime`` version identifier
+    - Example: ``"0.30.0"``
+    - Default: no restriction
+
+    The ``sktime_version`` tag of an object is a string specifying the
+    ``sktime`` version from which the estimator class originates,
+    i.e., the version in which the class was first added to ``sktime``.
+
+    The tag is used for packaging metadata and provenance tracking
+    of the object.
+
+    IMPORTANT: this tag is automatically set by the base classes.
+    It should not be manually set by developers.
+    """
+
+    _tags = {
+        "tag_name": "sktime_version",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "sktime version from which this estimator class originates",
+        "user_facing": False,
+    }
+
+
 class python_version(_BaseTag):
     """Python version requirement specifier for the object (PEP 440).
 
@@ -2062,6 +2093,36 @@ class capability__inverse_transform__exact(_BaseTag):
     }
 
 
+class skip_inverse_transform(_BaseTag):
+    """Behaviour flag: skips inverse transform when called.
+
+    - String name: ``"skip-inverse-transform"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer skips the inverse transform
+    when used in a pipeline.
+
+    This tag specifies whether the inverse transform should be skipped
+    when the transformer is used in a pipeline.
+
+    If the tag is ``False``, the inverse transform is carried out normally,
+    provided that the transformer supports inverse transformation.
+    """
+
+    _tags = {
+        "tag_name": "skip-inverse-transform",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "behaviour flag: skips inverse_transform when called yes/no",
+        "user_facing": True,
+    }
+
+
 class transform_returns_same_time_index(_BaseTag):
     """Property: transformer returns same time index as input.
 
@@ -2224,6 +2285,31 @@ class capability__unequal_length__adds(_BaseTag):
         "parent_type": "transformer",
         "tag_type": "bool",
         "short_descr": "can outputs be unequal length even if inputs are equal length?",
+        "user_facing": True,
+    }
+
+
+class symmetric(_BaseTag):
+    """Property: pairwise transformer is symmetric.
+
+    - String name: ``"symmetric"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to pairwise transformers.
+
+    The tag specifies whether the pairwise transformer is symmetric,
+    i.e., whether the transformation is the same when the two input series
+    are swapped: ``t(x, y) = t(y, x)`` for all pairs ``(x, y)``.
+    """
+
+    _tags = {
+        "tag_name": "symmetric",
+        "parent_type": ["transformer-pairwise", "transformer-pairwise-panel"],
+        "tag_type": "bool",
+        "short_descr": "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
         "user_facing": True,
     }
 
@@ -2523,7 +2609,7 @@ class property__alignment_type(_BaseTag):
 # ------------------------
 
 
-class capability__pairwise_parameter_estimation(_BaseTag):
+class capability__pairwise(_BaseTag):
     """Capability: parameter estimator supports pairwise parameter estimation.
 
     - String name: ``"capability:pairwise"``
@@ -2546,6 +2632,29 @@ class capability__pairwise_parameter_estimation(_BaseTag):
         "parent_type": "param_est",
         "tag_type": "bool",
         "short_descr": "does the estimator support pairwise parameter estimation?",
+        "user_facing": True,
+    }
+
+
+class scitype__X(_BaseTag):
+    """Scitypes internally supported by parameter estimator input X.
+
+    - String name: ``"scitype:X"``
+    - Public scitype tag
+    - Values: string, name(s) of scitype(s) supported
+    - Example: ``"Series"``
+
+    This tag applies to parameter estimators.
+
+    The tag specifies which scitype(s) of ``X`` the parameter estimator
+    internally supports, e.g. ``"Series"``, ``"Panel"`` or ``"Hierarchical"``.
+    """
+
+    _tags = {
+        "tag_name": "scitype:X",
+        "parent_type": "param_est",
+        "tag_type": "str",
+        "short_descr": "which scitypes does X internally support?",
         "user_facing": True,
     }
 
@@ -3640,18 +3749,6 @@ class info__source(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "sktime_version",
-        "object",
-        "str",
-        "sktime version from which this estimator class originates",
-    ),
-    (
-        "skip-inverse-transform",
-        "transformer",
-        "bool",
-        "behaviour flag: skips inverse_transform when called yes/no",
-    ),
-    (
         "X-y-must-have-same-index",
         ["forecaster", "regressor", "transformer"],
         "bool",
@@ -3664,22 +3761,10 @@ ESTIMATOR_TAG_REGISTER = [
         "passed to input checks, input conversion index type to enforce",
     ),
     (
-        "symmetric",
-        ["transformer-pairwise", "transformer-pairwise-panel"],
-        "bool",
-        "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
-    ),
-    (
         "pwtrafo_type",
         ["transformer-pairwise", "transformer-pairwise-panel"],
         ("str", ["distance", "kernel", "other"]),
         "mathematical type of pairwise transformer - distance, kernel, or other",
-    ),
-    (
-        "scitype:X",
-        "param_est",
-        "str",
-        "which scitypes does X internally support?",
     ),
     (
         "scitype:y",
@@ -3733,24 +3818,6 @@ ESTIMATOR_TAG_REGISTER = [
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
-    (
-        "task",
-        "detector",
-        "str",
-        "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
-    ),
-    (
-        "learning_type",
-        "detector",
-        "str",
-        "type of learning, e.g., 'supervised', 'unsupervised'",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
@@ -3779,12 +3846,6 @@ ESTIMATOR_TAG_REGISTER = [
     # -------------------------
     # these tags will be moved to skpro
     # some to be converted to configs, see skpro issue #269
-    (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
     (
         "capabilities:exact",
         "distribution",

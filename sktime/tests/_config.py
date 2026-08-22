@@ -103,9 +103,6 @@ EXCLUDED_TESTS = {
     # SAX returns strange output format
     # this needs to be fixed, was not tested previously due to legacy exception
     "SAXlegacy": ["test_fit_transform_output"],
-    "DynamicFactor": [
-        "test_predict_time_index_in_sample_full",  # refer to #4765
-    ],
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
@@ -144,17 +141,9 @@ EXCLUDED_TESTS = {
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "CNTCNetwork",
-        "ClearSky",
         "ContractableBOSS",
         "DOBIN",
-        "DirRecTabularRegressionForecaster",
-        "DirRecTimeSeriesRegressionForecaster",
-        "DirectTimeSeriesRegressionForecaster",
-        "DistFromAligner",
         "DistanceFeatures",
-        "DummyRegressor",
-        "ElasticEnsemble",
-        "FeatureSelection",
         "HCrystalBallAdapter",
         "HIVECOTEV1",
         "HIVECOTEV2",
@@ -169,25 +158,19 @@ EXCLUDED_TESTS_BY_TEST = {
         "MCDCNNRegressor",
         "MLPNetwork",
         "MUSE",
-        "MultioutputTabularRegressionForecaster",
-        "MultioutputTimeSeriesRegressionForecaster",
         "OnlineEnsembleForecaster",
         "PAAlegacy",
         "Prophetverse",
-        "RandomIntervalClassifier",
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
         "RandomSamplesAugmenter",
-        "RecursiveTabularRegressionForecaster",
-        "RecursiveTimeSeriesRegressionForecaster",
         "SAXlegacy",
         "SFA",
         "SFAFast",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
-        "StackingForecaster",
         "SummaryClassifier",
         "SupervisedTimeSeriesForest",
         "TEASER",
@@ -200,7 +183,6 @@ EXCLUDED_TESTS_BY_TEST = {
         # too after adding test parameters to them
         "BaggingForecaster",
         "ClustererPipeline",
-        "DirectTabularRegressionForecaster",
         "EnbPIForecaster",
         "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
@@ -253,7 +235,6 @@ EXCLUDED_TESTS_BY_TEST = {
 EXCLUDE_SOFT_DEPS = [
     "BaggingForecaster",
     "ClustererPipeline",
-    "DirectTabularRegressionForecaster",
     "EnbPIForecaster",
     "FittedParamExtractor",
     "ForecastingOptunaSearchCV",
