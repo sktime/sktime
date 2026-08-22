@@ -207,11 +207,12 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
         params2 = {
             "n_clusters": 3,
             "init_algorithm": "kmeans++",
-            "metric": "dwt",
+            "metric": "dtw",
             "n_init": 1,
-            "max_iter": 1,
-            "tol": 0.0001,
+            "max_iter": 2,
+            "tol": 1e-6,
             "verbose": False,
-            "random_state": 1,
+            "random_state": 2,
+            "distance_params": {"window": 0.2},
         }
         return [params1, params2]
