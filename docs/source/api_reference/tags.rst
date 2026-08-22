@@ -171,6 +171,24 @@ transform a single time series object (``"transformer"`` type).
     property__randomness
 
 
+.. _pairwise_transformer_tags:
+
+Tags for pairwise transformers
+------------------------------
+
+This section lists tags applying to pairwise transformers, i.e., objects that
+transform pairs of time series (``"transformer-pairwise"`` and ``"transformer-pairwise-panel"`` types).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    symmetric
+
+
 .. _detector_tags:
 
 Tags for detectors
@@ -237,6 +255,23 @@ This section lists tags applying to time series aligners (``"aligner"`` type).
     capability__distance
     capability__distance_matrix
     property__alignment_type
+
+
+.. _param_est_tags:
+
+Tags for parameter estimators
+------------------------------
+
+This section lists tags applying to parameter estimators (``"param_est"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    scitype__X
 
 
 Common developer tags

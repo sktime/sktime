@@ -19,6 +19,7 @@ class _ProphetAdapter(BaseForecaster):
         "authors": ["bletham", "tcuongd", "mloning", "aiwalter", "fkiraly"],
         # bletham and tcuongd for prophet/fbprophet
         "capability:exogenous": True,
+        "capability:categorical_in_X": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
