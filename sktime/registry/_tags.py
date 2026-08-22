@@ -2609,7 +2609,7 @@ class property__alignment_type(_BaseTag):
 # ------------------------
 
 
-class capability__pairwise_parameter_estimation(_BaseTag):
+class capability__pairwise(_BaseTag):
     """Capability: parameter estimator supports pairwise parameter estimation.
 
     - String name: ``"capability:pairwise"``
