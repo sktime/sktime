@@ -2289,6 +2289,31 @@ class capability__unequal_length__adds(_BaseTag):
     }
 
 
+class symmetric(_BaseTag):
+    """Property: pairwise transformer is symmetric.
+
+    - String name: ``"symmetric"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to pairwise transformers.
+
+    The tag specifies whether the pairwise transformer is symmetric,
+    i.e., whether the transformation is the same when the two input series
+    are swapped: ``t(x, y) = t(y, x)`` for all pairs ``(x, y)``.
+    """
+
+    _tags = {
+        "tag_name": "symmetric",
+        "parent_type": ["transformer-pairwise", "transformer-pairwise-panel"],
+        "tag_type": "bool",
+        "short_descr": "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
@@ -2584,7 +2609,7 @@ class property__alignment_type(_BaseTag):
 # ------------------------
 
 
-class capability__pairwise_parameter_estimation(_BaseTag):
+class capability__pairwise(_BaseTag):
     """Capability: parameter estimator supports pairwise parameter estimation.
 
     - String name: ``"capability:pairwise"``
@@ -3734,12 +3759,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["forecaster", "regressor"],
         "type",
         "passed to input checks, input conversion index type to enforce",
-    ),
-    (
-        "symmetric",
-        ["transformer-pairwise", "transformer-pairwise-panel"],
-        "bool",
-        "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
     ),
     (
         "pwtrafo_type",
