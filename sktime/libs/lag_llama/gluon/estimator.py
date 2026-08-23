@@ -184,7 +184,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         window_slice_reduce_ratio: float = 0.9,
         window_warp_prob: float = 0.0,
         window_warp_window_ratio: float = 0.1,
-        window_warp_scales: list = [0.5, 2.0],
+        window_warp_scales: list | None = None,
         # Continuning model arguments
         distr_output: str = "studentT",
         loss: DistributionLoss = NegativeLogLikelihood(),
@@ -196,10 +196,10 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         validation_sampler: InstanceSampler | None = None,
         time_feat: bool = False,
         dropout: float = 0.0,
-        lags_seq: list = ["Q", "M", "W", "D", "H", "T", "S"],
-        data_id_to_name_map: dict = {},
+        lags_seq: list | None = None,
+        data_id_to_name_map: dict | None = None,
         use_cosine_annealing_lr: bool = False,
-        cosine_annealing_lr_args: dict = {},
+        cosine_annealing_lr_args: dict | None = None,
         track_loss_per_series: bool = False,
         ckpt_path: str | None = None,
         nonnegative_pred_samples: bool = False,
@@ -212,6 +212,15 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         if trainer_kwargs is not None:
             default_trainer_kwargs.update(trainer_kwargs)
         super().__init__(trainer_kwargs=default_trainer_kwargs)
+
+        if window_warp_scales is None:
+            window_warp_scales = [0.5, 2.0]
+        if lags_seq is None:
+            lags_seq = ["Q", "M", "W", "D", "H", "T", "S"]
+        if data_id_to_name_map is None:
+            data_id_to_name_map = {}
+        if cosine_annealing_lr_args is None:
+            cosine_annealing_lr_args = {}
 
         self.scaling = scaling
         self.input_size = input_size
