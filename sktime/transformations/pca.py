@@ -218,12 +218,5 @@ class PCATransformer(BaseTransformer):
             "iterated_power": 1,
             "random_state": 1,
         }
-        params3 = {
-            "n_components": 1,
-            "svd_solver": "arpack",
-            "whiten": True,
-            "tol": 0.001,
-            "random_state": 1,
-        }
 
-        return [params0, params1, params2, params3]
+        return [params0, params1, params2]
