@@ -219,7 +219,7 @@ class PCATransformer(BaseTransformer):
             "random_state": 1,
         }
         params3 = {
-            "n_components": 2,
+            "n_components": 1,
             "svd_solver": "arpack",
             "whiten": True,
             "tol": 0.001,
