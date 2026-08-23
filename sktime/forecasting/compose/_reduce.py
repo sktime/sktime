@@ -1450,7 +1450,6 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
         from sklearn.pipeline import make_pipeline
 
         from sktime.transformations.panel.reduce import Tabularizer
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         params1 = {
             "estimator": make_pipeline(Tabularizer(), LinearRegression()),
