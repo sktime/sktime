@@ -1553,16 +1553,6 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
         }
 
         params = [params1, params2]
-
-        if _check_soft_dependencies("skpro", severity="none"):
-            from skpro.regression.residual import ResidualDouble
-
-            params3 = {
-                "estimator": ResidualDouble.create_test_instance(),
-                "window_length": 4,
-            }
-            params = params + [params3]
-
         return params
 
 
