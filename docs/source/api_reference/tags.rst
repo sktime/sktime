@@ -154,6 +154,7 @@ transform a single time series object (``"transformer"`` type).
     scitype__transform_input
     scitype__transform_output
     scitype__transform_labels
+    scitype__instancewise
     requires_x
     requires_y
     capability__missing_values

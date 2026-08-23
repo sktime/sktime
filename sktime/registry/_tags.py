@@ -1857,6 +1857,34 @@ class scitype__transform_output(_BaseTag):
     }
 
 
+class scitype__instancewise(_BaseTag):
+    """Whether the transformer transforms instances independently.
+
+    - String name: ``"scitype:instancewise"``
+    - Public scitype tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, ``fit`` and ``transform`` of the transformer are
+    statistically independent by time series instance, i.e., the transform of one
+    time series instance does not depend on any other instance.
+
+    If the tag is ``False``, ``fit`` and/or ``transform`` of the transformer
+    are not independent by time series instance.
+    """
+
+    _tags = {
+        "tag_name": "scitype:instancewise",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer transform instances independently?",
+        "user_facing": True,
+    }
+
+
 class requires_x(_BaseTag):
     """Behaviour flag: transformer requires X in fit and transform.
 
@@ -3774,12 +3802,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["param_est", "metric"],
         "str",
         "what scitype of y does the object support? must be scitype string",
-    ),
-    (
-        "scitype:instancewise",
-        "transformer",
-        "bool",
-        "does the transformer transform instances independently?",
     ),
     (
         "capability:missing_values:removes",
