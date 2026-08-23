@@ -199,14 +199,24 @@ class PCATransformer(BaseTransformer):
         Returns
         -------
         params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class.
-            Each dict constructs a valid test instance.
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return [
-            {},
-            {
-                "n_components": 1,
-                "whiten": True,
-                "svd_solver": "full",
-            },
-        ]
+        params0 = {}
+        params1 = {
+            "n_components": 1,
+            "whiten": True,
+            "svd_solver": "full",
+        }
+        params2 = {
+            "n_components": 1,
+            "svd_solver": "randomized",
+            "whiten": False,
+            "tol": 0.001,
+            "iterated_power": 1,
+            "random_state": 1,
+        }
+
+        return [params0, params1, params2]
