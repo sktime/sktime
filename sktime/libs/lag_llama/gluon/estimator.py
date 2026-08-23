@@ -228,6 +228,9 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         self.context_length = context_length
         self.max_context_length = max_context_length
 
+        if lags_seq is None:
+            lags_seq = ["Q", "M", "W", "D", "H", "T", "S"]
+
         lag_indices = []
         for freq in lags_seq:
             lag_indices.extend(
@@ -291,15 +294,25 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         self.window_slice_reduce_ratio = window_slice_reduce_ratio
         self.window_warp_prob = window_warp_prob
         self.window_warp_window_ratio = window_warp_window_ratio
+
+        if window_warp_scales is None:
+            window_warp_scales = [0.5, 2.0]
+
         self.window_warp_scales = window_warp_scales
         self.track_loss_per_series = track_loss_per_series
 
         self.time_feat = time_feat
         self.dropout = dropout
+        if data_id_to_name_map is None:
+            data_id_to_name_map = {}
+
         self.data_id_to_name_map = data_id_to_name_map
         self.ckpt_path = ckpt_path
 
         self.use_cosine_annealing_lr = use_cosine_annealing_lr
+        if cosine_annealing_lr_args is None:
+            cosine_annealing_lr_args = {}
+
         self.cosine_annealing_lr_args = cosine_annealing_lr_args
         self.device = device
 
