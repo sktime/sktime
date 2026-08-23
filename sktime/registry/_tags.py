@@ -3011,6 +3011,25 @@ class y_inner_mtype(_BaseTag):
     }
 
 
+class enforce_index_type(_BaseTag):
+    """Index type to enforce during input conversion.
+
+    - String name: ``"enforce_index_type"``
+    - Extension developer tag
+    - Values: type or ``None``
+    - Example: ``pd.DatetimeIndex``
+    - Default: ``None``
+    """
+
+    _tags = {
+        "tag_name": "enforce_index_type",
+        "parent_type": ["forecaster", "regressor"],
+        "tag_type": "type",
+        "short_descr": "passed to input checks, input conversion index type to enforce",
+        "user_facing": False,
+    }
+
+
 class is_univariate(_BaseTag):
     """Property: Whether the dataset is univariate.
 
@@ -3753,12 +3772,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["forecaster", "regressor", "transformer"],
         "bool",
         "do X/y in fit/update and X/fh in predict have to be same indices?",
-    ),
-    (
-        "enforce_index_type",
-        ["forecaster", "regressor"],
-        "type",
-        "passed to input checks, input conversion index type to enforce",
     ),
     (
         "pwtrafo_type",
