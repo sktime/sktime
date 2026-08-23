@@ -59,6 +59,16 @@ class TapNetNetwork(BaseDeepNetwork):
     attentional prototypical network,
     Proceedings of the AAAI Conference on Artificial Intelligence
     34(4), 6845-6852, 2020
+
+    Examples
+    --------
+    >>> from sktime.networks.tapnet import TapNetNetwork
+    >>> network = TapNetNetwork(
+    ...     filter_sizes=(8, 8, 8),
+    ...     kernel_size=(3, 3, 3),
+    ...     layers=(16, 8),
+    ...     random_state=42,
+    ... )
     """
 
     _tags = {
