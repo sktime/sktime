@@ -153,6 +153,7 @@ transform a single time series object (``"transformer"`` type).
 
     scitype__transform_input
     scitype__transform_output
+    scitype__instancewise
     scitype__transform_labels
     requires_x
     requires_y
