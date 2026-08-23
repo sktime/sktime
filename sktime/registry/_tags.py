@@ -1869,11 +1869,11 @@ class scitype__instancewise(_BaseTag):
     This tag applies to transformations.
 
     If the tag is ``True``, ``fit`` and ``transform`` of the transformer are
-    statistically independent by instance, i.e., the transform of one
-    instance does not depend on any other instance.
+    statistically independent by time series instance, i.e., the transform of one
+    time series instance does not depend on any other instance.
 
     If the tag is ``False``, ``fit`` and/or ``transform`` of the transformer
-    are not independent by instance.
+    are not independent by time series instance.
     """
 
     _tags = {
