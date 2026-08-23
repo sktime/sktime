@@ -25,10 +25,6 @@ from sktime.datasets import load_airline, load_longley
 
 # from sktime.exceptions import FitFailedWarning
 # commented out until #5959 is resolved, see test_evaluate_error_score
-# #5307 (loky/multiprocessing dropping warnings) is fixed as of this PR,
-# see sktime.utils.parallel._parallelize_joblib and its regression test in
-# sktime/utils/tests/test_parallelize.py; #5959 is a separate, still-open,
-# sporadic warning-emission issue not affected by that fix
 from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
@@ -503,13 +499,8 @@ def test_evaluate_error_score(
     args.update(backend)
 
     if error_score in [np.nan, 1000]:
-        # #5307 (loky/multiprocessing not passing on warnings) is fixed,
-        # see sktime.utils.parallel._parallelize_joblib and its dedicated
-        # regression test in sktime/utils/tests/test_parallelize.py.
-        #
-        # the assertion below stays commented out because of a separate,
-        # still-open, sporadic issue, #5959, unrelated to which backend is
-        # used - re-enable once #5959 is resolved
+        # known bug - warnings are sporadically not raised, #5959,
+        # unrelated to which backend is used - re-enable once resolved
 
         # if backend["backend"] not in ["loky", "multiprocessing"]:
         #     with pytest.warns(FitFailedWarning):
