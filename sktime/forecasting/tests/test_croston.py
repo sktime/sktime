@@ -215,12 +215,12 @@ def test_croston_get_fitted_params():
 
     fitted_params = forecaster.get_fitted_params()
 
-    expected = {"demand_level", "demand_interval", "periods_since_demand", "forecast"}
+    expected = {"v", "z", "p", "f"}
     assert expected <= set(fitted_params)
-    assert fitted_params["demand_level"] == forecaster._q_last
-    assert fitted_params["demand_interval"] == forecaster._a_last
-    assert fitted_params["periods_since_demand"] == forecaster._p
-    assert fitted_params["forecast"] == forecaster._f[-1]
+    assert fitted_params["v"] == forecaster._q_last
+    assert fitted_params["z"] == forecaster._a_last
+    assert fitted_params["p"] == forecaster._p
+    assert fitted_params["f"] == forecaster._f[-1]
 
 
 @pytest.mark.skipif(
@@ -244,13 +244,13 @@ def test_croston_fitted_params_track_update():
     after = forecaster.get_fitted_params()
 
     # every published value still mirrors the state it came from
-    assert after["demand_level"] == forecaster._q_last
-    assert after["demand_interval"] == forecaster._a_last
-    assert after["periods_since_demand"] == forecaster._p
-    assert after["forecast"] == forecaster._f[-1]
+    assert after["v"] == forecaster._q_last
+    assert after["z"] == forecaster._a_last
+    assert after["p"] == forecaster._p
+    assert after["f"] == forecaster._f[-1]
 
     # the tail of the PBS dataset is all zeros, so only the counter moves
     assert (y.iloc[-n_update:] == 0).all()
-    assert after["demand_level"] == before["demand_level"]
-    assert after["demand_interval"] == before["demand_interval"]
-    assert after["periods_since_demand"] == before["periods_since_demand"] + n_update
+    assert after["v"] == before["v"]
+    assert after["z"] == before["z"]
+    assert after["p"] == before["p"] + n_update

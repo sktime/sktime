@@ -46,6 +46,21 @@ class Croston(BaseForecaster):
     smoothing : float, default = 0.1
         Smoothing parameter in exponential smoothing
 
+    Attributes
+    ----------
+    v_ : float
+        Exponentially smoothed average of the non-zero values :math:`v`,
+        as fitted. Called ``q`` in the implementation.
+    z_ : float
+        Exponentially smoothed average of the inter-demand intervals
+        :math:`z`, as fitted. Called ``a`` in the implementation.
+    p_ : int
+        Number of periods since the last non-zero demand. Not part of the
+        :math:`v`, :math:`z` description above, but carried by the recursion:
+        it is smoothed into :math:`z` at the next non-zero observation.
+    f_ : float
+        Fitted forecast, :math:`\frac{v}{z}`.
+
     Examples
     --------
     >>> from sktime.forecasting.croston import Croston
@@ -153,13 +168,16 @@ class Croston(BaseForecaster):
         underscore, so the recursion state is mirrored here rather than
         renamed, leaving every existing attribute untouched.
 
+        Names follow the ``v`` / ``z`` notation of the class docstring. Note
+        the implementation calls these ``q`` and ``a`` internally.
+
         Called from both ``_fit`` and ``_update`` so the published values
         cannot drift from the state they mirror.
         """
-        self.demand_level_ = self._q_last
-        self.demand_interval_ = self._a_last
-        self.periods_since_demand_ = self._p
-        self.forecast_ = self._f[-1]
+        self.v_ = self._q_last
+        self.z_ = self._a_last
+        self.p_ = self._p
+        self.f_ = self._f[-1]
 
     def _update(self, y, X=None, update_params=True):
         """Update fitted parameters on new data.

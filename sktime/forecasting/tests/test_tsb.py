@@ -44,14 +44,14 @@ def test_tsb_get_fitted_params():
 
     fitted_params = forecaster.get_fitted_params()
 
-    expected = {"demand_size", "demand_probability", "forecast"}
+    expected = {"d", "p", "f"}
     assert expected <= set(fitted_params)
-    assert fitted_params["demand_size"] == forecaster._d_last
-    assert fitted_params["demand_probability"] == forecaster._p_last
-    assert fitted_params["forecast"] == forecaster._f[-1]
+    assert fitted_params["d"] == forecaster._d_last
+    assert fitted_params["p"] == forecaster._p_last
+    assert fitted_params["f"] == forecaster._f[-1]
     # forecast is the product of the two, by construction of the method
     np.testing.assert_allclose(
-        fitted_params["forecast"],
-        fitted_params["demand_size"] * fitted_params["demand_probability"],
+        fitted_params["f"],
+        fitted_params["d"] * fitted_params["p"],
         rtol=1e-12,
     )
