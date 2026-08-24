@@ -7,6 +7,7 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.compose import BaggingForecaster
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.bootstrap import STLBootstrapTransformer
@@ -86,15 +87,13 @@ def test_calculate_data_quantiles():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(BaggingForecaster),
+    not run_test_for_class([BaggingForecaster, ExponentialSmoothing]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_categorical_in_x_tag_delegation():
     """Test that capability:categorical_in_X is cloned from the wrapped forecaster."""
-    from sktime.forecasting.compose import ForecastX
-
     fcst_cat = NaiveForecaster()  # capability:categorical_in_X is True
-    fcst_no_cat = ForecastX(NaiveForecaster(), NaiveForecaster())  # tag is False
+    fcst_no_cat = ExponentialSmoothing()  # tag is False
 
     assert BaggingForecaster(forecaster=fcst_cat).get_tag("capability:categorical_in_X")
     assert not BaggingForecaster(forecaster=fcst_no_cat).get_tag(

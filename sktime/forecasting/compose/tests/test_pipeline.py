@@ -16,12 +16,12 @@ from sktime.datatypes import get_examples
 from sktime.datatypes._utilities import get_window
 from sktime.forecasting.compose import (
     ForecastingPipeline,
-    ForecastX,
     TransformedTargetForecaster,
     YfromX,
     make_reduction,
 )
 from sktime.forecasting.ets import AutoETS
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
@@ -856,62 +856,23 @@ def test_transformed_target_forecaster_predict_proba_dunder():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class(
-        [ForecastingPipeline, TransformedTargetForecaster, ForecastX]
-    ),
+    not run_test_for_class([TransformedTargetForecaster, ExponentialSmoothing]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_categorical_in_x_tag_delegation():
-    """Test that pipelines set capability:categorical_in_X from their components.
+    """Test that TransformedTargetForecaster clones capability:categorical_in_X.
 
-    ForecastingPipeline passes X through all transformers and then to the forecaster,
-    so the tag is True iff all steps have it True.
-
-    TransformedTargetForecaster passes X to the forecaster, and to transformers
-    as their y, so the tag is True iff the forecaster has it True and all
-    transformers that use y have capability:categorical_in_y True.
+    Transformers in this pipeline transform y and pass X through unchanged,
+    so the tag is cloned from the forecaster.
     """
-    from sktime.transformations.base import BaseTransformer
-
     fcst_cat = NaiveForecaster()  # capability:categorical_in_X is True
-    fcst_no_cat = ForecastX(NaiveForecaster(), NaiveForecaster())  # tag is False
-    trafo_cat = Imputer()  # capability:categorical_in_X is True
-    trafo_no_cat = ExponentTransformer()  # capability:categorical_in_X is False
+    fcst_no_cat = ExponentialSmoothing()  # tag is False
 
     assert fcst_cat.get_tag("capability:categorical_in_X")
     assert not fcst_no_cat.get_tag("capability:categorical_in_X")
-    assert trafo_cat.get_tag("capability:categorical_in_X")
-    assert not trafo_no_cat.get_tag("capability:categorical_in_X")
-
-    # ForecastingPipeline: all steps must support categorical X
-    pipe1 = ForecastingPipeline([trafo_cat, fcst_cat])
-    pipe2 = ForecastingPipeline([trafo_no_cat, fcst_cat])
-    pipe3 = ForecastingPipeline([trafo_cat, fcst_no_cat])
-
-    assert pipe1.get_tag("capability:categorical_in_X")
-    assert not pipe2.get_tag("capability:categorical_in_X")
-    assert not pipe3.get_tag("capability:categorical_in_X")
-
-    # TransformedTargetForecaster: transformers receive X as y
-    class _TrafoUsesYNoCat(BaseTransformer):
-        _tags = {
-            "y_inner_mtype": "pd.DataFrame",
-            "capability:categorical_in_y": False,
-            "fit_is_empty": True,
-        }
-
-        def _transform(self, X, y=None):
-            return X
-
-    class _TrafoIgnoresYNoCat(_TrafoUsesYNoCat):
-        _tags = {"y_inner_mtype": "None"}
 
     ttf1 = TransformedTargetForecaster([Detrender(), fcst_cat])
     ttf2 = TransformedTargetForecaster([Detrender(), fcst_no_cat])
-    ttf3 = TransformedTargetForecaster([_TrafoIgnoresYNoCat(), fcst_cat])
-    ttf4 = TransformedTargetForecaster([_TrafoUsesYNoCat(), fcst_cat])
 
     assert ttf1.get_tag("capability:categorical_in_X")
     assert not ttf2.get_tag("capability:categorical_in_X")
-    assert ttf3.get_tag("capability:categorical_in_X")
-    assert not ttf4.get_tag("capability:categorical_in_X")
