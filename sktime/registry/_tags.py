@@ -1327,8 +1327,14 @@ class capability__categorical_in_y(_BaseTag):
     - Default: ``True`` (transformers)
 
     This tag applies to the ``y`` argument of transformers.
-    Categorical columns are identified as described in
-    ``capability:categorical_in_X``.
+
+    A column of ``y`` is categorical if its ``feature_kind``, as inferred by
+    ``sktime.datatypes.check_is_scitype``, is ``DtypeKind.CATEGORICAL``.
+    This is determined by the column dtype, e.g., for ``pandas`` inputs,
+    dtypes ``object``, ``string``, ``category``, and datetime-like are categorical,
+    while numeric and boolean dtypes are not.
+    See also the tag ``capability:categorical_in_X``, which uses
+    the same identification for the ``X`` argument.
 
     If the tag is ``True``, ``y`` is passed to the transformer unchanged,
     and the transformer is expected to handle categorical columns natively.
