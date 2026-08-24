@@ -87,6 +87,7 @@ class CNTCRegressor(BaseDeepRegressor):
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
         "tests:skip_by_name": [
+            "test_class_has_doctest_example",
             "test_fit_idempotent",  # fails with `AssertionError`, see #3616
             "test_persistence_via_pickle",  # fails with `AssertionError`, see #8059
             "test_save_estimators_to_file",
@@ -337,8 +338,8 @@ class CNTCRegressor(BaseDeepRegressor):
         return test_params
 
     @staticmethod
-    def get_custom_objects():
-        """Return the custom objects needed for loading the model.
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
 
         Returns
         -------

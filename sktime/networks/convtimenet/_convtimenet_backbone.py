@@ -163,7 +163,7 @@ class _ConvEncoder(nn.Module):
         self,
         d_model,
         d_ff,
-        kernel_size=[19, 19, 29, 29, 37, 37],
+        kernel_size=None,
         dropout=0.1,
         activation="gelu",
         n_layers=3,
@@ -173,6 +173,8 @@ class _ConvEncoder(nn.Module):
         device="cpu",
     ):
         super().__init__()
+        if kernel_size is None:
+            kernel_size = [19, 19, 29, 29, 37, 37]
         self.layers = nn.ModuleList(
             [
                 _ConvEncoderLayer(
@@ -211,7 +213,7 @@ class ConvTimeNet_backbone(nn.Module):
         pooling_tp="max",
         fc_dropout: float = 0.0,
         enable_res_param=False,
-        dw_ks=[7, 13, 19],
+        dw_ks=None,
         norm="batch",
         use_embed=True,
         re_param=False,
@@ -227,6 +229,8 @@ class ConvTimeNet_backbone(nn.Module):
             x seq_len (aka time steps)
         """
         super().__init__()
+        if dw_ks is None:
+            dw_ks = [7, 13, 19]
         assert n_layers == len(dw_ks), "dw_ks should match the n_layers!"
 
         self.c_out, self.seq_len = c_out, seq_len
