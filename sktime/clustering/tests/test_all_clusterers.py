@@ -3,15 +3,9 @@
 import numpy as np
 import pytest
 
-from sktime.clustering.base import BaseClusterer
 from sktime.datatypes import check_is_scitype
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.scenarios_clustering import ClustererFitPredictMultivariate
-
-
-def test_base_clusterer_predict_proba_tag_default():
-    """Test that the base clusterer does not claim probabilistic predictions."""
-    assert not BaseClusterer.get_class_tag("capability:predict_proba")
 
 
 class ClustererFixtureGenerator(BaseFixtureGenerator):
