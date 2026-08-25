@@ -14,7 +14,8 @@ results = all_estimators()
 
 # test 2: check that docs and examples are not installed in site-packages
 # this would indicate regression on #10891 where these folders were accidentally shipped
-import sysconfig, os
+import os
+import sysconfig
 
 site_packages = sysconfig.get_paths()["purelib"]
 for name in ("docs", "examples"):
