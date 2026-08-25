@@ -888,10 +888,13 @@ def test_recursive_reduction_with_period_index():
 
     assert np.allclose(y_pred, manual_pred)
 
+
 def test_multioutput_regression_forecaster_with_sklearn_model():
     from sktime.regression.dummy import DummyRegressor
 
-    f = MultioutputTimeSeriesRegressionForecaster(estimator=DummyRegressor(), window_length=5)
+    f = MultioutputTimeSeriesRegressionForecaster(
+        estimator=DummyRegressor(), window_length=5
+    )
 
     y = load_airline()[:60]
     fh = [1, 2, 3]
