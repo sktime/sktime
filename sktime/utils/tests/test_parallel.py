@@ -56,16 +56,18 @@ def _warn_for_one_input_ray(x, meta=None):
 def test_ray_warnings_reach_caller():
     """Warnings raised inside a ray remote call must reach the caller.
 
-    Each ray task runs in its own worker process, so only the return value
-    of a task is passed back to the caller; a warning raised inside a task
-    does not otherwise propagate, the same mechanism covered for the
-    joblib backends in ``test_parallelize_warnings_reach_caller``.
-    ``mute_warnings=True`` filters warnings before they are raised in the
-    worker, so it continues to suppress them rather than forward them.
+    Same mechanism as the joblib backends in
+    ``test_parallelize_warnings_reach_caller``; see
+    ``_run_and_capture_warnings`` for why. ``mute_warnings=True`` filters
+    warnings before they are raised in the worker, so it continues to
+    suppress them rather than forward them.
     """
+    # leave at least 1 cpu for ray even on a single-cpu runner
+    num_cpus = max(os.cpu_count() - 1, 1)
+
     backend_params = {
         "mute_warnings": False,
-        "ray_remote_args": {"num_cpus": os.cpu_count() - 1},
+        "ray_remote_args": {"num_cpus": num_cpus},
     }
     with pytest.warns(UserWarning, match="expected test warning"):
         result = parallelize(
@@ -75,7 +77,7 @@ def test_ray_warnings_reach_caller():
 
     backend_params = {
         "mute_warnings": True,
-        "ray_remote_args": {"num_cpus": os.cpu_count() - 1},
+        "ray_remote_args": {"num_cpus": num_cpus},
     }
     with warnings.catch_warnings():
         warnings.simplefilter("error")

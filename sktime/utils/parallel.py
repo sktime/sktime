@@ -116,12 +116,21 @@ para_dict["none"] = _parallelize_none
 def _run_and_capture_warnings(fun, x, meta):
     """Run ``fun(x, meta=meta)``, capturing any warnings it raises.
 
-    For process-based joblib backends (``"loky"``, ``"multiprocessing"``),
-    only the return value of a ``delayed`` call is passed back to the
-    caller's process; anything a worker does with the ``warnings`` module
-    happens in that worker's own process and does not otherwise propagate.
-    Threading and sequential execution share the caller's process, so
-    warnings raised there are unaffected.
+    Used for process-based joblib backends (``"loky"``, ``"multiprocessing"``,
+    and custom joblib backends dispatched via ``backend="joblib"``, e.g.
+    ``"spark"``) and by ``_parallelize_ray``: only the return value of a job
+    crosses the process boundary back to the caller, so anything a worker
+    does with the ``warnings`` module happens in that worker's own process
+    and does not otherwise propagate. As a consequence, the caller only
+    learns about a job's warnings once that job's result is back, so the
+    re-emitting caller (below, and in ``_parallelize_ray``) surfaces them in
+    a batch once all jobs are done, rather than as each one raises.
+
+    ``"threading"`` and sequential execution share the caller's process, so
+    warnings raised there are visible without this wrapper; see
+    ``_parallelize_joblib``, which skips this wrapper for ``"threading"`` -
+    ``warnings.catch_warnings`` mutates module-global filter state and is
+    not safe to enter/exit concurrently from multiple threads.
 
     Returns
     -------
@@ -167,15 +176,20 @@ def _parallelize_joblib(fun, iter, meta, backend, backend_params):
     if "n_jobs" not in par_params:
         par_params["n_jobs"] = -1
 
+    # "threading" shares the caller's process, so fun's own warnings.warn
+    # calls already reach the caller - wrapping here would only add
+    # unnecessary overhead and mutate warnings' global filter state
+    # concurrently from multiple threads, see _run_and_capture_warnings.
+    if backend == "threading":
+        return Parallel(**par_params)(delayed(fun)(x, meta=meta) for x in iter)
+
     raw = Parallel(**par_params)(
         delayed(_run_and_capture_warnings)(fun, x, meta) for x in iter
     )
 
-    # re-emit warnings captured in worker jobs in the calling process, so
-    # that they are visible regardless of backend. warn_explicit (rather
-    # than warn) preserves the original warning's message, category and
-    # source location, and lets the caller's own warning filters (e.g.
-    # "once per location") apply normally.
+    # re-emit warnings captured by _run_and_capture_warnings; warn_explicit
+    # (rather than warn) preserves the original message, category and
+    # source location, so the caller's own filters apply normally.
     ret = []
     for result, record in raw:
         for w in record:
@@ -222,10 +236,10 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     def _ray_execute_function(
         fun, params: dict, meta: dict, mute_warnings: bool = False
     ):
+        assert ray.is_initialized()
         if mute_warnings:
             warnings.filterwarnings("ignore")  # silence sktime warnings
             return fun(params, meta), []
-        assert ray.is_initialized()
         with warnings.catch_warnings(record=True) as record:
             warnings.simplefilter("always")
             result = fun(params, meta)

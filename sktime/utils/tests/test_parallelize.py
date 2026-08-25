@@ -61,12 +61,9 @@ def _warn_for_one_input(x, **kwargs):
 def test_parallelize_warnings_reach_caller(fixture):
     """Warnings raised inside a parallelized call must reach the caller.
 
-    Covers all backends returned by ``_get_parallel_test_fixtures``. The
-    "loky" and "multiprocessing" joblib backends run each job in a separate
-    process, so only the return value of a job is passed back to the
-    caller; a warning raised inside the job does not otherwise propagate.
-    "threading" and sequential execution share the caller's process and are
-    unaffected. This matters for ``evaluate``, which raises
+    Covers all backends returned by ``_get_parallel_test_fixtures``; see
+    ``_run_and_capture_warnings`` for which backends need the capture/
+    re-emit mechanism and why. This matters for ``evaluate``, which raises
     ``FitFailedWarning`` from inside a parallelized fold.
     """
     backend = fixture["backend"]
