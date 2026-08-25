@@ -46,9 +46,23 @@ class ForecastingHorizonSplitter(BaseSplitter):
     fh : ForecastingHorizon or compatible input
         Forecasting horizon that defines the test set.
         Must be all out-of-sample if relative.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.split import ForecastingHorizonSplitter
+    >>> y = pd.Series(range(8))
+    >>> splitter = ForecastingHorizonSplitter(fh=[1, 2])
+    >>> train, test = next(splitter.split(y))
+    >>> train.tolist()
+    [0, 1, 2, 3, 4, 5]
+    >>> test.tolist()
+    [6, 7]
     """
 
-    _tags = {"split_hierarchical": False}
+    _tags = {
+        "split_hierarchical": False,
+    }
 
     def __init__(self, fh):
         super().__init__(fh=fh)

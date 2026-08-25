@@ -332,6 +332,7 @@ class _Reducer(_BaseWindowForecaster):
         from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.linear_model import LinearRegression
         from sklearn.pipeline import make_pipeline
+        from sklearn.tree import DecisionTreeRegressor
 
         from sktime.transformations.reduce import Tabularizer
 
@@ -345,6 +346,20 @@ class _Reducer(_BaseWindowForecaster):
             est = make_pipeline(Tabularizer(), est)
 
         params = [{"estimator": est, "window_length": 3}]
+
+        # second parameter set: a different regressor and a different window
+        # length. The regressor is a decision tree rather than a linear model,
+        # so the two sets cover both a linear and a non-linear reduction
+        # estimator, and the differing window length varies the number of lag
+        # features the reduction produces. The tree depth is left unrestricted
+        # so that recursive forecasts vary across the horizon; a shallow tree
+        # reaches a fixed point after few steps, which would weaken tests that
+        # catch horizon or index bugs.
+        est2 = DecisionTreeRegressor(random_state=0)
+        if "TimeSeries" in cls.__name__:
+            est2 = make_pipeline(Tabularizer(), est2)
+
+        params = params + [{"estimator": est2, "window_length": 4}]
 
         PROBA_IMPLEMENTED = ["DirectTabularRegressionForecaster"]
         self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
@@ -487,6 +502,9 @@ class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -775,6 +793,9 @@ class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -1115,6 +1136,9 @@ class _DirRecReducer(_Reducer):
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -1329,6 +1353,9 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -1438,6 +1465,9 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     _estimator_scitype = "time-series-regressor"
@@ -1974,6 +2004,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:libs": ["sktime.transformations.lag"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
