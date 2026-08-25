@@ -13,7 +13,7 @@ from sktime.registry import all_estimators
 results = all_estimators()
 
 # test 2: check that docs and examples are not installed in site-packages
-# this would indicate regression on #10891
+# this would indicate regression on #10891 where these folders were accidentally shipped
 import sysconfig, os
 
 site_packages = sysconfig.get_paths()["purelib"]
