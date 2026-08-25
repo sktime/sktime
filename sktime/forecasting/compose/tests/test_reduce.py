@@ -32,6 +32,7 @@ from sktime.forecasting.compose._reduce import _sliding_window_transform
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
+from sktime.regression.dummy import DummyRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.split.tests.test_split import _get_windows
@@ -890,8 +891,6 @@ def test_recursive_reduction_with_period_index():
 
 
 def test_multioutput_regression_forecaster_with_sklearn_model():
-    from sktime.regression.dummy import DummyRegressor
-
     f = MultioutputTimeSeriesRegressionForecaster(
         estimator=DummyRegressor(), window_length=5
     )
@@ -900,5 +899,6 @@ def test_multioutput_regression_forecaster_with_sklearn_model():
     fh = [1, 2, 3]
 
     f.fit(y, fh=fh)
-    breakpoint()
     pred = f.predict(fh=fh)
+    assert isinstance(pred, pd.Series)
+
