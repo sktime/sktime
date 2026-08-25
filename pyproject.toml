@@ -288,18 +288,7 @@ sktime = [
 ]
 
 [tool.setuptools.packages.find]
-exclude = [
-    "tests",
-    "tests.*",
-    "docs",
-    "docs.*",
-    "examples",
-    "examples.*",
-    "build_tools",
-    "build_tools.*",
-    "extension_templates",
-    "extension_templates.*",
-]
+include = ["sktime", "sktime.*"]
 
 [tool.ruff]
 line-length = 88
