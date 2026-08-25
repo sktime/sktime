@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   check_tag:
     name: Check tag
@@ -18,8 +21,10 @@ jobs:
 
       - name: Verify release tag matches pyproject.toml
         shell: bash
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
-          TAG="${{ github.event.release.tag_name }}"
+          TAG="${RELEASE_TAG}"
           GH_TAG_NAME="${TAG#v}"
           PY_VERSION=$(python - <<'PY'
           import pathlib, tomllib
