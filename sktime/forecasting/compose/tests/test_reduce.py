@@ -901,4 +901,3 @@ def test_multioutput_regression_forecaster_with_sklearn_model():
     f.fit(y, fh=fh)
     pred = f.predict(fh=fh)
     assert isinstance(pred, pd.Series)
-
