@@ -356,6 +356,11 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         for tag in true_if_any_tags:
             self._anytagis_then_set(tag, True, False, forecasters)
 
+        # categorical X is supported only if all component forecasters support it
+        self._anytagis_then_set(
+            "capability:categorical_in_X", False, True, forecasters
+        )
+
         # Update the tags
         self.set_tags(**true_if_all_tags)
 
