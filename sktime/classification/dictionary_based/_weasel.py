@@ -359,14 +359,18 @@ class WEASEL(BaseClassifier):
             "support_probabilities": True,
             "bigrams": False,
             "feature_selection": "none",
-            "alphabet_size": 2,
+            "alphabet_size": 4,
+            "binning_strategy": "equi-depth",
+            "anova": False,
         }
         param_2 = {
-            "window_inc": 4,
+            "window_inc": 2,
             "support_probabilities": True,
             "bigrams": True,
             "feature_selection": "chi2",
-            "alphabet_size": 4,
+            "alphabet_size": 2,
+            "binning_strategy": "information-gain",
+            "anova": True,
         }
         return [param_1, param_2]
 
