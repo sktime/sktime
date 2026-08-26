@@ -102,6 +102,7 @@ class TotoForecaster(BaseForecaster):
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
         "capability:missing_values": False,
+        "capability:categorical_in_X": False,
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,

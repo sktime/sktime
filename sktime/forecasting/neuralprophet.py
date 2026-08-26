@@ -112,6 +112,7 @@ class NeuralProphet(BaseForecaster):
         "env_marker": 'platform_system != "Windows" or python_version < "3.13"',
         "capability:exogenous": True,
         "capability:missing_values": True,
+        "capability:categorical_in_X": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,

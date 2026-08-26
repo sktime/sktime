@@ -106,6 +106,7 @@ class Prophetverse(_DelegatedForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:unequal_length": False,
+        "capability:categorical_in_X": False,
         "enforce_index_type": [pd.Period, pd.DatetimeIndex],
         "requires-fh-in-fit": False,
         "y_inner_mtype": "pd.DataFrame",
@@ -282,6 +283,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "capability:exogenous": True,
         "capability:missing_values": False,
         "capability:unequal_length": False,
+        "capability:categorical_in_X": False,
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",

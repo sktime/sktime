@@ -118,6 +118,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "capability:exogenous": True,
+        "capability:categorical_in_X": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
