@@ -189,6 +189,7 @@ transform pairs of time series (``"transformer-pairwise"`` and ``"transformer-pa
     :nosignatures:
 
     symmetric
+    pwtrafo_type
 
 
 .. _detector_tags:
