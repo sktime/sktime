@@ -887,3 +887,23 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
+def test_multioutput_time_series_regressor_dataframe_output():
+    """Test multioutput forecaster with a regressor returning a DataFrame.
+
+    A native time-series regressor returns a ``pd.DataFrame`` in the multioutput
+    case, which has no ``ravel``, so ``predict`` used to raise ``AttributeError``.
+    See bug #10829.
+    """
+    from sktime.regression.dummy import DummyRegressor
+
+    y = load_airline()
+    forecaster = MultioutputTimeSeriesRegressionForecaster(DummyRegressor())
+    forecaster.fit(y, fh=[1, 2, 3])
+    y_pred = forecaster.predict()
+    assert len(y_pred) == 3
