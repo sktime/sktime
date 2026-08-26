@@ -1428,6 +1428,43 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
 
     _estimator_scitype = "time-series-regressor"
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.linear_model import LinearRegression
+        from sklearn.pipeline import make_pipeline
+
+        from sktime.transformations.panel.reduce import Tabularizer
+
+        params1 = {
+            "estimator": make_pipeline(Tabularizer(), LinearRegression()),
+            "window_length": 2,
+        }
+        params2 = {
+            "estimator": make_pipeline(Tabularizer(), RandomForestRegressor()),
+            "window_length": 3,
+        }
+
+        params = [params1, params2]
+        return params
+
 
 class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
     """Multioutput reduction from forecasting to time series regression.
@@ -1470,6 +1507,43 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     }
 
     _estimator_scitype = "time-series-regressor"
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.linear_model import LinearRegression
+        from sklearn.pipeline import make_pipeline
+
+        from sktime.transformations.panel.reduce import Tabularizer
+
+        params1 = {
+            "estimator": make_pipeline(Tabularizer(), LinearRegression()),
+            "window_length": 2,
+        }
+        params2 = {
+            "estimator": make_pipeline(Tabularizer(), RandomForestRegressor()),
+            "window_length": 3,
+        }
+
+        params = [params1, params2]
+        return params
 
 
 class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
