@@ -32,7 +32,7 @@ from sktime.forecasting.compose._reduce import _sliding_window_transform
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
-from sktime.regression.dummy import DummyRegressor
+from sktime.regression.dummy import DummyRegressor as TSDummyRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.split.tests.test_split import _get_windows
@@ -890,9 +890,18 @@ def test_recursive_reduction_with_period_index():
     assert np.allclose(y_pred, manual_pred)
 
 
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
 def test_multioutput_regression_forecaster_with_sklearn_model():
+    """Test MultioutputTimeSeriesRegressionForecaster with sktime regressor.
+
+    sktime regressors return a pd.DataFrame from predict, which _MultioutputReducer
+    must convert to numpy before ravelling.
+    """
     f = MultioutputTimeSeriesRegressionForecaster(
-        estimator=DummyRegressor(), window_length=5
+        estimator=TSDummyRegressor(), window_length=5
     )
 
     y = load_airline()[:60]
