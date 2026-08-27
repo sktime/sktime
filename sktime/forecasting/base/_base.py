@@ -577,6 +577,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             store=self._converter_store_y,
             store_behaviour="freeze",
         )
+        y_out = self._restore_y_index_names(y_out)
 
         return y_out
 
@@ -1602,6 +1603,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             store=self._converter_store_y,
             store_behaviour="freeze",
         )
+        y_pred = self._restore_y_index_names(y_pred)
 
         return y_pred
 
@@ -1936,6 +1938,8 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 )
 
             y_scitype = y_metadata["scitype"]
+            if hasattr(y, "index"):
+                y_metadata["index_names"] = list(y.index.names)
             self._y_metadata = y_metadata
             self._y_mtype_last_seen = y_metadata["mtype"]
 
@@ -2674,6 +2678,13 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         """
         featnames = self._y_metadata["feature_names"]
         return featnames
+
+    def _restore_y_index_names(self, y_pred):
+        """Restore row index names from the most recently seen y."""
+        index_names = self._y_metadata.get("index_names")
+        if index_names is not None and hasattr(y_pred, "index"):
+            y_pred.index.names = index_names
+        return y_pred
 
     def _get_columns(self, method="predict", **kwargs):
         """Return column names for DataFrame-like returns.
