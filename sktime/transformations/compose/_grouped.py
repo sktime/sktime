@@ -541,7 +541,7 @@ class GroupbyCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
         """
         if df is None or group is None:
             return df
-        return df.loc[df.index.droplevel(-1).map(lambda x: x in group.index),]
+        return df.loc[df.index.droplevel(-1).isin(group.index)]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
