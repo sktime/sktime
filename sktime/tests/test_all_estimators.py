@@ -1128,6 +1128,18 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester):
                 f"estimator tags."
             )
 
+    def test_python_version_compatible(self, object_class):
+        """Check that the python_version tag is compatible with sktime's own bound."""
+        from sktime.utils.dependencies import _get_lowest_compatible_python_version
+
+        est_spec = object_class.get_class_tag("python_version")
+
+        assert _get_lowest_compatible_python_version(object_class) is not None, (
+            f"python_version tag of {object_class.__name__} is {est_spec!r}, which "
+            "has no python version in common with the bound sktime itself requires. "
+            "The estimator can therefore never be tested or used."
+        )
+
     def test_inheritance(self, object_class):
         """Check that estimator inherits from BaseObject and/or BaseEstimator."""
         assert issubclass(object_class, BaseObject), (
