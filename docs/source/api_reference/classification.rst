@@ -72,6 +72,7 @@ Deep learning
     cntc.CNTCClassifier
     cntc.CNTCClassifierTorch
     fcn.FCNClassifier
+    fcn.FCNClassifierTorch
     gru.GRUClassifier
     gru.GRUFCNNClassifier
     inceptiontime.InceptionTimeClassifier

@@ -10,6 +10,8 @@ __all__ = [
     "RNNNetworkTorch",
     "CNTCNetwork",
     "CNTCNetworkTorch",
+    "FCNNetwork",
+    "FCNNetworkTorch",
 ]
 
 from sktime.networks.cnn import (
@@ -19,6 +21,10 @@ from sktime.networks.cnn import (
 from sktime.networks.cntc import (
     CNTCNetwork,
     CNTCNetworkTorch,
+)
+from sktime.networks.fcn import (
+    FCNNetwork,
+    FCNNetworkTorch,
 )
 from sktime.networks.rnn import (
     RNNNetwork,
