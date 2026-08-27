@@ -2267,6 +2267,30 @@ class capability__bootstrap_index(_BaseTag):
     }
 
 
+class capability__missing_values__removes(_BaseTag):
+    """Capability: transformer output is guaranteed to have no missing values.
+
+    - String name: ``"capability:missing_values:removes"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag specifies whether the transformer result is guaranteed to have
+    no missing values.
+    """
+
+    _tags = {
+        "tag_name": "capability:missing_values:removes",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": (
+            "is the transformer result guaranteed to have no missing values?"
+        ),
+        "user_facing": True,
+    }
+
+
 class capability__unequal_length__removes(_BaseTag):
     """Capability: the transformer produces equal length series on unequal length input.
 
@@ -3829,12 +3853,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["param_est", "metric"],
         "str",
         "what scitype of y does the object support? must be scitype string",
-    ),
-    (
-        "capability:missing_values:removes",
-        "transformer",
-        "bool",
-        "is the transformer result guaranteed to have no missing values?",
     ),
     (
         "classifier_type",
