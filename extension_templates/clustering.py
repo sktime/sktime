@@ -102,6 +102,9 @@ class MyClusterer(BaseClusterer):
         "capability:predict": True,  # implements _predict for cluster assignment?
         "capability:predict_proba": False,  # implements non-default _predict_proba?
         "capability:out_of_sample": True,  # implements _predict for new data?
+        "property:randomness": "deterministic",  # "deterministic", "stochastic",
+        # or "derandomized" (stochastic, but reproducible if random_state is set)
+        "capability:random_state": False,  # is there a random_state parameter?
     }
 
     # todo: add any hyper-parameters and components to constructor
