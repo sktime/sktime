@@ -21,36 +21,34 @@ from sktime.utils.validation import is_int
 class FlexiblePanelSplitter(BaseSplitter):
     """Wrap a temporal splitter to make it work with unequal-length panels.
 
-    Folds (cutoffs) are determined by the longest time series instance in the
-    panel. For each fold, every other instance is included with as much of
-    its own history as available up to that fold's cutoff, provided it
-    covers the full forecasting horizon and has enough training history.
-    Instances that don't qualify for a given fold are simply excluded from
-    it, rather than truncating every instance to the length of the shortest
-    one, as ``base_cv`` would do by default on a panel.
+    Folds (cutoffs) come from the longest series in the panel. For each
+    fold, every other instance is included with as much of its own history
+    as is available up to that cutoff, as long as it covers the full
+    forecasting horizon and has enough training history. Instances that
+    don't qualify for a fold are excluded from it, rather than truncated to
+    the shortest instance the way ``base_cv`` would by default on a panel.
 
-    Each split is itself a panel, containing whichever instances qualify for
-    that fold - so different folds can contain a different number of
+    Each split is itself a panel containing whichever instances qualify for
+    that fold, so different folds can contain a different number of
     instances.
 
-    This assumes all instances of the panel lie on a common, comparable time
-    index, for instance because they are cut off at the same latest
-    timestamp. If ``y`` is a single (non-panel) time series, or all instances
-    have equal length and share the same time index, ``FlexiblePanelSplitter``
-    behaves identically to ``base_cv``.
+    This assumes all instances share a common, comparable time index, for
+    example because they're all cut off at the same latest timestamp. If
+    ``y`` is a single (non-panel) series, or every instance has equal length
+    and shares the same time index, ``FlexiblePanelSplitter`` behaves
+    exactly like ``base_cv``.
 
     Parameters
     ----------
     base_cv : sktime splitter, BaseSplitter descendant instance
         the underlying temporal splitter, e.g., ``SlidingWindowSplitter``
     min_length : int, optional, default=None
-        minimum number of training observations required for an instance to
-        be included in a fold. Must be > 0.
+        minimum number of training observations an instance needs to be
+        included in a fold. Must be > 0.
         If None (default), only instances with a full training window (as
-        long as the longest instance's training window for that fold) are
-        included.
+        long as the longest instance's for that fold) are included.
         If set, instances with at least ``min_length`` observations before
-        the cutoff are included as well, with all their available history.
+        the cutoff are included too, with all the history they have.
 
     Examples
     --------
@@ -79,11 +77,11 @@ class FlexiblePanelSplitter(BaseSplitter):
     fold 4: h0_0: 01-06..01-08, h0_1: 01-06..01-08
     fold 5: h0_0: 01-07..01-09, h0_1: 01-07..01-09
 
-    Every included series always gets the *same* 3-day calendar window.
-    Contrast with ``base_cv`` alone: it positions each series' window
-    relative to its own local index, so windows of equal length land on
-    different calendar dates per series (``h0_1`` starts 2 days later
-    than ``h0_0`` in the data, and that offset carries through every fold):
+    Every included series gets the same 3-day calendar window. ``base_cv``
+    alone positions each series' window relative to its own local index
+    instead, so windows of equal length land on different calendar dates
+    per series (``h0_1`` starts 2 days later than ``h0_0``, and that offset
+    carries through every fold):
 
     >>> for i, (train, test) in enumerate(cv.base_cv.split(y)):
     ...     print(f"fold {i}: {train_ranges(train)}")
