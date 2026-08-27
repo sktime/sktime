@@ -29,7 +29,10 @@ from sktime.classification.deep_learning.cnn import (
     CNNClassifier,
     CNNClassifierTorch,
 )
-from sktime.classification.deep_learning.cntc import CNTCClassifier
+from sktime.classification.deep_learning.cntc import (
+    CNTCClassifier,
+    CNTCClassifierTorch,
+)
 from sktime.classification.deep_learning.convtimenet import ConvTimeNetClassifier
 from sktime.classification.deep_learning.fcn import FCNClassifier
 from sktime.classification.deep_learning.gru import (
