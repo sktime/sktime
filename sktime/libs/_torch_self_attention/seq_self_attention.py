@@ -287,13 +287,15 @@ class SeqSelfAttentionTorch(NNModule):
         if mask is not None:
             e = self._apply_mask(e, mask)
 
-        self.intensity = e
+        # kept for inspection only, and detached so that the layer stays
+        # copyable and picklable once it has been run
+        self.intensity = e.detach()
         e = e - e.max(dim=-1, keepdim=True)[0]
         torch_exp = self._torch_op("torch.exp")
         torch_finfo = self._torch_op("torch.finfo")
         a = torch_exp(e)
         a = a / (a.sum(dim=-1, keepdim=True) + torch_finfo(a.dtype).eps)
-        self.attention = a
+        self.attention = a.detach()
 
         torch_bmm = self._torch_op("torch.bmm")
         v = torch_bmm(a, x)
