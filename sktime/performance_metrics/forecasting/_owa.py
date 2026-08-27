@@ -42,7 +42,7 @@ def m4_seasonality_test(y, sp):
     clim = (
         1.645 / np.sqrt(n) * np.sqrt(np.cumsum(np.concatenate([[1.0], 2.0 * xacf**2])))
     )
-    test_seasonal = abs(xacf[sp - 1]) > clim[sp]
+    test_seasonal = abs(xacf[sp - 1]) > clim[sp - 1]
 
     if np.isnan(test_seasonal):
         return False
