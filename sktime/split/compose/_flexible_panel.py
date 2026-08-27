@@ -45,17 +45,12 @@ class FlexiblePanelSplitter(BaseSplitter):
         the underlying temporal splitter, e.g., ``SlidingWindowSplitter``
     min_length : int, optional, default=None
         minimum number of training observations required for an instance to
-        be included in a fold.
+        be included in a fold. Must be > 0.
         If None (default), only instances with a full training window (as
         long as the longest instance's training window for that fold) are
         included.
         If set, instances with at least ``min_length`` observations before
         the cutoff are included as well, with all their available history.
-
-    Raises
-    ------
-    ValueError
-        If ``min_length`` is not None and not greater than zero.
 
     Examples
     --------
@@ -65,7 +60,37 @@ class FlexiblePanelSplitter(BaseSplitter):
     >>> y = _make_hierarchical(hierarchy_levels=(2,), max_timepoints=10,
     ...     min_timepoints=7, random_state=42)
     >>> cv = FlexiblePanelSplitter(SlidingWindowSplitter(window_length=3, fh=1))
-    >>> splits = list(cv.split(y))
+    >>> def train_ranges(train):
+    ...     # per-series (start..end) of the train window, keyed by series id
+    ...     idx = y.index[train]
+    ...     times = idx.get_level_values(-1)
+    ...     series = idx.droplevel(-1)
+    ...     return ", ".join(
+    ...         f"{s}: {times[series == s].min():%m-%d}"
+    ...         f"..{times[series == s].max():%m-%d}"
+    ...         for s in sorted(series.unique())
+    ...     )
+    >>> for i, (train, test) in enumerate(cv.split(y)):
+    ...     print(f"fold {i}: {train_ranges(train)}")
+    fold 0: h0_0: 01-02..01-04
+    fold 1: h0_0: 01-03..01-05
+    fold 2: h0_0: 01-04..01-06, h0_1: 01-04..01-06
+    fold 3: h0_0: 01-05..01-07, h0_1: 01-05..01-07
+    fold 4: h0_0: 01-06..01-08, h0_1: 01-06..01-08
+    fold 5: h0_0: 01-07..01-09, h0_1: 01-07..01-09
+
+    Every included series always gets the *same* 3-day calendar window.
+    Contrast with ``base_cv`` alone: it positions each series' window
+    relative to its own local index, so windows of equal length land on
+    different calendar dates per series (``h0_1`` starts 2 days later
+    than ``h0_0`` in the data, and that offset carries through every fold):
+
+    >>> for i, (train, test) in enumerate(cv.base_cv.split(y)):
+    ...     print(f"fold {i}: {train_ranges(train)}")
+    fold 0: h0_0: 01-02..01-04, h0_1: 01-04..01-06
+    fold 1: h0_0: 01-03..01-05, h0_1: 01-05..01-07
+    fold 2: h0_0: 01-04..01-06, h0_1: 01-06..01-08
+    fold 3: h0_0: 01-05..01-07, h0_1: 01-07..01-09
     """
 
     _tags = {
@@ -121,9 +146,13 @@ class FlexiblePanelSplitter(BaseSplitter):
         level_cols = list(range(y.nlevels - 1))
         iloc_by_time = pd.Series(range(len(y)), index=y)
 
+        # squeeze to a scalar level when there's only one, to avoid a pandas
+        # FutureWarning about list-like level of length 1 changing group keys
+        groupby_level = level_cols[0] if len(level_cols) == 1 else level_cols
+
         # per instance: its own time values and their global iloc positions in y
         instances = []
-        for _, group in iloc_by_time.groupby(level=level_cols):
+        for _, group in iloc_by_time.groupby(level=groupby_level):
             instances.append((group.index.get_level_values(-1), group.to_numpy()))
         longest_time_index, _ = max(instances, key=lambda inst: len(inst[0]))
 
