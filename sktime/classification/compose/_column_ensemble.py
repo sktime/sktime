@@ -291,6 +291,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.classification.dictionary_based import ContractableBOSS
+        from sktime.classification.dummy import DummyClassifier
         from sktime.classification.interval_based import CanonicalIntervalForest
         from sktime.classification.interval_based import (
             TimeSeriesForestClassifier as TSFC,
@@ -305,6 +306,12 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             )
             return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
         else:
+            param0 = {
+                "estimators": [
+                    ("d1", DummyClassifier(strategy="most_frequent"), 0),
+                    ("d2", DummyClassifier(strategy="prior"), 0),
+                ]
+            }
             param1 = {
                 "estimators": [
                     ("tsf1", TSFC(n_estimators=2), 0),
@@ -313,7 +320,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             }
             param2 = {**param1, "remainder": TSFC(n_estimators=2)}
 
-            return [param1, param2]
+            return [param0, param1, param2]
 
 
 def _get_column(X, key):

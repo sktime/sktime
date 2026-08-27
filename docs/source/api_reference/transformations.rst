@@ -231,6 +231,15 @@ Shapelets, wavelets, and convolution
 
     DWTTransformer
 
+.. currentmodule:: sktime.transformations.wavelet_packet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WaveletPacketTransformer
+
+
 Distance-based features
 ~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -526,6 +535,23 @@ Filtering and denoising
 
     Bollinger
 
+.. currentmodule:: sktime.transformations.hilbert
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HilbertTransformer
+
+.. currentmodule:: sktime.transformations.savitzky_golay
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SavitzkyGolayTransformer
+
+
 Differencing, slope, kinematics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -628,7 +654,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    fABBA
+    FABBA
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~

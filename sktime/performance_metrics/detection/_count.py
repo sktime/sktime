@@ -28,6 +28,9 @@ class DetectionCount(BaseDetectionMetric):
         "requires_X": False,
         "requires_y_true": False,  # this is an unsupervised metric
         "lower_is_better": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, target=0, excess_only=False):
