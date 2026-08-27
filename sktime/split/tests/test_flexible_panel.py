@@ -43,6 +43,8 @@ def test_flexible_panel_splitter_excludes_instances_without_full_window():
 
     # the shared fold uses each instance's own train/test window
     train1, test1 = splits[1]
+    assert list(train1.loc["long"].index) == [3, 4, 5]
+    assert list(test1.loc["long"].index) == [6]
     assert list(train1.loc["short"].index) == [3, 4, 5]
     assert list(test1.loc["short"].index) == [6]
 
@@ -67,6 +69,14 @@ def test_flexible_panel_splitter_min_length_relaxes_training_window():
 def test_flexible_panel_splitter_invalid_min_length_raises():
     with pytest.raises(ValueError, match="min_length"):
         FlexiblePanelSplitter(SlidingWindowSplitter(), min_length=0)
+
+
+def test_flexible_panel_splitter_min_length_above_window_warns():
+    """min_length above window_length has no relaxing effect, so it should warn."""
+    with pytest.warns(UserWarning, match="min_length"):
+        FlexiblePanelSplitter(
+            SlidingWindowSplitter(window_length=3, fh=1), min_length=5
+        )
 
 
 def test_flexible_panel_splitter_passthrough_for_single_series():
