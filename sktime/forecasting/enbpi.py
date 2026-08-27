@@ -76,7 +76,7 @@ class EnbPIForecaster(BaseForecaster):
     Examples
     --------
     >>> import numpy as np
-    >>> from tsbootstrap import MovingBlockBootstrap
+    >>> from tsbootstrap.adapters import MovingBlockBootstrap  # doctest: +SKIP
     >>> from sktime.forecasting.enbpi import EnbPIForecaster
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.datasets import load_airline
@@ -278,12 +278,12 @@ class EnbPIForecaster(BaseForecaster):
             }
         ]
         if _check_soft_dependencies("tsbootstrap", severity="none"):
-            from tsbootstrap import BlockBootstrap
+            from tsbootstrap.adapters import MovingBlockBootstrap
 
             params.append(
                 {
                     "forecaster": NaiveForecaster(),
-                    "bootstrap_transformer": BlockBootstrap(),
+                    "bootstrap_transformer": MovingBlockBootstrap(n_bootstraps=10),
                 }
             )
 
