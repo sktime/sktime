@@ -40,6 +40,7 @@ from sktime.utils.datetime import (
     _get_freq,
     _get_intervals_count_and_unit,
     _shift,
+    _to_offset_compat,
     infer_freq,
 )
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
@@ -628,10 +629,10 @@ def test_frequency_setter(freqstr):
     assert fh.freq is None
 
     fh.freq = freqstr
-    assert fh.freq == freqstr
+    assert fh.freq == _get_expected_freqstr(freqstr)
 
     fh = ForecastingHorizon([1, 2, 3], freq=freqstr)
-    assert fh.freq == freqstr
+    assert fh.freq == _get_expected_freqstr(freqstr)
 
 
 # TODO: Replace this long running test with fast unit test
@@ -859,7 +860,9 @@ def test_extract_freq_from_inputs() -> None:
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_extract_freq_from_cutoff(freq: str) -> None:
     """Test extract frequency from cutoff."""
-    assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == freq
+    assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == _to_offset_compat(
+        freq
+    )
 
 
 @pytest.mark.skipif(
