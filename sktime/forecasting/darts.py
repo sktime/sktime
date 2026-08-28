@@ -101,6 +101,15 @@ class DartsRegressionModel(_DartsRegressionAdapter):
     Notes
     -----
     If unspecified, all columns will be assumed to be known during prediction duration.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.darts import DartsRegressionModel
+    >>> y = load_airline()
+    >>> forecaster = DartsRegressionModel(lags=12)  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
 
     _tags = {
@@ -306,6 +315,15 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
     Notes
     -----
     If unspecified, all columns will be assumed to be known during prediction duration.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.darts import DartsXGBModel
+    >>> y = load_airline()
+    >>> forecaster = DartsXGBModel(lags=12)  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
 
     _tags = {
@@ -539,6 +557,15 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
     Notes
     -----
     If unspecified, all columns will be assumed to be known during prediction duration.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.darts import DartsLinearRegressionModel
+    >>> y = load_airline()
+    >>> forecaster = DartsLinearRegressionModel(lags=12)  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
 
     _tags = {
