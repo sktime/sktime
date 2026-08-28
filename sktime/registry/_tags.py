@@ -1620,6 +1620,67 @@ class capability__out_of_sample(_BaseTag):
     }
 
 
+class classifier_type(_BaseTag):
+    """The family of algorithms the classifier belongs to.
+
+    - String name: ``"classifier_type"``
+    - Public property tag
+    - Values: str, or list of str, subset of ``"dictionary"``, ``"distance"``,
+      ``"feature"``, ``"hybrid"``, ``"interval"``, ``"kernel"``, ``"shapelet"``
+    - Example: ``"distance"``
+    - Default: no default, the tag is not set by every classifier
+
+    This tag applies to classifiers only.
+
+    The tag records where the classifier sits in the common taxonomy of time
+    series classification algorithms, by the kind of representation or
+    similarity the algorithm is built on:
+
+    * ``"dictionary"``: the classifier discretizes the series into symbols and
+      classifies on the counts of the resulting words.
+    * ``"distance"``: the classifier uses an elastic or other distance between
+      whole series, for instance in a nearest neighbours scheme.
+    * ``"feature"``: the classifier extracts summary features from the series
+      and applies a tabular classifier to them.
+    * ``"hybrid"``: the classifier combines several of the other types, for
+      instance in an ensemble over different representations.
+    * ``"interval"``: the classifier extracts features from intervals of the
+      series, usually selected at random.
+    * ``"kernel"``: the classifier uses convolutional kernels, such as random
+      convolutional kernels, to transform the series.
+    * ``"shapelet"``: the classifier uses shapelets, i.e., discriminatory
+      subsequences of the series.
+
+    A classifier that draws on more than one of these can list several values.
+
+    The tag is descriptive and does not affect the behaviour of the classifier.
+    It is used to retrieve and compare classifiers by algorithm family, for
+    instance in benchmarking studies or in ``registry.all_estimators``.
+    """
+
+    _tags = {
+        "tag_name": "classifier_type",
+        "parent_type": "classifier",
+        "tag_type": (
+            "list",
+            [
+                "dictionary",
+                "distance",
+                "feature",
+                "hybrid",
+                "interval",
+                "kernel",
+                "shapelet",
+            ],
+        ),
+        "short_descr": (
+            "which type the classifier falls under in the taxonomy of "
+            "time series classification algorithms."
+        ),
+        "user_facing": True,
+    }
+
+
 # Transformations
 # ---------------
 
@@ -3835,24 +3896,6 @@ ESTIMATOR_TAG_REGISTER = [
         "transformer",
         "bool",
         "is the transformer result guaranteed to have no missing values?",
-    ),
-    (
-        "classifier_type",
-        "classifier",
-        (
-            "list",
-            [
-                "dictionary",
-                "distance",
-                "feature",
-                "hybrid",
-                "interval",
-                "kernel",
-                "shapelet",
-            ],
-        ),
-        "which type the classifier falls under in the taxonomy of time series "
-        "classification algorithms.",
     ),
     (
         "remember_data",

@@ -135,6 +135,7 @@ these types of objects.
     capability__multithreading
     capability__random_state
     property__randomness
+    classifier_type
 
 
 .. _transformer_tags:
