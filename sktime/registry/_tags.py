@@ -2920,6 +2920,38 @@ class inner_implements_multilevel(_BaseTag):
     }
 
 
+# Splitters
+# ---------
+
+
+class split_hierarchical(_BaseTag):
+    """Whether the splitter natively implements splitting for hierarchical data.
+
+    - String name: ``"split_hierarchical"``
+    - Public capability tag
+    - Values: bool (True / False)
+    - Example: True
+    - Default: False
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag specifies whether the splitter natively supports and implements
+    splitting for hierarchical time series data structures (e.g., pandas MultiIndex
+    hierarchies). If False, the base class will use a generic fallback by iterating
+    over individual hierarchy levels or instances.
+    """
+
+    _tags = {
+        "tag_name": "split_hierarchical",
+        "parent_type": "splitter",
+        "tag_type": "bool",
+        "short_descr": (
+            "whether _split is natively implemented for hierarchical y types"
+        ),
+        "user_facing": True,
+    }
+
+
 # Developer tags
 # --------------
 
@@ -3865,12 +3897,6 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         ("list", "str"),
         "parameters reserved by the base class and present in all child estimators",
-    ),
-    (
-        "split_hierarchical",
-        "splitter",
-        "bool",
-        "whether _split is natively implemented for hierarchical y types",
     ),
     (
         "split_series_uses",
