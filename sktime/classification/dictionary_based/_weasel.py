@@ -353,13 +353,28 @@ class WEASEL(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {
+        params1 = {
             "window_inc": 4,
             "support_probabilities": True,
             "bigrams": False,
             "feature_selection": "none",
             "alphabet_size": 2,
         }
+        # second set: equi-depth rather than the default information-gain
+        # binning, bigrams on, chi2 feature selection rather than none,
+        # anova off, and a fixed random_state. window_inc and alphabet_size
+        # stay as in the first set so fit cost is comparable.
+        params2 = {
+            "window_inc": 4,
+            "support_probabilities": True,
+            "bigrams": True,
+            "feature_selection": "chi2",
+            "alphabet_size": 2,
+            "binning_strategy": "equi-depth",
+            "anova": False,
+            "random_state": 0,
+        }
+        return [params1, params2]
 
 
 def _parallel_fit(
