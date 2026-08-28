@@ -2267,6 +2267,30 @@ class capability__bootstrap_index(_BaseTag):
     }
 
 
+class capability__missing_values__removes(_BaseTag):
+    """Capability: transformer output is guaranteed to have no missing values.
+
+    - String name: ``"capability:missing_values:removes"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag specifies whether the transformer result is guaranteed to have
+    no missing values.
+    """
+
+    _tags = {
+        "tag_name": "capability:missing_values:removes",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": (
+            "is the transformer result guaranteed to have no missing values?"
+        ),
+        "user_facing": True,
+    }
+
+
 class capability__unequal_length__removes(_BaseTag):
     """Capability: the transformer produces equal length series on unequal length input.
 
@@ -2917,6 +2941,38 @@ class inner_implements_multilevel(_BaseTag):
         "tag_type": "bool",
         "short_descr": "does the metric implement multilevel evaluation internally?",
         "user_facing": False,
+    }
+
+
+# Splitters
+# ---------
+
+
+class split_hierarchical(_BaseTag):
+    """Whether the splitter natively implements splitting for hierarchical data.
+
+    - String name: ``"split_hierarchical"``
+    - Public capability tag
+    - Values: bool (True / False)
+    - Example: True
+    - Default: False
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag specifies whether the splitter natively supports and implements
+    splitting for hierarchical time series data structures (e.g., pandas MultiIndex
+    hierarchies). If False, the base class will use a generic fallback by iterating
+    over individual hierarchy levels or instances.
+    """
+
+    _tags = {
+        "tag_name": "split_hierarchical",
+        "parent_type": "splitter",
+        "tag_type": "bool",
+        "short_descr": (
+            "whether _split is natively implemented for hierarchical y types"
+        ),
+        "user_facing": True,
     }
 
 
@@ -3831,12 +3887,6 @@ ESTIMATOR_TAG_REGISTER = [
         "what scitype of y does the object support? must be scitype string",
     ),
     (
-        "capability:missing_values:removes",
-        "transformer",
-        "bool",
-        "is the transformer result guaranteed to have no missing values?",
-    ),
-    (
         "classifier_type",
         "classifier",
         (
@@ -3865,12 +3915,6 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         ("list", "str"),
         "parameters reserved by the base class and present in all child estimators",
-    ),
-    (
-        "split_hierarchical",
-        "splitter",
-        "bool",
-        "whether _split is natively implemented for hierarchical y types",
     ),
     (
         "split_series_uses",
