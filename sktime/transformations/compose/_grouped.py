@@ -348,7 +348,11 @@ class GroupbyCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
         """
         if X.index.nlevels == 1:
             return [(category.values[0], None)]
-        return list(category.groupby(category))
+        # dropna=False: a categorizer can return NaN for a degenerate series, and
+        # an instance with no learned category (inverse_transform on instances
+        # unseen in fit) is NaN as well. Both must be routed to the fallback or
+        # raise, never silently dropped from the output.
+        return list(category.groupby(category, dropna=False))
 
     def _get_transformer_for_category(self, category, fitted):
         """Look up the (fitted or blueprint) transformer for a category.
@@ -509,7 +513,10 @@ class GroupbyCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
         pd.DataFrame
             The result of calling methodname on X, category by category.
         """
-        category = self.categorizer_.transform(X=X, y=y).iloc[:, 0]
+        if methodname == "inverse_transform":
+            category = self._fit_time_category(X)
+        else:
+            category = self.categorizer_.transform(X=X, y=y).iloc[:, 0]
 
         results = []
         for cat, group in self._group_by_category(X, category):
@@ -521,6 +528,33 @@ class GroupbyCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
 
         result = pd.concat(results, axis=0).sort_index()
         return result
+
+    def _fit_time_category(self, X):
+        """Return the category per instance of X as assigned during ``fit``.
+
+        ``inverse_transform`` receives data on the *transformed* scale, so
+        running ``categorizer_`` on it would assign categories from transformed
+        values and route instances to the wrong inverse. The assignment learned
+        in ``fit`` is used instead, keyed by instance - the same approach as
+        ``Differencer``, which inverts using state stored at fit time.
+
+        Instances not seen during ``fit`` have no learned category and are
+        returned as ``NaN``, which ``_get_transformer_for_category`` routes to
+        ``fallback_transformer_`` or raises on.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            Data to be inverse transformed.
+
+        Returns
+        -------
+        pd.Series
+            Category per instance of X.
+        """
+        if X.index.nlevels == 1:
+            return self.category_
+        return self.category_.reindex(X.index.droplevel(-1).unique())
 
     def _loc_group(self, df, group):
         """Return the rows of df belonging to group.

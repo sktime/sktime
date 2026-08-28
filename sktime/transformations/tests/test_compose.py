@@ -4,6 +4,7 @@
 __author__ = ["fkiraly", "aminmiral"]
 __all__ = []
 
+import numpy as np
 import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_estimator_deps
@@ -529,6 +530,73 @@ def test_groupby_category_transformer_transform_new_data():
 
     assert Xt_new.index.equals(X_new.index)
     assert (Xt_new["c0"] == 100.0**2).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_groupby_category_transformer_inverse_transform():
+    """Test inverse_transform undoes transform, per category.
+
+    Regression test: inverse_transform must not re-run the categorizer on its
+    argument. That argument is data on the transformed scale, so categorizing it
+    assigns categories from transformed values and routes instances to the wrong
+    inverse - silently returning un-inverted data when a fallback is configured,
+    or raising "not seen during fit" when one is not.
+
+    The generic suite does not cover this: its round-trip test gates on the
+    *class* tag ``capability:inverse_transform``, which is False here, while the
+    instance tag is set by ``__dynamic_tags__``.
+    """
+    X = _make_category_panel([2.0, 2.0, 3.0, 3.0])
+
+    t = GroupbyCategoryTransformer(
+        transformers={
+            "2": ExponentTransformer(power=2),
+            "3": ExponentTransformer(power=3),
+        },
+        categorizer=_MeanCategorizer(),
+    )
+
+    Xt = t.fit_transform(X)
+    # each category was raised to its own power
+    assert (Xt.loc[["inst_0", "inst_1"], "c0"] == 2.0**2).all()
+    assert (Xt.loc[["inst_2", "inst_3"], "c0"] == 3.0**3).all()
+
+    Xi = t.inverse_transform(Xt)
+    assert Xi.index.equals(X.index)
+    np.testing.assert_allclose(Xi["c0"].to_numpy(), X["c0"].to_numpy())
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
+def test_groupby_category_transformer_nan_category_not_dropped():
+    """Test an instance whose category is NaN is routed, not silently dropped.
+
+    ``groupby`` drops NaN keys by default, which would omit such instances from
+    the concatenated output entirely - fewer rows out than in, with no error.
+    """
+
+    class _NaNCategorizer(_MeanCategorizer):
+        def _transform(self, X, y=None):
+            mean = X.mean().mean()
+            category = np.nan if mean == 0 else str(round(mean))
+            return pd.DataFrame({"category": [category]})
+
+    X = _make_category_panel([0.0, 5.0])
+
+    t = GroupbyCategoryTransformer(
+        transformers={"5": ExponentTransformer(power=2)},
+        categorizer=_NaNCategorizer(),
+        fallback_transformer=ExponentTransformer(power=1),
+    )
+    Xt = t.fit_transform(X)
+
+    assert len(Xt) == len(X)
+    assert Xt.index.equals(X.index)
 
 
 @pytest.mark.skipif(
