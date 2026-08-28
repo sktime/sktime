@@ -98,18 +98,18 @@ class MyDetector(BaseDetector):
         #
         "distribution_type": "None",  # Tag to determine test in test_all_detectors
         #
-        # property:randomness = is the estimator deterministic or stochastic?
+        # property:randomness = does the estimator behave deterministically or randomly?
         "property:randomness": "deterministic",
         # valid values: str, one of "deterministic", "stochastic", "derandomized"
-        #   "deterministic": produces the same results on every run
-        #   "stochastic": may produce different results on different runs
-        #   "derandomized": stochastic, but reproducible if random_state is set
+        #   "deterministic": estimator gives same results every run
+        #   "stochastic": estimator may give different results every run
+        #   "derandomized": estimator is stochastic but can be seeded via random_state
         #
         # capability:random_state = does the estimator have a random_state parameter?
         "capability:random_state": False,
         # valid values: boolean True (yes), False (no)
-        # set to True if the estimator has a random_state parameter,
-        # which can be used to derandomize the estimator
+        # if True, the estimator has a random_state parameter for derandomization
+        # should be set to True if property:randomness is "derandomized"
         #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages

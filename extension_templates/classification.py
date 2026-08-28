@@ -107,9 +107,19 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:class_weight": False,  # ability to handle class weights
-        "property:randomness": "deterministic",  # "deterministic", "stochastic",
-        # or "derandomized" (stochastic, but reproducible if random_state is set)
-        "capability:random_state": False,  # is there a random_state parameter?
+        #
+        # property:randomness = does the estimator behave deterministically or randomly?
+        "property:randomness": "deterministic",
+        # valid values: str, one of "deterministic", "stochastic", "derandomized"
+        #   "deterministic": estimator gives same results every run
+        #   "stochastic": estimator may give different results every run
+        #   "derandomized": estimator is stochastic but can be seeded via random_state
+        #
+        # capability:random_state = does the estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, the estimator has a random_state parameter for derandomization
+        # should be set to True if property:randomness is "derandomized"
     }
 
     # todo: add any hyper-parameters and components to constructor

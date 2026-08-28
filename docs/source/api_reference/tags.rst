@@ -278,6 +278,23 @@ This section lists tags applying to parameter estimators (``"param_est"`` type).
     capability__pairwise
 
 
+.. _splitter_tags:
+
+Tags for splitters
+------------------
+
+This section lists tags applying to time series splitters (``"splitter"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    split_hierarchical
+
+
 Common developer tags
 ---------------------
 

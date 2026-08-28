@@ -49,6 +49,10 @@ class BaseDeepClassifier(BaseClassifier):
             "achieveordie",
             "noxthot",
         ],
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.classification.deep_learning.base._base_tf"],
     }
 
     @abstractmethod
