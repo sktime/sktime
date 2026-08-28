@@ -159,6 +159,7 @@ transform a single time series object (``"transformer"`` type).
     requires_x
     requires_y
     capability__missing_values
+    capability__missing_values__removes
     capability__unequal_length
     capability__unequal_length__adds
     capability__unequal_length__removes
@@ -276,6 +277,23 @@ This section lists tags applying to parameter estimators (``"param_est"`` type).
     scitype__X
     capability__multivariate
     capability__pairwise
+
+
+.. _splitter_tags:
+
+Tags for splitters
+------------------
+
+This section lists tags applying to time series splitters (``"splitter"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    split_hierarchical
 
 
 Common developer tags
