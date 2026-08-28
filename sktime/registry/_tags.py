@@ -2920,6 +2920,41 @@ class inner_implements_multilevel(_BaseTag):
     }
 
 
+# Splitters
+# ---------
+
+
+class split_type(_BaseTag):
+    """The splitting axis/strategy used by the time series splitter.
+
+    - String name: ``"split_type"``
+    - Public property tag
+    - Values: str, subset of ``"temporal"``, ``"instance"``
+    - Example: ``"temporal"``
+    - Default: ``"temporal"``
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag describes the fundamental axis along which the splitter operates:
+
+    * ``"temporal"``: the splitter splits observations along the time dimension,
+      for instance in expanding window or rolling window time series splits.
+    * ``"instance"``: the splitter splits by individual series or instance identity
+      in panel and hierarchical time series datasets.
+    """
+
+    _tags = {
+        "tag_name": "split_type",
+        "parent_type": "splitter",
+        "tag_type": ("str", ["temporal", "instance"]),
+        "short_descr": (
+            "whether the splitter splits by time or by instance "
+            "(panel/hierarchy index)"
+        ),
+        "user_facing": True,
+    }
+
+
 # Developer tags
 # --------------
 
@@ -3877,12 +3912,6 @@ ESTIMATOR_TAG_REGISTER = [
         "splitter",
         ("str", ["iloc", "loc", "custom"]),
         "whether split_series uses split (iloc) or split_loc (loc) to split series",
-    ),
-    (
-        "split_type",
-        "splitter",
-        ("str", ["temporal", "instance"]),
-        "whether the splitter splits by time or by instance (panel/hierarchy index)",
     ),
     # -------------------------
     # tags to be moved to skpro
