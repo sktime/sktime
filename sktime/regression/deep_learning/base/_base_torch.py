@@ -109,6 +109,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         "capability:random_state": True,
         "property:randomness": "stochastic",
         "tests:vm": True,
+        "tests:libs": ["sktime.regression.deep_learning.base._base_torch"],
     }
 
     # _instantiate_activation_vars is an iterable of attribute names of activations
