@@ -1,5 +1,14 @@
 """Version bridge for tags."""
 
+# scikit-learn tag names used by ``get_sklearn_tag``, mapped to the sktime tag
+# carrying the same information. Used for sktime estimators, which do not
+# implement the sklearn tag interface, see ``get_sklearn_tag``.
+SKLEARN_TO_SKTIME_TAG = {
+    "capability:multioutput": "capability:multioutput",
+    "capability:categorical": "capability:categorical_in_X",
+    "fit_is_empty": "fit_is_empty",
+}
+
 
 def get_sklearn_tag(estimator, tagname):
     """Get the value of a scikit-learn tag.
@@ -27,7 +36,17 @@ def get_sklearn_tag(estimator, tagname):
     value : object
         Value of the specified tag.
     """
+    from skbase.base import BaseObject
     from skbase.utils.dependencies import _check_soft_dependencies
+
+    # sktime objects do not inherit from ``sklearn.base.BaseEstimator``, so they do
+    # not implement ``__sklearn_tags__``. Up to scikit-learn 1.8, ``get_tags`` fell
+    # back to defaults for such objects; from 1.9 on it raises ``AttributeError``.
+    # sktime carries the same information in its own tags, so read those directly.
+    if isinstance(estimator, BaseObject):
+        sktime_tagname = SKLEARN_TO_SKTIME_TAG.get(tagname)
+        if sktime_tagname is not None:
+            return estimator.get_tag(sktime_tagname, False, raise_error=False)
 
     if tagname == "capability:multioutput":
         if _check_soft_dependencies("scikit-learn<1.6", severity="none"):
