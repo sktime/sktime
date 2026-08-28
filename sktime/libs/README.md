@@ -26,6 +26,10 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 * `granite_ttm` - a package implementing TinyTimeMixer.
   Unofficial fork of package which is not available on pypi.
 
+* `mira` - partial fork of MIRA, from [microsoft/MIRA](https://github.com/microsoft/MIRA).
+  Unofficial fork of partial code specific to the forecaster. An official package on
+  PyPI is not available. Licensed under MIT.
+
 * `lag_llama` - partial fork of Lag-Llama, from [time-series-foundation-models/lag-llama](https://github.com/time-series-foundation-models/lag-llama).
   Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
   Licensed under Apache 2.0.

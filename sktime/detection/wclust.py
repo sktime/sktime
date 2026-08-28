@@ -164,6 +164,22 @@ class WindowSegmenter(BaseDetector):
     return_segments : Boolean, default=True
         If True, returns the segments with the labels.
         If False, returns the labels for each time point.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.cluster import KMeans
+    >>> from sktime.detection.wclust import WindowSegmenter
+    >>> X = pd.DataFrame({"a": [1, 1, 1, 1, 10, 10, 10, 10]})
+    >>> segmenter = WindowSegmenter(
+    ...     clusterer=KMeans(n_clusters=2, random_state=0, n_init=10), window_size=2
+    ... )
+    >>> _ = segmenter.fit(X)
+    >>> result = segmenter.predict(X)
+    >>> result
+        ilocs  cluster
+    0  [0, 4)        1
+    1  [4, 7)        0
     """
 
     _tags = {
