@@ -404,7 +404,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 optimizer_class = _safe_import(
                     f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
                 )
-                if self.callback_kwargs:
+                if self.optimizer_kwargs:
                     return optimizer_class(
                         self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
                     )
