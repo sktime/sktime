@@ -50,6 +50,19 @@ class FlexiblePanelSplitter(BaseSplitter):
         If set, instances with at least ``min_length`` observations before
         the cutoff are included too, with all the history they have.
 
+    Notes
+    -----
+    Which instances qualify for a fold is decided from whatever panel is
+    passed to ``split``/``split_series``. If this splitter is used as (part
+    of) an explicit ``cv_X`` in ``evaluate``, wrap it with ``SameLocSplitter``
+    around ``y`` (e.g. ``SameLocSplitter(TestPlusTrainSplitter(cv), y)``, the
+    same composition ``evaluate`` uses by default) so ``X`` gets the same
+    per-fold instance selection as ``y``, instead of ``X`` being split
+    independently based on its own coverage. Without that, an ``X`` whose
+    per-instance coverage differs from ``y`` (e.g. exogenous data starting
+    later for some instance) silently yields folds where ``X`` and ``y``
+    disagree on which instances are included.
+
     Examples
     --------
     >>> from sktime.split import SlidingWindowSplitter
@@ -100,7 +113,7 @@ class FlexiblePanelSplitter(BaseSplitter):
         self.base_cv = base_cv
         self.min_length = min_length
 
-        super().__init__()
+        super().__init__(fh=base_cv.fh, window_length=base_cv.window_length)
 
         tags_to_clone = ["split_series_uses"]
         self.clone_tags(base_cv, tags_to_clone)
