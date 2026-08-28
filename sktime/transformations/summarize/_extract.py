@@ -387,7 +387,7 @@ class FittedParamExtractor(BaseTransformer):
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
-    
+
     Example
     --------
     >>> import pandas as pd
