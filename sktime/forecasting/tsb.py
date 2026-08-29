@@ -113,6 +113,124 @@ class TSB(BaseForecaster):
 
         self._f = f
 
+        # terminal state of the recursion, so that ``_update`` can continue it
+        # incrementally instead of refitting from scratch. Unlike Croston, TSB
+        # needs no periods-since-last-demand counter: ``p`` is smoothed every
+        # period, towards 1 on demand periods and towards 0 otherwise, so the
+        # elapsed-gap information is already carried in ``p`` itself.
+        self._d_last = d[-1]
+        self._p_last = p[-1]
+        self._seen_demand = bool(np.any(y > 0))
+
+        # If no demand was seen, the recursion never initialized: ``d`` was set
+        # from ``y[argmax(y > 0)] == y[0] == 0``. Resuming later needs only the
+        # NUMBER of zeros seen, not the data, so store the count.
+        self._n_zeros = 0 if self._seen_demand else n_timepoints
+
+        return self
+
+    def _recurse(self, y, d0, p0):
+        """Run the TSB recursion over ``y`` from initial state ``(d0, p0)``.
+
+        Shared by ``_fit``'s continuation in ``_update`` and by the delayed
+        initialization path, so both follow exactly the same arithmetic.
+
+        Returns
+        -------
+        d, p, f : np.ndarray, each of length ``len(y) + 1``, index 0 holding
+            the initial state.
+        """
+        alpha = self.alpha
+        beta = self.beta
+        n = len(y)
+
+        d, p, f = np.full((3, n + 1), np.nan)
+        d[0], p[0], f[0] = d0, p0, d0 * p0
+
+        for t in range(0, n):
+            if y[t] > 0:
+                d[t + 1] = alpha * y[t] + (1 - alpha) * d[t]
+                p[t + 1] = beta * 1 + (1 - beta) * p[t]
+            else:
+                d[t + 1] = d[t]
+                p[t + 1] = (1 - beta) * p[t]
+            f[t + 1] = d[t + 1] * p[t + 1]
+
+        return d, p, f
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters on new data.
+
+        Continues the TSB recursion from the state persisted by ``_fit``,
+        rather than refitting on the full history.
+
+        Parameters
+        ----------
+        y : pd.Series
+            Time series with which to update the forecaster. Contains only the
+            new observations, not the full history.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if not update_params:
+            return self
+
+        y = y.to_numpy()
+        n_new = len(y)
+        if n_new == 0:
+            return self
+
+        beta = self.beta
+
+        # ---- delayed initialization -------------------------------------
+        # If ``_fit`` saw no non-zero demand, ``argmax(y > 0)`` returned 0 and
+        # the demand size was initialized to ``y[0] == 0``, which propagates
+        # unchanged through zero periods -- not the state a fit on the pooled
+        # series would reach. Since every observation so far was zero, the only
+        # thing that history determines is HOW MANY zeros preceded the first
+        # demand, so a single counter replaces retaining the data.
+        # Note this affects ``d`` only: ``p`` initializes to the constant 0.5,
+        # independently of ``first_occurrence``.
+        if not self._seen_demand:
+            if not np.any(y > 0):
+                # still no demand: accumulate the count, forecast stays zero
+                self._n_zeros += n_new
+                self._f = np.concatenate([self._f, np.zeros(n_new)])
+                return self
+
+            # First demand arrives at index ``nz`` of this batch. A fit on the
+            # pooled series would have initialized d to that value and decayed
+            # p from 0.5 once per preceding zero. Decay iteratively rather than
+            # via ``(1 - beta) ** n`` so the result is bit-identical to a fit.
+            nz = int(np.argmax(y > 0))
+            d_pre = float(y[nz])
+            p_pre = 0.5
+            for _ in range(self._n_zeros + nz):
+                p_pre *= 1 - beta
+
+            d, p, f = self._recurse(y[nz:], d_pre, p_pre)
+
+            self._f = np.concatenate([self._f, np.zeros(nz), f[1:]])
+            self._d_last = d[-1]
+            self._p_last = p[-1]
+            self._seen_demand = True
+            self._n_zeros = 0
+            return self
+
+        # ---- ordinary continuation --------------------------------------
+        d, p, f = self._recurse(y, self._d_last, self._p_last)
+
+        self._f = np.concatenate([self._f, f[1:]])
+        self._d_last = d[-1]
+        self._p_last = p[-1]
+        self._seen_demand = self._seen_demand or bool(np.any(y > 0))
+
         return self
 
     def _predict(
