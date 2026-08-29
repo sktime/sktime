@@ -22,10 +22,8 @@ class BaseSplitter(BaseObject):
     <https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html>`__
     which implements only expanding window split strategy, and only integer based.
 
-    The most important method in this class is `.split(y)` which generates indices
-    of non-overlapping train/test splits of a time series `y`.
-    The length of the train split is determined by `window_length`.
-    The length of the test split is determined by forecasting horizon `fh`.
+    The most important method in this class is ``.split(y)`` which generates indices
+    of non-overlapping train/test splits of a time series ``y``.
 
     In general, splitting a time series :math:`y=(y_1,\ldots,y_T)`
     into train/test splits means separating it into two non-overlapping series:
@@ -34,37 +32,30 @@ class BaseSplitter(BaseObject):
     where :math:`k,l` are all integers greater than zero,
     and :math:`t(k)<t(k+1)` are ordered time indices.
     The exact set of indices depends on a concrete splitter.
-    Method `.split` is used to generate a pair of index sets:
+    Method ``.split(y)`` is used to generate a pair of index sets:
     train :math:`(t(1),\ldots,t(k))` and test :math:`(t(k+1),\ldots,t(k+l))`.
 
-    In case `window_length` and `fh` are integer valued,
-    they translate into :math:`k` and :math:`l`, respectively.
-
-    In case `window_length` and `fh` can be interpreted
-    as time interval length (time deltas), then they correspond to
-    :math:`t(k)-t(1)` and :math:`t(k+l)-t(k+1)`, respectively.
-
-    Method `.get_n_splits` returns the number of splitting iterations.
+    Method ``.get_n_splits`` returns the number of splitting iterations.
     This number depends on a concrete splitting strategy and splitter parameters.
 
-    Method `.get_cutoffs` returns the cutoff points between each train/test split.
+    Method  ``.get_cutoffs`` returns the cutoff points between each train/test split.
     Using the above notation, for a single split it corresponds
     to the last integer index of the training window, :math:`k`
 
     In order to illustrate the difference in integer/interval arithmetic
     in calculating train/test indices, let us consider the following examples.
-    Suppose, the arguments of a splitter are `cutoff = 10` and `window_length = 6`.
-    Then, we have `train_start = cutoff - window_length = 4`.
+    Suppose, the arguments of a splitter are ``cutoff = 10`` and ``window_length = 6``.
+    Then, we have ``train_start = cutoff - window_length = 4``.
     For timedelta-like values the logic is a bit more complicated.
-    The time point corresponding to the `cutoff`
-    (index value of the `y` series) is shifted back
-    by the timedelta `window_length`,
+    The time point corresponding to the ``cutoff``
+    (index value of the ``y`` series) is shifted back
+    by the timedelta ``window_length``,
     and then the integer position of the resulting datetime
     is considered to be the training window start.
-    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, freq="D")`,
-    we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
-    and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
-    which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
+    For example, for ``cutoff = 10``, and ``window_length = pd.Timedelta(6, freq="D")``,
+    we have ``y[cutoff] = pd.Timestamp("2021-01-10")``,
+    and ``y[cutoff] - window_length = pd.Timestamp("2021-01-04")``,
+    which leads to ``train_start = y.loc(y[cutoff] - window_length) = 4``.
     Similar timedelta arithmetic applies to other splitter arguments.
 
     Parameters
@@ -97,7 +88,6 @@ class BaseSplitter(BaseObject):
     }
 
     def __init__(self) -> None:
-
         super().__init__()
 
         # this block has a double purpose:
