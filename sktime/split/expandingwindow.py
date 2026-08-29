@@ -78,6 +78,14 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         # this class still acts as if it were overwritten with None,
         # via the _initial_window property that is read everywhere
 
+    @fh.setter
+    def fh(self, value):
+        """Set forecasting horizon.
+
+        Writes to _fh_ attribute due to property logic and inheritance.
+        """
+        self._fh_ = value
+
     @property
     def _initial_window(self):
         return None

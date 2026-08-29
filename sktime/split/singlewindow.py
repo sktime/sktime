@@ -102,6 +102,14 @@ class SingleWindowSplitter(BaseSplitter):
         self._fh_ = fh
         super().__init__()
 
+    @fh.setter
+    def fh(self, value):
+        """Set forecasting horizon.
+
+        Writes to _fh_ attribute due to property logic and inheritance.
+        """
+        self._fh_ = value
+
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
