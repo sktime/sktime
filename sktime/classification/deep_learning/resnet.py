@@ -76,6 +76,7 @@ class ResNetClassifier(BaseDeepClassifier):
         "tests:skip_by_name": [
             "test_fit_idempotent",
         ],
+        "tests:libs": ["sktime.networks.resnet"],
     }
 
     def __init__(
