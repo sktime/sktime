@@ -65,7 +65,10 @@ class ForecastingHorizonSplitter(BaseSplitter):
     }
 
     def __init__(self, fh):
-        super().__init__(fh=fh)
+        # self.fh = fh  - we do not do that since the fh is a reserved property,
+        # instead we use the _fh_ attribute to store the forecasting horizon
+        self._fh_ = fh
+        super().__init__()
 
     def _split(self, y: pd.Index):
         """Return train/test indices based on forecasting horizon."""

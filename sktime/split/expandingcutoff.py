@@ -97,12 +97,26 @@ class ExpandingCutoffSplitter(BaseSplitter):
     """
 
     def __init__(self, cutoff, fh, step_length):
-        super().__init__()
-        self.cutoff = _validate_cutoff(cutoff)
-        self.fh = fh
-        self._fh = _check_fh(fh)
+        self.cutoff = cutoff
         self.step_length = step_length
+        super().__init__()
+
+        # self.fh = fh  - we do not do that since the fh is a reserved property,
+        # instead we loop via the _fh method, which is called by the property
+        self._fh_ = fh
         return
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        _validate_cutoff(self.cutoff)
+        super().__post_init__()
 
     def _split(self, y, fh=None):
         """

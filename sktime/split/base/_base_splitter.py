@@ -69,8 +69,6 @@ class BaseSplitter(BaseObject):
 
     Parameters
     ----------
-    window_length : int or timedelta or pd.DateOffset
-        Length of rolling window. Only exposed for window-based splitters.
     fh : array-like or int, optional, (default=None)
         Forecasting horizon with the steps ahead to predict, if splits are used
         for forecasting or backtesting.
@@ -469,7 +467,10 @@ class BaseSplitter(BaseObject):
         Private method called by property ``fh``,
         can be overridden by inheriting classes.
 
-        Default is to return a forecasting horizon of ``1``.
+        Default is to return a forecasting horizon of ``1`` for temporal splitters,
+        and ``None`` for instance splitters.
+
+        If the attribute ``_fh_`` is set, then it is returned instead.
 
         Returns
         -------
@@ -483,7 +484,11 @@ class BaseSplitter(BaseObject):
             * ``None`` if no forecasting horizon is set. This is returned for splitters
               that do not have a natural forecasting horizon associated to them.
         """
-        return 1
+        if hasattr(self, "_fh_"):
+            return self._fh_
+        if self.get_tag("split_type") == "temporal":
+            return 1
+        return None
 
     def get_fh(self):
         """Forecasting horizon, in ForecastingHorizon format, relative to cutoff.
@@ -502,30 +507,6 @@ class BaseSplitter(BaseObject):
         fh = self.fh
         fh = check_fh(self.fh)  # coerce to ForecastingHorizon
         return fh
-
-    @property
-    def window_length(self):
-        """Window length, for splitters that are window based..
-
-        Returns
-        -------
-        window_length : int, timedelta, pd.DateOffset, or None
-        """
-        return self._window_length()
-
-    def _window_length(self):
-        """Window length, for splitters that are window based.
-
-        Private method called by property ``window_length``,
-        can be overridden by inheriting classes.
-
-        Default is to return a window length of ``10``.
-
-        Returns
-        -------
-        window_length : int, timedelta, pd.DateOffset, or None
-        """
-        return 10
 
     @staticmethod
     def _get_train_window(y: pd.Index, train_start: int, split_point: int):

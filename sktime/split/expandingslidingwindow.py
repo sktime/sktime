@@ -9,16 +9,6 @@ __all__ = [
 ]
 
 from sktime.split.base import BaseWindowSplitter
-from sktime.split.base._common import (
-    DEFAULT_FH,
-    DEFAULT_STEP_LENGTH,
-    DEFAULT_WINDOW_LENGTH,
-    SPLIT_GENERATOR_TYPE,
-)
-from sktime.utils.validation import (
-    ACCEPTED_WINDOW_LENGTH_TYPES,
-    NON_FLOAT_WINDOW_LENGTH_TYPES,
-)
 
 
 class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
@@ -52,10 +42,10 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     ----------
     fh : int, list or np.array, optional (default=1)
         Forecasting horizon
-    initial_window : int or timedelta or pd.DateOffset, optional (default=10)
-        Initial window length for the expanding window phase
     step_length : int or timedelta or pd.DateOffset, optional (default=1)
         Step length between windows
+    initial_window : int or timedelta or pd.DateOffset, optional (default=10)
+        Initial window length for the expanding window phase
     max_expanding_window_length : int, optional (default=float('inf'))
         Maximum window length. If none is passed in, it will expanding indefinitely.
 
@@ -92,15 +82,18 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
 
     def __init__(
         self,
-        fh=DEFAULT_FH,
-        step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
-        initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
-        max_expanding_window_length: ACCEPTED_WINDOW_LENGTH_TYPES = float("inf"),
-    ) -> None:
+        fh=1,
+        step_length=1,
+        initial_window=10,
+        max_expanding_window_length=float("inf"),
+    ):
         start_with_window = initial_window != 0
 
+        # self.fh = fh  - we do not do that since the fh is a reserved property,
+        # instead we loop via the _fh method, which is called by the property
+        self._fh_ = fh
+
         super().__init__(
-            fh=fh,
             window_length=initial_window,
             initial_window=None,
             step_length=step_length,
@@ -120,7 +113,7 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
     def _initial_window(self):
         return None
 
-    def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
+    def _split_windows(self, **kwargs):
         return self._split_windows_generic(expanding=True, **kwargs)
 
     @classmethod

@@ -98,8 +98,23 @@ class SingleWindowSplitter(BaseSplitter):
     """
 
     def __init__(self, fh, window_length=None):
-        _check_inputs_for_compatibility(args=[fh, window_length])
-        super().__init__(fh=fh, window_length=window_length)
+        self.window_length = window_length
+        # self.fh = fh  - we do not do that since the fh is a reserved property,
+        # instead we use the _fh_ attribute to store the forecasting horizon
+        self._fh_ = fh
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        _check_inputs_for_compatibility(args=[self.fh, self.window_length])
+        super().__post_init__()
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]

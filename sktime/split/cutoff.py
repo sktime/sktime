@@ -158,11 +158,13 @@ class CutoffSplitter(BaseSplitter):
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
         self.cutoffs = cutoffs
+        self.window_length = window_length
+
         # self.fh = fh  - we do not do that since the fh is a reserved property,
         # instead we loop via the _fh method, which is called by the property
-        # self.window_length = window_length  - sameas above, via _window_length
-        super().__init__()
+        self._fh_ = fh
 
+        super().__init__()
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
@@ -193,7 +195,6 @@ class CutoffSplitter(BaseSplitter):
                 test_window = y.get_indexer(test_window[test_window >= y.min()])
             yield training_window, test_window
 
-
     def _fh(self):
         """Forecasting horizon, in integer resp array of integer, relative to cutoff.
 
@@ -214,21 +215,7 @@ class CutoffSplitter(BaseSplitter):
             * ``None`` if no forecasting horizon is set. This is returned for splitters
               that do not have a natural forecasting horizon associated to them.
         """
-        return 1
-
-    def _window_length(self):
-        """Window length, for splitters that are window based.
-
-        Private method called by property ``window_length``,
-        can be overridden by inheriting classes.
-
-        Default is to return a window length of ``10``.
-
-        Returns
-        -------
-        window_length : int, timedelta, pd.DateOffset, or None
-        """
-        return 10
+        return self._fh_
 
     def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.

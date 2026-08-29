@@ -133,6 +133,32 @@ class SameLocSplitter(BaseSplitter):
             y_template = self.y_template
         return self.cv.get_n_splits(y_template)
 
+    def _fh(self):
+        """Forecasting horizon, in integer resp array of integer, relative to cutoff.
+
+        Private method called by property ``fh``,
+        can be overridden by inheriting classes.
+
+        Default is to return a forecasting horizon of ``1`` for temporal splitters,
+        and ``None`` for instance splitters.
+
+        If the attribute ``_fh_`` is set, then it is returned instead.
+
+        Returns
+        -------
+        fh : array-like or int, optional, (default=None)
+            Forecasting horizon with the steps ahead to predict, if splits are used
+            for forecasting or backtesting.
+
+            * if integer, the indices to forecast are ``1, 2, ..., fh``, periods ahead.
+            * if array-like, the indices to forecast are given by the values in ``fh``,
+              values must be coercible to integer.
+            * ``None`` if no forecasting horizon is set. This is returned for splitters
+              that do not have a natural forecasting horizon associated to them.
+        """
+        # inherits the fh from the cv splitter directly, since the splits are the same
+        return self.cv.fh
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the splitter.
