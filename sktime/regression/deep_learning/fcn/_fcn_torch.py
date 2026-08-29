@@ -86,7 +86,7 @@ class FCNRegressorTorch(BaseDeepRegressorTorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
-        # test and CI tags
+        # CI and test tags
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.fcn._fcn_torch"],

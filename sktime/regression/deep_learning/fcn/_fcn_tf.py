@@ -62,7 +62,7 @@ class FCNRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
-        # test and CI tags
+        # CI and test tags
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.fcn._fcn_tf"],

@@ -60,7 +60,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "james-large", "noxthot"],
         "maintainers": ["james-large", "niles05apr"],
         # estimator type handled by parent class
-        # test and CI tags
+        # CI and test tags
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_tf"],

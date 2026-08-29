@@ -86,7 +86,7 @@ class CNTCRegressor(BaseDeepRegressor):
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
-        # test and CI tags
+        # CI and test tags
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.cntc._cntc_tf"],

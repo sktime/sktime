@@ -67,7 +67,7 @@ class ResNetRegressor(BaseDeepRegressor):
         "maintainers": ["Withington"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
-        # test and CI tags
+        # CI and test tags
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.resnet._resnet_tf"],

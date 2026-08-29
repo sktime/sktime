@@ -84,7 +84,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "James-Large", "noxthot"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
-        # test and CI tags
+        # CI and test tags
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.mcdcnn._mcdcnn_tf"],

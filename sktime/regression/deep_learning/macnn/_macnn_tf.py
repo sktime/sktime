@@ -79,7 +79,7 @@ class MACNNRegressor(BaseDeepRegressor):
         "maintainers": ["jnrusson1", "nilesh05apr"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
-        # test and CI tags
+        # CI and test tags
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.macnn._macnn_tf"],

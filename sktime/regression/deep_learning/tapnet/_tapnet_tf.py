@@ -111,7 +111,7 @@ class TapNetRegressor(BaseDeepRegressor):
         "tests:skip_by_name": [
             "test_deepcopy_fitted_predict",
         ],
-        # test and CI tags
+        # CI and test tags
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.tapnet._tapnet_tf"],

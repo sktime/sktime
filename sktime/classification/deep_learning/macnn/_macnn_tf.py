@@ -89,6 +89,10 @@ class MACNNClassifier(BaseDeepClassifier):
         "maintainers": "jnrusson1",
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.macnn._macnn_tf"],
     }
 
     def __init__(
