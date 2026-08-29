@@ -388,7 +388,7 @@ class ConformalIntervals(BaseForecaster):
         y : pd.Series or pd.DataFrame
             sktime compatible time series to use in computing residuals matrix
         X : pd.DataFrame
-            sktime compatible exogeneous time series to use in forecasts
+            sktime compatible exogenous time series to use in forecasts
         forecaster : sktime compatible forecaster
             forecaster to use in computing the sliding residuals
         initial_window : float, int or None, optional (default=max(10, 0.1*len(y)))

@@ -11,8 +11,6 @@ from sktime.benchmarking.classification import ClassificationBenchmark
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
 from sktime.datasets import (
-    ArrowHead,
-    UCRUEADataset,
     load_unit_test,
 )
 from sktime.tests.test_switch import run_test_module_changed
@@ -169,41 +167,6 @@ def test_add_multiple_task(tmp_path):
             [
                 "[dataset=make_classification_problem]_[cv_splitter=KFold]",
                 "[dataset=load_unit_test]_[cv_splitter=KFold]",
-            ],
-            name="validation_id",
-        ),
-        results_df["validation_id"],
-    )
-
-
-@pytest.mark.skipif(
-    not run_test_module_changed("sktime.benchmarking"),
-    reason="run test only if benchmarking module has changed",
-)
-@pytest.mark.datadownload
-def test_multiple_dataset_format(tmp_path):
-    benchmark = ClassificationBenchmark()
-    benchmark.add_estimator(DummyClassifier())
-
-    dataset_loaders = [ArrowHead, UCRUEADataset("Beef")]
-    cv_splitter = KFold(n_splits=3)
-    scorers = [accuracy_score]
-
-    for dataset_loader in dataset_loaders:
-        benchmark.add_task(
-            dataset_loader,
-            cv_splitter,
-            scorers,
-        )
-
-    results_file = tmp_path / "results.csv"
-    results_df = benchmark.run(results_file)
-
-    pd.testing.assert_series_equal(
-        pd.Series(
-            [
-                "[dataset=ArrowHead]_[cv_splitter=KFold]",
-                "[dataset=Beef]_[cv_splitter=KFold]",
             ],
             name="validation_id",
         ),

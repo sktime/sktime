@@ -1290,7 +1290,7 @@ class PanelGluontsList(ScitypePanel):
         "name_aliases": [],
         "description": "gluonts list based panel of time series",
         "python_version": None,
-        "python_dependencies": None,
+        "python_dependencies": "gluonts",
         "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,
@@ -1415,7 +1415,7 @@ class PanelGluontsList(ScitypePanel):
 
 
 class PanelGluontsPandas(ScitypePanel):
-    """Data type: polars.DataFrame based specification of panel of time series.
+    """Data type: gluonts PandasDataset based specification of panel of time series.
 
     Parameters
     ----------

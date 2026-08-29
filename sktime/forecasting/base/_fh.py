@@ -11,9 +11,9 @@ import numpy as np
 import pandas as pd
 from pandas import Timedelta
 from pandas.tseries.frequencies import to_offset
+from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.utils.datetime import _coerce_duration_to_int
-from sktime.utils.dependencies import _check_soft_dependencies
+from sktime.utils.datetime import _coerce_duration_to_int, _to_offset_compat
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
@@ -102,9 +102,14 @@ def _check_values(values) -> pd.Index:
     if is_in_valid_index_types(values):
         pass
 
-    # convert single integer or timedelta or dateoffset
-    # to pandas index, no further checks needed
-    elif is_int(values):
+    # convert single positive integer to range index 1 ... integer,
+    # no further checks needed
+    elif is_int(values) and values > 0:
+        values = pd.Index(range(1, values + 1), dtype=int)
+
+    # convert single non-positive integer to index with one value,
+    # no further checks needed
+    elif is_int(values) and values <= 0:
         values = pd.Index([values], dtype=int)
 
     # convert range object to pandas.RangeIndex
@@ -170,15 +175,13 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        with _suppress_pd22_warning():
-            offset = to_offset(obj)
-        return offset
+        return _to_offset_compat(obj)
     else:
         return None
 
 
-def _extract_freq_from_cutoff(x) -> str | None:
-    """Extract frequency string from cutoff.
+def _extract_freq_from_cutoff(x) -> pd.offsets.BaseOffset | None:
+    """Extract frequency offset from cutoff.
 
     Parameters
     ----------
@@ -186,7 +189,7 @@ def _extract_freq_from_cutoff(x) -> str | None:
 
     Returns
     -------
-    str : Frequency string or None
+    pandas offset, or None if x carries no frequency information
     """
     if isinstance(x, (pd.Period, pd.PeriodIndex, pd.DatetimeIndex)):
         return x.freq
@@ -202,6 +205,21 @@ class ForecastingHorizon:
     values : pd.Index, pd.TimedeltaIndex, np.array, list, pd.Timedelta, or int
         Values of forecasting horizon
 
+        * int, positive: interpreted as forecasting horizon at period offsets
+          1, 2, ..., int.
+        * int, non-positive: interpreted as forecasting horizon at number of periods
+          in the past or present relative to the cutoff, with a single period offset,
+          the integer. At the default ``is_relative=True``,
+          zero is the cutoff itself, i.e., nowcasting the last observation.
+          Negative integers are interpreted as in-sample forecasting horizon values.
+        * range: interpreted as forecasting horizon with values in the range
+        * pd.Index of supported type: interpreted as forecasting horizon with values
+          as in the index.
+        * iterable of int or pd.Timedelta or date offset:
+          interpreted as forecasting horizon with values in the iterable.
+          Whether relative or absolute forecasting horizon is determined by the
+          type of the values.
+
     is_relative : bool, optional (default=None)
 
         - If True, a relative ForecastingHorizon is created:
@@ -209,8 +227,10 @@ class ForecastingHorizon:
         - If False, an absolute ForecastingHorizon is created:
           values are absolute.
         - if None, the flag is determined automatically:
-          relative, if values are of supported relative index type
-          absolute, if not relative and values of supported absolute index type
+          relative, if values are of supported relative index type:
+          integer-like, timedelta-like, or date offset-like types.
+          absolute, if not relative and values of supported absolute index type:
+          time index types, e.g., DatetimeIndex or PeriodIndex.
 
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
@@ -411,12 +431,8 @@ class ForecastingHorizon:
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         elif freq_from_obj is not None:  # only freq_from_obj is not None
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
@@ -1016,6 +1032,14 @@ def _coerce_to_period(x, freq=None):
         raise ValueError(
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
+    # periods have no start/end variant, and pandas 3 no longer accepts a
+    # MonthBegin offset in to_period - use the equivalent period alias instead
+    if isinstance(freq, pd.offsets.MonthBegin):
+        freq = f"{freq.n}M"
+    elif isinstance(freq, pd.offsets.QuarterBegin):
+        freq = f"{freq.n}Q"
+    elif isinstance(freq, pd.offsets.YearBegin):
+        freq = f"{freq.n}Y"
     return x.to_period(freq)
 
 
@@ -1042,7 +1066,7 @@ def _index_range(relative, cutoff):
 
 def _is_pandas_arithmetic_bug_fixed():
     """Check if pandas supports correct arithmetic without a workaround."""
-    # TODO: 0.41.0:
+    # TODO 1.2.0:
     # Check at every minor release whether lower pandas bound >=1.5.0
     # if yes, can remove the workaround in the "else" condition and the check
     #

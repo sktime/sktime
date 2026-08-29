@@ -3,7 +3,7 @@ __author__ = ["chrisholder"]
 import numpy as np
 
 from sktime.clustering.metrics.medoids import medoids
-from sktime.distances import distance_alignment_path_factory
+from sktime.dists_kernels._numba_distances import distance_alignment_path_factory
 
 
 def dba(

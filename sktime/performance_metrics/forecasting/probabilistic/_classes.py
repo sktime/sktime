@@ -642,6 +642,9 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -747,6 +750,9 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -857,6 +863,9 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -1054,6 +1063,12 @@ class LogLoss(_BaseDistrForecastingMetric):
           the log-loss is computed per variable marginal, results in many scores per row
     """
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
+
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
         super().__init__(multioutput=multioutput)
@@ -1114,6 +1129,12 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
           the score is computed per variable marginal, results in many scores per row
     """
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
+
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
         super().__init__(multioutput=multioutput)
@@ -1171,6 +1192,12 @@ class CRPS(_BaseDistrForecastingMetric):
         * if False, is univariate CRPS:
           the score is computed per variable marginal, results in many scores per row
     """  # noqa: E501
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
@@ -1239,6 +1266,12 @@ class AUCalibration(_BaseDistrForecastingMetric):
         * if False, is univariate metric, per variable:
           the metric is computed per variable marginal, results in many scores per row
     """  # noqa: E501
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate

@@ -4,7 +4,9 @@ import numpy as np
 import pytest
 
 from sktime.clustering.metrics.averaging import dba
-from sktime.distances.tests._utils import create_test_distance_numpy
+from sktime.dists_kernels._numba_distances.tests._utils import (
+    create_test_distance_numpy,
+)
 from sktime.tests.test_switch import run_test_for_class
 
 expected_dba = np.array(

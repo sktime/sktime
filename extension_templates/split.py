@@ -87,6 +87,19 @@ class MySplitter(BaseSplitter):
         # calls split ("iloc") or split_loc ("loc"). Setting this can give
         # performance advantages, e.g., if "loc" is faster to obtain.
         #
+        # property:randomness = is the estimator deterministic or stochastic?
+        "property:randomness": "deterministic",
+        # valid values: str, one of "deterministic", "stochastic", "derandomized"
+        #   "deterministic": produces the same results on every run
+        #   "stochastic": may produce different results on different runs
+        #   "derandomized": stochastic, but reproducible if random_state is set
+        #
+        # capability:random_state = does the estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # set to True if the estimator has a random_state parameter,
+        # which can be used to derandomize the estimator
+        #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
         # ----------------------------------------------------------------------------
@@ -141,8 +154,26 @@ class MySplitter(BaseSplitter):
         super().__init__()
 
         # do not put anything else in __init__,
+        # use __dynamic_tags__ for dynamic tag setting
         # use __post_init__ for any further initialization logic
 
+    # todo: add if there is dynamic tag setting logic, otherwise delete this method
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # todo: if tags of estimator depend on component tags, set these here
+        #  typically only needed if estimator is a composite
+        #  tags set here apply to the instance, and override the class tags
+        #
+        # example 1: conditional setting of a tag based on parameter foo
+        # if self.foo == 42:
+        #   self.set_tags(**{"capability:missing_values": True})
+        # example 2: cloning tags from component estimator component_estimator
+        #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
+
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
@@ -150,7 +181,6 @@ class MySplitter(BaseSplitter):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # todo: optional, parameter checking or coercion should happen here
@@ -164,16 +194,6 @@ class MySplitter(BaseSplitter):
         else:
             # estimators should be cloned to avoid side effects
             self._paramc = self.paramc.clone()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory
     def _split(self, y):
