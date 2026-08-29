@@ -118,11 +118,6 @@ EXCLUDED_TESTS = {
         "test_inheritance",
         "test_create_test_instance",
     ],
-    # see bug report #6465 and #7958
-    "MACNNClassifier": [
-        "test_multioutput",
-        "test_classifier_on_unit_test_data",
-    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
