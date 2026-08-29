@@ -467,7 +467,8 @@ class BaseSplitter(BaseObject):
             return fh
         # if integer type, coerce to range np.array
         if fh is not None and (isinstance(fh, int) or isinstance(fh, np.integer)):
-            fh = np.arange(fh) + 1
+            if fh > 0:
+                fh = np.arange(fh) + 1
         # if fh is not None and not isinstance(fh, np.ndarray):
         #     fh = np.asarray(fh, dtype=int)
         return fh
