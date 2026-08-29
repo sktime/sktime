@@ -108,7 +108,7 @@ class ResNetRegressor(BaseDeepRegressor):
         """
         self.history = None
         self._network = ResNetNetwork(
-            activation_hidden=self.activation_hidden,
+            activation=self.activation_hidden,
             random_state=self.random_state,
         )
 
