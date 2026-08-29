@@ -453,6 +453,9 @@ class BaseSplitter(BaseObject):
               values must be coercible to integer.
             * ``None`` if no forecasting horizon is set. This is returned for splitters
               that do not have a natural forecasting horizon associated to them.
+
+            Can return ``ForecastingHorizon`` type, for legacy compatibility reasons,
+            but this is not recommended.
         """
         from sktime.forecasting.base import ForecastingHorizon
 
