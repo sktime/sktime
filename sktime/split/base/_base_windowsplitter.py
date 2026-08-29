@@ -100,21 +100,32 @@ class BaseWindowSplitter(BaseSplitter):
 
     def __init__(
         self,
-        fh,
         initial_window: ACCEPTED_WINDOW_LENGTH_TYPES,
-        window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
         step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
         start_with_window: bool,
         max_expanding_window_length: ACCEPTED_WINDOW_LENGTH_TYPES = float("inf"),
     ) -> None:
-        _check_inputs_for_compatibility(
-            [fh, initial_window, window_length, step_length]
-        )
+
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
         self.max_expanding_window_length = max_expanding_window_length
-        super().__init__(fh=fh, window_length=window_length)
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        _check_inputs_for_compatibility(
+            [self.fh, self._initial_window, self.window_length, self.step_length]
+        )
+        super().__post_init__()
 
     @property
     def _initial_window(self):

@@ -157,9 +157,24 @@ class CutoffSplitter(BaseSplitter):
         fh=DEFAULT_FH,
         window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
     ) -> None:
-        _check_inputs_for_compatibility([fh, cutoffs, window_length])
         self.cutoffs = cutoffs
-        super().__init__(fh, window_length)
+        # self.fh = fh  - we do not do that since the fh is a reserved property,
+        # instead we loop via the _fh method, which is called by the property
+        # self.window_length = window_length  - sameas above, via _window_length
+        super().__init__()
+
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        _check_inputs_for_compatibility([self.cutoffs, self.fh, self.window_length])
+        super().__post_init__()
 
     def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
         n_timepoints = y.shape[0]
@@ -177,6 +192,43 @@ class CutoffSplitter(BaseSplitter):
             if is_datetime(x=cutoff):
                 test_window = y.get_indexer(test_window[test_window >= y.min()])
             yield training_window, test_window
+
+
+    def _fh(self):
+        """Forecasting horizon, in integer resp array of integer, relative to cutoff.
+
+        Private method called by property ``fh``,
+        can be overridden by inheriting classes.
+
+        Default is to return a forecasting horizon of ``1``.
+
+        Returns
+        -------
+        fh : array-like or int, optional, (default=None)
+            Forecasting horizon with the steps ahead to predict, if splits are used
+            for forecasting or backtesting.
+
+            * if integer, the indices to forecast are ``1, 2, ..., fh``, periods ahead.
+            * if array-like, the indices to forecast are given by the values in ``fh``,
+              values must be coercible to integer.
+            * ``None`` if no forecasting horizon is set. This is returned for splitters
+              that do not have a natural forecasting horizon associated to them.
+        """
+        return 1
+
+    def _window_length(self):
+        """Window length, for splitters that are window based.
+
+        Private method called by property ``window_length``,
+        can be overridden by inheriting classes.
+
+        Default is to return a window length of ``10``.
+
+        Returns
+        -------
+        window_length : int, timedelta, pd.DateOffset, or None
+        """
+        return 10
 
     def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
         """Return the number of splits.
