@@ -49,6 +49,28 @@ def _is_average(multilevel_or_multioutput):
         return True
 
 
+class _MetricNotImplementedError(RecursionError):
+    """Error raised if a metric implements neither private evaluation method.
+
+    Metrics are expected to implement at least one of ``_evaluate`` or
+    ``_evaluate_by_index``, as the default implementation of each is written in
+    terms of the other. If neither is implemented, the two defaults call each
+    other until the interpreter raises ``RecursionError``.
+
+    This subclasses ``RecursionError`` so that user code catching
+    ``RecursionError`` keeps working, while allowing the unwinding frames of the
+    failed recursion to re-raise one already-formatted error, instead of
+    re-wrapping it once per frame.
+    """
+
+    def __init__(self, metric_name):
+        super().__init__(
+            f"Error in {metric_name}: metric classes must implement one of "
+            "_evaluate or _evaluate_by_index, but neither is implemented. "
+            "Please implement at least one of the two in the metric class."
+        )
+
+
 class BaseForecastingErrorMetric(BaseMetric):
     """Base class for defining forecasting error metrics in sktime.
 
@@ -374,8 +396,12 @@ class BaseForecastingErrorMetric(BaseMetric):
         try:
             index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
             return index_df.mean(axis=0)
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except _MetricNotImplementedError:
+            # raised by an inner frame of the same failed recursion - re-raise
+            # unchanged, so the user sees one error and not one per frame
+            raise
+        except RecursionError as e:
+            raise _MetricNotImplementedError(type(self).__name__) from e
 
     def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
         """Vectorized version of _evaluate.
@@ -628,8 +654,12 @@ class BaseForecastingErrorMetric(BaseMetric):
                 )
                 out_series.loc[idx] = pseudovalue
             return out_series
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except _MetricNotImplementedError:
+            # raised by an inner frame of the same failed recursion - re-raise
+            # unchanged, so the user sees one error and not one per frame
+            raise
+        except RecursionError as e:
+            raise _MetricNotImplementedError(type(self).__name__) from e
 
     def _check_consistent_input(self, y_true, y_pred, multioutput, multilevel):
         y_true_orig = y_true

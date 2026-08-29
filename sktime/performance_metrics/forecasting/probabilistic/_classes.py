@@ -8,7 +8,10 @@ from pandas.api.types import is_numeric_dtype
 from sklearn.utils import check_array, check_consistent_length
 
 from sktime.datatypes import check_is_scitype, convert, convert_to
-from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._base import (
+    BaseForecastingErrorMetric,
+    _MetricNotImplementedError,
+)
 from sktime.performance_metrics.forecasting._coerce import _coerce_to_scalar
 
 # TODO: Rework tests now
@@ -170,8 +173,12 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
             out_df = pd.DataFrame(index_df.mean(axis=0)).T
             out_df.columns = index_df.columns
             return out_df
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except _MetricNotImplementedError:
+            # raised by an inner frame of the same failed recursion - re-raise
+            # unchanged, so the user sees one error and not one per frame
+            raise
+        except RecursionError as e:
+            raise _MetricNotImplementedError(type(self).__name__) from e
 
     def evaluate_by_index(self, y_true, y_pred, multioutput=None, **kwargs):
         """Return the metric evaluated at each time point.

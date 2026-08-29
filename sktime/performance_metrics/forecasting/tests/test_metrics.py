@@ -592,3 +592,122 @@ def test_msle_no_stdout_on_index_mismatch():
     with contextlib.redirect_stdout(buf):
         mean_squared_log_error(y_true, y_pred)
     assert buf.getvalue() == ""
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_metric_missing_both_evaluate_raises():
+    """A metric implementing neither _evaluate nor _evaluate_by_index must raise.
+
+    The default ``_evaluate`` and ``_evaluate_by_index`` are written in terms of
+    each other, so a metric implementing neither recurses until the interpreter
+    raises ``RecursionError``. That error was caught and a replacement was
+    constructed but never raised, so the frame returned ``None`` instead, and the
+    caller failed later with an unrelated ``AttributeError: 'NoneType' object has
+    no attribute 'mean'``.
+    """
+    from sktime.performance_metrics.forecasting._base import (
+        BaseForecastingErrorMetric,
+    )
+
+    class _NoImplementationMetric(BaseForecastingErrorMetric):
+        """Metric implementing neither _evaluate nor _evaluate_by_index."""
+
+    y_true = pd.Series([1.0, 2.0, 3.0, 4.0])
+    y_pred = pd.Series([1.1, 2.1, 2.9, 4.2])
+    metric = _NoImplementationMetric()
+
+    for method in (metric.evaluate, metric.evaluate_by_index):
+        with pytest.raises(RecursionError, match="_evaluate or _evaluate_by_index"):
+            method(y_true, y_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_metric_missing_both_evaluate_raises_proba():
+    """Same as the above, for the probabilistic metric base class."""
+    from sktime.performance_metrics.forecasting.probabilistic._classes import (
+        _BaseProbaForecastingErrorMetric,
+    )
+
+    class _NoImplementationProbaMetric(_BaseProbaForecastingErrorMetric):
+        """Proba metric implementing neither _evaluate nor _evaluate_by_index."""
+
+    y_true = pd.Series([1.0, 2.0, 3.0, 4.0], name=0)
+    y_pred = pd.DataFrame(
+        {(0, 0.1): [0.9, 1.9, 2.8, 4.0], (0, 0.9): [1.3, 2.3, 3.2, 4.4]}
+    )
+    metric = _NoImplementationProbaMetric()
+
+    with pytest.raises(RecursionError, match="_evaluate or _evaluate_by_index"):
+        metric.evaluate(y_true, y_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_metric_missing_both_evaluate_reported_once():
+    """The missing-implementation error must be reported once, not once per frame.
+
+    Every frame of the failed recursion unwinds through the same ``except``
+    clause. Re-wrapping in each frame chains one exception per frame, so printing
+    the error walks hundreds of ``__cause__`` tracebacks.
+    """
+    from sktime.performance_metrics.forecasting._base import (
+        BaseForecastingErrorMetric,
+    )
+
+    class _NoImplementationMetric(BaseForecastingErrorMetric):
+        """Metric implementing neither _evaluate nor _evaluate_by_index."""
+
+    y_true = pd.Series([1.0, 2.0, 3.0, 4.0])
+    y_pred = pd.Series([1.1, 2.1, 2.9, 4.2])
+
+    with pytest.raises(RecursionError) as excinfo:
+        _NoImplementationMetric().evaluate(y_true, y_pred)
+
+    depth = 0
+    cause = excinfo.value.__cause__
+    while cause is not None:
+        depth += 1
+        cause = cause.__cause__
+    assert depth <= 1, f"error chained {depth} times, expected at most once"
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_metric_single_implementation_still_delegates():
+    """Implementing only one of the two private methods must keep working.
+
+    The defaults delegate to each other on purpose; only implementing neither is
+    an error. This guards the fix against raising on the valid delegation path.
+    """
+    from sktime.performance_metrics.forecasting._base import (
+        BaseForecastingErrorMetric,
+    )
+
+    y_true = pd.Series([1.0, 2.0, 3.0, 4.0])
+    y_pred = pd.Series([1.5, 2.5, 2.5, 4.5])
+
+    class _ByIndexOnlyMetric(BaseForecastingErrorMetric):
+        """Metric implementing only _evaluate_by_index."""
+
+        def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+            return (y_true - y_pred).abs()
+
+    class _EvaluateOnlyMetric(BaseForecastingErrorMetric):
+        """Metric implementing only _evaluate."""
+
+        def _evaluate(self, y_true, y_pred, **kwargs):
+            return (y_true - y_pred).abs().mean()
+
+    assert np.isclose(_ByIndexOnlyMetric().evaluate(y_true, y_pred), 0.5)
+    assert np.isclose(_EvaluateOnlyMetric().evaluate(y_true, y_pred), 0.5)
+    assert len(_EvaluateOnlyMetric().evaluate_by_index(y_true, y_pred)) == len(y_true)
