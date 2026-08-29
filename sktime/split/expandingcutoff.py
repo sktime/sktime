@@ -117,7 +117,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
         _validate_cutoff(self.cutoff)
         super().__post_init__()
 
-    def _split(self, y, fh=None):
+    def _split(self, y):
         """
         Generate indices to split data into training and testing sets.
 
@@ -125,8 +125,6 @@ class ExpandingCutoffSplitter(BaseSplitter):
         ----------
         y : array-like, shape = [n_samples]
             Time series data.
-        fh : int, default=None
-            Forecast horizon, if None, uses self.fh
 
         Yields
         ------
@@ -135,8 +133,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
         test : ndarray
             The testing set indices for that split.
         """
-        if fh is None:
-            fh = self._fh
+        fh = self._fh
         for cutoff in self.get_cutoffs(y):
             train_window = np.arange(0, cutoff + 1, step=1)
             test_window = cutoff + fh
@@ -196,6 +193,8 @@ class ExpandingCutoffSplitter(BaseSplitter):
             )
         y = self._validate_y(y)
         fh = self.fh
+        if isinstance(fh, list):
+            fh = np.asarray(fh, dtype=int)
         step_length = check_step_length(self.step_length)
         cutoff_index = self._get_first_cutoff_index(y)
         cutoffs = np.array([cutoff_index])
