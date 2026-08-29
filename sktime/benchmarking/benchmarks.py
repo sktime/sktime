@@ -140,7 +140,7 @@ class BenchmarkingResults:
 
     During benchmark runs, internally ``BaseBenchmark.run()`` uses
     ``BenchmarkingResults`` as a mutable container while experiments execute:
-    it skips completed task-model pairs (using ``_contains``), appends
+    it skips completed task-model pairs (checked using ``_contains``), appends
     new results with incremental checkpointing (using ``_update``),
     and writes the final output file (using ``_save``). These methods are not
     part of the public API.
