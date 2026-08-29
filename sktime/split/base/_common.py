@@ -16,17 +16,6 @@ from sktime.utils.validation import (
 )
 from sktime.utils.validation.forecasting import check_fh
 
-DEFAULT_STEP_LENGTH = 1
-DEFAULT_WINDOW_LENGTH = 10
-DEFAULT_FH = 1
-
-ACCEPTED_Y_TYPES = pd.Series | pd.DataFrame | np.ndarray | pd.Index
-SPLIT_TYPE = (
-    tuple[pd.Series, pd.Series]
-    | tuple[pd.Series, pd.Series, pd.DataFrame, pd.DataFrame]
-)
-SPLIT_ARRAY_TYPE = tuple[np.ndarray, np.ndarray]
-SPLIT_GENERATOR_TYPE = Iterator[SPLIT_ARRAY_TYPE]
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 

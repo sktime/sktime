@@ -16,16 +16,11 @@ from pandas.api.types import is_datetime64_any_dtype
 
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import (
-    ACCEPTED_Y_TYPES,
-    DEFAULT_FH,
-    DEFAULT_WINDOW_LENGTH,
-    SPLIT_GENERATOR_TYPE,
     _check_fh,
     _check_inputs_for_compatibility,
     _get_train_window_via_endpoint,
 )
 from sktime.utils.validation import (
-    ACCEPTED_WINDOW_LENGTH_TYPES,
     array_is_datetime64,
     array_is_int,
     check_window_length,
@@ -36,7 +31,7 @@ from sktime.utils.validation import (
 from sktime.utils.validation.forecasting import VALID_CUTOFF_TYPES, check_cutoffs
 
 
-def _check_cutoffs_and_y(cutoffs: VALID_CUTOFF_TYPES, y: ACCEPTED_Y_TYPES) -> None:
+def _check_cutoffs_and_y(cutoffs: VALID_CUTOFF_TYPES, y) -> None:
     """Check that combination of inputs is compatible.
 
     Parameters
@@ -137,9 +132,11 @@ class CutoffSplitter(BaseSplitter):
     cutoffs : list or np.ndarray or pd.Index
         Cutoff points, positive and integer- or datetime-index like.
         Type should match the type of ``fh`` input.
-    fh : int, timedelta, list or np.ndarray of ints or timedeltas
+    fh : int, timedelta, list or np.ndarray of ints or timedeltas, optional (default=1)
+        Forecasting horizon, relative, to determine test folds.
         Type should match the type of ``cutoffs`` input.
-    window_length : int or timedelta or pd.DateOffset
+    window_length : int or timedelta or pd.DateOffset, optional (default=10)
+        Window length of the training window.
 
     Examples
     --------
@@ -151,12 +148,7 @@ class CutoffSplitter(BaseSplitter):
     [(array([1, 2, 3]), array([5, 7])), (array([3, 4, 5]), array([7, 9]))]
     """
 
-    def __init__(
-        self,
-        cutoffs: VALID_CUTOFF_TYPES,
-        fh=DEFAULT_FH,
-        window_length: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
-    ) -> None:
+    def __init__(self, cutoffs: VALID_CUTOFF_TYPES, fh=1, window_length=10):
         self.cutoffs = cutoffs
         self.window_length = window_length
 
@@ -178,7 +170,7 @@ class CutoffSplitter(BaseSplitter):
         _check_inputs_for_compatibility([self.cutoffs, self.fh, self.window_length])
         super().__post_init__()
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index):
         n_timepoints = y.shape[0]
         cutoffs = check_cutoffs(cutoffs=self.cutoffs)
         fh = _check_fh(fh=self.fh)
@@ -217,7 +209,7 @@ class CutoffSplitter(BaseSplitter):
         """
         return self._fh_
 
-    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
+    def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
 
         For this splitter the number is trivially equal to
@@ -235,7 +227,7 @@ class CutoffSplitter(BaseSplitter):
         """
         return len(self.cutoffs)
 
-    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
+    def get_cutoffs(self, y=None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         This method trivially returns the cutoffs given during instance initialization,
