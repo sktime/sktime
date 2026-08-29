@@ -111,7 +111,7 @@ class SingleWindowSplitter(BaseSplitter):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        _check_inputs_for_compatibility(args=[self.fh, self.window_length])
+        _check_inputs_for_compatibility(args=[self._fh_, self.window_length])
         super().__post_init__()
 
     def _split(self, y: pd.Index):
