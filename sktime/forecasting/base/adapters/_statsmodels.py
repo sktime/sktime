@@ -27,6 +27,7 @@ class _StatsModelsAdapter(BaseForecaster):
         # estimator type
         # --------------
         "capability:exogenous": False,
+        "capability:categorical_in_X": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         # CI and testing tags
