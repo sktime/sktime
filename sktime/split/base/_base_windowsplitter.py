@@ -95,7 +95,7 @@ class BaseWindowSplitter(BaseSplitter):
         start_with_window: bool,
         max_expanding_window_length=float("inf"),
         window_length=10,
-    ) -> None:
+    ):
         self.window_length = window_length
         self.step_length = step_length
         self.start_with_window = start_with_window
