@@ -520,7 +520,7 @@ class BaseSplitter(BaseObject):
               that do not have a natural forecasting horizon associated to them.
         """
         fh = self.fh
-        fh = check_fh(self.fh)  # coerce to ForecastingHorizon
+        fh = check_fh(fh)  # coerce to ForecastingHorizon
         return fh
 
     @staticmethod
