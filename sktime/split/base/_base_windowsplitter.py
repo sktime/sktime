@@ -114,7 +114,7 @@ class BaseWindowSplitter(BaseSplitter):
         * any soft dependency imports in the constructor
         """
         _check_inputs_for_compatibility(
-            [self._fh_, self._initial_window, self.window_length, self.step_length]
+            [self.fh, self._initial_window, self.window_length, self.step_length]
         )
         super().__post_init__()
 
