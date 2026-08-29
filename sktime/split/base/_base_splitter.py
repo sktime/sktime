@@ -446,6 +446,13 @@ class BaseSplitter(BaseObject):
     def fh(self):
         """Forecasting horizon, in integer resp array of integer, relative to cutoff.
 
+        Returns the indices of the test splits, relative to the last index of the
+        corresponding training split, in relative integer format,
+        in the unit of periods.
+
+        Returns ``None`` if the forecasting horizon is not defined, or not the same
+        across all train/test folds, or if the training splits have no natural period.
+
         Returns
         -------
         fh : array-like of int, or int, or None
@@ -492,6 +499,14 @@ class BaseSplitter(BaseObject):
 
     def get_fh(self):
         """Forecasting horizon, in ForecastingHorizon format, relative to cutoff.
+
+        Returns the indices of the test splits, relative to the last index of the
+        corresponding training split, in ``ForecastingHorizon`` format.
+
+        This is the same as the property ``fh``, coerced to ``ForecastingHorizon`` type.
+
+        Returns ``None`` if the forecasting horizon is not defined, or not the same
+        across all train/test folds.
 
         Returns
         -------
