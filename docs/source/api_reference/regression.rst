@@ -64,6 +64,7 @@ Deep learning
     cnn.CNNRegressor
     cnn.CNNRegressorTorch
     cntc.CNTCRegressor
+    cntc.CNTCRegressorTorch
     convtran.ConvTranRegressorTorch
     fcn.FCNRegressor
     fcn.FCNRegressorTorch
@@ -78,6 +79,7 @@ Deep learning
     mlp.MLPRegressor
     mlp.MLPRegressorTorch
     resnet.ResNetRegressor
+    resnet.ResNetRegressorTorch
     rnn.SimpleRNNRegressor
     rnn.SimpleRNNRegressorTorch
     tapnet.TapNetRegressor
