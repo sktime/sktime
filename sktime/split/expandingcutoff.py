@@ -195,7 +195,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
                 f"{self.__class__.__name__} requires `y` to compute the cutoffs."
             )
         y = self._validate_y(y)
-        fh = self._fh
+        fh = self.fh
         step_length = check_step_length(self.step_length)
         cutoff_index = self._get_first_cutoff_index(y)
         cutoffs = np.array([cutoff_index])

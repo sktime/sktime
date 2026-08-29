@@ -88,7 +88,7 @@ class ExpandingGreedySplitter(BaseSplitter):
 
         if isinstance(test_size, float):
             _test_size = int(np.ceil(len(y) * test_size))
-            self.fh = np.arange(_test_size) + 1
+            self._fh_ = np.arange(_test_size) + 1
         else:
             _test_size = test_size
 
@@ -133,6 +133,9 @@ class ExpandingGreedySplitter(BaseSplitter):
         """
         test_size = self.test_size
         fh = np.arange(test_size) + 1 if isinstance(test_size, int) else None
+        # if test_size is float, fh is set later in _split, so we check for that here
+        if fh is None and hasattr(self, "_fh_"):
+            fh = self._fh_
         return fh
 
     @classmethod

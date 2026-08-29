@@ -445,17 +445,22 @@ class BaseSplitter(BaseObject):
 
         Returns
         -------
-        fh : array-like of int, or int, or None
+        fh : 1D np.array of int, or None
             Forecasting horizon with the steps ahead to predict, if splits are used
             for forecasting or backtesting.
 
-            * if integer, the indices to forecast are ``1, 2, ..., fh``, periods ahead.
-            * if array-like, the indices to forecast are given by the values in ``fh``,
+            * if np.array, the indices to forecast are given by the values in ``fh``,
               values must be coercible to integer.
             * ``None`` if no forecasting horizon is set. This is returned for splitters
               that do not have a natural forecasting horizon associated to them.
         """
         fh = self._fh()
+        # if integer type, coerce to range np.array
+        if fh is not None and (isinstance(fh, int) or isinstance(fh, np.integer)):
+            fh = np.arange(fh) + 1
+        if fh is not None and not isinstance(fh, np.ndarray):
+            fh = np.asarray(fh, dtype=int)
+        
         return fh
 
     def _fh(self):
