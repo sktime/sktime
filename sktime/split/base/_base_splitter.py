@@ -463,6 +463,8 @@ class BaseSplitter(BaseObject):
         # if ForecastingHorizon type, return (legacy behaviour to be reviewed)
         if isinstance(fh, ForecastingHorizon):
             return fh
+        if isinstance(fh, pd.Timedelta) or isinstance(fh, pd.DateOffset):
+            return fh
         # if integer type, coerce to range np.array
         if fh is not None and (isinstance(fh, int) or isinstance(fh, np.integer)):
             fh = np.arange(fh) + 1
