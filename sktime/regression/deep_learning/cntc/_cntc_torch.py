@@ -223,6 +223,10 @@ class CNTCRegressorTorch(BaseDeepRegressorTorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.cntc._cntc_torch"],
     }
 
     def __init__(

@@ -151,6 +151,10 @@ class InceptionTimeRegressorTorch(BaseDeepRegressorTorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_torch"],
     }
 
     _instantiate_activation_vars = (

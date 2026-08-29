@@ -86,13 +86,16 @@ class CNTCRegressor(BaseDeepRegressor):
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.cntc._cntc_tf"],
         "tests:skip_by_name": [
             "test_class_has_doctest_example",
             "test_fit_idempotent",  # fails with `AssertionError`, see #3616
             "test_persistence_via_pickle",  # fails with `AssertionError`, see #8059
             "test_save_estimators_to_file",
         ],
-        "tests:vm": True,  # isolated due to suspected memory leaks, see #8518
     }
 
     def __init__(

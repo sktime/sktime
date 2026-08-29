@@ -79,6 +79,10 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         "maintainers": ["jnrusson1", "solen0id", "nilesh05apr"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.lstmfcn._lstmfcn_tf"],
     }
 
     def __init__(

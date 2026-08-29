@@ -59,7 +59,6 @@ class MLPRegressor(BaseDeepRegressor):
         If list or tuple, length must equal n_layers, with each element
         specifying the number of units for the corresponding hidden layer.
 
-
     References
     ----------
     .. [1] Wang et al, Time series classification from
@@ -84,6 +83,10 @@ class MLPRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.mlp._mlp_tf"],
         "tests:skip_all": True,  # DL suspected hangs/memouts, see #4610
     }
 

@@ -91,9 +91,10 @@ class CNNRegressor(BaseDeepRegressor):
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
         #
-        # testing configuration
-        # ---------------------
-        "tests:vm": True,  # run in VM due to memory requirement
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.cnn._cnn_tf"],
     }
 
     def __init__(

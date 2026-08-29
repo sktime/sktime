@@ -72,6 +72,10 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.rnn._rnn_tf"],
     }
 
     def __init__(

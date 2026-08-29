@@ -135,6 +135,10 @@ class LSTMFCNRegressorTorch(BaseDeepRegressorTorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.lstmfcn._lstmfcn_torch"],
     }
 
     def __init__(

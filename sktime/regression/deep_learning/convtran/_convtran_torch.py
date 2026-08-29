@@ -125,6 +125,10 @@ class ConvTranRegressorTorch(BaseDeepRegressorTorch):
         "property:randomness": "stochastic",
         "capability:random_state": True,
         "capability:multivariate": True,
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.convtran"],
     }
 
     def __init__(
