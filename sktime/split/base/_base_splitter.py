@@ -454,7 +454,12 @@ class BaseSplitter(BaseObject):
             * ``None`` if no forecasting horizon is set. This is returned for splitters
               that do not have a natural forecasting horizon associated to them.
         """
+        from sktime.forecasting.base import ForecastingHorizon
+
         fh = self._fh()
+        # if ForecastingHorizon type, return (legacy behaviour to be reviewed)
+        if isinstance(fh, ForecastingHorizon):
+            return fh
         # if integer type, coerce to range np.array
         if fh is not None and (isinstance(fh, int) or isinstance(fh, np.integer)):
             fh = np.arange(fh) + 1
