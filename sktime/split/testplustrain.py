@@ -40,7 +40,7 @@ class TestPlusTrainSplitter(BaseSplitter):
 
     def __init__(self, cv):
         self.cv = cv
-        super().__init__()
+        super().__init__(fh=cv.fh, window_length=cv.window_length)
 
         # dispatch split_series to the same split/split_loc as the wrapped cv
         # for performance reasons
