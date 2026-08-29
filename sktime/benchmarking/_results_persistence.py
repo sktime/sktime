@@ -15,14 +15,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pandas as pd
-
 from sktime.benchmarking._benchmarking_dataclasses import ResultObject
 from sktime.benchmarking._incremental_store import IncrementalResultStore
-from sktime.benchmarking._storage_handlers import (
-    get_storage_backend,
-    results_to_dataframe,
-)
+from sktime.benchmarking._storage_handlers import get_storage_backend
 
 
 class BenchmarkResultsPersistence:
@@ -139,31 +134,3 @@ class BenchmarkResultsPersistence:
             raise RuntimeError(f"Failed to save benchmark results to {self.path}")
 
         self._incremental_store.cleanup()
-
-
-def load_results_to_dataframe(path: str | Path) -> pd.DataFrame:
-    """Load persisted benchmark results into a summary pandas DataFrame.
-
-    Reads a completed results file (``.json``, ``.csv``, or ``.parquet``).
-    When the final file is absent, partial checkpoints from an interrupted
-    run are loaded from ``{path}.parts/`` if present.
-
-    Parameters
-    ----------
-    path : str or pathlib.Path
-        Path to the benchmark results file. Must refer to a file, not a
-        directory. Supported extensions are ``.json``, ``.csv``, and
-        ``.parquet``.
-
-    Returns
-    -------
-    pandas.DataFrame
-        Aggregated benchmark metrics per task-model pair. Empty when no
-        results are found at ``path`` or in its checkpoint directory.
-
-    Raises
-    ------
-    ValueError
-        If no storage handler supports the file extension of ``path``.
-    """
-    return results_to_dataframe(BenchmarkResultsPersistence(str(path)).load())

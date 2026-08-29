@@ -21,7 +21,7 @@ class BaseBenchmarkAnalyzer(BaseObject):
 
     Benchmark analyzers consume the flat results table produced by the v2
     benchmarking framework (``BaseBenchmark.run()`` /
-    ``ResultObject.to_dataframe``) and compute a benchmark analysis
+    ``BenchmarkingResults.to_df``) and compute a benchmark analysis
     (ranking, omnibus / pairwise significance tests, critical-difference
     diagrams).
 
@@ -171,9 +171,9 @@ class BaseBenchmarkAnalyzer(BaseObject):
         if isinstance(results, pd.DataFrame):
             return results
 
-        from sktime.benchmarking._results_persistence import load_results_to_dataframe
+        from sktime.benchmarking.benchmarks import BenchmarkingResults
 
-        df = load_results_to_dataframe(results)
+        df = BenchmarkingResults(path=str(results)).to_df()
         if df.empty:
             raise ValueError(f"No benchmark results found at '{results}'.")
         return df

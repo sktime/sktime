@@ -4,13 +4,14 @@ import logging
 import warnings
 from dataclasses import dataclass, field
 
+import pandas as pd
+
 from sktime.base import BaseEstimator
 from sktime.benchmarking._benchmarking_dataclasses import (
     ResultObject,
     TaskObject,
 )
 from sktime.benchmarking._results_persistence import BenchmarkResultsPersistence
-from sktime.benchmarking._storage_handlers import results_to_dataframe
 from sktime.benchmarking._utils import _check_id_format
 from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
@@ -123,8 +124,8 @@ class FailedExperimentRecord:
 
 
 @dataclass
-class _BenchmarkingResults:
-    """In-memory container for benchmark results.
+class BenchmarkingResults:
+    """Container for benchmark results loaded from or written to disk.
 
     Holds completed `ResultObject` instances and provides query and export
     operations. All file I/O is delegated to `BenchmarkResultsPersistence`.
@@ -154,7 +155,7 @@ class _BenchmarkingResults:
         self._persistence = BenchmarkResultsPersistence(self.path)
         self.results = self._persistence.load()
 
-    def update(self, new_result):
+    def _update(self, new_result):
         """Add or replace a result and checkpoint it to disk.
 
         If a result with the same ``task_id`` and ``model_id`` already exists,
@@ -178,7 +179,7 @@ class _BenchmarkingResults:
         self.results.append(new_result)
         self._persistence.persist_result(new_result)
 
-    def save(self):
+    def _save(self):
         """Write all results to the final output file at ``path``.
 
         Persists the complete in-memory result set in the format determined
@@ -188,7 +189,7 @@ class _BenchmarkingResults:
         """
         self._persistence.save_final(self.results)
 
-    def contains(self, task_id: str, model_id: str):
+    def _contains(self, task_id: str, model_id: str):
         """Check whether a task-model result is present in memory.
 
         Parameters
@@ -209,7 +210,7 @@ class _BenchmarkingResults:
             for result in self.results
         )
 
-    def to_dataframe(self):
+    def to_df(self):
         """Convert in-memory results to a summary pandas DataFrame.
 
         Returns
@@ -218,7 +219,13 @@ class _BenchmarkingResults:
             Aggregated benchmark metrics per task-model pair. Empty when
             no results are stored.
         """
-        return results_to_dataframe(self.results)
+        if not self.results:
+            return pd.DataFrame()
+        results_df = [result.to_dataframe() for result in self.results]
+        df = pd.concat(results_df, axis=0, ignore_index=True)
+        if {"pred_time_mean", "fit_time_mean"}.issubset(df.columns):
+            df["runtime_secs"] = df["pred_time_mean"] + df["fit_time_mean"]
+        return df
 
 
 class _SktimeRegistry:
@@ -652,11 +659,11 @@ class BaseBenchmark:
         """
         self._check_ready_to_run()
 
-        results = _BenchmarkingResults(path=results_path)
+        results = BenchmarkingResults(path=results_path)
         self._failed_experiments = []
 
         for task_id, estimator_id, task, estimator in self._generate_experiments():
-            if results.contains(task_id, estimator_id) and (
+            if results._contains(task_id, estimator_id) and (
                 force_rerun == "none"
                 or (isinstance(force_rerun, list) and estimator_id not in force_rerun)
             ):
@@ -687,7 +694,7 @@ class BaseBenchmark:
                 )
                 continue
 
-            results.update(
+            results._update(
                 ResultObject(
                     task_id=task_id,
                     model_id=estimator_id,
@@ -698,8 +705,8 @@ class BaseBenchmark:
         self._report_failed_experiments()
 
         if results_path is not None:
-            results.save()
-        return results.to_dataframe()
+            results._save()
+        return results.to_df()
 
     def _report_failed_experiments(self):
         """Log a summary of failed task-estimator pairs from the current run."""
