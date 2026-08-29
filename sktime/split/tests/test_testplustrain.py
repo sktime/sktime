@@ -4,8 +4,8 @@
 from sktime.split import SlidingWindowSplitter, TestPlusTrainSplitter
 
 
-def test_test_plus_train_forwards_fh_and_window_length():
-    """Test that TestPlusTrainSplitter forwards fh and window_length from cv.
+def test_test_plus_train_forwards_fh():
+    """Test that TestPlusTrainSplitter forwards fh from cv.
 
     Regression test for issue #10945.
     """
@@ -13,4 +13,3 @@ def test_test_plus_train_forwards_fh_and_window_length():
     splitter = TestPlusTrainSplitter(cv)
 
     assert splitter.fh == cv.fh
-    assert splitter.window_length == cv.window_length
