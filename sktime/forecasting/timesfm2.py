@@ -74,7 +74,74 @@ class TimesFM2Forecaster(BaseForecaster):
 
         If provided as ``dict``, the architecture entry (for example
         ``"TimesFmModelForPrediction"`` or ``"TimesFm2_5ModelForPrediction"``)
-        is used to infer the config class.
+        is used to infer the config class. Valid keys include:
+
+        patch_length : int, optional, default=32
+            The length of one patch in the input sequence.
+        context_length : int, optional, default=16384
+            The length of the input context.
+        horizon_length : int, optional, default=128
+            The length of the prediction horizon.
+        num_hidden_layers : int, optional, default=20
+            Number of hidden layers in the Transformer decoder.
+        hidden_size : int, optional, default=1280
+            Dimension of the hidden representations.
+        intermediate_size : int, optional, default=1280
+            Dimension of the MLP representations.
+        head_dim : int, optional, default=80
+            The attention head dimension. If ``None``, it will default to
+            ``hidden_size // num_attention_heads``.
+        num_attention_heads : int, optional, default=16
+            Number of attention heads for each attention layer in the
+            Transformer decoder.
+        rms_norm_eps : float, optional, default=1e-06
+            The epsilon used by the rms normalization layers.
+        quantiles : list of float, optional
+            The quantiles to predict. Default is
+            ``[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]``.
+        attention_dropout : float or int, optional, default=0.0
+            The dropout ratio for the attention probabilities.
+        initializer_range : float, optional, default=0.02
+            The standard deviation of the truncated_normal_initializer for
+            initializing all weight matrices.
+        num_key_value_heads : int, optional, default=16
+            Number of key/value heads for Grouped Query Attention. If
+            ``num_key_value_heads=num_attention_heads``, the model uses Multi
+            Head Attention (MHA); if ``num_key_value_heads=1``, Multi Query
+            Attention (MQA); otherwise GQA. When converting a multi-head
+            checkpoint to a GQA checkpoint, each group key and value head
+            should be constructed by meanpooling all the original heads within
+            that group. If not specified, defaults to ``num_attention_heads``.
+        attention_bias : bool, optional, default=False
+            Whether to use a bias in the query, key, value and output
+            projection layers during self-attention.
+        output_quantile_len : int, optional, default=1024
+            Length of the quantile output projection dimension.
+        decode_index : int, optional, default=5
+            Index into the quantile dimension used to extract the point
+            (median) forecast.
+        use_bias : bool, optional, default=False
+            Whether to use bias in MLP and transformer linear layers.
+        activation : str, optional, default="swish"
+            The non-linear activation function (function or string) in the
+            decoder. For example, ``"gelu"``, ``"relu"``, ``"silu"``, etc.
+        use_continuous_quantile_head : bool, optional, default=True
+            Whether to use the continuous quantile head for non-median
+            quantile predictions.
+        force_flip_invariance : bool, optional, default=True
+            Whether to apply flip-invariance averaging during forecasting.
+        infer_is_positive : bool, optional, default=True
+            Whether to clamp forecasts to non-negative values when the input
+            minimum is non-negative.
+        max_position_embeddings : int, optional, default=16384
+            The maximum sequence length that this model might ever be used
+            with.
+        rope_parameters : RopeParameters or dict, optional
+            Dictionary containing the configuration parameters for the RoPE
+            embeddings. The dictionary should contain a value for
+            ``rope_theta`` and optionally parameters used for scaling in case
+            you want to use RoPE with longer ``max_position_embeddings``.
+
     device_map : str, dict, int, or torch.device, default="cpu"
         Device placement following the ``transformers`` ``device_map`` naming
         convention, for example ``"cpu"``, ``"cuda"``, ``"cuda:0"``, or
@@ -96,7 +163,7 @@ class TimesFM2Forecaster(BaseForecaster):
         If provided, wraps the loaded pretrained base model with PEFT using
         ``peft.get_peft_model``. Applied only when ``model_path`` is not
         ``None``; ignored for config-only initialization with
-        ``model_path=None``.
+        ``model_path=None``. See [9]_.
     validation_split : float or None, default=0.2
         Fraction of data reserved for evaluation when :meth:`pretrain` is used.
         If ``None``, no evaluation dataset is created.
@@ -129,6 +196,8 @@ class TimesFM2Forecaster(BaseForecaster):
        https://huggingface.co/docs/transformers/en/main_classes/trainer
     .. [8] Quantization docs:
        https://huggingface.co/docs/transformers/en/main_classes/quantization
+    .. [9] PEFT documentation:
+       https://huggingface.co/docs/peft/en/package_reference/config#peft.PeftConfig
 
     Examples
     --------
@@ -251,16 +320,23 @@ class TimesFM2Forecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["rajatsen91", "siriuz42", "geetu040"],
+        # rajatsen91, siriuz42 for google-research/timesfm
+        "maintainers": ["geetu040"],
+        "python_dependencies": ["transformers[torch]>=4.52.0"],
+        # estimator type
+        # --------------
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pretrain": True,
-        "authors": ["rajatsen91", "siriuz42", "geetu040"],
-        # rajatsen91, siriuz42 for google-research/timesfm
-        "maintainers": ["geetu040"],
-        "python_dependencies": ["transformers[torch]>=4.52.0"],
+        # test and CI flags
+        # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_timesfm2"],
     }
 
     def __init__(
