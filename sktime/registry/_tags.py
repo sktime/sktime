@@ -2947,6 +2947,7 @@ class inner_implements_multilevel(_BaseTag):
 # Splitters
 # ---------
 
+
 class split_series_uses(_BaseTag):
     """Whether split_series dispatches to integer- or label-based location splitting.
 
@@ -2978,6 +2979,7 @@ class split_series_uses(_BaseTag):
         ),
         "user_facing": False,
     }
+
 
 class split_hierarchical(_BaseTag):
     """Whether the splitter natively implements splitting for hierarchical data.
