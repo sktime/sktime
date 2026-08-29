@@ -133,6 +133,7 @@ class WEASEL(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "dictionary",
+        "tests:skip_by_name": ["test_multiprocessing_idempotent"],  # see 5658
     }
 
     def __init__(
@@ -353,13 +354,25 @@ class WEASEL(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {
+        param_1 = {
             "window_inc": 4,
             "support_probabilities": True,
             "bigrams": False,
             "feature_selection": "none",
             "alphabet_size": 2,
+            "binning_strategy": "information-gain",
+            "anova": True,
         }
+        param_2 = {
+            "window_inc": 2,
+            "support_probabilities": True,
+            "bigrams": True,
+            "feature_selection": "chi2",
+            "alphabet_size": 4,
+            "binning_strategy": "equi-depth",
+            "anova": False,
+        }
+        return [param_1, param_2]
 
 
 def _parallel_fit(
