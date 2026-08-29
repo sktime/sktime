@@ -137,6 +137,32 @@ class DerivativeSlopeTransformer(BaseTransformer):
 
     where n is the length of the time series, and indices
     range from 0 to n-1.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.summarize import DerivativeSlopeTransformer
+    >>> X = pd.DataFrame({"a": [10, 12, 15, 20, 22]})
+    >>> t = DerivativeSlopeTransformer()
+    >>> t.fit_transform(X)
+         a
+    0  2.0
+    1  2.5
+    2  4.0
+    3  3.5
+    4  2.0
+
+    Works on multivariate data as well, computing the derivative independently
+    for each column:
+
+    >>> X2 = pd.DataFrame({"a": [10, 12, 15, 20, 22], "b": [5, 5, 6, 8, 8]})
+    >>> t.fit_transform(X2)
+         a    b
+    0  2.0  0.0
+    1  2.5  0.5
+    2  4.0  1.5
+    3  3.5  1.0
+    4  2.0  0.0
     """
 
     _tags = {
