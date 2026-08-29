@@ -2,9 +2,6 @@
 """Common utilities and constants for time series splitter module."""
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from collections.abc import Iterator
-
-import numpy as np
 import pandas as pd
 
 from sktime.datatypes._utilities import get_window
