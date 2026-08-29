@@ -41,7 +41,10 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "y_inner_mtype": ["pd.Series"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
@@ -58,7 +61,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 

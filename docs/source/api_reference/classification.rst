@@ -66,10 +66,13 @@ Deep learning
     :template: class.rst
 
     convtimenet.ConvTimeNetClassifier
+    convtran.ConvTranClassifierTorch
     cnn.CNNClassifier
+    cnn.CNNClassifierTorch
     cntc.CNTCClassifier
     cntc.CNTCClassifierTorch
     fcn.FCNClassifier
+    fcn.FCNClassifierTorch
     gru.GRUClassifier
     gru.GRUFCNNClassifier
     inceptiontime.InceptionTimeClassifier
@@ -77,6 +80,7 @@ Deep learning
     lstmfcn.LSTMFCNClassifier
     lstmfcn.LSTMFCNClassifierTorch
     macnn.MACNNClassifier
+    macnn.MACNNClassifierTorch
     mcdcnn.MCDCNNClassifier
     mcdcnn.MCDCNNClassifierTorch
     mlp.MLPClassifier
@@ -85,6 +89,7 @@ Deep learning
     rnn.SimpleRNNClassifier
     rnn.SimpleRNNClassifierTorch
     tapnet.TapNetClassifier
+    tapnet.TapNetClassifierTorch
 
 Foundation models
 -----------------
@@ -96,8 +101,9 @@ Foundation models
     :toctree: auto_generated/
     :template: class.rst
 
+    MantisClassifier
     MomentFMClassifier
-
+    TSPulseClassifier
 
 Dictionary-based
 ----------------

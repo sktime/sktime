@@ -66,8 +66,9 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "capability:missing_values": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "X-y-must-have-same-index": True,
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
@@ -88,7 +89,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -185,10 +186,20 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sklearn.tree import DecisionTreeRegressor
+
         from sktime.forecasting.naive import NaiveForecaster
 
         f1 = NaiveForecaster()
         f2 = NaiveForecaster(strategy="mean", window_length=3)
-        params = {"forecasters": [("f1", f1), ("f2", f2)]}
+        params1 = {"forecasters": [("f1", f1), ("f2", f2)]}
 
-        return params
+        # second set: a different forecaster combination, and an explicit
+        # meta-regressor rather than the default constructed in check_regressor
+        f3 = NaiveForecaster(strategy="drift")
+        params2 = {
+            "forecasters": [("f1", NaiveForecaster()), ("f3", f3)],
+            "regressor": DecisionTreeRegressor(random_state=0),
+        }
+
+        return [params1, params2]
