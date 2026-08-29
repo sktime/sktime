@@ -125,14 +125,27 @@ class FailedExperimentRecord:
 
 @dataclass
 class BenchmarkingResults:
-    """Container for benchmark results loaded from or written to disk.
+    """Utility for writing and loading benchmark results to and from disk.
 
-    Holds completed `ResultObject` instances and provides query and export
-    operations. All file I/O is delegated to `BenchmarkResultsPersistence`.
+    ``BenchmarkingResults`` is the in-memory representation of a persisted benchmark
+    results file. On construction it loads any data already stored at provided
+    ``path`` — either from a completed output file or from crash-safe partial
+    checkpoints left by an interrupted run (``{path}.parts/``).
 
-    On construction, previously saved results are loaded automatically when
-    ``path`` is given — either from a completed output file or from crash-safe
-    partial checkpoints left by an interrupted run.
+    The primary user-facing entry point is `to_df`, which returns the same
+    flat summary table produced by ``BaseBenchmark.run()``.
+
+    For structured access to individual experiments, use the ``results``
+    attribute, which holds a list of `ResultObject` instances.
+
+    During benchmark runs, internally ``BaseBenchmark.run()`` uses
+    ``BenchmarkingResults`` as a mutable container while experiments execute:
+    it skips completed task-model pairs (using ``_contains``), appends
+    new results with incremental checkpointing (using ``_update``),
+    and writes the final output file (using ``_save``). These methods are not
+    part of the public API.
+
+    All file I/O is delegated to `BenchmarkResultsPersistence`.
 
     Parameters
     ----------
@@ -145,6 +158,11 @@ class BenchmarkingResults:
     results : list of ResultObject, optional
         In-memory result list. Overwritten on init by loading from persistence
         when saved data exists at ``path`` or in its checkpoint directory.
+
+    Examples
+    --------
+    >>> from sktime.benchmarking import BenchmarkingResults
+    >>> df = BenchmarkingResults("results.csv").to_df()
     """
 
     path: str
