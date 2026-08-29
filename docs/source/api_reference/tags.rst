@@ -293,6 +293,7 @@ This section lists tags applying to time series splitters (``"splitter"`` type).
     :template: function.rst
     :nosignatures:
 
+    split_type
     split_series_uses
     split_hierarchical
 
