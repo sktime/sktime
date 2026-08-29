@@ -88,10 +88,7 @@ class ExpandingSlidingWindowSplitter(BaseWindowSplitter):
         max_expanding_window_length=float("inf"),
     ):
         start_with_window = initial_window != 0
-
-        # self.fh = fh  - we do not do that since the fh is a reserved property,
-        # instead we loop via the _fh method, which is called by the property
-        self._fh_ = fh
+        self.fh = fh
 
         super().__init__(
             window_length=initial_window,

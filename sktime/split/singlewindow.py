@@ -97,18 +97,8 @@ class SingleWindowSplitter(BaseSplitter):
 
     def __init__(self, fh, window_length=None):
         self.window_length = window_length
-        # self.fh = fh  - we do not do that since the fh is a reserved property,
-        # instead we use the _fh_ attribute to store the forecasting horizon
-        self._fh_ = fh
+        self.fh = fh
         super().__init__()
-
-    @fh.setter
-    def fh(self, value):
-        """Set forecasting horizon.
-
-        Writes to _fh_ attribute due to property logic and inheritance.
-        """
-        self._fh_ = value
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.

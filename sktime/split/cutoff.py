@@ -151,20 +151,9 @@ class CutoffSplitter(BaseSplitter):
     def __init__(self, cutoffs: VALID_CUTOFF_TYPES, fh=1, window_length=10):
         self.cutoffs = cutoffs
         self.window_length = window_length
-
-        # self.fh = fh  - we do not do that since the fh is a reserved property,
-        # instead we loop via the _fh method, which is called by the property
-        self._fh_ = fh
+        self.fh = fh
 
         super().__init__()
-
-    @fh.setter
-    def fh(self, value):
-        """Set forecasting horizon.
-
-        Writes to _fh_ attribute due to property logic and inheritance.
-        """
-        self._fh_ = value
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.

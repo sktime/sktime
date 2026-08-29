@@ -105,7 +105,8 @@ class BaseSplitter(BaseObject):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        pass
+        if not hasattr(self, "fh"):
+            self.fh = self._default_fh()
 
     def split(self, y):
         """Get iloc references to train/test splits of `y`.
@@ -432,9 +433,10 @@ class BaseSplitter(BaseObject):
         """
         raise NotImplementedError("abstract method")
 
-    @property
-    def fh(self):
+    def _default_fh(self):
         """Forecasting horizon, in integer resp array of integer, relative to cutoff.
+
+        Should not be overridden by inheriting classes, use _fh instead.
 
         Returns the indices of the test splits, relative to the last index of the
         corresponding training split, in relative integer format,

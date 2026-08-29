@@ -57,12 +57,9 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     """
 
     def __init__(self, fh=1, initial_window=10, step_length=1):
+        self.fh = fh
+
         start_with_window = initial_window != 0
-
-        # self.fh = fh  - we do not do that since the fh is a reserved property,
-        # instead we loop via the _fh method, which is called by the property
-        self._fh_ = fh
-
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
         # time expose the more intuitive name for the ExpandingWindowSplitter.
@@ -77,14 +74,6 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
         self.initial_window = initial_window
         # this class still acts as if it were overwritten with None,
         # via the _initial_window property that is read everywhere
-
-    @fh.setter
-    def fh(self, value):
-        """Set forecasting horizon.
-
-        Writes to _fh_ attribute due to property logic and inheritance.
-        """
-        self._fh_ = value
 
     @property
     def _initial_window(self):

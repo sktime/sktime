@@ -100,9 +100,7 @@ class SlidingWindowSplitter(BaseWindowSplitter):
         initial_window=None,
         start_with_window: bool = True,
     ) -> None:
-        # self.fh = fh  - we do not do that since the fh is a reserved property,
-        # instead we loop via the _fh method, which is called by the property
-        self._fh_ = fh
+        self.fh = fh
         super().__init__(
             window_length=window_length,
             initial_window=initial_window,

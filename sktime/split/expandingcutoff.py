@@ -98,12 +98,8 @@ class ExpandingCutoffSplitter(BaseSplitter):
     def __init__(self, cutoff, fh, step_length):
         self.cutoff = cutoff
         self.step_length = step_length
+        self.fh = fh
         super().__init__()
-
-        # self.fh = fh  - we do not do that since the fh is a reserved property,
-        # instead we loop via the _fh method, which is called by the property
-        self._fh_ = fh
-        return
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
