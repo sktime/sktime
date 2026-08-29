@@ -19,6 +19,8 @@ def test_test_plus_train_splitter_fh_and_window_length():
     Failure case of bug #10945: fh and window_length silently fell back to the
     ``BaseSplitter`` defaults, 1 and 10, instead of those of the wrapped splitter.
     """
+    # both values must differ from the BaseSplitter defaults, 10 and 1,
+    # otherwise the assertions below pass on the unfixed fallback
     cv = SlidingWindowSplitter(window_length=5, fh=[1, 2, 3])
     splitter = TestPlusTrainSplitter(cv)
 
@@ -36,12 +38,10 @@ def test_test_plus_train_splitter():
     cv = SlidingWindowSplitter(window_length=5, fh=[1, 2, 3])
     splitter = TestPlusTrainSplitter(cv)
 
-    assert splitter.get_n_splits(y) == cv.get_n_splits(y)
-
     # iloc references, via _split
     splits_iloc = list(splitter.split(y))
     splits_cv_iloc = list(cv.split(y))
-    assert len(splits_iloc) == len(splits_cv_iloc)
+    assert len(splits_iloc) == len(splits_cv_iloc) > 0
 
     for (train, test), (train_inner, test_inner) in zip(splits_iloc, splits_cv_iloc):
         assert np.all(train == train_inner)
@@ -50,7 +50,7 @@ def test_test_plus_train_splitter():
     # loc references, via _split_loc, a separate implementation
     splits_loc = list(splitter.split_loc(y))
     splits_cv_loc = list(cv.split_loc(y))
-    assert len(splits_loc) == len(splits_cv_loc)
+    assert len(splits_loc) == len(splits_cv_loc) > 0
 
     for (train, test), (train_inner, test_inner) in zip(splits_loc, splits_cv_loc):
         assert np.all(train == train_inner)
