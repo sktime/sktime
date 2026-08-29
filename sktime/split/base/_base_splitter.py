@@ -460,7 +460,6 @@ class BaseSplitter(BaseObject):
             fh = np.arange(fh) + 1
         if fh is not None and not isinstance(fh, np.ndarray):
             fh = np.asarray(fh, dtype=int)
-        
         return fh
 
     def _fh(self):
