@@ -259,8 +259,9 @@ def test_irf_on_vecm():
     from sktime.forecasting.vecm import VECM as skvecm
 
     # Convergence and estimation warnings happen regularly in statsmodels too.
+    # Use lag 12 to avoid near-singular covariance matrix with lag 1.
     X = load_airline()
-    X2 = X.shift(1).bfill()
+    X2 = X.shift(12).bfill()
     df = pd.DataFrame({"X": X, "X2": X2})
 
     sk_model = skvecm().fit(df)
@@ -281,8 +282,9 @@ def test_additional_irfparams_on_vecm():
     from sktime.forecasting.vecm import VECM as skvecm
 
     # Convergence and estimation warnings happen regularly in statsmodels too.
+    # Use lag 12 to avoid near-singular covariance matrix with lag 1.
     X = load_airline()
-    X2 = X.shift(1).bfill()
+    X2 = X.shift(12).bfill()
     df = pd.DataFrame({"X": X, "X2": X2})
 
     sk_model = skvecm().fit(df)
@@ -304,8 +306,9 @@ def test_irf_vecm_against_statsmodels():
 
     from sktime.forecasting.vecm import VECM as skvecm
 
+    # Use lag 12 to avoid near-singular covariance matrix with lag 1.
     X = load_airline()
-    X2 = X.shift(1).bfill()
+    X2 = X.shift(12).bfill()
     df = pd.DataFrame({"X": X, "X2": X2})
 
     st_model = statsvecm(df, seasons=2)
