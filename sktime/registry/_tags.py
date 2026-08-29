@@ -3035,8 +3035,7 @@ class split_type(_BaseTag):
         "parent_type": "splitter",
         "tag_type": ("str", ["temporal", "instance"]),
         "short_descr": (
-            "whether the splitter splits by time or by instance "
-            "(panel/hierarchy index)"
+            "whether the splitter splits by time or by instance (panel/hierarchy index)"
         ),
         "user_facing": True,
     }
