@@ -70,6 +70,7 @@ Deep learning
     cnn.CNNClassifier
     cnn.CNNClassifierTorch
     cntc.CNTCClassifier
+    cntc.CNTCClassifierTorch
     fcn.FCNClassifier
     fcn.FCNClassifierTorch
     gru.GRUClassifier
