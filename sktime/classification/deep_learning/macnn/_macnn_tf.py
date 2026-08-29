@@ -93,6 +93,10 @@ class MACNNClassifier(BaseDeepClassifier):
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.macnn._macnn_tf"],
+        "tests:skip_by_name": [
+            "test_multioutput",  # see #6465 and #7958
+            "test_classifier_on_unit_test_data",  # see #6465 and #7958
+        ],
     }
 
     def __init__(
