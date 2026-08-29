@@ -15,8 +15,6 @@ import pandas as pd
 from sktime.datatypes._utilities import get_index_for_series
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import (
-    ACCEPTED_Y_TYPES,
-    SPLIT_GENERATOR_TYPE,
     _check_fh,
     _check_inputs_for_compatibility,
     _get_end,
@@ -116,7 +114,7 @@ class SingleWindowSplitter(BaseSplitter):
         _check_inputs_for_compatibility(args=[self.fh, self.window_length])
         super().__post_init__()
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index):
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
@@ -129,7 +127,7 @@ class SingleWindowSplitter(BaseSplitter):
 
         yield training_window, test_window
 
-    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
+    def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
 
         Since this splitter returns a single train/test split,
@@ -147,7 +145,7 @@ class SingleWindowSplitter(BaseSplitter):
         """
         return 1
 
-    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
+    def get_cutoffs(self, y=None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Since this splitter returns a single train/test split,

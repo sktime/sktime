@@ -13,7 +13,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import ACCEPTED_Y_TYPES, _check_fh
 from sktime.utils.validation.forecasting import check_step_length
 
 
@@ -178,7 +177,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
                 )
         return index
 
-    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
+    def get_cutoffs(self, y=None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters

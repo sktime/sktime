@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_GENERATOR_TYPE
 
 
 class TestPlusTrainSplitter(BaseSplitter):
@@ -51,7 +50,7 @@ class TestPlusTrainSplitter(BaseSplitter):
         # for performance reasons
         self.clone_tags(self.cv, "split_series_uses")
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index):
         """Get iloc references to train/test splits of ``y``.
 
         private _split containing the core logic, called from split
@@ -75,7 +74,7 @@ class TestPlusTrainSplitter(BaseSplitter):
             y_test_self = np.union1d(y_train_inner, y_test_inner)
             yield y_train_self, y_test_self
 
-    def _split_loc(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split_loc(self, y: pd.Index):
         """Get loc references to train/test splits of ``y``.
 
         private _split containing the core logic, called from split_loc
@@ -99,7 +98,7 @@ class TestPlusTrainSplitter(BaseSplitter):
             y_test_self = y_train_inner.union(y_test_inner)
             yield y_train_self, y_test_self
 
-    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
+    def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
 
         This will always be equal to the number of splits

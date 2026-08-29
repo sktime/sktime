@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import SPLIT_GENERATOR_TYPE
 
 
 class ExpandingGreedySplitter(BaseSplitter):
@@ -84,7 +83,7 @@ class ExpandingGreedySplitter(BaseSplitter):
         if isinstance(self.test_size, float):
             self.set_tags(**{"split_hierarchical": False})
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index):
         test_size = self.test_size
 
         if isinstance(test_size, float):

@@ -12,7 +12,6 @@ __all__ = [
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_GENERATOR_TYPE
 
 
 class SameLocSplitter(BaseSplitter):
@@ -74,7 +73,7 @@ class SameLocSplitter(BaseSplitter):
         self.y_template = y_template
         super().__init__()
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index):
         cv = self.cv
         if self.y_template is None:
             y_template = y
@@ -86,7 +85,7 @@ class SameLocSplitter(BaseSplitter):
             y_test_iloc = y.get_indexer(y_test_loc)
             yield y_train_iloc, y_test_iloc
 
-    def _split_loc(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split_loc(self, y: pd.Index):
         """Get loc references to train/test splits of ``y``.
 
         private _split containing the core logic, called from split_loc
@@ -111,7 +110,7 @@ class SameLocSplitter(BaseSplitter):
 
         yield from cv.split_loc(y_template)
 
-    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
+    def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
 
         This will always be equal to the number of splits
