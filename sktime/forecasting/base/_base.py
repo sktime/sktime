@@ -481,9 +481,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         # check y is not None
         if y is None:
-            raise ValueError(
-                "y cannot be None. Pass a time series as pd.Series, pd.DataFrame, "
-                "or np.ndarray. See examples/01_forecasting.ipynb for usage."
+            cls_name = self.__class__.__name__
+            raise AssertionError(
+                f"Error in {cls_name}.fit: y cannot be None, but found None"
             )
 
         # skip reset on the first fit after pretrain; on refit, discard
