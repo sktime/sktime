@@ -96,7 +96,6 @@ EXCLUDED_TESTS = {
     "Pipeline": ["test_inheritance"],  # does not inherit from intermediate base classes
     # networks do not support negative fh
     "HFTransformersForecaster": ["test_predict_time_index_in_sample_full"],
-    "WEASEL": ["test_multiprocessing_idempotent"],  # see 5658
     # StatsForecastMSTL is failing in probabistic forecasts, see #5703, #5920
     "StatsForecastMSTL": ["test_pred_int_tag"],
     # KNeighborsTimeSeriesClassifierTslearn crashes in parallel mode
@@ -117,11 +116,6 @@ EXCLUDED_TESTS = {
         "test_transform_output_type",
         "test_inheritance",
         "test_create_test_instance",
-    ],
-    # see bug report #6465 and #7958
-    "MACNNClassifier": [
-        "test_multioutput",
-        "test_classifier_on_unit_test_data",
     ],
 }
 
@@ -167,7 +161,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
-        "WEASEL",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them
         "BaggingForecaster",

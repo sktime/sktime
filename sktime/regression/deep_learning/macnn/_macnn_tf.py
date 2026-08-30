@@ -70,6 +70,15 @@ class MACNNRegressor(BaseDeepRegressor):
     Neural Network for time series classification,
     Neural Networks, Volume 136, 2021, Pages 126-140, ISSN 0893-6080,
     https://doi.org/10.1016/j.neunet.2021.01.001.
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.macnn import MACNNRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> regressor = MACNNRegressor(n_epochs=20, batch_size=4)  # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train)  # doctest: +SKIP
+    MACNNRegressor(...)
     """
 
     _tags = {
