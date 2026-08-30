@@ -129,7 +129,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
         test : ndarray
             The testing set indices for that split.
         """
-        fh = self._fh
+        fh = self.get_fh().to_relative(self.cutoff)
         for cutoff in self.get_cutoffs(y):
             train_window = np.arange(0, cutoff + 1, step=1)
             test_window = cutoff + fh
