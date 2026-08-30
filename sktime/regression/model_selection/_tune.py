@@ -73,6 +73,9 @@ class TSRGridSearchCV(_DelegatedRegressor):
         ``cv_results_`` and returns the selected ``best_index_``. In that case
         ``best_score_`` is not available.
 
+        The refitted estimator is available at the ``best_estimator_``
+        attribute, and permits calling ``predict`` directly on the tuner.
+
     cv : int, cross-validation generator, iterable of splits, or None, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -160,8 +163,10 @@ class TSRGridSearchCV(_DelegatedRegressor):
         For multiple metrics, ``<name>`` is the name of the respective metric.
 
     best_estimator_ : estimator
-        Clone of ``estimator`` with the best found parameters set.
+        Clone of ``estimator`` with the best found parameters set, i.e., the
+        parameters which gave the best mean test score on the held out data.
         Fitted to the entire data if ``refit`` is not False, otherwise unfitted.
+        See the ``refit`` parameter for more information on allowed values.
 
     best_score_ : float
         Mean cross-validated score of ``best_estimator_``.
@@ -173,6 +178,9 @@ class TSRGridSearchCV(_DelegatedRegressor):
     best_index_ : int
         The index in the ``cv_results_`` arrays which corresponds to the best
         candidate parameter setting.
+
+        The dict at ``cv_results_["params"][best_index_]`` gives the parameter
+        setting for the best model, i.e., is identical with ``best_params_``.
 
     scorer_ : callable or dict of callable
         Metric used on the held out data to choose the best parameters.
@@ -188,10 +196,22 @@ class TSRGridSearchCV(_DelegatedRegressor):
     multimetric_ : bool
         Whether multiple metrics were passed in ``scoring``.
 
+    n_features_in_ : int
+        Number of features seen during ``fit``.
+        Present only if ``refit`` is not False, and ``best_estimator_``
+        exposes ``n_features_in_`` after being fitted.
+
+    feature_names_in_ : ndarray of shape (``n_features_in_``,)
+        Names of features seen during ``fit``.
+        Present only if ``refit`` is not False, and ``best_estimator_``
+        exposes ``feature_names_in_`` after being fitted.
+
     See Also
     --------
     ParameterGrid : Generates all the combinations of a hyperparameter grid.
     sktime.regression.model_evaluation.evaluate : Backtesting used internally.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
 
     Examples
     --------
