@@ -203,10 +203,14 @@ class SquaringResiduals(BaseForecaster):
         y_pred = self.forecaster_.update_predict(y=y, cv=cv, X=X, update_params=True)
 
         for step_ahead in fh_rel:
+            # Pass a length-1 sequence: bare int is interpreted as range(1, n+1).
+            step = int(step_ahead)
             if isinstance(y.index, pd.DatetimeIndex):
-                fh_current = ForecastingHorizon(step_ahead, freq=y.index.freq)
+                fh_current = ForecastingHorizon(
+                    [step], is_relative=True, freq=y.index.freq
+                )
             else:
-                fh_current = ForecastingHorizon(step_ahead)
+                fh_current = ForecastingHorizon([step], is_relative=True)
             # create current prediction series
             if len(fh_rel) == 1:
                 y_pred_current = y_pred
@@ -235,7 +239,7 @@ class SquaringResiduals(BaseForecaster):
             # fit to residuals
             res_step_forecaster_ = self._residual_forecaster.clone()
             res_step_forecaster_.fit(y=residuals)
-            self._res_forecasters[step_ahead] = res_step_forecaster_
+            self._res_forecasters[step] = res_step_forecaster_
         return self
 
     def _predict(self, fh, X):
@@ -404,7 +408,11 @@ class SquaringResiduals(BaseForecaster):
         fh_rel_index = fh_rel.to_pandas()
         pred_var = pd.Series(index=fh_rel_index, dtype="float64")
         for el in fh_rel:
-            pred_var.at[el] = self._res_forecasters[el].predict(fh=el)
+            step = int(el)
+            y_res = self._res_forecasters[step].predict(
+                fh=ForecastingHorizon([step], is_relative=True)
+            )
+            pred_var.at[el] = y_res.iloc[0]
         if self.strategy == "square":
             pred_var = pred_var**0.5
         pred_var.index = fh_abs.to_pandas()
