@@ -39,6 +39,10 @@ class BaseDeepRegressor(BaseRegressor):
         "python_dependencies": "tensorflow",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # test and CI tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.regression.deep_learning.base._base_tf"],
     }
 
     @abstractmethod

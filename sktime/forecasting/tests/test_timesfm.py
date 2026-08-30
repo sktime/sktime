@@ -10,7 +10,7 @@ Therefore, we call a check_estimator separately.
 
 import pytest
 
-from sktime.forecasting.timesfm_forecaster import TimesFMForecaster
+from sktime.forecasting.timesfm import TimesFMForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils import check_estimator
 
