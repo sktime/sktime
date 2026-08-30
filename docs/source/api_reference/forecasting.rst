@@ -54,6 +54,7 @@ Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
     ColumnEnsembleForecaster
     MultiplexForecaster
     ForecastX
+    YToXForecaster
     ForecastByLevel
     TransformSelectForecaster
     GroupbyCategoryForecaster

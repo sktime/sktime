@@ -33,6 +33,7 @@ __all__ = [
     "YfromX",
     "SkforecastAutoreg",
     "IgnoreX",
+    "YToXForecaster",
 ]
 
 from sktime.forecasting.compose._bagging import BaggingForecaster
@@ -78,3 +79,4 @@ from sktime.forecasting.compose._stack import StackingForecaster
 from sktime.forecasting.compose._transform_select_forecaster import (
     TransformSelectForecaster,
 )
+from sktime.forecasting.compose._ytox import YToXForecaster
