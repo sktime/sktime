@@ -39,7 +39,7 @@ class TestPlusTrainSplitter(BaseSplitter):
 
     def __init__(self, cv):
         self.cv = cv
-        super().__init__(fh=cv.fh, window_length=cv.window_length)
+        super().__init__()
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
