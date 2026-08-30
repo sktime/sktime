@@ -87,10 +87,10 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         Loss function for training.
     criterion_kwargs : dict or None, default = None
         Additional keyword arguments for the criterion.
-    callbacks : None or str or tuple of str, default = "ReduceLROnPlateau"
-        Learning rate schedulers as callbacks.
-    callback_kwargs : dict or None, default = None
-        Keyword arguments for callbacks.
+    callbacks : None, str, tuple of str, Callable, and/or
+        lightning.pytorch.callbacks.Callback, default = "ReduceLROnPlateau"
+        Callbacks applied during training. String names use library defaults; pass
+        instances or callables for custom configuration.
     lr : float, default = 0.01
         Learning rate (TF CNN uses Adam(lr=0.01)).
     verbose : bool, default = False
@@ -121,7 +121,7 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
     _tags = {
         "authors": ["hfawaz", "James-Large", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
-        "python_dependencies": "torch",
+        "python_dependencies": ["torch", "lightning"],
         "property:randomness": "stochastic",
         "capability:random_state": True,
     }
@@ -141,7 +141,9 @@ class CNNClassifierTorch(BaseDeepClassifierPytorch):
         optimizer_kwargs: dict | None = None,
         criterion: str | None | Callable = "CrossEntropyLoss",
         criterion_kwargs: dict | None = None,
-        callbacks: None | str | tuple[str, ...] = "ReduceLROnPlateau",
+        callbacks: None | str | Callable | tuple[str | Callable | object, ...] = (
+            "ReduceLROnPlateau"
+        ),
         callback_kwargs: dict | None = None,
         lr: float = 0.01,
         verbose: bool = False,
