@@ -520,8 +520,6 @@ class QuickTester(_QuickTester):
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
         """
-        from skbase.utils.stderr_mute import StderrMute
-
         # todo 1.3.0: remove this block
         if estimator is not None:
             warnings.warn(
@@ -534,18 +532,15 @@ class QuickTester(_QuickTester):
                 raise TypeError("pass either obj or estimator, not both")
             obj = estimator
 
-        # skbase mutes stdout only, sktime also mutes stderr, so that
-        # deep learning backends do not flood the test log
-        with StderrMute(active=int(verbose) < 2):
-            return super().run_tests(
-                obj=obj,
-                raise_exceptions=raise_exceptions,
-                tests_to_run=tests_to_run,
-                fixtures_to_run=fixtures_to_run,
-                tests_to_exclude=tests_to_exclude,
-                fixtures_to_exclude=fixtures_to_exclude,
-                verbose=verbose,
-            )
+        return super().run_tests(
+            obj=obj,
+            raise_exceptions=raise_exceptions,
+            tests_to_run=tests_to_run,
+            fixtures_to_run=fixtures_to_run,
+            tests_to_exclude=tests_to_exclude,
+            fixtures_to_exclude=fixtures_to_exclude,
+            verbose=verbose,
+        )
 
     @staticmethod
     def _subset_generator_dict(obj, generator_dict):
@@ -566,24 +561,6 @@ class QuickTester(_QuickTester):
                 generator_dict[_old] = generator_dict[_new]
 
         return generator_dict
-
-    @staticmethod
-    def _check_none_str_or_list_of_str(obj, var_name="obj"):
-        """Check that obj is None, str, or list of str, and coerce to list of str.
-
-        Retained locally to prevent a bug with generator expressions in
-        ``np.all`` (present in ``skbase <= 1.0.2``). Pending upstream
-        ``skbase`` fix.
-        """
-        if obj is not None:
-            msg = f"{var_name} must be None, str, or list of str"
-            if isinstance(obj, str):
-                obj = [obj]
-            if not isinstance(obj, list):
-                raise ValueError(msg)
-            if not np.all([isinstance(x, str) for x in obj]):
-                raise ValueError(msg)
-        return obj
 
 
 class TestAllObjects(BaseFixtureGenerator, QuickTester):
