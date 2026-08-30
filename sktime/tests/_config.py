@@ -157,7 +157,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
         "SummaryClassifier",
-        "SupervisedTimeSeriesForest",
         "TEASER",
         "TSFreshClassifier",
         "TapNetNetwork",
