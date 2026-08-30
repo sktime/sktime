@@ -79,9 +79,9 @@ class DummyClassifier(BaseClassifier):
         "maintainers": ["ZiyaoWei"],
         # estimator type
         # --------------
-        "X_inner_mtype": "nested_univ",
+        "X_inner_mtype": "numpy3D",
         "capability:missing_values": True,
-        "capability:unequal_length": True,
+        "capability:unequal_length": False,
         "capability:multivariate": True,
         "capability:predict_proba": True,
         "capability:random_state": True,
@@ -140,7 +140,7 @@ class DummyClassifier(BaseClassifier):
 
         Returns
         -------
-        y : predictions of probabilities for class values of X, np.ndarray
+        y : predicted probabilities of labels for X, np.ndarray
         """
         return self.sklearn_dummy_classifier.predict_proba(np.zeros(X.shape))
 
