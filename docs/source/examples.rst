@@ -6,7 +6,9 @@ Notebook Examples
 
 Welcome to sktime's notebook examples!
 
-These consist of introductory notebooks, ordered by learning task.
+These notebooks provide practical, hands-on examples for different time series tasks such as forecasting, classification, and transformations.
+
+These consist of introductory notebooks, ordered by learning tasks.
 
 For guided tutorials with videos, see our :ref:`tutorials` page.
 
