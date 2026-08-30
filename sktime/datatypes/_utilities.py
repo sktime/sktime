@@ -562,6 +562,23 @@ def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=Fal
         raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
     obj_in_mtype = metadata["mtype"]
 
+    # List-based panel mtypes can represent an instance with zero time points, but
+    # the internal pd-multiindex representation cannot, so a bound that empties an
+    # instance would silently drop it on the round-trip. Slice each instance on its
+    # own to keep emptied instances (see #10966).
+    if obj_in_mtype in ("df-list", "nested_univ"):
+        sliced = [
+            get_slice(
+                df,
+                start=start,
+                end=end,
+                start_inclusive=start_inclusive,
+                end_inclusive=end_inclusive,
+            )
+            for df in convert_to(obj, "df-list")
+        ]
+        return convert_to(sliced, obj_in_mtype)
+
     obj = convert_to(obj, GET_WINDOW_SUPPORTED_MTYPES)
 
     # numpy3D (Panel) or np.npdarray (Series)
