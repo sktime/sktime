@@ -8,6 +8,7 @@ combination of transformers and forecasters for a given dataset.
 import base64
 import io
 import json
+import math
 import warnings
 from time import sleep
 
@@ -784,7 +785,16 @@ class AutoResearchForecaster(BaseForecaster):
                 print(f"  [!] LLM call failed: {e}")
                 continue
 
-            valid_results = [r for r in iteration_results if r["error"] is None]
+            # a blueprint can evaluate without raising, yet score nan - e.g. if
+            # a transformer leaves NaNs in the target. Such scores must not enter
+            # the selection: ``min`` with nan is order-dependent, and ``nan <
+            # best_overall_score`` is always False, so a nan would both mask
+            # finite scores and leave ``best_overall_result`` unset.
+            valid_results = [
+                r
+                for r in iteration_results
+                if r["error"] is None and math.isfinite(r["score"])
+            ]
             if valid_results:
                 best_iter = min(valid_results, key=lambda r: r["score"])
                 if best_iter["score"] < best_overall_score:
