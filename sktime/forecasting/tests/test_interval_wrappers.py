@@ -16,6 +16,8 @@ from sktime.performance_metrics.forecasting.probabilistic import PinballLoss
 from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
 INTERVAL_WRAPPERS = [ConformalIntervals, NaiveVariance]
 CV_SPLITTERS = [SlidingWindowSplitter, ExpandingWindowSplitter]
 EVALUATE_STRATEGY = ["update", "refit"]
@@ -118,3 +120,34 @@ def test_evaluate_with_window_splitters(wrapper, splitter, strategy, sample_frac
 
     assert len(results) == 6
     assert not results.test_PinballLoss.isna().any()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([NaiveVariance, ExponentialSmoothing]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_naive_variance_exponential_smoothing_short_series():
+    """Test NaiveVariance with ExponentialSmoothing on short time series.
+
+    This test addresses issue #10943 where statsmodels 0.15.0+ raises
+    NotImplementedError instead of ValueError for insufficient data,
+    which was not caught by NaiveVariance's exception handling.
+
+    The fix in NaiveVariance._compute_sliding_residuals now catches both
+    ValueError and NotImplementedError when fitting on sliding windows,
+    treating them as equivalent skippable failures.
+
+    The test uses a 3-element series with a 2-step forecast horizon, which
+    causes NaiveVariance to attempt fitting on windows as small as 1 element,
+    triggering the error path.
+    """
+    y = pd.Series([100, 110, 105], index=pd.date_range("2020-01-01", periods=3, freq="ME"))
+
+    forecaster = ExponentialSmoothing()
+    my_forecaster_with_proba = NaiveVariance(forecaster)
+
+    my_forecaster_with_proba.fit(y, fh=[1, 2])
+    pred_var = my_forecaster_with_proba.predict_var()
+
+    assert isinstance(pred_var, pd.DataFrame)
+    assert len(pred_var) == 2
