@@ -310,7 +310,7 @@ class GGS:
 
     def identity_segmentation(self, data: npt.ArrayLike) -> list[int]:
         """Initialize change points."""
-        return [0, data.shape[0] + 1]
+        return [0, data.shape[0]]
 
     def find_change_points(self, data: npt.ArrayLike) -> list[int]:
         """
