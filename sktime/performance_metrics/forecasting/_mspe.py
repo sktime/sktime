@@ -7,6 +7,8 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
     mean_squared_percentage_error,
@@ -146,6 +148,67 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
             multilevel=multilevel,
             by_index=by_index,
         )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        multioutput = self.multioutput
+
+        # Calculate percentage error
+        eps = self.eps
+        if eps is None:
+            eps = np.finfo(np.float64).eps
+
+        if self.symmetric:
+            denominator = np.maximum(
+                np.abs(y_true) + np.abs(y_pred), eps
+            ) / 2
+        elif self.relative_to == "y_pred":
+            denominator = np.maximum(np.abs(y_pred), eps)
+        else:
+            denominator = np.maximum(np.abs(y_true), eps)
+
+        percentage_error = np.abs(y_true - y_pred) / denominator
+        raw_values = percentage_error ** 2
+
+        if self.square_root:
+            n = raw_values.shape[0]
+            mspe = raw_values.mean(axis=0)
+            rmspe = mspe.pow(0.5)
+            spe_sum = raw_values.sum(axis=0)
+            mspe_jackknife = (spe_sum - raw_values) / (n - 1)
+            rmspe_jackknife = mspe_jackknife.pow(0.5)
+            pseudo_values = n * rmspe - (n - 1) * rmspe_jackknife
+        else:
+            pseudo_values = raw_values
+
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+
+        return self._handle_multioutput(pseudo_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
