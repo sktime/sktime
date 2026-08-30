@@ -414,7 +414,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         strategy = self.strategy
         NEW_PREDICT = ["last"]
 
-        if strategy in NEW_PREDICT:
+        if strategy in NEW_PREDICT and self._y.index.is_unique:
             return self._predict_naive(fh=fh, X=X)
 
         y_pred = super()._predict(fh=fh, X=X)
