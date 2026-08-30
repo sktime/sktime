@@ -3779,14 +3779,29 @@
       ]
     },
     {
+      "login": "maarcosrmz",
+      "name": "Marcos Ramirez Joos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/87144291?v=4",
+      "profile": "https://github.com/maarcosrmz",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "kajal-jotwani",
+      "name": "Kajal Jotwani",
+      "avatar_url": "https://avatars.githubusercontent.com/u/130732790?v=4",
+      "profile": "https://github.com/kajal-jotwani",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "srupat",
       "name": "Srujan Patwardhan",
       "avatar_url": "https://avatars.githubusercontent.com/u/131141745?v=4",
       "profile": "https://github.com/srupat",
-      "contributions": [
-        "code",
-        "doc"
-      ]
+      "contributions": ["code", "doc", "bug"]
     },
     {
       "login": "Spandan-Mishra",
@@ -4066,6 +4081,36 @@
       "profile": "https://github.com/DebojitNath",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "Harshavardhan-28",
+      "name": "Harshavardhan Khamkar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/66818754?v=4",
+      "profile": "https://github.com/Harshavardhan-28",
+      "contributions": [
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "JamesBoardman27",
+      "name": "James Boardman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/77696811?v=4",
+      "profile": "https://github.com/JamesBoardman27",
+      "contributions": [
+        "doc",
+        "maintenance",
+        "test"
+      ]
+    },
+    {
+      "login": "chala2001",
+      "name": "Chalaka Perera",
+      "avatar_url": "https://avatars.githubusercontent.com/u/150885184?v=4",
+      "profile": "https://chalaka.online",
+      "contributions": [
+        "doc"
       ]
     }
   ]

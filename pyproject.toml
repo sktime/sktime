@@ -208,7 +208,7 @@ dl = [
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
   "torch; (sys_platform != 'darwin' or python_version < '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.13"',
-  "pytorch-forecasting>=1.0.0,<1.6.0; (sys_platform != 'darwin' or python_version != '3.13') and python_version < '3.14'",
+  "pytorch-forecasting>=1.8.0; (sys_platform != 'darwin' or python_version != '3.13') and python_version < '3.14'",
   "lightning>=2.0,<2.7; (sys_platform != 'darwin' or python_version < '3.13')",
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
@@ -288,7 +288,7 @@ sktime = [
 ]
 
 [tool.setuptools.packages.find]
-exclude = ["tests", "tests.*"]
+include = ["sktime", "sktime.*"]
 
 [tool.ruff]
 line-length = 88
