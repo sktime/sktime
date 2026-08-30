@@ -204,16 +204,6 @@ class TSRGridSearchCV(_DelegatedRegressor):
     multimetric_ : bool
         Whether multiple metrics were passed in ``scoring``.
 
-    n_features_in_ : int
-        Number of features seen during ``fit``.
-        Present only if ``refit`` is not False, and ``best_estimator_``
-        exposes ``n_features_in_`` after being fitted.
-
-    feature_names_in_ : ndarray of shape (``n_features_in_``,)
-        Names of features seen during ``fit``.
-        Present only if ``refit`` is not False, and ``best_estimator_``
-        exposes ``feature_names_in_`` after being fitted.
-
     See Also
     --------
     ParameterGrid : Generates all the combinations of a hyperparameter grid.

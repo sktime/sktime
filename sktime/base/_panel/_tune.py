@@ -499,11 +499,6 @@ def _fit_tuner(tuner, X, y, estimator_type):
     if tuner.refit:
         tuner.refit_time_ = _fit_and_time(tuner.best_estimator_, X, y)
 
-        # sklearn compatible attributes, set only if the tuned estimator has them
-        for attr in ["n_features_in_", "feature_names_in_"]:
-            if hasattr(tuner.best_estimator_, attr):
-                setattr(tuner, attr, getattr(tuner.best_estimator_, attr))
-
     return tuner
 
 
