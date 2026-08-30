@@ -182,15 +182,19 @@ def test_deprecated_parallel_params(param):
     assert deprecated.best_params_ == via_backend.best_params_
 
 
-def test_inert_params_are_accepted():
-    """pre_dispatch and return_train_score are accepted, and do not change results."""
+# todo 1.3.0: remove this test together with the return_train_score parameter
+def test_return_train_score_is_deprecated():
+    """return_train_score warns when True, and no train scores are computed."""
     default, _, _ = _fit_tuner()
-    inert, _, _ = _fit_tuner(pre_dispatch=4, return_train_score=True)
+
+    with pytest.warns(DeprecationWarning, match="sktime 1.3.0"):
+        deprecated, _, _ = _fit_tuner(return_train_score=True)
 
     np.testing.assert_allclose(
-        default.cv_results_["mean_test_score"], inert.cv_results_["mean_test_score"]
+        default.cv_results_["mean_test_score"],
+        deprecated.cv_results_["mean_test_score"],
     )
-    assert not any("train" in key for key in inert.cv_results_)
+    assert not any("train" in key for key in deprecated.cv_results_)
 
 
 def test_no_sklearn_gridsearch_delegate():

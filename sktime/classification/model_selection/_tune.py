@@ -439,6 +439,24 @@ def _resolve_deprecated_parallel(tuner):
     return backend, backend_params
 
 
+# todo 1.3.0: remove this function and its call in _fit_tuner, together with
+# removal of the return_train_score parameter of TSCGridSearchCV and
+# TSRGridSearchCV
+def _check_return_train_score(tuner):
+    """Warn if the deprecated return_train_score parameter of a tuner is set."""
+    if not tuner.return_train_score:
+        return
+
+    warn(
+        f"Parameter return_train_score of {type(tuner).__name__} is deprecated "
+        "and will be removed in sktime 1.3.0. Train scores are not computed by "
+        "the native grid search, so the value passed is ignored, and "
+        "cv_results_ contains test scores only.",
+        DeprecationWarning,
+        obj=tuner,
+    )
+
+
 def _fit_tuner(tuner, X, y, estimator_type):
     """Run the grid search for a tuner, and write the results to it.
 
@@ -456,6 +474,7 @@ def _fit_tuner(tuner, X, y, estimator_type):
     tuner : reference to ``tuner``, with the fitted attributes written
     """
     backend, backend_params = _resolve_deprecated_parallel(tuner)
+    _check_return_train_score(tuner)
 
     results = _run_grid_search(
         estimator=tuner.estimator,
@@ -508,9 +527,9 @@ def _coerce_prediction(y_pred):
     return y_pred
 
 
-# todo 1.3.0: remove the n_jobs and pre_dispatch parameters, from the
-# signature and the docstring, and remove the call to
-# _resolve_deprecated_parallel in _fit_tuner
+# todo 1.3.0: remove the n_jobs, pre_dispatch and return_train_score parameters,
+# from the signature and the docstring, and remove the calls to
+# _resolve_deprecated_parallel and _check_return_train_score in _fit_tuner
 class TSCGridSearchCV(_DelegatedClassifier):
     """Exhaustive search over specified parameter values for a classifier.
 
@@ -613,8 +632,11 @@ class TSCGridSearchCV(_DelegatedClassifier):
         step, which will always raise the error.
 
     return_train_score : bool, default=False
-        Retained for backwards compatibility, this parameter is ignored.
-        Train scores are not computed, ``cv_results_`` holds test scores only.
+        Whether to include training scores in ``cv_results_``.
+
+        Deprecated, and will be removed in sktime 1.3.0. Train scores are not
+        computed by the native grid search, so the value passed is ignored and
+        ``cv_results_`` contains test scores only. Passing True raises a warning.
 
     tune_by_variable : bool, optional (default=False)
         Whether to tune parameter by each time series variable separately,

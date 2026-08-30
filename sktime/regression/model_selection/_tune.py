@@ -7,9 +7,9 @@ import numpy as np
 from sktime.regression._delegate import _DelegatedRegressor
 
 
-# todo 1.3.0: remove the n_jobs and pre_dispatch parameters, from the
-# signature and the docstring, and remove the call to
-# _resolve_deprecated_parallel in _fit_tuner
+# todo 1.3.0: remove the n_jobs, pre_dispatch and return_train_score parameters,
+# from the signature and the docstring, and remove the calls to
+# _resolve_deprecated_parallel and _check_return_train_score in _fit_tuner
 class TSRGridSearchCV(_DelegatedRegressor):
     """Exhaustive search over specified parameter values for a regressor.
 
@@ -110,8 +110,11 @@ class TSRGridSearchCV(_DelegatedRegressor):
         step, which will always raise the error.
 
     return_train_score : bool, default=False
-        Retained for backwards compatibility, this parameter is ignored.
-        Train scores are not computed, ``cv_results_`` holds test scores only.
+        Whether to include training scores in ``cv_results_``.
+
+        Deprecated, and will be removed in sktime 1.3.0. Train scores are not
+        computed by the native grid search, so the value passed is ignored and
+        ``cv_results_`` contains test scores only. Passing True raises a warning.
 
     tune_by_variable : bool, optional (default=False)
         Whether to tune parameter by each time series variable separately,
