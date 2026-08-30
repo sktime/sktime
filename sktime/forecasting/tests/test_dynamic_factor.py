@@ -130,3 +130,53 @@ def test_DynamicFactor_with_exogenous_variables():
     compare_predictions_against_statsmodels(
         sktime_point_predictions, sktime_interval_predictions, statsmodels_predictions
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DynamicFactor),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_DynamicFactor_insample_and_mixed():
+    """Test ``DynamicFactor`` on in-sample and mixed horizons."""
+    from sktime.forecasting.base import ForecastingHorizon
+
+    # Test with and without exogenous variables
+    for X_train, X_pred in [(None, None), (TRAIN_X, PREDICT_X)]:
+        unfitted_sktime_model = DynamicFactor(
+            k_factors=K_FACTORS, factor_order=FACTOR_ORDER
+        )
+        fitted_sktime_model = unfitted_sktime_model.fit(TRAIN_Y, X=X_train)
+
+        # 1. Purely in-sample
+        fh_insample = ForecastingHorizon([-3, -2, -1, 0], is_relative=True)
+        pred_in = fitted_sktime_model.predict(fh=fh_insample)
+        assert len(pred_in) == 4
+        assert (
+            pred_in.index == fh_insample.to_absolute_index(fitted_sktime_model.cutoff)
+        ).all()
+
+        pred_in_int = fitted_sktime_model.predict_interval(
+            fh=fh_insample, coverage=COVERAGES
+        )
+        assert len(pred_in_int) == 4
+        assert (
+            pred_in_int.index
+            == fh_insample.to_absolute_index(fitted_sktime_model.cutoff)
+        ).all()
+
+        # 2. Mixed (both in-sample and out-of-sample)
+        fh_mixed = ForecastingHorizon([-2, 0, 2], is_relative=True)
+        pred_mixed = fitted_sktime_model.predict(fh=fh_mixed, X=X_pred)
+        assert len(pred_mixed) == 3
+        assert (
+            pred_mixed.index == fh_mixed.to_absolute_index(fitted_sktime_model.cutoff)
+        ).all()
+
+        pred_mixed_int = fitted_sktime_model.predict_interval(
+            fh=fh_mixed, X=X_pred, coverage=COVERAGES
+        )
+        assert len(pred_mixed_int) == 3
+        assert (
+            pred_mixed_int.index
+            == fh_mixed.to_absolute_index(fitted_sktime_model.cutoff)
+        ).all()
