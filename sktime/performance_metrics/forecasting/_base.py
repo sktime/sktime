@@ -7,14 +7,17 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
-from copy import deepcopy
 from inspect import getfullargspec, isfunction, signature
 
 import numpy as np
 import pandas as pd
 from sklearn.utils import check_array
 
-from sktime.datatypes import VectorizedDF, check_is_scitype, convert_to
+from sktime.datatypes import (
+    VectorizedDF,
+    check_is_scitype,
+    convert_to,
+)
 from sktime.performance_metrics.base import BaseMetric
 from sktime.performance_metrics.forecasting._coerce import (
     _coerce_to_1d_numpy,
@@ -303,8 +306,13 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
 
+        y_true_mi = kwargs.pop("_y_true_mi")
+        y_pred_mi = kwargs.pop("_y_pred_mi")
+
         kwargs = self._apply_sample_weight_to_kwargs(
-            y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+            y_true=y_true_mi,
+            y_pred=y_pred_mi,
+            **kwargs,
         )
 
         requires_vectorization = isinstance(y_true_inner, VectorizedDF)
@@ -312,6 +320,8 @@ class BaseForecastingErrorMetric(BaseMetric):
             # pass to inner function
             out_df = self._evaluate(y_true=y_true_inner, y_pred=y_pred_inner, **kwargs)
         else:
+            kwargs["data"] = y_true_mi
+            kwargs["y_pred_data"] = y_pred_mi
             out_df = self._evaluate_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
@@ -386,8 +396,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         Parameters
         ----------
         y_true : VectorizedDF
+            schema only; slices come from ``data`` in ``kwargs``
         y_pred : VectorizedDF
-        non-time-like instances of y_true, y_pred must be identical
+            schema only; slices come from ``y_pred_data`` in ``kwargs``
+        kwargs : must include ``data`` and ``y_pred_data`` (converted multiindex frames)
         """
         backend = dict()
         backend["backend"] = self.get_config()["backend:parallel"]
@@ -397,8 +409,9 @@ class BaseForecastingErrorMetric(BaseMetric):
             estimator=self.clone(),
             method="_evaluate",
             varname_of_self="y_true",
-            args={**kwargs, "y_pred": y_pred},
+            y_pred=y_pred,
             colname_default=self.name,
+            **kwargs,
             **backend,
         )
 
@@ -406,7 +419,7 @@ class BaseForecastingErrorMetric(BaseMetric):
             eval_result = pd.DataFrame(
                 eval_result.iloc[:, 0].to_list(),
                 index=eval_result.index,
-                columns=y_true.X.columns,
+                columns=y_true.X_mi_columns,
             )
 
         if self.multilevel == "uniform_average":
@@ -423,8 +436,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         Parameters
         ----------
         y_true : VectorizedDF
+            schema only; slices come from ``data`` in ``kwargs``
         y_pred : VectorizedDF
-        non-time-like instances of y_true, y_pred must be identical
+            schema only; slices come from ``y_pred_data`` in ``kwargs``
+        kwargs : must include ``data`` and ``y_pred_data`` (converted multiindex frames)
         """
         backend = dict()
         backend["backend"] = self.get_config()["backend:parallel"]
@@ -434,9 +449,10 @@ class BaseForecastingErrorMetric(BaseMetric):
             estimator=self.clone().set_params(**{"multilevel": "uniform_average"}),
             method="_evaluate_by_index",
             varname_of_self="y_true",
-            args={**kwargs, "y_pred": y_pred},
+            y_pred=y_pred,
             colname_default=self.name,
             return_type="list",
+            **kwargs,
             **backend,
         )
 
@@ -525,8 +541,13 @@ class BaseForecastingErrorMetric(BaseMetric):
             y_true, y_pred, multioutput, multilevel, **kwargs
         )
 
+        y_true_mi = kwargs.pop("_y_true_mi")
+        y_pred_mi = kwargs.pop("_y_pred_mi")
+
         kwargs = self._apply_sample_weight_to_kwargs(
-            y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
+            y_true=y_true_mi,
+            y_pred=y_pred_mi,
+            **kwargs,
         )
 
         requires_vectorization = isinstance(y_true_inner, VectorizedDF)
@@ -536,6 +557,8 @@ class BaseForecastingErrorMetric(BaseMetric):
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
         else:
+            kwargs["data"] = y_true_mi
+            kwargs["y_pred_data"] = y_pred_mi
             out_df = self._evaluate_by_index_vectorized(
                 y_true=y_true_inner, y_pred=y_pred_inner, **kwargs
             )
@@ -635,12 +658,6 @@ class BaseForecastingErrorMetric(BaseMetric):
         y_true_orig = y_true
         y_pred_orig = y_pred
 
-        # unwrap y_true, y_pred, if wrapped in VectorizedDF
-        if isinstance(y_true, VectorizedDF):
-            y_true = y_true.X
-        if isinstance(y_pred, VectorizedDF):
-            y_pred = y_pred.X
-
         # check row and column indices if y_true vs y_pred
         same_rows = y_true.index.equals(y_pred.index)
         same_row_num = len(y_true.index) == len(y_pred.index)
@@ -661,12 +678,8 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "Indices of y_true will be used for y_pred.",
                 obj=self,
             )
-            if isinstance(y_pred_orig, VectorizedDF):
-                y_pred_orig = deepcopy(y_pred_orig)
-                y_pred_orig.X.index = y_true.index
-            else:
-                y_pred_orig = y_pred_orig.copy()
-                y_pred_orig.index = y_true.index
+            y_pred_orig = y_pred_orig.copy()
+            y_pred_orig.index = y_true.index
         if not same_cols:
             warn(
                 "y_pred and y_true do not have the same column index. "
@@ -674,12 +687,8 @@ class BaseForecastingErrorMetric(BaseMetric):
                 "Indices of y_true will be used for y_pred.",
                 obj=self,
             )
-            if isinstance(y_pred_orig, VectorizedDF):
-                y_pred_orig = deepcopy(y_pred_orig)
-                y_pred_orig.X.columns = y_true.columns
-            else:
-                y_pred_orig = y_pred_orig.copy()
-                y_pred_orig.columns = y_true.columns
+            y_pred_orig = y_pred_orig.copy()
+            y_pred_orig.columns = y_true.columns
         # check multioutput arg
         # todo: add this back when variance_weighted is supported
         # ("raw_values", "uniform_average", "variance_weighted")
@@ -721,34 +730,42 @@ class BaseForecastingErrorMetric(BaseMetric):
         INNER_MTYPES = ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"]
 
         def _coerce_to_df(y, var_name="y"):
-            if isinstance(y, VectorizedDF):
-                return y.X_multiindex
-
             valid, msg, metadata = check_is_scitype(
                 y, scitype=SCITYPES, return_metadata=[], var_name=var_name
             )
             if not valid:
                 raise TypeError(msg)
             y_inner = convert_to(y, to_type=INNER_MTYPES)
+            return y_inner, metadata["scitype"]
 
-            scitype = metadata["scitype"]
-            ignore_index = multilevel == "uniform_average_time"
-            if scitype in ["Panel", "Hierarchical"] and not ignore_index:
-                y_inner = VectorizedDF(y_inner, is_scitype=scitype)
-            return y_inner
-
-        y_true = _coerce_to_df(y_true, var_name="y_true")
-        y_pred = _coerce_to_df(y_pred, var_name="y_pred")
+        y_true, scitype = _coerce_to_df(y_true, var_name="y_true")
+        y_pred, _ = _coerce_to_df(y_pred, var_name="y_pred")
         if "y_train" in kwargs.keys():
-            kwargs["y_train"] = _coerce_to_df(kwargs["y_train"], var_name="y_train")
+            kwargs["y_train"], _ = _coerce_to_df(kwargs["y_train"], var_name="y_train")
         if "y_pred_benchmark" in kwargs.keys():
-            kwargs["y_pred_benchmark"] = _coerce_to_df(
+            kwargs["y_pred_benchmark"], _ = _coerce_to_df(
                 kwargs["y_pred_benchmark"], var_name="y_pred_benchmark"
             )
 
         y_true, y_pred, multioutput, multilevel = self._check_consistent_input(
             y_true, y_pred, multioutput, multilevel
         )
+
+        ignore_index = multilevel == "uniform_average_time"
+        if scitype in ["Panel", "Hierarchical"] and not ignore_index:
+            y_true_mi = y_true
+            y_pred_mi = y_pred
+            y_true = VectorizedDF(y_true_mi, is_scitype=scitype)
+            y_pred = VectorizedDF(y_pred_mi, is_scitype=scitype)
+            for k in ("y_train", "y_pred_benchmark"):
+                if k in kwargs:
+                    kwargs[f"{k}_data"] = kwargs[k]
+                    kwargs[k] = VectorizedDF(kwargs[k], is_scitype=scitype)
+            kwargs["_y_true_mi"] = y_true_mi
+            kwargs["_y_pred_mi"] = y_pred_mi
+        else:
+            kwargs["_y_true_mi"] = y_true
+            kwargs["_y_pred_mi"] = y_pred
 
         return y_true, y_pred, multioutput, multilevel, kwargs
 

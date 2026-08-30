@@ -234,13 +234,13 @@ class BaseClassifier(BasePanelMixin):
         start = int(round(time.time() * 1000))
 
         # check and convert y for multioutput vectorization
-        y, y_metadata, y_inner_mtype = self._check_y(y, return_to_mtype=True)
+        y, y_metadata, y_inner_mtype, y_data = self._check_y(y, return_to_mtype=True)
         self._y_metadata = y_metadata
         self._y_inner_mtype = y_inner_mtype
         self._is_vectorized = isinstance(y, VectorizedDF)
 
         if self._is_vectorized:
-            self._vectorize("fit", X=X, y=y)
+            self._vectorize("fit", X=X, y=y, y_data=y_data)
             # fit timer end
             self.fit_time_ = int(round(time.time() * 1000)) - start
             # this should happen last: fitted state is set to True
