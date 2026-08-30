@@ -139,3 +139,29 @@ def test_SARIMAX_update_with_exogenous_variables():
     # Verify that the forecaster state is correctly updated
     assert forecaster2.cutoff == y_test.index[-1]
     assert forecaster2._is_fitted
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SARIMAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_SARIMAX_exogenous_probabilistic():
+    """Test SARIMAX predict_interval and predict_quantiles with exogenous variables.
+
+    Failure condition of #7849.
+    """
+    import numpy as np
+    from sktime.datasets import load_longley
+    from sktime.split import temporal_train_test_split
+
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
+    forecaster = SARIMAX()
+    forecaster.fit(y_train, X=X_train)
+    # X_test has length 4, but fh has length 2.
+    # predict_interval and predict_quantiles should slice X_test to match fh size
+    fh = [1, 2]
+    forecaster.predict_interval(fh=fh, X=X_test, coverage=[0.90])
+    forecaster.predict_quantiles(fh=fh, X=X_test, alpha=[0.05, 0.95])
+
+
