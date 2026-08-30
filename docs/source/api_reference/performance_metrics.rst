@@ -223,6 +223,7 @@ Event detection - anomalies, outliers
     DirectedChamfer
     DirectedHausdorff
     DetectionCount
+    SoftEDF1Score
     WindowedF1Score
     TimeSeriesAUPRC
 
