@@ -185,11 +185,12 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
         self.optimizer = optim
         self.optimizer_kwargs = optim_kwargs
 
-        # default case
-        if self.optim is None:
-            self.optimizer = "SGD"
-            if self.optimizer_kwargs is None:
-                self.optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
+        # Compute effective optimizer values for super().__init__()
+        # without mutating the stored parameters
+        effective_optimizer = optim if optim is not None else "SGD"
+        effective_optimizer_kwargs = optim_kwargs
+        if optim is None and optim_kwargs is None:
+            effective_optimizer_kwargs = {"momentum": 0.9, "weight_decay": 0.0005}
 
         if len(self.filter_sizes) != len(self.kernel_sizes):
             raise ValueError(
@@ -204,8 +205,8 @@ class MCDCNNClassifierTorch(BaseDeepClassifierPytorch):
             activation=self.activation,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
-            optimizer=self.optimizer,
-            optimizer_kwargs=self.optimizer_kwargs,
+            optimizer=effective_optimizer,
+            optimizer_kwargs=effective_optimizer_kwargs,
             callbacks=self.callbacks,
             callback_kwargs=self.callback_kwargs,
             metrics=self.metrics,
