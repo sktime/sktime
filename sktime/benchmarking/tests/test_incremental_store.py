@@ -15,7 +15,7 @@ from sktime.benchmarking._storage_handlers import (
     CSVStorageHandler,
     JSONStorageHandler,
 )
-from sktime.benchmarking.benchmarks import _BenchmarkingResults
+from sktime.benchmarking.benchmarks import _BenchmarkingResults, _is_failed_result
 from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.performance_metrics.forecasting import MeanSquaredPercentageError
@@ -302,7 +302,8 @@ def test_benchmark_resumes_after_crash(tmp_path, monkeypatch, output_suffix):
             raise RuntimeError("Simulated benchmark failure")
         return original_save(self)
 
-    # Validation failures are caught; simulate a crash during final save instead.
+    # Failed validation runs are checkpointed with NaN; simulate a crash during
+    # final save instead.
     monkeypatch.setattr(_BenchmarkingResults, "save", crashing_save_once)
 
     with pytest.raises(RuntimeError, match="Simulated benchmark failure"):
@@ -313,8 +314,13 @@ def test_benchmark_resumes_after_crash(tmp_path, monkeypatch, output_suffix):
 
     assert not results_path.exists()
     assert store.parts_dir.exists()
-    assert len(partial_results) == 1
-    assert partial_results[0].model_id == "naive_last"
+    assert len(partial_results) == 2
+    successful = [r for r in partial_results if not _is_failed_result(r)]
+    failed = [r for r in partial_results if _is_failed_result(r)]
+    assert len(successful) == 1
+    assert successful[0].model_id == "naive_last"
+    assert len(failed) == 1
+    assert failed[0].model_id == "naive_mean"
 
     resumed_benchmark = _setup_benchmark()
     results_df = resumed_benchmark.run(str(results_path))
