@@ -60,6 +60,25 @@ def _coerce_duration_to_int(
         raise TypeError("`duration` type not understood.")
 
 
+def _to_offset_compat(freq):
+    """Coerce a frequency string to a pandas offset.
+
+    Like ``to_offset``, but also accepts period-only aliases such as ``"M"``,
+    which pandas 3 no longer accepts in ``to_offset``.
+    """
+    with _suppress_pd22_warning():
+        try:
+            return pd.tseries.frequencies.to_offset(freq)
+        except ValueError:
+            # pandas 3 rejects period-only aliases such as "M", which is what a
+            # monthly PeriodIndex reports as freqstr; PeriodDtype resolves these
+            try:
+                return pd.PeriodDtype(freq).freq
+            except Exception:  # noqa: S110
+                pass
+            raise
+
+
 def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
     """Extract interval count and unit from frequency string.
 
@@ -70,8 +89,7 @@ def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
     if freq is None:
         raise ValueError("frequency is missing")
     else:
-        with _suppress_pd22_warning():
-            offset = pd.tseries.frequencies.to_offset(freq)
+        offset = _to_offset_compat(freq)
         count, unit = offset.n, offset.base.freqstr
         return count, unit
 

@@ -3,8 +3,8 @@ from sklearn.preprocessing import OneHotEncoder
 
 from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
 from sktime.regression.model_selection import TSRGridSearchCV
-from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-from sktime.transformations.series.subset import ColumnSelect
+from sktime.transformations.adapt import TabularToSeriesAdaptor
+from sktime.transformations.subset import ColumnSelect
 
 
 def test_pipeline_with_categorical():

@@ -8,7 +8,7 @@ from numpy.random import RandomState
 
 from sktime.clustering.metrics.averaging import _resolve_average_callable
 from sktime.clustering.partitioning import BaseTimeSeriesLloyds
-from sktime.distances import pairwise_distance
+from sktime.dists_kernels._numba_distances import pairwise_distance
 
 
 class TimeSeriesKMeans(BaseTimeSeriesLloyds):

@@ -1,6 +1,5 @@
 import pytest
-
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 def test_check_soft_dependencies_raises_error():
