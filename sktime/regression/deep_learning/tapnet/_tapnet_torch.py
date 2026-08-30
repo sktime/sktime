@@ -140,11 +140,14 @@ class TapNetRegressorTorch(BaseDeepRegressorTorch):
     _tags = {
         "authors": ["srupat"],
         "maintainers": ["srupat"],
-        "python_version": ">=3.10, <3.15",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
         "capability:multivariate": True,
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.tapnet._tapnet_torch"],
     }
 
     def __init__(
