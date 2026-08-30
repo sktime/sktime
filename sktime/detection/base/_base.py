@@ -284,8 +284,10 @@ class BaseDetector(BaseEstimator):
               segments. Possible labels are integers starting from 0.
         """
         y_sparse = self.predict(X)
+        index = X.index if hasattr(X, "index") else pd.RangeIndex(len(X))
         y_dense = self.sparse_to_dense(y_sparse, pd.RangeIndex(len(X)))
         y_dense = self._coerce_to_df(y_dense, columns=["labels"])
+        y_dense.index = index
         return y_dense
 
     def transform_scores(self, X):
