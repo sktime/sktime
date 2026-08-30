@@ -231,6 +231,18 @@ def _evaluate_blueprint(blueprint, cv, y, X=None):
         }
 
 
+def _is_valid(result):
+    """Whether a blueprint result may enter the selection.
+
+    A blueprint can evaluate without raising and still score ``nan``, e.g. if a
+    transformer leaves NaNs in the target. Such results must be excluded:
+    ``min`` over a list containing ``nan`` is order-dependent, and
+    ``nan < best_overall_score`` is always False, so a ``nan`` would both mask
+    finite scores and leave ``best_overall_result`` unset.
+    """
+    return result["error"] is None and math.isfinite(result["score"])
+
+
 def _call_llm(messages, model, api_params):
     """Call the LLM via litellm and return the response text."""
     import litellm
@@ -785,16 +797,7 @@ class AutoResearchForecaster(BaseForecaster):
                 print(f"  [!] LLM call failed: {e}")
                 continue
 
-            # a blueprint can evaluate without raising, yet score nan - e.g. if
-            # a transformer leaves NaNs in the target. Such scores must not enter
-            # the selection: ``min`` with nan is order-dependent, and ``nan <
-            # best_overall_score`` is always False, so a nan would both mask
-            # finite scores and leave ``best_overall_result`` unset.
-            valid_results = [
-                r
-                for r in iteration_results
-                if r["error"] is None and math.isfinite(r["score"])
-            ]
+            valid_results = [r for r in iteration_results if _is_valid(r)]
             if valid_results:
                 best_iter = min(valid_results, key=lambda r: r["score"])
                 if best_iter["score"] < best_overall_score:
