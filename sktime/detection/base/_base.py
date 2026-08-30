@@ -579,10 +579,18 @@ class BaseDetector(BaseEstimator):
         -------
         X : X_inner_mtype
             Data to be transformed
+
+        Raises
+        ------
+        TypeError
+            If ``X`` is not of a supported scitype.
+        ValueError
+            If ``X`` is multivariate and the detector does not support multivariate
+            input, i.e., the tag ``capability:multivariate`` is ``False``.
         """
         ALLOWED_SCITYPES = ["Series", "Panel"]
         X_valid, X_msg, X_metadata = check_is_scitype(
-            X, scitype=ALLOWED_SCITYPES, return_metadata=[]
+            X, scitype=ALLOWED_SCITYPES, return_metadata=["is_univariate", "n_columns"]
         )
         self._X_metadata = X_metadata
         if not X_valid:
@@ -596,17 +604,31 @@ class BaseDetector(BaseEstimator):
                 " See the detection tutorial examples/07_detection.ipynb, or"
                 " the data format tutorial examples/AA_datatypes_and_datasets.ipynb"
             )
-            if not X_valid:
-                check_is_error_msg(
-                    X_msg,
-                    var_name=msg_start,
-                    allowed_msg=allowed_msg,
-                    raise_exception=True,
-                )
+            check_is_error_msg(
+                X_msg,
+                var_name=msg_start,
+                allowed_msg=allowed_msg,
+                raise_exception=True,
+            )
+
+        # Check multivariate capability: raise a clear error rather than
+        # silently producing incorrect results on multi-column input.
+        # Uses metadata from check_is_scitype (not X.shape) per sktime conventions.
+        # Mirrors the equivalent guard in BaseClassifier._check_capabilities.
+        n_columns = X_metadata.get("n_columns", 1)
+        allow_mv = self.get_tag("capability:multivariate", tag_value_default=True)
+        if not allow_mv and n_columns > 1:
+            raise ValueError(
+                f"{type(self).__name__} does not support multivariate time series "
+                f"(detected {n_columns} columns). "
+                f"Set the tag 'capability:multivariate' to True in the estimator, "
+                f"or use a multivariate-capable detector."
+            )
 
         X_inner_mtype = self.get_tag("X_inner_mtype")
         X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
         return X_inner
+
 
     def _fit(self, X, y=None):
         """Fit to training data.
