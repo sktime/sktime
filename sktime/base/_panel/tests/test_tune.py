@@ -1,6 +1,6 @@
 """Tests for the grid search engine shared by the classification and regression tuners.
 
-The engine is tested directly here, the tuner classes are tested in ``test_tune``.
+The engine is tested directly here, the tuner classes in their own test modules.
 """
 
 __author__ = ["yash-sangwan"]
@@ -10,12 +10,12 @@ import pytest
 from sklearn.metrics import accuracy_score, log_loss, mean_squared_error, r2_score
 from sklearn.model_selection import KFold, ParameterGrid, StratifiedKFold
 
-from sktime.classification.dummy import DummyClassifier
-from sktime.classification.model_evaluation import evaluate
-from sktime.classification.model_selection._tune import (
+from sktime.base._panel._tune import (
     _resolve_cv,
     _run_grid_search,
 )
+from sktime.classification.dummy import DummyClassifier
+from sktime.classification.model_evaluation import evaluate
 from sktime.datasets import load_unit_test
 from sktime.exceptions import NotFittedError
 from sktime.tests.test_switch import run_test_module_changed
@@ -25,8 +25,10 @@ REG_GRID = {"strategy": ["constant"], "constant": [1.0, 2.0, 100.0]}
 CV = KFold(n_splits=2, shuffle=False)
 
 pytestmark = pytest.mark.skipif(
-    not run_test_module_changed(["sktime.classification", "sktime.regression"]),
-    reason="run test only if classification or regression code has changed",
+    not run_test_module_changed(
+        ["sktime.base._panel", "sktime.classification", "sktime.regression"]
+    ),
+    reason="run test only if the engine, classification or regression changed",
 )
 
 

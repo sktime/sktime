@@ -4,6 +4,11 @@ __author__ = ["ksharma6", "yash-sangwan"]
 
 import numpy as np
 
+from sktime.base._panel._tune import (
+    _check_refit_for_predict,
+    _coerce_prediction,
+    _fit_tuner,
+)
 from sktime.regression._delegate import _DelegatedRegressor
 
 
@@ -312,10 +317,6 @@ class TSRGridSearchCV(_DelegatedRegressor):
         -------
         self : Reference to self.
         """
-        # deferred import, sibling type modules must not cross-import at module
-        # level, see sktime/tests/test_cross_module_imports.py
-        from sktime.classification.model_selection._tune import _fit_tuner
-
         return _fit_tuner(self, X, y, estimator_type="regressor")
 
     def _predict(self, X):
@@ -337,11 +338,6 @@ class TSRGridSearchCV(_DelegatedRegressor):
         -------
         y : 2D np.ndarray of shape [n_instances, n_outputs], predicted values
         """
-        from sktime.classification.model_selection._tune import (
-            _check_refit_for_predict,
-            _coerce_prediction,
-        )
-
         _check_refit_for_predict(self)
         return _coerce_prediction(self._get_delegate().predict(X=X))
 
