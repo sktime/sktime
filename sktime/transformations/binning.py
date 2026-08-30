@@ -38,21 +38,47 @@ class TimeBinAggregate(BaseTransformer):
         Should have signature 1D -> float and defaults
         to mean if None
     return_index : str, one of the below; optional, default="range"
-        "range" = RangeIndex with bins indexed in same order as in ``bins``
-        "bin_start" = transformed pd.DataFrame will be indexed by bin starts
-        "bin_end" = transformed pd.DataFrame will be indexed by bin starts
-        "bin_mid" = transformed pd.DataFrame will be indexed by bin midpoints
-        "bin" = transformed pd.DataFrame will have ``bins`` as ``IntervalIndex``
+
+        * ``"range"`` = ``RangeIndex`` with bins indexed in same order as in ``bins``
+        * ``"bin_start"`` = transformed pd.DataFrame will be indexed by bin starts
+        * ``"bin_end"`` = transformed pd.DataFrame will be indexed by bin ends
+        * ``"bin_mid"`` = transformed pd.DataFrame will be indexed by bin midpoints
+        * ``"bin"`` = transformed pd.DataFrame will have ``bins`` as ``IntervalIndex``
 
     Examples
     --------
-    from sktime.datatypes import get_examples
-    from sktime.transformations.binning import TimeBinAggregate
+    Basic usage:
 
-    bins = [0, 2, 4]
-    X = get_examples("pd.DataFrame")[0]
+    >>> import pandas as pd
+    >>> from sktime.transformations.binning import TimeBinAggregate
+    >>> X = pd.DataFrame(
+    ...     {"a": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}, index=list(range(10))
+    ... )
+    >>> t = TimeBinAggregate(bins=[-1, 2, 5, 10])
+    >>> t.fit_transform(X)
+          0
+    -1  2.0
+     2  5.0
+     5  8.5
 
-    t = TimeBinAggregate([-1, 2, 10])
+    Using ``return_index="range"`` to get a plain sequential index instead of
+    bin starts:
+
+    >>> t2 = TimeBinAggregate(bins=[-1, 2, 5, 10], return_index="range")
+    >>> t2.fit_transform(X)
+         0
+    0  2.0
+    1  5.0
+    2  8.5
+
+    Using ``return_index="bin_end"`` to index by the end of each bin instead:
+
+    >>> t3 = TimeBinAggregate(bins=[-1, 2, 5, 10], return_index="bin_end")
+    >>> t3.fit_transform(X)
+          0
+    2   2.0
+    5   5.0
+    10  8.5
     """
 
     _tags = {
@@ -129,21 +155,30 @@ class TimeBinAggregate(BaseTransformer):
 
         if self.return_index == "range":
             Xt = Xt.reset_index(drop=True)
+
         elif self.return_index == "bin_start":
-            if bins is pd.IntervalIndex:
+            if isinstance(bins, pd.IntervalIndex):
                 Xt.index = [x.left for x in Xt.index]
             else:
                 Xt.index = bins[:-1]
+
         elif self.return_index == "bin_end":
-            if bins is pd.IntervalIndex:
+            if isinstance(bins, pd.IntervalIndex):
                 Xt.index = [x.right for x in Xt.index]
             else:
                 Xt.index = bins[1:]
+
         elif self.return_index == "bin_mid":
-            if bins is pd.IntervalIndex:
-                Xt.index = [(x.left + x.right) / 2 for x in Xt.index]
+            if isinstance(bins, pd.IntervalIndex):
+                Xt_ix = [(x.left + x.right) / 2 for x in Xt.index]
             else:
-                Xt.index = [(bins[i] + bins[i + 1]) / 2 for i in range(len(bins))]
+                Xt_ix = (np.array(bins[:-1]) + np.array(bins[1:])) / 2
+            # if all integer, coerce to integer
+            remainder = np.mod(Xt_ix, 1)
+            if np.sum(np.abs(remainder)) < 1e-10:
+                Xt_ix = np.array(Xt_ix, dtype=int)
+            Xt.index = Xt_ix
+
         elif self.return_index == "bin":
             Xt.index = self._bins
         return Xt
@@ -171,4 +206,9 @@ class TimeBinAggregate(BaseTransformer):
         params1 = {"bins": [0, 1]}
 
         params2 = {"bins": [0, 2, 4], "aggfunc": np.sum, "return_index": "bin_start"}
-        return [params1, params2]
+
+        params3 = {"bins": [0, 2, 4], "aggfunc": np.sum, "return_index": "bin_end"}
+
+        params4 = {"bins": [0, 2, 4], "aggfunc": np.sum, "return_index": "bin_mid"}
+
+        return [params1, params2, params3, params4]

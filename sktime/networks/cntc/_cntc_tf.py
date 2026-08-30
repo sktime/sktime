@@ -57,6 +57,13 @@ class CNTCNetwork(BaseDeepNetwork):
             networks, Contextual long short-term memory, Attention, Multilayer
             perceptron},
        }
+
+    Examples
+    --------
+    >>> from sktime.networks.cntc import CNTCNetwork
+    >>> network = CNTCNetwork(
+    ...     filter_sizes=(8, 4), kernel_sizes=(1, 1), random_state=42
+    ... )
     """
 
     _tags = {
