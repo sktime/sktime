@@ -574,22 +574,19 @@ def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=Fal
         if obj.ndim > 1:
             obj = obj.swapaxes(1, -1)
         # deal with inclusive/exclusive
-        if not start_inclusive:
+        # a bound is absent only if it is None; 0 is a valid bound
+        if start is not None and not start_inclusive:
             start = start + 1
-        if end_inclusive:
+        if end is not None and end_inclusive:
             end = end + 1
         # deal with out-of-index
-        if start < 0:
-            start = 0
-        if start >= len(obj):
-            start = len(obj) - 1
-        # subsetting
-        if start and end:
-            obj_subset = obj[start:end]
-        elif end:
-            obj_subset = obj[:end]
-        else:
-            obj_subset = obj[start:]
+        if start is not None:
+            if start < 0:
+                start = 0
+            if start >= len(obj):
+                start = len(obj) - 1
+        # subsetting; None (not 0) means the bound is absent, which slicing handles
+        obj_subset = obj[start:end]
         # we need to swap first and last dimension back before returning, if done above
         if obj.ndim > 1:
             obj_subset = obj_subset.swapaxes(1, -1)
@@ -616,11 +613,12 @@ def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=Fal
             else:
                 return time_indices < end
 
-        if start and end:
+        # a bound is absent only if it is None; 0 is a valid bound
+        if start is not None and end is not None:
             slice_select = get_start_cond() & get_end_cond()
-        elif end:
+        elif end is not None:
             slice_select = get_end_cond()
-        elif start:
+        elif start is not None:
             slice_select = get_start_cond()
 
         obj_subset = obj.iloc[slice_select]

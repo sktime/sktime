@@ -448,6 +448,23 @@ def test_get_slice_expected_result():
     assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
 
 
+def test_get_slice_zero_and_none_bounds():
+    """Tests that get_slice treats 0 as a valid bound and None as an absent one.
+
+    Regression test for bug #10966: an integer bound of 0 was treated as an
+    omitted bound (falsy check), and the numpy path performed arithmetic or
+    comparisons on None when only one bound was supplied.
+    """
+    # zero bounds and omitted bounds must all yield an empty slice here
+    assert len(get_slice(np.arange(5), start=0, end=0)) == 0
+    assert len(get_slice(np.arange(5), start=None, end=0)) == 0
+    assert len(get_slice(pd.Series(np.arange(5)), start=2, end=0)) == 0
+
+    # a start of 0 with a non-zero end is a normal slice, not an absent start
+    assert list(get_slice(np.arange(5), start=0, end=3)) == [0, 1, 2]
+    assert list(get_slice(pd.Series(np.arange(5)), start=0, end=3)) == [0, 1, 2]
+
+
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
