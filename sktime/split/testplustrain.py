@@ -29,7 +29,7 @@ class TestPlusTrainSplitter(BaseSplitter):
     Examples
     --------
     >>> from sktime.datasets import load_airline
-    >>> from sktime.split import ExpandingWindowSplitter
+    >>> from sktime.split import ExpandingWindowSplitter, TestPlusTrainSplitter
 
     >>> y = load_airline()
     >>> y_template = y[:60]
@@ -40,7 +40,7 @@ class TestPlusTrainSplitter(BaseSplitter):
 
     def __init__(self, cv):
         self.cv = cv
-        super().__init__()
+        super().__init__(fh=cv.fh, window_length=cv.window_length)
 
         # dispatch split_series to the same split/split_loc as the wrapped cv
         # for performance reasons
@@ -133,6 +133,6 @@ class TestPlusTrainSplitter(BaseSplitter):
         """
         from sktime.split import ExpandingWindowSplitter, SingleWindowSplitter
 
-        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
-        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=24)
+        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=5, step_length=2)
+        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=3)
         return [{"cv": cv_1}, {"cv": cv_2}]
