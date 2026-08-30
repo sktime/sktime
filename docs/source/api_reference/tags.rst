@@ -318,6 +318,7 @@ The tags below have limited use in retrieval or inspection of objects.
 
     x_inner_mtype
     y_inner_mtype
+    enforce_index_type
     visual_block_kind
 
 .. _dev_testing_tags:
