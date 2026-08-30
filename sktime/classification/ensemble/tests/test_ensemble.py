@@ -100,7 +100,7 @@ def test_equivalent_model_specifications(n_intervals, n_estimators):
     clf2 = Pipeline(steps)
     clf2.fit(X_train, y_train)
     b = clf2.predict(X_test)
-    np.array_equal(a, b)
+    assert np.array_equal(a, b)
 
 
 # Compare TimeSeriesForest ensemble predictions using pipeline as estimator
