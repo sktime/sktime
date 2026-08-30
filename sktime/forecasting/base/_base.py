@@ -1842,6 +1842,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         """
         if X is None and y is None:
             return None, None
+        # --- SERIES TO DATAFRAME UPGRADE FIX ---
+        if isinstance(y, pd.Series) and isinstance(y.index, pd.MultiIndex):
+            y = y.to_frame()
+
+        if isinstance(X, pd.Series) and isinstance(X.index, pd.MultiIndex):
+            X = X.to_frame()
 
         def _most_complex_scitype(scitypes, smaller_equal_than=None):
             """Return most complex scitype in a list of str."""
