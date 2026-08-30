@@ -595,8 +595,8 @@ def test_msle_no_stdout_on_index_mismatch():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.performance_metrics"]),
-    reason="Run if performance_metrics module has changed.",
+    not run_test_module_changed(["sktime.performance_metrics.forecasting._base"]),
+    reason="Run if the forecasting metric base class has changed.",
 )
 def test_metric_missing_both_evaluate_raises():
     """A metric implementing neither _evaluate nor _evaluate_by_index must raise.
@@ -625,8 +625,13 @@ def test_metric_missing_both_evaluate_raises():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.performance_metrics"]),
-    reason="Run if performance_metrics module has changed.",
+    not run_test_module_changed(
+        [
+            "sktime.performance_metrics.forecasting._base",
+            "sktime.performance_metrics.forecasting.probabilistic._classes",
+        ]
+    ),
+    reason="Run if a forecasting metric base class has changed.",
 )
 def test_metric_missing_both_evaluate_raises_proba():
     """Same as the above, for the probabilistic metric base class."""
@@ -648,8 +653,8 @@ def test_metric_missing_both_evaluate_raises_proba():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.performance_metrics"]),
-    reason="Run if performance_metrics module has changed.",
+    not run_test_module_changed(["sktime.performance_metrics.forecasting._base"]),
+    reason="Run if the forecasting metric base class has changed.",
 )
 def test_metric_single_implementation_still_delegates():
     """Implementing only one of the two private methods must keep working.
