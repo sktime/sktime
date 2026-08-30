@@ -3,6 +3,7 @@
 
 __author__ = ["vedantag17"]
 
+from copy import deepcopy
 from typing import Optional
 
 import numpy as np
@@ -14,8 +15,8 @@ from sktime.forecasting.base import BaseForecaster
 class GreykiteForecaster(BaseForecaster):
     """Adapter for using Greykite forecasting models within sktime.
 
-    This forecaster wraps Greykite forecast_pipeline (configured via a ForecastConfig)
-    and exposes a sktime-compatible API.
+    This forecaster wraps Greykite ``forecast_pipeline`` and exposes a
+    sktime-compatible API.
 
     WARNING: the ``greykite`` package has very restrictive dependencies that typically
     prevent installation together with other packages. For this reason, this estimator
@@ -23,17 +24,185 @@ class GreykiteForecaster(BaseForecaster):
     ``check_estimator(GreykiteForecaster)`` on your system before deploying
     this estimator.
 
+    Notes
+    -----
+    - Greykite ``ForecastConfig`` fields are available either via a ``forecast_config``
+      object or as flattened constructor parameters.
+    - If ``forecast_config`` is provided, it is used as the base configuration.
+    - Flattened parameters whose default is ``None`` override the corresponding
+      fields on that object when set.
+    - ``model_template`` and ``coverage`` are applied only when ``forecast_config`` is
+      ``None``, so their defaults do not overwrite values already set on a
+      user-provided config.
+    - To change those fields when passing ``forecast_config``, set them on the config
+      object itself.
+    - The time index of ``y`` and ``X`` can be any format recognized by
+      ``pandas.to_datetime``. If conversion fails, a default daily
+      ``DatetimeIndex`` starting at ``2000-01-01`` is created for Greykite
+      internally.
+
     Parameters
     ----------
-    forecast_config : ForecastConfig, optional
-        Configuration object for Greykite's forecasting pipeline.
-        If None, a default configuration is created.
-    date_format : str, optional
-        Format of the timestamp in the data. If None, it is inferred.
-    model_template : str, optional
-        Name of the model template to use (default: "SILVERKITE").
-    coverage : float, optional
-        Intended coverage of the prediction bands (0.0 to 1.0).
+    forecast_config : greykite ForecastConfig or None, default=None
+        Optional Greykite ``ForecastConfig`` used as the base configuration.
+        If None, a config is built from the flattened parameters below.
+        Prefer the flattened parameters for discoverability; use
+        ``forecast_config`` for advanced setups or when migrating existing
+        Greykite code.
+    date_format : str or None, default=None
+        Format string for parsing timestamps (e.g. ``"%Y-%m-%d"``).
+        If None, Greykite infers the format.
+    model_template : str, default="SILVERKITE"
+        Greykite model template name. Used only when ``forecast_config`` is
+        None; otherwise set ``forecast_config.model_template`` instead.
+
+        Main templates:
+
+        * ``"SILVERKITE"`` - default Silverkite model with automatic growth,
+          seasonality, holidays, autoregression, and interactions. Good
+          general choice for hourly and daily data.
+        * ``"PROPHET"`` - Facebook Prophet with growth, seasonality,
+          holidays, regressors, and prediction intervals.
+        * ``"AUTO_ARIMA"`` - ARIMA with automatic order selection.
+        * ``"AUTO"`` - automatically selects a SimpleSilverkite template
+          from data frequency, forecast horizon, and CV settings.
+        * ``"SILVERKITE_EMPTY"`` - intercept-only Silverkite; add only the
+          components you need via ``model_components_param``.
+        * ``"SK"`` - low-level Silverkite interface for custom tuning; not
+          intended out-of-the-box.
+        * ``"LAG_BASED"`` - forecasts from aggregated past values
+          (e.g. week-over-week).
+        * ``"SILVERKITE_TWO_STAGE"`` / ``"SILVERKITE_WOW"`` - multistage
+          models (long-term effects then short-term residuals, or
+          Silverkite plus week-over-week).
+
+        Frequency / horizon variants of Silverkite also exist, for example
+        ``SILVERKITE_DAILY_1``, ``SILVERKITE_DAILY_90``, ``SILVERKITE_WEEKLY``,
+        ``SILVERKITE_MONTHLY``, and ``SILVERKITE_HOURLY_{1,24,168,336}``.
+        These use hyperparameters tuned for that frequency and horizon.
+        See greykite ``ModelTemplateEnum`` for the full list [2]_.
+
+    coverage : float, default=0.95
+        Intended coverage of prediction bands, between 0 and 1. Used only
+        when ``forecast_config`` is None; otherwise set
+        ``forecast_config.coverage`` instead. If None on the config,
+        Greykite does not return upper/lower prediction bounds.
+    forecast_one_by_one : bool, int, list of int, or None, default=None
+        If set, enables Greykite's one-by-one forecasting (fit/predict in
+        segments of the horizon). ``True`` uses the full horizon as one
+        segment; an int is a segment size; a list of ints must sum to the
+        horizon. If None and ``forecast_config`` is None, defaults to
+        False; if ``forecast_config`` is provided, that config's value is
+        kept.
+    freq : str or None, default=None
+        Pandas frequency string for the series (e.g. ``"D"``, ``"H"``).
+        If None, inferred from the index of ``y`` when possible. Maps to
+        ``MetadataParam.freq``.
+    anomaly_info : dict, list of dict, or None, default=None
+        Optional anomaly adjustment specification. Values flagged here are
+        corrected before fitting. Maps to ``MetadataParam.anomaly_info``.
+    model_components_param : dict, ModelComponentsParam, list, or None, default=None
+        Model structure and tuning options passed to Greykite
+        ``ModelComponentsParam``. If None, an empty ``ModelComponentsParam``
+        is used and the chosen ``model_template`` supplies component defaults.
+        When a dict (or list of dicts for grid search), recognized keys are:
+
+        * ``growth`` : dict, default=None
+            Trend / growth terms. Template default if omitted.
+        * ``seasonality`` : dict, default=None
+            Seasonal Fourier or dummy terms. Template default if omitted.
+        * ``events`` : dict, default=None
+            Holidays and other event effects. Template default if omitted.
+        * ``changepoints`` : dict, default=None
+            Trend changepoint placement and strength. Template default if
+            omitted.
+        * ``autoregression`` : dict, default=None
+            Lagged value terms. Template default if omitted.
+        * ``regressors`` : dict, default=None
+            Contemporaneous exogenous regressors. Template default if omitted.
+        * ``lagged_regressors`` : dict, default=None
+            Lagged exogenous regressors. Template default if omitted.
+        * ``uncertainty`` : dict, default=None
+            Prediction-interval / uncertainty model. Template default if
+            omitted.
+        * ``custom`` : dict, default=None
+            Template-specific extra options. Template default if omitted.
+        * ``hyperparameter_override`` : dict or list of dict, default=None
+            Applied on top of the template hyperparameter grid for full
+            customization. No override if omitted.
+
+    evaluation_metric_param : dict, EvaluationMetricParam, or None, default=None
+        Metrics used for CV reporting and model selection. Passed to
+        Greykite ``EvaluationMetricParam``. If None, an empty param object
+        is used and Greykite pipeline defaults apply. When a dict, recognized
+        keys are:
+
+        * ``cv_selection_metric`` : str, default="MeanAbsolutePercentError"
+            Metric name used to pick the best CV model
+            (``EvaluationMetricEnum`` member name).
+        * ``cv_report_metrics`` : str or list of str, default="ALL"
+            Extra metric name(s) reported during CV. ``"ALL"`` computes all
+            ``EvaluationMetricEnum`` metrics.
+        * ``agg_periods`` : int, default=None
+            Optional number of periods to aggregate before scoring. No
+            aggregation if None.
+        * ``agg_func`` : callable, default=None
+            Aggregation function used with ``agg_periods`` (e.g. ``np.sum``).
+            Ignored if ``agg_periods`` is None.
+        * ``null_model_params`` : dict, default=None
+            Configuration for Greykite's null model baseline comparison
+            (``DummyRegressor`` keys such as ``strategy``). If None,
+            ``R2_null_model_score`` is not computed.
+        * ``relative_error_tolerance`` : float, default=None
+            Relative error threshold for the outside-tolerance metric
+            (e.g. ``0.05`` for 5%). If None, that metric is not computed.
+
+    evaluation_period_param : dict, EvaluationPeriodParam, or None, default=None
+        Train/test and cross-validation split configuration. Passed to
+        Greykite ``EvaluationPeriodParam``. If None, an empty param object
+        is used and Greykite pipeline defaults apply. When a dict, recognized
+        keys are:
+
+        * ``test_horizon`` : int, default=forecast horizon
+            Holdout length at the end of the series. Set to ``0`` to skip
+            backtest. Greykite default when unset is the forecast horizon.
+        * ``periods_between_train_test`` : int, default=0
+            Gap between train and test. Greykite default when unset is ``0``.
+        * ``cv_horizon`` : int, default=forecast horizon
+            Forecast horizon used inside each CV fold. Set to ``0`` (or
+            ``cv_max_splits=0``) to skip CV. Greykite default when unset is
+            the forecast horizon.
+        * ``cv_max_splits`` : int, default=3
+            Maximum number of CV splits. ``None`` uses all splits.
+        * ``cv_min_train_periods`` : int, default=2 * cv_horizon
+            Minimum training length per split. Greykite default when unset
+            is ``2 * cv_horizon``.
+        * ``cv_periods_between_splits`` : int, default=cv_horizon
+            Step size between CV split starts. Greykite default when unset
+            is ``cv_horizon``.
+        * ``cv_periods_between_train_test`` : int, default=periods_between_train_test
+            Gap between CV train and test. Greykite default when unset
+            mirrors ``periods_between_train_test``.
+        * ``cv_expanding_window`` : bool, default=True
+            If True, use expanding rather than sliding training windows.
+        * ``cv_use_most_recent_splits`` : bool, default=False
+            If True, prefer recent splits when capping ``cv_max_splits``.
+            Greykite default when unset is ``False``.
+
+    computation_param : dict, ComputationParam, or None, default=None
+        Runtime / parallelization options. Passed to Greykite
+        ``ComputationParam``. If None, an empty param object is used and
+        Greykite pipeline defaults apply. When a dict, recognized keys are:
+
+        * ``n_jobs`` : int, default=1
+            Parallel jobs for hyperparameter search (``-1`` uses all
+            processors).
+        * ``hyperparameter_budget`` : int, default=None
+            Max hyperparameter combinations to evaluate. None means full
+            grid search when the grid is discrete, or 10 samples when any
+            value is a distribution.
+        * ``verbose`` : int, default=1
+            Verbosity level for fitting and CV logs.
 
     Attributes
     ----------
@@ -49,7 +218,7 @@ class GreykiteForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.greykite import GreykiteForecaster
     >>> from sktime.forecasting.base import ForecastingHorizon
-    >>> y = load_airline()
+    >>> y = load_airline().to_timestamp()
     >>> fh = ForecastingHorizon([1, 2, 3])
     >>> forecaster = GreykiteForecaster()
     >>> forecaster.fit(y=y, fh=fh)  # doctest: +SKIP
@@ -58,7 +227,7 @@ class GreykiteForecaster(BaseForecaster):
     References
     ----------
     .. [1] https://linkedin.github.io/greykite/docs/1.0.0/html/pages/stepbystep/0400_configuration.html
-
+    .. [2] https://linkedin.github.io/greykite/docs/0.1.0/html/gallery/tutorials/0200_templates.html
     """
 
     _tags = {
@@ -90,8 +259,9 @@ class GreykiteForecaster(BaseForecaster):
             "test_save_estimators_to_file",
             "test_update_predict_predicted_index",
             "test_deepcopy_fitted_predict",
+            "test_deepcopy_fitted",
         ],
-        "tests:python_dependencies": ["prophet", "setuptools<82"],
+        "tests:python_dependencies": ["prophet>1.2.1", "setuptools<82"],
     }
 
     def __init__(
@@ -100,11 +270,25 @@ class GreykiteForecaster(BaseForecaster):
         date_format: str | None = None,
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
+        forecast_one_by_one=None,
+        freq=None,
+        anomaly_info=None,
+        model_components_param=None,
+        evaluation_metric_param=None,
+        evaluation_period_param=None,
+        computation_param=None,
     ):
         self.forecast_config = forecast_config
         self.date_format = date_format
         self.model_template = model_template
         self.coverage = coverage
+        self.forecast_one_by_one = forecast_one_by_one
+        self.freq = freq
+        self.anomaly_info = anomaly_info
+        self.model_components_param = model_components_param
+        self.evaluation_metric_param = evaluation_metric_param
+        self.evaluation_period_param = evaluation_period_param
+        self.computation_param = computation_param
 
         super().__init__()
 
@@ -132,23 +316,51 @@ class GreykiteForecaster(BaseForecaster):
         self._forecast = None
         self._X = None
 
+    @staticmethod
+    def _ensure_datetime_index(y):
+        """Ensure ``y`` has a DatetimeIndex for Greykite.
+
+        Tries ``pandas.to_datetime`` on the index; if that fails, falls back to a
+        default daily ``DatetimeIndex`` starting at ``2000-01-01``.
+        """
+        if y is None or isinstance(y.index, pd.DatetimeIndex):
+            return y
+        y = y.copy()
+        try:
+            y.index = pd.to_datetime(y.index)
+        except (TypeError, ValueError, OverflowError):
+            y.index = pd.date_range("2000-01-01", periods=len(y), freq="D")
+        return y
+
+    @staticmethod
+    def _coerce_param(param_cls, param):
+        """Coerce a dict or param instance to a Greykite param dataclass."""
+        if param is None:
+            return None
+        if isinstance(param, param_cls):
+            return param
+        if isinstance(param, dict):
+            return param_cls.from_dict(param)
+        if isinstance(param, list):
+            return [
+                None
+                if p is None
+                else p
+                if isinstance(p, param_cls)
+                else param_cls.from_dict(p)
+                for p in param
+            ]
+        raise TypeError(
+            f"Expected None, dict, list, or {param_cls.__name__}, got {type(param)}."
+        )
+
     def _create_forecast_config(self, y=None):
-        """Create a ForecastConfig object if one wasn't provided."""
-        if self.forecast_config is not None:
-            return self.forecast_config
+        """Create a ForecastConfig from ``forecast_config`` and flattened params.
 
-        # If frequency is not provided, try to infer it from the index.
-        if y is not None:
-            if isinstance(y.index, pd.PeriodIndex):
-                freq = y.index.freqstr
-            else:
-                freq = pd.infer_freq(y.index)
-        else:
-            freq = None
-
-        # Set train_end_date explicitly using the maximum timestamp in y
-        train_end_date = y.index.max() if y is not None else None
-
+        ``forecast_config`` (if given) is the base. Parameters defaulting to
+        ``None`` override base fields only when explicitly set. ``model_template``
+        and ``coverage`` are written only when no base config is provided.
+        """
         from greykite.framework.templates.autogen.forecast_config import (
             ComputationParam,
             EvaluationMetricParam,
@@ -158,29 +370,66 @@ class GreykiteForecaster(BaseForecaster):
             ModelComponentsParam,
         )
 
-        # Expects DataFrame with timestamp column named "ts" and value column named "y".
-        metadata_param = MetadataParam(
-            time_col="ts",
-            value_col="y",
-            date_format=self.date_format,
-            freq=freq,
-            train_end_date=train_end_date,
-        )
-        # Default model components.
-        model_components_param = ModelComponentsParam()
+        freq = self.freq
+        if freq is None and y is not None:
+            freq = pd.infer_freq(y.index)
+        train_end_date = y.index.max() if y is not None else None
 
-        # Create the ForecastConfig using Greykite's parameters.
-        self.forecast_config = ForecastConfig(
-            metadata_param=metadata_param,
-            model_components_param=model_components_param,
-            model_template=self.model_template,
-            coverage=self.coverage,
-            evaluation_metric_param=EvaluationMetricParam(),
-            evaluation_period_param=EvaluationPeriodParam(),
-            computation_param=ComputationParam(),
-            forecast_one_by_one=False,
-        )
-        return self.forecast_config
+        if self.forecast_config is not None:
+            fc = deepcopy(self.forecast_config)
+        else:
+            # model_template / coverage only applied when building a fresh config,
+            # so their defaults cannot clobber a user-provided forecast_config.
+            forecast_one_by_one = self.forecast_one_by_one
+            if forecast_one_by_one is None:
+                forecast_one_by_one = False
+            fc = ForecastConfig(
+                model_template=self.model_template,
+                coverage=self.coverage,
+                forecast_one_by_one=forecast_one_by_one,
+                model_components_param=ModelComponentsParam(),
+                evaluation_metric_param=EvaluationMetricParam(),
+                evaluation_period_param=EvaluationPeriodParam(),
+                computation_param=ComputationParam(),
+            )
+
+        # Overlay flattened params that default to None (explicit set only).
+        if self.model_components_param is not None:
+            fc.model_components_param = self._coerce_param(
+                ModelComponentsParam, self.model_components_param
+            )
+        if self.evaluation_metric_param is not None:
+            fc.evaluation_metric_param = self._coerce_param(
+                EvaluationMetricParam, self.evaluation_metric_param
+            )
+        if self.evaluation_period_param is not None:
+            fc.evaluation_period_param = self._coerce_param(
+                EvaluationPeriodParam, self.evaluation_period_param
+            )
+        if self.computation_param is not None:
+            fc.computation_param = self._coerce_param(
+                ComputationParam, self.computation_param
+            )
+        if self.forecast_config is not None and self.forecast_one_by_one is not None:
+            fc.forecast_one_by_one = self.forecast_one_by_one
+
+        # Metadata: adapter always feeds columns "ts" / "y".
+        if fc.metadata_param is None:
+            fc.metadata_param = MetadataParam()
+        fc.metadata_param.time_col = "ts"
+        fc.metadata_param.value_col = "y"
+        if self.date_format is not None or self.forecast_config is None:
+            fc.metadata_param.date_format = self.date_format
+        if self.freq is not None:
+            fc.metadata_param.freq = self.freq
+        elif fc.metadata_param.freq is None:
+            fc.metadata_param.freq = freq
+        if self.anomaly_info is not None:
+            fc.metadata_param.anomaly_info = self.anomaly_info
+        if train_end_date is not None and fc.metadata_param.train_end_date is None:
+            fc.metadata_param.train_end_date = train_end_date
+
+        return fc
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -194,8 +443,9 @@ class GreykiteForecaster(BaseForecaster):
                 "The forecasting horizon `fh` must be provided in the `fit` method."
             )
 
-        if isinstance(y.index, pd.PeriodIndex):
-            y.index = y.index.to_timestamp()
+        y = self._ensure_datetime_index(y)
+        X = self._ensure_datetime_index(X)
+
         # Convert y into a DataFrame with columns "ts" and "y".
         df = pd.DataFrame({"ts": y.index, "y": y.values})
 
@@ -205,13 +455,10 @@ class GreykiteForecaster(BaseForecaster):
                 df[col] = X[col].values
             self._X = X.copy()
 
-        # Create the forecast configuration if not already provided.
         fc = self._create_forecast_config(y)
-        if hasattr(fh, "to_numpy"):
-            steps = fh.to_numpy()
-        else:
-            steps = np.array(list(fh), dtype=int)
-        fc.forecast_horizon = int(steps.max())
+        steps = fh.to_relative(self.cutoff).to_numpy()
+        fc.forecast_horizon = int(np.max(steps))
+        self._forecast_config = fc
 
         # Fit the model using Greykite's forecast_pipeline.
         from greykite.framework.templates.forecaster import Forecaster
@@ -228,30 +475,14 @@ class GreykiteForecaster(BaseForecaster):
         if fh is None:
             fh = self._fh
         forecast_df = self._forecaster.forecast.df_test
-        if hasattr(fh, "to_numpy"):
-            steps = fh.to_numpy()
-        else:
-            steps = np.array(list(fh), dtype=int)
-        # compute zero-based positions
+        steps = fh.to_relative(self.cutoff).to_numpy()
         positions = (steps - 1).astype(int)
-
-        time_col = self._forecaster.forecast.time_col
-        times = forecast_df[time_col].values
-        preds = forecast_df["forecast"].values
-        selected_times = times[positions]
-        selected_preds = preds[positions]
-
-        y_pred = pd.Series(selected_preds, index=selected_times)
-        return y_pred
-
-    def get_fitted_params(self):
-        """Return fitted parameters."""
-        if self._forecaster is None:
-            raise ValueError("Forecaster has not been fitted yet. Call 'fit' first.")
-        return {
-            "model": self._forecaster.model,
-            "forecast_config": self.forecast_config,
-        }
+        selected_preds = forecast_df["forecast"].values[positions]
+        return pd.Series(
+            selected_preds,
+            index=fh.to_absolute_index(self.cutoff),
+            name=self._y.name,
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
