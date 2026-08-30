@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import ACCEPTED_Y_TYPES
+from sktime.split.base._common import ACCEPTED_Y_TYPES, _check_fh
 from sktime.utils.validation.forecasting import check_step_length
 
 
@@ -100,6 +100,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
         super().__init__()
         self.cutoff = _validate_cutoff(cutoff)
         self.fh = fh
+        self._fh = _check_fh(fh)
         self.step_length = step_length
         return
 
@@ -122,7 +123,7 @@ class ExpandingCutoffSplitter(BaseSplitter):
             The testing set indices for that split.
         """
         if fh is None:
-            fh = self.get_fh().to_relative(self.cutoff)
+            fh = self._fh
         for cutoff in self.get_cutoffs(y):
             train_window = np.arange(0, cutoff + 1, step=1)
             test_window = cutoff + fh
