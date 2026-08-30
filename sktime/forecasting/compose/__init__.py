@@ -23,6 +23,12 @@ __all__ = [
     "DirRecTimeSeriesRegressionForecaster",
     "DirectReductionForecaster",
     "RecursiveReductionForecaster",
+    "ReductionForecaster",
+    "BaseWindowNormalizer",
+    "MeanWindowNormalizer",
+    "SubtractMeanNormalizer",
+    "ZScoreWindowNormalizer",
+    "MinMaxWindowNormalizer",
     "StackingForecaster",
     "MultiplexForecaster",
     "make_reduction",
@@ -55,6 +61,14 @@ from sktime.forecasting.compose._pipeline import (
     ForecastX,
     Permute,
     TransformedTargetForecaster,
+)
+from sktime.forecasting.compose._pretrain_reduce import (
+    BaseWindowNormalizer,
+    MeanWindowNormalizer,
+    MinMaxWindowNormalizer,
+    ReductionForecaster,
+    SubtractMeanNormalizer,
+    ZScoreWindowNormalizer,
 )
 from sktime.forecasting.compose._reduce import (
     DirectReductionForecaster,
