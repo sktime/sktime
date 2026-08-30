@@ -7,6 +7,8 @@ from sktime.performance_metrics.detection._hausdorff import DirectedHausdorff
 from sktime.performance_metrics.detection._randindex import RandIndex
 from sktime.performance_metrics.detection._ts_auprc import TimeSeriesAUPRC
 
+from ._detectiondelaymean import DetectionDelayMean
+
 __all__ = [
     "DirectedChamfer",
     "DirectedHausdorff",
@@ -14,4 +16,5 @@ __all__ = [
     "WindowedF1Score",
     "RandIndex",
     "TimeSeriesAUPRC",
+    "DetectionDelayMean",
 ]
