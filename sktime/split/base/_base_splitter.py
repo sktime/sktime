@@ -463,6 +463,7 @@ class BaseSplitter(BaseObject):
         fh : ForecastingHorizon
             The forecasting horizon
         """
+        # check_fh(self.fh, enforce_relative=True) ?
         return check_fh(self.fh)
 
     @staticmethod
