@@ -202,3 +202,55 @@ def test_croston_update_params_false_does_not_change_forecast():
     after = forecaster.predict(fh=fh).to_numpy()
 
     np.testing.assert_allclose(before, after, rtol=1e-12)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Croston),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_croston_get_fitted_params():
+    """Test that the recursion state is exposed via get_fitted_params."""
+    y = load_PBS_dataset()
+    forecaster = Croston(smoothing=0.1).fit(y)
+
+    fitted_params = forecaster.get_fitted_params()
+
+    expected = {"v", "z", "p", "f"}
+    assert expected <= set(fitted_params)
+    assert fitted_params["v"] == forecaster._q_last
+    assert fitted_params["z"] == forecaster._a_last
+    assert fitted_params["p"] == forecaster._p
+    assert fitted_params["f"] == forecaster._f[-1]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Croston),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_croston_fitted_params_track_update():
+    """Test that fitted params are refreshed by update, not left stale.
+
+    The published values mirror the recursion state, so they must be rewritten
+    on every update. An all-zero update is the sharpest case: the demand level
+    and interval are unchanged by construction, and only the periods-since-last
+    -demand counter advances.
+    """
+    y = load_PBS_dataset()
+    forecaster = Croston(smoothing=0.1).fit(y.iloc[:-10])
+    before = forecaster.get_fitted_params()
+
+    n_update = 10
+    forecaster.update(y.iloc[-n_update:])
+    after = forecaster.get_fitted_params()
+
+    # every published value still mirrors the state it came from
+    assert after["v"] == forecaster._q_last
+    assert after["z"] == forecaster._a_last
+    assert after["p"] == forecaster._p
+    assert after["f"] == forecaster._f[-1]
+
+    # the tail of the PBS dataset is all zeros, so only the counter moves
+    assert (y.iloc[-n_update:] == 0).all()
+    assert after["v"] == before["v"]
+    assert after["z"] == before["z"]
+    assert after["p"] == before["p"] + n_update

@@ -31,3 +31,27 @@ def test_TSB(alpha, beta, fh, expected_forecast):
     np.testing.assert_almost_equal(
         y_pred, np.full(len(fh), expected_forecast), decimal=5
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TSB),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_tsb_get_fitted_params():
+    """Test that the recursion state is exposed via get_fitted_params."""
+    y = load_PBS_dataset()
+    forecaster = TSB(alpha=0.4, beta=0.05).fit(y)
+
+    fitted_params = forecaster.get_fitted_params()
+
+    expected = {"d", "p", "f"}
+    assert expected <= set(fitted_params)
+    assert fitted_params["d"] == forecaster._d_last
+    assert fitted_params["p"] == forecaster._p_last
+    assert fitted_params["f"] == forecaster._f[-1]
+    # forecast is the product of the two, by construction of the method
+    np.testing.assert_allclose(
+        fitted_params["f"],
+        fitted_params["d"] * fitted_params["p"],
+        rtol=1e-12,
+    )
