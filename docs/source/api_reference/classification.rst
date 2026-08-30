@@ -70,7 +70,9 @@ Deep learning
     cnn.CNNClassifier
     cnn.CNNClassifierTorch
     cntc.CNTCClassifier
+    cntc.CNTCClassifierTorch
     fcn.FCNClassifier
+    fcn.FCNClassifierTorch
     gru.GRUClassifier
     gru.GRUFCNNClassifier
     inceptiontime.InceptionTimeClassifier
@@ -84,6 +86,7 @@ Deep learning
     mlp.MLPClassifier
     mvts_transformer.MVTSTransformerClassifier
     resnet.ResNetClassifier
+    resnet.ResNetClassifierTorch
     rnn.SimpleRNNClassifier
     rnn.SimpleRNNClassifierTorch
     tapnet.TapNetClassifier

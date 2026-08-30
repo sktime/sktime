@@ -1,24 +1,24 @@
-"""Fully Convolutional Network (FCN) for classification."""
+"""Residual Network (ResNet) for classification."""
 
-__all__ = ["FCNClassifier"]
+__all__ = ["ResNetClassifier"]
 
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
-from sktime.networks.fcn import FCNNetwork
+from sktime.networks.resnet import ResNetNetwork
 
 
-class FCNClassifier(BaseDeepClassifier):
-    """Fully Convolutional Network (FCN), as described in [1]_.
+class ResNetClassifier(BaseDeepClassifier):
+    """Residual Neural Network as described in [1].
 
-    Adapted from the implementation from Fawaz et. al
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
+    Adapted from the implementation from source code
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
 
     Parameters
     ----------
-    n_epochs : int, default = 2000
+    n_epochs : int, default = 1500
         the number of epochs to train the model
     batch_size : int, default = 16
         the number of samples per gradient update.
@@ -44,71 +44,66 @@ class FCNClassifier(BaseDeepClassifier):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
-    filter_sizes : list or tuple of int , default = (128,256,128)
-        number of filters for each convolutional layer.
-        must have length equal to kernel_sizes.
-    kernel_sizes : list or tuple of int , default = (8,5,3)
-        kernel size for each convolutional layer.
-        must have length equal to filter_sizes.
-
 
     References
     ----------
-    .. [1] Wang et al, Time series classification from scratch with
-    deep neural networks: A strong baseline.
-    2017 International Joint Conference on Neural Networks (IJCNN)
+        .. [1] Wang et al, Time series classification from
+    scratch with deep neural networks: A strong baseline,
+    International joint conference on neural networks (IJCNN), 2017.
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.fcn import FCNClassifier
+    >>> from sktime.classification.deep_learning.resnet import ResNetClassifier
     >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> fcn = FCNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
-    >>> fcn.fit(X_train, y_train)  # doctest: +SKIP
-    FCNClassifier(...)
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> clf = ResNetClassifier(n_epochs=20) # doctest: +SKIP
+    >>> clf.fit(X_train, y_train) # doctest: +SKIP
+    ResNetClassifier(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "noxthot"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
         # hfawaz for dl-4-tsc
-        "maintainers": ["James-Large", "AurumnPegasus"],
+        "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
+        "python_dependencies": ["tensorflow"],
         # estimator type handled by parent class
+        # known ResNetClassifier sporafic failures, see #3954
+        # fails due to #3954 or #3616
         "tests:skip_all": True,
+        # `test_fit_idempotent` fails with `AssertionError`, see #3616
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+        ],
+        "tests:libs": ["sktime.networks.resnet._resnet_tf"],
     }
 
     def __init__(
         self,
-        n_epochs=2000,
-        batch_size=16,
+        n_epochs=1500,
         callbacks=None,
         verbose=False,
         loss="categorical_crossentropy",
         metrics=None,
+        batch_size=16,
         random_state=None,
         activation="sigmoid",
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
-        filter_sizes=(128, 256, 128),
-        kernel_sizes=(8, 5, 3),
     ):
-        self.callbacks = callbacks
         self.n_epochs = n_epochs
-        self.batch_size = batch_size
+        self.callbacks = callbacks
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
+        self.batch_size = batch_size
         self.random_state = random_state
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
-        self.history = None
-        self.filter_sizes = filter_sizes
-        self.kernel_sizes = kernel_sizes
 
         super().__init__()
 
@@ -121,11 +116,10 @@ class FCNClassifier(BaseDeepClassifier):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        self._network = FCNNetwork(
+        self.history = None
+        self._network = ResNetNetwork(
             activation=self.activation_hidden,
             random_state=self.random_state,
-            filter_sizes=self.filter_sizes,
-            kernel_sizes=self.kernel_sizes,
         )
 
         super().__post_init__()
@@ -154,21 +148,22 @@ class FCNClassifier(BaseDeepClassifier):
 
         tf.random.set_seed(self.random_state)
 
-        if self.metrics is None:
-            metrics = ["accuracy"]
-        else:
-            metrics = self.metrics
-        input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
-
-        output_layer = keras.layers.Dense(
-            units=n_classes, activation=self.activation, use_bias=self.use_bias
-        )(output_layer)
-
         self.optimizer_ = (
             keras.optimizers.Adam(learning_rate=0.01)
             if self.optimizer is None
             else self.optimizer
         )
+
+        if self.metrics is None:
+            metrics = ["accuracy"]
+        else:
+            metrics = self.metrics
+
+        input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
+
+        output_layer = keras.layers.Dense(
+            units=n_classes, activation=self.activation, use_bias=self.use_bias
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
@@ -176,6 +171,7 @@ class FCNClassifier(BaseDeepClassifier):
             optimizer=self.optimizer_,
             metrics=metrics,
         )
+
         return model
 
     def _fit(self, X, y):
@@ -246,20 +242,8 @@ class FCNClassifier(BaseDeepClassifier):
             "n_epochs": 12,
             "batch_size": 6,
             "use_bias": True,
-            "filter_sizes": [64, 128],
-            "kernel_sizes": [5, 3],
         }
-
-        # to check for tuple
-        params3 = {
-            "n_epochs": 8,
-            "batch_size": 4,
-            "use_bias": False,
-            "filter_sizes": (64, 128),
-            "kernel_sizes": (5, 3),
-        }
-
-        test_params = [param1, param2, params3]
+        test_params = [param1, param2]
 
         if _check_soft_dependencies("keras", severity="none"):
             from keras.callbacks import LambdaCallback

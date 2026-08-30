@@ -13,18 +13,17 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_TYPE
 from sktime.split.fh import ForecastingHorizonSplitter
 
 
 def temporal_train_test_split(
-    y: ACCEPTED_Y_TYPES,
-    X: pd.DataFrame | None = None,
-    test_size: float | None = None,
-    train_size: float | None = None,
+    y,
+    X=None,
+    test_size=None,
+    train_size=None,
     fh=None,
     anchor: str = "start",
-) -> SPLIT_TYPE:
+):
     """Split time series data containers into a single train/test split.
 
     Creates a single train/test split of endogenous time series ``y``,
@@ -263,7 +262,7 @@ class TemporalTrainTestSplitter(BaseSplitter):
 
         yield y_train_ix, y_test_ix
 
-    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
+    def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
 
         Since this splitter returns a single train/test split,
