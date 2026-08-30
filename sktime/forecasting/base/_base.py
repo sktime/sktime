@@ -2014,10 +2014,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # compatibility checks between X and y
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
-                # currently, check_equal_time_index only works for Series
-                # TODO: fix this so the check is general, using get_time_index
-                if self.get_tag("capability:exogenous") and X_scitype == "Series":
-                    check_equal_time_index(X, y, mode="contains")
+                if self.get_tag("capability:exogenous"):
+                    from sktime.datatypes._utilities import get_time_index
+                    x_idx = get_time_index(X)
+                    y_idx = get_time_index(y)
+                    if not y_idx.isin(x_idx).all():
+                        raise ValueError("Index of y is not contained in index of X")
 
             if y_scitype != X_scitype:
                 raise TypeError("X and y must have the same scitype")
