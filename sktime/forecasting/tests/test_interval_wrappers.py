@@ -141,7 +141,9 @@ def test_naive_variance_exponential_smoothing_short_series():
     causes NaiveVariance to attempt fitting on windows as small as 1 element,
     triggering the error path.
     """
-    y = pd.Series([100, 110, 105], index=pd.date_range("2020-01-01", periods=3, freq="ME"))
+    y = pd.Series(
+        [100, 110, 105], index=pd.date_range("2020-01-01", periods=3, freq="ME")
+    )
 
     forecaster = ExponentialSmoothing()
     my_forecaster_with_proba = NaiveVariance(forecaster)
