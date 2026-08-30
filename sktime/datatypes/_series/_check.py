@@ -73,7 +73,7 @@ class SeriesPdDataFrame(ScitypeSeries):
     An object ``obj: pandas.DataFrame`` follows the specification iff:
 
     * structure convention: ``obj.index`` must be monotonic,
-      and one of ``Int64Index``, ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``.
+      and one of ``Index`` (integer-typed), ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``.
     * variables: columns of ``obj`` correspond to different variables
     * variable names: column names ``obj.columns``
     * time points: rows of ``obj`` correspond to different, distinct time points
@@ -232,7 +232,7 @@ class SeriesPdSeries(ScitypeSeries):
     An object ``obj: pandas.Series`` follows the specification iff:
 
     * structure convention: ``obj.index`` must be monotonic,
-      and one of ``Int64Index``, ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``.
+      and one of ``Index`` (integer-typed), ``RangeIndex``, ``DatetimeIndex``, ``PeriodIndex``.
     * variables: there is a single variable, corresponding to the values of ``obj``.
       Only univariate series can be represented.
     * variable names: by default, there is no column name.
@@ -509,7 +509,7 @@ def _index_equally_spaced(index):
     Parameters
     ----------
     index: pandas.Index. Must be one of:
-        pd.Int64Index, pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex
+        pd.Index (integer-typed), pd.RangeIndex, pd.PeriodIndex, pd.DatetimeIndex
 
     Returns
     -------
@@ -575,7 +575,7 @@ class SeriesXarray(ScitypeSeries):
       - ``obj`` is a 2D array-like structure with shape ``(n_timepoints, n_features)``.
       - ``obj.coords`` must include:
 
-        - A time-like index (``dim_0``) which is either ``Int64Index``, ``RangeIndex``,
+        - A time-like index (``dim_0``) which is either ``Index`` (integer-typed), ``RangeIndex``,
           ``DatetimeIndex``, or ``PeriodIndex``, and it must be monotonic.
         - A variable-like index (``dim_1``) for feature/variable names (optional).
 
