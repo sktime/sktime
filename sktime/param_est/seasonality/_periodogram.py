@@ -190,9 +190,11 @@ class SeasonalityPeriodogram(BaseParamFitter):
             else:
                 idx += 1
         power[periods == nperseg] = 0  # disregard the artifact at nperseg
-        min_i = len(periods[periods >= max_period]) - 1
+        min_i = max(len(periods[periods >= max_period]) - 1, 0)
         max_i = len(periods[periods < min_period])
-        periods, power = periods[min_i:-max_i], power[min_i:-max_i]
+        # not -max_i: -0 == 0 would empty the slice when max_i == 0
+        stop_i = len(periods) - max_i
+        periods, power = periods[min_i:stop_i], power[min_i:stop_i]
         return periods, power
 
     def _fit(self, X):
