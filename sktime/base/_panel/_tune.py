@@ -521,8 +521,3 @@ def _coerce_prediction(y_pred):
     if y_pred.ndim == 1:
         y_pred = y_pred.reshape(-1, 1)
     return y_pred
-
-
-# todo 1.3.0: remove the n_jobs, pre_dispatch and return_train_score parameters,
-# from the signature and the docstring, and remove the calls to
-# _resolve_deprecated_parallel and _check_return_train_score in _fit_tuner

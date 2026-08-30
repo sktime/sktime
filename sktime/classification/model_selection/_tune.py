@@ -12,6 +12,9 @@ from sktime.base._panel._tune import (
 from sktime.classification._delegate import _DelegatedClassifier
 
 
+# todo 1.3.0: remove the n_jobs, pre_dispatch and return_train_score parameters,
+# from the signature and the docstring, and remove the calls to
+# _resolve_deprecated_parallel and _check_return_train_score in _fit_tuner
 class TSCGridSearchCV(_DelegatedClassifier):
     """Exhaustive search over specified parameter values for a classifier.
 
