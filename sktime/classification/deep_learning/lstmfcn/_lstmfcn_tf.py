@@ -77,6 +77,10 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         "maintainers": ["jnrusson1", "solen0id"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.lstmfcn._lstmfcn_tf"],
     }
 
     def __init__(
