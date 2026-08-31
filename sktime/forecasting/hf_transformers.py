@@ -395,7 +395,12 @@ class HFTransformersForecaster(BaseForecaster):
             # Freeze loaded parameters and reinitialize mismatched layers
             for param in self.model.parameters():
                 param.requires_grad = False
-            for key, _, _ in self.info["mismatched_keys"]:
+            for entry in self.info["mismatched_keys"]:
+                # transformers may return mismatched keys as strings or tuples.
+                if isinstance(entry, tuple):
+                    key = entry[0]
+                else:
+                    key = entry
                 _model = self.model
                 for attr_name in key.split(".")[:-1]:
                     _model = getattr(_model, attr_name)
