@@ -29,6 +29,7 @@ from sktime.forecasting.compose import (
     make_reduction,
 )
 from sktime.forecasting.compose._reduce import _sliding_window_transform
+from sktime.transformations.summarize import WindowSummarizer
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
@@ -887,3 +888,37 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_recursive_reduction_with_transformers_local():
+    """Test RecursiveTabularRegressionForecaster with transformers in local pooling."""
+    from sklearn.ensemble import HistGradientBoostingRegressor
+
+    y = load_airline()[:36]
+    y_train, y_test = temporal_train_test_split(y, test_size=12)
+    fh = ForecastingHorizon(y_test.index, is_relative=False)
+
+    kwargs = {
+        "lag_feature": {
+            "lag": [1, 2, 3],
+        }
+    }
+    transformer = WindowSummarizer(**kwargs, n_jobs=1)
+
+    forecaster = RecursiveTabularRegressionForecaster(
+        estimator=HistGradientBoostingRegressor(),
+        window_length=None,
+        transformers=[transformer],
+        pooling="local",
+    )
+
+    forecaster.fit(y_train, fh=fh)
+    y_pred = forecaster.predict(fh)
+
+    assert len(y_pred) == len(fh)
+    assert not np.any(np.isnan(y_pred))
+    assert not np.any(np.isinf(y_pred))

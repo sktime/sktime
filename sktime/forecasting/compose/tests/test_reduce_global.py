@@ -129,6 +129,29 @@ def check_eval(test_input, expected):
         assert expected is None
 
 
+def test_recursive_reduction_with_transformers_local_pooling():
+    """Test local pooling supports transformer-based features."""
+    y = load_airline()
+
+    regressor = make_pipeline(
+        RandomForestRegressor(random_state=1),
+    )
+
+    forecaster = make_reduction(
+        regressor,
+        scitype="tabular-regressor",
+        transformers=[WindowSummarizer(**kwargs, n_jobs=1)],
+        window_length=None,
+        strategy="recursive",
+        pooling="local",
+    )
+
+    forecaster.fit(y, fh=[1, 2])
+    y_pred = forecaster.predict(fh=[1, 2, 12])
+
+    assert len(y_pred) == 3
+
+
 @pytest.mark.skipif(
     not run_test_for_class(_RecursiveReducer),
     reason="run test only if softdeps are present and incrementally (if requested)",
