@@ -180,40 +180,25 @@ def test_chronos2_covariates_match_source_reference():
     not _check_estimator_deps(Chronos2Forecaster, severity="none"),
     reason="Chronos2Forecaster soft dependencies not available",
 )
-def test_chronos2_predict_quantiles_and_intervals():
+def test_chronos2_predict_proba():
     """Test that Chronos2Forecaster returns correctly shaped proba forecasts."""
     import torch
+    from skpro.distributions import HistogramQPD
 
-    y = load_airline().iloc[:30]  # Use a small slice for faster testing
+    y = load_airline().iloc[:30]
     fh = [1, 2]
-    alpha = [0.1, 0.5, 0.9]
-    coverage = 0.8
 
-    # Instantiate the forecaster matching the file's precision style
     forecaster = Chronos2Forecaster(
         "amazon/chronos-2",
-        config={
-            "device_map": "cpu",
-            "torch_dtype": torch.float32,
-        },
+        config={"device_map": "cpu", "torch_dtype": torch.float32},
         seed=1,
     )
     forecaster.fit(y)
 
-    # 1. Test predict_quantiles
-    quantiles = forecaster.predict_quantiles(fh=fh, alpha=alpha)
-    assert isinstance(quantiles, pd.DataFrame), "Output must be a DataFrame"
-    assert quantiles.shape == (2, 3), "Shape must be (len(fh), len(alpha))"
-    assert isinstance(quantiles.columns, pd.MultiIndex), "Columns must be MultiIndex"
-    assert list(quantiles.columns.get_level_values(1)) == alpha, "Alphas must match"
+    pred_dist = forecaster.predict_proba(fh=fh)
 
-    # 2. Test predict_interval
-    intervals = forecaster.predict_interval(fh=fh, coverage=coverage)
-    assert isinstance(intervals, pd.DataFrame), "Output must be a DataFrame"
-    assert isinstance(intervals.columns, pd.MultiIndex), "Columns must be MultiIndex"
+    assert isinstance(pred_dist, HistogramQPD), "Output must be a HistogramQPD"
+    assert pred_dist.shape == (2, 1), "Shape must be (len(fh), n_vars)"
 
-    # Check if lower bound is <= upper bound
-    var_name = intervals.columns.get_level_values(0)[0]
-    lower = intervals[(var_name, coverage, "lower")].values
-    upper = intervals[(var_name, coverage, "upper")].values
-    assert (lower <= upper).all(), "Lower bound must be <= upper bound"
+    quantiles = forecaster.predict_quantiles(fh=fh, alpha=[0.1, 0.9])
+    assert quantiles.shape == (2, 2)

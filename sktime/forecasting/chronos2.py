@@ -183,20 +183,7 @@ class Chronos2Forecaster(BaseForecaster):
                 self.model_pipeline = self._load_pipeline()
 
     def _fit(self, y, X=None, fh=None):
-        """Fit the forecaster to training data.
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            Target time series.
-        X : pd.DataFrame, optional
-            Past exogenous covariates.
-        fh : ForecastingHorizon, optional
-
-        Returns
-        -------
-        self
-        """
+        """Fit the forecaster to training data."""
         self.model_pipeline = self._load_pipeline()
 
         context_length = self._config["context_length"]
@@ -214,20 +201,8 @@ class Chronos2Forecaster(BaseForecaster):
         self._y_index_names = y.index.names
         return self
 
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-        X : pd.DataFrame, optional
-            Future exogenous covariates (known-future). Column names must be
-            a subset of X provided in fit.
-
-        Returns
-        -------
-        y_pred : pd.DataFrame
-        """
+    def _get_predict_tensor(self, fh, X=None):
+        """Shared utility to execute the Chronos-2 pipeline and return raw tensors."""
         import transformers
 
         self._ensure_model_pipeline_loaded()
@@ -272,8 +247,6 @@ class Chronos2Forecaster(BaseForecaster):
 
         pred_tensor = predictions[0]
         quantiles = self.model_pipeline.quantiles
-        median_idx = quantiles.index(0.5)
-        point_forecast = pred_tensor[:, median_idx, :].numpy()
 
         index = (
             ForecastingHorizon(range(1, prediction_length + 1))
@@ -281,6 +254,15 @@ class Chronos2Forecaster(BaseForecaster):
             ._values
         )
         pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
+
+        return pred_tensor, quantiles, index, pred_out
+
+    def _predict(self, fh, X=None):
+        """Forecast time series at future horizon."""
+        pred_tensor, quantiles, index, pred_out = self._get_predict_tensor(fh, X)
+
+        median_idx = quantiles.index(0.5)
+        point_forecast = pred_tensor[:, median_idx, :].numpy()
 
         pred_df = pd.DataFrame(
             point_forecast.T,
@@ -292,83 +274,30 @@ class Chronos2Forecaster(BaseForecaster):
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
         return pred_df.loc[dateindex]
 
-    def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Compute/return prediction quantiles for a forecast.
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Compute/return fully probabilistic forecasts."""
+        from skpro.distributions import HistogramQPD
 
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-        X : pd.DataFrame, optional
-        alpha : list of float, optional (default=[0.5])
+        pred_tensor, model_quantiles, index, pred_out = self._get_predict_tensor(fh, X)
 
-        Returns
-        -------
-        quantiles : pd.DataFrame
-        """
-        import transformers
+        transposed = pred_tensor.numpy().transpose(1, 2, 0)
 
-        if alpha is None:
-            alpha = [0.5]
+        n_quantiles = len(model_quantiles)
+        pred_length = len(index)
+        var_names = self._get_varnames()
 
-        self._ensure_model_pipeline_loaded()
-        transformers.set_seed(self._seed)
+        data = transposed.reshape(n_quantiles * pred_length, -1)
+        row_index = pd.MultiIndex.from_product([model_quantiles, index])
 
-        prediction_length = int(max(fh.to_relative(self.cutoff)))
+        q_df = pd.DataFrame(data, index=row_index, columns=var_names)
 
-        context_length = self._config["context_length"]
-        if context_length is None:
-            context_length = self.model_pipeline.model_context_length
+        dist = HistogramQPD(q_df, tails="mass", index=index, columns=var_names)
 
-        context = self._context
-        input_dict = {"target": context}
+        dateindex = index.map(lambda x: x in pred_out)
+        if not dateindex.all():
+            dist = dist.loc[pred_out]
 
-        if self._X is not None:
-            actual_len = context.shape[1]
-            past_X = self._X.values[-actual_len:]
-            input_dict["past_covariates"] = {
-                col: past_X[:, i] for i, col in enumerate(self._X.columns)
-            }
-
-        if X is not None:
-            future_vals = X.values[:prediction_length]
-            input_dict["future_covariates"] = {
-                col: future_vals[:, i] for i, col in enumerate(X.columns)
-            }
-
-        predictions = self.model_pipeline.predict(
-            [input_dict],
-            prediction_length=prediction_length,
-            batch_size=self._config["batch_size"],
-            context_length=context_length,
-            cross_learning=self._config["cross_learning"],
-            limit_prediction_length=self._config["limit_prediction_length"],
-        )
-
-        pred_tensor = predictions[0]
-        model_quantiles = self.model_pipeline.quantiles
-
-        index = (
-            ForecastingHorizon(range(1, prediction_length + 1))
-            .to_absolute(self._cutoff)
-            ._values
-        )
-        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
-
-        dfs = []
-        for a in alpha:
-            idx = (np.abs(np.array(model_quantiles) - a)).argmin()
-            q_forecast = pred_tensor[:, idx, :].numpy()
-
-            df_a = pd.DataFrame(q_forecast.T, index=index, columns=self._get_varnames())
-            dfs.append(df_a)
-
-        pred_df = pd.concat(dfs, axis=1, keys=alpha)
-        pred_df = pred_df.swaplevel(0, 1, axis=1).sort_index(axis=1)
-        pred_df.columns.names = ["variable", "alpha"]
-        pred_df.index.names = self._y_index_names
-
-        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
-        return pred_df.loc[dateindex]
+        return dist
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
