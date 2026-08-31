@@ -2393,6 +2393,33 @@ class symmetric(_BaseTag):
     }
 
 
+class pwtrafo_type(_BaseTag):
+    """Mathematical type of pairwise transformer.
+
+    - String name: ``"pwtrafo_type"``
+    - Public property tag
+    - Values: string, one of ``"distance"``, ``"kernel"``, ``"other"``
+    - Example: ``"distance"``
+
+    This tag applies to pairwise transformers.
+
+    The tag specifies the mathematical type of the pairwise transformer,
+    which can be one of the following:
+
+    * ``"distance"``: the transformer computes a distance between time series.
+    * ``"kernel"``: the transformer computes a kernel between time series.
+    * ``"other"``: the transformer computes another type of pairwise transformation.
+    """
+
+    _tags = {
+        "tag_name": "pwtrafo_type",
+        "parent_type": ["transformer-pairwise", "transformer-pairwise-panel"],
+        "tag_type": ("str", ["distance", "kernel", "other"]),
+        "short_descr": "mathematical type of pairwise transformer - distance, kernel, or other",
+        "user_facing": True,
+    }
+
+
 # Detector tags
 # --------------
 
@@ -3935,12 +3962,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["forecaster", "regressor"],
         "type",
         "passed to input checks, input conversion index type to enforce",
-    ),
-    (
-        "pwtrafo_type",
-        ["transformer-pairwise", "transformer-pairwise-panel"],
-        ("str", ["distance", "kernel", "other"]),
-        "mathematical type of pairwise transformer - distance, kernel, or other",
     ),
     (
         "scitype:y",
