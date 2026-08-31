@@ -6,7 +6,7 @@ from __future__ import annotations
 
 __author__ = ["RobKuebler"]
 
-__all__ = ["FlexiblePanelSplitter"]
+__all__ = ["SyncToLongest"]
 
 import warnings
 
@@ -17,7 +17,7 @@ from sktime.split.base import BaseSplitter
 from sktime.utils.validation import is_int
 
 
-class FlexiblePanelSplitter(BaseSplitter):
+class SyncToLongest(BaseSplitter):
     """Wrap a temporal splitter to make it work with unequal-length panels.
 
     Folds (cutoffs) come from the longest series in the panel. For each
@@ -34,7 +34,7 @@ class FlexiblePanelSplitter(BaseSplitter):
     This assumes all instances share a common, comparable time index, for
     example because they're all cut off at the same latest timestamp. If
     ``y`` is a single (non-panel) series, or every instance has equal length
-    and shares the same time index, ``FlexiblePanelSplitter`` behaves
+    and shares the same time index, ``SyncToLongest`` behaves
     exactly like ``base_cv``.
 
     Parameters
@@ -65,11 +65,11 @@ class FlexiblePanelSplitter(BaseSplitter):
     Examples
     --------
     >>> from sktime.split import SlidingWindowSplitter
-    >>> from sktime.split.compose import FlexiblePanelSplitter
+    >>> from sktime.split.compose import SyncToLongest
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> y = _make_hierarchical(hierarchy_levels=(2,), max_timepoints=10,
     ...     min_timepoints=7, random_state=42)
-    >>> cv = FlexiblePanelSplitter(SlidingWindowSplitter(window_length=3, fh=1))
+    >>> cv = SyncToLongest(SlidingWindowSplitter(window_length=3, fh=1))
     >>> def train_ranges(train):
     ...     # per-series (start..end) of the train window, keyed by series id
     ...     idx = y.index[train]
@@ -105,7 +105,7 @@ class FlexiblePanelSplitter(BaseSplitter):
 
     _tags = {
         "split_hierarchical": True,
-        # FlexiblePanelSplitter handles the hierarchical/panel case itself
+        # SyncToLongest handles the hierarchical/panel case itself
     }
 
     def __init__(self, base_cv: BaseSplitter, min_length: int | None = None) -> None:

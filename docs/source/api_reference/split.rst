@@ -72,7 +72,7 @@ more complex time index based splitting strategies.
     :toctree: auto_generated/
     :template: class.rst
 
-    FlexiblePanelSplitter
+    SyncToLongest
     Repeat
 
 .. currentmodule:: sktime.split

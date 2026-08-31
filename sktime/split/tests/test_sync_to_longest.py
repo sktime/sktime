@@ -1,4 +1,4 @@
-"""Tests for the FlexiblePanelSplitter splitter composition."""
+"""Tests for the SyncToLongest splitter composition."""
 
 __author__ = ["Garve"]
 
@@ -10,7 +10,7 @@ from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.performance_metrics.forecasting import MeanAbsoluteScaledError
 from sktime.split import SameLocSplitter, SlidingWindowSplitter, TestPlusTrainSplitter
-from sktime.split.compose import FlexiblePanelSplitter
+from sktime.split.compose import SyncToLongest
 from sktime.utils._testing.series import _make_series
 
 
@@ -23,7 +23,7 @@ def _panel(lengths: dict) -> pd.DataFrame:
     return pd.concat(series, names=["instance", "time"]).to_frame("value")
 
 
-def test_flexible_panel_splitter_excludes_instances_without_full_window():
+def test_sync_to_longest_excludes_instances_without_full_window():
     """Folds should only contain instances that have started by the cutoff.
 
     This is the scenario from the feature request: an early fold, before the
@@ -32,7 +32,7 @@ def test_flexible_panel_splitter_excludes_instances_without_full_window():
     contain both.
     """
     y = _panel({"long": 0, "short": 3})
-    cv = FlexiblePanelSplitter(
+    cv = SyncToLongest(
         SlidingWindowSplitter(window_length=3, fh=1, step_length=3)
     )
 
@@ -52,24 +52,24 @@ def test_flexible_panel_splitter_excludes_instances_without_full_window():
     assert list(test1.loc["short"].index) == [6]
 
 
-def test_flexible_panel_splitter_min_length_relaxes_training_window():
+def test_sync_to_longest_min_length_relaxes_training_window():
     """min_length should include instances with a partial training window."""
     y = _panel({"long": 0, "medium": 2, "short": 3})
     base_cv = SlidingWindowSplitter(window_length=3, fh=1, step_length=3)
 
-    cv_strict = FlexiblePanelSplitter(base_cv)
+    cv_strict = SyncToLongest(base_cv)
     first_fold_instances = set(
         next(cv_strict.split_series(y))[0].index.get_level_values(0)
     )
     assert "medium" not in first_fold_instances
 
-    cv_relaxed = FlexiblePanelSplitter(base_cv, min_length=1)
+    cv_relaxed = SyncToLongest(base_cv, min_length=1)
     train0, _ = next(cv_relaxed.split_series(y))
     assert "medium" in set(train0.index.get_level_values(0))
     assert list(train0.loc["medium"].index) == [2]  # only 1 point available
 
 
-def test_flexible_panel_splitter_forwards_fh_and_window_length():
+def test_sync_to_longest_forwards_fh_and_window_length():
     """cv.fh/cv.window_length must match base_cv's, not BaseSplitter's defaults.
 
     evaluate() reads cv.fh (not base_cv.fh) to fit/predict each fold. If it
@@ -79,7 +79,7 @@ def test_flexible_panel_splitter_forwards_fh_and_window_length():
     mismatch between y_test and y_pred deep inside metric computation.
     """
     base_cv = SlidingWindowSplitter(window_length=3, fh=[1, 2], step_length=3)
-    cv = FlexiblePanelSplitter(base_cv)
+    cv = SyncToLongest(base_cv)
     assert cv.fh == base_cv.fh
     assert cv.window_length == base_cv.window_length
 
@@ -88,24 +88,24 @@ def test_flexible_panel_splitter_forwards_fh_and_window_length():
     assert len(results) == cv.get_n_splits(y)
 
 
-def test_flexible_panel_splitter_invalid_min_length_raises():
+def test_sync_to_longest_invalid_min_length_raises():
     with pytest.raises(ValueError, match="min_length"):
-        FlexiblePanelSplitter(SlidingWindowSplitter(), min_length=0)
+        SyncToLongest(SlidingWindowSplitter(), min_length=0)
 
 
-def test_flexible_panel_splitter_min_length_above_window_warns():
+def test_sync_to_longest_min_length_above_window_warns():
     """min_length above window_length has no relaxing effect, so it should warn."""
     with pytest.warns(UserWarning, match="min_length"):
-        FlexiblePanelSplitter(
+        SyncToLongest(
             SlidingWindowSplitter(window_length=3, fh=1), min_length=5
         )
 
 
-def test_flexible_panel_splitter_works_with_evaluate_and_exogenous_X():
+def test_sync_to_longest_works_with_evaluate_and_exogenous_X():
     """evaluate() should run end to end when X is passed alongside y."""
     y = _panel({"long": 0, "short": 3})
     X = y.rename(columns={"value": "exog"}) * 10
-    cv = FlexiblePanelSplitter(
+    cv = SyncToLongest(
         SlidingWindowSplitter(window_length=3, fh=1, step_length=3)
     )
     forecaster = NaiveForecaster()
@@ -116,24 +116,24 @@ def test_flexible_panel_splitter_works_with_evaluate_and_exogenous_X():
     assert results["test_MeanAbsolutePercentageError"].notna().all()
 
 
-def test_flexible_panel_splitter_with_explicit_cv_x():
+def test_sync_to_longest_with_explicit_cv_x():
     """evaluate() should accept an explicit, different cv_X for X.
 
-    cv_X wraps FlexiblePanelSplitter in TestPlusTrainSplitter, so X_test
+    cv_X wraps SyncToLongest in TestPlusTrainSplitter, so X_test
     covers the train+test region instead of just the test region. It is
     further wrapped in SameLocSplitter(..., y) -- the same composition
     evaluate() itself uses by default -- so that instance qualification for
     each fold is always decided from y, not independently from X. Without
     that wrapping, an X whose per-instance coverage differs from y's (see
-    test_flexible_panel_splitter_explicit_cv_x_needs_same_loc below) makes
-    FlexiblePanelSplitter pick a different set of instances for X than for
+    test_sync_to_longest_explicit_cv_x_needs_same_loc below) makes
+    SyncToLongest pick a different set of instances for X than for
     y, silently breaking downstream shapes.
     """
     y = _panel({"long": 0, "short": 3})
     X = y.rename(columns={"value": "exog"}) * 10
     base_cv = SlidingWindowSplitter(window_length=3, fh=1, step_length=3)
-    cv = FlexiblePanelSplitter(base_cv)
-    cv_X = SameLocSplitter(TestPlusTrainSplitter(FlexiblePanelSplitter(base_cv)), y)
+    cv = SyncToLongest(base_cv)
+    cv_X = SameLocSplitter(TestPlusTrainSplitter(SyncToLongest(base_cv)), y)
 
     results = evaluate(forecaster=NaiveForecaster(), y=y, X=X, cv=cv, cv_X=cv_X)
 
@@ -147,8 +147,8 @@ def test_flexible_panel_splitter_with_explicit_cv_x():
     assert set(X_test.index) == set(y_train.index) | set(y_test.index)
 
 
-def test_flexible_panel_splitter_explicit_cv_x_needs_same_loc():
-    """An explicit cv_X built on FlexiblePanelSplitter must wrap SameLocSplitter.
+def test_sync_to_longest_explicit_cv_x_needs_same_loc():
+    """An explicit cv_X built on SyncToLongest must wrap SameLocSplitter.
 
     If X's per-instance coverage differs from y's (here "short" ends earlier
     in X than in y), an unwrapped cv_X re-decides instance qualification
@@ -164,9 +164,9 @@ def test_flexible_panel_splitter_explicit_cv_x_needs_same_loc():
     y = _panel({"long": 0, "short": 3})  # "short" covers 3..9
     X = _panel({"long": 0, "short": 5}).rename(columns={"value": "exog"}) * 10
     base_cv = SlidingWindowSplitter(window_length=3, fh=1, step_length=1)
-    cv = FlexiblePanelSplitter(base_cv)
+    cv = SyncToLongest(base_cv)
 
-    unsafe_cv_X = TestPlusTrainSplitter(FlexiblePanelSplitter(base_cv))
+    unsafe_cv_X = TestPlusTrainSplitter(SyncToLongest(base_cv))
     safe_cv_X = SameLocSplitter(unsafe_cv_X, y)
 
     # unwrapped: X is split independently, "short" silently drops out of
@@ -182,10 +182,10 @@ def test_flexible_panel_splitter_explicit_cv_x_needs_same_loc():
         list(safe_cv_X.split_series(X))
 
 
-def test_flexible_panel_splitter_works_with_mase():
+def test_sync_to_longest_works_with_mase():
     """evaluate() should run with MeanAbsoluteScaledError, which needs y_train."""
     y = _panel({"long": 0, "short": 3})
-    cv = FlexiblePanelSplitter(
+    cv = SyncToLongest(
         SlidingWindowSplitter(window_length=3, fh=1, step_length=3)
     )
     forecaster = NaiveForecaster()
@@ -197,11 +197,11 @@ def test_flexible_panel_splitter_works_with_mase():
     assert results[f"test_{scoring.name}"].notna().all()
 
 
-def test_flexible_panel_splitter_passthrough_for_single_series():
-    """FlexiblePanelSplitter on a plain (non-panel) series should be a no-op."""
+def test_sync_to_longest_passthrough_for_single_series():
+    """SyncToLongest on a plain (non-panel) series should be a no-op."""
     y = _make_series(n_timepoints=20)
     base_cv = SlidingWindowSplitter(window_length=5, fh=1)
-    cv = FlexiblePanelSplitter(base_cv)
+    cv = SyncToLongest(base_cv)
 
     expected = list(base_cv.split(y))
     actual = list(cv.split(y))
