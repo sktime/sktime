@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import SPLIT_GENERATOR_TYPE
 from sktime.utils.validation import is_int
 
 
@@ -113,7 +112,9 @@ class FlexiblePanelSplitter(BaseSplitter):
         self.base_cv = base_cv
         self.min_length = min_length
 
-        super().__init__(fh=base_cv.fh, window_length=base_cv.window_length)
+        super().__init__()
+
+        self.window_length = base_cv.window_length
 
         tags_to_clone = ["split_series_uses"]
         self.clone_tags(base_cv, tags_to_clone)
@@ -133,7 +134,16 @@ class FlexiblePanelSplitter(BaseSplitter):
                     stacklevel=2,
                 )
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _fh(self):
+        """Forecasting horizon, in integer resp array of integer, relative to cutoff.
+
+        Private method called by property ``fh``, overridden here to inherit
+        the forecasting horizon from ``base_cv`` directly, since the splits
+        are the same.
+        """
+        return self.base_cv.fh
+
+    def _split(self, y: pd.Index):
         """Get iloc references to train/test splits of ``y``.
 
         private _split containing the core logic, called from split
