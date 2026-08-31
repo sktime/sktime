@@ -880,7 +880,7 @@ class NaiveVariance(BaseForecaster):
             y_test = get_slice(y, start=id, end=None)  # subset on which we predict
             try:
                 forecaster.fit(y_train, fh=y_test.index)
-            except ValueError:
+            except (ValueError, NotImplementedError):
                 if self.verbose:
                     warn(
                         f"Couldn't fit the model on "
