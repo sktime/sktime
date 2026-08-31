@@ -96,7 +96,7 @@ class TSBootstrapAdapter(BaseTransformer):
         """
         # Need to be cloned otherwise it helds a inner state and fails during update
         bootstrapped_samples = self.bootstrap.clone().bootstrap(
-            X, test_ratio=0, return_indices=True
+            X, return_indices=True
         )
 
         def wrap_df(spl):
@@ -148,10 +148,10 @@ class TSBootstrapAdapter(BaseTransformer):
         deps = cls.get_class_tag("python_dependencies")
 
         if _check_soft_dependencies(deps, severity="none"):
-            from tsbootstrap import BlockBootstrap, MovingBlockBootstrap
+            from tsbootstrap.adapters import MovingBlockBootstrap
 
             params = [
-                {"bootstrap": BlockBootstrap(n_bootstraps=10)},
+                {"bootstrap": MovingBlockBootstrap(n_bootstraps=10)},
                 {
                     "bootstrap": MovingBlockBootstrap(n_bootstraps=10, block_length=4),
                     "include_actual": True,
