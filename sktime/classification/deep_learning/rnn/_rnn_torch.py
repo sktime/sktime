@@ -130,10 +130,13 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         # --------------
         "authors": ["RecreationalMath"],
         "maintainers": ["RecreationalMath"],
-        "python_version": ">=3.9",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.rnn._rnn_torch"],
     }
 
     def __init__(

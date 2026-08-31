@@ -2267,6 +2267,30 @@ class capability__bootstrap_index(_BaseTag):
     }
 
 
+class capability__missing_values__removes(_BaseTag):
+    """Capability: transformer output is guaranteed to have no missing values.
+
+    - String name: ``"capability:missing_values:removes"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag specifies whether the transformer result is guaranteed to have
+    no missing values.
+    """
+
+    _tags = {
+        "tag_name": "capability:missing_values:removes",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": (
+            "is the transformer result guaranteed to have no missing values?"
+        ),
+        "user_facing": True,
+    }
+
+
 class capability__unequal_length__removes(_BaseTag):
     """Capability: the transformer produces equal length series on unequal length input.
 
@@ -2917,6 +2941,103 @@ class inner_implements_multilevel(_BaseTag):
         "tag_type": "bool",
         "short_descr": "does the metric implement multilevel evaluation internally?",
         "user_facing": False,
+    }
+
+
+# Splitters
+# ---------
+
+
+class split_series_uses(_BaseTag):
+    """Whether split_series dispatches to integer- or label-based location splitting.
+
+    - String name: ``"split_series_uses"``
+    - Developer property tag
+    - Values: str, subset of ``"iloc"``, ``"loc"``, ``"custom"``
+    - Example: ``"iloc"``
+    - Default: ``"iloc"``
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag controls internal dispatch in the high-level ``split_series`` method:
+
+    * ``"iloc"``: ``split_series`` dispatches to positional index
+      splitting (``_split``).
+    * ``"loc"``: ``split_series`` dispatches to label-based index
+      splitting (``_split_loc``).
+    * ``"custom"``: ``split_series`` uses a custom internal splitting routine.
+
+    Developer tag, not user-facing, used to control internal dispatch.
+    """
+
+    _tags = {
+        "tag_name": "split_series_uses",
+        "parent_type": "splitter",
+        "tag_type": ("str", ["iloc", "loc", "custom"]),
+        "short_descr": (
+            "whether split_series uses split (iloc) or split_loc (loc) to split series"
+        ),
+        "user_facing": False,
+    }
+
+
+class split_hierarchical(_BaseTag):
+    """Whether the splitter natively implements splitting for hierarchical data.
+
+    - String name: ``"split_hierarchical"``
+    - Public capability tag
+    - Values: bool (True / False)
+    - Example: True
+    - Default: False
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag specifies whether the splitter natively supports and implements
+    splitting for hierarchical time series data structures (e.g., pandas MultiIndex
+    hierarchies). If False, the base class will use a generic fallback by iterating
+    over individual hierarchy levels or instances.
+
+    Developer tag, not user-facing, used to control internal dispatch.
+    """
+
+    _tags = {
+        "tag_name": "split_hierarchical",
+        "parent_type": "splitter",
+        "tag_type": "bool",
+        "short_descr": (
+            "whether _split is natively implemented for hierarchical y types"
+        ),
+        "user_facing": False,
+    }
+
+
+class split_type(_BaseTag):
+    """The splitting axis/strategy used by the time series splitter.
+
+    - String name: ``"split_type"``
+    - Public property tag
+    - Values: str, subset of ``"temporal"``, ``"instance"``
+    - Example: ``"temporal"``
+    - Default: ``"temporal"``
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag describes the fundamental axis along which the splitter operates:
+
+    * ``"temporal"``: the splitter splits observations along the time dimension,
+      for instance in expanding window or rolling window time series splits.
+    * ``"instance"``: the splitter splits by individual series or instance identity
+      in panel and hierarchical time series datasets.
+    """
+
+    _tags = {
+        "tag_name": "split_type",
+        "parent_type": "splitter",
+        "tag_type": ("str", ["temporal", "instance"]),
+        "short_descr": (
+            "whether the splitter splits by time or by instance (panel/hierarchy index)"
+        ),
+        "user_facing": True,
     }
 
 
@@ -3831,12 +3952,6 @@ ESTIMATOR_TAG_REGISTER = [
         "what scitype of y does the object support? must be scitype string",
     ),
     (
-        "capability:missing_values:removes",
-        "transformer",
-        "bool",
-        "is the transformer result guaranteed to have no missing values?",
-    ),
-    (
         "classifier_type",
         "classifier",
         (
@@ -3865,24 +3980,6 @@ ESTIMATOR_TAG_REGISTER = [
         "estimator",
         ("list", "str"),
         "parameters reserved by the base class and present in all child estimators",
-    ),
-    (
-        "split_hierarchical",
-        "splitter",
-        "bool",
-        "whether _split is natively implemented for hierarchical y types",
-    ),
-    (
-        "split_series_uses",
-        "splitter",
-        ("str", ["iloc", "loc", "custom"]),
-        "whether split_series uses split (iloc) or split_loc (loc) to split series",
-    ),
-    (
-        "split_type",
-        "splitter",
-        ("str", ["temporal", "instance"]),
-        "whether the splitter splits by time or by instance (panel/hierarchy index)",
     ),
     # -------------------------
     # tags to be moved to skpro
