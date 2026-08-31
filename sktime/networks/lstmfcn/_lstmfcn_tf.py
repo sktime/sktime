@@ -39,6 +39,13 @@ class LSTMFCNNetwork(BaseDeepNetwork):
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
        https://arxiv.org/pdf/1801.04503.pdf
+
+    Examples
+    --------
+    >>> from sktime.networks.lstmfcn import LSTMFCNNetwork
+    >>> network = LSTMFCNNetwork(
+    ...     kernel_sizes=(8, 5, 3), filter_sizes=(64, 128, 64), random_state=42
+    ... )
     """
 
     _tags = {
