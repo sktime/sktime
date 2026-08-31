@@ -113,7 +113,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         # testing configuration
         # ---------------------
         "tests:skip_by_name": ["test_fit_idempotent"],
-        "tests:libs": ["sktime.networks.inceptiontime"],
+        "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_tf"],
         "tests:vm": True,
     }
 
