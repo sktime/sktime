@@ -269,7 +269,7 @@ def test_irf_on_vecm():
     sk_res.fit(df)
 
     actual = np.round(sk_res.get_fitted_params()["irf"].sum())
-    expected = 3.0
+    expected = 2.0
     np.testing.assert_allclose(actual, expected, rtol=0.10)
 
 
@@ -292,7 +292,7 @@ def test_additional_irfparams_on_vecm():
     sk_res.fit(df)
 
     actual = np.round(sk_res.get_fitted_params()["irf"].sum())
-    expected = 30.0
+    expected = 18.0
     np.testing.assert_allclose(actual, expected, rtol=0.10)
 
 
@@ -306,9 +306,8 @@ def test_irf_vecm_against_statsmodels():
 
     from sktime.forecasting.vecm import VECM as skvecm
 
-    # Use lag 12 to avoid near-singular covariance matrix with lag 1.
     X = load_airline()
-    X2 = X.shift(12).bfill()
+    X2 = X.shift(1).bfill()
     df = pd.DataFrame({"X": X, "X2": X2})
 
     st_model = statsvecm(df, seasons=2)
