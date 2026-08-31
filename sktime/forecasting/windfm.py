@@ -295,7 +295,7 @@ class WindFMForecaster(BaseForecaster):
         ----------
         fh : guaranteed to be ForecastingHorizon
             The forecasting horizon with the steps ahead to to predict.
-        X :  sktime time series object, optional (default=None)
+        X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
         alpha : list of float (guaranteed not None and floats in [0,1] interval)
@@ -313,9 +313,57 @@ class WindFMForecaster(BaseForecaster):
         """
         pred_df, y_index = self._predict_samples(fh)
 
-        quantiles = np.quantile(pred_df.to_numpy(), q=alpha, axis=1).T
+        samples = np.sort(pred_df.to_numpy(), axis=1)
+        cumulative_probability = np.arange(1, samples.shape[1] + 1) / samples.shape[1]
+        quantile_indices = np.searchsorted(cumulative_probability, np.asarray(alpha))
+        quantiles = samples[:, quantile_indices]
         columns = pd.MultiIndex.from_product([self._get_varnames(), alpha])
         return pd.DataFrame(quantiles, index=y_index, columns=columns)
+
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic,
+            called from predict_proba and probabilistic prediction methods
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to to predict.
+        X :  sktime time series object, optional (default=None)
+            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
+            Exogeneous time series for the forecast
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution
+            if marginal=True, will be marginal distribution by time point
+            if marginal=False and implemented by method, will be joint
+        """
+        from skpro.distributions import Empirical
+
+        pred_df, y_index = self._predict_samples(fh)
+
+        sample_index = pd.MultiIndex.from_product(
+            [pred_df.columns, y_index], names=["sample", y_index.name]
+        )
+        samples = pd.DataFrame(
+            pred_df.to_numpy().T.reshape(-1, 1),
+            index=sample_index,
+            columns=self._get_varnames(),
+        )
+
+        return Empirical(samples, time_indep=marginal)
 
     def _predict_samples(self, fh):
         """Generate WindFM sample paths for a future horizon."""
