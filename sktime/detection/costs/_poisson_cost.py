@@ -93,6 +93,31 @@ class PoissonCost(BaseCost):
         Fixed rate parameter of the Poisson distribution.
         If None, the cost is evaluated with rate set to
         the MLE estimate (sample mean) over each interval.
+
+    Examples
+    --------
+    The data must consist of non-negative integer counts.
+
+    >>> import numpy as np
+    >>> from sktime.detection.costs import PoissonCost
+    >>> X = np.array([1, 2, 1, 2, 20, 22, 20, 22]).reshape(-1, 1)
+    >>> cost = PoissonCost()
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[  9.91],
+           [ 19.75],
+           [110.33]])
+
+    The first two intervals are each well described by a single rate, so their
+    cost is low. The third spans the change in rate and is expensive.
+
+    Passing ``param`` evaluates the cost at a fixed rate instead of the MLE
+    estimate of the interval:
+
+    >>> cost = PoissonCost(param=2.0)
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[ 10.45],
+           [262.78],
+           [273.23]])
     """
 
     _tags = {
