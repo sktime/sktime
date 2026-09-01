@@ -139,6 +139,7 @@ Forecasting
 * [ENH] ``Cisco TSFM`` forecaster  (:pr:`10444`) :user:`vedantag17`
 * [ENH] ``MIRA`` medical time series foundation model for forecasting by Microsoft (:pr:`10398`) :user:`Faakhir30`
 * [ENH] ``Momentfm`` caching and lazy load addition (:pr:`10494`) :user:`vedantag17`
+* [ENH] TimesFM 3 multivariate forecaster (:pr:`TBD`) :user:`hasanfaesal`
 * [ENH] rename ``timesfm2_forecaster`` module to ``timesfm2`` (:pr:`10539`) :user:`fkiraly`
 * [ENH] minor improvements to ``DummyGlobalForecaster`` code (:pr:`10562`) :user:`fkiraly`
 * [ENH] in ``test_forecastingbenchmark_global_mode``, replace soft dependent estimator with ``DummyGlobalForecaster`` (:pr:`10561`) :user:`fkiraly`
