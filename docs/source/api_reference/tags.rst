@@ -74,6 +74,7 @@ These tags are typically used for typing, packaging and documentation purposes.
     python_version
     python_dependencies
     env_marker
+    sktime_version
     requires_cython
     r_dependencies
 
@@ -131,6 +132,7 @@ these types of objects.
     capability__feature_importance
     capability__contractable
     capability__train_estimate
+    capability__multithreading
     capability__random_state
     property__randomness
 
@@ -153,9 +155,11 @@ transform a single time series object (``"transformer"`` type).
     scitype__transform_input
     scitype__transform_output
     scitype__transform_labels
+    scitype__instancewise
     requires_x
     requires_y
     capability__missing_values
+    capability__missing_values__removes
     capability__unequal_length
     capability__unequal_length__adds
     capability__unequal_length__removes
@@ -166,7 +170,26 @@ transform a single time series object (``"transformer"`` type).
     capability__bootstrap_index
     fit_is_empty
     transform_returns_same_time_index
+    skip_inverse_transform
     property__randomness
+
+
+.. _pairwise_transformer_tags:
+
+Tags for pairwise transformers
+------------------------------
+
+This section lists tags applying to pairwise transformers, i.e., objects that
+transform pairs of time series (``"transformer-pairwise"`` and ``"transformer-pairwise-panel"`` types).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    symmetric
 
 
 .. _detector_tags:
@@ -235,6 +258,44 @@ This section lists tags applying to time series aligners (``"aligner"`` type).
     capability__distance
     capability__distance_matrix
     property__alignment_type
+
+
+.. _param_est_tags:
+
+Tags for parameter estimators
+------------------------------
+
+This section lists tags applying to parameter estimators (``"param_est"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    scitype__X
+    capability__multivariate
+    capability__pairwise
+
+
+.. _splitter_tags:
+
+Tags for splitters
+------------------
+
+This section lists tags applying to time series splitters (``"splitter"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    split_type
+    split_series_uses
+    split_hierarchical
 
 
 Common developer tags

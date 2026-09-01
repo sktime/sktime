@@ -13,7 +13,7 @@ from pandas import Timedelta
 from pandas.tseries.frequencies import to_offset
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.utils.datetime import _coerce_duration_to_int
+from sktime.utils.datetime import _coerce_duration_to_int, _to_offset_compat
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
@@ -175,15 +175,13 @@ def _check_freq(obj):
     elif isinstance(obj, (pd.Period, pd.Index)):
         return _extract_freq_from_cutoff(obj)
     elif isinstance(obj, str) or obj is None:
-        with _suppress_pd22_warning():
-            offset = to_offset(obj)
-        return offset
+        return _to_offset_compat(obj)
     else:
         return None
 
 
-def _extract_freq_from_cutoff(x) -> str | None:
-    """Extract frequency string from cutoff.
+def _extract_freq_from_cutoff(x) -> pd.offsets.BaseOffset | None:
+    """Extract frequency offset from cutoff.
 
     Parameters
     ----------
@@ -191,7 +189,7 @@ def _extract_freq_from_cutoff(x) -> str | None:
 
     Returns
     -------
-    str : Frequency string or None
+    pandas offset, or None if x carries no frequency information
     """
     if isinstance(x, (pd.Period, pd.PeriodIndex, pd.DatetimeIndex)):
         return x.freq
@@ -433,12 +431,8 @@ class ForecastingHorizon:
                     f"Current: {freq_from_self}, from update: {freq_from_obj}."
                 )
         elif freq_from_obj is not None:  # only freq_from_obj is not None
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
             self._freq = freq_from_obj
         else:
-            if freq_from_obj == "ME":
-                freq_from_obj = "M"
             # leave self._freq as freq_from_self, or set to None if does not exist yet
             self._freq = freq_from_self
 
@@ -1038,6 +1032,14 @@ def _coerce_to_period(x, freq=None):
         raise ValueError(
             "_coerce_to_period requires freq argument to be passed if x is pd.Timestamp"
         )
+    # periods have no start/end variant, and pandas 3 no longer accepts a
+    # MonthBegin offset in to_period - use the equivalent period alias instead
+    if isinstance(freq, pd.offsets.MonthBegin):
+        freq = f"{freq.n}M"
+    elif isinstance(freq, pd.offsets.QuarterBegin):
+        freq = f"{freq.n}Q"
+    elif isinstance(freq, pd.offsets.YearBegin):
+        freq = f"{freq.n}Y"
     return x.to_period(freq)
 
 

@@ -80,6 +80,7 @@ class MantisForecaster(BaseForecaster):
         # CI and testing tags
         # -------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_mantis"],
     }
 
     def __init__(

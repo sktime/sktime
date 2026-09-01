@@ -190,6 +190,37 @@ class authors(_BaseTag):
     }
 
 
+class sktime_version(_BaseTag):
+    """Version of ``sktime`` from which the object originates.
+
+    Part of packaging metadata for the object.
+
+    - String name: ``"sktime_version"``
+    - Private tag, developer and framework facing
+    - Values: string, ``sktime`` version identifier
+    - Example: ``"0.30.0"``
+    - Default: no restriction
+
+    The ``sktime_version`` tag of an object is a string specifying the
+    ``sktime`` version from which the estimator class originates,
+    i.e., the version in which the class was first added to ``sktime``.
+
+    The tag is used for packaging metadata and provenance tracking
+    of the object.
+
+    IMPORTANT: this tag is automatically set by the base classes.
+    It should not be manually set by developers.
+    """
+
+    _tags = {
+        "tag_name": "sktime_version",
+        "parent_type": "object",
+        "tag_type": "str",
+        "short_descr": "sktime version from which this estimator class originates",
+        "user_facing": False,
+    }
+
+
 class python_version(_BaseTag):
     """Python version requirement specifier for the object (PEP 440).
 
@@ -825,6 +856,33 @@ class capability__train_estimate(_BaseTag):
         "parent_type": "estimator",
         "tag_type": "bool",
         "short_descr": "can the estimator estimate its performance on the training set?",  # noqa: E501
+        "user_facing": True,
+    }
+
+
+class capability__multithreading(_BaseTag):
+    """Capability: the classifier can use multiple threads.
+
+    - String name: ``"capability:multithreading"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to classifiers and early classifiers.
+
+    If the tag is ``True``, the classifier exposes an ``n_jobs`` parameter that
+    can be used to run supported operations with multiple threads.
+
+    If the tag is ``False``, the classifier does not expose this standard
+    multithreading configuration.
+    """
+
+    _tags = {
+        "tag_name": "capability:multithreading",
+        "parent_type": ["classifier", "early_classifier"],
+        "tag_type": "bool",
+        "short_descr": "can the classifier set n_jobs to use multiple threads?",
         "user_facing": True,
     }
 
@@ -1826,6 +1884,34 @@ class scitype__transform_output(_BaseTag):
     }
 
 
+class scitype__instancewise(_BaseTag):
+    """Whether the transformer transforms instances independently.
+
+    - String name: ``"scitype:instancewise"``
+    - Public scitype tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, ``fit`` and ``transform`` of the transformer are
+    statistically independent by time series instance, i.e., the transform of one
+    time series instance does not depend on any other instance.
+
+    If the tag is ``False``, ``fit`` and/or ``transform`` of the transformer
+    are not independent by time series instance.
+    """
+
+    _tags = {
+        "tag_name": "scitype:instancewise",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "does the transformer transform instances independently?",
+        "user_facing": True,
+    }
+
+
 class requires_x(_BaseTag):
     """Behaviour flag: transformer requires X in fit and transform.
 
@@ -2062,6 +2148,36 @@ class capability__inverse_transform__exact(_BaseTag):
     }
 
 
+class skip_inverse_transform(_BaseTag):
+    """Behaviour flag: skips inverse transform when called.
+
+    - String name: ``"skip-inverse-transform"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to transformations.
+
+    If the tag is ``True``, the transformer skips the inverse transform
+    when used in a pipeline.
+
+    This tag specifies whether the inverse transform should be skipped
+    when the transformer is used in a pipeline.
+
+    If the tag is ``False``, the inverse transform is carried out normally,
+    provided that the transformer supports inverse transformation.
+    """
+
+    _tags = {
+        "tag_name": "skip-inverse-transform",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": "behaviour flag: skips inverse_transform when called yes/no",
+        "user_facing": True,
+    }
+
+
 class transform_returns_same_time_index(_BaseTag):
     """Property: transformer returns same time index as input.
 
@@ -2151,6 +2267,30 @@ class capability__bootstrap_index(_BaseTag):
     }
 
 
+class capability__missing_values__removes(_BaseTag):
+    """Capability: transformer output is guaranteed to have no missing values.
+
+    - String name: ``"capability:missing_values:removes"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag specifies whether the transformer result is guaranteed to have
+    no missing values.
+    """
+
+    _tags = {
+        "tag_name": "capability:missing_values:removes",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": (
+            "is the transformer result guaranteed to have no missing values?"
+        ),
+        "user_facing": True,
+    }
+
+
 class capability__unequal_length__removes(_BaseTag):
     """Capability: the transformer produces equal length series on unequal length input.
 
@@ -2224,6 +2364,31 @@ class capability__unequal_length__adds(_BaseTag):
         "parent_type": "transformer",
         "tag_type": "bool",
         "short_descr": "can outputs be unequal length even if inputs are equal length?",
+        "user_facing": True,
+    }
+
+
+class symmetric(_BaseTag):
+    """Property: pairwise transformer is symmetric.
+
+    - String name: ``"symmetric"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag applies to pairwise transformers.
+
+    The tag specifies whether the pairwise transformer is symmetric,
+    i.e., whether the transformation is the same when the two input series
+    are swapped: ``t(x, y) = t(y, x)`` for all pairs ``(x, y)``.
+    """
+
+    _tags = {
+        "tag_name": "symmetric",
+        "parent_type": ["transformer-pairwise", "transformer-pairwise-panel"],
+        "tag_type": "bool",
+        "short_descr": "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
         "user_facing": True,
     }
 
@@ -2523,7 +2688,7 @@ class property__alignment_type(_BaseTag):
 # ------------------------
 
 
-class capability__pairwise_parameter_estimation(_BaseTag):
+class capability__pairwise(_BaseTag):
     """Capability: parameter estimator supports pairwise parameter estimation.
 
     - String name: ``"capability:pairwise"``
@@ -2546,6 +2711,29 @@ class capability__pairwise_parameter_estimation(_BaseTag):
         "parent_type": "param_est",
         "tag_type": "bool",
         "short_descr": "does the estimator support pairwise parameter estimation?",
+        "user_facing": True,
+    }
+
+
+class scitype__X(_BaseTag):
+    """Scitypes internally supported by parameter estimator input X.
+
+    - String name: ``"scitype:X"``
+    - Public scitype tag
+    - Values: string, name(s) of scitype(s) supported
+    - Example: ``"Series"``
+
+    This tag applies to parameter estimators.
+
+    The tag specifies which scitype(s) of ``X`` the parameter estimator
+    internally supports, e.g. ``"Series"``, ``"Panel"`` or ``"Hierarchical"``.
+    """
+
+    _tags = {
+        "tag_name": "scitype:X",
+        "parent_type": "param_est",
+        "tag_type": "str",
+        "short_descr": "which scitypes does X internally support?",
         "user_facing": True,
     }
 
@@ -2753,6 +2941,103 @@ class inner_implements_multilevel(_BaseTag):
         "tag_type": "bool",
         "short_descr": "does the metric implement multilevel evaluation internally?",
         "user_facing": False,
+    }
+
+
+# Splitters
+# ---------
+
+
+class split_series_uses(_BaseTag):
+    """Whether split_series dispatches to integer- or label-based location splitting.
+
+    - String name: ``"split_series_uses"``
+    - Developer property tag
+    - Values: str, subset of ``"iloc"``, ``"loc"``, ``"custom"``
+    - Example: ``"iloc"``
+    - Default: ``"iloc"``
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag controls internal dispatch in the high-level ``split_series`` method:
+
+    * ``"iloc"``: ``split_series`` dispatches to positional index
+      splitting (``_split``).
+    * ``"loc"``: ``split_series`` dispatches to label-based index
+      splitting (``_split_loc``).
+    * ``"custom"``: ``split_series`` uses a custom internal splitting routine.
+
+    Developer tag, not user-facing, used to control internal dispatch.
+    """
+
+    _tags = {
+        "tag_name": "split_series_uses",
+        "parent_type": "splitter",
+        "tag_type": ("str", ["iloc", "loc", "custom"]),
+        "short_descr": (
+            "whether split_series uses split (iloc) or split_loc (loc) to split series"
+        ),
+        "user_facing": False,
+    }
+
+
+class split_hierarchical(_BaseTag):
+    """Whether the splitter natively implements splitting for hierarchical data.
+
+    - String name: ``"split_hierarchical"``
+    - Public capability tag
+    - Values: bool (True / False)
+    - Example: True
+    - Default: False
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag specifies whether the splitter natively supports and implements
+    splitting for hierarchical time series data structures (e.g., pandas MultiIndex
+    hierarchies). If False, the base class will use a generic fallback by iterating
+    over individual hierarchy levels or instances.
+
+    Developer tag, not user-facing, used to control internal dispatch.
+    """
+
+    _tags = {
+        "tag_name": "split_hierarchical",
+        "parent_type": "splitter",
+        "tag_type": "bool",
+        "short_descr": (
+            "whether _split is natively implemented for hierarchical y types"
+        ),
+        "user_facing": False,
+    }
+
+
+class split_type(_BaseTag):
+    """The splitting axis/strategy used by the time series splitter.
+
+    - String name: ``"split_type"``
+    - Public property tag
+    - Values: str, subset of ``"temporal"``, ``"instance"``
+    - Example: ``"temporal"``
+    - Default: ``"temporal"``
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag describes the fundamental axis along which the splitter operates:
+
+    * ``"temporal"``: the splitter splits observations along the time dimension,
+      for instance in expanding window or rolling window time series splits.
+    * ``"instance"``: the splitter splits by individual series or instance identity
+      in panel and hierarchical time series datasets.
+    """
+
+    _tags = {
+        "tag_name": "split_type",
+        "parent_type": "splitter",
+        "tag_type": ("str", ["temporal", "instance"]),
+        "short_descr": (
+            "whether the splitter splits by time or by instance (panel/hierarchy index)"
+        ),
+        "user_facing": True,
     }
 
 
@@ -3640,18 +3925,6 @@ class info__source(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "sktime_version",
-        "object",
-        "str",
-        "sktime version from which this estimator class originates",
-    ),
-    (
-        "skip-inverse-transform",
-        "transformer",
-        "bool",
-        "behaviour flag: skips inverse_transform when called yes/no",
-    ),
-    (
         "X-y-must-have-same-index",
         ["forecaster", "regressor", "transformer"],
         "bool",
@@ -3664,22 +3937,10 @@ ESTIMATOR_TAG_REGISTER = [
         "passed to input checks, input conversion index type to enforce",
     ),
     (
-        "symmetric",
-        ["transformer-pairwise", "transformer-pairwise-panel"],
-        "bool",
-        "is the transformer symmetric, i.e., t(x,y)=t(y,x) always?",
-    ),
-    (
         "pwtrafo_type",
         ["transformer-pairwise", "transformer-pairwise-panel"],
         ("str", ["distance", "kernel", "other"]),
         "mathematical type of pairwise transformer - distance, kernel, or other",
-    ),
-    (
-        "scitype:X",
-        "param_est",
-        "str",
-        "which scitypes does X internally support?",
     ),
     (
         "scitype:y",
@@ -3689,24 +3950,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["param_est", "metric"],
         "str",
         "what scitype of y does the object support? must be scitype string",
-    ),
-    (
-        "scitype:instancewise",
-        "transformer",
-        "bool",
-        "does the transformer transform instances independently?",
-    ),
-    (
-        "capability:missing_values:removes",
-        "transformer",
-        "bool",
-        "is the transformer result guaranteed to have no missing values?",
-    ),
-    (
-        "capability:multithreading",
-        ["classifier", "early_classifier"],
-        "bool",
-        "can the classifier set n_jobs to use multiple threads?",
     ),
     (
         "classifier_type",
@@ -3733,58 +3976,16 @@ ESTIMATOR_TAG_REGISTER = [
         "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
-    (
-        "task",
-        "detector",
-        "str",
-        "subtype of detector, e.g., 'anomaly_detection', 'segmentation'",
-    ),
-    (
-        "learning_type",
-        "detector",
-        "str",
-        "type of learning, e.g., 'supervised', 'unsupervised'",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
         "parameters reserved by the base class and present in all child estimators",
-    ),
-    (
-        "split_hierarchical",
-        "splitter",
-        "bool",
-        "whether _split is natively implemented for hierarchical y types",
-    ),
-    (
-        "split_series_uses",
-        "splitter",
-        ("str", ["iloc", "loc", "custom"]),
-        "whether split_series uses split (iloc) or split_loc (loc) to split series",
-    ),
-    (
-        "split_type",
-        "splitter",
-        ("str", ["temporal", "instance"]),
-        "whether the splitter splits by time or by instance (panel/hierarchy index)",
     ),
     # -------------------------
     # tags to be moved to skpro
     # -------------------------
     # these tags will be moved to skpro
     # some to be converted to configs, see skpro issue #269
-    (
-        "distribution_type",
-        "estimator",
-        "str",
-        "distribution type of data as str",
-    ),
     (
         "capabilities:exact",
         "distribution",

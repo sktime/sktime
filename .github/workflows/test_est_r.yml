@@ -62,7 +62,7 @@ jobs:
         uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
-          r-version: '4.4.2'
+          r-version: release
 
       - name: Configure R paths (Unix)
         if: ${{ matrix.os != 'windows-latest' }}
@@ -94,12 +94,11 @@ jobs:
           PKGS=$(python -c "from sktime.registry._craft import _r_deps; print(','.join(repr(x) for x in _r_deps('${{ matrix.flag }}')))")
           Rscript -e "install.packages(c($PKGS), repos='https://cloud.r-project.org', Ncpus=2, dependencies=c('Depends','Imports','LinkingTo'))"
 
-      - name: Check R version (macOS)
-        if: ${{ matrix.os == 'macos-latest' }}
+      - name: Check R version
         run: Rscript -e "cat('R=',paste(unlist(getRversion()),collapse='.'),'\n')"
 
       - name: Install rpy2
-        run: uv pip install "rpy2>=3.6,<3.7"
+        run: uv pip install rpy2
         env:
           UV_SYSTEM_PYTHON: 1
 

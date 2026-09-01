@@ -269,6 +269,16 @@ class CutoffFhSplitter(BaseSplitter):
         Forecasting horizon, relative or absolute, to determine test folds.
         Type should match the type of ``cutoffs`` input.
         If not ForecastingHorizon, is coerced.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.split import CutoffFhSplitter
+    >>> y = pd.period_range("2020-01-01", periods=10, freq="D")
+    >>> cutoff = pd.PeriodIndex(["2020-01-04", "2020-01-07"], freq="D")
+    >>> splitter = CutoffFhSplitter(cutoff=cutoff, fh=[1, 2])
+    >>> [(t[0].tolist(), t[1].tolist()) for t in splitter.split(y)]
+    [([0, 1, 2, 3], [4, 5]), ([0, 1, 2, 3, 4, 5, 6], [7, 8])]
     """
 
     _tags = {

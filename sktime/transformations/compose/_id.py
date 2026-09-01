@@ -14,7 +14,21 @@ from sktime.transformations.compose._common import CORE_MTYPES
 
 
 class Id(BaseTransformer):
-    """Identity transformer, returns data unchanged in transform/inverse_transform."""
+    """Identity transformer, returns data unchanged in transform/inverse_transform.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.compose import Id
+    >>> X = pd.Series([1, 2, 3])
+    >>> transformer = Id()
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.equals(X)
+    True
+    >>> X_inv = transformer.inverse_transform(Xt)
+    >>> X_inv.equals(X)
+    True
+    """
 
     _tags = {
         "authors": "fkiraly",
@@ -30,7 +44,6 @@ class Id(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, X, y=None):

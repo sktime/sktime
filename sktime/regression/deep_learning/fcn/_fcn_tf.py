@@ -1,22 +1,24 @@
-"""Residual Network (ResNet) for regression."""
+"""Fully Connected Neural Network (CNN) for regression."""
+
+__all__ = ["FCNRegressor"]
 
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
-from sktime.networks.resnet import ResNetNetwork
+from sktime.networks.fcn._fcn_tf import FCNNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 
 
-class ResNetRegressor(BaseDeepRegressor):
-    """Residual Neural Network Regressor adopted from [1].
+class FCNRegressor(BaseDeepRegressor):
+    """Fully Connected Neural Network (FCN), as described in [1]_.
 
-    Adapted from the implementation by hfawaz in
-    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
+    Adapted from the implementation from Fawaz et. al
+    https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
 
     Parameters
     ----------
-    n_epochs : int, default = 1500
+    n_epochs : int, default = 2000
         the number of epochs to train the model
     batch_size : int, default = 16
         the number of samples per gradient update.
@@ -28,9 +30,8 @@ class ResNetRegressor(BaseDeepRegressor):
         whether to output extra information
     loss : string, default="mean_squared_error"
         fit parameter for the keras model
-    optimizer : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics : list of strings, default=["mean_squared_error"],
-    activation : string or a tf callable, default="linear"
+    metrics : list of strings, default=["accuracy"],
+    activation : string or a tf callable, default="sigmoid"
         Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
@@ -42,58 +43,58 @@ class ResNetRegressor(BaseDeepRegressor):
         whether the layer uses a bias vector.
     optimizer : keras.optimizers object, default = Adam(lr=0.01)
         specify the optimizer and the learning rate to be used.
+    filter_sizes : list or tuple of int , default = (128,256,128)
+        number of filters for each convolutional layer.
+        must have length equal to kernel_sizes.
+    kernel_sizes : list or tuple of int  , default = (8,5,3)
+        kernel size for each convolutional layer.
+        must have length equal to filter_sizes.
 
     References
     ----------
-        .. [1] Wang et al, Time series classification from
-    scratch with deep neural networks: A strong baseline,
-    International joint conference on neural networks (IJCNN), 2017.
-
-    Examples
-    --------
-    >>> from sktime.regression.deep_learning.resnet import ResNetRegressor
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> clf = ResNetRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
-    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
-    ResNetRegressor(...)
+    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
+    Journal of Systems Engineering and Electronics, 28(1):2017.
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "Withington", "noxthot"],
-        # hfawaz for dl-4-tsc
-        "maintainers": ["Withington"],
-        "python_dependencies": "tensorflow",
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
+        "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
         # estimator type handled by parent class
+        "tests:skip_all": True,  # see 4610
     }
 
     def __init__(
         self,
-        n_epochs=1500,
+        n_epochs=2000,
+        batch_size=16,
         callbacks=None,
         verbose=False,
         loss="mean_squared_error",
         metrics=None,
-        batch_size=16,
         random_state=None,
-        activation="linear",
+        activation="sigmoid",
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
+        filter_sizes=(128, 256, 128),
+        kernel_sizes=(8, 5, 3),
     ):
         self.n_epochs = n_epochs
+        self.batch_size = batch_size
         self.callbacks = callbacks
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
-        self.batch_size = batch_size
         self.random_state = random_state
         self.activation = activation
         self.activation_hidden = activation_hidden
         self.use_bias = use_bias
         self.optimizer = optimizer
+        self.history = None
+        self.filter_sizes = filter_sizes
+        self.kernel_sizes = kernel_sizes
 
         super().__init__()
 
@@ -106,13 +107,12 @@ class ResNetRegressor(BaseDeepRegressor):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        self.history = None
-        self._network = ResNetNetwork(
-            activation_hidden=self.activation_hidden,
+        self._network = FCNNetwork(
+            activation=self.activation_hidden,
             random_state=self.random_state,
+            filter_sizes=self.filter_sizes,
+            kernel_sizes=self.kernel_sizes,
         )
-
-        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -136,24 +136,21 @@ class ResNetRegressor(BaseDeepRegressor):
 
         tf.random.set_seed(self.random_state)
 
-        self.optimizer_ = (
-            keras.optimizers.Adam(learning_rate=0.01)
-            if self.optimizer is None
-            else self.optimizer
-        )
-
         if self.metrics is None:
-            metrics = [
-                "mean_squared_error",
-            ]
+            metrics = ["accuracy"]
         else:
             metrics = self.metrics
-
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(
             units=1, activation=self.activation, use_bias=self.use_bias
         )(output_layer)
+
+        self.optimizer_ = (
+            keras.optimizers.Adam(learning_rate=0.01)
+            if self.optimizer is None
+            else self.optimizer
+        )
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
@@ -161,7 +158,6 @@ class ResNetRegressor(BaseDeepRegressor):
             optimizer=self.optimizer_,
             metrics=metrics,
         )
-
         return model
 
     def _fit(self, X, y):
@@ -186,15 +182,13 @@ class ResNetRegressor(BaseDeepRegressor):
         self.model_ = self.build_model(self.input_shape)
         if self.verbose:
             self.model_.summary()
-
-        self.callbacks_ = deepcopy(self.callbacks)
         self.history = self.model_.fit(
             X,
             y,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=self.callbacks_,
+            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
         )
         return self
 
@@ -224,17 +218,28 @@ class ResNetRegressor(BaseDeepRegressor):
         from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
-            "n_epochs": 6,
+            "n_epochs": 10,
             "batch_size": 4,
             "use_bias": False,
         }
 
         param2 = {
-            "n_epochs": 4,
+            "n_epochs": 12,
             "batch_size": 6,
             "use_bias": True,
+            "filter_sizes": [64, 128],
+            "kernel_sizes": [5, 3],
         }
-        test_params = [param1, param2]
+
+        # to check for tuple
+        param3 = {
+            "n_epochs": 8,
+            "batch_size": 4,
+            "use_bias": False,
+            "filter_sizes": (64, 128),
+            "kernel_sizes": (5, 3),
+        }
+        test_params = [param1, param2, param3]
 
         if _check_soft_dependencies("keras", severity="none"):
             from keras.callbacks import LambdaCallback
