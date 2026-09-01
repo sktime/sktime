@@ -59,7 +59,7 @@ class _PytorchForecastingAdapter(BaseForecaster):
         "python_dependencies": [
             "pytorch-forecasting>=1.8.0",
             "torch",
-            "lightning",
+            "lightning>=2.4",
         ],
         # estimator type
         # --------------

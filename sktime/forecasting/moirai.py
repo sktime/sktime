@@ -89,7 +89,7 @@ class MOIRAIForecaster(BaseForecaster):
             "einops",
             "huggingface_hub",
             "hf-xet",
-            "lightning",
+            "lightning>=2.4",
             "hydra-core",
             "safetensors",
         ],
