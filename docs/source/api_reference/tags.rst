@@ -319,6 +319,7 @@ The tags below have limited use in retrieval or inspection of objects.
     x_inner_mtype
     y_inner_mtype
     visual_block_kind
+    reserved_params
 
 .. _dev_testing_tags:
 

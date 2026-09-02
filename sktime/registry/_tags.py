@@ -3733,6 +3733,36 @@ class visual_block_kind(_BaseTag):
     }
 
 
+class reserved_params(_BaseTag):
+    """Parameters reserved by the base class, present in all child estimators.
+
+    - String name: ``"reserved_params"``
+    - Extension developer tag
+    - Values: str, or list of str
+    - Example: ``["multioutput", "multilevel"]``
+    - Default: ``[]``
+
+    This tag lists parameters that are introduced by a base class, and are
+    therefore present in all its descendants, rather than being specific to an
+    individual estimator.
+
+    For instance, forecasting metrics inherit ``multioutput`` and ``multilevel``
+    from their base class, so these are reserved rather than metric specific.
+
+    The ``sktime`` test suite uses the tag to tell such parameters apart from
+    estimator specific ones, for example when checking that ``get_test_params``
+    covers the parameters of an estimator.
+    """
+
+    _tags = {
+        "tag_name": "reserved_params",
+        "parent_type": "estimator",
+        "tag_type": ("list", "str"),
+        "short_descr": "parameters reserved by the base class and present in all child estimators",  # noqa: E501
+        "user_facing": False,
+    }
+
+
 # Catalogue tags
 # --------------
 
@@ -3974,12 +4004,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["forecaster", "transformer"],
         "bool",
         "whether estimator remembers all data seen as self._X, self._y, etc",
-    ),
-    (
-        "reserved_params",
-        "estimator",
-        ("list", "str"),
-        "parameters reserved by the base class and present in all child estimators",
     ),
     # -------------------------
     # tags to be moved to skpro
