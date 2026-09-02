@@ -7,6 +7,7 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
 from sktime.performance_metrics.forecasting._base import (
     BaseForecastingErrorMetricFunc,
     _ScaledMetricTags,
@@ -126,6 +127,54 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
             multilevel=multilevel,
             by_index=by_index,
         )
+    
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+        y_train : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Training data used to calculate the naive forecasting error.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+        """
+        multioutput = self.multioutput
+        sp = self.sp
+        y_train = kwargs["y_train"]
+
+        eps = np.finfo(np.float64).eps
+
+        raw_values = (y_true - y_pred) ** 2
+
+        naive_forecast_true = y_train[sp:]
+        naive_forecast_pred = y_train[:-sp]
+        naive_diff = (naive_forecast_true - naive_forecast_pred.values) ** 2
+        naive_error = naive_diff.median()
+
+        scaled_values = raw_values / np.maximum(naive_error, eps)
+
+        if self.square_root:
+            n = scaled_values.shape[0]
+            msse = scaled_values.mean(axis=0)
+            rmse = msse.pow(0.5)
+            ssse_sum = scaled_values.sum(axis=0)
+            msse_jackknife = (ssse_sum - scaled_values) / (n - 1)
+            rmse_jackknife = msse_jackknife.pow(0.5)
+            pseudo_values = n * rmse - (n - 1) * rmse_jackknife
+        else:
+            pseudo_values = scaled_values
+
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+        return self._handle_multioutput(pseudo_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
