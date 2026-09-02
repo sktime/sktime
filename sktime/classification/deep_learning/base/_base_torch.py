@@ -783,7 +783,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         return metrics_dict if metrics_dict else None
 
     @abc.abstractmethod
-    def _build_network(self):
+    def _build_network(self, X, y):
         pass
 
     def _build_dataloader(self, X, y=None):
