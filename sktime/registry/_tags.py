@@ -3953,8 +3953,7 @@ class scitype__y(_BaseTag):
         "tag_name": "scitype:y",
         "parent_type": ["param_est", "metric"],
         "tag_type": "str",
-        "short_descr": """what scitype of y does the object support?
-                          must be scitype string""",
+        "short_descr": "which scitype of y does the object support?",
         "user_facing": True,
     }
 
