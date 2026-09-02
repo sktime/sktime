@@ -3941,7 +3941,7 @@ class X_y_must_have_same_index(_BaseTag):
     }
 
 
-class scitype_y(_BaseTag):
+class scitype__y(_BaseTag):
     """Whether the forecaster is univariate, multivariate or both.
 
     - String name: ``"scitype:y"``

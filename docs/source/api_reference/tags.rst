@@ -234,7 +234,7 @@ This section lists tags applying to time series metrics (``"metric"`` type).
     :template: function.rst
     :nosignatures:
 
-    scitype_y
+    scitype__y
     lower_is_better
     capability__sample_weight
     scitype__y_pred
@@ -279,7 +279,7 @@ This section lists tags applying to parameter estimators (``"param_est"`` type).
     :nosignatures:
 
     scitype__X
-    scitype_y
+    scitype__y
     capability__multivariate
     capability__pairwise
 
