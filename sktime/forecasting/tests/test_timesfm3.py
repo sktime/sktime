@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import pickle
+from contextlib import contextmanager
 from dataclasses import dataclass
 from types import SimpleNamespace
-from contextlib import contextmanager
 from unittest.mock import patch
 
 import numpy as np
@@ -107,14 +107,17 @@ def _make_forecaster(**kwargs):
 
 @contextmanager
 def _patch_upstream(fake):
-    with patch.object(
-        TimesFM3Forecaster,
-        "_load_model",
-        autospec=True,
-        side_effect=lambda self: setattr(self, "forecaster_", fake) or fake,
-    ), patch(
-        "sktime.forecasting.base._base._check_estimator_deps",
-        return_value=True,
+    with (
+        patch.object(
+            TimesFM3Forecaster,
+            "_load_model",
+            autospec=True,
+            side_effect=lambda self: setattr(self, "forecaster_", fake) or fake,
+        ),
+        patch(
+            "sktime.forecasting.base._base._check_estimator_deps",
+            return_value=True,
+        ),
     ):
         yield
 
@@ -143,7 +146,10 @@ def test_univariate_series_point_forecast_index():
         forecaster = _make_forecaster()
         y_pred = forecaster.fit(y).predict(fh=fh)
 
-    assert list(y_pred.index) == [index[-1] + pd.Timedelta(days=1), index[-1] + pd.Timedelta(days=3)]
+    assert list(y_pred.index) == [
+        index[-1] + pd.Timedelta(days=1),
+        index[-1] + pd.Timedelta(days=3),
+    ]
 
 
 def test_multivariate_dataframe_point_forecast():
@@ -462,7 +468,9 @@ def test_timesfm3_multivariate_covariate_parity_with_upstream():
         return_quantiles=True,
     )
 
-    np.testing.assert_allclose(y_pred.to_numpy(), direct.forecast.T, rtol=1e-5, atol=1e-4)
+    np.testing.assert_allclose(
+        y_pred.to_numpy(), direct.forecast.T, rtol=1e-5, atol=1e-4
+    )
     for alpha in [0.1, 0.5, 0.9]:
         idx = _DEFAULT_QUANTILES.index(alpha)
         expected = direct.quantiles[:, :, idx]

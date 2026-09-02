@@ -15,7 +15,6 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
-_DEFAULT_QUANTILES = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 _RESERVED_CONFIG_KEYS = frozenset({"checkpoint_path", "device", "per_core_batch_size"})
 _LICENSE_URL = "https://huggingface.co/google/timesfm-3.0-pytorch/blob/main/LICENSE"
 
@@ -283,9 +282,7 @@ class TimesFM3Forecaster(BaseForecaster):
     def _validate_numeric_exog(X, label):
         """Ensure exogenous columns are numeric."""
         non_numeric = [
-            col
-            for col in X.columns
-            if not pd.api.types.is_numeric_dtype(X[col])
+            col for col in X.columns if not pd.api.types.is_numeric_dtype(X[col])
         ]
         if non_numeric:
             raise ValueError(
@@ -397,7 +394,9 @@ class TimesFM3Forecaster(BaseForecaster):
 
         past_only = None
         if self._past_only_cols_:
-            past_only = self._X.loc[self._context_.index, self._past_only_cols_].values.T
+            past_only = self._X.loc[
+                self._context_.index, self._past_only_cols_
+            ].values.T
             past_only = past_only.astype(np.float32)
 
         past_future = None
@@ -431,18 +430,14 @@ class TimesFM3Forecaster(BaseForecaster):
         )
 
         index = (
-            ForecastingHorizon(range(1, horizon + 1))
-            .to_absolute(self._cutoff)
-            ._values
+            ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
         )
         pred_out = fh.get_expected_pred_idx(self._context_.values.T, cutoff=self.cutoff)
         return output, index, pred_out, horizon
 
     def _predict(self, fh, X):
         """Forecast time series at future horizon."""
-        output, index, pred_out, _ = self._run_forecast(
-            fh, X, return_quantiles=False
-        )
+        output, index, pred_out, _ = self._run_forecast(fh, X, return_quantiles=False)
 
         forecast = np.asarray(output.forecast)
         if forecast.ndim == 1:
@@ -460,9 +455,7 @@ class TimesFM3Forecaster(BaseForecaster):
 
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast."""
-        output, index, pred_out, _ = self._run_forecast(
-            fh, X, return_quantiles=True
-        )
+        output, index, pred_out, _ = self._run_forecast(fh, X, return_quantiles=True)
 
         available = [round(q, 3) for q in self.forecaster_.config.quantiles]
         alpha_rounded = [round(a, 3) for a in alpha]
@@ -518,7 +511,8 @@ class _CachedTimesFM3:
         if self.forecaster is not None:
             return self.forecaster
 
-        from timesfm3 import ModelConfig, TimesFM3Forecaster as _UpstreamForecaster
+        from timesfm3 import ModelConfig
+        from timesfm3 import TimesFM3Forecaster as _UpstreamForecaster
 
         config = ModelConfig(**self.config_kwargs)
         self.forecaster = _UpstreamForecaster(config=config)
