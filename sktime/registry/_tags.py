@@ -3949,7 +3949,7 @@ class scitype__y(_BaseTag):
     - Example: ``"univariate"``
     """
 
-    tags = {
+    _tags = {
         "tag_name": "scitype:y",
         "parent_type": ["param_est", "metric"],
         "tag_type": "str",
