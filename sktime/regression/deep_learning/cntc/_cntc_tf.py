@@ -1,34 +1,21 @@
-"""Contextual Time-series Neural Classifier for TSC."""
+"""Contextual Time-series Neural Regressor for TSC."""
 
-__all__ = ["CNTCClassifier"]
-from copy import deepcopy
-
+__all__ = ["CNTCRegressor"]
+import numpy as np
 from sklearn.utils import check_random_state
 
-from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.cntc import CNTCNetwork
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 
 
-class CNTCClassifier(BaseDeepClassifier):
-    """Contextual Time-series Neural Classifier (CNTC), as described in [1].
+class CNTCRegressor(BaseDeepRegressor):
+    """Contextual Time-series Neural Regressor (CNTC), as described in [1].
 
     Adapted from the implementation from Fullah et. al
     https://github.com/AmaduFullah/CNTC_MODEL/blob/master/cntc.ipynb
 
     Parameters
     ----------
-    activation : string or a tf callable, default="softmax"
-        Activation function used in the output layer.
-        List of available activation functions:
-        https://keras.io/api/layers/activations/
-    activation_attention : string, default = "sigmoid"
-        Activation function inside the self attention module;
-        List of available keras activation functions:
-        https://keras.io/api/layers/activations/
-    activation_hidden : string or a tf callable, default="relu"
-        Activation function used in the hidden layers.
-        List of available activation functions:
-        https://keras.io/api/layers/activations/
     n_epochs : int, default = 2000
         the number of epochs to train the model
     batch_size : int, default = 16
@@ -59,7 +46,15 @@ class CNTCClassifier(BaseDeepClassifier):
         fit parameter for the keras model
     optimizer : keras.optimizer, default=keras.optimizers.Adam(),
     metrics : list of strings, default=["accuracy"],
-    callbacks : list of keras.callbacks, default = None,
+    activation : string, default="linear",
+        activation function for the output layer
+        List of available activation functions: https://keras.io/api/layers/activations/
+    activation_hidden : string, default="relu",
+        activation function for the hidden layers
+        List of available activation functions: https://keras.io/api/layers/activations/
+    activation_attention : string, default="sigmoid",
+        activation function for the attention layer
+        List of available activation functions: https://keras.io/api/layers/activations/
 
     References
     ----------
@@ -78,16 +73,6 @@ class CNTCClassifier(BaseDeepClassifier):
             networks, Contextual long short-term memory, Attention, Multilayer
             perceptron},
        }
-
-    Examples
-    --------
-    >>> from sktime.classification.deep_learning.cntc import CNTCClassifier
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
-    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
-    >>> cntc = CNTCClassifier() # doctest: +SKIP
-    >>> cntc.fit(X_train, y_train) # doctest: +SKIP
-    CNTCClassifier(...) # doctest: +SKIP
     """
 
     _tags = {
@@ -95,23 +80,22 @@ class CNTCClassifier(BaseDeepClassifier):
             "AmaduFullah",
             "James-Large",
             "Withington",
-            "TonyBagnall",
             "AurumnPegasus",
+            "TonyBagnall",
             "noxthot",
         ],
-        "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
+        "maintainers": ["James-Large", "Withington", "AurumnPegasus", "nilesh05apr"],
         "python_dependencies": ["tensorflow"],
-        # testing configuration
-        # ---------------------
-        "tests:libs": ["sktime.networks.cntc"],
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.cntc._cntc_tf"],
         "tests:skip_by_name": [
-            "test_fit_idempotent",
-            "test_persistence_via_pickle",
+            "test_class_has_doctest_example",
+            "test_fit_idempotent",  # fails with `AssertionError`, see #3616
+            "test_persistence_via_pickle",  # fails with `AssertionError`, see #8059
             "test_save_estimators_to_file",
         ],
-        # Run tests in a dedicated VM due to sporadic crashes and possible
-        # memory leaks (see #8518)
-        "tests:vm": True,
     }
 
     def __init__(
@@ -126,16 +110,16 @@ class CNTCClassifier(BaseDeepClassifier):
         dropout=(0.2, 0.2, 0.1, 0.1, 0.1, 0.1, 0.1),
         callbacks=None,
         verbose=False,
-        loss="categorical_crossentropy",
+        loss="mean_squared_error",
         metrics=None,
         random_state=0,
-        activation="softmax",
-        activation_attention="sigmoid",
+        activation="linear",
         activation_hidden="relu",
+        activation_attention="sigmoid",
     ):
         self.activation = activation
-        self.activation_attention = activation_attention
         self.activation_hidden = activation_hidden
+        self.activation_attention = activation_attention
         self.kernel_sizes = kernel_sizes  # used plural
         self.filter_sizes = filter_sizes  # used plural
         self.rnn_size = rnn_size
@@ -170,7 +154,7 @@ class CNTCClassifier(BaseDeepClassifier):
 
         super().__post_init__()
 
-    def build_model(self, input_shape, n_classes, **kwargs):
+    def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
         In sktime, time series are stored in numpy arrays of shape (d,m), where d
@@ -180,8 +164,6 @@ class CNTCClassifier(BaseDeepClassifier):
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer, should be (d,m)
-        n_classes: int
-            The number of classes, which becomes the size of the output layer
 
         Returns
         -------
@@ -192,9 +174,10 @@ class CNTCClassifier(BaseDeepClassifier):
         metrics = ["accuracy"] if self.metrics is None else self.metrics
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
-        output_layer = keras.layers.Dense(units=n_classes, activation=self.activation)(
-            output_layer
-        )
+        output_layer = keras.layers.Dense(
+            activation=self.activation,
+            units=1,
+        )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
         model.compile(
@@ -270,7 +253,7 @@ class CNTCClassifier(BaseDeepClassifier):
         return trainX
 
     def _fit(self, X, y):
-        """Fit the classifier on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
 
         Parameters
         ----------
@@ -283,38 +266,27 @@ class CNTCClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self._convert_y_to_keras(y)
+        if self.callbacks is None:
+            self._callbacks = []
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
-        self.model_ = self.build_model(self.input_shape, self.n_classes_)
+        self.model_ = self.build_model(self.input_shape)
         X2 = self.prepare_input(X)
         if self.verbose:
             self.model_.summary()
         self.history = self.model_.fit(
             [X2, X, X],
-            y_onehot,
+            y,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            callbacks=self._callbacks,
         )
         return self
 
     def _predict(self, X, **kwargs):
-        import numpy as np
-
-        probs = self._predict_proba(X, **kwargs)
-        rng = check_random_state(self.random_state)
-        return np.array(
-            [
-                self.classes_[int(rng.choice(np.flatnonzero(prob == prob.max())))]
-                for prob in probs
-            ]
-        )
-
-    def _predict_proba(self, X, **kwargs):
-        """Find probability estimates for each class for all cases in X.
+        """Find regression estimate for all cases in X.
 
         Parameters
         ----------
@@ -325,17 +297,10 @@ class CNTCClassifier(BaseDeepClassifier):
         -------
         output : array of shape = [n_instances, n_classes] of probabilities
         """
-        import numpy as np
-
         X2 = self.prepare_input(X)
-        probs = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
-
-        # check if binary classification
-        if probs.shape[1] == 1:
-            # first column is probability of class 0 and second is of class 1
-            probs = np.hstack([1 - probs, probs])
-        probs = probs / probs.sum(axis=1, keepdims=1)
-        return probs
+        preds = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
+        preds = np.squeeze(preds, axis=-1)
+        return preds
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -360,28 +325,29 @@ class CNTCClassifier(BaseDeepClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        param0 = {"n_epochs": 10, "batch_size": 4}
         param1 = {
             "n_epochs": 10,
-            "batch_size": 4,
-            "rnn_size": 16,
-            "lstm_size": 16,
+            "random_state": 0,
         }
 
-        params = [param0, param1]
+        param2 = {
+            "n_epochs": 12,
+            "batch_size": 6,
+            "kernel_sizes": (2, 2),
+            "random_state": 42,
+        }
+        test_params = [param1, param2]
 
-        from skbase.utils.dependencies import _check_soft_dependencies
+        return test_params
 
-        if _check_soft_dependencies("tensorflow", severity="none"):
-            from tensorflow import keras
+    @staticmethod
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
 
-            param_callbacks = {
-                "n_epochs": 10,
-                "batch_size": 4,
-                "callbacks": [
-                    keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)
-                ],
-            }
-            params.append(param_callbacks)
+        Returns
+        -------
+        dict of str to type, mapping names to classes
+        """
+        from sktime.libs._keras_self_attention import SeqSelfAttention
 
-        return params
+        return SeqSelfAttention.get_custom_objects()

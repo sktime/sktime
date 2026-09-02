@@ -127,7 +127,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         "capability:multioutput": False,
         "capability:random_state": True,
         "property:randomness": "stochastic",
+        # CI and test tags
+        # ----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.classification.deep_learning.base._base_torch"],
     }
 
     # _instantiate_activation_vars is an iterable of attribute names of activations
