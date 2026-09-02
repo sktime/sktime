@@ -515,6 +515,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/e
     </tr>
     <tr>
       <td align="center" valign="top" width="11.11%"><a href="https://github.com/xiaobenbenecho"><img src="https://avatars.githubusercontent.com/u/17461849?v=4?s=100" width="100px;" alt="xiaobenbenecho"/><br /><sub><b>xiaobenbenecho</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=xiaobenbenecho" title="Code">💻</a></td>
+      <td align="center" valign="top" width="11.11%"><a href="https://github.com/FlyingDragon112"><img src="https://avatars.githubusercontent.com/u/86844582?v=4?s=100" width="100px;" alt="FlyingDragon112"/><br /><sub><b>FlyingDragon112</b></sub></a><br /><a href="https://github.com/sktime/sktime/commits?author=FlyingDragon112" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
