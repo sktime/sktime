@@ -64,6 +64,7 @@ class UvEnvironmentManager(BaseEnvironmentManager):
         self.uv_executable = uv_executable or shutil.which("uv")
         self.base_requirements = list(base_requirements or [])
         self.editable = [Path(path) for path in (editable or [])]
+        super().__init__()
 
     def get_python_executable(
         self,

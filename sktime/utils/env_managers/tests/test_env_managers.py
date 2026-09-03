@@ -29,6 +29,7 @@ class _DummyManager(BaseEnvironmentManager):
         self.python = Path(python or sys.executable)
         self.seen_requirements = None
         self.seen_python = None
+        super().__init__()
 
     def get_python_executable(self, requirements=None, python=None):
         self.seen_requirements = list(requirements or [])
@@ -185,10 +186,10 @@ def test_run_callable_builds_payload(monkeypatch):
     not run_test_module_changed("sktime.utils.env_managers"),
     reason="run test only if env_managers module has changed",
 )
-def test_uv_manager_requires_uv_executable(tmp_path):
+def test_uv_manager_requires_uv_executable(tmp_path, monkeypatch):
     """Missing uv executable raises a clear error."""
+    monkeypatch.setattr("sktime.utils.env_managers._uv.shutil.which", lambda _: None)
     manager = UvEnvironmentManager(envs_dir=tmp_path, uv_executable=None)
-    manager.uv_executable = None
     with pytest.raises(RuntimeError, match="uv"):
         manager.get_python_executable(["pandas"])
 
