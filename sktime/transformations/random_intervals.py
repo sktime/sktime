@@ -43,6 +43,25 @@ class RandomIntervals(BaseTransformer):
     See Also
     --------
     SupervisedIntervals
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.random_intervals import RandomIntervals
+    >>> vals_a = [float(i % 10) for i in range(20)]
+    >>> vals_b = [float(9 - (i % 10)) for i in range(20)]
+    >>> X = pd.DataFrame(
+    ...     {"a": vals_a, "b": vals_b},
+    ...     index=pd.MultiIndex.from_product(
+    ...         [["i0", "i1"], range(10)], names=["instance", "time"]
+    ...     ),
+    ... )
+    >>> t = RandomIntervals(n_intervals=2, random_state=42)
+    >>> Xt = t.fit_transform(X)
+    >>> Xt.shape
+    (2, 14)
+    >>> Xt.iloc[0, 0]
+    np.float64(2.5)
     """
 
     _tags = {
