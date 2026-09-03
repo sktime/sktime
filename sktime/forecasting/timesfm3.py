@@ -9,7 +9,7 @@ This module wraps the Google Research TimesFM 3.0 foundation model via the
 - quantile prediction through :meth:`predict_quantiles`
 """
 
-__author__ = ["geetu040"]
+__author__ = ["jhalucky"]
 __all__ = ["TimesFM3Forecaster"]
 
 from copy import deepcopy
@@ -78,8 +78,8 @@ class TimesFM3Forecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["geetu040"],
-        "maintainers": ["geetu040"],
+        "authors": ["jhalucky"],
+        "maintainers": ["jhalucky"],
         "python_dependencies": ["timesfm[torch]>=3.0.0"],
         "capability:multivariate": True,
         "capability:exogenous": True,
@@ -340,7 +340,19 @@ class TimesFM3Forecaster(BaseForecaster):
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator."""
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : list of dict
+            Parameters to create testing instances of the class.
+        """
         return [
             {
                 "checkpoint_path": "google/timesfm-3.0-pytorch",
@@ -350,7 +362,17 @@ class TimesFM3Forecaster(BaseForecaster):
                     "use_symmetric_averaging": False,
                     "make_positive": False,
                 },
-            }
+            },
+            {
+                "checkpoint_path": "google/timesfm-3.0-pytorch",
+                "per_core_batch_size": 1,
+                "device": "cpu",
+                "context_length": 64,
+                "predict_kwargs": {
+                    "use_symmetric_averaging": True,
+                    "make_positive": True,
+                },
+            },
         ]
 
 
