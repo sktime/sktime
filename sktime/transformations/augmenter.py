@@ -248,7 +248,7 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
             if n < 1 or not np.isfinite(n):
                 raise ValueError("n must be a finite number >= 1.")
         else:
-            raise ValueError("n must be int or float, not " + str(type(n))) + "."
+            raise ValueError("n must be int or float, not " + str(type(n)) + ".")
         self.n = n
         self.without_replacement = without_replacement
         self.random_state = random_state

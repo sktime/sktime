@@ -135,3 +135,14 @@ def test_random_samples(parameter):
         checksum = _calc_checksum(Xt)
         checksums.append(checksum)
     assert checksums == expected_checksums_random_samples
+
+
+@pytest.mark.parametrize("n", ["spam", None, [1, 2]])
+def test_random_samples_invalid_n_raises_value_error(n):
+    """Test that invalid n raises ValueError, not TypeError.
+
+    Regression test for #11014: the error message concatenation was outside
+    the raise parentheses, so a TypeError was raised instead of ValueError.
+    """
+    with pytest.raises(ValueError, match="n must be int or float"):
+        aug.RandomSamplesAugmenter(n=n)
