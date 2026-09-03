@@ -645,7 +645,7 @@ class SFAFast(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         # small window size for testing
-        params = {
+        params1 = {
             "word_length": 4,
             "window_size": 4,
             "return_sparse": True,
@@ -653,7 +653,22 @@ class SFAFast(BaseTransformer):
             "feature_selection": "chi2",
             "alphabet_size": 2,
         }
-        return params
+        # second set: different word length and alphabet size, z-normalisation
+        # per window, equi-width rather than the default equi-depth binning,
+        # bigrams switched on, and no feature selection.
+        # output format parameters are the same as in the first set.
+        params2 = {
+            "word_length": 2,
+            "window_size": 5,
+            "return_sparse": True,
+            "return_pandas_data_series": True,
+            "feature_selection": "none",
+            "alphabet_size": 4,
+            "norm": True,
+            "binning_method": "equi-width",
+            "bigrams": True,
+        }
+        return [params1, params2]
 
     def set_fitted(self):
         """Whether `fit` has been called."""
