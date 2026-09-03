@@ -145,7 +145,10 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # CI and test tags
+        # ----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.networks.mlp._mlp_torch"],
         "tests:python_dependencies": "torchmetrics",
     }
 

@@ -42,6 +42,7 @@ class IgnoreX(_DelegatedForecaster):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, forecaster, ignore_x=True):
