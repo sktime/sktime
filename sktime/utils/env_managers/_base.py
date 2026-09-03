@@ -149,7 +149,8 @@ class BaseEnvironmentManager(BaseObject):
             Python interpreter specification for this environment, e.g.
             ``"3.11"`` or a path. ``None`` uses the manager default.
             Different ``python`` values produce different environments
-            even when ``requirements`` are the same.
+            even when ``requirements`` are the same. Do not combine a
+            different ``python`` with a callable ``target``; see Notes.
         args : sequence, optional (default=None)
             Extra positional arguments. For scripts and modules these are
             passed as command-line arguments. For callables they are passed
@@ -175,6 +176,16 @@ class BaseEnvironmentManager(BaseObject):
         ModuleNotFoundError
             If ``target`` is a callable and ``cloudpickle`` is not installed
             in the parent environment.
+
+        Notes
+        -----
+        Callables are serialized with ``cloudpickle`` in the parent and
+        unpickled in the child. That requires the child interpreter to use
+        the same Python version as the parent. Passing a different
+        ``python`` for a callable target will fail.
+
+        Use a script or module target when environments should use
+        different Python versions.
         """
         kind = resolve_run_target(target)
         reqs = list(requirements or [])
