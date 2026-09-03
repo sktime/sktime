@@ -16,11 +16,6 @@ from sktime.forecasting.base.adapters._pytorch import (
 )
 from sktime.forecasting.trend import CurveFitForecaster
 from sktime.networks.cinn import CINNNetwork
-from sktime.utils.dependencies import _safe_import
-
-torch = _safe_import("torch")
-DataLoader = _safe_import("torch.utils.data.DataLoader")
-Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
@@ -259,6 +254,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
         split_index = int(len(y) * (1 - self.val_split))
 
+        from torch.utils.data import DataLoader
+
         dataset = self._prepare_data(
             y[:split_index], X[:split_index] if X is not None else None
         )
@@ -300,6 +297,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
     def _instantiate_optimizer(self):
         """Create Adam optimizer for the cINN network."""
+        import torch
+
         return torch.optim.Adam(self.network.parameters(), lr=self.lr)
 
     def _build_network(self, fh):
@@ -395,7 +394,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         fh : ForecastingHorizon, optional
             Not used; sample_dim determines the output dimension.
         """
-        from torch.utils.data import ConcatDataset
+        from torch.utils.data import ConcatDataset, DataLoader
 
         all_series = _get_series_from_panel(y)
 
@@ -500,6 +499,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     def _run_epoch(
         self, epoch, data_loader, val_data_loader_nll=None, early_stopper=None
     ):
+        import torch
+
         nll = None
         for i, _input in enumerate(data_loader):
             (c, x) = _input
@@ -557,6 +558,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        from torch.utils.data import DataLoader
+
         from sktime.transformations.merger import Merger
 
         if fh is None:
@@ -608,6 +611,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         if z is None:
             dataset = PyTorchTrainDataset(yz, 0, fh=self.sample_dim, X=X)
         else:
+            PyTorchCinnTestDataset = _get_dataset_class()
             dataset = PyTorchCinnTestDataset(z, 0, fh=self.sample_dim, X=X)
         return dataset
 
@@ -763,34 +767,39 @@ def _test_function(x, a, b):
     return a * x + b
 
 
-class PyTorchCinnTestDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
+def _get_dataset_class():
+    """Return the dataset class used for training and testing."""
+    from torch.utils.data import Dataset
 
-    def __init__(self, y, seq_len, fh=None, X=None):
-        self.y = y.values
-        self.X = X.values if X is not None else X
-        self.seq_len = seq_len
-        self.fh = fh
+    class PyTorchCinnTestDataset(Dataset):
+        """Dataset for use in sktime deep learning forecasters."""
 
-    def __len__(self):
-        """Return length of dataset."""
-        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+        def __init__(self, y, seq_len, fh=None, X=None):
+            self.y = y.values
+            self.X = X.values if X is not None else X
+            self.seq_len = seq_len
+            self.fh = fh
 
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import from_numpy, tensor
+        def __len__(self):
+            """Return length of dataset."""
+            return max(len(self.y) - self.seq_len - self.fh + 1, 0)
 
-        if self.X is not None:
-            exog_data = tensor(
-                self.X[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float()
-        else:
-            exog_data = tensor([])
-        return (
-            exog_data,
-            from_numpy(self.y[i]).float(),
-        )
+        def __getitem__(self, i):
+            """Return data point."""
+            from torch import from_numpy, tensor
 
+            if self.X is not None:
+                exog_data = tensor(
+                    self.X[i + self.seq_len : i + self.seq_len + self.fh]
+                ).float()
+            else:
+                exog_data = tensor([])
+            return (
+                exog_data,
+                from_numpy(self.y[i]).float(),
+            )
+
+    return PyTorchCinnTestDataset
 
 class _EarlyStopper:
     """
