@@ -88,6 +88,9 @@ class TimesFM3Forecaster(BaseForecaster):
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": True,
+        "capability:pred_int:insample": False,
+        "capability:non_contiguous_X": False,
+        "capability:categorical_in_X": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "tests:vm": True,
@@ -136,16 +139,8 @@ class TimesFM3Forecaster(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
-        context = self._coerce_y_to_dataframe(y)
-        if self.context_length is not None and len(context) > self.context_length:
-            context = context.iloc[-self.context_length :]
-
-        self.context_ = context
-        self._y_columns = list(context.columns)
-        self._is_univariate = len(self._y_columns) == 1
-
+        y = self._coerce_y_to_dataframe(y)
         if X is not None:
-            X = X.loc[context.index]
             self._validate_covariate_columns(X)
 
         self.evaluator_ = self._load_evaluator()
@@ -153,56 +148,43 @@ class TimesFM3Forecaster(BaseForecaster):
 
     def _predict(self, fh, X):
         """Forecast time series at future horizon."""
+        context = self._get_context()
         fh, preds_idx, horizon = self._validate_predict_fh(fh)
-        forecast, _ = self._run_forecast(fh, X, horizon, return_quantiles=False)
-        index = fh.to_absolute(self._cutoff)._values
-        if self._is_univariate:
-            return pd.Series(forecast[preds_idx], index=index, name=self._y_columns[0])
+        forecast, _ = self._run_forecast(context, X, horizon, return_quantiles=False)
+        index = fh.to_absolute_index(self.cutoff)
 
-        forecast = forecast[:, preds_idx].T
-        return pd.DataFrame(forecast, index=index, columns=self._y_columns)
+        if forecast.ndim == 1:
+            data = np.asarray(forecast)[preds_idx].reshape(-1, 1)
+        else:
+            data = np.asarray(forecast)[:, preds_idx].T
+
+        return pd.DataFrame(data, index=index, columns=context.columns)
 
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast."""
+        context = self._get_context()
         fh, preds_idx, horizon = self._validate_predict_fh(fh)
-        _, quantiles = self._run_forecast(fh, X, horizon, return_quantiles=True)
+        _, quantiles = self._run_forecast(context, X, horizon, return_quantiles=True)
 
-        model_quantiles = self._get_model_quantiles()
-        alpha = [round(float(a), 3) for a in alpha]
-        model_quantiles_rounded = [round(float(q), 3) for q in model_quantiles]
-        if not set(alpha).issubset(set(model_quantiles_rounded)):
-            raise ValueError(
-                "Requested quantiles are not all available in model config: "
-                f"requested={alpha}, available={model_quantiles_rounded}."
-            )
-        quantile_idx = [model_quantiles_rounded.index(a) for a in alpha]
-
-        index = fh.to_absolute(self._cutoff)._values
-        columns = pd.MultiIndex.from_product([self._y_columns, alpha])
-
-        if self._is_univariate:
-            preds = quantiles[preds_idx][:, quantile_idx]
-            preds = preds.reshape(len(preds_idx), len(alpha))
-        else:
-            preds = quantiles[:, preds_idx, :][:, :, quantile_idx]
-            preds = np.transpose(preds, (1, 0, 2))
-            preds = preds.reshape(len(preds_idx), len(self._y_columns) * len(alpha))
-
+        index = fh.to_absolute_index(self.cutoff)
+        columns = pd.MultiIndex.from_product([list(context.columns), alpha])
+        preds = self._interpolate_quantiles(quantiles, preds_idx, alpha)
         return pd.DataFrame(preds, index=index, columns=columns)
 
-    def _run_forecast(self, fh, X, horizon, return_quantiles):
+    def _run_forecast(self, context, X, horizon, return_quantiles):
         """Call upstream evaluator and return point and/or quantile forecasts."""
         self.evaluator_ = self._load_evaluator()
 
-        target = self.context_.values.T.astype(np.float32)
-        if self._is_univariate:
+        target = context.values.T.astype(np.float32)
+        if target.shape[0] == 1:
             target = target.ravel()
 
-        past_only, past_future = self._prepare_covariates(X, horizon)
+        past_only, past_future = self._prepare_covariates(context, X, horizon)
 
-        predict_kwargs = {"return_quantiles": return_quantiles}
+        predict_kwargs = {}
         if self.predict_kwargs:
             predict_kwargs.update(deepcopy(self.predict_kwargs))
+        predict_kwargs["return_quantiles"] = return_quantiles
 
         outputs = list(
             self.evaluator_.predict_batch(
@@ -216,7 +198,7 @@ class TimesFM3Forecaster(BaseForecaster):
         out = outputs[0]
         return out.forecast, out.quantiles
 
-    def _prepare_covariates(self, X_future, horizon):
+    def _prepare_covariates(self, context, X_future, horizon):
         """Split sktime ``X`` into TimesFM past-only and past-future arrays."""
         if self._X is None:
             if X_future is not None:
@@ -227,8 +209,40 @@ class TimesFM3Forecaster(BaseForecaster):
                 )
             return None, None
 
-        X_past = self._X.loc[self.context_.index]
+        X_past = self._X.reindex(context.index)
         past_only_cols, past_future_cols = self._resolve_covariate_columns(X_future)
+
+        past_only = None
+        if past_only_cols:
+            past_only = X_past[past_only_cols].values.T.astype(np.float32)
+
+        past_future = None
+        if past_future_cols:
+            if X_future is None:
+                raise ValueError(
+                    "Past-and-future covariates require future values in predict. "
+                    f"Missing future values for columns: {past_future_cols}."
+                )
+            missing = set(past_future_cols) - set(X_future.columns)
+            if missing:
+                raise ValueError(
+                    "Predict-time X is missing past-and-future covariate columns: "
+                    f"{sorted(missing)}."
+                )
+
+            future = X_future[past_future_cols].iloc[:horizon]
+            if len(future) < horizon:
+                raise ValueError(
+                    f"Future covariates must cover the full horizon (need {horizon} "
+                    f"steps, got {len(future)})."
+                )
+            combined = np.concatenate(
+                [X_past[past_future_cols].values.T, future.values.T],
+                axis=1,
+            )
+            past_future = combined.astype(np.float32)
+
+        return past_only, past_future
 
         past_only = None
         if past_only_cols:
@@ -299,9 +313,39 @@ class TimesFM3Forecaster(BaseForecaster):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
-        preds_idx = fh._values.values - 1
+        preds_idx = np.asarray(fh, dtype=int) - 1
+        if np.any(preds_idx < 0):
+            raise NotImplementedError(
+                f"{self.__class__.__name__} can not perform in-sample prediction. "
+                f"Found fh with in sample index: {fh}"
+            )
         horizon = int(np.max(preds_idx) + 1)
         return fh, preds_idx, horizon
+
+    def _get_context(self):
+        """Return truncated endogenous context as a DataFrame."""
+        context = self._coerce_y_to_dataframe(self._y)
+        if self.context_length is not None and len(context) > self.context_length:
+            context = context.iloc[-self.context_length :]
+        return context
+
+    def _interpolate_quantiles(self, quantile_forecasts, preds_idx, alpha):
+        """Interpolate requested quantile levels from the model quantile grid."""
+        native = np.asarray(self._get_model_quantiles(), dtype=float)
+        alpha = np.asarray(alpha, dtype=float)
+        q = np.asarray(quantile_forecasts)
+
+        if q.ndim == 2:
+            selected = q[preds_idx]
+            return np.vstack([np.interp(alpha, native, row) for row in selected])
+
+        selected = q[:, preds_idx, :]
+        n_var, n_fh, _ = selected.shape
+        out = np.empty((n_fh, n_var, len(alpha)), dtype=float)
+        for v in range(n_var):
+            for t in range(n_fh):
+                out[t, v, :] = np.interp(alpha, native, selected[v, t])
+        return out.reshape(n_fh, n_var * len(alpha))
 
     def _load_evaluator(self):
         """Load or retrieve cached TimesFM 3 evaluator."""
