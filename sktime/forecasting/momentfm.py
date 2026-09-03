@@ -221,7 +221,6 @@ class MomentFMForecaster(BaseForecaster):
         """
         from torch.nn import MSELoss
 
-        
         self._config = self.config if self.config is not None else {}
         self._criterion = self.criterion if self.criterion else MSELoss()
         self._moment_seq_len = 512
