@@ -15,7 +15,6 @@ from sktime.forecasting.base.adapters._pytorch import (
     _get_series_from_panel,
 )
 from sktime.forecasting.trend import CurveFitForecaster
-from sktime.networks.cinn import CINNNetwork
 
 
 def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
@@ -302,6 +301,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
         return torch.optim.Adam(self.network.parameters(), lr=self.lr)
 
     def _build_network(self, fh):
+        from sktime.networks.cinn import CINNNetwork
+
         return CINNNetwork(
             horizon=self.sample_dim,
             cond_features=self.n_cond_features,
@@ -728,6 +729,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
 
         cinn_forecaster = pickle.loads(serial)
         if hasattr(cinn_forecaster, "_state_dict"):
+            from sktime.networks.cinn import CINNNetwork
+
             cinn_forecaster.network = CINNNetwork(
                 horizon=cinn_forecaster.sample_dim,
                 cond_features=cinn_forecaster.n_cond_features,
@@ -800,6 +803,7 @@ def _get_dataset_class():
             )
 
     return PyTorchCinnTestDataset
+
 
 class _EarlyStopper:
     """
