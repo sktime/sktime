@@ -192,7 +192,9 @@ class BaseEnvironmentManager(BaseObject):
         args = list(args or [])
         func_kwargs = dict(kwargs or {})
 
-        if kind == "callable" and "cloudpickle" not in reqs:
+        if kind == "callable" and not any(
+            str(req).strip().lower().startswith("cloudpickle") for req in reqs
+        ):
             reqs.append("cloudpickle")
 
         env_python_path = self.get_python_executable(reqs, python=python)
