@@ -4,5 +4,5 @@
 
 __all__ = ["SyncToLongest", "Repeat"]
 
-from sktime.split.compose._sync_to_longest import SyncToLongest
 from sktime.split.compose._repeat import Repeat
+from sktime.split.compose._sync_to_longest import SyncToLongest

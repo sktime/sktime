@@ -32,9 +32,7 @@ def test_sync_to_longest_excludes_instances_without_full_window():
     contain both.
     """
     y = _panel({"long": 0, "short": 3})
-    cv = SyncToLongest(
-        SlidingWindowSplitter(window_length=3, fh=1, step_length=3)
-    )
+    cv = SyncToLongest(SlidingWindowSplitter(window_length=3, fh=1, step_length=3))
 
     splits = list(cv.split_series(y))
     assert len(splits) == 3
@@ -96,18 +94,14 @@ def test_sync_to_longest_invalid_min_length_raises():
 def test_sync_to_longest_min_length_above_window_warns():
     """min_length above window_length has no relaxing effect, so it should warn."""
     with pytest.warns(UserWarning, match="min_length"):
-        SyncToLongest(
-            SlidingWindowSplitter(window_length=3, fh=1), min_length=5
-        )
+        SyncToLongest(SlidingWindowSplitter(window_length=3, fh=1), min_length=5)
 
 
 def test_sync_to_longest_works_with_evaluate_and_exogenous_X():
     """evaluate() should run end to end when X is passed alongside y."""
     y = _panel({"long": 0, "short": 3})
     X = y.rename(columns={"value": "exog"}) * 10
-    cv = SyncToLongest(
-        SlidingWindowSplitter(window_length=3, fh=1, step_length=3)
-    )
+    cv = SyncToLongest(SlidingWindowSplitter(window_length=3, fh=1, step_length=3))
     forecaster = NaiveForecaster()
 
     results = evaluate(forecaster=forecaster, y=y, X=X, cv=cv)
@@ -185,9 +179,7 @@ def test_sync_to_longest_explicit_cv_x_needs_same_loc():
 def test_sync_to_longest_works_with_mase():
     """evaluate() should run with MeanAbsoluteScaledError, which needs y_train."""
     y = _panel({"long": 0, "short": 3})
-    cv = SyncToLongest(
-        SlidingWindowSplitter(window_length=3, fh=1, step_length=3)
-    )
+    cv = SyncToLongest(SlidingWindowSplitter(window_length=3, fh=1, step_length=3))
     forecaster = NaiveForecaster()
     scoring = MeanAbsoluteScaledError()
 
