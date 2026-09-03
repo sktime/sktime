@@ -468,19 +468,30 @@ def test_get_slice_zero_and_none_bounds():
 def test_get_slice_preserves_emptied_panel_instances():
     """A bound that empties some panel instances keeps them as empty (#10966).
 
-    A ``df-list`` panel is sliced instance-by-instance, so an instance whose
-    time points all fall outside the bound is preserved as an empty frame rather
-    than silently dropped (which happens if the panel round-trips through the
-    ``pd-multiindex`` representation, which cannot hold a zero-length instance).
+    A list-based panel is sliced instance-by-instance, so an instance whose
+    time points all fall outside the bound is preserved as an empty instance
+    rather than silently dropped (which happens if the panel round-trips through
+    the ``pd-multiindex`` representation, which cannot hold a zero-length
+    instance). Covered for both ``df-list`` and ``nested_univ``.
     """
+    from sktime.datatypes import convert_to
+
     panel = [
         pd.DataFrame({"value": [1, 2, 3]}, index=[-2, -1, 0]),
         pd.DataFrame({"value": [4, 5, 6]}, index=[0, 1, 2]),
     ]
+
     result = get_slice(panel, end=0)
     assert len(result) == 2
     assert [len(df) for df in result] == [2, 0]
     assert result[0]["value"].tolist() == [1, 2]
+
+    nested = convert_to(panel, "nested_univ")
+    nested_result = get_slice(nested, end=0)
+    assert len(nested_result) == 2
+    cells = [nested_result.iloc[i, 0] for i in range(len(nested_result))]
+    assert [len(cell) for cell in cells] == [2, 0]
+    assert cells[0].tolist() == [1, 2]
 
 
 @pytest.mark.skipif(

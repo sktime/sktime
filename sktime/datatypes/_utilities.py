@@ -565,7 +565,9 @@ def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=Fal
     # List-based panel mtypes can represent an instance with zero time points, but
     # the internal pd-multiindex representation cannot, so a bound that empties an
     # instance would silently drop it on the round-trip. Slice each instance on its
-    # own to keep emptied instances (see #10966).
+    # own to keep emptied instances (see #10966). We cannot round-trip back through
+    # convert_to for the same reason (it routes via pd-multiindex), so nested_univ
+    # is rebuilt directly, reindexing on the original instance keys.
     if obj_in_mtype in ("df-list", "nested_univ"):
         sliced = [
             get_slice(
@@ -577,7 +579,17 @@ def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=Fal
             )
             for df in convert_to(obj, "df-list")
         ]
-        return convert_to(sliced, obj_in_mtype)
+        if obj_in_mtype == "df-list":
+            return sliced
+        # nested_univ: one cell (a pd.Series) per instance and column, so an
+        # emptied instance survives as a zero-length Series rather than vanishing.
+        return pd.DataFrame(
+            {
+                col: [df[col] for df in sliced]
+                for col in (sliced[0].columns if sliced else obj.columns)
+            },
+            index=obj.index,
+        )
 
     obj = convert_to(obj, GET_WINDOW_SUPPORTED_MTYPES)
 
