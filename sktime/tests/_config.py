@@ -154,7 +154,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
         "TEASER",
-        "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
