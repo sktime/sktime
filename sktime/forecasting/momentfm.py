@@ -7,7 +7,6 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
-from sktime.utils.dependencies import _safe_import
 
 
 class MomentFMForecaster(BaseForecaster):
@@ -698,7 +697,6 @@ def _get_dataset_class():
     """Soft dependency import for the MomentPytorchDataset class."""
     from torch.utils.data import Dataset
 
-
     class MomentPytorchDataset(Dataset):
         """Customized Pytorch dataset for the momentfm model."""
 
@@ -774,6 +772,5 @@ def _get_dataset_class():
                 "historical_y": historical_y,
                 "input_mask": self.input_mask,
             }
-
 
     return MomentPytorchDataset
