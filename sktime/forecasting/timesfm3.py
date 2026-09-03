@@ -139,7 +139,6 @@ class TimesFM3Forecaster(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
-        y = self._coerce_y_to_dataframe(y)
         if X is not None:
             self._validate_covariate_columns(X)
 
@@ -211,38 +210,6 @@ class TimesFM3Forecaster(BaseForecaster):
 
         X_past = self._X.reindex(context.index)
         past_only_cols, past_future_cols = self._resolve_covariate_columns(X_future)
-
-        past_only = None
-        if past_only_cols:
-            past_only = X_past[past_only_cols].values.T.astype(np.float32)
-
-        past_future = None
-        if past_future_cols:
-            if X_future is None:
-                raise ValueError(
-                    "Past-and-future covariates require future values in predict. "
-                    f"Missing future values for columns: {past_future_cols}."
-                )
-            missing = set(past_future_cols) - set(X_future.columns)
-            if missing:
-                raise ValueError(
-                    "Predict-time X is missing past-and-future covariate columns: "
-                    f"{sorted(missing)}."
-                )
-
-            future = X_future[past_future_cols].iloc[:horizon]
-            if len(future) < horizon:
-                raise ValueError(
-                    f"Future covariates must cover the full horizon (need {horizon} "
-                    f"steps, got {len(future)})."
-                )
-            combined = np.concatenate(
-                [X_past[past_future_cols].values.T, future.values.T],
-                axis=1,
-            )
-            past_future = combined.astype(np.float32)
-
-        return past_only, past_future
 
         past_only = None
         if past_only_cols:
