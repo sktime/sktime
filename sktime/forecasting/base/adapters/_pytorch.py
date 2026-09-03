@@ -6,9 +6,6 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.dependencies import _safe_import
 
-torch = _safe_import("torch")
-Dataset = _safe_import("torch.utils.data.Dataset")
-
 
 def _get_series_from_panel(y):
     """Extract individual time series from panel/hierarchical data.
@@ -222,6 +219,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         dataset : torch.utils.data.Dataset
             Training dataset
         """
+        PyTorchTrainDataset = _get_train_dataset_class()
         return PyTorchTrainDataset(y=y, seq_len=self._get_seq_len(), fh=pred_len)
 
     def _build_panel_dataloader(self, y, all_series, pred_len):
@@ -248,6 +246,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
         seq_len = self._get_seq_len()
 
+        PyTorchTrainDataset = _get_train_dataset_class()
         datasets = [
             PyTorchTrainDataset(y=series, seq_len=seq_len, fh=pred_len)
             for series in all_series
@@ -344,8 +343,10 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                     f"Please pass one of {self.optimizers.keys()} for `optimizer`."
                 )
         else:
+            from torch.optim import Adam
+
             # default optimizer
-            return torch.optim.Adam(self.network.parameters(), lr=self.lr)
+            return Adam(self.network.parameters(), lr=self.lr)
 
     def _instantiate_criterion(self):
         if self.criterion:
@@ -359,8 +360,10 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                     f"Please pass one of {self.criterions.keys()} for `criterion`."
                 )
         else:
+            from torch.nn import MSELoss
+
             # default criterion
-            return torch.nn.MSELoss()
+            return MSELoss()
 
     def _predict(self, fh=None, X=None):
         """Predict with fitted model."""
@@ -411,6 +414,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                     "documentation."
                 )
         else:
+            PyTorchPredDataset = _get_train_dataset_class()
+
             dataset = PyTorchTrainDataset(
                 y=y,
                 seq_len=self.network.seq_len,
@@ -436,6 +441,8 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                     "documentation."
                 )
         else:
+            PyTorchPredDataset = _get_pred_dataset_class()
+
             dataset = PyTorchPredDataset(
                 y=y[-self.network.seq_len :],
                 seq_len=self.network.seq_len,
@@ -457,60 +464,90 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         pass
 
 
-class PyTorchTrainDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
+def _get_train_dataset_class():
+    """Get the default training dataset class for PyTorch forecasters.
 
-    def __init__(self, y, seq_len, fh=None, X=None):
-        self.y = y.values
-        self.X = X.values if X is not None else X
-        self.seq_len = seq_len
-        self.fh = fh
+    Function for soft dependency management.
 
-    def __len__(self):
-        """Return length of dataset."""
-        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+    Returns
+    -------
+    dataset_class : type
+        The default dataset class for training.
+    """
+    from torch.utils.data import Dataset
 
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import from_numpy, tensor
+    class PyTorchTrainDataset(Dataset):
+        """Dataset for use in sktime deep learning forecasters."""
 
-        hist_y = tensor(self.y[i : i + self.seq_len]).float()
-        if self.X is not None:
-            exog_data = tensor(
-                self.X[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float()
-        else:
-            exog_data = tensor([])
-        return (
-            torch.cat([hist_y, exog_data]),
-            from_numpy(self.y[i + self.seq_len : i + self.seq_len + self.fh]).float(),
-        )
+        def __init__(self, y, seq_len, fh=None, X=None):
+            self.y = y.values
+            self.X = X.values if X is not None else X
+            self.seq_len = seq_len
+            self.fh = fh
+
+        def __len__(self):
+            """Return length of dataset."""
+            return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+
+        def __getitem__(self, i):
+            """Return data point."""
+            from torch import cat, from_numpy, tensor
+
+            split_ix = i + self.seq_len
+
+            hist_y = tensor(self.y[i : split_ix]).float()
+            if self.X is not None:
+                exog_data = tensor(
+                    self.X[split_ix : split_ix + self.fh]
+                ).float()
+            else:
+                exog_data = tensor([])
+            return (
+                cat([hist_y, exog_data]),
+                from_numpy(self.y[split_ix : split_ix + self.fh]).float(),
+            )
+
+    return PyTorchTrainDataset
 
 
-class PyTorchPredDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
+def _get_pred_dataset_class():
+    """Get the default prediction dataset class for PyTorch forecasters.
 
-    def __init__(self, y, seq_len, X=None):
-        self.y = y.values
-        self.seq_len = seq_len
-        self.X = X.values if X is not None else X
+    Function for soft dependency management.
 
-    def __len__(self):
-        """Return length of dataset."""
-        return 1
+    Returns
+    -------
+    dataset_class : type
+        The default dataset class for prediction.
+    """
+    from torch.utils.data import Dataset
 
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import from_numpy, tensor
+    class PyTorchPredDataset(Dataset):
+        """Dataset for use in sktime deep learning forecasters."""
 
-        hist_y = tensor(self.y[i : i + self.seq_len]).float()
-        if self.X is not None:
-            exog_data = tensor(
-                self.X[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float()
-        else:
-            exog_data = tensor([])
-        return (
-            torch.cat([hist_y, exog_data]),
-            from_numpy(self.y[i + self.seq_len : i + self.seq_len]).float(),
-        )
+        def __init__(self, y, seq_len, X=None):
+            self.y = y.values
+            self.seq_len = seq_len
+            self.X = X.values if X is not None else X
+
+        def __len__(self):
+            """Return length of dataset."""
+            return 1
+
+        def __getitem__(self, i):
+            """Return data point."""
+            from torch import cat, from_numpy, tensor
+
+            hist_y = tensor(self.y[i : i + self.seq_len]).float()
+            if self.X is not None:
+                exog_data = tensor(
+                    self.X[i + self.seq_len : i + self.seq_len + self.fh]
+                ).float()
+            else:
+                exog_data = tensor([])
+            return (
+                cat([hist_y, exog_data]),
+                from_numpy(self.y[i + self.seq_len : i + self.seq_len]).float(),
+            )
+
+    return PyTorchPredDataset
