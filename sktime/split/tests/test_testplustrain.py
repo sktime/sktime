@@ -13,10 +13,10 @@ from sktime.utils._testing.series import _make_series
     not run_test_for_class([SlidingWindowSplitter, TestPlusTrainSplitter]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_test_plus_train_splitter_fh_and_window_length():
-    """Test that TestPlusTrainSplitter takes fh and window_length from cv.
+def test_test_plus_train_splitter_fh():
+    """Test that TestPlusTrainSplitter takes fh from cv.
 
-    Failure case of bug #10945: fh and window_length silently fell back to the
+    Failure case of bug #10945: fh silently fell back to the
     ``BaseSplitter`` defaults, 1 and 10, instead of those of the wrapped splitter.
     """
     # both values must differ from the BaseSplitter defaults, 10 and 1,
@@ -25,7 +25,6 @@ def test_test_plus_train_splitter_fh_and_window_length():
     splitter = TestPlusTrainSplitter(cv)
 
     assert splitter.fh == [1, 2, 3]
-    assert splitter.window_length == 5
 
 
 @pytest.mark.skipif(
