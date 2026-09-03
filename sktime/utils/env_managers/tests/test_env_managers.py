@@ -28,9 +28,11 @@ class _DummyManager(BaseEnvironmentManager):
     def __init__(self, python=None):
         self.python = Path(python or sys.executable)
         self.seen_requirements = None
+        self.seen_python = None
 
-    def get_python_executable(self, requirements=None):
+    def get_python_executable(self, requirements=None, python=None):
         self.seen_requirements = list(requirements or [])
+        self.seen_python = python
         return self.python
 
 
@@ -262,3 +264,60 @@ def test_base_environment_manager_is_abstract():
     """BaseEnvironmentManager cannot be instantiated without get_python_executable."""
     with pytest.raises(TypeError):
         BaseEnvironmentManager()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.env_managers"),
+    reason="run test only if env_managers module has changed",
+)
+def test_env_key_differs_by_python_version(tmp_path):
+    """Same requirements with different Python specs get different env keys."""
+    manager = UvEnvironmentManager(envs_dir=tmp_path, uv_executable="/fake/uv")
+    reqs = ["numpy"]
+    assert manager._env_key(reqs, python="3.11") != manager._env_key(
+        reqs, python="3.12"
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.env_managers"),
+    reason="run test only if env_managers module has changed",
+)
+def test_create_env_uses_per_call_python(tmp_path, monkeypatch):
+    """Per-call python overrides the manager default in ``uv venv``."""
+    calls = []
+
+    def fake_run(cmd, **kwargs):
+        calls.append(list(cmd))
+        if len(cmd) >= 3 and cmd[1] == "venv":
+            Path(cmd[2]).mkdir(parents=True, exist_ok=True)
+        return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+    monkeypatch.setattr("sktime.utils.env_managers._uv.subprocess.run", fake_run)
+
+    manager = UvEnvironmentManager(
+        envs_dir=tmp_path,
+        python="3.12",
+        uv_executable="/fake/uv",
+    )
+    env_dir = tmp_path / manager._env_key(["pandas"], python="3.11")
+    manager._create_env(env_dir, ["pandas"], python="3.11")
+
+    assert calls[0][calls[0].index("--python") + 1] == "3.11"
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.env_managers"),
+    reason="run test only if env_managers module has changed",
+)
+def test_run_forwards_python_to_get_python_executable(monkeypatch):
+    """``run`` passes ``python`` through to ``get_python_executable``."""
+
+    def fake_run(cmd, **kwargs):
+        return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
+
+    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+
+    manager = _DummyManager()
+    manager.run("script.py", requirements=["numpy"], python="3.10")
+    assert manager.seen_python == "3.10"

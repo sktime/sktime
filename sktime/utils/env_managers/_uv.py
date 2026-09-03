@@ -35,7 +35,9 @@ class UvEnvironmentManager(BaseEnvironmentManager):
         Directory for storing virtual environments. Defaults to
         ``".sktime_envs"`` in the current working directory.
     python : str, optional (default=None)
-        Python interpreter specification passed to ``uv venv --python``.
+        Default Python interpreter specification passed to
+        ``uv venv --python``. Overridden by the ``python`` argument of
+        ``get_python_executable`` or ``run``.
     uv_executable : str, optional (default=None)
         Path to the ``uv`` executable. Defaults to the first ``uv`` on
         ``PATH``.
@@ -55,6 +57,7 @@ class UvEnvironmentManager(BaseEnvironmentManager):
         base_requirements: list[str] | None = None,
         editable: list[str | Path] | None = None,
     ):
+        """Store manager settings and ensure ``envs_dir`` exists."""
         self.envs_dir = Path(envs_dir or Path.cwd() / ".sktime_envs")
         self.envs_dir.mkdir(parents=True, exist_ok=True)
         self.python = python
@@ -62,7 +65,11 @@ class UvEnvironmentManager(BaseEnvironmentManager):
         self.base_requirements = list(base_requirements or [])
         self.editable = [Path(path) for path in (editable or [])]
 
-    def get_python_executable(self, requirements: list[str] | None = None) -> Path:
+    def get_python_executable(
+        self,
+        requirements: list[str] | None = None,
+        python: str | None = None,
+    ) -> Path:
         """Get or create an environment for ``requirements`` and return its Python.
 
         Parameters
@@ -71,6 +78,9 @@ class UvEnvironmentManager(BaseEnvironmentManager):
             PEP 440 requirement strings that select or create the environment.
             Combined with ``base_requirements`` and ``editable`` when hashing
             and installing.
+        python : str, optional (default=None)
+            Python interpreter specification for this environment, e.g.
+            ``"3.11"`` or a path. ``None`` uses ``self.python``.
 
         Returns
         -------
@@ -88,40 +98,142 @@ class UvEnvironmentManager(BaseEnvironmentManager):
             )
 
         requirements = list(requirements or [])
-        env_dir = self.envs_dir / self._env_key(requirements)
+        python = self._resolve_python(python)
+        env_dir = self.envs_dir / self._env_key(requirements, python=python)
         env_python_path = env_python(env_dir)
 
-        if self._is_ready(env_dir, requirements):
+        if self._is_ready(env_dir, requirements, python=python):
             logger.debug("Reusing environment at %s", env_dir)
             return env_python_path
 
         logger.info("Creating environment at %s", env_dir)
-        self._create_env(env_dir, requirements)
+        self._create_env(env_dir, requirements, python=python)
         return env_python_path
 
-    def _env_key(self, requirements: list[str]) -> str:
-        return dependency_env_key(self._all_requirements(requirements))
+    def _resolve_python(self, python: str | None) -> str | None:
+        """Return the per-call Python spec, falling back to the manager default.
+
+        Parameters
+        ----------
+        python : str or None
+            Per-call interpreter specification.
+
+        Returns
+        -------
+        str or None
+            ``python`` if given, otherwise ``self.python``.
+        """
+        if python is not None:
+            return python
+        return self.python
+
+    def _env_key(self, requirements: list[str], python: str | None = None) -> str:
+        """Return the reuse key for an environment with ``requirements``.
+
+        The key hashes ``base_requirements``, editable installs, the
+        per-call ``requirements``, and the Python spec so two environments
+        that share ``envs_dir`` but differ in extras or interpreter do not
+        collide.
+
+        Parameters
+        ----------
+        requirements : list of str
+            Per-call PEP 440 requirement strings.
+        python : str, optional (default=None)
+            Resolved Python interpreter specification included in the hash.
+
+        Returns
+        -------
+        str
+            Stable hash used as the environment directory name.
+        """
+        python = self._resolve_python(python)
+        tokens = self._all_requirements(requirements)
+        if python is not None:
+            tokens = [*tokens, f"python:{python}"]
+        return dependency_env_key(tokens)
 
     def _all_requirements(self, requirements: list[str]) -> list[str]:
+        """Combine manager-level and per-call install tokens.
+
+        Parameters
+        ----------
+        requirements : list of str
+            Per-call PEP 440 requirement strings.
+
+        Returns
+        -------
+        list of str
+            ``base_requirements``, then ``-e <path>`` for each editable
+            package, then ``requirements``.
+        """
         editable = [f"-e {path}" for path in self.editable]
         return [*self.base_requirements, *editable, *requirements]
 
-    def _is_ready(self, env_dir: Path, requirements: list[str]) -> bool:
+    def _is_ready(
+        self,
+        env_dir: Path,
+        requirements: list[str],
+        python: str | None = None,
+    ) -> bool:
+        """Return whether ``env_dir`` is a complete env for ``requirements``.
+
+        An environment is ready when its Python executable exists and the
+        ``.env_ready`` marker stores the same key as ``_env_key``.
+
+        Parameters
+        ----------
+        env_dir : pathlib.Path
+            Candidate environment directory.
+        requirements : list of str
+            Per-call PEP 440 requirement strings.
+        python : str, optional (default=None)
+            Resolved Python interpreter specification.
+
+        Returns
+        -------
+        bool
+            ``True`` if the environment can be reused as-is.
+        """
         env_python_path = env_python(env_dir)
         marker = env_dir / _READY_MARKER
         if not env_python_path.exists() or not marker.exists():
             return False
 
         stored = marker.read_text(encoding="utf-8").strip()
-        return stored == self._env_key(requirements)
+        return stored == self._env_key(
+            requirements, python=self._resolve_python(python)
+        )
 
-    def _create_env(self, env_dir: Path, requirements: list[str]) -> None:
+    def _create_env(
+        self,
+        env_dir: Path,
+        requirements: list[str],
+        python: str | None = None,
+    ) -> None:
+        """Create a ``uv`` virtual environment and install requirements.
+
+        Deletes ``env_dir`` if it already exists, runs ``uv venv``, then
+        ``uv pip install`` when there is anything to install. Writes
+        ``requirements.txt`` and a ``.env_ready`` marker on success.
+
+        Parameters
+        ----------
+        env_dir : pathlib.Path
+            Directory that will hold the new virtual environment.
+        requirements : list of str
+            Per-call PEP 440 requirement strings, installed in addition
+            to ``base_requirements`` and ``editable``.
+        python : str, optional (default=None)
+            Interpreter specification passed to ``uv venv --python``.
+        """
         if env_dir.exists():
             shutil.rmtree(env_dir)
 
+        python = self._resolve_python(python)
         create_cmd = [self.uv_executable, "venv", str(env_dir)]
-        if self.python is not None:
-            create_cmd.extend(["--python", self.python])
+        if python is not None:
+            create_cmd.extend(["--python", python])
 
         subprocess.run(create_cmd, check=True, capture_output=True, text=True)
 
@@ -137,13 +249,29 @@ class UvEnvironmentManager(BaseEnvironmentManager):
             encoding="utf-8",
         )
         env_dir.joinpath(_READY_MARKER).write_text(
-            self._env_key(requirements),
+            self._env_key(requirements, python=python),
             encoding="utf-8",
         )
 
     def _install_command(
         self, env_dir: Path, requirements: list[str]
     ) -> list[str] | None:
+        """Build the ``uv pip install`` command for ``env_dir``.
+
+        Parameters
+        ----------
+        env_dir : pathlib.Path
+            Virtual environment whose interpreter should receive the
+            packages.
+        requirements : list of str
+            Per-call PEP 440 requirement strings.
+
+        Returns
+        -------
+        list of str or None
+            Full ``uv pip install --python ...`` argument vector, or
+            ``None`` when there are no packages to install.
+        """
         install_items: list[str] = []
         for path in self.editable:
             install_items.extend(["-e", str(path)])
