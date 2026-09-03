@@ -106,8 +106,18 @@ def _make_forecaster(**kwargs):
 
 
 @contextmanager
+def _clear_class_dependencies():
+    """Temporarily clear the class-level ``python_dependencies`` tag."""
+    tags = dict(TimesFM3Forecaster._tags)
+    tags["python_dependencies"] = []
+    with patch.object(TimesFM3Forecaster, "_tags", tags):
+        yield
+
+
+@contextmanager
 def _patch_upstream(fake):
     with (
+        _clear_class_dependencies(),
         patch.object(
             TimesFM3Forecaster,
             "_load_model",
@@ -122,14 +132,29 @@ def _patch_upstream(fake):
         yield
 
 
+def test_patch_upstream_clears_class_dependency_tag():
+    """Mocked tests must not require the class-level timesfm dependency."""
+    original = TimesFM3Forecaster.get_class_tag("python_dependencies")
+    with _patch_upstream(_FakeUpstreamForecaster()):
+        deps = TimesFM3Forecaster.get_class_tag("python_dependencies")
+        assert deps in ([], None), (
+            "mocked TimesFM3 tests must clear the class-level "
+            f"python_dependencies tag, but get_class_tag returns {deps!r}"
+        )
+    assert TimesFM3Forecaster.get_class_tag("python_dependencies") == original
+
+
 def test_license_rejected_before_model_load():
     """Fit raises when license has not been accepted."""
     forecaster = TimesFM3Forecaster(ignore_deps=True)
     y = pd.Series([1.0, 2.0, 3.0, 4.0])
 
-    with patch(
-        "sktime.forecasting.base._base._check_estimator_deps",
-        return_value=True,
+    with (
+        _clear_class_dependencies(),
+        patch(
+            "sktime.forecasting.base._base._check_estimator_deps",
+            return_value=True,
+        ),
     ):
         with pytest.raises(ValueError, match="license_accepted"):
             forecaster.fit(y)
@@ -179,16 +204,58 @@ def test_predict_quantiles_available_levels():
     assert set(y_quant.columns.get_level_values(1)) == {0.1, 0.9}
 
 
-def test_predict_quantiles_unavailable_level():
-    """Unsupported quantile levels raise a clear error."""
+def test_predict_quantiles_interpolates_intermediate_and_clamps_tails():
+    """Off-grid quantile levels interpolate; outer levels clamp to the native grid."""
+    fake = _FakeUpstreamForecaster()
+    y = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [3.0, 2.0, 1.0]})
+
+    with _patch_upstream(fake):
+        forecaster = _make_forecaster()
+        fitted = forecaster.fit(y)
+        native = fitted.predict_quantiles(fh=[1, 2], alpha=[0.1, 0.2, 0.3, 0.9])
+        requested = fitted.predict_quantiles(fh=[1, 2], alpha=[0.05, 0.25, 0.9])
+
+    np.testing.assert_allclose(
+        requested[("a", 0.05)].to_numpy(),
+        native[("a", 0.1)].to_numpy(),
+    )
+    np.testing.assert_allclose(
+        requested[("b", 0.05)].to_numpy(),
+        native[("b", 0.1)].to_numpy(),
+    )
+    np.testing.assert_allclose(
+        requested[("a", 0.25)].to_numpy(),
+        0.5 * (native[("a", 0.2)].to_numpy() + native[("a", 0.3)].to_numpy()),
+    )
+    np.testing.assert_allclose(
+        requested[("a", 0.9)].to_numpy(),
+        native[("a", 0.9)].to_numpy(),
+    )
+
+
+def test_empty_past_covariates_fits_without_x():
+    """An empty ``past_covariates`` list is equivalent to no covariates."""
     fake = _FakeUpstreamForecaster()
     y = pd.Series([1.0, 2.0, 3.0, 4.0])
 
     with _patch_upstream(fake):
-        forecaster = _make_forecaster()
-        forecaster.fit(y)
-        with pytest.raises(ValueError, match="Requested quantiles"):
-            forecaster.predict_quantiles(fh=[1, 2], alpha=[0.05])
+        forecaster = _make_forecaster(past_covariates=[])
+        y_pred = forecaster.fit(y).predict(fh=[1])
+
+    assert len(y_pred) == 1
+    assert fake.calls[0]["past_only_covariates"] is None
+    assert fake.calls[0]["past_future_covariates"] is None
+
+
+def test_nonempty_past_covariates_requires_x():
+    """A non-empty ``past_covariates`` list still requires fit-time ``X``."""
+    fake = _FakeUpstreamForecaster()
+    y = pd.Series([1.0, 2.0, 3.0, 4.0])
+
+    with _patch_upstream(fake):
+        forecaster = _make_forecaster(past_covariates=["po"])
+        with pytest.raises(ValueError, match="past_covariates"):
+            forecaster.fit(y)
 
 
 def test_upstream_arrays_without_exogenous():

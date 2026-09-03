@@ -34,8 +34,10 @@ class TimesFM3Forecaster(BaseForecaster):
     cutoff.
 
     Point forecasts use the upstream median quantile. Probabilistic forecasts
-    are available through ``predict_quantiles`` for quantile levels
-    ``0.1, 0.2, ..., 0.9``.
+    are available through ``predict_quantiles``. Native checkpoint levels
+    ``0.1, 0.2, ..., 0.9`` are returned exactly; intermediate levels are
+    linearly interpolated, and levels outside that range are clamped to the
+    nearest native quantile.
 
     Parameters
     ----------
@@ -322,7 +324,7 @@ class TimesFM3Forecaster(BaseForecaster):
         self._check_license()
         self._load_model()
 
-        if self.past_covariates is not None and X is None:
+        if self.past_covariates and X is None:
             raise ValueError(
                 "`past_covariates` were specified but no exogenous `X` was "
                 "provided in fit."
@@ -454,31 +456,27 @@ class TimesFM3Forecaster(BaseForecaster):
         return pred_df.loc[dateindex]
 
     def _predict_quantiles(self, fh, X, alpha):
-        """Compute/return prediction quantiles for a forecast."""
+        """Compute/return prediction quantiles for a forecast.
+
+        Requested levels are linearly interpolated onto the checkpoint's native
+        quantile grid. ``np.interp`` saturates outside the grid, so levels
+        beyond the native range are clamped to the nearest native quantile.
+        """
         output, index, pred_out, _ = self._run_forecast(fh, X, return_quantiles=True)
 
-        available = [round(q, 3) for q in self.forecaster_.config.quantiles]
-        alpha_rounded = [round(a, 3) for a in alpha]
-        if not set(alpha_rounded).issubset(set(available)):
-            raise ValueError(
-                "Requested quantiles are not all available in the TimesFM 3 "
-                f"checkpoint: requested={alpha_rounded}, available={available}."
-            )
-
+        available = np.asarray(self.forecaster_.config.quantiles, dtype=float)
         quantiles = np.asarray(output.quantiles)
         if quantiles.ndim == 2:
             quantiles = quantiles[np.newaxis, :, :]
 
+        interpolated = np.apply_along_axis(
+            lambda row: np.interp(alpha, available, row), 2, quantiles
+        )
+
         var_names = self._get_varnames()
-        quantile_indices = [available.index(a) for a in alpha_rounded]
-
         columns = pd.MultiIndex.from_product([var_names, alpha])
-        data = {}
-        for s, var in enumerate(var_names):
-            for a, idx in zip(alpha, quantile_indices):
-                data[(var, a)] = quantiles[s, :, idx]
-
-        pred_df = pd.DataFrame(data, index=index, columns=columns)
+        values = interpolated.transpose(1, 0, 2).reshape(len(index), -1)
+        pred_df = pd.DataFrame(values, index=index, columns=columns)
         pred_df.index.names = self._y_index_names
 
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
