@@ -477,6 +477,8 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                 "Check window_size and f_statistic parameters."
             )
 
+        from torch.utils.data import DataLoader
+
         combined_dataset = ConcatDataset(datasets)
         data_loader = DataLoader(
             combined_dataset, batch_size=self.batch_size, shuffle=True
