@@ -479,9 +479,24 @@ class ContractableBOSS(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_parameter_samples": 10, "max_ensemble_size": 5}
         else:
-            return {
+            params1 = {
                 "n_parameter_samples": 4,
                 "max_ensemble_size": 2,
                 "save_train_predictions": True,
                 "feature_selection": "none",
             }
+            # second set: random feature selection rather than none, a smaller
+            # minimum window (widening the window grid on the short test
+            # series), no saved train predictions (the default), a slightly
+            # different parameter sample count, and a fixed random_state.
+            # Sampling stays small so both sets are fast to fit.
+            # chi2 is not used here: on the short test scenario series it
+            # selects no features, leading to degenerate ensemble weights.
+            params2 = {
+                "n_parameter_samples": 6,
+                "max_ensemble_size": 2,
+                "min_window": 8,
+                "feature_selection": "random",
+                "random_state": 0,
+            }
+            return [params1, params2]

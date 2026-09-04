@@ -125,7 +125,6 @@ EXCLUDED_TESTS = {
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [
         "CNTCNetwork",
-        "ContractableBOSS",
         "DOBIN",
         "DistanceFeatures",
         "HCrystalBallAdapter",
@@ -141,7 +140,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "MCDCNNNetwork",
         "MCDCNNRegressor",
         "MLPNetwork",
-        "MUSE",
         "OnlineEnsembleForecaster",
         "PAAlegacy",
         "Prophetverse",
