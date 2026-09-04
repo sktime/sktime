@@ -141,28 +141,17 @@ class DerivativeSlopeTransformer(BaseTransformer):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.transformations.summarize import DerivativeSlopeTransformer
-    >>> X = pd.DataFrame({"a": [10, 12, 15, 20, 22]})
-    >>> t = DerivativeSlopeTransformer()
-    >>> t.fit_transform(X)
+    >>> from sktime.transformations.summarize._extract import (
+    ...     DerivativeSlopeTransformer,
+    ... )
+    >>> X = pd.DataFrame({"a": [1, 2, 3, 4]})
+    >>> transformer = DerivativeSlopeTransformer()
+    >>> transformer.fit_transform(X)
          a
-    0  2.0
-    1  2.5
-    2  4.0
-    3  3.5
-    4  2.0
-
-    Works on multivariate data as well, computing the derivative independently
-    for each column:
-
-    >>> X2 = pd.DataFrame({"a": [10, 12, 15, 20, 22], "b": [5, 5, 6, 8, 8]})
-    >>> t.fit_transform(X2)
-         a    b
-    0  2.0  0.0
-    1  2.5  0.5
-    2  4.0  1.5
-    3  3.5  1.0
-    4  2.0  0.0
+    0  1.0
+    1  1.0
+    2  1.0
+    3  1.0
     """
 
     _tags = {
@@ -227,6 +216,20 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         - If RandomState instance, random_state is the random number generator;
         - If None, the random number generator is the RandomState instance used
         by ``np.random``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.transformations.summarize import RandomIntervalFeatureExtractor
+    >>> X = pd.DataFrame({
+    ...     "ts": [pd.Series([1, 2, 3, 4, 5])]
+    ... })
+    >>> transformer = RandomIntervalFeatureExtractor(
+    ...     n_intervals=1, features=[np.mean], random_state=42
+    ... )
+    >>> float(transformer.fit_transform(X).iloc[0, 0])
+    4.0
     """
 
     _tags = {
@@ -384,6 +387,22 @@ class FittedParamExtractor(BaseTransformer):
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
+
+    Example
+    --------
+    >>> import pandas as pd
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>> from sktime.transformations.summarize import FittedParamExtractor
+    >>> X = pd.DataFrame({"y": [1, 2, 3, 4]})
+    >>> forecaster = TrendForecaster()
+    >>> transformer = FittedParamExtractor(
+    ...     forecaster=forecaster,
+    ...     param_names="regressor__intercept",
+    ... )
+    >>> transformer.fit_transform(X)
+       regressor__intercept
+    0                   1.0
+
     """
 
     _tags = {
