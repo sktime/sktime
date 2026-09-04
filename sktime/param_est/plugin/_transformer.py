@@ -228,7 +228,16 @@ class PluginParamsTransformer(_DelegatedTransformer):
             "param_est": FixedParams({"foo": 12}),
             "params": {"power": "foo"},
         }
-        params = [params1]
+        # second unconditional set: explicit string reference to a parameter
+        # "power" present in both estimators, rather than the dictionary plug
+        # of the first set. Uses the dependency-free FixedParams, so the
+        # two-set requirement holds regardless of soft dependencies present.
+        params1b = {
+            "transformer": ExponentTransformer(),
+            "param_est": FixedParams({"power": 0.5}),
+            "params": "power",
+        }
+        params = [params1, params1b]
 
         # uses a "real" param est that depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
