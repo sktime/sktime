@@ -4,18 +4,9 @@
 __author__ = ["benheid"]
 
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
-
-if _check_soft_dependencies(["pykan", "torch"], severity="none"):
-    import torch
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
 
 
 class PyKANForecaster(BaseForecaster):
