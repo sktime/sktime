@@ -122,8 +122,8 @@ class PyKANForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        from kan import KAN
         import torch
+        from kan import KAN
 
         PyTorchTrainDataset = _get_dataset_class()
 
@@ -217,8 +217,8 @@ class PyKANForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        from kan import KAN
         import torch
+        from kan import KAN
 
         model = KAN(width=self._layer_sizes, grid=self._best_grid, **self._model_params)
         model.load_state_dict(self._state_dict)
@@ -307,7 +307,7 @@ def _get_dataset_class():
 
             window_end = i + self.seq_len
 
-            hist_y = tensor(self.y[i : window_end]).type(float32)
+            hist_y = tensor(self.y[i:window_end]).type(float32)
             if self.X is not None:
                 exog_data = (
                     tensor(self.X[window_end : window_end + self.fh])
