@@ -95,8 +95,14 @@ def _all_sklearn_estimators_cached(
     """
     from sklearn.base import BaseEstimator
 
-    MODULES_TO_IGNORE_SKLEARN = ["array_api_compat", "tests", "experimental"]
+    MODULES_TO_IGNORE_SKLEARN = [
+        "array_api_compat",
+        "conftest",
+        "tests",
+        "experimental",
+    ]
     MODULES_TO_IGNORE_SKTIME = (
+        "conftest",
         "tests",
         "setup",
         "contrib",
