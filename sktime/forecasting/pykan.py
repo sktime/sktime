@@ -46,9 +46,7 @@ class PyKANForecaster(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.pykan import PyKANForecaster
-    >>> y = load_airline()
     >>> forecaster = PyKANForecaster(hidden_layers=(1, 1), input_layer_size=2, grids=[2, 3], model_params={"k": 2}, fit_params={"steps": 1}, val_size=0.5, device="cpu")
     """
 
