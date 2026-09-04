@@ -113,8 +113,6 @@ EXCLUDED_TESTS = {
         "test_predict_points",
         "test_predict_segments",
         "test_output_type",
-        "test_inheritance",
-        "test_create_test_instance",
     ],
 }
 
