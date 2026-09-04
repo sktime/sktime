@@ -1,8 +1,6 @@
 # ruff: noqa: S603
 """Base class for isolated environment managers."""
 
-from __future__ import annotations
-
 import hashlib
 import subprocess
 import sys

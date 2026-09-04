@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tests for isolated environment managers."""
 
-from __future__ import annotations
-
 import sys
 from pathlib import Path
 from types import SimpleNamespace

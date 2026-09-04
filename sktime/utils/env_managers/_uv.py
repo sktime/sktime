@@ -1,8 +1,6 @@
 # ruff: noqa: S603
 """UV virtual environment manager."""
 
-from __future__ import annotations
-
 import logging
 import shutil
 import subprocess

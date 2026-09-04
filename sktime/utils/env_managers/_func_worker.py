@@ -1,7 +1,5 @@
 """Subprocess worker that executes a serialized callable."""
 
-from __future__ import annotations
-
 import sys
 
 
