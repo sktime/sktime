@@ -1,8 +1,8 @@
 """Piecewise Aggregate Approximation Transformer (PAA)."""
 
+import numpy as np
 import pandas as pd
 
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["MatthewMiddlehurst"]
@@ -11,33 +11,22 @@ __author__ = ["MatthewMiddlehurst"]
 class PAAlegacy(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
-    (PAA) Piecewise Aggregate Approximation Transformer, as described in
-    Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra.
-    Dimensionality reduction for fast similarity search in large time series
-    databases.
-    Knowledge and information Systems, 3(3), 263-286, 2001.
-    For each series reduce the dimensionality to num_intervals, where each
-    value is the mean of values in
-    the interval.
-
-    TO DO: pythonise it to make it more efficient. Maybe check vs this version
-            http://vigne.sh/posts/piecewise-aggregate-approx/
-    Could have: Tune the interval size in fit somehow?
+    Piecewise Aggregate Approximation reduces the number of time points
+    in a time series by replacing each interval with its mean value.
 
     Parameters
     ----------
-    num_intervals   : int, dimension of the transformed data (default 8)
+    num_intervals : int, default=8
+        Number of intervals in the transformed time series.
     """
 
     _tags = {
         "authors": ["MatthewMiddlehurst"],
         "scitype:transform-input": "Series",
-        # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
-        # what scitype is returned: Primitives, Series, Panel
-        "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
-        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        "scitype:instancewise": True,
+        "X_inner_mtype": "pd.DataFrame",
+        "y_inner_mtype": "None",
         "capability:categorical_in_X": False,
     }
 
@@ -49,108 +38,102 @@ class PAAlegacy(BaseTransformer):
         """Set self.num_intervals to n."""
         self.num_intervals = n
 
-    # todo: looks like this just loops over series instances
-    # so should be refactored to work on Series directly
     def _transform(self, X, y=None):
-        """Transform data.
+        """Transform data using Piecewise Aggregate Approximation.
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_dims]
-            Nested dataframe with multivariate time-series in cells.
+        X : pd.DataFrame
+            Time series with time points in rows and variables in columns.
 
         Returns
         -------
-        dims: Pandas data frame with first dimension in column zero,
-              second in column one etc.
+        pd.DataFrame
+            Transformed time series with ``num_intervals`` rows and
+            the same number of columns as ``X``.
         """
-        # Get information about the dataframe
-        num_atts = len(X.iloc[0, 0])
-        col_names = X.columns
+        num_timepoints = X.shape[0]
 
-        # Check the parameters are appropriate
-        self._check_parameters(num_atts)
+        self._check_parameters(num_timepoints)
 
-        # On each dimension, perform PAA
-        dataFrames = []
-        for x in col_names:
-            dataFrames.append(self._perform_paa_along_dim(pd.DataFrame(X[x])))
+        transformed = []
 
-        # Combine the dimensions together
-        result = pd.concat(dataFrames, axis=1, sort=False)
-        result.columns = col_names
+        for column in X.columns:
+            values = X[column].to_numpy()
 
-        return result
+            paa_values = self._perform_paa_along_dim(values)
 
-    def _perform_paa_along_dim(self, X):
-        X = from_nested_to_2d_array(X, return_numpy=True)
+            transformed.append(paa_values)
 
-        num_atts = X.shape[1]
-        num_insts = X.shape[0]
-        dims = pd.DataFrame()
-        data = []
+        result = np.column_stack(transformed)
 
-        for i in range(num_insts):
-            series = X[i, :]
+        return pd.DataFrame(
+            result,
+            columns=X.columns,
+        )
 
-            frames = []
-            current_frame = 0
-            current_frame_size = 0
-            frame_length = num_atts / self.num_intervals
-            frame_sum = 0
+    def _perform_paa_along_dim(self, series):
+        """Perform PAA on one time series.
 
-            for n in range(num_atts):
-                remaining = frame_length - current_frame_size
+        Parameters
+        ----------
+        series : np.ndarray
+            One-dimensional time series.
 
-                if remaining > 1:
-                    frame_sum += series[n]
-                    current_frame_size += 1
-                else:
-                    frame_sum += remaining * series[n]
-                    current_frame_size += remaining
+        Returns
+        -------
+        np.ndarray
+            PAA representation containing ``num_intervals`` values.
+        """
+        series = np.asarray(series, dtype=float)
 
-                if current_frame_size == frame_length:
-                    frames.append(frame_sum / frame_length)
-                    current_frame += 1
+        n = len(series)
+        frame_length = n / self.num_intervals
 
-                    frame_sum = (1 - remaining) * series[n]
-                    current_frame_size = 1 - remaining
+        frames = np.zeros(self.num_intervals, dtype=float)
 
-            # if the last frame was lost due to double imprecision
-            if current_frame == self.num_intervals - 1:
-                frames.append(frame_sum / frame_length)
+        for i in range(self.num_intervals):
+            start = i * frame_length
+            end = (i + 1) * frame_length
 
-            data.append(pd.Series(frames))
+            total = 0.0
 
-        dims[0] = data
+            # Determine all data points that overlap this interval
+            first = int(np.floor(start))
+            last = int(np.ceil(end))
 
-        return dims
+            for j in range(first, min(last, n)):
+                # Amount of data point j that belongs to this interval
+                overlap_start = max(start, j)
+                overlap_end = min(end, j + 1)
+
+                overlap = max(0.0, overlap_end - overlap_start)
+
+                total += series[j] * overlap
+
+            frames[i] = total / frame_length
+
+        return frames
 
     def _check_parameters(self, num_atts):
         """Check parameters of PAA.
 
-        Function for checking the values of parameters inserted into PAA.
-        For example, the number of subsequences cannot be larger than the
-        time series length.
-
-        Throws
-        ------
-        ValueError or TypeError if a parameters input is invalid.
+        Parameters
+        ----------
+        num_atts : int
+            Number of time points.
         """
-        if isinstance(self.num_intervals, int):
-            if self.num_intervals <= 0:
-                raise ValueError(
-                    "num_intervals must have the \
-                                  value of at least 1"
-                )
-            if self.num_intervals > num_atts:
-                raise ValueError(
-                    "num_intervals cannot be higher \
-                                  than the time series length."
-                )
-        else:
+        if not isinstance(self.num_intervals, int):
             raise TypeError(
                 "num_intervals must be an 'int'. Found '"
                 + type(self.num_intervals).__name__
                 + "' instead."
+            )
+
+        if self.num_intervals <= 0:
+            raise ValueError("num_intervals must have the value of at least 1")
+
+        if self.num_intervals > num_atts:
+            raise ValueError(
+                "num_intervals cannot be higher than the time series length."
             )

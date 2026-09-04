@@ -6,13 +6,8 @@ import pytest
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.dictionary_based._paa import PAAlegacy as PAA
-from sktime.utils._testing.panel import _make_nested_from_array
 
 
-# Check that exception is raised for bad num intervals.
-# input types - string, float, negative int, negative float, empty dict
-# and an int that is larger than the time series length.
-# correct input is meant to be a positive integer of 1 or more.
 @pytest.mark.skipif(
     not run_test_for_class(PAA),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -20,7 +15,7 @@ from sktime.utils._testing.panel import _make_nested_from_array
 @pytest.mark.parametrize("bad_num_intervals", ["str", 1.2, -1.2, -1, {}, 11, 0])
 def test_bad_input_args(bad_num_intervals):
     """Test that exception is raised for bad num intervals."""
-    X = _make_nested_from_array(np.ones(10), n_instances=10, n_columns=1)
+    X = pd.DataFrame(np.ones(10))
 
     if not isinstance(bad_num_intervals, int):
         with pytest.raises(TypeError):
@@ -36,15 +31,24 @@ def test_bad_input_args(bad_num_intervals):
 )
 def test_output_of_transformer():
     """Test that the transformer has changed the data correctly."""
-    X = _make_nested_from_array(
-        np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), n_instances=1, n_columns=1
-    )
+    X = pd.DataFrame(np.arange(1, 11))
 
     p = PAA(num_intervals=3).fit(X)
     res = p.transform(X)
-    orig = convert_list_to_dataframe([[2.2, 5.5, 8.8]])
-    orig.columns = X.columns
-    assert check_if_dataframes_are_equal(res, orig)
+
+    # Convert output to numpy array so the test works with
+    # sktime-compatible output containers.
+    actual_values = np.asarray(res).reshape(-1)
+
+    # PAA with 10 observations and 3 intervals.
+    expected_values = np.array([2.2, 5.5, 8.8])
+
+    assert np.allclose(
+        actual_values,
+        expected_values,
+        rtol=1e-5,
+        atol=1e-8,
+    )
 
 
 @pytest.mark.skipif(
@@ -53,35 +57,27 @@ def test_output_of_transformer():
 )
 def test_output_dimensions():
     """Test output dimensions."""
-    # test with univariate
-    X = _make_nested_from_array(np.ones(12), n_instances=10, n_columns=1)
+
+    # Test with univariate - 12 timepoints, 1 feature
+    X = pd.DataFrame(np.ones(12))
 
     p = PAA(num_intervals=5).fit(X)
     res = p.transform(X)
 
-    # get the dimension of the generated dataframe.
-    corr_time_series_length = res.iloc[0, 0].shape[0]
-    num_rows = res.shape[0]
-    num_cols = res.shape[1]
+    # Convert to numpy array for dimension checks.
+    res_array = np.asarray(res)
 
-    assert corr_time_series_length == 5
-    assert num_rows == 10
-    assert num_cols == 1
+    assert res_array.shape == (5, 1)
 
-    # test with multivariate
-    X = _make_nested_from_array(np.ones(12), n_instances=10, n_columns=5)
+    # Test with multivariate - 12 timepoints, 5 features
+    X = pd.DataFrame(np.ones((12, 5)))
 
     p = PAA(num_intervals=5).fit(X)
     res = p.transform(X)
 
-    # get the dimension of the generated dataframe.
-    corr_time_series_length = res.iloc[0, 0].shape[0]
-    num_rows = res.shape[0]
-    num_cols = res.shape[1]
+    res_array = np.asarray(res)
 
-    assert corr_time_series_length == 5
-    assert num_rows == 10
-    assert num_cols == 5
+    assert res_array.shape == (5, 5)
 
 
 @pytest.mark.skipif(
@@ -90,35 +86,39 @@ def test_output_dimensions():
 )
 def test_paa_performs_correctly_along_each_dim():
     """Test that PAA produces the same result along each dimension."""
-    X = _make_nested_from_array(
-        np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), n_instances=1, n_columns=2
+
+    # 10 timepoints, 2 features
+    X = pd.DataFrame(
+        np.array(
+            [
+                [1, 1],
+                [2, 2],
+                [3, 3],
+                [4, 4],
+                [5, 5],
+                [6, 6],
+                [7, 7],
+                [8, 8],
+                [9, 9],
+                [10, 10],
+            ]
+        )
     )
 
     p = PAA(num_intervals=3).fit(X)
     res = p.transform(X)
-    orig = convert_list_to_dataframe([[2.2, 5.5, 8.8], [2.2, 5.5, 8.8]])
-    orig.columns = X.columns
-    assert check_if_dataframes_are_equal(res, orig)
 
+    res_array = np.asarray(res)
 
-def convert_list_to_dataframe(list_to_convert):
-    """Convert a Python list to a Pandas dataframe."""
-    # Convert this into a panda's data frame
-    df = pd.DataFrame()
-    for i in range(len(list_to_convert)):
-        inst = list_to_convert[i]
-        data = []
-        data.append(pd.Series(inst))
-        df[i] = data
-    return df
+    expected_values = np.array([2.2, 5.5, 8.8])
 
+    # Check both columns have same result
+    for col in range(res_array.shape[1]):
+        actual_values = res_array[:, col]
 
-def check_if_dataframes_are_equal(df1, df2):
-    """Check that pandas DataFrames are equal."""
-    from pandas.testing import assert_frame_equal
-
-    try:
-        assert_frame_equal(df1, df2)
-        return True
-    except AssertionError:
-        return False
+        assert np.allclose(
+            actual_values,
+            expected_values,
+            rtol=1e-5,
+            atol=1e-8,
+        )
