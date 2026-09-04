@@ -315,7 +315,7 @@ def _get_dataset_class():
                     .flatten()
                 )
             else:
-                exog_data = tensor([])
+                exog_data = tensor([], dtype=float32)
             return (
                 cat([hist_y, exog_data]),
                 from_numpy(self.y[window_end : window_end + self.fh]).type(float32),
