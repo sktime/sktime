@@ -28,6 +28,17 @@ class IgnoreX(_DelegatedForecaster):
     ----------
     forecaster_ : clone of forecaster
         The fitted forecaster.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import IgnoreX
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
+    >>> forecaster = IgnoreX(NaiveForecaster())
+    >>> forecaster.fit(y, X=X, fh=[1, 2, 3])
+    IgnoreX(forecaster=NaiveForecaster())
+    >>> y_pred = forecaster.predict(X=X)
     """
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -42,7 +53,6 @@ class IgnoreX(_DelegatedForecaster):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, forecaster, ignore_x=True):
