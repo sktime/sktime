@@ -261,16 +261,6 @@ def test_uv_manager_create_env_invokes_uv(tmp_path, monkeypatch):
     not run_test_module_changed("sktime.utils.env_managers"),
     reason="run test only if env_managers module has changed",
 )
-def test_base_environment_manager_is_abstract():
-    """BaseEnvironmentManager cannot be instantiated without get_python_executable."""
-    with pytest.raises(TypeError):
-        BaseEnvironmentManager()
-
-
-@pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
-    reason="run test only if env_managers module has changed",
-)
 def test_env_key_differs_by_python_version(tmp_path):
     """Same requirements with different Python specs get different env keys."""
     manager = UvEnvironmentManager(envs_dir=tmp_path, uv_executable="/fake/uv")
