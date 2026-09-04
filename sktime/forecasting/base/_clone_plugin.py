@@ -4,6 +4,15 @@
 from copy import deepcopy
 
 from skbase.base._clone_plugins import BaseCloner, _default_clone
+from skbase.utils.dependencies import _safe_import
+from torch import nn
+
+from sktime.utils.torch_utils import (
+    clone_state_dict,
+    load_state_dict_into,
+)
+
+torch = _safe_import("torch")
 
 
 class _PretrainedCloner(BaseCloner):
@@ -52,7 +61,15 @@ class _PretrainedCloner(BaseCloner):
         new_object._pretrained_attrs = list(obj._pretrained_attrs)
         for attr in obj._pretrained_attrs:
             if hasattr(obj, attr):
-                setattr(new_object, attr, deepcopy(getattr(obj, attr)))
+                val = getattr(obj, attr)
+                if isinstance(val, nn.Module) and hasattr(new_object, attr):
+                    try:
+                        sd = clone_state_dict(val)
+                        load_state_dict_into(getattr(new_object, attr), sd)
+                    except Exception:
+                        setattr(new_object, attr, deepcopy(val))
+                else:
+                    setattr(new_object, attr, deepcopy(val))
 
         new_object._state = "pretrained"
 

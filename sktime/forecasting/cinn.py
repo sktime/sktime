@@ -17,6 +17,7 @@ from sktime.forecasting.base.adapters._pytorch import (
 from sktime.forecasting.trend import CurveFitForecaster
 from sktime.networks.cinn import CINNNetwork
 from sktime.utils.dependencies import _safe_import
+from sktime.utils.torch_utils import clone_state_dict
 
 torch = _safe_import("torch")
 DataLoader = _safe_import("torch.utils.data.DataLoader")
@@ -289,7 +290,10 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             ):
                 break
         if val_data_loader_nll is not None:
-            self.network.load_state_dict(early_stopper._best_model.state_dict())
+            if getattr(early_stopper, "_best_state_dict", None) is not None:
+                self.network.load_state_dict(early_stopper._best_model.state_dict)
+            else:
+                self.network.load_state_dict(early_stopper._best_model.state_dict())
         dataset = self._prepare_data(y, X if X is not None else None)
         X, y = next(iter(DataLoader(dataset, shuffle=False, batch_size=len(dataset))))
 
@@ -827,7 +831,13 @@ class _EarlyStopper:
         ):
             self.min_validation_loss = validation_loss
             self.counter = 0
-            self._best_model = deepcopy(model)
+            try:
+                self._best_state_dict = clone_state_dict(model)
+                self._best_model = None
+            except Exception:
+                self._best_model = deepcopy(model)
+                self._best_state_dict = None
+
         elif validation_loss > (self.min_validation_loss + self.min_delta):
             self.counter += 1
             if self.counter >= self.patience:
