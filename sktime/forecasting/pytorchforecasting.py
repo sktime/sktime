@@ -46,8 +46,8 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> # import packages
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingTFT
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -55,16 +55,15 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> # define forecast horizon
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
-    >>> # split X, y data for train and test
-    >>> x = data[["c0", "c1"]]
+    >>> # split X, y temporally: the last ``max_prediction_length`` time stamps of
+    >>> # every series are held out, so ``y_test`` covers exactly the ``fh`` stamps
+    >>> X = data[["c0", "c1"]]
     >>> y = data["c2"].to_frame()
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(
+    ...     y, X, test_size=max_prediction_length
     ... )
-    >>> len_levels = len(y_test.index.names)
-    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
-    ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
-    ... )
+    >>> y_train.shape, y_test.shape  # 1000 series x 45 train, x 5 test stamps
+    ((45000, 1), (5000, 1))
     >>> # define the model
     >>> model = PytorchForecastingTFT(
     ...     trainer_params={
@@ -76,27 +75,11 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingTFT(trainer_params={'limit_train_batches': 10,
                                         'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test) # doctest: +SKIP
-    >>> print(y_test) # doctest: +SKIP
-                                c2
-    h0   h1     time
-    h0_0 h1_180 2000-01-01  5.261697
-                2000-01-02  5.614349
-                2000-01-03  6.619191
-                2000-01-04  5.159320
-                2000-01-05  7.590924
-    ...                          ...
-    h0_4 h1_199 2000-02-10  6.591850
-                2000-02-11  5.619114
-                2000-02-12  5.105312
-                2000-02-13  5.185010
-                2000-02-14  4.534434
-
-    [4500 rows x 1 columns]
+    >>> y_pred = model.predict(fh, X=X_test) # doctest: +SKIP
     >>> print(y_pred) # doctest: +SKIP
                                 c2
     h0   h1     time
-    h0_0 h1_180 2000-02-15  5.310687
+    h0_0 h1_0   2000-02-15  5.310687
                 2000-02-16  5.162195
                 2000-02-17  5.157579
                 2000-02-18  5.360476
@@ -108,7 +91,14 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
                 2000-02-18  5.181715
                 2000-02-19  5.188011
 
-    [500 rows x 1 columns]
+    [5000 rows x 1 columns]
+    >>> # score the forecast against the held-out ground truth.
+    >>> # ``score`` compares ``y`` with ``predict(fh, X)``, so ``y`` must contain
+    >>> # exactly the ``fh`` time stamps. Passing a full training or test series
+    >>> # raises "ValueError: Found input variables with inconsistent numbers of
+    >>> # samples", because ``y_pred`` has only ``len(fh)`` rows per series.
+    >>> model.score(y_test, X=X_test, fh=fh)  # MAPE, lower is better # doctest: +SKIP
+    0.0871...
 
 
     References
@@ -339,8 +329,8 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     >>> # import packages
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -348,14 +338,13 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     >>> # define forecast horizon
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
-    >>> # split y data for train and test
-    >>> y_train, y_test = train_test_split(
-    ...     data["c2"].to_frame(), test_size=0.2, train_size=0.8, shuffle=False
+    >>> # split y temporally: the last ``max_prediction_length`` time stamps of
+    >>> # every series are held out, so ``y_test`` covers exactly the ``fh`` stamps
+    >>> y_train, y_test = temporal_train_test_split(
+    ...     data["c2"].to_frame(), test_size=max_prediction_length
     ... )
-    >>> len_levels = len(y_test.index.names)
-    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
-    ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
-    ... )
+    >>> y_train.shape, y_test.shape  # 1000 series x 45 train, x 5 test stamps
+    ((45000, 1), (5000, 1))
     >>> # define the model
     >>> model = PytorchForecastingNBeats(
     ...     trainer_params={
@@ -367,27 +356,11 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     >>> model.fit(y=y_train, fh=fh) # doctest: +SKIP
     PytorchForecastingNBeats(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, y=y_test) # doctest: +SKIP
-    >>> print(y_test) # doctest: +SKIP
-                                c2
-    h0   h1     time
-    h0_0 h1_180 2000-01-01  6.308914
-                2000-01-02  3.471440
-                2000-01-03  4.169305
-                2000-01-04  5.990554
-                2000-01-05  5.611347
-    ...                          ...
-    h0_4 h1_199 2000-02-10  6.448248
-                2000-02-11  4.290731
-                2000-02-12  5.494657
-                2000-02-13  4.752948
-                2000-02-14  5.243385
-
-    [4500 rows x 1 columns]
+    >>> y_pred = model.predict(fh) # doctest: +SKIP
     >>> print(y_pred) # doctest: +SKIP
                                 c2
     h0   h1     time
-    h0_0 h1_180 2000-02-15  5.167375
+    h0_0 h1_0   2000-02-15  5.167375
                 2000-02-16  5.178759
                 2000-02-17  5.251082
                 2000-02-18  5.331861
@@ -399,7 +372,14 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
                 2000-02-18  5.081184
                 2000-02-19  5.113482
 
-    [500 rows x 1 columns]
+    [5000 rows x 1 columns]
+    >>> # score the forecast against the held-out ground truth.
+    >>> # ``score`` compares ``y`` with ``predict(fh)``, so ``y`` must contain
+    >>> # exactly the ``fh`` time stamps. Passing a full training or test series
+    >>> # raises "ValueError: Found input variables with inconsistent numbers of
+    >>> # samples", because ``y_pred`` has only ``len(fh)`` rows per series.
+    >>> model.score(y_test, fh=fh)  # MAPE, lower is better # doctest: +SKIP
+    0.0871...
 
 
     References
@@ -645,8 +625,8 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     >>> # import packages
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingDeepAR
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -654,16 +634,15 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     >>> # define forecast horizon
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
-    >>> # split X, y data for train and test
-    >>> x = data[["c0", "c1"]]
+    >>> # split X, y temporally: the last ``max_prediction_length`` time stamps of
+    >>> # every series are held out, so ``y_test`` covers exactly the ``fh`` stamps
+    >>> X = data[["c0", "c1"]]
     >>> y = data["c2"].to_frame()
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(
+    ...     y, X, test_size=max_prediction_length
     ... )
-    >>> len_levels = len(y_test.index.names)
-    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
-    ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
-    ... )
+    >>> y_train.shape, y_test.shape  # 1000 series x 45 train, x 5 test stamps
+    ((45000, 1), (5000, 1))
     >>> # define the model
     >>> model = PytorchForecastingDeepAR(
     ...     trainer_params={
@@ -675,27 +654,11 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingDeepAR(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test) # doctest: +SKIP
-    >>> print(y_test) # doctest: +SKIP
-                                c2
-    h0   h1     time
-    h0_0 h1_180 2000-01-01  5.006716
-                2000-01-02  5.197903
-                2000-01-03  4.477552
-                2000-01-04  4.751521
-                2000-01-05  3.323994
-    ...                          ...
-    h0_4 h1_199 2000-02-10  5.590399
-                2000-02-11  5.595445
-                2000-02-12  4.915307
-                2000-02-13  4.726925
-                2000-02-14  5.482842
-
-    [4500 rows x 1 columns]
+    >>> y_pred = model.predict(fh, X=X_test) # doctest: +SKIP
     >>> print(y_pred) # doctest: +SKIP
                                 c2
     h0   h1     time
-    h0_0 h1_180 2000-02-15  4.919366
+    h0_0 h1_0   2000-02-15  4.919366
                 2000-02-16  4.862666
                 2000-02-17  5.021425
                 2000-02-18  4.934844
@@ -707,7 +670,14 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
                 2000-02-18  5.139505
                 2000-02-19  5.121511
 
-    [500 rows x 1 columns]
+    [5000 rows x 1 columns]
+    >>> # score the forecast against the held-out ground truth.
+    >>> # ``score`` compares ``y`` with ``predict(fh, X)``, so ``y`` must contain
+    >>> # exactly the ``fh`` time stamps. Passing a full training or test series
+    >>> # raises "ValueError: Found input variables with inconsistent numbers of
+    >>> # samples", because ``y_pred`` has only ``len(fh)`` rows per series.
+    >>> model.score(y_test, X=X_test, fh=fh)  # MAPE, lower is better # doctest: +SKIP
+    0.0871...
 
 
     References
@@ -928,8 +898,8 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> # import packages
     >>> from sktime.forecasting.base import ForecastingHorizon
     >>> from sktime.forecasting.pytorchforecasting import PytorchForecastingNHiTS
+    >>> from sktime.split import temporal_train_test_split
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
-    >>> from sklearn.model_selection import train_test_split
     >>> # generate random data
     >>> data = _make_hierarchical(
     ...     hierarchy_levels=(5, 200), max_timepoints=50, min_timepoints=50, n_columns=3
@@ -937,16 +907,15 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> # define forecast horizon
     >>> max_prediction_length = 5
     >>> fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
-    >>> # split X, y data for train and test
-    >>> x = data[["c0", "c1"]]
+    >>> # split X, y temporally: the last ``max_prediction_length`` time stamps of
+    >>> # every series are held out, so ``y_test`` covers exactly the ``fh`` stamps
+    >>> X = data[["c0", "c1"]]
     >>> y = data["c2"].to_frame()
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     x, y, test_size=0.2, train_size=0.8, shuffle=False
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(
+    ...     y, X, test_size=max_prediction_length
     ... )
-    >>> len_levels = len(y_test.index.names)
-    >>> y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
-    ...     lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
-    ... )
+    >>> y_train.shape, y_test.shape  # 1000 series x 45 train, x 5 test stamps
+    ((45000, 1), (5000, 1))
     >>> # define the model
     >>> model = PytorchForecastingNHiTS(
     ...     trainer_params={
@@ -958,27 +927,11 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     >>> model.fit(y=y_train, X=X_train, fh=fh) # doctest: +SKIP
     PytorchForecastingNHiTS(trainer_params={'limit_train_batches': 10,
                                             'max_epochs': 5})
-    >>> y_pred = model.predict(fh, X=X_test, y=y_test) # doctest: +SKIP
-    >>> print(y_test) # doctest: +SKIP
-                                c2
-    h0   h1     time
-    h0_0 h1_180 2000-01-01  8.184178
-                2000-01-02  5.444128
-                2000-01-03  5.992600
-                2000-01-04  5.223143
-                2000-01-05  6.191883
-    ...                          ...
-    h0_4 h1_199 2000-02-10  7.498591
-                2000-02-11  5.910466
-                2000-02-12  7.409602
-                2000-02-13  4.670040
-                2000-02-14  5.454403
-
-    [4500 rows x 1 columns]
+    >>> y_pred = model.predict(fh, X=X_test) # doctest: +SKIP
     >>> print(y_pred) # doctest: +SKIP
                                 c2
     h0   h1     time
-    h0_0 h1_180 2000-02-15  5.764410
+    h0_0 h1_0   2000-02-15  5.764410
                 2000-02-16  5.826406
                 2000-02-17  5.925301
                 2000-02-18  5.792100
@@ -990,7 +943,14 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
                 2000-02-18  5.249713
                 2000-02-19  5.047630
 
-    [500 rows x 1 columns]
+    [5000 rows x 1 columns]
+    >>> # score the forecast against the held-out ground truth.
+    >>> # ``score`` compares ``y`` with ``predict(fh, X)``, so ``y`` must contain
+    >>> # exactly the ``fh`` time stamps. Passing a full training or test series
+    >>> # raises "ValueError: Found input variables with inconsistent numbers of
+    >>> # samples", because ``y_pred`` has only ``len(fh)`` rows per series.
+    >>> model.score(y_test, X=X_test, fh=fh)  # MAPE, lower is better # doctest: +SKIP
+    0.0871...
 
 
     References
