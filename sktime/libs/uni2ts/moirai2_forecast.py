@@ -115,7 +115,7 @@ class Moirai2Forecast(L.LightningModule):
         past_feat_dynamic_real_dim: int,
         context_length: int,
         module_kwargs: dict | None = None,
-        module: Moirai2Module | None = None,
+        module = None,
     ):
         assert (module is not None) or (module_kwargs is not None), (
             "if module is not provided, module_kwargs is required"
