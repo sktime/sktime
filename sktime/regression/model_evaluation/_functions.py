@@ -127,6 +127,16 @@ def evaluate(
         - ``y_train``: pd.Series of train targets (if ``return_data=True``)
         - ``y_pred``: pd.Series of predictions (if ``return_data=True``)
         - ``y_test``: pd.Series of test targets (if ``return_data=True``)
+        - ``fold_fingerprint``: str or None, stable digest of the train and test
+        indices of the i-th split. Two ``evaluate`` calls on the same folds give
+        the same fingerprints, in the same row order, whatever the estimator, the
+        process, or the machine, so "all estimators were scored on the same
+        folds" becomes checkable rather than assumed. Paired post-hoc tests such
+        as the Friedman test and critical difference diagrams are only valid
+        under that. A ``cv`` that shuffles without a ``random_state`` resamples
+        on every call, and shows up here as fingerprints that do not match.
+        None means the fold has no index that could be hashed, so it is not
+        comparable. See ``sktime.utils.index.fold_fingerprint``.
 
     Examples
     --------
