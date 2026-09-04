@@ -253,6 +253,7 @@ class PatchTSMixerForecaster(BaseForecaster):
         "capability:global_forecasting": False,
         "requires-fh-in-fit": False,
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_patch_tsmixer"],
     }
 
     def __init__(
@@ -334,11 +335,12 @@ class PatchTSMixerForecaster(BaseForecaster):
         cfg.setdefault("context_length", context_length)
         cfg.setdefault("prediction_length", prediction_length)
         cfg.setdefault("num_input_channels", n_channels)
-        cfg.setdefault(
-            "patch_stride",
-            cfg.get("patch_length", _DEFAULT_CONFIG["patch_length"]),
-        )
-        cfg.setdefault("scaling", _DEFAULT_CONFIG["scaling"])
+        if self.model_path is None:
+            cfg.setdefault(
+                "patch_stride",
+                cfg.get("patch_length", _DEFAULT_CONFIG["patch_length"]),
+            )
+            cfg.setdefault("scaling", _DEFAULT_CONFIG["scaling"])
         return cfg
 
     def _load_model(self, config):
