@@ -334,6 +334,7 @@ class _Reducer(_BaseWindowForecaster):
         from sklearn.pipeline import make_pipeline
         from sklearn.tree import DecisionTreeRegressor
 
+        from sktime.regression.compose import RegressorPipeline
         from sktime.transformations.reduce import Tabularizer
 
         # naming convention is as follows:
@@ -343,7 +344,7 @@ class _Reducer(_BaseWindowForecaster):
         # which of these is the case, we check by checking substring in the class name
         est = LinearRegression()
         if "TimeSeries" in cls.__name__:
-            est = make_pipeline(Tabularizer(), est)
+            est = RegressorPipeline(est, [Tabularizer()])
 
         params = [{"estimator": est, "window_length": 3}]
 
@@ -881,6 +882,8 @@ class _MultioutputReducer(_Reducer):
 
         # Iterate over estimators/forecast horizon
         y_pred = self.estimator_.predict(X_pred)
+        if isinstance(y_pred, pd.DataFrame):
+            y_pred = y_pred.to_numpy()
         return y_pred.ravel()
 
 
