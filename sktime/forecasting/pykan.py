@@ -43,6 +43,13 @@ class PyKANForecaster(BaseForecaster):
     ----------
     .. [1] Liu, Ziming, et al. "KAN: Kolmogorov-Arnold Networks."
       arXiv preprint arXiv:2404.19756 (2024).
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.pykan import PyKANForecaster
+    >>> y = load_airline()
+    >>> forecaster = PyKANForecaster(hidden_layers=(1, 1), input_layer_size=2, grids=[2, 3], model_params={"k": 2}, fit_params={"steps": 1}, val_size=0.5, device="cpu")
     """
 
     _tags = {
