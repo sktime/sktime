@@ -113,9 +113,9 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "sktime.networks.convtimenet._convtimenet_backbone",
         ],
         "tests:skip_by_name": [
-            "test_fit_idempotent",  # see 11031
-            "test_deepcopy_fitted",  # see 11031
-            "test_deepcopy_fitted_predict",  # see 11031
+            "test_fit_idempotent",  # see #11031
+            "test_deepcopy_fitted",  # see #11031
+            "test_deepcopy_fitted_predict",  # see #11031
         ],
     }
 
