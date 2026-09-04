@@ -4077,39 +4077,55 @@ def check_tag_is_valid(tag_name, tag_value):
     Raises
     ------
     KeyError - if tag_name is not a valid tag in ESTIMATOR_TAG_LIST
-    ValueError - if the tag_valid is not a valid for the tag with name tag_name
+    ValueError - if tag_value is not a valid value for the tag with name tag_name
     """
     if tag_name not in ESTIMATOR_TAG_LIST:
-        raise KeyError(tag_name + " is not a valid tag")
+        raise KeyError(f"{tag_name} is not a valid tag")
 
-    tag_type = ESTIMATOR_TAG_TABLE[2][ESTIMATOR_TAG_TABLE[0] == "tag_name"]
+    tag_type = ESTIMATOR_TAG_TABLE[2][ESTIMATOR_TAG_TABLE[0] == tag_name].iloc[0]
+
+    if isinstance(tag_type, tuple):
+        subtype, allowed = tag_type
+
+        if subtype == "str":
+            if tag_value not in allowed:
+                raise ValueError(
+                    f"{tag_name} must be one of {allowed}, found {tag_value}"
+                )
+
+        # the ("list", "str") case must be handled before the general
+        # ("list", list_of_str) case below, since allowed is the str "str" here,
+        # and a subset check against it is not meaningful
+        elif subtype == "list" and allowed == "str":
+            msg = f"{tag_name} must be str or list of str, found {tag_value}"
+            if not isinstance(tag_value, (str, list)):
+                raise ValueError(msg)
+            if isinstance(tag_value, list) and not all(
+                isinstance(x, str) for x in tag_value
+            ):
+                raise ValueError(msg)
+
+        elif subtype == "list":
+            msg = f"{tag_name} must be a subset of {allowed}, found {tag_value}"
+            if not isinstance(tag_value, (list, set, tuple)):
+                raise ValueError(msg)
+            try:
+                is_subset = set(tag_value).issubset(allowed)
+            except TypeError:  # unhashable entries, e.g. a list of dict
+                raise ValueError(msg) from None
+            if not is_subset:
+                raise ValueError(msg)
+
+        return
 
     if tag_type == "bool" and not isinstance(tag_value, bool):
-        raise ValueError(tag_name + " must be True/False, found " + tag_value)
+        raise ValueError(f"{tag_name} must be True/False, found {tag_value}")
 
     if tag_type == "int" and not isinstance(tag_value, int):
-        raise ValueError(tag_name + " must be integer, found " + tag_value)
+        raise ValueError(f"{tag_name} must be integer, found {tag_value}")
 
     if tag_type == "str" and not isinstance(tag_value, str):
-        raise ValueError(tag_name + " must be string, found " + tag_value)
+        raise ValueError(f"{tag_name} must be string, found {tag_value}")
 
     if tag_type == "list" and not isinstance(tag_value, list):
-        raise ValueError(tag_name + " must be list, found " + tag_value)
-
-    if tag_type[0] == "str" and tag_value not in tag_type[1]:
-        raise ValueError(
-            tag_name + " must be one of " + tag_type[1] + " found " + tag_value
-        )
-
-    if tag_type[0] == "list" and not set(tag_value).issubset(tag_type[1]):
-        raise ValueError(
-            tag_name + " must be subest of " + tag_type[1] + " found " + tag_value
-        )
-
-    if tag_type[0] == "list" and tag_type[1] == "str":
-        msg = f"{tag_name} must be str or list of str, found {tag_value}"
-        if not isinstance(tag_value, (str, list)):
-            raise ValueError(msg)
-        if isinstance(tag_value, list):
-            if not all(isinstance(x, str) for x in tag_value):
-                raise ValueError(msg)
+        raise ValueError(f"{tag_name} must be list, found {tag_value}")
