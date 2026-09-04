@@ -7,6 +7,8 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
     median_relative_absolute_error,
@@ -95,3 +97,22 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
     }
 
     func = median_relative_absolute_error
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point."""
+        multioutput = self.multioutput
+        y_pred_benchmark = kwargs["y_pred_benchmark"]
+
+        eps = np.finfo(np.float64).eps
+        denominator = (y_true - y_pred_benchmark).abs().clip(lower=eps)
+        raw_values = (y_true - y_pred).abs() / denominator
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        if isinstance(multioutput, str):
+            if multioutput == "raw_values":
+                return raw_values
+
+            if multioutput == "uniform_average":
+                return raw_values.median(axis=1)
+
+        return raw_values.dot(multioutput)
