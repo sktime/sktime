@@ -17,6 +17,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
 from sktime.forecasting.base import ForecastingHorizon
+from sktime.utils.index import fold_fingerprint
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_cv, check_scoring
 
@@ -86,6 +87,7 @@ def _get_column_order_and_datatype(
     others_metadata = {
         "len_train_window": "int",
         "cutoff": cutoff_dtype,
+        "fold_fingerprint": "object",
     }
     if global_mode:
         y_metadata = {
@@ -239,6 +241,13 @@ def _evaluate_window(x, meta):
     if fh is None:
         fh = _select_fh_from_y(y_test)
 
+    # fingerprint of the fold itself, computed before any fitting, so that it is
+    # also recorded on folds where the forecaster fails
+    if global_mode:
+        fingerprint = fold_fingerprint(y_pretrain, y_train, y_test)
+    else:
+        fingerprint = fold_fingerprint(y_train, y_test)
+
     try:
         # fit/update
         start_fit = time.perf_counter()
@@ -338,6 +347,7 @@ def _evaluate_window(x, meta):
     )
 
     temp_result["cutoff"] = [cutoff_ind]
+    temp_result["fold_fingerprint"] = [fingerprint]
     if return_data:
         temp_result["y_train"] = [y_train]
         temp_result["y_test"] = [y_test]
@@ -516,6 +526,8 @@ def evaluate(
     * results of ``scoring`` calculations, from 4,  in the ``i``-th loop
     * runtimes for fitting and/or predicting, from 2, 3, 7, in the ``i``-th loop
     * cutoff state of ``forecaster``, at 3, in the ``i``-th loop
+    * a fingerprint of the ``i``-th fold, identifying the train and test indices
+      it was made of, see ``fold_fingerprint`` in the return description
     * :math:`y_{train, i}`, :math:`y_{test, i}` (and ``y_pretrain`` in global mode),
       ``y_pred`` (optional)
     * fitted forecaster for each fold (optional)
@@ -664,6 +676,18 @@ def evaluate(
         - pred_time: (float) Time in sec to ``predict`` from fitted estimator.
         - len_train_window: (int) Length of train window.
         - cutoff: (int, pd.Timestamp, pd.Period) cutoff = last time index in train fold.
+
+        - fold_fingerprint: (str or None) stable digest of the train and test
+        indices of the i-th split, and of the pretrain indices if ``cv_global``
+        is passed. ``X`` splits are not covered, since by default they are
+        subset to the same ``loc`` indices as ``y``. Two ``evaluate`` calls on
+        the same folds give the same fingerprints, in the same row order,
+        whatever the estimator, the process, or the machine, so "all estimators
+        were scored on the same folds" becomes checkable rather than assumed.
+        Paired post-hoc tests such as the Friedman test and critical difference
+        diagrams are only valid under that. None means the fold has no index
+        that could be hashed, so it is not comparable.
+        See ``sktime.utils.index.fold_fingerprint``.
 
         - y_train: (pd.Series) only present if ``return_data=True``,
         train fold of the i-th split in ``cv``, used to fit/update the forecaster.
