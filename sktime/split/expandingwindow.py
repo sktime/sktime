@@ -9,16 +9,6 @@ __all__ = [
 ]
 
 from sktime.split.base import BaseWindowSplitter
-from sktime.split.base._common import (
-    DEFAULT_FH,
-    DEFAULT_STEP_LENGTH,
-    DEFAULT_WINDOW_LENGTH,
-    SPLIT_GENERATOR_TYPE,
-)
-from sktime.utils.validation import (
-    ACCEPTED_WINDOW_LENGTH_TYPES,
-    NON_FLOAT_WINDOW_LENGTH_TYPES,
-)
 
 
 class ExpandingWindowSplitter(BaseWindowSplitter):
@@ -66,19 +56,14 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     '[(array([0, 1, 2, 3, 4]), array([6, 8]))]'
     """
 
-    def __init__(
-        self,
-        fh=DEFAULT_FH,
-        initial_window: ACCEPTED_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
-        step_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_STEP_LENGTH,
-    ) -> None:
-        start_with_window = initial_window != 0
+    def __init__(self, fh=1, initial_window=10, step_length=1):
+        self.fh = fh
 
+        start_with_window = initial_window != 0
         # Note that we pass the initial window as the window_length below. This
         # allows us to use the common logic from the parent class, while at the same
         # time expose the more intuitive name for the ExpandingWindowSplitter.
         super().__init__(
-            fh=fh,
             window_length=initial_window,
             initial_window=None,
             step_length=step_length,
@@ -94,7 +79,7 @@ class ExpandingWindowSplitter(BaseWindowSplitter):
     def _initial_window(self):
         return None
 
-    def _split_windows(self, **kwargs) -> SPLIT_GENERATOR_TYPE:
+    def _split_windows(self, **kwargs):
         return self._split_windows_generic(expanding=True, **kwargs)
 
     @classmethod
