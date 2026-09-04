@@ -2,8 +2,6 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-from __future__ import annotations
-
 __author__ = ["RobKuebler"]
 
 __all__ = ["SyncToLongest"]
