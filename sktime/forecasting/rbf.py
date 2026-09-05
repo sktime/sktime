@@ -340,10 +340,8 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         fh : ForecastingHorizon, optional
             Forecasting horizon. Uses pred_len from constructor if not provided.
         """
-        from sktime.forecasting.base.adapters._pytorch import _get_series_from_panel
-
         pred_len = self._get_pretrain_pred_len(fh)
-        all_series = _get_series_from_panel(y)
+        all_series = self._get_series_from_panel(y)
 
         # Use first column of first series as reference (univariate forecaster)
         ref_series = all_series[0]
@@ -378,14 +376,12 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         fh : ForecastingHorizon, optional
             Forecasting horizon.
         """
-        from sktime.forecasting.base.adapters._pytorch import _get_series_from_panel
-
         if hasattr(self, "_pretrain_pred_len"):
             pred_len = self._pretrain_pred_len
         else:
             pred_len = self._get_pretrain_pred_len(fh)
 
-        all_series = _get_series_from_panel(y)
+        all_series = self._get_series_from_panel(y)
         dataloader = self._build_panel_dataloader(y, all_series, pred_len)
 
         self.network.train()
