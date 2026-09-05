@@ -23,15 +23,22 @@ class DirectedHausdorff(BaseDetectionMetric):
 
     If ``X`` is provided, the time points are taken as the location indices in ``X``.
     Otherwise, it is assumed that ``X`` has a ``RangeIndex``.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.detection import DirectedHausdorff
+    >>> y_true = pd.DataFrame({"ilocs": [0, 2, 3]})
+    >>> y_pred = pd.DataFrame({"ilocs": [0, 1, 3, 4, 5]})
+    >>> metric = DirectedHausdorff()
+    >>> metric(y_true, y_pred)
+    2.0
     """
 
     _tags = {
         "scitype:y": "points",  # or segments
         "requires_X": False,
         "lower_is_better": True,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _evaluate(self, y_true, y_pred, X=None):
