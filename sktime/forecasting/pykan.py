@@ -52,6 +52,15 @@ class PyKANForecaster(BaseForecaster):
     ----------
     .. [1] Liu, Ziming, et al. "KAN: Kolmogorov-Arnold Networks."
       arXiv preprint arXiv:2404.19756 (2024).
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.pykan import PyKANForecaster
+    >>> y = load_airline()
+    >>> forecaster = PyKANForecaster()  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
 
     _tags = {
@@ -66,6 +75,7 @@ class PyKANForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "capability:exogenous": True,
+        "capability:categorical_in_X": False,
         "requires-fh-in-fit": True,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,

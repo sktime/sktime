@@ -532,6 +532,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         "capability:missing_values": False,
         "capability:insample": False,
         "capability:pred_int": False,
+        "capability:categorical_in_X": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": True,
