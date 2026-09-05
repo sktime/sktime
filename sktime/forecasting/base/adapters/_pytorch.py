@@ -110,7 +110,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         """
         pred_len = self._get_pretrain_pred_len(fh)
 
-        all_series = _get_series_from_panel(y)
+        all_series = self._get_series_from_panel(y)
 
         # Use first series as reference for network dimensions
         self._y = all_series[0]
@@ -152,7 +152,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         else:
             pred_len = self._get_pretrain_pred_len(fh)
 
-        all_series = _get_series_from_panel(y)
+        all_series = self._get_series_from_panel(y)
         dataloader = self._build_panel_dataloader(y, all_series, pred_len)
 
         # Continue training
@@ -190,7 +190,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         dataset : torch.utils.data.Dataset
             Training dataset
         """
-        PyTorchTrainDataset = _get_train_dataset_class()
+        PyTorchTrainDataset = self._get_train_dataset_class()
         return PyTorchTrainDataset(y=y, seq_len=self._get_seq_len(), fh=pred_len)
 
     def _build_panel_dataloader(self, y, all_series, pred_len):
@@ -217,7 +217,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
         seq_len = self._get_seq_len()
 
-        PyTorchTrainDataset = _get_train_dataset_class()
+        PyTorchTrainDataset = self._get_train_dataset_class()
 
         datasets = [
             PyTorchTrainDataset(y=series, seq_len=seq_len, fh=pred_len)
@@ -386,7 +386,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                     "documentation."
                 )
         else:
-            PyTorchTrainDataset = _get_train_dataset_class()
+            PyTorchTrainDataset = self._get_train_dataset_class()
             dataset = PyTorchTrainDataset(
                 y=y,
                 seq_len=self.network.seq_len,
@@ -412,7 +412,7 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                     "documentation."
                 )
         else:
-            PyTorchPredDataset = _get_pred_dataset_class()
+            PyTorchPredDataset = self._get_pred_dataset_class()
             dataset = PyTorchPredDataset(
                 y=y[-self.network.seq_len :],
                 seq_len=self.network.seq_len,
@@ -433,101 +433,99 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
     def _build_network(self, fh):
         pass
 
+    def _get_train_dataset_class(self):
+        """Get the PyTorch dataset class for the forecaster."""
+        from torch.utils.data import Dataset
 
-def _get_train_dataset_class():
-    """Get the PyTorch dataset class for the forecaster."""
-    from torch.utils.data import Dataset
+        class PyTorchTrainDataset(Dataset):
+            """Dataset for use in sktime deep learning forecasters."""
 
-    class PyTorchTrainDataset(Dataset):
-        """Dataset for use in sktime deep learning forecasters."""
+            def __init__(self, y, seq_len, fh=None, X=None):
+                self.y = y.values
+                self.X = X.values if X is not None else X
+                self.seq_len = seq_len
+                self.fh = fh
 
-        def __init__(self, y, seq_len, fh=None, X=None):
-            self.y = y.values
-            self.X = X.values if X is not None else X
-            self.seq_len = seq_len
-            self.fh = fh
+            def __len__(self):
+                """Return length of dataset."""
+                return max(len(self.y) - self.seq_len - self.fh + 1, 0)
 
-        def __len__(self):
-            """Return length of dataset."""
-            return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+            def __getitem__(self, i):
+                """Return data point."""
+                from torch import cat, from_numpy, tensor
 
-        def __getitem__(self, i):
-            """Return data point."""
-            from torch import cat, from_numpy, tensor
+                split_ix = i + self.seq_len
 
-            split_ix = i + self.seq_len
+                hist_y = tensor(self.y[i:split_ix]).float()
+                if self.X is not None:
+                    exog_data = tensor(self.X[split_ix : split_ix + self.fh]).float()
+                else:
+                    exog_data = tensor([])
+                return (
+                    cat([hist_y, exog_data]),
+                    from_numpy(self.y[split_ix : split_ix + self.fh]).float(),
+                )
 
-            hist_y = tensor(self.y[i:split_ix]).float()
-            if self.X is not None:
-                exog_data = tensor(self.X[split_ix : split_ix + self.fh]).float()
-            else:
-                exog_data = tensor([])
-            return (
-                cat([hist_y, exog_data]),
-                from_numpy(self.y[split_ix : split_ix + self.fh]).float(),
-            )
-
-    return PyTorchTrainDataset
-
-
-def _get_pred_dataset_class():
-    """Get the PyTorch prediction dataset class for the forecaster."""
-    from torch.utils.data import Dataset
-
-    class PyTorchPredDataset(Dataset):
-        """Dataset for use in sktime deep learning forecasters."""
-
-        def __init__(self, y, seq_len, X=None):
-            self.y = y.values
-            self.seq_len = seq_len
-            self.X = X.values if X is not None else X
-
-        def __len__(self):
-            """Return length of dataset."""
-            return 1
-
-        def __getitem__(self, i):
-            """Return data point."""
-            from torch import cat, from_numpy, tensor
-
-            split_ix = i + self.seq_len
-
-            hist_y = tensor(self.y[i:split_ix]).float()
-            if self.X is not None:
-                exog_data = tensor(self.X[split_ix : split_ix + self.fh]).float()
-            else:
-                exog_data = tensor([])
-            return (
-                cat([hist_y, exog_data]),
-                from_numpy(self.y[split_ix:split_ix]).float(),
-            )
-
-    return PyTorchPredDataset
+        return PyTorchTrainDataset
 
 
-def _get_series_from_panel(y):
-    """Extract individual time series from panel/hierarchical data.
+    def _get_pred_dataset_class(self):
+        """Get the PyTorch prediction dataset class for the forecaster."""
+        from torch.utils.data import Dataset
 
-    Works with both 2-level (panel) and 3+ level (hierarchical) MultiIndex.
-    The last index level is assumed to be time, all other levels identify instances.
+        class PyTorchPredDataset(Dataset):
+            """Dataset for use in sktime deep learning forecasters."""
 
-    Parameters
-    ----------
-    y : pd.DataFrame with MultiIndex
-        Panel or hierarchical data
+            def __init__(self, y, seq_len, X=None):
+                self.y = y.values
+                self.seq_len = seq_len
+                self.X = X.values if X is not None else X
 
-    Returns
-    -------
-    list of pd.DataFrame
-        Individual time series, one per unique instance combination
-    """
-    instance_ids = y.index.droplevel(-1).unique()
+            def __len__(self):
+                """Return length of dataset."""
+                return 1
 
-    all_series = []
-    for instance_id in instance_ids:
-        series_data = y.loc[instance_id]
-        if not isinstance(series_data, pd.DataFrame):
-            series_data = pd.DataFrame(series_data)
-        all_series.append(series_data)
+            def __getitem__(self, i):
+                """Return data point."""
+                from torch import cat, from_numpy, tensor
 
-    return all_series
+                split_ix = i + self.seq_len
+
+                hist_y = tensor(self.y[i:split_ix]).float()
+                if self.X is not None:
+                    exog_data = tensor(self.X[split_ix : split_ix + self.fh]).float()
+                else:
+                    exog_data = tensor([])
+                return (
+                    cat([hist_y, exog_data]),
+                    from_numpy(self.y[split_ix:split_ix]).float(),
+                )
+
+        return PyTorchPredDataset
+
+    def _get_series_from_panel(self, y):
+        """Extract individual time series from panel/hierarchical data.
+
+        Works with both 2-level (panel) and 3+ level (hierarchical) MultiIndex.
+        The last index level is assumed to be time, all other levels identify instances.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel or hierarchical data
+
+        Returns
+        -------
+        list of pd.DataFrame
+            Individual time series, one per unique instance combination
+        """
+        instance_ids = y.index.droplevel(-1).unique()
+
+        all_series = []
+        for instance_id in instance_ids:
+            series_data = y.loc[instance_id]
+            if not isinstance(series_data, pd.DataFrame):
+                series_data = pd.DataFrame(series_data)
+            all_series.append(series_data)
+
+        return all_series
