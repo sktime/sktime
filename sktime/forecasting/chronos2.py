@@ -82,7 +82,7 @@ class Chronos2Forecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": False,
         "capability:missing_values": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -183,20 +183,7 @@ class Chronos2Forecaster(BaseForecaster):
                 self.model_pipeline = self._load_pipeline()
 
     def _fit(self, y, X=None, fh=None):
-        """Fit the forecaster to training data.
-
-        Parameters
-        ----------
-        y : pd.DataFrame
-            Target time series.
-        X : pd.DataFrame, optional
-            Past exogenous covariates.
-        fh : ForecastingHorizon, optional
-
-        Returns
-        -------
-        self
-        """
+        """Fit the forecaster to training data."""
         self.model_pipeline = self._load_pipeline()
 
         context_length = self._config["context_length"]
@@ -214,20 +201,8 @@ class Chronos2Forecaster(BaseForecaster):
         self._y_index_names = y.index.names
         return self
 
-    def _predict(self, fh, X=None):
-        """Forecast time series at future horizon.
-
-        Parameters
-        ----------
-        fh : ForecastingHorizon
-        X : pd.DataFrame, optional
-            Future exogenous covariates (known-future). Column names must be
-            a subset of X provided in fit.
-
-        Returns
-        -------
-        y_pred : pd.DataFrame
-        """
+    def _get_predict_tensor(self, fh, X=None):
+        """Shared utility to execute the Chronos-2 pipeline and return raw tensors."""
         import transformers
 
         self._ensure_model_pipeline_loaded()
@@ -272,8 +247,6 @@ class Chronos2Forecaster(BaseForecaster):
 
         pred_tensor = predictions[0]
         quantiles = self.model_pipeline.quantiles
-        median_idx = quantiles.index(0.5)
-        point_forecast = pred_tensor[:, median_idx, :].numpy()
 
         index = (
             ForecastingHorizon(range(1, prediction_length + 1))
@@ -281,6 +254,15 @@ class Chronos2Forecaster(BaseForecaster):
             ._values
         )
         pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
+
+        return pred_tensor, quantiles, index, pred_out
+
+    def _predict(self, fh, X=None):
+        """Forecast time series at future horizon."""
+        pred_tensor, quantiles, index, pred_out = self._get_predict_tensor(fh, X)
+
+        median_idx = quantiles.index(0.5)
+        point_forecast = pred_tensor[:, median_idx, :].numpy()
 
         pred_df = pd.DataFrame(
             point_forecast.T,
@@ -291,6 +273,31 @@ class Chronos2Forecaster(BaseForecaster):
 
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
         return pred_df.loc[dateindex]
+
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Compute/return fully probabilistic forecasts."""
+        from skpro.distributions import HistogramQPD
+
+        pred_tensor, model_quantiles, index, pred_out = self._get_predict_tensor(fh, X)
+
+        transposed = pred_tensor.numpy().transpose(1, 2, 0)
+
+        n_quantiles = len(model_quantiles)
+        pred_length = len(index)
+        var_names = self._get_varnames()
+
+        data = transposed.reshape(n_quantiles * pred_length, -1)
+        row_index = pd.MultiIndex.from_product([model_quantiles, index])
+
+        q_df = pd.DataFrame(data, index=row_index, columns=var_names)
+
+        dist = HistogramQPD(q_df, tails="mass", index=index, columns=var_names)
+
+        dateindex = index.map(lambda x: x in pred_out)
+        if not dateindex.all():
+            dist = dist.loc[pred_out]
+
+        return dist
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
