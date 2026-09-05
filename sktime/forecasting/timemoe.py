@@ -1,21 +1,21 @@
 """Implements TimeMOE forecaster."""
 
-__author__ = ["Maple728", "KimMeen", "PranavBhatP"]
-# Maple728 and KimMeen for timemoe
 __all__ = ["TimeMoEForecaster"]
 
+from copy import deepcopy
 
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.split import temporal_train_test_split
 from sktime.utils.singleton import _multiton
 
 
 class TimeMoEForecaster(BaseForecaster):
     """
-    Interface for TimeMOE forecaster for zero-shot forecasting.
+    Interface for TimeMOE forecaster.
 
     TimeMoE is a decoder-only time series foundational model that uses a mixture
     of experts algorithm to make predictions. designed to operate in an auto-regressive
@@ -23,9 +23,15 @@ class TimeMoEForecaster(BaseForecaster):
     and context lengths of up to 4096. This method has been proposed in [2]_ and the
     official code is available at [2]_.
 
+    Supports:
+
+    - zero-shot forecasting via ``fit`` + ``predict``
+    - fine-tuning of a pretrained checkpoint via ``pretrain``
+    - training from scratch via ``pretrain`` with ``model_path=None``
+
     Parameters
     ----------
-    model_path: str
+    model_path: str or None, default="Maple728/TimeMoE-50M"
         Path to the TimeMOE model. This can be:
 
         - A model ID from the HuggingFace Hub, e.g., "Maple728/TimeMoE-50M"
@@ -34,6 +40,8 @@ class TimeMoEForecaster(BaseForecaster):
           The path should point to a directory containing the model weights and
           configuration files in the format expected by the HuggingFace Transformers
           library.
+        - ``None`` to initialize from ``config`` with random weights (from-scratch)
+
     config: dict, optional
         A dictionary specifying the configuration of the TimeMOE model.
         The available configuration options include hyperparameters that control
@@ -70,6 +78,13 @@ class TimeMoEForecaster(BaseForecaster):
         - tie_word_embeddings: bool, default=False
             Whether to tie word embeddings in the TimeMOE model.
 
+        When ``model_path=None``, these keys initialize the model architecture
+        from scratch (random weights). When ``model_path`` is set, user-provided
+        keys override the checkpoint config. Shape-changing overrides cause
+        mismatched weights to be reinitialized randomly; those layers need
+        ``pretrain`` / fine-tuning before they are useful. If ``config`` is
+        omitted with a pretrained path, the checkpoint config is used as-is.
+
     seed: int, optional (default=None)
         Seed for reproducibility.
 
@@ -86,30 +101,100 @@ class TimeMoEForecaster(BaseForecaster):
         the installation of required packages manually. If False, the class will enforce
         the default dependencies required for Chronos.
 
+    context_length : int, optional (default=1024)
+        Sliding-window length for ``pretrain``.
+        For small datasets, use a shorter length with ``stride=1``.
+
+    stride : int, optional (default=None)
+        Sliding-window stride for ``pretrain``. Defaults to ``context_length``.
+
+    training_args : dict, optional (default=None)
+        Keyword arguments used for training.
+        Supports all arguments by ``transformers.TrainingArguments`` [3]_.
+
+        Additionally, the following arguments are supported:
+        - min_learning_rate: float, default=0
+            Minimum learning rate for cosine_schedule
+
+    validation_split : float or None, default=0.2
+        Fraction of data reserved for evaluation when :meth:`pretrain` is used.
+        If ``None``, no evaluation dataset is created.
+
+    device : str, dict, int, or torch.device, default="cpu"
+        Device placement following the ``transformers`` ``device_map`` naming
+        convention, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
+
+    dtype : torch.dtype, optional (default=None)
+        Torch dtype used when loading the model and preparing prediction
+        inputs. ``None`` keeps the checkpoint's native dtype for
+        ``from_pretrained`` (and the initialized dtype for from-scratch
+        models); prediction inputs then follow the loaded model dtype.
+
     References
     ----------
     .. [1] https://github.com/Time-MoE/Time-MoE
     .. [2] Xiaoming Shi, Shiyu Wang, Yuqi Nie, Dianqi Li, Zhou Ye and others
     Time-MoE: Billion-Scale Time Series Foundation Models with Mixture of Experts
+    .. [3] Trainer/TrainingArguments docs:
+       https://huggingface.co/docs/transformers/en/main_classes/trainer#transformers.TrainingArguments
 
     Examples
     --------
+    Zero-shot forecasting:
+
     >>> from sktime.forecasting.timemoe import TimeMoEForecaster
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> y = load_airline()
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
-    >>> forecaster.fit(y)
-    TimeMoEForecaster(model_path='Maple728/TimeMoE-50M')
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> forecaster.fit(y_train)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3], y = y_test)  # doctest: +SKIP
+
+    Fine-tuning of a pretrained checkpoint:
+
+    >>> from sktime.utils._testing.hierarchical import _make_hierarchical
+    >>> y_panel = _make_hierarchical(  # doctest: +SKIP
+    ...     hierarchy_levels=(3,), min_timepoints=64, max_timepoints=128,
+    ... )
+    >>> forecaster = TimeMoEForecaster(  # doctest: +SKIP
+    ...     model_path="Maple728/TimeMoE-50M",
+    ...     context_length=32,
+    ...     stride=1,
+    ...     training_args={"max_steps": 10, "per_device_train_batch_size": 2},
+    ... )
+    >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
+    >>> forecaster.fit(load_airline())  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+
+    Training from scratch:
+
+    >>> forecaster = TimeMoEForecaster(  # doctest: +SKIP
+    ...     model_path=None,
+    ...     config={
+    ...         "hidden_size": 64,
+    ...         "intermediate_size": 128,
+    ...         "num_hidden_layers": 2,
+    ...         "num_attention_heads": 4,
+    ...         "num_experts": 2,
+    ...         "num_experts_per_tok": 1,
+    ...         "horizon_lengths": [1],
+    ...         "max_position_embeddings": 128,
+    ...     },
+    ...     context_length=32,
+    ...     stride=1,
+    ...     training_args={"max_steps": 10},
+    ... )
+    >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
+    >>> forecaster.fit(load_airline())  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["Maple728", "KimMeen", "PranavBhatP"],
+        "authors": ["Maple728", "KimMeen", "PranavBhatP", "Faakhir30"],
         # abdulfatir and lostella for amazon-science/chronos-forecasting
-        "maintainers": ["PranavBhatP"],
+        "maintainers": ["PranavBhatP", "Faakhir30"],
         "python_dependencies": ["torch", "transformers<=4.40.1", "accelerate<=0.28.0"],
         # estimator type
         # --------------
@@ -119,6 +204,7 @@ class TimeMoEForecaster(BaseForecaster):
         "enforce_index_type": None,
         "capability:missing_values": False,
         "capability:pred_int": False,
+        "capability:pretrain": True,
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
@@ -133,17 +219,29 @@ class TimeMoEForecaster(BaseForecaster):
 
     def __init__(
         self,
-        model_path: str,
+        model_path: str | None = "Maple728/TimeMoE-50M",
         config: dict = None,
         seed: int = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
+        context_length: int = 1024,
+        stride: int = None,
+        training_args: dict = None,
+        validation_split: float | None = 0.2,
+        device="cpu",
+        dtype=None,
     ):
         self.seed = seed
         self.config = config
         self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
+        self.context_length = context_length
+        self.stride = stride
+        self.validation_split = validation_split
+        self.training_args = training_args
+        self.device = device
+        self.dtype = dtype
 
         super().__init__()
 
@@ -176,9 +274,67 @@ class TimeMoEForecaster(BaseForecaster):
         """
         self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
 
-        _config = self._get_default_config()
-        _config.update(self.config if self.config is not None else {})
-        self._config = _config
+        if self.model_path is None:
+            # from-scratch: defaults + user overrides
+            _config = self._get_default_config()
+            _config.update(self.config if self.config is not None else {})
+            self._config = _config
+        else:
+            # pretrained: only user overrides (merged onto checkpoint at load)
+            self._config = dict(self.config) if self.config is not None else {}
+
+    def _pretrain(self, y, X=None, fh=None):
+        """Pretrain / fine-tune using upstream Time-MoE Trainer + window dataset."""
+        from sktime.libs.timemoe.hf_trainer import (
+            TimeMoeTrainer,
+            TimeMoETrainingArguments,
+        )
+        from sktime.libs.timemoe.time_moe_window_dataset import TimeMoEWindowDataset
+        from sktime.libs.timemoe.ts_dataset import SeriesListDataset
+
+        self.model_ = self._load_model()
+
+        if self.validation_split is not None:
+            y_train, y_eval = temporal_train_test_split(
+                y, test_size=self.validation_split
+            )
+        else:
+            y_train = y
+            y_eval = None
+
+        train_ds = TimeMoEWindowDataset(
+            SeriesListDataset(_prepare_series_list(y_train)),
+            context_length=self.context_length,
+            prediction_length=0,
+            stride=self.stride,
+        )
+
+        eval_dataset = None
+        if self.validation_split is not None:
+            eval_dataset = TimeMoEWindowDataset(
+                SeriesListDataset(_prepare_series_list(y_eval)),
+                context_length=self.context_length,
+                prediction_length=0,
+                stride=self.stride,
+            )
+
+        training_args = (
+            deepcopy(self.training_args) if self.training_args is not None else {}
+        )
+        training_args.setdefault("output_dir", "tmp_timemoe_trainer")
+        training_args.setdefault("report_to", [])
+        training_args = TimeMoETrainingArguments(**training_args)
+
+        trainer = TimeMoeTrainer(
+            model=self.model_,
+            args=training_args,
+            train_dataset=train_ds,
+            eval_dataset=eval_dataset,
+        )
+        trainer.train()
+
+        self.model_ = trainer.model
+        return self
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -202,34 +358,40 @@ class TimeMoEForecaster(BaseForecaster):
         else:
             config["input_size"] = 1
         self._config = config
-        self.model = _CachedTimeMoE(
+        self.model_ = self._load_model()
+
+        return self
+
+    def _load_model(self):
+        """Load model, reusing ``model_`` after pretrain."""
+        if hasattr(self, "model_") and self.model_ is not None:
+            return self.model_
+
+        model = _CachedTimeMoE(
             key=self._get_unique_timemoe_key(),
             timemoe_kwargs=self._get_timemoe_kwargs(),
             use_source_package=self.use_source_package,
+            config=self._config,
         ).load_from_checkpoint()
-
-        return self
+        return model
 
     def _get_timemoe_kwargs(self):
         """Get the kwargs for TimeMoE model."""
         kwargs = {
             "pretrained_model_name_or_path": self.model_path,
-            "torch_dtype": self._config["torch_dtype"],
-            "device_map": self._config["device_map"],
+            "device_map": self.device,
         }
+        if self.dtype is not None:
+            kwargs["torch_dtype"] = self.dtype
 
         return kwargs
 
     def _get_unique_timemoe_key(self):
         """Get a unique key for TimeMoE model."""
-        model_path = self.model_path
-        use_source_package = self.use_source_package
-        kwargs = self._get_timemoe_kwargs()
-
         kwargs_plus_model_path = {
-            **kwargs,
-            "model_path": model_path,
-            "use_source_package": use_source_package,
+            **self._get_timemoe_kwargs(),
+            "use_source_package": self.use_source_package,
+            "config": self._config,
         }
 
         return str(sorted(kwargs_plus_model_path.items()))
@@ -242,8 +404,6 @@ class TimeMoEForecaster(BaseForecaster):
         dict
             The default configuration for TimeMoE model.
         """
-        import torch
-
         default_config = {
             "input_size": 1,
             "hidden_size": 4096,
@@ -265,8 +425,6 @@ class TimeMoEForecaster(BaseForecaster):
             "apply_aux_loss": True,
             "router_aux_loss_factor": 0.02,
             "tie_word_embeddings": False,
-            "torch_dtype": torch.bfloat16,
-            "device_map": "cpu",
         }
         return default_config
 
@@ -313,14 +471,13 @@ class TimeMoEForecaster(BaseForecaster):
             for j in range(_y.shape[2]):
                 _y_i = _y[i, :, j]
 
-                input_tensor = torch.tensor(
-                    _y_i, dtype=self._config["torch_dtype"]
-                ).unsqueeze(0)
+                dtype = self.dtype or self.model_.dtype
+                input_tensor = torch.tensor(_y_i, dtype=dtype).unsqueeze(0)
 
                 attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
 
                 with torch.no_grad():
-                    output = self.model(
+                    output = self.model_(
                         input_tensor,
                         attention_mask,
                         max_horizon_length=prediction_length,
@@ -381,12 +538,12 @@ class TimeMoEForecaster(BaseForecaster):
         return y_pred
 
     @classmethod
-    def get_test_params(cls, parameter_default="default"):
+    def get_test_params(cls, parameter_set="default"):
         """Get the test parameters for the forecaster.
 
         Parameters
         ----------
-        parameter_default : str, optional (default='default')
+        parameter_set : str, optional (default='default')
             The default parameter to use for the test.
 
         Returns
@@ -394,38 +551,85 @@ class TimeMoEForecaster(BaseForecaster):
         params : dict
             Dictionary of test parameters.
         """
-        test_params = []
-        test_params.append(
-            {
+        tiny_config = {
+            "hidden_size": 16,
+            "intermediate_size": 32,
+            "num_hidden_layers": 1,
+            "num_attention_heads": 2,
+            "num_key_value_heads": 2,
+            "num_experts": 2,
+            "num_experts_per_tok": 1,
+            "horizon_lengths": [1],
+            "max_position_embeddings": 32,
+            "use_dense": False,
+            "apply_aux_loss": True,
+        }
+        training_args = {
+            "max_steps": 1,
+            "per_device_train_batch_size": 1,
+            "output_dir": "tmp_timemoe_trainer",
+            "report_to": [],
+            "logging_strategy": "no",
+            "save_strategy": "no",
+        }
+        return [
+            {  # from-scratch model
+                "model_path": None,
+                "config": tiny_config,
+                "device": "cpu",
+                "context_length": 8,
+                "stride": 1,
+                "validation_split": 0.2,
+                "training_args": training_args,
+            },
+            {  # from-scratch model with dense attention
+                "model_path": None,
+                "config": {
+                    **tiny_config,
+                    "num_experts": 1,
+                    "use_dense": True,
+                    "apply_aux_loss": False,
+                },
+                "device": "cpu",
+                "context_length": 8,
+                "stride": 1,
+                "validation_split": None,
+                "training_args": training_args,
+            },
+            {  # pretrained model
                 "model_path": "Maple728/TimeMoE-50M",
-            }
-        )
-        test_params.append(
-            {"model_path": "Maple728/TimeMoE-50M", "config": {"num_experts": 2}}
-        )
-
-        return test_params
+                "device": "cpu",
+                "context_length": 8,
+                "stride": 1,
+                "validation_split": None,
+                "training_args": training_args,
+            },
+        ]
 
 
 @_multiton
 class _CachedTimeMoE:
-    """Cached TimeMoE model to ensure only one instance exists in memory.
+    """Cached TimeMoE model loader."""
 
-    TimeMoE is a zero-shot model and immutable, hence there will not be
-    any side effects of sharing the same instance across multiple uses.
-    This caching mechanism uses the _multiton decorator to ensure
-    that models with the same configuration are reused, preventing
-    duplicate models in memory when handling multivariate data.
-    """
-
-    def __init__(self, key, timemoe_kwargs, use_source_package):
+    def __init__(self, key, timemoe_kwargs, use_source_package, config=None):
         self.key = key
         self.timemoe_kwargs = timemoe_kwargs
         self.use_source_package = use_source_package
+        self.config = config or {}
         self.model = None
 
     def load_from_checkpoint(self):
-        """Load the model from checkpoint."""
+        """Load from checkpoint, or initialize from config when path is absent."""
+        if self.model is not None:
+            return self.model
+
+        if self.timemoe_kwargs.get("pretrained_model_name_or_path") is None:
+            self.model = self._load_from_config()
+        else:
+            self.model = self._load_pretrained()
+        return self.model
+
+    def _get_model_class(self):
         if self.use_source_package:
             if not _check_soft_dependencies("timemoe", severity="none"):
                 raise ImportError(
@@ -435,10 +639,82 @@ class _CachedTimeMoE:
                 )
             from timemoe.models.modeling_timemoe import TimeMoeForPrediction
 
-            model = TimeMoeForPrediction.from_pretrained(**self.timemoe_kwargs)
-        else:
-            from sktime.libs.timemoe import TimeMoeForPrediction
+            return TimeMoeForPrediction
+        from sktime.libs.timemoe import TimeMoeForPrediction
 
-            model = TimeMoeForPrediction.from_pretrained(**self.timemoe_kwargs)
+        return TimeMoeForPrediction
 
+    def _get_config_class(self):
+        if self.use_source_package:
+            from timemoe.models.modeling_timemoe import TimeMoeConfig
+
+            return TimeMoeConfig
+        from sktime.libs.timemoe import TimeMoeConfig
+
+        return TimeMoeConfig
+
+    def _load_pretrained(self):
+        """Load checkpoint, optionally merging user config overrides.
+
+        User overrides are applied on top of the checkpoint config. Shape
+        mismatches are allowed so changed heads/layers reinitialize; those
+        need fine-tuning via ``pretrain``.
+        """
+        ModelClass = self._get_model_class()
+        path = self.timemoe_kwargs["pretrained_model_name_or_path"]
+        load_kwargs = {
+            k: v
+            for k, v in self.timemoe_kwargs.items()
+            if k != "pretrained_model_name_or_path"
+        }
+
+        if self.config:
+            ConfigClass = self._get_config_class()
+            base = ConfigClass.from_pretrained(path)
+            cfg_dict = base.to_dict()
+            cfg_dict.update(self.config)
+            config = ConfigClass.from_dict(cfg_dict)
+            return ModelClass.from_pretrained(
+                path,
+                config=config,
+                ignore_mismatched_sizes=True,
+                **load_kwargs,
+            )
+
+        return ModelClass.from_pretrained(path, **load_kwargs)
+
+    def _load_from_config(self):
+        config = self._get_config_class()(**(self.config or {}))
+        model = self._get_model_class()(config)
+        dtype = self.timemoe_kwargs.get("dtype", None)
+        device = self.timemoe_kwargs.get("device", "cpu")
+        if dtype is not None:
+            model = model.to(dtype=dtype)
+        if device is not None and device != "auto":
+            model = model.to(device)
         return model
+
+
+def _prepare_series_list(data):
+    """Convert panel/hierarchical DataFrame into list of 1D numpy series.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        MultiIndex time series table where the last index level is time.
+
+    Returns
+    -------
+    series_list : list of np.ndarray
+        Flattened list of univariate instance-column series, each as a
+        ``numpy`` array.
+    """
+    instance_levels = list(range(data.index.nlevels - 1))
+    groupby_level = instance_levels[0] if len(instance_levels) == 1 else instance_levels
+
+    series_list = []
+    for _, group in data.groupby(level=groupby_level):
+        for col in group.columns:
+            series_list.append(group[col].to_numpy())
+
+    return series_list
