@@ -19,6 +19,17 @@ class WindowedF1Score(BaseDetectionMetric):
     ----------
     margin : int, optional (default=0)
         Margin of error to consider a detected event as matched.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.detection import WindowedF1Score
+    >>> y_true = pd.DataFrame({"ilocs": [10, 50]})
+    >>> y_pred = pd.DataFrame({"ilocs": [11, 52]})
+    >>> WindowedF1Score()(y_true, y_pred)
+    0.0
+    >>> WindowedF1Score(margin=2)(y_true, y_pred)
+    1.0
     """
 
     _tags = {
@@ -29,7 +40,6 @@ class WindowedF1Score(BaseDetectionMetric):
         "lower_is_better": False,  # higher F1 is better
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, margin=0):

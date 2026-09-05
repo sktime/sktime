@@ -44,6 +44,20 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
         If None, behaves as if the first regressor in the list is selected.
         Selects the regressor as which MultiplexRegressor behaves.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.regression.compose import MultiplexRegressor
+    >>> from sktime.regression.dummy import DummyRegressor
+    >>> X_train = np.array([[[0.0, 1.0, 2.0]], [[1.0, 2.0, 3.0]]])
+    >>> y_train = np.array([1.0, 2.0])
+    >>> X_test = np.array([[[0.0, 1.0, 2.0]]])
+    >>> reg = MultiplexRegressor([("dummy", DummyRegressor())])
+    >>> reg.fit(X_train, y_train)
+    MultiplexRegressor(regressors=[('dummy', DummyRegressor())])
+    >>> reg.predict(X_test)
+    array([1.5])
+
     Attributes
     ----------
     regressor_ : sktime regressor
@@ -67,7 +81,6 @@ class MultiplexRegressor(_HeterogenousMetaEstimator, _DelegatedRegressor):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     # attribute for _DelegatedRegressor, which then delegates
