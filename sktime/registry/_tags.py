@@ -3957,6 +3957,24 @@ class info__source(_BaseTag):
     }
 
 
+class X_y_must_have_same_index(_BaseTag):
+    """Do X/y in fit/update and X/fh in predict have to be same indices.
+
+    - String name: ``"X-y-must-have-same-index"``
+    - Values: bool
+    - Example: ``True``
+    """
+
+    _tags = {
+        "tag_name": "X-y-must-have-same-index",
+        "parent_type": ["forecaster", "regressor", "transformer"],
+        "tag_type": "bool",
+        "short_descr": """do X/y in fit/update and X/fh in predict
+                        have to be same indices?""",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
     (
         "X-y-must-have-same-index",
