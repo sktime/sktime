@@ -30,8 +30,7 @@ def default_sine(x, amplitude, phase, offset, amplitude2, amplitude3, phase2):
 
 
 class CINNForecaster(BaseDeepNetworkPyTorch):
-    """
-    Conditional Invertible Neural Network (cINN) Forecaster.
+    """Conditional Invertible Neural Network (cINN) Forecaster.
 
     This forecaster uses a cINN to forecast the time series. The cINN learns a
     bijective mapping between the time series and a normal distributed latent
