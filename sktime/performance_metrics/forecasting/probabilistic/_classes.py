@@ -639,14 +639,32 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
         Can be specified if no explicit coverages are present in the direct use of
         the metric, for instance in benchmarking via ``evaluate``, or tuning
         via ``ForecastingGridSearchCV``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.forecasting.probabilistic import (
+    ...     EmpiricalCoverage,
+    ... )
+    >>> y_true = pd.Series([3, -0.5, 2, 7, 2])
+    >>> y_pred = pd.DataFrame({
+    ...     ('Coverage', 0.8, 'lower'): [1.5, 0.0, 1.5, 5.0, 2.5],
+    ...     ('Coverage', 0.8, 'upper'): [3.5, 1.0, 2.5, 6.0, 3.5],
+    ...     ('Coverage', 0.9, 'lower'): [1.0, -1.0, 1.0, 4.0, 1.5],
+    ...     ('Coverage', 0.9, 'upper'): [4.0, 1.5, 3.5, 7.5, 4.0],
+    ... })
+    >>> ec = EmpiricalCoverage()
+    >>> ec(y_true, y_pred)
+    np.float64(0.7)
+    >>> ec = EmpiricalCoverage(score_average=False)
+    >>> ec(y_true, y_pred).to_numpy()
+    array([0.4, 1. ])
     """
 
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": False,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -747,14 +765,30 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
         Can be specified if no explicit coverages are present in the direct use of
         the metric, for instance in benchmarking via ``evaluate``, or tuning
         via ``ForecastingGridSearchCV``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.forecasting.probabilistic import IntervalWidth
+    >>> y_true = pd.Series([3, -0.5, 2, 7, 2])
+    >>> y_pred = pd.DataFrame({
+    ...     ('Coverage', 0.8, 'lower'): [1.5, 0.0, 1.5, 5.0, 2.5],
+    ...     ('Coverage', 0.8, 'upper'): [3.5, 1.0, 2.5, 6.0, 3.5],
+    ...     ('Coverage', 0.9, 'lower'): [1.0, -1.0, 1.0, 4.0, 1.5],
+    ...     ('Coverage', 0.9, 'upper'): [4.0, 1.5, 3.5, 7.5, 4.0],
+    ... })
+    >>> iw = IntervalWidth()
+    >>> iw(y_true, y_pred)
+    np.float64(2.0)
+    >>> iw = IntervalWidth(score_average=False)
+    >>> iw(y_true, y_pred).to_numpy()
+    array([1.2, 2.8])
     """
 
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": True,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -860,14 +894,32 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
         Can be specified if no explicit coverages are present in the direct use of
         the metric, for instance in benchmarking via ``evaluate``, or tuning
         via ``ForecastingGridSearchCV``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.forecasting.probabilistic import (
+    ...     ConstraintViolation,
+    ... )
+    >>> y_true = pd.Series([3, -0.5, 2, 7, 2])
+    >>> y_pred = pd.DataFrame({
+    ...     ('Coverage', 0.8, 'lower'): [1.5, 0.0, 1.5, 5.0, 2.5],
+    ...     ('Coverage', 0.8, 'upper'): [3.5, 1.0, 2.5, 6.0, 3.5],
+    ...     ('Coverage', 0.9, 'lower'): [1.0, -1.0, 1.0, 4.0, 1.5],
+    ...     ('Coverage', 0.9, 'upper'): [4.0, 1.5, 3.5, 7.5, 4.0],
+    ... })
+    >>> cv = ConstraintViolation()
+    >>> cv(y_true, y_pred)
+    np.float64(0.2)
+    >>> cv = ConstraintViolation(score_average=False)
+    >>> cv(y_true, y_pred).to_numpy()
+    array([0.4, 0. ])
     """
 
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": True,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
