@@ -291,7 +291,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
                 break
         if val_data_loader_nll is not None:
             if getattr(early_stopper, "_best_state_dict", None) is not None:
-                self.network.load_state_dict(early_stopper._best_model.state_dict)
+                self.network.load_state_dict(early_stopper._best_state_dict)
             else:
                 self.network.load_state_dict(early_stopper._best_model.state_dict())
         dataset = self._prepare_data(y, X if X is not None else None)
@@ -834,7 +834,7 @@ class _EarlyStopper:
             try:
                 self._best_state_dict = clone_state_dict(model)
                 self._best_model = None
-            except Exception:
+            except (RuntimeError, AttributeError, TypeError):
                 self._best_model = deepcopy(model)
                 self._best_state_dict = None
 

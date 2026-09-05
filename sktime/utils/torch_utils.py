@@ -5,24 +5,7 @@ This module provides small helpers to clone a PyTorch module's state_dict
 Imports are lazy/safe: functions raise ImportError only when torch is actually
 required, so the module can be imported in environments without torch.
 
-Functions
----------
-clone_state_dict(module)
-    Return a CPU-detached clone of module.state_dict().
-load_state_dict_into(module, state_dict)
-    Load a state_dict (CPU tensors allowed) into a module.
-module_to_bytes(module)
-    Serialize a module's cloned state_dict to bytes.
-bytes_to_state_dict(b)
-    Deserialize bytes produced by module_to_bytes back to a state_dict.
-is_torch_module(obj)
-    Return True if obj is an instance of torch.nn.Module (safe if torch missing).
-
-Notes
------
-These helpers are intended to avoid deepcopy/pickling of nn.Module objects by
-transferring only the state_dict. Use them to make model persistence and cloning
-robust across PyTorch versions.
+INTERNAL MODULE: Do not rely on this API; it may change without notice.
 """
 
 import io
@@ -30,6 +13,8 @@ import io
 import torch
 from skbase.utils.dependencies import _safe_import
 from torch import nn
+
+__all__ = []
 
 
 def clone_state_dict(module: nn.Module) -> dict[str, torch.Tensor]:

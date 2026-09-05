@@ -1,18 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Clone plugin for preserving pretrained state in forecasters."""
 
-from copy import deepcopy
-
 from skbase.base._clone_plugins import BaseCloner, _default_clone
-from skbase.utils.dependencies import _safe_import
-from torch import nn
-
-from sktime.utils.torch_utils import (
-    clone_state_dict,
-    load_state_dict_into,
-)
-
-torch = _safe_import("torch")
 
 
 class _PretrainedCloner(BaseCloner):
@@ -54,23 +43,34 @@ class _PretrainedCloner(BaseCloner):
 
     def _clone(self, obj):
         """Clone obj and preserve pretrained attributes."""
+        from copy import deepcopy
+
+        from sktime.utils.torch_utils import (
+            clone_state_dict,
+            is_torch_module,
+            load_state_dict_into,
+        )
+
         # First, do the standard clone (copies hyperparameters)
         new_object = _default_clone(estimator=obj, recursive_clone=self.recursive_clone)
         if obj.get_config()["clone_config"]:
             new_object.set_config(**obj.get_config())
+
         new_object._pretrained_attrs = list(obj._pretrained_attrs)
         for attr in obj._pretrained_attrs:
             if hasattr(obj, attr):
-                val = getattr(obj, attr)
-                if isinstance(val, nn.Module) and hasattr(new_object, attr):
-                    try:
-                        sd = clone_state_dict(val)
-                        load_state_dict_into(getattr(new_object, attr), sd)
-                    except Exception:
-                        setattr(new_object, attr, deepcopy(val))
-                else:
-                    setattr(new_object, attr, deepcopy(val))
+                obj_attr = getattr(obj, attr)
+            # Use state_dict cloning for nn.Module, deepcopy for others
+            if is_torch_module(obj_attr):
+                try:
+                    state_dict = clone_state_dict(obj_attr)
+                    cloned_obj = obj_attr.__class__()  # Create empty instance
+                    load_state_dict_into(cloned_obj, state_dict)
+                    setattr(new_object, attr, cloned_obj)
+                except (RuntimeError, AttributeError, TypeError):
+                    setattr(new_object, attr, deepcopy(obj_attr))
+            else:
+                setattr(new_object, attr, deepcopy(obj_attr))
 
         new_object._state = "pretrained"
-
         return new_object
