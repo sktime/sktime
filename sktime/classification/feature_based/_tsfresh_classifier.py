@@ -92,6 +92,10 @@ class TSFreshClassifier(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "feature",
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.transformations.tsfresh"],
     }
 
     def __init__(
