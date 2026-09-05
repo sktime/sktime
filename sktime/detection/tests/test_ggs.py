@@ -40,3 +40,14 @@ def test_GreedyGaussianSegmentation(univariate_mean_shift):
         "max_shuffles": 250,
         "random_state": None,
     }
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(GreedyGaussianSegmentation),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_GreedyGaussianSegmentation_fit_transform(univariate_mean_shift):
+    """Test that fit_transform passes y through to fit_predict."""
+    ggs = GreedyGaussianSegmentation(k_max=5, lamb=0.5)
+    y_pred = ggs.fit_transform(univariate_mean_shift)
+    assert len(y_pred) == len(univariate_mean_shift)
