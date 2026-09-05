@@ -717,12 +717,15 @@ def test_pytorch_optimizer_invalid_raises():
 
     # not a str, and not a class or instance of a torch optimizer
     # torch.nn.Linear is a class, but not a subclass of torch.optim.Optimizer
-    for optimizer in [42, torch.nn.Linear, torch.nn.Linear(4, 3)]:
+    # 0 is falsy, but only None selects the default optimizer
+    for optimizer in [42, 0, torch.nn.Linear, torch.nn.Linear(4, 3)]:
         with pytest.raises(TypeError, match="optimizer"):
             _mlp_torch_clf(optimizer=optimizer).fit(X_train, y_train)
 
-    with pytest.raises(ValueError, match="Unknown optimizer"):
-        _mlp_torch_clf(optimizer="not_an_optimizer").fit(X_train, y_train)
+    # the empty string is falsy, but is looked up as a str and not found
+    for optimizer in ["not_an_optimizer", ""]:
+        with pytest.raises(ValueError, match="Unknown optimizer"):
+            _mlp_torch_clf(optimizer=optimizer).fit(X_train, y_train)
 
 
 DUMMY_EST_PARAMETERS_FOO = [None, 10.3, "string", {"key": "value"}, lambda x: x**2]

@@ -604,7 +604,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         torchOptimizer = _safe_import("torch.optim.Optimizer")
 
         # if no optimizer is passed, use Adam as default
-        if not self.optimizer:
+        if self.optimizer is None:
             optimizer_class = _safe_import("torch.optim.Adam")
             optimizer_params = {"lr": self.lr}
         # if optimizer is a string, look it up in the available optimizers
