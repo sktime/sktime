@@ -373,10 +373,24 @@ class ShapeletTransformClassifier(BaseClassifier):
                 "batch_size": 10,
             }
         else:
-            return {
+            from sklearn.tree import DecisionTreeClassifier
+
+            params1 = {
                 "estimator": RotationForest(n_estimators=2),
                 "n_shapelet_samples": 10,
                 "max_shapelets": 3,
                 "batch_size": 5,
                 "save_transformed_data": True,
             }
+            # second set: a single-tree estimator rather than an ensemble,
+            # slightly different shapelet sampling, the default
+            # save_transformed_data=False, and a fixed random_state.
+            # sampling stays small so both sets are fast to fit.
+            params2 = {
+                "estimator": DecisionTreeClassifier(random_state=0),
+                "n_shapelet_samples": 12,
+                "max_shapelets": 4,
+                "batch_size": 6,
+                "random_state": 0,
+            }
+            return [params1, params2]

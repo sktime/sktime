@@ -617,8 +617,21 @@ class TEASER(BaseEarlyClassifier):
 
         if _check_estimator_deps(Catch22Classifier, severity="none"):
             est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))
+            est2 = Catch22Classifier(
+                estimator=RandomForestClassifier(n_estimators=2),
+                random_state=0,
+            )
         else:
             est = DummyClassifier()
+            est2 = DummyClassifier()
 
-        params = {"classification_points": [3], "estimator": est}
-        return params
+        params1 = {"classification_points": [3], "estimator": est}
+        # second set: two classification points rather than one, exercising
+        # the multi-point early classification decision path, with a fixed
+        # random_state.
+        params2 = {
+            "classification_points": [3, 5],
+            "estimator": est2,
+            "random_state": 0,
+        }
+        return [params1, params2]
