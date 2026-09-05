@@ -146,7 +146,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "RandomIntervalFeatureExtractor",
         "RandomIntervalSegmenter",
         "RandomIntervalSpectralEnsemble",
-        "RandomSamplesAugmenter",
         "SAXlegacy",
         "SFA",
         "SFAFast",
