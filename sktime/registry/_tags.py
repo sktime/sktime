@@ -2765,6 +2765,35 @@ class scitype__X(_BaseTag):
     }
 
 
+class scitype__y(_BaseTag):
+    """Scitype of the target data ``y`` supported by the object.
+
+    - String name: ``"scitype:y"``
+    - Public scitype tag
+    - Values: string, name of the supported scitype
+    - Example: ``"Series"``
+    - Example 2: ``"points"`` (detection metrics)
+
+    This tag applies to parameter estimators and metrics.
+
+    For parameter estimators, it specifies which scitype of ``y`` is supported
+    natively, typically ``"Series"``.
+
+    For metrics, it specifies the scientific type of the labels ``y`` that
+    the metric consumes. Detection metrics use values such as ``"points"``
+    (event locations) or ``"segments"`` (interval labels). Other metrics
+    may use the same tag for the scitype of the target series.
+    """
+
+    _tags = {
+        "tag_name": "scitype:y",
+        "parent_type": ["param_est", "metric"],
+        "tag_type": "str",
+        "short_descr": "what scitype of y does the object support? must be scitype string",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Benchmark analyzer tags
 # -----------------------
 
@@ -3975,15 +4004,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["transformer-pairwise", "transformer-pairwise-panel"],
         ("str", ["distance", "kernel", "other"]),
         "mathematical type of pairwise transformer - distance, kernel, or other",
-    ),
-    (
-        "scitype:y",
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        ["param_est", "metric"],
-        "str",
-        "what scitype of y does the object support? must be scitype string",
     ),
     (
         "classifier_type",
