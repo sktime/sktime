@@ -67,6 +67,10 @@ class ResNetRegressor(BaseDeepRegressor):
         "maintainers": ["Withington"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.resnet._resnet_tf"],
     }
 
     def __init__(
@@ -108,7 +112,7 @@ class ResNetRegressor(BaseDeepRegressor):
         """
         self.history = None
         self._network = ResNetNetwork(
-            activation_hidden=self.activation_hidden,
+            activation=self.activation_hidden,
             random_state=self.random_state,
         )
 

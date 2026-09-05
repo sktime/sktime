@@ -62,7 +62,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         #   since aligner distances are always symmetric,
         #   we know it's the case for sure if X equals X2
         if X2 is None:
-            X = X2
+            X2 = X
             symm = True
         else:
             symm = False
@@ -93,8 +93,14 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         from skbase.utils.dependencies import _check_estimator_deps
 
         from sktime.alignment.dtw_python import AlignerDTW
+        from sktime.alignment.lucky import AlignerLuckyDtw
 
+        # two unconditional sets: a dependency-free aligner, and the
+        # default None aligner, which returns the zero distance matrix
+        params = [{"aligner": AlignerLuckyDtw()}, {}]
+
+        # additional set with AlignerDTW, if dtw-python is installed
         if _check_estimator_deps(AlignerDTW, severity="none"):
-            return {"aligner": AlignerDTW()}
-        else:
-            return {}
+            params.append({"aligner": AlignerDTW()})
+
+        return params

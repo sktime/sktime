@@ -137,6 +137,32 @@ class DerivativeSlopeTransformer(BaseTransformer):
 
     where n is the length of the time series, and indices
     range from 0 to n-1.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.summarize import DerivativeSlopeTransformer
+    >>> X = pd.DataFrame({"a": [10, 12, 15, 20, 22]})
+    >>> t = DerivativeSlopeTransformer()
+    >>> t.fit_transform(X)
+         a
+    0  2.0
+    1  2.5
+    2  4.0
+    3  3.5
+    4  2.0
+
+    Works on multivariate data as well, computing the derivative independently
+    for each column:
+
+    >>> X2 = pd.DataFrame({"a": [10, 12, 15, 20, 22], "b": [5, 5, 6, 8, 8]})
+    >>> t.fit_transform(X2)
+         a    b
+    0  2.0  0.0
+    1  2.5  0.5
+    2  4.0  1.5
+    3  3.5  1.0
+    4  2.0  0.0
     """
 
     _tags = {
@@ -358,6 +384,36 @@ class FittedParamExtractor(BaseTransformer):
         Number of jobs to run in parallel.
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>> from sktime.transformations.summarize import FittedParamExtractor
+    >>> X = pd.DataFrame({
+    ...     "series": [
+    ...         pd.Series([1.0, 2.0, 3.0, 4.0]),
+    ...         pd.Series([10.0, 8.0, 6.0, 4.0]),
+    ...     ]
+    ... })
+    >>> t = FittedParamExtractor(
+    ...     forecaster=TrendForecaster(), param_names="regressor__intercept"
+    ... )
+    >>> t.fit_transform(X)
+       regressor__intercept
+    0                   1.0
+    1                  10.0
+
+    Multiple fitted parameters can be extracted at once, one column each:
+
+    >>> t = FittedParamExtractor(
+    ...     forecaster=TrendForecaster(),
+    ...     param_names=["regressor__intercept", "regressor__coef"],
+    ... )
+    >>> t.fit_transform(X)
+       regressor__intercept  regressor__coef
+    0                   1.0              1.0
+    1                  10.0             -2.0
     """
 
     _tags = {

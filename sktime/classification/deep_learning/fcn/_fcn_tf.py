@@ -1,17 +1,17 @@
-"""Fully Connected Neural Network (CNN) for regression."""
+"""Fully Convolutional Network (FCN) for classification."""
 
-__all__ = ["FCNRegressor"]
+__all__ = ["FCNClassifier"]
 
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
+from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.fcn import FCNNetwork
-from sktime.regression.deep_learning.base import BaseDeepRegressor
 
 
-class FCNRegressor(BaseDeepRegressor):
-    """Fully Connected Neural Network (FCN), as described in [1]_.
+class FCNClassifier(BaseDeepClassifier):
+    """Fully Convolutional Network (FCN), as described in [1]_.
 
     Adapted from the implementation from Fawaz et. al
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/fcn.py
@@ -30,6 +30,7 @@ class FCNRegressor(BaseDeepRegressor):
         whether to output extra information
     loss : string, default="mean_squared_error"
         fit parameter for the keras model
+    optimizer : keras.optimizer, default=keras.optimizers.Adam(),
     metrics : list of strings, default=["accuracy"],
     activation : string or a tf callable, default="sigmoid"
         Activation function used in the output layer.
@@ -46,23 +47,40 @@ class FCNRegressor(BaseDeepRegressor):
     filter_sizes : list or tuple of int , default = (128,256,128)
         number of filters for each convolutional layer.
         must have length equal to kernel_sizes.
-    kernel_sizes : list or tuple of int  , default = (8,5,3)
+    kernel_sizes : list or tuple of int , default = (8,5,3)
         kernel size for each convolutional layer.
         must have length equal to filter_sizes.
 
+
     References
     ----------
-    .. [1] Zhao et. al, Convolutional neural networks for time series classification,
-    Journal of Systems Engineering and Electronics, 28(1):2017.
+    .. [1] Wang et al, Time series classification from scratch with
+    deep neural networks: A strong baseline.
+    2017 International Joint Conference on Neural Networks (IJCNN)
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.fcn import FCNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> X_test, y_test = load_unit_test(split="test", return_X_y=True)
+    >>> fcn = FCNClassifier(n_epochs=20,batch_size=4)  # doctest: +SKIP
+    >>> fcn.fit(X_train, y_train)  # doctest: +SKIP
+    FCNClassifier(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
-        "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
+        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "noxthot"],
+        # hfawaz for dl-4-tsc
+        "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
-        "tests:skip_all": True,  # see 4610
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.fcn._fcn_tf"],
+        "tests:skip_all": True,
     }
 
     def __init__(
@@ -71,7 +89,7 @@ class FCNRegressor(BaseDeepRegressor):
         batch_size=16,
         callbacks=None,
         verbose=False,
-        loss="mean_squared_error",
+        loss="categorical_crossentropy",
         metrics=None,
         random_state=None,
         activation="sigmoid",
@@ -81,9 +99,9 @@ class FCNRegressor(BaseDeepRegressor):
         filter_sizes=(128, 256, 128),
         kernel_sizes=(8, 5, 3),
     ):
+        self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
-        self.callbacks = callbacks
         self.verbose = verbose
         self.loss = loss
         self.metrics = metrics
@@ -114,7 +132,9 @@ class FCNRegressor(BaseDeepRegressor):
             kernel_sizes=self.kernel_sizes,
         )
 
-    def build_model(self, input_shape, **kwargs):
+        super().__post_init__()
+
+    def build_model(self, input_shape, n_classes, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
         In sktime, time series are stored in numpy arrays of shape (d,m), where d
@@ -126,6 +146,8 @@ class FCNRegressor(BaseDeepRegressor):
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer, should be (m,d)
+        n_classes: int
+            The number of classes, which becomes the size of the output layer
 
         Returns
         -------
@@ -143,7 +165,7 @@ class FCNRegressor(BaseDeepRegressor):
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(
-            units=1, activation=self.activation, use_bias=self.use_bias
+            units=n_classes, activation=self.activation, use_bias=self.use_bias
         )(output_layer)
 
         self.optimizer_ = (
@@ -161,7 +183,7 @@ class FCNRegressor(BaseDeepRegressor):
         return model
 
     def _fit(self, X, y):
-        """Fit the regressor on the training set (X, y).
+        """Fit the classifier on the training set (X, y).
 
         Parameters
         ----------
@@ -174,17 +196,18 @@ class FCNRegressor(BaseDeepRegressor):
         -------
         self : object
         """
+        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
-        self.model_ = self.build_model(self.input_shape)
+        self.model_ = self.build_model(self.input_shape, self.n_classes_)
         if self.verbose:
             self.model_.summary()
         self.history = self.model_.fit(
             X,
-            y,
+            y_onehot,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
@@ -232,14 +255,15 @@ class FCNRegressor(BaseDeepRegressor):
         }
 
         # to check for tuple
-        param3 = {
+        params3 = {
             "n_epochs": 8,
             "batch_size": 4,
             "use_bias": False,
             "filter_sizes": (64, 128),
             "kernel_sizes": (5, 3),
         }
-        test_params = [param1, param2, param3]
+
+        test_params = [param1, param2, params3]
 
         if _check_soft_dependencies("keras", severity="none"):
             from keras.callbacks import LambdaCallback
