@@ -562,6 +562,35 @@ def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=Fal
         raise ValueError("obj must be of Series, Panel, or Hierarchical scitype")
     obj_in_mtype = metadata["mtype"]
 
+    # List-based panel mtypes can represent an instance with zero time points, but
+    # the internal pd-multiindex representation cannot, so a bound that empties an
+    # instance would silently drop it on the round-trip. Slice each instance on its
+    # own to keep emptied instances (see #10966). We cannot round-trip back through
+    # convert_to for the same reason (it routes via pd-multiindex), so nested_univ
+    # is rebuilt directly, reindexing on the original instance keys.
+    if obj_in_mtype in ("df-list", "nested_univ"):
+        sliced = [
+            get_slice(
+                df,
+                start=start,
+                end=end,
+                start_inclusive=start_inclusive,
+                end_inclusive=end_inclusive,
+            )
+            for df in convert_to(obj, "df-list")
+        ]
+        if obj_in_mtype == "df-list":
+            return sliced
+        # nested_univ: one cell (a pd.Series) per instance and column, so an
+        # emptied instance survives as a zero-length Series rather than vanishing.
+        return pd.DataFrame(
+            {
+                col: [df[col] for df in sliced]
+                for col in (sliced[0].columns if sliced else obj.columns)
+            },
+            index=obj.index,
+        )
+
     obj = convert_to(obj, GET_WINDOW_SUPPORTED_MTYPES)
 
     # numpy3D (Panel) or np.npdarray (Series)
@@ -574,22 +603,19 @@ def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=Fal
         if obj.ndim > 1:
             obj = obj.swapaxes(1, -1)
         # deal with inclusive/exclusive
-        if not start_inclusive:
+        # a bound is absent only if it is None; 0 is a valid bound
+        if start is not None and not start_inclusive:
             start = start + 1
-        if end_inclusive:
+        if end is not None and end_inclusive:
             end = end + 1
         # deal with out-of-index
-        if start < 0:
-            start = 0
-        if start >= len(obj):
-            start = len(obj) - 1
-        # subsetting
-        if start and end:
-            obj_subset = obj[start:end]
-        elif end:
-            obj_subset = obj[:end]
-        else:
-            obj_subset = obj[start:]
+        if start is not None:
+            if start < 0:
+                start = 0
+            if start >= len(obj):
+                start = len(obj) - 1
+        # subsetting; None (not 0) means the bound is absent, which slicing handles
+        obj_subset = obj[start:end]
         # we need to swap first and last dimension back before returning, if done above
         if obj.ndim > 1:
             obj_subset = obj_subset.swapaxes(1, -1)
@@ -616,11 +642,12 @@ def get_slice(obj, start=None, end=None, start_inclusive=True, end_inclusive=Fal
             else:
                 return time_indices < end
 
-        if start and end:
+        # a bound is absent only if it is None; 0 is a valid bound
+        if start is not None and end is not None:
             slice_select = get_start_cond() & get_end_cond()
-        elif end:
+        elif end is not None:
             slice_select = get_end_cond()
-        elif start:
+        elif start is not None:
             slice_select = get_start_cond()
 
         obj_subset = obj.iloc[slice_select]
