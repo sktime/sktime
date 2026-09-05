@@ -468,7 +468,6 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
         return PyTorchTrainDataset
 
-
     def _get_pred_dataset_class(self):
         """Get the PyTorch prediction dataset class for the forecaster."""
         from torch.utils.data import Dataset

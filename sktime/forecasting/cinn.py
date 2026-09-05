@@ -765,7 +765,6 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             cinn_forecaster = cls.load_from_serial(file.open("_obj").read())
         return cinn_forecaster
 
-
     def _get_pred_dataset_class(self):
         """Return the dataset class used for training and testing."""
         from torch.utils.data import Dataset
