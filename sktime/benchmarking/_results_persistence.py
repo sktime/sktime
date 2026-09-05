@@ -11,8 +11,6 @@ It coordinates two complementary mechanisms:
    `IncrementalResultStore`.
 """
 
-from __future__ import annotations
-
 from pathlib import Path
 
 from sktime.benchmarking._benchmarking_dataclasses import ResultObject
