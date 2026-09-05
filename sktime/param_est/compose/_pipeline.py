@@ -315,6 +315,13 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         # construct with name/estimator tuples
         params = [{"transformers": [("foo", t1), ("bar", t2)], "param_est": p0}]
 
+        # second unconditional set: transformers given without names, and a
+        # single transformer rather than two. Uses the dependency-free
+        # FixedParams, so the two-set requirement holds regardless of which
+        # soft dependencies are present.
+        p1 = FixedParams({"b": 3})
+        params = params + [{"transformers": [t1], "param_est": p1}]
+
         # test case 2 depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
             p = SeasonalityACF()

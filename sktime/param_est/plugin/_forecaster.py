@@ -297,7 +297,16 @@ class PluginParamsForecaster(_DelegatedForecaster):
             "param_est": FixedParams({"foo": 12}),
             "params": {"sp": "foo"},
         }
-        params = [params1]
+        # second unconditional set: explicit string reference to a parameter
+        # "sp" present in both estimators, rather than the dictionary plug of
+        # the first set. Uses the dependency-free FixedParams, so the two-set
+        # requirement holds regardless of which soft dependencies are present.
+        params1b = {
+            "forecaster": NaiveForecaster(),
+            "param_est": FixedParams({"sp": 4}),
+            "params": "sp",
+        }
+        params = [params1, params1b]
 
         # uses a "real" param est that depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
