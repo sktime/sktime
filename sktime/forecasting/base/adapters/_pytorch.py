@@ -4,35 +4,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _safe_import
-
-
-def _get_series_from_panel(y):
-    """Extract individual time series from panel/hierarchical data.
-
-    Works with both 2-level (panel) and 3+ level (hierarchical) MultiIndex.
-    The last index level is assumed to be time, all other levels identify instances.
-
-    Parameters
-    ----------
-    y : pd.DataFrame with MultiIndex
-        Panel or hierarchical data
-
-    Returns
-    -------
-    list of pd.DataFrame
-        Individual time series, one per unique instance combination
-    """
-    instance_ids = y.index.droplevel(-1).unique()
-
-    all_series = []
-    for instance_id in instance_ids:
-        series_data = y.loc[instance_id]
-        if not isinstance(series_data, pd.DataFrame):
-            series_data = pd.DataFrame(series_data)
-        all_series.append(series_data)
-
-    return all_series
 
 
 class BaseDeepNetworkPyTorch(BaseForecaster):
@@ -532,3 +503,31 @@ def _get_pred_dataset_class():
             )
 
     return PyTorchPredDataset
+
+
+def _get_series_from_panel(y):
+    """Extract individual time series from panel/hierarchical data.
+
+    Works with both 2-level (panel) and 3+ level (hierarchical) MultiIndex.
+    The last index level is assumed to be time, all other levels identify instances.
+
+    Parameters
+    ----------
+    y : pd.DataFrame with MultiIndex
+        Panel or hierarchical data
+
+    Returns
+    -------
+    list of pd.DataFrame
+        Individual time series, one per unique instance combination
+    """
+    instance_ids = y.index.droplevel(-1).unique()
+
+    all_series = []
+    for instance_id in instance_ids:
+        series_data = y.loc[instance_id]
+        if not isinstance(series_data, pd.DataFrame):
+            series_data = pd.DataFrame(series_data)
+        all_series.append(series_data)
+
+    return all_series
