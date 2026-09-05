@@ -3,15 +3,24 @@
 __author__ = ["ksharma6"]
 
 import numpy as np
-from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import r2_score
 
 from sktime.regression._delegate import _DelegatedRegressor
+from sktime.regression.model_evaluation import evaluate
+from sktime.utils.model_selection import (
+    _make_cv_results,
+    _make_evaluate_cv,
+    _refit_estimator,
+    _resolve_scorers,
+    _run_grid_search,
+    _select_best_index,
+)
 
 
 class TSRGridSearchCV(_DelegatedRegressor):
     """Exhaustive search over specified parameter values for an estimator.
 
-    Adapts sklearn GridSearchCV for sktime time series regressors
+    Performs native grid search for sktime time series regressors.
 
     Optimizes hyper-parameters of `estimators` by exhaustive grid search.
 
@@ -33,17 +42,10 @@ class TSRGridSearchCV(_DelegatedRegressor):
         Strategy to evaluate the performance of the cross-validated model on
         the test set.
 
-        If `scoring` represents a single score, one can use:
-
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
-
-        If `scoring` represents multiple scores, one can use:
-
-        - a list or tuple of unique strings;
-        - a callable returning a dictionary where the keys are the metric
-          names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
+        A string is resolved as a scikit-learn scorer. A callable, list/tuple of
+        callables or strings, or dictionary of named callables/strings can be used
+        for single- or multi-metric evaluation. If ``None``, defaults to
+        ``r2_score``.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
@@ -68,7 +70,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
 
         The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
+        search instance.
 
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_params_`` will only be available if
@@ -222,7 +224,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
     --------
     ParameterGrid : Generates all the combinations of a hyperparameter grid.
     train_test_split : Utility function to split the data into a development
-        set usable for fitting a GridSearchCV instance and an evaluation set
+        set usable for fitting a grid-search instance and an evaluation set
         for its final evaluation.
     sklearn.metrics.make_scorer : Make a scorer from a performance metric or
         loss function.
@@ -271,23 +273,7 @@ class TSRGridSearchCV(_DelegatedRegressor):
         self.tune_by_variable = tune_by_variable
 
         super().__init__()
-
-        DELEGATED_PARAMS = [
-            "estimator",
-            "param_grid",
-            "scoring",
-            "n_jobs",
-            "refit",
-            "cv",
-            "verbose",
-            "pre_dispatch",
-            "error_score",
-            "return_train_score",
-        ]
-
-        gscvargs = {k: getattr(self, k) for k in DELEGATED_PARAMS}
-
-        self.estimator_ = GridSearchCV(**gscvargs)
+        self.estimator_ = estimator.clone()
 
         if self.tune_by_variable:
             self.set_tags(**{"capability:multioutput": False})
@@ -325,25 +311,45 @@ class TSRGridSearchCV(_DelegatedRegressor):
         if y.shape[1] == 1:
             y = y.flatten()
 
-        estimator = self._get_delegate()
-        estimator.fit(X=X, y=y)
+        scorers = _resolve_scorers(self.scoring, r2_score)
+        cv = _make_evaluate_cv(self.cv, y)
+        raw_results = _run_grid_search(
+            estimator=self.estimator,
+            param_grid=self.param_grid,
+            cv=cv,
+            scorers=scorers,
+            evaluate=evaluate,
+            X=X,
+            y=y,
+            error_score=self.error_score,
+            n_jobs=self.n_jobs,
+            pre_dispatch=self.pre_dispatch,
+            verbose=self.verbose,
+            return_train_score=self.return_train_score,
+        )
 
-        fitted_param_names = [
-            "cv_results_",
-            "best_estimator_",
-            "best_score_",
-            "best_params_",
-            "best_index_",
-            "scorer_",
-            "n_splits_",
-            "refit_time_",
-            "multimetric_",
-        ]
+        self.cv_results_ = _make_cv_results(
+            raw_results, scorers, self.return_train_score
+        )
+        self.n_splits_ = cv.get_n_splits()
+        self.scorer_ = next(iter(scorers.values())) if len(scorers) == 1 else scorers
+        self.multimetric_ = len(scorers) > 1
 
-        for p in fitted_param_names:
-            if hasattr(estimator, p):
-                val = getattr(estimator, p)
-                setattr(self, p, val)
+        scoring_names = list(scorers)
+        self.best_index_, score_key = _select_best_index(
+            self.cv_results_, scoring_names, self.refit
+        )
+        self.best_params_ = self.cv_results_["params"][self.best_index_]
+        if score_key is not None:
+            self.best_score_ = self.cv_results_[score_key][self.best_index_]
+
+        if self.refit:
+            self.best_estimator_, self.refit_time_ = _refit_estimator(
+                self.estimator, self.best_params_, X, y
+            )
+            self.estimator_ = self.best_estimator_
+        else:
+            self.estimator_ = self.estimator.clone().set_params(**self.best_params_)
 
         return self
 
@@ -373,15 +379,19 @@ class TSRGridSearchCV(_DelegatedRegressor):
         y : 1D np.array of int, of shape [n_instances] - predicted class labels
             indices correspond to instance indices in X
         """
+        if not self.refit:
+            raise RuntimeError(
+                f"In {self.__class__.__name__}, refit must be True "
+                "to make predictions, "
+                f"but found refit=False."
+            )
+
         estimator = self._get_delegate()
         y_pred = estimator.predict(X=X)
         if y_pred.ndim == 1:
             y_pred = y_pred.reshape(-1, 1)
         return y_pred
 
-    # the delegate is an sklearn estimator and it does not have get_fitted_params
-    # therefore we have to override _get_fitted_params from the delegator,
-    # which would otherwise call it
     def _get_fitted_params(self):
         """Get fitted parameters.
 
@@ -395,7 +405,9 @@ class TSRGridSearchCV(_DelegatedRegressor):
         fitted_params : dict with str keys
             fitted parameters, keyed by names of fitted parameter
         """
-        return {}
+        if not self.refit:
+            return {}
+        return self._get_delegate().get_fitted_params()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
