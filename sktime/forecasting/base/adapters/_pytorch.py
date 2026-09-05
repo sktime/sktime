@@ -455,16 +455,16 @@ def _get_train_dataset_class():
             """Return data point."""
             from torch import cat, from_numpy, tensor
 
-            window_end = i + self.seq_len
+            split_ix = i + self.seq_len
 
-            hist_y = tensor(self.y[i:window_end]).float()
+            hist_y = tensor(self.y[i:split_ix]).float()
             if self.X is not None:
-                exog_data = tensor(self.X[window_end : window_end + self.fh]).float()
+                exog_data = tensor(self.X[split_ix : split_ix + self.fh]).float()
             else:
                 exog_data = tensor([])
             return (
                 cat([hist_y, exog_data]),
-                from_numpy(self.y[window_end : window_end + self.fh]).float(),
+                from_numpy(self.y[split_ix : split_ix + self.fh]).float(),
             )
 
     return PyTorchTrainDataset
@@ -490,16 +490,16 @@ def _get_pred_dataset_class():
             """Return data point."""
             from torch import cat, from_numpy, tensor
 
-            hist_y = tensor(self.y[i : i + self.seq_len]).float()
+            split_ix = i + self.seq_len
+
+            hist_y = tensor(self.y[i:split_ix]).float()
             if self.X is not None:
-                exog_data = tensor(
-                    self.X[i + self.seq_len : i + self.seq_len + self.fh]
-                ).float()
+                exog_data = tensor(self.X[split_ix : split_ix + self.fh]).float()
             else:
                 exog_data = tensor([])
             return (
                 cat([hist_y, exog_data]),
-                from_numpy(self.y[i + self.seq_len : i + self.seq_len]).float(),
+                from_numpy(self.y[split_ix : split_ix]).float(),
             )
 
     return PyTorchPredDataset
