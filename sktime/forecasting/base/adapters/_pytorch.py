@@ -484,7 +484,7 @@ def _get_train_dataset_class():
             """Return data point."""
             from torch import cat, from_numpy, tensor
 
-            window_end = i + self.seq_len        
+            window_end = i + self.seq_len
 
             hist_y = tensor(self.y[i:window_end]).float()
             if self.X is not None:
@@ -496,7 +496,7 @@ def _get_train_dataset_class():
                 from_numpy(self.y[window_end : window_end + self.fh]).float(),
             )
 
-    return PyTorchTrainDataset  
+    return PyTorchTrainDataset
 
 
 def _get_pred_dataset_class():
