@@ -65,6 +65,24 @@ def test_white_noise(parameter):
     assert checksums == expected_checksums_white_noise
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(aug.WhiteNoiseAugmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_white_noise_named_column_dataframe():
+    """Test that WhiteNoiseAugmenter accepts named-column DataFrame input.
+
+    Regression test for #11018: _transform accessed X[0], hard-coding the
+    column label 0, so a valid 1-column DataFrame with a named column
+    raised KeyError: 0.
+    """
+    X = pd.DataFrame({"v": [1.0, 2.0, 3.0, 4.0, 5.0]})
+    Xt = aug.WhiteNoiseAugmenter(scale=0.5, random_state=42).fit_transform(X)
+    assert isinstance(Xt, pd.DataFrame)
+    assert Xt.shape == X.shape
+    assert list(Xt.columns) == ["v"]
+
+
 # Test ReverseAugmenter
 expected_checksum_reverse = 17.757893
 
