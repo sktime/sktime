@@ -499,7 +499,7 @@ def _get_pred_dataset_class():
                 exog_data = tensor([])
             return (
                 cat([hist_y, exog_data]),
-                from_numpy(self.y[split_ix : split_ix]).float(),
+                from_numpy(self.y[split_ix:split_ix]).float(),
             )
 
     return PyTorchPredDataset
