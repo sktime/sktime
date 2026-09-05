@@ -222,3 +222,50 @@ class TestEvaluate:
         assert "test_accuracy_score" in result.columns
         assert "fit_time" in result.columns
         assert "pred_time" in result.columns
+
+    def test_evaluate_fold_fingerprint_deterministic_splitter(self):
+        """Test that a deterministic splitter gives the same folds every call.
+
+        The fingerprint is what lets a caller check that two estimators were
+        scored on the same folds, which paired post-hoc tests such as the
+        Friedman test and critical difference diagrams assume.
+        See bug report #10881.
+        """
+        X, y = make_classification_problem()
+        cv = KFold(n_splits=3, shuffle=False)
+
+        args = dict(cv=cv, X=X, y=y, scoring=accuracy_score, error_score="raise")
+        first = evaluate(classifier=DummyClassifier(), **args)
+        second = evaluate(classifier=DummyClassifier(), **args)
+
+        fingerprints = first["fold_fingerprint"]
+
+        assert len(fingerprints) == 3
+        assert fingerprints.notna().all()
+        assert fingerprints.map(lambda x: isinstance(x, str)).all()
+
+        # same splitter and data, so the same folds, so the same fingerprints
+        assert fingerprints.equals(second["fold_fingerprint"])
+
+        # a different classifier on the same folds gives the same fingerprints,
+        # so the fingerprint identifies the fold, not the estimator
+        other = evaluate(
+            classifier=KNeighborsTimeSeriesClassifier(n_neighbors=1), **args
+        )
+        assert fingerprints.equals(other["fold_fingerprint"])
+
+    def test_evaluate_fold_fingerprint_shuffling_splitter(self):
+        """Test that a shuffling splitter is visible in the fingerprints.
+
+        A splitter with ``shuffle=True`` and no ``random_state`` resamples on
+        every call, so two calls score on different folds and their results are
+        not paired. Reported in bug report #10881.
+        """
+        X, y = make_classification_problem()
+        cv = KFold(n_splits=3, shuffle=True)
+
+        args = dict(cv=cv, X=X, y=y, scoring=accuracy_score, error_score="raise")
+        first = evaluate(classifier=DummyClassifier(), **args)
+        second = evaluate(classifier=DummyClassifier(), **args)
+
+        assert not set(first["fold_fingerprint"]) & set(second["fold_fingerprint"])
