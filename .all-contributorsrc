@@ -4031,7 +4031,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/221158347?v=4",
       "profile": "https://github.com/OfficialAbhinavSingh",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -4130,6 +4131,15 @@
       "profile": "https://github.com/oberoir080",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "Sharon-study",
+      "name": "Sharon-study",
+      "avatar_url": "https://avatars.githubusercontent.com/u/182816133?v=4",
+      "profile": "https://github.com/Sharon-study",
+      "contributions": [
+        "test"
       ]
     }
   ]
