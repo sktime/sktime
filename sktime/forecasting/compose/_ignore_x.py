@@ -58,6 +58,9 @@ class IgnoreX(_DelegatedForecaster):
         """
         self._set_delegated_tags(self.forecaster)
         self.set_tags(**{"capability:exogenous": not self.ignore_x})
+        # if X is ignored, categorical X is unproblematic, regardless of the delegate
+        if self.ignore_x:
+            self.set_tags(**{"capability:categorical_in_X": True})
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.

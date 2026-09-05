@@ -704,6 +704,7 @@ class NaiveVariance(BaseForecaster):
             "requires-fh-in-fit",
             "capability:exogenous",
             "capability:missing_values",
+            "capability:categorical_in_X",
             "y_inner_mtype",
             "X_inner_mtype",
             "X-y-must-have-same-index",
