@@ -5,6 +5,7 @@ __all__ = ["run_test_vm"]
 import os
 import platform
 import re
+from functools import wraps
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -48,7 +49,13 @@ def run_test_vm(cls_name):
         if platform.system() == "Darwin":
             import torch
 
-            torch.backends.mps.is_available = lambda: False
+            original_is_available = torch.backends.mps.is_available
+
+            @wraps(original_is_available)
+            def _is_available():
+                return False
+
+            torch.backends.mps.is_available = _is_available
 
     if _check_soft_dependencies("hf-xet", severity="none"):
         # to allow hf-xet to download models on macos runners on version `latest`
