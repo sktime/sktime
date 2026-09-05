@@ -275,15 +275,15 @@ class TSFreshClassifier(BaseClassifier):
                 "default_fc_parameters": "minimal",
                 "relevant_feature_extractor": False,
             }
-        else:
-            params1 = {
-                "estimator": RandomForestClassifier(n_estimators=2),
-                "default_fc_parameters": "minimal",
-                "relevant_feature_extractor": False,
-            }
-            params2 = {
-                "estimator": RandomForestClassifier(n_estimators=2),
-                "default_fc_parameters": "minimal",
-                "relevant_feature_extractor": True,
-            }
+
+        params1 = {
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "default_fc_parameters": "minimal",
+            "relevant_feature_extractor": False,
+        }
+        params2 = {
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "default_fc_parameters": "minimal",
+            "relevant_feature_extractor": True,
+        }
         return [params1, params2]
