@@ -222,8 +222,27 @@ class _StatsModelsAdapter(BaseForecaster):
 
         get_prediction_arguments = {"start": start, "end": end}
 
-        if hasattr(self, "random_state"):
-            get_prediction_arguments["random_state"] = self.random_state
+        # Only pass random_state when supported by get_prediction.
+        if self.random_state is not None:
+            get_prediction_params = inspect.signature(
+                self._fitted_forecaster.get_prediction
+            ).parameters
+
+            if "simulate_kwargs" in get_prediction_params:
+                simulate_params = inspect.signature(
+                    self._fitted_forecaster.simulate
+                ).parameters
+
+                if "rng" in simulate_params:
+                    get_prediction_arguments["simulate_kwargs"] = {
+                        "rng": self.random_state
+                    }
+                else:
+                    get_prediction_arguments["simulate_kwargs"] = {
+                        "random_state": self.random_state
+                    }
+            elif "random_state" in get_prediction_params:
+                get_prediction_arguments["random_state"] = self.random_state
 
         if inspect.signature(self._fitted_forecaster.get_prediction).parameters.get(
             "exog"
