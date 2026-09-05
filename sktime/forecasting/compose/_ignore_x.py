@@ -32,12 +32,12 @@ class IgnoreX(_DelegatedForecaster):
     Examples
     --------
     >>> from sktime.forecasting.compose import IgnoreX
-    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> from sktime.forecasting.sarimax import SARIMAX
     >>> from sktime.datasets import load_longley
     >>> y, X = load_longley()
-    >>> forecaster = IgnoreX(NaiveForecaster())
+    >>> forecaster = IgnoreX(SARIMAX())
     >>> forecaster.fit(y, X=X, fh=[1, 2, 3])
-    IgnoreX(forecaster=NaiveForecaster())
+    IgnoreX(forecaster=SARIMAX())
     >>> y_pred = forecaster.predict(X=X)
     """
 
