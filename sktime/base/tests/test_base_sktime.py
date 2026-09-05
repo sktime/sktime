@@ -4,6 +4,13 @@
 __author__ = ["fkiraly"]
 
 
+def test_naive_forecaster_python_version_default():
+    """NaiveForecaster.python_version is None; default should still apply."""
+    from sktime.forecasting.naive import NaiveForecaster
+
+    assert NaiveForecaster.get_class_tag("python_version", "3.12") == "3.12"
+
+
 def test_get_fitted_params_sklearn():
     """Tests fitted parameter retrieval with sklearn components.
 
