@@ -235,6 +235,13 @@ class HolidayFeatures(BaseTransformer):
                 "calendar": {date(2022, 5, 15): "Regional Holiday"},
                 "return_indicator": True,
             },
+            {
+                "calendar": {date(2022, 5, 17): "Regional Holiday"},
+                "include_weekend": True,
+                "return_dummies": False,
+                "return_categorical": True,
+                "keep_original_columns": True,
+            },
         ]
         return params
 
