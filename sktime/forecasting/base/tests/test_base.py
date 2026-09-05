@@ -33,6 +33,21 @@ HIER_MTYPES = ["pd_multiindex_hier"]
 BACKENDS = _get_parallel_test_fixtures("config")
 
 
+def test_predict_preserves_time_index_name():
+    """Test that point forecasts preserve the time index name from y."""
+    y = _make_series(return_mtype="pd.Series", index_type="period")
+    y.index = y.index.rename("time")
+
+    y_pred = NaiveForecaster().fit(y, fh=[1, 2]).predict()
+
+    assert y_pred.index.name == y.index.name
+
+    forecaster = NaiveForecaster().fit(y.iloc[:-2], fh=[1, 2])
+    y_pred = forecaster.update_predict_single(y.iloc[-2:], update_params=False)
+
+    assert y_pred.index.name == y.index.name
+
+
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"])
     or not _check_soft_dependencies("skpro", severity="none"),
