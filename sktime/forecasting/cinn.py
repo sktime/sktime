@@ -373,6 +373,7 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
             index=series.index,
         )
         n_cond_features = len(cond_data.columns)
+        PyTorchTrainDataset = self._get_train_dataset_class()
         dataset = PyTorchTrainDataset(series, 0, fh=self.sample_dim, X=cond_data)
         return dataset, n_cond_features
 
