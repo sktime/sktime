@@ -168,6 +168,24 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         None, optional (default=None)
         Not needed here, added in the constructor to align with base class \
             sharing both Classifier and Regressor parameters.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.regression.compose import ComposableTimeSeriesForestRegressor
+    >>> rng = np.random.RandomState(42)
+    >>> X = pd.DataFrame(
+    ...     {"v": rng.rand(12)},
+    ...     index=pd.MultiIndex.from_product(
+    ...         [["i0", "i1", "i2"], range(4)], names=["instance", "time"]
+    ...     ),
+    ... )
+    >>> y = pd.Series([1.0, 2.0, 3.0], index=["i0", "i1", "i2"])
+    >>> reg = ComposableTimeSeriesForestRegressor(n_estimators=5, random_state=42)
+    >>> reg = reg.fit(X, y)
+    >>> reg.predict(X)
+    array([1., 2., 3.])
     """
 
     _tags = {
