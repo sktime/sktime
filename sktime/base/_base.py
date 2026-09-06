@@ -289,6 +289,20 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         -------
         if ``path`` is None - in-memory serialized self
         if ``path`` is file location - ZipFile with reference to the file
+
+        Notes
+        -----
+        Serialized estimator objects are **not** guaranteed to be compatible
+        across different versions of ``sktime``. Loading an estimator that was
+        saved with a different version of ``sktime`` may succeed without warning
+        but produce an object that is silently broken due to changes in the
+        estimator's internal state, constructor parameters, or tag values
+        between versions. For example, a parameter added to the constructor
+        of an estimator in a newer version will not be present in an instance
+        restored from an older dump, potentially leading to unexpected behavior
+        or errors during use. To avoid this, always save and load estimators
+        using the same version of ``sktime``, or use the source code
+        representation (if available) instead of binary-serialized objects.
         """
         import pickle
         import shutil
@@ -349,6 +363,16 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         Returns
         -------
         deserialized self resulting in output ``serial``, of ``cls.save(None)``
+
+        Notes
+        -----
+        Loading a serialized estimator dumps across different versions of
+        ``sktime`` is not supported. Pickle simply restores the internal state
+        of the object from the older version without running the constructor,
+        so attributes, parameters or tags that were added or changed between
+        versions will be missing. This can lead to silent, subtle or hard-to-
+        debug failures. Always ensure the same version of ``sktime`` is used
+        for both saving and loading the estimator.
         """
         import pickle
 
@@ -365,6 +389,16 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         Returns
         -------
         deserialized self resulting in output at ``path``, of ``cls.save(path)``
+
+        Notes
+        -----
+        Loading a serialized estimator dumps across different versions of
+        ``sktime`` is not supported. Pickle simply restores the internal state
+        of the object from the older version without running the constructor,
+        so attributes, parameters or tags that were added or changed between
+        versions will be missing. This can lead to silent, subtle or hard-to-
+        debug failures. Always ensure the same version of ``sktime`` is used
+        for both saving and loading the estimator.
         """
         import pickle
         from zipfile import ZipFile
