@@ -3958,7 +3958,16 @@ class info__source(_BaseTag):
 
 
 class X_y_must_have_same_index(_BaseTag):
-    """Do X/y in fit/update and X/fh in predict have to be same indices.
+    """Whether X and y must have compatible time indices.
+
+    If ``True``, the time index of ``X`` must contain the time index of
+    ``y`` during ``fit`` and ``update``. For forecasting operations with
+    a forecasting horizon ``fh``, the time index of ``X`` must also contain
+    the indices specified by ``fh``.
+
+    This tag indicates that the estimator requires exogenous data ``X`` to
+    be available at all time points required by the target series and
+    forecasting horizon.
 
     - String name: ``"X-y-must-have-same-index"``
     - Values: bool
