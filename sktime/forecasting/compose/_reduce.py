@@ -1268,6 +1268,42 @@ class DirectTabularRegressionForecaster(_DirectReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+
+    Notes
+    -----
+    Layout of the feature matrix passed to ``estimator``:
+
+    Let ``w = window_length``, and let ``X`` have columns ``x1, ..., xk``.
+    Each row of the feature matrix is the concatenation of one block of ``w``
+    values per variable, in the order ``y, x1, ..., xk``::
+
+        [y(t-w+1), ..., y(t), x1(t-w+1), ..., x1(t), ..., xk(t-w+1), ..., xk(t)]
+
+    where ``t`` is the last time stamp of the window.
+    The feature matrix therefore has ``w * (1 + k)`` columns, and ``w`` columns
+    if no ``X`` is passed.
+    Within a block, columns are in chronological order, that is, the oldest
+    observation of the window comes first and the most recent one comes last.
+    Values of ``X`` at the time stamps being forecast are not used as features,
+    only lagged values inside the window are.
+
+    One clone of ``estimator`` is fitted per element of ``fh``, all of them
+    using the above layout. The fitted clones are available as the fitted
+    parameter ``estimators``.
+
+    This layout is what feature indexed attributes of a fitted clone refer to,
+    for instance ``coef_`` or ``feature_importances_`` of ``scikit-learn``
+    regressors. With ``w = 5`` and ``X`` having columns ``x1, x2``, for example,
+    ``feature_importances_`` has ``5 * 3 = 15`` entries: entries 0 to 4 are the
+    lags of ``y``, entries 5 to 9 the lags of ``x1``, and entries 10 to 14 the
+    lags of ``x2``, each ordered from oldest to most recent.
+
+    If ``pooling="global"``, a ``pandas.DataFrame`` with named columns is passed
+    to ``estimator`` instead of a ``numpy`` array. The ``w`` lags of ``y`` are
+    named ``y_lag_1``, ..., ``y_lag_w``, most recent lag first, and are followed
+    by the columns of ``X``, which are not lagged in this case. For
+    ``scikit-learn`` regressors, these names can be read off
+    ``estimator.feature_names_in_``.
     """
 
     def __init__(
@@ -1318,6 +1354,35 @@ class MultioutputTabularRegressionForecaster(_MultioutputReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+
+    Notes
+    -----
+    Layout of the feature matrix passed to ``estimator``:
+
+    Let ``w = window_length``, and let ``X`` have columns ``x1, ..., xk``.
+    Each row of the feature matrix is the concatenation of one block of ``w``
+    values per variable, in the order ``y, x1, ..., xk``::
+
+        [y(t-w+1), ..., y(t), x1(t-w+1), ..., x1(t), ..., xk(t-w+1), ..., xk(t)]
+
+    where ``t`` is the last time stamp of the window.
+    The feature matrix therefore has ``w * (1 + k)`` columns, and ``w`` columns
+    if no ``X`` is passed.
+    Within a block, columns are in chronological order, that is, the oldest
+    observation of the window comes first and the most recent one comes last.
+    Values of ``X`` at the time stamps being forecast are not used as features,
+    only lagged values inside the window are.
+
+    The target passed to ``estimator`` is 2D, with one column per element of
+    ``fh``, in the order of ``fh``.
+
+    This layout is what feature indexed attributes of the fitted ``estimator``
+    refer to, for instance ``coef_`` or ``feature_importances_`` of
+    ``scikit-learn`` regressors. With ``w = 5`` and ``X`` having columns
+    ``x1, x2``, for example, ``feature_importances_`` has ``5 * 3 = 15``
+    entries: entries 0 to 4 are the lags of ``y``, entries 5 to 9 the lags of
+    ``x1``, and entries 10 to 14 the lags of ``x2``, each ordered from oldest
+    to most recent.
     """
 
     _estimator_scitype = "tabular-regressor"
@@ -1346,6 +1411,44 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
+
+    Notes
+    -----
+    Layout of the feature matrix passed to ``estimator``:
+
+    Let ``w = window_length``, and let ``X`` have columns ``x1, ..., xk``.
+    Each row of the feature matrix is the concatenation of one block of ``w``
+    values per variable, in the order ``y, x1, ..., xk``::
+
+        [y(t-w+1), ..., y(t), x1(t-w+1), ..., x1(t), ..., xk(t-w+1), ..., xk(t)]
+
+    where ``t`` is the last time stamp of the window.
+    The feature matrix therefore has ``w * (1 + k)`` columns, and ``w`` columns
+    if no ``X`` is passed.
+    Within a block, columns are in chronological order, that is, the oldest
+    observation of the window comes first and the most recent one comes last.
+    Values of ``X`` at the time stamps being forecast are not used as features,
+    only lagged values inside the window are.
+
+    A single clone of ``estimator`` is fitted, always on a one step ahead
+    target, and applied iteratively in ``predict``. For horizons beyond the
+    first, previously predicted values of ``y`` enter the window in place of
+    observed values.
+
+    This layout is what feature indexed attributes of the fitted ``estimator``
+    refer to, for instance ``coef_`` or ``feature_importances_`` of
+    ``scikit-learn`` regressors. With ``w = 5`` and ``X`` having columns
+    ``x1, x2``, for example, ``feature_importances_`` has ``5 * 3 = 15``
+    entries: entries 0 to 4 are the lags of ``y``, entries 5 to 9 the lags of
+    ``x1``, and entries 10 to 14 the lags of ``x2``, each ordered from oldest
+    to most recent.
+
+    If ``pooling="global"``, a ``pandas.DataFrame`` with named columns is passed
+    to ``estimator`` instead of a ``numpy`` array. The ``w`` lags of ``y`` are
+    named ``y_lag_1``, ..., ``y_lag_w``, most recent lag first, and are followed
+    by the columns of ``X``, which are not lagged in this case. For
+    ``scikit-learn`` regressors, these names can be read off
+    ``estimator.feature_names_in_``.
     """
 
     _tags = {
@@ -1404,6 +1507,26 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
+
+    Notes
+    -----
+    Layout of the feature matrix passed to ``estimator``:
+
+    Let ``w = window_length``. One clone of ``estimator`` is fitted per element
+    of ``fh``, and the ``i``-th clone, counting from 1 in the order of ``fh``,
+    is passed ``w + i - 1`` features::
+
+        [y(t-w+1), ..., y(t), y at the horizons preceding the i-th one]
+
+    where ``t`` is the last time stamp of the window. The first ``w`` columns
+    are the window, in chronological order, oldest observation first. The
+    trailing ``i - 1`` columns are the values of ``y`` at the earlier horizons,
+    in the order of ``fh``; these are observed values in ``fit`` and predicted
+    values in ``predict``. The fitted clones are available as the fitted
+    parameter ``estimators``.
+
+    Exogenous data ``X`` is currently not supported by the ``dirrec`` strategy,
+    and is silently ignored if passed.
     """
 
     _estimator_scitype = "tabular-regressor"
@@ -1422,6 +1545,22 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+
+    Notes
+    -----
+    Layout of the panel passed to ``estimator``:
+
+    Let ``w = window_length``, and let ``X`` have columns ``x1, ..., xk``.
+    ``estimator`` is passed a 3D ``numpy`` array of shape
+    ``(n_windows, 1 + k, w)``. The variable axis is ordered ``y, x1, ..., xk``,
+    and the time axis is in chronological order, oldest observation of the
+    window first.
+    Values of ``X`` at the time stamps being forecast are not used as features,
+    only lagged values inside the window are.
+
+    One clone of ``estimator`` is fitted per element of ``fh``, all of them
+    using the above layout. The fitted clones are available as the fitted
+    parameter ``estimators``.
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -1477,6 +1616,21 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+
+    Notes
+    -----
+    Layout of the panel passed to ``estimator``:
+
+    Let ``w = window_length``, and let ``X`` have columns ``x1, ..., xk``.
+    ``estimator`` is passed a 3D ``numpy`` array of shape
+    ``(n_windows, 1 + k, w)``. The variable axis is ordered ``y, x1, ..., xk``,
+    and the time axis is in chronological order, oldest observation of the
+    window first.
+    Values of ``X`` at the time stamps being forecast are not used as features,
+    only lagged values inside the window are.
+
+    The target passed to ``estimator`` is 2D, with one column per element of
+    ``fh``, in the order of ``fh``.
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -1495,6 +1649,23 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+
+    Notes
+    -----
+    Layout of the panel passed to ``estimator``:
+
+    Let ``w = window_length``, and let ``X`` have columns ``x1, ..., xk``.
+    ``estimator`` is passed a 3D ``numpy`` array of shape
+    ``(n_windows, 1 + k, w)``. The variable axis is ordered ``y, x1, ..., xk``,
+    and the time axis is in chronological order, oldest observation of the
+    window first.
+    Values of ``X`` at the time stamps being forecast are not used as features,
+    only lagged values inside the window are.
+
+    A single clone of ``estimator`` is fitted, always on a one step ahead
+    target, and applied iteratively in ``predict``. For horizons beyond the
+    first, previously predicted values of ``y`` enter the window in place of
+    observed values.
     """
 
     _tags = {
@@ -1560,6 +1731,22 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
+
+    Notes
+    -----
+    Layout of the panel passed to ``estimator``:
+
+    Let ``w = window_length``. One clone of ``estimator`` is fitted per element
+    of ``fh``, and the ``i``-th clone, counting from 1 in the order of ``fh``,
+    is passed a 3D ``numpy`` array of shape ``(n_windows, 1, w + i - 1)``.
+    The time axis holds the window in chronological order, oldest observation
+    first, followed by the values of ``y`` at the earlier horizons in the order
+    of ``fh``; these are observed values in ``fit`` and predicted values in
+    ``predict``. The fitted clones are available as the fitted parameter
+    ``estimators``.
+
+    Exogenous data ``X`` is currently not supported by the ``dirrec`` strategy,
+    and is silently ignored if passed.
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -1700,6 +1887,40 @@ def make_reduction(
     forecaster : an sktime forecaster object
         the reduction forecaster, wrapping ``estimator``
         class is determined by the ``strategy`` argument and type of ``estimator``.
+
+    See Also
+    --------
+    DirectTabularRegressionForecaster
+    RecursiveTabularRegressionForecaster
+    MultioutputTabularRegressionForecaster
+    DirRecTabularRegressionForecaster
+    DirectTimeSeriesRegressionForecaster
+    RecursiveTimeSeriesRegressionForecaster
+    MultioutputTimeSeriesRegressionForecaster
+    DirRecTimeSeriesRegressionForecaster
+
+    Notes
+    -----
+    The class of the constructed forecaster is determined by ``strategy`` and by
+    the type of ``estimator``. For a tabular regressor, ``strategy`` values
+    ``"direct"``, ``"recursive"``, ``"multioutput"``, ``"dirrec"`` construct,
+    respectively, ``DirectTabularRegressionForecaster``,
+    ``RecursiveTabularRegressionForecaster``,
+    ``MultioutputTabularRegressionForecaster``,
+    ``DirRecTabularRegressionForecaster``.
+    For a time series regressor, the same ``strategy`` values construct the
+    corresponding ``...TimeSeriesRegressionForecaster`` classes.
+
+    Which features are generated, and in which order they are passed to
+    ``estimator``, is documented in the class docstring of the constructed
+    forecaster, see the classes listed above. The constructed class can be
+    inspected via ``type(forecaster)``, or from the html representation of the
+    constructed forecaster.
+
+    That feature layout is what is needed to interpret feature indexed
+    attributes of the fitted ``estimator``, such as ``coef_`` or
+    ``feature_importances_`` of ``scikit-learn`` regressors, since these are
+    indexed by generated lag feature and not by the columns of ``y`` and ``X``.
 
     Examples
     --------
