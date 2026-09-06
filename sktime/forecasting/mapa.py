@@ -129,6 +129,16 @@ class MAPAForecaster(BaseForecaster):
         Only used if forecast_combine="weighted_mean".
         Must have same length as aggregation_levels.
         Weights are normalized to sum to 1.
+        Examples
+        --------
+    >>> import pandas as pd
+    >>> from sktime.forecasting.mapa import MAPAForecaster
+    >>> y = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+    ...               index=pd.period_range("2021-01", periods=12, freq="M"))
+    >>> forecaster = MAPAForecaster(aggregation_levels=[1, 2, 4], sp=4)
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    MAPAForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
