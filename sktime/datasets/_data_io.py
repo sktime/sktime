@@ -70,7 +70,14 @@ def _list_available_datasets(extract_path, origin_repo=None):
     return datasets
 
 
-def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
+def _cache_dataset(
+    url,
+    name,
+    extract_path=None,
+    repeats=1,
+    verbose=False,
+    download_entire_repo=False,
+):
     """Download and unzip datasets from multiple mirrors or fallback sources.
 
     If url is string, will attempt to download and unzip from url, to extract_path.
@@ -89,6 +96,10 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
         number of times to try downloading from each url
     verbose : bool, optional (default: False)
         whether to print progress
+    download_entire_repo : bool, optional (default=False)
+        If True, download the full HuggingFace dataset repository snapshot in a single
+        call instead of filtering for ``name``. This significantly reduces API calls
+        when downloading many datasets from the same repository.
 
     Returns
     -------
@@ -116,6 +127,7 @@ def _cache_dataset(url, name, extract_path=None, repeats=1, verbose=False):
                 hf_repo_name="sktime/tsc-datasets",
                 folder_name=name,
                 fallback_urls=[name_url],
+                download_entire_repo=download_entire_repo,
             )
 
             downloader.download(download_path=extract_path)
@@ -142,7 +154,13 @@ def _mkdir_if_not_exist(*path):
 
 
 def _load_dataset(
-    name, split, return_X_y, return_type=None, extract_path=None, y_dtype="str"
+    name,
+    split,
+    return_X_y,
+    return_type=None,
+    extract_path=None,
+    y_dtype="str",
+    download_entire_repo=False,
 ):
     """Load time series classification datasets (helper function).
 
@@ -172,6 +190,10 @@ def _load_dataset(
         defaults to sktime/datasets/local_data and downloads data there
     y_dtype : str, optional(default: 'str')
         dtype of the target variable
+    download_entire_repo : bool, optional (default=False)
+        If True, download a full HuggingFace snapshot for the repository that contains
+        ``name`` the first time any dataset is requested. Subsequent dataset loads use
+        the locally cached repository without extra API calls.
 
     Returns
     -------
@@ -216,7 +238,12 @@ def _load_dataset(
     # download the dataset from CLASSIF_URLS
     # will try multiple mirrors if necessary
     # if fails, will raise a RuntimeError
-    _cache_dataset(CLASSIF_URLS, name, extract_path=extract_path)
+    _cache_dataset(
+        CLASSIF_URLS,
+        name,
+        extract_path=extract_path,
+        download_entire_repo=download_entire_repo,
+    )
 
     # if we reach this, the data has been downloaded, now we can load it
     return _get_data_from(extract_path)
