@@ -208,6 +208,68 @@ class ExponentialSmoothing(_StatsModelsAdapter):
             minimize_kwargs=self.minimize_kwargs,
             use_brute=self.use_brute,
         )
+    
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters with new data.
+
+        Parameters
+        ----------
+        y : pd.Series
+            New time series to update with.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        update_params : bool, optional (default=True)
+            If True, refit model on updated data using existing
+            optimized parameters (no re-optimization).
+            If False, only update the cutoff index.
+
+        Returns
+        -------
+        self : reference to self.
+        """
+        from statsmodels.tsa.holtwinters import (
+            ExponentialSmoothing as _ExponentialSmoothing,
+        )
+
+        if update_params:
+            # get existing optimized parameters - avoids re-optimization
+            fitted_params = self._fitted_forecaster.params
+
+            # append new data to existing training data
+            import pandas as pd
+            y_updated = pd.concat([self._y, y])
+            y_updated = y_updated[~y_updated.index.duplicated(keep="last")]
+
+            # refit model on updated data using existing params
+            self._forecaster = _ExponentialSmoothing(
+                y_updated,
+                trend=self.trend,
+                damped_trend=self.damped_trend,
+                seasonal=self.seasonal,
+                seasonal_periods=self.sp,
+                use_boxcox=self.use_boxcox,
+                initialization_method=self.initialization_method,
+            )
+
+            # fit with existing smoothing params, no re-optimization
+            self._fitted_forecaster = self._forecaster.fit(
+                smoothing_level=fitted_params["smoothing_level"]
+                if not pd.isna(fitted_params["smoothing_level"])
+                else None,
+                smoothing_trend=fitted_params["smoothing_trend"]
+                if not pd.isna(fitted_params["smoothing_trend"])
+                else None,
+                smoothing_seasonal=fitted_params["smoothing_seasonal"]
+                if not pd.isna(fitted_params["smoothing_seasonal"])
+                else None,
+                damping_trend=fitted_params["damping_trend"]
+                if not pd.isna(fitted_params["damping_trend"])
+                else None,
+                optimized=False,
+                remove_bias=self.remove_bias,
+            )
+
+        return self
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
