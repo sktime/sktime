@@ -7,8 +7,11 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+from scipy.stats import gmean
+
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
+    EPS,
     geometric_mean_squared_error,
 )
 
@@ -131,6 +134,46 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
         super().__init__(
             multioutput=multioutput, multilevel=multilevel, by_index=by_index
         )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+        """
+        multioutput = self.multioutput
+
+        errors = y_true - y_pred
+        errors = errors.where(errors != 0.0, EPS)
+
+        raw_values = errors ** 2
+
+        n = raw_values.shape[0]
+
+        gmse = gmean(raw_values, axis=0)
+
+        gmse_jackknife = (raw_values ** (-1 / n) * gmse) ** (1 + 1 / (n - 1))
+        
+        if self.square_root:
+            rgmse = gmse ** 0.5
+            rgmse_jackknife = gmse_jackknife ** 0.5
+            pseudo_values = n * rgmse - (n - 1) * rgmse_jackknife
+        else:
+            pseudo_values = n * gmse - (n - 1) * gmse_jackknife
+
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+        return self._handle_multioutput(pseudo_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
