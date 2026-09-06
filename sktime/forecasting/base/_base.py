@@ -691,6 +691,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
 
+        Availability:
+            Only available if estimator tag `capability:pred_quantiles` is True.
+            Otherwise raises NotImplementedError.
+
+        
         If ``alpha`` is iterable, multiple quantiles will be calculated.
 
         State required:
@@ -785,6 +790,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
     def predict_interval(self, fh=None, X=None, coverage=0.90):
         """Compute/return prediction interval forecasts.
+
+        Availability:
+            Only available if estimator tag `capability:pred_int` is True.
+            Otherwise raises NotImplementedError.
+
+        
 
         If ``coverage`` is iterable, multiple intervals will be calculated.
 
@@ -881,6 +892,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
     def predict_var(self, fh=None, X=None, cov=False):
         """Compute/return variance forecasts.
 
+        Availability:
+            Only available if estimator tag `capability:pred_var` is True.
+            Otherwise raises NotImplementedError.
+
+        
+
         State required:
             Requires state to be "fitted", i.e., ``self.is_fitted=True``.
 
@@ -964,6 +981,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
     def predict_proba(self, fh=None, X=None, marginal=True):
         """Compute/return fully probabilistic forecasts.
+        
+        Availability:
+            Only available if estimator tag `capability:pred_proba` is True.
+            Otherwise raises NotImplementedError.
+
+        
 
         Note:
 
