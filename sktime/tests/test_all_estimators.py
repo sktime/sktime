@@ -583,36 +583,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
 
         run_doctest(object_class, name=f"class {object_class.__name__}")
 
-    def test_create_test_instance(self, object_class):
-        """Check create_test_instance logic and basic constructor functionality.
-
-        create_test_instance and create_test_instances_and_names are the
-        key methods used to create test instances in testing.
-        If this test does not pass, validity of the other tests cannot be guaranteed.
-
-        Also tests inheritance and super call logic in the constructor.
-
-        Tests that:
-        * create_test_instance results in an instance of object_class
-        * __init__ calls super.__init__
-        * _tags_dynamic attribute for tag inspection is present after construction
-        """
-        estimator = object_class.create_test_instance()
-
-        # Check that init does not construct object of other class than itself
-        assert isinstance(estimator, object_class), (
-            "object returned by create_test_instance must be an instance of the class, "
-            f"found {type(estimator)}"
-        )
-
-        msg = (
-            f"{object_class.__name__}.__init__ should call "
-            f"super({object_class.__name__}, self).__init__, "
-            "but that does not seem to be the case. Please ensure to call the "
-            f"parent class's constructor in {object_class.__name__}.__init__"
-        )
-        assert hasattr(estimator, "_tags_dynamic"), msg
-
     def test_get_test_params(self, object_class):
         """Check that get_test_params returns valid parameter sets."""
         param_list = object_class.get_test_params()
@@ -719,41 +689,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
         #     f"parameters are not tested: {params_not_tested}"
         # )
 
-    def test_create_test_instances_and_names(self, object_class):
-        """Check that create_test_instances_and_names works.
-
-        create_test_instance and create_test_instances_and_names are the key methods
-        used to create test instances in testing. If this test does not pass, validity
-        of the other tests cannot be guaranteed.
-
-        Tests expected function signature of create_test_instances_and_names.
-        """
-        estimators, names = object_class.create_test_instances_and_names()
-
-        assert isinstance(estimators, list), (
-            "first return of create_test_instances_and_names must be a list, "
-            f"found {type(estimators)}"
-        )
-        assert isinstance(names, list), (
-            "second return of create_test_instances_and_names must be a list, "
-            f"found {type(names)}"
-        )
-
-        assert np.all([isinstance(est, object_class) for est in estimators]), (
-            "list elements of first return returned by create_test_instances_and_names "
-            "all must be an instance of the class"
-        )
-
-        assert np.all([isinstance(name, str) for name in names]), (
-            "list elements of second return returned by create_test_instances_and_names"
-            " all must be strings"
-        )
-
-        assert len(estimators) == len(names), (
-            "the two lists returned by create_test_instances_and_names must have "
-            "equal length"
-        )
-
     def test_estimator_tags(self, object_class):
         """Check conventions on estimator tags."""
         Estimator = object_class
@@ -835,49 +770,11 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
         if hasattr(estimator, "predict_proba"):
             assert hasattr(estimator, "predict")
 
-    def test_no_cross_test_side_effects_part1(self, object_instance):
-        """Test that there are no side effects across tests, through estimator state."""
-        object_instance.test__attr = 42
-
-    def test_no_cross_test_side_effects_part2(self, object_instance):
-        """Test that there are no side effects across tests, through estimator state."""
-        assert not hasattr(object_instance, "test__attr")
-
     @pytest.mark.parametrize("a", [True, 42])
     def test_no_between_test_case_side_effects(self, object_instance, scenario, a):
         """Test that there are no side effects across instances of the same test."""
         assert not hasattr(object_instance, "test__attr")
         object_instance.test__attr = 42
-
-    def test_get_params(self, object_instance):
-        """Check that get_params works correctly."""
-        estimator = object_instance
-        params = estimator.get_params()
-        assert isinstance(params, dict)
-
-        e = estimator.clone()
-
-        shallow_params = e.get_params(deep=False)
-        deep_params = e.get_params(deep=True)
-
-        assert all(item in deep_params.items() for item in shallow_params.items())
-
-    def test_set_params(self, object_instance):
-        """Check that set_params works correctly."""
-        estimator = object_instance
-        params = estimator.get_params()
-
-        msg = f"set_params of {type(estimator).__name__} does not return self"
-        assert estimator.set_params(**params) is estimator, msg
-
-        is_equal, equals_msg = deep_equals(
-            estimator.get_params(), params, return_msg=True
-        )
-        msg = (
-            f"get_params result of {type(estimator).__name__} (x) does not match "
-            f"what was passed to set_params (y). Reason for discrepancy: {equals_msg}"
-        )
-        assert is_equal, msg
 
     def test_set_params_sklearn(self, object_class):
         """Check that set_params works correctly, mirrors sklearn check_set_params.
@@ -920,34 +817,11 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
             )
             assert is_equal, msg
 
-    def test_clone(self, object_instance):
-        """Check that clone method does not raise exceptions and results in a clone.
-
-        A clone of an object x is an object that:
-        * has same class and parameters as x
-        * is not identical with x
-        * is unfitted (even if x was fitted)
-        """
-        est_clone = object_instance.clone()
-        assert isinstance(est_clone, type(object_instance))
-        assert est_clone is not object_instance
-        if hasattr(est_clone, "is_fitted"):
-            assert not est_clone.is_fitted
-
     def test_deepcopy(self, object_instance):
         """Check that an unfitted estimator instance can be deepcopied."""
         est_copy = deepcopy(object_instance)
         assert isinstance(est_copy, type(object_instance))
         assert est_copy is not object_instance
-
-    def test_repr(self, object_instance):
-        """Check that __repr__ call to instance does not raise exceptions."""
-        estimator = object_instance
-        repr(estimator)
-
-    def test_repr_html(self, object_instance):
-        """Check that _repr_html_ call to instance does not raise exceptions."""
-        object_instance._repr_html_()
 
     def test_constructor(self, object_class):
         """Check that the constructor has sklearn compatible signature and behaviour.
