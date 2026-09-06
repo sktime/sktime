@@ -14,7 +14,7 @@ a la "Advances in Financial Machine Learning" by M. Prado.
 Fractional differentiation processes time-series to a stationary one while preserving memory in the original time-series.
 Fracdiff features super-fast computation and scikit-learn compatible API.
 
-![spx](https://raw.githubusercontent.com/fracdiff/fracdiff/main/examples/fig/spx.png)
+![spx](./fig/spx.png)
 
 ## What is fractional differentiation?
 
@@ -115,7 +115,7 @@ X = f.fit_transform(X)
 
 For example, 0.5th differentiation of S&P 500 historical price looks like this:
 
-![spx](https://raw.githubusercontent.com/fracdiff/fracdiff/main/examples/fig/spx.png)
+![spx](./fig/spx.png)
 
 [`Fracdiff`](https://fracdiff.github.io/fracdiff/#id1) is compatible with scikit-learn API.
 One can incorporate it into a pipeline.
@@ -154,7 +154,7 @@ f.d_
 
 The result for Nikkei 225 index historical price looks like this:
 
-![nky](https://raw.githubusercontent.com/fracdiff/fracdiff/main/examples/fig/nky.png)
+![nky](./fig/nky.png)
 
 
 ### PyTorch API
