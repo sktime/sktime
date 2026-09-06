@@ -43,7 +43,7 @@ class FCNClassifierTorch(BaseDeepClassifierPytorch):
         The number of epochs to train the model.
     batch_size : int, default = 16
         The size of each mini-batch during training.
-    optimizer : case insensitive str or None or an instance of optimizers
+    optimizer : case insensitive str or None, or a class or instance of optimizers
         defined in torch.optim, default = "Adam"
         The optimizer to use for training the model. List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms

@@ -154,7 +154,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "ShapeletTransformClassifier",
         "SlidingWindowSegmenter",
         "TEASER",
-        "TSFreshClassifier",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
@@ -165,7 +164,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
         "HFTransformersForecaster",
-        "HolidayFeatures",
         "ParamFitterPipeline",
         "PluginParamsForecaster",
         "PluginParamsTransformer",
@@ -217,7 +215,6 @@ EXCLUDE_SOFT_DEPS = [
     "FittedParamExtractor",
     "ForecastingOptunaSearchCV",
     "HFTransformersForecaster",
-    "HolidayFeatures",
     "ParamFitterPipeline",
     "PluginParamsForecaster",
     "PluginParamsTransformer",
