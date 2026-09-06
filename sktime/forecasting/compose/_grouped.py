@@ -1,6 +1,8 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositors for performing forecasting by group."""
 
+import types
+
 import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
@@ -361,10 +363,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
         # Finally, dynamically adding implementation of probabilistic
         # functions depending on the tags set.
+        # Use types.MethodType to bind the module-level functions as bound
+        # methods on this instance. Without MethodType, assigning raw functions
+        # to instance.__dict__ bypasses Python's descriptor protocol, causing
+        # them to be called without the implicit `self` argument (TypeError).
         if self.get_tags()["capability:pred_int"]:
-            self._predict_interval = _predict_interval
-            self._predict_var = _predict_var
-            self._predict_proba = _predict_proba
+            self._predict_interval = types.MethodType(_predict_interval, self)
+            self._predict_var = types.MethodType(_predict_var, self)
+            self._predict_proba = types.MethodType(_predict_proba, self)
 
     @property
     def _steps(self):
