@@ -1,0 +1,23 @@
+name: Check Contributors
+
+on:
+  schedule:
+  - cron: '0 0 * * 0'  # Sun 00:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-contributors:
+    if: ${{ github.repository == 'sktime/sktime' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Run check_contributors script
+        run: python build_tools/check_contributors.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
