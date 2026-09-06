@@ -241,7 +241,7 @@ class SubLOF(BaseDetector):
             if len(X_subset) == 0:
                 continue
 
-            y_subset = model.predict(X_subset.iloc[:, [0]])
+            y_subset = model.predict(X_subset.drop(columns=["__id"]))
             anomaly_indexes = np.where(y_subset == -1)[0] + X_subset["__id"].iloc[0]
             y_all.append(pd.Series(anomaly_indexes))
 
