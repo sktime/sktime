@@ -742,6 +742,14 @@ Domain agnostic foundation models
 
     TimerS1Forecaster
 
+.. currentmodule:: sktime.forecasting.tafsut
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TafsutForecaster
+
 .. currentmodule:: sktime.forecasting.timesfm
 
 .. autosummary::
