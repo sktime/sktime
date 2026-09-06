@@ -90,9 +90,10 @@ class NaiveForecaster(_BaseWindowForecaster):
         Seasonal periodicity to use in the seasonal forecasting. None=1.
 
     window_length : int or None, default=None
-        Window length to use in the ``mean`` strategy. If None, entire training
-            series will be used.
-
+    Window length to use in the ``mean`` and ``drift`` strategies.
+    If None, the entire training series will be used.
+    Ignored for the ``last`` strategy.
+    
     References
     ----------
     .. [1] Hyndman, R.J., & Athanasopoulos, G. (2021) Forecasting:
