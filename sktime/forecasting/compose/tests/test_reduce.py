@@ -887,3 +887,28 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+def test_warn_missing_exog_columns_in_reduction():
+    """Warn when exogenous columns used at fit are missing at predict."""
+
+    idx = pd.date_range("2020-01-01", periods=10, freq="D")
+    y = pd.Series(range(10), index=idx)
+
+    # Fit-time X has column 'A'
+    X_train = pd.DataFrame({"A": [1] * 10}, index=idx)
+
+    # Predict-time X missing column 'A'
+    idx_test = pd.date_range("2020-01-11", periods=3, freq="D")
+    X_test = pd.DataFrame(index=idx_test)
+
+    forecaster = make_reduction(
+        LinearRegression(),
+        strategy="recursive",
+        window_length=3,
+    )
+
+    forecaster.fit(y, X_train)
+
+    with pytest.warns(UserWarning, match="Exogenous columns missing"):
+        forecaster.predict(fh=[1, 2, 3], X=X_test)
