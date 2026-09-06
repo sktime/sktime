@@ -229,8 +229,12 @@ class BaseGridSearch(_DelegatedForecaster):
         results = pd.DataFrame(results)
 
         # Rank results, according to whether greater is better for the given scoring.
-        results[f"rank_{scoring_name}"] = results.loc[:, f"mean_{scoring_name}"].rank(
-            ascending=scoring.get_tag("lower_is_better")
+        results = results.assign(
+            **{
+                f"rank_{scoring_name}": results[f"mean_{scoring_name}"].rank(
+                    ascending=scoring.get_tag("lower_is_better")
+                )
+            }
         )
 
         self.cv_results_ = results
