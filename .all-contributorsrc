@@ -4150,6 +4150,16 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "MaxFreedomPollard",
+      "name": "Max Freedom Pollard",
+      "avatar_url": "https://avatars.githubusercontent.com/u/272618364?v=4",
+      "profile": "https://github.com/MaxFreedomPollard",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }

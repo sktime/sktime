@@ -592,3 +592,36 @@ def test_msle_no_stdout_on_index_mismatch():
     with contextlib.redirect_stdout(buf):
         mean_squared_log_error(y_true, y_pred)
     assert buf.getvalue() == ""
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_mdape_horizon_weight_denominator():
+    """median_absolute_percentage_error must use the same denominator when weighted.
+
+    The horizon_weight branch passed y_pred and y_true to _percentage_error in
+    swapped positional order, so the percentage error was taken relative to
+    y_pred when relative_to was "y_true" and vice versa. Uniform weights then
+    changed the reported value.
+    """
+    from sktime.performance_metrics.forecasting._functions import (
+        median_absolute_percentage_error,
+    )
+
+    # every prediction is twice the true value, so the error is 1.0 relative to
+    # y_true and 0.5 relative to y_pred, at every time point
+    y_true = np.array([1.0, 2.0, 4.0, 8.0])
+    y_pred = np.array([2.0, 4.0, 8.0, 16.0])
+    uniform = np.ones(len(y_true))
+
+    for relative_to, expected in [("y_true", 1.0), ("y_pred", 0.5)]:
+        unweighted = median_absolute_percentage_error(
+            y_true, y_pred, relative_to=relative_to
+        )
+        weighted = median_absolute_percentage_error(
+            y_true, y_pred, relative_to=relative_to, horizon_weight=uniform
+        )
+        assert np.allclose(unweighted, expected)
+        assert np.allclose(weighted, expected)
