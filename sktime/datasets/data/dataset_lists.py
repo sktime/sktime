@@ -7,4 +7,5 @@ classification_data = [
     "ItalyPowerDemand",
     "OSULeaf",
     "PLAID",
+    "NAB",
 ]
