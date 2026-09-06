@@ -275,7 +275,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         # --------------
         "authors": "felipeangelimvieira",
         "maintainers": "felipeangelimvieira",
-        "python_dependencies": "prophetverse",
+        "python_dependencies": "prophetverse>=0.8.0,<0.11.0",	
         # estimator type
         # --------------
         "capability:multivariate": False,
