@@ -315,11 +315,15 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         # construct with name/estimator tuples
         params = [{"transformers": [("foo", t1), ("bar", t2)], "param_est": p0}]
 
-        # test case 2 depends on statsmodels, requires statsmodels
+        # construct without names -- the same branch the statsmodels case
+        # covers, but through FixedParams so it holds in every environment
+        params = params + [{"transformers": [t1, t2], "param_est": p0}]
+
+        # test case 3 depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
             p = SeasonalityACF()
 
-            # construct without names
+            # construct without names, against a "real" param est
             params = params + [{"transformers": [t1, t2], "param_est": p}]
 
         return params
