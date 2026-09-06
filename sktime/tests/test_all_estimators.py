@@ -689,8 +689,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
         #     f"parameters are not tested: {params_not_tested}"
         # )
 
-    def test_estimator_tags(self, object_class):
-        """Check conventions on estimator tags."""
+    def test_object_tags(self, object_class):
+        """Check conventions on object tags."""
         Estimator = object_class
 
         assert hasattr(Estimator, "get_class_tags")
@@ -921,8 +921,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
         "univariate-metric",
     ]
 
-    def test_valid_estimator_class_tags(self, object_class):
-        """Check that Estimator class tags are in valid_tags."""
+    def test_valid_object_class_tags(self, object_class):
+        """Check that Object class tags are in valid_tags."""
         for tag in object_class.get_class_tags().keys():
             msg = (
                 f"{object_class} has invalid tag: {tag!r} - "
@@ -953,8 +953,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
                     msg += "."
                 raise AssertionError(msg)
 
-    def test_valid_estimator_tags(self, object_instance):
-        """Check that Estimator tags are in valid_tags."""
+    def test_valid_object_tags(self, object_instance):
+        """Check that Object tags are in valid_tags."""
         for tag in object_instance.get_tags().keys():
             msg = (
                 f"{object_instance} has invalid tag: {tag!r} - "
