@@ -27,7 +27,7 @@ Therefore, a key set of common concepts and terminology is important.
 Data Types
 ~~~~~~~~~~
 
-``sktime`` is designed for time series machine learning. Time series data refers to data where the variables are ordered over time or
+``sktime`` is designed for time series machine learning. Time series data refers to data in which the variables are ordered over time or
 an index indicating the position of an observation in the sequence of values.
 
 In ``sktime`` time series data can refer to data that is univariate, multivariate or panel, with the difference relating to the number and interrelation
