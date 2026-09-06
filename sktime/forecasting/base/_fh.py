@@ -422,6 +422,9 @@ class ForecastingHorizon:
         else:
             freq_from_self = None
 
+        if freq_from_obj == "ME":
+            freq_from_obj = "M"
+
         if freq_from_self is not None and freq_from_obj is not None:
             with _suppress_pd22_warning():
                 freqs_unequal = freq_from_self != freq_from_obj
