@@ -55,12 +55,12 @@ class VECM(_StatsModelsAdapter):
         Season of the first observation.
     method : str {"ml"}, default: "ml"
         Estimation method to use. "ml" stands for Maximum Likelihood.
-    exog_coint : optional, a scalar (float), 1D ndarray of size nobs,
-        2D ndarray/pd.DataFrame of size (any, neqs)
-        Deterministic terms inside the cointegration relation.
-    exog_coint_fc : optional, a scalar (float), 1D ndarray of size nobs,
-        2D ndarray/pd.DataFrame of size (any, neqs)
-        Forecasted value of exog_coint
+
+    Notes
+    -----
+    Deterministic terms inside the cointegration relation (exog_coint) should be
+    passed to the ``fit()`` method, not the constructor. Forecasted values for these
+    terms (exog_coint_fc) should be passed to the ``predict()`` method.
 
     Examples
     --------
@@ -119,8 +119,6 @@ class VECM(_StatsModelsAdapter):
         seasons=0,
         first_season=0,
         method="ml",
-        exog_coint=None,
-        exog_coint_fc=None,
     ):
         self.dates = dates
         self.freq = freq
@@ -131,10 +129,85 @@ class VECM(_StatsModelsAdapter):
         self.seasons = seasons
         self.first_season = first_season
         self.method = method
-        self.exog_coint = exog_coint
-        self.exog_coint_fc = exog_coint_fc
+
+        # Initialize exog_coint and exog_coint_fc to None
+        # These should be passed to fit() and predict() respectively
+        self._exog_coint = None
+        self._exog_coint_fc = None
 
         super().__init__()
+
+    def fit(self, y, X=None, fh=None, exog_coint=None):
+        """Fit forecaster to training data.
+
+        Parameters
+        ----------
+        y : time series in ``sktime`` compatible data container format.
+            Time series to which to fit the forecaster.
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
+        X : time series in ``sktime`` compatible format, optional (default=None).
+            Exogeneous time series to fit the model to.
+        exog_coint : optional, a scalar (float), 1D ndarray of size nobs,
+            2D ndarray/pd.DataFrame of size (any, neqs)
+            Deterministic terms inside the cointegration relation.
+
+        Returns
+        -------
+        self : Reference to self.
+        """
+        # Store exog_coint for use in _fit
+        self._exog_coint = exog_coint
+        # Call parent's fit method
+        return super().fit(y=y, X=X, fh=fh)
+
+    def predict(self, fh=None, X=None, exog_coint_fc=None):
+        """Forecast time series at future horizon.
+
+        Parameters
+        ----------
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+        exog_coint_fc : optional, a scalar (float), 1D ndarray of size nobs,
+            2D ndarray/pd.DataFrame of size (any, neqs)
+            Forecasted value of exog_coint
+
+        Returns
+        -------
+        y_pred : time series in sktime compatible data container format
+            Point predictions
+        """
+        # Store exog_coint_fc for use in _predict
+        self._exog_coint_fc = exog_coint_fc
+        # Call parent's predict method
+        return super().predict(fh=fh, X=X)
+
+    def predict_interval(self, fh=None, X=None, coverage=None, exog_coint_fc=None):
+        """Compute/return prediction intervals for a forecast.
+
+        Parameters
+        ----------
+        fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
+            The forecasting horizon encoding the time stamps to forecast at.
+        X : time series in ``sktime`` compatible format, optional (default=None)
+            Exogeneous time series to use in prediction.
+        coverage : float or list of float, default=0.90
+            Coverage(s) for which to compute prediction intervals.
+        exog_coint_fc : optional, a scalar (float), 1D ndarray of size nobs,
+            2D ndarray/pd.DataFrame of size (any, neqs)
+            Forecasted value of exog_coint
+
+        Returns
+        -------
+        pred_int : pd.DataFrame
+            Prediction intervals.
+        """
+        # Store exog_coint_fc for use in _predict_interval
+        self._exog_coint_fc = exog_coint_fc
+        # Call parent's predict_interval method
+        return super().predict_interval(fh=fh, X=X, coverage=coverage)
 
     def _fit(self, y, fh=None, X=None):
         """Fit forecaster to training data.
@@ -166,7 +239,7 @@ class VECM(_StatsModelsAdapter):
         self._forecaster = _VECM(
             endog=y,
             exog=X,
-            exog_coint=self.exog_coint,
+            exog_coint=self._exog_coint,
             dates=self.dates,
             freq=self.freq,
             missing=self.missing,
@@ -209,7 +282,7 @@ class VECM(_StatsModelsAdapter):
             y_pred_outsample = self._fitted_forecaster.predict(
                 steps=fh_int[-1],
                 exog_fc=exog_fc,
-                exog_coint_fc=self.exog_coint_fc,
+                exog_coint_fc=self._exog_coint_fc,
             )
 
         # in-sample prediction by means of residuals
@@ -286,7 +359,7 @@ class VECM(_StatsModelsAdapter):
             _, y_lower, y_upper = self._fitted_forecaster.predict(
                 steps=fh_int[-1],
                 exog_fc=exog_fc,
-                exog_coint_fc=self.exog_coint_fc,
+                exog_coint_fc=self._exog_coint_fc,
                 alpha=alpha,
             )
             values = []
