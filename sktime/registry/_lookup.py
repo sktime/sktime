@@ -52,19 +52,19 @@ def all_estimators(
     ----------
     estimator_types: str, list of str, optional (default=None)
         Which kind of estimators should be returned.
-        if None, no filter is applied and all estimators are returned.
-        if str or list of str, strings define scitypes specified in search
-        only estimators that are of (at least) one of the scitypes are returned
-        possible str values are entries of registry.BASE_CLASS_REGISTER (first col)
-        for instance 'classifier', 'regressor', 'transformer', 'forecaster'
+
+        * if None, no filter is applied and all estimators are returned.
+        * if str or list of str, strings define scitypes specified in search,
+          only estimators that are of (at least) one of the scitypes are returned.
+          Possible str values are entries of registry.BASE_CLASS_REGISTER (first col).
+          for instance 'classifier', 'regressor', 'transformer', 'forecaster'
 
     return_names: bool, optional (default=True)
 
-        if True, estimator class name is included in the ``all_estimators``
-        return in the order: name, estimator class, optional tags, either as
-        a tuple or as pandas.DataFrame columns
-
-        if False, estimator class name is removed from the ``all_estimators`` return.
+        * if True, estimator class name is included in the ``all_estimators``
+          return in the order: name, estimator class, optional tags, either as
+          a tuple or as pandas.DataFrame columns
+        * if False, estimator class name is removed from the ``all_estimators`` return.
 
     filter_tags: dict of (str or list of str or re.Pattern), optional (default=None)
         For a list of valid tag strings, use the registry.all_tags utility.
@@ -104,11 +104,10 @@ def all_estimators(
 
     as_dataframe: bool, optional (default=False)
 
-        True: ``all_estimators`` will return a ``pandas.DataFrame`` with named
-        columns for all of the attributes being returned.
-
-        False: ``all_estimators`` will return a list (either a list of
-        estimators or a list of tuples, see Returns)
+        * True: ``all_estimators`` will return a ``pandas.DataFrame`` with named
+          columns for all of the attributes being returned.
+        * False: ``all_estimators`` will return a list (either a list of
+          estimators or a list of tuples, see Returns)
 
     return_tags: str or list of str, optional (default=None)
         Names of tags to fetch and return each estimator's value of.
@@ -126,7 +125,7 @@ def all_estimators(
 
         1. list of estimators, if ``return_names=False``, and ``return_tags`` is None
 
-        2. list of tuples (optional estimator name, class, ~ptional estimator
+        2. list of tuples (optional estimator name, class, optional estimator
         tags), if ``return_names=True`` or ``return_tags`` is not ``None``.
 
         3. ``pandas.DataFrame`` if ``as_dataframe = True``
