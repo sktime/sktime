@@ -3957,6 +3957,37 @@ class info__source(_BaseTag):
     }
 
 
+class X_y_must_have_same_index(_BaseTag):
+    """Property: X and y must have compatible time indices.
+
+    - String name: ``"X-y-must-have-same-index"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``True`` for forecasters, ``False`` for transformers
+
+    This tag applies to forecasters and transformers.
+
+    For forecasters, if the tag is ``True``, the time index of ``X`` must
+    contain the time index of ``y`` during ``fit`` and ``update``. During
+    prediction, the time index of ``X`` must contain the indices specified
+    by ``fh``.
+
+    For transformers, if the tag is ``True``, the transformer requires
+    ``X`` and ``y`` to have compatible time indices. If the tag is ``False``,
+    the transformer can handle different ``X`` and ``y`` indices.
+    """
+
+    _tags = {
+        "tag_name": "X-y-must-have-same-index",
+        "parent_type": ["forecaster", "regressor", "transformer"],
+        "tag_type": "bool",
+        "short_descr": """do X/y in fit/update and X/fh in predict
+                        have to be same indices?""",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
     (
         "X-y-must-have-same-index",

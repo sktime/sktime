@@ -7,6 +7,11 @@ import pytest
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.dictionary_based._paa import PAAlegacy as PAA
 
+# Check that exception is raised for bad num intervals.
+# input types - string, float, negative int, negative float, empty dict
+# and an int that is larger than the time series length.
+# correct input is meant to be a positive integer of 1 or more.
+
 
 @pytest.mark.skipif(
     not run_test_for_class(PAA),
@@ -75,6 +80,7 @@ def test_output_dimensions():
     p = PAA(num_intervals=5).fit(X)
     res = p.transform(X)
 
+    # get the dimension of the generated dataframe.
     res_array = np.asarray(res)
 
     assert res_array.shape == (5, 5)

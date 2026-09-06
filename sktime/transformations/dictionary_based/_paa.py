@@ -11,22 +11,33 @@ __author__ = ["MatthewMiddlehurst"]
 class PAAlegacy(BaseTransformer):
     """Piecewise Aggregate Approximation Transformer (PAA).
 
-    Piecewise Aggregate Approximation reduces the number of time points
-    in a time series by replacing each interval with its mean value.
+    (PAA) Piecewise Aggregate Approximation Transformer, as described in
+    Eamonn Keogh, Kaushik Chakrabarti, Michael Pazzani, and Sharad Mehrotra.
+    Dimensionality reduction for fast similarity search in large time series
+    databases.
+    Knowledge and information Systems, 3(3), 263-286, 2001.
+    For each series reduce the dimensionality to num_intervals, where each
+    value is the mean of values in
+    the interval.
+
+    TO DO: pythonise it to make it more efficient. Maybe check vs this version
+            http://vigne.sh/posts/piecewise-aggregate-approx/
+    Could have: Tune the interval size in fit somehow?
 
     Parameters
     ----------
-    num_intervals : int, default=8
-        Number of intervals in the transformed time series.
+    num_intervals   : int, dimension of the transformed data (default 8)
     """
 
     _tags = {
         "authors": ["MatthewMiddlehurst"],
         "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
-        "scitype:instancewise": True,
-        "X_inner_mtype": "pd.DataFrame",
-        "y_inner_mtype": "None",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": True,  # is this an instance-wise transform?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "capability:categorical_in_X": False,
     }
 
@@ -38,6 +49,8 @@ class PAAlegacy(BaseTransformer):
         """Set self.num_intervals to n."""
         self.num_intervals = n
 
+    # todo: looks like this just loops over series instances
+    # so should be refactored to work on Series directly
     def _transform(self, X, y=None):
         """Transform data using Piecewise Aggregate Approximation.
 
@@ -48,16 +61,20 @@ class PAAlegacy(BaseTransformer):
 
         Returns
         -------
+        dims: Pandas data frame with first dimension in column zero,
+              second in column one etc.
         pd.DataFrame
             Transformed time series with ``num_intervals`` rows and
             the same number of columns as ``X``.
         """
+        # Get information about the dataframe
         num_timepoints = X.shape[0]
 
+        # Check the parameters are appropriate
         self._check_parameters(num_timepoints)
 
         transformed = []
-
+        # On each dimension, perform PAA
         for column in X.columns:
             values = X[column].to_numpy()
 
@@ -65,6 +82,7 @@ class PAAlegacy(BaseTransformer):
 
             transformed.append(paa_values)
 
+        # Combine the dimensions together
         result = np.column_stack(transformed)
 
         return pd.DataFrame(
@@ -106,7 +124,7 @@ class PAAlegacy(BaseTransformer):
                 # Amount of data point j that belongs to this interval
                 overlap_start = max(start, j)
                 overlap_end = min(end, j + 1)
-
+                # if the last frame was lost due to double imprecision
                 overlap = max(0.0, overlap_end - overlap_start)
 
                 total += series[j] * overlap
@@ -117,6 +135,14 @@ class PAAlegacy(BaseTransformer):
 
     def _check_parameters(self, num_atts):
         """Check parameters of PAA.
+
+        Function for checking the values of parameters inserted into PAA.
+        For example, the number of subsequences cannot be larger than the
+        time series length.
+
+        Throws
+        ------
+        ValueError or TypeError if a parameters input is invalid.
 
         Parameters
         ----------
