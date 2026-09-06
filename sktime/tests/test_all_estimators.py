@@ -20,6 +20,7 @@ import pandas as pd
 import pytest
 from skbase.testing import BaseFixtureGenerator as _BaseFixtureGenerator
 from skbase.testing import QuickTester as _QuickTester
+from skbase.testing import TestAllObjects as _TestAllObjects
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.base import BaseEstimator, BaseObject, load
@@ -563,7 +564,7 @@ class QuickTester(_QuickTester):
         return generator_dict
 
 
-class TestAllObjects(BaseFixtureGenerator, QuickTester):
+class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
     """Package level tests for all sktime objects."""
 
     object_type_filter = "object"
