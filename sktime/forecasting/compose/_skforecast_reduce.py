@@ -189,9 +189,9 @@ class SkforecastAutoreg(BaseForecaster):
 
     def _create_forecaster(self: "SkforecastAutoreg"):
         """Create ``skforecast.ForecasterAutoreg.ForecasterAutoreg`` model."""
-        from skforecast.ForecasterAutoreg import ForecasterAutoreg
+        from skforecast.recursive import ForecasterRecursive
 
-        return ForecasterAutoreg(
+        return ForecasterRecursive(
             self._regressor,
             self.lags,
             transformer_y=self._transformer_y,
