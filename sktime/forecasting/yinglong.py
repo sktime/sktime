@@ -34,7 +34,7 @@ class YingLongForecaster(BaseForecaster):
 
     device : str, default="cuda"
         Device used for model inference, e.g. ``"cpu"``, ``"cuda"``,
-        or ``"cuda:0``.
+        or ``"cuda:0"``.
 
     torch_dtype : str or torch.dtype, default="bfloat16"
         Data type used when loading the pretrained model.
@@ -52,6 +52,11 @@ class YingLongForecaster(BaseForecaster):
         Additional keyword arguments passed to
         ``AutoModelForCausalLM.from_pretrained``.
 
+    ignore_deps : bool, default=False
+        Whether to clear the estimator's soft dependency tags. This is
+        primarily useful for testing without installing the optional
+        YingLong dependencies.
+
     Notes
     -----
     YingLong expects the input context length to be compatible with the
@@ -61,6 +66,15 @@ class YingLongForecaster(BaseForecaster):
     YingLong is a zero-shot model and does not perform task-specific
     parameter fitting. ``fit`` stores the observed series and loads the
     pretrained model; ``predict`` performs autoregressive generation.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.yinglong import YingLongForecaster
+    >>> y = load_airline()
+    >>> forecaster = YingLongForecaster()  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
     References
     ----------

@@ -1,4 +1,3 @@
-
 .. _forecasting_ref:
 
 Forecasting
@@ -842,6 +841,14 @@ Domain agnostic foundation models
     :template: class.rst
 
     Toto2Forecaster
+
+.. currentmodule:: sktime.forecasting.yinglong
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    YingLongForecaster
 
 
 Multimodal foundation models
