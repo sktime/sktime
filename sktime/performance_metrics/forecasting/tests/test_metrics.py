@@ -592,3 +592,64 @@ def test_msle_no_stdout_on_index_mismatch():
     with contextlib.redirect_stdout(buf):
         mean_squared_log_error(y_true, y_pred)
     assert buf.getvalue() == ""
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_mase_applies_sample_weight_once():
+    """MASE must apply sample_weight once, not twice.
+
+    _evaluate_by_index called _get_weighted_df on the same frame both before and
+    after dividing by the naive error. _get_weighted_df is df.mul(sample_weight,
+    axis=0) with no idempotency guard, so the weights were squared.
+
+    The naive denominator is computed from y_train and does not depend on the
+    weights, so weighted MASE must equal weighted MAE divided by that same
+    constant denominator. That invariant is the reference used here.
+    """
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsoluteScaledError,
+    )
+
+    y_true = pd.DataFrame({"c": [3.0, 5.0, 4.0, 6.0, 5.0]})
+    y_pred = pd.DataFrame({"c": [2.8, 5.5, 4.2, 5.4, 5.3]})
+    y_train = pd.DataFrame({"c": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]})
+
+    naive_error = (y_train[1:] - y_train[:-1].values).abs().mean().iloc[0]
+
+    for sample_weight in (
+        np.array([1.0, 1.0, 1.0, 1.0, 1.0]),
+        np.array([0.5, 1.0, 1.0, 1.0, 1.5]),
+        np.array([1.0, 2.0, 3.0, 4.0, 5.0]),
+    ):
+        mase = MeanAbsoluteScaledError()
+        actual = mase(y_true, y_pred, y_train=y_train, sample_weight=sample_weight)
+
+        weighted_abs_error = (y_true - y_pred).abs().mul(sample_weight, axis=0)
+        expected = float((weighted_abs_error / naive_error).mean(axis=1).mean())
+
+        assert np.allclose(actual, expected), (
+            f"sample_weight={sample_weight}: got {actual}, expected {expected}"
+        )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_mase_unweighted_is_unchanged():
+    """The unweighted and uniform-weight paths must be untouched by the fix."""
+    from sktime.performance_metrics.forecasting import MeanAbsoluteScaledError
+
+    y_true = pd.DataFrame({"c": [3.0, 5.0, 4.0, 6.0, 5.0]})
+    y_pred = pd.DataFrame({"c": [2.8, 5.5, 4.2, 5.4, 5.3]})
+    y_train = pd.DataFrame({"c": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]})
+
+    mase = MeanAbsoluteScaledError()
+    unweighted = mase(y_true, y_pred, y_train=y_train)
+    uniform = mase(
+        y_true, y_pred, y_train=y_train, sample_weight=np.ones(len(y_true))
+    )
+    assert np.allclose(unweighted, uniform)

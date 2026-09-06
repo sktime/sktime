@@ -198,7 +198,11 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
 
         raw_values = raw_values / np.maximum(naive_error, eps)
 
-        raw_values = self._get_weighted_df(raw_values, **kwargs)
+        # sample_weight is already applied above, before the scaling. Applying
+        # _get_weighted_df a second time to the same frame squares the weights,
+        # because it is a plain df.mul(sample_weight, axis=0) with no idempotency
+        # guard. The naive denominator comes from y_train and does not depend on
+        # the weights, so one application is the whole of the weighting.
 
         return self._handle_multioutput(raw_values, multioutput)
 
