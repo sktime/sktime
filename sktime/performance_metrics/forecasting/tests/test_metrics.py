@@ -531,6 +531,7 @@ def test_owa_aggregate_then_ratio():
     per the definition in the M4 competition paper.
     """
     from sktime.performance_metrics.forecasting import OverallWeightedAverage
+    from sktime.performance_metrics.forecasting._owa import m4_naive2_forecast
 
     if not _check_estimator_deps(OverallWeightedAverage, severity="none"):
         pytest.skip("OverallWeightedAverage dependencies not available.")
@@ -539,9 +540,8 @@ def test_owa_aggregate_then_ratio():
     y_true = np.array([100.05, 100.0, 100.15])
     y_pred = np.array([100.0, 100.05, 100.0])
 
-    # Naive2 forecasts for this y_train (SeasonalityACF sp=1, NaiveForecaster last).
-    # To check the definition of Naive2, check class OverallWeightedAverage.
-    y_pred_naive2 = np.array([100.0, 100.0, 100.1])
+    # M4 Naive2: random walk (last value) when sp=1.
+    y_pred_naive2 = m4_naive2_forecast(y_train, len(y_true), sp=1)
 
     # MASE denominator: mean absolute lag-1 difference in training (sp=1).
     mase_scale = np.abs(np.diff(y_train)).mean()
