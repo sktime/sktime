@@ -332,6 +332,7 @@ class _Reducer(_BaseWindowForecaster):
         from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.linear_model import LinearRegression
         from sklearn.pipeline import make_pipeline
+        from sklearn.tree import DecisionTreeRegressor
 
         from sktime.transformations.reduce import Tabularizer
 
@@ -345,6 +346,20 @@ class _Reducer(_BaseWindowForecaster):
             est = make_pipeline(Tabularizer(), est)
 
         params = [{"estimator": est, "window_length": 3}]
+
+        # second parameter set: a different regressor and a different window
+        # length. The regressor is a decision tree rather than a linear model,
+        # so the two sets cover both a linear and a non-linear reduction
+        # estimator, and the differing window length varies the number of lag
+        # features the reduction produces. The tree depth is left unrestricted
+        # so that recursive forecasts vary across the horizon; a shallow tree
+        # reaches a fixed point after few steps, which would weaken tests that
+        # catch horizon or index bugs.
+        est2 = DecisionTreeRegressor(random_state=0)
+        if "TimeSeries" in cls.__name__:
+            est2 = make_pipeline(Tabularizer(), est2)
+
+        params = params + [{"estimator": est2, "window_length": 4}]
 
         PROBA_IMPLEMENTED = ["DirectTabularRegressionForecaster"]
         self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
@@ -487,6 +502,9 @@ class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -775,6 +793,9 @@ class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -1112,6 +1133,9 @@ class _DirRecReducer(_Reducer):
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -1326,6 +1350,9 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -1399,6 +1426,43 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
 
     _estimator_scitype = "time-series-regressor"
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.linear_model import LinearRegression
+        from sklearn.pipeline import make_pipeline
+
+        from sktime.transformations.panel.reduce import Tabularizer
+
+        params1 = {
+            "estimator": make_pipeline(Tabularizer(), LinearRegression()),
+            "window_length": 2,
+        }
+        params2 = {
+            "estimator": make_pipeline(Tabularizer(), RandomForestRegressor()),
+            "window_length": 3,
+        }
+
+        params = [params1, params2]
+        return params
+
 
 class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
     """Multioutput reduction from forecasting to time series regression.
@@ -1435,9 +1499,49 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     _estimator_scitype = "time-series-regressor"
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.linear_model import LinearRegression
+        from sklearn.pipeline import make_pipeline
+
+        from sktime.transformations.panel.reduce import Tabularizer
+
+        params1 = {
+            "estimator": make_pipeline(Tabularizer(), LinearRegression()),
+            "window_length": 2,
+        }
+        params2 = {
+            "estimator": make_pipeline(Tabularizer(), RandomForestRegressor()),
+            "window_length": 3,
+        }
+
+        params = [params1, params2]
+        return params
 
 
 class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
@@ -1971,6 +2075,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:libs": ["sktime.transformations.lag"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
