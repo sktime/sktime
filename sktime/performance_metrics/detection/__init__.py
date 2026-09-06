@@ -6,6 +6,9 @@ from sktime.performance_metrics.detection._f1score import WindowedF1Score
 from sktime.performance_metrics.detection._hausdorff import DirectedHausdorff
 from sktime.performance_metrics.detection._randindex import RandIndex
 from sktime.performance_metrics.detection._ts_auprc import TimeSeriesAUPRC
+from sktime.performance_metrics.detection._advance_warning import (
+    NormalizedAdvanceWarningScore,
+)
 
 __all__ = [
     "DirectedChamfer",
