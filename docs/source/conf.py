@@ -146,8 +146,7 @@ suppress_warnings = [
     "autosectionlabel",
     "ref",
 ]
-# FIXME: Temporary solution until numpydoc issues are fixed
-warnings.filterwarnings("ignore", category=UserWarning, module="numpydoc.docscrape")
+
 show_warning_types = True
 
 # Link to GitHub repo for github_issues extension
