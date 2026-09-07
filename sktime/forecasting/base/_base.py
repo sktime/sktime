@@ -480,7 +480,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         _check_estimator_deps(self)
 
         # check y is not None
-        assert y is not None, "y cannot be None, but found None"
+        if y is None:
+            cls_name = self.__class__.__name__
+            raise AssertionError(
+                f"Error in {cls_name}.fit: y cannot be None, but found None"
+            )
 
         # skip reset on the first fit after pretrain; on refit, discard
         # task-specific fitted state while retaining pretrained state
@@ -914,6 +918,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             as ``y`` in ``fit``.
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
+
+        cov : bool, optional (default=False)
+            currently unused, present for downwards compatibility and future extension
 
         Returns
         -------

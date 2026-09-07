@@ -379,12 +379,13 @@ def test_dynamic_tags_reset_properly():
     """Test that dynamic tags are being reset properly."""
     from sktime.forecasting.compose import MultiplexForecaster
 
-    # this forecaster will have the scitype:y tag set to "univariate"
+    # this forecaster will have the capability:multivariate tag set to True,
+    # since VAR is multivariate
     f = MultiplexForecaster([("foo", ThetaForecaster()), ("var", VAR())])
     f.set_params(selected_forecaster="var")
 
     X_multivariate = _make_series(n_columns=2)
-    # fit should reset the estimator, and set scitype:y tag to "multivariate"
+    # fit should reset the estimator, and set capability:multivariate to True
     # the fit will cause an error if this is not happening properly
     f.fit(X_multivariate)
 

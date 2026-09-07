@@ -830,6 +830,7 @@ class EvoForestTSWM(BaseTransformer):
         # test and CI flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_evoforest_tswm"],
     }
 
     def __init__(self, pooling="full"):

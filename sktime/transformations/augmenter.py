@@ -52,11 +52,11 @@ class WhiteNoiseAugmenter(_AugmenterTags, BaseTransformer):
     Parameters
     ----------
     scale: float, scale parameter (default=1.0)
-            Specifies the standard deviation.
+        Specifies the standard deviation.
     random_state: None or int or ``np.random.RandomState`` instance, optional
-            "If int or RandomState, use it for drawing the random variates.
-            If None, rely on ``self.random_state``.
-            Default is None." [3]
+        "If int or RandomState, use it for drawing the random variates.
+        If None, rely on ``self.random_state``.
+        Default is None." [3]
 
     Examples
     --------
@@ -248,7 +248,7 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
             if n < 1 or not np.isfinite(n):
                 raise ValueError("n must be a finite number >= 1.")
         else:
-            raise ValueError("n must be int or float, not " + str(type(n))) + "."
+            raise ValueError(f"n must be int or float, not {type(n)}.")
         self.n = n
         self.without_replacement = without_replacement
         self.random_state = random_state
