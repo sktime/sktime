@@ -223,7 +223,7 @@ class _StatsModelsAdapter(BaseForecaster):
         get_prediction_arguments = {"start": start, "end": end}
 
         # Only pass random_state when supported by get_prediction.
-        if self.random_state is not None:
+        if hasattr(self, "random_state"):
             get_prediction_params = inspect.signature(
                 self._fitted_forecaster.get_prediction
             ).parameters
