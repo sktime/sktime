@@ -42,26 +42,41 @@ def load_from_tsfile_to_dataframe(
     ----------
     full_file_path_and_name: str
         The full pathname of the .ts file to read.
-    return_separate_X_and_y: bool
-        true if X and Y values should be returned as separate Data Frames (
-        X) and a numpy array (y), false otherwise.
-        This is only relevant for data that
-    replace_missing_vals_with: str
-       The value that missing values in the text file should be replaced
-       with prior to parsing.
-    encoding: str
-        encoding is the name of the encoding used to read file using the open function.
+    return_separate_X_and_y : bool, default=True
+        Whether to return separate ``(X, y)`` outputs. If ``True``, returns
+        a nested pandas ``DataFrame`` ``X`` and a numpy array ``y`` in the
+        ``"nested_univ"`` mtype. If ``False``, returns a single pandas ``DataFrame``
+        and, when class labels are present, appends them in a ``"class_vals"``
+        column (``"nested_univ"`` mtype).
+    replace_missing_vals_with : str, default="NaN"
+        Value used to replace missing-value markers (``"?"``) before parsing;
+        if missing-value markers are present, the replacement must be convertible
+        to ``float``.
+    encoding : str, default="utf-8"
+        Text encoding used when reading the file.
+    y_dtype : str, default="str"
+        Class label dtype to use in the returned ``y``. Accepted values are
+        ``"str"``, ``"int"``, and ``"float"``.
 
     Returns
     -------
-    DataFrame (default) or ndarray (i
-        If return_separate_X_and_y then a tuple containing a DataFrame and a
-        numpy array containing the relevant time-series and corresponding
-        class values.
-    DataFrame
-        If not return_separate_X_and_y then a single DataFrame containing
-        all time-series and (if relevant) a column "class_vals" the
-        associated class values.
+    X : pd.DataFrame
+        Nested dataframe containing the loaded time series in the
+        ``"nested_univ"`` mtype.
+    y : np.ndarray
+        Returned only when ``return_separate_X_and_y=True`` and class labels are
+        present in the file.
+    data : pd.DataFrame
+        Returned when ``return_separate_X_and_y=False``; contains all dimensions and,
+        when available, a ``"class_vals"`` column in the ``"nested_univ"`` mtype.
+
+    Examples
+    --------
+    >>> from sktime.datasets._readers_writers.ts import load_from_tsfile_to_dataframe
+    >>> X, y = load_from_tsfile_to_dataframe("path/to/data.ts")
+    >>> data = load_from_tsfile_to_dataframe(
+    ...     "path/to/data.ts", return_separate_X_and_y=False
+    ... )
     """
     # Initialize flags and variables used when parsing the file
     metadata_started = False
