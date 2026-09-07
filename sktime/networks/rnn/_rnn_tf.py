@@ -20,6 +20,11 @@ class RNNNetwork(BaseDeepNetwork):
         https://keras.io/api/layers/activations/
     dropout : float, default = 0.0
         The dropout rate for the RNN layer.
+
+    Examples
+    --------
+    >>> from sktime.networks.rnn import RNNNetwork
+    >>> network = RNNNetwork(units=6, random_state=42)
     """
 
     _tags = {

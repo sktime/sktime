@@ -85,7 +85,7 @@ all_extras = [
   'cloudpickle',
   'holidays',
   'matplotlib!=3.9.1,>=3.3.2',
-  'numba<0.67,>=0.53',
+  'numba>=0.53,<0.68',
   'polars[pandas]>=0.20,<2.0',
   'seaborn>=0.11',
   "skpro>=2,<2.15.0",
@@ -104,22 +104,22 @@ all_extras = [
 alignment = [
   'dtaidistance<2.5; python_version < "3.13"',
   'dtw-python>=1.3,<1.8; python_version < "3.13"',
-  'numba<0.67,>=0.53',
+  'numba>=0.53,<0.68',
 ]
 classification = [
-  'numba<0.67,>=0.53',
+  'numba>=0.53,<0.68',
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
   'tsfresh<0.22,>=0.17; python_version < "3.12"',
 ]
 clustering = [
   'networkx<3.7',
-  'numba<0.67,>=0.53',
+  'numba>=0.53,<0.68',
   'tslearn<0.7.0,!=0.6.0,>=0.5.2; python_version < "3.12"',
   'ts2vg<1.3; python_version < "3.13" and platform_machine != "aarch64"',
 ]
 detection = [
   'hmmlearn<0.4,>=0.2.7; python_version < "3.13"',
-  'numba<0.67,>=0.53',
+  'numba>=0.53,<0.68',
   'pyod<1.2,>=0.8; python_version < "3.12"',
 ]
 forecasting = [
@@ -139,12 +139,12 @@ param_est = [
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
 ]
 regression = [
-  'numba<0.67,>=0.53',
+  'numba>=0.53,<0.68',
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
 ]
 transformations = [
   'holidays>=0.29,<0.59; python_version < "3.13"',
-  'numba<0.67,>=0.53',
+  'numba>=0.53,<0.68',
   'pycatch22>=0.4,<0.4.6; python_version < "3.13"',
   'simdkalman',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
@@ -208,7 +208,7 @@ dl = [
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
   "torch; (sys_platform != 'darwin' or python_version < '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.13"',
-  "pytorch-forecasting>=1.0.0,<1.6.0; (sys_platform != 'darwin' or python_version != '3.13') and python_version < '3.14'",
+  "pytorch-forecasting>=1.8.0; (sys_platform != 'darwin' or python_version != '3.13') and python_version < '3.14'",
   "lightning>=2.0,<2.7; (sys_platform != 'darwin' or python_version < '3.13')",
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
@@ -246,7 +246,7 @@ notebooks = [
   "lightning>=2.0,<2.7",
   "skpro",
   "statsforecast",
-  'numba<0.67',
+  'numba<0.68',
 ]
 numpy1 = [
   "numpy<2.0.0",
@@ -288,7 +288,7 @@ sktime = [
 ]
 
 [tool.setuptools.packages.find]
-exclude = ["tests", "tests.*"]
+include = ["sktime", "sktime.*"]
 
 [tool.ruff]
 line-length = 88

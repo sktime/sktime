@@ -121,6 +121,8 @@ class _CachedLagLlama:
         finally:
             torch.load = original_load
 
+        self.predictor_.to(self.device)
+
         return self.estimator_, self.predictor_
 
 
@@ -444,6 +446,7 @@ class LagLlamaForecaster(BaseForecaster):
         # test and CI flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_lagllama"],
         "tests:libs": ["sktime.libs.lag_llama"],
     }
 
@@ -766,6 +769,8 @@ class LagLlamaForecaster(BaseForecaster):
                 )
         finally:
             torch.load = original_load
+
+        self.predictor_.to(self.device_)
 
         return self
 

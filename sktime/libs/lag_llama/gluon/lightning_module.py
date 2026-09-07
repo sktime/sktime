@@ -110,15 +110,21 @@ class LagLlamaLightningModule(LightningModule):
         window_slice_reduce_ratio: float = 0.9,
         window_warp_prob: float = 0.0,
         window_warp_window_ratio: float = 0.1,
-        window_warp_scales: list = [0.5, 2.0],
-        data_id_to_name_map: dict = {},
+        window_warp_scales: list | None = None,
+        data_id_to_name_map: dict | None = None,
         use_cosine_annealing_lr: bool = False,
-        cosine_annealing_lr_args: dict = {},
+        cosine_annealing_lr_args: dict | None = None,
         track_loss_per_series: bool = False,
         nonnegative_pred_samples: bool = False,
         use_kv_cache: bool = True,
         use_single_pass_sampling: bool = False,
     ):
+        if window_warp_scales is None:
+            window_warp_scales = [0.5, 2.0]
+        if data_id_to_name_map is None:
+            data_id_to_name_map = {}
+        if cosine_annealing_lr_args is None:
+            cosine_annealing_lr_args = {}
         super().__init__()
         self.save_hyperparameters()
         self.context_length = self.hparams.context_length

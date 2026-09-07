@@ -57,7 +57,7 @@ class _PytorchForecastingAdapter(BaseForecaster):
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
         "python_dependencies": [
-            "pytorch-forecasting>=1.0.0",
+            "pytorch-forecasting>=1.8.0",
             "torch",
             "lightning",
         ],
