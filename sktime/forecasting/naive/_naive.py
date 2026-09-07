@@ -598,9 +598,12 @@ class NaiveForecaster(_BaseWindowForecaster):
         fh_idx = fh.to_absolute_index(self.cutoff)
         if cov:
             fh_size = len(fh)
-            cov_matrix = np.fill_diagonal(
-                np.zeros(shape=(fh_size, fh_size)), marginal_vars
-            )
+            # ``np.fill_diagonal`` mutates the array in place and returns
+            # ``None`` (numpy convention); the previous one-shot assignment
+            # therefore set ``cov_matrix = None`` and the subsequent
+            # ``pd.DataFrame`` call crashed in ``predict_var(cov=True)``.
+            cov_matrix = np.zeros(shape=(fh_size, fh_size))
+            np.fill_diagonal(cov_matrix, marginal_vars)
             pred_var = pd.DataFrame(cov_matrix, columns=fh_idx, index=fh_idx)
         else:
             pred_var = pd.DataFrame(marginal_vars, index=fh_idx)
