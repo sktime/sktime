@@ -215,5 +215,14 @@ class SAXlegacy(BaseTransformer):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         # small word length, window size for testing
-        params = {"word_length": 2, "window_size": 4}
-        return params
+        params1 = {"word_length": 2, "window_size": 4}
+        # second set: different word length, window size, minimum alphabet
+        # size (2, a different set of gaussian breakpoints), and repeat-word
+        # removal switched on
+        params2 = {
+            "word_length": 3,
+            "alphabet_size": 2,
+            "window_size": 6,
+            "remove_repeat_words": True,
+        }
+        return [params1, params2]
