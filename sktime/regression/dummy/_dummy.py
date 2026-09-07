@@ -51,10 +51,10 @@ class DummyRegressor(BaseRegressor):
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
     >>> X_test, y_test = load_unit_test(split="test")
-    >>> regressor = DummyRegressor(strategy="median") # doctest: +SKIP
-    >>> regressor.fit(X_train,y_train) # doctest: +SKIP
+    >>> regressor = DummyRegressor(strategy="median")
+    >>> regressor.fit(X_train,y_train)
     DummyRegressor(strategy='median')
-    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
+    >>> y_pred = regressor.predict(X_test)
     """
 
     _tags = {
