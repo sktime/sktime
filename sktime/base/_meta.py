@@ -9,10 +9,10 @@ from inspect import isclass
 
 import numpy as np
 import pandas as pd
+from skbase.base._pretty_printing._object_html_repr import _VisualBlock
 
 from sktime.base import BaseEstimator
 from sktime.base._base import _safe_clone
-from sktime.utils._estimator_html_repr import _VisualBlock
 
 
 class _HeterogenousMetaEstimator:
