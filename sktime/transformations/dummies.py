@@ -191,31 +191,36 @@ class SeasonalDummiesOneHot(BaseTransformer):
 
             period_index = index.to_period(freq)
 
+        # `freqstr` is not the bare frequency code - anchored frequencies carry a
+        # suffix ("W-SUN", "Q-DEC"), and since pandas 2.2 sub-daily frequencies are
+        # lower case ("h"). Normalize to the bare, upper case code before matching.
+        freq_code = period_index.freqstr.split("-")[0].upper()
+
         # Extract the appropriate attribute based on the frequency of the period index
-        if period_index.freqstr == "M":
+        if freq_code == "M":
             time_index = period_index.month
-        elif period_index.freqstr == "Q":
+        elif freq_code == "Q":
             time_index = period_index.quarter
-        elif period_index.freqstr == "W":
+        elif freq_code == "W":
             time_index = period_index.week
-        elif period_index.freqstr == "D":
+        elif freq_code == "D":
             time_index = period_index.day
-        elif period_index.freqstr == "H":
+        elif freq_code == "H":
             time_index = period_index.hour
         else:
             raise ValueError(f"Unsupported frequency: {period_index.freqstr}")
 
         # Create dummy variables for the time periods
         dummies = pd.get_dummies(time_index, prefix="", prefix_sep="")
-        if period_index.freqstr == "M":
+        if freq_code == "M":
             dummies.columns = dummies.columns.map(lambda x: calendar.month_abbr[int(x)])
-        elif period_index.freqstr == "Q":
+        elif freq_code == "Q":
             dummies.columns = dummies.columns.map(lambda x: f"Q{int(x)}")
-        elif period_index.freqstr == "W":
+        elif freq_code == "W":
             dummies.columns = dummies.columns.map(lambda x: f"W{int(x)}")
-        elif period_index.freqstr == "D":
+        elif freq_code == "D":
             dummies.columns = dummies.columns.map(lambda x: f"D{int(x)}")
-        elif period_index.freqstr == "H":
+        elif freq_code == "H":
             dummies.columns = dummies.columns.map(lambda x: f"H{int(x)}")
         dummies = dummies.astype(int)  # Convert boolean values to integers
 
