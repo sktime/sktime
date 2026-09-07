@@ -164,3 +164,155 @@ def test_is_hierarchical():
 
     assert result_true
     assert not result_false
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
+def test_apply_method_per_series_integer_instance_ids():
+    """Test apply_method_per_series with integer instance IDs.
+
+    This is a regression test for a bug where apply_method_per_series
+    would fail with TypeError when the MultiIndex had 2 levels with
+    integer instance IDs, because droplevel(-1).unique().to_list()
+    returns scalar integers instead of tuples.
+
+    The unpacking operator (*group_keys) fails on non-iterable scalars.
+    """
+    from sktime.utils.multiindex import apply_method_per_series
+
+    # Create a 2-level MultiIndex with integer instance IDs
+    index = pd.MultiIndex.from_product(
+        [[0, 1, 2], [0, 1, 2, 3, 4]], names=["instance", "time"]
+    )
+    y = pd.Series(range(15), index=index, name="value")
+
+    # This should not raise TypeError
+    result = apply_method_per_series(y, "shift", periods=1)
+
+    # Verify the result is correct
+    assert isinstance(result, pd.Series)
+    assert len(result) == len(y)
+    assert result.index.equals(y.index)
+    assert result.index.names == y.index.names
+
+    # Verify shift worked correctly per series
+    expected = y.groupby(level=0).shift(periods=1)
+    pd.testing.assert_series_equal(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
+def test_apply_method_per_series_float_instance_ids():
+    """Test apply_method_per_series with float instance IDs."""
+    from sktime.utils.multiindex import apply_method_per_series
+
+    index = pd.MultiIndex.from_product(
+        [[0.0, 1.0, 2.0], [0, 1, 2]], names=["instance", "time"]
+    )
+    y = pd.Series(range(9), index=index, name="value")
+
+    result = apply_method_per_series(y, "shift", periods=1)
+
+    assert isinstance(result, pd.Series)
+    assert len(result) == len(y)
+    assert result.index.names == y.index.names
+
+    expected = y.groupby(level=0).shift(periods=1)
+    pd.testing.assert_series_equal(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
+def test_apply_method_per_series_string_instance_ids():
+    """Test apply_method_per_series with string instance IDs."""
+    from sktime.utils.multiindex import apply_method_per_series
+
+    index = pd.MultiIndex.from_product(
+        [["a", "b", "c"], [0, 1, 2]], names=["instance", "time"]
+    )
+    y = pd.Series(range(9), index=index, name="value")
+
+    result = apply_method_per_series(y, "shift", periods=1)
+
+    assert isinstance(result, pd.Series)
+    assert len(result) == len(y)
+    assert result.index.names == y.index.names
+
+    expected = y.groupby(level=0).shift(periods=1)
+    pd.testing.assert_series_equal(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
+def test_apply_method_per_series_hierarchical():
+    """Test apply_method_per_series with 3-level hierarchical MultiIndex."""
+    from sktime.utils.multiindex import apply_method_per_series
+
+    index = pd.MultiIndex.from_product(
+        [["region_A", "region_B"], [0, 1], [0, 1, 2]],
+        names=["region", "instance", "time"],
+    )
+    y = pd.Series(range(12), index=index, name="value")
+
+    result = apply_method_per_series(y, "shift", periods=1)
+
+    assert isinstance(result, pd.Series)
+    assert len(result) == len(y)
+    assert result.index.names == y.index.names
+
+    # Verify shift worked correctly per series (grouped by first 2 levels)
+    expected = y.groupby(level=[0, 1]).shift(periods=1)
+    pd.testing.assert_series_equal(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
+def test_apply_method_per_series_dataframe():
+    """Test apply_method_per_series with DataFrame and integer instance IDs."""
+    from sktime.utils.multiindex import apply_method_per_series
+
+    index = pd.MultiIndex.from_product(
+        [[0, 1], [0, 1, 2, 3]], names=["instance", "time"]
+    )
+    df = pd.DataFrame({"col1": range(8), "col2": range(10, 18)}, index=index)
+
+    result = apply_method_per_series(df, "shift", periods=1)
+
+    assert isinstance(result, pd.DataFrame)
+    assert result.shape == df.shape
+    assert result.index.names == df.index.names
+
+    # Verify shift worked correctly per series
+    expected = df.groupby(level=0).shift(periods=1)
+    pd.testing.assert_frame_equal(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils.multiindex"]),
+    reason="Run if multiindex module has changed.",
+)
+def test_apply_method_per_series_single_level():
+    """Test apply_method_per_series with single-level index."""
+    from sktime.utils.multiindex import apply_method_per_series
+
+    index = pd.Index([0, 1, 2, 3, 4], name="time")
+    y = pd.Series([10, 20, 30, 40, 50], index=index, name="value")
+
+    result = apply_method_per_series(y, "shift", periods=1)
+
+    assert isinstance(result, pd.Series)
+    assert len(result) == len(y)
+
+    # For single-level index, should apply method directly
+    expected = y.shift(periods=1)
+    pd.testing.assert_series_equal(result, expected)
