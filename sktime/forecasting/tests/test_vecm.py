@@ -52,3 +52,72 @@ def test_VECM_against_statsmodels():
     # print("actual: \n")
     # print(new_arr)
     assert_allclose(y_pred, new_arr)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(VECM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_VECM_insample_prediction_with_custom_columns():
+    """Test VECM in-sample prediction with non-default column names.
+
+    Regression test for #6633: in-sample prediction should work with
+    DataFrames that have non-default column names and datetime index,
+    and match the residuals-based in-sample fit.
+    """
+    np.random.seed(42)
+    data = np.random.randn(100, 2)
+    index = pd.date_range(start="2020-01-01", periods=100, freq="D")
+    df = pd.DataFrame(data, columns=["a", "b"], index=index)
+
+    y_train, y_test = temporal_train_test_split(df)
+
+    model = VECM(k_ar_diff=2, coint_rank=1, deterministic="ci", seasons=0)
+    model.fit(y_train)
+
+    # In-sample forecast horizon (negative values)
+    fh = ForecastingHorizon(range(-4, 1), is_relative=True)
+    y_pred = model.predict(fh)
+
+    # Check that prediction has correct shape and column names
+    assert y_pred.shape[1] == 2
+    assert list(y_pred.columns) == ["a", "b"]
+    # Check that predictions are finite
+    assert np.all(np.isfinite(y_pred.values))
+
+    # in-sample predictions are y - resid, with resid aligned to the tail
+    # of y_train; verify this explicitly against the fitted residuals
+    resid = model._fitted_forecaster.resid
+    offset = len(y_train) - len(resid)
+    y_hat = y_train.values[offset:] - resid
+    expected = y_hat[len(y_hat) - len(y_pred) :]
+    assert_allclose(y_pred.values, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(VECM),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_VECM_mixed_horizon_prediction_with_custom_columns():
+    """Test VECM prediction with mixed in-sample and out-sample horizon.
+
+    Regression test for #6633: prediction with a horizon that contains
+    both in-sample (fh <= 0) and out-sample (fh > 0) values should work
+    with DataFrames that have non-default column names and datetime index.
+    """
+    np.random.seed(42)
+    data = np.random.randn(100, 2)
+    index = pd.date_range(start="2020-01-01", periods=100, freq="D")
+    df = pd.DataFrame(data, columns=["a", "b"], index=index)
+
+    y_train, y_test = temporal_train_test_split(df)
+
+    model = VECM(k_ar_diff=2, coint_rank=1, deterministic="ci", seasons=0)
+    model.fit(y_train)
+
+    fh = ForecastingHorizon(range(-2, 3), is_relative=True)
+    y_pred = model.predict(fh)
+
+    assert y_pred.shape == (5, 2)
+    assert list(y_pred.columns) == ["a", "b"]
+    assert np.all(np.isfinite(y_pred.values))
