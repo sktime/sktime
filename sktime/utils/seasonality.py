@@ -163,7 +163,8 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
             freq=anchor.index.freq
         ).tz_localize(anchor.index.tz)
 
-    df_pivot.columns = df_pivot.columns.droplevel(0)
+    if len(df.columns) == 1:
+        df_pivot.columns = df_pivot.columns.droplevel(0)
 
     return df_pivot
 
@@ -213,33 +214,40 @@ def _unpivot_sp(df, template=None):
         tz = None
     df_copied, _ = _make_period_index_df(template, freq)
     ix = df_copied.index.astype("int64")
-    df_melt = df.melt(ignore_index=False)
+
+    df_stacked = df.stack(level=-1, future_stack=True)
+    if isinstance(df_stacked, pd.Series):
+        df_stacked = pd.DataFrame(df_stacked)
 
     if len(ix) <= 1:
         period_len_int = 1
     else:
         period_len_int = ix[1] - ix[0]
 
-    offset = df_melt[df_melt.columns[0]]
-    if isinstance(df_melt.index, pd.DatetimeIndex):
-        a = df_melt.index.to_period(freq=freq)
+    offset = df_stacked.index.get_level_values(-1)
+    epochs = df_stacked.index.get_level_values(0)
+
+    if isinstance(epochs, pd.DatetimeIndex):
+        a = epochs.to_period(freq=freq)
         res = a + offset // period_len_int
-        df_melt.index = res
+        df_stacked.index = res
         was_datetime = True
     else:
-        df_melt.index = df_melt.index + offset // period_len_int
+        df_stacked.index = epochs + offset // period_len_int
         was_datetime = False
-    df_melt = df_melt.drop(columns=df_melt.columns[0])
-    df_melt = df_melt.sort_index()
-    df_melt = df_melt.dropna()
+
+    df_stacked = df_stacked.sort_index()
+    df_stacked = df_stacked.dropna()
 
     if was_datetime:
-        df_melt.index = df_melt.index.to_timestamp(template.index.freq).tz_localize(tz)
+        df_stacked.index = df_stacked.index.to_timestamp(
+            template.index.freq
+        ).tz_localize(tz)
 
     if template is not None:
         if hasattr(template, "columns"):
-            df_melt.columns = template.columns
+            df_stacked.columns = template.columns
         elif hasattr(template, "name"):
-            df_melt.columns = [template.name]
+            df_stacked.columns = [template.name]
 
-    return df_melt
+    return df_stacked

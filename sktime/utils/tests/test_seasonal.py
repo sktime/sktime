@@ -118,3 +118,159 @@ def test_pivot_sp_consistent(sp, index_type, n_timepoints, anchor_side):
     df2_pivot_values = df2_pivot.values.flatten()
     df2_pivot_values = df2_pivot_values[~np.isnan(df2_pivot_values)]
     assert np.all(df_pivot_values[1:] == df2_pivot_values)
+
+
+# --- New multivariate tests (hand-computed) for PR #10313 ---
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
+def test_pivot_sp_univariate_backward_compat():
+    """Test _pivot_sp: univariate output still has flat (non-MultiIndex) columns.
+
+    Regression guard: the multivariate fix must not break the univariate API.
+    Columns must remain a flat integer index [0, 1, 2], not a MultiIndex.
+
+    Hand-computed:
+      Input: values [10, 20, 30, 40, 50, 60], sp=3, RangeIndex(6)
+      Epochs:  row 0 = [10, 20, 30]
+               row 1 = [40, 50, 60]
+      Expected columns: [0, 1, 2]  (flat, no variable-name level)
+    """
+    df = pd.DataFrame({"A": [10, 20, 30, 40, 50, 60]}, index=range(6))
+    result = _pivot_sp(df, sp=3)
+
+    # columns must be flat — NOT a MultiIndex
+    assert not isinstance(result.columns, pd.MultiIndex), (
+        "Univariate _pivot_sp should return flat column index, got MultiIndex"
+    )
+    assert result.columns.tolist() == [0, 1, 2]
+
+    # values must match hand-computed layout
+    expected = np.array([[10.0, 20.0, 30.0], [40.0, 50.0, 60.0]])
+    np.testing.assert_array_equal(result.values, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
+def test_pivot_sp_multivariate_correctness():
+    """Test _pivot_sp: multivariate input produces correct MultiIndex columns.
+
+    Hand-computed (sp=3, 2 variables A and B, 6 timepoints):
+
+      Input df:
+        index | A  | B
+            0 | 10 | 1
+            1 | 20 | 2
+            2 | 30 | 3
+            3 | 40 | 4
+            4 | 50 | 5
+            5 | 60 | 6
+
+      Epoch 0 (indices 0,1,2): A->[10,20,30], B->[1,2,3]
+      Epoch 1 (indices 3,4,5): A->[40,50,60], B->[4,5,6]
+
+      Expected columns (MultiIndex):
+        ('A',0), ('A',1), ('A',2), ('B',0), ('B',1), ('B',2)
+      Expected row 0: [10, 20, 30, 1, 2, 3]
+      Expected row 1: [40, 50, 60, 4, 5, 6]
+
+    Key property: no column collision between A offsets and B offsets.
+    """
+    df = pd.DataFrame(
+        {"A": [10, 20, 30, 40, 50, 60], "B": [1, 2, 3, 4, 5, 6]},
+        index=range(6),
+    )
+    result = _pivot_sp(df, sp=3)
+
+    # columns must be a MultiIndex (variable x offset)
+    assert isinstance(result.columns, pd.MultiIndex), (
+        "Multivariate _pivot_sp should return MultiIndex columns"
+    )
+
+    # hand-computed values per variable and offset
+    np.testing.assert_array_equal(result[("A", 0)].values, [10, 40])
+    np.testing.assert_array_equal(result[("A", 1)].values, [20, 50])
+    np.testing.assert_array_equal(result[("A", 2)].values, [30, 60])
+    np.testing.assert_array_equal(result[("B", 0)].values, [1, 4])
+    np.testing.assert_array_equal(result[("B", 1)].values, [2, 5])
+    np.testing.assert_array_equal(result[("B", 2)].values, [3, 6])
+
+    # shape: 2 epochs x (2 vars * 3 offsets) = 2 x 6
+    assert result.shape == (2, 6)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
+def test_unpivot_sp_multivariate_correctness():
+    """Test _unpivot_sp: correctly inverts _pivot_sp for multivariate input.
+
+    Hand-computed (sp=3, 2 variables A and B, 6 timepoints):
+
+      After _pivot_sp, result has MultiIndex columns (A,0..2) and (B,0..2).
+      After _unpivot_sp with the original df as template, must recover exactly:
+
+        index | A  | B
+            0 | 10 | 1
+            1 | 20 | 2
+            2 | 30 | 3
+            3 | 40 | 4
+            4 | 50 | 5
+            5 | 60 | 6
+    """
+    df = pd.DataFrame(
+        {"A": [10, 20, 30, 40, 50, 60], "B": [1, 2, 3, 4, 5, 6]},
+        index=range(6),
+    )
+    pivoted = _pivot_sp(df, sp=3)
+    recovered = _unpivot_sp(df=pivoted, template=df)
+
+    # must recover original shape
+    assert recovered.shape == df.shape
+
+    # must recover original column names
+    assert recovered.columns.tolist() == ["A", "B"]
+
+    # must recover original index
+    np.testing.assert_array_equal(recovered.index, df.index)
+
+    # must recover original values (hand-computed)
+    np.testing.assert_array_equal(recovered[["A", "B"]].values, df.values)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
+@pytest.mark.parametrize("sp", [2, 4])
+def test_pivot_sp_multivariate_no_collision(sp):
+    """Test _pivot_sp: no column name collision for multivariate input.
+
+    For any sp, variables A and B must occupy distinct columns.
+    Previously (before the fix), droplevel(0) would produce duplicate
+    column names like [0, 1, 0, 1] for sp=2 with two variables.
+
+    Hand-computed (sp=2, n_timepoints=4):
+      A offsets: ('A',0), ('A',1)
+      B offsets: ('B',0), ('B',1)
+      Total 4 distinct columns — no collision.
+    """
+    df = pd.DataFrame(
+        {"A": [1.0, 2.0, 3.0, 4.0], "B": [5.0, 6.0, 7.0, 8.0]},
+        index=range(4),
+    )
+    result = _pivot_sp(df, sp=sp)
+
+    # All column names must be unique (no collision)
+    assert len(result.columns) == len(set(result.columns)), (
+        f"Column collision detected in _pivot_sp with sp={sp} and 2 variables"
+    )
+
+    # Must be a MultiIndex for multivariate input
+    assert isinstance(result.columns, pd.MultiIndex)
