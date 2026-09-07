@@ -70,8 +70,8 @@ class TimeMoEForecaster(BaseForecaster):
         - tie_word_embeddings: bool, default=False
             Whether to tie word embeddings in the TimeMOE model.
 
-    seed: int, optional (default=None)
-        Seed for reproducibility.
+    random_state: int, optional (default=None)
+        Random state for reproducibility.
 
     use_source_package: bool, optional (default=False)
         If True, the model will be loaded directly from the source package ``TimeMoE``.
@@ -125,6 +125,8 @@ class TimeMoEForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -135,11 +137,11 @@ class TimeMoEForecaster(BaseForecaster):
         self,
         model_path: str,
         config: dict = None,
-        seed: int = None,
+        random_state: int = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
-        self.seed = seed
+        self.random_state = random_state
         self.config = config
         self.model_path = model_path
         self.use_source_package = use_source_package
@@ -174,7 +176,7 @@ class TimeMoEForecaster(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+        self._seed = np.random.randint(0, 2**31) if self.random_state is None else self.random_state
 
         _config = self._get_default_config()
         _config.update(self.config if self.config is not None else {})

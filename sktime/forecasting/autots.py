@@ -9,7 +9,7 @@ import pandas as pd
 from pandas.api.types import is_integer_dtype
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-
+from sktime.utils.warnings import warn
 
 class AutoTS(BaseForecaster):
     """Auto-ensemble from autots library by winedarksea.
@@ -72,9 +72,9 @@ class AutoTS(BaseForecaster):
         'Random' - randomly generates starting template, 'General' uses template
         included in package, 'General+Random' - both of previous.
         Also can be overridden with import_template()
-    random_seed (int):
-        The random seed for reproducibility.
-        Random seed allows (slightly) more consistent results.
+    random_state (int):
+        The random state for reproducibility.
+        Random state allows (slightly) more consistent results.
     holiday_country (str):
         The country for holiday effects.
         Can be passed through to Holidays package for some models.
@@ -240,7 +240,8 @@ class AutoTS(BaseForecaster):
         constraint: float = None,
         ensemble: str = "auto",
         initial_template: str = "General+Random",
-        random_seed: int = 2022,
+        random_seed: str = "deprecated",
+        random_state: int = 2022,
         holiday_country: str = "US",
         subset: int = None,
         aggfunc: str = "first",
@@ -275,7 +276,19 @@ class AutoTS(BaseForecaster):
         self.constraint = constraint
         self.ensemble = ensemble
         self.initial_template = initial_template
+
+        if random_seed != "deprecated":
+            warn(
+                "In `AutoTS`, parameter 'random_seed' will be renamed to "
+                "'random_state' in version 1.2.0. To keep current behaviour and "
+                "to silence this warning, use 'random_state' instead of "
+                "'random_seed'.",
+                DeprecationWarning,
+            )
+            random_state = random_seed
+
         self.random_seed = random_seed
+        self.random_state = random_state
         self.holiday_country = holiday_country
         self.subset = subset
         self.aggfunc = aggfunc
@@ -312,6 +325,8 @@ class AutoTS(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
+        self.random_state = self.random_seed
+
         from autots import AutoTS as _autots
 
         self._ModelClass = _autots
@@ -427,7 +442,8 @@ class AutoTS(BaseForecaster):
                 "constraint": None,
                 "ensemble": "auto",
                 "initial_template": "General+Random",
-                "random_seed": 2022,
+                "random_seed": "deprecated",
+                "random_state": 2022,
                 "holiday_country": "US",
                 "subset": None,
                 "aggfunc": "first",
@@ -475,7 +491,8 @@ class AutoTS(BaseForecaster):
                 "constraint": None,
                 "ensemble": "auto",
                 "initial_template": "General+Random",
-                "random_seed": 2022,
+                "random_seed": "deprecated",
+                "random_state": 2022,
                 "holiday_country": "US",
                 "subset": None,
                 "aggfunc": "first",
@@ -573,7 +590,8 @@ class AutoTS(BaseForecaster):
             constraint=self.constraint,
             ensemble=ensemble,
             initial_template=self.initial_template,
-            random_seed=self.random_seed,
+            random_seed = self.random_state,
+            random_state=self.random_state,
             holiday_country=self.holiday_country,
             subset=self.subset,
             aggfunc=self.aggfunc,

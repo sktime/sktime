@@ -56,6 +56,13 @@ def test_autots_prediction_intervals():
     intervals_multi = intervals_multi.sort_index(axis=1)
     pd.testing.assert_index_equal(intervals_multi.columns, expected_cols)
 
+def test_random_seed_deprecation():
+    """Test deprecated random_seed parameter."""
+    with pytest.warns(DeprecationWarning, match="parameter 'random_seed'"):
+        forecaster = AutoTS(random_seed=10)
+
+    assert forecaster.random_state == 10
+
 
 @pytest.mark.skipif(
     not _check_estimator_deps(AutoTS, severity="none"),
