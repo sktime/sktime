@@ -210,7 +210,7 @@ class AlignmentLoc(ScitypeAlignment):
     * column names must be strings of the form ``"ind0"``, ``"ind1"``, ..., ``"indn"``,
         where ``n`` is the number of columns
     * column types must be valid vor loc indexing into
-    ``Int64Index``, ``RangeIndex``, ``DatetimeIndex``, or ``PeriodIndex``.
+    ``Index`` (integer-typed), ``RangeIndex``, ``DatetimeIndex``, or ``PeriodIndex``.
     * all columns must be monotonic increasing, not necessarily strictly, or regulraly
 
     Parameters

@@ -80,7 +80,7 @@ class HierarchicalPdMultiIndex(ScitypeHierarchical):
     An object ``obj: pandas.DataFrame`` follows the specification iff:
 
     * structure convention: ``obj.index`` must be a 3 or more level multi-index of type
-      ``(Index, ..., Index, t)``, where ``t`` is one of ``Int64Index``, ``RangeIndex``,
+      ``(Index, ..., Index, t)``, where ``t`` is one of ``Index`` (integer-typed), ``RangeIndex``,
       ``DatetimeIndex``, ``PeriodIndex`` and monotonic.
       We call the last index the "time-like" index.
     * hierarchy level: rows with the same non-time-like index values correspond to the
