@@ -11,6 +11,7 @@ __author__ = [
 __all__ = [
     "BaseTimeSeriesForest",
     "_transform",
+    "_transform_multivariate",
     "_get_intervals",
     "_fit_estimator",
 ]
@@ -74,7 +75,7 @@ class BaseTimeSeriesForest:
         else:
             return self.base_estimator
 
-    def _fit(self, X, y):
+    def _fit(self, X, y, use_multivariate="no"):
         """Build a forest of trees from the training set (X, y).
 
         Parameters
@@ -83,6 +84,9 @@ class BaseTimeSeriesForest:
             Panel training data.
         y : np.ndarray
             The class labels.
+        additional parameters
+        ---------------------
+        use_multivariate: str, optional, default="no"
 
         Returns
         -------
@@ -93,8 +97,13 @@ class BaseTimeSeriesForest:
 
         from sktime.base._base import _clone_estimator
 
-        X = X.squeeze(1)
-        n_instances, self.series_length = X.shape
+        if use_multivariate == "yes":
+            self._is_multivariate = True
+            n_instances, n_channels, self.series_length = X.shape
+        else:
+            self._is_multivariate = False
+            X = X.squeeze(1)
+            n_instances, self.series_length = X.shape
 
         n_jobs = check_n_jobs(self.n_jobs)
 
@@ -122,7 +131,11 @@ class BaseTimeSeriesForest:
 
         self.estimators_ = Parallel(n_jobs=n_jobs)(
             delayed(_fit_estimator)(
-                _clone_estimator(self._estimator, rng), X, y, self.intervals_[i]
+                _clone_estimator(self._estimator, rng),
+                X,
+                y,
+                self.intervals_[i],
+                use_multivariate=self._is_multivariate,
             )
             for i in range(self.n_estimators)
         )
@@ -266,7 +279,27 @@ def _transform(X, intervals):
     return transformed_x.T
 
 
-def _fit_estimator(estimator, X, y, intervals):
+def _transform_multivariate(X, intervals):
+    """Transform multivariate X for given intervals.
+
+    Parameters
+    ----------
+    X : np.ndarray of shape (n_samples, n_channels, series_length)
+    intervals : np.ndarray of shape (n_intervals, 2)
+
+    Returns
+    -------
+    Xt : np.ndarray of shape (n_samples, 3 * n_intervals * n_channels)
+    """
+    n_channels = X.shape[1]
+    channel_features = [_transform(X[:, c, :], intervals) for c in range(n_channels)]
+    return np.concatenate(channel_features, axis=1)
+
+
+def _fit_estimator(estimator, X, y, intervals, use_multivariate=False):
     """Fit an estimator on input data (X, y)."""
-    transformed_x = _transform(X, intervals)
+    if use_multivariate:
+        transformed_x = _transform_multivariate(X, intervals)
+    else:
+        transformed_x = _transform(X, intervals)
     return estimator.fit(transformed_x, y)
