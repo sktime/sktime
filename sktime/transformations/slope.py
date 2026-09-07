@@ -25,6 +25,15 @@ class SlopeTransformer(BaseTransformer):
     ----------
     num_intervals : int, number of approx equal segments
                     to split the time series into.
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.slope import SlopeTransformer
+    >>> X = pd.DataFrame({"a": [pd.Series([1, 2, 3, 4])]})
+    >>> transformer = SlopeTransformer(num_intervals=2)
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.iloc[0, 0].round(6).tolist()
+    [1.618034, 1.618034]
     """
 
     _tags = {
