@@ -50,7 +50,8 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         structure is used.
 
     custom_dataset_pred : Dataset, default=None
-        A custom dataset to be used for prediction.
+        A custom dataset to be used for prediction.If not provided, the default dataset
+        structure is used.
 
     hid_size : int, default=1
         Size of the hidden layers in the model.
@@ -169,8 +170,6 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         self.optimizer_kwargs = optimizer_kwargs
         self.lr = lr
         self.num_epochs = num_epochs
-        self.custom_dataset_train = custom_dataset_train
-        self.custom_dataset_pred = custom_dataset_pred
         self.batch_size = batch_size
         self.hid_size = hid_size
         self.num_stacks = num_stacks
@@ -192,6 +191,8 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             optimizer=optimizer,
             optimizer_kwargs=optimizer_kwargs,
             lr=lr,
+            custom_dataset_train=custom_dataset_train,
+            custom_dataset_pred=custom_dataset_pred,
         )
 
     def __post_init__(self):
