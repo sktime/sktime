@@ -520,12 +520,17 @@ class FittedParamExtractor(BaseTransformer):
         from sktime.forecasting.exp_smoothing import ExponentialSmoothing
         from sktime.forecasting.trend import TrendForecaster
 
-        # accessing a nested parameter
+        # accessing a nested parameter via a list of names
         params = [
             {
                 "forecaster": TrendForecaster(),
                 "param_names": ["regressor__intercept"],
-            }
+            },
+            # same dependency-free forecaster, string name path of _check_param_names
+            {
+                "forecaster": TrendForecaster(),
+                "param_names": "regressor__coef",
+            },
         ]
 
         # ExponentialSmoothing requires statsmodels

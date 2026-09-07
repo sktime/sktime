@@ -269,6 +269,14 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         from sktime.classification.kernel_based import RocketClassifier
 
         params0 = {"classifiers": [DummyClassifier()]}
+        # second set is dependency-free and covers iterable weights
+        params0b = {
+            "classifiers": [
+                DummyClassifier(strategy="most_frequent"),
+                DummyClassifier(strategy="prior"),
+            ],
+            "weights": [2, 1],
+        }
 
         ests = [KNeighborsTimeSeriesClassifier, RocketClassifier]
         if _check_estimator_deps(ests, severity="none"):
@@ -288,6 +296,6 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
                 "weights": 2,
                 "cv": 3,
             }
-            return [params0, params1, params2]
+            return [params0, params0b, params1, params2]
         else:
-            return params0
+            return [params0, params0b]

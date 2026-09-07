@@ -156,9 +156,7 @@ EXCLUDED_TESTS_BY_TEST = {
         # The below estimators need to have their name removed from EXCLUDE_SOFT_DEPS
         # too after adding test parameters to them
         "BaggingForecaster",
-        "ClustererPipeline",
         "EnbPIForecaster",
-        "FittedParamExtractor",
         "ForecastingOptunaSearchCV",
         "HFTransformersForecaster",
         "ParamFitterPipeline",
@@ -168,7 +166,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "SupervisedIntervals",
         "TSBootstrapAdapter",
         "ThetaModularForecaster",
-        "WeightedEnsembleClassifier",
     ],
     "test_doctest_examples": [
         # between-versions inconsistency how doctest handles np.float64.
@@ -207,9 +204,7 @@ EXCLUDED_TESTS_BY_TEST = {
 # estimators that have 2 test params only when their soft dependency is installed
 EXCLUDE_SOFT_DEPS = [
     "BaggingForecaster",
-    "ClustererPipeline",
     "EnbPIForecaster",
-    "FittedParamExtractor",
     "ForecastingOptunaSearchCV",
     "HFTransformersForecaster",
     "ParamFitterPipeline",
@@ -219,7 +214,6 @@ EXCLUDE_SOFT_DEPS = [
     "SupervisedIntervals",
     "TSBootstrapAdapter",
     "ThetaModularForecaster",
-    "WeightedEnsembleClassifier",
 ]
 
 # add EXCLUDED_TESTS_BY_TEST to EXCLUDED_TESTS
