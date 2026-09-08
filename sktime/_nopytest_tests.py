@@ -11,3 +11,10 @@ from sktime.registry import all_estimators
 # all_estimators crawls all modules excepting pytest test files
 # if it encounters an unisolated import, it will throw an exception
 results = all_estimators()
+
+# test: check that craft can crawl all sktime and scikit-learn modules without
+# throwing an exception
+# this is a test for soft dependency isolation, in particular of pytest itself
+from sktime.registry import craft
+
+craft("NaiveForecaster")

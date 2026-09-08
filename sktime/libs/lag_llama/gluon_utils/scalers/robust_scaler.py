@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from __future__ import annotations
-
 from sktime.utils.dependencies import _safe_import
 
 torch = _safe_import("torch")
