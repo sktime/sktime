@@ -355,7 +355,7 @@ LOSS_RESULTS = {
         "func": geometric_mean_relative_squared_error,
         "class": GeometricMeanRelativeSquaredError(),
     },
-    "mean_aymmetric_error": {
+    "mean_asymmetric_error": {
         "test_case_1": 0.17139968,
         "test_case_2": 0.163956601,
         "test_case_3": 1.000000,
