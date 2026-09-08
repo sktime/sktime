@@ -687,3 +687,66 @@ def test_sample_weight_generator_is_passed_to_func(metric_class, random_state):
     assert not np.isclose(function_loss, function_loss_with_weights), " ".join(
         ["Loss function with sample weight generator should return different value"]
     )
+
+
+RELATIVE_LOSS_METRICS = [
+    name
+    for name, result in LOSS_RESULTS.items()
+    if (
+        name != "relative_loss"
+        and not result["class"].get_tag("requires-y-train")
+        and not result["class"].get_tag("requires-y-pred-benchmark")
+    )
+]
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "metric_name",
+    RELATIVE_LOSS_METRICS,
+)
+@pytest.mark.parametrize("n_test_case", [1, 2, 3])
+def test_relative_loss(metric_name, n_test_case):
+    """Test RelativeLoss with compatible MetricObjects."""
+    metric_object = LOSS_RESULTS[metric_name]["class"]
+
+    relative_metric = RelativeLoss(
+        relative_loss_function=metric_object,
+    )
+
+    y_true = Y_TEST_CASES[f"test_case_{n_test_case}"]["test"]
+    y_train = Y_TEST_CASES[f"test_case_{n_test_case}"]["train"]
+
+    y_pred = np.concatenate([y_train, y_true])[23:35]
+    y_pred_benchmark = 0.6 * y_pred
+
+    result = relative_metric.evaluate(
+        y_true,
+        y_pred,
+        y_train=y_train,
+        y_pred_benchmark=y_pred_benchmark,
+    )
+
+    loss_preds = metric_object.evaluate(
+        y_true,
+        y_pred,
+        y_train=y_train,
+        y_pred_benchmark=y_pred_benchmark,
+    )
+
+    loss_benchmark = metric_object.evaluate(
+        y_true,
+        y_pred_benchmark,
+        y_train=y_train,
+        y_pred_benchmark=y_pred_benchmark,
+    )
+
+    expected = np.divide(
+        loss_preds,
+        np.maximum(loss_benchmark, 1e-12),
+    )
+
+    assert np.isclose(result, expected)
