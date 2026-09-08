@@ -107,6 +107,7 @@ class TSFELTransformer(BaseTransformer):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tsfel.tests.test_tsfel"],
     }
 
     def __init__(

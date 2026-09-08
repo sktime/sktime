@@ -12,6 +12,7 @@ __author__ = ["mloning", "fkiraly"]
 import pkgutil
 import re
 from importlib import import_module
+from importlib.abc import MetaPathFinder
 from unittest.mock import patch
 
 import pytest
@@ -127,6 +128,46 @@ def test_module_softdeps(module):
             f"but tried importing: '{dependency}'. Make sure soft dependencies are "
             f"properly isolated."
         ) from e
+
+
+def test_moirai_forecaster_import_is_lazy_for_forecasting_imports(monkeypatch):
+    """Test MOIRAI does not import vendored forecast when importing forecasters."""
+    import sys
+
+    import skbase.utils.dependencies as skbase_dependencies
+
+    original_check_soft_dependencies = skbase_dependencies._check_soft_dependencies
+
+    def mocked_check_soft_dependencies(packages, *args, **kwargs):
+        if packages == ["lightning", "huggingface_hub"]:
+            return True
+        return original_check_soft_dependencies(packages, *args, **kwargs)
+
+    class BlockMoiraiForecastImport(MetaPathFinder):
+        attempts = 0
+
+        def find_spec(self, fullname, path=None, target=None):
+            if fullname == "sktime.libs.uni2ts.forecast":
+                self.attempts += 1
+                raise AssertionError(f"{fullname} imported eagerly")
+            return None
+
+    blocker = BlockMoiraiForecastImport()
+    monkeypatch.setattr(
+        skbase_dependencies,
+        "_check_soft_dependencies",
+        mocked_check_soft_dependencies,
+    )
+    for module in list(sys.modules):
+        if module == "sktime.forecasting" or module.startswith("sktime.forecasting."):
+            monkeypatch.delitem(sys.modules, module, raising=False)
+    monkeypatch.delitem(sys.modules, "sktime.libs.uni2ts.forecast", raising=False)
+    monkeypatch.setattr(sys, "meta_path", [blocker, *sys.meta_path])
+
+    from sktime.forecasting.naive import NaiveForecaster
+
+    assert NaiveForecaster.__name__ == "NaiveForecaster"
+    assert blocker.attempts == 0
 
 
 def _has_soft_dep(est):
