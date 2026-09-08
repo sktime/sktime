@@ -16,6 +16,8 @@ class DummyForecastingCatalogue(BaseCatalogue):
     True
     >>> catalogue.get("dataset")
     ['Airline']
+    >>> catalogue.get("dataset", as_object=True)[0].__name__
+    'Airline'
     """
 
     _tags = {

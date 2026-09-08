@@ -19,6 +19,8 @@ class DummyClassificationCatalogue(BaseCatalogue):
     True
     >>> catalogue.get("dataset")
     ['ArrowHead']
+    >>> catalogue.get("dataset", as_object=True)[0].__name__
+    'ArrowHead'
     """
 
     _tags = {
