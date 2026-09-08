@@ -710,7 +710,19 @@ RELATIVE_LOSS_METRICS = [
 )
 @pytest.mark.parametrize("n_test_case", [1, 2, 3])
 def test_relative_loss(metric_name, n_test_case):
-    """Test RelativeLoss with compatible MetricObjects."""
+    """Test RelativeLoss with Metric objects as relative loss functions.
+
+    This test verifies that instantiated forecasting Metric objects can
+    be passed to the ``relative_loss_function`` parameter of RelativeLoss
+    and are evaluated correctly.
+
+    For each compatible metric, the result obtained using the Metric
+    object is compared with the result obtained using the corresponding
+    metric function. The comparison is performed across multiple predefined
+    test cases to ensure that Metric object support is consistent with the
+    existing function-based implementation.
+    """
+
     metric_object = LOSS_RESULTS[metric_name]["class"]
 
     relative_metric = RelativeLoss(
