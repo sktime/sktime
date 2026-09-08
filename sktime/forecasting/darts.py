@@ -116,6 +116,7 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_darts"],
     }
 
     def __init__(
@@ -324,6 +325,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_darts"],
     }
 
     def __init__(
@@ -555,6 +557,7 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_darts"],
     }
 
     def __init__(
