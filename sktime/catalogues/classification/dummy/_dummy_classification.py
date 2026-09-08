@@ -7,7 +7,19 @@ from sktime.catalogues.base import BaseCatalogue
 
 
 class DummyClassificationCatalogue(BaseCatalogue):
-    """Dummy catalogue of datasets, classifiers, metrics, and cv."""
+    """Dummy catalogue of datasets, classifiers, metrics, and cv.
+
+    Examples
+    --------
+    >>> from sktime.catalogues import DummyClassificationCatalogue
+    >>> catalogue = DummyClassificationCatalogue()
+    >>> len(catalogue)
+    4
+    >>> "ArrowHead" in catalogue
+    True
+    >>> catalogue.get("dataset")
+    ['ArrowHead']
+    """
 
     _tags = {
         "authors": "jgyasu",
