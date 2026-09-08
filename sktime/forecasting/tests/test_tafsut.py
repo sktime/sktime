@@ -19,7 +19,7 @@ class _FakeModel:
 
 def _make_forecaster():
     forecaster = TafsutForecaster(local_files_only=True)
-    forecaster._load_model = lambda: _FakeModel()
+    forecaster._load_model = _FakeModel
     return forecaster
 
 

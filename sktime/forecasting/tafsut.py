@@ -63,7 +63,7 @@ class TafsutForecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["Tafsut-FM"],
+        "authors": ["tareq-si-salem", "aryamanDutta"],
         "maintainers": ["sktime developers"],
         "python_version": ">=3.10",
         "python_dependencies": [
