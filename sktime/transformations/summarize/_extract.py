@@ -144,14 +144,15 @@ class DerivativeSlopeTransformer(BaseTransformer):
     >>> from sktime.transformations.summarize._extract import (
     ...     DerivativeSlopeTransformer,
     ... )
-    >>> X = pd.DataFrame({"a": [1, 2, 3, 4]})
+    >>> X = pd.DataFrame({"a": [10, 12, 15, 20, 22]})
     >>> transformer = DerivativeSlopeTransformer()
     >>> transformer.fit_transform(X)
          a
-    0  1.0
-    1  1.0
-    2  1.0
-    3  1.0
+    0  2.0
+    1  2.5
+    2  4.0
+    3  3.5
+    4  2.0
     """
 
     _tags = {
@@ -388,21 +389,35 @@ class FittedParamExtractor(BaseTransformer):
         None means 1 unless in a joblib.parallel_backend context.
         -1 means using all processors.
 
-    Example
+    Examples
     --------
     >>> import pandas as pd
     >>> from sktime.forecasting.trend import TrendForecaster
     >>> from sktime.transformations.summarize import FittedParamExtractor
-    >>> X = pd.DataFrame({"y": [1, 2, 3, 4]})
-    >>> forecaster = TrendForecaster()
-    >>> transformer = FittedParamExtractor(
-    ...     forecaster=forecaster,
-    ...     param_names="regressor__intercept",
+    >>> X = pd.DataFrame({
+    ...     "series": [
+    ...         pd.Series([1.0, 2.0, 3.0, 4.0]),
+    ...         pd.Series([10.0, 8.0, 6.0, 4.0]),
+    ...     ]
+    ... })
+    >>> t = FittedParamExtractor(
+    ...     forecaster=TrendForecaster(), param_names="regressor__intercept"
     ... )
-    >>> transformer.fit_transform(X)
+    >>> t.fit_transform(X)
        regressor__intercept
     0                   1.0
+    1                  10.0
 
+    Multiple fitted parameters can be extracted at once, one column each:
+
+    >>> t = FittedParamExtractor(
+    ...     forecaster=TrendForecaster(),
+    ...     param_names=["regressor__intercept", "regressor__coef"],
+    ... )
+    >>> t.fit_transform(X)
+       regressor__intercept  regressor__coef
+    0                   1.0              1.0
+    1                  10.0             -2.0
     """
 
     _tags = {

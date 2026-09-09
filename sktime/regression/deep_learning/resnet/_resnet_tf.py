@@ -1,19 +1,17 @@
-"""Residual Network (ResNet) for classification."""
-
-__all__ = ["ResNetClassifier"]
+"""Residual Network (ResNet) for regression."""
 
 from copy import deepcopy
 
 from sklearn.utils import check_random_state
 
-from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.resnet import ResNetNetwork
+from sktime.regression.deep_learning.base import BaseDeepRegressor
 
 
-class ResNetClassifier(BaseDeepClassifier):
-    """Residual Neural Network as described in [1].
+class ResNetRegressor(BaseDeepRegressor):
+    """Residual Neural Network Regressor adopted from [1].
 
-    Adapted from the implementation from source code
+    Adapted from the implementation by hfawaz in
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/resnet.py
 
     Parameters
@@ -31,8 +29,8 @@ class ResNetClassifier(BaseDeepClassifier):
     loss : string, default="mean_squared_error"
         fit parameter for the keras model
     optimizer : keras.optimizer, default=keras.optimizers.Adam(),
-    metrics : list of strings, default=["accuracy"],
-    activation : string or a tf callable, default="sigmoid"
+    metrics : list of strings, default=["mean_squared_error"],
+    activation : string or a tf callable, default="linear"
         Activation function used in the output layer.
         List of available activation functions:
         https://keras.io/api/layers/activations/
@@ -53,29 +51,26 @@ class ResNetClassifier(BaseDeepClassifier):
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning.resnet import ResNetClassifier
+    >>> from sktime.regression.deep_learning.resnet import ResNetRegressor
     >>> from sktime.datasets import load_unit_test
     >>> X_train, y_train = load_unit_test(split="train")
-    >>> clf = ResNetClassifier(n_epochs=20) # doctest: +SKIP
-    >>> clf.fit(X_train, y_train) # doctest: +SKIP
-    ResNetClassifier(...)
+    >>> clf = ResNetRegressor(n_epochs=20, batch_size=4) # doctest: +SKIP
+    >>> clf.fit(X_train, Y_train) # doctest: +SKIP
+    ResNetRegressor(...)
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["hfawaz", "James-Large", "AurumnPegasus", "nilesh05apr", "noxthot"],
+        "authors": ["hfawaz", "James-Large", "Withington", "noxthot"],
         # hfawaz for dl-4-tsc
-        "maintainers": ["James-Large", "AurumnPegasus", "nilesh05apr"],
-        "python_dependencies": ["tensorflow"],
+        "maintainers": ["Withington"],
+        "python_dependencies": "tensorflow",
         # estimator type handled by parent class
-        # known ResNetClassifier sporafic failures, see #3954
-        # fails due to #3954 or #3616
-        "tests:skip_all": True,
-        # `test_fit_idempotent` fails with `AssertionError`, see #3616
-        "tests:skip_by_name": [
-            "test_fit_idempotent",
-        ],
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.resnet._resnet_tf"],
     }
 
     def __init__(
@@ -83,11 +78,11 @@ class ResNetClassifier(BaseDeepClassifier):
         n_epochs=1500,
         callbacks=None,
         verbose=False,
-        loss="categorical_crossentropy",
+        loss="mean_squared_error",
         metrics=None,
         batch_size=16,
         random_state=None,
-        activation="sigmoid",
+        activation="linear",
         activation_hidden="relu",
         use_bias=True,
         optimizer=None,
@@ -123,7 +118,7 @@ class ResNetClassifier(BaseDeepClassifier):
 
         super().__post_init__()
 
-    def build_model(self, input_shape, n_classes, **kwargs):
+    def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
 
         In sktime, time series are stored in numpy arrays of shape (d,m), where d
@@ -135,8 +130,6 @@ class ResNetClassifier(BaseDeepClassifier):
         ----------
         input_shape : tuple
             The shape of the data fed into the input layer, should be (m,d)
-        n_classes: int
-            The number of classes, which becomes the size of the output layer
 
         Returns
         -------
@@ -154,14 +147,16 @@ class ResNetClassifier(BaseDeepClassifier):
         )
 
         if self.metrics is None:
-            metrics = ["accuracy"]
+            metrics = [
+                "mean_squared_error",
+            ]
         else:
             metrics = self.metrics
 
         input_layer, output_layer = self._network.build_network(input_shape, **kwargs)
 
         output_layer = keras.layers.Dense(
-            units=n_classes, activation=self.activation, use_bias=self.use_bias
+            units=1, activation=self.activation, use_bias=self.use_bias
         )(output_layer)
 
         model = keras.models.Model(inputs=input_layer, outputs=output_layer)
@@ -174,7 +169,7 @@ class ResNetClassifier(BaseDeepClassifier):
         return model
 
     def _fit(self, X, y):
-        """Fit the classifier on the training set (X, y).
+        """Fit the regressor on the training set (X, y).
 
         Parameters
         ----------
@@ -187,22 +182,23 @@ class ResNetClassifier(BaseDeepClassifier):
         -------
         self : object
         """
-        y_onehot = self._convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
         X = X.transpose(0, 2, 1)
 
         check_random_state(self.random_state)
         self.input_shape = X.shape[1:]
-        self.model_ = self.build_model(self.input_shape, self.n_classes_)
+        self.model_ = self.build_model(self.input_shape)
         if self.verbose:
             self.model_.summary()
+
+        self.callbacks_ = deepcopy(self.callbacks)
         self.history = self.model_.fit(
             X,
-            y_onehot,
+            y,
             batch_size=self.batch_size,
             epochs=self.n_epochs,
             verbose=self.verbose,
-            callbacks=deepcopy(self.callbacks) if self.callbacks else [],
+            callbacks=self.callbacks_,
         )
         return self
 
@@ -232,13 +228,13 @@ class ResNetClassifier(BaseDeepClassifier):
         from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
-            "n_epochs": 10,
+            "n_epochs": 6,
             "batch_size": 4,
             "use_bias": False,
         }
 
         param2 = {
-            "n_epochs": 12,
+            "n_epochs": 4,
             "batch_size": 6,
             "use_bias": True,
         }

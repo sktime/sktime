@@ -85,6 +85,10 @@ class MLPClassifier(BaseDeepClassifier):
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.mlp._mlp_tf"],
     }
 
     def __init__(

@@ -408,7 +408,10 @@ def test_get_duration(n_timepoints, index_type):
             _make_index(n_timepoints, index_type)
 
 
-FIXED_FREQUENCY_STRINGS = ["10min", "H", "D", "2D"]
+if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+    FIXED_FREQUENCY_STRINGS = ["10min", "h", "D", "2D"]
+else:
+    FIXED_FREQUENCY_STRINGS = ["10min", "H", "D", "2D"]
 NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
 FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
@@ -531,7 +534,10 @@ def test_to_relative(freq: str):
     Fixes bug in
     https://github.com/sktime/sktime/issues/1935#issue-1114814142
     """
-    freq = "2H"
+    if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+        freq = "2h"
+    else:
+        freq = "2H"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
     cutoff = get_cutoff(t, return_index=True, reverse_order=True)
     fh_abs = ForecastingHorizon(t, is_relative=False)
@@ -671,7 +677,7 @@ def test_auto_ets_case_with_naive():
 
     https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
-    freq = "30T"
+    freq = "30min"
     _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
     t = pd.date_range("2021-09-19", periods=50, freq=freq)
     y = pd.Series(_y, index=t)
@@ -1010,7 +1016,10 @@ def test_tz_preserved():
 
 
 # the "XE" frequencies are not supported by pandas 1 or 2.0.X
-FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
+if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+    FREQ_STR_FOR_PD22 = ["M", "3M"]
+else:
+    FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
 
 if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
     FREQ_STR_FOR_PD22 += [
