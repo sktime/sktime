@@ -9,6 +9,8 @@ forecasts.
 __author__ = ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"]
 __all__ = ["EnsembleForecaster", "AutoEnsembleForecaster"]
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.stats import gmean
@@ -190,15 +192,28 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         elif self.method == "inverse-variance":
             # get in-sample forecasts
             if self.regressor is not None:
-                Warning(f"regressor will not be used because ${self.method} is set.")
-            inv_var = np.array(
+                warnings.warn(
+                    f"regressor will not be used because method="
+                    f"{self.method!r} is set.",
+                    stacklevel=2,
+                )
+            variances = np.array(
                 [
-                    1 / np.var(y_test - y_pred_test)
+                    np.var(y_test - y_pred_test)
                     for y_pred_test in self._predict_forecasters(fh_test, X_test)
                 ]
             )
-            # standardize the inverse variance
-            self.weights_ = list(inv_var / np.sum(inv_var))
+            zero_variance = variances == 0
+            if zero_variance.any():
+                # one or more forecasters fit the test set exactly (variance
+                # zero), so 1 / variance is undefined. Split the weight
+                # equally between the exact forecasters, zero elsewhere.
+                weights = zero_variance / zero_variance.sum()
+            else:
+                inv_var = 1 / variances
+                # standardize the inverse variance
+                weights = inv_var / np.sum(inv_var)
+            self.weights_ = list(weights)
         else:
             raise NotImplementedError(
                 f"Given method {self.method} does not exist, "
