@@ -206,7 +206,7 @@ dl = [
   'neuralforecast>=1.6.4; python_version < "3.12"',
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
-  "torch<2.14; python_version < '3.14'",
+  "torch; (sys_platform != 'darwin' or python_version < '3.13')",
   'transformers[torch]<4.41.0; python_version < "3.13"',
   "pytorch-forecasting>=1.8.0; (sys_platform != 'darwin' or python_version != '3.13') and python_version < '3.14'",
   "lightning>=2.0,<2.7; (sys_platform != 'darwin' or python_version < '3.13')",
