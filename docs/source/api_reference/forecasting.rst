@@ -310,6 +310,17 @@ Forecasters with AR or MA component.
 
 All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
+Neural autoregression
+~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.forecasting.nnetar
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    NNetAR
+
 (V)AR(I)MAX models
 ~~~~~~~~~~~~~~~~~~
 
