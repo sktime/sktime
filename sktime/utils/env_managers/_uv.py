@@ -18,33 +18,51 @@ logger = logging.getLogger(__name__)
 
 _READY_MARKER = ".env_ready"
 _REQUIREMENTS_FILE = "requirements.txt"
+_DEFAULT_ENVS_DIR = ".temp_envs"
 
 
 class UvEnvironmentManager(BaseEnvironmentManager):
     """Create and reuse ``uv`` virtual environments keyed by dependency set.
 
     Environments are stored under ``envs_dir`` and reused when the same
-    dependency set is requested again. The parent process never activates
-    these environments; callers use ``get_python_executable`` or ``run``.
+    dependency set and Python spec are requested again. The parent
+    process never activates these environments; callers use
+    ``get_python_executable`` or ``run``.
+
+    Implements ``get_python_executable`` by creating a ``uv`` venv and
+    installing packages with ``uv pip install``. Shared launch logic
+    (``run``, ``_prepare_run``, ``_resolve_python``) comes from
+    ``BaseEnvironmentManager``.
 
     Parameters
     ----------
-    envs_dir : str or path-like, optional (default=None)
-        Directory for storing virtual environments. Defaults to
-        ``".sktime_envs"`` in the current working directory.
+    envs_dir : str or pathlib.Path, optional (default=None)
+        Directory for storing virtual environments. A ``str`` is a
+        filesystem path, relative to the current working directory
+        unless absolute. ``None`` uses ``.temp_envs`` in the current
+        working directory.
     python : str, optional (default=None)
-        Default Python interpreter specification passed to
-        ``uv venv --python``. Overridden by the ``python`` argument of
-        ``get_python_executable`` or ``run``.
+        Default interpreter passed to ``uv venv --python``. Valid
+        values are a version request (``"3.11"``, ``"3.12.9"``), an
+        implementation pin (``"cpython@3.11"``), or an absolute path
+        to an interpreter. Overridden by the ``python`` argument of
+        ``get_python_executable`` or ``run``. ``None`` uses the
+        ``uv venv`` default.
     uv_executable : str, optional (default=None)
-        Path to the ``uv`` executable. Defaults to the first ``uv`` on
+        Filesystem path to the ``uv`` executable, or the name of an
+        executable on ``PATH``. ``None`` uses the first ``uv`` on
         ``PATH``.
     base_requirements : list of str, optional (default=None)
-        Requirement strings installed in every environment created by
-        this manager, in addition to per-call ``requirements``.
-    editable : list of str or path-like, optional (default=None)
-        Local paths installed editable (``uv pip install -e``) in every
-        environment created by this manager.
+        PEP 440 specifier strings installed in every environment this
+        manager creates, in addition to per-call ``requirements``.
+        Same format as the ``python_dependencies`` tag.
+        Example: ``["cloudpickle"]``. ``None`` means no extra packages.
+    editable : list of str or pathlib.Path, optional (default=None)
+        Local project directories installed editable
+        (``uv pip install -e``) in every environment. Each entry is
+        the project root that contains ``pyproject.toml``, not the
+        ``pyproject.toml`` file itself. ``None`` means no editable
+        installs.
     """
 
     def __init__(
@@ -55,8 +73,39 @@ class UvEnvironmentManager(BaseEnvironmentManager):
         base_requirements: list[str] | None = None,
         editable: list[str | Path] | None = None,
     ):
-        """Store manager settings and ensure ``envs_dir`` exists."""
-        self.envs_dir = Path(envs_dir or Path.cwd() / ".sktime_envs")
+        """Store manager settings and ensure ``envs_dir`` exists.
+
+        Parameters
+        ----------
+        envs_dir : str or pathlib.Path, optional (default=None)
+            Directory for storing virtual environments. A ``str`` is a
+            filesystem path, relative to the current working directory
+            unless absolute. ``None`` uses ``.temp_envs`` in the current
+            working directory.
+        python : str, optional (default=None)
+            Default interpreter passed to ``uv venv --python``. Valid
+            values are a version request (``"3.11"``, ``"3.12.9"``), an
+            implementation pin (``"cpython@3.11"``), or an absolute path
+            to an interpreter. Overridden by the ``python`` argument of
+            ``get_python_executable`` or ``run``. ``None`` uses the
+            ``uv venv`` default.
+        uv_executable : str, optional (default=None)
+            Filesystem path to the ``uv`` executable, or the name of an
+            executable on ``PATH``. ``None`` uses the first ``uv`` on
+            ``PATH``.
+        base_requirements : list of str, optional (default=None)
+            PEP 440 specifier strings installed in every environment this
+            manager creates, in addition to per-call ``requirements``.
+            Same format as the ``python_dependencies`` tag.
+            Example: ``["cloudpickle"]``. ``None`` means no extra packages.
+        editable : list of str or pathlib.Path, optional (default=None)
+            Local project directories installed editable
+            (``uv pip install -e``) in every environment. Each entry is
+            the project root that contains ``pyproject.toml``, not the
+            ``pyproject.toml`` file itself. ``None`` means no editable
+            installs.
+        """
+        self.envs_dir = Path(envs_dir or Path.cwd() / _DEFAULT_ENVS_DIR)
         self.envs_dir.mkdir(parents=True, exist_ok=True)
         self.python = python
         self.uv_executable = uv_executable or shutil.which("uv")
@@ -74,12 +123,14 @@ class UvEnvironmentManager(BaseEnvironmentManager):
         Parameters
         ----------
         requirements : list of str, optional (default=None)
-            PEP 440 requirement strings that select or create the environment.
-            Combined with ``base_requirements`` and ``editable`` when hashing
-            and installing.
+            Package requirements, same format as the
+            ``python_dependencies`` tag: a list of PEP 440 specifier
+            strings. Combined with ``base_requirements`` and ``editable``
+            when hashing and installing. ``None`` means no extra packages.
         python : str, optional (default=None)
-            Python interpreter specification for this environment, e.g.
-            ``"3.11"`` or a path. ``None`` uses ``self.python``.
+            Interpreter for this environment: version request
+            (``"3.11"``), implementation pin (``"cpython@3.11"``), or
+            absolute path. ``None`` uses ``self.python``.
 
         Returns
         -------
@@ -108,23 +159,6 @@ class UvEnvironmentManager(BaseEnvironmentManager):
         logger.info("Creating environment at %s", env_dir)
         self._create_env(env_dir, requirements, python=python)
         return env_python_path
-
-    def _resolve_python(self, python: str | None) -> str | None:
-        """Return the per-call Python spec, falling back to the manager default.
-
-        Parameters
-        ----------
-        python : str or None
-            Per-call interpreter specification.
-
-        Returns
-        -------
-        str or None
-            ``python`` if given, otherwise ``self.python``.
-        """
-        if python is not None:
-            return python
-        return self.python
 
     def _env_key(self, requirements: list[str], python: str | None = None) -> str:
         """Return the reuse key for an environment with ``requirements``.
