@@ -602,6 +602,7 @@ See next section for foundation models.
     :toctree: auto_generated/
     :template: class.rst
 
+    HyperTreeARForecaster
     HyperTreeNetARForecaster
 
 .. currentmodule:: sktime.forecasting.rbf
