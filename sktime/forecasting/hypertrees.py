@@ -8,6 +8,36 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
+_PERIOD_TO_OFFSET_ALIAS = {"M": "MS", "Q": "QS", "Y": "YS", "A": "YS"}
+
+
+def _period_to_offset_alias(freq):
+    """Convert a pandas period alias to its ``pd.date_range`` offset alias.
+
+    ``pd.PeriodIndex.freqstr`` returns period aliases (``"M"``, ``"Q"``, ``"Y"``,
+    ``"A"``) that pandas >= 2.2 deprecated as ``pd.date_range`` aliases in favour
+    of the offset equivalents (``"MS"``, ``"QS"``, ``"YS"``). Passing the period
+    alias through to ``pd.date_range`` raises a ``FutureWarning`` and will
+    eventually raise, so we map the base alias to its start-of-period offset
+    equivalent.
+
+    Compound aliases such as ``"Q-DEC"`` or ``"A-JAN"`` keep their anchor: only
+    the base alias before the ``"-"`` separator is mapped.
+
+    Parameters
+    ----------
+    freq : str
+        Frequency alias, e.g. ``"M"``, ``"Q-DEC"``, ``"MS"``, ``"D"``.
+
+    Returns
+    -------
+    str
+        A ``pd.date_range``-safe alias.
+    """
+    base, sep, anchor = freq.partition("-")
+    offset = _PERIOD_TO_OFFSET_ALIAS.get(base, base)
+    return f"{offset}-{anchor}" if sep else offset
+
 
 class HyperTreeNetARForecaster(BaseForecaster):
     """Hyper-TreeNet-AR forecaster, from the ``hypertrees-forecasting`` package.
@@ -159,7 +189,9 @@ class HyperTreeNetARForecaster(BaseForecaster):
         self._freq = freq or "MS"
         fcst_h = int(np.max(fh.to_relative(self.cutoff)._values))
         self._dates = pd.date_range(
-            "2000-01-01", periods=self._train_len + fcst_h, freq=self._freq
+            "2000-01-01",
+            periods=self._train_len + fcst_h,
+            freq=_period_to_offset_alias(self._freq),
         )
 
         times = np.arange(1, self._train_len + 1)
