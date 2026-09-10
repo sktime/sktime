@@ -228,6 +228,22 @@ class TSCGridSearchCV(_DelegatedClassifier):
         for its final evaluation.
     sklearn.metrics.make_scorer : Make a scorer from a performance metric or
         loss function.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
+    >>> from sktime.classification.model_selection import TSCGridSearchCV
+    >>> rng = np.random.RandomState(42)
+    >>> X = rng.rand(6, 1, 10)
+    >>> y = np.array([0, 0, 0, 1, 1, 1])
+    >>> clf = TimeSeriesForestClassifier(n_estimators=3, random_state=42)
+    >>> gs = TSCGridSearchCV(clf, {"n_estimators": [3, 5]}, cv=2)
+    >>> gs = gs.fit(X, y)
+    >>> gs.best_params_
+    {'n_estimators': 3}
+    >>> float(round(gs.best_score_, 4))
+    0.6667
     """
 
     _tags = {
