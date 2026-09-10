@@ -40,7 +40,7 @@ class ConformalIntervals(BaseForecaster):
         as offsets to the point prediction at forecast horizon h
     method="empirical_residual" uses empirical quantiles of absolute residuals
         on the training set, i.e., quantiles of epsilon-h (in notation [1]_),
-        at quantile point (1-coverage)/2 quantiles, as offsets to point prediction
+        at quantile point coverage, as plusminus offsets to point prediction
 
     Parameters
     ----------
@@ -48,7 +48,7 @@ class ConformalIntervals(BaseForecaster):
         Estimator to which probabilistic forecasts are being added
     method : str, optional, default="empirical"
         "empirical": predictive interval bounds are empirical quantiles from training
-        "empirical_residual": upper/lower are plusminus (1-coverage)/2 quantiles
+        "empirical_residual": upper/lower are plusminus the coverage quantile
             of the absolute residuals at horizon, i.e., of epsilon-h
         "conformal_bonferroni": Bonferroni, as in Stankeviciute et al
             Caveat: this does not give frequentist but conformal predictive intervals
@@ -319,7 +319,7 @@ class ConformalIntervals(BaseForecaster):
                 quantiles = 0.5 + np.tile([-0.5, 0.5], len(coverage)) * coverage2
                 pred_int_row = np.quantile(resids, quantiles)
             if self.method == "empirical_residual":
-                quantiles = 0.5 - 0.5 * coverage2
+                quantiles = coverage2
                 pred_int_row = np.quantile(abs_resids, quantiles)
             elif self.method == "conformal_bonferroni":
                 alphas = 1 - coverage2
