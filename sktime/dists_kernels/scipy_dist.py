@@ -50,6 +50,20 @@ class ScipyDist(BasePairwiseTransformer):
         any kwargs passed to the metric in addition, i.e., to the function cdist
         common kwargs: ``w`` : array-like, same length as X.columns, weights for metric
         refer to scipy.spatial.distance.dist for a documentation of other extra kwargs
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.dists_kernels import ScipyDist
+    >>> X = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [1.0, 3.0, 2.0]})
+    >>> ScipyDist().transform(X)
+    array([[0.        , 2.23606798, 2.23606798],
+           [2.23606798, 0.        , 1.41421356],
+           [2.23606798, 1.41421356, 0.        ]])
+    >>> ScipyDist(metric="sqeuclidean").transform(X)
+    array([[0., 5., 5.],
+           [5., 0., 2.],
+           [5., 2., 0.]])
     """
 
     _tags = {
