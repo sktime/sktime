@@ -45,6 +45,16 @@ class CUSUM(BaseIntervalScorer):
     .. [1] Page, E. S. (1954). Continuous inspection schemes. Biometrika.
     .. [2] Wang, D., Yu, Y., & Rinaldo, A. (2020). Univariate mean change
        point detection. Electronic Journal of Statistics.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.detection._change_scores._cusum import CUSUM
+    >>> X = pd.DataFrame({"v": [0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0]})
+    >>> cuts = np.array([[0, 4, 8]])
+    >>> CUSUM().evaluate(X, cuts)
+    array([[5.30330086]])
     """
 
     _tags = {
