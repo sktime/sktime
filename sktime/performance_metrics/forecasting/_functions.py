@@ -1748,7 +1748,7 @@ def median_absolute_percentage_error(
         output_errors = _weighted_percentile(
             np.abs(
                 _percentage_error(
-                    y_pred, y_true, symmetric=symmetric, relative_to=relative_to
+                    y_true, y_pred, symmetric=symmetric, relative_to=relative_to
                 )
             ),
             sample_weight=horizon_weight,
