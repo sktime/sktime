@@ -1063,13 +1063,23 @@ class LogLoss(_BaseDistrForecastingMetric):
           the log-loss is computed for entire row, results one score per row
         * if False, is univariate log-loss:
           the log-loss is computed per variable marginal, results in many scores per row
-    """
 
-    _tags = {
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
-    }
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.base._proba._normal import Normal
+    >>> from sktime.performance_metrics.forecasting.probabilistic import LogLoss
+    >>> index = pd.RangeIndex(3)
+    >>> y_true = pd.DataFrame({"a": [0.0, 0.5, 1.0]}, index=index)
+    >>> y_pred = Normal(
+    ...     mu=[[0.1], [0.4], [0.9]],
+    ...     sigma=[[1.0], [1.0], [1.0]],
+    ...     index=index,
+    ...     columns=pd.Index(["a"]),
+    ... )
+    >>> LogLoss()(y_true, y_pred)
+    np.float64(0.9239385332046727)
+    """
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
@@ -1193,13 +1203,23 @@ class CRPS(_BaseDistrForecastingMetric):
           the score is computed for entire row, results one score per row
         * if False, is univariate CRPS:
           the score is computed per variable marginal, results in many scores per row
-    """  # noqa: E501
 
-    _tags = {
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
-    }
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.base._proba._normal import Normal
+    >>> from sktime.performance_metrics.forecasting.probabilistic import CRPS
+    >>> index = pd.RangeIndex(3)
+    >>> y_true = pd.DataFrame({"a": [0.0, 0.5, 1.0]}, index=index)
+    >>> y_pred = Normal(
+    ...     mu=[[0.1], [0.4], [0.9]],
+    ...     sigma=[[1.0], [1.0], [1.0]],
+    ...     index=index,
+    ...     columns=pd.Index(["a"]),
+    ... )
+    >>> CRPS()(y_true, y_pred)
+    np.float64(0.2376810788616731)
+    """  # noqa: E501
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
@@ -1267,13 +1287,23 @@ class AUCalibration(_BaseDistrForecastingMetric):
           the metric is computed for entire row, results one score per row
         * if False, is univariate metric, per variable:
           the metric is computed per variable marginal, results in many scores per row
-    """  # noqa: E501
 
-    _tags = {
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
-    }
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.base._proba._normal import Normal
+    >>> from sktime.performance_metrics.forecasting.probabilistic import AUCalibration
+    >>> index = pd.RangeIndex(3)
+    >>> y_true = pd.DataFrame({"a": [0.0, 0.5, 1.0]}, index=index)
+    >>> y_pred = Normal(
+    ...     mu=[[0.1], [0.4], [0.9]],
+    ...     sigma=[[1.0], [1.0], [1.0]],
+    ...     index=index,
+    ...     columns=pd.Index(["a"]),
+    ... )
+    >>> AUCalibration()(y_true, y_pred)
+    np.float64(0.11111111111111112)
+    """  # noqa: E501
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
