@@ -15,14 +15,31 @@ import pytest
 from sklearn.metrics import accuracy_score, brier_score_loss, f1_score
 from sklearn.model_selection import KFold
 
+from sktime.classification.base import BaseClassifier
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.classification.dummy import DummyClassifier
 from sktime.classification.model_evaluation import evaluate
+from sktime.exceptions import FitFailedWarning
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.panel import make_classification_problem
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 BACKENDS = _get_parallel_test_fixtures("estimator")
+
+
+class _AlwaysFailsClassifier(BaseClassifier):
+    """Classifier whose ``_fit`` always raises, to exercise FitFailedWarning.
+
+    Module-level by design: process-based joblib backends ("loky",
+    "multiprocessing") pickle the classifier to send it to worker processes,
+    so a locally-defined class would fail there.
+    """
+
+    def _fit(self, X, y):
+        raise ValueError("deliberate failure for FitFailedWarning test")
+
+    def _predict(self, X):
+        raise NotImplementedError
 
 
 @pytest.mark.skipif(
@@ -222,3 +239,29 @@ class TestEvaluate:
         assert "test_accuracy_score" in result.columns
         assert "fit_time" in result.columns
         assert "pred_time" in result.columns
+
+    @pytest.mark.parametrize("backend", BACKENDS)
+    def test_evaluate_fit_failure_warning_reaches_caller(self, backend):
+        """FitFailedWarning raised inside a parallelized fold must reach the caller.
+
+        Regression test for #5307: process-based backends ("loky",
+        "multiprocessing") run each fold in a separate process, so a warning
+        raised inside ``_evaluate_fold`` did not reach the caller before that
+        issue was fixed in ``sktime.utils.parallel``.
+        """
+        X, y = make_classification_problem()
+        cv = KFold(n_splits=3)
+
+        with pytest.warns(FitFailedWarning):
+            result = evaluate(
+                classifier=_AlwaysFailsClassifier(),
+                cv=cv,
+                X=X,
+                y=y,
+                scoring=accuracy_score,
+                error_score=0,
+                **backend,
+            )
+
+        assert isinstance(result, pd.DataFrame)
+        assert all(result["test_accuracy_score"] == 0)

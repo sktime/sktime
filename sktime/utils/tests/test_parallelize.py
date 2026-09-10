@@ -1,4 +1,5 @@
 import copy
+import warnings
 
 import pytest
 
@@ -34,3 +35,46 @@ def test_parallelize_simple_loop(fixture):
 
     assert list(result) == expected
     assert backend_params == params_before
+
+
+def _warn_for_one_input(x, **kwargs):
+    """Return x, but raise a UserWarning when x == 2.
+
+    Module-level by design: process-based joblib backends ("loky",
+    "multiprocessing") pickle the target function to send it to worker
+    processes, so a closure or local function would fail there.
+    """
+    if x == 2:
+        warnings.warn(
+            "expected test warning from _warn_for_one_input",
+            UserWarning,
+            stacklevel=2,
+        )
+    return x
+
+
+@pytest.mark.skipif(
+    not _should_run,
+    reason="sktime.utils.parallel unchanged, skipping parallelize tests",
+)
+@pytest.mark.parametrize("fixture", _get_parallel_test_fixtures())
+def test_parallelize_warnings_reach_caller(fixture):
+    """Warnings raised inside a parallelized call must reach the caller.
+
+    Covers all backends returned by ``_get_parallel_test_fixtures``; see
+    ``_run_and_capture_warnings`` for which backends need the capture/
+    re-emit mechanism and why. This matters for ``evaluate``, which raises
+    ``FitFailedWarning`` from inside a parallelized fold.
+    """
+    backend = fixture["backend"]
+    backend_params = copy.deepcopy(fixture["backend_params"])
+
+    with pytest.warns(UserWarning, match="expected test warning"):
+        result = parallelize(
+            _warn_for_one_input,
+            range(4),
+            backend=backend,
+            backend_params=backend_params,
+        )
+
+    assert list(result) == [0, 1, 2, 3]
