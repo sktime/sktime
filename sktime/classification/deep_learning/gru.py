@@ -320,8 +320,8 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
         dropout: float = 0.0,
         gru_dropout: float = 0.0,
         bidirectional: bool = False,
-        conv_layers: list = [128, 256, 128],
-        kernel_sizes: list = [7, 5, 3],
+        conv_layers: tuple = (128, 256, 128),
+        kernel_sizes: tuple = (7, 5, 3),
         # base classifier specific
         num_epochs: int = 10,
         batch_size: int = 8,

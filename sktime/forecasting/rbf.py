@@ -58,7 +58,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         - ``"multiquadric"``: :math:`\sqrt{1 + \gamma (t - c)^2}`
         - ``"inverse_multiquadric"``: :math:`\frac{1}{\sqrt{1 + \gamma (t - c)^2}}`
 
-    hidden_layers : list of int, optional (default=[64, 32])
+    hidden_layers : list or tuple of int, optional (default=(64, 32))
         Sizes of linear layers following the RBF layer.
     optimizer : {"adam", "sgd", "rmsprop"}, optional (default="adam")
         Type of optimizer to use.
@@ -117,7 +117,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         centers=None,
         gamma=1.0,
         rbf_type="gaussian",
-        hidden_layers=[64, 32],
+        hidden_layers=(64, 32),
         optimizer="adam",
         lr=0.01,
         epochs=100,
