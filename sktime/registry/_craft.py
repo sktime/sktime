@@ -176,10 +176,19 @@ def craft(spec, safe=False):
 
     # Parse the specification once.
     # Both safe and unsafe modes operate on the resulting AST.
-    tree = ast.parse(spec, mode="exec")
+    try:
+        tree = ast.parse(spec, mode="exec")
+    except SyntaxError as e:
+        if safe:
+            raise ValueError(
+                f"Error in craft utility: failed to parse specification: {spec}"
+            ) from e
+        exec_parsed = False
+    else:
+        exec_parsed = True
 
     # single expression
-    if len(tree.body) == 1 and isinstance(tree.body[0], ast.Expr):
+    if exec_parsed and len(tree.body) == 1 and isinstance(tree.body[0], ast.Expr):
         # safe mode: validate the AST against the allowed constructors and operators
         if safe and not _validate_ast(tree, register):
             raise ValueError(
