@@ -328,6 +328,8 @@ def _validate_ast(tree, register):
 
         return True
 
+    # the above is an exhaustive list of what is allowed
+    # hence, if we reach this point, the AST contains an unsupported node type
     return False
 
 
