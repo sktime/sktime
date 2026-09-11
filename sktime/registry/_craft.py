@@ -106,7 +106,7 @@ def craft(spec, safe=False):
     This permits simple constructor calls such as ``A(a=42)``,
     or nested constructor calls such as ``A(a=42, b=B("test"))``, and only such calls.
 
-    In particular, does not permit attribute access, lambdas, comprehensions, operators,
+    In particular, does not permit attribute access, lambdas, comprehensions,
     imports, assignments, function calls through arbitrary expressions, etc,
     which are "unsafe" in the sense of allowing arbitrary code injection.
 
