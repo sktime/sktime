@@ -280,6 +280,16 @@ def _validate_ast(tree, register):
     if isinstance(tree, ast.Constant):
         return True
 
+    # Literal containers are also safe provided all nested elements are safe.
+    if isinstance(tree, (ast.List, ast.Tuple, ast.Set)):
+        return all(_validate_ast(elt, reg) for elt in tree.elts)
+
+    if isinstance(tree, ast.Dict):
+        return all(
+            _validate_ast(key, reg) and _validate_ast(value, reg)
+            for key, value in zip(tree.keys, tree.values)
+        )
+
     # binary and unary operators (dunder operations)
     # are allowed, since this is how we can build pipelines
     allowed_binops = (
