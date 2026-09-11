@@ -243,7 +243,7 @@ def _LTSFNLinearNetwork():
     """Factory function for LTSF-NLinear Network."""
     from torch import nn
 
-    class _LTSFNLinearNetwork(nn.module):
+    class _LTSFNLinearNetwork(nn.Module):
         def __init__(
             self,
             seq_len,
