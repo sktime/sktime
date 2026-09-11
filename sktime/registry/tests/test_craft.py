@@ -81,8 +81,11 @@ if _check_soft_dependencies(["statsmodels"], severity="none"):
 @pytest.mark.parametrize("safe", [True, False])
 def test_craft(spec, safe):
     """Check that crafting works and is inverse to str coercion."""
+    # hack - among test cases, all unsafe specs contain a "return" statement
+    # in general, this statement is not true, i.e., unsafe iff contains return
     spec_is_unsafe = "return" in spec
 
+    # test that unsafe specs correctly raise an error in safe mode
     if safe and spec_is_unsafe:
         with pytest.raises(ValueError):
             craft(spec, safe=safe)
