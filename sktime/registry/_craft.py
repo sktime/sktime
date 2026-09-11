@@ -89,7 +89,7 @@ def craft(spec, safe=False):
         expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
                         | UNARYOP expression
 
-        arguments  ::= positional_argument | keyword_argument| arguments "," arguments
+        arguments  ::= positional_argument | keyword_argument | arguments "," arguments
 
         positional_argument ::= expression | CONSTANT
         keyword_argument    ::= NAME "=" (expression | CONSTANT)
