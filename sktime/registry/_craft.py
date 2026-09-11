@@ -259,9 +259,7 @@ def _validate_ast(tree, register):
     # available for variables. In particular, don't permit dunder names.
     if isinstance(tree, ast.Name):
         if tree.id.startswith("__") or tree.id not in register:
-            raise ValueError(
-                f"unsafe or unknown name in specification: {tree.id!r}"
-            )
+            return False
         return True
 
     # Constants are safe as values.
@@ -296,17 +294,13 @@ def _validate_ast(tree, register):
 
     if isinstance(tree, ast.BinOp):
         if not isinstance(tree.op, allowed_binops):
-            raise ValueError(
-                f"unsafe binary operator: {type(tree.op).__name__}"
-            )
+            return False
         _validate_ast(tree.left, register)
         _validate_ast(tree.right, register)
 
     elif isinstance(tree, ast.UnaryOp):
         if not isinstance(tree.op, allowed_unaryops):
-            raise ValueError(
-                f"unsafe unary operator: {type(tree.op).__name__}"
-            )
+            return False
         _validate_ast(tree.operand, register)
 
     if isinstance(tree, ast.Call):
@@ -317,9 +311,7 @@ def _validate_ast(tree, register):
         #   getattr(...)(...)
         #   (lambda: ...)(...)
         if not isinstance(tree.func, ast.Name):
-            raise ValueError(
-                "safe specifications only allow direct constructor calls"
-            )
+            return False
 
         _validate_ast(tree.func, register)
 
@@ -329,7 +321,7 @@ def _validate_ast(tree, register):
         for kw in tree.keywords:
             # **kwargs is represented by keyword.arg == None.
             if kw.arg is None:
-                raise ValueError("**kwargs are not allowed in safe specifications")
+                return False
             _validate_ast(kw.value, register)
 
         return True
