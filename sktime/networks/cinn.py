@@ -184,7 +184,12 @@ class CINNNetwork:
         self.encoded_cond_size = encoded_cond_size
         self.num_coupling_layers = num_coupling_layers
         self.hidden_dim_size = hidden_dim_size
-        self.activation = activation if activation is not None else nn.ReLU
+        self.activation = activation
+
+        if activation is None:
+            from torch import nn
+
+            self.activation = nn.ReLU()
 
     def build(self):
         """Build the cINN."""

@@ -1,5 +1,6 @@
 """Deep Learning Forecaster using LTSF-Transformer Model."""
 
+
 def _LTSFTransformerNetwork():
     """Return the LTSF-Transformer network class."""
     import torch.nn as nn
