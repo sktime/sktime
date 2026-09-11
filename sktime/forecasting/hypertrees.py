@@ -157,6 +157,18 @@ class HyperTreeNetARForecaster(BaseForecaster):
             except ValueError:
                 freq = None
         self._freq = freq or "MS"
+        # Period aliases (M, Q, Y, A, Q-DEC, ...) are deprecated for
+        # pd.date_range, map to start-of-period equivalents.
+        if "-" in self._freq:
+            _base, _, _suffix = self._freq.partition("-")
+            _base = {"M": "MS", "Q": "QS", "Y": "YS", "A": "YS"}.get(
+                _base, _base
+            )
+            self._freq = _base + "-" + _suffix
+        else:
+            self._freq = {"M": "MS", "Q": "QS", "Y": "YS", "A": "YS"}.get(
+                self._freq, self._freq
+            )
         fcst_h = int(np.max(fh.to_relative(self.cutoff)._values))
         self._dates = pd.date_range(
             "2000-01-01", periods=self._train_len + fcst_h, freq=self._freq
