@@ -1,8 +1,10 @@
 """Benchmarking interface for use with sktime objects."""
 
 import logging
+import sys
 import warnings
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import pandas as pd
 
@@ -31,6 +33,9 @@ _SCTYPE_TO_COLLECTION = {
 }
 
 logger = logging.getLogger(__name__)
+
+_BENCHMARK_ENVS_DIR = ".benchmark_envs"
+_BENCHMARK_BASE_REQUIREMENTS = ["cloudpickle"]
 
 
 def _is_initialised_estimator(estimator: BaseEstimator) -> bool:
@@ -339,16 +344,24 @@ class BaseBenchmark:
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
     isolated : bool, optional (default=False)
-        If ``True``, each task-estimator pair is executed in its own ``uv``
-        virtual environment via a subprocess launched with that environment's
-        Python interpreter. Environments are created (or reused) per dependency
-        set and never activated in the parent process.
-    envs_dir : str or path-like, optional (default=None)
-        Directory for storing ``uv`` virtual environments when ``isolated=True``.
-        Defaults to ``".benchmark_envs"`` in the current working directory.
-    python : str, optional (default=None)
-        Python interpreter specification passed to ``uv venv --python`` when
-        creating isolated environments.
+        If ``True``, each task-estimator pair is executed in an isolated
+        environment via ``env_manager.run``. Environments are created or
+        reused per dependency set and never activated in the parent
+        process. Implied ``True`` when ``env_manager`` is passed.
+    env_manager : BaseEnvironmentManager, optional (default=None)
+        Manager that creates environments and launches
+        ``sktime.benchmarking._worker``. ``None`` builds a
+        ``UvEnvironmentManager`` that installs ``cloudpickle`` and the
+        same ``sktime`` version as the parent process
+        , using the parent interpreter.
+        A different Python version is not supported because the worker
+        unpickles estimators and tasks with ``cloudpickle``.
+        To use a local checkout of sktime instead, pass a manager
+         with ``editable`` set.
+    envs_dir : str or pathlib.Path, optional (default=None)
+        Directory for isolated environments when ``env_manager`` is
+        ``None``. ``None`` uses ``.benchmark_envs`` in the current working
+        directory.
     """
 
     _benchmark_kind: str = ""
@@ -360,16 +373,16 @@ class BaseBenchmark:
         backend_params=None,
         return_data=False,
         isolated=False,
+        env_manager=None,
         envs_dir=None,
-        python=None,
     ):
         self.id_format = id_format
         self.backend = backend
         self.backend_params = backend_params
         self.return_data = return_data
-        self.isolated = isolated
+        self.isolated = isolated or env_manager is not None
+        self.env_manager = env_manager
         self.envs_dir = envs_dir
-        self.python = python
         self.estimators = _SktimeRegistry(id_format)
         self.tasks = _SktimeRegistry(id_format)
 
@@ -378,7 +391,7 @@ class BaseBenchmark:
         self._metrics = []
 
         self._failed_experiments: list[FailedExperimentRecord] = []
-        self._env_manager = None
+        self._env_manager = env_manager
 
     def add_estimator(
         self,
@@ -828,13 +841,24 @@ class BaseBenchmark:
         raise NotImplementedError("This method must be implemented by a subclass.")
 
     def _get_env_manager(self):
-        """Return the cached ``UvEnvironmentManager`` for isolated execution."""
+        """Return the environment manager for isolated execution.
+
+        Uses ``env_manager`` if the caller passed one. Otherwise builds a
+        ``UvEnvironmentManager`` that installs ``cloudpickle`` and the
+        same released ``sktime`` as the parent process, using the parent
+        interpreter so ``cloudpickle`` can round-trip the worker payload.
+        """
         if self._env_manager is None:
-            from sktime.benchmarking._uv_env import UvEnvironmentManager
+            import sktime
+            from sktime.utils.env_managers import UvEnvironmentManager
 
             self._env_manager = UvEnvironmentManager(
-                envs_dir=self.envs_dir,
-                python=self.python,
+                envs_dir=self.envs_dir or Path.cwd() / _BENCHMARK_ENVS_DIR,
+                python=sys.executable,
+                base_requirements=[
+                    *_BENCHMARK_BASE_REQUIREMENTS,
+                    f"sktime=={sktime.__version__}",
+                ],
             )
         return self._env_manager
 

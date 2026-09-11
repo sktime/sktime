@@ -1,23 +1,22 @@
 # ruff: noqa: S603
 
-"""Run benchmark validation in an isolated ``uv`` subprocess."""
+"""Run benchmark validation in an isolated environment subprocess."""
 
 from __future__ import annotations
 
 import builtins
 import logging
-import subprocess
 
 import cloudpickle
 
 from sktime.base import BaseEstimator
 from sktime.benchmarking._benchmarking_dataclasses import TaskObject
-from sktime.benchmarking._uv_env import (
-    UvEnvironmentManager,
-    collect_pair_requirements,
-)
+from sktime.benchmarking._isolated_requirements import collect_pair_requirements
+from sktime.utils.env_managers import BaseEnvironmentManager
 
 logger = logging.getLogger(__name__)
+
+_WORKER_MODULE = "sktime.benchmarking._worker"
 
 
 def run_isolated_validation(
@@ -28,9 +27,9 @@ def run_isolated_validation(
     backend,
     backend_params,
     return_data: bool,
-    env_manager: UvEnvironmentManager,
+    env_manager: BaseEnvironmentManager,
 ) -> dict:
-    """Run ``_run_validation`` in a dedicated ``uv`` environment subprocess.
+    """Run ``_run_validation`` in a dedicated environment subprocess.
 
     Parameters
     ----------
@@ -46,8 +45,9 @@ def run_isolated_validation(
         Backend parameters passed to ``evaluate``.
     return_data : bool
         Whether fold predictions are returned.
-    env_manager : UvEnvironmentManager
-        Environment manager used to create or reuse pair environments.
+    env_manager : BaseEnvironmentManager
+        Manager used to create or reuse a pair environment and launch
+        ``sktime.benchmarking._worker``.
 
     Returns
     -------
@@ -55,8 +55,6 @@ def run_isolated_validation(
         Fold results mapping, as returned by ``_run_validation``.
     """
     requirements = collect_pair_requirements(estimator, task)
-    env_python = env_manager.get_python_executable(requirements)
-
     payload = {
         "benchmark_kind": benchmark_kind,
         "task": task,
@@ -67,16 +65,14 @@ def run_isolated_validation(
     }
 
     logger.debug(
-        "Launching isolated validation with %s (requirements: %s)",
-        env_python,
+        "Launching isolated validation (requirements: %s)",
         requirements or "core only",
     )
 
-    proc = subprocess.run(
-        [str(env_python), "-m", "sktime.benchmarking._worker"],
+    proc = env_manager.run(
+        _WORKER_MODULE,
+        requirements=requirements,
         input=cloudpickle.dumps(payload),
-        capture_output=True,
-        check=False,
     )
 
     if proc.returncode != 0:
