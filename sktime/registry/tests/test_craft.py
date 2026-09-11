@@ -91,6 +91,7 @@ def test_craft(spec, safe):
             craft(spec, safe=safe)
         return
 
+    # test that crafting and re-crafting produces consistent results
     crafted_obj = craft(spec, safe=safe)
 
     new_spec = str(crafted_obj)
