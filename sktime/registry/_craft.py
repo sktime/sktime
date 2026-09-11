@@ -19,6 +19,8 @@ will have the same effect as new_est = spec.clone()
 
 __author__ = ["fkiraly"]
 
+import ast
+from platform import node
 import re
 
 from sktime.registry._lookup import all_estimators
@@ -51,7 +53,7 @@ def _extract_class_names(spec):
     return cls_name_list
 
 
-def craft(spec):
+def craft(spec, safe=False):
     """Instantiate an object from the specification string.
 
     The ``craft`` utility can be used to deserialize an estimator specification string,
@@ -79,6 +81,33 @@ def craft(spec):
     ``craft`` recognizes estimators present in ``sktime`` and ``scikit-learn``,
     and base python.
 
+    If ``safe=True`` mode is enabld, only simple propositional expressions are allowed.
+
+    The accepted "safe" grammar is intentionally small:
+    
+    .. code-block:: text
+
+        expression ::= NAME | NAME "(" arguments ")"
+
+        arguments  ::= positional_argument | keyword_argument| arguments "," arguments
+
+        positional_argument ::= expression | CONSTANT
+        keyword_argument    ::= NAME "=" (expression | CONSTANT)
+
+    Where
+
+    .. code-block:: text
+
+        NAME       ::= valid Python identifier, object name in ``sktime`` or ``skpro``
+        CONSTANT   ::= literal value (e.g., number, string, boolean)
+
+    This permits simple constructor calls such as ``A(a=42)``,
+    or nested constructor calls such as ``A(a=42, b=B("test"))``, and only such calls.
+
+    In particular, does not permit attribute access, lambdas, comprehensions, operators,
+    imports, assignments, function calls through arbitrary expressions, etc,
+    which are "unsafe" in the sense of allowing arbitrary code injection.
+
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
@@ -88,7 +117,15 @@ def craft(spec):
         * option 1: a string that evaluates to an estimator
         * option 2: a sequence of assignments in valid python code,
           with the object to be defined preceded by a "return".
-          assignments can use names of classes as if all imports were present
+          assignments can use names of classes as if all imports were present.
+          Option 2 is not available in ``safe=True`` mode.
+
+    safe : bool, optional (default=False)
+        whether to enforce safe expressions according to the safe specification rules.
+    
+        * if True, only allow safe expressions according to the safe specification
+          rules, see above for the exact rules.
+        * if False, allow all expressions (default behavior).
 
     Returns
     -------
@@ -135,9 +172,35 @@ def craft(spec):
     register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
     register = {**register_sklearn, **register_sktime}
 
+    # Parse the specification once.
+    # Both safe and unsafe modes operate on the resulting AST.
+    tree = ast.parse(spec, mode="exec")
+
+    # safe mode: validate the AST before evaluation
+    if safe and not _validate_ast(tree, register):
+        raise ValueError(
+            "Error in craft utility: unsafe or invalid specification supplied: "
+            f"{spec}"
+        )
+
+    expr = tree.body[0].value
+    expr_tree = ast.Expression(body=expr)
+    ast.fix_missing_locations(expr_tree)
+
     try:
-        obj = eval(spec, globals(), register)
-    except Exception:
+        obj = eval(
+            compile(expr_tree, "<craft>", "eval"),
+            {"__builtins__": {}},
+            register,
+        )
+    except Exception as e:
+        if safe:
+            raise ValueError(
+                "Error in craft utility: failed to evaluate specification: "
+                f"{spec}"
+            ) from e
+
+        # unsafe mode: attempt to execute the specification directly
         from textwrap import indent
 
         spec_fun = indent(spec, "    ")
@@ -152,6 +215,87 @@ def build_obj():
         obj = eval("build_obj()", register, register)
 
     return obj
+
+
+def _validate_ast(tree, register):
+    """Validate that ``spec`` contains only safe constructor expressions.
+
+    The accepted grammar is intentionally small:
+
+        expression ::= NAME | NAME "(" arguments ")"
+
+        arguments  ::= positional_argument | keyword_argument| arguments "," arguments
+
+        positional_argument ::= expression | CONSTANT
+        keyword_argument    ::= NAME "=" (expression | CONSTANT)
+
+    This permits nested constructor calls such as:
+
+        A(a=42, b=B("test"))
+
+    and only such calls.
+    In particular, does not permit attribute access, lambdas, comprehensions, operators,
+    imports, assignments, function calls through arbitrary expressions, etc.
+
+    Parameters
+    ----------
+    tree : ast.Expression or ast.AST
+        The abstract syntax tree of the specification to validate.
+    register : dict
+        The registry of allowed names (estimators, methods, variables) for validation.
+
+    Returns
+    -------
+    bool
+        True if the AST is valid according to the safe spec rules, False otherwise.
+    """
+    if not isinstance(tree, ast.Expression):
+        raise ValueError("safe specification is not a valid expression")
+
+    # if Expression, obtain node
+    if isinstance(tree, ast.Expression):
+        tree = tree.body
+
+    if isinstance(tree, ast.Name):
+        # Only names explicitly supplied in the estimator registry are
+        # available. In particular, don't permit dunder names.
+        if tree.id.startswith("__") or tree.id not in register:
+            raise ValueError(
+                f"unsafe or unknown name in specification: {tree.id!r}"
+            )
+        return True
+
+    if isinstance(tree, ast.Constant):
+        # Constants are safe as values. In particular, this allows strings,
+        # numbers, booleans, None, etc.
+        return True
+
+    if isinstance(tree, ast.Call):
+        # Only direct calls such as A(...) are allowed.
+        #
+        # This deliberately rejects:
+        #   obj.A(...)
+        #   getattr(...)(...)
+        #   (lambda: ...)(...)
+        if not isinstance(tree.func, ast.Name):
+            raise ValueError(
+                "safe specifications only allow direct constructor calls"
+            )
+
+        _validate_ast(tree.func, register)
+
+        for arg in tree.args:
+            _validate_ast(arg, register)
+
+        for kw in tree.keywords:
+            # **kwargs is represented by keyword.arg == None.
+            if kw.arg is None:
+                raise ValueError("**kwargs are not allowed in safe specifications")
+            _validate_ast(kw.value, register)
+
+        return True
+
+    return False
 
 
 def deps(spec, include_test_deps=False):
