@@ -83,7 +83,7 @@ def craft(spec, safe=False):
     If ``safe=True`` mode is enabled, only simple propositional expressions are allowed.
 
     The accepted "safe" grammar is intentionally small:
-    
+
     .. code-block:: text
 
         expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
@@ -124,7 +124,7 @@ def craft(spec, safe=False):
 
     safe : bool, optional (default=False)
         whether to enforce safe expressions according to the safe specification rules.
-    
+
         * if True, only allow safe expressions according to the safe specification
           rules, see above for the exact rules.
         * if False, allow all expressions (default behavior).
@@ -200,8 +200,7 @@ def craft(spec, safe=False):
         except Exception as e:
             if safe:
                 raise ValueError(
-                    "Error in craft utility: failed to evaluate specification: "
-                    f"{spec}"
+                    f"Error in craft utility: failed to evaluate specification: {spec}"
                 ) from e
         else:
             return obj

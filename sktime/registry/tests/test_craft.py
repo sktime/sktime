@@ -108,58 +108,47 @@ def test_craft(spec, safe):
         "NaiveForecaster().fit",
         "NaiveForecaster().foo()",
         "NaiveForecaster.__init__",
-
         # Indirect / arbitrary function calls
         "getattr(NaiveForecaster(), 'fit')",
         "(NaiveForecaster)()",
         "(lambda: NaiveForecaster())()",
-
         # Lambdas
         "lambda: NaiveForecaster()",
         "NaiveForecaster(lam=lambda: 1)",
-
         # Comprehensions / generators
         "[NaiveForecaster() for _ in range(1)]",
         "{NaiveForecaster() for _ in range(1)}",
         "{i: NaiveForecaster() for i in range(1)}",
         "(NaiveForecaster() for _ in range(1))",
-
         # Arbitrary builtin/function names are not in the safe registry
         "eval('NaiveForecaster()')",
         "exec('x = 1')",
         "open('foo')",
         "getattr",
-
         # Dunder names / access
         "__import__('os')",
         "__builtins__",
         "NaiveForecaster().__class__",
         "NaiveForecaster().__dict__",
-
         # **kwargs expansion
         "NaiveForecaster(**{})",
-
         # Statements / multi-statement code
         "x = NaiveForecaster()",
         "NaiveForecaster(); NaiveForecaster()",
         "import os",
         "from os import path",
         "if True:\n    return NaiveForecaster()",
-
         # Unsupported expression forms
         "[NaiveForecaster()]",
         "{'estimator': NaiveForecaster()}",
         "(NaiveForecaster(),)",
         "NaiveForecaster() if True else NaiveForecaster()",
-
         # Boolean operators are deliberately not part of the safe grammar
         "NaiveForecaster() and NaiveForecaster()",
         "NaiveForecaster() or NaiveForecaster()",
-
         # Comparisons
         "NaiveForecaster() == NaiveForecaster()",
         "NaiveForecaster() < NaiveForecaster()",
-
         # Chained / indirect calls
         "NaiveForecaster()()",
         "(NaiveForecaster())()",
