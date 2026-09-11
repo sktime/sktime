@@ -202,6 +202,12 @@ def craft(spec, safe=False):
 
         return obj
 
+    elif safe:
+        raise ValueError(
+            "Error in craft utility: safe mode requires a single expression, "
+            f"but got a block of code: {spec}"
+        )
+
     else:
         # unsafe mode: attempt to execute the specification directly
         from textwrap import indent
