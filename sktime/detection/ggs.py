@@ -41,6 +41,7 @@ import numpy.typing as npt
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
+from sktime.detection._formatters import format_segments
 from sktime.detection.base import BaseDetector
 
 logger = logging.getLogger(__name__)
@@ -415,6 +416,19 @@ class GreedyGaussianSegmentation(BaseDetector):
        "Greedy Gaussian segmentation of multivariate time series.",
        Adv Data Anal Classif 13, 727-751 (2019).
        https://doi.org/10.1007/s11634-018-0335-0
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.ggs import GreedyGaussianSegmentation
+    >>> X = np.concatenate([np.ones(5) * i**2 for i in range(4)])[:, np.newaxis]
+    >>> ggs = GreedyGaussianSegmentation(k_max=3, lamb=0.5)
+    >>> ggs.fit_predict(X)
+          ilocs
+    0    [0, 5)
+    1   [5, 10)
+    2  [10, 15)
+    3  [15, 20)
     """
 
     _tags = {
@@ -478,8 +492,9 @@ class GreedyGaussianSegmentation(BaseDetector):
 
         Returns
         -------
-        y_pred : array_like
-            1D array of segment labels indexed by segment.
+        y_pred : pd.DataFrame
+            ``"ilocs"`` column with left-closed ``pd.Interval`` objects,
+            one row per detected segment.
         """
         if isinstance(X, pd.Series):
             X = X.values[:, np.newaxis]
@@ -501,27 +516,10 @@ class GreedyGaussianSegmentation(BaseDetector):
         adaptee.initialize_intermediates()
         change_points_ = adaptee.find_change_points(X)
 
-        # Assign labels based on detected change points
-        labels = np.zeros(X.shape[0], dtype=np.int32)
-        for i, (start, stop) in enumerate(zip(change_points_[:-1], change_points_[1:])):
-            labels[start:stop] = i
-        return labels
-
-    def fit_predict(self, X) -> npt.ArrayLike:
-        """Perform segmentation.
-
-        Parameters
-        ----------
-        X: array_like (1D or 2D), pd.Series, or pd.DataFrame
-            1D array of time series values, or 2D array with index along the first
-            dimension and columns representing features of the time series.
-
-        Returns
-        -------
-        y_pred : array_like
-            1D array of segment labels indexed by segment
-        """
-        return self.fit(X, None).predict(X)
+        # change_points_ are the segment breaks. identity_segmentation returns a
+        # right break of len(X) + 1, so clip before forming the intervals.
+        breaks = np.clip(np.asarray(change_points_, dtype=int), 0, X.shape[0])
+        return format_segments(breaks[:-1], breaks[1:])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
