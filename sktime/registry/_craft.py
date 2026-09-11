@@ -280,6 +280,11 @@ def _validate_ast(tree, register):
         ast.Mod,
         ast.Pow,
         ast.MatMult,
+        ast.BitOr,
+        ast.BitAnd,
+        ast.BitXor,
+        ast.LShift,
+        ast.RShift,
     )
 
     allowed_unaryops = (
