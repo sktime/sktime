@@ -329,7 +329,7 @@ class ESRNN:
 
     def pin_ball(self):
         """Return the default Pinball Loss."""
-        return _PinballLoss()
+        return _PinballLoss()()
 
     def _build(self):
         """Build the ES-RNN."""
