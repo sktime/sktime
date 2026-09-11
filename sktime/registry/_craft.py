@@ -251,6 +251,8 @@ def _validate_ast(tree, register):
     if not isinstance(tree, ast.Expression):
         raise ValueError("safe specification is not a valid expression")
 
+    reg = register  # for shorter expressions below
+
     # if Expression, obtain node
     if isinstance(tree, ast.Expression):
         tree = tree.body
@@ -258,9 +260,7 @@ def _validate_ast(tree, register):
     # Only names explicitly supplied in the estimator registry are
     # available for variables. In particular, don't permit dunder names.
     if isinstance(tree, ast.Name):
-        if tree.id.startswith("__") or tree.id not in register:
-            return False
-        return True
+        return tree.id in reg and not tree.id.startswith("__")
 
     # Constants are safe as values.
     # In particular, this allows strings, numbers, booleans, None, etc.
@@ -295,18 +295,14 @@ def _validate_ast(tree, register):
     if isinstance(tree, ast.BinOp):
         if not isinstance(tree.op, allowed_binops):
             return False
-        if not _validate_ast(tree.left, register):
-            return False
-        if not _validate_ast(tree.right, register):
-            return False
+        return _validate_ast(tree.left, reg) and _validate_ast(tree.right, reg)
 
     elif isinstance(tree, ast.UnaryOp):
         if not isinstance(tree.op, allowed_unaryops):
             return False
-        if not _validate_ast(tree.operand, register):
-            return False
+        return _validate_ast(tree.operand, reg)
 
-    if isinstance(tree, ast.Call):
+    elif isinstance(tree, ast.Call):
         # Only direct calls such as A(...) are allowed.
         #
         # This deliberately rejects:
@@ -316,18 +312,18 @@ def _validate_ast(tree, register):
         if not isinstance(tree.func, ast.Name):
             return False
 
-        if not _validate_ast(tree.func, register):
+        if not _validate_ast(tree.func, reg):
             return False
 
         for arg in tree.args:
-            if not _validate_ast(arg, register):
+            if not _validate_ast(arg, reg):
                 return False
 
         for kw in tree.keywords:
             # **kwargs is represented by keyword.arg == None.
             if kw.arg is None:
                 return False
-            if not _validate_ast(kw.value, register):
+            if not _validate_ast(kw.value, reg):
                 return False
 
         return True
