@@ -20,7 +20,6 @@ will have the same effect as new_est = spec.clone()
 __author__ = ["fkiraly"]
 
 import ast
-from platform import node
 import re
 
 from sktime.registry._lookup import all_estimators
