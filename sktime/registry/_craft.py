@@ -182,23 +182,27 @@ def craft(spec, safe=False):
             f"{spec}"
         )
 
-    expr = tree.body[0].value
-    expr_tree = ast.Expression(body=expr)
-    ast.fix_missing_locations(expr_tree)
+    if len(tree.body) == 1 and isinstance(tree.body[0], ast.Expr):
+        expr = tree.body[0].value
+        expr_tree = ast.Expression(body=expr)
+        ast.fix_missing_locations(expr_tree)
 
-    try:
-        obj = eval(
-            compile(expr_tree, "<craft>", "eval"),
-            {"__builtins__": {}},
-            register,
-        )
-    except Exception as e:
-        if safe:
-            raise ValueError(
-                "Error in craft utility: failed to evaluate specification: "
-                f"{spec}"
-            ) from e
+        try:
+            obj = eval(
+                compile(expr_tree, "<craft>", "eval"),
+                {"__builtins__": {}},
+                register,
+            )
+        except Exception as e:
+            if safe:
+                raise ValueError(
+                    "Error in craft utility: failed to evaluate specification: "
+                    f"{spec}"
+                ) from e
 
+        return obj
+
+    else:
         # unsafe mode: attempt to execute the specification directly
         from textwrap import indent
 
@@ -248,22 +252,14 @@ def _validate_ast(tree, register):
     bool
         True if the AST is valid according to the safe spec rules, False otherwise.
     """
-    if not isinstance(tree, ast.Expression):
-        raise ValueError("safe specification is not a valid expression")
-
     reg = register  # for shorter expressions below
 
-    # if Expression, obtain node
-    if isinstance(tree, ast.Expression):
-        tree = tree.body
-
-        # The safe form must be a single expression.
-        if len(tree) != 1:
-            return False
-        tree = tree[0]
-        if not isinstance(tree, ast.Expr):
-            return False
-        tree = tree.value
+    if isinstance(tree, ast.Module):
+        return (
+            len(tree.body) == 1
+            and isinstance(tree.body[0], ast.Expr)
+            and _validate_ast(tree.body[0].value, reg)
+        )
 
     # Only names explicitly supplied in the estimator registry are
     # available for variables. In particular, don't permit dunder names.
@@ -305,12 +301,12 @@ def _validate_ast(tree, register):
             return False
         return _validate_ast(tree.left, reg) and _validate_ast(tree.right, reg)
 
-    elif isinstance(tree, ast.UnaryOp):
+    if isinstance(tree, ast.UnaryOp):
         if not isinstance(tree.op, allowed_unaryops):
             return False
         return _validate_ast(tree.operand, reg)
 
-    elif isinstance(tree, ast.Call):
+    if isinstance(tree, ast.Call):
         # Only direct calls such as A(...) are allowed.
         #
         # This deliberately rejects:
