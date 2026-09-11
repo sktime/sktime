@@ -255,19 +255,54 @@ def _validate_ast(tree, register):
     if isinstance(tree, ast.Expression):
         tree = tree.body
 
+    # Only names explicitly supplied in the estimator registry are
+    # available for variables. In particular, don't permit dunder names.
     if isinstance(tree, ast.Name):
-        # Only names explicitly supplied in the estimator registry are
-        # available. In particular, don't permit dunder names.
         if tree.id.startswith("__") or tree.id not in register:
             raise ValueError(
                 f"unsafe or unknown name in specification: {tree.id!r}"
             )
         return True
 
+    # Constants are safe as values.
+    # In particular, this allows strings, numbers, booleans, None, etc.
     if isinstance(tree, ast.Constant):
-        # Constants are safe as values. In particular, this allows strings,
-        # numbers, booleans, None, etc.
         return True
+
+    # binary and unary operators (dunder operations)
+    # are allowed, since this is how we can build pipelines
+    allowed_binops = (
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.FloorDiv,
+        ast.Mod,
+        ast.Pow,
+        ast.MatMult,
+    )
+
+    allowed_unaryops = (
+        ast.UAdd,
+        ast.USub,
+        ast.Not,
+        ast.Invert,
+    )
+
+    if isinstance(tree, ast.BinOp):
+        if not isinstance(tree.op, allowed_binops):
+            raise ValueError(
+                f"unsafe binary operator: {type(tree.op).__name__}"
+            )
+        _validate_ast(tree.left, register)
+        _validate_ast(tree.right, register)
+
+    elif isinstance(tree, ast.UnaryOp):
+        if not isinstance(tree.op, allowed_unaryops):
+            raise ValueError(
+                f"unsafe unary operator: {type(tree.op).__name__}"
+            )
+        _validate_ast(tree.operand, register)
 
     if isinstance(tree, ast.Call):
         # Only direct calls such as A(...) are allowed.
