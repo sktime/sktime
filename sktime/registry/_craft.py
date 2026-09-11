@@ -86,7 +86,8 @@ def craft(spec, safe=False):
     
     .. code-block:: text
 
-        expression ::= NAME | NAME "(" arguments ")"
+        expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
+                        | UNARYOP expression
 
         arguments  ::= positional_argument | keyword_argument| arguments "," arguments
 
@@ -99,6 +100,8 @@ def craft(spec, safe=False):
 
         NAME       ::= valid Python identifier, object name in ``sktime`` or ``sklearn``
         CONSTANT   ::= literal value (e.g., number, string, boolean)
+        BINOP      ::= valid Python binary operator (e.g., +, -, *, /)
+        UNARYOP    ::= valid Python unary operator (e.g., +, -, ~)
 
     This permits simple constructor calls such as ``A(a=42)``,
     or nested constructor calls such as ``A(a=42, b=B("test"))``, and only such calls.
@@ -190,7 +193,7 @@ def craft(spec, safe=False):
         try:
             obj = eval(
                 compile(expr_tree, "<craft>", "eval"),
-                {"__builtins__": {}},
+                {"__builtins__": {}} if safe else globals(),
                 register,
             )
         except Exception as e:
@@ -199,8 +202,8 @@ def craft(spec, safe=False):
                     "Error in craft utility: failed to evaluate specification: "
                     f"{spec}"
                 ) from e
-
-        return obj
+        else:
+            return obj
 
     elif safe:
         raise ValueError(
@@ -231,7 +234,7 @@ def _validate_ast(tree, register):
 
     The accepted grammar is intentionally small:
 
-        expression ::= NAME | NAME "(" arguments ")"
+        expression ::= NAME | NAME "(" arguments ")" | expression OP expression
 
         arguments  ::= positional_argument | keyword_argument| arguments "," arguments
 
