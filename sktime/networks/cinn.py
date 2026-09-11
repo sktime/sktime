@@ -3,7 +3,6 @@
 __author__ = ["benHeid"]
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies
 
 
 def _CINNNetwork():
@@ -147,7 +146,6 @@ def _CINNNetwork():
             """
             c = self._calculate_condition(c)
             return self.network(z, c=c, rev=True)[0].detach().numpy()
-
 
     return _CINNNetwork
 

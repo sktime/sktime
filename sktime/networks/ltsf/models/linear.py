@@ -109,7 +109,7 @@ class LTSFLinearNetwork:
 
 
 def _LTSFDLinearNetwork():
-    """Returns the LTSF-DLinear Network class."""
+    """Return the LTSF-DLinear Network class."""
     from torch import nn
 
     class _LTSFDLinearNetwork(nn.Module):
@@ -240,7 +240,7 @@ class LTSFDLinearNetwork:
 
 
 def _LTSFNLinearNetwork():
-    """Factory function for LTSF-NLinear Network."""
+    """Return the LTSF-NLinear Network class."""
     from torch import nn
 
     class _LTSFNLinearNetwork(nn.Module):

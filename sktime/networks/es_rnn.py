@@ -61,9 +61,9 @@ def _ESRNN():
             self.season1_length = season1_length
             self.season2_length = season2_length
             super().__init__()
-            self.level_coeff = torch.nn.Parameter(torch.rand(1), requires_grad=True)
-            self.seasonal_coeff_1 = torch.nn.Parameter(torch.rand(1), requires_grad=True)
-            self.seasonal_coeff_2 = torch.nn.Parameter(torch.rand(1), requires_grad=True)
+            self.level_coeff = nn.Parameter(torch.rand(1), requires_grad=True)
+            self.seasonal_coeff_1 = nn.Parameter(torch.rand(1), requires_grad=True)
+            self.seasonal_coeff_2 = nn.Parameter(torch.rand(1), requires_grad=True)
             self.input_layer = nn.Linear(input_shape, input_shape)
             self.lstm = nn.LSTM(
                 self.input_shape, self.hidden_size, self.num_layer, batch_first=True
