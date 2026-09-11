@@ -178,14 +178,15 @@ def craft(spec, safe=False):
     # Both safe and unsafe modes operate on the resulting AST.
     tree = ast.parse(spec, mode="exec")
 
-    # safe mode: validate the AST before evaluation
-    if safe and not _validate_ast(tree, register):
-        raise ValueError(
-            "Error in craft utility: unsafe or invalid specification supplied: "
-            f"{spec}"
-        )
-
+    # single expression
     if len(tree.body) == 1 and isinstance(tree.body[0], ast.Expr):
+        # safe mode: validate the AST against the allowed constructors and operators
+        if safe and not _validate_ast(tree, register):
+            raise ValueError(
+                "Error in craft utility: unsafe or invalid specification supplied: "
+                f"{spec}"
+            )
+
         expr = tree.body[0].value
         expr_tree = ast.Expression(body=expr)
         ast.fix_missing_locations(expr_tree)
@@ -205,6 +206,7 @@ def craft(spec, safe=False):
         else:
             return obj
 
+    # safe mode only allows single expressions
     if safe:
         raise ValueError(
             "Error in craft utility: safe mode requires a single expression, "
