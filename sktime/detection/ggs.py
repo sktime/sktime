@@ -416,6 +416,19 @@ class GreedyGaussianSegmentation(BaseDetector):
        "Greedy Gaussian segmentation of multivariate time series.",
        Adv Data Anal Classif 13, 727-751 (2019).
        https://doi.org/10.1007/s11634-018-0335-0
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.ggs import GreedyGaussianSegmentation
+    >>> X = np.concatenate([np.ones(5) * i**2 for i in range(4)])[:, np.newaxis]
+    >>> ggs = GreedyGaussianSegmentation(k_max=3, lamb=0.5)
+    >>> ggs.fit_predict(X)
+          ilocs
+    0    [0, 5)
+    1   [5, 10)
+    2  [10, 15)
+    3  [15, 20)
     """
 
     _tags = {
