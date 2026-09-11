@@ -10,6 +10,7 @@ import pandas as pd
 import pytest
 from numpy.testing._private.utils import assert_array_equal
 from pytest import raises
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.datasets import load_airline
 from sktime.datatypes._utilities import get_cutoff
@@ -39,9 +40,9 @@ from sktime.utils.datetime import (
     _get_freq,
     _get_intervals_count_and_unit,
     _shift,
+    _to_offset_compat,
     infer_freq,
 )
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.series import is_in_valid_index_types, is_integer_index
 
 
@@ -407,7 +408,10 @@ def test_get_duration(n_timepoints, index_type):
             _make_index(n_timepoints, index_type)
 
 
-FIXED_FREQUENCY_STRINGS = ["10min", "H", "D", "2D"]
+if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+    FIXED_FREQUENCY_STRINGS = ["10min", "h", "D", "2D"]
+else:
+    FIXED_FREQUENCY_STRINGS = ["10min", "H", "D", "2D"]
 NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
 FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
 
@@ -530,7 +534,10 @@ def test_to_relative(freq: str):
     Fixes bug in
     https://github.com/sktime/sktime/issues/1935#issue-1114814142
     """
-    freq = "2H"
+    if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+        freq = "2h"
+    else:
+        freq = "2H"
     t = pd.date_range(start="2021-01-01", freq=freq, periods=5)
     cutoff = get_cutoff(t, return_index=True, reverse_order=True)
     fh_abs = ForecastingHorizon(t, is_relative=False)
@@ -628,10 +635,10 @@ def test_frequency_setter(freqstr):
     assert fh.freq is None
 
     fh.freq = freqstr
-    assert fh.freq == freqstr
+    assert fh.freq == _get_expected_freqstr(freqstr)
 
     fh = ForecastingHorizon([1, 2, 3], freq=freqstr)
-    assert fh.freq == freqstr
+    assert fh.freq == _get_expected_freqstr(freqstr)
 
 
 # TODO: Replace this long running test with fast unit test
@@ -670,7 +677,7 @@ def test_auto_ets_case_with_naive():
 
     https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
-    freq = "30T"
+    freq = "30min"
     _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
     t = pd.date_range("2021-09-19", periods=50, freq=freq)
     y = pd.Series(_y, index=t)
@@ -859,7 +866,9 @@ def test_extract_freq_from_inputs() -> None:
 @pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
 def test_extract_freq_from_cutoff(freq: str) -> None:
     """Test extract frequency from cutoff."""
-    assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == freq
+    assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == _to_offset_compat(
+        freq
+    )
 
 
 @pytest.mark.skipif(
@@ -1007,7 +1016,10 @@ def test_tz_preserved():
 
 
 # the "XE" frequencies are not supported by pandas 1 or 2.0.X
-FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
+if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+    FREQ_STR_FOR_PD22 = ["M", "3M"]
+else:
+    FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]
 
 if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
     FREQ_STR_FOR_PD22 += [

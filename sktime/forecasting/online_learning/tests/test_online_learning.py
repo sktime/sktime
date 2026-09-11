@@ -6,6 +6,7 @@ __author__ = ["magittan"]
 
 import numpy as np
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.metrics import mean_squared_error
 
 from sktime.datasets import load_airline
@@ -18,7 +19,6 @@ from sktime.forecasting.online_learning._prediction_weighted_ensembler import (
 )
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_soft_dependencies
 
 cv = SlidingWindowSplitter(start_with_window=True, window_length=1, fh=1)
 

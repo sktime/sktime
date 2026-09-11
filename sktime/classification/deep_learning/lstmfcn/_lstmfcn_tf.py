@@ -77,6 +77,10 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         "maintainers": ["jnrusson1", "solen0id"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.lstmfcn._lstmfcn_tf"],
     }
 
     def __init__(
@@ -239,7 +243,7 @@ class LSTMFCNClassifier(BaseDeepClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 25,

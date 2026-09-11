@@ -89,10 +89,10 @@ class ClassificationBenchmark(BaseBenchmark):
 
         Parameters
         ----------
-        data : Union[Callable, tuple]
+        dataset_loader : Union[Callable, tuple]
             Can be
             - a function which returns a dataset, like from `sktime.datasets`.
-            - a tuple contianing two data container that are sktime comptaible.
+            - a tuple containing two data containers that are sktime compatible.
             - single data container that is sktime compatible (only endogenous data).
         cv_splitter : BaseSplitter object
             Splitter used for generating validation folds.

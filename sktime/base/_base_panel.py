@@ -540,7 +540,7 @@ class BasePanelMixin(BaseEstimator):
             "capability:categorical_in_X"
         ):
             raise TypeError(
-                f"{est_type}s do not support categorical features in exogeneous X."
+                f"{est_type}s do not support categorical features in exogenous X."
             )
 
         n_cases = X_metadata["n_instances"]

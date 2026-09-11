@@ -16,18 +16,19 @@ from inspect import isclass
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.datatypes import check_is_scitype, get_examples, mtype_to_scitype
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.transformations.boxcox import BoxCoxTransformer
 from sktime.transformations.compose import FitInTransform
-from sktime.transformations.panel.padder import PaddingTransformer
-from sktime.transformations.panel.tsfresh import (
+from sktime.transformations.exponent import ExponentTransformer
+from sktime.transformations.padder import PaddingTransformer
+from sktime.transformations.summarize import SummaryTransformer
+from sktime.transformations.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
-from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.exponent import ExponentTransformer
-from sktime.transformations.series.summarize import SummaryTransformer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformHierarchicalMultivariate,
@@ -38,7 +39,6 @@ from sktime.utils._testing.scenarios_transformers import (
     TransformerFitTransformSeriesUnivariate,
 )
 from sktime.utils._testing.series import _make_series
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 # other scenarios that might be needed later in development:
@@ -690,8 +690,8 @@ def test_vectorize_reconstruct_unique_columns():
     ------
     AssertionError if output columns are not as expected.
     """
-    from sktime.transformations.series.detrend import Detrender
-    from sktime.transformations.series.theta import ThetaLinesTransformer
+    from sktime.transformations.detrend import Detrender
+    from sktime.transformations.theta import ThetaLinesTransformer
 
     X = pd.DataFrame({"a": [1, 2], "b": [3, 4], "c": [5, 6]})
     X_mi = get_examples("pd_multiindex_hier")[0]
@@ -727,7 +727,7 @@ def test_vectorize_reconstruct_correct_hierarchy():
     ------
     AssertionError if output index is not as expected.
     """
-    from sktime.transformations.series.summarize import SummaryTransformer
+    from sktime.transformations.summarize import SummaryTransformer
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     # hierarchical data with 2 variables and 2 levels
@@ -760,8 +760,8 @@ def test_wrong_y_is_not_passed_to_transformer():
     from sktime.pipeline import make_pipeline
     from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
     from sktime.transformations.compose import FitInTransform
-    from sktime.transformations.panel.interpolate import TSInterpolator
-    from sktime.transformations.series.kalman_filter import KalmanFilterTransformerFP
+    from sktime.transformations.interpolate import TSInterpolator
+    from sktime.transformations.kalman_filter import KalmanFilterTransformerFP
 
     # this test requires the KalmanFilterTransformerFP to be runnable
     if not _check_estimator_deps(KalmanFilterTransformerFP, severity="none"):
@@ -883,7 +883,7 @@ def test_functrafo_and_default_capability_categorical_in_X():
 
     Failure cases from #8752 and #8753.
     """
-    from sktime.transformations.series.func_transform import FunctionTransformer
+    from sktime.transformations.func_transform import FunctionTransformer
 
     transformer = FunctionTransformer(lambda x: x)
     X = pd.DataFrame(np.array([[0, 1], [2, 3]]).astype(str))
@@ -891,7 +891,7 @@ def test_functrafo_and_default_capability_categorical_in_X():
 
     from sklearn.preprocessing import OneHotEncoder
 
-    from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    from sktime.transformations.adapt import TabularToSeriesAdaptor
 
     transformer = TabularToSeriesAdaptor(OneHotEncoder(), input_type="pandas")
     X = pd.DataFrame([["A", "B"], ["A", "B"]])

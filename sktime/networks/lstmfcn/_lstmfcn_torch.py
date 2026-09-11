@@ -3,6 +3,8 @@
 __authors__ = ["Faakhir30"]
 __all__ = ["LSTMFCNNetworkTorch"]
 
+from collections.abc import Callable
+
 import numpy as np
 
 # from sktime.networks.base import BaseDeepNetwork
@@ -36,12 +38,14 @@ class LSTMFCNNetworkTorch(NNModule):
         Controls dropout rate of LSTM layer
     attention : bool, default=False
         If True, uses attention mechanism before LSTM layer
-    activation : str or None, default=None
+    activation : Callable or None, default=None
         Activation function used in the output layer.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
-    activation_hidden : str, default="relu"
+        Recommended: Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU', None
+    activation_hidden : Callable or None, default=None
         Activation function used for convolutional layers.
-        Supported: 'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', 'gelu'
+        Recommended: Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
+        'SELU', 'GELU'
     init_weights: str or None, default = 'kaiming_uniform'
         The method to initialize the weights of the conv layers. Supported values are
         'kaiming_uniform', 'kaiming_normal', 'xavier_uniform', 'xavier_normal', or None
@@ -80,11 +84,12 @@ class LSTMFCNNetworkTorch(NNModule):
         lstm_size: int = 8,
         dropout: float = 0.8,
         attention: bool = False,
-        activation: str | None = None,
-        activation_hidden: str = "relu",
+        activation: Callable | None = None,
+        activation_hidden: Callable | None = None,
         init_weights: str | None = "kaiming_uniform",
         random_state: int = 0,
     ):
+        super().__init__()
         self.input_size = input_size
         self.num_classes = num_classes
         self.kernel_sizes = kernel_sizes
@@ -92,12 +97,10 @@ class LSTMFCNNetworkTorch(NNModule):
         self.lstm_size = lstm_size
         self.dropout = dropout
         self.attention = attention
-        self.activation = activation
-        self.activation_hidden = activation_hidden
         self.init_weights = init_weights
         self.random_state = random_state
-
-        super().__init__()
+        self.activation = activation
+        self.activation_hidden = activation_hidden
 
         # LSTM Arm
         if self.attention:
@@ -142,10 +145,6 @@ class LSTMFCNNetworkTorch(NNModule):
         # Global Average Pooling
         nnAdaptiveAvgPool1d = _safe_import("torch.nn.AdaptiveAvgPool1d")
         self.global_avg_pool = nnAdaptiveAvgPool1d(1)
-
-        self._activation_hidden = self._instantiate_activation(self.activation_hidden)
-        if self.activation is not None:
-            self._activation = self._instantiate_activation(self.activation)
 
         # Output layer (concatenated LSTM + CNN outputs)
         # LSTM outputs lstm_size, CNN outputs filter_sizes[-1]
@@ -195,7 +194,8 @@ class LSTMFCNNetworkTorch(NNModule):
         for conv_layer, bn_layer in zip(self.conv_layers, self.bn_layers):
             y = conv_layer(y)
             y = bn_layer(y)
-            y = self._activation_hidden(y)
+            if self.activation_hidden is not None:
+                y = self.activation_hidden(y)
 
         # Global Average Pooling
         y = self.global_avg_pool(y)  # (batch, filter_sizes[2], 1)
@@ -208,7 +208,7 @@ class LSTMFCNNetworkTorch(NNModule):
         # Final output layer
         out = self.fc(concatenated)
         if self.activation is not None:
-            out = self._activation(out)
+            out = self.activation(out)
 
         # Squeeze if regression
         if self.num_classes == 1:
@@ -239,46 +239,3 @@ class LSTMFCNNetworkTorch(NNModule):
 
             if module.bias is not None:
                 module.bias.data.zero_()
-
-    def _instantiate_activation(self, activation):
-        """Instantiate the activation function for CNN layers.
-
-        Parameters
-        ----------
-        activation : str
-            Activation function to instantiate.
-
-        Returns
-        -------
-        activation_function : torch.nn.Module
-            The activation function to be applied in the CNN arm.
-        """
-        if isinstance(activation, NNModule):
-            return activation
-        elif isinstance(activation, str):
-            act = activation.lower()
-            if act == "relu":
-                return _safe_import("torch.nn.ReLU")()
-            elif act == "tanh":
-                return _safe_import("torch.nn.Tanh")()
-            elif act == "sigmoid":
-                return _safe_import("torch.nn.Sigmoid")()
-            elif act == "leaky_relu":
-                return _safe_import("torch.nn.LeakyReLU")()
-            elif act == "elu":
-                return _safe_import("torch.nn.ELU")()
-            elif act == "selu":
-                return _safe_import("torch.nn.SELU")()
-            elif act == "gelu":
-                return _safe_import("torch.nn.GELU")()
-            else:
-                raise ValueError(
-                    "If `activation` is a string, it must be one of "
-                    "'relu', 'tanh', 'sigmoid', 'leaky_relu', 'elu', 'selu', or 'gelu'."
-                    f"Found {activation}"
-                )
-        else:
-            raise TypeError(
-                "`activation` should either be of type str or torch.nn.Module. "
-                f"But found the type to be: {type(activation)}"
-            )

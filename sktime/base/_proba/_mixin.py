@@ -315,7 +315,7 @@ class _PredictProbaMixin:
         # pred_mean and pred_var now have the same format
 
         # default is normal with predict as mean and pred_var as variance
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         # silent fork of Normal in sktime if skpro is not installed
         if _check_soft_dependencies("skpro", severity="none"):

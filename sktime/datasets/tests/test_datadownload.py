@@ -5,6 +5,7 @@ from urllib.request import Request, urlopen
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import (
     _load_fpp3,
@@ -16,7 +17,6 @@ from sktime.datasets import (
 )
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.datatypes import check_is_mtype, check_raise
-from sktime.utils.dependencies import _check_soft_dependencies
 
 # test tsf download only on a random uniform subsample of datasets
 N_TSF_SUBSAMPLE = 3

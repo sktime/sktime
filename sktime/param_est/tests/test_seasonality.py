@@ -5,10 +5,10 @@ __author__ = ["fkiraly"]
 
 import numpy as np
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.datasets import load_airline
 from sktime.param_est.seasonality import SeasonalityACF, SeasonalityACFqstat
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
@@ -33,7 +33,7 @@ def test_seasonality_acf():
 )
 def test_seasonality_acf_pipeline():
     """Test SeasonalityACF pipeline on airline data."""
-    from sktime.transformations.series.difference import Differencer
+    from sktime.transformations.difference import Differencer
 
     X = load_airline()
     sp_est = Differencer() * SeasonalityACF()

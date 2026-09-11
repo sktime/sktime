@@ -14,7 +14,7 @@ class AutoARIMA(_PmdArimaAdapter):
     Includes automated fitting of (S)ARIMA(X) hyper-parameters (p, d, q, P, D, Q).
 
     Exposes ``pmdarima.arima.AutoARIMA`` [1]_ under the ``sktime`` interface.
-    Seasonal ARIMA models and exogeneous input is supported, hence this estimator is
+    Seasonal ARIMA models and exogenous input is supported, hence this estimator is
     capable of fitting auto-SARIMA, auto-ARIMAX, and auto-SARIMAX.
 
     The auto-ARIMA algorithm seeks to identify the most optimal parameters
@@ -294,6 +294,7 @@ class AutoARIMA(_PmdArimaAdapter):
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
+        "tests:specific": ["sktime.forecasting.tests.test_pmdarima"],
     }
 
     SARIMAX_KWARGS_KEYS = [
@@ -511,7 +512,7 @@ class ARIMA(_PmdArimaAdapter):
     """(S)ARIMA(X) forecaster, from pmdarima package.
 
     Exposes ``pmdarima.arima.ARIMA`` [1]_ under the ``sktime`` interface.
-    Seasonal ARIMA models and exogeneous input is supported, hence this estimator is
+    Seasonal ARIMA models and exogenous input is supported, hence this estimator is
     capable of fitting SARIMA, ARIMAX, and SARIMAX.
     To additionally fit (S)ARIMA(X) hyper-parameters, use the ``AutoARIMA`` estimator.
 
@@ -710,7 +711,10 @@ class ARIMA(_PmdArimaAdapter):
         "capability:missing_values": True,
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
+        "tests:skip_by_name": [
+            "test_predict_time_index_with_X",  # bug report #9081
+        ],
+        "tests:specific": ["sktime.forecasting.tests.test_pmdarima"],
     }
 
     SARIMAX_KWARGS_KEYS = [

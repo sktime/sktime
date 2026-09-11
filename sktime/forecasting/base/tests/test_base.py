@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.datatypes import check_is_mtype, convert
 from sktime.datatypes._utilities import get_cutoff, get_window
@@ -23,7 +24,6 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
@@ -106,7 +106,7 @@ def test_vectorization_series_to_hier(mtype, backend):
     y = convert(y, from_type="pd_multiindex_hier", to_type=mtype)
 
     f = YfromX.create_test_instance()
-    assert f.get_tag("scitype:y") == "univariate"  # check the assumption
+    assert not f.get_tag("capability:multivariate")  # check the assumption
 
     f.set_config(**backend.copy())
     y_pred = f.fit(y).predict([1, 2, 3])
@@ -172,7 +172,7 @@ def test_vectorization_series_to_panel_proba(method, mtype):
     elif method in ["predict_var"]:
         expected_mtype = "pd-multiindex"
     else:
-        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+        raise RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
     valid, _, _ = check_is_mtype(
         y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
@@ -212,7 +212,7 @@ def test_vectorization_series_to_hier_proba(method, mtype):
     elif method in ["predict_var"]:
         expected_mtype = "pd_multiindex_hier"
     else:
-        RuntimeError(f"bug in test, unreachable state, method {method} queried")
+        raise RuntimeError(f"bug in test, unreachable state, method {method} queried")
 
     valid, _, _ = check_is_mtype(
         y_pred, expected_mtype, return_metadata=True, msg_return_dict="list"
@@ -324,7 +324,7 @@ def test_col_vectorization_correct_col_order():
 
     f = NaiveForecaster()
     # force univariate tag to trigger vectorization over columns for sure
-    f.set_tags(**{"scitype:y": "univariate"})
+    f.set_tags(**{"capability:multivariate": False})
 
     f.fit(y=y, fh=[1])
     y_pred = f.predict()
@@ -379,12 +379,13 @@ def test_dynamic_tags_reset_properly():
     """Test that dynamic tags are being reset properly."""
     from sktime.forecasting.compose import MultiplexForecaster
 
-    # this forecaster will have the scitype:y tag set to "univariate"
+    # this forecaster will have the capability:multivariate tag set to True,
+    # since VAR is multivariate
     f = MultiplexForecaster([("foo", ThetaForecaster()), ("var", VAR())])
     f.set_params(selected_forecaster="var")
 
     X_multivariate = _make_series(n_columns=2)
-    # fit should reset the estimator, and set scitype:y tag to "multivariate"
+    # fit should reset the estimator, and set capability:multivariate to True
     # the fit will cause an error if this is not happening properly
     f.fit(X_multivariate)
 
@@ -556,3 +557,31 @@ def _get_exog_proba_fcst():
     reg_proba = ResidualDouble(lin_reg, lin_reg)
 
     return YfromX(reg_proba)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base"]),
+    reason="run only if forecasting base module has changed",
+)
+def test_pretrain_respects_preexisting_attrs():
+    """Test that pretrain does not misclassify preexisting attrs as set by pretrain.
+
+    Regression test for bug #10531, but also a general API contract test.
+    """
+
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(2,),
+        min_timepoints=5,
+        max_timepoints=5,
+    )
+
+    forecaster = NaiveForecaster()
+
+    forecaster.pretrain(y_panel)
+
+    msg = "pretrain should not misclassify preexisting attrs as set by pretrain"
+    assert len(forecaster._pretrained_attrs) == 0, msg
+    assert len(forecaster.get_pretrained_params()) == 0, msg

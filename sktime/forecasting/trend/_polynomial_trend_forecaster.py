@@ -125,7 +125,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         X : pd.DataFrame, default=None
             Exogenous variables are ignored
         fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------

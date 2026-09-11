@@ -24,7 +24,7 @@ class AcorrLjungbox(BaseParamFitter):
         * If lags is an integer then this is taken to be the largest lag that
           is included.
         * If lags is an array, then all lags are included upto largest lag in the list.
-        * If lags is None, then the default maxlag is f``min(10, nobs // 5)``,
+        * If lags is None, then the default maxlag is ``min(10, nobs // 5)``,
           where ``nobs`` is the length of the time series passed in ``fit``.
           The default number of lags changes if period is set.
 

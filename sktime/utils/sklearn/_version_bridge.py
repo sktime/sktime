@@ -10,7 +10,7 @@ class _SklVersionBridgeMixin:
 
     def _sklearn_15_or_lower(self):
         """Check if the installed scikit-learn version is 1.5 or lower."""
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         return _check_soft_dependencies("scikit-learn<1.6", severity="none")
 

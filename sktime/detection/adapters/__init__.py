@@ -2,6 +2,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements adapters for time series detection."""
 
-__all__ = ["PyODAnnotator", "PyODDetector"]
+__all__ = ["PyODDetector"]
 
-from sktime.detection.adapters._pyod import PyODAnnotator, PyODDetector
+from sktime.detection.adapters._pyod import PyODDetector

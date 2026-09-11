@@ -63,7 +63,7 @@ class TSBootstrapAdapter(BaseTransformer):
         "capability:bootstrap_index": True,
         # CI and test flags
         # -----------------
-        "tests:vms": True,  # run on separate VM due to tsbootstrap dependency
+        "tests:vm": True,  # run on separate VM due to tsbootstrap dependency
     }
 
     def __init__(
@@ -143,7 +143,7 @@ class TSBootstrapAdapter(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         deps = cls.get_class_tag("python_dependencies")
 

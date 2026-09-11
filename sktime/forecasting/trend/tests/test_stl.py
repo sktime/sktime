@@ -5,11 +5,11 @@
 __author__ = ["ericjb"]
 
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline
 from sktime.forecasting.trend import STLForecaster
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 # zero trend does not work without intercept

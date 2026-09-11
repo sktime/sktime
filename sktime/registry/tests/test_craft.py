@@ -4,9 +4,9 @@
 __author__ = ["fkiraly"]
 
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.registry._craft import craft, deps, imports
-from sktime.utils.dependencies import _check_soft_dependencies
 
 simple_spec = "NaiveForecaster()"
 simple_spec_with_dep = "VAR(trend='ct')"
@@ -65,12 +65,15 @@ return ForecastingGridSearchCV(
 """
 
 dunder_spec_no_deps = "Imputer() * NaiveForecaster()"
-dunder_spec_with_deps = "Detrender(ExponentialSmoothing(sp=12)) * Prophet()"
+dunder_spec_with_deps = (
+    "Detrender(ExponentialSmoothing(sp=12)) * "
+    "LTSFLinearForecaster(seq_len=10, pred_len=3)"
+)
 
 specs = [simple_spec, pipe_spec_no_deps, dunder_spec_no_deps]
 
 
-if _check_soft_dependencies(["statsmodels", "prophet"], severity="none"):
+if _check_soft_dependencies(["statsmodels"], severity="none"):
     specs += [simple_spec_with_dep, pipe_spec_with_deps, dunder_spec_with_deps]
 
 
@@ -102,7 +105,7 @@ def test_deps(spec):
     assert deps(pipe_spec_with_deps) == ["statsmodels"]
 
     # example with two dependencies, should be identified, order does not matter
-    expected_deps = {"statsmodels", "prophet"}
+    expected_deps = {"statsmodels", "torch"}
     assert set(deps(dunder_spec_with_deps)) == expected_deps
 
 
@@ -118,7 +121,7 @@ def test_imports():
         "CV\nfrom sktime.forecasting.naive import NaiveForecaster\nfrom sktime.fore"
         "casting.naive import NaiveForecaster\nfrom sktime.forecasting.theta impor"
         "t ThetaForecaster\nfrom sktime.split.expandingwindow import "
-        "ExpandingWindowSplitter\nfrom sktime.transformations.series.impute import "
+        "ExpandingWindowSplitter\nfrom sktime.transformations.impute import "
         "Imputer"
     )
     assert imports(pipe_spec_with_deps) == pipe_imports

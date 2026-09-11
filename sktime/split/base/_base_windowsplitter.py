@@ -9,20 +9,13 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._utilities import get_index_for_series
-from sktime.forecasting.base import ForecastingHorizon
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import (
-    ACCEPTED_Y_TYPES,
-    FORECASTING_HORIZON_TYPES,
-    SPLIT_ARRAY_TYPE,
-    SPLIT_GENERATOR_TYPE,
     _check_fh,
     _check_inputs_for_compatibility,
     _get_end,
 )
 from sktime.utils.validation import (
-    ACCEPTED_WINDOW_LENGTH_TYPES,
-    NON_FLOAT_WINDOW_LENGTH_TYPES,
     array_is_int,
     check_window_length,
     is_int,
@@ -31,12 +24,7 @@ from sktime.utils.validation import (
 from sktime.utils.validation.forecasting import check_step_length
 
 
-def _check_window_lengths(
-    y: pd.Index,
-    fh: ForecastingHorizon,
-    window_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
-    initial_window: NON_FLOAT_WINDOW_LENGTH_TYPES,
-) -> None:
+def _check_window_lengths(y, fh, window_length, initial_window):
     """Check that combination of inputs is compatible.
 
     Parameters
@@ -102,21 +90,33 @@ class BaseWindowSplitter(BaseSplitter):
 
     def __init__(
         self,
-        fh: FORECASTING_HORIZON_TYPES,
-        initial_window: ACCEPTED_WINDOW_LENGTH_TYPES,
-        window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-        step_length: NON_FLOAT_WINDOW_LENGTH_TYPES,
+        initial_window,
+        step_length,
         start_with_window: bool,
-        max_expanding_window_length: ACCEPTED_WINDOW_LENGTH_TYPES = float("inf"),
-    ) -> None:
-        _check_inputs_for_compatibility(
-            [fh, initial_window, window_length, step_length]
-        )
+        max_expanding_window_length=float("inf"),
+        window_length=10,
+    ):
+        self.window_length = window_length
         self.step_length = step_length
         self.start_with_window = start_with_window
         self.initial_window = initial_window
         self.max_expanding_window_length = max_expanding_window_length
-        super().__init__(fh=fh, window_length=window_length)
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        _check_inputs_for_compatibility(
+            [self.fh, self._initial_window, self.window_length, self.step_length]
+        )
+        super().__post_init__()
 
     @property
     def _initial_window(self):
@@ -124,7 +124,7 @@ class BaseWindowSplitter(BaseSplitter):
             return self.initial_window
         return None
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y):
         n_timepoints = y.shape[0]
         window_length = check_window_length(
             window_length=self.window_length,
@@ -146,7 +146,7 @@ class BaseWindowSplitter(BaseSplitter):
 
         yield from self._split_windows(window_length=window_length, y=y, fh=fh)
 
-    def _split_for_initial_window(self, y: pd.Index) -> SPLIT_ARRAY_TYPE:
+    def _split_for_initial_window(self, y):
         """Get train/test splits for non-empty initial window.
 
         Parameters
@@ -164,7 +164,13 @@ class BaseWindowSplitter(BaseSplitter):
             raise ValueError(
                 "`start_with_window` must be True if `initial_window` is given"
             )
-        if self._initial_window <= self.window_length:
+        if is_int(x=self._initial_window):
+            initial_window_too_small = self._initial_window <= self.window_length
+        else:
+            initial_window_too_small = (
+                y[0] + self._initial_window <= y[0] + self.window_length
+            )
+        if initial_window_too_small:
             raise ValueError("`initial_window` must greater than `window_length`")
         if is_int(x=self._initial_window):
             end = self._initial_window
@@ -177,22 +183,11 @@ class BaseWindowSplitter(BaseSplitter):
             test = np.argwhere(y.isin(y[end - 1] + fh)).flatten()
         return train, test
 
-    def _split_windows(
-        self,
-        window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-        y: pd.Index,
-        fh: ForecastingHorizon,
-    ) -> SPLIT_GENERATOR_TYPE:
+    def _split_windows(self, window_length, y, fh):
         """Abstract method for sliding/expanding windows."""
         raise NotImplementedError("abstract method")
 
-    def _split_windows_generic(
-        self,
-        window_length: ACCEPTED_WINDOW_LENGTH_TYPES,
-        y: pd.Index,
-        fh: ForecastingHorizon,
-        expanding: bool,
-    ) -> SPLIT_GENERATOR_TYPE:
+    def _split_windows_generic(self, window_length, y, fh, expanding: bool):
         """Split `y` into training and test windows.
 
         This function encapsulates common functionality
@@ -245,9 +240,7 @@ class BaseWindowSplitter(BaseSplitter):
             yield train, test
 
     @staticmethod
-    def _get_train_start(
-        start: int, window_length: ACCEPTED_WINDOW_LENGTH_TYPES, y: pd.Index
-    ) -> int:
+    def _get_train_start(start: int, window_length, y) -> int:
         if is_timedelta_or_date_offset(x=window_length):
             train_start = y.get_loc(
                 max(y[min(start, len(y) - 1)] - window_length, min(y))
@@ -258,7 +251,7 @@ class BaseWindowSplitter(BaseSplitter):
             train_start = start - window_length
         return train_start
 
-    def _get_start(self, y: pd.Index, fh: ForecastingHorizon) -> int:
+    def _get_start(self, y, fh) -> int:
         """Get the first split point."""
         # By default, the first split point is the index zero, the first
         # observation in
@@ -292,7 +285,7 @@ class BaseWindowSplitter(BaseSplitter):
                 start = np.argmin(y <= shifted_y0) if shifted_y0 >= y[start] else start
         return start
 
-    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
+    def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
 
         Parameters
@@ -338,7 +331,7 @@ class BaseWindowSplitter(BaseSplitter):
             n_splits = len(self.get_cutoffs(y))
         return n_splits
 
-    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
+    def get_cutoffs(self, y=None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters

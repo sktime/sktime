@@ -4,7 +4,7 @@ __author__ = ["chrisholder", "TonyBagnall"]
 
 import numpy as np
 
-from sktime.distances import pairwise_distance
+from sktime.dists_kernels._numba_distances import pairwise_distance
 
 
 def medoids(
@@ -19,9 +19,9 @@ def medoids(
     X : np.ndarray (3d array of shape (n_instances, n_dimensions, series_length))
         Time series to compute medoids from.
     precomputed_pairwise_distance: np.ndarray (2d array of shape
-        (n_instances, n_instances)), defaults = None
+        (n_instances, n_instances)), default=None
         Precomputed pairwise distance between each time series in X.
-    distance_metric: str, defaults = 'dtw'
+    distance_metric: str, default='dtw'
         String of distance metric to compute.
 
     Returns

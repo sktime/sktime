@@ -65,6 +65,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -249,8 +250,8 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for FeatureUnion."""
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         # with name and estimator tuple, all transformers don't have fit
         TRANSFORMERS = [

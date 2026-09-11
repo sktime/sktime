@@ -11,7 +11,7 @@ from sklearn.neighbors import KNeighborsClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.matrix_profile import MatrixProfile
+from sktime.transformations.matrix_profile import MatrixProfileFeatures
 
 
 class MatrixProfileClassifier(BaseClassifier):
@@ -122,7 +122,7 @@ class MatrixProfileClassifier(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
-        self._transformer = MatrixProfile(m=self.subsequence_length)
+        self._transformer = MatrixProfileFeatures(m=self.subsequence_length)
         self._estimator = _clone_estimator(
             (
                 KNeighborsClassifier(n_neighbors=1)

@@ -6,8 +6,6 @@ import numpy as np
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes import convert_to
-from sktime.transformations.base import BaseTransformer
-from sktime.transformations.compose import TransformerPipeline
 from sktime.utils.sklearn import is_sklearn_classifier
 
 __author__ = ["fkiraly"]
@@ -78,7 +76,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.classification.interval_based import TimeSeriesForestClassifier
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.classification.compose import ClassifierPipeline
@@ -116,11 +114,27 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
 
     def __init__(self, classifier, transformers):
         self.classifier = classifier
-        self.classifier_ = classifier.clone()
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        transformers = self.transformers
+        classifier = self.classifier
+
+        self.classifier_ = classifier.clone()
+
+        from sktime.transformations.compose import TransformerPipeline
+
+        self.transformers_ = TransformerPipeline(transformers)
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = classifier.get_tag("capability:multivariate", False)
@@ -193,6 +207,8 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         ClassifierPipeline object, concatenation of ``other`` (first) with ``self``
         (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
@@ -332,7 +348,7 @@ class ClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         # imports
         from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
         from sktime.classification.dummy import DummyClassifier
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)
@@ -418,8 +434,8 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     Examples
     --------
     >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.classification.compose import SklearnClassifierPipeline
     >>> X_train, y_train = load_unit_test(split="train")
@@ -453,14 +469,30 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
     # no default tag values - these are set dynamically below
 
     def __init__(self, classifier, transformers):
-        from sklearn.base import clone
-
         self.classifier = classifier
-        self.classifier_ = clone(classifier)
         self.transformers = transformers
-        self.transformers_ = TransformerPipeline(transformers)
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        transformers = self.transformers
+        classifier = self.classifier
+
+        from sklearn.base import clone
+
+        self.classifier_ = clone(classifier)
+
+        from sktime.transformations.compose import TransformerPipeline
+
+        self.transformers_ = TransformerPipeline(transformers)
 
         # all sktime and sklearn transformers always support multivariate
         multivariate = True
@@ -519,6 +551,8 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         ClassifierPipeline object, concatenation of ``other`` (first) with ``self``
         (last).
         """
+        from sktime.transformations.base import BaseTransformer
+
         if isinstance(other, BaseTransformer):
             # use the transformers dunder to get a TransformerPipeline
             trafo_pipeline = other * self.transformers_
@@ -682,8 +716,8 @@ class SklearnClassifierPipeline(_HeterogenousMetaEstimator, BaseClassifier):
         """
         from sklearn.neighbors import KNeighborsClassifier
 
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         # example with series-to-series transformer before sklearn classifier
         t1 = ExponentTransformer(power=2)

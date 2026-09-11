@@ -1,10 +1,10 @@
 """Tests for using OptionalPassthrough."""
 
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import OptionalPassthrough
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
@@ -27,8 +27,8 @@ def test_optionalpassthrough():
     from sktime.forecasting.model_selection import ForecastingGridSearchCV
     from sktime.forecasting.naive import NaiveForecaster
     from sktime.split import SlidingWindowSplitter
-    from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-    from sktime.transformations.series.detrend import Deseasonalizer
+    from sktime.transformations.adapt import TabularToSeriesAdaptor
+    from sktime.transformations.detrend import Deseasonalizer
 
     # create pipeline
     pipe = TransformedTargetForecaster(
@@ -64,7 +64,7 @@ def test_passthrough_does_not_broadcast_variables():
     """Test that OptionalPassthrough does not itself vectorize/broadcast columns."""
     from sktime.datasets import load_longley
     from sktime.transformations.compose import OptionalPassthrough
-    from sktime.transformations.series.detrend import Deseasonalizer
+    from sktime.transformations.detrend import Deseasonalizer
 
     _, X = load_longley()
 
@@ -83,7 +83,7 @@ def test_passthrough_does_not_broadcast_variables():
 def test_passthrough_does_not_broadcast_instances():
     """Test that OptionalPassthrough does not itself vectorize/broadcast rows."""
     from sktime.transformations.compose import OptionalPassthrough
-    from sktime.transformations.series.detrend import Deseasonalizer
+    from sktime.transformations.detrend import Deseasonalizer
     from sktime.utils._testing.hierarchical import _make_hierarchical
 
     X = _make_hierarchical()

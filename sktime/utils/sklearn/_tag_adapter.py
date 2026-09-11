@@ -27,7 +27,7 @@ def get_sklearn_tag(estimator, tagname):
     value : object
         Value of the specified tag.
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     if tagname == "capability:multioutput":
         if _check_soft_dependencies("scikit-learn<1.6", severity="none"):

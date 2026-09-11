@@ -45,7 +45,7 @@ def _extract_class_names(spec):
 
     # we need to exclude expressions that look like classes per the regex
     # but aren't
-    EXCLUDE_LIST = ["True", "False"]
+    EXCLUDE_LIST = ["True", "False", "None"]
     cls_name_list = [x for x in cls_name_list if x not in EXCLUDE_LIST]
 
     return cls_name_list
@@ -53,6 +53,31 @@ def _extract_class_names(spec):
 
 def craft(spec):
     """Instantiate an object from the specification string.
+
+    The ``craft`` utility can be used to deserialize an estimator specification string,
+    including composites such as pipelines.
+
+    It takes a specification string and returns an ``sktime`` estimator, class,
+    or object, corresponding to that string.
+
+    Specification strings can be:
+
+    * simple expressions such as ``"NaiveForecaster"`` or ``"NaiveForecaster(sp=2)"``
+    * compositions such as ``"Deseasonalizer() * NaiveForecaster()"``
+    * a longer block of code, closing with a return statement, e.g., the string block
+
+    .. code-block:: python
+
+        deseason = Deseasonalizer()
+        naive = NaiveForecaster()
+        return deseason * naive
+
+    The ``craft`` utility is useful as a serialization / deserialization pair,
+    together with ``str`` coercion (or commandline printing) of an
+    unfitted estimator.
+
+    ``craft`` recognizes estimators present in ``sktime`` and ``scikit-learn``,
+    and base python.
 
     Parameters
     ----------
@@ -69,6 +94,41 @@ def craft(spec):
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
         this will have the property that ``spec == str(obj)`` (up to formatting)
+
+    Examples
+    --------
+    >>> from sktime.registry import craft
+
+    Example 1: simple estimator
+
+    * serialized as the string ``"NaiveForecaster(sp=2)"``
+    * deserialized as the estimator ``NaiveForecaster(sp=2)``
+
+    >>> spec = "NaiveForecaster(sp=2)"
+    >>> est = craft(spec)
+    >>> print(est)
+    NaiveForecaster(sp=2)
+
+    Example 2: composite estimator
+
+    * serialized as the string ``"Deseasonalizer() * NaiveForecaster()"``
+    * deserialized as the estimator ``Deseasonalizer() * NaiveForecaster()``,
+      same as ``ForecastingPipeline([Deseasonalizer(), NaiveForecaster()])``
+
+    >>> spec = "Deseasonalizer() * NaiveForecaster()"
+    >>> est = craft(spec)
+
+    Example 3: longer code block
+
+    * serialized as a code block with assignments and return statement
+    * deserialized as the estimator defined in the return statement
+
+    >>> spec = '''
+    ... deseason = Deseasonalizer()
+    ... naive = NaiveForecaster()
+    ... return deseason * naive
+    ... '''
+    >>> est = craft(spec)
     """
     # retrieve all estimators from sktime and sklearn for namespace resolution
     register_sktime = dict(all_estimators())  # noqa: F841
@@ -97,7 +157,8 @@ def build_obj():
 def deps(spec, include_test_deps=False):
     """Get PEP 440 dependency requirements for a craft spec.
 
-    This will result in a list of PEP 440 compatible requirement string.
+    The ``deps`` utility returns a PEP 440 compatible requirement string
+    required to construct the deserialization via ``craft``.
 
     In case the spec includes estimators with disjunctions in their requirement
     specifications, the first disjunctive requirement is returned, i.e.,
@@ -172,6 +233,12 @@ def deps(spec, include_test_deps=False):
 def imports(spec):
     """Get import code block for a craft spec.
 
+    The ``imports`` utility returns a full python import block,
+    as a string block, required for importing all estimators and objects occurring
+    in the ``spec`` block.
+
+    The ``imports`` utility recognizes ``sktime`` and ``scikit-learn`` objects.
+
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
@@ -223,3 +290,80 @@ def _get_public_import(module_path: str) -> str:
         if part.startswith("_"):
             return ".".join(parts[:i])  # Keep only part before first private submodule
     return module_path  # Return the original path if no private submodules are found
+
+
+def _r_deps(spec, include_test_deps=False):
+    """Get R dependency requirements for a craft spec.
+
+    The ``_r_deps`` utility returns a list of R requirement strings
+    required to construct the deserialization via ``craft``.
+
+    In case the spec includes estimators with disjunctions in their requirement
+    specifications, the first disjunctive requirement is returned, i.e.,
+    any disjunctions are resolved by picking the first dependency in the disjunction.
+
+    Parameters
+    ----------
+    spec : str, sktime/skbase compatible object specification
+        i.e., a string that executes to construct an object if all R
+        dependencies were present.
+        dependencies inferred are of any classes in the scope of ``all_estimators``
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
+
+    include_test_deps : bool, default=False
+        whether to include dependencies tagged as
+        "tests:r_dependencies" in addition to "r_dependencies"
+
+    Returns
+    -------
+    reqs : list of str
+        each str is R compatible requirement string for craft(spec)
+        if spec has no requirements, return is [], the length 0 list
+    """
+    register = dict(all_estimators())
+
+    dep_strs = []
+
+    for x in _extract_class_names(spec):
+        if x not in register.keys():
+            raise RuntimeError(
+                f"class {x} is required to build spec, but was not found "
+                "in all_estimators scope"
+            )
+        cls = register[x]
+
+        new_deps = cls.get_class_tag("r_dependencies")
+
+        def _resolve_disjunctions(dep):
+            """Resolve disjunctions in dependencies by picking first."""
+            if isinstance(dep, list):
+                return dep[0]  # pick first dependency in disjunction
+            return dep
+
+        def _coerce_dep_strs(dep):
+            """Coerce dependency tag value to list of strings."""
+            if dep is None:
+                return []
+            elif isinstance(dep, str) and len(dep) > 0:
+                return [dep]
+            elif isinstance(dep, str) and len(dep) == 0:
+                return []
+            elif isinstance(dep, list):
+                return [_resolve_disjunctions(d) for d in dep]
+            else:
+                return dep
+
+        new_deps = cls.get_class_tag("r_dependencies")
+        dep_strs += _coerce_dep_strs(new_deps)
+
+        if include_test_deps:
+            test_deps = cls.get_class_tag("tests:r_dependencies")
+            dep_strs += _coerce_dep_strs(test_deps)
+
+        reqs = list(set(dep_strs))
+
+    return reqs
