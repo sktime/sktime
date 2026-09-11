@@ -78,9 +78,9 @@ def craft(spec, safe=False):
     unfitted estimator.
 
     ``craft`` recognizes estimators present in ``sktime`` and ``scikit-learn``,
-    and base python.
+    and base python (built-in types and functions).
 
-    If ``safe=True`` mode is enabld, only simple propositional expressions are allowed.
+    If ``safe=True`` mode is enabled, only simple propositional expressions are allowed.
 
     The accepted "safe" grammar is intentionally small:
     
@@ -97,7 +97,7 @@ def craft(spec, safe=False):
 
     .. code-block:: text
 
-        NAME       ::= valid Python identifier, object name in ``sktime`` or ``skpro``
+        NAME       ::= valid Python identifier, object name in ``sktime`` or ``sklearn``
         CONSTANT   ::= literal value (e.g., number, string, boolean)
 
     This permits simple constructor calls such as ``A(a=42)``,
@@ -256,6 +256,14 @@ def _validate_ast(tree, register):
     # if Expression, obtain node
     if isinstance(tree, ast.Expression):
         tree = tree.body
+
+        # The safe form must be a single expression.
+        if len(tree) != 1:
+            return False
+        tree = tree[0]
+        if not isinstance(tree, ast.Expr):
+            return False
+        tree = tree.value
 
     # Only names explicitly supplied in the estimator registry are
     # available for variables. In particular, don't permit dunder names.
