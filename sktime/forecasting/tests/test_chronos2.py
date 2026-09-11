@@ -174,3 +174,31 @@ def test_chronos2_covariates_match_source_reference():
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(Chronos2Forecaster, severity="none"),
+    reason="Chronos2Forecaster soft dependencies not available",
+)
+def test_chronos2_predict_proba():
+    """Test that Chronos2Forecaster returns correctly shaped proba forecasts."""
+    import torch
+    from skpro.distributions import HistogramQPD
+
+    y = load_airline().iloc[:30]
+    fh = [1, 2]
+
+    forecaster = Chronos2Forecaster(
+        "amazon/chronos-2",
+        config={"device_map": "cpu", "torch_dtype": torch.float32},
+        seed=1,
+    )
+    forecaster.fit(y)
+
+    pred_dist = forecaster.predict_proba(fh=fh)
+
+    assert isinstance(pred_dist, HistogramQPD), "Output must be a HistogramQPD"
+    assert pred_dist.shape == (2, 1), "Shape must be (len(fh), n_vars)"
+
+    quantiles = forecaster.predict_quantiles(fh=fh, alpha=[0.1, 0.9])
+    assert quantiles.shape == (2, 2)
