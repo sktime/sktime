@@ -352,6 +352,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
 
     SARIMAX
 
+.. currentmodule:: sktime.forecasting.pyfable_arima
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PyFableARIMA
+
 .. currentmodule:: sktime.forecasting.var
 
 .. autosummary::
@@ -753,6 +761,14 @@ Domain agnostic foundation models
 
     SundialForecaster
 
+.. currentmodule:: sktime.forecasting.t0
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    T0Forecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
@@ -816,6 +832,14 @@ Domain agnostic foundation models
     :template: class.rst
 
     TiRexForecaster
+
+.. currentmodule:: sktime.forecasting.tirex2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TiRex2Forecaster
 
 .. currentmodule:: sktime.forecasting.toto
 

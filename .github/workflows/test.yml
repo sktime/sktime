@@ -286,7 +286,7 @@ jobs:
 
   test-est:
     needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
-    if: ${{ needs.detect-changed-classes.outputs.vm_chunks != '[]' }}
+    if: ${{ needs.prepare-chunks.outputs.vm_chunks != '[]' }}
 
     strategy:
       fail-fast: false
@@ -300,7 +300,7 @@ jobs:
 
   test-est-r:
     needs: [detect-changed-classes, prepare-chunks, test-nosoftdeps]
-    if: ${{ needs.detect-changed-classes.outputs.r_vm_chunks != '[]' }}
+    if: ${{ needs.prepare-chunks.outputs.r_vm_chunks != '[]' }}
 
     strategy:
       fail-fast: false
@@ -457,7 +457,7 @@ jobs:
 
       - name: Install sktime and dependencies
         run: |
-          if [[ "${{ matrix.mlflow-version }}" == "2.9.2'" ]]; then
+          if [[ "${{ matrix.mlflow-version }}" == "2.9.2" ]]; then
             uv pip install .[all_extras,dev,mlflow_tests,mlflow2] --no-cache-dir
           else
             uv pip install .[all_extras,dev,mlflow_tests] --no-cache-dir
@@ -471,9 +471,20 @@ jobs:
       - name: Run tests
         run: make test_mlflow
 
-  test-deps-2023:
+  test-historical-deps:
     needs: test-nosoftdeps
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        include:
+          - exclude-newer: "2023-07-01"
+            python-version: "3.11"
+          - exclude-newer: "2024-09-01"
+            python-version: "3.12"
+          - exclude-newer: "2025-09-01"
+            python-version: "3.13"
+
     steps:
       - uses: actions/checkout@v7
 
@@ -489,47 +500,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: 3.11
-
-      - name: Display Python version
-        run: python -c "import sys; print(sys.version)"
-
-      - name: Install sktime and dependencies
-        # We require `scikit-base>=0.6.1` which was released after the 2023 cutoff
-        # so we bump its date later
-        run: >
-          uv pip install .[dev]
-          --exclude-newer-package "scikit-base=false"
-          --exclude-newer-package "setuptools=false"
-        env:
-          UV_SYSTEM_PYTHON: 1
-          UV_EXCLUDE_NEWER: "2023-07-01"
-
-      - name: Show dependencies
-        run: uv pip list
-
-      - name: Run tests
-        run: make PYTESTOPTIONS="--matrixdesign=False --timeout=600" test_softdeps_full
-
-  test-deps-2024:
-    needs: test-nosoftdeps
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - run: git remote set-branches origin 'main'
-
-      - run: git fetch --depth 1
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: 3.12
+          python-version: ${{ matrix['python-version'] }}
 
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
@@ -541,7 +512,7 @@ jobs:
           --exclude-newer-package "scikit-base=false"
         env:
           UV_SYSTEM_PYTHON: 1
-          UV_EXCLUDE_NEWER: "2024-09-01"
+          UV_EXCLUDE_NEWER: ${{ matrix['exclude-newer'] }}
 
       - name: Show dependencies
         run: uv pip list

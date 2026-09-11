@@ -48,7 +48,7 @@ class _PytorchForecastingAdapter(BaseForecaster):
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
     """  # noqa: E501
 
     _tags = {
@@ -57,7 +57,7 @@ class _PytorchForecastingAdapter(BaseForecaster):
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
         "python_dependencies": [
-            "pytorch-forecasting>=1.0.0",
+            "pytorch-forecasting>=1.8.0",
             "torch",
             "lightning",
         ],

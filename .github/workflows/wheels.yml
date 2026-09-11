@@ -16,7 +16,8 @@ jobs:
         with:
           python-version: '3.11'
 
-      - shell: bash
+      - name: Verify release tag matches pyproject.toml
+        shell: bash
         run: |
           TAG="${{ github.event.release.tag_name }}"
           GH_TAG_NAME="${TAG#v}"

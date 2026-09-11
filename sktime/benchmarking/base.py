@@ -9,11 +9,26 @@ from warnings import warn
 
 import numpy as np
 
+# TODO 1.3.0: remove the entire v1 benchmarking framework (see #10464).
+_V1_DEPRECATION_MSG = (
+    "The sktime v1 benchmarking framework is deprecated and will be removed in "
+    "sktime 1.3.0. Use the v2 framework instead: sktime.benchmarking "
+    "BaseBenchmark / ForecastingBenchmark / ClassificationBenchmark, and "
+    "sktime.benchmarking.analysis for post-hoc analysis. See "
+    "https://github.com/sktime/sktime/issues/10464."
+)
+
 
 class BaseDataset:
-    """Base dataset class."""
+    """Base dataset class.
+
+    .. deprecated:: 1.1.0
+        Part of the deprecated v1 benchmarking framework; will be removed in
+        sktime 1.3.0. Use the v2 framework instead. See #10464.
+    """
 
     def __init__(self, name):
+        warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
         self._name = name
 
     def __repr__(self):
@@ -52,9 +67,15 @@ class HDDBaseDataset(BaseDataset):
 
 
 class BaseResults:
-    """Base results class."""
+    """Base results class.
+
+    .. deprecated:: 1.1.0
+        Part of the deprecated v1 benchmarking framework; will be removed in
+        sktime 1.3.0. Use the v2 framework instead. See #10464.
+    """
 
     def __init__(self):
+        warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
         # assigned during fitting of orchestration
         self.strategy_names = []
         self.dataset_names = []
@@ -183,7 +204,12 @@ class HDDBaseResults(BaseResults):
 
 
 class _PredictionsWrapper:
-    """Single result class for consistency of return object when loading results."""
+    """Single result class for consistency of return object when loading results.
+
+    .. deprecated:: 1.1.0
+        Part of the deprecated v1 benchmarking framework; will be removed in
+        sktime 1.3.0. See #10464.
+    """
 
     def __init__(
         self,
@@ -198,6 +224,7 @@ class _PredictionsWrapper:
         predict_estimator_end_time,
         y_proba=None,
     ):
+        warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
         # check input format
         if not all(isinstance(array, np.ndarray) for array in [y_true, y_pred]):
             raise ValueError(
@@ -223,6 +250,9 @@ class _PredictionsWrapper:
 
 
 class BaseMetric:
+    # NOTE: BaseMetric is intentionally NOT deprecated - it is still used by the
+    # v2 framework (sktime.benchmarking._benchmarking_dataclasses). It will be
+    # relocated into the v2 package before the v1 files are removed. See #10464.
     def __init__(self, name, **kwargs):
         self.name = name
         self.kwargs = kwargs

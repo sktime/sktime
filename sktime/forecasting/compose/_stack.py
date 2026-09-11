@@ -186,10 +186,20 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sklearn.tree import DecisionTreeRegressor
+
         from sktime.forecasting.naive import NaiveForecaster
 
         f1 = NaiveForecaster()
         f2 = NaiveForecaster(strategy="mean", window_length=3)
-        params = {"forecasters": [("f1", f1), ("f2", f2)]}
+        params1 = {"forecasters": [("f1", f1), ("f2", f2)]}
 
-        return params
+        # second set: a different forecaster combination, and an explicit
+        # meta-regressor rather than the default constructed in check_regressor
+        f3 = NaiveForecaster(strategy="drift")
+        params2 = {
+            "forecasters": [("f1", NaiveForecaster()), ("f3", f3)],
+            "regressor": DecisionTreeRegressor(random_state=0),
+        }
+
+        return [params1, params2]

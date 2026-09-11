@@ -4,6 +4,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"]
 # gorold, chenghaoliu89, liu-jc are from SalesforceAIResearch/uni2ts
@@ -62,7 +63,7 @@ class MOIRAIForecaster(BaseForecaster):
     >>> X = pd.DataFrame(X, columns=["x1", "x2"], index=index)  # doctest: +SKIP
     >>> morai_forecaster.fit(y, X=X)  # doctest: +SKIP
     MOIRAIForecaster(checkpoint_path='sktime/moirai-1.0-R-small')
-    >>> X_test = pd.DataFrame(
+    >>> X_test = pd.DataFrame(  # doctest: +SKIP
     ...     np.random.normal(0, 1, (10, 2)),
     ...     columns=["x1", "x2"],
     ...     index=pd.date_range("2020-01-31", periods=10, freq="D"),
@@ -111,11 +112,13 @@ class MOIRAIForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "capability:pretrain": False,
         "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.uni2ts"],
+        "tests:specific": ["sktime.forecasting.tests.test_moirai"],
     }
 
     def __init__(
@@ -161,16 +164,83 @@ class MOIRAIForecaster(BaseForecaster):
                 }
             )
 
+    def _get_moirai_kwargs(self):
+        """Return model construction kwargs (excluding prediction_length).
+
+        ``prediction_length`` is excluded from the cache key because it is
+        updated at predict-time via ``self.model_.hparams.prediction_length``.
+
+        The effective feature dimensions are read from the fitted attributes
+        ``_num_feat_dynamic_real`` / ``_num_past_feat_dynamic_real`` when
+        available (populated inside ``_fit``), falling back to the constructor
+        parameters otherwise.  This ensures ``self.num_feat_dynamic_real``
+        and ``self.num_past_feat_dynamic_real`` are never mutated.
+        """
+        return {
+            "checkpoint_path": self.checkpoint_path,
+            "context_length": self.context_length,
+            "patch_size": self.patch_size,
+            "num_samples": self.num_samples,
+            "target_dim": self.target_dim,
+            "feat_dynamic_real_dim": self._num_feat_dynamic_real,
+            "past_feat_dynamic_real_dim": self._num_past_feat_dynamic_real,
+            "map_location": self.map_location,
+            "use_source_package": self.use_source_package,
+        }
+
+    def _get_moirai_key(self):
+        """Return a unique cache key for the MOIRAI model."""
+        return str(sorted(self._get_moirai_kwargs().items()))
+
+    def _init_model(self, prediction_length=1):
+        """Lazy-initialise the MOIRAI model, loading weights only once.
+
+        If ``model_`` has already been set, the existing instance is returned without
+        re-loading.
+
+        Parameters
+        ----------
+        prediction_length : int, default=1
+            Initial prediction length passed to the model constructor.
+            This value can be overridden at predict-time.
+
+        Returns
+        -------
+        model_ : MoiraiForecast
+            The loaded (and possibly cached) MOIRAI model.
+        """
+        if not hasattr(self, "model_") or self.model_ is None:
+            self.model_ = _CachedMoirai(
+                key=self._get_moirai_key(),
+                moirai_kwargs=self._get_moirai_kwargs(),
+                prediction_length=prediction_length,
+            ).load_from_checkpoint()
+        return self.model_
+
+    # ------------------------------------------------------------------
+    # Pickle support
+    # ------------------------------------------------------------------
+    # ``model_`` is a PyTorch / uni2ts Lightning module whose internal
+    # class references (e.g. ``uni2ts.distribution._base.DistrParamProj``)
+    # cannot be resolved by Python's pickler when the vendored
+    # ``sktime.libs.uni2ts`` package is used, because the classes are
+    # registered under the original ``uni2ts.*`` namespace.
+    #
+    # Since the model is stateless (zero-shot) and already cached by the
+    # multiton, we simply drop it from the pickle payload and restore it
+    # lazily on the next ``predict()`` call.
+    # ------------------------------------------------------------------
+
     def __getstate__(self):
-        """Return state for pickling, excluding the unpickleable torch model."""
+        """Return picklable state with the non-serialisable model excluded."""
         state = self.__dict__.copy()
-        if "model" in state:
-            state["model"] = None
+        state.pop("model_", None)
         return state
 
     def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
+        """Restore state; model_ will be reloaded lazily on next predict."""
         self.__dict__.update(state)
+        self.model_ = None
 
     # Apply a patch for redirecting imports to sktime.libs.uni2ts
     if _check_soft_dependencies(["lightning", "huggingface_hub"], severity="none"):
@@ -282,6 +352,9 @@ class MOIRAIForecaster(BaseForecaster):
         else:
             prediction_length = 1
 
+        # Resolve effective feature dimensions without mutating hyper-parameters.
+        # self.num_feat_dynamic_real / self.num_past_feat_dynamic_real stay as
+        # the user set them (None means "infer from data").
         if self.num_feat_dynamic_real is None:
             self._num_feat_dynamic_real = X.shape[1] if X is not None else 0
         else:
@@ -292,63 +365,25 @@ class MOIRAIForecaster(BaseForecaster):
         else:
             self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
 
-        self.model = self._load_model(prediction_length)
-
-    def _get_model_kwargs(self, prediction_length):
-        """Return MOIRAI model kwargs from fitted estimator state."""
-        model_kwargs = {
-            "prediction_length": prediction_length,
-            "context_length": self.context_length,
-            "patch_size": self.patch_size,
-            "num_samples": self.num_samples,
-            "target_dim": self.target_dim,
-            "feat_dynamic_real_dim": self._num_feat_dynamic_real,
-            "past_feat_dynamic_real_dim": self._num_past_feat_dynamic_real,
-        }
-        return model_kwargs
-
-    def _load_model(self, prediction_length):
-        """Load the MOIRAI model from source or the vendored sktime copy."""
-        model_kwargs = self._get_model_kwargs(prediction_length)
-        # Load model from source package
-        if self.use_source_package:
-            if _check_soft_dependencies("uni2ts", severity="none"):
-                from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
-
-                if self.checkpoint_path.startswith("Salesforce"):
-                    model_kwargs["module"] = MoiraiModule.from_pretrained(
-                        self.checkpoint_path
-                    )
-                    return MoiraiForecast(**model_kwargs)
-                else:
-                    from huggingface_hub import hf_hub_download
-
-                    model_kwargs["checkpoint_path"] = hf_hub_download(
-                        repo_id=self.checkpoint_path, filename="model.ckpt"
-                    )
-                    model = MoiraiForecast.load_from_checkpoint(**model_kwargs)
-                    model.to(self.map_location)
-                    return model
-        # Load model from sktime
-        else:
-            model = self._instantiate_patched_model(model_kwargs)
-            model.to(self.map_location)
-            return model
+        # Lazy-init: load model on first access; reuse on subsequent fit() calls.
+        self.model_ = self._init_model(prediction_length)
+        self.model_.to(self.map_location)
 
     def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
 
-        if getattr(self, "model", None) is None:
-            self.model = self._load_model(max(fh._values))
+        # Re-load model from multiton cache if lost (e.g. after pickle round-trip).
+        if not hasattr(self, "model_") or self.model_ is None:
+            self._init_model()
 
         if self.deterministic:
             import torch
 
             torch.manual_seed(42)
 
-        self.model.hparams.prediction_length = max(fh._values)
+        self.model_.hparams.prediction_length = max(fh._values)
 
         if min(fh._values) < 0:
             raise NotImplementedError(
@@ -450,7 +485,10 @@ class MOIRAIForecaster(BaseForecaster):
             pred_df, target, feat_dynamic_real, future_length, _target_name
         )
 
-        predictor = self.model.create_predictor(batch_size=self.batch_size)
+        predictor = self.model_.create_predictor(
+            batch_size=self.batch_size,
+            device=self.map_location or "auto",
+        )
         forecasts = predictor.predict(ds_test)
         forecast_it = iter(forecasts)
         predictions = self._get_prediction_df(forecast_it, df_config)
@@ -838,3 +876,111 @@ class MOIRAIForecaster(BaseForecaster):
             return len(X.index.get_level_values(-1).unique())
         else:
             return len(X)
+
+
+@_multiton
+class _CachedMoirai:
+    """Cached MOIRAI model to ensure only one instance exists in memory.
+
+    MOIRAI is a zero-shot model and immutable, hence there are no side effects
+    of sharing the same instance across multiple uses.  The multiton pattern
+    (keyed on model configuration) prevents redundant weight downloads when
+    ``fit()`` is called multiple times with different data.
+
+    ``prediction_length`` is *not* part of the cache key because it is updated
+    at inference time via ``self.model_.hparams.prediction_length`` in
+    ``MOIRAIForecaster._predict()``.
+    """
+
+    def __init__(self, key, moirai_kwargs, prediction_length):
+        self.key = key
+        self.moirai_kwargs = moirai_kwargs
+        self.prediction_length = prediction_length
+        self.model = None
+
+    def load_from_checkpoint(self):
+        """Return the cached model, loading weights on first call."""
+        if self.model is not None:
+            return self.model
+
+        # Guard against incompatible hf_xet (e.g., PyO3 ABI mismatch when
+        # hf_xet was compiled for an older CPython than the current runtime).
+        # huggingface_hub reads HF_HUB_DISABLE_XET from constants.py at
+        # import time, and file_download.py accesses it as
+        # `constants.HF_HUB_DISABLE_XET` at call time. We must therefore
+        # patch huggingface_hub.constants directly (not file_download) so
+        # that _download_to_tmp_and_move skips xet_get for this session.
+        import os
+
+        try:
+            import hf_xet  # noqa: F401
+        except Exception:
+            os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+            if _check_soft_dependencies("huggingface_hub", severity="none"):
+                import huggingface_hub.constants as _hf_constants
+
+                _hf_constants.HF_HUB_DISABLE_XET = True
+
+        kwargs = self.moirai_kwargs
+        model_kwargs = {
+            "prediction_length": self.prediction_length,
+            "context_length": kwargs["context_length"],
+            "patch_size": kwargs["patch_size"],
+            "num_samples": kwargs["num_samples"],
+            "target_dim": kwargs["target_dim"],
+            "feat_dynamic_real_dim": kwargs["feat_dynamic_real_dim"],
+            "past_feat_dynamic_real_dim": kwargs["past_feat_dynamic_real_dim"],
+        }
+
+        if kwargs["use_source_package"]:
+            _check_soft_dependencies("uni2ts")
+            from uni2ts.model.moirai import MoiraiForecast, MoiraiModule
+
+            if kwargs["checkpoint_path"].startswith("Salesforce"):
+                model_kwargs["module"] = MoiraiModule.from_pretrained(
+                    kwargs["checkpoint_path"]
+                )
+                self.model = MoiraiForecast(**model_kwargs)
+            else:
+                from huggingface_hub import hf_hub_download
+
+                model_kwargs["checkpoint_path"] = hf_hub_download(
+                    repo_id=kwargs["checkpoint_path"], filename="model.ckpt"
+                )
+                # weights_only=False: PyTorch>=2.6 changed the default to True,
+                # but MOIRAI checkpoints contain trusted uni2ts globals that
+                # cannot be loaded with weights_only=True.
+                self.model = MoiraiForecast.load_from_checkpoint(
+                    **model_kwargs, weights_only=False
+                )
+        else:
+            # Use the sktime-vendored uni2ts package with sys.modules patched
+            # so that ``import uni2ts`` inside MoiraiForecast resolves to
+            # ``sktime.libs.uni2ts``.
+            from unittest.mock import patch
+
+            import sktime
+            from sktime.libs.uni2ts.forecast import MoiraiForecast
+
+            with patch.dict("sys.modules", {"uni2ts": sktime.libs.uni2ts}):
+                if kwargs["checkpoint_path"].startswith("Salesforce"):
+                    from sktime.libs.uni2ts.moirai_module import MoiraiModule
+
+                    model_kwargs["module"] = MoiraiModule.from_pretrained(
+                        kwargs["checkpoint_path"]
+                    )
+                    self.model = MoiraiForecast(**model_kwargs)
+                else:
+                    from huggingface_hub import hf_hub_download
+
+                    model_kwargs["checkpoint_path"] = hf_hub_download(
+                        repo_id=kwargs["checkpoint_path"], filename="model.ckpt"
+                    )
+                    # weights_only=False: PyTorch>=2.6 changed the default to True,
+                    # but MOIRAI checkpoints contain trusted uni2ts globals that
+                    # cannot be loaded with weights_only=True.
+                    self.model = MoiraiForecast.load_from_checkpoint(
+                        **model_kwargs, weights_only=False
+                    )
+
+        return self.model

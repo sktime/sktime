@@ -99,6 +99,19 @@ class MyTimeSeriesParamFitter(BaseParamFitter):
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if X passed has more than one variable
         #
+        # property:randomness = is the estimator deterministic or stochastic?
+        "property:randomness": "deterministic",
+        # valid values: str, one of "deterministic", "stochastic", "derandomized"
+        #   "deterministic": produces the same results on every run
+        #   "stochastic": may produce different results on different runs
+        #   "derandomized": stochastic, but reproducible if random_state is set
+        #
+        # capability:random_state = does the estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # set to True if the estimator has a random_state parameter,
+        # which can be used to derandomize the estimator
+        #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages
         # ----------------------------------------------------------------------------
