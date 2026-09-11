@@ -21,6 +21,7 @@ from sktime.forecasting.compose import (
     make_reduction,
 )
 from sktime.forecasting.ets import AutoETS
+from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_selection import ForecastingGridSearchCV
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.pytorchforecasting import PytorchForecastingNBeats
@@ -852,3 +853,26 @@ def test_transformed_target_forecaster_predict_proba_dunder():
     quantiles = dist.quantile([0.1, 0.5, 0.9])
     assert not quantiles.isnull().any().any()
     assert quantiles.shape[0] == len(fh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([TransformedTargetForecaster, ExponentialSmoothing]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_categorical_in_x_tag_delegation():
+    """Test that TransformedTargetForecaster clones capability:categorical_in_X.
+
+    Transformers in this pipeline transform y and pass X through unchanged,
+    so the tag is cloned from the forecaster.
+    """
+    fcst_cat = NaiveForecaster()  # capability:categorical_in_X is True
+    fcst_no_cat = ExponentialSmoothing()  # tag is False
+
+    assert fcst_cat.get_tag("capability:categorical_in_X")
+    assert not fcst_no_cat.get_tag("capability:categorical_in_X")
+
+    ttf1 = TransformedTargetForecaster([Detrender(), fcst_cat])
+    ttf2 = TransformedTargetForecaster([Detrender(), fcst_no_cat])
+
+    assert ttf1.get_tag("capability:categorical_in_X")
+    assert not ttf2.get_tag("capability:categorical_in_X")

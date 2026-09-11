@@ -455,6 +455,8 @@ class ForecastingPipeline(_Pipeline):
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
+        # we do not delegate capability:categorical_in_X, since transformers can
+        #   remove or add categorical columns, and that is not tag-inspectable
 
     @property
     def forecaster_(self):
@@ -913,6 +915,7 @@ class TransformedTargetForecaster(_Pipeline):
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
+            "capability:categorical_in_X",  # can the estimator handle categorical X?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
