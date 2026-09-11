@@ -78,13 +78,21 @@ if _check_soft_dependencies(["statsmodels"], severity="none"):
 
 
 @pytest.mark.parametrize("spec", specs)
-def test_craft(spec):
+@pytest.mark.parametrize("safe", [True, False])
+def test_craft(spec, safe):
     """Check that crafting works and is inverse to str coercion."""
-    crafted_obj = craft(spec)
+    spec_is_unsafe = "return" in spec
+
+    if safe and spec_is_unsafe:
+        with pytest.raises(ValueError):
+            craft(spec, safe=safe)
+        return
+
+    crafted_obj = craft(spec, safe=safe)
 
     new_spec = str(crafted_obj)
 
-    crafted_again = craft(new_spec)
+    crafted_again = craft(new_spec, safe=safe)
 
     assert crafted_again == crafted_obj
 
