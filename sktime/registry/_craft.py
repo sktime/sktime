@@ -295,13 +295,16 @@ def _validate_ast(tree, register):
     if isinstance(tree, ast.BinOp):
         if not isinstance(tree.op, allowed_binops):
             return False
-        _validate_ast(tree.left, register)
-        _validate_ast(tree.right, register)
+        if not _validate_ast(tree.left, register):
+            return False
+        if not _validate_ast(tree.right, register):
+            return False
 
     elif isinstance(tree, ast.UnaryOp):
         if not isinstance(tree.op, allowed_unaryops):
             return False
-        _validate_ast(tree.operand, register)
+        if not _validate_ast(tree.operand, register):
+            return False
 
     if isinstance(tree, ast.Call):
         # Only direct calls such as A(...) are allowed.
@@ -313,16 +316,19 @@ def _validate_ast(tree, register):
         if not isinstance(tree.func, ast.Name):
             return False
 
-        _validate_ast(tree.func, register)
+        if not _validate_ast(tree.func, register):
+            return False
 
         for arg in tree.args:
-            _validate_ast(arg, register)
+            if not _validate_ast(arg, register):
+                return False
 
         for kw in tree.keywords:
             # **kwargs is represented by keyword.arg == None.
             if kw.arg is None:
                 return False
-            _validate_ast(kw.value, register)
+            if not _validate_ast(kw.value, register):
+                return False
 
         return True
 
