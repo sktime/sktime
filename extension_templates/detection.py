@@ -70,7 +70,7 @@ class MyDetector(BaseDetector):
         # valid values: "unsupervised", "supervised", "semi_supervised"
         #
         # capability:multivariate controls whether internal X can be multivariate
-        # if True (only univariate), always applies vectorization over variables
+        # if False (only univariate), always applies vectorization over variables
         "capability:multivariate": False,
         # valid values: True = inner _fit, _transform receive only univariate series
         #   False = uni- and multivariate series are passed to inner methods
@@ -97,6 +97,19 @@ class MyDetector(BaseDetector):
         #   if not on the list, converted to the first entry of the same scitype
         #
         "distribution_type": "None",  # Tag to determine test in test_all_detectors
+        #
+        # property:randomness = does the estimator behave deterministically or randomly?
+        "property:randomness": "deterministic",
+        # valid values: str, one of "deterministic", "stochastic", "derandomized"
+        #   "deterministic": estimator gives same results every run
+        #   "stochastic": estimator may give different results every run
+        #   "derandomized": estimator is stochastic but can be seeded via random_state
+        #
+        # capability:random_state = does the estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, the estimator has a random_state parameter for derandomization
+        # should be set to True if property:randomness is "derandomized"
         #
         # ----------------------------------------------------------------------------
         # packaging info - only required for sktime contribution or 3rd party packages

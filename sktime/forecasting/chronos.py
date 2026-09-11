@@ -10,7 +10,6 @@ from abc import ABC, abstractmethod
 import numpy as np
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
@@ -179,7 +178,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
         return np.median(prediction_results[0].numpy(), axis=0)
 
 
-class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
+class ChronosForecaster(BaseFoundationForecaster):
     """
     Interface to the Chronos and Chronos-Bolt Zero-Shot Forecaster by Amazon Research.
 
@@ -325,6 +324,7 @@ class ChronosForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.chronos"],
+        "tests:specific": ["sktime.forecasting.tests.test_chronos"],
         "tests:skip_by_name": [  # pickling problems
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",

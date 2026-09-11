@@ -83,6 +83,19 @@ class _FoundationModelCache:
         self._entries[key] = handle
         return handle
 
+    def put(self, key: tuple, handle: ModelHandle) -> None:
+        """Insert or replace the cached handle for ``key``.
+
+        Used when an adapter updates shared backend state after loading, for
+        example after ``_pretrain``. Callers must pass a ``ModelHandle``.
+        """
+        if not isinstance(handle, ModelHandle):
+            raise TypeError(
+                "Foundation model cache entries must be a ModelHandle, "
+                f"but received {type(handle).__name__}."
+            )
+        self._entries[_make_hashable(key)] = handle
+
     def clear(self) -> None:
         """Remove all cache references.
 

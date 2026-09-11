@@ -28,6 +28,17 @@ ModelOutput = _safe_import("transformers.utils.ModelOutput")
 
 logger = logging.getLogger(__file__)
 
+_TRANSFORMERS_V5 = _check_soft_dependencies("transformers>=5.0", severity="none")
+
+# in transformers v5, weights can be materialized lazily from a meta device
+# after the checkpoint has already been copied in, so `_init_weights` must use
+# the guarded init functions (which no-op on already-initialized parameters)
+# instead of unconditionally overwriting parameters with fresh random values
+if _TRANSFORMERS_V5:
+    init = _safe_import("transformers.initialization")
+else:
+    init = _safe_import("torch.nn.init")
+
 
 # workaround condition for the case where ModelOutput cannot be imported
 # using the mock class does not work here
@@ -105,11 +116,16 @@ class Patch(nn.Module):
 
 
 class InstanceNorm(nn.Module):
-    """See, also, RevIN. Apply standardization along the last dimension."""
+    """See, also, RevIN.
 
-    def __init__(self, eps: float = 1e-5) -> None:
+    Apply standardization along the last dimension, optionally followed by an
+    ``arcsinh`` transform.
+    """
+
+    def __init__(self, eps: float = 1e-5, use_arcsinh: bool = False) -> None:
         super().__init__()
         self.eps = eps
+        self.use_arcsinh = use_arcsinh
 
     def forward(self, x, loc_scale=None):
         """Apply instance normalization to the input tensor.
@@ -127,16 +143,27 @@ class InstanceNorm(nn.Module):
             normalization. If not provided explicitly, the function calculates this
             from the data in ``x``.
         """
+        # normalization is always carried out in float32, and the result is cast
+        # back to the input's original dtype, to match the precision behaviour of
+        # the model when run in reduced-precision dtypes (e.g. bfloat16)
+        orig_dtype = x.dtype
+        x = x.to(torch.float32)
+
         if loc_scale is None:
             loc = torch.nan_to_num(torch.nanmean(x, dim=-1, keepdim=True), nan=0.0)
             scale = torch.nan_to_num(
-                torch.nanmean((x - loc).square(), dim=-1, keepdim=True).sqrt(), nan=1.0
+                (x - loc).square().nanmean(dim=-1, keepdim=True).sqrt(), nan=1.0
             )
-            scale = torch.where(scale == 0, torch.abs(loc) + self.eps, scale)
+            scale = torch.where(scale == 0, self.eps, scale)
         else:
             loc, scale = loc_scale
 
-        return (x - loc) / scale, (loc, scale)
+        scaled_x = (x - loc) / scale
+
+        if self.use_arcsinh:
+            scaled_x = torch.arcsinh(scaled_x)
+
+        return scaled_x.to(orig_dtype), (loc, scale)
 
     def inverse(self, x, loc_scale):
         """Reverses the normalization process of the InstanceNorm during ``forward()``.
@@ -153,8 +180,16 @@ class InstanceNorm(nn.Module):
         x: torch.tensor
             The original unnormalized tensor.
         """
+        orig_dtype = x.dtype
+        x = x.to(torch.float32)
         loc, scale = loc_scale
-        return x * scale + loc
+
+        if self.use_arcsinh:
+            x = torch.sinh(x)
+
+        x = x * scale + loc
+
+        return x.to(orig_dtype)
 
 
 class ResidualBlock(nn.Module):
@@ -328,9 +363,20 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         """Initialize the weights"""
         factor = self.config.initializer_factor
         if isinstance(module, (self.__class__)):
-            module.shared.weight.data.normal_(mean=0.0, std=factor * 1.0)
+            init.normal_(module.shared.weight, mean=0.0, std=factor * 1.0)
+            # reinitialize quantiles buffer for transformers v5 meta device
+            # compatibility, since it is a non-persistent buffer and is not
+            # restored from the checkpoint state dict
+            if _TRANSFORMERS_V5:
+                quantiles = torch.tensor(
+                    module.chronos_config.quantiles,
+                    dtype=module.dtype,
+                    device=module.quantiles.device,
+                )
+                init.copy_(module.quantiles, quantiles)
         elif isinstance(module, ResidualBlock):
-            module.hidden_layer.weight.data.normal_(
+            init.normal_(
+                module.hidden_layer.weight,
                 mean=0.0,
                 std=factor * ((self.chronos_config.input_patch_size * 2) ** -0.5),
             )
@@ -338,9 +384,10 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
                 hasattr(module.hidden_layer, "bias")
                 and module.hidden_layer.bias is not None
             ):
-                module.hidden_layer.bias.data.zero_()
+                init.zeros_(module.hidden_layer.bias)
 
-            module.residual_layer.weight.data.normal_(
+            init.normal_(
+                module.residual_layer.weight,
                 mean=0.0,
                 std=factor * ((self.chronos_config.input_patch_size * 2) ** -0.5),
             )
@@ -348,16 +395,18 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
                 hasattr(module.residual_layer, "bias")
                 and module.residual_layer.bias is not None
             ):
-                module.residual_layer.bias.data.zero_()
+                init.zeros_(module.residual_layer.bias)
 
-            module.output_layer.weight.data.normal_(
-                mean=0.0, std=factor * ((self.config.d_ff) ** -0.5)
+            init.normal_(
+                module.output_layer.weight,
+                mean=0.0,
+                std=factor * ((self.config.d_ff) ** -0.5),
             )
             if (
                 hasattr(module.output_layer, "bias")
                 and module.output_layer.bias is not None
             ):
-                module.output_layer.bias.data.zero_()
+                init.zeros_(module.output_layer.bias)
 
     def encode(self, context, mask=None):
         """Encode the input context tensor using the model's architecture.

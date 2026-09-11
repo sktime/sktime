@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import _GlobalForecastingDeprecationMixin
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
@@ -18,7 +17,7 @@ from sktime.forecasting.foundation import (
 )
 
 
-class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
+class TimeMoEForecaster(BaseFoundationForecaster):
     """
     Interface for TimeMOE forecaster for zero-shot forecasting.
 
@@ -131,6 +130,7 @@ class TimeMoEForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForeca
         "capability:global_forecasting": True,
         # testing configuration
         # ---------------------
+        "tests:vm": True,
         "tests:libs": ["sktime.libs.timemoe"],
     }
 

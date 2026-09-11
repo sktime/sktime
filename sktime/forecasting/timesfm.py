@@ -7,9 +7,6 @@ __author__ = ["rajatsen91", "geetu040"]
 
 import numpy as np
 
-from sktime.forecasting.base import (
-    _GlobalForecastingDeprecationMixin,
-)
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
     ForecastResult,
@@ -18,7 +15,7 @@ from sktime.forecasting.foundation import (
 )
 
 
-class TimesFMForecaster(_GlobalForecastingDeprecationMixin, BaseFoundationForecaster):
+class TimesFMForecaster(BaseFoundationForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
     TimesFM (Time Series Foundation Model) is a pretrained time-series foundation model

@@ -31,6 +31,7 @@ from sktime.forecasting.foundation import (
     FoundationModelSpec,
     ModelHandle,
 )
+from sktime.forecasting.foundation._cache import FOUNDATION_MODEL_CACHE
 
 
 class TotoForecaster(BaseFoundationForecaster):
@@ -132,7 +133,9 @@ class TotoForecaster(BaseFoundationForecaster):
         "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3", "setuptools<82"],
         # CI and test flags
         # -----------------
+        "capability:pretrain": True,
         "tests:vm": True,  # run tests on own VM?
+        "tests:specific": ["sktime.forecasting.tests.test_toto"],
     }
 
     def __init__(
@@ -246,6 +249,128 @@ class TotoForecaster(BaseFoundationForecaster):
         forecaster = TotoForecaster(toto_model.model)
         return ModelHandle(model=toto_model, pipeline=forecaster)
 
+    def _pretrain(self, y, X=None, fh=None):
+        """Fine-tune Toto on panel/hierarchical data.
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in ``"_"``.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Panel or hierarchical time series data to pretrain on.
+            The last index level is time; all other levels identify instances.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series (currently unused).
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon (currently unused during pretraining).
+
+        Returns
+        -------
+        self : reference to self
+
+        References
+        ----------
+        .. [2] TotoForFinetuning Lightning module:
+               https://github.com/DataDog/toto/blob/main/toto/model/lightning_module.py
+        .. [3] FinetuneDataModule:
+               https://github.com/DataDog/toto/blob/main/toto/data/datamodule/finetune_datamodule.py
+        """
+        import datasets as hfds
+        import numpy as np
+        from lightning.pytorch import Trainer
+        from toto.data.datamodule.finetune_datamodule import FinetuneDataModule
+        from toto.inference.forecaster import TotoForecaster as _TotoInference
+        from toto.model.lightning_module import TotoForFinetuning
+        from toto.model.toto import Toto
+
+        model_spec = self.model_spec
+        device = model_spec.device
+
+        toto_base = Toto.from_pretrained(
+            pretrained_model_name_or_path=model_spec.model_path,
+            **model_spec.load_extra_kwargs,
+        )
+        toto_base.to(device)
+        patch_size = getattr(toto_base.model.patch_embed, "patch_size", 16)
+
+        instance_levels = list(range(y.index.nlevels - 1))
+        groupby_level = (
+            instance_levels[0] if len(instance_levels) == 1 else instance_levels
+        )
+        min_len = min(len(group) for _, group in y.groupby(level=groupby_level))
+
+        prediction_horizon = min(64, max(1, min_len // 3))
+        max_context_length = min(512, max(1, min_len - prediction_horizon))
+        max_steps = 1000 if min_len >= 100 else 1
+
+        lightning_module = TotoForFinetuning(
+            pretrained_backbone=toto_base.model,
+            val_prediction_len=prediction_horizon,
+        )
+        lightning_module.to(device)
+
+        records = []
+        for _, group in y.groupby(level=groupby_level):
+            time_index = group.index.get_level_values(-1)
+            timestamps = [str(t) for t in time_index]
+            n = len(time_index)
+
+            for col in group.columns:
+                values = group[col].to_numpy(dtype=np.float64)
+                records.append(
+                    {
+                        "timestamp": timestamps,
+                        "target": values,
+                        "feat_dynamic_real": np.zeros(n, dtype=np.float64),
+                    }
+                )
+
+        if not records:
+            raise ValueError("No series found in y after grouping by instance levels.")
+        hf_dataset = hfds.Dataset.from_list(records).with_format("numpy")
+
+        dm = FinetuneDataModule(
+            dataset=hf_dataset,
+            max_context_length=max_context_length,
+            prediction_horizon=prediction_horizon,
+            patch_size=patch_size,
+            train_batch_size=4,
+            val_batch_size=1,
+            num_workers=0,
+        )
+
+        accelerator = "gpu" if device == "cuda" else "cpu"
+        trainer = Trainer(
+            max_steps=max_steps,
+            enable_progress_bar=True,
+            accelerator=accelerator,
+            devices=1,
+        )
+
+        min_required_len = 3 * patch_size + prediction_horizon
+        if min_len > min_required_len:
+            trainer.fit(lightning_module, datamodule=dm)
+        else:
+            import warnings
+
+            warnings.warn(
+                f"Series length {min_len} is too short for Toto pretraining "
+                f"(requires > {min_required_len}). Skipping finetuning step."
+            )
+
+        lightning_module.model.eval()
+        handle = ModelHandle(
+            model=toto_base,
+            pipeline=_TotoInference(lightning_module.model),
+        )
+        self.model_handle_ = handle
+        FOUNDATION_MODEL_CACHE.put(self._get_unique_model_key(), handle)
+        self.pretrain_device_ = device
+        return self
+
     def _inference(
         self,
         handle,
@@ -256,32 +381,7 @@ class TotoForecaster(BaseFoundationForecaster):
         fh,
         alpha=None,
     ):
-        """Forecast time series at future horizon.
-
-        private _predict containing the core logic, called from predict
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : sktime time series object, optional (default=None)
-            guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
-            Exogeneous time series for the forecast
-
-        Returns
-        -------
-        y_pred : sktime time series object
-            should be of the same type as seen in _fit, as in "y_inner_mtype" tag
-            Point predictions
-        """
+        """Run Toto inference and return a normalized forecast result."""
         model_spec = self.model_spec
         predict_kwargs = model_spec.predict_extra_kwargs
         future_exog = self._build_future_exog(future_X, pred_len)

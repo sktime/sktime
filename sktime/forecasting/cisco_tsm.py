@@ -7,6 +7,7 @@ __author__ = ["vedantag17"]
 __all__ = ["CiscoTSMForecaster"]
 
 import numpy as np
+import pandas as pd
 
 from sktime.forecasting.foundation import (
     BaseFoundationForecaster,
@@ -75,8 +76,9 @@ class CiscoTSMForecaster(BaseFoundationForecaster):
         ``[0.01, 0.05, 0.1, 0.2, 0.25, 0.3, 0.4, 0.5,
            0.6, 0.7, 0.75, 0.8, 0.9, 0.95, 0.99]``.
         These levels are available via ``predict_quantiles`` /
-        ``predict_interval``. Arbitrary ``alpha`` values not in this set
-        are handled by linear interpolation over the available levels.
+        ``predict_interval`` / ``predict_proba``. Arbitrary ``alpha``
+        values not in this set are handled by linear interpolation
+        over the available levels.
     ignore_deps : bool, default=False
         If ``True``, soft-dependency checks for ``cisco-tsm`` and
         ``torch`` are skipped. Useful for testing the sktime adapter
@@ -87,6 +89,9 @@ class CiscoTSMForecaster(BaseFoundationForecaster):
     - CTSM is a univariate model. Multivariate targets are not supported.
     - Exogenous variables are not supported.
     - In-sample prediction is not supported.
+    - ``predict_proba`` returns a ``skpro`` ``HistogramQPD`` over the
+      model quantile grid (``skpro>=2.14``), consistent with
+      ``predict_quantiles``.
     - The loaded ``CiscoTsmMR`` object is cached in-process using all settings
       that affect model construction, including the native quantile levels.
     - The model is excluded from the pickle state to keep serialization
@@ -119,7 +124,7 @@ class CiscoTSMForecaster(BaseFoundationForecaster):
         # --------------
         "authors": ["vedantag17"],
         "maintainers": ["vedantag17"],
-        "python_dependencies": ["cisco-tsm", "torch"],
+        "python_dependencies": ["cisco-tsm", "torch", "skpro>=2.14"],
         "python_version": ">=3.11,<3.14",
         # estimator type
         # --------------
@@ -135,6 +140,7 @@ class CiscoTSMForecaster(BaseFoundationForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_cisco_tsm"],
     }
 
     def __init__(
@@ -167,6 +173,12 @@ class CiscoTSMForecaster(BaseFoundationForecaster):
             predict_extra_kwargs={"context_length": context_length},
         )
         super().__init__(model_spec=model_spec)
+
+    def __dynamic_tags__(self):
+        """Clear version bounds when dependency checks are disabled."""
+        super().__dynamic_tags__()
+        if self.model_spec.ignore_deps:
+            self.set_tags(python_dependencies=None, python_version=None)
 
     def _load_model(self):
         """Instantiate the CiscoTsmMR model for the shared handle cache.
@@ -241,6 +253,32 @@ class CiscoTSMForecaster(BaseFoundationForecaster):
         }
         return ForecastResult(mean=mean, quantiles=quantiles)
 
+    def _predict_proba(self, fh, X, marginal=True):
+        """Return a distribution based on CTSM's native quantile grid."""
+        from skpro.distributions import HistogramQPD
+
+        native_levels = list(self.model_spec.load_extra_kwargs["quantiles"])
+        predictions = self._predict_quantiles(
+            fh=fh,
+            X=X,
+            alpha=native_levels,
+        )
+
+        pred_index = predictions.index
+        columns = self.context_y_.columns
+        row_index = pd.MultiIndex.from_product([native_levels, pred_index])
+        quantile_frame = pd.DataFrame(
+            predictions.to_numpy().T.reshape(-1, len(columns)),
+            index=row_index,
+            columns=columns,
+        )
+        return HistogramQPD(
+            quantile_frame,
+            tails="mass",
+            index=pred_index,
+            columns=columns,
+        )
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -294,11 +332,9 @@ class _DummyCiscoModel:
     def forecast(self, series, horizon_len):
         """Return constant forecasts matching the CiscoTsmMR output format."""
         mean = np.full(horizon_len, self.horizon_fill, dtype=np.float32)
-        # Provide the same 15 native quantile levels as the real model so that
-        # _predict_quantiles can interpolate without special-casing the dummy.
-        # Reference the class-level constant directly to avoid a circular import.
+        # Strictly increasing in probability so HistogramQPD bins have width.
         quantiles = {
-            q: np.full(horizon_len, self.horizon_fill, dtype=np.float32)
+            q: np.full(horizon_len, self.horizon_fill + float(q), dtype=np.float32)
             for q in self.quantiles
         }
         return [{"mean": mean, "quantiles": quantiles}]

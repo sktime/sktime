@@ -166,6 +166,7 @@ class WindFMForecaster(BaseFoundationForecaster):
         ],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.windfm"],
+        "tests:specific": ["sktime.forecasting.tests.test_windfm"],
     }
 
     _target_col = "power"

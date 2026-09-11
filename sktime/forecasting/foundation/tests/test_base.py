@@ -311,6 +311,20 @@ def test_inference_must_return_forecast_result(y):
         forecaster.predict(fh=[1, 2])
 
 
+def test_model_cache_put_replaces_existing_handle(y):
+    """Adapters can replace a cached handle after loading, e.g. after pretrain."""
+    from sktime.forecasting.foundation._cache import FOUNDATION_MODEL_CACHE
+
+    first = _DummyFoundationForecaster().fit(y)
+    replacement = ModelHandle(model=_DummyModel())
+
+    FOUNDATION_MODEL_CACHE.put(first._get_unique_model_key(), replacement)
+    second = _DummyFoundationForecaster().fit(y)
+
+    assert second.model_handle_ is replacement
+    assert second.model_handle_ is not first.model_handle_
+
+
 def test_model_cache_reuses_handle_for_equal_loading_spec(y):
     """Equal loading specifications share one process-local model handle."""
     spec_1 = FoundationModelSpec(

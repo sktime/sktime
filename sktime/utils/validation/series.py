@@ -236,17 +236,17 @@ def check_equal_time_index(*ys, mode="equal"):
         can be Series, Panel, Hierarchical, but must be pandas or numpy
         note: this assumption is not checked by the function itself
             if check is needed, use check_is_scitype or check_is_mtype before call
-    mode : str, "equal" or "contained", optional, default = "equal"
+    mode : str, "equal" or "contains", optional, default = "equal"
         if "equal" will check for all indices being exactly equal
-        if "contained", will check whether all indices are subset of ys[0].index
+        if "contains", will check whether all indices are subset of ys[0].index
 
     Raises
     ------
     ValueError
         if mode = "equal", raised if there are at least two non-None entries of ys
             of which pandas indices are not the same
-        if mode = "contained, raised if there is at least one non-None ys[i]
-            such that ys[i].index is not contained in ys[o].index
+        if mode = "contains", raised if there is at least one non-None ys[i]
+            such that ys[i].index is not contained in ys[0].index
         np.ndarray are considered having (pandas) integer range index on axis 0
     """
     from sktime.datatypes._utilities import get_index_for_series
