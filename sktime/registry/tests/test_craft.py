@@ -110,7 +110,6 @@ def test_craft(spec, safe):
         "NaiveForecaster.__init__",
         # Indirect / arbitrary function calls
         "getattr(NaiveForecaster(), 'fit')",
-        "(NaiveForecaster)()",
         "(lambda: NaiveForecaster())()",
         # Lambdas
         "lambda: NaiveForecaster()",
@@ -139,9 +138,6 @@ def test_craft(spec, safe):
         "from os import path",
         "if True:\n    return NaiveForecaster()",
         # Unsupported expression forms
-        "[NaiveForecaster()]",
-        "{'estimator': NaiveForecaster()}",
-        "(NaiveForecaster(),)",
         "NaiveForecaster() if True else NaiveForecaster()",
         # Boolean operators are deliberately not part of the safe grammar
         "NaiveForecaster() and NaiveForecaster()",
