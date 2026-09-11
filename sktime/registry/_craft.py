@@ -202,6 +202,8 @@ def craft(spec, safe=False):
                 raise ValueError(
                     f"Error in craft utility: failed to evaluate specification: {spec}"
                 ) from e
+            else:
+                raise e
         else:
             return obj
 
@@ -235,19 +237,31 @@ def _validate_ast(tree, register):
 
     The accepted grammar is intentionally small:
 
-        expression ::= NAME | NAME "(" arguments ")" | expression OP expression
+    .. code-block:: text
 
-        arguments  ::= positional_argument | keyword_argument| arguments "," arguments
+        expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
+                        | UNARYOP expression
+
+        arguments  ::= positional_argument | keyword_argument | arguments "," arguments
 
         positional_argument ::= expression | CONSTANT
         keyword_argument    ::= NAME "=" (expression | CONSTANT)
+
+    Where
+
+    .. code-block:: text
+
+        NAME       ::= valid Python identifier, object name in ``sktime`` or ``sklearn``
+        CONSTANT   ::= literal value (e.g., number, string, boolean)
+        BINOP      ::= valid Python binary operator (e.g., +, -, *, /)
+        UNARYOP    ::= valid Python unary operator (e.g., +, -, ~)
 
     This permits nested constructor calls such as:
 
         A(a=42, b=B("test"))
 
     and only such calls.
-    In particular, does not permit attribute access, lambdas, comprehensions, operators,
+    In particular, does not permit attribute access, lambdas, comprehensions,
     imports, assignments, function calls through arbitrary expressions, etc.
 
     Parameters
