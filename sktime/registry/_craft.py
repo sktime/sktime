@@ -205,7 +205,7 @@ def craft(spec, safe=False):
         else:
             return obj
 
-    elif safe:
+    if safe:
         raise ValueError(
             "Error in craft utility: safe mode requires a single expression, "
             f"but got a block of code: {spec}"
