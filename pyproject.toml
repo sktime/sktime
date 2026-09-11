@@ -244,7 +244,7 @@ notebooks = [
   "pytorch-forecasting",
   "torch",
   "lightning>=2.0,<2.7",
-  "skpro",
+  "skpro>=2",
   "statsforecast",
   'numba<0.68',
 ]
@@ -255,7 +255,7 @@ pandas1 = [
   "pandas<2.0.0",
 ]
 skpro = [
-  "skpro",
+  "skpro>=2",
 ]
 compatibility_tests = [
   'catboost; python_version < "3.13"',
