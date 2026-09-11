@@ -41,6 +41,7 @@ import numpy.typing as npt
 import pandas as pd
 from sklearn.utils.validation import check_random_state
 
+from sktime.detection._formatters import format_segments
 from sktime.detection.base import BaseDetector
 
 logger = logging.getLogger(__name__)
@@ -478,8 +479,9 @@ class GreedyGaussianSegmentation(BaseDetector):
 
         Returns
         -------
-        y_pred : array_like
-            1D array of segment labels indexed by segment.
+        y_pred : pd.DataFrame
+            ``"ilocs"`` column with left-closed ``pd.Interval`` objects,
+            one row per detected segment.
         """
         if isinstance(X, pd.Series):
             X = X.values[:, np.newaxis]
@@ -501,11 +503,10 @@ class GreedyGaussianSegmentation(BaseDetector):
         adaptee.initialize_intermediates()
         change_points_ = adaptee.find_change_points(X)
 
-        # Assign labels based on detected change points
-        labels = np.zeros(X.shape[0], dtype=np.int32)
-        for i, (start, stop) in enumerate(zip(change_points_[:-1], change_points_[1:])):
-            labels[start:stop] = i
-        return labels
+        # change_points_ are the segment breaks. identity_segmentation returns a
+        # right break of len(X) + 1, so clip before forming the intervals.
+        breaks = np.clip(np.asarray(change_points_, dtype=int), 0, X.shape[0])
+        return format_segments(breaks[:-1], breaks[1:])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

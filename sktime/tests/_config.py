@@ -109,11 +109,6 @@ EXCLUDED_TESTS = {
         "test_fit_idempotent",
     ],
     "TSRGridSearchCV": ["test_multioutput"],  # see 6708
-    "GreedyGaussianSegmentation": [
-        "test_predict_points",
-        "test_predict_segments",
-        "test_output_type",
-    ],
 }
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
