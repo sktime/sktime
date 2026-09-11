@@ -106,7 +106,7 @@ def _ESRNN():
             batch, seq_length, num_features = x.shape
             season1_length = self.season1_length
             if self.season1_length > seq_length:
-                warn(f"Input window should atleast cover one season,{seq_length}")
+                warn(f"Input window should at least cover one season,{seq_length}")
                 season1_length = seq_length
             level = x[:, :season1_length, :].mean(dim=1, keepdim=True)
             initial_seasonality_1 = x[:, :season1_length, :] / level
@@ -150,12 +150,12 @@ def _ESRNN():
             season1_length = self.season1_length
             if self.season1_length > seq_length:
                 season1_length = seq_length
-                warn(f"Input window should atleast cover one season,{seq_length}")
+                warn(f"Input window should at least cover one season,{seq_length}")
 
             season2_length = self.season2_length
             if self.season2_length > seq_length:
                 season2_length = seq_length
-                warn(f"Input window should atleast cover one season,{seq_length}")
+                warn(f"Input window should at least cover one season,{seq_length}")
 
             level = x[:, : max(season1_length, season2_length), :]
             level = level.mean(dim=1, keepdim=True)
@@ -216,7 +216,6 @@ def _ESRNN():
                 out_list = [last_output]
                 for t in range(self.pred_len - 1):
                     next_out = self.input_layer(last_output)
-                    next_out = next_out
                     lstm_out, (h, c) = self.lstm(next_out, (h, c))
                     next_output = self.output_layer(lstm_out)
                     out_list.append(next_output)
@@ -267,6 +266,8 @@ def _ESRNN():
                     * seasonality_2[:, -self.pred_len :, :]
                 )
                 return output_leveled
+
+    return _ESRNN
 
 
 class ESRNN:
