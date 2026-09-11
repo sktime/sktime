@@ -220,11 +220,11 @@ class TSPulseAnomalyDetector(BaseDetector):
             self._prediction_mode = list(self.prediction_mode)
 
         self._device = "cpu"
-        if _check_soft_dependencies("torch", severity="none"):
-            if torch.cuda.is_available():
-                self._device = "cuda"
-            elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-                self._device = "mps"
+
+        if torch.cuda.is_available():
+            self._device = "cuda"
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            self._device = "mps"
 
         if self.anomaly_threshold is None and self.anomaly_percentile is None:
             raise ValueError(

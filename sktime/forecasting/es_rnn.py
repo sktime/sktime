@@ -163,7 +163,6 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         custom_dataset_train=None,
         custom_dataset_pred=None,
     ) -> None:
-        super().__init__()
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.seasonality_type = seasonality_type
