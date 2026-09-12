@@ -100,7 +100,14 @@ class NeuralProphet(BaseForecaster):
     _tags = {
         "authors": ["vedantag17"],
         "maintainers": ["vedantag17"],
-        "python_dependencies": ["neuralprophet", "setuptools"],
+        "python_dependencies": [
+            "neuralprophet",
+            "setuptools",
+            # neuralprophet requires numpy<2; scipy>=1.16 pulls numpy>=2, so
+            # keep scipy below that bound as well
+            "numpy<2",
+            "scipy<1.16",
+        ],
         # neuralprophet causes a C-level segfault on Windows + Python 3.13+
         "env_marker": 'platform_system != "Windows" or python_version < "3.13"',
         "capability:exogenous": True,

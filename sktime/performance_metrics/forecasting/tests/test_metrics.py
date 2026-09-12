@@ -566,3 +566,29 @@ def test_owa_aggregate_then_ratio():
     assert np.isfinite(owa)
     assert owa < 100
     assert np.allclose(owa, expected_owa)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_msle_no_stdout_on_index_mismatch():
+    """mean_squared_log_error must not print debug output.
+
+    A leftover debug block printed an index-mismatch banner and a stack trace to
+    stdout whenever y_true and y_pred were pandas objects with different indices.
+    A metric must be silent.
+    """
+    import contextlib
+    import io
+
+    from sktime.performance_metrics.forecasting._functions import (
+        mean_squared_log_error,
+    )
+
+    y_true = pd.Series([1.0, 2.0, 3.0], index=[0, 1, 2])
+    y_pred = pd.Series([1.1, 2.1, 2.9], index=[10, 11, 12])
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        mean_squared_log_error(y_true, y_pred)
+    assert buf.getvalue() == ""

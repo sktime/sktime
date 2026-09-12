@@ -94,19 +94,131 @@ class PatchTSTForecaster(BaseForecaster):
         Fraction of the data to use for validation.
 
     config : dict, optional, default = {}
-        A config dict specifying parameters to initialize an full
-        PatchTST model. Missing parameters in the config will be automatically
-        replaced by their default values. See the PatchTSTConfig config on
-        huggingface for more details.
-        Note: if `prediction_length` is passed as in larger than the passed `fh`
-        in the `fit` function, the `prediction_length` will be used to train the
-        model. If `prediction_length` is passed as in smaller than the passed
-        `fh` in the `fit` function, the passed `fh` will be used to train the
-        model.
+        A config dict specifying parameters to initialize a full PatchTST
+        model. Missing parameters in the config will be automatically replaced
+        by their default values. Valid keys include:
+
+        num_input_channels : int, optional, default=1
+            The number of input channels.
+        context_length : int, optional, default=32
+            The context length of the input sequence.
+        distribution_output : str, optional, default="student_t"
+            The distribution emission head for the model when ``loss`` is
+            ``"nll"``. Could be either ``"student_t"``, ``"normal"`` or
+            ``"negative_binomial"``.
+        loss : str, optional, default="mse"
+            The loss function for the model corresponding to the
+            ``distribution_output`` head. For parametric distributions it is
+            the negative log likelihood (``"nll"``) and for point estimates it
+            is the mean squared error ``"mse"``.
+        patch_length : int, optional, default=1
+            Define the patch length of the patchification process.
+        patch_stride : int, optional, default=1
+            Define the stride of the patchification process.
+        num_hidden_layers : int, optional, default=3
+            Number of hidden layers in the Transformer decoder.
+        d_model : int, optional, default=128
+            Size of the encoder layers and the pooler layer.
+        num_attention_heads : int, optional, default=4
+            Number of attention heads for each attention layer in the
+            Transformer encoder.
+        share_embedding : bool, optional, default=True
+            Sharing the input embedding across all channels.
+        channel_attention : bool, optional, default=False
+            Activate channel attention block in the Transformer to allow
+            channels to attend each other.
+        ffn_dim : int, optional, default=512
+            Dimension of the "intermediate" (often named feed-forward) layer
+            in the Transformer encoder.
+        norm_type : str, optional, default="batchnorm"
+            Normalization at each Transformer layer. Can be ``"batchnorm"`` or
+            ``"layernorm"``.
+        norm_eps : float, optional, default=1e-05
+            A value added to the denominator for numerical stability of
+            normalization.
+        attention_dropout : float or int, optional, default=0.0
+            The dropout ratio for the attention probabilities.
+        positional_dropout : float, optional, default=0.0
+            The dropout probability in the positional embedding layer.
+        path_dropout : float, optional, default=0.0
+            The dropout path in the residual block.
+        ff_dropout : float, optional, default=0.0
+            The dropout probability used between the two layers of the
+            feed-forward networks.
+        bias : bool, optional, default=True
+            Whether to add bias in the feed-forward networks.
+        activation_function : str, optional, default="gelu"
+            The non-linear activation function (string) in the Transformer.
+            ``"gelu"`` and ``"relu"`` are supported.
+        pre_norm : bool, optional, default=True
+            Normalization is applied before self-attention if ``pre_norm`` is
+            set to ``True``. Otherwise, normalization is applied after residual
+            block.
+        positional_encoding_type : str, optional, default="sincos"
+            Positional encodings. Options ``"random"`` and ``"sincos"`` are
+            supported.
+        use_cls_token : bool, optional, default=False
+            Whether cls token is used.
+        init_std : float, optional, default=0.02
+            The standard deviation of the truncated normal weight
+            initialization distribution.
+        share_projection : bool, optional, default=True
+            Sharing the projection layer across different channels in the
+            forecast head.
+        scaling : str, bool, or None, optional, default="std"
+            Whether to scale the input targets via ``"mean"`` scaler,
+            ``"std"`` scaler or no scaler if ``None``. If ``True``, the scaler
+            is set to ``"mean"``.
+        do_mask_input : bool, optional
+            Apply masking during the pretraining.
+        mask_type : str, optional, default="random"
+            Masking type. Only ``"random"`` and ``"forecast"`` are currently
+            supported.
+        random_mask_ratio : float, optional, default=0.5
+            Masking ratio applied to mask the input data during random
+            pretraining.
+        num_forecast_mask_patches : int or list, optional, default=[2]
+            Number of patches to be masked at the end of each batch sample.
+            If it is an integer, all the samples in the batch will have the
+            same number of masked patches. If it is a list, samples in the
+            batch will be randomly masked by numbers defined in the list.
+            This argument is only used for forecast pretraining.
+        channel_consistent_masking : bool, optional, default=False
+            If channel consistent masking is ``True``, all the channels will
+            have the same masking pattern.
+        unmasked_channel_indices : list, optional
+            Indices of channels that are not masked during pretraining.
+            Values in the list are numbers between 1 and
+            ``num_input_channels``.
+        mask_value : int, optional, default=0
+            Values in the masked patches will be filled by ``mask_value``.
+        pooling_type : str, optional, default="mean"
+            Pooling of the embedding. ``"mean"``, ``"max"`` and ``None`` are
+            supported.
+        head_dropout : float, optional, default=0.0
+            The dropout probability for head.
+        prediction_length : int, optional, default=24
+            The prediction horizon that the model will output.
+        num_targets : int, optional, default=1
+            Number of targets for regression and classification tasks. For
+            classification, it is the number of classes.
+        output_range : list, optional
+            Output range for regression task. The range of output values can
+            be set to enforce the model to produce values within a range.
+        num_parallel_samples : int, optional, default=100
+            The number of samples generated in parallel for probabilistic
+            prediction.
+
+        Note: if ``prediction_length`` is passed as larger than the passed
+        ``fh`` in the ``fit`` function, the ``prediction_length`` will be used
+        to train the model. If ``prediction_length`` is passed as smaller than
+        the passed ``fh`` in the ``fit`` function, the passed ``fh`` will be
+        used to train the model.
 
     training_args : dict, optional, default = None
         Training arguments to use for the model. If this is passed,
-        the remaining applicable training arguments will be ignored
+        the remaining applicable training arguments will be ignored.
+        See [3]_ for details.
     compute_metrics : list or function, default = None
         List of metrics or function to use during training
     callbacks: list or function, default = None
@@ -119,6 +231,7 @@ class PatchTSTForecaster(BaseForecaster):
         Paper: https://arxiv.org/abs/2211.14730
     [2] HuggingFace PatchTST Page:
         https://huggingface.co/docs/transformers/en/model_doc/patchtst
+    [3] https://huggingface.co/docs/transformers/v5.14.0/en/main_classes/trainer#transformers.TrainingArguments
 
     Examples
     --------

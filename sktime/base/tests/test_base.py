@@ -490,7 +490,7 @@ def test_set_get_config():
 def test_eq_dunder():
     """Tests equality dunder for BaseObject descendants.
 
-    Equality should be determined only by get_params results.
+    Equality should be determined by class and get_params results.
 
     Raises
     ------
@@ -528,3 +528,41 @@ def test_eq_dunder():
     assert composite == composite_2
     assert composite != composite_3
     assert composite_2 != composite_3
+
+
+def test_eq_dunder_checks_class():
+    """Tests that __eq__ compares the class, not only the parameters.
+
+    Regression test for bug #10780: objects of different classes with equal
+    parameter sets compared equal, which caused silent deduplication of
+    distinct objects, e.g., of distinct metrics in benchmarking.
+
+    Raises
+    ------
+    AssertionError if logic behind __eq__ is incorrect, logic tested:
+        objects of unrelated classes with equal params are not equal
+        objects of a class and its subclass with equal params are not equal
+        objects of the same class with equal params remain equal
+        objects are not equal to non-BaseObject instances
+    """
+    # unrelated classes, identical params
+    unrelated_1 = CompositionDummy(foo=42)
+    unrelated_2 = FittableCompositionDummy(foo=42)
+
+    assert unrelated_1.get_params() == unrelated_2.get_params()
+    assert unrelated_1 != unrelated_2
+    assert unrelated_2 != unrelated_1
+
+    # parent and subclass, identical params
+    parent = FixtureClassParent()
+    child = FixtureClassChild()
+
+    assert parent.get_params() == child.get_params()
+    assert parent != child
+    assert child != parent
+
+    # same class with equal params must still be equal
+    assert CompositionDummy(foo=42) == CompositionDummy(foo=42)
+
+    # comparison against a non-BaseObject must not raise, and must be unequal
+    assert unrelated_1 != 42
