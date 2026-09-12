@@ -207,6 +207,26 @@ class TransformerPipeline(_HeterogenousMetaEstimator, BaseTransformer):
     def _steps(self, value):
         self.steps = value
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # aggregate python_dependencies from all components
+        component_deps = self._deps()
+        # preserve composite's own direct dependencies if any
+        own_deps = self.get_class_tag("python_dependencies", None)
+        all_deps = []
+        if own_deps is not None:
+            if isinstance(own_deps, str):
+                all_deps.append(own_deps)
+            elif isinstance(own_deps, list):
+                all_deps.append(own_deps)
+        if component_deps:
+            all_deps.append(component_deps)
+        combined_deps = self._combine_dependencies(all_deps)
+        self.set_tags(**{"python_dependencies": combined_deps})
+
     def _check_steps(self, estimators):
         """Check Steps.
 
