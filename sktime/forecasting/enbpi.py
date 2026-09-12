@@ -146,6 +146,8 @@ class EnbPIForecaster(BaseForecaster):
 
         super().__init__()
 
+        self.clone_tags(self.forecaster_, ["capability:categorical_in_X"])
+
         if bootstrap_transformer.get_tag("object_type") == "bootstrap":
             from sktime.transformations.bootstrap import TSBootstrapAdapter
 

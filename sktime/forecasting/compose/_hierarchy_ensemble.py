@@ -182,12 +182,16 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 "requires-fh-in-fit",
                 "capability:exogenous",
                 "capability:missing_values",
+                "capability:categorical_in_X",
             ]
             self.clone_tags(forecasters, tags_to_clone)
         else:
             l_forecasters = [(x[0], x[1]) for x in forecasters]
             self._anytagis_then_set("requires-fh-in-fit", True, False, l_forecasters)
             self._anytagis_then_set("capability:exogenous", True, False, l_forecasters)
+            self._anytagis_then_set(
+                "capability:categorical_in_X", False, True, l_forecasters
+            )
             self._anytagis_then_set(
                 "capability:missing_values", False, True, l_forecasters
             )

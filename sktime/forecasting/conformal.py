@@ -175,6 +175,7 @@ class ConformalIntervals(BaseForecaster):
         tags_to_clone = [
             "requires-fh-in-fit",
             "capability:exogenous",
+            "capability:categorical_in_X",
             "capability:missing_values",
             "X-y-must-have-same-index",
             "enforce_index_type",
