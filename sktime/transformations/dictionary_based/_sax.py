@@ -51,6 +51,14 @@ class SAXlegacy(BaseTransformer):
     Attributes
     ----------
     words:      history = []
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.dictionary_based._sax import SAXlegacy
+    >>> X = np.random.RandomState(42).randn(2, 1, 20)
+    >>> sax = SAXlegacy(word_length=4, alphabet_size=4, window_size=10)
+    >>> X_transformed = sax.fit_transform(X)
     """
 
     _tags = {
