@@ -3958,11 +3958,24 @@ class info__source(_BaseTag):
 
 
 class X_y_must_have_same_index(_BaseTag):
-    """Do X/y in fit/update and X/fh in predict have to be same indices.
+    """Whether X and y must have compatible time indices.
 
     - String name: ``"X-y-must-have-same-index"``
     - Values: bool
     - Example: ``True``
+
+    If ``True``, the estimator cannot handle different indices for ``X`` and
+    ``y``.
+
+    For forecasters, this applies to ``fit``, ``update``, and ``predict``
+    when exogenous data ``X`` is used. During ``fit`` and ``update``,
+    ``X.index`` must contain ``y.index``. During ``predict``, ``X.index``
+    must contain the indices specified by the forecasting horizon ``fh``.
+
+    For transformers, this tag indicates whether the transformer can handle
+    different indices for ``X`` and ``y`` when both are provided. A value of
+    ``False`` means that the transformer requires compatible ``X`` and ``y``
+    indices.
     """
 
     _tags = {
