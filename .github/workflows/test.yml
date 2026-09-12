@@ -626,7 +626,7 @@ jobs:
         run: make test_without_datasets
 
   check-dependency-bounds:
-    name: Check latest dependency releases
+    name: Core dependency upper bound monitor
     runs-on: ubuntu-latest
 
     steps:
