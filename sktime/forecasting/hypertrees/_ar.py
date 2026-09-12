@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Hyper-Trees forecasters."""
 
-__author__ = ["aminehd"]
+__author__ = ["oberoir080"]
 
 import numpy as np
 import pandas as pd
@@ -9,16 +9,17 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
-class HyperTreeNetARForecaster(BaseForecaster):
-    """Hypertree-Net-AR forecaster, from the ``hypertrees-forecasting`` package.
+class HyperTreeARForecaster(BaseForecaster):
+    """Hypertree-AR forecaster, from the ``hypertrees-forecasting`` package.
 
-    Direct interface to ``hypertrees.models.HyperTreeNetAR`` [1]_.
+    Direct interface to ``hypertrees.models.HyperTreeAR`` [1]_.
 
     Hyper-Trees use a gradient boosted tree (LightGBM) to learn the parameters
     of a classical time series model as functions of features, rather than
-    forecasting the series directly. ``HyperTreeNetAR`` targets a time-varying
-    AR(p) model: the tree produces embeddings that a small neural network maps
-    to the AR parameters, and the AR model generates the forecast.
+    forecasting the series directly. ``HyperTreeAR`` targets a time-varying
+    AR(p) model: the tree predicts the AR coefficients directly from the
+    features at each time point, and the AR recursion generates the forecast.
+    Unlike ``HyperTreeNetAR``, no neural network is involved.
 
     The interfaced estimator is univariate and models a single series.
 
@@ -26,25 +27,10 @@ class HyperTreeNetARForecaster(BaseForecaster):
     ----------
     p : int, optional (default=2)
         Maximum number of AR(p) lags.
-    embedding_dimension : int, optional (default=1)
-        Embedding dimension of the tree embeddings fed to the network.
-    hidden_dim : int, optional (default=128)
-        Hidden dimension of the embedding network (MLP).
-    dropout : float, optional (default=0.1)
-        Dropout rate of the embedding network.
-    use_random_projection : bool, optional (default=True)
-        Whether to use random projections for the embeddings.
-    rp_embed_dim : int, optional (default=12)
-        Dimension of the random projections, only used when
-        ``use_random_projection=True``.
-    network_learning_rate : float, optional (default=1e-3)
-        Learning rate of the embedding network optimizer.
-    gradient_mode : str, optional (default="separate")
-        Gradient computation mode, ``"separate"`` or ``"shared"``.
-    device : str, optional (default="cpu")
-        Device for the embedding network, e.g. ``"cpu"`` or ``"cuda"``.
-    hessian_method : str, optional (default="exact")
-        Method for the Hessian diagonal, ``"exact"`` or ``"gn"``.
+    hessian_method : str, optional (default="analytic")
+        Method for the Hessian diagonal, one of ``"exact"``, ``"analytic"``,
+        or ``"gn"``. ``"analytic"`` uses closed-form gradients and Hessians,
+        exploiting that the AR fit is linear in its parameters.
     n_hessian_probes : int, optional (default=5)
         Number of Hutchinson probes, only used when ``hessian_method="gn"``.
     lgb_params : dict, optional (default=None)
@@ -61,20 +47,20 @@ class HyperTreeNetARForecaster(BaseForecaster):
 
     Examples
     --------
-    >>> from sktime.forecasting.hypertrees import HyperTreeNetARForecaster
+    >>> from sktime.forecasting.hypertrees import HyperTreeARForecaster
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = HyperTreeNetARForecaster(p=2)  # doctest: +SKIP
+    >>> forecaster = HyperTreeARForecaster(p=2)  # doctest: +SKIP
     >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
-    HyperTreeNetARForecaster(...)
+    HyperTreeARForecaster(...)
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["StatMixedML", "kashif", "aminehd"],
-        "maintainers": ["aminehd"],
+        "authors": ["StatMixedML", "kashif", "oberoir080"],
+        "maintainers": ["oberoir080"],
         "python_dependencies": ["hypertrees-forecasting>=0.2"],
         # estimator type
         # --------------
@@ -95,29 +81,13 @@ class HyperTreeNetARForecaster(BaseForecaster):
     def __init__(
         self,
         p=2,
-        embedding_dimension=1,
-        hidden_dim=128,
-        dropout=0.1,
-        use_random_projection=True,
-        rp_embed_dim=12,
-        network_learning_rate=1e-3,
-        gradient_mode="separate",
-        device="cpu",
-        hessian_method="exact",
+        hessian_method="analytic",
         n_hessian_probes=5,
         lgb_params=None,
         num_iterations=100,
         seed=123,
     ):
         self.p = p
-        self.embedding_dimension = embedding_dimension
-        self.hidden_dim = hidden_dim
-        self.dropout = dropout
-        self.use_random_projection = use_random_projection
-        self.rp_embed_dim = rp_embed_dim
-        self.network_learning_rate = network_learning_rate
-        self.gradient_mode = gradient_mode
-        self.device = device
         self.hessian_method = hessian_method
         self.n_hessian_probes = n_hessian_probes
         self.lgb_params = lgb_params
@@ -130,8 +100,6 @@ class HyperTreeNetARForecaster(BaseForecaster):
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
-
-        private _fit containing the core logic, called from fit
 
         Parameters
         ----------
@@ -146,7 +114,7 @@ class HyperTreeNetARForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        from hypertrees.models.HyperTreeNetAR import HyperTreeNetAR
+        from hypertrees.models.HyperTreeAR import HyperTreeAR
 
         self._series_id = 0
         self._train_len = len(y)
@@ -177,26 +145,15 @@ class HyperTreeNetARForecaster(BaseForecaster):
             for col in self._x_cols:
                 train_data[str(col)] = np.asarray(X[col].to_numpy())
 
-        forecaster = HyperTreeNetAR(
+        forecaster = HyperTreeAR(
             p=self.p,
             freq=self._freq,
             fcst_h=fcst_h,
-            device=self.device,
             hessian_method=self.hessian_method,
             n_hessian_probes=self.n_hessian_probes,
         )
-        network_params = {
-            "learning_rate": self.network_learning_rate,
-            "embedding_dimension": self.embedding_dimension,
-            "hidden_dim": self.hidden_dim,
-            "dropout": self.dropout,
-            "use_random_projection": self.use_random_projection,
-            "rp_embed_dim": self.rp_embed_dim,
-        }
         forecaster.train(
             lgb_params=self._lgb_params,
-            network_params=network_params,
-            gradient_mode=self.gradient_mode,
             num_iterations=self.num_iterations,
             train_data=train_data,
             seed=self.seed,
@@ -273,18 +230,12 @@ class HyperTreeNetARForecaster(BaseForecaster):
                 "p": 2,
                 "num_iterations": 10,
                 "lgb_params": lgb_params,
-                "hidden_dim": 8,
-                "rp_embed_dim": 4,
-                "dropout": 0.0,
             },
             {
                 "p": 1,
-                "gradient_mode": "shared",
+                "hessian_method": "exact",
                 "num_iterations": 10,
                 "lgb_params": lgb_params,
-                "hidden_dim": 8,
-                "rp_embed_dim": 4,
-                "dropout": 0.0,
             },
         ]
         return params
