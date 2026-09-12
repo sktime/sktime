@@ -9,30 +9,9 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
-
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        bfloat16 = None
-
-        class Tensor:
-            """Dummy class if torch is unavailable."""
-
-
-if _check_soft_dependencies("transformers", severity="none"):
-    import transformers
-else:
-
-    class PreTrainedModel:
-        """Dummy class if transformers is unavailable."""
 
 
 class ChronosModelStrategy(ABC):
@@ -77,7 +56,7 @@ class ChronosModelStrategy(ABC):
 
     @abstractmethod
     def predict(
-        self, pipeline, y_tensor: torch.Tensor, predictions_length: int, config: dict
+        self, pipeline, y_tensor, predictions_length: int, config: dict
     ) -> dict:
         """Make predictions using the model pipeline.
 
@@ -120,6 +99,8 @@ class ChronosDefaultStrategy(ChronosModelStrategy):
     """Strategy for handling standard set of Chronos Models."""
 
     def initialize_config(self) -> dict:
+        import torch
+
         return {
             "num_samples": None,
             "temperature": None,
@@ -135,9 +116,7 @@ class ChronosDefaultStrategy(ChronosModelStrategy):
             key=key, chronos_kwargs=kwargs, use_source_package=use_source_package
         )
 
-    def predict(
-        self, pipeline, y_tensor: torch.Tensor, prediction_length: int, config: dict
-    ) -> np.ndarray:
+    def predict(self, pipeline, y_tensor, prediction_length: int, config: dict):
         prediction_results = pipeline.predict(
             y_tensor,
             prediction_length,
@@ -154,6 +133,8 @@ class ChronosBoltStrategy(ChronosModelStrategy):
     """Strategy for handling Chronos-Bolt models."""
 
     def initialize_config(self) -> dict:
+        import torch
+
         return {
             "limit_prediction_length": False,
             "torch_dtype": torch.bfloat16,
@@ -165,9 +146,7 @@ class ChronosBoltStrategy(ChronosModelStrategy):
             key=key, chronos_bolt_kwargs=kwargs, use_source_package=use_source_package
         )
 
-    def predict(
-        self, pipeline, y_tensor: torch.Tensor, prediction_length: int, config: dict
-    ) -> np.ndarray:
+    def predict(self, pipeline, y_tensor, prediction_length: int, config: dict):
         prediction_results = pipeline.predict(
             y_tensor,
             prediction_length,
@@ -329,21 +308,27 @@ class ChronosForecaster(BaseForecaster):
         ],
     }
 
-    _default_chronos_config = {
-        "num_samples": None,  # int, use value from pretrained model if None
-        "temperature": None,  # float, use value from pretrained model if None
-        "top_k": None,  # int, use value from pretrained model if None
-        "top_p": None,  # float, use value from pretrained model if None
-        "limit_prediction_length": False,  # bool
-        "torch_dtype": torch.bfloat16,  # torch.dtype
-        "device_map": "cpu",  # str, use "cpu" for CPU inference, "cuda" for gpu and "mps" for Apple Silicon # noqa
-    }
+    def _get_default_chronos_config(self):
+        import torch
 
-    _default_chronos_bolt_config = {
-        "limit_prediction_length": False,  # bool
-        "torch_dtype": torch.bfloat16,  # torch.dtype
-        "device_map": "cpu",  # str, use "cpu" for CPU inference, "cuda" for gpu and "mps" for Apple Silicon # noqa
-    }
+        return {
+            "num_samples": None,  # int, use value from pretrained model if None
+            "temperature": None,  # float, use value from pretrained model if None
+            "top_k": None,  # int, use value from pretrained model if None
+            "top_p": None,  # float, use value from pretrained model if None
+            "limit_prediction_length": False,  # bool
+            "torch_dtype": torch.bfloat16,  # torch.dtype
+            "device_map": "cpu",  # str, use "cpu" for CPU inference, "cuda" for gpu and "mps" for Apple Silicon # noqa
+        }
+
+    def _get_default_chronos_bolt_config(self):
+        import torch
+
+        return {
+            "limit_prediction_length": False,  # bool
+            "torch_dtype": torch.bfloat16,  # torch.dtype
+            "device_map": "cpu",  # str, use "cpu" for CPU inference, "cuda" for gpu and "mps" for Apple Silicon # noqa
+        }
 
     def __init__(
         self,
@@ -580,6 +565,9 @@ class ChronosForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Predicted forecasts.
         """
+        import torch
+        import transformers
+
         self._ensure_model_pipeline_loaded()
 
         transformers.set_seed(self._seed)
