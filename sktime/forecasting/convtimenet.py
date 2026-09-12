@@ -148,7 +148,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         "authors": ["Mingyue-Cheng", "0russewt0", "pty12345", "Tanuj-Taneja1"],
         "maintainers": ["Tanuj-Taneja1"],
         "tests:skip_by_name": [
-            "test_fit_idempotent",
             "test_update_predict_predicted_index",
         ],
         "python_dependencies": ["torch"],
