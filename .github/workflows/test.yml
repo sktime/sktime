@@ -782,9 +782,10 @@ jobs:
                   print()
 
               print(
-                  f"{len(unsupported)} dependency "
-                  f"{'is' if len(unsupported) == 1 else 'are'} "
-                  "blocking its latest PyPI release."
+                  f"{len(unsupported)} newest release of core "
+                  f"{'dependency is' if len(unsupported) == 1 else 'dependencies are'} "
+                  "blocked by sktime pyproject.toml upper bounds. "
+                  "Please update the upper bounds accordingly, in a separate PR."
               )
               print("=" * 72)
 
