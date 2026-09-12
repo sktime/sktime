@@ -149,7 +149,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # CI and test flags
         # -----------------
         "tests:vm": True,
-        "tests:skip_by_name": ["test_persistence_via_pickle"]
+        "tests:skip_by_name": ["test_persistence_via_pickle"],
     }
 
     def __init__(
