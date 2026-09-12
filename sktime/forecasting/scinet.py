@@ -275,8 +275,8 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
             },
             {
                 "seq_len": 4,
-                "pred_len": 3,
                 "num_levels": 1,
+                "pred_len": 5,
                 "lr": 0.001,
                 "optimizer": "Adam",
                 "batch_size": 1,

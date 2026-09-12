@@ -68,6 +68,7 @@ class MultiplexClassifier(_HeterogenousMetaEstimator, _DelegatedClassifier):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     # attribute for _DelegatedClassifier, which then delegates

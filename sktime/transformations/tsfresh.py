@@ -31,6 +31,10 @@ class _TSFreshFeatureExtractor(BaseTransformer):
         # the dependency tag translates to:
         # tsfresh is required, and tsfresh>=0.21 or scipy<1.15
         "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_tsfresh"],
     }
 
     def __init__(
@@ -310,7 +314,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
         # When using the long input format, tsfresh seems to sort the index,
         # here we make sure we return the dataframe in the sort order as the
         # input data
-        instances = X.iloc[:, 0].unique()
+        instances = X[X.columns[0]].drop_duplicates().to_numpy()
         Xt = Xt.reindex(instances)
         return Xt
 

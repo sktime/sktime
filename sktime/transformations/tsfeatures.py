@@ -117,6 +117,7 @@ class TSFeaturesTransformer(BaseTransformer):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_tsfeatures"],
     }
 
     def __init__(
