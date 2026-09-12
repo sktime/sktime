@@ -9,7 +9,7 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 
-class HyperTreeSTLForecaster(BaseForecaster):
+class HypertreeSTLForecaster(BaseForecaster):
     """Hyper-Tree-STL forecaster, from the ``hypertrees-forecasting`` package.
 
     Direct interface to ``hypertrees.models.HyperTreeSTL`` [1]_.
