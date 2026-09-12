@@ -61,9 +61,13 @@ class HypertreeSTLForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["StatMixedML", "kashif", "aminehd"],
         "maintainers": ["aminehd"],
         "python_dependencies": ["hypertrees-forecasting"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
@@ -73,6 +77,9 @@ class HypertreeSTLForecaster(BaseForecaster):
         "capability:missing_values": False,
         "capability:pred_int": False,
         "capability:insample": False,
+        # testing and CI tags
+        # -------------------
+        "tests:vm": True,
     }
 
     def __init__(
