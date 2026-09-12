@@ -624,3 +624,173 @@ jobs:
 
       - name: Run tests
         run: make test_without_datasets
+
+  check-dependency-bounds:
+    name: Check latest dependency releases
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Install packaging
+        run: python -m pip install packaging
+
+      - name: Check dependency upper bounds
+        run: |
+          python <<'PY'
+          import json
+          import sys
+          import tomllib
+          import urllib.request
+
+          from packaging.requirements import Requirement
+          from packaging.version import Version
+
+          PYPI_URL = "https://pypi.org/pypi/{}/json"
+
+          with open("pyproject.toml", "rb") as f:
+              project = tomllib.load(f)
+
+          dependencies = project.get("project", {}).get("dependencies", [])
+
+          if not dependencies:
+              print("No core dependencies found.")
+              sys.exit(0)
+
+          unsupported = []
+          errors = []
+
+          print("Checking dependency upper bounds against PyPI...\n")
+
+          for dependency in dependencies:
+              try:
+                  requirement = Requirement(dependency)
+              except Exception as exc:
+                  errors.append(
+                      f"{dependency}: invalid requirement: {exc}"
+                  )
+                  continue
+
+              upper_bounds = [
+                  spec
+                  for spec in requirement.specifier
+                  if spec.operator in ("<", "<=")
+              ]
+
+              if not upper_bounds:
+                  print(f"  - {requirement.name}: no upper bound")
+                  continue
+
+              upper_bound = min(
+                  upper_bounds,
+                  key=lambda spec: Version(spec.version),
+              )
+
+              try:
+                  with urllib.request.urlopen(
+                      PYPI_URL.format(requirement.name)
+                  ) as response:
+                      data = json.load(response)
+              except Exception as exc:
+                  errors.append(
+                      f"{requirement.name}: failed to query PyPI: {exc}"
+                  )
+                  continue
+
+              releases = data.get("releases", {})
+              versions = []
+
+              for version_string, files in releases.items():
+                  try:
+                      version = Version(version_string)
+                  except Exception:
+                      continue
+
+                  if version.is_prerelease or version.is_devrelease:
+                      continue
+
+                  # Ignore releases for which all files are yanked.
+                  if files and all(
+                      file.get("yanked", False)
+                      for file in files
+                  ):
+                      continue
+
+                  versions.append(version)
+
+              if not versions:
+                  errors.append(
+                      f"{requirement.name}: "
+                      "could not find a stable PyPI release"
+                  )
+                  continue
+
+              latest = max(versions)
+              bound_version = Version(upper_bound.version)
+
+              if upper_bound.operator == "<":
+                  supported = latest < bound_version
+              else:
+                  supported = latest <= bound_version
+
+              if supported:
+                  print(
+                      f"  ✓ {requirement.name}: "
+                      f"{latest} is allowed by {upper_bound}"
+                  )
+              else:
+                  print(
+                      f"  ✗ {requirement.name}: "
+                      f"{latest} is blocked by {upper_bound}"
+                  )
+
+                  unsupported.append({
+                      "name": requirement.name,
+                      "requirement": dependency,
+                      "latest": str(latest),
+                      "upper_bound": str(upper_bound),
+                  })
+
+          print()
+
+          if errors:
+              print("::group::Errors")
+              for error in errors:
+                  print(f"  ✗ {error}")
+              print("::endgroup::")
+              print()
+
+          if unsupported:
+              print("::error::Latest dependency releases are not supported.")
+              print()
+              print("=" * 72)
+              print("DEPENDENCY UPPER BOUNDS NEED ATTENTION")
+              print("=" * 72)
+              print()
+
+              for dependency in unsupported:
+                  print(f"  {dependency['name']}")
+                  print(f"    declared: {dependency['requirement']}")
+                  print(f"    latest:   {dependency['latest']}")
+                  print(f"    blocked:  {dependency['upper_bound']}")
+                  print()
+
+              print(
+                  f"{len(unsupported)} dependency "
+                  f"{'is' if len(unsupported) == 1 else 'are'} "
+                  "blocking its latest PyPI release."
+              )
+              print("=" * 72)
+
+          if errors or unsupported:
+              sys.exit(1)
+
+          print("✓ All dependency upper bounds allow the latest "
+                "stable PyPI releases.")
+          PY
