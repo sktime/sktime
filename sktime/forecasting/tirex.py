@@ -15,52 +15,16 @@ It does not require any training or data input.
 """
 
 __author__ = ["sinemkilicdere", "martinloretzzz"]
-import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster
-from sktime.utils.singleton import _multiton
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
-
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        bfloat16 = None
-
-        class Tensor:
-            """Dummy class if torch is unavailable."""
+from sktime.forecasting.foundation import (
+    BaseFoundationForecaster,
+    ForecastResult,
+    FoundationModelSpec,
+    ModelHandle,
+)
 
 
-def _tirex_cache_key(model: str, device: str) -> str:
-    """Create a deterministic cache key for the TiRex model."""
-    model_str = str(model)
-    device_str = str(device)
-    cache_key = "_".join([model_str, device_str])
-    return cache_key
-
-
-@_multiton
-class _cached_TiRex:
-    """Cached TiRex loader; ensures one memory instance per unique key."""
-
-    def __init__(self, key: str, model: str, device: str):
-        self.key = key
-        self.model = model
-        self.device = device
-        self._obj = None
-
-    def load(self):
-        from tirex import load_model
-
-        if self._obj is None:
-            self._obj = load_model(self.model, device=self.device, backend="torch")
-        return self._obj
-
-
-class TiRexForecaster(BaseForecaster):
+class TiRexForecaster(BaseFoundationForecaster):
     """Interface to the TiRex Zero-Shot Forecaster.
 
     This forecaster loads the TiRex model from the ``tirex-ts`` package when fit() is
@@ -80,8 +44,8 @@ class TiRexForecaster(BaseForecaster):
 
     Attributes
     ----------
-    model_ : object
-        The loaded TiRex model instance (vendored implementation).
+    model_handle_ : ModelHandle
+        Shared handle containing the loaded TiRex model.
 
     References
     ----------
@@ -113,7 +77,7 @@ class TiRexForecaster(BaseForecaster):
         "python_dependencies": ["torch", "tirex-ts"],
         # estimator type
         # --------------
-        "y_inner_mtype": "pd.Series",
+        "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "capability:exogenous": False,
@@ -132,11 +96,12 @@ class TiRexForecaster(BaseForecaster):
         self.model = model
         self.device = device
         self.license_accepted = license_accepted
-
-        self.model_ = None
-
-        # leave this as is
-        super().__init__()
+        model_spec = FoundationModelSpec(
+            model_path=model,
+            device=device,
+            load_extra_kwargs={"backend": "torch"},
+        )
+        super().__init__(model_spec=model_spec)
 
         if not self.license_accepted:
             raise ValueError(
@@ -159,93 +124,51 @@ class TiRexForecaster(BaseForecaster):
         license_text = dist.read_text("licenses/LICENSE")
         print(license_text)
 
-    def _fit(self, y, X, fh):
-        """Fit forecaster to training data.
+    def _load_model(self):
+        """Load the TiRex backend into the shared model cache."""
+        from tirex import load_model
 
-        Loads and caches the underlying TiRex model instance (no training).
+        model_spec = self.model_spec
+        model = load_model(
+            model_spec.model_path,
+            device=model_spec.device,
+            **model_spec.load_extra_kwargs,
+        )
+        return ModelHandle(model=model)
 
-        Parameters
-        ----------
-        y : sktime time series object
-            guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            Time series to which to fit the forecaster.
+    def _inference(
+        self,
+        handle,
+        context_y,
+        context_X,
+        future_X,
+        pred_len,
+        fh,
+        alpha=None,
+    ):
+        """Forecast a complete future horizon with the TiRex backend."""
+        import torch
 
-            * if self.get_tag("capability:multivariate")==False:
-              guaranteed to be univariate (e.g., single-column for DataFrame)
-            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
-              the method should handle uni- and multivariate y appropriately
+        relative_fh = fh.to_relative(self.cutoff).to_pandas()
+        if not all(value > 0 for value in relative_fh):
+            pred_len = len(relative_fh)
 
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-            Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
-            Otherwise, if not passed in _fit, guaranteed to be passed in _predict
-        X : optional (default=None)
-            guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            Exogeneous time series to fit to.
-
-        Returns
-        -------
-        self : TiRexForecaster
-            Fitted forecaster (with ``model_`` set).
-        """
-        key = _tirex_cache_key(self.model, self.device)
-        self.model_ = _cached_TiRex(
-            key=key, model=self.model, device=self.device
-        ).load()
-        return self
-
-    def _predict(self, fh, X):
-        """Forecast time series at future horizon.
-
-        Converts the observed series to a tensor context and delegates multi-step
-        prediction to the TiRex model. The current implementation does not use ``X``.
-
-        State required:
-            Requires state to be "fitted".
-
-        Accesses in self:
-            Fitted model attributes ending in "_"
-            self.cutoff
-
-        Parameters
-        ----------
-        fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to predict.
-            If not passed in _fit, guaranteed to be passed here
-        X : pd.DataFrame, optional (default=None)
-            Exogenous time series
-
-        Returns
-        -------
-        y_predict : sktime time series object
-            Point forecasts, same type as seen in _fit (as in "y_inner_mtype" tag).
-        """
-        # implement here
-
-        y = self._y
-        context_values = y.to_numpy()[None, :]
-
-        context_tensor = torch.as_tensor(context_values, dtype=torch.float32)
-
-        predict_len = len(fh)
-
-        forecast = self.model_.forecast(
-            context=context_tensor, prediction_length=predict_len
+        context = torch.as_tensor(
+            context_y.iloc[:, 0].to_numpy()[None, :],
+            dtype=torch.float32,
+        )
+        forecast = handle.model.forecast(
+            context=context,
+            prediction_length=pred_len,
         )
 
         if isinstance(forecast, (list, tuple)):
             forecast = forecast[1]
-
         if hasattr(forecast, "detach"):
             forecast = forecast.detach().cpu().numpy()
 
-        yhat = forecast.reshape(-1)[: len(fh)]
-
-        index = fh.to_absolute(self.cutoff).to_pandas()
-
-        return pd.Series(
-            yhat, index=index, name=(y.name if hasattr(y, "name") else None)
-        )
+        values = forecast.reshape(-1)[:pred_len]
+        return ForecastResult(mean=values.reshape(-1, 1))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
