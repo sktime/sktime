@@ -84,6 +84,34 @@ def test_predict(X, y_expected):
     not run_test_for_class(SubLOF),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_fit_predict_with_novelty_false():
+    """Check training anomalies can be predicted when novelty is disabled."""
+    X = pd.DataFrame([0, 0, 100, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 100, 0])
+    expected = pd.DataFrame({"ilocs": [2, 7, 13]})
+
+    model = SubLOF(3, window_size=5, novelty=False)
+
+    pd.testing.assert_frame_equal(model.fit_predict(X), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SubLOF),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_fit_transform_with_novelty_false():
+    """Check training anomaly labels can be transformed when novelty is disabled."""
+    X = pd.DataFrame([0, 0, 100, 0, 0, 0, 0, 100, 0, 0, 0, 0, 0, 100, 0])
+    expected = pd.DataFrame({"labels": [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0]})
+
+    model = SubLOF(3, window_size=5, novelty=False)
+
+    pd.testing.assert_frame_equal(model.fit_transform(X), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SubLOF),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_sublof_does_not_mutate_input():
     """Check that SubLOF does not modify the input DataFrame."""
     X = pd.DataFrame([0, 0.5, 100, 0.1, 0, 0.2, 0.3, 50])
