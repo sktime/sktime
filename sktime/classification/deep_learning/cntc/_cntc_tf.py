@@ -385,3 +385,15 @@ class CNTCClassifier(BaseDeepClassifier):
             params.append(param_callbacks)
 
         return params
+
+    @staticmethod
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
+
+        Returns
+        -------
+        dict of str to type, mapping names to classes
+        """
+        from sktime.libs._keras_self_attention import SeqSelfAttention
+
+        return SeqSelfAttention.get_custom_objects()
