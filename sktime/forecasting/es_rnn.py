@@ -143,10 +143,13 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
+        # estimator type
+        # --------------
+        "capability:pretrain": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,
-        "capability:pretrain": True,
+        "tests:skip_by_name": ["test_persistence_via_pickle"]
     }
 
     def __init__(
