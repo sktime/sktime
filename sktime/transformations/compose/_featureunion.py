@@ -40,6 +40,20 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         if True, columns of return DataFrame are flat, by "transformer__variablename"
         if False, columns are MultiIndex (transformer, variablename)
         has no effect if return mtype is one without column names
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.compose import FeatureUnion
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> X = pd.DataFrame({"a": [1, 2, 3]})
+    >>> union = FeatureUnion([
+    ...     ("exp4", ExponentTransformer(power=4)),
+    ...     ("exp025", ExponentTransformer(power=0.25)),
+    ... ])
+    >>> Xt = union.fit_transform(X)
+    >>> Xt.columns.tolist()
+    ['exp4__a', 'exp025__a']
     """
 
     _tags = {
@@ -65,7 +79,6 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
