@@ -973,8 +973,8 @@ Ensembles and stacking
     :toctree: auto_generated/
     :template: class.rst
 
-    HypertreeNetARForecaster
-    HypertreeSTLForecaster
+    HyperTreeNetARForecaster
+    HyperTreeSTLForecaster
 
 Causal Forecasting
 ------------------

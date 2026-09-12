@@ -1,9 +1,9 @@
 """Hypertree forecasting models for sktime."""
 
 __all__ = [
-    "HypertreeNetARForecaster",
-    "HypertreeSTLForecaster",
+    "HyperTreeNetARForecaster",
+    "HyperTreeSTLForecaster",
 ]
 
-from sktime.forecasting.hypertrees._netar import HypertreeNetARForecaster
-from sktime.forecasting.hypertrees._stl import HypertreeSTLForecaster
+from sktime.forecasting.hypertrees._netar import HyperTreeNetARForecaster
+from sktime.forecasting.hypertrees._stl import HyperTreeSTLForecaster
