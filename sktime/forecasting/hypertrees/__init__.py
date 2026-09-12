@@ -4,4 +4,4 @@ __all__ = [
     "HypertreeNetARForecaster",
 ]
 
-from sktime.forecasting.hypertrees._net_ar import HypertreeNetARForecaster
+from sktime.forecasting.hypertrees._netar import HypertreeNetARForecaster
