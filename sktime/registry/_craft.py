@@ -19,6 +19,7 @@ will have the same effect as new_est = spec.clone()
 
 __author__ = ["fkiraly"]
 
+import ast
 import re
 
 from sktime.registry._lookup import all_estimators
@@ -51,7 +52,7 @@ def _extract_class_names(spec):
     return cls_name_list
 
 
-def craft(spec):
+def craft(spec, safe=False):
     """Instantiate an object from the specification string.
 
     The ``craft`` utility can be used to deserialize an estimator specification string,
@@ -77,7 +78,37 @@ def craft(spec):
     unfitted estimator.
 
     ``craft`` recognizes estimators present in ``sktime`` and ``scikit-learn``,
-    and base python.
+    and base python (built-in types and functions).
+
+    If ``safe=True`` mode is enabled, only simple propositional expressions are allowed.
+
+    The accepted "safe" grammar is intentionally small:
+
+    .. code-block:: text
+
+        expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
+                        | UNARYOP expression
+
+        arguments  ::= positional_argument | keyword_argument | arguments "," arguments
+
+        positional_argument ::= expression | CONSTANT
+        keyword_argument    ::= NAME "=" (expression | CONSTANT)
+
+    Where
+
+    .. code-block:: text
+
+        NAME       ::= valid Python identifier, object name in ``sktime`` or ``sklearn``
+        CONSTANT   ::= literal value (e.g., number, string, boolean)
+        BINOP      ::= valid Python binary operator (e.g., +, -, *, /)
+        UNARYOP    ::= valid Python unary operator (e.g., +, -, ~)
+
+    This permits simple constructor calls such as ``A(a=42)``,
+    or nested constructor calls such as ``A(a=42, b=B("test"))``, and only such calls.
+
+    In particular, does not permit attribute access, lambdas, comprehensions,
+    imports, assignments, function calls through arbitrary expressions, etc,
+    which are "unsafe" in the sense of allowing arbitrary code injection.
 
     Parameters
     ----------
@@ -88,7 +119,15 @@ def craft(spec):
         * option 1: a string that evaluates to an estimator
         * option 2: a sequence of assignments in valid python code,
           with the object to be defined preceded by a "return".
-          assignments can use names of classes as if all imports were present
+          assignments can use names of classes as if all imports were present.
+          Option 2 is not available in ``safe=True`` mode.
+
+    safe : bool, optional (default=False)
+        whether to enforce safe expressions according to the safe specification rules.
+
+        * if True, only allow safe expressions according to the safe specification
+          rules, see above for the exact rules.
+        * if False, allow all expressions (default behavior).
 
     Returns
     -------
@@ -135,9 +174,57 @@ def craft(spec):
     register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
     register = {**register_sklearn, **register_sktime}
 
+    # Parse the specification once.
+    # Both safe and unsafe modes operate on the resulting AST.
     try:
-        obj = eval(spec, globals(), register)
-    except Exception:
+        tree = ast.parse(spec, mode="exec")
+    except SyntaxError as e:
+        if safe:
+            raise ValueError(
+                f"Error in craft utility: failed to parse specification: {spec}"
+            ) from e
+        exec_parsed = False
+    else:
+        exec_parsed = True
+
+    # single expression
+    if exec_parsed and len(tree.body) == 1 and isinstance(tree.body[0], ast.Expr):
+        # safe mode: validate the AST against the allowed constructors and operators
+        if safe and not _validate_ast(tree, register):
+            raise ValueError(
+                "Error in craft utility: unsafe or invalid specification supplied: "
+                f"{spec}"
+            )
+
+        expr = tree.body[0].value
+        expr_tree = ast.Expression(body=expr)
+        ast.fix_missing_locations(expr_tree)
+
+        try:
+            obj = eval(
+                compile(expr_tree, "<craft>", "eval"),
+                {"__builtins__": {}} if safe else globals(),
+                register,
+            )
+        except Exception as e:
+            if safe:
+                raise ValueError(
+                    f"Error in craft utility: failed to evaluate specification: {spec}"
+                ) from e
+            else:
+                raise e
+        else:
+            return obj
+
+    # safe mode only allows single expressions
+    if safe:
+        raise ValueError(
+            "Error in craft utility: safe mode requires a single expression, "
+            f"but got a block of code: {spec}"
+        )
+
+    else:
+        # unsafe mode: attempt to execute the specification directly
         from textwrap import indent
 
         spec_fun = indent(spec, "    ")
@@ -152,6 +239,145 @@ def build_obj():
         obj = eval("build_obj()", register, register)
 
     return obj
+
+
+def _validate_ast(tree, register):
+    """Validate that ``spec`` contains only safe constructor expressions.
+
+    The accepted grammar is intentionally small:
+
+    .. code-block:: text
+
+        expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
+                        | UNARYOP expression
+
+        arguments  ::= positional_argument | keyword_argument | arguments "," arguments
+
+        positional_argument ::= expression | CONSTANT
+        keyword_argument    ::= NAME "=" (expression | CONSTANT)
+
+    Where
+
+    .. code-block:: text
+
+        NAME       ::= valid Python identifier, object name in ``sktime`` or ``sklearn``
+        CONSTANT   ::= literal value (e.g., number, string, boolean)
+        BINOP      ::= valid Python binary operator (e.g., +, -, *, /)
+        UNARYOP    ::= valid Python unary operator (e.g., +, -, ~)
+
+    This permits nested constructor calls such as:
+
+        A(a=42, b=B("test"))
+
+    and only such calls.
+    In particular, does not permit attribute access, lambdas, comprehensions,
+    imports, assignments, function calls through arbitrary expressions, etc.
+
+    Parameters
+    ----------
+    tree : ast.Expression or ast.AST
+        The abstract syntax tree of the specification to validate.
+    register : dict
+        The registry of allowed names (estimators, methods, variables) for validation.
+
+    Returns
+    -------
+    bool
+        True if the AST is valid according to the safe spec rules, False otherwise.
+    """
+    reg = register  # for shorter expressions below
+
+    if isinstance(tree, ast.Module):
+        return (
+            len(tree.body) == 1
+            and isinstance(tree.body[0], ast.Expr)
+            and _validate_ast(tree.body[0].value, reg)
+        )
+
+    # Only names explicitly supplied in the estimator registry are
+    # available for variables. In particular, don't permit dunder names.
+    if isinstance(tree, ast.Name):
+        return tree.id in reg and not tree.id.startswith("__")
+
+    # Constants are safe as values.
+    # In particular, this allows strings, numbers, booleans, None, etc.
+    if isinstance(tree, ast.Constant):
+        return True
+
+    # Literal containers are also safe provided all nested elements are safe.
+    if isinstance(tree, (ast.List, ast.Tuple, ast.Set)):
+        return all(_validate_ast(elt, reg) for elt in tree.elts)
+
+    if isinstance(tree, ast.Dict):
+        return all(
+            _validate_ast(key, reg) and _validate_ast(value, reg)
+            for key, value in zip(tree.keys, tree.values)
+        )
+
+    # binary and unary operators (dunder operations)
+    # are allowed, since this is how we can build pipelines
+    allowed_binops = (
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.FloorDiv,
+        ast.Mod,
+        ast.Pow,
+        ast.MatMult,
+        ast.BitOr,
+        ast.BitAnd,
+        ast.BitXor,
+        ast.LShift,
+        ast.RShift,
+    )
+
+    allowed_unaryops = (
+        ast.UAdd,
+        ast.USub,
+        ast.Not,
+        ast.Invert,
+    )
+
+    if isinstance(tree, ast.BinOp):
+        if not isinstance(tree.op, allowed_binops):
+            return False
+        return _validate_ast(tree.left, reg) and _validate_ast(tree.right, reg)
+
+    if isinstance(tree, ast.UnaryOp):
+        if not isinstance(tree.op, allowed_unaryops):
+            return False
+        return _validate_ast(tree.operand, reg)
+
+    if isinstance(tree, ast.Call):
+        # Only direct calls such as A(...) are allowed.
+        #
+        # This deliberately rejects:
+        #   obj.A(...)
+        #   getattr(...)(...)
+        #   (lambda: ...)(...)
+        if not isinstance(tree.func, ast.Name):
+            return False
+
+        if not _validate_ast(tree.func, reg):
+            return False
+
+        for arg in tree.args:
+            if not _validate_ast(arg, reg):
+                return False
+
+        for kw in tree.keywords:
+            # **kwargs is represented by keyword.arg == None.
+            if kw.arg is None:
+                return False
+            if not _validate_ast(kw.value, reg):
+                return False
+
+        return True
+
+    # the above is an exhaustive list of what is allowed
+    # hence, if we reach this point, the AST contains an unsupported node type
+    return False
 
 
 def deps(spec, include_test_deps=False):
