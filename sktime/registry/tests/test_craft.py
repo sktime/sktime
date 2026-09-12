@@ -78,15 +78,82 @@ if _check_soft_dependencies(["statsmodels"], severity="none"):
 
 
 @pytest.mark.parametrize("spec", specs)
-def test_craft(spec):
+@pytest.mark.parametrize("safe", [True, False])
+def test_craft(spec, safe):
     """Check that crafting works and is inverse to str coercion."""
-    crafted_obj = craft(spec)
+    # hack - among test cases, all unsafe specs contain a "return" statement
+    # in general, this statement is not true, i.e., unsafe iff contains return
+    spec_is_unsafe = "return" in spec
+
+    # test that unsafe specs correctly raise an error in safe mode
+    if safe and spec_is_unsafe:
+        with pytest.raises(ValueError):
+            craft(spec, safe=safe)
+        return
+
+    # test that crafting and re-crafting produces consistent results
+    crafted_obj = craft(spec, safe=safe)
 
     new_spec = str(crafted_obj)
 
-    crafted_again = craft(new_spec)
+    crafted_again = craft(new_spec, safe=safe)
 
     assert crafted_again == crafted_obj
+
+
+@pytest.mark.parametrize(
+    "spec",
+    [
+        # Attribute access
+        "NaiveForecaster().fit",
+        "NaiveForecaster().foo()",
+        "NaiveForecaster.__init__",
+        # Indirect / arbitrary function calls
+        "getattr(NaiveForecaster(), 'fit')",
+        "(lambda: NaiveForecaster())()",
+        # Lambdas
+        "lambda: NaiveForecaster()",
+        "NaiveForecaster(lam=lambda: 1)",
+        # Comprehensions / generators
+        "[NaiveForecaster() for _ in range(1)]",
+        "{NaiveForecaster() for _ in range(1)}",
+        "{i: NaiveForecaster() for i in range(1)}",
+        "(NaiveForecaster() for _ in range(1))",
+        # Arbitrary builtin/function names are not in the safe registry
+        "eval('NaiveForecaster()')",
+        "exec('x = 1')",
+        "open('foo')",
+        "getattr",
+        # Dunder names / access
+        "__import__('os')",
+        "__builtins__",
+        "NaiveForecaster().__class__",
+        "NaiveForecaster().__dict__",
+        # **kwargs expansion
+        "NaiveForecaster(**{})",
+        # Statements / multi-statement code
+        "x = NaiveForecaster()",
+        "NaiveForecaster(); NaiveForecaster()",
+        "import os",
+        "from os import path",
+        "if True:\n    return NaiveForecaster()",
+        # Unsupported expression forms
+        "NaiveForecaster() if True else NaiveForecaster()",
+        # Boolean operators are deliberately not part of the safe grammar
+        "NaiveForecaster() and NaiveForecaster()",
+        "NaiveForecaster() or NaiveForecaster()",
+        # Comparisons
+        "NaiveForecaster() == NaiveForecaster()",
+        "NaiveForecaster() < NaiveForecaster()",
+        # Chained / indirect calls
+        "NaiveForecaster()()",
+        "(NaiveForecaster())()",
+    ],
+)
+def test_craft_safe_rejects_unsafe_specs(spec):
+    """Test that unsafe Python constructs are rejected in safe mode."""
+    with pytest.raises(ValueError, match="unsafe or invalid specification|safe mode"):
+        craft(spec, safe=True)
 
 
 @pytest.mark.parametrize("spec", specs)
