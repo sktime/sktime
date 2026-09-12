@@ -1,7 +1,7 @@
 """Interface for ES RNN for Time Series Forecasting."""
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
+from skbase.utils.dependencies import _safe_import
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.networks.es_rnn import ESRNN
@@ -21,6 +21,8 @@ class ESRNNTrainDataset(Dataset):
         self._get_data()
 
     def _get_data(self):
+        from torch import FloatTensor
+
         length = len(self.y)
         x_arr = []
         y_arr = []
@@ -35,8 +37,8 @@ class ESRNNTrainDataset(Dataset):
             raise ValueError("Input size to small")
 
         self.x_train, self.y_train = (
-            torch.FloatTensor(np.array(x_arr)),
-            torch.FloatTensor(np.array(y_arr)),
+            FloatTensor(np.array(x_arr)),
+            FloatTensor(np.array(y_arr)),
         )
 
     def __len__(self):
@@ -57,8 +59,10 @@ class ESRNNPredDataset(Dataset):
         self._get_data()
 
     def _get_data(self):
+        from torch import FloatTensor
+
         x_pred = self.y[-self.window :]
-        x_pred = torch.FloatTensor(np.array(x_pred))
+        x_pred = FloatTensor(np.array(x_pred))
         self.x_pred = x_pred.unsqueeze(0)
 
     def __len__(self):
@@ -67,7 +71,9 @@ class ESRNNPredDataset(Dataset):
 
     def __getitem__(self, idx):
         """Return data point."""
-        return self.x_pred[idx], torch.zeros(1)
+        from torch import zeros
+
+        return self.x_pred[idx], zeros(1)
 
 
 class ESRNNForecaster(BaseDeepNetworkPyTorch):
