@@ -778,7 +778,7 @@ jobs:
                   print(f"  {dependency['name']}")
                   print(f"    declared: {dependency['requirement']}")
                   print(f"    latest:   {dependency['latest']}")
-                  print(f"    blocked:  {dependency['upper_bound']}")
+                  print(f"    pyproject bound:  {dependency['upper_bound']}")
                   print()
 
               print(
