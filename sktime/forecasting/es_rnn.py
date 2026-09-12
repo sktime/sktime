@@ -177,16 +177,18 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.window = window
         self.pred_len = pred_len
         self.stride = stride
-        self.batch_size = batch_size
-        self.num_epochs = num_epochs
-        self.optimizer = optimizer
-        self.criterion = criterion
-        self.optimizer_kwargs = optimizer_kwargs
-        self.criterion_kwargs = criterion_kwargs
         self.custom_dataset_train = custom_dataset_train
         self.custom_dataset_pred = custom_dataset_pred
-        self.lr = lr
-        super().__init__()
+        self.criterion = criterion
+
+        super().__init__(
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            criterion_kwargs=criterion_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            lr=lr,
+        )
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
