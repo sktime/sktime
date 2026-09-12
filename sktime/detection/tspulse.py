@@ -6,7 +6,6 @@ __all__ = ["TSPulseAnomalyDetector"]
 
 import numpy as np
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.detection.base import BaseDetector
 from sktime.utils.dependencies import _safe_import

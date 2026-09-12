@@ -180,23 +180,36 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.custom_dataset_train = custom_dataset_train
         self.custom_dataset_pred = custom_dataset_pred
         self.lr = lr
-        if _check_soft_dependencies("torch", severity="none"):
-            import torch
+        super().__init__()
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        import torch
+
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def _instantiate_criterion(self):
         if self.criterion:
