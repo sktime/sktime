@@ -4150,6 +4150,15 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "LouisDeconinck",
+      "name": "Louis Deconinck",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27673665?v=4",
+      "profile": "https://github.com/LouisDeconinck",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
