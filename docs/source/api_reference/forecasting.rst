@@ -967,6 +967,15 @@ Ensembles and stacking
 
     MAPAForecaster
 
+.. currentmodule:: sktime.forecasting.hypertrees
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HypertreeNetARForecaster
+
+
 Causal Forecasting
 ------------------
 
