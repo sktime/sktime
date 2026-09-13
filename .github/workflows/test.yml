@@ -484,6 +484,8 @@ jobs:
             python-version: "3.12"
           - exclude-newer: "2025-09-01"
             python-version: "3.13"
+          - exclude-newer: "2026-09-01"
+            python-version: "3.14"
 
     steps:
       - uses: actions/checkout@v7
