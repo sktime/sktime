@@ -31,7 +31,7 @@ class LuckyDtwDist(_DelegatedPairwiseTransformerPanel):
         "authors": ["fkiraly", "Kristian A Buza"],
         # estimator type
         # --------------
-        "symmetric": True,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
+        "symmetric": False,  # is the transformer symmetric, i.e., t(x,y)=t(y,x) always?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
