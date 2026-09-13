@@ -352,7 +352,9 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """
         import pickle
 
-        return pickle.loads(serial)
+        obj = pickle.loads(serial)
+        cls._warn_version_mismatch(obj)
+        return obj
 
     @classmethod
     def load_from_path(cls, serial):
@@ -370,7 +372,34 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         from zipfile import ZipFile
 
         with ZipFile(serial, "r") as file:
-            return pickle.loads(file.open("_obj").read())
+            obj = pickle.loads(file.open("_obj").read())
+        cls._warn_version_mismatch(obj)
+        return obj
+
+    @staticmethod
+    def _warn_version_mismatch(obj):
+        """Warn if ``obj`` was saved with a different sktime version.
+
+        Estimator dumps are not guaranteed to be compatible across sktime
+        versions, so loading an object saved with a different version may
+        silently produce an invalid estimator.
+        """
+        import warnings
+
+        from sktime import __version__ as current_version
+
+        saved_version = obj.get_tag(
+            "sktime_version", tag_value_default=None, raise_error=False
+        )
+        if saved_version is not None and saved_version != current_version:
+            warnings.warn(
+                f"Estimator was saved with sktime version {saved_version}, "
+                f"but the current sktime version is {current_version}. "
+                "Estimator dumps are not guaranteed to be compatible across "
+                "sktime versions; the loaded object may be invalid.",
+                UserWarning,
+                stacklevel=3,
+            )
 
 
 # todo 1.2.0: remove this class from inheritance in BaseObject
