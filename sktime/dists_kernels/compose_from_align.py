@@ -71,7 +71,10 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         # find out whether we know that the resulting matrix is symmetric
         #   since aligner distances are always symmetric,
         #   we know it's the case for sure if X equals X2
-        if X2 is None:
+        # X2 is None covers direct calls to _transform;
+        #   X2 is X covers calls via transform, where the base class
+        #   already substituted X for a None X2 (identity is preserved)
+        if X2 is None or X2 is X:
             X2 = X
             symm = True
         else:
