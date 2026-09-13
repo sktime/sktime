@@ -89,10 +89,11 @@ class TestAllPanelTransformers(TransformerPairwisePanelFixtureGenerator, QuickTe
     def test_pairwise_transformers_panel_symmetric(self, object_instance, scenario):
         """Main test function for pairwise transformers on tabular data."""
         trafo_name = type(object_instance).__name__
-        dist_mat = scenario.run(object_instance, method_sequence=["transform"])
 
         X = scenario.args["transform"]["X"]
         len_X = len(scenario.args["transform"]["X"])
+
+        dist_mat = object_instance.transform(X)
 
         assert isinstance(dist_mat, np.ndarray), (
             f"Type of matrix returned by transform is wrong for {trafo_name}"
