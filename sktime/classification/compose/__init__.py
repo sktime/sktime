@@ -5,11 +5,9 @@
 __author__ = ["mloning", "fkiraly"]
 __all__ = [
     "ClassifierPipeline",
-    "ComposableTimeSeriesForestClassifier",
     "ColumnEnsembleClassifier",
     "MultiplexClassifier",
     "SklearnClassifierPipeline",
-    "WeightedEnsembleClassifier",
 ]
 
 from sktime.classification.compose._column_ensemble import ColumnEnsembleClassifier
