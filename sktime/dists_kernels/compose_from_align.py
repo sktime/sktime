@@ -31,7 +31,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
 
     _tags = {
         "authors": ["fkiraly"],
-        "symmetric": True,  # all the distances are symmetric
+        "symmetric": False,  # aligners in general are non-symmetric
         "capability:unequal_length": True,  # aligners can usually handle unequal length
         # CI and test flags
         # -----------------
