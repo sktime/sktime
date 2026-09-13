@@ -1271,7 +1271,7 @@ def load_solar(
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float})
-    y = y.asfreq("30MIN")
+    y = y.asfreq("30min")
     y = y.squeeze("columns")
     if api_version is None:
         return y
@@ -1298,7 +1298,7 @@ def load_solar(
             .droplevel(0)
             .sort_index()
         )
-        df = df.asfreq("30T")
+        df = df.asfreq("30min")
         df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
 
         if return_full_df:

@@ -4130,7 +4130,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/118175583?v=4",
       "profile": "https://github.com/oberoir080",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -4158,6 +4159,15 @@
       "profile": "https://github.com/nicolasdmolina",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "LouisDeconinck",
+      "name": "Louis Deconinck",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27673665?v=4",
+      "profile": "https://github.com/LouisDeconinck",
+      "contributions": [
+        "doc"
       ]
     }
   ]
