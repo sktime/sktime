@@ -658,6 +658,12 @@ jobs:
               project = tomllib.load(f)
 
           dependencies = project.get("project", {}).get("dependencies", [])
+          project_config = project.get("project", {})
+
+          optional_dependencies = project_config.get("optional-dependencies", {})
+          all_extras = optional_dependencies.get("all_extras", [])
+
+          dependencies.extend(all_extras)
 
           if not dependencies:
               print("No core dependencies found.")
