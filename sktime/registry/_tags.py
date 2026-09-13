@@ -2747,7 +2747,8 @@ class scitype__y(_BaseTag):
     - Example: ``"Series"``
     - Example 2: ``"points"`` (detection metrics)
 
-    This tag applies to parameter estimators and metrics.
+    This tag applies to parameter estimators and detection metrics
+    (not forecasting metrics).
 
     For parameter estimators, it specifies which scitype of ``y`` is supported
     natively, typically ``"Series"``.
