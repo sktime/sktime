@@ -16,6 +16,17 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     ----------
     aligner: BaseAligner, must implement get_distance method
         if None, distance is equal zero
+
+    Examples
+    --------
+    >>> from sktime.alignment.lucky import AlignerLuckyDtw
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.dists_kernels.compose_from_align import DistFromAligner
+    >>>
+    >>> X, _ = load_unit_test()
+    >>> X = X[0:3]
+    >>> dist = DistFromAligner(AlignerLuckyDtw())
+    >>> dist_mat = dist.transform(X)
     """
 
     _tags = {
@@ -25,7 +36,6 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, aligner=None):
