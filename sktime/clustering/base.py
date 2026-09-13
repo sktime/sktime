@@ -37,7 +37,7 @@ class BaseClusterer(BaseEstimator):
         "capability:multithreading": False,
         "capability:out_of_sample": True,
         "capability:predict": True,
-        "capability:predict_proba": True,
+        "capability:predict_proba": False,
     }
 
     def __init__(self, n_clusters: int = None):
