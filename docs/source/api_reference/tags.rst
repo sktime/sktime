@@ -236,6 +236,7 @@ This section lists tags applying to time series metrics (``"metric"`` type).
 
     lower_is_better
     capability__sample_weight
+    scitype__y
     scitype__y_pred
     requires_y_true
     requires_y_pred_benchmark
@@ -278,6 +279,7 @@ This section lists tags applying to parameter estimators (``"param_est"`` type).
     :nosignatures:
 
     scitype__X
+    scitype__y
     capability__multivariate
     capability__pairwise
 
