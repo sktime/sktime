@@ -58,7 +58,7 @@ class Logger(BaseTransformer):
     >>> from sktime.transformations.compose import DataLog, Logger
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.naive import NaiveForecaster
-    >>> from sktime.transformations.series.detrend import Detrender
+    >>> from sktime.transformations.detrend import Detrender
     >>>
     >>> # create a logger
     >>> logger = Logger(logger="foo", log_methods="all", logger_backend="datalog")

@@ -13,7 +13,7 @@ from sklearn.model_selection import cross_val_predict
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn import RotationForest
-from sktime.transformations.panel.shapelet_transform import RandomShapeletTransform
+from sktime.transformations.shapelet_transform import RandomShapeletTransform
 from sktime.utils.validation.panel import check_X_y
 
 

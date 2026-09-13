@@ -106,12 +106,17 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         "property:randomness": "derandomized",
         # CI and testing
         # --------------
+        "tests:vm": True,
         "tests:libs": [
             "sktime.networks.convtimenet._convtimenet",
             "sktime.networks.convtimenet._dlutils",
             "sktime.networks.convtimenet._convtimenet_backbone",
         ],
-        "tests:skip_by_name": ["test_fit_idempotent"],
+        "tests:skip_by_name": [
+            "test_fit_idempotent",  # see #11031
+            "test_deepcopy_fitted",  # see #11031
+            "test_deepcopy_fitted_predict",  # see #11031
+        ],
     }
 
     def __init__(
@@ -160,7 +165,6 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # Ensure dw_ks is a list

@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from sklearn.metrics import f1_score
 
-from sktime.performance_metrics.annotation import metrics
+from sktime.performance_metrics._annotation import metrics
 
 
 def test_padded_f1_with_sklearn():

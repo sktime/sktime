@@ -10,7 +10,7 @@ from sktime.forecasting.compose import BaggingForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.bootstrap import STLBootstrapTransformer
-from sktime.transformations.series.boxcox import LogTransformer
+from sktime.transformations.boxcox import LogTransformer
 
 
 @pytest.mark.skipif(

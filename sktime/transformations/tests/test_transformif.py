@@ -5,7 +5,7 @@ import pytest
 from sktime.param_est.seasonality import SeasonalityACF
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import Id, TransformIf
-from sktime.transformations.series.detrend import Deseasonalizer
+from sktime.transformations.detrend import Deseasonalizer
 
 
 @pytest.mark.skipif(

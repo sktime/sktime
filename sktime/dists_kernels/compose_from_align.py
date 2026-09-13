@@ -16,6 +16,17 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     ----------
     aligner: BaseAligner, must implement get_distance method
         if None, distance is equal zero
+
+    Examples
+    --------
+    >>> from sktime.alignment.lucky import AlignerLuckyDtw
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.dists_kernels.compose_from_align import DistFromAligner
+    >>>
+    >>> X, _ = load_unit_test()
+    >>> X = X[0:3]
+    >>> dist = DistFromAligner(AlignerLuckyDtw())
+    >>> dist_mat = dist.transform(X)
     """
 
     _tags = {
@@ -61,7 +72,7 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         #   since aligner distances are always symmetric,
         #   we know it's the case for sure if X equals X2
         if X2 is None:
-            X = X2
+            X2 = X
             symm = True
         else:
             symm = False
@@ -89,10 +100,17 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     def get_test_params(cls, parameter_set="default"):
         """Test parameters for DistFromAligner."""
         # importing inside to avoid circular dependencies
-        from sktime.alignment.dtw_python import AlignerDTW
-        from sktime.utils.dependencies import _check_estimator_deps
+        from skbase.utils.dependencies import _check_estimator_deps
 
+        from sktime.alignment.dtw_python import AlignerDTW
+        from sktime.alignment.lucky import AlignerLuckyDtw
+
+        # two unconditional sets: a dependency-free aligner, and the
+        # default None aligner, which returns the zero distance matrix
+        params = [{"aligner": AlignerLuckyDtw()}, {}]
+
+        # additional set with AlignerDTW, if dtw-python is installed
         if _check_estimator_deps(AlignerDTW, severity="none"):
-            return {"aligner": AlignerDTW()}
-        else:
-            return {}
+            params.append({"aligner": AlignerDTW()})
+
+        return params

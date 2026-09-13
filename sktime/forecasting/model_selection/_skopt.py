@@ -8,7 +8,6 @@ from sklearn.model_selection import check_cv
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection._base import BaseGridSearch
-from sktime.performance_metrics.base import BaseMetric
 from sktime.split.base import BaseSplitter
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
@@ -25,49 +24,54 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         The forecaster to tune, must implement the sktime forecaster interface.
         sklearn regressors can be used, but must first be converted to forecasters
         via one of the reduction compositors, e.g., via ``make_reduction``
-    cv : cross-validation generator or an iterable
-        Splitter used for generating validation folds.
-        e.g. SlidingWindowSplitter()
+
+    cv : sktime time series splitter
+        Re-sampling strategy for cross-validation, must be an instance of a sktime
+        time series splitter, e.g. ``SlidingWindowSplitter()``
+
     param_distributions : dict or a list of dict/tuple. See below for details.
-        1. If dict, a dictionary that represents the search space over the parameters of
-        the provided estimator. The keys are parameter names (strings), and the values
-        follows the following format. A list to store categorical parameters and a
-        tuple for integer and real parameters with the following format
-        (int/float, int/float, "prior") e.g (1e-6, 1e-1, "log-uniform").
-        2. If a list of dict, each dictionary corresponds to a parameter space,
-        following the same structure described in case 1 above. the search will be
-        performed sequentially for each parameter space, with the number of samples
-        set to n_iter.
-        3. If a list of tuple, tuple must contain (dict, int) where the int refers to
-        n_iter for that search space. dict must follow the same structure as in case 1.
-        This is useful if you want to perform a search with different number of
-        iterations for each parameter space.
+
+        * If dict, a dictionary that represents the search space over the parameters of
+          the provided estimator. The keys are parameter names (strings), and the values
+          follows the following format. A list to store categorical parameters and a
+          tuple for integer and real parameters with the following format
+          (int/float, int/float, "prior") e.g (1e-6, 1e-1, "log-uniform").
+        * If a list of dict, each dictionary corresponds to a parameter space,
+          following the same structure described in case 1 above. the search will be
+          performed sequentially for each parameter space, with the number of samples
+          set to n_iter.
+        * If a list of tuple, tuple must contain (dict, int) where the int refers to
+          n_iter for that search space. dict must follow the same structure as in
+          case 1 (dict).
+          This is useful if you want to perform a search with different number of
+          iterations for each parameter space.
+
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution. Consider increasing n_points
         if you want to try more parameter settings in parallel.
+
     n_points : int, default=1
         Number of parameter settings to sample in parallel.
         If this does not align with n_iter, the last iteration will sample less points
 
-    scoring : sktime metric (BaseMetric), str, or callable, optional (default=None)
+    scoring : sktime metric (BaseMetric), str, or callable, optional (default=MAPE)
         scoring metric to use in tuning the forecaster
 
         * sktime metric objects (BaseMetric) descendants can be searched
-        with the ``registry.all_estimators`` search utility,
-        for instance via ``all_estimators("metric", as_dataframe=True)``
+          with the ``registry.all_estimators`` search utility,
+          for instance via ``all_estimators("metric", as_dataframe=True)``
 
         * If callable, must have signature
-        ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
-        assuming np.ndarrays being of the same length, and lower being better.
-        Metrics in sktime.performance_metrics.forecasting are all of this form.
+          ``(y_true: 1D np.ndarray, y_pred: 1D np.ndarray) -> float``,
+          with ``np.ndarray`` being of the same length, and lower being better.
 
         * If str, uses registry.resolve_alias to resolve to one of the above.
           Valid strings are valid registry.craft specs, which include
           string repr-s of any BaseMetric object, e.g., "MeanSquaredError()";
           and keys of registry.ALIAS_DICT referring to metrics.
 
-        * If None, defaults to MeanAbsolutePercentageError()
+        * If None, defaults to ``MeanAbsolutePercentageError()``
 
     optimizer_kwargs: dict, optional
         Arguments passed to Optimizer to control the behaviour of the bayesian search.
@@ -79,32 +83,69 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         from lists of possible values instead of scipy.stats distributions.
         Pass an int for reproducible output across multiple
         function calls.
+
     strategy : {"refit", "update", "no-update_params"}, optional, default="refit"
         data ingestion strategy in fitting cv, passed to ``evaluate`` internally
         defines the ingestion mode when the forecaster sees new data when window expands
-        "refit" = a new copy of the forecaster is fitted to each training window
-        "update" = forecaster is updated with training window data, in sequence provided
-        "no-update_params" = fit to first training window, re-used without fit or update
-    update_behaviour: str, optional, default = "full_refit"
+
+        * ``"refit"`` = a new copy of the forecaster is fitted to each training window
+        * ``"update"`` = forecaster is updated with training window data,
+          in sequence provided
+        * ``"no-update_params"`` = fit to first training window,
+          re-used without fit or update
+
+    update_behaviour : str, optional, default = "full_refit"
         one of {"full_refit", "inner_only", "no_update"}
         behaviour of the forecaster when calling update
-        "full_refit" = both tuning parameters and inner estimator refit on all data seen
-        "inner_only" = tuning parameters are not re-tuned, inner estimator is updated
-        "no_update" = neither tuning parameters nor inner estimator are updated
+
+        * ``"full_refit"`` = both tuning parameters and inner estimator refit on
+          all data seen
+        * ``"inner_only"`` = tuning parameters are not re-tuned, inner estimator is
+          updated
+        * ``"no_update"`` = neither tuning parameters nor inner estimator are updated
+
     refit : bool, optional (default=True)
-        True = refit the forecaster with the best parameters on the entire data in fit
-        False = no refitting takes place. The forecaster cannot be used to predict.
-        This is to be used to tune the hyperparameters, and then use the estimator
-        as a parameter estimator, e.g., via get_fitted_params or PluginParamsForecaster.
-    verbose : int, optional (default=0)
-    error_score : "raise" or numeric, default=np.nan
-        Value to assign to the score if an exception occurs in estimator fitting. If set
-        to "raise", the exception is raised. If a numeric value is given,
-        FitFailedWarning is raised.
+        Whether to refit the forecaster with the best parameters on the entire data.
+
+        * True = refit the forecaster with the best parameters
+          on the entire data in ``fit``
+        * False = no refitting takes place. The forecaster cannot be used to predict.
+          This is to be used to tune the hyperparameters, and then use the estimator
+          as a parameter estimator, e.g.,
+          via ``get_fitted_params`` or ``PluginParamsForecaster``.
+
+    tune_by_instance : bool, optional (default=False)
+        Whether to tune parameter by each time series instance separately,
+        in case of ``Panel`` or ``Hierarchical`` data passed to the tuning estimator.
+        Only applies if time series passed are ``Panel`` or ``Hierarchical``.
+
+        * If ``True``, clones of the forecaster will be fit to each instance separately,
+          and are available in fields of the forecasters_ attribute.
+          Has the same effect as applying ``ForecastByLevel`` wrapper to self.
+        * If ``False``, the same best parameter is selected for all instances.
+
+    tune_by_variable : bool, optional (default=False)
+        Whether to tune parameter by each time series variable separately,
+        in case of multivariate data passed to the tuning estimator.
+        Only applies if time series passed are strictly multivariate.
+
+        * If ``True``, clones of the forecaster will be fit to each variable separately,
+          and are available in fields of the forecasters_ attribute.
+          Has the same effect as applying ``ColumnEnsembleForecaster`` wrapper to self.
+        * If ``False``, the same best parameter is selected for all variables.
+
+    verbose: int, optional (default=0)
+        Verbosity level. The higher, the more messages.
+
     return_n_best_forecasters: int, default=1
         In case the n best forecaster should be returned, this value can be set
         and the n best forecasters will be assigned to n_best_forecasters_.
         Set return_n_best_forecasters to -1 to return all forecasters.
+
+    error_score : "raise" or numeric, default=np.nan
+        Value to assign to the score if an exception occurs in estimator fitting. If set
+        to "raise", the exception is raised. If a numeric value is given,
+        FitFailedWarning is raised.
 
     backend : {"dask", "loky", "multiprocessing", "threading"}, by default "loky".
         Runs parallel evaluate if specified and ``strategy`` is set as "refit".
@@ -119,23 +160,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "threading" is unlikely to see speed ups due to the GIL and the serialization
         backend (``cloudpickle``) for "dask" and "loky" is generally more robust
         than the standard ``pickle`` library used in "multiprocessing".
-
-    tune_by_instance : bool, optional (default=False)
-        Whether to tune parameter by each time series instance separately,
-        in case of Panel or Hierarchical data passed to the tuning estimator.
-        Only applies if time series passed are Panel or Hierarchical.
-        If True, clones of the forecaster will be fit to each instance separately,
-        and are available in fields of the forecasters_ attribute.
-        Has the same effect as applying ForecastByLevel wrapper to self.
-        If False, the same best parameter is selected for all instances.
-    tune_by_variable : bool, optional (default=False)
-        Whether to tune parameter by each time series variable separately,
-        in case of multivariate data passed to the tuning estimator.
-        Only applies if time series passed are strictly multivariate.
-        If True, clones of the forecaster will be fit to each variable separately,
-        and are available in fields of the forecasters_ attribute.
-        Has the same effect as applying ColumnEnsembleForecaster wrapper to self.
-        If False, the same best parameter is selected for all variables.
 
     backend_params : dict, optional
         additional parameters passed to the backend as config.
@@ -243,17 +267,17 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         n_iter: int = 10,
         n_points: int | None = 1,
         random_state: int | None = None,
-        scoring: list[BaseMetric] | None = None,
+        scoring=None,
         optimizer_kwargs: dict | None = None,
         strategy: str | None = "refit",
-        refit: bool = True,
-        verbose: int = 0,
-        return_n_best_forecasters: int = 1,
-        backend: str = "loky",
         update_behaviour: str = "full_refit",
-        error_score=np.nan,
+        refit: bool = True,
         tune_by_instance=False,
         tune_by_variable=False,
+        verbose: int = 0,
+        return_n_best_forecasters: int = 1,
+        error_score=np.nan,
+        backend: str = "loky",
         backend_params=None,
         n_jobs="deprecated",
     ):

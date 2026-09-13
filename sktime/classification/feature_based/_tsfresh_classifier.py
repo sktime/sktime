@@ -11,7 +11,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.tsfresh import (
+from sktime.transformations.tsfresh import (
     TSFreshFeatureExtractor,
     TSFreshRelevantFeatureExtractor,
 )
@@ -92,6 +92,10 @@ class TSFreshClassifier(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "feature",
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.transformations.tsfresh"],
     }
 
     def __init__(
@@ -275,9 +279,15 @@ class TSFreshClassifier(BaseClassifier):
                 "default_fc_parameters": "minimal",
                 "relevant_feature_extractor": False,
             }
-        else:
-            return {
-                "estimator": RandomForestClassifier(n_estimators=2),
-                "default_fc_parameters": "minimal",
-                "relevant_feature_extractor": False,
-            }
+
+        params1 = {
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "default_fc_parameters": "minimal",
+            "relevant_feature_extractor": False,
+        }
+        params2 = {
+            "estimator": RandomForestClassifier(n_estimators=2),
+            "default_fc_parameters": "minimal",
+            "relevant_feature_extractor": True,
+        }
+        return [params1, params2]

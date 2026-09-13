@@ -28,16 +28,16 @@ class BaseGridSearch(_DelegatedForecaster):
         self,
         forecaster,
         cv,
-        strategy="refit",
-        backend="loky",
-        refit=False,
         scoring=None,
-        verbose=0,
-        return_n_best_forecasters=1,
+        strategy="refit",
         update_behaviour="full_refit",
-        error_score=np.nan,
+        refit=False,
         tune_by_instance=False,
         tune_by_variable=False,
+        verbose=0,
+        return_n_best_forecasters=1,
+        error_score=np.nan,
+        backend="loky",
         backend_params=None,
         n_jobs="deprecated",
     ):
@@ -65,7 +65,6 @@ class BaseGridSearch(_DelegatedForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self._set_delegated_tags(self.forecaster)
@@ -80,7 +79,7 @@ class BaseGridSearch(_DelegatedForecaster):
         if self.tune_by_variable:
             self.set_tags(**{"capability:multivariate": False})
 
-        # todo 1.0.0: check if this is still necessary
+        # todo 2.0.0: check if this is still necessary
         # n_jobs is deprecated, left due to use in tutorials, books, blog posts
         if self.n_jobs != "deprecated":
             warn(
@@ -169,7 +168,7 @@ class BaseGridSearch(_DelegatedForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -294,7 +293,7 @@ class BaseGridSearch(_DelegatedForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : pd.DataFrame, optional (default=None)
             Exogenous time series

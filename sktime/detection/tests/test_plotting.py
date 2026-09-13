@@ -1,19 +1,21 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.detection.plotting.utils import (
     plot_time_series_with_change_points,
     plot_time_series_with_profiles,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.fixture
 def time_series_data():
     ts_data = np.random.rand(100)
     ts = pd.DataFrame({"Data": ts_data})
+    dates = pd.date_range(start="2026-05-07", periods=len(ts_data), freq="H")
     true_cps = [4, 8]
+    true_cps_dates = dates[[4, 8]]
     font_size = 12
     ts_name = "Test Time Series"
     profiles = np.array([np.random.rand(100) for _ in range(20)])
@@ -23,6 +25,7 @@ def time_series_data():
         "ts_name": ts_name,
         "ts": ts,
         "true_cps": true_cps,
+        "true_cps_dates": true_cps_dates,
         "font_size": font_size,
         "profiles": profiles,
         "found_cps": found_cps,
@@ -41,13 +44,17 @@ def test_plot_time_series_with_change_points(time_series_data):
     ts_name = time_series_data["ts_name"]
     ts = time_series_data["ts"]
     true_cps = time_series_data["true_cps"]
+    true_cps_dates = time_series_data["true_cps_dates"]
     font_size = time_series_data["font_size"]
 
-    fig, ax = plot_time_series_with_change_points(ts_name, ts, true_cps, font_size)
+    fig, ax = plot_time_series_with_change_points(
+        ts_name, ts, true_cps, font_size=font_size
+    )
 
     assert isinstance(fig, plt.Figure)
     assert isinstance(ax, plt.Axes)
     assert ax.get_title() == ts_name
+    assert len(true_cps_dates) == len(true_cps)
 
 
 @pytest.mark.skipif(

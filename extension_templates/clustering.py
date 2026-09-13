@@ -102,6 +102,19 @@ class MyClusterer(BaseClusterer):
         "capability:predict": True,  # implements _predict for cluster assignment?
         "capability:predict_proba": False,  # implements non-default _predict_proba?
         "capability:out_of_sample": True,  # implements _predict for new data?
+        #
+        # property:randomness = does the estimator behave deterministically or randomly?
+        "property:randomness": "deterministic",
+        # valid values: str, one of "deterministic", "stochastic", "derandomized"
+        #   "deterministic": estimator gives same results every run
+        #   "stochastic": estimator may give different results every run
+        #   "derandomized": estimator is stochastic but can be seeded via random_state
+        #
+        # capability:random_state = does the estimator have a random_state parameter?
+        "capability:random_state": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, the estimator has a random_state parameter for derandomization
+        # should be set to True if property:randomness is "derandomized"
     }
 
     # todo: add any hyper-parameters and components to constructor
@@ -121,8 +134,26 @@ class MyClusterer(BaseClusterer):
         super().__init__()
 
         # do not put anything else in __init__,
+        # use __dynamic_tags__ for dynamic tag setting
         # use __post_init__ for any further initialization logic
 
+    # todo: add if there is dynamic tag setting logic, otherwise delete this method
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # todo: if tags of estimator depend on component tags, set these here
+        #  typically only needed if estimator is a composite
+        #  tags set here apply to the instance, and override the class tags
+        #
+        # example 1: conditional setting of a tag based on parameter foo
+        # if self.foo == 42:
+        #   self.set_tags(**{"capability:missing_values": True})
+        # example 2: cloning tags from component estimator component_estimator
+        #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
+
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
@@ -130,7 +161,6 @@ class MyClusterer(BaseClusterer):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # todo: optional, parameter checking or coercion should happen here
