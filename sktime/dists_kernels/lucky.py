@@ -31,7 +31,7 @@ class LuckyDtwDist(_DelegatedPairwiseTransformerPanel):
     >>>
     >>> dist = LuckyDtwDist(window=2)
     >>> X, _ = load_unit_test(return_type="pd-multiindex")
-    >>> dist.transform(X)
+    >>> dist_mat = dist.transform(X)
     """
 
     _tags = {
