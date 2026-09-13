@@ -1,6 +1,6 @@
 """Abstract base class for the Pytorch neural network classifiers."""
 
-__authors__ = ["geetu040", "RecreationalMath"]
+__authors__ = ["geetu040", "RecreationalMath", "KingLizard1020"]
 
 __all__ = ["BaseDeepClassifierPytorch"]
 
@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.classification.base import BaseClassifier
+from sktime.utils._lookup import _lookup
 from sktime.utils.dependencies import _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
@@ -607,16 +608,21 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         if self.optimizer is None:
             optimizer_class = _safe_import("torch.optim.Adam")
             optimizer_params = {"lr": self.lr}
-        # if optimizer is a string, look it up in the available optimizers
+        # if optimizer is a string, look it up in torch.optim (case-insensitive)
         elif isinstance(self.optimizer, str):
-            if self.optimizer.lower() not in self._all_optimizers:
-                raise ValueError(
-                    f"Unknown optimizer: {self.optimizer}. Please pass one of "
-                    f"{', '.join(self._all_optimizers)} for `optimizer`."
+            try:
+                optimizer_class = _lookup(
+                    self.optimizer,
+                    "torch.optim",
+                    alias_dict=self._all_optimizers,
                 )
-            optimizer_class = _safe_import(
-                f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
-            )
+            except ValueError as err:
+                raise ValueError(
+                    f"Unknown optimizer: {self.optimizer}. Please pass a valid "
+                    "optimizer name from torch.optim "
+                    "(https://pytorch.org/docs/stable/optim.html#algorithms), "
+                    "or an optimizer class or instance."
+                ) from err
             optimizer_params = {"lr": self.lr}
         # if optimizer is an optimizer class, use it as is
         elif isinstance(self.optimizer, type) and issubclass(
