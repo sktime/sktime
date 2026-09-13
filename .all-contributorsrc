@@ -4031,7 +4031,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/221158347?v=4",
       "profile": "https://github.com/OfficialAbhinavSingh",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -4119,6 +4120,43 @@
       "name": "Chalaka Perera",
       "avatar_url": "https://avatars.githubusercontent.com/u/150885184?v=4",
       "profile": "https://chalaka.online",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "oberoir080",
+      "name": "Rahul Oberoi",
+      "avatar_url": "https://avatars.githubusercontent.com/u/118175583?v=4",
+      "profile": "https://github.com/oberoir080",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "PiyushKumar74110",
+      "name": "Piyush Kumar",
+      "avatar_url": "https://avatars.githubusercontent.com/u/184361025?v=4",
+      "profile": "https://www.linkedin.com/in/piyush-kumar-935017316/",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "Sharon-study",
+      "name": "Sharon-study",
+      "avatar_url": "https://avatars.githubusercontent.com/u/182816133?v=4",
+      "profile": "https://github.com/Sharon-study",
+      "contributions": [
+        "test"
+      ]
+    },
+    {
+      "login": "LouisDeconinck",
+      "name": "Louis Deconinck",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27673665?v=4",
+      "profile": "https://github.com/LouisDeconinck",
       "contributions": [
         "doc"
       ]
