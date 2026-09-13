@@ -45,6 +45,9 @@ class LuckyDtwDist(_DelegatedPairwiseTransformerPanel):
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
         "pwtrafo_type": "distance",  # type of pw. transformer, "kernel" or "distance"
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.alignment.lucky"],
     }
 
     def __init__(self, window=None):
