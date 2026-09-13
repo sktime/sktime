@@ -104,6 +104,7 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     capability__random_state
     requires_fh_in_fit
     fit_is_empty
+    remember_data
     property__randomness
     X_y_must_have_same_index
 
@@ -171,6 +172,7 @@ transform a single time series object (``"transformer"`` type).
     capability__inverse_transform__range
     capability__bootstrap_index
     fit_is_empty
+    remember_data
     transform_returns_same_time_index
     skip_inverse_transform
     property__randomness
