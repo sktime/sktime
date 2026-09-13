@@ -953,6 +953,38 @@ class fit_is_empty(_BaseTag):
     }
 
 
+class remember_data(_BaseTag):
+    """Behaviour flag: whether the estimator remembers all data seen.
+
+    - String name: ``"remember_data"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False`` (transformers)
+
+    This tag applies to transformers and forecasters.
+
+    If the tag is ``True``, the estimator memorizes data seen in ``fit``
+    and ``update`` as ``self._X``, ``self._y``, or similar attributes.
+
+    If the tag is ``False``, the estimator does not store all data seen.
+
+    For transformers, if this tag is ``True``, the ``fit_is_empty`` tag
+    must be ``False``, even if ``_fit`` is empty, because boilerplate
+    writes to ``self._X`` in ``fit``.
+    """
+
+    _tags = {
+        "tag_name": "remember_data",
+        "parent_type": ["forecaster", "transformer"],
+        "tag_type": "bool",
+        "short_descr": (
+            "whether estimator remembers all data seen as self._X, self._y, etc"
+        ),
+        "user_facing": True,
+    }
+
+
 class property__randomness(_BaseTag):
     """Property: Degree of randomness vs determinism of the estimator.
 
@@ -4020,12 +4052,6 @@ ESTIMATOR_TAG_REGISTER = [
         ),
         "which type the classifier falls under in the taxonomy of time series "
         "classification algorithms.",
-    ),
-    (
-        "remember_data",
-        ["forecaster", "transformer"],
-        "bool",
-        "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
         "reserved_params",
