@@ -3957,20 +3957,20 @@ class info__source(_BaseTag):
     }
 
 
-class X_y_must_have_same_index(_BaseTag):
-    """Do X/y in fit/update and X/fh in predict have to be same indices.
+class scitype_y(_BaseTag):
+    """Whether the forecaster is univariate, multivariate or both.
 
-    - String name: ``"X-y-must-have-same-index"``
-    - Values: bool
-    - Example: ``True``
+    - String name: ``"scitype:y"``
+    - Values: string
+    - Example: ``"univariate"``
     """
 
     _tags = {
-        "tag_name": "X-y-must-have-same-index",
-        "parent_type": ["forecaster", "regressor", "transformer"],
-        "tag_type": "bool",
-        "short_descr": """do X/y in fit/update and X/fh in predict
-                        have to be same indices?""",
+        "tag_name": "scitype:y",
+        "parent_type": ["param_est", "metric"],
+        "tag_type": "str",
+        "short_descr": """what scitype of y does the object support?
+                          must be scitype string""",
         "user_facing": True,
     }
 
@@ -3993,15 +3993,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["transformer-pairwise", "transformer-pairwise-panel"],
         ("str", ["distance", "kernel", "other"]),
         "mathematical type of pairwise transformer - distance, kernel, or other",
-    ),
-    (
-        "scitype:y",
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        ["param_est", "metric"],
-        "str",
-        "what scitype of y does the object support? must be scitype string",
     ),
     (
         "classifier_type",
