@@ -23,6 +23,15 @@ class LuckyDtwDist(_DelegatedPairwiseTransformerPanel):
     ..[1] Stephan Spiegel, Brijnesh-Johannes Jain, and Sahin Albayrak.
         Fast time series classification under lucky time warping distance.
         Proceedings of the 29th Annual ACM Symposium on Applied Computing. 2014.
+
+    Examples
+    --------
+    >>> from sktime.dists_kernels.lucky import LuckyDtwDist
+    >>> from sktime.datasets import load_unit_test
+    >>>
+    >>> dist = LuckyDtwDist(window=2)
+    >>> X, _ = load_unit_test(return_type="pd-multiindex")
+    >>> dist.transform(X)
     """
 
     _tags = {
