@@ -4178,6 +4178,17 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "KingLizard1020",
+      "name": "Kailash Nelson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/37966146?v=4",
+      "profile": "https://github.com/KingLizard1020",
+      "contributions": [
+        "code",
+        "doc",
+        "test"
+      ]
     }
   ]
 }
