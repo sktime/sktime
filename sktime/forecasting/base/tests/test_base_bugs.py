@@ -3,7 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import pytest
-from skbase.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.forecasting.compose import ForecastByLevel, TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -82,7 +82,8 @@ def test_predict_residuals_conversion():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.forecasting.base"),
+    not run_test_module_changed("sktime.forecasting.base")
+    or not _check_soft_dependencies("statsmodels", severity="none"),
     reason="run only if base module has changed",
 )
 def test_statsmodels_adapter_random_state_handling():
