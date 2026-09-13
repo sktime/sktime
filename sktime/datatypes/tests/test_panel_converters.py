@@ -3,8 +3,10 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import generate_example_long_table, make_multi_index_dataframe
+from sktime.datatypes import convert
 from sktime.datatypes._adapter import convert_from_multiindex_to_listdataset
 from sktime.datatypes._panel._check import _is_nested_dataframe, are_columns_nested
 from sktime.datatypes._panel._convert import (
@@ -22,7 +24,6 @@ from sktime.datatypes._panel._convert import (
 )
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.panel import make_classification_problem
-from sktime.utils.dependencies import _check_soft_dependencies
 
 N_INSTANCES = [10, 15]
 N_COLUMNS = [3, 5]
@@ -269,6 +270,26 @@ def test_from_long_to_nested(n_instances, n_columns, n_timepoints):
 
     assert _is_nested_dataframe(nested_df)
     assert nested_df.shape == (n_instances, n_columns)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+def test_convert_pd_long_to_nested_univ():
+    """Test convert dispatch from pd-long to nested_univ."""
+    X_long = generate_example_long_table(num_cases=2, series_len=3, num_dims=2)
+    expected = from_long_to_nested(X_long)
+
+    converted = convert(
+        obj=X_long,
+        from_type="pd-long",
+        to_type="nested_univ",
+        as_scitype="Panel",
+    )
+
+    assert _is_nested_dataframe(converted)
+    pd.testing.assert_frame_equal(converted, expected)
 
 
 @pytest.mark.skipif(

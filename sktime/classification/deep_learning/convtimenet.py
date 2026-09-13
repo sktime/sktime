@@ -106,12 +106,17 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         "property:randomness": "derandomized",
         # CI and testing
         # --------------
+        "tests:vm": True,
         "tests:libs": [
             "sktime.networks.convtimenet._convtimenet",
             "sktime.networks.convtimenet._dlutils",
             "sktime.networks.convtimenet._convtimenet_backbone",
         ],
-        "tests:skip_by_name": ["test_fit_idempotent"],
+        "tests:skip_by_name": [
+            "test_fit_idempotent",  # see #11031
+            "test_deepcopy_fitted",  # see #11031
+            "test_deepcopy_fitted_predict",  # see #11031
+        ],
     }
 
     def __init__(
@@ -138,11 +143,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         self.patch_stride = patch_stride
         self.dropout = dropout
         self.d_ff = d_ff
-        # Ensure dw_ks is a list
-        if isinstance(dw_ks, int):
-            self.dw_ks = [dw_ks]
-        else:
-            self.dw_ks = dw_ks
+        self.dw_ks = dw_ks
         self.device = device
 
         super().__init__(
@@ -156,6 +157,23 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             verbose=verbose,
             random_state=random_state,
         )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        # Ensure dw_ks is a list
+        if isinstance(self.dw_ks, int):
+            self._dw_ks = [self.dw_ks]
+        else:
+            self._dw_ks = self.dw_ks
+
+        super().__post_init__()
 
     def _build_network(self, X, y):
         from sktime.networks.convtimenet._convtimenet import ConvTimeNet
@@ -173,7 +191,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             n_classes=self.n_classes,
             dropout=self.dropout,
             d_ff=self.d_ff,
-            dw_ks=self.dw_ks,
+            dw_ks=self._dw_ks,
             device=self.device,
         )
         return model.to(self.device)

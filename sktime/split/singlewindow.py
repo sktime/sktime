@@ -15,19 +15,12 @@ import pandas as pd
 from sktime.datatypes._utilities import get_index_for_series
 from sktime.split.base import BaseSplitter
 from sktime.split.base._common import (
-    ACCEPTED_Y_TYPES,
-    FORECASTING_HORIZON_TYPES,
-    SPLIT_GENERATOR_TYPE,
     _check_fh,
     _check_inputs_for_compatibility,
     _get_end,
     _get_train_window_via_endpoint,
 )
-from sktime.utils.validation import (
-    ACCEPTED_WINDOW_LENGTH_TYPES,
-    array_is_int,
-    check_window_length,
-)
+from sktime.utils.validation import array_is_int, check_window_length
 
 
 class SingleWindowSplitter(BaseSplitter):
@@ -102,15 +95,24 @@ class SingleWindowSplitter(BaseSplitter):
     [(array([3, 4, 5]), array([7, 9]))]
     """
 
-    def __init__(
-        self,
-        fh: FORECASTING_HORIZON_TYPES,
-        window_length: ACCEPTED_WINDOW_LENGTH_TYPES | None = None,
-    ) -> None:
-        _check_inputs_for_compatibility(args=[fh, window_length])
-        super().__init__(fh=fh, window_length=window_length)
+    def __init__(self, fh, window_length=None):
+        self.window_length = window_length
+        self.fh = fh
+        super().__init__()
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        _check_inputs_for_compatibility(args=[self.fh, self.window_length])
+        super().__post_init__()
+
+    def _split(self, y: pd.Index):
         n_timepoints = y.shape[0]
         window_length = check_window_length(self.window_length, n_timepoints)
         fh = _check_fh(self.fh)
@@ -123,7 +125,7 @@ class SingleWindowSplitter(BaseSplitter):
 
         yield training_window, test_window
 
-    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
+    def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
 
         Since this splitter returns a single train/test split,
@@ -141,7 +143,7 @@ class SingleWindowSplitter(BaseSplitter):
         """
         return 1
 
-    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
+    def get_cutoffs(self, y=None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Since this splitter returns a single train/test split,

@@ -121,6 +121,8 @@ class _CachedLagLlama:
         finally:
             torch.load = original_load
 
+        self.predictor_.to(self.device)
+
         return self.estimator_, self.predictor_
 
 
@@ -172,8 +174,189 @@ class LagLlamaForecaster(BaseForecaster):
         Fraction of data for validation during pretrain().
         Set to None to skip validation.
     trainer_kwargs : dict, optional (default=None)
-        Arguments passed to PyTorch Lightning Trainer during pretrain()
-        (e.g., ``{"max_epochs": 10}``). If None, defaults to ``{"max_epochs": 50}``.
+        Arguments passed to PyTorch Lightning ``Trainer`` during ``pretrain()``
+        (e.g., ``{"max_epochs": 10}``). If None, defaults to
+        ``{"max_epochs": 50}``. Valid keys include:
+
+        accelerator : str or Accelerator
+            Supports passing different accelerator types (``"cpu"``, ``"gpu"``,
+            ``"tpu"``, ``"hpu"``, ``"mps"``, ``"auto"``) as well as custom
+            accelerator instances.
+        strategy : str or Strategy, default="auto"
+            Supports different training strategies with aliases as well as
+            custom strategies.
+        devices : list of int, str, or int, default="auto"
+            The devices to use. Can be set to a positive number (int or str), a
+            sequence of device indices (list or str), the value ``-1`` to
+            indicate all available devices should be used, or ``"auto"`` for
+            automatic selection based on the chosen accelerator.
+        num_nodes : int, default=1
+            Number of GPU nodes for distributed training.
+        precision : int, str, or None, default="32-true"
+            Double precision (``64``, ``"64"`` or ``"64-true"``), full precision
+            (``32``, ``"32"`` or ``"32-true"``), 16bit mixed precision (``16``,
+            ``"16"``, ``"16-mixed"``) or bfloat16 mixed precision (``"bf16"``,
+            ``"bf16-mixed"``). Can be used on CPU, GPU, TPUs, or HPUs.
+        logger : Logger, iterable of Logger, bool, or None, default=True
+            Logger (or iterable collection of loggers) for experiment tracking.
+            A ``True`` value uses the default ``TensorBoardLogger`` if it is
+            installed, otherwise ``CSVLogger``. ``False`` will disable logging.
+            If multiple loggers are provided, local files (checkpoints,
+            profiler traces, etc.) are saved in the ``log_dir`` of the first
+            logger.
+        callbacks : list of Callback, Callback, or None, default=None
+            Add a callback or list of callbacks.
+        fast_dev_run : int or bool, default=False
+            Runs ``n`` if set to ``n`` (int) else 1 if set to ``True``
+            batch(es) of train, val and test to find any bugs (i.e. a sort of
+            unit test).
+        max_epochs : int or None, default=None
+            Stop training once this number of epochs is reached. Disabled by
+            default (``None``). If both ``max_epochs`` and ``max_steps`` are not
+            specified, defaults to ``max_epochs = 1000``. To enable infinite
+            training, set ``max_epochs = -1``.
+        min_epochs : int or None, default=None
+            Force training for at least these many epochs. Disabled by default
+            (``None``).
+        max_steps : int, default=-1
+            Stop training after this number of steps. Disabled by default
+            (``-1``). If ``max_steps = -1`` and ``max_epochs = None``, will
+            default to ``max_epochs = 1000``. To enable infinite training, set
+            ``max_epochs`` to ``-1``.
+        min_steps : int or None, default=None
+            Force training for at least these number of steps. Disabled by
+            default (``None``).
+        max_time : str, timedelta, dict of str to int, or None, default=None
+            Stop training after this amount of time has passed. Disabled by
+            default (``None``). The time duration can be specified in the format
+            ``DD:HH:MM:SS`` (days, hours, minutes, seconds), as a
+            ``datetime.timedelta``, or a dictionary with keys that will be
+            passed to ``datetime.timedelta``.
+        limit_train_batches : int, float, or None, default=1.0
+            How much of training dataset to check (float = fraction, int =
+            num_batches). Value is per device.
+        limit_val_batches : int, float, or None, default=1.0
+            How much of validation dataset to check (float = fraction, int =
+            num_batches). Value is per device.
+        limit_test_batches : int, float, or None, default=1.0
+            How much of test dataset to check (float = fraction, int =
+            num_batches). Value is per device.
+        limit_predict_batches : int, float, or None, default=1.0
+            How much of prediction dataset to check (float = fraction, int =
+            num_batches). Value is per device.
+        overfit_batches : int or float, default=0.0
+            Overfit a fraction of training/validation data (float) or a set
+            number of batches (int).
+        val_check_interval : int, float, str, timedelta, dict, or None, default=1.0
+            How often to check the validation set. Pass a float in the range
+            ``[0.0, 1.0]`` to check after a fraction of the training epoch.
+            Pass an int to check after a fixed number of training batches. An
+            int value can only be higher than the number of training batches
+            when ``check_val_every_n_epoch=None``, which validates after every
+            N training batches across epochs or during iteration-based
+            training. Additionally, accepts a time-based duration as a string
+            ``"DD:HH:MM:SS"``, a ``datetime.timedelta``, or a dict of kwargs to
+            ``datetime.timedelta``. When time-based, validation triggers once
+            the elapsed wall-clock time since the last validation exceeds the
+            interval; the check occurs after the current batch completes, the
+            validation loop runs, and the timer is reset.
+        check_val_every_n_epoch : int or None, default=1
+            Perform a validation loop after every N training epochs. If
+            ``None``, validation will be done solely based on the number of
+            training batches, requiring ``val_check_interval`` to be an integer
+            value. When used together with a time-based
+            ``val_check_interval`` and ``check_val_every_n_epoch > 1``,
+            validation is aligned to epoch multiples: if the interval elapses
+            before the next multiple-N epoch, validation runs at the start of
+            that epoch (after the first batch) and the timer resets; if it
+            elapses during a multiple-N epoch, validation runs after the
+            current batch. For ``None`` or ``1`` cases, the time-based behavior
+            of ``val_check_interval`` applies without additional alignment.
+        num_sanity_val_steps : int or None, default=2
+            Sanity check runs ``n`` validation batches before starting the
+            training routine. Set it to ``-1`` to run all batches in all
+            validation dataloaders.
+        log_every_n_steps : int or None, default=50
+            How often to log within steps.
+        enable_checkpointing : bool or None, default=True
+            If ``True``, enable checkpointing. It will configure a default
+            ``ModelCheckpoint`` callback if there is no user-defined
+            ``ModelCheckpoint`` in ``callbacks``.
+        enable_progress_bar : bool or None, default=True
+            Whether to enable the progress bar by default.
+        enable_model_summary : bool or None, default=True
+            Whether to enable model summarization by default.
+        accumulate_grad_batches : int, default=1
+            Accumulates gradients over ``k`` batches before stepping the
+            optimizer.
+        gradient_clip_val : int, float, or None, default=None
+            The value at which to clip gradients. Passing
+            ``gradient_clip_val=None`` disables gradient clipping. If using
+            Automatic Mixed Precision (AMP), the gradients will be unscaled
+            before.
+        gradient_clip_algorithm : str or None, default=None
+            The gradient clipping algorithm to use. Pass
+            ``gradient_clip_algorithm="value"`` to clip by value, and
+            ``gradient_clip_algorithm="norm"`` to clip by norm. By default it
+            will be set to ``"norm"``.
+        deterministic : bool, {"warn"}, or None, default=None
+            If ``True``, sets whether PyTorch operations must use deterministic
+            algorithms. Set to ``"warn"`` to use deterministic algorithms
+            whenever possible, throwing warnings on operations that don't
+            support deterministic mode. If not set, defaults to ``False``.
+        benchmark : bool or None, default=None
+            The value (``True`` or ``False``) to set
+            ``torch.backends.cudnn.benchmark`` to. The value for
+            ``torch.backends.cudnn.benchmark`` set in the current session will
+            be used (``False`` if not manually set). If ``deterministic`` is
+            set to ``True``, this will default to ``False``. Override to
+            manually set a different value.
+        inference_mode : bool
+            Whether to use ``torch.inference_mode()`` or ``torch.no_grad()``
+            during evaluation (validate/test/predict).
+        use_distributed_sampler : bool
+            Whether to wrap the DataLoader's sampler with
+            ``torch.utils.data.DistributedSampler``. If not specified this is
+            toggled automatically for strategies that require it. By default,
+            it will add ``shuffle=True`` for the train sampler and
+            ``shuffle=False`` for validation/test/predict samplers. If you want
+            to disable this logic, you can pass ``False`` and add your own
+            distributed sampler in the dataloader hooks. If ``True`` and a
+            distributed sampler was already added, Lightning will not replace
+            the existing one. For iterable-style datasets, this is not done
+            automatically.
+        profiler : Profiler, str, or None, default=None
+            To profile individual steps during training and assist in
+            identifying bottlenecks.
+        detect_anomaly : bool, default=False
+            Enable anomaly detection for the autograd engine.
+        barebones : bool
+            Whether to run in "barebones mode", where all features that may
+            impact raw speed are disabled. This is meant for analyzing the
+            ``Trainer`` overhead and is discouraged during regular training
+            runs. The following features are deactivated:
+            ``enable_checkpointing``, ``logger``, ``enable_progress_bar``,
+            ``log_every_n_steps``, ``enable_model_summary``,
+            ``num_sanity_val_steps``, ``fast_dev_run``, ``detect_anomaly``,
+            ``profiler``, ``log()``, ``log_dict()``.
+        plugins : list, object, or None, default=None
+            ``Precision``, ``ClusterEnvironment``, ``CheckpointIO``,
+            ``LayerSync``, a list of those, or ``None``. Plugins allow
+            modification of core behavior like ddp and amp, and enable custom
+            lightning plugins.
+        sync_batchnorm : bool, default=False
+            Synchronize batch norm layers between process groups/whole world.
+        reload_dataloaders_every_n_epochs : int, default=0
+            Set to a positive integer to reload dataloaders every ``n`` epochs.
+        default_root_dir : str, Path, or None, default=os.getcwd()
+            Default path for logs and weights when no logger/ckpt_callback
+            passed. Can be remote file paths such as ``s3://mybucket/path`` or
+            ``hdfs://path/``.
+        enable_autolog_hparams : bool, default=True
+            Whether to log hyperparameters at the start of a run.
+        model_registry : str or None
+            The name of the model being uploaded to Model hub.
+
     lr : float, optional (default=5e-4)
         Learning rate for fine-tuning during pretrain().
     aug_prob : float, optional (default=0.0)
@@ -235,6 +418,19 @@ class LagLlamaForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["pranavvp16"],
+        "maintainers": ["pranavvp16"],
+        "python_version": "<3.14",
+        "python_dependencies": [
+            "gluonts>=0.14.0",
+            "torch",
+            "lightning>=2.0",
+            "huggingface_hub",
+        ],
+        # estimator type
+        # --------------
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:exogenous": False,
         "capability:multivariate": False,  # LagLlama is univariate only
@@ -246,16 +442,12 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pretrain": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
-        "authors": ["pranavvp16"],
-        "maintainers": ["pranavvp16"],
-        "python_version": "<3.14",
-        "python_dependencies": [
-            "gluonts>=0.14.0",
-            "torch",
-            "lightning>=2.0",
-            "huggingface_hub",
-        ],
+        "capability:unequal_length": False,
+        # test and CI flags
+        # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_lagllama"],
+        "tests:libs": ["sktime.libs.lag_llama"],
     }
 
     def __init__(
@@ -273,47 +465,6 @@ class LagLlamaForecaster(BaseForecaster):
         lr=5e-4,
         aug_prob=0.0,
     ):
-        """Initialize LagLlamaForecaster.
-
-        Parameters
-        ----------
-        ckpt_path : str, optional (default=None)
-            Path to LagLlama checkpoint file. If None, automatically downloads
-            from HuggingFace: "time-series-foundation-models/Lag-Llama"
-        device : str, optional (default=None)
-            Device for inference ("cpu", "cuda", "cuda:0", etc.).
-            If None, uses CUDA if available, otherwise CPU.
-        context_length : int, optional (default=32)
-            Number of past time steps used as context for prediction.
-            LagLlama was trained with context_length=32.
-        num_samples : int, optional (default=100)
-            Number of sample paths for probabilistic forecasting.
-        batch_size : int, optional (default=1)
-            Batch size for prediction.
-        use_rope_scaling : bool, optional (default=False)
-            Whether to use RoPE scaling for handling longer context lengths.
-        nonnegative_pred_samples : bool, optional (default=False)
-            If True, ensures all predicted samples are passed through ReLU.
-        use_source_package : bool, optional (default=False)
-            If True, uses the external lag-llama package instead of vendored version.
-        validation_split : float, optional (default=0.2)
-            Fraction of training data to use for validation during pretrain().
-            Set to None to skip validation.
-        trainer_kwargs : dict, optional (default=None)
-            Additional arguments for PyTorch Lightning Trainer during pretrain().
-            If None, defaults to {"max_epochs": 50}.
-            Common options: "max_epochs", "devices", "accelerator", etc.
-        lr : float, optional (default=5e-4)
-            Learning rate for fine-tuning during pretrain().
-        aug_prob : float, optional (default=0.0)
-            Probability of applying data augmentation during pretrain().
-        """
-        # Initialize parent class
-        super().__init__()
-
-        import torch
-
-        # Store parameters
         self.ckpt_path = ckpt_path
         self.device = device
         self.context_length = context_length
@@ -324,17 +475,33 @@ class LagLlamaForecaster(BaseForecaster):
         self.use_source_package = use_source_package
         self.validation_split = validation_split
         self.trainer_kwargs = trainer_kwargs
+        self.lr = lr
+        self.aug_prob = aug_prob
+        # Initialize parent class
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        import torch
+
+        # Store parameters
+        trainer_kwargs = self.trainer_kwargs
         self._trainer_kwargs = (
             trainer_kwargs if trainer_kwargs is not None else {"max_epochs": 50}
         )
-        self.lr = lr
-        self.aug_prob = aug_prob
 
         # Set device (lazy - actual device object created when needed)
-        if device is None:
+        if self.device is None:
             self.device_ = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         else:
-            self.device_ = torch.device(device)
+            self.device_ = torch.device(self.device)
 
         # On Apple Silicon, PyTorch Lightning auto-selects MPS but not all ops are
         # supported (e.g. aten::nanmedian). Force CPU accelerator in that case.
@@ -603,6 +770,8 @@ class LagLlamaForecaster(BaseForecaster):
         finally:
             torch.load = original_load
 
+        self.predictor_.to(self.device_)
+
         return self
 
     def _pretrain_update(self, y, X=None, fh=None):
@@ -843,7 +1012,7 @@ class LagLlamaForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
@@ -869,11 +1038,10 @@ class LagLlamaForecaster(BaseForecaster):
 
         _y = self._extend_df(_y, fh)
 
-        # Check for range index
-        self._is_range_index = False
-        if self.check_range_index(y):
+        # _is_range_index is pre-computed in _fit; do not mutate it here
+        # (see _fit comment on the sktime non-state-changing contract).
+        if self._is_range_index:
             _y.index = self.handle_range_index(_y.index)
-            self._is_range_index = True
 
         # Check for hierarchical data and convert to panel
         _is_hierarchical = False

@@ -85,7 +85,7 @@ class TrendForecaster(BaseForecaster):
         X : pd.DataFrame, default=None
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------

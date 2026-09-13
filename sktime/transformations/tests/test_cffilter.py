@@ -7,7 +7,7 @@ import pytest
 from numpy import array_equal
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.cffilter import CFFilter
+from sktime.transformations.cffilter import CFFilter
 
 
 @pytest.mark.skipif(

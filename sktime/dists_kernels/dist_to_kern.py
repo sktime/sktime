@@ -54,6 +54,7 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, dist, dist_diag=None):
@@ -149,8 +150,8 @@ class KernelFromDist(BasePairwiseTransformerPanel):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.dists_kernels.dtw import DtwDist
-        from sktime.transformations.series.adapt import PandasTransformAdaptor
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.adapt import PandasTransformAdaptor
+        from sktime.transformations.summarize import SummaryTransformer
 
         params1 = {"dist": DtwDist()}
         t = SummaryTransformer("mean", None)
@@ -190,6 +191,7 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, kernel):

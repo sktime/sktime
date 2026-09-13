@@ -177,6 +177,7 @@ def all_estimators(
         "registry",
         "normal",
         "_normal",
+        "libs",
     )
 
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
