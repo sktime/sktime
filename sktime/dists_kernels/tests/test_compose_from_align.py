@@ -30,8 +30,7 @@ def test_dist_from_aligner_symmetric_when_x2_none():
 
     assert dist_mat.shape == (3, 3)
     assert np.allclose(dist_mat, dist_mat.T), (
-        "self-distance matrix should be symmetric, got:\n"
-        f"{dist_mat}"
+        f"self-distance matrix should be symmetric, got: {dist_mat}"
     )
 
 
