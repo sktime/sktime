@@ -18,6 +18,7 @@ _MODULE_ALIASES = {
     "rbf_forecaster": "rbf",
     "timesfm_forecaster": "timesfm",
     "timesfm2_forecaster": "timesfm2",
+    "timesfm3_forecaster": "timesfm3",
 }
 # TODO 2.0.0: remove deprecation and aliasing logic in 2.0 release
 # imports do not need to be updated in the codebase
