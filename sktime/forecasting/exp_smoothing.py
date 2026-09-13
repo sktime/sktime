@@ -230,7 +230,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
             ``create_test_instance`` uses the first (or only) dictionary in `params
         """
         params = [
-            {"random_state": 42},
+            {},
             {
                 "trend": "mul",
                 "damped_trend": True,
@@ -255,6 +255,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
                 "damping_trend": 0.28,
                 "method": "SLSQP",
             },
+            {"random_state": 42},  # to cover bug #10968
         ]
 
         return params
