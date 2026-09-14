@@ -1013,7 +1013,7 @@ class remember_data(_BaseTag):
     This behaviour can be useful for models with incremental learning capabilities
     that require access to all previously seen data in their internal logic.
     Alternatively, the tag can also be useful for debugging.
-    
+
     If no ``X`` or ``y`` is passed to the estimator,
     ``self._X`` and ``self._y`` will be set to ``None``.
 
@@ -1034,6 +1034,7 @@ class remember_data(_BaseTag):
         ),
         "user_facing": False,
     }
+
 
 # Forecasters
 # -----------
