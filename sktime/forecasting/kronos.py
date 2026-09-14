@@ -143,6 +143,7 @@ class KronosForecaster(BaseForecaster):
         ],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.kronos"],
+        "tests:specific": ["sktime.forecasting.tests.test_kronos"],
     }
 
     _kronos_columns = ["open", "high", "low", "close", "volume", "amount"]
