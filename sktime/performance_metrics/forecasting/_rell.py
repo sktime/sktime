@@ -131,8 +131,12 @@ class RelativeLoss(BaseForecastingErrorMetricFunc):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Retrieve test parameters."""
-        from sktime.performance_metrics.forecasting import mean_squared_error
+        from sktime.performance_metrics.forecasting import (
+            MeanSquaredError,
+            mean_squared_error,
+        )
 
         params1 = {}
         params2 = {"relative_loss_function": mean_squared_error}
-        return [params1, params2]
+        params3 = {"relative_loss_function": MeanSquaredError()}
+        return [params1, params2, params3]
