@@ -129,6 +129,7 @@ class SubLOF(BaseDetector):
         # --------------
         "authors": "Alex-JG3",
         "maintainers": "Alex-JG3",
+        "python_dependencies": ["pandas<3"],
         # estimator type
         # --------------
         "task": "anomaly_detection",
@@ -138,6 +139,7 @@ class SubLOF(BaseDetector):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:vm": True,
     }
 
     def __init__(
@@ -206,7 +208,7 @@ class SubLOF(BaseDetector):
         x_span = x_max - x_min
 
         if isinstance(interval_size, int) and not is_integer_index(x):
-            interval_size = pd.Timedelta(x.freq) * interval_size
+            interval_size = x.freq * interval_size
         n_intervals = math.floor(x_span / interval_size) + 1
 
         if x_max >= x_min + (n_intervals - 1) * interval_size:
