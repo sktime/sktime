@@ -154,7 +154,7 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {
+        params0 = {
             "n_clusters": 2,
             "kernel": "gak",
             "n_init": 1,
@@ -165,6 +165,19 @@ class TimeSeriesKernelKMeans(_TslearnAdapter, BaseClusterer):
             "n_jobs": 1,
             "random_state": 1,
         }
+
+        params1 = {
+            "n_clusters": 3,
+            "kernel": "gak",
+            "n_init": 2,
+            "max_iter": 2,
+            "tol": 0.001,
+            "kernel_params": {"sigma": 0.5},
+            "verbose": False,
+            "n_jobs": None,
+            "random_state": 42,
+        }
+        return [params0, params1]
 
     def _score(self, X, y=None) -> float:
         return np.abs(self.inertia_)

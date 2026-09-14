@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.networks.inceptiontime import InceptionTimeNetwork
 from sktime.regression.deep_learning.base import BaseDeepRegressor
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class InceptionTimeRegressor(BaseDeepRegressor):
@@ -53,6 +52,15 @@ class InceptionTimeRegressor(BaseDeepRegressor):
     -----
     ..[1] Fawaz et. al, InceptionTime: Finding AlexNet for Time Series
     Classification, Data Mining and Knowledge Discovery, 34, 2020
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.inceptiontime import InceptionTimeRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> regressor = InceptionTimeRegressor(n_epochs=20, batch_size=4)  # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train)  # doctest: +SKIP
+    InceptionTimeRegressor(...)
     """
 
     _tags = {
@@ -61,6 +69,10 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "james-large", "noxthot"],
         "maintainers": ["james-large", "niles05apr"],
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_tf"],
     }
 
     def __init__(
@@ -82,8 +94,6 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         activation_hidden="relu",
         activation_inception="linear",
     ):
-        _check_dl_dependencies(severity="error")
-
         self.verbose = verbose
 
         # predefined
@@ -106,19 +116,30 @@ class InceptionTimeRegressor(BaseDeepRegressor):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         network_params = {
-            "n_filters": n_filters,
-            "use_residual": use_residual,
-            "use_bottleneck": use_bottleneck,
-            "bottleneck_size": bottleneck_size,
-            "depth": depth,
-            "kernel_size": kernel_size,
-            "random_state": random_state,
-            "activation": activation_hidden,
-            "activation_inception": activation_inception,
+            "n_filters": self.n_filters,
+            "use_residual": self.use_residual,
+            "use_bottleneck": self.use_bottleneck,
+            "bottleneck_size": self.bottleneck_size,
+            "depth": self.depth,
+            "kernel_size": self.kernel_size,
+            "random_state": self.random_state,
+            "activation": self.activation_hidden,
+            "activation_inception": self.activation_inception,
         }
 
         self._network = InceptionTimeNetwork(**network_params)
+
+        super().__post_init__()
 
     def build_model(self, input_shape, **kwargs):
         """Construct a compiled, un-trained, keras model that is ready for training.
@@ -232,7 +253,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

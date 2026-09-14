@@ -26,7 +26,7 @@ from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
 from sktime.datasets import load_arrow_head, load_gunpoint
 from sktime.split import SingleSplit
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.panel.reduce import Tabularizer
+from sktime.transformations.reduce import Tabularizer
 
 REPOPATH = os.path.dirname(sktime.__file__)
 DATAPATH = os.path.join(REPOPATH, "datasets/data/")

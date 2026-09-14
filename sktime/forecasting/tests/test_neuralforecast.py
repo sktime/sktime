@@ -99,7 +99,7 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
 
     # attempt fit without X
     with pytest.raises(
-        ValueError, match="Missing exogeneous data, 'futr_exog_list' is non-empty."
+        ValueError, match="Missing exogenous data, 'futr_exog_list' is non-empty."
     ):
         model.fit(y_train, fh=[1, 2, 3, 4])
 
@@ -108,7 +108,7 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
 
     # attempt predict without X
     with pytest.raises(
-        ValueError, match="Missing exogeneous data, 'futr_exog_list' is non-empty."
+        ValueError, match="Missing exogenous data, 'futr_exog_list' is non-empty."
     ):
         model.predict()
 

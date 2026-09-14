@@ -238,9 +238,11 @@ class SARIMAX(_StatsModelsAdapter):
         # estimator type
         # --------------
         "capability:exogenous": True,
+        "capability:random_state": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "tests:skip_all": True,  # Unkown reason
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(
