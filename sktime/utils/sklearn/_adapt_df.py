@@ -2,6 +2,7 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+
 def prep_skl_df(df, copy_df=False):
     """Make df compatible with sklearn input expectations.
 
