@@ -440,12 +440,21 @@ def test_get_slice_expected_result():
     """
     X_df = get_examples(mtype="pd.DataFrame")[0]
     assert len(get_slice(X_df, start=1, end=3)) == 2
+    assert len(get_slice(X_df, start=0, end=0)) == 0
+    assert len(get_slice(X_df, start=None, end=0)) == 0
+    assert len(get_slice(X_df, start=2, end=0)) == 0
 
     X_s = get_examples(mtype="pd.Series")[0]
     assert len(get_slice(X_s, start=1, end=3)) == 2
+    assert len(get_slice(X_s, start=0, end=0)) == 0
+    assert len(get_slice(X_s, start=None, end=0)) == 0
+    assert len(get_slice(X_s, start=2, end=0)) == 0
 
     X_np = get_examples(mtype="numpy3D")[0]
     assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
+    assert get_slice(X_np, start=0, end=0).shape == (0, 2, 3)
+    assert get_slice(X_np, start=None, end=0).shape == (0, 2, 3)
+    assert get_slice(X_np, start=2, end=0).shape == (0, 2, 3)
 
 
 @pytest.mark.skipif(
@@ -461,7 +470,7 @@ def test_retain_series_freq_on_update():
 
     # create dummy index with hourly timestamps and panel data by hour of day
     ind = pd.date_range(
-        start="1960-01-01 10:00:00", periods=len(y.index), freq="24H", name="datetime"
+        start="1960-01-01 10:00:00", periods=len(y.index), freq="24h", name="datetime"
     )
     y = pd.Series(y.values, index=ind, name="passengers")
     y_train, y_test = temporal_train_test_split(y, test_size=2)
