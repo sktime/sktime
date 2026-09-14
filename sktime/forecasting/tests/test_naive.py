@@ -236,7 +236,7 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     strategies should not make a difference.
     """
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
-    freq = pd.Timedelta("1H")
+    freq = pd.Timedelta("1h")
     kwargs = dict(closed="left") if pd.__version__ < "1.4.0" else dict(inclusive="left")
     data = pd.Series(
         index=pd.date_range(
@@ -331,7 +331,7 @@ def test_naive_predict_var_backwards(strategy, sp, window_length, n_periods):
     .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
     """
     mu, sigma = 0.0, 10.0
-    fake_idx = pd.date_range("1980", periods=n_periods + 1, freq="H")
+    fake_idx = pd.date_range("1980", periods=n_periods + 1, freq="h")
     np.random.seed(42)
     y = pd.Series(np.random.normal(mu, sigma, size=n_periods), index=fake_idx[:-1])
 
@@ -379,7 +379,7 @@ def test_naive_predict_interval_mean(strategy, sp, window_length, fh):
     """
     n_timepoints = 100000
     mu, sigma = 0.0, 10.0
-    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="h")
     np.random.seed(42)
     y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
 
@@ -432,7 +432,7 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     """
     n_timepoints = 100000
     mu, sigma = 0.0, 10.0
-    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="h")
     np.random.seed(42)
     y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
 
