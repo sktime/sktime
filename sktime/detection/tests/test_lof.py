@@ -40,16 +40,34 @@ from sktime.tests.test_switch import run_test_for_class
             ),
             datetime.timedelta(days=1),
             pd.IntervalIndex.from_breaks(
-                [
-                    "2024-01-01 00:00:00",
-                    "2024-01-02 00:00:00",
-                    "2024-01-03 00:00:00",
-                    "2024-01-04 00:00:00",
-                    "2024-01-05 00:00:00",
-                    "2024-01-06 00:00:00",
-                ],
+                pd.to_datetime(
+                    [
+                        "2024-01-01 00:00:00",
+                        "2024-01-02 00:00:00",
+                        "2024-01-03 00:00:00",
+                        "2024-01-04 00:00:00",
+                        "2024-01-05 00:00:00",
+                        "2024-01-06 00:00:00",
+                    ]
+                ),
                 closed="left",
-                dtype="interval[datetime64[ns], left]",
+            ),
+        ),
+        (
+            pd.date_range("2024-01-01", periods=5, freq="D"),
+            1,
+            pd.IntervalIndex.from_breaks(
+                pd.date_range("2024-01-01", periods=6, freq="D"), closed="left"
+            ),
+        ),
+        (
+            pd.date_range("2024-01-31", periods=5, freq="ME"),
+            2,
+            pd.IntervalIndex.from_breaks(
+                pd.to_datetime(
+                    ["2024-01-31", "2024-03-31", "2024-05-31", "2024-07-31"]
+                ),
+                closed="left",
             ),
         ),
     ],
