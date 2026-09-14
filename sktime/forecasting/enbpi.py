@@ -128,12 +128,27 @@ class EnbPIForecaster(BaseForecaster):
         aggregation_function="mean",
     ):
         self.forecaster = forecaster
-        self.forecaster_ = (
-            forecaster.clone() if forecaster is not None else NaiveForecaster()
-        )
         self.bootstrap_transformer = bootstrap_transformer
         self.random_state = random_state
         self.aggregation_function = aggregation_function
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        fcst = self.forecaster
+        self.forecaster_ = fcst.clone() if fcst is not None else NaiveForecaster()
+
         if self.aggregation_function == "mean":
             self._aggregation_function = np.mean
         elif self.aggregation_function == "median":
@@ -144,8 +159,7 @@ class EnbPIForecaster(BaseForecaster):
                 f"Please choose either 'mean' or 'median'."
             )
 
-        super().__init__()
-
+        bootstrap_transformer = self.bootstrap_transformer
         if bootstrap_transformer.get_tag("object_type") == "bootstrap":
             from sktime.transformations.bootstrap import TSBootstrapAdapter
 

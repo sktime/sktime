@@ -16,22 +16,9 @@ It does not require any training or data input.
 
 __author__ = ["sinemkilicdere", "martinloretzzz"]
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
-
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-else:
-
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        bfloat16 = None
-
-        class Tensor:
-            """Dummy class if torch is unavailable."""
 
 
 def _tirex_cache_key(model: str, device: str) -> str:
@@ -220,7 +207,7 @@ class TiRexForecaster(BaseForecaster):
         y_predict : sktime time series object
             Point forecasts, same type as seen in _fit (as in "y_inner_mtype" tag).
         """
-        # implement here
+        import torch
 
         y = self._y
         context_values = y.to_numpy()[None, :]

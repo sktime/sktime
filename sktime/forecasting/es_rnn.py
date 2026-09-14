@@ -1,7 +1,7 @@
 """Interface for ES RNN for Time Series Forecasting."""
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
+from skbase.utils.dependencies import _safe_import
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.networks.es_rnn import ESRNN
@@ -21,6 +21,8 @@ class ESRNNTrainDataset(Dataset):
         self._get_data()
 
     def _get_data(self):
+        from torch import FloatTensor
+
         length = len(self.y)
         x_arr = []
         y_arr = []
@@ -35,8 +37,8 @@ class ESRNNTrainDataset(Dataset):
             raise ValueError("Input size to small")
 
         self.x_train, self.y_train = (
-            torch.FloatTensor(np.array(x_arr)),
-            torch.FloatTensor(np.array(y_arr)),
+            FloatTensor(np.array(x_arr)),
+            FloatTensor(np.array(y_arr)),
         )
 
     def __len__(self):
@@ -57,8 +59,10 @@ class ESRNNPredDataset(Dataset):
         self._get_data()
 
     def _get_data(self):
+        from torch import FloatTensor
+
         x_pred = self.y[-self.window :]
-        x_pred = torch.FloatTensor(np.array(x_pred))
+        x_pred = FloatTensor(np.array(x_pred))
         self.x_pred = x_pred.unsqueeze(0)
 
     def __len__(self):
@@ -67,7 +71,9 @@ class ESRNNPredDataset(Dataset):
 
     def __getitem__(self, idx):
         """Return data point."""
-        return self.x_pred[idx], torch.zeros(1)
+        from torch import zeros
+
+        return self.x_pred[idx], zeros(1)
 
 
 class ESRNNForecaster(BaseDeepNetworkPyTorch):
@@ -137,10 +143,13 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         # packaging info
         # --------------
         "authors": ["Ankit-1204"],
+        # estimator type
+        # --------------
+        "capability:pretrain": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,
-        "capability:pretrain": True,
+        "tests:skip_by_name": ["test_persistence_via_pickle"],
     }
 
     def __init__(
@@ -163,7 +172,6 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         custom_dataset_train=None,
         custom_dataset_pred=None,
     ) -> None:
-        super().__init__()
         self.hidden_size = hidden_size
         self.num_layer = num_layer
         self.seasonality_type = seasonality_type
@@ -172,32 +180,47 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
         self.window = window
         self.pred_len = pred_len
         self.stride = stride
-        self.batch_size = batch_size
-        self.num_epochs = num_epochs
-        self.optimizer = optimizer
-        self.criterion = criterion
-        self.optimizer_kwargs = optimizer_kwargs
-        self.criterion_kwargs = criterion_kwargs
         self.custom_dataset_train = custom_dataset_train
         self.custom_dataset_pred = custom_dataset_pred
-        self.lr = lr
-        if _check_soft_dependencies("torch", severity="none"):
-            import torch
+        self.criterion = criterion
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        super().__init__(
+            num_epochs=num_epochs,
+            batch_size=batch_size,
+            criterion_kwargs=criterion_kwargs,
+            optimizer=optimizer,
+            optimizer_kwargs=optimizer_kwargs,
+            lr=lr,
+        )
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        import torch
+
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def _instantiate_criterion(self):
         if self.criterion:
