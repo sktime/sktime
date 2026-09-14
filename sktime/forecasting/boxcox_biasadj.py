@@ -39,6 +39,26 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     lambda_fixed : float, optional (default=None)
         The Box-Cox transformation parameter. If None, it will be estimated.
 
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.forecasting.boxcox_biasadj import BoxCoxBiasAdjustedForecaster
+    >>> from sktime.forecasting.naive import NaiveForecaster
+
+    Create a positive-valued time series (Box-Cox requires positive data):
+
+    >>> y = pd.Series(
+    ...     [100.0, 110.0, 108.0, 115.0, 120.0, 118.0, 125.0, 130.0],
+    ...     index=pd.date_range("2020", periods=8, freq="YE"),
+    ... )
+
+    Wrap a NaiveForecaster with Box-Cox bias adjustment:
+
+    >>> forecaster = BoxCoxBiasAdjustedForecaster(forecaster=NaiveForecaster(strategy="mean"))
+    >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +ELLIPSIS
+    BoxCoxBiasAdjustedForecaster(...)
+    >>> y_pred = forecaster.predict()
+
     Notes
     -----
     This forecaster applies only to univariate, non-hierarchical inner forecasters.
