@@ -133,6 +133,7 @@ def test_fit_transform_datetime_monthly_idx_numeric_output(df_datetime_monthly_i
     Xt = transformer.fit_transform(df_datetime_monthly_idx)
     expected = pd.DataFrame(
         data={"time_since_2000-01-01 00:00:00": [0, 1, 2, 3, 4]},
+        index=df_datetime_monthly_idx.index,
     )
     assert_frame_equal(Xt, expected)
 
