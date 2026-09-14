@@ -157,9 +157,11 @@ class BoxCoder(nn.Module):
         self.register_buffer("anchor", anchors)
 
     def forward(self, boxes):
-        self.bound = self.decode(boxes)  # (bs, patch_count, 2)
-        points = self.meshgrid(self.bound)
-        return points, self.bound
+        # bound is kept local, not stored on the module: caching an intermediate,
+        # non-leaf tensor as an attribute breaks deepcopy of the fitted module
+        bound = self.decode(boxes)  # (bs, patch_count, 2)
+        points = self.meshgrid(bound)
+        return points, bound
 
     def decode(self, rel_codes):  # return each of the patch's box, left & right, [0, 1]
         boxes = self.anchor
