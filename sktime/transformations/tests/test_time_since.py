@@ -25,7 +25,7 @@ def df_datetime_15mins_idx():
     """Create timeseries with Datetime index, 15 minute frequency."""
     return pd.DataFrame(
         data={"y": [1, 1, 1, 1, 1]},
-        index=pd.date_range(start="2000-01-01", freq="15T", periods=5),
+        index=pd.date_range(start="2000-01-01", freq="15min", periods=5),
     )
 
 
