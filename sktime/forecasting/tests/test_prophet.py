@@ -9,6 +9,7 @@ from unittest import mock
 
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.fbprophet import Prophet
 from sktime.tests.test_switch import run_test_for_class
@@ -58,7 +59,11 @@ def test_prophet_period_fh(convert_to_datetime):
     if convert_to_datetime:
         y = y.to_timestamp(freq="M")
 
-    fh_index = pd.PeriodIndex(pd.date_range("1961-01", periods=36, freq="M"))
+    if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+        freq = "ME"
+    else:
+        freq = "M"
+    fh_index = pd.PeriodIndex(pd.date_range("1961-01", periods=36, freq=freq))
     fh = ForecastingHorizon(fh_index, is_relative=False)
 
     forecaster = Prophet(
