@@ -953,38 +953,6 @@ class fit_is_empty(_BaseTag):
     }
 
 
-class remember_data(_BaseTag):
-    """Behaviour flag: whether the estimator remembers all data seen.
-
-    - String name: ``"remember_data"``
-    - Public behaviour flag
-    - Values: boolean, ``True`` / ``False``
-    - Example: ``True``
-    - Default: ``False`` (transformers), ``True`` (forecasters)
-
-    This tag applies to forecasters and transformers.
-
-    If the tag is ``True``, the estimator memorizes data seen in ``fit``
-    and ``update`` as ``self._X``, ``self._y``, or similar attributes.
-
-    If the tag is ``False``, the estimator does not store all data seen.
-
-    For transformers, if this tag is ``True``, the ``fit_is_empty`` tag
-    must be ``False``, even if ``_fit`` is empty, because boilerplate
-    writes to ``self._X`` in ``fit``.
-    """
-
-    _tags = {
-        "tag_name": "remember_data",
-        "parent_type": ["forecaster", "transformer"],
-        "tag_type": "bool",
-        "short_descr": (
-            "whether estimator remembers all data seen as self._X, self._y, etc"
-        ),
-        "user_facing": True,
-    }
-
-
 class property__randomness(_BaseTag):
     """Property: Degree of randomness vs determinism of the estimator.
 
@@ -1025,6 +993,47 @@ class property__randomness(_BaseTag):
         "user_facing": True,
     }
 
+
+class remember_data(_BaseTag):
+    """Behaviour flag: whether the estimator remembers all data seen.
+
+    - String name: ``"remember_data"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False`` (transformers), ``True`` (forecasters)
+
+    Developer tag that modifies behaviour of the boilerplate layer.
+
+    If set to ``True``, the estimator will remember all data seen, and store it
+    internally in the ``self._X`` and/or ``self._y`` attributes, in ``pd.DataFrame``
+    resp hierarchical ``DataFrame`` formats ``pd-multiindex`` or
+    ``pd_multiindex_hier``, if hierarchical data is passed.
+
+    This behaviour can be useful for models with incremental learning capabilities
+    that require access to all previously seen data in their internal logic.
+    Alternatively, the tag can also be useful for debugging.
+    
+    If no ``X`` or ``y`` is passed to the estimator,
+    ``self._X`` and ``self._y`` will be set to ``None``.
+
+    Calls to ``update`` will update the data stored in the internal attributes as well,
+    using ``pandas`` update operations.
+
+    If the ``remember_data`` tag is set to ``True``, the ``fit_is_empty`` tag
+    must be ``False``, even if ``_fit`` is empty, because boilerplate
+    writes to ``self._X`` in ``fit``.
+    """
+
+    _tags = {
+        "tag_name": "remember_data",
+        "parent_type": ["forecaster", "transformer"],
+        "tag_type": "bool",
+        "short_descr": (
+            "whether estimator remembers all data seen as self._X, self._y, etc"
+        ),
+        "user_facing": False,
+    }
 
 # Forecasters
 # -----------
