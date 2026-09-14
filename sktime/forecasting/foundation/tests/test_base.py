@@ -136,7 +136,7 @@ def test_post_init_normalizes_spec_without_mutating_constructor_spec():
     assert forecaster.model_spec is not spec
     assert forecaster.model_spec.config == {"architecture": {"layers": 2}}
     assert forecaster.model_spec.config is not config
-    assert forecaster.model_spec.random_state is not None
+    assert forecaster.model_spec.random_state == 42
     assert spec.random_state == 42
 
 
