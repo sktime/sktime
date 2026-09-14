@@ -206,7 +206,7 @@ class SubLOF(BaseDetector):
         x_span = x_max - x_min
 
         if isinstance(interval_size, int) and not is_integer_index(x):
-            interval_size = x.freq * interval_size
+            interval_size = pd.Timedelta(x.freq) * interval_size
         n_intervals = math.floor(x_span / interval_size) + 1
 
         if x_max >= x_min + (n_intervals - 1) * interval_size:
