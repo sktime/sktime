@@ -134,8 +134,7 @@ def test_fit_transform_datetime_monthly_idx_numeric_output(df_datetime_monthly_i
     expected = pd.DataFrame(
         data={
             "time_since_2000-01-01 00:00:00": (
-                df_datetime_monthly_idx.index
-                - df_datetime_monthly_idx.index[0]
+                df_datetime_monthly_idx.index - df_datetime_monthly_idx.index[0]
             )
         },
         index=df_datetime_monthly_idx.index,
