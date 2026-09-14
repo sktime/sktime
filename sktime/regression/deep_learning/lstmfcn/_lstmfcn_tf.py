@@ -26,10 +26,16 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         the number of samples per gradient update.
     dropout : float, default=0.8
         controls dropout rate of LSTM layer
-    kernel_sizes : list of ints, default=[8, 5, 3]
-        specifying the length of the 1D convolution windows
-    filter_sizes : int, list of ints, default=[128, 256, 128]
-        size of filter for each conv layer
+    kernel_sizes : list or tuple of int, default=(8, 5, 3)
+        Length of the 1D convolution windows for each convolutional layer.
+        The number of convolutional layers is ``len(kernel_sizes)``.
+        Must have the same length as ``filter_sizes``.
+        Defaults match Karim et al. (2019): three layers with kernels 8, 5, 3.
+    filter_sizes : list or tuple of int, default=(128, 256, 128)
+        Number of filters for each convolutional layer.
+        The number of convolutional layers is ``len(filter_sizes)``.
+        Must have the same length as ``kernel_sizes``.
+        Defaults match Karim et al. (2019): three layers with 128, 256, 128 filters.
     lstm_size : int, default=8
         output dimension for LSTM layer
     attention : boolean, default=False
@@ -248,7 +254,23 @@ class LSTMFCNRegressor(BaseDeepRegressor):
             "lstm_size": 2,
             "attention": True,
         }
-        test_params = [param1, param2]
+
+        # Dynamic number of conv layers via list inputs
+        param3 = {
+            "n_epochs": 8,
+            "batch_size": 4,
+            "kernel_sizes": [3, 2],
+            "filter_sizes": [2, 4],
+        }
+
+        # Dynamic number of conv layers via tuple inputs
+        param4 = {
+            "n_epochs": 8,
+            "batch_size": 4,
+            "kernel_sizes": (3, 2),
+            "filter_sizes": (2, 4),
+        }
+        test_params = [param1, param2, param3, param4]
 
         if _check_soft_dependencies("keras", severity="none"):
             from keras.callbacks import LambdaCallback

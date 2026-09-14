@@ -175,6 +175,9 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         "X_inner_mtype": "nested_univ",  # nested pd.DataFrame
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(

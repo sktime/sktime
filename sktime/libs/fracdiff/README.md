@@ -14,7 +14,7 @@ a la "Advances in Financial Machine Learning" by M. Prado.
 Fractional differentiation processes time-series to a stationary one while preserving memory in the original time-series.
 Fracdiff features super-fast computation and scikit-learn compatible API.
 
-![spx](./examples/fig/spx.png)
+![spx](./fig/spx.png)
 
 ## What is fractional differentiation?
 
@@ -115,7 +115,7 @@ X = f.fit_transform(X)
 
 For example, 0.5th differentiation of S&P 500 historical price looks like this:
 
-![spx](./examples/fig/spx.png)
+![spx](./fig/spx.png)
 
 [`Fracdiff`](https://fracdiff.github.io/fracdiff/#id1) is compatible with scikit-learn API.
 One can incorporate it into a pipeline.
@@ -154,7 +154,7 @@ f.d_
 
 The result for Nikkei 225 index historical price looks like this:
 
-![nky](./examples/fig/nky.png)
+![nky](./fig/nky.png)
 
 
 ### PyTorch API
@@ -183,11 +183,11 @@ output = module(input)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fracdiff/fracdiff/blob/main/examples/example_prado.ipynb)
 
-More examples are provided [here](examples/example_prado.ipynb).
+More examples are provided [here](https://github.com/fracdiff/fracdiff/blob/main/examples/example_prado.ipynb).
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/fracdiff/fracdiff/blob/main/examples/example_exercise.ipynb)
 
-Example solutions of exercises in Section 5 of "Advances in Financial Machine Learning" are provided [here](examples/example_exercise.ipynb).
+Example solutions of exercises in Section 5 of "Advances in Financial Machine Learning" are provided [here](https://github.com/fracdiff/fracdiff/blob/main/examples/example_exercise.ipynb).
 
 ## Contributing
 
@@ -195,7 +195,7 @@ Any contributions are more than welcome.
 
 The maintainer (simaki) is not making further enhancements and appreciates pull requests to make them.
 See [Issue](https://github.com/fracdiff/fracdiff/issues) for proposed features.
-Please take a look at [CONTRIBUTING.md](.github/CONTRIBUTING.md) before creating a pull request.
+Please take a look at [CONTRIBUTING.md](https://github.com/fracdiff/fracdiff/blob/main/.github/CONTRIBUTING.md) before creating a pull request.
 
 ## References
 

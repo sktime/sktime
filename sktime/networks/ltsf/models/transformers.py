@@ -1,77 +1,11 @@
 """Deep Learning Forecaster using LTSF-Transformer Model."""
 
-from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch", severity="none"):
+def _LTSFTransformerNetwork():
+    """Return the LTSF-Transformer network class."""
     import torch.nn as nn
 
-    nn_module = nn.Module
-else:
-
-    class nn_module:
-        """Dummy class if torch is unavailable."""
-
-
-class LTSFTransformerNetwork:
-    """LTSF-Transformer Forecaster.
-
-    Implementation of the Long-Term Short-Term Feature (LTSF) transformer forecaster,
-    aka LTSF-Transformer, by Zeng et al [1]_.
-
-    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
-    which is unfortunately not available as a package.
-
-    Parameters
-    ----------
-    seq_len : int
-        Length of the input sequence.
-        Preferred to be twice the pred_len.
-    pred_len : int
-        Length of the prediction sequence.
-    context_len : int, optional (default=2)
-        Length of the label sequence.
-        Preferred to be same as the pred_len.
-    position_encoding : bool, optional (default=True)
-        Whether to use positional encoding.
-        Positional encoding helps the model understand the order of elements
-        in the input sequence by adding unique positional information to each element.
-    temporal_encoding : bool, optional (default=True)
-        Whether to use temporal encoding.
-        Works only with DatetimeIndex and PeriodIndex, disabled otherwise.
-    temporal_encoding_type : str, optional (default="linear")
-        Type of temporal encoding to use, relevant only if temporal_encoding is True.
-        - "linear": Uses linear layer to encode temporal data.
-        - "embed": Uses embeddings layer with learnable weights.
-        - "fixed-embed": Uses embeddings layer with fixed sine-cosine values as weights.
-    d_model : int, optional (default=512)
-        Dimension of the model.
-    n_heads : int, optional (default=8)
-        Number of attention heads.
-    d_ff : int, optional (default=2048)
-        Dimension of the feedforward network model.
-    e_layers : int, optional (default=3)
-        Number of encoder layers.
-    d_layers : int, optional (default=2)
-        Number of decoder layers.
-    factor : int, optional (default=5)
-        Factor for the attention mechanism.
-    dropout : float, optional (default=0.1)
-        Dropout rate.
-    activation : str, optional (default="relu")
-        Activation function to use. Defaults to relu and otherwise gelu.
-    freq : str, optional (default="h")
-        Frequency of the input data, relevant only if temporal_encoding is True.
-
-    References
-    ----------
-    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
-    Are transformers effective for time series forecasting?
-    Proceedings of the AAAI conference on artificial intelligence 2023
-    (Vol. 37, No. 9, pp. 11121-11128).
-    .. [2] https://github.com/cure-lab/LTSF-Linear
-    """
-
-    class _LTSFTransformerNetwork(nn_module):
+    class _LTSFTransformerNetwork(nn.Module):
         def __init__(
             self,
             seq_len,
@@ -248,6 +182,68 @@ class LTSFTransformerNetwork:
             else:
                 return dec_out[:, -self.pred_len :, :]  # [B, L, D]
 
+    return _LTSFTransformerNetwork
+
+
+class LTSFTransformerNetwork:
+    """LTSF-Transformer Forecaster.
+
+    Implementation of the Long-Term Short-Term Feature (LTSF) transformer forecaster,
+    aka LTSF-Transformer, by Zeng et al [1]_.
+
+    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
+    which is unfortunately not available as a package.
+
+    Parameters
+    ----------
+    seq_len : int
+        Length of the input sequence.
+        Preferred to be twice the pred_len.
+    pred_len : int
+        Length of the prediction sequence.
+    context_len : int, optional (default=2)
+        Length of the label sequence.
+        Preferred to be same as the pred_len.
+    position_encoding : bool, optional (default=True)
+        Whether to use positional encoding.
+        Positional encoding helps the model understand the order of elements
+        in the input sequence by adding unique positional information to each element.
+    temporal_encoding : bool, optional (default=True)
+        Whether to use temporal encoding.
+        Works only with DatetimeIndex and PeriodIndex, disabled otherwise.
+    temporal_encoding_type : str, optional (default="linear")
+        Type of temporal encoding to use, relevant only if temporal_encoding is True.
+        - "linear": Uses linear layer to encode temporal data.
+        - "embed": Uses embeddings layer with learnable weights.
+        - "fixed-embed": Uses embeddings layer with fixed sine-cosine values as weights.
+    d_model : int, optional (default=512)
+        Dimension of the model.
+    n_heads : int, optional (default=8)
+        Number of attention heads.
+    d_ff : int, optional (default=2048)
+        Dimension of the feedforward network model.
+    e_layers : int, optional (default=3)
+        Number of encoder layers.
+    d_layers : int, optional (default=2)
+        Number of decoder layers.
+    factor : int, optional (default=5)
+        Factor for the attention mechanism.
+    dropout : float, optional (default=0.1)
+        Dropout rate.
+    activation : str, optional (default="relu")
+        Activation function to use. Defaults to relu and otherwise gelu.
+    freq : str, optional (default="h")
+        Frequency of the input data, relevant only if temporal_encoding is True.
+
+    References
+    ----------
+    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
+    Are transformers effective for time series forecasting?
+    Proceedings of the AAAI conference on artificial intelligence 2023
+    (Vol. 37, No. 9, pp. 11121-11128).
+    .. [2] https://github.com/cure-lab/LTSF-Linear
+    """
+
     def __init__(
         self,
         seq_len,
@@ -291,7 +287,7 @@ class LTSFTransformerNetwork:
         self.c_out = c_out
 
     def _build(self):
-        return self._LTSFTransformerNetwork(
+        return _LTSFTransformerNetwork()(
             seq_len=self.seq_len,
             context_len=self.context_len,
             pred_len=self.pred_len,

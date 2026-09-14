@@ -86,6 +86,29 @@ class TestAllPanelTransformers(TransformerPairwisePanelFixtureGenerator, QuickTe
             dist_mat.shape == (len_X, len_X2)
         ), f"Shape of matrix returned by transform is wrong for {trafo_name}"
 
+    def test_pairwise_transformers_panel_symmetric(self, object_instance, scenario):
+        """Main test function for pairwise transformers on tabular data."""
+        trafo_name = type(object_instance).__name__
+
+        X = scenario.args["transform"]["X"]
+        len_X = len(scenario.args["transform"]["X"])
+
+        dist_mat = object_instance.transform(X)
+
+        assert isinstance(dist_mat, np.ndarray), (
+            f"Type of matrix returned by transform is wrong for {trafo_name}"
+        )
+        assert (
+            # this is only true as long as fixture are of mtypes where len = n_instances
+            # should that change, use check_is_mtype to get n_instances metadata
+            dist_mat.shape == (len_X, len_X)
+        ), f"Shape of matrix returned by transform is wrong for {trafo_name}"
+
+        if object_instance.get_tag("symmetric"):
+            assert np.allclose(dist_mat, dist_mat.T), (
+                f"Matrix returned by transform is not symmetric for {trafo_name}"
+            )
+
     def test_transform_diag(self, object_instance, scenario):
         """Test expected output of transform_diag."""
         trafo_name = type(object_instance).__name__
