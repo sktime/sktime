@@ -8,6 +8,7 @@ backend and translating between pandas data and :class:`ForecastResult`.
 from contextlib import contextmanager
 from copy import deepcopy
 from dataclasses import replace
+from numbers import Integral
 
 import numpy as np
 from sklearn.utils import check_random_state
@@ -348,10 +349,14 @@ class BaseFoundationForecaster(BaseForecaster):
 
     def _resolve_random_state(self, random_state):
         """Convert sklearn-compatible random state input to one integer seed."""
+        if random_state is None:
+            return None
+
         rng = check_random_state(random_state)
-        return (
-            None if random_state is None else int(rng.randint(np.iinfo(np.int32).max))
-        )
+        if isinstance(random_state, Integral):
+            return int(random_state)
+
+        return int(rng.randint(np.iinfo(np.int32).max))
 
     def _resolve_config(self, config):
         """Return an isolated deep copy of model configuration.
