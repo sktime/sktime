@@ -120,6 +120,31 @@ class UvEnvironmentManager(BaseEnvironmentManager):
     ) -> Path:
         """Get or create an environment for ``requirements`` and return its Python.
 
+        Looks under ``self.envs_dir`` for a subdirectory named by a
+        16-character hash of ``base_requirements``, each
+        ``-e <editable path>``, the per-call ``requirements``, and the
+        resolved ``python`` spec. The interpreter path it returns is
+        ``<env_dir>/bin/python`` (``<env_dir>/Scripts/python.exe`` on
+        Windows).
+
+        Reuse (no delete, no create) when all of the following hold:
+
+        * that interpreter file exists
+        * ``<env_dir>/.env_ready`` exists
+        * the marker text equals the current hash
+
+        Otherwise the directory is treated as missing or stale:
+
+        * if ``<env_dir>`` already exists, it is removed with
+          ``shutil.rmtree``
+        * ``uv venv <env_dir>`` is run, with ``--python`` when a spec
+          is set
+        * ``uv pip install`` runs when there is anything to install
+        * ``<env_dir>/requirements.txt`` and ``<env_dir>/.env_ready``
+          are written on success
+
+        The parent process never activates the environment.
+
         Parameters
         ----------
         requirements : list of str, optional (default=None)
@@ -135,7 +160,9 @@ class UvEnvironmentManager(BaseEnvironmentManager):
         Returns
         -------
         pathlib.Path
-            Path to the environment's Python executable.
+            Path to the environment's Python executable,
+            ``<envs_dir>/<hash>/bin/python`` or
+            ``<envs_dir>/<hash>/Scripts/python.exe``.
 
         Raises
         ------
