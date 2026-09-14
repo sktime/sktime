@@ -297,6 +297,10 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
 
         from skbase.utils.dependencies import _check_soft_dependencies
 
+        import sktime
+
+        self._sktime_version = sktime.__version__
+
         if serialization_format not in SERIALIZATION_FORMATS:
             raise ValueError(
                 f"The provided `serialization_format`='{serialization_format}' "
@@ -352,7 +356,9 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         """
         import pickle
 
-        return pickle.loads(serial)
+        obj = pickle.loads(serial)
+        _check_loaded_version(obj)
+        return obj
 
     @classmethod
     def load_from_path(cls, serial):
@@ -370,7 +376,29 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         from zipfile import ZipFile
 
         with ZipFile(serial, "r") as file:
-            return pickle.loads(file.open("_obj").read())
+            obj = pickle.loads(file.open("_obj").read())
+        _check_loaded_version(obj)
+        return obj
+
+
+def _check_loaded_version(obj):
+    import warnings
+
+    import sktime
+
+    saved_version = getattr(obj, "_sktime_version", None)
+    current_version = sktime.__version__
+
+    if saved_version != current_version:
+        saved_ver_str = saved_version if saved_version is not None else "unknown (<1.1.0)"
+        warnings.warn(
+            f"The loaded estimator was saved using sktime version '{saved_ver_str}', "
+            f"which differs from the current sktime version '{current_version}'. "
+            "Loading estimators saved with a different sktime version is not guaranteed "
+            "to be compatible and may produce invalid estimators or unexpected behavior.",
+            UserWarning,
+            stacklevel=3,
+        )
 
 
 # todo 1.2.0: remove this class from inheritance in BaseObject
