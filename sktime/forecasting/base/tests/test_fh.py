@@ -652,7 +652,7 @@ def test_auto_ets():
 
     https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
-    freq = "30T"
+    freq = "30min"
     _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
     t = pd.date_range("2021-09-19", periods=50, freq=freq)
     y = pd.Series(_y, index=t)
