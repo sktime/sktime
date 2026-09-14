@@ -1,6 +1,7 @@
 # ruff: noqa: S603
 """Base class for isolated environment managers."""
 
+import functools
 import hashlib
 import subprocess
 import sys
@@ -110,6 +111,7 @@ class BaseEnvironmentManager(BaseObject):
 
     * ``run`` — classify ``target``, obtain the interpreter, start the
       child process
+    * ``attach`` — decorate a callable so calls run via ``run``
     * ``_prepare_run`` — build the child argv and stdin payload
     * ``_resolve_python`` — per-call ``python``, else ``self.python``
 
@@ -349,6 +351,103 @@ class BaseEnvironmentManager(BaseObject):
         defaults = {"capture_output": True, "check": False}
         defaults.update(run_kwargs)
         return subprocess.run(cmd, input=stdin, **defaults)
+
+    def attach(
+        self,
+        func: Callable | None = None,
+        *,
+        requirements: list[str] | None = None,
+    ):
+        """Decorate ``func`` so calls run in this manager's environment.
+
+        The wrapper has the same positional and keyword arguments as
+        ``func``. Each call is ``self.run(func, args=..., kwargs=...)``
+        and returns ``func``'s return value, not a
+        ``CompletedProcess``.
+
+        Extra packages come from ``self.base_requirements`` /
+        ``self.editable`` when those exist, and from ``requirements``
+        bound on this wrapper. There is no ``input`` argument; pass
+        data as normal function arguments.
+
+        Can be used as ``env_manager.attach(fn)``,
+        ``env_manager.attach(fn, requirements=...)``, ``@env_manager.attach``,
+        or ``@env_manager.attach(requirements=...)``.
+
+        Parameters
+        ----------
+        func : callable, optional (default=None)
+            Function to wrap. ``None`` when used as
+            ``@manager.attach(...)`` with keyword arguments; then this
+            method returns a decorator.
+        requirements : list of str, optional (default=None)
+            Extra packages for this wrapper only, same format as
+            ``run``'s ``requirements``. Combined with the manager's
+            ``base_requirements`` and ``editable`` when the environment
+            is created. ``None`` means no extra packages.
+
+        Returns
+        -------
+        callable
+            Wrapped ``func``, or a decorator if ``func`` is ``None``.
+
+        Raises
+        ------
+        TypeError
+            If ``func`` is not a callable.
+        ModuleNotFoundError
+            If ``cloudpickle`` is not installed in the parent
+            environment.
+        RuntimeError
+            If the worker returns no stdout.
+        subprocess.CalledProcessError
+            If the child process exits with a non-zero status.
+
+        Notes
+        -----
+        Same Python-version constraint as callable ``run``: the child
+        unpickles ``func`` with ``cloudpickle``.
+
+        Examples
+        --------
+        >>> def mean_absolute_error(y_true, y_pred):  # doctest: +SKIP
+        ...     ...
+        >>> mae_numpy_2_5 = manager.attach(  # doctest: +SKIP
+        ...     mean_absolute_error,
+        ...     requirements=["numpy==2.5.0"],
+        ... )
+        >>> result = mae_numpy_2_5(y_true, y_pred)  # doctest: +SKIP
+        """
+
+        def decorator(fn: Callable) -> Callable:
+            if not callable(fn) or isinstance(fn, (str, Path)):
+                raise TypeError("attach() requires a callable")
+
+            @functools.wraps(fn)
+            def wrapped(*args, **kwargs):
+                from sktime.utils.dependencies import _check_soft_dependencies
+
+                _check_soft_dependencies("cloudpickle", severity="error")
+                import cloudpickle
+
+                proc = self.run(
+                    fn,
+                    requirements=requirements,
+                    args=args,
+                    kwargs=kwargs,
+                    check=True,
+                )
+                if not proc.stdout:
+                    raise RuntimeError(
+                        "Attached function returned no output from the isolated worker"
+                    )
+                return cloudpickle.loads(proc.stdout)
+
+            return wrapped
+
+        if func is None:
+            return decorator
+        return decorator(func)
 
     def _prepare_run(
         self,
