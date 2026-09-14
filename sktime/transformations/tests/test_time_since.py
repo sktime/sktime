@@ -151,9 +151,9 @@ def test_fit_transform_datetime_monthly_idx_datetime_output(df_datetime_monthly_
     Xt = transformer.fit_transform(df_datetime_monthly_idx)
     expected = pd.DataFrame(
         data={
-            "time_since_2000-01-01 00:00:00": [
-                pd.Timedelta(i, unit="D") for i in (0, 31, 60, 91, 121)
-            ]
+            "time_since_2000-01-01 00:00:00": (
+                df_datetime_monthly_idx.index - df_datetime_monthly_idx.index[0]
+            )
         },
         index=df_datetime_monthly_idx.index,
     )
