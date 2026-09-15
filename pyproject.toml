@@ -237,7 +237,6 @@ notebooks = [
   "scipy<1.16",
   "pmdarima",
   "seaborn",
-  "tbats",
   # needed for the examples
   "dtw-python",
   "prophet",
