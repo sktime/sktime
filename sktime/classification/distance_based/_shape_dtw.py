@@ -510,7 +510,7 @@ class ShapeDTW(BaseClassifier):
             )
         for x in second_desc.columns:
             second_desc_array.append(
-                convert(first_desc[x], from_type="nested_univ", to_type="numpyflat")
+                convert(second_desc[x], from_type="nested_univ", to_type="numpyflat")
             )
 
         # Concatenate the arrays together
