@@ -9,17 +9,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.transformations.hierarchical.aggregate import (
-    Aggregator,
-    _check_index_no_total,
-)
-from sktime.transformations.hierarchical.reconcile import (
-    BottomUpReconciler,
-    NonNegativeOptimalReconciler,
-    OptimalReconciler,
-    TopdownReconciler,
-)
-from sktime.transformations.hierarchical.reconcile._utils import _loc_series_idxs
 from sktime.utils.warnings import warn
 
 
@@ -126,24 +115,54 @@ class ReconcilerForecaster(BaseForecaster):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    # We do not create the instances to avoid error due to
-    # soft dependency on cvxpy for NonNegativeOptimalReconciler
-    TRFORM_METHOD_MAP = {
-        "bu": (BottomUpReconciler, {}),
-        "ols": (OptimalReconciler, {}),
-        "ols:nonneg": (NonNegativeOptimalReconciler, {}),
-        "wls_str": (OptimalReconciler, {"error_covariance_matrix": "wls_str"}),
-        "wls_str:nonneg": (
-            NonNegativeOptimalReconciler,
-            {"error_covariance_matrix": "wls_str"},
-        ),
-        "td_fcst": (TopdownReconciler, {"method": "td_fcst"}),
-        "td_share": (TopdownReconciler, {"method": "td_share"}),
-    }
+    def _decode_reconciler_method(self, method):
+        """Decode the reconciliation method and return the corresponding class.
 
-    METHOD_LIST = ["mint_cov", "mint_shrink", "wls_var"] + list(
-        TRFORM_METHOD_MAP.keys()
-    )
+        Parameters
+        ----------
+        method : str
+            The reconciliation method to decode.
+
+        Returns
+        -------
+        Class : class
+            The class corresponding to the reconciliation method.
+        """
+        from sktime.transformations.hierarchical.reconcile import (
+            BottomUpReconciler,
+            NonNegativeOptimalReconciler,
+            OptimalReconciler,
+            TopdownReconciler,
+        )
+
+        # We do not create the instances to avoid error due to
+        # soft dependency on cvxpy for NonNegativeOptimalReconciler
+        TRFORM_METHOD_MAP = {
+            "bu": (BottomUpReconciler, {}),
+            "ols": (OptimalReconciler, {}),
+            "ols:nonneg": (NonNegativeOptimalReconciler, {}),
+            "wls_str": (OptimalReconciler, {"error_covariance_matrix": "wls_str"}),
+            "wls_str:nonneg": (
+                NonNegativeOptimalReconciler,
+                {"error_covariance_matrix": "wls_str"},
+            ),
+            "td_fcst": (TopdownReconciler, {"method": "td_fcst"}),
+            "td_share": (TopdownReconciler, {"method": "td_share"}),
+        }
+        return TRFORM_METHOD_MAP[method]
+
+    METHOD_LIST = [
+        "mint_cov",
+        "mint_shrink",
+        "wls_var",
+        "ols",
+        "wls_str",
+        "bu",
+        "td_fcst",
+        "td_share",
+        "ols:nonneg",
+        "wls_str:nonneg",
+    ]
     RETURN_TOTALS_LIST = [True, False]
 
     def __init__(self, forecaster, method="mint_shrink", return_totals=True, alpha=0):
@@ -186,6 +205,8 @@ class ReconcilerForecaster(BaseForecaster):
 
         self._series_to_keep = y.index.droplevel(-1).unique()
 
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         # Add totals and flatten single levels
         if _check_index_no_total(y):
             y = self._add_totals(y)
@@ -201,7 +222,7 @@ class ReconcilerForecaster(BaseForecaster):
         self.forecaster_ = self.forecaster.clone()
 
         if not self._requires_residuals:
-            Class, kwargs = self.TRFORM_METHOD_MAP[self.method]
+            Class, kwargs = self._decode_reconciler_method(self.method)
             self.reconciler_transform_ = Class(**kwargs)
             yt = self.reconciler_transform_.fit_transform(y)
             self.forecaster_.fit(y=yt, X=X, fh=fh)
@@ -226,6 +247,11 @@ class ReconcilerForecaster(BaseForecaster):
             self.error_cov_matrix_ = self._get_error_covariance_matrix(
                 shrink=False, diag_only=True
             )
+
+        from sktime.transformations.hierarchical.reconcile import (
+            NonNegativeOptimalReconciler,
+            OptimalReconciler,
+        )
 
         ReconcilerClass = OptimalReconciler
         if self.method.endswith(":nonneg"):
@@ -252,6 +278,8 @@ class ReconcilerForecaster(BaseForecaster):
         y_pred : pd.Series
             Point predictions
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         if X is not None:
             if _check_index_no_total(X):
                 X = self._add_totals(X)
@@ -267,6 +295,11 @@ class ReconcilerForecaster(BaseForecaster):
             return base_fc
 
         reconc_fc = self.reconciler_transform_.inverse_transform(base_fc)
+
+        from sktime.transformations.hierarchical.aggregate import Aggregator
+        from sktime.transformations.hierarchical.reconcile._utils import (
+            _loc_series_idxs,
+        )
 
         agg = Aggregator(False, bypass_inverse_transform=False).fit(reconc_fc)
         if not self.return_totals:
@@ -293,6 +326,8 @@ class ReconcilerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         # check index for no "__total", if not add totals to y
         if _check_index_no_total(y):
             y = self._add_totals(y)

@@ -4,7 +4,7 @@ Utilises the signature method of feature extraction.
 This method was built according to the best practices
 and methodologies described in the paper:
     "A Generalised Signature Method for Time Series"
-    [arxiv](https://arxiv.org/pdf/2006.00873.pdf).
+    `arxiv <https://arxiv.org/pdf/2006.00873.pdf>`_.
 """
 
 import numpy as np
@@ -148,7 +148,6 @@ class SignatureClassifier(BaseClassifier):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self.signature_method = SignatureTransformer(

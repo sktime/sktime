@@ -368,7 +368,7 @@ class MUSE(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {
+        params1 = {
             "window_inc": 4,
             "alphabet_size": 2,
             "use_first_order_differences": False,
@@ -376,6 +376,23 @@ class MUSE(BaseClassifier):
             "feature_selection": "none",
             "bigrams": False,
         }
+        # second set: first order differences switched on (doubling the
+        # dimensions considered), bigrams on, anova off, and a fixed
+        # random_state. window_inc and alphabet_size stay as in the first
+        # set, and feature selection stays "none", so fit cost is comparable
+        # (chi2 combined with first order differences is an order of
+        # magnitude slower on the test scenarios).
+        params2 = {
+            "window_inc": 4,
+            "alphabet_size": 2,
+            "use_first_order_differences": True,
+            "support_probabilities": True,
+            "feature_selection": "none",
+            "bigrams": True,
+            "anova": False,
+            "random_state": 0,
+        }
+        return [params1, params2]
 
 
 def _compute_window_inc(series_length, window_inc):

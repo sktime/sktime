@@ -11,6 +11,7 @@ from copy import copy
 from itertools import compress
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.metrics import pairwise
 from sklearn.utils import check_random_state, gen_even_slices
 from sklearn.utils.extmath import safe_sparse_dot
@@ -19,7 +20,6 @@ from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.dictionary_based import SFAFast
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.panel import check_X_y
 
 # delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3

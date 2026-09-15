@@ -13,9 +13,9 @@ __all__ = [
 ]
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 from ._base import BaseKalmanFilter, _init_matrix, _validate_param_shape
@@ -303,6 +303,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         # test and CI flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_kalman_filter"],
     }
 
     def __init__(
@@ -795,6 +796,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_kalman_filter"],
     }
 
     def __init__(

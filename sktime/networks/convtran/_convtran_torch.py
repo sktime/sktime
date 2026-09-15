@@ -3,6 +3,8 @@
 __authors__ = ["srupat"]
 __all__ = ["ConvTranNetworkTorch"]
 
+from collections.abc import Callable
+
 import numpy as np
 
 from sktime.networks.convtran._attention import (
@@ -36,9 +38,9 @@ class ConvTranNetworkTorch(NNModule):
     net_type : str, default="C-T"
         Network type to use. Should be one of "T" (Transformer),
         "C-T" (ConvTran) or "C-CT" (Causal ConvTran).
-    activation : str or None, default=None
+    activation : Callable or None, default=None
         Activation function to use in the output layer.
-    activation_hidden : str, default="relu"
+    activation_hidden : Callable or None, default=None
         Activation function to use in the hidden layers.
     emb_size : int, default=16
         Embedding dimension used in attention and feed-forward blocks.
@@ -81,8 +83,8 @@ class ConvTranNetworkTorch(NNModule):
         input_size: int | tuple[int, ...],
         num_classes: int,
         net_type: str = "C-T",
-        activation: str | None = None,
-        activation_hidden: str = "relu",
+        activation: Callable | None = None,
+        activation_hidden: Callable | None = None,
         emb_size: int = 16,
         dim_ff: int = 256,
         num_heads: int = 8,
@@ -164,11 +166,6 @@ class ConvTranNetworkTorch(NNModule):
                 "is enabled."
             )
 
-        self._activation_hidden = self._instantiate_hidden_activation()
-        self._activation_out = (
-            self._instantiate_output_activation() if self.activation else None
-        )
-
         self._build_blocks()
 
     def _torch_op(self, import_path):
@@ -201,7 +198,7 @@ class ConvTranNetworkTorch(NNModule):
 
         self.feed_forward = nnSequential(
             nnLinear(self.emb_size, self.dim_ff),
-            self._activation_hidden,
+            self.activation_hidden,
             nnDropout(self.dropout),
             nnLinear(self.dim_ff, self.emb_size),
             nnDropout(self.dropout),
@@ -389,54 +386,6 @@ class ConvTranNetworkTorch(NNModule):
         self.layer_norm_1 = nnLayerNorm(self.emb_size, eps=1e-5)
         self.layer_norm_2 = nnLayerNorm(self.emb_size, eps=1e-5)
 
-    def _instantiate_hidden_activation(self):
-        if isinstance(self.activation_hidden, NNModule):
-            return self.activation_hidden
-        if not isinstance(self.activation_hidden, str):
-            raise TypeError(
-                "`activation_hidden` should be a str or torch.nn.Module. "
-                f"Found {type(self.activation_hidden)}"
-            )
-
-        act = self.activation_hidden.lower()
-        if act == "relu":
-            return _safe_import("torch.nn.ReLU")()
-        if act in {"leaky_relu", "leakyrelu"}:
-            return _safe_import("torch.nn.LeakyReLU")(negative_slope=0.01)
-        if act == "gelu":
-            return _safe_import("torch.nn.GELU")()
-
-        raise ValueError(
-            "Unsupported activation_hidden. Supported: "
-            "'relu', 'leaky_relu', 'gelu'. "
-            f"Found {self.activation_hidden}"
-        )
-
-    def _instantiate_output_activation(self):
-        if isinstance(self.activation, NNModule):
-            return self.activation
-        if not isinstance(self.activation, str):
-            raise TypeError(
-                "`activation` should be a str or torch.nn.Module. "
-                f"Found {type(self.activation)}"
-            )
-
-        act = self.activation.lower()
-        if act == "sigmoid":
-            return _safe_import("torch.nn.Sigmoid")()
-        if act == "softmax":
-            return _safe_import("torch.nn.Softmax")(dim=1)
-        if act == "logsoftmax":
-            return _safe_import("torch.nn.LogSoftmax")(dim=1)
-        if act == "logsigmoid":
-            return _safe_import("torch.nn.LogSigmoid")()
-
-        raise ValueError(
-            "Unsupported activation. Supported: "
-            "'sigmoid', 'softmax', 'logsoftmax', 'logsigmoid'. "
-            f"Found {self.activation}"
-        )
-
     def _causal_out_len(self, length, kernel_size, stride, dilation):
         pad = (kernel_size - 1) * dilation
         return (length + pad - dilation * (kernel_size - 1) - 1) // stride + 1
@@ -519,8 +468,8 @@ class ConvTranNetworkTorch(NNModule):
 
     def _finalize_output(self, out):
         out = self.out(out)
-        if self._activation_out is not None:
-            out = self._activation_out(out)
+        if self.activation is not None:
+            out = self.activation(out)
         if self.num_classes == 1:
             out = out.squeeze(-1)
         return out

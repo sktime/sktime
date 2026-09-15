@@ -3,6 +3,8 @@
 __all__ = ["TSCStrategy", "TSRStrategy"]
 __author__ = ["mloning", "sajaysurya"]
 
+from warnings import warn
+
 import pandas as pd
 from joblib import dump, load
 from sklearn.base import ClassifierMixin, RegressorMixin
@@ -10,6 +12,7 @@ from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.pipeline import Pipeline
 
 from sktime.base import BaseEstimator
+from sktime.benchmarking.base import _V1_DEPRECATION_MSG
 from sktime.classification.base import BaseClassifier
 from sktime.forecasting.base._sktime import BaseForecaster
 from sktime.regression.base import BaseRegressor
@@ -29,9 +32,14 @@ class BaseStrategy(BaseEstimator):
 
     Implements attributes and operations shared by all strategies, including input and
     compatibility checks between passed estimator, data and task.
+
+    .. deprecated:: 1.1.0
+        Part of the deprecated v1 benchmarking framework; will be removed in
+        sktime 1.3.0. Use the v2 framework instead. See #10464.
     """
 
     def __init__(self, estimator, name=None):
+        warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
         self._check_estimator_compatibility(estimator)
 
         self._estimator = estimator

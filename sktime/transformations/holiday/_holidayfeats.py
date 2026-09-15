@@ -11,9 +11,9 @@ from datetime import date
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -234,6 +234,13 @@ class HolidayFeatures(BaseTransformer):
             {
                 "calendar": {date(2022, 5, 15): "Regional Holiday"},
                 "return_indicator": True,
+            },
+            {
+                "calendar": {date(2022, 5, 17): "Regional Holiday"},
+                "include_weekend": True,
+                "return_dummies": False,
+                "return_categorical": True,
+                "keep_original_columns": True,
             },
         ]
         return params

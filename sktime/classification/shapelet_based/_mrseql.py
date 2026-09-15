@@ -80,7 +80,6 @@ class MrSEQL(_DelegatedClassifier):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self._symrep = self._coerce_to_list(self.symrep)
@@ -134,7 +133,7 @@ class MrSEQL(_DelegatedClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         params1 = {}
 

@@ -18,6 +18,7 @@ __author__ = [
     "dsask",
     "othmaneabou",
     "daniellekutner",
+    "siddharth7113",
 ]
 __all__ = ["TotoForecaster"]
 
@@ -40,6 +41,13 @@ class TotoForecaster(BaseForecaster):
     of observability data. Generate both point forecasts and uncertainty estimates using
     a Student-T mixture model. Support for variable prediction horizons and context
     lengths.
+
+    Known-future exogenous variables ``X`` are supported via Toto's native
+    exogenous mechanism: the columns of ``X`` are appended after the target
+    channels as exogenous variates. When ``X`` is used, it must be supplied for
+    every step of the forecast horizon, i.e. for all steps ``1 .. max(fh)`` ahead
+    of the cutoff (no gaps), since Toto consumes the known future values at each
+    autoregressive step.
 
     Parameters
     ----------
@@ -73,13 +81,23 @@ class TotoForecaster(BaseForecaster):
     >>> model.fit(y)
     TotoForecaster()
     >>> forecast = model.predict(fh=[1,2,5])
+
+    With known-future exogenous variables:
+
+    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> X, y = load_longley()
+    >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
+    >>> model = TotoForecaster()
+    >>> model.fit(y_train, X=X_train)  # doctest: +SKIP
+    TotoForecaster()
+    >>> forecast = model.predict(fh=[1, 2, 3], X=X_test)  # doctest: +SKIP
     """
 
     _tags = {
         "y_inner_mtype": ["pd.DataFrame"],
-        "X_inner_mtype": "None",
+        "X_inner_mtype": ["pd.DataFrame"],
         "capability:multivariate": True,
-        "capability:exogenous": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,
@@ -87,6 +105,7 @@ class TotoForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:non_contiguous_X": False,
         # contribution and dependency tags
         "authors": [
             "JATAYU000",
@@ -103,13 +122,16 @@ class TotoForecaster(BaseForecaster):
             "dsask",
             "othmaneabou",
             "daniellekutner",
+            "siddharth7113",
         ],
         "maintainers": ["JATAYU000"],
         "python_version": ">= 3.10",
-        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3"],
+        "python_dependencies": ["torch>=2.5", "toto-ts>=0.1.3", "setuptools<82"],
         # CI and test flags
         # -----------------
+        "capability:pretrain": True,
         "tests:vm": True,  # run tests on own VM?
+        "tests:specific": ["sktime.forecasting.tests.test_toto"],
     }
 
     def __init__(
@@ -182,6 +204,17 @@ class TotoForecaster(BaseForecaster):
             "scale_factor_exponent": self.scale_factor_exponent,
         }
 
+    def __getstate__(self):
+        """Return state for pickling, handling unpickleable Toto model."""
+        state = self.__dict__.copy()
+        if "forecaster_" in state:
+            state["forecaster_"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state dictionary."""
+        self.__dict__.update(state)
+
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
 
@@ -220,10 +253,19 @@ class TotoForecaster(BaseForecaster):
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
         else:
             self._device = self.device
-        self.input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
-            self._device
-        )
+        if X is not None:
+            combined = pd.concat([y, X], axis=1)
+            self.input_series = torch.tensor(combined.values.T, dtype=torch.float32).to(
+                self._device
+            )
+            self._num_exog_ = X.shape[1]
+        else:
+            self.input_series = torch.tensor(y.values.T, dtype=torch.float32).to(
+                self._device
+            )
+            self._num_exog_ = 0
 
+        self._n_targets_ = y.shape[1]
         self._id_mask = torch.zeros_like(self.input_series).to(self._device)
         self._padding_mask = torch.full_like(
             self.input_series, True, dtype=torch.bool
@@ -241,9 +283,180 @@ class TotoForecaster(BaseForecaster):
             id_mask=self._id_mask,
             timestamp_seconds=self.timestamp_seconds,
             time_interval_seconds=self.time_interval_seconds,
+            num_exogenous_variables=self._num_exog_,
         )
 
+        # Load the model eagerly at fit-time so it is ready for predict.
+        self.forecaster_ = self._load_forecaster()
+
         return self
+
+    def _load_forecaster(self):
+        """Load or retrieve the Toto inference forecaster from the multiton cache.
+
+        If the forecaster is already loaded on this instance, returns it directly.
+        Otherwise, loads from the multiton cache (or creates a new one).
+
+        The model is never stored directly on the instance to avoid pickling
+        issues with the underlying PyTorch backbone.  The multiton-backed
+        :class:`_CachedTotoForecaster` ensures each unique configuration is
+        loaded only once regardless of how many ``fit`` / ``predict`` calls
+        are made.  After ``_pretrain``, the cache entry is updated in-place
+        with the fine-tuned model, so subsequent calls return that model.
+
+        Returns
+        -------
+        forecaster : toto.inference.forecaster.TotoForecaster
+            The ready-to-use Toto inference forecaster.
+        """
+        if hasattr(self, "forecaster_") and self.forecaster_ is not None:
+            return self.forecaster_
+
+        forecaster = _CachedTotoForecaster(
+            key=self._get_toto_key(),
+            toto_kwargs=self._get_toto_kwargs(),
+            device=self._device,
+        ).load_from_checkpoint()
+        self.forecaster_ = forecaster
+        return forecaster
+
+    def _pretrain(self, y, X=None, fh=None):
+        """Fine-tune Toto on panel/hierarchical data.
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in ``"_"``.
+
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex (guaranteed Panel or Hierarchical)
+            Panel or hierarchical time series data to pretrain on.
+            The last index level is time; all other levels identify instances.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series (currently unused).
+        fh : ForecastingHorizon or None, optional (default=None)
+            Forecasting horizon (currently unused during pretraining).
+
+        Returns
+        -------
+        self : reference to self
+
+        References
+        ----------
+        .. [2] TotoForFinetuning Lightning module:
+               https://github.com/DataDog/toto/blob/main/toto/model/lightning_module.py
+        .. [3] FinetuneDataModule:
+               https://github.com/DataDog/toto/blob/main/toto/data/datamodule/finetune_datamodule.py
+        """
+        import torch
+        from lightning.pytorch import Trainer
+        from toto.data.datamodule.finetune_datamodule import FinetuneDataModule
+        from toto.inference.forecaster import TotoForecaster as _TotoInference
+        from toto.model.lightning_module import TotoForFinetuning
+        from toto.model.toto import Toto
+
+        if self.device is None:
+            self._device = "cuda" if torch.cuda.is_available() else "cpu"
+        else:
+            self._device = self.device
+
+        # Load base pre-trained backbone
+        toto_base = Toto.from_pretrained(**self._get_toto_kwargs())
+        toto_base.to(self._device)
+        patch_size = getattr(toto_base.model.patch_embed, "patch_size", 16)
+
+        # Determine min length of series to adapt context and prediction horizons
+        instance_levels = list(range(y.index.nlevels - 1))
+        groupby_level = (
+            instance_levels[0] if len(instance_levels) == 1 else instance_levels
+        )
+        min_len = min(len(group) for _, group in y.groupby(level=groupby_level))
+
+        # Adjust for short series (especially for tests)
+        prediction_horizon = min(64, max(1, min_len // 3))
+        max_context_length = min(512, max(1, min_len - prediction_horizon))
+        max_steps = 1000 if min_len >= 100 else 1
+
+        lightning_module = TotoForFinetuning(
+            pretrained_backbone=toto_base.model,
+            val_prediction_len=prediction_horizon,
+        )
+        lightning_module.to(self._device)
+
+        # Convert panel/hierarchical y into a HuggingFace Dataset
+        import datasets as hfds
+        import numpy as np
+
+        records = []
+        for _, group in y.groupby(level=groupby_level):
+            time_index = group.index.get_level_values(-1)
+            timestamps = [str(t) for t in time_index]
+            n = len(time_index)
+
+            # One record per column (variate) so each series is univariate
+            for col in group.columns:
+                values = group[col].to_numpy(dtype=np.float64)
+                records.append(
+                    {
+                        "timestamp": timestamps,
+                        "target": values,
+                        # feat_dynamic_real is required by transform_fev_dataset;
+                        # supply a zero-filled placeholder.
+                        "feat_dynamic_real": np.zeros(n, dtype=np.float64),
+                    }
+                )
+
+        if not records:
+            raise ValueError("No series found in y after grouping by instance levels.")
+        hf_dataset = hfds.Dataset.from_list(records).with_format("numpy")
+
+        dm = FinetuneDataModule(
+            dataset=hf_dataset,
+            max_context_length=max_context_length,
+            prediction_horizon=prediction_horizon,
+            patch_size=patch_size,
+            train_batch_size=4,
+            val_batch_size=1,
+            num_workers=0,
+        )
+
+        accelerator = "gpu" if self._device == "cuda" else "cpu"
+        trainer = Trainer(
+            max_steps=max_steps,
+            enable_progress_bar=True,
+            accelerator=accelerator,
+            devices=1,
+        )
+
+        # Toto's GluonTSDatasetView enforces a strict minimum length for training:
+        # train_length >= 3 * patch_size AND test_length >= prediction_horizon
+        # If the input series is too short (e.g. sktime dummy test data of length 10),
+        # skip finetuning to avoid an AssertionError.
+        min_required_len = 3 * patch_size + prediction_horizon
+        if min_len > min_required_len:
+            trainer.fit(lightning_module, datamodule=dm)
+        else:
+            import warnings
+
+            warnings.warn(
+                f"Series length {min_len} is too short for Toto pretraining "
+                f"(requires > {min_required_len}). Skipping finetuning step."
+            )
+
+        # Push the fine-tuned model into the multiton cache so that
+        # _load_forecaster() returns it on all subsequent fit/predict calls.
+        lightning_module.model.eval()
+        cached = _CachedTotoForecaster(
+            key=self._get_toto_key(),
+            toto_kwargs=self._get_toto_kwargs(),
+            device=self._device,
+        )
+        cached.forecaster = _TotoInference(lightning_module.model)
+
+        # Record the device as a picklable pretrained attribute
+        self.pretrain_device_ = self._device
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
@@ -274,11 +487,9 @@ class TotoForecaster(BaseForecaster):
         """
         import torch
 
-        torch.manual_seed(self._seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self._seed)
-
         prediction_length = max(fh.to_relative(self._cutoff))
+
+        future_exog = self._build_future_exog(X, prediction_length)
 
         forecaster = _CachedTotoForecaster(
             key=self._get_toto_key(),
@@ -286,17 +497,23 @@ class TotoForecaster(BaseForecaster):
             device=self._device,
         ).load_from_checkpoint()
 
+        torch.manual_seed(self._seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self._seed)
+
         forecast = forecaster.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
+            future_exogenous_variables=future_exog,
         )
         if self.prediction_type.lower() == "median":
             all_predictions = forecast.median.cpu().squeeze(0).numpy().T
         else:
             all_predictions = forecast.mean.cpu().squeeze(0).numpy().T
 
+        all_predictions = all_predictions[:, : self._n_targets_]
         pred_index = fh.to_absolute(self._cutoff)._values
         relative_indices = fh.to_relative(self._cutoff) - 1
         selected_predictions = all_predictions[relative_indices]
@@ -343,17 +560,24 @@ class TotoForecaster(BaseForecaster):
 
         prediction_length = max(fh.to_relative(self._cutoff))
 
+        future_exog = self._build_future_exog(X, prediction_length)
+
         forecaster = _CachedTotoForecaster(
             key=self._get_toto_key(),
             toto_kwargs=self._get_toto_kwargs(),
             device=self._device,
         ).load_from_checkpoint()
 
+        torch.manual_seed(self._seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self._seed)
+
         forecast = forecaster.forecast(
             self._series,
             prediction_length=prediction_length,
             num_samples=self.num_samples,
             samples_per_batch=self.samples_per_batch,
+            future_exogenous_variables=future_exog,
         )
         var_names = self._y.columns
         cols_idx = pd.MultiIndex.from_product([var_names, alpha])
@@ -375,6 +599,61 @@ class TotoForecaster(BaseForecaster):
                 pred_quantiles[(var_name, a)] = selected_quantiles
         return pred_quantiles
 
+    def _build_future_exog(self, X, prediction_length):
+        """Build the future exogenous tensor for Toto's ``forecast`` call.
+
+        Toto rolls out a contiguous block of ``prediction_length`` steps and, for
+        each step, replaces the exogenous channels with the known future values.
+        It therefore needs ``X`` for **every** step ``1 .. prediction_length``
+        ahead of the cutoff, shaped ``(batch, num_exogenous, future_time_steps)``.
+
+        Parameters
+        ----------
+        X : pd.DataFrame or None
+            Future exogenous values passed to ``predict``.
+        prediction_length : int
+            Number of contiguous steps Toto will forecast.
+
+        Returns
+        -------
+        torch.Tensor or None
+            Tensor of shape ``(1, num_exogenous, prediction_length)`` if the
+            forecaster was fitted with exogenous variables, else ``None``.
+        """
+        if self._num_exog_ == 0:
+            return None
+
+        import torch
+
+        from sktime.forecasting.base import ForecastingHorizon
+
+        if X is None:
+            raise ValueError(
+                "TotoForecaster was fitted with exogenous variables X, so X must "
+                "also be passed to predict, covering the full forecast horizon."
+            )
+
+        # contiguous absolute index for steps 1 .. prediction_length
+        full_fh = ForecastingHorizon(range(1, prediction_length + 1), is_relative=True)
+        future_index = full_fh.to_absolute(self._cutoff)._values
+
+        # align user X onto every step Toto rolls through; gaps become NaN
+        X_future = X.reindex(future_index)
+        if X_future.isnull().values.any():
+            raise ValueError(
+                "TotoForecaster requires exogenous X for every step in the "
+                "forecast horizon. Provide X covering all steps from 1 to "
+                f"{prediction_length} ahead of the cutoff (no gaps)."
+            )
+
+        # shape (time, n_exog) -> (n_exog, time) -> (1, n_exog, time)
+        future_exog = (
+            torch.tensor(X_future.values.T, dtype=torch.float32)
+            .unsqueeze(0)
+            .to(self._device)
+        )
+        return future_exog
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -395,8 +674,7 @@ class TotoForecaster(BaseForecaster):
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
         test_params = [
-            {"num_samples": 2, "samples_per_batch": 2, "prediction_type": "median"},
-            {"num_samples": 2, "samples_per_batch": 1, "prediction_type": "mean"},
+            {"num_samples": 2, "samples_per_batch": 1, "prediction_type": "median"},
             {"num_samples": 1, "samples_per_batch": 1, "prediction_type": "mean"},
         ]
 
@@ -429,7 +707,6 @@ class _CachedTotoForecaster:
 
         toto_model = Toto.from_pretrained(**self.toto_kwargs)
         toto_model.to(self.device)
-        toto_model.compile()
         self.forecaster = TotoForecaster(toto_model.model)
 
         return self.forecaster

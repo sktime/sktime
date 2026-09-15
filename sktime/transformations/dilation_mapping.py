@@ -131,5 +131,5 @@ class DilationMappingTransformer(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        params = [{"dilation": 2}]
+        params = [{"dilation": 2}, {"dilation": 1}]
         return params

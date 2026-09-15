@@ -126,7 +126,7 @@ if __name__ == "__main__":
     else:  # Local run
         print(" Local Run")
         dataset = "ElectricDevices"
-        data_dir = f"../datasets/data/"
+        data_dir = "../datasets/data/"
         results_dir = "./temp"
         resample = 0
         tf = True

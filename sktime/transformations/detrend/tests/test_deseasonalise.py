@@ -8,13 +8,12 @@ __all__ = []
 import numpy as np
 import pytest
 
-from sktime.forecasting.tests._config import TEST_SPS
-from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.detrend import Deseasonalizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 MODELS = ["additive", "multiplicative"]
+TEST_SPS = [3, 12]
 
 
 @pytest.mark.skipif(
@@ -24,6 +23,8 @@ MODELS = ["additive", "multiplicative"]
 @pytest.mark.parametrize("sp", TEST_SPS)
 def test_deseasonalised_values(sp):
     from statsmodels.tsa.seasonal import seasonal_decompose
+
+    from sktime.split import temporal_train_test_split
 
     y = make_forecasting_problem()
     y_train, _ = temporal_train_test_split(y, train_size=0.75)
@@ -44,6 +45,8 @@ def test_deseasonalised_values(sp):
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("model", MODELS)
 def test_transform_time_index(sp, model):
+    from sktime.split import temporal_train_test_split
+
     y = make_forecasting_problem()
     y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
@@ -60,6 +63,8 @@ def test_transform_time_index(sp, model):
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("model", MODELS)
 def test_inverse_transform_time_index(sp, model):
+    from sktime.split import temporal_train_test_split
+
     y = make_forecasting_problem()
     y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
@@ -76,8 +81,10 @@ def test_inverse_transform_time_index(sp, model):
 @pytest.mark.parametrize("sp", TEST_SPS)
 @pytest.mark.parametrize("model", MODELS)
 def test_transform_inverse_transform_equivalence(sp, model):
+    from sktime.split import temporal_train_test_split
+
     y = make_forecasting_problem()
-    y_train, y_test = temporal_train_test_split(y, train_size=0.75)
+    y_train, _ = temporal_train_test_split(y, train_size=0.75)
 
     transformer = Deseasonalizer(sp=sp, model=model)
     transformer.fit(y_train)

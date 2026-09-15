@@ -74,7 +74,7 @@ def plot_series(
     >>> y = load_airline()
     >>> fig, ax = plot_series(y)  # doctest: +SKIP
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
@@ -231,7 +231,7 @@ def plot_interval(ax, interval_df):
     >>> ax.set_xlabel('Date')  # doctest: +SKIP
     >>> ax.set_ylabel('Passengers')  # doctest: +SKIP
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("seaborn")
 
@@ -290,7 +290,7 @@ def plot_lags(series, lags=1, suptitle=None):
     >>> fig, ax = plot_lags(y, lags=2) # plot of y(t) with y(t-2)  # doctest: +SKIP
     >>> fig, ax = plot_lags(y, lags=[1,2,3]) # y(t) & y(t-1), y(t-2).. # doctest: +SKIP
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib")
     import matplotlib.pyplot as plt
@@ -406,7 +406,7 @@ def plot_correlations(
     >>> y = load_airline()
     >>> fig, ax = plot_correlations(y)  # doctest: +SKIP
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt
@@ -510,8 +510,9 @@ def plot_folds_global_forecasting(cv, cv_global, cv_global_temporal, y):
     axes : np.ndarray
         matplotlib axes object with the figure
     """
+    from skbase.utils.dependencies import _check_soft_dependencies
+
     from sktime.forecasting.model_evaluation._functions import gen_y_X_train_test_global
-    from sktime.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib")
 
@@ -591,7 +592,7 @@ def plot_windows(cv, y, title="", ax=None):
     >>> y = load_airline()
     >>> plot_windows(cv, y.iloc[:50])  # doctest: +SKIP
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib", "seaborn")
     import matplotlib.pyplot as plt
@@ -734,7 +735,7 @@ def plot_calibration(y_true, y_pred, ax=None):
     >>> pred_quantiles = forecaster.predict_quantiles(fh=fh, alpha=[0.1, 0.25, 0.5, 0.75, 0.9])  # doctest: +SKIP
     >>> plot_calibration(y_true=y_test.loc[pred_quantiles.index], y_pred=pred_quantiles)  # doctest: +SKIP
     """  # noqa: E501
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies("matplotlib", "statsmodels")
     import matplotlib.pyplot as plt

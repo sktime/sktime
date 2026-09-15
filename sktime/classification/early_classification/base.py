@@ -29,10 +29,10 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 from abc import abstractmethod
 
 import numpy as np
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BaseEarlyClassifier(BaseEstimator):

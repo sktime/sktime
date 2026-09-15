@@ -65,7 +65,6 @@ class BaseGridSearch(_DelegatedForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self._set_delegated_tags(self.forecaster)

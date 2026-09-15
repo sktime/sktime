@@ -6,6 +6,7 @@ from collections.abc import Callable
 
 import numpy as np
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.dists_kernels._numba_distances._distance import (
     _METRIC_INFOS,
@@ -21,7 +22,6 @@ from sktime.dists_kernels._numba_distances.tests._utils import (
     create_test_distance_numpy,
 )
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def _check_symmetric(x: np.ndarray, rtol: float = 1e-05, atol: float = 1e-08) -> bool:

@@ -8,8 +8,6 @@ __author__ = ["mloning", "SveaMeyer13", "KishManani", "fkiraly"]
 import pandas as pd
 
 from sktime.datatypes import update_data
-from sktime.forecasting.base._fh import ForecastingHorizon
-from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
 
 
@@ -99,15 +97,28 @@ class Detrender(BaseTransformer):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         # default for forecaster - written to forecaster_ to not overwrite param
         if self.forecaster is None:
+            from sktime.forecasting.trend import PolynomialTrendForecaster
+
             self.forecaster_ = PolynomialTrendForecaster(degree=1)
         else:
-            self.forecaster_ = forecaster.clone()
+            self.forecaster_ = self.forecaster.clone()
 
         allowed_models = ("additive", "multiplicative")
-        if model not in allowed_models:
-            raise ValueError("`model` must be 'additive' or 'multiplicative'")
+        if self.model not in allowed_models:
+            raise ValueError(
+                "Error in Detrender: `model` must be 'additive' or 'multiplicative'"
+            )
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -138,6 +149,9 @@ class Detrender(BaseTransformer):
             time_index = X.index
         else:
             time_index = X.index.get_level_values(-1).unique()
+
+        from sktime.forecasting.base._fh import ForecastingHorizon
+
         return ForecastingHorizon(time_index, is_relative=False)
 
     def _get_fitted_forecaster(self, X, y, fh):

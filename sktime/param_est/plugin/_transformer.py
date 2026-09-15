@@ -215,11 +215,12 @@ class PluginParamsTransformer(_DelegatedTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
         from sktime.transformations.detrend import Deseasonalizer
         from sktime.transformations.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
 
         # use of dictionary to plug "foo" parameter into "power", uses mock param_est
         params1 = {

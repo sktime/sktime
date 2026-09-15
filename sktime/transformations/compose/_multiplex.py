@@ -149,7 +149,7 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
         )
         selected = self.selected_transformer
         if selected is not None and selected not in component_names:
-            raise Exception(
+            raise ValueError(
                 f"Invalid selected_transformer parameter value provided, "
                 f" found: {selected}. Must be one of these"
                 f" valid selected_transformer parameter values: {component_names}."
