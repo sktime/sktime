@@ -410,10 +410,13 @@ def test_get_duration(n_timepoints, index_type):
 
 if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
     FIXED_FREQUENCY_STRINGS = ["10min", "h", "D", "2D"]
+    NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "ME"]
 else:
     FIXED_FREQUENCY_STRINGS = ["10min", "H", "D", "2D"]
-NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
+    NON_FIXED_FREQUENCY_STRINGS = ["W-WED", "W-SUN", "W-SAT", "M"]
 FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, *NON_FIXED_FREQUENCY_STRINGS]
+# periods have no "ME" alias, "M" is valid for periods on all pandas versions
+PERIOD_FREQUENCY_STRINGS = [*FIXED_FREQUENCY_STRINGS, "W-WED", "W-SUN", "W-SAT", "M"]
 
 
 def _get_expected_freqstr(freqstr):
@@ -578,14 +581,14 @@ def test_to_absolute_int_fh_with_freq(idx: int, freq: str):
     assert_array_equal(fh + idx, absolute_int)
 
 
-@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+@pytest.mark.parametrize("freq", PERIOD_FREQUENCY_STRINGS)
 def test_to_absolute_with_multiple_freq(freq: str):
     """Test to_absolute with multiple freq"""
     fh = ForecastingHorizon([0, 1, 2, 3, 4], is_relative=True)
     start = "2024-09-26 17:24"
     cutoff = pd.PeriodIndex([start], freq=freq)
     absolute = fh.to_absolute(cutoff)
-    date_range = pd.date_range(start=start, freq=freq, periods=5)
+    date_range = pd.date_range(start=start, freq=_get_expected_freqstr(freq), periods=5)
     period_index = date_range.to_period(freq)
     assert_array_equal(period_index.to_numpy(), absolute.to_numpy())
 
@@ -652,7 +655,7 @@ def test_auto_ets():
 
     https://github.com/sktime/sktime/issues/1435#issue-1000175469
     """
-    freq = "30T"
+    freq = "30min"
     _y = np.arange(50) + np.random.rand(50) + np.sin(np.arange(50) / 4) * 10
     t = pd.date_range("2021-09-19", periods=50, freq=freq)
     y = pd.Series(_y, index=t)
@@ -863,7 +866,7 @@ def test_extract_freq_from_inputs() -> None:
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-@pytest.mark.parametrize("freq", FREQUENCY_STRINGS)
+@pytest.mark.parametrize("freq", PERIOD_FREQUENCY_STRINGS)
 def test_extract_freq_from_cutoff(freq: str) -> None:
     """Test extract frequency from cutoff."""
     assert _extract_freq_from_cutoff(pd.Period("2020", freq=freq)) == _to_offset_compat(
@@ -1016,7 +1019,10 @@ def test_tz_preserved():
 
 
 # the "XE" frequencies are not supported by pandas 1 or 2.0.X
-if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+# the deprecated "M" aliases are removed in pandas 3, "ME" is covered below
+if _check_soft_dependencies("pandas>=3.0.0", severity="none"):
+    FREQ_STR_FOR_PD22 = []
+elif _check_soft_dependencies("pandas>=2.2.0", severity="none"):
     FREQ_STR_FOR_PD22 = ["M", "3M"]
 else:
     FREQ_STR_FOR_PD22 = ["Y", "2Y", "M", "3M"]

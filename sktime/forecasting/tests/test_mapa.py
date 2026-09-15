@@ -20,7 +20,11 @@ def sample_data():
         and some added noise.
     """
     np.random.seed(42)
-    dates = pd.date_range(start="2020-01-01", periods=24, freq="M")
+    if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+        freq = "ME"
+    else:
+        freq = "M"
+    dates = pd.date_range(start="2020-01-01", periods=24, freq=freq)
     data = np.sin(np.linspace(0, 4 * np.pi, 24)) * 10 + np.random.normal(0, 1, 24) + 20
     return pd.DataFrame(data, index=dates, columns=["value"])
 
