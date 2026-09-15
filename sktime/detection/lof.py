@@ -140,6 +140,7 @@ class SubLOF(BaseDetector):
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:vm": True,
+        "tests:specific": ["sktime.detection.tests.test_lof"]
     }
 
     def __init__(
