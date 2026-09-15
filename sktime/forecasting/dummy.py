@@ -164,6 +164,11 @@ class ForecastKnownValues(BaseForecaster):
             idx = self._y.index
             if isinstance(idx, pd.MultiIndex):
                 unique_levels = idx.droplevel(-1).unique()
+                if unique_levels.nlevels == 1:
+                    # for a two-level MultiIndex, droplevel returns a flat Index
+                    # whose entries are scalars rather than tuples - wrap them so
+                    # that unpacking below yields one entry per index level
+                    unique_levels = [(level,) for level in unique_levels]
                 fh_abs = pd.MultiIndex.from_tuples(
                     ((*level, time) for level in unique_levels for time in fh_abs),
                     names=idx.names,
