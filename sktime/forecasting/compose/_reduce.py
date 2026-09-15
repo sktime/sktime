@@ -331,9 +331,9 @@ class _Reducer(_BaseWindowForecaster):
         """
         from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
         from sklearn.tree import DecisionTreeRegressor
 
+        from sktime.pipeline import make_pipeline
         from sktime.transformations.reduce import Tabularizer
 
         # naming convention is as follows:
