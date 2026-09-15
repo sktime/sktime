@@ -1,7 +1,6 @@
 import numpy as np
 
 from ..abstract import MatrixBuilder as AbstractMatrixBuilder
-from . import ModelParams
 
 
 class MatrixBuilder(AbstractMatrixBuilder):

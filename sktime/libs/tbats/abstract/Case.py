@@ -1,6 +1,3 @@
-from pmdarima.arima import auto_arima
-
-
 class Case(object):
     """Provides means to choose best model for provided components setup
 
@@ -44,6 +41,8 @@ class Case(object):
         Model
             Best model by AIC
         """
+        from pmdarima.arima import auto_arima
+
         best_model = self.fit_initial_model(y)
 
         if self.components.use_arma_errors:
