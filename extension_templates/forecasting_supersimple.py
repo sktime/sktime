@@ -86,6 +86,8 @@ class MyForecaster(BaseForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": True,
+        "fm": False,
+        "few-shot": False,
         "requires-fh-in-fit": True,
     }
 
