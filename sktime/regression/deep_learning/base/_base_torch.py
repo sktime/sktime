@@ -10,42 +10,19 @@ from collections.abc import Callable
 import numpy as np
 
 from sktime.regression.base import BaseRegressor
+from sktime.utils._lookup import _lc_class_dict, _lookup_class
 from sktime.utils.dependencies import _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 
-LC_TO_UC_ACTIVATIONS = {
-    "elu": "ELU",
-    "hardshrink": "Hardshrink",
-    "hardsigmoid": "Hardsigmoid",
-    "hardtanh": "Hardtanh",
-    "hardswish": "Hardswish",
-    "leakyrelu": "LeakyReLU",
-    "logsigmoid": "LogSigmoid",
-    "multiheadattention": "MultiheadAttention",
-    "prelu": "PReLU",
-    "relu": "ReLU",
-    "relu6": "ReLU6",
-    "rrelu": "RReLU",
-    "selu": "SELU",
-    "celu": "CELU",
-    "gelu": "GELU",
-    "sigmoid": "Sigmoid",
-    "silu": "SiLU",
-    "mish": "Mish",
-    "softplus": "Softplus",
-    "softshrink": "Softshrink",
-    "softsign": "Softsign",
-    "tanh": "Tanh",
-    "tanhshrink": "Tanhshrink",
-    "threshold": "Threshold",
-    "glu": "GLU",
-    "softmin": "Softmin",
-    "softmax": "Softmax",
-    "softmax2d": "Softmax2d",
-    "logsoftmax": "LogSoftmax",
-    "adaptivelogsoftmaxwithloss": "AdaptiveLogSoftmaxWithLoss",
-}
+# import paths of the torch modules and base classes that strings are looked up in
+TORCH_NN = "torch.nn"
+TORCH_MODULE = "torch.nn.Module"
+TORCH_LOSS = "torch.nn.modules.loss._Loss"
+TORCH_OPTIMIZERS = "torch.optim"
+TORCH_OPTIMIZER = "torch.optim.Optimizer"
+TORCH_SCHEDULERS = "torch.optim.lr_scheduler"
+TORCH_SCHEDULER = "torch.optim.lr_scheduler.LRScheduler"
 
 
 class BaseDeepRegressorTorch(BaseRegressor):
@@ -57,31 +34,59 @@ class BaseDeepRegressorTorch(BaseRegressor):
         The number of epochs to train the model
     batch_size : int, default = 8
         The size of each mini-batch during training
-    criterion : case insensitive str or an instance of a loss function
+    criterion : case insensitive str, or an instance of a loss function
         defined in PyTorch, default = None
-        The loss function to be used in training the neural network.
-        If None, CrossEntropyLoss is used.
-        If a string/Callable is passed, it must be one of the loss functions defined in
-        https://pytorch.org/docs/stable/nn.html#loss-functions
+        The loss function to use for training the model.
+        If None, MSELoss is used.
+
+        Permitted values:
+
+        - ``None``: the ``MSELoss`` loss function is used.
+        - ``str``: case insensitive name of any loss function in ``torch.nn``,
+          for example ``"l1loss"`` or ``"L1Loss"``. See
+          https://pytorch.org/docs/stable/nn.html#loss-functions
+        - instance of a loss function defined in ``torch.nn``, for example
+          ``torch.nn.L1Loss()``. An instance is used as is.
+
+        If a str is passed, the loss function is constructed with
+        ``criterion_kwargs``.
     criterion_kwargs : dict, default = None
         The keyword arguments to be passed to the loss function.
-    optimizer : case insensitive str or an instance of an optimizer
+    optimizer : case insensitive str, or an instance of an optimizer
         defined in PyTorch, default = None
-        The optimizer to use for training the model. If None, Adam optimizer is used.
-        If a string/Callable is passed, it must be one of the optimizers defined in
-        https://pytorch.org/docs/stable/optim.html#algorithms
+        The optimizer to use for training the model.
+        If None, Adam is used.
+
+        Permitted values:
+
+        - ``None``: the ``Adam`` optimizer is used.
+        - ``str``: case insensitive name of any optimizer in ``torch.optim``,
+          for example ``"adam"`` or ``"SGD"``. See
+          https://pytorch.org/docs/stable/optim.html#algorithms
+        - instance of a subclass of ``torch.optim.Optimizer``, for example
+          ``torch.optim.SGD(model.parameters(), lr=0.01)``.
+
+        If a str is passed, the optimizer is constructed on the parameters of the
+        network, with ``lr`` and ``optimizer_kwargs``.
     optimizer_kwargs : dict, default = None
         The keyword arguments to be passed to the optimizer.
-    callbacks : None or str or a tuple of str, default = None
+    callbacks : case insensitive str, or a tuple of str, default = None
+        The learning rate schedulers to use during training.
         Currently only learning rate schedulers are supported as callbacks.
-        If more than one scheduler is passed, they are applied sequentially in the
-        order they are passed. If None, then no learning rate scheduler is used.
-        Note: Since PyTorch learning rate schedulers need to be initialized with
-        the optimizer object, we only accept the class name (str) of the scheduler here
-        and do not accept an instance of the scheduler. As that can lead to errors
-        and unexpected behavior.
-        List of available learning rate schedulers:
-        https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+        If None, no learning rate scheduler is used.
+
+        Permitted values:
+
+        - ``None``: no learning rate scheduler is used.
+        - ``str``: case insensitive name of any learning rate scheduler in
+          ``torch.optim.lr_scheduler``, for example ``"steplr"`` or ``"StepLR"``.
+          See https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+        - tuple of ``str``: multiple schedulers, which are applied sequentially,
+          in the order in which they are passed.
+
+        Schedulers are constructed with ``callback_kwargs``. Instances are not
+        accepted, since PyTorch schedulers must be constructed with the optimizer,
+        which does not exist before ``fit`` is called.
     callback_kwargs : dict or None, default = None
         The keyword arguments to be passed to the callbacks.
     metrics : None or str or Callable or tuple of str and/or Callable, default = None
@@ -175,12 +180,6 @@ class BaseDeepRegressorTorch(BaseRegressor):
             activation_map[var] = getattr(self, var, None)
         self._callable_activations = self._instantiate_activations(activation_map)
 
-        # optimizers, criterions, callbacks will be instantiated in
-        # _instantiate_optimizer, _instantiate_criterion & _instantiate_callbacks
-        # methods respectively
-        self._all_optimizers = None
-        self._all_criterions = None
-        self._all_callbacks = None
         self._metrics_objects = None
 
     def _fit(self, X, y):
@@ -284,19 +283,22 @@ class BaseDeepRegressorTorch(BaseRegressor):
                     f"But got {type(activation)} instead."
                 )
 
-            uc_activation = LC_TO_UC_ACTIVATIONS.get(activation, activation)
-            if not _safe_import(f"torch.nn.{uc_activation}"):
+            # look up the activation of that name in torch.nn, case insensitively
+            activation_class = _lookup_class(
+                activation,
+                module_path=TORCH_NN,
+                base_class_path=TORCH_MODULE,
+            )
+            if activation_class is None:
                 raise ValueError(
-                    f"Activation '{uc_activation}' is not a valid PyTorch activation"
+                    f"Activation '{activation}' is not a valid PyTorch activation"
                     "function in torch.nn module. Please pass a valid PyTorch"
                     "activation function in torch.nn module. Refer "
                     "https://pytorch.org/docs/stable/nn.html#non-linear-activations-"
                     "weighted-sum-nonlinearity for list of valid activation functions."
                 )
 
-            callable_activations[activation_var] = _safe_import(
-                f"torch.nn.{uc_activation}"
-            )()
+            callable_activations[activation_var] = activation_class()
         return callable_activations
 
     def _instantiate_schedulers(self):
@@ -327,44 +329,30 @@ class BaseDeepRegressorTorch(BaseRegressor):
         else:
             self._callbacks = self.callbacks
 
-        if self._all_callbacks is None:
-            self._all_callbacks = {
-                "lambdalr": "LambdaLR",
-                "multiplicativelr": "MultiplicativeLR",
-                "steplr": "StepLR",
-                "multisteplr": "MultiStepLR",
-                "constantlr": "ConstantLR",
-                "linearlr": "LinearLR",
-                "exponentiallr": "ExponentialLR",
-                "polynomiallr": "PolynomialLR",
-                "cosineannealinglr": "CosineAnnealingLR",
-                "chainedscheduler": "ChainedScheduler",
-                "sequentiallr": "SequentialLR",
-                "reducelronplateau": "ReduceLROnPlateau",
-                "cycliclr": "CyclicLR",
-                "onecyclelr": "OneCycleLR",
-                "cosineannealingwarmrestarts": "CosineAnnealingWarmRestarts",
-            }
         schedulers = []
         for scheduler in self._callbacks:
             if isinstance(scheduler, str):
-                if scheduler.lower() in self._all_callbacks:
-                    scheduler_class = _safe_import(
-                        f"torch.optim.lr_scheduler.{self._all_callbacks[scheduler.lower()]}"  # noqa: E501
-                    )
-                    if self.callback_kwargs:
-                        schedulers.append(
-                            scheduler_class(self._optimizer, **self.callback_kwargs)
-                        )
-                    else:
-                        schedulers.append(scheduler_class(self._optimizer))
-                else:
+                # look up the scheduler of that name in torch.optim.lr_scheduler,
+                # case insensitively
+                scheduler_class = _lookup_class(
+                    scheduler,
+                    module_path=TORCH_SCHEDULERS,
+                    base_class_path=TORCH_SCHEDULER,
+                )
+                if scheduler_class is None:
+                    all_callbacks = _lc_class_dict(TORCH_SCHEDULERS, TORCH_SCHEDULER)
                     raise ValueError(
                         f"Unknown learning rate scheduler: {scheduler}. "
-                        f"Please pass one/many of {', '.join(self._all_callbacks)} "
+                        f"Please pass one/many of {', '.join(sorted(all_callbacks))} "
                         "as a callback. Currently only learning rate schedulers are "
                         "supported as callbacks."
                     )
+                if self.callback_kwargs:
+                    schedulers.append(
+                        scheduler_class(self._optimizer, **self.callback_kwargs)
+                    )
+                else:
+                    schedulers.append(scheduler_class(self._optimizer))
             else:
                 raise TypeError(
                     "Callbacks can either be None, a str or a tuple of str representing"
@@ -381,41 +369,28 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 self.network.parameters(), lr=self.lr
             )
             return opt
-        if self._all_optimizers is None:
-            self._all_optimizers = {
-                "adadelta": "Adadelta",
-                "adagrad": "Adagrad",
-                "adam": "Adam",
-                "adamw": "AdamW",
-                "sparseadam": "SparseAdam",
-                "adamax": "Adamax",
-                "asgd": "ASGD",
-                "lbfgs": "LBFGS",
-                "nadam": "NAdam",
-                "radam": "RAdam",
-                "rmsprop": "RMSprop",
-                "rprop": "Rprop",
-                "sgd": "SGD",
-            }
         # import the base class for all optimizers in PyTorch
-        torchOptimizer = _safe_import("torch.optim.Optimizer")
-        # if optimizer is a string, look it up in the available optimizers
+        torchOptimizer = _safe_import(TORCH_OPTIMIZER)
+        # if optimizer is a string, look up the optimizer of that name
+        # in torch.optim, case insensitively
         if isinstance(self.optimizer, str):
-            if self.optimizer.lower() in self._all_optimizers:
-                optimizer_class = _safe_import(
-                    f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
-                )
-                if self.optimizer_kwargs:
-                    return optimizer_class(
-                        self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
-                    )
-                else:
-                    return optimizer_class(self.network.parameters(), lr=self.lr)
-            else:
+            optimizer_class = _lookup_class(
+                self.optimizer,
+                module_path=TORCH_OPTIMIZERS,
+                base_class_path=TORCH_OPTIMIZER,
+            )
+            if optimizer_class is None:
+                all_optimizers = _lc_class_dict(TORCH_OPTIMIZERS, TORCH_OPTIMIZER)
                 raise ValueError(
                     f"Unknown optimizer: {self.optimizer}. Please pass one of "
-                    f"{', '.join(self._all_optimizers)} for `optimizer`."
+                    f"{', '.join(sorted(all_optimizers))} for `optimizer`."
                 )
+            if self.optimizer_kwargs:
+                return optimizer_class(
+                    self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
+                )
+            else:
+                return optimizer_class(self.network.parameters(), lr=self.lr)
         # if optimizer is already an instance of torch.optim.Optimizer, use it directly
         elif isinstance(self.optimizer, torchOptimizer):
             return self.optimizer
@@ -434,47 +409,26 @@ class BaseDeepRegressorTorch(BaseRegressor):
         if not self.criterion:
             loss = _safe_import("torch.nn.MSELoss")()
             return loss
-        if self._all_criterions is None:
-            self._all_criterions = {
-                "l1loss": "L1Loss",
-                "mseloss": "MSELoss",
-                "crossentropyloss": "CrossEntropyLoss",
-                "ctcloss": "CTCLoss",
-                "nllloss": "NLLLoss",
-                "poissonnllloss": "PoissonNLLLoss",
-                "gaussiannllloss": "GaussianNLLLoss",
-                "kldivloss": "KLDivLoss",
-                "bceloss": "BCELoss",
-                "bcewithlogitsloss": "BCEWithLogitsLoss",
-                "marginrankingloss": "MarginRankingLoss",
-                "hingeembeddingloss": "HingeEmbeddingLoss",
-                "multilabelmarginloss": "MultiLabelMarginLoss",
-                "huberloss": "HuberLoss",
-                "smoothl1loss": "SmoothL1Loss",
-                "softmarginloss": "SoftMarginLoss",
-                "multilabelsoftmarginloss": "MultiLabelSoftMarginLoss",
-                "cosineembeddingloss": "CosineEmbeddingLoss",
-                "multimarginloss": "MultiMarginLoss",
-                "tripletmarginloss": "TripletMarginLoss",
-                "tripletmarginwithdistanceloss": "TripletMarginWithDistanceLoss",
-            }
         # import the base class for all loss functions in PyTorch
-        torchLossFunction = _safe_import("torch.nn.modules.loss._Loss")
-        # if criterion is a string, look it up in the available criterions
+        torchLossFunction = _safe_import(TORCH_LOSS)
+        # if criterion is a string, look up the loss function of that name
+        # in torch.nn, case insensitively
         if isinstance(self.criterion, str):
-            if self.criterion.lower() in self._all_criterions:
-                criterion_class = _safe_import(
-                    f"torch.nn.{self._all_criterions[self.criterion.lower()]}"
-                )
-                if self.criterion_kwargs:
-                    return criterion_class(**self.criterion_kwargs)
-                else:
-                    return criterion_class()
-            else:
+            criterion_class = _lookup_class(
+                self.criterion,
+                module_path=TORCH_NN,
+                base_class_path=TORCH_LOSS,
+            )
+            if criterion_class is None:
+                all_criterions = _lc_class_dict(TORCH_NN, TORCH_LOSS)
                 raise ValueError(
                     f"Unknown criterion: {self.criterion}. Please pass one "
-                    f"of {', '.join(self._all_criterions)} for `criterion`."
+                    f"of {', '.join(sorted(all_criterions))} for `criterion`."
                 )
+            if self.criterion_kwargs:
+                return criterion_class(**self.criterion_kwargs)
+            else:
+                return criterion_class()
         # if criterion is already an instance of torch.nn.modules.loss._Loss, use it
         elif isinstance(self.criterion, torchLossFunction):
             return self.criterion
