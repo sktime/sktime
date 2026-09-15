@@ -123,8 +123,17 @@ class _BaseWindowForecaster(BaseForecaster):
     def _get_last_window(self):
         """Select last window."""
         # Get the start and end points of the last window.
-        cutoff = self._cutoff
-        start = _shift(cutoff, by=-self.window_length_ + 1)
+        if hasattr(self._y.index, "freq"):
+            if self._y.index.freq is None:
+                freq_inferred = pd.infer_freq(self._y.index)
+                cutoff_with_freq = self._cutoff
+                cutoff_with_freq.freq = freq_inferred
+            else:
+                cutoff_with_freq = self._cutoff
+        else:
+            cutoff_with_freq = self._cutoff
+        cutoff = cutoff_with_freq
+        start = _shift(cutoff_with_freq, by=-self.window_length_ + 1)
         cutoff = cutoff[0]
 
         # Get the last window of the endogenous variable.
