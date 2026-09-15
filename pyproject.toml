@@ -233,8 +233,6 @@ mlflow_tests = [
 notebooks = [
   # needed for the blog post notebooks
   "matplotlib",
-  "numpy<2",
-  "scipy<1.16",
   "pmdarima",
   "seaborn",
   # needed for the examples
