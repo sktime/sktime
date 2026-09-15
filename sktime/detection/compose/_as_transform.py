@@ -148,9 +148,9 @@ class DetectorAsTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
-        from sktime.detection.lof import SubLOF
+        from sktime.detection.dummy import DummyRegularAnomalies, ZeroAnomalies
 
-        params1 = {"estimator": SubLOF.create_test_instance()}
-        params2 = {"estimator": SubLOF.create_test_instance()}
+        params1 = {"estimator": DummyRegularAnomalies.create_test_instance()}
+        params2 = {"estimator": ZeroAnomalies.create_test_instance()}
 
         return [params1, params2]
