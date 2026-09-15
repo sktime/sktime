@@ -41,3 +41,29 @@ def test_convert_MvS_to_UvS_as_Series():
     w = convert_MvS_to_UvS_as_Series(z)
 
     assert y.name == w.name
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+@pytest.mark.parametrize("n_vars", [1, 2, 3])
+def test_numpyflat_to_numpy3d_roundtrip_with_store(n_vars):
+    """Tests for failure condition in bug #11092.
+
+    from_numpy3d_to_numpyflat records the second dimension in store, but
+    from_numpyflat_to_numpy3d built the restore shape with true division, so
+    reshape was handed a float and raised TypeError for every second dimension.
+    """
+    import numpy as np
+
+    from sktime.datatypes import convert
+
+    X = np.random.rand(4, n_vars, 6)
+    store = {}
+
+    flat = convert(X, "numpy3D", "numpyflat", "Panel", store=store)
+    back = convert(flat, "numpyflat", "numpy3D", "Panel", store=store)
+
+    assert back.shape == X.shape
+    np.testing.assert_allclose(back, X)
