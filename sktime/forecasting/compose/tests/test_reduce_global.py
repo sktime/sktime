@@ -104,7 +104,6 @@ def y_dict():
         y_train_hier_unequal = X3.groupby(
             x_names,
             as_index=True,
-            include_groups=False,
         ).apply(lambda df: df.set_index(time_names).asfreq(freq_inferred))
     else:
         y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
