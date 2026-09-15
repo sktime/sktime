@@ -53,7 +53,7 @@ classifiers = [
 # core dependencies of sktime
 # this set should be kept minimal!
 dependencies = [
-  "joblib>=1.2.0,<1.6",  # required for parallel processing
+  "joblib>=1.2.0,<1.7",  # required for parallel processing
   "numpy>=1.21,<2.6",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
   "pandas<3.0.0,>=1.1",  # pandas is the main in-memory data container
@@ -88,7 +88,7 @@ all_extras = [
   'numba>=0.53,<0.68',
   'polars[pandas]>=0.20,<2.0',
   'seaborn>=0.11',
-  "skpro>=2,<2.15.0",
+  "skpro>=2,<2.16.0",
   'statsmodels>=0.12.1',
 ]
 
@@ -127,7 +127,7 @@ forecasting = [
   'pmdarima!=1.8.1,<2.2,>=1.8',
   'prophet<1.4,>=1.2; python_version < "3.13"',
   'skforecast<0.19,>=0.12.1; python_version < "3.14"',
-  "skpro>=2,<2.15.0",
+  "skpro>=2,<2.16.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
   'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
 ]
@@ -244,7 +244,7 @@ notebooks = [
   "pytorch-forecasting",
   "torch",
   "lightning>=2.0,<2.7",
-  "skpro",
+  "skpro>=2",
   "statsforecast",
   'numba<0.68',
 ]
