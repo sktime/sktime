@@ -881,6 +881,11 @@ class _MultioutputReducer(_Reducer):
 
         # Iterate over estimators/forecast horizon
         y_pred = self.estimator_.predict(X_pred)
+        # sktime regressors (unlike sklearn ones) can return a pd.DataFrame,
+        # which has no .ravel(); coerce to numpy first, same as _RecursiveReducer
+        # does for its own regressor_proba branch above.
+        if isinstance(y_pred, pd.DataFrame):
+            y_pred = y_pred.values
         return y_pred.ravel()
 
 

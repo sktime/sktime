@@ -32,6 +32,7 @@ from sktime.forecasting.compose._reduce import _sliding_window_transform
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.regression.base import BaseRegressor
+from sktime.regression.dummy import DummyRegressor as TimeSeriesDummyRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.split.tests.test_split import _get_windows
@@ -293,6 +294,32 @@ def test_dummy_regressor_mean_prediction_endogenous_only(
     # the expected result should be the mean of the remaining values.
     expected = np.mean(y_train[effective_window_length:])
     np.testing.assert_array_almost_equal(actual, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.regression"]),
+    reason="run test only if forecasting or regression module has changed",
+)
+def test_multioutput_time_series_regression_forecaster_with_sktime_regressor():
+    """Test multioutput reduction with a sktime (not sklearn) regressor.
+
+    sktime regressors can return predictions as a pd.DataFrame rather than a
+    numpy array, unlike sklearn regressors. Regression test for bug report
+    #10896, where this raised ``AttributeError: 'DataFrame' object has no
+    attribute 'ravel'``.
+    """
+    y = load_airline()[:60]
+    fh = [1, 2, 3]
+
+    forecaster = MultioutputTimeSeriesRegressionForecaster(
+        estimator=TimeSeriesDummyRegressor(), window_length=5
+    )
+    forecaster.fit(y, fh=fh)
+    y_pred = forecaster.predict(fh=fh)
+
+    assert isinstance(y_pred, pd.Series)
+    assert len(y_pred) == len(fh)
+    assert y_pred.notna().all()
 
 
 _REGISTRY = [
