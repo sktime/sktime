@@ -900,14 +900,13 @@ class BaseDetector(BaseEstimator):
         """
         if not isinstance(y_sparse, pd.DataFrame):
             y_sparse = pd.DataFrame(y_sparse, dtype="int64")
-        if not hasattr(y_sparse, "ilocs") or y_sparse.ilocs.dtype != "interval":
-            # Anomaly/changepoint detection case
-            y_dense = BaseDetector._sparse_points_to_dense(y_sparse, index)
-            return y_dense
-        else:
-            # Segmentation case
-            y_dense = BaseDetector._sparse_segments_to_dense(y_sparse, index)
-            return y_dense
+        is_segmentation = isinstance(y_sparse.index, pd.IntervalIndex) or (
+            "ilocs" in y_sparse.columns
+            and isinstance(y_sparse["ilocs"].dtype, pd.IntervalDtype)
+        )
+        if not is_segmentation:
+            return BaseDetector._sparse_points_to_dense(y_sparse, index)
+        return BaseDetector._sparse_segments_to_dense(y_sparse, index)
 
     @staticmethod
     def _sparse_points_to_dense(y_sparse, index):
@@ -950,7 +949,13 @@ class BaseDetector(BaseEstimator):
             labelled -1.
         """
         if len(y_sparse) == 0:
-            return pd.DataFrame(0, index=index, dtype="int64", columns=["labels"])
+            return pd.Series(0, index=index, dtype="int64")
+
+        if isinstance(y_sparse.index, pd.IntervalIndex):
+            data = {"ilocs": y_sparse.index}
+            if len(y_sparse.columns) > 0:
+                data["labels"] = y_sparse.iloc[:, 0].to_numpy()
+            y_sparse = pd.DataFrame(data)
 
         seg_index = y_sparse.set_index("ilocs").index
         index_rg = pd.RangeIndex(len(index))
@@ -963,12 +968,10 @@ class BaseDetector(BaseEstimator):
         interval_ixs = seg_index.get_indexer(index_rg)
 
         if "labels" not in y_sparse.columns:
-            y_dense = pd.DataFrame({"labels": interval_ixs}, index=index_rg)
-            return y_dense
+            return pd.Series(interval_ixs, index=index_rg, dtype="int64")
         else:
             y_dense = y_sparse.labels.loc[interval_ixs]
-            y_dense = y_dense.reset_index(drop=True)
-            return pd.DataFrame({"labels": y_dense}, index=index_rg)
+            return pd.Series(y_dense.to_numpy(), index=index_rg, dtype="int64")
 
     @staticmethod
     def dense_to_sparse(y_dense):
