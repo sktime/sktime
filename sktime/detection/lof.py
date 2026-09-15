@@ -81,10 +81,6 @@ class SubLOF(BaseDetector):
           original paper,
         - if a float, the contamination should be in the range (0, 0.5].
 
-        .. versionchanged:: 0.22
-           The default value of ``contamination`` changed from 0.1
-           to ``'auto'``.
-
     novelty : bool, default=False
         By default, LocalOutlierFactor is only meant to be used for outlier
         detection (novelty=False). Set novelty to True if you want to use
