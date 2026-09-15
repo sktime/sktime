@@ -412,6 +412,27 @@ class SlidingWindowSegmenter(BaseTransformer):
         length of sliding window interval
 
     Used by the ShapeDTW algorithm.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.segment import SlidingWindowSegmenter
+    >>> X = pd.DataFrame({"a": [1, 2, 3, 4, 5]})
+    >>> t = SlidingWindowSegmenter(window_length=3)
+    >>> t.fit_transform(X)
+       0  1  2  3  4
+    0  1  1  2  3  4
+    1  1  2  3  4  5
+    2  2  3  4  5  5
+
+    The output always has ``window_length`` rows and as many columns as
+    there are original time points, regardless of the window size:
+
+    >>> t2 = SlidingWindowSegmenter(window_length=2)
+    >>> t2.fit_transform(X)
+       0  1  2  3  4
+    0  1  1  2  3  4
+    1  1  2  3  4  5
     """
 
     _tags = {

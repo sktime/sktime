@@ -24,11 +24,11 @@ __all__ = ["BaseDetector"]
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.validation.series import check_series
 
 
@@ -103,7 +103,6 @@ class BaseDetector(BaseEstimator):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass

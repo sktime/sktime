@@ -1356,7 +1356,9 @@ class RandomShapeletTransform(BaseTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {"max_shapelets": 5, "n_shapelet_samples": 50, "batch_size": 20}
+        params1 = {"max_shapelets": 5, "n_shapelet_samples": 50, "batch_size": 20}
+        params2 = {"max_shapelets": 3, "n_shapelet_samples": 27, "batch_size": 10}
+        return [params1, params2]
 
     def _extract_random_shapelet(self, X, y, i, shapelets, max_shapelets_per_class):
         from sktime.transformations.shapelet_transform import _shapelet_transform_numba

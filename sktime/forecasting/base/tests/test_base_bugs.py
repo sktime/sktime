@@ -3,6 +3,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
 import pytest
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.forecasting.compose import ForecastByLevel, TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -15,7 +16,6 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.difference import Differencer
 from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 @pytest.mark.skipif(
@@ -79,3 +79,69 @@ def test_predict_residuals_conversion():
     result = pipe.predict_residuals()
 
     assert type(result) is type(y_train)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.base")
+    or not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="run only if base module has changed",
+)
+def test_statsmodels_adapter_random_state_handling():
+    """Regression test for #10968: avoid passing unsupported random_state."""
+    import pandas as pd
+
+    from sktime.forecasting.base import ForecastingHorizon
+    from sktime.forecasting.base.adapters._statsmodels import _StatsModelsAdapter
+
+    class MockPredictionResults:
+        def conf_int(self, alpha):
+            return pd.DataFrame([[0, 1], [0, 1], [0, 1]], columns=["lower", "upper"])
+
+    class MockNonETSModel:
+        def get_prediction(self, start=None, end=None, **kwargs):
+            assert "random_state" not in kwargs
+            return MockPredictionResults()
+
+    class MockETSModel:
+        def get_prediction(
+            self,
+            start=None,
+            end=None,
+            dynamic=False,
+            index=None,
+            method=None,
+            simulate_repetitions=1000,
+            **simulate_kwargs,
+        ):
+            assert simulate_kwargs["simulate_kwargs"] == {"rng": 42}
+            return MockPredictionResults()
+
+        def simulate(self, nsimulations, rng=None, **kwargs):
+            return None
+
+    class MockAdapter(_StatsModelsAdapter):
+        _tags = {
+            "capability:pred_int": True,
+        }
+
+        def __init__(self, model, random_state=None):
+            self.model = model
+            super().__init__(random_state=random_state)
+
+        def _fit_forecaster(self, y, X=None):
+            self._fitted_forecaster = self.model
+
+        @staticmethod
+        def _extract_conf_int(prediction_results, alpha):
+            return prediction_results.conf_int(alpha)
+
+    y = pd.Series([1, 2, 3, 4, 5])
+    fh = ForecastingHorizon([1, 2, 3])
+
+    non_ets = MockAdapter(MockNonETSModel(), random_state=42)
+    non_ets.fit(y, fh=fh)
+    non_ets.predict_interval(fh=fh, coverage=[0.9])
+
+    ets = MockAdapter(MockETSModel(), random_state=42)
+    ets.fit(y, fh=fh)
+    ets.predict_interval(fh=fh, coverage=[0.9])

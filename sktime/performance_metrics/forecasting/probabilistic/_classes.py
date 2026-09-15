@@ -170,8 +170,10 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
             out_df = pd.DataFrame(index_df.mean(axis=0)).T
             out_df.columns = index_df.columns
             return out_df
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except RecursionError as e:
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            ) from e
 
     def evaluate_by_index(self, y_true, y_pred, multioutput=None, **kwargs):
         """Return the metric evaluated at each time point.
@@ -266,10 +268,10 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
                     **kwargs,
                 )
             return out_series
-        except RecursionError:
+        except RecursionError as e:
             raise RecursionError(
                 "Must implement one of _evaluate or _evaluate_by_index"
-            )
+            ) from e
 
     def _check_consistent_input(self, y_true, y_pred, multioutput):
         check_consistent_length(y_true, y_pred)
@@ -642,6 +644,9 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -747,6 +752,9 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -857,6 +865,9 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -1054,6 +1065,12 @@ class LogLoss(_BaseDistrForecastingMetric):
           the log-loss is computed per variable marginal, results in many scores per row
     """
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
+
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
         super().__init__(multioutput=multioutput)
@@ -1114,6 +1131,12 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
           the score is computed per variable marginal, results in many scores per row
     """
 
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
+
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
         super().__init__(multioutput=multioutput)
@@ -1171,6 +1194,12 @@ class CRPS(_BaseDistrForecastingMetric):
         * if False, is univariate CRPS:
           the score is computed per variable marginal, results in many scores per row
     """  # noqa: E501
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
@@ -1239,6 +1268,12 @@ class AUCalibration(_BaseDistrForecastingMetric):
         * if False, is univariate metric, per variable:
           the metric is computed per variable marginal, results in many scores per row
     """  # noqa: E501
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate

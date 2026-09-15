@@ -32,13 +32,13 @@ __all__ = ["convert_dict"]
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.utils.dependencies import _check_soft_dependencies
 
 # this needs to be refactored with the convert module
 MTYPE_LIST_SERIES = [

@@ -3,7 +3,11 @@
 
 import pytest
 
-from sktime.utils.dependencies import _check_dl_dependencies, _check_mlflow_dependencies
+from sktime.utils.dependencies import (
+    _check_dl_dependencies,
+    _check_mlflow_dependencies,
+    _get_lowest_compatible_python_version,
+)
 
 
 def test_all_public_exports_importable():
@@ -54,3 +58,41 @@ def test_check_mlflow_dependencies_error_when_missing():
     except ImportError:
         with pytest.raises(ModuleNotFoundError):
             _check_mlflow_dependencies(severity="error")
+
+
+class _MockEstimator:
+    """Mock estimator for testing."""
+
+    @classmethod
+    def get_class_tag(cls, tag_name):
+        return cls.python_version
+
+
+@pytest.mark.parametrize(
+    "estimator_spec,sktime_spec,expected",
+    [
+        (">=3.10", ">=3.9", "3.10"),
+        (">=3.11", ">=3.9", "3.11"),
+        (">=3.10,<3.13", ">=3.11", "3.11"),
+        ("==3.11", ">=3.10", "3.11"),
+        (">3.10", ">=3.10", "3.11"),
+        (None, ">=3.10", "3.10"),
+    ],
+)
+def test_get_lowest_compatible_python_version(
+    monkeypatch,
+    estimator_spec,
+    sktime_spec,
+    expected,
+):
+    """Test finding the lowest compatible Python version."""
+    _MockEstimator.python_version = estimator_spec
+
+    monkeypatch.setattr(
+        "sktime.utils.dependencies._dependencies.metadata",
+        lambda _: {"Requires-Python": sktime_spec},
+    )
+
+    result = _get_lowest_compatible_python_version(_MockEstimator)
+
+    assert result == expected

@@ -184,7 +184,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 1.1.0 - check why this cannot be easily removed
+                        # todo 1.2.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -1366,7 +1366,7 @@ class TransformedTargetForecaster(_Pipeline):
 
         # if the inner forecaster natively supports _predict_proba,
         # delegate and wrap in a TransformedDistribution
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if not _check_soft_dependencies("skpro", severity="none"):
             raise RuntimeError(

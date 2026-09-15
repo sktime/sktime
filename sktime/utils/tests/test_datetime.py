@@ -7,6 +7,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline
 from sktime.datatypes import VectorizedDF
@@ -19,7 +20,6 @@ from sktime.utils.datetime import (
     infer_freq,
     set_hier_freq,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
@@ -61,20 +61,20 @@ def test_coerce_duration_to_int() -> None:
     assert _coerce_duration_to_int(duration=3) == 3
 
     duration = pd.offsets.Minute(75)
-    assert _coerce_duration_to_int(duration=duration, freq="25T") == 3
+    assert _coerce_duration_to_int(duration=duration, freq="25min") == 3
 
     duration = pd.Timedelta(minutes=75)
-    assert _coerce_duration_to_int(duration=duration, freq="25T") == 3
+    assert _coerce_duration_to_int(duration=duration, freq="25min") == 3
 
     duration = pd.to_timedelta([75, 100], unit="m")
     pd.testing.assert_index_equal(
-        _coerce_duration_to_int(duration=duration, freq="25T"),
+        _coerce_duration_to_int(duration=duration, freq="25min"),
         pd.Index([3, 4], dtype=int),
     )
 
     duration = pd.Index([pd.offsets.Minute(75), pd.offsets.Minute(100)])
     pd.testing.assert_index_equal(
-        _coerce_duration_to_int(duration=duration, freq="25T"),
+        _coerce_duration_to_int(duration=duration, freq="25min"),
         pd.Index([3, 4], dtype=int),
     )
 

@@ -45,6 +45,7 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -59,7 +60,6 @@ from sktime.datatypes import (
 )
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.datatypes._series_as_panel import convert_to_scitype
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import (
     is_sklearn_classifier,
     is_sklearn_clusterer,
@@ -221,7 +221,6 @@ class BaseTransformer(BaseEstimator):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass

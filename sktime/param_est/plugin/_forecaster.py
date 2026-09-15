@@ -285,10 +285,11 @@ class PluginParamsForecaster(_DelegatedForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.utils.dependencies import _check_estimator_deps
 
         # use of dictionary to plug "foo" parameter into "sp", uses mock param_est
         params1 = {

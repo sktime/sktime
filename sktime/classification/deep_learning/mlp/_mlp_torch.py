@@ -23,16 +23,44 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         Dimensionality of the hidden layers.
     n_layers : int, default = 4
         Number of hidden layers.
-    activation : str or None or an instance of activation functions defined in
-        torch.nn, default = None
-        Activation function used in the fully connected output layer. Recommended
-        Callable instance of 'Sigmoid', 'Softmax', 'LogSoftmax', 'LogSigmoid', None
-        If None, then no activation function is applied.
-    activation_hidden : str or None or an instance of activation functions defined in
-        torch.nn, default = "ReLU"
-        The activation function applied inside the hidden layers of the MLP.
-        Recommended Callable instance of 'ReLU', 'LeakyReLU', 'ELU', 'PReLU', 'GELU',
-        'SELU', 'RReLU', 'CELU', 'Tanh', 'Hardtanh', None
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``Sigmoid``, ``Softmax``, ``LogSoftmax``,
+        ``LogSigmoid``.
+    activation_hidden : str, Callable, or None, default="ReLU"
+        Activation applied to the hidden layers of the MLP.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``LeakyReLU``, ``ELU``, ``PReLU``, ``GELU``,
+        ``SELU``, ``RReLU``, ``CELU``, ``Tanh``, ``Hardtanh``.
     bias : bool, default = True
         If False, then the layer does not use bias weights.
     dropout : float or tuple of floats, default = (0.1, 0.2, 0.2, 0.3)
@@ -46,7 +74,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         connected output layer, with dropout probability equal to fc_dropout.
     num_epochs : int, default = 100
         The number of epochs to train the model.
-    optimizer : case insensitive str or None or an instance of optimizers
+    optimizer : case insensitive str or None, or a class or instance of optimizers
         defined in torch.optim, default = "Adam"
         The optimizer to use for training the model. List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
@@ -117,7 +145,10 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # CI and test tags
+        # ----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.networks.mlp._mlp_torch"],
         "tests:python_dependencies": "torchmetrics",
     }
 
@@ -322,7 +353,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         }  # functionally equivalent to params2 for multi-class classification
         params = [params1, params2, params3, params4, params5]
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         if _check_soft_dependencies("torchmetrics", severity="none"):
             params.append(

@@ -1,10 +1,10 @@
 """Tests for using OptionalPassthrough."""
 
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import OptionalPassthrough
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

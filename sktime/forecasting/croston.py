@@ -134,6 +134,76 @@ class Croston(BaseForecaster):
                 p += 1
         self._f = f
 
+        # terminal state of the recursion, so that ``_update`` can continue it
+        # incrementally instead of refitting from scratch. ``p`` in particular
+        # is not recoverable from ``f`` alone, but is needed to smooth the
+        # interval estimate at the next non-zero observation.
+        self._q_last = q[-1]
+        self._a_last = a[-1]
+        self._p = p
+        self._seen_demand = bool(np.any(y > 0))
+
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters on new data.
+
+        Continues Croston's recursion from the state persisted by ``_fit``,
+        rather than refitting on the full history.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Time series with which to update the forecaster. Contains only the
+            new observations, not the full history.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if not update_params:
+            return self
+
+        y = y.to_numpy().flatten()
+        n_new = len(y)
+        if n_new == 0:
+            return self
+
+        # If ``_fit`` saw no non-zero demand, its initialization was degenerate
+        # (``argmax`` on an all-zero series returns 0), and the recursion state
+        # does not correspond to what a fit on the concatenated series would
+        # produce. Refitting on the accumulated history restores exactness.
+        if not self._seen_demand and np.any(y > 0):
+            return self._fit(y=self._y, X=X, fh=None)
+
+        smoothing = self.smoothing
+
+        q, a, f = np.full((3, n_new + 1), np.nan)
+        q[0], a[0], f[0] = self._q_last, self._a_last, self._f[-1]
+        p = self._p
+
+        for t in range(0, n_new):
+            if y[t] > 0:
+                q[t + 1] = smoothing * y[t] + (1 - smoothing) * q[t]
+                a[t + 1] = smoothing * p + (1 - smoothing) * a[t]
+                f[t + 1] = q[t + 1] / a[t + 1]
+                p = 1
+            else:
+                q[t + 1] = q[t]
+                a[t + 1] = a[t]
+                f[t + 1] = f[t]
+                p += 1
+
+        self._f = np.concatenate([self._f, f[1:]])
+        self._q_last = q[-1]
+        self._a_last = a[-1]
+        self._p = p
+        self._seen_demand = self._seen_demand or bool(np.any(y > 0))
+
         return self
 
     def _predict(

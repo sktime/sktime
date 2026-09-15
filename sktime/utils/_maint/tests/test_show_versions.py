@@ -3,12 +3,13 @@
 import pathlib
 import uuid
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.utils._maint._show_versions import (
     DEFAULT_DEPS_TO_SHOW,
     _get_deps_info,
     show_versions,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def test_show_versions_runs():

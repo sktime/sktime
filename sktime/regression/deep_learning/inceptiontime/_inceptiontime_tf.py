@@ -52,6 +52,15 @@ class InceptionTimeRegressor(BaseDeepRegressor):
     -----
     ..[1] Fawaz et. al, InceptionTime: Finding AlexNet for Time Series
     Classification, Data Mining and Knowledge Discovery, 34, 2020
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.inceptiontime import InceptionTimeRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> regressor = InceptionTimeRegressor(n_epochs=20, batch_size=4)  # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train)  # doctest: +SKIP
+    InceptionTimeRegressor(...)
     """
 
     _tags = {
@@ -60,6 +69,10 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "james-large", "noxthot"],
         "maintainers": ["james-large", "niles05apr"],
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_tf"],
     }
 
     def __init__(
@@ -110,7 +123,6 @@ class InceptionTimeRegressor(BaseDeepRegressor):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         network_params = {
@@ -241,7 +253,7 @@ class InceptionTimeRegressor(BaseDeepRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

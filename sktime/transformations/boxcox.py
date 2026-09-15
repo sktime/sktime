@@ -1,4 +1,4 @@
-"""Implemenents Box-Cox and Log Transformations."""
+"""Implements Box-Cox and Log Transformations."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 
@@ -6,9 +6,9 @@ __author__ = ["mloning", "aiwalter", "fkiraly"]
 __all__ = ["BoxCoxTransformer", "LogTransformer"]
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation import is_int
 
 

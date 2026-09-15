@@ -10,6 +10,7 @@ import pandas as pd
 from numpy.fft import rfft
 
 from sktime.transformations.base import BaseTransformer
+from sktime.utils.datetime import _to_offset_compat
 
 
 class FourierFeatures(BaseTransformer):
@@ -313,11 +314,11 @@ class FourierFeatures(BaseTransformer):
             since_prev_timedelta = datetime - prev
             return since_prev_timedelta / period_timedelta
 
-        offset = pd.tseries.frequencies.to_offset(period_str)
+        offset = _to_offset_compat(period_str)
         offset_boundaries = pd.date_range(
             start=np.amin(datetime_index) - offset,
             end=np.amax(datetime_index) + offset,
-            freq=period_str,
+            freq=offset,
             tz=datetime_index.tz,
         )
 

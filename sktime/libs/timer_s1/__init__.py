@@ -216,7 +216,7 @@ All code contained is released under the license below.
    limitations under the License.
 """
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", "transformers", severity="none"):
     from sktime.libs.timer_s1.configuration_TimerS1 import TimerS1Config

@@ -6,6 +6,7 @@ This module provides an ``sktime`` forecaster wrapping the local Timer-S1
 
 - zero-shot prediction through :meth:`fit` + :meth:`predict`
 - quantile prediction through :meth:`predict_quantiles`
+- distributional prediction through :meth:`predict_proba`
 
 Model training and fine-tuning are not supported at the moment, though they may
 be added in future. Calling :meth:`fit` only loads the model and stores the
@@ -45,8 +46,13 @@ class TimerS1Forecaster(BaseForecaster):
     - Timer-S1 training is currently not supported, but may be added in future.
       The estimator performs only zero-shot forecasting from a loaded or
       randomly initialized model.
-    - Quantile prediction is only available for quantiles present in
-      ``model.config.quantiles``.
+    - Quantile prediction via ``predict_quantiles`` is only available for
+      quantiles present in ``model.config.quantiles``.
+    - Distributional prediction via ``predict_proba`` returns a ``skpro``
+      ``HistogramQPD`` parameterized by the native quantile grid
+      ``model.config.quantiles``: it interpolates linearly between adjacent
+      native quantiles, and (via ``tails="mass"``) clamps levels outside the
+      native grid to the nearest native quantile.
     - Loaded models are cached via a multiton helper keyed by model-loading
       inputs to avoid repeated model instantiation.
     - The default Timer-S1 checkpoint has 8 billion parameters. For most
@@ -391,6 +397,45 @@ class TimerS1Forecaster(BaseForecaster):
         )
 
         return pred_quantiles
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return fully probabilistic forecasts.
+
+        private _predict_proba containing the core logic, called from predict_proba
+
+        Parameters
+        ----------
+        fh : int, list, np.array or ForecastingHorizon (not optional)
+            The forecasting horizon encoding the time stamps to forecast at.
+            if has not been passed in fit, must be passed, not optional
+        X : sktime time series object, optional (default=None)
+            Exogeneous time series for the forecast
+        marginal : bool, optional (default=True)
+            whether returned distribution is marginal by time index
+
+        Returns
+        -------
+        pred_dist : sktime BaseDistribution
+            predictive distribution, ``HistogramQPD`` parameterized by the
+            native quantile grid ``model.config.quantiles``
+        """
+        from skpro.distributions import HistogramQPD
+
+        self.model_ = self._load_model()
+
+        quantiles = [round(i, 3) for i in self.model_.config.quantiles]
+        preds = self._predict_quantiles(fh=fh, X=X, alpha=quantiles)
+
+        pred_index = preds.index
+        name = self.context_.name if self.context_.name is not None else 0
+        columns = pd.Index([name])
+
+        # rows of q_df are (quantile level, time index), see HistogramQPD docs
+        row_index = pd.MultiIndex.from_product([quantiles, pred_index])
+        data = preds.to_numpy().T.reshape(-1, 1)
+        q_df = pd.DataFrame(data, index=row_index, columns=columns)
+
+        return HistogramQPD(q_df, tails="mass", index=pred_index, columns=columns)
 
     def _load_model(self):
         """Load or retrieve a cached Timer-S1 model instance.
