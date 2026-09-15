@@ -105,16 +105,12 @@ def y_dict():
             x_names,
             as_index=True,
             include_groups=False,
-        ).apply(
-            lambda df: df.set_index(time_names).asfreq(freq_inferred),
-            **kwargs,
-        )
+        ).apply(lambda df: df.set_index(time_names).asfreq(freq_inferred))
     else:
         y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
             lambda df: df.drop(x_names, axis=1)
             .set_index(time_names)
             .asfreq(freq_inferred),
-            **kwargs,
         )
     y_dict["y_train_hier_unequal"] = y_train_hier_unequal
 
