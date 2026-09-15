@@ -420,11 +420,25 @@ class BaggingForecaster(BaseForecaster):
         from skbase.utils.dependencies import _check_soft_dependencies
 
         from sktime.forecasting.compose import YfromX
-        from sktime.transformations.bootstrap import MovingBlockBootstrapTransformer
+        from sktime.forecasting.naive import NaiveForecaster
+        from sktime.transformations.bootstrap import (
+            MovingBlockBootstrapTransformer,
+            RandomBlockBootstrapTransformer,
+        )
 
         mbb = MovingBlockBootstrapTransformer(block_length=6, n_series=3)
         fcst = YfromX.create_test_instance()
-        params = [{"bootstrap_transformer": mbb, "forecaster": fcst}]
+        params_1 = {"bootstrap_transformer": mbb, "forecaster": fcst}
+
+        rbb = RandomBlockBootstrapTransformer(
+            min_block_size=3, max_block_size=7, random_state=42
+        )
+        naive_fcst = NaiveForecaster(strategy="drift")
+        params_2 = {
+            "bootstrap_transformer": rbb,
+            "forecaster": naive_fcst,
+        }
+        params = [params_1, params_2]
 
         # the default param set causes a statsmodels based estimator
         # to be created as bootstrap_transformer
