@@ -17,8 +17,12 @@ class _SklVersionBridgeMixin:
     def _validate_data_version_safe(self, **kwargs):
         """Validate data using the version-safe method."""
         if self._sklearn_15_or_lower():
+            if "ensure_all_finite" in kwargs:
+                kwargs["force_all_finite"] = kwargs.pop("ensure_all_finite")
             return self._validate_data(**kwargs)
         else:
             from sklearn.utils.validation import validate_data
 
+            if "force_all_finite" in kwargs:
+                kwargs["ensure_all_finite"] = kwargs.pop("force_all_finite")
             return validate_data(self, **kwargs)
