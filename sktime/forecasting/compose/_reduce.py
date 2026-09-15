@@ -1447,8 +1447,8 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
         """
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
 
+        from sktime.pipeline import make_pipeline
         from sktime.transformations.panel.reduce import Tabularizer
 
         params1 = {
@@ -1527,8 +1527,8 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
         """
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
 
+        from sktime.pipeline import make_pipeline
         from sktime.transformations.panel.reduce import Tabularizer
 
         params1 = {
