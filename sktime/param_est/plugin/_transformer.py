@@ -228,16 +228,23 @@ class PluginParamsTransformer(_DelegatedTransformer):
             "param_est": FixedParams({"foo": 12}),
             "params": {"power": "foo"},
         }
-        params = [params1]
+        # explicit string reference to "power", the same branch params3 covers,
+        # but through FixedParams so it holds without statsmodels
+        params2 = {
+            "transformer": ExponentTransformer(),
+            "param_est": FixedParams({"power": 2}),
+            "params": "power",
+        }
+        params = [params1, params2]
 
         # uses a "real" param est that depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
             # explicit reference to a parameter "sp", present in both estimators
-            params2 = {
+            params3 = {
                 "transformer": Deseasonalizer(),
                 "param_est": SeasonalityACF(),
                 "params": "sp",
             }
-            params = params + [params2]
+            params = params + [params3]
 
         return params
