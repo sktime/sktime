@@ -1,6 +1,6 @@
 """fABBA - A Time Series Symbolic Representation.
 
-Implentation derived from following library
+Implementation derived from following library
 
 {https://github.com/nla-group/fABBA/tree/master?tab=readme-ov-file}.
 
@@ -68,26 +68,26 @@ class FABBA(BaseTransformer):
     scl : float, optional (default=1, greater equal 0)
         scaling factor for length in clustering
 
-    if_parition: bool, optinal(default=False)
-        determines if to parition series for parallel processing
+    if_partition: bool, optional (default=False)
+        determines if to partition series for parallel processing
         used only if input is a single series
-        uses parition_rate or num_partition or parition_idx
+        uses partition_rate or num_partition or partition_idx
 
     partition_rate : float, optional (default=None, greater equal 0)
         rate to determine number of partitions for parallel processing
-        used only if input is a single series and if_parition is True
+        used only if input is a single series and if_partition is True
         if partition_rate is None, number of partitions is set to
         number of processors
 
     num_partition : int, optional (default=None, greater equal 1)
         number of partitions for parallel processing
-        used only if input is a single series and if_parition is True
+        used only if input is a single series and if_partition is True
         if partition is None, number of partitions is set based on partition_rate
 
     partition_idx : list(int), optional (default=None, list of int greater equal 0)
         indexes to partition on for parallel processing
-        used only if input is a single series and if_parition is True
-        if partition_idx is None, number of partitions is set based on parition
+        used only if input is a single series and if_partition is True
+        if partition_idx is None, number of partitions is set based on partition
 
     max_len : int, optional (default=np.inf, greater equal 1 or -1)
         maximum length of segments for polygonal chain approximation
@@ -183,7 +183,7 @@ class FABBA(BaseTransformer):
         "python_dependencies": None,
         "tests:skip_by_name": [
             "test_fit_idempotent",  # numpy3d not supported for unequal length series
-            "test_multiprocessing_idempotent",  # if_parition true causes issues
+            "test_multiprocessing_idempotent",  # if_partition true causes issues
         ],
     }
 
@@ -346,14 +346,14 @@ class FABBA(BaseTransformer):
             if single_series.dtype != "float64":
                 single_series = np.asarray(single_series).astype("float64")
 
-            # if parition is to be done
+            # if partition is to be done
             if self.if_partition:
                 # No point in more jobs than series len
                 if n_jobs > len(single_series):
                     n_jobs = 1
 
                 # Partition the time series
-                # If not given index to parition at
+                # If not given index to partition at
                 if self.partition_idx:
                     if self.num_partition is None:
                         if self.partition_rate is None:
@@ -386,10 +386,10 @@ class FABBA(BaseTransformer):
                         single_series[i * interval : (i + 1) * interval]
                         for i in range(partition)
                     ]
-                # if given index to parition at
+                # if given index to partition at
                 else:
                     partition_idx = sorted(set(self.partition_idx))
-                    # If parition_idx out of bounds raise error
+                    # If partition_idx out of bounds raise error
                     if (
                         partition_idx[0] < 0
                         or partition_idx[-1] > single_series.shape[0]
@@ -406,17 +406,17 @@ class FABBA(BaseTransformer):
                     if n_jobs > len(partition_idx) - 1:
                         n_jobs = len(partition_idx) - 1
 
-                    # Make list of series from paritioning
+                    # Make list of series from partitioning
                     series = [
                         single_series[partition_idx[i] : partition_idx[i + 1]]
                         for i in range(len(partition_idx) - 1)
                     ]
-            # if no parition
+            # if no partition
             else:
                 # to prevent useless processors
                 n_jobs = 1
 
-                # no parition
+                # no partition
                 series = [single_series]
 
         # if multiple series then convert them to list of ndarray
@@ -531,10 +531,10 @@ class FABBA(BaseTransformer):
                     if (norm_data[j] - norm_data[start]) > self.alpha:
                         break
 
-                    # above condition doesn't gurantee points are close in actual
+                    # above condition doesn't guarantee points are close in actual
                     # space since sorting might be done in a way that makes sorted
-                    # distances different than acutal distances
-                    # thus we need to confirm acutal distance is within tol
+                    # distances different than actual distances
+                    # thus we need to confirm actual distance is within tol
                     dist = cluster_data[j, :] - cluster_center
                     distance = np.inner(dist, dist)
                     if distance < self.alpha**2:
@@ -567,7 +567,7 @@ class FABBA(BaseTransformer):
         Returns
         -------
         symbols : list of strings
-            symbols correspoding to each label
+            symbols corresponding to each label
         alphabets : list of strings
             the alphabets used for symbolization
 
@@ -1036,7 +1036,7 @@ class FABBA(BaseTransformer):
     def _custom_pieces_to_symbols(self, pieces):
         """Convert Pieces To Symbols.
 
-        Comverts ndarray of pieces (len, inc) into symbols based on saved centers.
+        Converts ndarray of pieces (len, inc) into symbols based on saved centers.
 
         Parameters
         ----------
@@ -1140,14 +1140,14 @@ class FABBA(BaseTransformer):
             if single_series.dtype != "float64":
                 single_series = np.asarray(single_series).astype("float64")
 
-            # if parition is to be done
+            # if partition is to be done
             if self.if_partition:
                 # No point in more jobs than series len
                 if n_jobs > len(single_series):
                     n_jobs = 1
 
                 # Partition the time series
-                # If not given index to parition at
+                # If not given index to partition at
                 if self.partition_idx:
                     if self.num_partition is None:
                         if self.partition_rate is None:
@@ -1180,10 +1180,10 @@ class FABBA(BaseTransformer):
                         single_series[i * interval : (i + 1) * interval]
                         for i in range(partition)
                     ]
-                # if given index to parition at
+                # if given index to partition at
                 else:
                     partition_idx = sorted(set(self.partition_idx))
-                    # If parition_idx out of bounds raise error
+                    # If partition_idx out of bounds raise error
                     if (
                         partition_idx[0] < 0
                         or partition_idx[-1] > single_series.shape[0]
@@ -1200,17 +1200,17 @@ class FABBA(BaseTransformer):
                     if n_jobs > len(partition_idx) - 1:
                         n_jobs = len(partition_idx) - 1
 
-                    # Make list of series from paritioning
+                    # Make list of series from partitioning
                     series = [
                         single_series[partition_idx[i] : partition_idx[i + 1]]
                         for i in range(len(partition_idx) - 1)
                     ]
-            # if no parition
+            # if no partition
             else:
                 # to prevent useless processors
                 n_jobs = 1
 
-                # no parition
+                # no partition
                 series = [single_series]
 
         # if multiple series then convert them to list of ndarray
@@ -1482,7 +1482,7 @@ class FABBA(BaseTransformer):
         # Get series fromr results
         series = [res.get() for res in result]
 
-        # If was paritioned before then return original series
+        # If was partitioned before then return original series
         if self.if_partition:
             series = np.concatenate(series)
 

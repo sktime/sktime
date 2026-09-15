@@ -272,7 +272,7 @@ class VARReduce(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            Guaranteed to have a single column if scitype:y=="univariate".
+            Guaranteed to have a single column if capability:multivariate is False.
         fh : ForecastingHorizon, optional (default=None)
             The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)

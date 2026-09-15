@@ -91,7 +91,6 @@ class MrSQM(_DelegatedClassifier):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # construct the delegate - direct delegation to MrSQMClassifier

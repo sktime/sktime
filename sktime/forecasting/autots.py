@@ -225,6 +225,7 @@ class AutoTS(BaseForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_autots_custom"],
         "tests:python_dependencies": ["matplotlib"],
     }
 
@@ -309,7 +310,6 @@ class AutoTS(BaseForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         from autots import AutoTS as _autots

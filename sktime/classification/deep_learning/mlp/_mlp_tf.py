@@ -8,7 +8,6 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.deep_learning.base import BaseDeepClassifier
 from sktime.networks.mlp import MLPNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MLPClassifier(BaseDeepClassifier):
@@ -86,6 +85,10 @@ class MLPClassifier(BaseDeepClassifier):
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.mlp._mlp_tf"],
     }
 
     def __init__(
@@ -105,8 +108,6 @@ class MLPClassifier(BaseDeepClassifier):
         n_layers=3,
         hidden_dim=500,
     ):
-        _check_dl_dependencies(severity="error")
-
         self.callbacks = callbacks
         self.n_epochs = n_epochs
         self.batch_size = batch_size
@@ -237,7 +238,7 @@ class MLPClassifier(BaseDeepClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,

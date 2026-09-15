@@ -5,13 +5,13 @@ from copy import deepcopy
 
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes._adapter.dask_to_pd import (
     check_dask_frame,
     convert_dask_to_pandas,
     convert_pandas_to_dask,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 # simple pd.DataFrame fixture
 pd_fixture_simple = pd.DataFrame({"foo": [2, 3, 4], "bar": [3, 4, 5]})

@@ -127,8 +127,8 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "authors": ["johannfaouzi", "Abhay-Lejith"],
         # johannfaouzi is author of upstream pyts code
         "python_dependencies": "pyts",
-        # univariate-only controls whether internal X can be univariate/multivariate
-        # if True (only univariate), always applies vectorization over variables
+        # capability:multivariate controls whether internal X can be multivariate
+        # if False (only univariate), always applies vectorization over variables
         "capability:multivariate": False,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
@@ -136,6 +136,9 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "fit_is_empty": False,
         "y_inner_mtype": "numpy1D",
         "requires_y": True,
+        "capability:random_state": True,
+        "property:randomness": "stochastic",
+        "capability:categorical_in_X": False,
     }
 
     _estimator_attr = "_pyts_shapelet_transform"

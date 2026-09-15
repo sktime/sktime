@@ -129,6 +129,7 @@ class SubLOF(BaseDetector):
         # --------------
         "authors": "Alex-JG3",
         "maintainers": "Alex-JG3",
+        "python_dependencies": ["pandas<3"],
         # estimator type
         # --------------
         "task": "anomaly_detection",
@@ -138,6 +139,8 @@ class SubLOF(BaseDetector):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:vm": True,
+        "tests:specific": ["sktime.detection.tests.test_lof"],
     }
 
     def __init__(

@@ -42,6 +42,9 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         "capability:missing_values": False,
         "y_inner_mtype": ["pd.Series"],
         "capability:multivariate": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):

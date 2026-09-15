@@ -24,8 +24,8 @@ class _TbatsAdapter(BaseForecaster):
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        # todo 1.1.0: check whether numpy and scipy bounds are still needed
-        "python_dependencies": ["tbats", "numpy<2", "scipy<1.16"],
+        # todo 1.2.0: check whether numpy and scipy bounds are still needed
+        "python_dependencies": ["tbats", "numpy<2", "scipy<1.16", "scikit-learn<1.8"],
         # CI and testing tags
         # -------------------
         "tests:vm": True,

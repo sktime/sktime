@@ -23,23 +23,24 @@ class ForecastKnownValues(BaseForecaster):
       e.g., in combination with ReconcilerForecaster for an isolated reconciliation step
 
     When forecasting, uses ``pandas.DataFrame.reindex`` under the hood to obtain
-    predicted
-    values from ``y_known``. Parameters other than ``y_known`` are directly passed
+    predicted values from ``y_known``.
+    Parameters other than ``y_known`` are directly passed
     on to ``pandas.DataFrame.reindex``.
 
     Parameters
     ----------
     y_known : pd.DataFrame or pd.Series in one of the sktime compatible data formats
-        should contain known values that the forecaster will replay in predict
+        should contain known values that the forecaster will replay in ``predict``
         can also be in a non-pandas sktime data format, will then be coerced to pandas
     method : str or None, optional, default=None
-        one of {None, 'backfill'/'bfill', 'pad'/'ffill', 'nearest'}
-        method to use for imputing indices at which forecasts are unavailable in y_known
+        one of ``{None, 'backfill'/'bfill', 'pad'/'ffill', 'nearest'}``
+        method to use for imputing indices at which forecasts are unavailable
+        in ``y_known``
     fill_value : scalar, optional, default=np.NaN
         value to use for any missing values (e.g., if ``method`` is None)
     limit : int, optional, default=None=infinite
-        maximum number of consecutive elements to bfill/ffill if
-        ``method=bfill``/``ffill``
+        maximum number of consecutive elements to ``bfill`` / ``ffill`` if
+        ``method='bfill'``/``'ffill'``
 
     Examples
     --------

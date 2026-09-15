@@ -91,9 +91,10 @@ class CNNRegressor(BaseDeepRegressor):
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
         #
-        # testing configuration
-        # ---------------------
-        "tests:vm": True,  # run in VM due to memory requirement
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.cnn._cnn_tf"],
     }
 
     def __init__(
@@ -141,7 +142,6 @@ class CNNRegressor(BaseDeepRegressor):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self.history = None
@@ -263,7 +263,7 @@ class CNNRegressor(BaseDeepRegressor):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         param1 = {
             "n_epochs": 10,
