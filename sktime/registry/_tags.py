@@ -4007,12 +4007,6 @@ class X_y_must_have_same_index(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "X-y-must-have-same-index",
-        ["forecaster", "regressor", "transformer"],
-        "bool",
-        "do X/y in fit/update and X/fh in predict have to be same indices?",
-    ),
-    (
         "enforce_index_type",
         ["forecaster", "regressor"],
         "type",
