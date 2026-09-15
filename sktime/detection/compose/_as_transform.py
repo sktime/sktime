@@ -37,10 +37,10 @@ class DetectorAsTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.detection.compose import DetectorAsTransformer
-    >>> from sktime.detection.lof import SubLOF
+    >>> from sktime.detection.dummy import DummyRegularAnomalies
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical()
-    >>> detector = SubLOF.create_test_instance()
+    >>> detector = DummyRegularAnomalies.create_test_instance()
     >>> t = DetectorAsTransformer(detector)
     >>> t.fit(X)
     DetectorAsTransformer(...)
