@@ -6,5 +6,9 @@ This module provides functionality for selecting the coint_rank in VECM
 
 __all__ = [
     "JohansenCointegration",
+    "CointegrationEG",
+    "CointegrationPO",
 ]
 from sktime.param_est.cointegration._johansen import JohansenCointegration
+from sktime.param_est.cointegration._engle_granger import CointegrationEG
+from sktime.param_est.cointegration._phillips_ouliaris import CointegrationPO
