@@ -50,7 +50,9 @@ class TimerForecaster(BaseForecaster):
         Timer supports variable context lengths. If the series is shorter,
         the full series is used.
     device : str, default="cpu"
-        Device to run the model on. Options: "cpu", "cuda", "cuda:0", etc.
+        Device to run the model on. Options include ``"cpu"``, ``"cuda"``,
+        ``"cuda:0"``, and ``"auto"``. ``"auto"`` is passed to transformers
+        ``device_map`` and selects an available accelerator.
 
     References
     ----------
@@ -212,7 +214,7 @@ class TimerForecaster(BaseForecaster):
 
         # Timer expects shape (batch_size, seq_len)
         input_tensor = torch.tensor(
-            context, dtype=torch.float32, device=self.device
+            context, dtype=torch.float32, device=self.model_.device
         ).unsqueeze(0)
 
         with torch.no_grad():
@@ -285,9 +287,9 @@ class _CachedTimer:
 
         from sktime.libs.timer import TimerForPrediction
 
-        self._model = TimerForPrediction.from_pretrained(self.model_name)
-
-        self._model.to(self.device)
+        self._model = TimerForPrediction.from_pretrained(
+            self.model_name, device_map=self.device
+        )
         self._model.eval()
 
         return self._model
