@@ -16,7 +16,7 @@ X_train, y_train = make_classification_problem()
 
 
 def test_time_series_forest_classifier_feature_importance_availability():
-    """Test feature importance is discoverable only after fitting."""
+    """Test unfitted feature discovery does not block estimator reset."""
     classifier = TimeSeriesForestClassifier(n_estimators=2, random_state=0)
 
     assert not hasattr(classifier, "feature_importances_")

@@ -303,6 +303,8 @@ class TimeSeriesForestClassifier(
         feature_importances_ : pandas Dataframe of shape (series_length, 3)
             The feature importances for each feature type (mean, std, slope).
         """
+        # sklearn's BaseEstimator.__dir__ probes properties with hasattr. Since
+        # NotFittedError is an AttributeError subclass, this hides the property.
         self.check_is_fitted()
 
         all_importances_per_feature = {
