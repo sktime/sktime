@@ -107,13 +107,18 @@ class TimeSeriesForestClassifier(
         # --------------
         "authors": ["kkoziara", "luiszugasti", "kanand77"],
         "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
-        "python_dependencies": ["joblib"],
+        "python_dependencies": ["joblib", "scikit-learn<1.8"],
         # estimator type
         # --------------
         "capability:feature_importance": True,
         "capability:predict_proba": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.base._panel.forest._tsf"],
+        "tests:specific": ["sktime.classification.interval_based.tests.test_tsf"],
     }
 
     def __init__(
