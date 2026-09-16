@@ -3,45 +3,16 @@
 __author__ = ["benHeid"]
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch", severity="none"):
+
+def _CINNNetwork():
+    """Soft dependency isolation for the cINN network."""
+    import FrEIA.framework as Ff
+    import FrEIA.modules as Fm
     import torch
     import torch.nn as nn
 
-    NNModule = nn.Module
-else:
-
-    class NNModule:
-        """Dummy class if torch is unavailable."""
-
-
-if _check_soft_dependencies("FrEIA", severity="none"):
-    import FrEIA.framework as Ff
-    import FrEIA.modules as Fm
-
-
-class CINNNetwork:
-    """
-    Conditional Invertible Neural Network.
-
-    Parameters
-    ----------
-    horizon : int
-        Forecasting horizon.
-    cond_features : int
-        Number of features in the condition.
-    encoded_cond_size : int
-        Dimension of the encoded condition.
-    num_coupling_layers : int
-        Number of coupling layers in the cINN.
-    hidden_dim_size : int
-        Number of hidden units in the subnet.
-    activation : torch.nn.modules.Module
-        Activation function to use in the subnet.
-    """
-
-    class _CINNNetwork(NNModule):
+    class _CINNNetwork(nn.Module):
         def __init__(
             self,
             horizon,
@@ -176,6 +147,29 @@ class CINNNetwork:
             c = self._calculate_condition(c)
             return self.network(z, c=c, rev=True)[0].detach().numpy()
 
+    return _CINNNetwork
+
+
+class CINNNetwork:
+    """
+    Conditional Invertible Neural Network.
+
+    Parameters
+    ----------
+    horizon : int
+        Forecasting horizon.
+    cond_features : int
+        Number of features in the condition.
+    encoded_cond_size : int
+        Dimension of the encoded condition.
+    num_coupling_layers : int
+        Number of coupling layers in the cINN.
+    hidden_dim_size : int
+        Number of hidden units in the subnet.
+    activation : torch.nn.modules.Module
+        Activation function to use in the subnet.
+    """
+
     def __init__(
         self,
         horizon,
@@ -190,11 +184,16 @@ class CINNNetwork:
         self.encoded_cond_size = encoded_cond_size
         self.num_coupling_layers = num_coupling_layers
         self.hidden_dim_size = hidden_dim_size
-        self.activation = activation if activation is not None else nn.ReLU
+        self.activation = activation
+
+        if activation is None:
+            from torch import nn
+
+            self.activation = nn.ReLU()
 
     def build(self):
         """Build the cINN."""
-        return self._CINNNetwork(
+        return _CINNNetwork()(
             self.horizon,
             self.cond_features,
             self.encoded_cond_size,
