@@ -383,7 +383,7 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
 
         Returns
         -------
-        self
+        self : BaseObject
             Instance of class reset to a clean post-init state but retaining
             the current hyper-parameter values.
         """
@@ -406,7 +406,8 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
 
         Returns
         -------
-        Tags : sklearn.utils._tags.Tags instance
+        tags : sklearn.utils._tags.Tags
+            Tags describing the estimator for scikit-learn.
         """
         try:
             from sklearn.utils._tags import (
