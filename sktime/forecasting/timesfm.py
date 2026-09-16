@@ -230,13 +230,16 @@ class TimesFMForecaster(BaseForecaster):
         self.model_dims = model_dims
         self.per_core_batch_size = per_core_batch_size
         self.backend = backend
-        self._backend = None
         self.verbose = verbose
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-initialization setup."""
+        self._backend = _resolve_backend(self.backend)
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
@@ -301,7 +304,6 @@ class TimesFMForecaster(BaseForecaster):
             self._context_len = context_multiple * self.input_patch_len
 
         self.context = y
-        self._backend = _resolve_backend(self.backend)
         self.tfm = self._load_model()
 
     def _load_model(self):

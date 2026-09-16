@@ -206,7 +206,6 @@ class WindFMForecaster(BaseForecaster):
         self.model_path = model_path
         self.tokenizer_path = tokenizer_path
         self.device = device
-        self._device = None
         self.columns = columns
         self.freq = freq
         self.start = start
@@ -215,6 +214,10 @@ class WindFMForecaster(BaseForecaster):
         self.deterministic = deterministic
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-initialization setup."""
+        self._device = _resolve_device(self.device)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -247,8 +250,6 @@ class WindFMForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self._device = _resolve_device(self.device)
-
         if X is None:
             warn(
                 "WindFMForecaster requires weather covariates in X for meaningful "

@@ -146,7 +146,6 @@ class TiRexForecaster(BaseForecaster):
     ):
         self.model = model
         self.device = device
-        self._device = None
         self.license_accepted = license_accepted
 
         self.model_ = None
@@ -165,6 +164,10 @@ class TiRexForecaster(BaseForecaster):
                 "To print and view the license for TiRex, "
                 "call `TiRexForecaster.print_license()`"
             )
+
+    def __post_init__(self):
+        """Post-initialization setup."""
+        self._device = _resolve_device(self.device)
 
     @classmethod
     def print_license(self):
@@ -204,7 +207,6 @@ class TiRexForecaster(BaseForecaster):
         self : TiRexForecaster
             Fitted forecaster (with ``model_`` set).
         """
-        self._device = _resolve_device(self.device)
         key = _tirex_cache_key(self.model, self._device)
         self.model_ = _cached_TiRex(
             key=key, model=self.model, device=self._device

@@ -177,7 +177,6 @@ class KronosForecaster(BaseForecaster):
         self.model_path = model_path
         self.tokenizer_path = tokenizer_path
         self.device = device
-        self._device = None
         self.columns = columns
         self.freq = freq
         self.start = start
@@ -186,6 +185,10 @@ class KronosForecaster(BaseForecaster):
         self.deterministic = deterministic
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-initialization setup."""
+        self._device = _resolve_device(self.device)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -218,7 +221,6 @@ class KronosForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self._device = _resolve_device(self.device)
         self.context_ = y.copy()
         self.max_context_ = len(self.context_)
 
