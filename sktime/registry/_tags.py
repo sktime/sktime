@@ -3974,7 +3974,7 @@ class X_y_must_have_same_index(_BaseTag):
 
     For transformers, this tag indicates whether the transformer can handle
     different indices for ``X`` and ``y`` when both are provided. A value of
-    ``False`` means that the transformer requires compatible ``X`` and ``y``
+    ``True`` means that the transformer requires compatible ``X`` and ``y``
     indices.
     """
 
