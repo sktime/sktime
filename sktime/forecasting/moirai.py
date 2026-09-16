@@ -26,7 +26,8 @@ class MOIRAIForecaster(BaseForecaster):
     num_samples : int, default=100
         Number of samples to draw.
     map_location : str, default=None
-        Hardware to use for the model.
+        Hardware to use for the model. ``None`` and ``"auto"`` let the GluonTS
+        predictor select CUDA when available, otherwise CPU.
     target_dim : int, default=2
         Dimension of the target.
     deterministic : bool, default=False
@@ -366,8 +367,9 @@ class MOIRAIForecaster(BaseForecaster):
             self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
 
         # Lazy-init: load model on first access; reuse on subsequent fit() calls.
+        # Device placement happens in ``create_predictor``, which resolves
+        # ``map_location``, including ``None`` and ``"auto"``.
         self.model_ = self._init_model(prediction_length)
-        self.model_.to(self.map_location)
 
     def _predict(self, fh, X=None):
         if fh is None:
