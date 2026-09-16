@@ -23,8 +23,19 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 
 # private vendor forks in `sktime`
 
-* `granite_ttm` - a package implementing TinyTimeMixer.
-  Unofficial fork of package which is not available on pypi.
+* `chronos` - a package implementing Chronos and Chronos-Bolt.
+  Unofficial fork of the `amazon-science/chronos-forecasting` package from https://github.com/amazon-science/chronos-forecasting. Licensed under Apache 2.0.
+
+* `falcon_tst` - unofficial fork of the `ant-intl/Falcon-TST_Large`
+  model code from https://huggingface.co/ant-intl/Falcon-TST_Large.
+  Licensed under Apache 2.0.
+
+* `granite_ttm` - a package implementing the TinyTimeMixer Foundation Model.
+  Unofficial fork of the `ibm-granite/granite-tsfm` package, maintained in `sktime`. Licensed under Apache 2.0.
+
+* `kronos` - a package implementing Kronos.
+  Unofficial fork of the `shiyu-coder/Kronos` model code from
+  https://github.com/shiyu-coder/Kronos. Licensed under MIT.
 
 * `mira` - partial fork of MIRA, from [microsoft/MIRA](https://github.com/microsoft/MIRA).
   Unofficial fork of partial code specific to the forecaster. An official package on
@@ -34,14 +45,25 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
   Licensed under Apache 2.0.
 
-* `momentfm` - a package implementing the `momentfm` library, unofficial fork
-  maintained since April 2025.
+* `momentfm` - partial fork of the `momentfm` package, from
+  https://github.com/moment-timeseries-foundation-model/moment.
+  Unofficial fork of partial code specific to the forecaster.
+  Licensed under MIT.
 
 * `sundial` - partial fork of Sundial, adapted from [thuml/sundial-base-128m](https://huggingface.co/thuml/sundial-base-128m).
   Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
   Licensed under Apache 2.0.
 
-* `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
+* `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available. Licensed under Apache 2.0.
+
+* `timer` - a package implementing Timer.
+  Unofficial fork of the `thuml/timer-base-84m` model code from
+  https://huggingface.co/thuml/timer-base-84m.
+  Licensed under Apache 2.0.
+
+* `timer_s1` - a package implementing Timer-S1.
+  Unofficial fork of the `bytedance-research/Timer-S1` model code from
+  https://huggingface.co/bytedance-research/Timer-S1. Licensed under Apache 2.0.
 
 * `timemoe` - partial fork of `time-moe` package, from [Time-MoE/Time-MoE](https://github.com/Time-MoE/Time-MoE). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
 
@@ -51,12 +73,11 @@ This folder contains libraries directly distributed with, and maintained by, `sk
  the package with minimal dependencies and code specific to the forecaster.
  Official package available at [pypi](https://pypi.org/project/uni2ts/).
 
-* `windfm` - partial fork of WindFM, from
-  [shiyu-coder/WindFM](https://github.com/shiyu-coder/WindFM).
-  Unofficial fork of partial code specific to the forecaster. An official
-  package on pypi is not available.
+* `windfm` - unofficial fork of the `shiyu-coder/WindFM` model code from
+  https://github.com/shiyu-coder/WindFM. Licensed under MIT.
 
- * `xlstm_time` - fork of the [repository of the same name](https://github.com/muslehal/xLSTMTime), implementing the xLSTM forecaster, by `mushlehal`.
+* `xlstm_time` - unofficial fork of the `xLSTMTime` package, based on
+  https://github.com/muslehal/xLSTMTime. Licensed under MIT.
 
 
 # Snippets from other libraries
@@ -64,8 +85,11 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 The `libs` folder contains also some private snippets from other libraries,
 in folders starting with underscore. These should not be accessed by users of `sktime` directly.
 
-* `_aws_fortuna-enbpi` - Parts of the `EnbPI` class from aws-fortuna.
+* `_aws_fortuna_enbpi` - Parts of the `EnbPI` class from aws-fortuna.
   The installation of the original package is not working due to dependency
   mismatches.
 
 * `_keras_self_attention` - fork of some layers from the [abandoned package `keras-self-attention`](https://github.com/CyberZHG/keras-self-attention), archived in March 2024.
+
+* `_torch_self_attention` - PyTorch implementation of a sequential
+  self-attention layer used by the TapNet model.
