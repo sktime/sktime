@@ -310,3 +310,73 @@ def test_run_forwards_python_to_get_python_executable(monkeypatch):
     manager = _DummyManager()
     manager.run("script.py", requirements=["numpy"], python="3.10")
     assert manager.seen_python == "3.10"
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.env_managers")
+    or not _check_soft_dependencies("cloudpickle", severity="none"),
+    reason="run test only if env_managers changed and cloudpickle is present",
+)
+def test_attach_returns_function_result(monkeypatch):
+    """``attach`` wraps a callable so the call returns the function result."""
+    import cloudpickle
+
+    def fake_run(cmd, **kwargs):
+        payload = cloudpickle.loads(kwargs["input"])
+        result = payload["func"](*payload["args"], **payload["kwargs"])
+        return SimpleNamespace(
+            returncode=0,
+            stdout=cloudpickle.dumps(result),
+            stderr=b"",
+        )
+
+    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+
+    def mean_absolute_error(y_true, y_pred):
+        return abs(y_true - y_pred)
+
+    manager = _DummyManager()
+    mae_numpy_2_5 = manager.attach(
+        mean_absolute_error,
+        requirements=["numpy==2.5.0"],
+    )
+
+    assert mae_numpy_2_5(3, 1) == 2
+    assert "numpy==2.5.0" in manager.seen_requirements
+    assert "cloudpickle" in manager.seen_requirements
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.env_managers")
+    or not _check_soft_dependencies("cloudpickle", severity="none"),
+    reason="run test only if env_managers changed and cloudpickle is present",
+)
+def test_attach_as_decorator(monkeypatch):
+    """``@manager.attach`` and ``@manager.attach(requirements=...)`` wrap defs."""
+    import cloudpickle
+
+    def fake_run(cmd, **kwargs):
+        payload = cloudpickle.loads(kwargs["input"])
+        result = payload["func"](*payload["args"], **payload["kwargs"])
+        return SimpleNamespace(
+            returncode=0,
+            stdout=cloudpickle.dumps(result),
+            stderr=b"",
+        )
+
+    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+
+    manager = _DummyManager()
+
+    @manager.attach
+    def add(x, y):
+        return x + y
+
+    @manager.attach(requirements=["numpy==2.5.0"])
+    def sub(x, y):
+        return x - y
+
+    assert add(1, 2) == 3
+    assert sub(5, 2) == 3
+    assert add.__name__ == "add"
+    assert "numpy==2.5.0" in manager.seen_requirements
