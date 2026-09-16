@@ -293,9 +293,6 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         from sktime.classification.dictionary_based import ContractableBOSS
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.interval_based import CanonicalIntervalForest
-        from sktime.classification.interval_based import (
-            TimeSeriesForestClassifier as TSFC,
-        )
 
         if parameter_set == "results_comparison":
             cboss = ContractableBOSS(
