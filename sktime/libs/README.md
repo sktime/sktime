@@ -13,6 +13,10 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of abandoned package from July 2024,
   see [issue 6700](https://github.com/sktime/sktime/issues/6700).
 
+* `Tbats` - a package implementing BATS and TBATS.
+  Unofficial fork of abandoned package from September 2026 onwards,
+  see [sktime issue 11097](https://github.com/sktime/sktime/issues/11097).
+
 * `vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
 
@@ -26,8 +30,8 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   model code from https://huggingface.co/ant-intl/Falcon-TST_Large.
   Licensed under Apache 2.0.
 
-* `granite_ttm` - a package implementing the TinyTimeMixer Foundation Model.
-  Unofficial fork of the `ibm-granite/granite-tsfm` package, maintained in `sktime`. Licensed under Apache 2.0.
+* `granite_ttm` - a package implementing TinyTimeMixer.
+  Unofficial fork of package which is not available on pypi.
 
 * `kronos` - a package implementing Kronos.
   Unofficial fork of the `shiyu-coder/Kronos` model code from
@@ -41,16 +45,15 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
   Licensed under Apache 2.0.
 
-* `momentfm` - partial fork of the `momentfm` package, from
-  https://github.com/moment-timeseries-foundation-model/moment.
-  Unofficial fork of partial code specific to the forecaster.
-  Licensed under MIT.
+* `momentfm` - a package implementing the `momentfm` library, unofficial fork
+  maintained since April 2025.
 
 * `sundial` - partial fork of Sundial, adapted from [thuml/sundial-base-128m](https://huggingface.co/thuml/sundial-base-128m).
   Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
   Licensed under Apache 2.0.
 
-* `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available. Licensed under Apache 2.0.
+* `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code
+  specific to the forecaster. An official package on pypi is not available.
 
 * `timer` - a package implementing Timer.
   Unofficial fork of the `thuml/timer-base-84m` model code from
@@ -69,11 +72,12 @@ This folder contains libraries directly distributed with, and maintained by, `sk
  the package with minimal dependencies and code specific to the forecaster.
  Official package available at [pypi](https://pypi.org/project/uni2ts/).
 
-* `windfm` - unofficial fork of the `shiyu-coder/WindFM` model code from
-  https://github.com/shiyu-coder/WindFM. Licensed under MIT.
+* `windfm` - partial fork of WindFM, from
+  [shiyu-coder/WindFM](https://github.com/shiyu-coder/WindFM).
+  Unofficial fork of partial code specific to the forecaster. An official
+  package on pypi is not available.
 
-* `xlstm_time` - unofficial fork of the `xLSTMTime` package, based on
-  https://github.com/muslehal/xLSTMTime. Licensed under MIT.
+* `xlstm_time` - fork of the [repository of the same name](https://github.com/muslehal/xLSTMTime), implementing the xLSTM forecaster, by `mushlehal`.
 
 
 # Snippets from other libraries
