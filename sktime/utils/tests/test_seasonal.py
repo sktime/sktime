@@ -118,3 +118,26 @@ def test_pivot_sp_consistent(sp, index_type, n_timepoints, anchor_side):
     df2_pivot_values = df2_pivot.values.flatten()
     df2_pivot_values = df2_pivot_values[~np.isnan(df2_pivot_values)]
     assert np.all(df_pivot_values[1:] == df2_pivot_values)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.utils"]),
+    reason="Run if utils module has changed.",
+)
+@pytest.mark.parametrize("anchor_side", ["start", "end"])
+@pytest.mark.parametrize("freq", ["MS", "3MS", "QS", "QS-FEB", "YS-JUL"])
+def test_pivot_sp_start_of_period_freq(freq, anchor_side):
+    """Test _pivot_sp/_unpivot_sp round trip for start-of-period frequencies.
+
+    Periods have no start-of-period variant, so the frequency needs to be
+    coerced before converting to period, otherwise ``to_period`` raises.
+    """
+    index = pd.date_range("2020-01-01", periods=24, freq=freq)
+    df = pd.DataFrame({"foo": np.arange(24.0)}, index=index)
+
+    df_pivot = _pivot_sp(df, sp=4, anchor_side=anchor_side)
+    df_unpivot = _unpivot_sp(df=df_pivot, template=df)
+
+    assert len(df_unpivot) == len(df)
+    assert np.all(df_unpivot.index == df.index)
+    assert np.all(df_unpivot == df)
