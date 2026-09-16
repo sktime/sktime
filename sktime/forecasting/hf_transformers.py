@@ -337,6 +337,24 @@ class HFTransformersForecaster(BaseForecaster):
         self.peft_config = peft_config
         self.device = device
 
+        super().__init__()
+
+    def __post_init__(self):
+        """Validate optional device placement dependencies."""
+        if self.device is not None:
+            _check_soft_dependencies(
+                "accelerate",
+                severity="error",
+                obj=self,
+                msg=(
+                    f"Error in {self.__class__.__name__}: the 'accelerate' "
+                    "package is required when 'device' is set, because "
+                    "transformers uses it for device_map. Install it with "
+                    "`pip install accelerate` or "
+                    '`pip install "transformers[torch]"`.'
+                ),
+            )
+
     def _fit(self, y, X, fh):
         from transformers import AutoConfig, PreTrainedModel, Trainer, TrainingArguments
 
