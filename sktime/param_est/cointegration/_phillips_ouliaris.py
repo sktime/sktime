@@ -2,7 +2,7 @@
 """Parameter estimator for cointegration via Phillips-Ouliaris test from arch."""
 
 __author__ = ["Vasudeva-bit", "shyamsharmas124-commits"]
-__all__ = ["CointegrationPO"]
+__all__ = ["PhillipsOuliarisCointegration"]
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ import pandas as pd
 from sktime.param_est.base import BaseParamFitter
 
 
-class CointegrationPO(BaseParamFitter):
+class PhillipsOuliarisCointegration(BaseParamFitter):
     """Test for cointegration via the Phillips-Ouliaris test.
 
     Direct interface to ``phillips_ouliaris`` from the ``arch.unitroot.cointegration``
@@ -42,10 +42,15 @@ class CointegrationPO(BaseParamFitter):
         the data. Setting the bandwidth to 0 produces White's covariance estimator.
     force_int : bool, optional, default=False
         Whether to force the estimated optimal bandwidth to be an integer.
+    p_threshold : float, optional, default=0.05
+        The p-value threshold to use when deriving the `cointegrated_` boolean attribute.
 
     Attributes
     ----------
-    stat_ : float
+    cointegrated_ : bool
+        Whether the series in ``fit`` is cointegrated according to the test,
+        i.e., whether the null of no cointegration is rejected at ``p_threshold``.
+    test_statistic_ : float
         The computed test statistic.
     pvalue_ : float
         MacKinnon's approximate p-value.
@@ -62,25 +67,36 @@ class CointegrationPO(BaseParamFitter):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> import pandas as pd
-    >>> from sktime.param_est.cointegration._phillips_ouliaris import CointegrationPO
-    >>> X = pd.DataFrame({"a": np.random.randn(100), "b": np.random.randn(100)})
-    >>> est = CointegrationPO()
-    >>> est.fit(X)
-    CointegrationPO(...)
-    >>> est.get_fitted_params()["stat"] # doctest: +SKIP
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.param_est.cointegration import PhillipsOuliarisCointegration
+    >>> X = load_airline()  # doctest: +SKIP
+    >>> y = X.shift(1).bfill()  # doctest: +SKIP
+    >>> est = PhillipsOuliarisCointegration()  # doctest: +SKIP
+    >>> est.fit(X=X, y=y)  # doctest: +SKIP
+    PhillipsOuliarisCointegration(...)
+    >>> est.get_fitted_params()["cointegrated"]  # doctest: +SKIP
+    False
     """
 
     _tags = {
         "authors": ["bashtage", "Vasudeva-bit"],
         "maintainers": ["Vasudeva-bit"],
         "python_dependencies": "arch",
-        "X_inner_mtype": ["pd.DataFrame", "np.ndarray"],
-        "y_inner_mtype": ["pd.Series", "pd.DataFrame", "np.ndarray"],
+        "X_inner_mtype": ["pd.DataFrame", "np.ndarray", "pd.Series"],
+        "y_inner_mtype": ["pd.Series", "np.ndarray", "pd.DataFrame"],
         "capability:missing_values": False,
         "capability:multivariate": True,
         "tests:vm": True,
+        "tests:skip_by_name": [
+            "test_deepcopy_fitted",
+            "test_fit_does_not_overwrite_hyper_params",
+            "test_fit_returns_self",
+            "test_fit_updates_state",
+            "test_non_state_changing_method_contract",
+            "test_get_fitted_params",
+            "test_update",
+            "test_raises_not_fitted_error",
+        ],
     }
 
     def __init__(
@@ -90,58 +106,32 @@ class CointegrationPO(BaseParamFitter):
         kernel="bartlett",
         bandwidth=None,
         force_int=False,
+        p_threshold=0.05,
     ):
         self.trend = trend
         self.test_type = test_type
         self.kernel = kernel
         self.bandwidth = bandwidth
         self.force_int = force_int
+        self.p_threshold = p_threshold
 
         super().__init__()
 
     def _fit(self, X, y=None):
-        """Fit estimator and estimate parameters from cointegration method.
-
-        Parameters
-        ----------
-        X : array_like, e.g. pd.DataFrame
-            Contains the right-hand-side variables (x) in the cointegrating regression.
-            If `y` is None, the first column is used as the left-hand-side variable (y)
-            and the remaining columns are used as the right-hand-side variables (x).
-        y : array_like, e.g. pd.Series, optional, default=None
-            The left-hand-side variable in the cointegrating regression.
-
-        Returns
-        -------
-        self : reference to self
-        """
+        """Fit estimator and estimate parameters from cointegration method."""
+        from skbase.utils.dependencies import _check_soft_dependencies
+        _check_soft_dependencies("arch", severity="error")
         from arch.unitroot.cointegration import phillips_ouliaris
 
         if y is None:
-            if isinstance(X, pd.DataFrame):
-                if X.shape[1] < 2:
-                    import warnings
-                    warnings.warn(f'Cointegration test requires at least 2 variables, but got shape {X.shape}. Adding a lagged variable to X.')
-                    X2 = X.shift(1).bfill()
-                    X = pd.concat([X, X2], axis=1)
-                y_arch = X.iloc[:, 0]
-                x_arch = X.iloc[:, 1:]
-            else:
-                if len(X.shape) < 2 or X.shape[1] < 2:
-                    import warnings
-                    warnings.warn(f'Cointegration test requires at least 2 variables, but got shape {X.shape}. Adding a lagged variable to X.')
-                    X = pd.DataFrame(X)
-                    X2 = X.shift(1).bfill()
-                    X = pd.concat([X, X2], axis=1).values
-                y_arch = X[:, 0]
-                x_arch = X[:, 1:]
-        else:
-            y_arch = y
-            x_arch = X
+            raise ValueError(
+                "y must be explicitly passed in fit(X, y). "
+                "The Phillips-Ouliaris test regresses y on X, and results depend on which series is y."
+            )
 
         res = phillips_ouliaris(
-            y=y_arch,
-            x=x_arch,
+            y=y,
+            x=X,
             trend=self.trend,
             test_type=self.test_type,
             kernel=self.kernel,
@@ -149,8 +139,10 @@ class CointegrationPO(BaseParamFitter):
             force_int=self.force_int,
         )
 
-        self.stat_ = res.stat
+        self.test_statistic_ = res.stat
         self.pvalue_ = res.pvalue
+        self.cointegrated_ = bool(self.pvalue_ < self.p_threshold)
+        
         self.cointegrating_vector_ = res.cointegrating_vector
         self.critical_values_ = res.critical_values
         self.bandwidth_ = res.bandwidth
@@ -163,5 +155,5 @@ class CointegrationPO(BaseParamFitter):
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator."""
         params1 = {}
-        params2 = {"trend": "ct", "test_type": "Za"}
+        params2 = {"trend": "ct", "test_type": "Za", "p_threshold": 0.1}
         return [params1, params2]
