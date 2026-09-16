@@ -10,7 +10,7 @@ def check_array(array, **kwargs):
     """
     if "force_all_finite" in kwargs:
         val = kwargs.pop("force_all_finite")
-        if _check_soft_dependencies("scikit-learn>=1.6", raise_error=False):
+        if _check_soft_dependencies("scikit-learn>=1.6", severity="none"):
             return _val.check_array(array, ensure_all_finite=val, **kwargs)
         else:
             return _val.check_array(array, force_all_finite=val, **kwargs)
