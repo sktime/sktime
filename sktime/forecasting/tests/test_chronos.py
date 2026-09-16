@@ -1,5 +1,7 @@
 """Regression tests for the Chronos and Chronos-Bolt forecaster."""
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
@@ -84,3 +86,54 @@ def test_chronos_airline_predictions_match_source_reference(
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+class _FakeChronosBoltPipeline:
+    """Minimal Chronos-Bolt pipeline stub for strategy tests.
+
+    Avoids the heavy transformers/torch soft dependencies while still
+    exercising ``ChronosBoltStrategy.predict`` logic.
+    """
+
+    def __init__(self, prediction_length=64):
+        self.model = SimpleNamespace(
+            config=SimpleNamespace(
+                chronos_config={"prediction_length": prediction_length}
+            )
+        )
+        self.last_call = None
+
+    def predict(self, context, prediction_length, limit_prediction_length=False):
+        self.last_call = (prediction_length, limit_prediction_length)
+
+        class _TensorStub:
+            def numpy(self):
+                return np.zeros((1, prediction_length))
+
+        return [_TensorStub()]
+
+
+def test_chronos_bolt_predict_rejects_horizon_beyond_native_length():
+    """Chronos-Bolt raises a clear error when fh exceeds native length (#11168)."""
+    from sktime.forecasting.chronos import ChronosBoltStrategy
+
+    pipeline = _FakeChronosBoltPipeline(prediction_length=64)
+    strategy = ChronosBoltStrategy()
+    config = strategy.initialize_config()
+
+    with pytest.raises(ValueError, match="at most 64 steps"):
+        strategy.predict(pipeline, None, 65, config)
+
+
+def test_chronos_bolt_predict_within_native_length():
+    """Chronos-Bolt predict works and forwards limit_prediction_length within limit."""
+    from sktime.forecasting.chronos import ChronosBoltStrategy
+
+    pipeline = _FakeChronosBoltPipeline(prediction_length=64)
+    strategy = ChronosBoltStrategy()
+    config = strategy.initialize_config()
+
+    result = strategy.predict(pipeline, None, 16, config)
+
+    assert result.shape == (16,)
+    assert pipeline.last_call == (16, False)

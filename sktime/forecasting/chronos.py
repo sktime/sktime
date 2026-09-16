@@ -168,6 +168,15 @@ class ChronosBoltStrategy(ChronosModelStrategy):
     def predict(
         self, pipeline, y_tensor: torch.Tensor, prediction_length: int, config: dict
     ) -> np.ndarray:
+        model_prediction_length = pipeline.model.config.chronos_config["prediction_length"]
+        if prediction_length > model_prediction_length:
+            raise ValueError(
+                f"Chronos-Bolt can natively forecast at most "
+                f"{model_prediction_length} steps, but a forecast horizon of "
+                f"{prediction_length} steps was requested. Longer horizons are "
+                "not supported for Chronos-Bolt; use a shorter fh or a "
+                "different forecaster."
+            )
         prediction_results = pipeline.predict(
             y_tensor,
             prediction_length,
