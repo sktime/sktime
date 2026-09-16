@@ -118,6 +118,7 @@ class TimeSeriesForestClassifier(
         # -------------------
         "tests:vm": True,
         "tests:libs": ["sktime.classification.interval_based._tsf"],
+        "tests:specific": ["sktime.classification.interval_based.tests.test_tsf"],
     }
 
     def __init__(
