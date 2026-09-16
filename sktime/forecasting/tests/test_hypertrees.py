@@ -8,7 +8,7 @@ import warnings
 import pandas as pd
 import pytest
 
-from sktime.forecasting.hypertrees import _period_to_offset_alias
+from sktime.forecasting.hypertrees._netar import _period_to_offset_alias
 
 
 @pytest.mark.parametrize(
