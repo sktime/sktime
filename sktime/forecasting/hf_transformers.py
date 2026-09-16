@@ -323,7 +323,6 @@ class HFTransformersForecaster(BaseForecaster):
         peft_config=None,
         device=None,
     ):
-        super().__init__()
         self.model_path = model_path
         self.fit_strategy = fit_strategy
         self.validation_split = validation_split
