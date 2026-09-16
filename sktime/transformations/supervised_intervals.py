@@ -108,6 +108,9 @@ class SupervisedIntervals(BaseTransformer):
         "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(

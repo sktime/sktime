@@ -994,6 +994,48 @@ class property__randomness(_BaseTag):
     }
 
 
+class remember_data(_BaseTag):
+    """Behaviour flag: whether the estimator remembers all data seen.
+
+    - String name: ``"remember_data"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False`` (transformers), ``True`` (forecasters)
+
+    Developer tag that modifies behaviour of the boilerplate layer.
+
+    If set to ``True``, the estimator will remember all data seen, and store it
+    internally in the ``self._X`` and/or ``self._y`` attributes, in ``pd.DataFrame``
+    resp hierarchical ``DataFrame`` formats ``pd-multiindex`` or
+    ``pd_multiindex_hier``, if hierarchical data is passed.
+
+    This behaviour can be useful for models with incremental learning capabilities
+    that require access to all previously seen data in their internal logic.
+    Alternatively, the tag can also be useful for debugging.
+
+    If no ``X`` or ``y`` is passed to the estimator,
+    ``self._X`` and ``self._y`` will be set to ``None``.
+
+    Calls to ``update`` will update the data stored in the internal attributes as well,
+    using ``pandas`` update operations.
+
+    If the ``remember_data`` tag is set to ``True``, the ``fit_is_empty`` tag
+    must be ``False``, even if ``_fit`` is empty, because boilerplate
+    writes to ``self._X`` in ``fit``.
+    """
+
+    _tags = {
+        "tag_name": "remember_data",
+        "parent_type": ["forecaster", "transformer"],
+        "tag_type": "bool",
+        "short_descr": (
+            "whether estimator remembers all data seen as self._X, self._y, etc"
+        ),
+        "user_facing": False,
+    }
+
+
 # Forecasters
 # -----------
 
@@ -2765,6 +2807,36 @@ class scitype__X(_BaseTag):
     }
 
 
+class scitype__y(_BaseTag):
+    """Scitype of the target data ``y`` supported by the object.
+
+    - String name: ``"scitype:y"``
+    - Public scitype tag
+    - Values: string, name of the supported scitype
+    - Example: ``"Series"``
+    - Example 2: ``"points"`` (detection metrics)
+
+    This tag applies to parameter estimators and detection metrics
+    (not forecasting metrics).
+
+    For parameter estimators, it specifies which scitype of ``y`` is supported
+    natively, typically ``"Series"``.
+
+    For metrics, it specifies the scientific type of the labels ``y`` that
+    the metric consumes. Detection metrics use values such as ``"points"``
+    (event locations) or ``"segments"`` (interval labels). Other metrics
+    may use the same tag for the scitype of the target series.
+    """
+
+    _tags = {
+        "tag_name": "scitype:y",
+        "parent_type": ["param_est", "metric"],
+        "tag_type": "str",
+        "short_descr": "what scitype of y does the object support? must be scitype string",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Benchmark analyzer tags
 # -----------------------
 
@@ -3977,12 +4049,6 @@ class X_y_must_have_same_index(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "X-y-must-have-same-index",
-        ["forecaster", "regressor", "transformer"],
-        "bool",
-        "do X/y in fit/update and X/fh in predict have to be same indices?",
-    ),
-    (
         "enforce_index_type",
         ["forecaster", "regressor"],
         "type",
@@ -3993,15 +4059,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["transformer-pairwise", "transformer-pairwise-panel"],
         ("str", ["distance", "kernel", "other"]),
         "mathematical type of pairwise transformer - distance, kernel, or other",
-    ),
-    (
-        "scitype:y",
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        ["param_est", "metric"],
-        "str",
-        "what scitype of y does the object support? must be scitype string",
     ),
     (
         "classifier_type",
@@ -4020,12 +4077,6 @@ ESTIMATOR_TAG_REGISTER = [
         ),
         "which type the classifier falls under in the taxonomy of time series "
         "classification algorithms.",
-    ),
-    (
-        "remember_data",
-        ["forecaster", "transformer"],
-        "bool",
-        "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
         "reserved_params",

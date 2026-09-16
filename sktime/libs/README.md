@@ -13,6 +13,10 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of abandoned package from July 2024,
   see [issue 6700](https://github.com/sktime/sktime/issues/6700).
 
+* `Tbats` - a package implementing BATS and TBATS.
+  Unofficial fork of abandoned package from September 2026 onwards,
+  see [sktime issue 11097](https://github.com/sktime/sktime/issues/11097).
+
 * `vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
 
