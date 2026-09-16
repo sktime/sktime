@@ -117,7 +117,7 @@ class TimeSeriesForestClassifier(
         # CI and testing tags
         # -------------------
         "tests:vm": True,
-        "tests:libs": ["sktime.classification.interval_based._tsf"],
+        "tests:libs": ["sktime.base._panel.forest._tsf"],
         "tests:specific": ["sktime.classification.interval_based.tests.test_tsf"],
     }
 
