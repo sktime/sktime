@@ -367,8 +367,6 @@ class MOIRAIForecaster(BaseForecaster):
             self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
 
         # Lazy-init: load model on first access; reuse on subsequent fit() calls.
-        # Device placement happens in ``create_predictor``, which resolves
-        # ``map_location``, including ``None`` and ``"auto"``.
         self.model_ = self._init_model(prediction_length)
 
     def _predict(self, fh, X=None):
