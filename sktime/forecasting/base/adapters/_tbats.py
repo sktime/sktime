@@ -29,7 +29,8 @@ class _TbatsAdapter(BaseForecaster):
         # -------------------
         "tests:vm": True,
         # libs tag is set so child classes get tested if this file changes
-        "tests:libs": ["sktime.forecasting.base.adapters._tbats", "sktime.libs.tbats"],
+        "tests:libs": ["sktime.forecasting.base.adapters._tbats"],
+        "tests:specific": ["sktime.libs.tbats.tests"],
     }
 
     def __init__(
