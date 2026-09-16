@@ -12,6 +12,16 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 
+def _resolve_backend(backend):
+    """Resolve automatic JAX backend selection."""
+    if backend != "auto":
+        return backend
+
+    import jax
+
+    return "gpu" if jax.default_backend() == "gpu" else "cpu"
+
+
 class TimesFMForecaster(BaseForecaster):
     """TimesFM (Time Series Foundation Model) for Zero-Shot Forecasting.
 
@@ -87,7 +97,8 @@ class TimesFMForecaster(BaseForecaster):
         The batch size to be used per core during model inference.
     backend : str, optional (default="cpu")
         The computational backend to be used,
-        which can be one of "cpu", "gpu", or "tpu".
+        which can be one of "auto", "cpu", "gpu", or "tpu". ``"auto"`` selects
+        GPU when JAX has a GPU backend and CPU otherwise.
         This setting is case-sensitive.
     verbose : bool, optional (default=False)
         Whether to print detailed logs during execution.
@@ -219,6 +230,7 @@ class TimesFMForecaster(BaseForecaster):
         self.model_dims = model_dims
         self.per_core_batch_size = per_core_batch_size
         self.backend = backend
+        self._backend = None
         self.verbose = verbose
         self.broadcasting = broadcasting
         self.use_source_package = use_source_package
@@ -289,6 +301,7 @@ class TimesFMForecaster(BaseForecaster):
             self._context_len = context_multiple * self.input_patch_len
 
         self.context = y
+        self._backend = _resolve_backend(self.backend)
         self.tfm = self._load_model()
 
     def _load_model(self):
@@ -310,7 +323,7 @@ class TimesFMForecaster(BaseForecaster):
             "num_layers": self.num_layers,
             "model_dims": self.model_dims,
             "per_core_batch_size": self.per_core_batch_size,
-            "backend": self.backend,
+            "backend": self._backend,
             "verbose": self.verbose,
         }
 
