@@ -1,5 +1,7 @@
 import sklearn.utils.validation as _val
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 
 def check_array(array, **kwargs):
     """Compatibility wrapper for sklearn.utils.validation.check_array.
@@ -8,8 +10,8 @@ def check_array(array, **kwargs):
     """
     if "force_all_finite" in kwargs:
         val = kwargs.pop("force_all_finite")
-        try:
+        if _check_soft_dependencies("scikit-learn>=1.6", raise_error=False):
             return _val.check_array(array, ensure_all_finite=val, **kwargs)
-        except TypeError:
+        else:
             return _val.check_array(array, force_all_finite=val, **kwargs)
     return _val.check_array(array, **kwargs)
