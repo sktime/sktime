@@ -174,6 +174,12 @@ class HFTransformersForecaster(BaseForecaster):
         When ``fit_strategy`` is set to "peft",
         this will be used to set up PEFT parameters for the model.
         See the ``peft`` documentation for details [2]_.
+    device : str, optional (default=None)
+        Device on which to load the model, passed to the transformers
+        ``device_map``, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
+        ``"auto"`` selects an available accelerator. If ``None``, the
+        transformers default placement is used. Ignored when ``model_path`` is
+        an already initialized model object, which keeps its own device.
 
     References
     ----------
@@ -312,6 +318,7 @@ class HFTransformersForecaster(BaseForecaster):
         deterministic=False,
         callbacks=None,
         peft_config=None,
+        device=None,
     ):
         super().__init__()
         self.model_path = model_path
@@ -328,6 +335,7 @@ class HFTransformersForecaster(BaseForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
         self.peft_config = peft_config
+        self.device = device
 
     def _fit(self, y, X, fh):
         from transformers import AutoConfig, PreTrainedModel, Trainer, TrainingArguments
@@ -375,6 +383,10 @@ class HFTransformersForecaster(BaseForecaster):
             else:
                 raise ValueError("The model type cannot be inferred from the config.")
 
+            load_kwargs = {}
+            if self.device is not None:
+                load_kwargs["device_map"] = self.device
+
             self.model, self.info = getattr(
                 transformers, prediction_model_class
             ).from_pretrained(
@@ -382,6 +394,7 @@ class HFTransformersForecaster(BaseForecaster):
                 config=config,
                 output_loading_info=True,
                 ignore_mismatched_sizes=True,
+                **load_kwargs,
             )
 
             # Freeze loaded parameters and reinitialize mismatched layers
@@ -471,6 +484,7 @@ class HFTransformersForecaster(BaseForecaster):
             callbacks=self._callbacks,
         )
         trainer.train()
+        self.model = trainer.model
 
     def _predict(self, fh, X=None):
         import transformers
