@@ -79,10 +79,8 @@ class TimerForecaster(BaseForecaster):
         # --------------
         "authors": ["PewterZz"],
         "maintainers": "PewterZz",
-        "python_dependencies": [
-            "transformers>=4.40,<4.41",
-            "torch",
-        ],
+        # [torch] extra also installs accelerate, required by device_map
+        "python_dependencies": ["transformers[torch]>=4.40,<4.41"],
         "python_version": "<3.13",
         # estimator type
         # --------------
