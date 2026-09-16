@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 import scipy.stats as stats
 
-from sktime.libs.tbats.bats import Components, ModelParams, Model, ParamsOptimizer, Context
+from sktime.libs.tbats.bats import Components, ModelParams, ParamsOptimizer, Context
 
 
 class TestBATSParamsOptimizer(object):

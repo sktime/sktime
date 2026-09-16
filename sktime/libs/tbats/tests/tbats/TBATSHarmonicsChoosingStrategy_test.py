@@ -28,7 +28,6 @@ class TestTBATSHarmonicsChoosingStrategy(object):
         def __init__(self, aic_score_map):
             super().__init__(n_jobs=1)
             self.aic_score_map = aic_score_map
-            pass
 
         def create_case(self, components):
             for (harmonics, aic_score) in self.aic_score_map:
