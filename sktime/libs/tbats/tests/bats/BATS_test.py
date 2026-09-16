@@ -1,10 +1,16 @@
 import pytest
 import numpy as np
 import multiprocessing
+from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_module_changed
 import sktime.libs.tbats.error as error
 from sktime.libs.tbats import BATS
 
-
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none")
+    or not run_test_module_changed("sktime.libs.tbats"),
+    reason="Execute tests iff pmdarima is available and anything in the TBATS module has changed",
+)
 class TestBATS(object):
 
     def test_input_validation(self):

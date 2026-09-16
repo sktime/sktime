@@ -1,10 +1,15 @@
 import numpy as np
 import pytest
 import scipy.stats as stats
-
+from skbase.utils.dependencies import _check_soft_dependencies
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.libs.tbats.bats import Components, ModelParams, ParamsOptimizer, Context
 
-
+@pytest.mark.skipif(
+    not _check_soft_dependencies("pmdarima", severity="none")
+    or not run_test_module_changed("sktime.libs.tbats"),
+    reason="Execute tests iff pmdarima is available and anything in the TBATS module has changed",
+)
 class TestBATSParamsOptimizer(object):
 
     def setup_method(self, method):
