@@ -67,6 +67,15 @@ FIXTURE_OBJECT_TAGS = {"A": 42424241, "B": 3, "C": 1234, 3: "E"}
 DEFAULT_TAGS = BaseObject._tags
 
 
+class NoneTagTestClass(BaseObject):
+    """Class for testing tag_value_default when tag is explicitly None."""
+
+    _tags = {
+        "none_tag": None,
+        "real_tag": "real_value",
+    }
+
+
 def test_get_class_tags():
     """Tests get_class_tags class method of BaseObject for correctness.
 
@@ -109,6 +118,32 @@ def test_get_class_tag():
 
     assert child_tag_default == "bar", msg
     assert child_tag_defaultNone is None, msg
+
+
+@pytest.mark.parametrize("cls", [NoneTagTestClass])
+def test_get_class_tag_default_when_none(cls):
+    """Test tag_value_default when tag value is None.
+
+    Regression test for #10305.
+    """
+    assert cls.get_class_tag("none_tag", "fallback") == "fallback"
+    assert cls.get_class_tag("none_tag") is None
+    assert cls.get_class_tag("real_tag", "fallback") == "real_value"
+    assert cls.get_class_tag("nonexistent", "fallback") == "fallback"
+    assert cls.get_class_tag("nonexistent") is None
+
+
+@pytest.mark.parametrize("cls", [NoneTagTestClass])
+def test_get_tag_default_when_none(cls):
+    """Test tag_value_default for get_tag when tag value is None.
+
+    Regression test for #10305.
+    """
+    obj = cls()
+
+    assert obj.get_tag("none_tag", "fallback") == "fallback"
+    assert obj.get_tag("none_tag") is None
+    assert obj.get_tag("real_tag", "fallback") == "real_value"
 
 
 def test_get_tags():
