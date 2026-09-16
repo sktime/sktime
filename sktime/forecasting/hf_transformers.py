@@ -180,6 +180,9 @@ class HFTransformersForecaster(BaseForecaster):
         ``"auto"`` selects an available accelerator. If ``None``, the
         transformers default placement is used. Ignored when ``model_path`` is
         an already initialized model object, which keeps its own device.
+        Setting ``device`` requires the ``accelerate`` package, which is not
+        part of the base ``transformers`` install. Install it with
+        ``pip install accelerate`` or ``pip install "transformers[torch]"``.
 
     References
     ----------
