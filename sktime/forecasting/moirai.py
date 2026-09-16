@@ -26,7 +26,7 @@ class MOIRAIForecaster(BaseForecaster):
     num_samples : int, default=100
         Number of samples to draw.
     map_location : str, default=None
-        Hardware to use for the model. ``None`` and ``"auto"`` let the GluonTS
+        Hardware to use for the model. ``None`` lets the GluonTS
         predictor select CUDA when available, otherwise CPU.
     target_dim : int, default=2
         Dimension of the target.
