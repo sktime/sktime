@@ -303,6 +303,8 @@ class TimeSeriesForestClassifier(
         feature_importances_ : pandas Dataframe of shape (series_length, 3)
             The feature importances for each feature type (mean, std, slope).
         """
+        self.check_is_fitted()
+
         all_importances_per_feature = {
             _feature_type: np.zeros(self.series_length)
             for _feature_type in self._feature_types

@@ -15,6 +15,17 @@ TESTED_MODULE = "sktime.classification.interval_based._tsf"
 X_train, y_train = make_classification_problem()
 
 
+def test_time_series_forest_classifier_feature_importance_availability():
+    """Test feature importance is discoverable only after fitting."""
+    classifier = TimeSeriesForestClassifier(n_estimators=2, random_state=0)
+
+    assert not hasattr(classifier, "feature_importances_")
+
+    classifier.fit(X_train, y_train)
+
+    assert hasattr(classifier, "feature_importances_")
+
+
 @patch(
     f"{TESTED_MODULE}.TimeSeriesForestClassifier."
     f"_extract_feature_importance_by_feature_type_per_tree"
@@ -42,6 +53,7 @@ def test_time_series_forest_classifier_feature_importance(
         [[[0, 9], [15, 20]]] * given_n_estimators
     )
     given_time_series_forest_classifier.n_intervals = given_n_intervals
+    given_time_series_forest_classifier._is_fitted = True
 
     extract_feature_importance_of_feature_mock.return_value = np.ones(
         given_time_series_forest_classifier.n_intervals
