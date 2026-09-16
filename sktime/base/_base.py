@@ -387,7 +387,6 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             Instance of class reset to a clean post-init state but retaining
             the current hyper-parameter values.
         """
-        # Save transient sklearn callback and context attributes
         sklearn_attrs = {}
         for attr in ("_parent_callback_ctx", "_skl_callbacks"):
             if hasattr(self, attr):
@@ -395,7 +394,6 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
 
         res = super().reset()
 
-        # Restore transient sklearn attributes
         for attr, val in sklearn_attrs.items():
             setattr(self, attr, val)
 
