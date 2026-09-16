@@ -100,9 +100,17 @@ def y_dict():
 
     freq_inferred = y_train.index.freq
 
-    y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
-        lambda df: df.drop(x_names, axis=1).set_index(time_names).asfreq(freq_inferred)
-    )
+    if _check_soft_dependencies("pandas>=3.0", severity="none"):
+        y_train_hier_unequal = X3.groupby(
+            x_names,
+            as_index=True,
+        ).apply(lambda df: df.set_index(time_names).asfreq(freq_inferred))
+    else:
+        y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
+            lambda df: df.drop(x_names, axis=1)
+            .set_index(time_names)
+            .asfreq(freq_inferred),
+        )
     y_dict["y_train_hier_unequal"] = y_train_hier_unequal
 
     # Create integer index data

@@ -189,6 +189,9 @@ class SeasonalDummiesOneHot(BaseTransformer):
                     if freq is None:
                         raise ValueError("Frequency can't be determined from the index")
 
+            # pandas 3 no longer accepts a MonthBegin offset in to_period
+            if isinstance(freq, pd.offsets.MonthBegin):
+                freq = f"{freq.n}M"
             period_index = index.to_period(freq)
 
         # Extract the appropriate attribute based on the frequency of the period index

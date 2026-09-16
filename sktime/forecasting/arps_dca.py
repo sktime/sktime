@@ -122,7 +122,9 @@ class _ArpsDcaBase(BaseForecaster):
         if isinstance(index, pd.PeriodIndex):
             index = index.to_timestamp(how="start")
         if isinstance(index, pd.DatetimeIndex):
-            values = index.astype("int64").to_numpy() / 864e11
+            # days since epoch, independent of the datetime resolution, e.g., ns or us
+            values = (index - pd.Timestamp(0, tz=index.tz)) / pd.Timedelta(days=1)
+            values = values.to_numpy()
         else:
             values = index.astype("int64").to_numpy()
         return values.astype(float).reshape(-1)

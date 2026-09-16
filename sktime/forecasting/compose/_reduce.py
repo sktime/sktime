@@ -331,9 +331,9 @@ class _Reducer(_BaseWindowForecaster):
         """
         from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
         from sklearn.tree import DecisionTreeRegressor
 
+        from sktime.pipeline import make_pipeline
         from sktime.transformations.reduce import Tabularizer
 
         # naming convention is as follows:
@@ -1447,8 +1447,8 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
         """
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
 
+        from sktime.pipeline import make_pipeline
         from sktime.transformations.panel.reduce import Tabularizer
 
         params1 = {
@@ -1527,8 +1527,8 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
         """
         from sklearn.ensemble import RandomForestRegressor
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
 
+        from sktime.pipeline import make_pipeline
         from sktime.transformations.panel.reduce import Tabularizer
 
         params1 = {

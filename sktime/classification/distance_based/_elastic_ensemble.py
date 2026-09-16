@@ -92,6 +92,7 @@ class ElasticEnsemble(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["jasonlines", "TonyBagnall"],
+        "python_dependencies": ["scikit-learn<1.8"],
         # estimator type
         # --------------
         "capability:multithreading": True,
@@ -99,6 +100,9 @@ class ElasticEnsemble(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "distance",
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(

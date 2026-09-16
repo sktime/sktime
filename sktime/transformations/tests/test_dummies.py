@@ -33,3 +33,15 @@ def test_seasonal_dummies():
     X_expected = X_expected.astype(int)
     X_expected = X_expected.iloc[:, 1:]  # drop the first dummy
     assert X.equals(X_expected), "Test failed: X does not match X_expected."
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([SeasonalDummiesOneHot]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_seasonal_dummies_month_start():
+    """Test month start frequency, to_period with MonthBegin fails on pandas 3."""
+    date_range = pd.date_range(start="2022-01-01", periods=4, freq="MS")
+    y = pd.Series([1, 2, 3, 4], index=date_range)
+    X = SeasonalDummiesOneHot().fit_transform(y=y, X=None)
+    assert list(X.columns) == ["Feb", "Mar", "Apr"]
