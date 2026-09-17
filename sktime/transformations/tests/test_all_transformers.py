@@ -33,6 +33,30 @@ class TransformerFixtureGenerator(BaseFixtureGenerator):
     object_type_filter = "transformer"
 
 
+def _categorical_test_index(object_instance, n_timepoints=17):
+    """Return an index that ``object_instance`` accepts, or None for the default.
+
+    Some transformers only accept datetime-like indices, via the
+    ``enforce_index_type`` tag. Their support for categorical values in ``X`` is
+    independent of the index type, so the categorical tests below must not hand
+    them an index they reject, or they report an index failure as if it were a
+    missing categorical capability.
+    """
+    enforced = object_instance.get_tag("enforce_index_type", None, False)
+
+    if enforced is None:
+        return None
+    if not isinstance(enforced, (list, tuple)):
+        enforced = [enforced]
+
+    if pd.DatetimeIndex in enforced:
+        return pd.date_range("2023-01-01", periods=n_timepoints, freq="D")
+    if pd.PeriodIndex in enforced:
+        return pd.period_range("2023-01-01", periods=n_timepoints, freq="D")
+
+    return None
+
+
 class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
     """Module level tests for all sktime transformers."""
 
@@ -215,6 +239,11 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         X = pd.DataFrame({"var_0": [i + 3 for i in range(17)]})
         y = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
 
+        index = _categorical_test_index(object_instance)
+        if index is not None:
+            X.index = index
+            y.index = index
+
         requires_y = object_instance.get_tag("requires_y")
         uses_y = object_instance.get_tag("y_inner_mtype") not in ["None", None]
         if requires_y or uses_y:
@@ -234,6 +263,11 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
         """
         X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
         y = pd.DataFrame({"var_1": [i for i in range(17)]})
+
+        index = _categorical_test_index(object_instance)
+        if index is not None:
+            X.index = index
+            y.index = index
 
         if (
             object_instance.get_tag("capability:categorical_in_X")
@@ -265,3 +299,42 @@ class TestAllTransformers(TransformerFixtureGenerator, QuickTester):
 #                 X = _make_args(estimator, method)[0]
 #                 Xt = estimator.transform(X)
 #                 np.testing.assert_array_equal(X.index, Xt.index)
+
+
+def test_categorical_test_index_respects_enforce_index_type():
+    """Test that the categorical tests use an index the transformer accepts.
+
+    ``PeakTimeFeature`` and ``SeasonalDummiesOneHot`` accept categorical values in
+    ``X``, but only on a datetime-like index. Handing them the default
+    ``RangeIndex`` made them fail the categorical tests with an index error,
+    which reads as if the ``capability:categorical_in_X`` tag were wrong.
+    """
+    from sktime.transformations.peak import PeakTimeFeature
+    from sktime.transformations.summarize import WindowSummarizer
+
+    datetime_only = PeakTimeFeature.create_test_instance()
+    index = _categorical_test_index(datetime_only)
+    assert isinstance(index, (pd.DatetimeIndex, pd.PeriodIndex))
+    assert len(index) == 17
+
+    # a transformer without the tag keeps the default index
+    unconstrained = WindowSummarizer.create_test_instance()
+    assert _categorical_test_index(unconstrained) is None
+
+
+def test_categorical_X_passes_on_datetime_indexed_transformers():
+    """Test the datetime-only transformers really do accept categorical X."""
+    from sktime.transformations.dummies import SeasonalDummiesOneHot
+    from sktime.transformations.peak import PeakTimeFeature
+
+    for cls in (PeakTimeFeature, SeasonalDummiesOneHot):
+        instance = cls.create_test_instance()
+
+        X = pd.DataFrame({"var_0": [str(i % 3) for i in range(17)]})
+        y = pd.DataFrame({"var_1": [i for i in range(17)]})
+        index = _categorical_test_index(instance)
+        X.index = index
+        y.index = index
+
+        assert instance.get_tag("capability:categorical_in_X")
+        instance.fit_transform(X, y)
