@@ -25,7 +25,7 @@ class _SklVersionBridgeMixin:
                 val["ensure_all_finite"] = val
 
         # from sklearn 1.5 onwards, the location of the validate_data function changed
-        if _check_soft_dependencies("scikit-learn<1.6", severity="none")
+        if _check_soft_dependencies("scikit-learn<1.6", severity="none"):
             return self._validate_data(**kwargs)
         else:
             from sklearn.utils.validation import validate_data
