@@ -2,7 +2,9 @@ import numpy as np
 import multiprocessing as actual_processing
 import multiprocessing.dummy as dummy_processing
 from sklearn.base import BaseEstimator
-from sklearn.utils.validation import check_array, column_or_1d as c1d
+from sklearn.utils.validation import column_or_1d as c1d
+
+from .._compat import check_array
 from sklearn.model_selection import ParameterGrid
 
 from .. import error

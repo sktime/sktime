@@ -112,7 +112,12 @@ class TBATS(_TbatsAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """  # noqa: E501
 
-    _tags = {"tests:specific": ["sktime.forecasting.tests.test_tbats"]}
+    _tags = {
+        "tests:specific": [
+            "sktime.forecasting.tests.test_tbats",
+            "sktime.libs.tbats.tests",
+        ]
+    }
 
     _fitted_param_names = "aic"
 

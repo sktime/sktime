@@ -187,6 +187,10 @@ class PatchTSMixerForecaster(BaseForecaster):
         Hugging Face ``Trainer`` callbacks (e.g. ``EarlyStoppingCallback``).
     num_parallel_samples : int, optional, default=None
         Override ``num_parallel_samples`` on the model for ``generate``.
+    device : str, optional (default=None)
+        Device on which to run the model. ``"auto"`` is passed to transformers
+        ``device_map`` and selects an available accelerator. If ``None``,
+        existing model and Trainer placement behavior is preserved.
 
     References
     ----------
@@ -268,6 +272,7 @@ class PatchTSMixerForecaster(BaseForecaster):
         training_args: dict | None = None,
         callbacks: list | None = None,
         num_parallel_samples: int | None = None,
+        device: str | None = None,
     ):
         self.model_path = model_path
         self.revision = revision
@@ -280,6 +285,7 @@ class PatchTSMixerForecaster(BaseForecaster):
         self.training_args = training_args
         self.callbacks = callbacks
         self.num_parallel_samples = num_parallel_samples
+        self.device = device
         self.model = None
         super().__init__()
 
@@ -342,14 +348,21 @@ class PatchTSMixerForecaster(BaseForecaster):
         return cfg
 
     def _load_model(self, config):
+        load_kwargs = {}
+        if self.device is not None:
+            load_kwargs["device_map"] = self.device
         if self.model_path is None:
-            return PatchTSMixerForPrediction(config=config)
+            model = PatchTSMixerForPrediction(config=config)
+            if self.device not in (None, "auto"):
+                model = model.to(self.device)
+            return model
 
         return PatchTSMixerForPrediction.from_pretrained(
             self.model_path,
             revision=self.revision,
             config=config,
             ignore_mismatched_sizes=True,
+            **load_kwargs,
         )
 
     def _fit(self, y, X=None, fh=None):

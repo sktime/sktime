@@ -93,6 +93,13 @@ class PatchTSTForecaster(BaseForecaster):
     validation_split : float, optional, default = 0.2
         Fraction of the data to use for validation.
 
+    device : str, optional (default=None)
+        Device on which to load the model, passed to the transformers
+        ``device_map``, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
+        ``"auto"`` selects an available accelerator. If ``None``, the
+        transformers default placement is used. Ignored when ``model_path`` is
+        an already initialized ``PatchTSTModel``, which keeps its own device.
+
     config : dict, optional, default = {}
         A config dict specifying parameters to initialize a full PatchTST
         model. Missing parameters in the config will be automatically replaced
@@ -396,6 +403,7 @@ class PatchTSTForecaster(BaseForecaster):
         training_args=None,
         compute_metrics=None,
         callbacks=None,
+        device=None,
     ):
         self.model_path = model_path
         self.fit_strategy = fit_strategy
@@ -407,6 +415,7 @@ class PatchTSTForecaster(BaseForecaster):
         self._training_args = self.training_args if self.training_args else {}
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
+        self.device = device
 
         self._config = self.config if self.config else {}
         super().__init__()
@@ -456,13 +465,19 @@ class PatchTSTForecaster(BaseForecaster):
 
             if not self.model_path:
                 self.model = PatchTSTForPrediction(config=config)
+                if self.device not in (None, "auto"):
+                    self.model = self.model.to(self.device)
             else:
                 # Load model with the passed config if it is given
+                load_kwargs = {}
+                if self.device is not None:
+                    load_kwargs["device_map"] = self.device
                 self.model, info = PatchTSTForPrediction.from_pretrained(
                     self.model_path,
                     config=config,
                     output_loading_info=True,
                     ignore_mismatched_sizes=True,
+                    **load_kwargs,
                 )
 
             if self.fit_strategy == "zero-shot":
@@ -540,6 +555,7 @@ class PatchTSTForecaster(BaseForecaster):
 
         # Train the model
         trainer.train()
+        self.model = trainer.model
 
         return self
 
