@@ -297,24 +297,31 @@ class PluginParamsForecaster(_DelegatedForecaster):
             "param_est": FixedParams({"foo": 12}),
             "params": {"sp": "foo"},
         }
-        params = [params1]
+        # explicit string reference to "sp", the same branch params2 covers,
+        # but through FixedParams so it holds without statsmodels
+        params2 = {
+            "forecaster": NaiveForecaster(),
+            "param_est": FixedParams({"sp": 12}),
+            "params": "sp",
+        }
+        params = [params1, params2]
 
         # uses a "real" param est that depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
             # explicit reference to a parameter "sp", present in both estimators
-            params2 = {
+            params3 = {
                 "forecaster": NaiveForecaster(),
                 "param_est": SeasonalityACF(),
                 "params": "sp",
             }
-            params = params + [params2]
+            params = params + [params3]
 
             # no params given, this should recognize that the intersection is only "sp"
-            params3 = {
+            params4 = {
                 "forecaster": NaiveForecaster(),
                 "param_est": SeasonalityACF(),
                 "update_params": True,
             }
-            params = params + [params3]
+            params = params + [params4]
 
         return params
