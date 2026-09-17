@@ -881,7 +881,9 @@ class _MultioutputReducer(_Reducer):
 
         # Iterate over estimators/forecast horizon
         y_pred = self.estimator_.predict(X_pred)
-        return y_pred.ravel()
+        if hasattr(y_pred, "ravel"):
+            y_pred = y_pred.ravel()
+        return y_pred
 
 
 class _RecursiveReducer(_Reducer):

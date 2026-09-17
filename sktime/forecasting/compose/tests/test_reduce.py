@@ -440,7 +440,7 @@ def test_make_reduction_infer_scitype_for_sklearn_pipeline():
     """
     estimator = make_pipeline(Tabularizer(), LinearRegression())
     forecaster = make_reduction(estimator, scitype="infer")
-    assert forecaster._estimator_scitype == "tabular-regressor"
+    assert forecaster._estimator_scitype == "time-series-regressor"
 
 
 @pytest.mark.skipif(
