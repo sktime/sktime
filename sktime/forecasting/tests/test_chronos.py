@@ -3,10 +3,11 @@
 import numpy as np
 import pandas as pd
 import pytest
-from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline
 from sktime.forecasting.chronos import ChronosForecaster
+from sktime.tests.test_switch import run_test_for_class
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch
@@ -54,8 +55,8 @@ _CHRONOS_REFERENCE_CASES = [
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ChronosForecaster, severity="none"),
-    reason="run test only if ChronosForecaster soft dependencies are present",
+    not run_test_for_class(ChronosForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize(
     "model_path,forecaster_kwargs,expected_head",
@@ -88,8 +89,8 @@ def test_chronos_airline_predictions_match_source_reference(
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(ChronosForecaster, severity="none"),
-    reason="ChronosForecaster soft dependencies not available",
+    not run_test_for_class(ChronosForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_chronos_bolt_long_prediction_length():
     """Chronos-Bolt supports prediction horizons longer than its native length."""
@@ -103,4 +104,4 @@ def test_chronos_bolt_long_prediction_length():
 
     y_pred = forecaster.fit(y, fh=fh).predict()
 
-    assert len(y_pred) == 65
+    assert len(y_pred) == len(fh)
