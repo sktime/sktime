@@ -62,26 +62,64 @@ def test_safe_extract_tar_rejects_path_traversal_member(tmp_path):
 
 
 def test_safe_extract_tar_rejects_symlink_member_on_legacy_fallback(tmp_path):
-    """The manual fallback path (pre-filter Pythons) rejects link members.
+    """The manual fallback path (pre-PEP-706 Pythons) rejects link members.
 
-    Forces the legacy fallback by making `extractall` raise `TypeError` on the
-    `filter` kwarg, as it would on a `tarfile` without PEP 706 support.
+    Forces the legacy fallback by removing `tarfile.data_filter`, which is how
+    an interpreter without PEP 706 support presents.
     """
     extract_dir = tmp_path / "extract"
     extract_dir.mkdir()
     archive_path = _make_tar(tmp_path, [("link.csv", True)])
 
-    with tarfile.open(archive_path) as tar:
-        original_extractall = tar.extractall
-
-        def fake_extractall(*args, **kwargs):
-            if "filter" in kwargs:
-                raise TypeError("extractall() got an unexpected keyword 'filter'")
-            return original_extractall(*args, **kwargs)
-
-        with patch.object(tar, "extractall", side_effect=fake_extractall):
+    had_filter = hasattr(tarfile, "data_filter")
+    original = getattr(tarfile, "data_filter", None)
+    if had_filter:
+        del tarfile.data_filter
+    try:
+        with tarfile.open(archive_path) as tar:
             with pytest.raises(RuntimeError, match="link member"):
                 _safe_extract_tar(tar, str(extract_dir))
+    finally:
+        if had_filter:
+            tarfile.data_filter = original
+
+
+def test_safe_extract_tar_does_not_mistake_internal_typeerror_for_no_filter(tmp_path):
+    """A `TypeError` from *inside* extraction must propagate, not silently
+    retry with an unfiltered `extractall`.
+
+    Probing `tarfile.data_filter` instead of catching `TypeError` around the
+    extraction is what makes this hold: the earlier version would have treated
+    any internal `TypeError` as "this interpreter has no filter support" and
+    re-extracted the archive unfiltered over a partially populated directory.
+    """
+    extract_dir = tmp_path / "extract"
+    extract_dir.mkdir()
+    archive_path = _make_tar(tmp_path, [("data/file.csv", False)])
+
+    if not hasattr(tarfile, "data_filter"):
+        pytest.skip("interpreter has no PEP 706 filter support")
+
+    unfiltered_calls = []
+
+    with tarfile.open(archive_path) as tar:
+        # Raise only for the *filtered* call, and record (without raising) any
+        # unfiltered one. An implementation that treats the TypeError as
+        # "filter unsupported" falls through to the unfiltered path and
+        # swallows the error; this asserts it does not.
+        def fake_extractall(*args, **kwargs):
+            if "filter" in kwargs:
+                raise TypeError("boom from inside extraction")
+            unfiltered_calls.append(kwargs)
+
+        with patch.object(tar, "extractall", side_effect=fake_extractall):
+            with pytest.raises(TypeError, match="boom from inside extraction"):
+                _safe_extract_tar(tar, str(extract_dir))
+
+    assert unfiltered_calls == [], (
+        "internal TypeError was mistaken for missing filter support and "
+        "retried with an unfiltered extractall"
+    )
 
 
 def test_safe_extract_tar_extracts_normal_members(tmp_path):

@@ -105,13 +105,21 @@ def _extract_validated_members(tar, path):
 
 
 def _safe_extract_tar(tar, path):
-    """Extract `tar` into `path`, guarding against path-traversal members."""
-    try:
-        # filter="data" (PEP 706) rejects absolute paths, `..` traversal, and
-        # dangerous link/device members. Available on Python 3.12+, and
-        # backported to patched 3.9-3.11 as a security fix.
+    """Extract `tar` into `path`, guarding against path-traversal members.
+
+    `tarfile.data_filter` and the `filter` argument to `extractall` were added
+    together by PEP 706 (Python 3.12, backported to patched 3.9-3.11), so the
+    attribute is an exact probe for whether the filter is available. Probing up
+    front rather than catching `TypeError` around the extraction matters: on an
+    interpreter that *does* support the filter, a `TypeError` raised from inside
+    extraction would otherwise be mistaken for "filter unsupported" and retried
+    with an unfiltered `extractall` over a partially populated directory.
+    """
+    if hasattr(tarfile, "data_filter"):
+        # Rejects absolute paths, `..` traversal, and dangerous link/device
+        # members, and strips setuid/setgid bits.
         tar.extractall(path=path, filter="data")
-    except TypeError:
+    else:
         _extract_validated_members(tar, path)
 
 
