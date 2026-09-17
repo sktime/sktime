@@ -52,16 +52,18 @@ def test_seasonal_dummies_month_start():
     or _check_soft_dependencies("pandas<2.1.0", severity="none"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_seasonal_dummies_hourly():
+@pytest.mark.parametrize("freq", ["h", "H"])
+def test_seasonal_dummies_hourly(freq):
     """Test hourly frequency, see issue #8840.
 
     ``PeriodIndex.freqstr`` is ``"h"`` rather than ``"H"`` from pandas 2.2 on, so
     matching it against ``"H"`` raised ``ValueError: Unsupported frequency: h``.
+    The legacy ``"H"`` is rejected by pandas 3, and mapped to ``"h"``.
     """
     date_range = pd.date_range(start="2023-01-01", periods=24, freq="h")
     X = pd.DataFrame({"values": range(24)}, index=date_range)
 
-    Xt = SeasonalDummiesOneHot(freq="h").fit_transform(X)
+    Xt = SeasonalDummiesOneHot(freq=freq).fit_transform(X)
 
     # one dummy per hour, less the dropped first one, plus the original column
     assert list(Xt.columns) == ["values"] + [f"H{i}" for i in range(1, 24)]
@@ -105,3 +107,21 @@ def test_seasonal_dummies_all_documented_freqs(freq, sp, expected_prefix):
     if expected_prefix is not None:
         dummy_cols = [c for c in Xt_freq.columns if c != "values"]
         assert all(c.startswith(expected_prefix) for c in dummy_cols)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([SeasonalDummiesOneHot]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("freq", ["QS", "QS-APR"])
+def test_seasonal_dummies_quarter_start(freq):
+    """Test quarter start frequency, to_period with QuarterBegin fails on pandas 3.
+
+    Dummies are for the calendar quarter, for any anchor, as on pandas 2.
+    """
+    date_range = pd.date_range(start="2022-01-01", periods=8, freq=freq)
+    y = pd.Series(range(8), index=date_range)
+    X = SeasonalDummiesOneHot().fit_transform(y=y, X=None)
+    assert list(X.columns) == ["Q2", "Q3", "Q4"]
+    for quarter in [2, 3, 4]:
+        assert (X[f"Q{quarter}"] == (date_range.quarter == quarter)).all()

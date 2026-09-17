@@ -164,7 +164,7 @@ class SeasonalDummiesOneHot(BaseTransformer):
         """
 
         def number_to_freq(number):
-            number_map = {1: "A", 4: "Q", 12: "M", 52: "W", 365: "D", 8760: "H"}
+            number_map = {1: "A", 4: "Q", 12: "M", 52: "W", 365: "D", 8760: "h"}
             freq = number_map.get(number, None)
             if freq is None:
                 raise ValueError(f"Unsupported seasonal periodicity: {number}")
@@ -189,9 +189,14 @@ class SeasonalDummiesOneHot(BaseTransformer):
                     if freq is None:
                         raise ValueError("Frequency can't be determined from the index")
 
-            # pandas 3 no longer accepts a MonthBegin offset in to_period
+            # pandas 3 no longer accepts begin offsets or "H" in to_period,
+            # map to the calendar month or quarter, as pandas 2 did
             if isinstance(freq, pd.offsets.MonthBegin):
                 freq = f"{freq.n}M"
+            elif isinstance(freq, pd.offsets.QuarterBegin):
+                freq = f"{freq.n}Q"
+            elif isinstance(freq, str) and freq == "H":
+                freq = "h"
             period_index = index.to_period(freq)
 
         # `freqstr` is not the bare frequency code - anchored frequencies carry a
