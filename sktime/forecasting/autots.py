@@ -350,11 +350,12 @@ class AutoTS(BaseForecaster):
         # since AutoTS can only deal with dates
         y_date = self._convert_input_to_date(y)
         self._y_date = y_date
+        X_date = self._convert_input_to_date(X)
 
         self._fh = fh
         self._instantiate_model()
         try:
-            self.forecaster_.fit(df=y_date, future_regressor=X)
+            self.forecaster_.fit(df=y_date, future_regressor=X_date)
         except Exception as e:
             raise e
         return self
@@ -381,10 +382,11 @@ class AutoTS(BaseForecaster):
             Point predictions
         """
         y_date = self._y_date
+        X_date = self._convert_input_to_date(X)
 
         values = self.forecaster_.predict(
             forecast_length=self._get_forecast_length(),
-            future_regressor=X,
+            future_regressor=X_date,
         ).forecast.values
 
         cutoff = self._fh_cutoff_transformation(y_date)
@@ -663,6 +665,87 @@ class AutoTS(BaseForecaster):
             transformed_fh_cutoff = len(cutoff.index)
         return transformed_fh_cutoff
 
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return quantile forecasts.
+
+        State required:
+            Requires state to be "fitted".
+
+        Accesses in self:
+            Fitted model attributes ending in "_"
+            self.cutoff, self._is_fitted
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : list of float
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Quantile forecasts.
+            Column index is pd.MultiIndex with levels:
+            0. variable name
+            1. alpha (probability)
+            Row index is fh.
+        """
+        y_date = self._y_date
+        X_date = self._convert_input_to_date(X)
+
+        cutoff = self._fh_cutoff_transformation(y_date)
+        # _fh values are 1-based relative indices; convert to 0-based for indexing
+        relative_fh_idx = self._fh.to_relative(cutoff)._values - 1
+        var_names = y_date.columns
+        row_idx = self._fh.to_absolute_index(self.cutoff)
+
+        # alpha = 0.5 maps to point forecast
+        # alpha < 0.5 maps to lower_forecast at coverage = 1 - 2 * alpha
+        # alpha > 0.5 maps to upper_forecast at coverage = 2 * alpha - 1
+        coverages_needed = {abs(1 - 2 * a) for a in alpha if a != 0.5}
+
+        # call autots predict once per unique coverage needed
+        pred_objects = {}
+        for cov in coverages_needed:
+            pred_objects[cov] = self.forecaster_.predict(
+                forecast_length=self._get_forecast_length(),
+                prediction_interval=cov,
+                future_regressor=X_date,
+            )
+
+        # point forecast for alpha=0.5
+        if 0.5 in alpha:
+            point_pred = self.forecaster_.predict(
+                forecast_length=self._get_forecast_length(),
+                future_regressor=X_date,
+            )
+            point_vals = point_pred.forecast.values[relative_fh_idx]
+
+        dfs = {}
+        for a in alpha:
+            if a == 0.5:
+                for var_idx, var_name in enumerate(var_names):
+                    dfs[(var_name, a)] = point_vals[:, var_idx]
+            else:
+                cov = abs(1 - 2 * a)
+                pred_obj = pred_objects[cov]
+                if a < 0.5:
+                    vals = pred_obj.lower_forecast.values[relative_fh_idx]
+                else:
+                    vals = pred_obj.upper_forecast.values[relative_fh_idx]
+                for var_idx, var_name in enumerate(var_names):
+                    dfs[(var_name, a)] = vals[:, var_idx]
+
+        quantiles = pd.DataFrame(dfs, index=row_idx)
+        quantiles.columns = pd.MultiIndex.from_tuples(
+            quantiles.columns, names=["variable", "alpha"]
+        )
+        quantiles.sort_index(axis=1, inplace=True)
+        return quantiles
+
     def _predict_interval(self, fh, X, coverage):
         """Compute/return prediction intervals for a forecast.
 
@@ -699,6 +782,7 @@ class AutoTS(BaseForecaster):
         coverage_list = list(coverage)
 
         y_date = self._y_date
+        X_date = self._convert_input_to_date(X)
 
         # Call predict on the internal forecaster
         # This returns a dict of PredictionObjects if prediction_interval is a list,
@@ -706,7 +790,7 @@ class AutoTS(BaseForecaster):
         prediction = self.forecaster_.predict(
             forecast_length=self._get_forecast_length(),
             prediction_interval=coverage_list,
-            future_regressor=X,
+            future_regressor=X_date,
         )
 
         cutoff = self._fh_cutoff_transformation(y_date)
