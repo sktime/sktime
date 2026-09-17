@@ -2669,6 +2669,21 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
 
         return y_pred
 
+    @staticmethod
+    def _asfreq_freq(y):
+        """Return the frequency alias to pass to ``asfreq`` for ``y``, or None.
+
+        ``ForecastingHorizon.freq`` reports the ``DatetimeIndex`` offset alias,
+        e.g. ``"ME"`` for monthly. ``PeriodIndex.asfreq`` only accepts period
+        aliases, e.g. ``"M"``, and raises on ``"ME"``. Where the index carries a
+        frequency of its own, use that, so the alias always matches the index.
+        """
+        index = y.index
+        if index.nlevels > 1:
+            index = index.get_level_values(-1)
+
+        return getattr(index, "freqstr", None)
+
     def _predict_out_of_sample(self, X_pool, fh):
         """Recursive reducer: predict out of sample (ahead of cutoff)."""
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
@@ -2694,11 +2709,12 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred_list = []
 
         for _ in y_lags_no_gaps:
-            if hasattr(self.fh, "freq") and self.fh.freq is not None:
+            freq = self._asfreq_freq(y_plus_preds)
+            if freq is not None:
                 y_plus_preds = apply_method_per_series(
                     y_plus_preds,
                     "asfreq",
-                    self.fh.freq,
+                    freq,
                     how="start",
                 )
             Xt = lagger_y_to_X.transform(y_plus_preds)
