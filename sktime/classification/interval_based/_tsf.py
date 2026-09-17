@@ -104,7 +104,7 @@ class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
         # --------------
         "authors": ["kkoziara", "luiszugasti", "kanand77"],
         "maintainers": ["kkoziara", "luiszugasti", "kanand77"],
-        "python_dependencies": ["joblib", "scikit-learn<1.8"],
+        "python_dependencies": ["joblib"],
         # estimator type
         # --------------
         "capability:feature_importance": True,
