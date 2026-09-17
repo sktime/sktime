@@ -22,7 +22,9 @@ class _SklVersionBridgeMixin:
         if "force_all_finite" in kwargs:
             val = kwargs.pop("force_all_finite")
             if _check_soft_dependencies("scikit-learn>=1.6", severity="none"):
-                val["ensure_all_finite"] = val
+                kwargs["ensure_all_finite"] = val
+            else:
+                kwargs["force_all_finite"] = val
 
         # from sklearn 1.5 onwards, the location of the validate_data function changed
         if _check_soft_dependencies("scikit-learn<1.6", severity="none"):
