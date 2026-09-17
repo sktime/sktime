@@ -420,7 +420,12 @@ class HFTransformersForecaster(BaseForecaster):
             # Freeze loaded parameters and reinitialize mismatched layers
             for param in self.model.parameters():
                 param.requires_grad = False
-            for key, _, _ in self.info["mismatched_keys"]:
+            for item in self.info["mismatched_keys"]:
+                if isinstance(item, tuple):
+                    key = item[0]
+                else:
+                    key = item
+
                 _model = self.model
                 for attr_name in key.split(".")[:-1]:
                     _model = getattr(_model, attr_name)
@@ -457,6 +462,10 @@ class HFTransformersForecaster(BaseForecaster):
 
         # Prepare training arguments
         training_args = deepcopy(self.training_args)
+        # Initialize training arguments when none are provided.
+        if training_args is None:
+            training_args = {}
+
         training_args["label_names"] = ["future_values"]
         # evaluation_strategy was renamed to eval_strategy in transformers 4.41.0
         if _check_soft_dependencies("transformers>=4.41.0", severity="none"):
