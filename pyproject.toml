@@ -58,7 +58,7 @@ dependencies = [
   "packaging",  # for estimator specific dependency parsing
   "pandas<3.1.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base>=1.0.0,<1.2.0",  # base module for sklearn compatible base API
-  "scikit-learn>=0.24,<1.8.0",  # required for estimators and framework layer
+  "scikit-learn>=0.24,<1.10.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
 
@@ -182,7 +182,7 @@ docs = [
 ]
 tests = [
   "pytest>=7.4,<9.2",
-  "pytest-randomly>=3.15,<4.2",
+  "pytest-randomly>=3.15,<5.1",
   "pytest-timeout>=2.1,<2.5",
   "pytest-xdist>=3.3,<3.9",
 ]
