@@ -114,7 +114,8 @@ class TBATS(_TbatsAdapter):
 
     _tags = {
         "tests:specific": [
-            "sktime.forecasting.tests.test_tbats", "sktime.libs.tbats.tests",
+            "sktime.forecasting.tests.test_tbats",
+            "sktime.libs.tbats.tests",
         ]
     }
 
