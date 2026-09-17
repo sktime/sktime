@@ -90,7 +90,7 @@ else:
     COMPOSITE_ESTIMATORS = []
 
 
-@pytest.mark.skip(reason="this compatibility is no longer supported since sklearn 1.8.0")
+@pytest.mark.skip(reason="compatibility is no longer supported since sklearn 1.8.0")
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
     or not run_test_module_changed("sktime.classification"),
@@ -106,7 +106,7 @@ def test_sklearn_cross_validation(data_args):
     assert isinstance(scores, np.ndarray)
 
 
-@pytest.mark.skip(reason="this compatibility is no longer supported since sklearn 1.8.0")
+@pytest.mark.skip(reason="compatibility is no longer supported since sklearn 1.8.0")
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.classification"),
     reason="skip test if required soft dependency not available",
@@ -122,7 +122,7 @@ def test_sklearn_cross_validation_iterators(data_args, cross_validation_method):
         assert isinstance(train, np.ndarray) and isinstance(test, np.ndarray)
 
 
-@pytest.mark.skip(reason="this compatibility is no longer supported since sklearn 1.8.0")
+@pytest.mark.skip(reason="compatibility is no longer supported since sklearn 1.8.0")
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
     or not run_test_module_changed("sktime.classification"),
@@ -143,7 +143,7 @@ def test_sklearn_parameter_tuning(data_args, parameter_tuning_method):
     assert isinstance(parameter_tuning_method.best_estimator_, CanonicalIntervalForest)
 
 
-@pytest.mark.skip(reason="this compatibility is no longer supported since sklearn 1.8.0")
+@pytest.mark.skip(reason="compatibility is no longer supported since sklearn 1.8.0")
 @pytest.mark.skipif(
     not _check_soft_dependencies("numba", severity="none")
     or not run_test_module_changed("sktime.classification"),
