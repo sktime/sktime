@@ -100,3 +100,26 @@ def test_VARMAX_against_statsmodels_with_exog():
     y_pred_stats = y_pred_stats.loc[fh.to_absolute_index(train.index[-1])]
 
     assert_allclose(y_pred, y_pred_stats)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(VARMAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_VARMAX_with_integer_index():
+    """Check VARMAX with a non-zero-based integer index, see #11111.
+
+    statsmodels 0.15 no longer accepts a plain integer index, so the adapter
+    must coerce it to a ``pd.RangeIndex`` also for multivariate data.
+    """
+    np.random.seed(13455)
+    index = pd.Index(np.arange(5, 35))
+    y = pd.DataFrame(np.random.rand(30, 2) + 1.0, columns=list("AB"), index=index)
+    fh = ForecastingHorizon([1, 2, 3])
+
+    forecaster = VARMAX(**VARMAX.get_test_params()[0])
+    forecaster.fit(y)
+    y_pred = forecaster.predict(fh=fh)
+
+    assert y_pred.shape == (3, 2)
+    pd.testing.assert_index_equal(y_pred.index, pd.Index([35, 36, 37]))
