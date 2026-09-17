@@ -26,12 +26,15 @@ class LuckyDtwDist(_DelegatedPairwiseTransformerPanel):
 
     Examples
     --------
-    >>> from sktime.dists_kernels.lucky import LuckyDtwDist
     >>> from sktime.datasets import load_unit_test
+    >>> from sktime.dists_kernels import LuckyDtwDist
     >>>
-    >>> dist = LuckyDtwDist(window=2)
-    >>> X, _ = load_unit_test(return_type="pd-multiindex")
+    >>> X, _ = load_unit_test()
+    >>> X = X[0:3]
+    >>> dist = LuckyDtwDist()
     >>> dist_mat = dist.transform(X)
+    >>> dist_mat.shape
+    (3, 3)
     """
 
     _tags = {
