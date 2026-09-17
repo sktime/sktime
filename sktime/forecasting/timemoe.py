@@ -81,6 +81,11 @@ class TimeMoEForecaster(BaseForecaster):
         of package maintained in sktime. To install the source package,
         follow the instructions here [1]_.
 
+    device : str, optional (default=None)
+        Device placement passed to transformers ``device_map``, for example
+        ``"cpu"``, ``"cuda"``, or ``"auto"``. If ``None``,
+        ``config["device_map"]`` is used.
+
     ignore_deps: bool, optional, default=False
         If True, dependency checks will be ignored, and the user is expected to handle
         the installation of required packages manually. If False, the class will enforce
@@ -139,12 +144,14 @@ class TimeMoEForecaster(BaseForecaster):
         seed: int = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
+        device: str | None = None,
     ):
         self.seed = seed
         self.config = config
         self.model_path = model_path
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
+        self.device = device
 
         super().__init__()
 
@@ -179,6 +186,8 @@ class TimeMoEForecaster(BaseForecaster):
 
         _config = self._get_default_config()
         _config.update(self.config if self.config is not None else {})
+        if self.device is not None:
+            _config["device_map"] = self.device
         self._config = _config
 
     def _fit(self, y, X=None, fh=None):
@@ -314,11 +323,15 @@ class TimeMoEForecaster(BaseForecaster):
             for j in range(_y.shape[2]):
                 _y_i = _y[i, :, j]
 
-                input_tensor = torch.tensor(
-                    _y_i, dtype=self._config["torch_dtype"]
-                ).unsqueeze(0)
+                input_tensor = (
+                    torch.tensor(_y_i, dtype=self._config["torch_dtype"])
+                    .unsqueeze(0)
+                    .to(self.model.device)
+                )
 
-                attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
+                attention_mask = torch.ones(
+                    input_tensor.shape[:2], dtype=torch.long, device=self.model.device
+                )
 
                 with torch.no_grad():
                     output = self.model(
