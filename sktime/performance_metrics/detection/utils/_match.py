@@ -1,6 +1,7 @@
 """Matching of detected alarms to true events, for live detection metrics."""
 
 import datetime as dt
+import numbers
 from dataclasses import dataclass
 
 import numpy as np
@@ -54,6 +55,12 @@ def _event_times(events, X, var_name):
     -------
     pd.Index
         Times of the events, in the order of the rows of ``events``.
+
+    Raises
+    ------
+    ValueError
+        If ``events`` has no ``"ilocs"`` column, is not in points format,
+        or has positions outside ``[0, len(X))``.
     """
     if "ilocs" not in events.columns:
         raise ValueError(
@@ -68,7 +75,19 @@ def _event_times(events, X, var_name):
             f"but found dtype {ilocs.dtype}. Segments are not supported."
         )
 
-    return X.index[np.asarray(ilocs.to_numpy(), dtype=int)]
+    positions = np.asarray(ilocs.to_numpy(), dtype=int)
+
+    # a negative position would silently wrap to the end of X, so refuse it
+    n_timepoints = len(X.index)
+    outside = (positions < 0) | (positions >= n_timepoints)
+    if outside.any():
+        raise ValueError(
+            f"{var_name} has 'ilocs' outside [0, {n_timepoints}), the positions "
+            f"of X, found {positions[outside].tolist()}. "
+            "'ilocs' must be positions into the X passed with them."
+        )
+
+    return X.index[positions]
 
 
 def _coerce_tolerance(value, index, var_name):
@@ -92,6 +111,8 @@ def _coerce_tolerance(value, index, var_name):
     TypeError
         If the unit of ``value`` does not fit the unit of ``index``.
         A plain ``0`` is accepted for both, and means no tolerance.
+    ValueError
+        If ``value`` is negative.
     """
     is_time_index = isinstance(index, pd.DatetimeIndex)
     is_time_value = isinstance(value, (pd.Timedelta, np.timedelta64, dt.timedelta))
@@ -106,14 +127,24 @@ def _coerce_tolerance(value, index, var_name):
                 f"pd.Timedelta('3s'), if X has a time index, "
                 f"but found {value!r}."
             )
-        return pd.Timedelta(value)
+        tolerance = pd.Timedelta(value)
+        zero = pd.Timedelta(0)
+    else:
+        if is_time_value or not isinstance(value, numbers.Real):
+            raise TypeError(
+                f"{var_name} must be a number in the units of X.index, "
+                f"if X does not have a time index, but found {value!r}."
+            )
+        tolerance = value
+        zero = 0
 
-    if is_time_value:
-        raise TypeError(
-            f"{var_name} must be a number of index steps, if X does not have "
-            f"a time index, but found {value!r}."
+    # a negative tolerance would shrink or empty the hit windows without notice
+    if tolerance < zero:
+        raise ValueError(
+            f"{var_name} must be 0 or more, but found {value!r}. "
+            "The hit window is [T - max_lead, T + max_delay]."
         )
-    return value
+    return tolerance
 
 
 def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
@@ -125,7 +156,8 @@ def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
     Positions in ``y_true`` and ``y_pred`` are ``iloc`` references into ``X``,
     and are mapped through ``X.index`` before matching. If ``X`` has a time
     index, windows and returned times are in time units. Otherwise they are
-    in index steps.
+    in the units of ``X.index``, not in positions: on an index ``[0, 10, 20]``,
+    a ``max_lead`` of 10 reaches back one point, not ten.
 
     An alarm may hit more than one event, if event windows overlap. Alarms
     that hit no event are false alarms. Further alarms inside a window that
@@ -139,12 +171,12 @@ def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
         Detected alarms, in points format, with an ``"ilocs"`` column.
     X : pd.DataFrame or pd.Series
         Time series the events refer to. Only its index is used.
-    max_lead : int, or time offset
-        How early an alarm may be, and still count as a hit.
-        Number of index steps, or a time offset such as ``pd.Timedelta("3s")``
-        if ``X`` has a time index.
-    max_delay : int, or time offset, default=0
-        How late an alarm may be, and still count as a hit.
+    max_lead : int, float, or time offset
+        How early an alarm may be, and still count as a hit. Must be 0 or more.
+        A number in the units of ``X.index``, or a time offset such as
+        ``pd.Timedelta("3s")`` if ``X`` has a time index.
+    max_delay : int, float, or time offset, default=0
+        How late an alarm may be, and still count as a hit. Must be 0 or more.
         Same unit as ``max_lead``. The default means that an alarm after the
         event does not count.
 
@@ -153,6 +185,14 @@ def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
     _EventMatch
         Which events were hit, the earliest hit per event, and which alarms
         hit no event. See the class docstring for the fields.
+
+    Raises
+    ------
+    ValueError
+        If an ``"ilocs"`` value is outside ``[0, len(X))``,
+        or if ``max_lead`` or ``max_delay`` is negative.
+    TypeError
+        If the unit of ``max_lead`` or ``max_delay`` does not fit ``X.index``.
 
     Examples
     --------

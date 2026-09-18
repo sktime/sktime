@@ -20,6 +20,13 @@ def _make_X(n_timepoints=10, time_index=False):
     return pd.DataFrame({"foo": range(n_timepoints)})
 
 
+def _make_uneven_time_X():
+    """Make a series on an uneven clock: steps of 10s, then one step of 4s."""
+    seconds = [0, 10, 20, 30, 34]
+    index = pd.Timestamp("2020-01-01") + pd.to_timedelta(seconds, unit="s")
+    return pd.DataFrame({"foo": range(len(seconds))}, index=index)
+
+
 @SKIP_IF_UNCHANGED
 def test_match_integer_index():
     """Windows are in index steps if the index is integer."""
@@ -136,3 +143,53 @@ def test_match_extra_alarms_in_one_window():
     assert list(match.hit) == [True]
     assert list(match.earliest_hit) == [1]
     assert list(match.false_alarm) == [False, False, True]
+
+
+@SKIP_IF_UNCHANGED
+def test_match_uneven_time_index():
+    """Windows are measured in time, not in steps.
+
+    Both alarms are one step before their event. The first is 10s early and
+    misses the 5s window, the second is 4s early and hits it. Counting steps
+    would treat both alarms the same, so it would fail this test.
+    """
+    X = _make_uneven_time_X()
+    y_true = pd.DataFrame({"ilocs": [2, 4]})  # events at 20s and 34s
+    y_pred = pd.DataFrame({"ilocs": [1, 3]})  # alarms at 10s and 30s
+
+    match = _match_alarms_to_events(y_true, y_pred, X, max_lead=pd.Timedelta("5s"))
+
+    assert list(match.hit) == [False, True]
+    assert list(match.earliest_hit) == [-1, 1]
+    assert list(match.false_alarm) == [True, False]
+
+
+@SKIP_IF_UNCHANGED
+@pytest.mark.parametrize("bad_iloc", [-1, 10])
+@pytest.mark.parametrize("bad_table", ["y_true", "y_pred"])
+def test_match_rejects_ilocs_outside_X(bad_iloc, bad_table):
+    """Positions outside [0, len(X)) raise, and -1 does not wrap to the end."""
+    X = _make_X()  # 10 points, so valid positions are 0 to 9
+    good = pd.DataFrame({"ilocs": [5]})
+    bad = pd.DataFrame({"ilocs": [bad_iloc]})
+    y_true, y_pred = (bad, good) if bad_table == "y_true" else (good, bad)
+
+    with pytest.raises(ValueError, match=f"{bad_table} has 'ilocs' outside"):
+        _match_alarms_to_events(y_true, y_pred, X, max_lead=2)
+
+
+@SKIP_IF_UNCHANGED
+@pytest.mark.parametrize("name", ["max_lead", "max_delay"])
+@pytest.mark.parametrize("time_index", [False, True])
+def test_match_rejects_negative_tolerance(name, time_index):
+    """A negative tolerance raises, instead of making empty windows."""
+    X = _make_X(time_index=time_index)
+    y_true = pd.DataFrame({"ilocs": [5]})
+    y_pred = pd.DataFrame({"ilocs": [4]})
+
+    step = pd.Timedelta("1s") if time_index else 1
+    tolerances = {"max_lead": 2 * step, "max_delay": 0 * step}
+    tolerances[name] = -2 * step
+
+    with pytest.raises(ValueError, match=f"{name} must be 0 or more"):
+        _match_alarms_to_events(y_true, y_pred, X, **tolerances)

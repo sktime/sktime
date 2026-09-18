@@ -21,6 +21,13 @@ def _make_X(n_timepoints=10, time_index=False):
     return pd.DataFrame({"foo": range(n_timepoints)})
 
 
+def _make_uneven_time_X():
+    """Make a series on an uneven clock: steps of 10s, then one step of 4s."""
+    seconds = [0, 10, 20, 30, 34]
+    index = pd.Timestamp("2020-01-01") + pd.to_timedelta(seconds, unit="s")
+    return pd.DataFrame({"foo": range(len(seconds))}, index=index)
+
+
 def _events(ilocs):
     """Make an event table, typed like detector output, also when empty."""
     return pd.DataFrame({"ilocs": ilocs}, dtype="int64")
@@ -92,6 +99,23 @@ def test_event_tpr_time_index():
     # a one second lead is too short for the alarm at 3s
     score = EventTPR(max_lead=pd.Timedelta("1s"))(y_true, y_pred, X)
     assert score == 0.0
+
+
+@SKIP_IF_UNCHANGED
+def test_event_tpr_uneven_time_index():
+    """Windows are measured in time, not in steps.
+
+    Both alarms are one step before their event. The first is 10s early and
+    misses the 5s window, the second is 4s early and hits it. Counting steps
+    would give 1.0 instead of 0.5, so it would fail this test.
+    """
+    X = _make_uneven_time_X()
+    y_true = _events([2, 4])  # events at 20s and 34s
+    y_pred = _events([1, 3])  # alarms at 10s and 30s
+
+    score = EventTPR(max_lead=pd.Timedelta("5s"))(y_true, y_pred, X)
+
+    assert score == 0.5
 
 
 @SKIP_IF_UNCHANGED
