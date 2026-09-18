@@ -4047,6 +4047,40 @@ class X_y_must_have_same_index(_BaseTag):
     }
 
 
+class distr__measuretype(_BaseTag):
+    """Class the distribution measure belongs to.
+
+    - String name: ``"distr:measuretype"``
+    - Public property tag
+    - Values: string, one of ``"continuous"``, ``"discrete"``, ``"mixed"``
+    - Example: ``"continuous"``
+    - Default: ``"continuous"``
+
+    This tag applies to probabilistic distribution objects (``"distribution"`` type).
+
+    It specifies the measure-theoretic class of the distribution:
+
+    * ``"continuous"``: absolutely continuous distributions with a density
+      (e.g., ``Normal``)
+    * ``"discrete"``: discrete distributions supported on countable points
+    * ``"mixed"``: mixtures with both continuous and discrete components
+
+    The tag is used by distribution methods and tests to select exact vs
+    approximate numerical implementations where needed.
+    """
+
+    _tags = {
+        "tag_name": "distr:measuretype",
+        "parent_type": "distribution",
+        "tag_type": ("str", ["continuous", "discrete", "mixed"]),
+        "short_descr": (
+            "class the distribution measure belongs to - "
+            "abs.continuous, discrete, mixed"
+        ),
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
     (
         "enforce_index_type",
@@ -4100,12 +4134,6 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         ("list", "str"),
         "methods provided by the distribution that return approximate results",
-    ),
-    (
-        "distr:measuretype",
-        "distribution",
-        ("str", ["continuous", "discrete", "mixed"]),
-        "class the distribution measure belongs to - abs.continuous, discrete, mixed",
     ),
     (
         "approx_mean_spl",
