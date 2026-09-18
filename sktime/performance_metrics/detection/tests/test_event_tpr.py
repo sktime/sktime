@@ -37,7 +37,7 @@ def _events(ilocs):
 def test_event_tpr_hit():
     """An alarm inside the window hits the event."""
     X = _make_X()
-    score = EventTPR(max_lead=2)(_events([5]), _events([4]), X)
+    score = EventTPR(earliest_offset=-2)(_events([5]), _events([4]), X)
 
     assert score == 1.0
 
@@ -46,7 +46,7 @@ def test_event_tpr_hit():
 def test_event_tpr_miss():
     """An alarm outside the window does not hit the event."""
     X = _make_X()
-    score = EventTPR(max_lead=2)(_events([5]), _events([1]), X)
+    score = EventTPR(earliest_offset=-2)(_events([5]), _events([1]), X)
 
     assert score == 0.0
 
@@ -55,7 +55,7 @@ def test_event_tpr_miss():
 def test_event_tpr_no_events():
     """With no true events, the score is missing."""
     X = _make_X()
-    score = EventTPR(max_lead=2)(_events([]), _events([2]), X)
+    score = EventTPR(earliest_offset=-2)(_events([]), _events([2]), X)
 
     assert isinstance(score, float)
     assert np.isnan(score)
@@ -65,7 +65,7 @@ def test_event_tpr_no_events():
 def test_event_tpr_no_alarms():
     """With true events but no alarms, the score is 0."""
     X = _make_X()
-    score = EventTPR(max_lead=2)(_events([4, 7]), _events([]), X)
+    score = EventTPR(earliest_offset=-2)(_events([4, 7]), _events([]), X)
 
     assert score == 0.0
 
@@ -79,7 +79,7 @@ def test_event_tpr_window_edges(alarm, expected):
     """Alarms on both window edges hit, one step outside does not."""
     X = _make_X(n_timepoints=20)
     # event at 10, window is [8, 11]
-    metric = EventTPR(max_lead=2, max_delay=1)
+    metric = EventTPR(earliest_offset=-2, latest_offset=1)
     score = metric(_events([10]), _events([alarm]), X)
 
     assert score == expected
@@ -93,11 +93,11 @@ def test_event_tpr_time_index():
     y_pred = _events([3])
 
     # window of the event at 5s is [3s, 5s], so only that event is hit
-    score = EventTPR(max_lead=pd.Timedelta("2s"))(y_true, y_pred, X)
+    score = EventTPR(earliest_offset=pd.Timedelta("-2s"))(y_true, y_pred, X)
     assert score == 0.5
 
-    # a one second lead is too short for the alarm at 3s
-    score = EventTPR(max_lead=pd.Timedelta("1s"))(y_true, y_pred, X)
+    # an earliest offset of one second is too short for the alarm at 3s
+    score = EventTPR(earliest_offset=pd.Timedelta("-1s"))(y_true, y_pred, X)
     assert score == 0.0
 
 
@@ -113,7 +113,7 @@ def test_event_tpr_uneven_time_index():
     y_true = _events([2, 4])  # events at 20s and 34s
     y_pred = _events([1, 3])  # alarms at 10s and 30s
 
-    score = EventTPR(max_lead=pd.Timedelta("5s"))(y_true, y_pred, X)
+    score = EventTPR(earliest_offset=pd.Timedelta("-5s"))(y_true, y_pred, X)
 
     assert score == 0.5
 
@@ -125,10 +125,10 @@ def test_event_tpr_integer_index():
     y_true = _events([3])  # index value 30
     y_pred = _events([2])  # index value 20, one position earlier
 
-    # the alarm is 10 index units early, so a lead of 10 is enough
-    assert EventTPR(max_lead=10)(y_true, y_pred, X) == 1.0
-    # a lead of 5 is not, even though the alarm is only one position early
-    assert EventTPR(max_lead=5)(y_true, y_pred, X) == 0.0
+    # the alarm is 10 index units early, so an earliest offset of -10 is enough
+    assert EventTPR(earliest_offset=-10)(y_true, y_pred, X) == 1.0
+    # -5 is not, even though the alarm is only one position early
+    assert EventTPR(earliest_offset=-5)(y_true, y_pred, X) == 0.0
 
 
 @SKIP_IF_UNCHANGED
@@ -139,7 +139,7 @@ def test_event_tpr_one_alarm_in_two_overlapping_windows():
     y_true = _events([10, 12])
     y_pred = _events([9])
 
-    score = EventTPR(max_lead=4)(y_true, y_pred, X)
+    score = EventTPR(earliest_offset=-4)(y_true, y_pred, X)
 
     assert score == 1.0
 
@@ -147,7 +147,7 @@ def test_event_tpr_one_alarm_in_two_overlapping_windows():
 @SKIP_IF_UNCHANGED
 def test_event_tpr_requires_X():
     """Without X there is no index to map positions through, so it raises."""
-    metric = EventTPR(max_lead=2)
+    metric = EventTPR(earliest_offset=-2)
 
     with pytest.raises(TypeError):
         metric(_events([5]), _events([4]))

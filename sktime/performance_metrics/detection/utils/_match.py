@@ -140,15 +140,16 @@ def _refuse_intervals(y, metric_name):
         )
 
 
-def _coerce_tolerance(value, index, var_name):
-    """Coerce a tolerance to the unit of ``index``.
+def _coerce_offset(value, index, var_name):
+    """Coerce a signed window offset to the unit of ``index``.
 
     Parameters
     ----------
     value : int, float, or time offset
-        Tolerance to coerce.
+        Offset to coerce. Negative values are before the event, positive
+        values are after it.
     index : pd.Index
-        Index of the time series the tolerance applies to.
+        Index of the time series the offset applies to.
     var_name : str
         Name of ``value`` in the caller, used in error messages.
 
@@ -160,9 +161,9 @@ def _coerce_tolerance(value, index, var_name):
     ------
     TypeError
         If the unit of ``value`` does not fit the unit of ``index``.
-        A plain ``0`` is accepted for both, and means no tolerance.
+        A plain ``0`` is accepted for both, and means no offset.
     ValueError
-        If ``value`` is NaN or negative.
+        If ``value`` is NaN.
     """
     is_time_index = _is_time_index(index)
     is_time_value = isinstance(value, (pd.Timedelta, np.timedelta64, dt.timedelta))
@@ -174,44 +175,37 @@ def _coerce_tolerance(value, index, var_name):
         if not is_time_value and not isinstance(value, str):
             raise TypeError(
                 f"{var_name} must be a time offset, for instance "
-                f"pd.Timedelta('3s'), if X has a time index, "
+                f"pd.Timedelta('-3s'), if X has a time index, "
                 f"but found {value!r}."
             )
-        tolerance = pd.Timedelta(value)
-        zero = pd.Timedelta(0)
+        offset = pd.Timedelta(value)
     else:
         if is_time_value or not isinstance(value, numbers.Real):
             raise TypeError(
                 f"{var_name} must be a number in the units of X.index, "
                 f"if X does not have a time index, but found {value!r}."
             )
-        tolerance = value
-        zero = 0
+        offset = value
 
-    # NaN passes the negative check, as NaN < 0 is False, but bends the window
-    if pd.isna(tolerance):
+    # NaN would bend the window without notice, as every comparison with it fails
+    if pd.isna(offset):
         raise ValueError(f"{var_name} must not be NaN, but found {value!r}.")
 
-    # a negative tolerance would shrink or empty the hit windows without notice
-    if tolerance < zero:
-        raise ValueError(
-            f"{var_name} must be 0 or more, but found {value!r}. "
-            "The hit window is [T - max_lead, T + max_delay]."
-        )
-    return tolerance
+    return offset
 
 
-def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
+def _match_alarms_to_events(y_true, y_pred, X, earliest_offset=0, latest_offset=0):
     """Match detected alarms to true events, on the time axis of ``X``.
 
     An alarm hits a true event at time ``T`` if it falls in the closed window
-    ``[T - max_lead, T + max_delay]``.
+    ``[T + earliest_offset, T + latest_offset]``. The offsets are signed,
+    negative is before the event and positive is after it.
 
     Positions in ``y_true`` and ``y_pred`` are ``iloc`` references into ``X``,
     and are mapped through ``X.index`` before matching. If ``X`` has a time
     index, windows and returned times are in time units. Otherwise they are
     in the units of ``X.index``, not in positions: on an index ``[0, 10, 20]``,
-    a ``max_lead`` of 10 reaches back one point, not ten.
+    an ``earliest_offset`` of -10 reaches back one point, not ten.
 
     An alarm may hit more than one event, if event windows overlap. Alarms
     that hit no event are false alarms. Further alarms inside a window that
@@ -225,14 +219,13 @@ def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
         Detected alarms, in points format, with an ``"ilocs"`` column.
     X : pd.DataFrame or pd.Series
         Time series the events refer to. Only its index is used.
-    max_lead : int, float, or time offset
-        How early an alarm may be, and still count as a hit. Must be 0 or more.
+    earliest_offset : int, float, or time offset, default=0
+        Start of the hit window, relative to the event time ``T``.
         A number in the units of ``X.index``, or a time offset such as
-        ``pd.Timedelta("3s")`` if ``X`` has a time index.
-    max_delay : int, float, or time offset, default=0
-        How late an alarm may be, and still count as a hit. Must be 0 or more.
-        Same unit as ``max_lead``. The default means that an alarm after the
-        event does not count.
+        ``pd.Timedelta("-3s")`` if ``X`` has a time index.
+    latest_offset : int, float, or time offset, default=0
+        End of the hit window, relative to the event time ``T``.
+        Same unit as ``earliest_offset``. Must not be before ``earliest_offset``.
 
     Returns
     -------
@@ -243,10 +236,10 @@ def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
     Raises
     ------
     ValueError
-        If an ``"ilocs"`` value is outside ``[0, len(X))``,
-        or if ``max_lead`` or ``max_delay`` is NaN or negative.
+        If an ``"ilocs"`` value is outside ``[0, len(X))``, if an offset is NaN,
+        or if ``earliest_offset`` is after ``latest_offset``.
     TypeError
-        If the unit of ``max_lead`` or ``max_delay`` does not fit ``X.index``.
+        If the unit of an offset does not fit ``X.index``.
 
     Examples
     --------
@@ -257,7 +250,7 @@ def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
     >>> X = pd.DataFrame({"foo": range(10)})
     >>> y_true = pd.DataFrame({"ilocs": [5]})
     >>> y_pred = pd.DataFrame({"ilocs": [3, 8]})
-    >>> match = _match_alarms_to_events(y_true, y_pred, X, max_lead=2)
+    >>> match = _match_alarms_to_events(y_true, y_pred, X, earliest_offset=-2)
     >>> match.hit
     array([ True])
     >>> match.earliest_hit
@@ -268,8 +261,17 @@ def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
     event_times = _event_times(y_true, X, "y_true")
     alarm_times = _event_times(y_pred, X, "y_pred")
 
-    lead = _coerce_tolerance(max_lead, X.index, "max_lead")
-    delay = _coerce_tolerance(max_delay, X.index, "max_delay")
+    earliest = _coerce_offset(earliest_offset, X.index, "earliest_offset")
+    latest = _coerce_offset(latest_offset, X.index, "latest_offset")
+
+    # an inverted window would silently match nothing, so refuse it
+    if earliest > latest:
+        raise ValueError(
+            "earliest_offset must not be after latest_offset, but found "
+            f"earliest_offset={earliest_offset!r} and "
+            f"latest_offset={latest_offset!r}. "
+            "The hit window is [T + earliest_offset, T + latest_offset]."
+        )
 
     n_events = len(event_times)
     n_alarms = len(alarm_times)
@@ -292,8 +294,8 @@ def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
     sorted_alarms = alarm_times[order]
 
     # half-open positions of the window bounds, in the sorted alarms
-    start = sorted_alarms.searchsorted(event_times - lead, side="left")
-    stop = sorted_alarms.searchsorted(event_times + delay, side="right")
+    start = sorted_alarms.searchsorted(event_times + earliest, side="left")
+    stop = sorted_alarms.searchsorted(event_times + latest, side="right")
 
     hit = stop > start
     earliest_hit[hit] = order[start[hit]]

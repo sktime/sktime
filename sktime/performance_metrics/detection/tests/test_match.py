@@ -35,7 +35,7 @@ def test_match_integer_index():
     y_pred = pd.DataFrame({"ilocs": [3, 8]})
 
     # window is [3, 5], so the alarm at 3 hits and the alarm at 8 does not
-    match = _match_alarms_to_events(y_true, y_pred, X, max_lead=2)
+    match = _match_alarms_to_events(y_true, y_pred, X, earliest_offset=-2)
 
     assert list(match.hit) == [True]
     assert list(match.earliest_hit) == [0]
@@ -51,7 +51,9 @@ def test_match_time_index():
     y_true = pd.DataFrame({"ilocs": [5]})
     y_pred = pd.DataFrame({"ilocs": [3, 8]})
 
-    match = _match_alarms_to_events(y_true, y_pred, X, max_lead=pd.Timedelta("2s"))
+    match = _match_alarms_to_events(
+        y_true, y_pred, X, earliest_offset=pd.Timedelta("-2s")
+    )
 
     assert list(match.hit) == [True]
     assert list(match.earliest_hit) == [0]
@@ -63,14 +65,14 @@ def test_match_time_index():
 
 
 @SKIP_IF_UNCHANGED
-def test_match_time_index_rejects_step_tolerance():
-    """A step count is refused if the index is a time index."""
+def test_match_time_index_rejects_step_offset():
+    """A plain number is refused as an offset if the index is a time index."""
     X = _make_X(time_index=True)
     y_true = pd.DataFrame({"ilocs": [5]})
     y_pred = pd.DataFrame({"ilocs": [3]})
 
-    with pytest.raises(TypeError, match="max_lead"):
-        _match_alarms_to_events(y_true, y_pred, X, max_lead=2)
+    with pytest.raises(TypeError, match="earliest_offset"):
+        _match_alarms_to_events(y_true, y_pred, X, earliest_offset=-2)
 
 
 @SKIP_IF_UNCHANGED
@@ -80,7 +82,7 @@ def test_match_no_events():
     y_true = pd.DataFrame({"ilocs": []})
     y_pred = pd.DataFrame({"ilocs": [2, 6]})
 
-    match = _match_alarms_to_events(y_true, y_pred, X, max_lead=2)
+    match = _match_alarms_to_events(y_true, y_pred, X, earliest_offset=-2)
 
     assert len(match.hit) == 0
     assert len(match.earliest_hit) == 0
@@ -94,7 +96,7 @@ def test_match_no_alarms():
     y_true = pd.DataFrame({"ilocs": [4, 7]})
     y_pred = pd.DataFrame({"ilocs": []})
 
-    match = _match_alarms_to_events(y_true, y_pred, X, max_lead=2)
+    match = _match_alarms_to_events(y_true, y_pred, X, earliest_offset=-2)
 
     assert list(match.hit) == [False, False]
     assert list(match.earliest_hit) == [-1, -1]
@@ -109,21 +111,65 @@ def test_match_window_edges():
     # window is [8, 11], so 8 and 11 are hits, 7 and 12 are not
     y_pred = pd.DataFrame({"ilocs": [7, 8, 11, 12]})
 
-    match = _match_alarms_to_events(y_true, y_pred, X, max_lead=2, max_delay=1)
+    match = _match_alarms_to_events(
+        y_true, y_pred, X, earliest_offset=-2, latest_offset=1
+    )
 
     assert list(match.hit) == [True]
     assert list(match.earliest_hit) == [1]
     assert list(match.false_alarm) == [True, False, False, True]
 
 
+# event at 10; the first alarm is always just outside the early edge,
+# so the earliest hit is always the alarm at position 1
+WINDOW_CASES = [
+    pytest.param(0, 0, [9, 10, 11], [True, False, True], id="exact_only"),
+    pytest.param(-3, 0, [6, 7, 10, 11], [True, False, False, True], id="advance_only"),
+    pytest.param(0, 2, [9, 10, 12, 13], [True, False, False, True], id="late_only"),
+    pytest.param(
+        -3, 2, [6, 7, 12, 13], [True, False, False, True], id="before_and_after"
+    ),
+    pytest.param(
+        -5, -2, [4, 5, 8, 9, 10], [True, False, False, True, True], id="both_negative"
+    ),
+]
+
+
 @SKIP_IF_UNCHANGED
-def test_match_default_max_delay_is_zero():
+@pytest.mark.parametrize(
+    "earliest_offset, latest_offset, alarms, false_alarm", WINDOW_CASES
+)
+def test_match_window_cases(earliest_offset, latest_offset, alarms, false_alarm):
+    """The window is [T + earliest_offset, T + latest_offset], with signed offsets.
+
+    In the both-negative case, the window is [5, 8] for the event at 10, so
+    alarms that are not early enough, including one at the event, do not count.
+    """
+    X = _make_X(n_timepoints=20)
+    y_true = pd.DataFrame({"ilocs": [10]})
+    y_pred = pd.DataFrame({"ilocs": alarms})
+
+    match = _match_alarms_to_events(
+        y_true,
+        y_pred,
+        X,
+        earliest_offset=earliest_offset,
+        latest_offset=latest_offset,
+    )
+
+    assert list(match.hit) == [True]
+    assert list(match.earliest_hit) == [1]
+    assert list(match.false_alarm) == false_alarm
+
+
+@SKIP_IF_UNCHANGED
+def test_match_default_latest_offset_is_zero():
     """By default, an alarm after the event does not count as a hit."""
     X = _make_X()
     y_true = pd.DataFrame({"ilocs": [5]})
     y_pred = pd.DataFrame({"ilocs": [6]})
 
-    match = _match_alarms_to_events(y_true, y_pred, X, max_lead=3)
+    match = _match_alarms_to_events(y_true, y_pred, X, earliest_offset=-3)
 
     assert list(match.hit) == [False]
     assert list(match.earliest_hit) == [-1]
@@ -138,7 +184,7 @@ def test_match_extra_alarms_in_one_window():
     # window is [7, 10], alarms are out of order on purpose
     y_pred = pd.DataFrame({"ilocs": [9, 8, 15]})
 
-    match = _match_alarms_to_events(y_true, y_pred, X, max_lead=3)
+    match = _match_alarms_to_events(y_true, y_pred, X, earliest_offset=-3)
 
     assert list(match.hit) == [True]
     assert list(match.earliest_hit) == [1]
@@ -157,7 +203,9 @@ def test_match_uneven_time_index():
     y_true = pd.DataFrame({"ilocs": [2, 4]})  # events at 20s and 34s
     y_pred = pd.DataFrame({"ilocs": [1, 3]})  # alarms at 10s and 30s
 
-    match = _match_alarms_to_events(y_true, y_pred, X, max_lead=pd.Timedelta("5s"))
+    match = _match_alarms_to_events(
+        y_true, y_pred, X, earliest_offset=pd.Timedelta("-5s")
+    )
 
     assert list(match.hit) == [False, True]
     assert list(match.earliest_hit) == [-1, 1]
@@ -175,36 +223,35 @@ def test_match_rejects_ilocs_outside_X(bad_iloc, bad_table):
     y_true, y_pred = (bad, good) if bad_table == "y_true" else (good, bad)
 
     with pytest.raises(ValueError, match=f"{bad_table} has 'ilocs' outside"):
-        _match_alarms_to_events(y_true, y_pred, X, max_lead=2)
+        _match_alarms_to_events(y_true, y_pred, X, earliest_offset=-2)
 
 
 @SKIP_IF_UNCHANGED
-@pytest.mark.parametrize("name", ["max_lead", "max_delay"])
 @pytest.mark.parametrize("time_index", [False, True])
-def test_match_rejects_negative_tolerance(name, time_index):
-    """A negative tolerance raises, instead of making empty windows."""
+def test_match_rejects_earliest_after_latest(time_index):
+    """An inverted window raises, instead of silently matching nothing."""
     X = _make_X(time_index=time_index)
     y_true = pd.DataFrame({"ilocs": [5]})
     y_pred = pd.DataFrame({"ilocs": [4]})
 
     step = pd.Timedelta("1s") if time_index else 1
-    tolerances = {"max_lead": 2 * step, "max_delay": 0 * step}
-    tolerances[name] = -2 * step
 
-    with pytest.raises(ValueError, match=f"{name} must be 0 or more"):
-        _match_alarms_to_events(y_true, y_pred, X, **tolerances)
+    with pytest.raises(ValueError, match="earliest_offset must not be after"):
+        _match_alarms_to_events(
+            y_true, y_pred, X, earliest_offset=1 * step, latest_offset=-1 * step
+        )
 
 
 @SKIP_IF_UNCHANGED
-@pytest.mark.parametrize("name", ["max_lead", "max_delay"])
-def test_match_rejects_nan_tolerance(name):
-    """A NaN tolerance raises, instead of silently bending the window."""
+@pytest.mark.parametrize("name", ["earliest_offset", "latest_offset"])
+def test_match_rejects_nan_offset(name):
+    """A NaN offset raises, instead of silently bending the window."""
     X = _make_X()
     y_true = pd.DataFrame({"ilocs": [5]})
     y_pred = pd.DataFrame({"ilocs": [4]})
 
-    tolerances = {"max_lead": 2, "max_delay": 0}
-    tolerances[name] = float("nan")
+    offsets = {"earliest_offset": -2, "latest_offset": 0}
+    offsets[name] = float("nan")
 
     with pytest.raises(ValueError, match=f"{name} must not be NaN"):
-        _match_alarms_to_events(y_true, y_pred, X, **tolerances)
+        _match_alarms_to_events(y_true, y_pred, X, **offsets)
