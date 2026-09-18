@@ -881,7 +881,7 @@ class _MultioutputReducer(_Reducer):
 
         # Iterate over estimators/forecast horizon
         y_pred = self.estimator_.predict(X_pred)
-        return y_pred.ravel()
+        return np.asarray(y_pred).ravel()
 
 
 class _RecursiveReducer(_Reducer):
