@@ -109,6 +109,37 @@ def _is_time_index(index):
     return isinstance(index, pd.DatetimeIndex)
 
 
+def _refuse_intervals(y, metric_name):
+    """Raise if an event table holds intervals, as live metrics score points only.
+
+    Without this check, the detection metric base class turns interval events
+    into their end points without notice, which changes the events that are
+    scored. Empty tables pass, since an empty alarm table is valid.
+
+    Parameters
+    ----------
+    y : pd.DataFrame or None
+        Event table to check, with an ``"ilocs"`` column.
+    metric_name : str
+        Name of the calling metric, used in the error message.
+
+    Raises
+    ------
+    ValueError
+        If ``y`` is a non-empty table whose ``"ilocs"`` are intervals.
+    """
+    if y is None or len(y) == 0 or "ilocs" not in y.columns:
+        return
+
+    if isinstance(y["ilocs"].dtype, pd.IntervalDtype):
+        raise ValueError(
+            f"{metric_name} scores point events only, but found interval "
+            "'ilocs', that is segments. Pass one row per event, with integer "
+            "'ilocs'. Intervals are refused, as turning them into end points "
+            "would change the events."
+        )
+
+
 def _coerce_tolerance(value, index, var_name):
     """Coerce a tolerance to the unit of ``index``.
 

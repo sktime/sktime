@@ -7,6 +7,7 @@ from sktime.performance_metrics.detection._base import BaseDetectionMetric
 from sktime.performance_metrics.detection.utils._match import (
     _is_time_index,
     _match_alarms_to_events,
+    _refuse_intervals,
 )
 
 __author__ = ["yash-sangwan"]
@@ -82,6 +83,15 @@ class FalseAlarmRate(BaseDetectionMetric):
         self.time_unit = time_unit
 
         super().__init__()
+
+    def _coerce_to_detection_type(self, y, X, allow_none=False):
+        """Refuse interval events, then coerce as in the base class.
+
+        The base class would turn interval events into their end points without
+        notice. This metric scores point events only, so it raises instead.
+        """
+        _refuse_intervals(y, type(self).__name__)
+        return super()._coerce_to_detection_type(y, X, allow_none=allow_none)
 
     def _evaluate(self, y_true, y_pred, X):
         """Evaluate the false alarm rate on given inputs.
