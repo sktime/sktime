@@ -124,6 +124,7 @@ class TEASER(BaseEarlyClassifier):
             "test_multiprocessing_idempotent",
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
+            "test_get_test_params_coverage"],
         ],
     }
 

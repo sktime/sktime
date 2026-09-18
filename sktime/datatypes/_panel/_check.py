@@ -1290,7 +1290,7 @@ class PanelGluontsList(ScitypePanel):
         "name_aliases": [],
         "description": "gluonts list based panel of time series",
         "python_version": None,
-        "python_dependencies": None,
+        "python_dependencies": "gluonts",
         "python_type": "list",
         "capability:multivariate": True,
         "capability:unequally_spaced": True,

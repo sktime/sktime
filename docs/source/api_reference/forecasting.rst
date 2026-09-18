@@ -148,6 +148,20 @@ Direct and recursive - 3rd party
     DartsLinearRegressionModel
     DartsXGBModel
 
+Probabilistic reduction forecasters
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Meta-algorithms that wrap probabilistic tabular regressors (e.g., from ``skpro``)
+to produce probabilistic forecasts via reduction.
+
+.. currentmodule:: sktime.forecasting.compose
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MCRecursiveProbaReductionForecaster
+    DirectTabularRegressionForecaster
 
 Naive forecasters
 -----------------
@@ -337,6 +351,14 @@ All "ARIMA" and "Auto-ARIMA" models below include SARIMAX capability.
     :template: class.rst
 
     SARIMAX
+
+.. currentmodule:: sktime.forecasting.pyfable_arima
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    PyFableARIMA
 
 .. currentmodule:: sktime.forecasting.var
 
@@ -739,6 +761,14 @@ Domain agnostic foundation models
 
     SundialForecaster
 
+.. currentmodule:: sktime.forecasting.t0
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    T0Forecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
@@ -802,6 +832,14 @@ Domain agnostic foundation models
     :template: class.rst
 
     TiRexForecaster
+
+.. currentmodule:: sktime.forecasting.tirex2
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TiRex2Forecaster
 
 .. currentmodule:: sktime.forecasting.toto
 
@@ -928,6 +966,16 @@ Ensembles and stacking
     :template: class.rst
 
     MAPAForecaster
+
+.. currentmodule:: sktime.forecasting.hypertrees
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HyperTreeARForecaster
+    HyperTreeNetARForecaster
+
 
 Causal Forecasting
 ------------------

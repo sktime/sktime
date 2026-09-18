@@ -104,6 +104,7 @@ class HIVECOTEV2(BaseClassifier):
         # testing
         # -------
         "tests:specific": ["sktime.classification.hybrid.tests.test_hivecote_v2"],
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

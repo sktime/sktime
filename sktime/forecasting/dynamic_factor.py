@@ -144,7 +144,8 @@ class DynamicFactor(_StatsModelsAdapter):
         "capability:non_contiguous_X": False,
         # test skip flags
         # ---------------
-        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],  # see #4765
+        # known issue with in-sample prediction, see #4765
+        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],
     }
 
     def __init__(
