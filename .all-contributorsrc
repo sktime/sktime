@@ -4130,7 +4130,8 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/118175583?v=4",
       "profile": "https://github.com/oberoir080",
       "contributions": [
-        "code"
+        "code",
+        "doc"
       ]
     },
     {
@@ -4152,10 +4153,46 @@
       ]
     },
     {
-      "login": "Ayushagrawal-cse",
+      "login":"Ayushagrawal-cse",
       "name": "Ayush Agrawal",
       "avatar_url": "https://avatars.githubusercontent.com/u/191835489?v=4",
-      "profile": "https://www.linkedin.com/in/bgp-ayush-agrawal/",
+      "profile" : "https://www.linkedin.com/in/bgp-ayush-agrawal/",
+      "contributions" : [
+        "code"
+      ]
+    },
+    {
+      "login": "adity1raut",
+      "name": "Aditya Raut",
+      "avatar_url": "https://avatars.githubusercontent.com/u/159172287?v=4",
+      "profile": "https://github.com/adity1raut",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "nicolasdmolina",
+      "name": "Nicky Molina",
+      "avatar_url": "https://avatars.githubusercontent.com/u/223382489?v=4",
+      "profile": "https://github.com/nicolasdmolina",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "LouisDeconinck",
+      "name": "Louis Deconinck",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27673665?v=4",
+      "profile": "https://github.com/LouisDeconinck",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Belagum",
+      "name": "Belagum",
+      "avatar_url": "https://avatars.githubusercontent.com/u/140494656?v=4",
+      "profile": "https://github.com/Belagum",
       "contributions": [
         "code"
       ]
