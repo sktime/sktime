@@ -90,6 +90,25 @@ def _event_times(events, X, var_name):
     return X.index[positions]
 
 
+def _is_time_index(index):
+    """Return whether ``index`` is a time index, with time offsets as units.
+
+    Only a ``pd.DatetimeIndex`` counts as a time index. Any other index is used
+    in its own units, the values of the index.
+
+    Parameters
+    ----------
+    index : pd.Index
+        Index of the time series.
+
+    Returns
+    -------
+    bool
+        True if ``index`` is a ``pd.DatetimeIndex``, False otherwise.
+    """
+    return isinstance(index, pd.DatetimeIndex)
+
+
 def _coerce_tolerance(value, index, var_name):
     """Coerce a tolerance to the unit of ``index``.
 
@@ -112,9 +131,9 @@ def _coerce_tolerance(value, index, var_name):
         If the unit of ``value`` does not fit the unit of ``index``.
         A plain ``0`` is accepted for both, and means no tolerance.
     ValueError
-        If ``value`` is negative.
+        If ``value`` is NaN or negative.
     """
-    is_time_index = isinstance(index, pd.DatetimeIndex)
+    is_time_index = _is_time_index(index)
     is_time_value = isinstance(value, (pd.Timedelta, np.timedelta64, dt.timedelta))
     is_zero = isinstance(value, (int, np.integer)) and value == 0
 
@@ -137,6 +156,10 @@ def _coerce_tolerance(value, index, var_name):
             )
         tolerance = value
         zero = 0
+
+    # NaN passes the negative check, as NaN < 0 is False, but bends the window
+    if pd.isna(tolerance):
+        raise ValueError(f"{var_name} must not be NaN, but found {value!r}.")
 
     # a negative tolerance would shrink or empty the hit windows without notice
     if tolerance < zero:
@@ -190,7 +213,7 @@ def _match_alarms_to_events(y_true, y_pred, X, max_lead, max_delay=0):
     ------
     ValueError
         If an ``"ilocs"`` value is outside ``[0, len(X))``,
-        or if ``max_lead`` or ``max_delay`` is negative.
+        or if ``max_lead`` or ``max_delay`` is NaN or negative.
     TypeError
         If the unit of ``max_lead`` or ``max_delay`` does not fit ``X.index``.
 

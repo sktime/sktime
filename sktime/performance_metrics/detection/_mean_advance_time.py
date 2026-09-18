@@ -4,7 +4,10 @@ import numpy as np
 import pandas as pd
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
-from sktime.performance_metrics.detection.utils._match import _match_alarms_to_events
+from sktime.performance_metrics.detection.utils._match import (
+    _is_time_index,
+    _match_alarms_to_events,
+)
 
 __author__ = ["yash-sangwan"]
 __all__ = ["MeanAdvanceTime"]
@@ -112,7 +115,7 @@ class MeanAdvanceTime(BaseDetectionMetric):
 
         # a time index gives a TimedeltaIndex, which has a mean in time units,
         # a plain numeric Index has no mean method, so go through numpy
-        if isinstance(X.index, pd.DatetimeIndex):
+        if _is_time_index(X.index):
             return float(advance.mean() / pd.Timedelta(1, unit=self.time_unit))
         return float(np.mean(advance.to_numpy()))
 

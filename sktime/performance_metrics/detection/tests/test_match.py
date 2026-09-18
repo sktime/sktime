@@ -193,3 +193,18 @@ def test_match_rejects_negative_tolerance(name, time_index):
 
     with pytest.raises(ValueError, match=f"{name} must be 0 or more"):
         _match_alarms_to_events(y_true, y_pred, X, **tolerances)
+
+
+@SKIP_IF_UNCHANGED
+@pytest.mark.parametrize("name", ["max_lead", "max_delay"])
+def test_match_rejects_nan_tolerance(name):
+    """A NaN tolerance raises, instead of silently bending the window."""
+    X = _make_X()
+    y_true = pd.DataFrame({"ilocs": [5]})
+    y_pred = pd.DataFrame({"ilocs": [4]})
+
+    tolerances = {"max_lead": 2, "max_delay": 0}
+    tolerances[name] = float("nan")
+
+    with pytest.raises(ValueError, match=f"{name} must not be NaN"):
+        _match_alarms_to_events(y_true, y_pred, X, **tolerances)
