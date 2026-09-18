@@ -13,6 +13,7 @@ from sktime.regression.base import BaseRegressor
 from sktime.regression.deep_learning.base import BaseDeepRegressor
 from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
 from sktime.regression.dummy import DummyRegressor
+from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.panel import (
     _make_panel,
     _make_regression_y,
@@ -397,6 +398,115 @@ def test_deep_estimator_full(optimizer):
 
     # check if components are same
     assert full_dummy.__dict__ == deserialized_full.__dict__
+
+
+def _mlp_torch_reg(**kwargs):
+    """Construct a small MLPRegressorTorch for lookup tests."""
+    from sktime.regression.deep_learning.mlp import MLPRegressorTorch
+
+    params = {
+        "num_epochs": 1,
+        "batch_size": 4,
+        "callbacks": None,
+        "hidden_dim": 5,
+        "n_layers": 1,
+        "dropout": 0.0,
+        "random_state": 42,
+    }
+    params.update(kwargs)
+    return MLPRegressorTorch(**params)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.regression"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_optimizer_str_looked_up_in_torch_optim():
+    """Test that any optimizer in torch.optim can be selected by its name."""
+    import torch
+
+    X_train, y_train = make_regression_problem(n_instances=10, n_timepoints=12)
+
+    for optimizer in ["sgd", "SGD", "SgD"]:
+        reg = _mlp_torch_reg(optimizer=optimizer).fit(X_train, y_train)
+        assert isinstance(reg._optimizer, torch.optim.SGD)
+
+    # Adafactor is not in every torch version, and was not selectable by name
+    # while the optimizers were looked up in a manually curated dictionary
+    if hasattr(torch.optim, "Adafactor"):
+        reg = _mlp_torch_reg(optimizer="adafactor").fit(X_train, y_train)
+        assert isinstance(reg._optimizer, torch.optim.Adafactor)
+
+    # objects in torch.optim that are not optimizers cannot be selected:
+    # Optimizer is the base class of all optimizers, lr_scheduler a sub-module
+    for optimizer in ["not_an_optimizer", "optimizer", "lr_scheduler"]:
+        with pytest.raises(ValueError, match="Unknown optimizer"):
+            _mlp_torch_reg(optimizer=optimizer).fit(X_train, y_train)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.regression"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_criterion_str_looked_up_in_torch_nn():
+    """Test that any loss function in torch.nn can be selected by its name."""
+    import torch
+
+    X_train, y_train = make_regression_problem(n_instances=10, n_timepoints=12)
+
+    for criterion in ["l1loss", "L1Loss", "L1LOSS"]:
+        reg = _mlp_torch_reg(criterion=criterion).fit(X_train, y_train)
+        assert isinstance(reg._criterion, torch.nn.L1Loss)
+
+    # objects in torch.nn that are not loss functions cannot be selected
+    for criterion in ["not_a_loss", "Linear"]:
+        with pytest.raises(ValueError, match="Unknown criterion"):
+            _mlp_torch_reg(criterion=criterion).fit(X_train, y_train)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.regression"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_activation_str_looked_up_in_torch_nn():
+    """Test that any activation in torch.nn can be selected by its name."""
+    import torch
+
+    for activation in ["softmax", "Softmax", "SOFTMAX"]:
+        reg = _mlp_torch_reg(activation=activation)
+        assert isinstance(reg._callable_activations["activation"], torch.nn.Softmax)
+
+    # activations are instantiated in __init__, so an invalid name raises there
+    with pytest.raises(ValueError, match="not a valid PyTorch activation"):
+        _mlp_torch_reg(activation="not_an_activation")
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.regression"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_callbacks_str_looked_up_in_lr_scheduler():
+    """Test that any scheduler in torch.optim.lr_scheduler can be selected by name."""
+    import torch
+
+    X_train, y_train = make_regression_problem(n_instances=10, n_timepoints=12)
+
+    for callbacks in ["constantlr", "ConstantLR", "CONSTANTLR"]:
+        reg = _mlp_torch_reg(callbacks=callbacks).fit(X_train, y_train)
+        assert isinstance(reg._schedulers[0], torch.optim.lr_scheduler.ConstantLR)
+
+    # several schedulers can be passed, and are applied in the order passed
+    reg = _mlp_torch_reg(callbacks=("constantlr", "ConstantLR")).fit(X_train, y_train)
+    assert len(reg._schedulers) == 2
+
+    # objects in torch.optim.lr_scheduler that are not schedulers cannot be selected
+    for callbacks in ["not_a_scheduler", "LRScheduler"]:
+        with pytest.raises(ValueError, match="Unknown learning rate scheduler"):
+            _mlp_torch_reg(callbacks=callbacks).fit(X_train, y_train)
 
 
 DUMMY_EST_PARAMETERS_FOO = [None, 10.3, "string", {"key": "value"}, lambda x: x**2]
