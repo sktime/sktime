@@ -3,7 +3,6 @@
 __author__ = ["Alex-JG3"]
 
 import datetime
-import math
 
 import numpy as np
 import pandas as pd
@@ -138,6 +137,7 @@ class SubLOF(BaseDetector):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:specific": ["sktime.detection.tests.test_lof"],
     }
 
     def __init__(
@@ -203,16 +203,16 @@ class SubLOF(BaseDetector):
 
         x_max = x.max()
         x_min = x.min()
-        x_span = x_max - x_min
-
         if isinstance(interval_size, int) and not is_integer_index(x):
             interval_size = x.freq * interval_size
-        n_intervals = math.floor(x_span / interval_size) + 1
 
-        if x_max >= x_min + (n_intervals - 1) * interval_size:
-            n_intervals += 1
+        breaks = [x_min]
+        while breaks[-1] <= x_max:
+            next_break = breaks[-1] + interval_size
+            if next_break <= breaks[-1]:
+                raise ValueError("interval_size must advance the index")
+            breaks.append(next_break)
 
-        breaks = [x_min + interval_size * i for i in range(n_intervals)]
         interval_range = pd.IntervalIndex.from_breaks(breaks, closed="left")
         return interval_range
 

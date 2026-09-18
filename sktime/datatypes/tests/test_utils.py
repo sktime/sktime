@@ -461,7 +461,7 @@ def test_retain_series_freq_on_update():
 
     # create dummy index with hourly timestamps and panel data by hour of day
     ind = pd.date_range(
-        start="1960-01-01 10:00:00", periods=len(y.index), freq="24H", name="datetime"
+        start="1960-01-01 10:00:00", periods=len(y.index), freq="24h", name="datetime"
     )
     y = pd.Series(y.values, index=ind, name="passengers")
     y_train, y_test = temporal_train_test_split(y, test_size=2)

@@ -152,7 +152,7 @@ class ClearSky(BaseTransformer):
         df["tod"] = df.index.hour + df.index.minute / 60 + df.index.second / 60
 
         # set up smoothing grid
-        tod = pd.timedelta_range(start="0T", end="1D", freq=self.freq)[:-1]
+        tod = pd.timedelta_range(start="0min", end="1D", freq=self.freq)[:-1]
         tod = [(x.total_seconds() / (60 * 60)) for x in tod.to_pytimedelta()]
         yday = pd.RangeIndex(start=1, stop=367)
         indx = pd.MultiIndex.from_product([yday, tod], names=["yday", "tod"])
@@ -371,9 +371,11 @@ def _check_index(X):
         if freq_ind is None:
             raise ValueError("Input index frequency cannot be inferred and is not set.")
 
-    tod = pd.timedelta_range(start="0T", end="1D", freq=freq_ind)
+    tod = pd.timedelta_range(start="0min", end="1D", freq=freq_ind)
     # check frequency of tod
-    if (tod.freq > pd.offsets.Day(1)) | (tod.freq < pd.offsets.Second(1)):
+    # compare as Timedelta, pandas 3 cannot compare Day with other offsets
+    freq_td = (pd.Timestamp(0) + tod.freq) - pd.Timestamp(0)
+    if (freq_td > pd.Timedelta(days=1)) | (freq_td < pd.Timedelta(seconds=1)):
         raise ValueError(
             """
             Transformer intended to be used with input frequency of greater than
