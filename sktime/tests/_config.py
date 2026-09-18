@@ -148,7 +148,6 @@ EXCLUDED_TESTS_BY_TEST = {
         "SFAFast",
         "ShapeletTransform",
         "ShapeletTransformClassifier",
-        "SlidingWindowSegmenter",
         "TEASER",
         "TapNetNetwork",
         "TemporalDictionaryEnsemble",
