@@ -34,21 +34,26 @@ class MeanAdvanceTime(BaseDetectionMetric):
     The advance time is positive for alarms before the event. It is negative
     for a late hit, which can only happen if ``max_delay`` is above 0.
 
+    Only point events are scored, so interval ``ilocs`` (segments) in
+    ``y_true`` or ``y_pred`` raise a ``ValueError``.
+
     If there are no true events, or no event is hit, the score is not defined,
     and ``nan`` is returned.
 
     Parameters
     ----------
-    max_lead : int or time offset, default=0
+    max_lead : int, float, or time offset, default=0
         How early an alarm may be, and still hit a true event.
         A time offset, for instance ``pd.Timedelta("3s")``, if ``X`` has a
         time index, otherwise a number in the units of ``X.index``.
         The default of 0 counts only alarms at the event itself,
         or after it within ``max_delay``.
-    max_delay : int or time offset, default=0
+        NaN or negative values raise a ``ValueError``.
+    max_delay : int, float, or time offset, default=0
         How late an alarm may be, and still hit a true event.
         Same unit as ``max_lead``. The default of 0 means that alarms
         after the event do not count.
+        NaN or negative values raise a ``ValueError``.
     time_unit : str, default="s"
         Unit of the returned score, if ``X`` has a time index.
         Any unit accepted by ``pd.Timedelta``, for instance ``"s"``, ``"ms"``,

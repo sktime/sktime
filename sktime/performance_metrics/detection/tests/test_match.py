@@ -29,7 +29,7 @@ def _make_uneven_time_X():
 
 @SKIP_IF_UNCHANGED
 def test_match_integer_index():
-    """Windows are in index steps if the index is integer."""
+    """Windows are in the units of an integer index."""
     X = _make_X()
     y_true = pd.DataFrame({"ilocs": [5]})
     y_pred = pd.DataFrame({"ilocs": [3, 8]})

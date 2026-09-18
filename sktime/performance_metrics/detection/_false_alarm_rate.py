@@ -34,21 +34,27 @@ class FalseAlarmRate(BaseDetectionMetric):
     is ignored.
 
     With no true events the score is still defined, as every alarm is a false
-    alarm. With no alarms the score is 0. If ``X`` has no span, that is fewer
-    than two time points, the rate is not defined, and ``nan`` is returned.
+    alarm. With no alarms the score is 0, as long as ``X`` has a span. If ``X``
+    has no span, that is fewer than two time points, the rate is not defined,
+    and ``nan`` is returned, even if there are no alarms.
+
+    Only point events are scored, so interval ``ilocs`` (segments) in
+    ``y_true`` or ``y_pred`` raise a ``ValueError``.
 
     Parameters
     ----------
-    max_lead : int or time offset, default=0
+    max_lead : int, float, or time offset, default=0
         How early an alarm may be, and still hit a true event.
         A time offset, for instance ``pd.Timedelta("3s")``, if ``X`` has a
         time index, otherwise a number in the units of ``X.index``.
         The default of 0 counts only alarms at the event itself,
         or after it within ``max_delay``.
-    max_delay : int or time offset, default=0
+        NaN or negative values raise a ``ValueError``.
+    max_delay : int, float, or time offset, default=0
         How late an alarm may be, and still hit a true event.
         Same unit as ``max_lead``. The default of 0 means that alarms
         after the event are false alarms.
+        NaN or negative values raise a ``ValueError``.
     time_unit : str, default="hour"
         Unit in which the duration is counted, if ``X`` has a time index,
         so the score is false alarms per ``time_unit``.
