@@ -253,7 +253,7 @@ class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
     def is_excluded(self, test_name, est):
         """Shorthand to check whether test test_name is excluded for estimator est."""
         # there are two conditions for exclusion:
-        # 0. the estimator has the tag tests:skip_all set       
+        # 0. the estimator has the tag tests:skip_all set
         # 1. the estimator is excluded in the legacy excluded_tests list
         # 2. the excluded test appears in the "tests:skip_by_name" tag
         cond0 = est.get_class_tag("tests:skip_all", False)
