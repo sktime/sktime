@@ -91,7 +91,6 @@ class FreshPRINCE(BaseClassifier):
         # test skip flags
         # ---------------
         "tests:skip_all": True,  # fails due to #8151 or #8059
-      
         "capability:random_state": True,
         "property:randomness": "derandomized",
         # test and CI flags

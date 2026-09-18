@@ -50,7 +50,8 @@ class CNNNetwork(BaseDeepNetwork):
         "python_dependencies": "tensorflow",
         # test skip flags
         # ---------------
-        "tests:skip_by_name": ["test_inheritance"],  # not a registered base class, WiP, see #3028
+        "tests:skip_by_name": ["test_inheritance"],
+        # not a registered base class, WiP, see #3028
     }
 
     def __init__(

@@ -312,7 +312,7 @@ class HFTransformersForecaster(BaseForecaster):
         # ---------------
         "tests:skip_by_name": [
             # networks do not support negative fh
-            "test_predict_time_index_in_sample_full",  
+            "test_predict_time_index_in_sample_full",
             "test_get_test_params_coverage",
         ],
     }
