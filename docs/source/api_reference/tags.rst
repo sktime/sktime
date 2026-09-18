@@ -68,6 +68,7 @@ These tags are typically used for typing, packaging and documentation purposes.
     :template: function.rst
     :nosignatures:
 
+    reserved_params
     object_type
     maintainers
     authors
@@ -94,6 +95,7 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     :template: function.rst
     :nosignatures:
 
+    enforce_index_type
     capability__exogenous
     capability__insample
     capability__pred_int
@@ -125,6 +127,8 @@ these types of objects.
     :template: function.rst
     :nosignatures:
 
+    enforce_index_type
+    classifier_type
     capability__multivariate
     capability__multioutput
     capability__missing_values
@@ -192,6 +196,7 @@ transform pairs of time series (``"transformer-pairwise"`` and ``"transformer-pa
     :template: function.rst
     :nosignatures:
 
+    pwtrafo_type
     symmetric
 
 
