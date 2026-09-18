@@ -57,9 +57,7 @@ class MeanAdvanceTime(BaseDetectionMetric):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.performance_metrics.detection._mean_advance_time import (
-    ...     MeanAdvanceTime
-    ... )
+    >>> from sktime.performance_metrics.detection import MeanAdvanceTime
     >>> index = pd.date_range("2020-01-01", periods=20, freq="s")
     >>> X = pd.DataFrame({"foo": range(20)}, index=index)
     >>> y_true = pd.DataFrame({"ilocs": [5, 15]})

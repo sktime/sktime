@@ -58,9 +58,7 @@ class FalseAlarmRate(BaseDetectionMetric):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.performance_metrics.detection._false_alarm_rate import (
-    ...     FalseAlarmRate
-    ... )
+    >>> from sktime.performance_metrics.detection import FalseAlarmRate
     >>> index = pd.date_range("2020-01-01", periods=7, freq="20min")
     >>> X = pd.DataFrame({"foo": range(7)}, index=index)
     >>> y_true = pd.DataFrame({"ilocs": [5]})

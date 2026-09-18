@@ -45,7 +45,7 @@ class EventTPR(BaseDetectionMetric):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.performance_metrics.detection._event_tpr import EventTPR
+    >>> from sktime.performance_metrics.detection import EventTPR
     >>> X = pd.DataFrame({"foo": range(10)})
     >>> y_true = pd.DataFrame({"ilocs": [4, 8]})
     >>> y_pred = pd.DataFrame({"ilocs": [3]})
