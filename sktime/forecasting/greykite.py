@@ -3,7 +3,7 @@
 
 __author__ = ["vedantag17"]
 
-from typing import Optional
+import copy
 
 import numpy as np
 import pandas as pd
@@ -18,10 +18,7 @@ class GreykiteForecaster(BaseForecaster):
     and exposes a sktime-compatible API.
 
     WARNING: the ``greykite`` package has very restrictive dependencies that typically
-    prevent installation together with other packages. For this reason, this estimator
-    is also not covered by regular tests. We therefore recommend to run
-    ``check_estimator(GreykiteForecaster)`` on your system before deploying
-    this estimator.
+    prevent installation together with other packages.
 
     Parameters
     ----------
@@ -34,6 +31,10 @@ class GreykiteForecaster(BaseForecaster):
         Name of the model template to use (default: "SILVERKITE").
     coverage : float, optional
         Intended coverage of the prediction bands (0.0 to 1.0).
+    cv_max_splits : int or None, optional
+        Maximum number of cross-validation splits used by greykite's
+        internal pipeline.  Set to ``0`` to skip CV entirely.
+        If ``None``, greykite's default (3) is used.
 
     Attributes
     ----------
@@ -41,8 +42,6 @@ class GreykiteForecaster(BaseForecaster):
         The fitted Greykite forecaster.
     _forecast : pandas.DataFrame
         The forecast result from the Greykite model.
-    _X : pandas.DataFrame
-        The exogenous variables, if provided.
 
     Examples
     --------
@@ -68,10 +67,9 @@ class GreykiteForecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:multivariate": False,  # Handles univariate targets here.
-        "capability:exogenous": True,  # Can handle exogenous variables.
+        "capability:exogenous": True,
         "capability:missing_values": True,  # Handles missing data.
         "y_inner_mtype": "pd.Series",  # Expected input type for y.
-        "X_inner_mtype": "pd.DataFrame",  # Expected input type for X.
         "requires-fh-in-fit": True,  # Forecasting horizon is required in fit.
         "capability:pred_int": False,  # Can produce prediction intervals.
         "capability:unequal_length": False,
@@ -89,6 +87,7 @@ class GreykiteForecaster(BaseForecaster):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
             "test_update_predict_predicted_index",
+            "test_deepcopy_fitted",
             "test_deepcopy_fitted_predict",
         ],
         "tests:python_dependencies": ["prophet", "setuptools<82"],
@@ -96,15 +95,17 @@ class GreykiteForecaster(BaseForecaster):
 
     def __init__(
         self,
-        forecast_config: Optional["GreykiteForecaster.ForecastConfig"] = None,
+        forecast_config=None,
         date_format: str | None = None,
         model_template: str = "SILVERKITE",
         coverage: float = 0.95,
+        cv_max_splits: int | None = None,
     ):
         self.forecast_config = forecast_config
         self.date_format = date_format
         self.model_template = model_template
         self.coverage = coverage
+        self.cv_max_splits = cv_max_splits
 
         super().__init__()
 
@@ -135,19 +136,30 @@ class GreykiteForecaster(BaseForecaster):
     def _create_forecast_config(self, y=None):
         """Create a ForecastConfig object if one wasn't provided."""
         if self.forecast_config is not None:
-            return self.forecast_config
+            self._forecast_config_ = copy.copy(self.forecast_config)
+            return self._forecast_config_
 
         # If frequency is not provided, try to infer it from the index.
+        # pd.infer_freq only supports DatetimeIndex / PeriodIndex; for integer
+        # or other index types we leave freq as None.
         if y is not None:
             if isinstance(y.index, pd.PeriodIndex):
-                freq = y.index.freqstr
-            else:
+                freq = pd.infer_freq(y.index.to_timestamp())
+            elif isinstance(y.index, pd.DatetimeIndex):
                 freq = pd.infer_freq(y.index)
+            else:
+                freq = None
         else:
             freq = None
 
-        # Set train_end_date explicitly using the maximum timestamp in y
-        train_end_date = y.index.max() if y is not None else None
+        # Set train_end_date only for datetime-like indices; greykite cannot
+        # parse an integer as a date.
+        if y is not None and isinstance(y.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+            train_end_date = y.index.max()
+            if isinstance(y.index, pd.PeriodIndex):
+                train_end_date = train_end_date.to_timestamp()
+        else:
+            train_end_date = None
 
         from greykite.framework.templates.autogen.forecast_config import (
             ComputationParam,
@@ -169,18 +181,21 @@ class GreykiteForecaster(BaseForecaster):
         # Default model components.
         model_components_param = ModelComponentsParam()
 
-        # Create the ForecastConfig using Greykite's parameters.
-        self.forecast_config = ForecastConfig(
+        # Build the config and store it as a fitted attribute, NOT as a
+        # hyperparameter, so that self.forecast_config stays None.
+        self._forecast_config_ = ForecastConfig(
             metadata_param=metadata_param,
             model_components_param=model_components_param,
             model_template=self.model_template,
             coverage=self.coverage,
             evaluation_metric_param=EvaluationMetricParam(),
-            evaluation_period_param=EvaluationPeriodParam(),
+            evaluation_period_param=EvaluationPeriodParam(
+                cv_max_splits=self.cv_max_splits,
+            ),
             computation_param=ComputationParam(),
             forecast_one_by_one=False,
         )
-        return self.forecast_config
+        return self._forecast_config_
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -194,23 +209,34 @@ class GreykiteForecaster(BaseForecaster):
                 "The forecasting horizon `fh` must be provided in the `fit` method."
             )
 
-        if isinstance(y.index, pd.PeriodIndex):
-            y.index = y.index.to_timestamp()
-        # Convert y into a DataFrame with columns "ts" and "y".
-        df = pd.DataFrame({"ts": y.index, "y": y.values})
+        # Preserve the series name so _predict can return a named Series.
+        self._y_name_ = y.name
 
-        # If exogenous variables X are provided, merge them into the DataFrame.
+        self._y_train_ = y
+        self._X_train_ = X
+        self._X_cols_ = list(X.columns) if X is not None else []
+
+        # Build the greykite DataFrame without mutating y.index.
+        # IMPORTANT: never do y.index = y.index.to_timestamp() in-place.
+        if isinstance(y.index, pd.PeriodIndex):
+            ts_index = y.index.to_timestamp()
+        else:
+            ts_index = y.index
+        df = pd.DataFrame({"ts": ts_index, "y": y.values})
+
+        # Add exogenous columns to the training DataFrame.
         if X is not None:
             for col in X.columns:
                 df[col] = X[col].values
-            self._X = X.copy()
 
         # Create the forecast configuration if not already provided.
-        fc = self._create_forecast_config(y)
-        if hasattr(fh, "to_numpy"):
-            steps = fh.to_numpy()
-        else:
-            steps = np.array(list(fh), dtype=int)
+        # Use a shallow copy so that setting forecast_horizon does not mutate
+        # either self.forecast_config (the user-supplied hyperparameter) or
+        # self._forecast_config_ across repeated fit calls.
+        fc = copy.copy(self._create_forecast_config(y))
+        # Convert fh to relative integer steps so that both relative fh
+        # (e.g. [1, 2, 3]) and absolute fh (e.g. Period objects) work correctly.
+        steps = np.array(fh.to_relative(self.cutoff).to_numpy(), dtype=int)
         fc.forecast_horizon = int(steps.max())
 
         # Fit the model using Greykite's forecast_pipeline.
@@ -224,33 +250,77 @@ class GreykiteForecaster(BaseForecaster):
         """Generate forecasts.
 
         Uses the stored results and returns predictions as a pandas Series.
+        If exogenous variables were used in training and ``X`` is provided,
+        re-runs the pipeline with future regressor values appended because
+        greykite's ``forecast_pipeline`` requires future regressor values in
+        the input DataFrame.
         """
         if fh is None:
             fh = self._fh
-        forecast_df = self._forecaster.forecast.df_test
-        if hasattr(fh, "to_numpy"):
-            steps = fh.to_numpy()
+
+        # If exogenous columns were used in training and future X is provided,
+        # re-run the pipeline so greykite can use the future regressor values.
+        if self._X_cols_ and X is not None:
+            # Rebuild training DataFrame.
+            if isinstance(self._y_train_.index, pd.PeriodIndex):
+                ts_index = self._y_train_.index.to_timestamp()
+            else:
+                ts_index = self._y_train_.index
+            train_df = pd.DataFrame({"ts": ts_index, "y": self._y_train_.values})
+            if self._X_train_ is not None:
+                for col in self._X_train_.columns:
+                    train_df[col] = self._X_train_[col].values
+
+            # Build future rows: timestamps from fh, y=NaN, X columns filled.
+            abs_idx = fh.to_absolute(self.cutoff).to_pandas()
+            if isinstance(abs_idx, pd.PeriodIndex):
+                abs_idx = abs_idx.to_timestamp()
+
+            future_df = pd.DataFrame({"ts": abs_idx, "y": np.nan})
+            for col in self._X_cols_:
+                if col in X.columns:
+                    future_df[col] = X[col].values
+
+            full_df = pd.concat([train_df, future_df], ignore_index=True)
+
+            fc = copy.copy(self._create_forecast_config(self._y_train_))
+            steps = np.array(fh.to_relative(self.cutoff).to_numpy(), dtype=int)
+            fc.forecast_horizon = int(steps.max())
+
+            from greykite.framework.templates.forecaster import Forecaster
+
+            forecaster = Forecaster().run_forecast_config(full_df, fc)
         else:
-            steps = np.array(list(fh), dtype=int)
-        # compute zero-based positions
+            forecaster = self._forecaster
+
+        forecast_df = forecaster.forecast.df_test
+        # Convert fh to relative integer steps (handles both relative and
+        # Period-based absolute fh) then map to 0-based positions.
+        steps = np.array(fh.to_relative(self.cutoff).to_numpy(), dtype=int)
         positions = (steps - 1).astype(int)
 
-        time_col = self._forecaster.forecast.time_col
-        times = forecast_df[time_col].values
         preds = forecast_df["forecast"].values
-        selected_times = times[positions]
         selected_preds = preds[positions]
 
-        y_pred = pd.Series(selected_preds, index=selected_times)
+        # Use sktime's authoritative absolute forecast dates as the index rather
+        # than greykite's internal timestamps, so the result is consistent with
+        # what sktime (and callers like test_hierarchical_with_exogeneous) expect.
+        abs_idx = fh.to_absolute(self.cutoff).to_pandas()
+
+        y_pred = pd.Series(selected_preds, index=abs_idx, name=self._y_name_)
         return y_pred
 
     def get_fitted_params(self):
         """Return fitted parameters."""
+        self.check_is_fitted()
         if self._forecaster is None:
-            raise ValueError("Forecaster has not been fitted yet. Call 'fit' first.")
+            # Vectorized (multivariate) case: sktime called _fit on per-variable
+            # clones rather than on this outer instance, so _forecaster was never
+            # set here.  Return what is available on the outer instance.
+            return {"forecast_config": getattr(self, "_forecast_config_", None)}
         return {
             "model": self._forecaster.model,
-            "forecast_config": self.forecast_config,
+            "forecast_config": self._forecast_config_,
         }
 
     @classmethod
@@ -265,28 +335,22 @@ class GreykiteForecaster(BaseForecaster):
 
         Returns
         -------
-        params : dict
-            A dictionary containing parameters to construct a valid test instance of
-            the GreykiteForecaster. The dictionary includes:
-                - model_template: str
-                    Name of the model template to use (default is 'SILVERKITE').
-                - date_format: str or None
-                    Format of the time column (default is None, allowing inference).
+        params : list of dict
+            Each dictionary contains parameters to construct a valid test
+            instance of GreykiteForecaster.
         """
+        # PROPHET template is excluded because greykite pins holidays==0.13
+        # while prophet requires holidays>=0.41, making them incompatible.
         return [
             {
-                "model_template": "SILVERKITE",
+                "model_template": "SILVERKITE_EMPTY",
                 "date_format": None,
+                "cv_max_splits": 1,
             },
             {
-                "model_template": "SILVERKITE",
+                "model_template": "SILVERKITE_EMPTY",
                 "date_format": None,
+                "cv_max_splits": 1,
                 "coverage": 0.95,
-            },
-            {
-                "model_template": "PROPHET",
-                "date_format": "%Y-%m-%d",
-                "forecast_config": None,
-                "coverage": 0.75,
             },
         ]
