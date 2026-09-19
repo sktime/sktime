@@ -578,6 +578,156 @@ def test_pytorch_optimizer_kwargs():
     assert clf._optimizer.param_groups[0]["weight_decay"] == 0.0001
 
 
+def _mlp_torch_clf(**kwargs):
+    """Construct a small MLPClassifierTorch for optimizer tests."""
+    from sktime.classification.deep_learning.mlp import MLPClassifierTorch
+
+    params = {
+        "num_epochs": 2,
+        "batch_size": 4,
+        "callbacks": None,
+        "hidden_dim": 5,
+        "n_layers": 1,
+        "dropout": 0.0,
+        "random_state": 42,
+    }
+    params.update(kwargs)
+    return MLPClassifierTorch(**params)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_optimizer_instance_is_bound_to_network():
+    """Test that an optimizer passed as an instance updates the network."""
+    import torch
+
+    from sktime.datasets import load_unit_test
+
+    X_train, y_train = load_unit_test(split="train")
+    X_test, _ = load_unit_test(split="test")
+
+    # the network does not exist yet, so the instance is bound to other parameters
+    placeholder = torch.nn.Linear(4, 3)
+    optimizer = torch.optim.Adam(placeholder.parameters(), lr=0.01)
+
+    clf_instance = _mlp_torch_clf(optimizer=optimizer).fit(X_train, y_train)
+
+    # the optimizer used in fit must be bound to the parameters of the network
+    bound_params = [
+        param
+        for group in clf_instance._optimizer.param_groups
+        for param in group["params"]
+    ]
+    network_params = list(clf_instance.network.parameters())
+    assert len(bound_params) == len(network_params)
+    assert all(bound is actual for bound, actual in zip(bound_params, network_params))
+
+    # an equivalent optimizer passed as a string must give the same fitted model
+    clf_str = _mlp_torch_clf(optimizer="adam", lr=0.01).fit(X_train, y_train)
+
+    _assert_array_almost_equal(
+        clf_instance.predict_proba(X_test), clf_str.predict_proba(X_test)
+    )
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_optimizer_instance_hyperparameters():
+    """Test that hyperparameters of an optimizer instance are carried over."""
+    import torch
+
+    from sktime.datasets import load_unit_test
+
+    X_train, y_train = load_unit_test(split="train")
+
+    placeholder = torch.nn.Linear(4, 3)
+    optimizer = torch.optim.SGD(
+        placeholder.parameters(), lr=0.05, momentum=0.9, weight_decay=0.0001
+    )
+
+    clf = _mlp_torch_clf(optimizer=optimizer).fit(X_train, y_train)
+
+    assert isinstance(clf._optimizer, torch.optim.SGD)
+    # `lr` was not set explicitly, so the `lr` of the instance is retained
+    assert clf._optimizer.param_groups[0]["lr"] == 0.05
+    assert clf._optimizer.param_groups[0]["momentum"] == 0.9
+    assert clf._optimizer.param_groups[0]["weight_decay"] == 0.0001
+
+    # an explicitly set `lr` overrides the `lr` of the instance
+    clf = _mlp_torch_clf(optimizer=optimizer, lr=0.02).fit(X_train, y_train)
+    assert clf._optimizer.param_groups[0]["lr"] == 0.02
+    assert clf._optimizer.param_groups[0]["momentum"] == 0.9
+
+    # `optimizer_kwargs` take precedence over the hyperparameters of the instance
+    clf = _mlp_torch_clf(optimizer=optimizer, optimizer_kwargs={"momentum": 0.5}).fit(
+        X_train, y_train
+    )
+    assert clf._optimizer.param_groups[0]["momentum"] == 0.5
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_optimizer_class():
+    """Test that an optimizer passed as a class is instantiated on the network."""
+    import torch
+
+    from sktime.datasets import load_unit_test
+
+    X_train, y_train = load_unit_test(split="train")
+
+    clf = _mlp_torch_clf(
+        optimizer=torch.optim.SGD,
+        lr=0.02,
+        optimizer_kwargs={"momentum": 0.9},
+    ).fit(X_train, y_train)
+
+    assert isinstance(clf._optimizer, torch.optim.SGD)
+    assert clf._optimizer.param_groups[0]["lr"] == 0.02
+    assert clf._optimizer.param_groups[0]["momentum"] == 0.9
+
+    bound_params = [
+        param for group in clf._optimizer.param_groups for param in group["params"]
+    ]
+    assert all(
+        bound is actual for bound, actual in zip(bound_params, clf.network.parameters())
+    )
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_optimizer_invalid_raises():
+    """Test that an invalid optimizer raises an informative error."""
+    import torch
+
+    from sktime.datasets import load_unit_test
+
+    X_train, y_train = load_unit_test(split="train")
+
+    # not a str, and not a class or instance of a torch optimizer
+    # torch.nn.Linear is a class, but not a subclass of torch.optim.Optimizer
+    # 0 is falsy, but only None selects the default optimizer
+    for optimizer in [42, 0, torch.nn.Linear, torch.nn.Linear(4, 3)]:
+        with pytest.raises(TypeError, match="optimizer"):
+            _mlp_torch_clf(optimizer=optimizer).fit(X_train, y_train)
+
+    # the empty string is falsy, but is looked up as a str and not found
+    for optimizer in ["not_an_optimizer", ""]:
+        with pytest.raises(ValueError, match="Unknown optimizer"):
+            _mlp_torch_clf(optimizer=optimizer).fit(X_train, y_train)
+
+
 DUMMY_EST_PARAMETERS_FOO = [None, 10.3, "string", {"key": "value"}, lambda x: x**2]
 
 
