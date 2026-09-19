@@ -20,7 +20,9 @@ def test_BKFilter_wrapper():
     import statsmodels.api as sm
 
     dta = sm.datasets.macrodata.load_pandas().data
-    index = pd.date_range(start="1959Q1", end="2009Q4", freq="Q")
+    index = pd.date_range(
+        start="1959Q1", end="2009Q4", freq=pd.offsets.QuarterEnd(startingMonth=12)
+    )
     dta.set_index(index, inplace=True)
     sm_cycles = sm.tsa.filters.bkfilter(dta[["realinv"]], 6, 24, 12)
     bk = BKFilter(6, 24, 12)

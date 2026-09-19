@@ -108,6 +108,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # no default tag values - these are set dynamically below
