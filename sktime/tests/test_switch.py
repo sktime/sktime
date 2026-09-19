@@ -70,7 +70,7 @@ def run_test_for_class(cls, return_reason=False):
       If ``ONLY_CHANGED_MODULES`` is False, this condition is always True.
 
     Also checks whether the class or function is on the exclude override list,
-    as per the ``tests:skil_all`` tag in the estimator set to ``True``.
+    as per the ``tests:skip_all`` tag in the estimator set to ``True``.
     If so, the tests are always skipped, irrespective of the other conditions.
 
     Parameters
