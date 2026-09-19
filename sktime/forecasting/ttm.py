@@ -527,6 +527,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": True,
+        "fm": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,

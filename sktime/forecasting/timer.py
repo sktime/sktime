@@ -88,6 +88,7 @@ class TimerForecaster(BaseForecaster):
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
+        "fm": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:insample": False,
