@@ -1,0 +1,174 @@
+"""Mean advance time, of alarms raised ahead of true events."""
+
+import numpy as np
+import pandas as pd
+
+from sktime.performance_metrics.detection._base import BaseDetectionMetric
+from sktime.performance_metrics.detection.utils._match import (
+    _is_time_index,
+    _match_alarms_to_events,
+    _refuse_intervals,
+)
+
+__author__ = ["yash-sangwan"]
+__all__ = ["MeanAdvanceTime"]
+
+
+class MeanAdvanceTime(BaseDetectionMetric):
+    """Mean advance time, how early the earliest alarm comes before each event.
+
+    A true event at time ``T`` counts as hit if at least one alarm falls in the
+    window ``[T + earliest_offset, T + latest_offset]``. For each hit event, the
+    advance time is ``T`` minus the time of the earliest alarm in its window.
+    The score is the mean advance time over hit events only.
+
+    The offsets are signed, negative is before the event and positive is after
+    it. With offsets in the units of ``X.index``, for an event at ``T``:
+
+    * ``earliest_offset=0, latest_offset=0``: only an alarm exactly at ``T``.
+    * ``earliest_offset=-3, latest_offset=0``: advance only, an alarm from 3
+      before ``T`` up to ``T``. Late alarms do not count.
+    * ``earliest_offset=0, latest_offset=2``: late only, an alarm from ``T`` up
+      to 2 after ``T``. Early alarms do not count.
+    * ``earliest_offset=-3, latest_offset=2``: before and after, an alarm from 3
+      before ``T`` up to 2 after ``T``.
+    * ``earliest_offset=-10, latest_offset=-2``: at least 2 before ``T``, and not
+      earlier than 10 before ``T``. An alarm at ``T`` does not count.
+
+    Missed events do not enter the mean. Read this score together with
+    ``EventTPR``, which reports how many events were hit at all.
+
+    Positions in ``y_true`` and ``y_pred`` are ``iloc`` references into ``X``,
+    and are mapped through ``X.index`` before matching, so ``X`` is required.
+    If ``X`` has a time index, the offsets are time offsets, for instance
+    ``pd.Timedelta("-3s")``, and the score is returned as a number of
+    ``time_unit``. Otherwise all values are in the units of ``X.index``.
+
+    The advance time is positive for alarms before the event. It is negative
+    for a late hit, which can only happen if ``latest_offset`` is above 0.
+
+    Only point events are scored, so interval ``ilocs`` (segments) in
+    ``y_true`` or ``y_pred`` raise a ``ValueError``.
+
+    If there are no true events, or no event is hit, the score is not defined,
+    and ``nan`` is returned.
+
+    Parameters
+    ----------
+    earliest_offset : int, float, or time offset, default=0
+        Start of the hit window, relative to the event time ``T``.
+        Negative values let alarms before the event count.
+        A time offset, for instance ``pd.Timedelta("-3s")``, if ``X`` has a
+        time index, otherwise a number in the units of ``X.index``.
+        A ``ValueError`` is raised if it is NaN, or after ``latest_offset``.
+    latest_offset : int, float, or time offset, default=0
+        End of the hit window, relative to the event time ``T``.
+        Positive values let alarms after the event count, the default of 0
+        means that alarms after the event do not count.
+        Same unit as ``earliest_offset``. NaN raises a ``ValueError``.
+    time_unit : str, default="s"
+        Unit of the returned score, if ``X`` has a time index.
+        Any unit accepted by ``pd.Timedelta``, for instance ``"s"``, ``"ms"``,
+        ``"min"``, or ``"h"``. Ignored if ``X`` does not have a time index.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.detection import MeanAdvanceTime
+    >>> index = pd.date_range("2020-01-01", periods=20, freq="s")
+    >>> X = pd.DataFrame({"foo": range(20)}, index=index)
+    >>> y_true = pd.DataFrame({"ilocs": [5, 15]})
+    >>> y_pred = pd.DataFrame({"ilocs": [2, 14]})
+    >>> metric = MeanAdvanceTime(earliest_offset=pd.Timedelta("-3s"))
+    >>> metric(y_true, y_pred, X)
+    2.0
+    """
+
+    _tags = {
+        "scitype:y": "points",
+        "requires_X": True,  # event positions are mapped through X.index
+        "requires_y_true": True,
+        "lower_is_better": False,  # earlier alarms are better
+    }
+
+    def __init__(self, earliest_offset=0, latest_offset=0, time_unit="s"):
+        self.earliest_offset = earliest_offset
+        self.latest_offset = latest_offset
+        self.time_unit = time_unit
+
+        super().__init__()
+
+    def _coerce_to_detection_type(self, y, X, allow_none=False):
+        """Refuse interval events, then coerce as in the base class.
+
+        The base class would turn interval events into their end points without
+        notice. This metric scores point events only, so it raises instead.
+        """
+        _refuse_intervals(y, type(self).__name__)
+        return super()._coerce_to_detection_type(y, X, allow_none=allow_none)
+
+    def _evaluate(self, y_true, y_pred, X):
+        """Evaluate the mean advance time on given inputs.
+
+        private _evaluate containing core logic, called from evaluate
+
+        Parameters
+        ----------
+        y_true : pd.DataFrame
+            Ground truth events, in points format, with an ``"ilocs"`` column.
+        y_pred : pd.DataFrame
+            Detected alarms, in points format, with an ``"ilocs"`` column.
+        X : pd.DataFrame
+            Time series the events refer to. Only its index is used.
+
+        Returns
+        -------
+        float
+            Mean of event time minus earliest hit time, over hit events only,
+            or ``nan`` if no event is hit.
+        """
+        match = _match_alarms_to_events(
+            y_true,
+            y_pred,
+            X,
+            earliest_offset=self.earliest_offset,
+            latest_offset=self.latest_offset,
+        )
+
+        if not match.hit.any():
+            return np.nan
+
+        hit_times = match.event_times[match.hit]
+        earliest_alarm_times = match.alarm_times[match.earliest_hit[match.hit]]
+        advance = hit_times - earliest_alarm_times
+
+        # a time index gives a TimedeltaIndex, which has a mean in time units,
+        # a plain numeric Index has no mean method, so go through numpy
+        if _is_time_index(X.index):
+            return float(advance.mean() / pd.Timedelta(1, unit=self.time_unit))
+        return float(np.mean(advance.to_numpy()))
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+        """
+        param0 = {}
+        param1 = {"earliest_offset": -2}
+        param2 = {"earliest_offset": -3, "latest_offset": 1, "time_unit": "ms"}
+
+        return [param0, param1, param2]
