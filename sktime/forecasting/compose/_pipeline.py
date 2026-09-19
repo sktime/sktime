@@ -456,6 +456,21 @@ class ForecastingPipeline(_Pipeline):
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
 
+        # aggregate python_dependencies from all components
+        component_deps = self._deps()
+        # preserve composite's own direct dependencies if any
+        own_deps = self.get_class_tag("python_dependencies", None)
+        all_deps = []
+        if own_deps is not None:
+            if isinstance(own_deps, str):
+                all_deps.append(own_deps)
+            elif isinstance(own_deps, list):
+                all_deps.append(own_deps)
+        if component_deps:
+            all_deps.append(component_deps)
+        combined_deps = self._combine_dependencies(all_deps)
+        self.set_tags(**{"python_dependencies": combined_deps})
+
     @property
     def forecaster_(self):
         """Return reference to the forecaster in the pipeline.
@@ -920,6 +935,21 @@ class TransformedTargetForecaster(_Pipeline):
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.forecaster_, tags_to_clone)
         self._anytagis_then_set("fit_is_empty", False, True, self.steps_)
+
+        # aggregate python_dependencies from all components
+        component_deps = self._deps()
+        # preserve composite's own direct dependencies if any
+        own_deps = self.get_class_tag("python_dependencies", None)
+        all_deps = []
+        if own_deps is not None:
+            if isinstance(own_deps, str):
+                all_deps.append(own_deps)
+            elif isinstance(own_deps, list):
+                all_deps.append(own_deps)
+        if component_deps:
+            all_deps.append(component_deps)
+        combined_deps = self._combine_dependencies(all_deps)
+        self.set_tags(**{"python_dependencies": combined_deps})
 
         # above, we cloned the capability:exogenous tag,
         # but we also need to check whether X is used as y in some transformer
