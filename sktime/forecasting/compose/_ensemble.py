@@ -349,6 +349,11 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         # the ensemble requires fh in fit
         # iff any of the component forecasters require fh in fit
         self._anytagis_then_set("requires-fh-in-fit", True, False, self._forecasters)
+        # X is passed to all component forecasters,
+        # so categorical X is supported only if all of them support it
+        self._anytagis_then_set(
+            "capability:categorical_in_X", False, True, self._forecasters
+        )
 
     def _parse_fc_multiplicities(self, forecasters):
         """Parse forecasters with multiplicities.
