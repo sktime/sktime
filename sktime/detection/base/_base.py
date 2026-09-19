@@ -853,7 +853,8 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
         Raises
         ------
         TypeError
-            If ``X`` is a single time series, or not valid Panel data.
+            If ``X`` is a single time series, Hierarchical data,
+            or not valid Panel data.
         """
         name = type(self).__name__
 
@@ -869,6 +870,13 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
             X, scitype="Panel", return_metadata=[]
         )
         if not X_valid:
+            if check_is_scitype(X, scitype="Hierarchical"):
+                raise TypeError(
+                    f"{name}.pretrain currently accepts Panel data only, "
+                    "not Hierarchical data. Pass Panel data to pretrain, for "
+                    "instance a pd.DataFrame with 2-level row MultiIndex "
+                    "(instance, time)."
+                )
             check_is_error_msg(
                 X_msg,
                 var_name=f"Unsupported input data type in {name}.pretrain, input X",
