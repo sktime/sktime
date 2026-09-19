@@ -51,9 +51,11 @@ class TEMPOForecaster(BaseForecaster):
     model_path : str, optional (default="Melady/TEMPO")
         Hugging Face repository identifier for the pretrained TEMPO model.
     filename : str, optional (default="TEMPO-80M_v1.pth")
-        Model checkpoint filename.
-    cache_dir : str, optional (default="./checkpoints/TEMPO_checkpoints")
+        Model checkpoint filename. Available options include
+        "TEMPO-80M_v1.pth" and "TEMPO-80M_v2.pth".
+    cache_dir : str or None, optional (default="./checkpoints/TEMPO_checkpoints")
         Local cache directory for downloaded model files.
+        If None, uses the default cache directory of the upstream TEMPO library.
     device : str or None, optional (default=None)
         Device to run inference on, e.g., "cpu" or "cuda".
     """
@@ -85,12 +87,20 @@ class TEMPOForecaster(BaseForecaster):
         device=None,
     ):
         self.model_path = model_path
-        self.repo_id = model_path
         self.filename = filename
         self.cache_dir = cache_dir
         self.device = device
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic for device initialization."""
+        if self.device is None:
+            import torch
+
+            self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            self._device = self.device
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -99,15 +109,7 @@ class TEMPOForecaster(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecaster by loading the upstream model instance."""
-        if self.device is None:
-            import torch
-
-            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        else:
-            device = self.device
-
         self._y = y
-        self._device = device
         self.model_ = self._load_model()
         return self
 
