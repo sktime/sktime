@@ -298,12 +298,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         """
         from torch.utils.data import ConcatDataset, DataLoader
 
-        from sktime.forecasting.base.adapters._pytorch import (
-            PyTorchTrainDataset,
-            _get_series_from_panel,
-        )
-
-        all_series = _get_series_from_panel(y)
+        all_series = self._get_series_from_panel(y)
+        PyTorchTrainDataset = self._get_train_dataset_class()
 
         datasets = [
             PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=fh)
@@ -841,12 +837,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         """
         from torch.utils.data import ConcatDataset, DataLoader
 
-        from sktime.forecasting.base.adapters._pytorch import (
-            PyTorchTrainDataset,
-            _get_series_from_panel,
-        )
-
-        all_series = _get_series_from_panel(y)
+        all_series = self._get_series_from_panel(y)
+        PyTorchTrainDataset = self._get_train_dataset_class()
 
         datasets = [
             PyTorchTrainDataset(y=series, seq_len=self.seq_len, fh=fh)
