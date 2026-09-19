@@ -67,6 +67,7 @@ class MyTrafoPw(BasePairwiseTransformer):
         #
         # estimator tags
         # --------------
+        "capability:multivariate": True,  # natively supports 2+ variables?
         "property:randomness": "deterministic",  # "deterministic", "stochastic",
         # or "derandomized" (stochastic, but reproducible if random_state is set)
         "capability:random_state": False,  # is there a random_state parameter?
