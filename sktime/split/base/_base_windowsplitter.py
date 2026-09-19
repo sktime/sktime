@@ -164,7 +164,13 @@ class BaseWindowSplitter(BaseSplitter):
             raise ValueError(
                 "`start_with_window` must be True if `initial_window` is given"
             )
-        if self._initial_window <= self.window_length:
+        if is_int(x=self._initial_window):
+            initial_window_too_small = self._initial_window <= self.window_length
+        else:
+            initial_window_too_small = (
+                y[0] + self._initial_window <= y[0] + self.window_length
+            )
+        if initial_window_too_small:
             raise ValueError("`initial_window` must greater than `window_length`")
         if is_int(x=self._initial_window):
             end = self._initial_window
