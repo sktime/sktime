@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes import check_is_scitype
 from sktime.detection.dummy import (
     DummyRegularAnomalies,
     ZeroChangePoints,
@@ -219,6 +220,28 @@ def test_check_X_pretrain_keeps_panel(X_panel):
 
     assert X_out is X_panel
     assert X_metadata["scitype"] == "Panel"
+
+
+@pytest.mark.parametrize("detector_cls", DETECTORS)
+def test_pretrain_hierarchical_label_collision_raises(detector_cls):
+    """Test pretrain raises TypeError if flattened instance labels collide.
+
+    The instances ("a__b", "c") and ("a", "b__c") both flatten to "a__b__c",
+    and the two series must not be merged into one instance.
+    """
+    detector = detector_cls.create_test_instance()
+    index = pd.MultiIndex.from_tuples(
+        [("a__b", "c", t) for t in range(5)] + [("a", "b__c", t) for t in range(5)],
+        names=["h0", "h1", "time"],
+    )
+    X_hier = pd.DataFrame({"value": np.arange(10.0)}, index=index)
+    # the input itself is valid, only the flattened labels collide
+    assert check_is_scitype(X_hier, scitype="Hierarchical")
+
+    with pytest.raises(TypeError, match="Unsupported input data type"):
+        detector.pretrain(X_hier)
+
+    assert detector.state == "new"
 
 
 def _make_fit_and_new_data():
