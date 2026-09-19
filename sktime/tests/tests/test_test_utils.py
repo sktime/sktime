@@ -61,9 +61,10 @@ def test_run_test_for_class():
     from sktime.tests._config import ONLY_CHANGED_MODULES
 
     # test that assumptions on being on exception list are correct
-    assert "HIVECOTEV2" in EXCLUDE_ESTIMATORS  # if this fails, switch the example
-    assert "NaiveForecaster" not in EXCLUDE_ESTIMATORS  # same here
-    assert "Prophet" not in EXCLUDE_ESTIMATORS  # same here
+    assert HIVECOTEV2.get_class_tag("tests:skip_all", False)
+    # if this fails, switch the example
+    assert not NaiveForecaster.get_class_tag("tests:skip_all", False)  # same here
+    assert not Prophet.get_class_tag("tests:skip_all", False)  # same here
 
     f_on_excl_list = HIVECOTEV2
     f_no_deps = NaiveForecaster
