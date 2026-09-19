@@ -1,5 +1,9 @@
 """Test data loaders that download from external sources."""
 
+import io
+import shutil
+import tarfile
+from unittest.mock import Mock, patch
 from urllib.request import Request, urlopen
 
 import numpy as np
@@ -15,6 +19,11 @@ from sktime.datasets import (
     load_solar,
     load_UCR_UEA_dataset,
 )
+from sktime.datasets._fpp3_loaders import (
+    REQUEST_TIMEOUT,
+    _decompress_file_to_temp,
+    _safe_extract_tar,
+)
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
 from sktime.datatypes import check_is_mtype, check_raise
 
@@ -27,6 +36,46 @@ TSF_SUBSAMPLE_SMALL = [
     "solar_10_minutes_dataset",
     "australian_electricity_demand_dataset",
 ]
+
+
+def test_fpp3_download_uses_timeout(tmp_path):
+    """Test that FPP3 downloads have connect and read timeouts."""
+    pytest.importorskip("requests")
+
+    archive = io.BytesIO()
+    with tarfile.open(fileobj=archive, mode="w:gz") as tar:
+        member = tarfile.TarInfo("package/data/example.rda")
+        member.size = 0
+        tar.addfile(member, io.BytesIO())
+
+    response = Mock(content=archive.getvalue())
+    response.raise_for_status.return_value = None
+    with patch("requests.get", return_value=response) as request_get:
+        extracted = _decompress_file_to_temp(
+            datafile="package.tar.gz",
+            archivedir="package",
+            temp_folder=tmp_path,
+        )
+
+    request_get.assert_called_once_with(
+        "https://cran.r-project.org/src/contrib/package.tar.gz",
+        timeout=REQUEST_TIMEOUT,
+    )
+    shutil.rmtree(extracted)
+
+
+def test_fpp3_rejects_unsafe_tar_path(tmp_path):
+    """Test that FPP3 extraction rejects paths outside its destination."""
+    archive = io.BytesIO()
+    with tarfile.open(fileobj=archive, mode="w") as tar:
+        member = tarfile.TarInfo("../../outside")
+        member.size = 0
+        tar.addfile(member, io.BytesIO())
+
+    archive.seek(0)
+    with tarfile.open(fileobj=archive) as tar:
+        with pytest.raises(RuntimeError, match="unsafe tar member"):
+            _safe_extract_tar(tar, tmp_path)
 
 
 @pytest.mark.datadownload
