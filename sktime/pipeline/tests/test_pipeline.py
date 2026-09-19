@@ -1,3 +1,4 @@
+from copy import deepcopy
 from unittest.mock import MagicMock
 
 import pytest
@@ -7,6 +8,22 @@ from sktime.datasets import load_longley
 from sktime.pipeline.pipeline import MethodNotImplementedError, Pipeline
 from sktime.transformations.boxcox import BoxCoxTransformer
 from sktime.transformations.exponent import ExponentTransformer
+
+
+def test_constructor_does_not_mutate_steps():
+    """Test that Pipeline construction does not mutate the steps blueprint."""
+    steps = [
+        {
+            "skobject": ExponentTransformer(),
+            "name": "exponent",
+            "edges": {"X": "X"},
+        }
+    ]
+    steps_before = deepcopy(steps)
+
+    Pipeline(steps)
+
+    assert steps == steps_before
 
 
 @pytest.mark.parametrize(
