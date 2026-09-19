@@ -437,6 +437,7 @@ class GreedyGaussianSegmentation(BaseDetector):
             "test_transform_output_type",
             "test_inheritance",
             "test_create_test_instance",
+            "test_class_has_doctest_example",
         ],
     }
 

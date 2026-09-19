@@ -97,6 +97,8 @@ class ShapeletLearningClassifierTslearn(_TslearnAdapter, BaseClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:unequal_length": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # test skip flags
         # ---------------
         "tests:skip_all": True,  # sporadic timeouts, see #6344
