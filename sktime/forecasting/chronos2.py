@@ -82,7 +82,8 @@ class Chronos2Forecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": False,
         "capability:missing_values": False,
-        "capability:pred_int": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -228,6 +229,48 @@ class Chronos2Forecaster(BaseForecaster):
         -------
         y_pred : pd.DataFrame
         """
+        pred_tensor, prediction_length = self._predict_tensor(fh, X)
+
+        quantiles = self.model_pipeline.quantiles
+        median_idx = quantiles.index(0.5)
+        point_forecast = pred_tensor[:, median_idx, :].numpy()
+
+        index = (
+            ForecastingHorizon(range(1, prediction_length + 1))
+            .to_absolute(self._cutoff)
+            ._values
+        )
+        pred_out = fh.get_expected_pred_idx(self._context, cutoff=self.cutoff)
+
+        pred_df = pd.DataFrame(
+            point_forecast.T,
+            index=index,
+            columns=self._get_varnames(),
+        )
+        pred_df.index.names = self._y_index_names
+
+        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
+        return pred_df.loc[dateindex]
+
+    def _predict_tensor(self, fh, X=None):
+        """Run the underlying Chronos-2 pipeline and return the raw prediction tensor.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous covariates (known-future). Column names must be
+            a subset of X provided in fit.
+
+        Returns
+        -------
+        pred_tensor : torch.Tensor
+            Raw prediction tensor of shape
+            ``(n_variates, n_quantiles, prediction_length)``
+            as returned by ``Chronos2Pipeline.predict``.
+        prediction_length : int
+            Number of steps ahead the tensor was generated for.
+        """
         import transformers
 
         self._ensure_model_pipeline_loaded()
@@ -270,27 +313,71 @@ class Chronos2Forecaster(BaseForecaster):
             limit_prediction_length=self._config["limit_prediction_length"],
         )
 
-        pred_tensor = predictions[0]
-        quantiles = self.model_pipeline.quantiles
-        median_idx = quantiles.index(0.5)
-        point_forecast = pred_tensor[:, median_idx, :].numpy()
+        return predictions[0], prediction_length
+
+    def _predict_quantiles(self, fh, X=None, alpha=None):
+        """Compute/return prediction quantiles for a forecast.
+
+        The underlying Chronos-2 pipeline natively outputs a grid of quantile
+        forecasts (``model_pipeline.quantiles``). This method interpolates that
+        grid onto the requested ``alpha`` levels, so arbitrary quantile levels
+        can be returned without a second forward pass.
+
+        Parameters
+        ----------
+        fh : ForecastingHorizon
+        X : pd.DataFrame, optional
+            Future exogenous covariates (known-future). Column names must be
+            a subset of X provided in fit.
+        alpha : list of float
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+            second level being the values of alpha passed to the function.
+            Row index is fh. Entries are quantile forecasts, for var in col index,
+            at quantile probability in second col index, for the row index.
+        """
+        pred_tensor, prediction_length = self._predict_tensor(fh, X)
+
+        native_quantiles = np.asarray(self.model_pipeline.quantiles, dtype=float)
+        sort_idx = np.argsort(native_quantiles)
+        native_quantiles = native_quantiles[sort_idx]
+        sorted_tensor = pred_tensor.detach().cpu().numpy()[:, sort_idx, :]
+
+        alpha_arr = np.asarray(alpha, dtype=float)
+        # interpolate the native quantile grid onto the requested alpha levels,
+        # for each variate and each horizon step
+        quantile_vals = np.stack(
+            [
+                np.interp(alpha_arr, native_quantiles, sorted_tensor[v, :, t])
+                for v in range(sorted_tensor.shape[0])
+                for t in range(sorted_tensor.shape[2])
+            ]
+        ).reshape(sorted_tensor.shape[0], sorted_tensor.shape[2], len(alpha))
 
         index = (
             ForecastingHorizon(range(1, prediction_length + 1))
             .to_absolute(self._cutoff)
             ._values
         )
-        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(self._context, cutoff=self.cutoff)
 
-        pred_df = pd.DataFrame(
-            point_forecast.T,
-            index=index,
-            columns=self._get_varnames(),
+        var_names = self._get_varnames()
+        cols_idx = pd.MultiIndex.from_product([var_names, alpha])
+        pred_quantiles = pd.DataFrame(index=index, columns=cols_idx)
+        pred_quantiles.index.names = self._y_index_names
+
+        for i, var_name in enumerate(var_names):
+            for j, a in enumerate(alpha):
+                pred_quantiles[(var_name, a)] = quantile_vals[i, :, j]
+
+        dateindex = pred_quantiles.index.get_level_values(-1).map(
+            lambda x: x in pred_out
         )
-        pred_df.index.names = self._y_index_names
-
-        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
-        return pred_df.loc[dateindex]
+        return pred_quantiles.loc[dateindex]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
