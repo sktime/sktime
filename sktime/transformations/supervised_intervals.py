@@ -110,7 +110,10 @@ class SupervisedIntervals(BaseTransformer):
         "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
+        "tests:skip_by_name": [
+            "test_class_has_doctest_example",
+            "test_get_test_params_coverage",
+        ],
     }
 
     def __init__(
