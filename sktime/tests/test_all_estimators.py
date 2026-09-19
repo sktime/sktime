@@ -229,7 +229,6 @@ class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
         est_list = all_estimators(
             estimator_types=getattr(self, "object_type_filter", None),
             return_names=False,
-            exclude_estimators=self.exclude_objects,
             filter_tags=self.filter_tags,
         )
         # subsample estimators by OS & python version
