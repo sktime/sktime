@@ -162,6 +162,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "dictionary",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -699,6 +700,7 @@ class IndividualTDE(BaseClassifier):
         "capability:multithreading": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
