@@ -72,7 +72,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y, pd.Series) and pd.api.types.is_integer_dtype(y.index):
+        if pd.api.types.is_integer_dtype(y.index):
             y, X = _coerce_int_to_range_index(y, X)
         self._fit_forecaster(y, X)
         return self
@@ -222,8 +222,27 @@ class _StatsModelsAdapter(BaseForecaster):
 
         get_prediction_arguments = {"start": start, "end": end}
 
+        # Only pass random_state when supported by get_prediction.
         if hasattr(self, "random_state"):
-            get_prediction_arguments["random_state"] = self.random_state
+            get_prediction_params = inspect.signature(
+                self._fitted_forecaster.get_prediction
+            ).parameters
+
+            if "simulate_kwargs" in get_prediction_params:
+                simulate_params = inspect.signature(
+                    self._fitted_forecaster.simulate
+                ).parameters
+
+                if "rng" in simulate_params:
+                    get_prediction_arguments["simulate_kwargs"] = {
+                        "rng": self.random_state
+                    }
+                else:
+                    get_prediction_arguments["simulate_kwargs"] = {
+                        "random_state": self.random_state
+                    }
+            elif "random_state" in get_prediction_params:
+                get_prediction_arguments["random_state"] = self.random_state
 
         if inspect.signature(self._fitted_forecaster.get_prediction).parameters.get(
             "exog"
