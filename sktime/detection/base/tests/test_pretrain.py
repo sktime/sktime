@@ -169,17 +169,56 @@ def test_pretrain_single_series_raises(detector_cls, X_single):
 
 
 @pytest.mark.parametrize("detector_cls", DETECTORS)
-def test_pretrain_hierarchical_raises(detector_cls):
-    """Test pretrain raises TypeError on hierarchical data, and keeps the state."""
+def test_pretrain_hierarchical_is_noop(detector_cls):
+    """Test pretrain accepts hierarchical data, and is a no-op apart from the state."""
     detector = detector_cls.create_test_instance()
     X_hier = _make_hierarchical(
         hierarchy_levels=(2, 2), min_timepoints=10, max_timepoints=10
     )
+    X_hier_before = X_hier.copy()
+    attrs_before = dict(vars(detector))
 
-    with pytest.raises(TypeError, match="Panel data only, not Hierarchical"):
-        detector.pretrain(X_hier)
+    result = detector.pretrain(X_hier)
 
-    assert detector.state == "new"
+    assert result is detector
+    assert detector.state == "pretrained"
+    assert detector.get_pretrained_params() == {}
+    _assert_only_state_changed(detector, attrs_before)
+    # flattening does not change the input data
+    pd.testing.assert_frame_equal(X_hier, X_hier_before)
+
+
+@pytest.mark.parametrize(
+    "hierarchy_levels", [(2, 2), (2, 1, 3)], ids=["2_levels", "3_levels"]
+)
+def test_check_X_pretrain_flattens_hierarchical(hierarchy_levels):
+    """Test hierarchical data is flattened to panel data, joining instance levels."""
+    X_hier = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels, min_timepoints=10, max_timepoints=10
+    )
+
+    X_flat, X_metadata = DummyRegularAnomalies()._check_X_pretrain(X_hier)
+
+    assert X_metadata["scitype"] == "Panel"
+    assert X_metadata["mtype"] == "pd-multiindex"
+    # for instance, the instance ("h0_0", "h1_0") becomes "h0_0__h1_0"
+    expected = ["__".join(instance) for instance in X_hier.index.droplevel(-1)]
+    assert list(X_flat.index.get_level_values(0)) == expected
+    assert X_flat.index.get_level_values(-1).equals(X_hier.index.get_level_values(-1))
+    np.testing.assert_array_equal(X_flat.to_numpy(), X_hier.to_numpy())
+
+
+@pytest.mark.parametrize(
+    "X_panel",
+    [_make_panel(), np.random.default_rng(0).random((3, 1, 20))],
+    ids=["pd-multiindex", "numpy3D"],
+)
+def test_check_X_pretrain_keeps_panel(X_panel):
+    """Test panel data is passed on unchanged, as the same object."""
+    X_out, X_metadata = DummyRegularAnomalies()._check_X_pretrain(X_panel)
+
+    assert X_out is X_panel
+    assert X_metadata["scitype"] == "Panel"
 
 
 def _make_fit_and_new_data():
