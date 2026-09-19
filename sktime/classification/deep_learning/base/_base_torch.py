@@ -609,14 +609,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             optimizer_params = {"lr": self.lr}
         # if optimizer is a string, look it up in the available optimizers
         elif isinstance(self.optimizer, str):
-            if self.optimizer.lower() not in self._all_optimizers:
-                raise ValueError(
-                    f"Unknown optimizer: {self.optimizer}. Please pass one of "
-                    f"{', '.join(self._all_optimizers)} for `optimizer`."
-                )
-            optimizer_class = _safe_import(
-                f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
-            )
+            optimizer_class = self._resolve_optimizer(self.optimizer, torchOptimizer)
             optimizer_params = {"lr": self.lr}
         # if optimizer is an optimizer class, use it as is
         elif isinstance(self.optimizer, type) and issubclass(
@@ -649,6 +642,45 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             optimizer_params.update(self.optimizer_kwargs)
 
         return optimizer_class(self.network.parameters(), **optimizer_params)
+
+    def _resolve_optimizer(self, optimizer, torch_optimizer):
+        """Resolve an optimizer ``str`` to a ``torch.optim`` class.
+
+        Curated lower-case aliases in ``_all_optimizers`` take precedence.
+        Otherwise the name is looked up directly in ``torch.optim``,
+        case-insensitively, so that any optimizer shipped with PyTorch can be
+        passed as a string.
+
+        Parameters
+        ----------
+        optimizer : str
+            Name of the optimizer to resolve, e.g. ``"adamw"`` or ``"AdamW"``.
+        torch_optimizer : type
+            The ``torch.optim.Optimizer`` base class used to validate candidates.
+
+        Returns
+        -------
+        type
+            The resolved ``torch.optim`` optimizer class.
+        """
+        # curated lower-case aliases take precedence
+        aliases = self._all_optimizers or {}
+        if optimizer.lower() in aliases:
+            return _safe_import(f"torch.optim.{aliases[optimizer.lower()]}")
+
+        # fall back to a direct, case-insensitive lookup in torch.optim
+        torch_optim = _safe_import("torch.optim")
+        for attr_name in dir(torch_optim):
+            if attr_name.lower() == optimizer.lower():
+                attr = getattr(torch_optim, attr_name, None)
+                if isinstance(attr, type) and issubclass(attr, torch_optimizer):
+                    return attr
+
+        raise ValueError(
+            f"Unknown optimizer: {optimizer}. Please pass a valid torch.optim "
+            f"optimizer (e.g. one of {', '.join(sorted(aliases))}), "
+            "or an optimizer class or instance."
+        )
 
     def _instantiate_criterion(self):
         # if no criterion is passed, use CrossEntropyLoss as default
