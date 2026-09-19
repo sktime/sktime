@@ -350,13 +350,11 @@ class AutoTS(BaseForecaster):
         # since AutoTS can only deal with dates
         y_date = self._convert_input_to_date(y)
         self._y_date = y_date
+        X_date = self._convert_input_to_date(X)
 
         self._fh = fh
         self._instantiate_model()
-        try:
-            self.forecaster_.fit(df=y_date, future_regressor=X)
-        except Exception as e:
-            raise e
+        self.forecaster_.fit(df=y_date, future_regressor=X_date)
         return self
 
     def _predict(self, fh, X):
@@ -381,10 +379,11 @@ class AutoTS(BaseForecaster):
             Point predictions
         """
         y_date = self._y_date
+        X_date = self._convert_input_to_date(X)
 
         values = self.forecaster_.predict(
             forecast_length=self._get_forecast_length(),
-            future_regressor=X,
+            future_regressor=X_date,
         ).forecast.values
 
         cutoff = self._fh_cutoff_transformation(y_date)
@@ -692,21 +691,15 @@ class AutoTS(BaseForecaster):
             2. "lower"/"upper"
             Row index is fh.
         """
-        import pandas as pd
-
-        # Prepare coverage list for AutoTS
-        # AutoTS supports a list of floats for prediction_interval
         coverage_list = list(coverage)
 
         y_date = self._y_date
+        X_date = self._convert_input_to_date(X)
 
-        # Call predict on the internal forecaster
-        # This returns a dict of PredictionObjects if prediction_interval is a list,
-        # or a single PredictionObject if it's a float.
         prediction = self.forecaster_.predict(
             forecast_length=self._get_forecast_length(),
             prediction_interval=coverage_list,
-            future_regressor=X,
+            future_regressor=X_date,
         )
 
         cutoff = self._fh_cutoff_transformation(y_date)
@@ -733,21 +726,108 @@ class AutoTS(BaseForecaster):
             for c_str, pred_obj in prediction.items():
                 _process_pred_obj(pred_obj, float(c_str))
         else:
-            # Fallback for single object (though passing list usually returns dict)
-            # If we passed a single value list and got an object,
-            # ensure we match it to the coverage
             if len(coverage) == 1:
                 _process_pred_obj(prediction, coverage[0])
             else:
-                # Should not happen if API is consistent
                 raise ValueError(
                     "AutoTS returned single prediction for multiple coverages."
                 )
 
         pred_int = pd.DataFrame(dfs, index=row_idx)
         pred_int.columns.names = ["variable", "coverage", "lower/upper"]
-        # Ensure columns are sorted/ordered correctly if needed,
-        # sktime usually handles it
         pred_int.sort_index(axis=1, inplace=True)
 
         return pred_int
+
+    def _predict_quantiles(self, fh, X, alpha):
+        """Compute/return prediction quantiles for a forecast.
+
+        private _predict_quantiles containing the core logic,
+            called from predict_quantiles
+
+        Parameters
+        ----------
+        fh : guaranteed to be ForecastingHorizon
+            The forecasting horizon with the steps ahead to predict.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous time series
+        alpha : list of float (guaranteed not None and floats in [0,1] interval)
+            A list of probabilities at which quantile forecasts are computed.
+
+        Returns
+        -------
+        quantiles : pd.DataFrame
+            Column has multi-index: first level is variable name from y in fit,
+                second level being the values of alpha passed to the function.
+            Row index is fh, with additional (upper) levels equal to instance
+                levels, from y seen in fit.
+            Entries are quantile forecasts, for var in col index,
+                at quantile probability in second col index,
+                for the row index.
+        """
+        y_date = self._y_date
+        X_date = self._convert_input_to_date(X)
+
+        cutoff = self._fh_cutoff_transformation(y_date)
+        relative_fh_idx = self._fh.to_relative(cutoff)._values - 1
+        var_names = y_date.columns
+        row_idx = self._fh.to_absolute_index(self.cutoff)
+
+        # map alpha values to AutoTS coverage levels
+        # alpha < 0.5 -> lower bound at coverage |1 - 2*alpha|
+        # alpha > 0.5 -> upper bound at coverage |1 - 2*alpha|
+        # alpha = 0.5 -> point forecast
+        coverages_needed = set()
+        for a in alpha:
+            if a != 0.5:
+                coverages_needed.add(abs(1 - 2 * a))
+
+        point_forecast = None
+        pred_objects = {}
+
+        if coverages_needed:
+            coverage_list = sorted(coverages_needed)
+            prediction = self.forecaster_.predict(
+                forecast_length=self._get_forecast_length(),
+                prediction_interval=coverage_list,
+                future_regressor=X_date,
+            )
+            if isinstance(prediction, dict):
+                for c_str, pred_obj in prediction.items():
+                    pred_objects[float(c_str)] = pred_obj
+            else:
+                pred_objects[coverage_list[0]] = prediction
+
+        if 0.5 in alpha:
+            if pred_objects:
+                any_pred = next(iter(pred_objects.values()))
+                point_forecast = any_pred.forecast.values[relative_fh_idx]
+            else:
+                point_pred = self.forecaster_.predict(
+                    forecast_length=self._get_forecast_length(),
+                    future_regressor=X_date,
+                )
+                point_forecast = point_pred.forecast.values[relative_fh_idx]
+
+        dfs = {}
+        for a in alpha:
+            if a == 0.5:
+                for var_idx, var_name in enumerate(var_names):
+                    dfs[(var_name, a)] = point_forecast[:, var_idx]
+            else:
+                cov = abs(1 - 2 * a)
+                pred_obj = pred_objects[cov]
+                if a < 0.5:
+                    vals = pred_obj.lower_forecast.values[relative_fh_idx]
+                else:
+                    vals = pred_obj.upper_forecast.values[relative_fh_idx]
+                for var_idx, var_name in enumerate(var_names):
+                    dfs[(var_name, a)] = vals[:, var_idx]
+
+        quantiles = pd.DataFrame(dfs, index=row_idx)
+        quantiles.columns = pd.MultiIndex.from_tuples(
+            quantiles.columns, names=["variable", "alpha"]
+        )
+        quantiles.sort_index(axis=1, inplace=True)
+
+        return quantiles
