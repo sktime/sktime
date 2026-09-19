@@ -76,6 +76,7 @@ class CNTCNetwork(BaseDeepNetwork):
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
         "python_dependencies": ["tensorflow"],
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

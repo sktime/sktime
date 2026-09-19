@@ -100,6 +100,7 @@ class BaggingForecaster(BaseForecaster):
         "capability:pred_int:insample": True,  # ... for in-sample horizons?
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

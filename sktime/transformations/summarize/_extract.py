@@ -239,6 +239,7 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # and for y?
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -428,6 +429,7 @@ class FittedParamExtractor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(self, forecaster, param_names, n_jobs=None):

@@ -58,7 +58,7 @@ dependencies = [
   "packaging",  # for estimator specific dependency parsing
   "pandas<3.1.0,>=1.1",  # pandas is the main in-memory data container
   "scikit-base>=1.0.0,<1.2.0",  # base module for sklearn compatible base API
-  "scikit-learn>=0.24,<1.8.0",  # required for estimators and framework layer
+  "scikit-learn>=0.24,<1.10.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
 
@@ -129,14 +129,14 @@ forecasting = [
   'skforecast<0.19,>=0.12.1; python_version < "3.14"',
   "skpro>=2,<2.16.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
-  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'statsmodels<0.16,>=0.12.1; python_version < "3.15"',
 ]
 networks = [
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
 ]
 param_est = [
   'seasonal<0.4,>=0.3.1; python_version < "3.13"',
-  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'statsmodels<0.16,>=0.12.1; python_version < "3.15"',
 ]
 regression = [
   'numba>=0.53,<0.68',
@@ -147,7 +147,7 @@ transformations = [
   'numba>=0.53,<0.68',
   'pycatch22>=0.4,<0.4.6; python_version < "3.13"',
   'simdkalman',
-  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'statsmodels<0.16,>=0.12.1; python_version < "3.15"',
   'tsfresh<0.22,>=0.17; python_version < "3.12"',
 ]
 

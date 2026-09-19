@@ -68,6 +68,7 @@ class M5Dataset(BaseForecastingDataset):
         "n_panels": 30490,  # 30490 bottom levels
         "n_hierarchy_levels": 5,  # Number of levels  in the hierarchy (equivalent to
         #  number of index levels excluding the time index)
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

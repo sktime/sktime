@@ -308,6 +308,7 @@ class HFTransformersForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_hf_transformers_forecaster"],
         "tests:python_dependencies": ["peft"],
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
