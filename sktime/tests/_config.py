@@ -50,7 +50,6 @@ EXCLUDE_ESTIMATORS = [
     # these are temporarily skipped to allow merging of the base test framework
     "SameLocSplitter",
     "Repeat",
-    "CutoffFhSplitter",
     # sporadic timeouts, see #6344
     "ShapeletLearningClassifierTslearn",
     # models with large weights
