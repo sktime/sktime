@@ -4,6 +4,7 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
+from sktime.utils.singleton import _multiton
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "priyanshuharshbodhi1"]
 
@@ -135,6 +136,17 @@ class Moirai2Forecaster(BaseForecaster):
         self.use_source_package = use_source_package
         super().__init__()
 
+    def __getstate__(self):
+        """Return state for pickling, excluding the unpickleable torch model."""
+        state = self.__dict__.copy()
+        if "model" in state:
+            state["model"] = None
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from unpickled state dictionary."""
+        self.__dict__.update(state)
+
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
 
@@ -189,6 +201,58 @@ class Moirai2Forecaster(BaseForecaster):
             )
             return Moirai2Forecast.load_from_checkpoint(**model_kwargs)
 
+    def _get_model_kwargs(self, prediction_length):
+        """Return Moirai2 model kwargs from fitted estimator state."""
+        model_kwargs = {
+            "prediction_length": prediction_length,
+            "context_length": self.context_length,
+            "target_dim": self._target_dim,
+            "feat_dynamic_real_dim": self._num_feat_dynamic_real,
+            "past_feat_dynamic_real_dim": self._num_past_feat_dynamic_real,
+        }
+        return model_kwargs
+
+    def _get_unique_key(self):
+        """Return a unique key for multiton caching."""
+        return f"{self.checkpoint_path}_{self.use_source_package}_{self.map_location}"
+
+    def _load_model(self, prediction_length):
+        """Load the Moirai2 model from source or the vendored sktime copy."""
+        model_kwargs = self._get_model_kwargs(prediction_length)
+        # Load model from source package
+        if self.use_source_package:
+            if _check_soft_dependencies("uni2ts", severity="none"):
+                from uni2ts.model.moirai2 import Moirai2Forecast, Moirai2Module
+
+                if self.checkpoint_path.startswith("Salesforce"):
+                    model_kwargs["module"] = Moirai2Module.from_pretrained(
+                        self.checkpoint_path
+                    )
+                    return Moirai2Forecast(**model_kwargs)
+                else:
+                    from huggingface_hub import hf_hub_download
+
+                    model_kwargs["checkpoint_path"] = hf_hub_download(
+                        repo_id=self.checkpoint_path, filename="model.ckpt"
+                    )
+                    model = Moirai2Forecast.load_from_checkpoint(**model_kwargs)
+                    model.to(self.map_location)
+                    return model
+        # Load model from sktime (cached module, fresh wrapper)
+        else:
+            module = _CachedMoirai2Module(
+                key=self._get_unique_key(),
+                model_loader=self._instantiate_patched_model,
+                map_location=self.map_location,
+            ).load_module()
+
+            from sktime.libs.uni2ts.moirai2_forecast import Moirai2Forecast
+
+            model_kwargs["module"] = module
+            model = Moirai2Forecast(**model_kwargs)
+            model.to(self.map_location)
+            return model
+
     def _fit(self, y, X, fh):
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
@@ -206,43 +270,19 @@ class Moirai2Forecaster(BaseForecaster):
             self._num_past_feat_dynamic_real = self.num_past_feat_dynamic_real
 
         if isinstance(y, pd.DataFrame):
-            target_dim = y.shape[1]
+            self._target_dim = y.shape[1]
         else:
-            target_dim = 1
+            self._target_dim = 1
 
-        model_kwargs = {
-            "prediction_length": prediction_length,
-            "context_length": self.context_length,
-            "target_dim": target_dim,
-            "feat_dynamic_real_dim": self._num_feat_dynamic_real,
-            "past_feat_dynamic_real_dim": self._num_past_feat_dynamic_real,
-        }
-
-        if self.use_source_package:
-            if _check_soft_dependencies("uni2ts", severity="none"):
-                from uni2ts.model.moirai2 import Moirai2Forecast, Moirai2Module
-
-                if self.checkpoint_path.startswith("Salesforce"):
-                    model_kwargs["module"] = Moirai2Module.from_pretrained(
-                        self.checkpoint_path
-                    )
-                    self.model = Moirai2Forecast(**model_kwargs)
-                else:
-                    from huggingface_hub import hf_hub_download
-
-                    model_kwargs["checkpoint_path"] = hf_hub_download(
-                        repo_id=self.checkpoint_path, filename="model.ckpt"
-                    )
-                    self.model = Moirai2Forecast.load_from_checkpoint(**model_kwargs)
-                    self.model.to(self.map_location)
-        else:
-            self.model = self._instantiate_patched_model(model_kwargs)
-            self.model.to(self.map_location)
+        self.model = self._load_model(prediction_length)
 
     def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh
         fh = fh.to_relative(self.cutoff)
+
+        if getattr(self, "model", None) is None:
+            self.model = self._load_model(max(fh._values))
 
         self.model.hparams.prediction_length = max(fh._values)
 
@@ -562,3 +602,39 @@ class Moirai2Forecaster(BaseForecaster):
             return len(X.index.get_level_values(-1).unique())
         else:
             return len(X)
+
+
+@_multiton
+class _CachedMoirai2Module:
+    """Cached Moirai2 module to ensure weights are loaded only once per config.
+
+    Caches the pretrained module (neural network weights) rather than the full
+    Moirai2Forecast wrapper, because the wrapper encodes data-shape-specific
+    configuration (target_dim, feat_dynamic_real_dim) that varies between calls.
+    The module is immutable and can be safely shared.
+    """
+
+    def __init__(self, key, model_loader, map_location):
+        self.key = key
+        self.model_loader = model_loader
+        self.map_location = map_location
+        self.module = None
+
+    def load_module(self):
+        """Load the Moirai2 module, returning cached instance if available."""
+        if self.module is not None:
+            return self.module
+
+        # Load a temporary model to extract the module from it.
+        # _instantiate_patched_model needs model_kwargs but we only care about
+        # the module, so pass minimal kwargs.
+        tmp_kwargs = {
+            "prediction_length": 1,
+            "context_length": 200,
+            "target_dim": 1,
+            "feat_dynamic_real_dim": 0,
+            "past_feat_dynamic_real_dim": 0,
+        }
+        tmp_model = self.model_loader(tmp_kwargs)
+        self.module = tmp_model.module
+        return self.module
