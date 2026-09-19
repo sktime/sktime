@@ -33,6 +33,7 @@ from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._state_at import _StateAtMixin
 from sktime.utils.adapters._safe_call import _method_has_arg
+from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.series import check_series
 
 
@@ -213,8 +214,8 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
     def pretrain(self, X, y=None):
         """Pretrain detector on a collection of time series.
 
-        Pretrains the detector on panel data, i.e., multiple time series,
-        before it is fitted to a single series via ``fit``.
+        Pretrains the detector on Panel or Hierarchical data, i.e., multiple
+        time series, before it is fitted to a single series via ``fit``.
 
         Only detectors with the ``capability:pretrain`` tag set to ``True``
         learn from the data. For all other detectors, ``pretrain`` is a no-op:
@@ -238,11 +239,14 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : time series collection in ``sktime`` compatible Panel format
+        X : Panel or Hierarchical data in ``sktime`` compatible format
             Data to pretrain the detector on, must contain multiple time series.
             For instance, a ``pd.DataFrame`` with 2-level row ``MultiIndex``
             ``(instance, time)``, or a 3D ``np.ndarray``
             ``(instance, variable, time)``.
+            Hierarchical data is flattened to Panel data, by joining all
+            instance levels into one level, for instance, the instance
+            ``("h0_0", "h1_0")`` becomes ``"h0_0__h1_0"``.
 
         y : optional, default=None
             Known events in ``X``, for detectors that learn from labels.
@@ -256,7 +260,8 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
         Raises
         ------
         TypeError
-            If ``X`` is a single time series, or not valid Panel data.
+            If ``X`` is a single time series, or not valid Panel
+            or Hierarchical data.
 
         See Also
         --------
@@ -266,7 +271,7 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
         """
         _check_estimator_deps(self)
 
-        X_metadata = self._check_X_pretrain(X)
+        X, X_metadata = self._check_X_pretrain(X)
 
         # detectors without pretrain capability: no-op, only the state changes
         if not self._has_pretrain_capability():
@@ -835,9 +840,14 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
         return X_inner
 
     def _check_X_pretrain(self, X):
-        """Check that input data to pretrain is Panel data.
+        """Check input data to pretrain, and flatten Hierarchical data to Panel.
 
         Unlike ``_check_X``, does not write to self.
+
+        Panel data is returned unchanged. Hierarchical data is flattened to
+        Panel data, by joining all instance levels into one level with
+        ``flatten_multiindex``, for instance, the instance ``("h0_0", "h1_0")``
+        becomes ``"h0_0__h1_0"``.
 
         Parameters
         ----------
@@ -846,49 +856,60 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
 
         Returns
         -------
+        X : Panel data
+            ``X`` if it is Panel data, or ``X`` flattened to a ``pd.DataFrame``
+            with 2-level row ``MultiIndex`` if it is Hierarchical data.
         X_metadata : dict
-            Metadata of ``X``, as returned by ``check_is_scitype``,
+            Metadata of the returned ``X``, as returned by ``check_is_scitype``,
             contains the mtype of ``X`` in the ``"mtype"`` key.
 
         Raises
         ------
         TypeError
-            If ``X`` is a single time series, Hierarchical data,
-            or not valid Panel data.
+            If ``X`` is a single time series, or not valid Panel
+            or Hierarchical data.
         """
         name = type(self).__name__
 
         if check_is_scitype(X, scitype="Series"):
             raise TypeError(
-                f"{name}.pretrain requires Panel data (multiple time series), "
-                "but a single Series was passed. Use fit for a single series, "
-                "or pass Panel data to pretrain, for instance a pd.DataFrame "
-                "with 2-level row MultiIndex (instance, time)."
+                f"{name}.pretrain requires Panel or Hierarchical data "
+                "(multiple time series), but a single Series was passed. "
+                "Use fit for a single series, or pass Panel data to pretrain, "
+                "for instance a pd.DataFrame with 2-level row MultiIndex "
+                "(instance, time)."
             )
 
         X_valid, X_msg, X_metadata = check_is_scitype(
-            X, scitype="Panel", return_metadata=[]
+            X, scitype=["Panel", "Hierarchical"], return_metadata=[]
         )
+
+        # flatten all instance levels into one level, then continue as Panel
+        if X_valid and X_metadata["scitype"] == "Hierarchical":
+            X = convert(X, from_type=X_metadata["mtype"], to_type="pd_multiindex_hier")
+            instances = flatten_multiindex(X.index.droplevel(-1))
+            times = X.index.get_level_values(-1)
+            flat_index = pd.MultiIndex.from_arrays(
+                [instances, times], names=[None, times.name]
+            )
+            X = X.set_axis(flat_index, axis=0)
+            X_valid, X_msg, X_metadata = check_is_scitype(
+                X, scitype="Panel", return_metadata=[]
+            )
+
         if not X_valid:
-            if check_is_scitype(X, scitype="Hierarchical"):
-                raise TypeError(
-                    f"{name}.pretrain currently accepts Panel data only, "
-                    "not Hierarchical data. Pass Panel data to pretrain, for "
-                    "instance a pd.DataFrame with 2-level row MultiIndex "
-                    "(instance, time)."
-                )
             check_is_error_msg(
                 X_msg,
                 var_name=f"Unsupported input data type in {name}.pretrain, input X",
                 allowed_msg=(
-                    "Allowed scitype for X in pretrain is Panel, for instance "
-                    "a pd.DataFrame with 2-level row MultiIndex (instance, time), "
-                    "or a 3D np.ndarray (instance, variable, time)."
+                    "Allowed scitypes for X in pretrain are Panel and Hierarchical, "
+                    "for instance a pd.DataFrame with 2-level row MultiIndex "
+                    "(instance, time), or a 3D np.ndarray (instance, variable, time)."
                 ),
                 raise_exception=True,
             )
 
-        return X_metadata
+        return X, X_metadata
 
     def _pretrain(self, X, y=None):
         """Pretrain detector on a collection of time series, first call.
