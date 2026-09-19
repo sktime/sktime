@@ -303,6 +303,25 @@ This section lists tags applying to time series splitters (``"splitter"`` type).
     split_hierarchical
 
 
+
+.. _distribution_tags:
+
+Tags for distributions
+----------------------
+
+This section lists tags applying to probabilistic distribution objects
+(``"distribution"`` type), used e.g. in probabilistic forecasting.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    distr__measuretype
+
+
 Common developer tags
 ---------------------
 
