@@ -8,6 +8,7 @@ import pandas as pd
 from sktime.detection._datatypes._check import _is_valid_detection
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.detection import make_detection_problem
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.validation.detection import check_learning_type, check_task
 
 
@@ -112,6 +113,33 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         )
         y_pred = object_instance.predict_segments(X_test)
         assert _is_valid_detection(y_pred, type="segments"), y_pred
+
+    def test_pretrain_then_fit_predict(self, object_instance):
+        """Test pretrain can be called, and fit and predict work after it."""
+        estimator = object_instance
+        distribution_type = estimator.get_tag("distribution_type")
+
+        X_pretrain = _make_hierarchical(
+            hierarchy_levels=(2,), min_timepoints=50, max_timepoints=50
+        )
+        estimator.pretrain(X_pretrain)
+        assert estimator.state == "pretrained"
+        if not estimator.get_tag("capability:pretrain"):
+            assert estimator.get_pretrained_params() == {}
+
+        X_train = make_detection_problem(
+            n_timepoints=50, estimator_type=distribution_type
+        )
+        estimator.fit(X_train)
+        assert estimator.state == "fitted"
+
+        X_test = make_detection_problem(
+            n_timepoints=10, estimator_type=distribution_type
+        )
+        # output format is checked in test_output_type, not here,
+        # as some detectors skip that test
+        y_pred = estimator.predict(X_test)
+        assert isinstance(y_pred, pd.DataFrame)
 
     def test_detector_tags(self, object_class):
         """Check the learning_type and task tags are valid."""
