@@ -10,8 +10,38 @@ the class methods `load_from_serial` and `load_from_path`.
 __author__ = ["fkiraly", "achieveordie"]
 
 
+def _check_version_compatibility(saved_version):
+    import warnings
+
+    from sktime import __version__ as current_version
+
+    if saved_version is None:
+        warnings.warn(
+            "The loaded estimator was saved without sktime version metadata. "
+            f"Current sktime version is {current_version}. Estimator dumps are not "
+            "guaranteed to be compatible across sktime versions and may fail or "
+            "produce invalid estimators.",
+            UserWarning,
+            stacklevel=3,
+        )
+    elif saved_version != current_version:
+        warnings.warn(
+            f"The loaded estimator was saved with sktime version {saved_version}, "
+            f"but current sktime version is {current_version}. Estimator dumps are not "
+            "guaranteed to be compatible across sktime versions and may fail or "
+            "produce invalid estimators.",
+            UserWarning,
+            stacklevel=3,
+        )
+
+
 def load(serial):
     """Load an object either from in-memory object or from a file location.
+
+    Note: Estimator dumps are version-specific and are not guaranteed to be
+    compatible across different sktime versions. If the version of sktime used
+    to save the object differs from the current version (or if version metadata is
+    missing), a UserWarning will be emitted.
 
     Parameters
     ----------
@@ -114,7 +144,14 @@ def load(serial):
                 "`serial` should be a tuple of size 2 "
                 f"found, a tuple of size: {len(serial)}"
             )
-        cls, stored = serial
+        cls_or_meta, stored = serial
+        if isinstance(cls_or_meta, dict):
+            cls = cls_or_meta["class"]
+            saved_version = cls_or_meta.get("sktime_version")
+        else:
+            cls = cls_or_meta
+            saved_version = None
+        _check_version_compatibility(saved_version)
         return cls.load_from_serial(stored)
 
     elif isinstance(serial, (str, Path)):
@@ -122,7 +159,14 @@ def load(serial):
         if not path.exists():
             raise FileNotFoundError(f"The given save location: {serial}\nwas not found")
         with ZipFile(path) as file:
-            cls = pickle.loads(file.open("_metadata", "r").read())
+            meta = pickle.loads(file.open("_metadata", "r").read())
+            if isinstance(meta, dict):
+                cls = meta["class"]
+                saved_version = meta.get("sktime_version")
+            else:
+                cls = meta
+                saved_version = None
+        _check_version_compatibility(saved_version)
         return cls.load_from_path(path)
     else:
         raise TypeError(
