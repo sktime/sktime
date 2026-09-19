@@ -12,10 +12,11 @@ from sktime.datatypes._convert import convert, convert_to
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import (
     AMBIGUOUS_MTYPES,
-    SCITYPE_LIST,
-    SCITYPE_REGISTER,
     generate_mtype_list,
     generate_mtype_register,
+    generate_mtype_soft_deps,
+    generate_scitype_list,
+    generate_scitype_register,
     mtype_to_scitype,
     scitype_to_mtype,
 )
@@ -63,6 +64,15 @@ def __getattr__(name):
 
     if name == "MTYPE_REGISTER":
         return generate_mtype_register()
+
+    if name == "SCITYPE_REGISTER":
+        return generate_scitype_register()
+
+    if name == "SCITYPE_LIST":
+        return generate_scitype_list()
+
+    if name == "MTYPE_SOFT_DEPS":
+        return generate_mtype_soft_deps()
 
     if name == "ALL_TIME_SERIES_MTYPES":
         series = generate_mtype_list(scitype="Series")

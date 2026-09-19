@@ -34,6 +34,13 @@ class CNNNetwork(BaseDeepNetwork):
     ----------
     .. [1] Zhao et al. Convolutional neural networks for time series classification,
     Journal of Systems Engineering and Electronics 28(1), 162--169, 2017
+
+    Examples
+    --------
+    >>> from sktime.networks.cnn import CNNNetwork
+    >>> network = CNNNetwork(
+    ...     kernel_size=5, n_conv_layers=2, random_state=42
+    ... )
     """
 
     _tags = {

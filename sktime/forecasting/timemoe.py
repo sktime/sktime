@@ -120,9 +120,10 @@ class TimeMoEForecaster(BaseForecaster):
         Fraction of data reserved for evaluation when :meth:`pretrain` is used.
         If ``None``, no evaluation dataset is created.
 
-    device : str, dict, int, or torch.device, default="cpu"
-        Device placement following the ``transformers`` ``device_map`` naming
-        convention, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
+    device : str, optional (default=None)
+        Device placement passed to transformers ``device_map``, for example
+        ``"cpu"``, ``"cuda"``, or ``"auto"``. If ``None``,
+        ``config["device_map"]`` is used.
 
     dtype : torch.dtype, optional (default=None)
         Torch dtype used when loading the model and preparing prediction
@@ -228,7 +229,7 @@ class TimeMoEForecaster(BaseForecaster):
         stride: int = None,
         training_args: dict = None,
         validation_split: float | None = 0.2,
-        device="cpu",
+        device: str | None = None,
         dtype=None,
     ):
         self.seed = seed
@@ -282,6 +283,9 @@ class TimeMoEForecaster(BaseForecaster):
         else:
             # pretrained: only user overrides (merged onto checkpoint at load)
             self._config = dict(self.config) if self.config is not None else {}
+
+        if self.device is not None:
+            self._config["device_map"] = self.device
 
     def _pretrain(self, y, X=None, fh=None):
         """Pretrain / fine-tune using upstream Time-MoE Trainer + window dataset."""
@@ -379,10 +383,12 @@ class TimeMoEForecaster(BaseForecaster):
         """Get the kwargs for TimeMoE model."""
         kwargs = {
             "pretrained_model_name_or_path": self.model_path,
-            "device_map": self.device,
+            "device_map": self._config.get("device_map", "cpu"),
         }
         if self.dtype is not None:
             kwargs["torch_dtype"] = self.dtype
+        elif "torch_dtype" in self._config:
+            kwargs["torch_dtype"] = self._config["torch_dtype"]
 
         return kwargs
 
@@ -425,6 +431,7 @@ class TimeMoEForecaster(BaseForecaster):
             "apply_aux_loss": True,
             "router_aux_loss_factor": 0.02,
             "tie_word_embeddings": False,
+            "device_map": "cpu",
         }
         return default_config
 
@@ -471,10 +478,16 @@ class TimeMoEForecaster(BaseForecaster):
             for j in range(_y.shape[2]):
                 _y_i = _y[i, :, j]
 
-                dtype = self.dtype or self.model_.dtype
-                input_tensor = torch.tensor(_y_i, dtype=dtype).unsqueeze(0)
+                dtype = (
+                    self.dtype or self._config.get("torch_dtype") or self.model_.dtype
+                )
+                input_tensor = (
+                    torch.tensor(_y_i, dtype=dtype).unsqueeze(0).to(self.model_.device)
+                )
 
-                attention_mask = torch.ones(input_tensor.shape[:2], dtype=torch.long)
+                attention_mask = torch.ones(
+                    input_tensor.shape[:2], dtype=torch.long, device=self.model_.device
+                )
 
                 with torch.no_grad():
                     output = self.model_(
@@ -668,11 +681,12 @@ class _CachedTimeMoE:
             if k != "pretrained_model_name_or_path"
         }
 
-        if self.config:
+        overrides = _architecture_config(self.config)
+        if overrides:
             ConfigClass = self._get_config_class()
             base = ConfigClass.from_pretrained(path)
             cfg_dict = base.to_dict()
-            cfg_dict.update(self.config)
+            cfg_dict.update(overrides)
             config = ConfigClass.from_dict(cfg_dict)
             return ModelClass.from_pretrained(
                 path,
@@ -684,15 +698,26 @@ class _CachedTimeMoE:
         return ModelClass.from_pretrained(path, **load_kwargs)
 
     def _load_from_config(self):
-        config = self._get_config_class()(**(self.config or {}))
+        config = self._get_config_class()(**_architecture_config(self.config))
         model = self._get_model_class()(config)
-        dtype = self.timemoe_kwargs.get("dtype", None)
-        device = self.timemoe_kwargs.get("device", "cpu")
+        dtype = self.timemoe_kwargs.get("torch_dtype", None)
+        device = self.timemoe_kwargs.get("device_map", "cpu")
         if dtype is not None:
             model = model.to(dtype=dtype)
         if device is not None and device != "auto":
             model = model.to(device)
         return model
+
+
+def _architecture_config(config):
+    """Return model-architecture keys, excluding load-time placement."""
+    if not config:
+        return {}
+    return {
+        key: value
+        for key, value in config.items()
+        if key not in ("device_map", "torch_dtype")
+    }
 
 
 def _prepare_series_list(data):

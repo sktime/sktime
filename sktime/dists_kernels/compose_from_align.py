@@ -16,24 +16,46 @@ class DistFromAligner(BasePairwiseTransformerPanel):
     ----------
     aligner: BaseAligner, must implement get_distance method
         if None, distance is equal zero
+    force_symmetric: bool, default False
+        if True, the resulting distance matrix is forced to be symmetric,
+        by always setting distmat[i, j] = distmat[j, i] for i>j
+
+    Examples
+    --------
+    >>> from sktime.alignment.lucky import AlignerLuckyDtw
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.dists_kernels.compose_from_align import DistFromAligner
+    >>>
+    >>> X, _ = load_unit_test()
+    >>> X = X[0:3]
+    >>> dist = DistFromAligner(AlignerLuckyDtw())
+    >>> dist_mat = dist.transform(X)
     """
 
     _tags = {
         "authors": ["fkiraly"],
-        "symmetric": True,  # all the distances are symmetric
+        "symmetric": False,  # aligners in general are non-symmetric
         "capability:unequal_length": True,  # aligners can usually handle unequal length
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, aligner=None):
+    def __init__(self, aligner=None, force_symmetric=False):
         self.aligner = aligner
+        self.force_symmetric = force_symmetric
 
         super().__init__()
 
-        if aligner is not None:
-            self.clone_tags(aligner, "capability:unequal_length")
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.aligner is not None:
+            self.clone_tags(self.aligner, "capability:unequal_length")
+        if self.force_symmetric:
+            self.set_tags(**{"symmetric": True})
 
     def _transform(self, X, X2=None):
         """Compute distance/kernel matrix.
@@ -60,8 +82,12 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         # find out whether we know that the resulting matrix is symmetric
         #   since aligner distances are always symmetric,
         #   we know it's the case for sure if X equals X2
+        # X2 is None covers direct calls to _transform;
+        #   X2 is X covers calls via transform, where the base class
+        #   already substituted X for a None X2 (identity is preserved)
         if X2 is None:
-            X = X2
+            X2 = X
+        if self.force_symmetric and X2 is X:
             symm = True
         else:
             symm = False
@@ -92,8 +118,14 @@ class DistFromAligner(BasePairwiseTransformerPanel):
         from skbase.utils.dependencies import _check_estimator_deps
 
         from sktime.alignment.dtw_python import AlignerDTW
+        from sktime.alignment.lucky import AlignerLuckyDtw
 
+        # two unconditional sets: a dependency-free aligner, and the
+        # default None aligner, which returns the zero distance matrix
+        params = [{"aligner": AlignerLuckyDtw()}, {}]
+
+        # additional set with AlignerDTW, if dtw-python is installed
         if _check_estimator_deps(AlignerDTW, severity="none"):
-            return {"aligner": AlignerDTW()}
-        else:
-            return {}
+            params.append({"aligner": AlignerDTW()})
+
+        return params
