@@ -9,8 +9,6 @@ __author__ = ["fkiraly"]
 from functools import lru_cache
 from inspect import getmro, isclass
 
-from sktime.tests._config import EXCLUDE_ESTIMATORS
-
 LOCAL_PACKAGE = "sktime"
 
 
@@ -72,7 +70,7 @@ def run_test_for_class(cls, return_reason=False):
       If ``ONLY_CHANGED_MODULES`` is False, this condition is always True.
 
     Also checks whether the class or function is on the exclude override list,
-    EXCLUDE_ESTIMATORS in sktime.tests._config (a list of strings, of names).
+    as per the ``tests:skil_all`` tag in the estimator set to ``True``.
     If so, the tests are always skipped, irrespective of the other conditions.
 
     Parameters
@@ -157,9 +155,6 @@ def run_test_for_class(cls, return_reason=False):
     if hasattr(cls, "get_class_tag") and not isclass(cls):
         cls = cls.__class__
     # check whether estimator is on the exclude override list
-    if cls.__name__ in EXCLUDE_ESTIMATORS:
-        return _return(False, "False_exclude_list")
-
     if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
         return _return(False, "False_exclude_list")
 

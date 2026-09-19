@@ -5,7 +5,6 @@ to registry or to individual tags, where applicable.
 """
 
 __all__ = [
-    "EXCLUDE_ESTIMATORS",
     "EXCLUDED_TESTS",
     "MATRIXDESIGN",
     "ONLY_CHANGED_MODULES",
@@ -30,10 +29,6 @@ ONLY_CHANGED_MODULES = False
 # default is False, can be set to True by pytest --only_vm_estimators True flag
 ONLY_VM_ESTIMATORS = False
 
-
-# DO NOT ADD ESTIMATORS HERE ANYMORE
-# ADD TEST SKIPS TO TAG tag tests:skip_all INSTEAD
-EXCLUDE_ESTIMATORS = []
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
 # ADD TEST SKIPS TO TAG tag tests:skip_by_name INSTEAD
