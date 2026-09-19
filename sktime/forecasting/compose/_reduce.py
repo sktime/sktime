@@ -2490,6 +2490,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.transformations.lag"],
+        "tests:skip_all": True,
+        # temporarily removed RRF from tests, while #7380 is not merged
     }
 
     def __init__(

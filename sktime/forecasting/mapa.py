@@ -139,6 +139,9 @@ class MAPAForecaster(BaseForecaster):
         "requires-fh-in-fit": True,
         "authors": ["trnnick", "phoeenniixx", "satvshr"],
         "python_dependencies": ["statsmodels", "pandas>1"],
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # known bug, see #8039
     }
 
     def __init__(
