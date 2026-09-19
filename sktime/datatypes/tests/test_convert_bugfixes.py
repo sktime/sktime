@@ -41,3 +41,28 @@ def test_convert_MvS_to_UvS_as_Series():
     w = convert_MvS_to_UvS_as_Series(z)
 
     assert y.name == w.name
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+def test_numpy3d_numpyflat_store_roundtrip():
+    """Checks numpy3D -> numpyflat -> numpy3D roundtrip with a store.
+
+    Failure condition for bug #11092: the restore branch built the target
+    shape with true division, so ``reshape`` received a float and raised
+    ``TypeError: 'float' object cannot be interpreted as an integer``.
+    """
+    import numpy as np
+
+    from sktime.datatypes import convert
+
+    X = np.random.rand(3, 2, 5)
+    store = {}
+
+    flat = convert(X, "numpy3D", "numpyflat", "Panel", store=store)
+    restored = convert(flat, "numpyflat", "numpy3D", "Panel", store=store)
+
+    assert np.array_equal(restored, X)
+    assert restored.shape == X.shape
