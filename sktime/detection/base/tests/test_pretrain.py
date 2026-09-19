@@ -16,6 +16,7 @@ from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.detection import make_detection_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.deep_equals import deep_equals
 
 # one detector per task, with and without fit_is_empty
 DETECTORS = [DummyRegularAnomalies, ZeroChangePoints, ZeroSegments]
@@ -165,3 +166,66 @@ def test_pretrain_single_series_raises(detector_cls, X_single):
         detector.pretrain(X_single)
 
     assert detector.state == "new"
+
+
+@pytest.mark.parametrize("detector_cls", DETECTORS)
+def test_pretrain_hierarchical_raises(detector_cls):
+    """Test pretrain raises TypeError on hierarchical data, and keeps the state."""
+    detector = detector_cls.create_test_instance()
+    X_hier = _make_hierarchical(
+        hierarchy_levels=(2, 2), min_timepoints=10, max_timepoints=10
+    )
+
+    with pytest.raises(TypeError, match="Panel data only, not Hierarchical"):
+        detector.pretrain(X_hier)
+
+    assert detector.state == "new"
+
+
+def _make_fit_and_new_data():
+    """Make DataFrame data for fit, and new data that continues its index.
+
+    Uses DataFrame input, as update with Series input fails in combine_first,
+    for a reason unrelated to pretrain.
+    """
+    X_all = make_detection_problem(n_timepoints=40, random_state=0).to_frame()
+    return X_all.iloc[:30], X_all.iloc[30:]
+
+
+def test_pretrain_then_fit_update():
+    """Test update after pretrain and fit gives the same result as without it."""
+    X_fit, X_new = _make_fit_and_new_data()
+
+    detector = DummyRegularAnomalies()
+    detector.pretrain(_make_panel())
+    detector.fit(X_fit)
+    result = detector.update(X_new)
+
+    reference = DummyRegularAnomalies()
+    reference.fit(X_fit)
+    reference.update(X_new)
+
+    assert result is detector
+    assert detector.state == "fitted"
+    is_equal, msg = deep_equals(vars(detector), vars(reference), return_msg=True)
+    assert is_equal, msg
+    pd.testing.assert_frame_equal(detector.predict(X_new), reference.predict(X_new))
+
+
+def test_pretrain_then_fit_update_predict():
+    """Test update_predict after pretrain and fit gives the same result as without."""
+    X_fit, X_new = _make_fit_and_new_data()
+
+    detector = DummyRegularAnomalies()
+    detector.pretrain(_make_panel())
+    detector.fit(X_fit)
+    y_pred = detector.update_predict(X_new)
+
+    reference = DummyRegularAnomalies()
+    reference.fit(X_fit)
+    y_pred_reference = reference.update_predict(X_new)
+
+    assert detector.state == "fitted"
+    pd.testing.assert_frame_equal(y_pred, y_pred_reference)
+    is_equal, msg = deep_equals(vars(detector), vars(reference), return_msg=True)
+    assert is_equal, msg
