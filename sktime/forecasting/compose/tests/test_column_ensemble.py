@@ -100,11 +100,11 @@ def test_column_ensemble_multivariate_and_int():
 )
 def test_column_ensemble_hierarchical():
     """Tests column ensemble with hierarchical reconciliation, see bug #3784."""
-    from sktime.transformations.hierarchical.aggregate import Aggregator
-    from sktime.transformations.hierarchical.reconcile import Reconciler
-
     from sktime.datatypes import get_examples
     from sktime.datatypes._utilities import get_window
+
+    from sktime.transformations.hierarchical.aggregate import Aggregator
+    from sktime.transformations.hierarchical.reconcile import Reconciler
 
     X = get_examples("pd_multiindex_hier")[0]
     y = get_examples("pd_multiindex_hier")[1]
