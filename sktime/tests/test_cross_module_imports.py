@@ -232,37 +232,6 @@ KNOWN_EXCEPTIONS = frozenset(
         ("param_est/plugin/_transformer.py", "param_est", "transformations"),
         ("param_est/tests/test_plugin.py", "param_est", "forecasting"),
         ("param_est/tests/test_plugin.py", "param_est", "transformations"),
-        (
-            "regression/tests/test_categorical_in_composite.py",
-            "regression",
-            "transformations",
-        ),
-        (
-            "transformations/detrend/tests/test_detrend.py",
-            "transformations",
-            "forecasting",
-        ),
-        (
-            "transformations/summarize/tests/test_FittedParamExtractor.py",
-            "transformations",
-            "forecasting",
-        ),
-        (
-            "transformations/tests/test_imputer.py",
-            "transformations",
-            "forecasting",
-        ),
-        (
-            "transformations/tests/test_multiplexer.py",
-            "transformations",
-            "forecasting",
-        ),
-        ("transformations/tests/test_subset.py", "transformations", "forecasting"),
-        (
-            "transformations/tests/test_transformif.py",
-            "transformations",
-            "param_est",
-        ),
     }
 )
 
