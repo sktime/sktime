@@ -67,6 +67,27 @@ def test_heterogeneous_get_fitted_params():
     not run_test_module_changed("sktime.forecasting.base"),
     reason="run only if base module has changed",
 )
+def test_predict_residuals_hierarchical():
+    """Regression test for #2765: predict_residuals on hierarchical y."""
+    from sktime.utils._testing.hierarchical import _bottom_hier_datagen
+
+    y = _bottom_hier_datagen(
+        no_bottom_nodes=3,
+        no_levels=1,
+        random_seed=111,
+    )
+    forecaster = NaiveForecaster()
+    forecaster.fit(y)
+    y_res = forecaster.predict_residuals(y)
+
+    assert type(y_res) is type(y)
+    assert y_res.index.equals(y.index)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.base"),
+    reason="run only if base module has changed",
+)
 def test_predict_residuals_conversion():
     """Regression test for bugfix #4766, related to predict_residuals internal type."""
     from sktime.datasets import load_longley
