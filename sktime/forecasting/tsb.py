@@ -28,6 +28,16 @@ class TSB(BaseForecaster):
     beta : float, default = 0.1
         Smoothing parameter for demand occurrence probability (p)
 
+    Attributes
+    ----------
+    d_ : float
+        Fitted demand size :math:`d`, smoothed by ``alpha`` on demand periods.
+    p_ : float
+        Fitted demand occurrence probability :math:`p`, smoothed by ``beta``
+        every period -- towards 1 on demand periods, towards 0 otherwise.
+    f_ : float
+        Fitted forecast, :math:`d \cdot p`.
+
     Examples
     --------
     >>> from sktime.forecasting.tsb import TSB
@@ -112,8 +122,27 @@ class TSB(BaseForecaster):
                 f[t + 1] = d[t + 1] * p[t + 1]
 
         self._f = f
+        self._d_last = d[-1]
+        self._p_last = p[-1]
+        self._set_fitted_params()
 
         return self
+
+    def _set_fitted_params(self):
+        """Publish the recursion state under the trailing-underscore convention.
+
+        ``get_fitted_params`` collects attributes whose names end in an
+        underscore, so the recursion state is mirrored here rather than
+        renamed, leaving every existing attribute untouched.
+
+        Names follow the ``d`` / ``p`` notation used in the class docstring.
+
+        Factored out so that any future ``_update`` implementation refreshes
+        the published values through the same call and they cannot drift.
+        """
+        self.d_ = self._d_last
+        self.p_ = self._p_last
+        self.f_ = self._f[-1]
 
     def _predict(
         self,
