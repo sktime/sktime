@@ -39,6 +39,17 @@ MoeModelOutputWithPast = _safe_import(
     "transformers.modeling_outputs.MoeModelOutputWithPast"
 )
 
+# if dataclass parent imports fail and they are MagicMock objects,
+# they are replaced with empty classes to prevent dataclass inheritance errors
+if MoeCausalLMOutputWithPast.__name__ == "MagicMock":
+    class MoeCausalLMOutputWithPast:
+        pass
+
+
+if MoeModelOutputWithPast.__name__ == "MagicMock":
+    class MoeModelOutputWithPast:
+        pass
+
 
 @dataclass
 class TimerS1CausalLMOutput(MoeCausalLMOutputWithPast):
