@@ -63,6 +63,18 @@ def _check_fh(fh):
     return fh.to_indexer().to_numpy()
 
 
+def _apply_transformers(y, transformers):
+    """Fit and transform a series with one or more transformers."""
+    if len(transformers) == 1:
+        tf_fit = transformers[0].fit(y)
+    else:
+        from sktime.transformations.compose import FeatureUnion
+
+        feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
+        tf_fit = FeatureUnion(feat).fit(y)
+    return tf_fit.transform(y)
+
+
 def _sliding_window_transform(
     y,
     window_length,
@@ -131,7 +143,11 @@ def _sliding_window_transform(
         kwargs = {"transformers": transformers}
         _sliding_window_trans_f = _sliding_window_transform_global
     else:  # if pooling == "local":
-        kwargs = {"fh": fh, "windows_identical": windows_identical}
+        kwargs = {
+            "fh": fh,
+            "windows_identical": windows_identical,
+            "transformers": transformers,
+        }
         _sliding_window_trans_f = _sliding_window_transform_local
 
     yt, Xt = _sliding_window_trans_f(y=y, X=X, window_length=window_length, **kwargs)
@@ -147,7 +163,9 @@ def _sliding_window_transform(
     return yt, Xt
 
 
-def _sliding_window_transform_local(y, window_length, fh, X, windows_identical):
+def _sliding_window_transform_local(
+    y, window_length, fh, X, windows_identical, transformers=None
+):
     """Transform time series data using sliding window for local pooling."""
     z = _concat_y_X(y, X)
     n_timepoints, n_variables = z.shape
@@ -186,7 +204,34 @@ def _sliding_window_transform_local(y, window_length, fh, X, windows_identical):
     # would lead to unequal-length data, with more time points for
     # exogenous series than the target series, which is currently not supported.
     yt = Zt[:, 0, window_length + fh]
-    Xt = Zt[:, :, :window_length]
+
+    if transformers is None:
+        Xt = Zt[:, :, :window_length]
+    else:
+        if yt.ndim == 1:
+            yt = pd.Series(yt)
+        else:
+            yt = pd.DataFrame(yt)
+
+        y_hist = Zt[:, 0, :window_length]
+        y_feature_rows = []
+
+        for y_hist_i in y_hist:
+            y_hist_series = pd.Series(y_hist_i)
+            X_from_y = _apply_transformers(y_hist_series, transformers)
+            if isinstance(X_from_y, pd.Series):
+                X_from_y = X_from_y.to_frame()
+            X_from_y = X_from_y.iloc[[-1]].reset_index(drop=True)
+            y_feature_rows.append(X_from_y)
+
+        X_from_y = pd.concat(y_feature_rows, axis=0, ignore_index=True)
+
+        if X is not None:
+            X_hist = Zt[:, 1:, :window_length].reshape(Zt.shape[0], -1)
+            X_hist = pd.DataFrame(X_hist)
+            Xt = pd.concat([X_from_y, X_hist], axis=1)
+        else:
+            Xt = X_from_y
 
     return yt, Xt
 
@@ -195,14 +240,7 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     """Transform time series data using sliding window for global pooling."""
     n_cut = -window_length
 
-    if len(transformers) == 1:
-        tf_fit = transformers[0].fit(y)
-    else:
-        from sktime.transformations.compose import FeatureUnion
-
-        feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
-        tf_fit = FeatureUnion(feat).fit(y)
-    X_from_y = tf_fit.transform(y)
+    X_from_y = _apply_transformers(y, transformers)
 
     X_from_y_cut = _cut_df(X_from_y, n_obs=n_cut)
     yt = _cut_df(y, n_obs=n_cut)
@@ -570,11 +608,6 @@ class _DirectReducer(_Reducer):
                 + " to derive reduction features. Window length will be"
                 + " inferred, please set to None"
             )
-        if self.transformers is not None and self.pooling == "local":
-            raise ValueError(
-                "Transformers currently cannot be provided"
-                + "for models that run locally"
-            )
         pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
         if self.pooling == "local":
             if pd_format is True and isinstance(y, pd.MultiIndex):
@@ -687,7 +720,7 @@ class _DirectReducer(_Reducer):
                 "`X` must be passed to `predict` if `X` is given in `fit`."
             )
 
-        if self.pooling == "global":
+        if self.pooling == "global" or self.transformers_ is not None:
             y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
             if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
@@ -737,26 +770,32 @@ class _DirectReducer(_Reducer):
             y_pred = pool_preds(y_preds)
 
         else:
-            # Pre-allocate arrays.
-            if self._X is None:
-                n_columns = 1
+            if self.transformers_ is not None:
+                if isinstance(X_last, pd.DataFrame):
+                    X_pred = prep_skl_df(X_last)
+                else:
+                    X_pred = X_last
             else:
-                # X is ignored here, since we currently only look at lagged values for
-                # exogenous variables and not contemporaneous ones.
-                n_columns = self._X.shape[1] + 1
+                # Pre-allocate arrays.
+                if self._X is None:
+                    n_columns = 1
+                else:
+                    # X is ignored here, since we currently only look at lagged values for
+                    # exogenous variables and not contemporaneous ones.
+                    n_columns = self._X.shape[1] + 1
 
-            # Pre-allocate arrays.
-            window_length = self.window_length_
-            X_pred = np.zeros((1, n_columns, window_length))
+                # Pre-allocate arrays.
+                window_length = self.window_length_
+                X_pred = np.zeros((1, n_columns, window_length))
 
-            # Fill pre-allocated arrays with available data.
-            X_pred[:, 0, :] = y_last
-            if self._X is not None:
-                X_pred[:, 1:, :] = X_last.T
+                # Fill pre-allocated arrays with available data.
+                X_pred[:, 0, :] = y_last
+                if self._X is not None:
+                    X_pred[:, 1:, :] = X_last.T
 
-            # We need to make sure that X has the same order as used in fit.
-            if self._estimator_scitype == "tabular-regressor":
-                X_pred = X_pred.reshape(1, -1)
+                # We need to make sure that X has the same order as used in fit.
+                if self._estimator_scitype == "tabular-regressor":
+                    X_pred = X_pred.reshape(1, -1)
 
             # Allocate array for predictions.
             if est_type == "regressor":
@@ -929,12 +968,6 @@ class _RecursiveReducer(_Reducer):
                 + " to derive reduction features. Window length will be"
                 + " inferred, please set to None"
             )
-        if self.transformers is not None and self.pooling == "local":
-            raise ValueError(
-                "Transformers currently cannot be provided"
-                + "for models that run locally"
-            )
-
         pd_format = isinstance(y, pd.Series) or isinstance(y, pd.DataFrame)
 
         self._timepoints = get_time_index(y)
@@ -1063,51 +1096,70 @@ class _RecursiveReducer(_Reducer):
                         y_update=y_pred, X_update=X, shift=i + 1
                     )
         else:
-            # Pre-allocate arrays.
-            if X is None:
-                n_columns = 1
+            if self.transformers_ is not None:
+                fh_max = fh.to_relative(self.cutoff)[-1]
+                y_pred = np.zeros(fh_max)
+
+                y_window = list(y_last)
+
+                for i in range(fh_max):
+                    y_hist_series = pd.Series(y_window[-self.window_length_:])
+                    X_pred = _apply_transformers(y_hist_series, self.transformers_)
+                    if isinstance(X_pred, pd.Series):
+                        X_pred = X_pred.to_frame()
+                    X_pred = X_pred.iloc[[-1]].reset_index(drop=True)
+
+                    if isinstance(X_pred, pd.DataFrame):
+                        X_pred = prep_skl_df(X_pred)
+
+                    y_pred[i] = self.estimator_.predict(X_pred)[0]
+                    y_window.append(y_pred[i])
             else:
-                n_columns = X.shape[1] + 1
-            window_length = self.window_length_
-            fh_max = fh.to_relative(self.cutoff)[-1]
+                # Pre-allocate arrays.
+                if X is None:
+                    n_columns = 1
+                else:
+                    n_columns = X.shape[1] + 1
+                window_length = self.window_length_
+                fh_max = fh.to_relative(self.cutoff)[-1]
 
-            y_pred = np.zeros(fh_max)
+                y_pred = np.zeros(fh_max)
 
-            # Array with input data for prediction.
-            last = np.zeros((1, n_columns, window_length + fh_max))
+                # Array with input data for prediction.
+                last = np.zeros((1, n_columns, window_length + fh_max))
 
-            # Fill pre-allocated arrays with available data.
-            last[:, 0, :window_length] = y_last
-            if X is not None:
-                X_to_use = np.concatenate(
-                    [X_last.T, X.iloc[-(last.shape[2] - window_length) :, :].T], axis=1
-                )
-                if X_to_use.shape[1] < window_length + fh_max:
-                    X_to_use = np.pad(
-                        X_to_use,
-                        ((0, 0), (0, window_length + fh_max - X_to_use.shape[1])),
-                        "edge",
+                # Fill pre-allocated arrays with available data.
+                last[:, 0, :window_length] = y_last
+                if X is not None:
+                    X_to_use = np.concatenate(
+                        [X_last.T, X.iloc[-(last.shape[2] - window_length) :, :].T], axis=1
                     )
-                elif X_to_use.shape[1] > window_length + fh_max:
-                    X_to_use = X_to_use[:, : window_length + fh_max]
-                # else X_to_use.shape[1] == window_length + fh_max
-                # and there are no additional steps to take
-                last[:, 1:] = X_to_use
+                    if X_to_use.shape[1] < window_length + fh_max:
+                        X_to_use = np.pad(
+                            X_to_use,
+                            ((0, 0), (0, window_length + fh_max - X_to_use.shape[1])),
+                            "edge",
+                        )
+                    elif X_to_use.shape[1] > window_length + fh_max:
+                        X_to_use = X_to_use[:, : window_length + fh_max]
+                    # else X_to_use.shape[1] == window_length + fh_max
+                    # and there are no additional steps to take
+                    last[:, 1:] = X_to_use
 
-            # Recursively generate predictions by iterating over forecasting horizon.
-            for i in range(fh_max):
-                # Slice prediction window.
-                X_pred = last[:, :, i : window_length + i]
+                # Recursively generate predictions by iterating over forecasting horizon.
+                for i in range(fh_max):
+                    # Slice prediction window.
+                    X_pred = last[:, :, i : window_length + i]
 
-                # Reshape data into tabular array.
-                if self._estimator_scitype == "tabular-regressor":
-                    X_pred = X_pred.reshape(1, -1)
+                    # Reshape data into tabular array.
+                    if self._estimator_scitype == "tabular-regressor":
+                        X_pred = X_pred.reshape(1, -1)
 
-                # Generate predictions.
-                y_pred[i] = self.estimator_.predict(X_pred)[0]
+                    # Generate predictions.
+                    y_pred[i] = self.estimator_.predict(X_pred)[0]
 
-                # Update last window with previous prediction.
-                last[:, 0, window_length + i] = y_pred[i]
+                    # Update last window with previous prediction.
+                    last[:, 0, window_length + i] = y_pred[i]
 
         # While the recursive strategy requires to generate predictions for all steps
         # until the furthest step in the forecasting horizon, we only return the
