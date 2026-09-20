@@ -110,6 +110,9 @@ class BOSSVSClassifierPyts(_PytsAdapter, BaseClassifier):
         "capability:missing_values": True,
         "capability:predict_proba": True,
         "classifier_type": "dictionary",
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.base.adapters._pyts"],
     }
 
     # defines the name of the attribute containing the pyts estimator

@@ -143,6 +143,7 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         # ---------------
         "tests:skip_by_name": ["test_non_state_changing_method_contract"],
         # creates nested numpy shapelets sporadically, see #6171
+        "tests:libs": ["sktime.base.adapters._pyts"],
     }
 
     _estimator_attr = "_pyts_shapelet_transform"

@@ -110,6 +110,7 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:libs": ["sktime.base.adapters._pyts"],
     }
 
     # defines the name of the attribute containing the pyts estimator

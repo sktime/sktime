@@ -163,6 +163,9 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         "capability:missing_values": True,
         "capability:predict_proba": True,
         "classifier_type": "shapelet",
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.base.adapters._pyts"],
     }
 
     # defines the name of the attribute containing the pyts estimator
