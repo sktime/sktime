@@ -175,16 +175,6 @@ KNOWN_EXCEPTIONS = frozenset(
         ("detection/eagglo.py", "detection", "transformations"),
         ("detection/stray.py", "detection", "transformations"),
         (
-            "forecasting/base/tests/test_base_bugs.py",
-            "forecasting",
-            "transformations",
-        ),
-        (
-            "forecasting/compose/tests/test_bagging.py",
-            "forecasting",
-            "transformations",
-        ),
-        (
             "forecasting/compose/tests/test_column_ensemble.py",
             "forecasting",
             "transformations",
