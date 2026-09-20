@@ -166,7 +166,6 @@ KNOWN_EXCEPTIONS = frozenset(
             "transformations",
         ),
         ("clustering/compose/_as_transform.py", "clustering", "transformations"),
-        ("clustering/compose/_pipeline.py", "clustering", "transformations"),
         (
             "clustering/compose/tests/test_pipeline.py",
             "clustering",
