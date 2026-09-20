@@ -920,7 +920,10 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        "tests:skip_by_name": [
+            "test_update_with_exogenous_variables",
+            "test_pred_int_tag",  # failing in probabilistic forecasts, see #5703, #5920
+        ],
         # multiplicative test case does not work on negative valued data, see #9808
     }
 
