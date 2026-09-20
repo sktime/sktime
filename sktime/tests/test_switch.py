@@ -131,7 +131,6 @@ def run_test_for_class(cls, return_reason=False):
         NEG_REASONS = [
             "False_exclude_list",
             "False_required_deps_missing",
-            "False_requires_vm",
         ]
         for neg_reason in NEG_REASONS:
             if any(reason == neg_reason for reason in reasons):
