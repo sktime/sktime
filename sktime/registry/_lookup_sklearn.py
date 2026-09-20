@@ -9,10 +9,8 @@ from functools import lru_cache
 import pandas as pd
 from skbase.lookup import all_objects
 
-from sktime.registry._config import (
-    MODULES_TO_IGNORE_SKLEARN,
-    MODULES_TO_IGNORE as MODULES_TO_IGNORE_SKTIME,
-)
+from sktime.registry._config import MODULES_TO_IGNORE as MODULES_TO_IGNORE_SKTIME
+from sktime.registry._config import MODULES_TO_IGNORE_SKLEARN
 
 
 def _all_sklearn_estimators(
