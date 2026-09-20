@@ -69,10 +69,9 @@ def test_heterogeneous_get_fitted_params():
 )
 def test_predict_residuals_conversion():
     """Regression test for bugfix #4766, related to predict_residuals internal type."""
-    from sktime.transformations.difference import Differencer
-
     from sktime.datasets import load_longley
     from sktime.split import temporal_train_test_split
+    from sktime.transformations.difference import Differencer
 
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
