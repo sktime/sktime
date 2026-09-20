@@ -113,6 +113,13 @@ def run_test_for_class(cls, return_reason=False):
             return run, reason
         return run
 
+    # if object is passed, obtain the class - objects are not hashable
+    if hasattr(cls, "get_class_tag") and not isclass(cls):
+        cls = cls.__class__
+    # check whether estimator is on the exclude override list
+    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
+        return _return(False, "False_exclude_list")
+
     if isinstance(cls, (list, tuple)):
         runs = [run_test_for_class(x, return_reason=True) for x in cls]
         reasons = [x[1] for x in runs]
@@ -150,13 +157,6 @@ def run_test_for_class(cls, return_reason=False):
 
         # otherwise, we do not run, and the reason is "no change"
         return _return(False, "False_no_change")
-
-    # if object is passed, obtain the class - objects are not hashable
-    if hasattr(cls, "get_class_tag") and not isclass(cls):
-        cls = cls.__class__
-    # check whether estimator is on the exclude override list
-    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
-        return _return(False, "False_exclude_list")
 
     # now we know that cls is a class or function,
     # and not on the exclude list
