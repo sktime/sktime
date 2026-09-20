@@ -1680,11 +1680,14 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # if no y is passed, the so far observed y is used
         if y is None and self.get_config()["remember_data"]:
             y = self._y
-        if y is None:
+        elif y is None:
             raise ValueError(
-                "y must be passed to predict_residuals; BaseForecaster does not "
-                "retain training data. Pass the observations to compute residuals "
-                "against."
+                "Error in predict_residuals, this instance of "
+                f"{self.__class__.__name__} does not retain training data."
+                "To compute in-sample residuals on training data, "
+                "pass the training data as the `y` argument to `predict_residuals` "
+                "explicitly, or set the config remember_data to True,"
+                " via `my_forecaster.set_config(remember_data=True)`."
             )
 
         # we want residuals, so fh must be the index of y
@@ -2115,7 +2118,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         y : pd.Series, pd.DataFrame, or np.ndarray (1D or 2D)
             Endogenous time series
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
-            Exogeneous time series (ignored by the base implementation)
+            Exogeneous time series
         enforce_index_type : type, optional (default=None)
             Ignored by the base implementation; kept for subclass overrides.
         """
@@ -2123,12 +2126,15 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             # unwrap y if VectorizedDF
             if isinstance(y, VectorizedDF):
                 y = y.X_multiindex
-            if self.get_config()["remember_data"]:
-                # if _y does not exist yet, initialize it with y
-                if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
-                    self._y = y
-                else:
-                    self._y = update_data(self._y, y)
+            self._set_cutoff_from_y(y)
+
+        # if remember_data config is set, update stored _y
+        if y is not None and self.get_config()["remember_data"]:
+            # if _y does not exist yet, initialize it with y
+            if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
+                self._y = y
+            else:
+                self._y = update_data(self._y, y)
 
             # set cutoff to the end of the observation horizon
             self._set_cutoff_from_y(y)

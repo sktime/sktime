@@ -485,20 +485,24 @@ from sktime.forecasting.base import BaseForecaster
 
 
 @pytest.mark.skipif(
-    # legacy default is not depricated yet
-    BaseForecaster().get_config()["remember_data"]
-    or not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
 )
-def test_base_forecaster_does_not_store_y_X():
-    """Test that BaseForecaster does not store _y/_X after fit."""
+@pytest.mark.parametrize("remember_data", [True, False])
+def test_remember_data(remember_data):
+    """Test that the ``remember_data`` flag works as expected.
+
+    True: data is stored as self._X, self._y.
+    False: data is not stored, self._X and self._y are not set.
+    """
     from sktime.datasets import load_airline
     from sktime.forecasting.base import BaseForecaster
 
     y = load_airline()
+    X = load_airline()
 
     class _MinimalForecaster(BaseForecaster):
-        _tags = {"ignores-exogenous-X": True}
+        _tags = {"capability:exogenous": True}
 
         def _fit(self, y, X, fh):
             return self
@@ -507,10 +511,16 @@ def test_base_forecaster_does_not_store_y_X():
             return pd.Series(0, index=fh.to_absolute_index(self.cutoff))
 
     f = _MinimalForecaster()
-    f.fit(y, fh=[1, 2, 3])
+    f.set_config(**{"remember_data": remember_data})
 
-    assert not hasattr(f, "_y") or f._y is None
-    assert not hasattr(f, "_X") or f._X is None
+    f.fit(y, X=X, fh=[1, 2, 3])
+
+    if not remember_data:
+        assert not hasattr(f, "_y") or f._y is None
+        assert not hasattr(f, "_X") or f._X is None
+    else:
+        assert hasattr(f, "_y") and f._y is not None
+        assert hasattr(f, "_X") and f._X is not None
 
 
 @pytest.mark.skipif(
