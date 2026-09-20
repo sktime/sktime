@@ -70,8 +70,6 @@ class SameLocSplitter(BaseSplitter):
         # CI and test flags
         # -----------------
         "tests:specific": ["sktime.split.tests.test_sameloc"],
-        # splitters excluded with undiagnosed failures, see #6194
-        # these are temporarily skipped to allow merging of the base test framework
     }
 
     def __init__(self, cv, y_template=None):
@@ -108,17 +106,13 @@ class SameLocSplitter(BaseSplitter):
         test : pd.Index
             Test window indices, loc references to test indices in y
         """
+        cv = self.cv
         if self.y_template is None:
             y_template = y
         else:
             y_template = self.y_template
 
-        # keep only template locs that are present in y, consistent with _split
-        for train_loc, test_loc in self.cv.split_loc(y_template):
-            yield (
-                train_loc[train_loc.isin(y)],
-                test_loc[test_loc.isin(y)],
-            )
+        yield from cv.split_loc(y_template)
 
     def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
@@ -187,11 +181,12 @@ class SameLocSplitter(BaseSplitter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.datasets import load_airline
         from sktime.split import ExpandingWindowSplitter, SingleWindowSplitter
 
-        y = load_airline()
-        y_temp = y[:60]
-        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
-        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=24)
-        return [{"cv": cv_1, "y_template": y_temp}, {"cv": cv_2, "y_template": y_temp}]
+        # y_template=None uses y itself as template, so splits lie within y.
+        # A fixed y_template cannot satisfy the generic split_loc contract for
+        # arbitrary y by design: template locs missing from y should raise,
+        # not be silently dropped (see test_sync_to_longest).
+        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=6, step_length=3)
+        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=6)
+        return [{"cv": cv_1}, {"cv": cv_2}]

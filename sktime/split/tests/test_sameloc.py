@@ -76,24 +76,25 @@ def test_same_loc_splitter_hierarchical():
     not run_test_for_class([ExpandingWindowSplitter, SameLocSplitter]),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_sameloc_split_loc_returns_locs_in_y():
-    """split_loc(y) must return locs from y.index, not from y_template.
+def test_sameloc_split_loc_returns_template_locs():
+    """split_loc returns exactly the template's locs, see #11201.
 
-    Regression test for #11201: _split_loc yielded the template's locs
-    verbatim, so locs not present in y were returned.
+    Template locs missing from y must not be silently dropped; they surface
+    as a KeyError in split_series, which SyncToLongest relies on.
     """
     from sktime.datasets import load_airline
 
     y = load_airline()
     y_template = y[:60]
-    y_other = y[12:72]  # overlaps the template but has a different index
-
     cv = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
     splitter = SameLocSplitter(cv, y_template)
 
-    splits = list(splitter.split_loc(y_other))
-    assert len(splits) > 0
-    assert any(len(train) > 0 for train, _ in splits)
-    for train, test in splits:
-        assert train.isin(y_other.index).all()
-        assert test.isin(y_other.index).all()
+    expected = list(cv.split_loc(y_template))
+    actual = list(splitter.split_loc(y))
+    assert len(actual) == len(expected)
+    for (train, test), (train_exp, test_exp) in zip(actual, expected):
+        assert train.equals(train_exp)
+        assert test.equals(test_exp)
+
+    with pytest.raises(KeyError):
+        list(splitter.split_series(y[12:72]))
