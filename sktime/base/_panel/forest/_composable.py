@@ -291,7 +291,7 @@ class BaseTimeSeriesForest(BaseForest):
         # assumes particular structure of clf,
         # with each tree consisting of a particular pipeline,
         # as in modular tsf
-        from sktime.transformations.panel.summarize import (
+        from sktime.transformations.summarize import (
             RandomIntervalFeatureExtractor,
         )
 

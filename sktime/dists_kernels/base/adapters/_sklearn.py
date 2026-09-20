@@ -55,7 +55,8 @@ class _SklearnDistanceAdapter:
     ----------
     distance : sklearn BasePairwiseTransformerPanel distance, or str
         Distance object or string code for distance.
-        If string code, adapts one of the numba distances from ``sktime.distances``.
+        If string code, adapts one of the numba distances from
+        ``sktime.dists_kernels._numba_distances``.
     distance_params : dict, optional
         Parameters to pass to the distance object.
         For BasePairwiseTransformerPanel distances, parameters should be
@@ -107,7 +108,7 @@ class _SklearnDistanceAdapter:
         if distance_params is None:
             distance_params = {}
         if isinstance(distance, str):
-            from sktime.distances import pairwise_distance
+            from sktime.dists_kernels._numba_distances import pairwise_distance
 
             return pairwise_distance(X, X2, distance, **distance_params)
         else:

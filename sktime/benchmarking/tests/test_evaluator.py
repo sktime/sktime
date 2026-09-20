@@ -3,14 +3,14 @@
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.metrics import accuracy_score
 
 from sktime.benchmarking.evaluation import Evaluator
 from sktime.benchmarking.metrics import PairwiseMetric
 from sktime.benchmarking.results import RAMResults
-from sktime.series_as_features.model_selection import PresplitFilesCV
+from sktime.split import PresplitFilesCV
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def dummy_results():

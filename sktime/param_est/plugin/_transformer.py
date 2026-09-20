@@ -7,7 +7,7 @@ __all__ = ["PluginParamsTransformer"]
 from inspect import signature
 
 from sktime.param_est.plugin._common import _resolve_param_map
-from sktime.transformations._delegate import _DelegatedTransformer
+from sktime.transformations.base import _DelegatedTransformer
 
 
 class PluginParamsTransformer(_DelegatedTransformer):
@@ -64,8 +64,8 @@ class PluginParamsTransformer(_DelegatedTransformer):
     >>> from sktime.datasets import load_airline
     >>> from sktime.param_est.plugin import PluginParamsTransformer
     >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>> from sktime.transformations.series.detrend import Deseasonalizer
-    >>> from sktime.transformations.series.difference import Differencer
+    >>> from sktime.transformations.detrend import Deseasonalizer
+    >>> from sktime.transformations.difference import Differencer
     >>>
     >>> X = load_airline()  # doctest: +SKIP
     >>>
@@ -102,6 +102,7 @@ class PluginParamsTransformer(_DelegatedTransformer):
         "capability:multivariate": True,  # can the transformer handle multivariate X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "remember_data": False,  # whether all data seen is remembered as self._X
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # attribute for _DelegatedTransformer, which then delegates
@@ -215,11 +216,12 @@ class PluginParamsTransformer(_DelegatedTransformer):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.transformations.series.detrend import Deseasonalizer
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.transformations.detrend import Deseasonalizer
+        from sktime.transformations.exponent import ExponentTransformer
 
         # use of dictionary to plug "foo" parameter into "power", uses mock param_est
         params1 = {

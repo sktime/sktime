@@ -5,7 +5,7 @@ import pytest
 
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.pipeline.step import Step, StepResult
-from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.transformations.exponent import ExponentTransformer
 
 
 def test_get_result_none_predecessor():

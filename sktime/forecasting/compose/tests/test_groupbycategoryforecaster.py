@@ -98,7 +98,7 @@ def test_predefined_output_groupby(timeseries, categories):
 
 def test_series_without_panel_level():
     from sktime.datasets import load_airline
-    from sktime.transformations.series.adi_cv import ADICVTransformer
+    from sktime.transformations.adi_cv import ADICVTransformer
 
     y = load_airline()
     X = pd.DataFrame(0, index=pd.date_range("2020-01-01", periods=10), columns=["B"])

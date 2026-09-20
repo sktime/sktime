@@ -27,7 +27,7 @@ def X2():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="test only if anything in sktime.classification module has changed",
 )
 def test_mul_algebra_dunder(X1, X2):
@@ -66,7 +66,7 @@ def test_mul_algebra_dunder(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="test only if anything in sktime.classification module has changed",
 )
 def test_add_algebra_dunder(X1, X2):
@@ -105,7 +105,7 @@ def test_add_algebra_dunder(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="test only if anything in sktime.classification module has changed",
 )
 def test_mixed_algebra_dunders(X1, X2):
@@ -132,12 +132,12 @@ def test_mixed_algebra_dunders(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="test only if anything in sktime.classification module has changed",
 )
 def test_pw_trafo_pipeline_mul_dunder(X1, X2):
     """Tests creation of pairwise panel trafo pipelines using mul dunder."""
-    from sktime.transformations.series.exponent import ExponentTransformer
+    from sktime.transformations.exponent import ExponentTransformer
 
     t3 = EditDist()
     t1 = ExponentTransformer(2)
@@ -165,7 +165,7 @@ def test_pw_trafo_pipeline_mul_dunder(X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="test only if anything in sktime.classification module has changed",
 )
 @pytest.mark.parametrize("constant", [0, 1, -0.25])
@@ -195,7 +195,7 @@ def test_dunders_with_constants(constant, X1, X2):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed(["sktime.distances", "sktime.dists_kernels"]),
+    not run_test_module_changed("sktime.dists_kernels"),
     reason="test only if anything in sktime.classification module has changed",
 )
 def test_getitem_dunder(X1, X2):

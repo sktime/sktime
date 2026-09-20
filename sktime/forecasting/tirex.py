@@ -34,6 +34,20 @@ else:
             """Dummy class if torch is unavailable."""
 
 
+def _resolve_device(device):
+    """Resolve automatic device selection while preserving explicit values."""
+    if device != "auto":
+        return device
+
+    import torch
+
+    if torch.cuda.is_available():
+        return "cuda"
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 def _tirex_cache_key(model: str, device: str) -> str:
     """Create a deterministic cache key for the TiRex model."""
     model_str = str(model)
@@ -73,7 +87,8 @@ class TiRexForecaster(BaseForecaster):
     model : str (default = "NX-AI/TiRex")
         "Model identifier to load via the vendored TiRex loader"
     device : {"cpu", "cuda", ...}, default="cpu"
-        Compute device used by the underlying TiRex model.
+        Compute device used by the underlying TiRex model. ``"auto"`` selects
+        CUDA, then MPS, then CPU.
     license_accepted : bool, default=False
         Whether the user accepts the license terms of TiRex.
         Must be set to True to use the model.
@@ -115,7 +130,7 @@ class TiRexForecaster(BaseForecaster):
         # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         # CI and test flags
@@ -150,6 +165,10 @@ class TiRexForecaster(BaseForecaster):
                 "call `TiRexForecaster.print_license()`"
             )
 
+    def __post_init__(self):
+        """Post-initialization setup."""
+        self._device = _resolve_device(self.device)
+
     @classmethod
     def print_license(self):
         """Print the license terms of TiRex."""
@@ -166,15 +185,17 @@ class TiRexForecaster(BaseForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -186,9 +207,9 @@ class TiRexForecaster(BaseForecaster):
         self : TiRexForecaster
             Fitted forecaster (with ``model_`` set).
         """
-        key = _tirex_cache_key(self.model, self.device)
+        key = _tirex_cache_key(self.model, self._device)
         self.model_ = _cached_TiRex(
-            key=key, model=self.model, device=self.device
+            key=key, model=self.model, device=self._device
         ).load()
         return self
 

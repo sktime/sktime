@@ -5,11 +5,11 @@ from sktime.datatypes import MTYPE_LIST_SERIES
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["fkiraly"]
-__all__ = ["AnnotatorAsTransformer", "DetectorAsTransformer"]
+__all__ = ["DetectorAsTransformer"]
 
 
 MTYPE_LIST_FOR_DETECTORS = MTYPE_LIST_SERIES
-# override until annotators only support pd.Series
+# override until detectors only support pd.Series
 MTYPE_LIST_FOR_DETECTORS = ["pd.Series"]
 
 
@@ -37,10 +37,10 @@ class DetectorAsTransformer(BaseTransformer):
     Examples
     --------
     >>> from sktime.detection.compose import DetectorAsTransformer
-    >>> from sktime.detection.lof import SubLOF
+    >>> from sktime.detection.dummy import DummyRegularAnomalies
     >>> from sktime.utils._testing.hierarchical import _make_hierarchical
     >>> X = _make_hierarchical()
-    >>> detector = SubLOF.create_test_instance()
+    >>> detector = DummyRegularAnomalies.create_test_instance()
     >>> t = DetectorAsTransformer(detector)
     >>> t.fit(X)
     DetectorAsTransformer(...)
@@ -148,13 +148,9 @@ class DetectorAsTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
-        from sktime.detection.lof import SubLOF
+        from sktime.detection.dummy import DummyRegularAnomalies, ZeroAnomalies
 
-        params1 = {"estimator": SubLOF.create_test_instance()}
-        params2 = {"estimator": SubLOF.create_test_instance()}
+        params1 = {"estimator": DummyRegularAnomalies.create_test_instance()}
+        params2 = {"estimator": ZeroAnomalies.create_test_instance()}
 
         return [params1, params2]
-
-
-# todo 1.0.0 - remove alias, i.e., remove this line
-AnnotatorAsTransformer = DetectorAsTransformer

@@ -28,8 +28,9 @@ __all__ = [
 @lru_cache(maxsize=1)
 def generate_example_dicts(soft_deps="present"):
     """Generate example dicts using lookup."""
+    from skbase.utils.dependencies import _check_estimator_deps
+
     from sktime.datatypes._base import BaseExample
-    from sktime.utils.dependencies import _check_estimator_deps
     from sktime.utils.retrieval import _all_classes
 
     classes = _all_classes("sktime.datatypes")

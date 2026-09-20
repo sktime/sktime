@@ -30,7 +30,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
     >>> import numpy as np
     >>> import pandas as pd
     >>> from sktime.detection.lof import SubLOF
-    >>> from sktime.transformations.series.detrend import Detrender
+    >>> from sktime.transformations.detrend import Detrender
     >>>
     >>> n = 100
     >>> x = pd.Series(np.linspace(0, 5, n) + np.random.normal(0, 0.1, size=n))
@@ -69,13 +69,12 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         self.steps = steps
         self.steps_ = self._check_steps(steps, allow_postproc=False)
 
+        super().__init__()
+
         tags_to_clone = ["learning_type", "task"]
         # we do not clone X-y-must-have-same-index, since transformers can
         #   create indices, and that behaviour is not tag-inspectable
         self.clone_tags(self.estimator_, tags_to_clone)
-
-        # init must be called at the end so task is properly set
-        super().__init__()
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated DetectorPipeline.
@@ -181,7 +180,7 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
         ann_ind = self._get_first_detector_index(estimator_tuples)
 
         if not allow_postproc and ann_ind != len(estimators) - 1:
-            TypeError(
+            raise TypeError(
                 f"in {self_name}, last estimator must be a time series detector, "
                 f"but found a transformer"
             )
@@ -375,34 +374,28 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        import datetime
-
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.detection.lof import SubLOF
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
-        from sktime.transformations.series.detrend import Detrender
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.detection.dummy import DummyRegularAnomalies, ZeroAnomalies
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
+        from sktime.transformations.detrend import Detrender
+        from sktime.transformations.exponent import ExponentTransformer
 
-        lof = SubLOF(
-            n_neighbors=5, window_size=datetime.timedelta(days=25), novelty=True
-        )
+        dummy_regular = DummyRegularAnomalies.create_test_instance()
+        zero_anomalies = ZeroAnomalies.create_test_instance()
+
         STEPS1 = [
             ("transformer", TabularToSeriesAdaptor(StandardScaler())),
-            ("anomaly", lof),
+            ("anomaly", dummy_regular),
         ]
         params1 = {"steps": STEPS1}
 
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("anomaly", lof),
+            ("anomaly", zero_anomalies),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [Detrender(), lof]}
+        params3 = {"steps": [Detrender(), dummy_regular]}
 
         return [params1, params2, params3]
-
-
-# todo 1.0.0 - remove alias, i.e., remove this line
-AnnotatorPipeline = DetectorPipeline

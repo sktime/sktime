@@ -15,6 +15,7 @@ class _PytsAdapter:
     _tags = {
         "X_inner_mtype": "numpyflat",
         "python_dependencies": ["pyts"],
+        "tests:vm": True,  # pyts based estimators get tested in their own VM
     }
 
     # defines the name of the attribute containing the pyts estimator

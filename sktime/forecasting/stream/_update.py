@@ -117,15 +117,17 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -160,13 +162,15 @@ class UpdateRefitsEvery(_DelegatedForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         update_params : bool, optional (default=True)
@@ -331,15 +335,17 @@ class UpdateEvery(_DelegatedForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : optional (default=None)
@@ -374,13 +380,15 @@ class UpdateEvery(_DelegatedForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         update_params : bool, optional (default=True)
@@ -449,20 +457,31 @@ class DontUpdate(_DelegatedForecaster):
 
     Parameters
     ----------
-    refit_interval : difference of sktime time indices (int or timedelta), optional
-        interval that needs to elapse after which the first update defaults to fit
-        default = 0, i.e., always refits, never updates
-        if index of y seen in fit is integer or y is index-free container type,
-            refit_interval must be int, and is interpreted as difference of int location
-        if index of y seen in fit is timestamp, must be int or pd.Timedelta
-            if pd.Timedelta, will be interpreted as time since last refit elapsed
-            if int, will be interpreted as number of time stamps seen since last refit
-    refit_window_size : difference of sktime time indices (int or timedelta), optional
-        length of the data window to refit to in case update calls fit
-        default = inf, i.e., refits to entire training data seen so far
-    refit_window_lag : difference of sktime indices (int or timedelta), optional
-        lag of the data window to refit to, w.r.t. cutoff, in case update calls fit
-        default = 0, i.e., refit window ends with and includes cutoff
+    forecaster : an sktime forecaster
+        the forecaster for which ``update`` is called with ``update_params=False``
+        always, i.e., never updates.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.trend import TrendForecaster
+    >>> from sktime.forecasting.stream import DontUpdate
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> y0 = y.iloc[:-20]
+    >>> y1 = y.iloc[-20:-10]
+    >>> y2 = y.iloc[-10:]
+    >>> inner_forecaster = TrendForecaster()
+    >>> forecaster = DontUpdate(inner_forecaster)
+    >>> forecaster.fit(y0, fh=[1,2,3])
+    DontUpdate(...)
+    >>> # predict etc could be called here
+    >>> # e.g., forecaster.predict()
+    >>> # first update, calls update with update_params=False
+    >>> forecaster.update(y1)
+    DontUpdate(...)
+    >>> # second update, calls update with update_params=False
+    >>> forecaster.update(y2)
+    DontUpdate(...)
     """
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -505,13 +524,15 @@ class DontUpdate(_DelegatedForecaster):
 
         Parameters
         ----------
-        y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
+        y : sktime time series object
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series with which to update the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         X : pd.DataFrame, optional (default=None)
             Exogenous time series
         update_params : bool, optional (default=True)
@@ -539,11 +560,13 @@ class DontUpdate(_DelegatedForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from sktime.forecasting.naive import NaiveForecaster
         from sktime.forecasting.trend import TrendForecaster
 
-        forecaster = TrendForecaster.create_test_instance()
+        param1 = {"forecaster": TrendForecaster.create_test_instance()}
+        param2 = {"forecaster": NaiveForecaster()}
 
-        return {"forecaster": forecaster}
+        return [param1, param2]
 
 
 def _is_time_offset(obj):

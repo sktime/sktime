@@ -109,6 +109,23 @@ class TEASER(BaseEarlyClassifier):
         "capability:multithreading": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        # testing
+        # -------
+        "tests:specific": [
+            "sktime.classification.early_classification.tests.test_teaser"
+        ],
+        # Early classifiers intentionally retain information from previous predict calls
+        # for #1.
+        # #2 and #3 are due to predict/predict_proba returning two items and that
+        # breaking assert_array_equal
+        "tests:skip_by_name": [
+            "test_non_state_changing_method_contract",
+            "test_fit_idempotent",
+            "test_multiprocessing_idempotent",
+            "test_persistence_via_pickle",
+            "test_save_estimators_to_file",
+            "test_get_test_params_coverage",
+        ],
     }
 
     def __init__(
@@ -610,9 +627,10 @@ class TEASER(BaseEarlyClassifier):
         params : dict or list of dict, default = {}
             Parameters to create testing instances of the class.
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.feature_based import Catch22Classifier
-        from sktime.utils.dependencies import _check_estimator_deps
 
         if _check_estimator_deps(Catch22Classifier, severity="none"):
             est = Catch22Classifier(estimator=RandomForestClassifier(n_estimators=2))

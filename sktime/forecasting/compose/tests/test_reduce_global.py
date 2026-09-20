@@ -7,6 +7,7 @@ import random
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.ensemble import (
     GradientBoostingRegressor,
     HistGradientBoostingRegressor,
@@ -23,9 +24,8 @@ from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.summarize import WindowSummarizer
+from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils._testing.hierarchical import _make_hierarchical
-from sktime.utils.dependencies import _check_soft_dependencies
 
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
 sklearn_zero_x = _check_soft_dependencies("scikit-learn<1.4", severity="none")
@@ -100,9 +100,17 @@ def y_dict():
 
     freq_inferred = y_train.index.freq
 
-    y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
-        lambda df: df.drop(x_names, axis=1).set_index(time_names).asfreq(freq_inferred)
-    )
+    if _check_soft_dependencies("pandas>=3.0", severity="none"):
+        y_train_hier_unequal = X3.groupby(
+            x_names,
+            as_index=True,
+        ).apply(lambda df: df.set_index(time_names).asfreq(freq_inferred))
+    else:
+        y_train_hier_unequal = X3.groupby(x_names, as_index=True).apply(
+            lambda df: df.drop(x_names, axis=1)
+            .set_index(time_names)
+            .asfreq(freq_inferred),
+        )
     y_dict["y_train_hier_unequal"] = y_train_hier_unequal
 
     # Create integer index data

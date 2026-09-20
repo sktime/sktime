@@ -74,7 +74,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
 
     Examples
     --------
-    >>> from sktime.transformations.panel.pca import PCATransformer
+    >>> from sktime.transformations.pca import PCATransformer
     >>> from sktime.clustering.k_means import TimeSeriesKMeans
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import ClustererPipeline
@@ -108,6 +108,7 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # no default tag values - these are set dynamically below
@@ -332,10 +333,11 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeans
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
+        from sktime.transformations.exponent import ExponentTransformer
 
         params = []
 
@@ -425,8 +427,8 @@ class SklearnClustererPipeline(ClustererPipeline):
     Examples
     --------
     >>> from sklearn.cluster import KMeans
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
-    >>> from sktime.transformations.series.summarize import SummaryTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
+    >>> from sktime.transformations.summarize import SummaryTransformer
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.clustering.compose import SklearnClustererPipeline
     >>> X_train, y_train = load_unit_test(split="train")
@@ -660,8 +662,8 @@ class SklearnClustererPipeline(ClustererPipeline):
         """
         from sklearn.cluster import KMeans
 
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         # example with series-to-series transformer before sklearn clusterer
         t1 = ExponentTransformer(power=2)

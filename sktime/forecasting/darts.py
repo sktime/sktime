@@ -110,12 +110,13 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         "maintainers": ["yarnabrina", "fnhirwa"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:insample": False,
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_darts"],
     }
 
     def __init__(
@@ -315,7 +316,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         "python_dependencies": [["u8darts>=0.29", "darts>=0.29"], "xgboost"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:insample": False,
@@ -324,6 +325,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_darts"],
     }
 
     def __init__(
@@ -546,7 +548,7 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         "maintainers": ["fnhirwa"],
         # estimator type
         # --------------
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:insample": False,
@@ -555,6 +557,7 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_darts"],
     }
 
     def __init__(

@@ -244,3 +244,25 @@ sktime.
     Time series decomposition:
         A technique used to separate a time series into its underlying components, such as trend, seasonality, and noise.
         This can be useful for understanding the patterns in the data and for modeling each component separately.
+
+    Pretraining
+        A two-phase training workflow for forecasters that support global learning
+        across multiple time series. In the first phase, ``pretrain(y_panel)`` learns
+        shared patterns from :term:`panel time series` or hierarchical data and sets
+        the estimator :term:`state <Estimator state>` to ``"pretrained"``.
+        In the second phase, ``fit(y_series)`` fine-tunes or sets context on a
+        specific series without resetting the pretrained weights.
+        Whether a forecaster supports pretraining is indicated by the
+        ``capability:pretrain`` :term:`tag`.
+        See the :ref:`forecasting API reference <forecasting_ref>` for a list of
+        forecasters that support pretraining.
+
+    Estimator state
+        The lifecycle phase of an :term:`estimator`, accessible via the ``state``
+        property. Forecasters have three possible states:
+        ``"new"`` (after construction), ``"pretrained"`` (after ``pretrain``),
+        and ``"fitted"`` (after ``fit``).
+        An estimator must be in the ``"fitted"`` state before ``predict`` and
+        related methods can be called.
+        :term:`Pretraining` transitions from ``"new"`` to ``"pretrained"``, and
+        ``fit`` transitions to ``"fitted"`` from any prior state.
