@@ -302,7 +302,9 @@ class ConformalIntervals(BaseForecaster):
         cols = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
         for fh_ind, offset in zip(fh_absolute, fh_relative):
-            resids = np.diagonal(residuals_matrix, offset=offset)
+            # get_slice(end=id) is end-exclusive, so row i trains on y[:i).
+            # diag(k) is therefore the (k+1)-step residual; horizon h uses k=h-1.
+            resids = np.diagonal(residuals_matrix, offset=offset - 1)
             resids = resids[~np.isnan(resids)]
             if len(resids) < 1:
                 resids = np.array([0], dtype=float)
