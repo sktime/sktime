@@ -230,8 +230,8 @@ class ChronosForecaster(BaseForecaster):
         If not provided, the default values from the pretrained model or system
         configuration are used.
 
-    seed: int, optional, default=None
-        Random seed for transformers.
+    random_state: int, optional, default=None
+        Random_state for transformers.
 
     use_source_package: bool, optional, default=False
         If True, the model will be loaded directly from the source package ``chronos``.
@@ -318,6 +318,8 @@ class ChronosForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -349,7 +351,7 @@ class ChronosForecaster(BaseForecaster):
         self,
         model_path: str,
         config: dict = None,
-        seed: int | None = None,
+        random_state: int | None = None,
         use_source_package: bool = False,
         ignore_deps: bool = False,
     ):
@@ -357,7 +359,7 @@ class ChronosForecaster(BaseForecaster):
         self.use_source_package = use_source_package
         self.ignore_deps = ignore_deps
         self.config = config
-        self.seed = seed
+        self.random_state = random_state
 
         super().__init__()
 
@@ -382,7 +384,7 @@ class ChronosForecaster(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+        self._seed = np.random.randint(0, 2**31) if self.random_state is None else self.random_state
 
         # initialize model_strategy as None, will be set correctly after loading config.
         self.model_strategy = None
@@ -662,7 +664,7 @@ class ChronosForecaster(BaseForecaster):
                 "config": {
                     "num_samples": 20,
                 },
-                "seed": 42,
+                "random_state": 42,
             }
         )
         test_params.append(

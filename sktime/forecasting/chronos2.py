@@ -45,8 +45,8 @@ class Chronos2Forecaster(BaseForecaster):
             If True, enables cross-learning across all input series in a batch,
             sharing information via the group attention mechanism.
 
-    seed : int or None, optional, default=None
-        Random seed for reproducibility.
+    random_state : int or None, optional, default=None
+        Random state for reproducibility.
 
     ignore_deps : bool, optional, default=False
         If True, dependency checks are skipped.
@@ -88,6 +88,8 @@ class Chronos2Forecaster(BaseForecaster):
         "capability:multivariate": True,
         "capability:insample": False,
         "capability:global_forecasting": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "capability:non_contiguous_X": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
@@ -109,11 +111,11 @@ class Chronos2Forecaster(BaseForecaster):
         self,
         model_path: str = "amazon/chronos-2",
         config: dict = None,
-        seed: int | None = None,
+        random_state: int | None = None,
         ignore_deps: bool = False,
     ):
         self.model_path = model_path
-        self.seed = seed
+        self.random_state = random_state
         self.config = config
         self.ignore_deps = ignore_deps
 
@@ -138,7 +140,7 @@ class Chronos2Forecaster(BaseForecaster):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+        self._seed = np.random.randint(0, 2**31) if self.random_state is None else self.random_state
 
         import torch
 
@@ -297,7 +299,7 @@ class Chronos2Forecaster(BaseForecaster):
         """Return testing parameter settings for the estimator."""
         return [
             {"model_path": "amazon/chronos-2"},
-            {"model_path": "amazon/chronos-2", "seed": 42},
+            {"model_path": "amazon/chronos-2", "random_state": 42},
         ]
 
 
