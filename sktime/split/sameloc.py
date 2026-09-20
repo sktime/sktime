@@ -70,9 +70,6 @@ class SameLocSplitter(BaseSplitter):
         # CI and test flags
         # -----------------
         "tests:specific": ["sktime.split.tests.test_sameloc"],
-        # splitters excluded with undiagnosed failures, see #6194
-        # these are temporarily skipped to allow merging of the base test framework
-        "tests:skip_all": True,
     }
 
     def __init__(self, cv, y_template=None):
@@ -184,11 +181,17 @@ class SameLocSplitter(BaseSplitter):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        from sktime.datasets import load_airline
         from sktime.split import ExpandingWindowSplitter, SingleWindowSplitter
 
-        y = load_airline()
-        y_temp = y[:60]
-        cv_1 = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
-        cv_2 = SingleWindowSplitter(fh=[2, 4], window_length=24)
-        return [{"cv": cv_1, "y_template": y_temp}, {"cv": cv_2, "y_template": y_temp}]
+        # window lengths are chosen to fit the synthetic series used in the
+        # generic splitter contract tests (12 timepoints per hierarchical
+        # instance, 50 for single series), see test_all_splitters.py
+        cv_1 = ExpandingWindowSplitter(fh=1, initial_window=5, step_length=2)
+        cv_2 = SingleWindowSplitter(fh=1, window_length=5)
+        # y_template is None, i.e., the splitter replicates the splits of cv
+        # on the passed y itself. A fixed y_template would take the generic
+        # splitter contract tests - which split synthetic series unrelated to
+        # the template - outside the documented contract of the splitter,
+        # which requires y to be loc-compatible with y_template, see #11201.
+        # The fixed-template behaviour is covered in test_sameloc.py.
+        return [{"cv": cv_1}, {"cv": cv_2}]
