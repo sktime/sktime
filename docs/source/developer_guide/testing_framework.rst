@@ -223,9 +223,9 @@ Escaping tests
 
 On occasion, it may make sense to escape individual estimators from individual tests.
 
-This can be done (currently, as of 0.9.0) in two ways:
+This can be done in two ways:
 
-* adding the estimator or test/estimator combination to the ``EXCLUDED_TESTS`` or ``EXCLUDE_ESTIMATORS`` in the appropriate ``_config`` file.
+* adding the ``tests:skip_by_name`` or ``tests:skip_all`` tag to the test or estimator in question, see the tag API reference.
 * adding a check condition in the ``is_excluded`` method used in ``pytest_generate_fixtures``, possibly only if the testing module supports this
 
 Escaping tests directly in the tests, e.g., via ``if isinstance(object_instance, MyClass)`` should be avoided where possible.
