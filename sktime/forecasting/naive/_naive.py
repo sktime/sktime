@@ -135,6 +135,9 @@ class NaiveForecaster(_BaseWindowForecaster):
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
+        "capability:exogenous": False, 
+        "capability:update": True, 
+        "scitype:y": "univariate",
         "capability:exogenous": False,
         "capability:multivariate": False,
         "capability:pred_int": True,
@@ -224,8 +227,34 @@ class NaiveForecaster(_BaseWindowForecaster):
                 f"the training series."
             )
 
-        return self
+        return self 
+ 
+    def _update(self, y, X=None, update_params=True):
+        if not update_params:
+            return self
 
+        if hasattr(self, "_y") and self._y is not None:
+            self._y = pd.concat([self._y, y])
+
+            self._y = self._y[~self._y.index.duplicated(keep="last")]
+
+            self._y = self._y.sort_index()
+        else:
+            self._y = y
+
+        if hasattr(self, "window_length_") and self.window_length_ is not None:
+            self._y = self._y.tail(self.window_length_)
+
+        if isinstance(self._y.index, pd.DatetimeIndex):
+            try:
+                self._y.index.freq = pd.infer_freq(self._y.index)
+            except:
+                pass
+
+        self._set_cutoff_from_y(self._y)
+
+        return self
+    
     def _predict_last_window(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
     ):
@@ -726,16 +755,7 @@ class NaiveVariance(BaseForecaster):
     def _predict(self, fh, X):
         return self.forecaster_.predict(fh=fh, X=X)
 
-    def _update(self, y, X=None, update_params=True):
-        self.forecaster_.update(y, X, update_params=update_params)
-        if update_params and self._fh is not None:
-            self.residuals_matrix_ = self._compute_sliding_residuals(
-                y=self._y,
-                X=self._X,
-                forecaster=self.forecaster,
-                initial_window=self.initial_window,
-            )
-        return self
+    
 
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
