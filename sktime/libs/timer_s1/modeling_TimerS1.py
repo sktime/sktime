@@ -16,6 +16,7 @@
 
 import math
 from dataclasses import dataclass
+from unittest.mock import MagicMock
 
 from skbase.utils.dependencies import _safe_import
 
@@ -41,7 +42,7 @@ MoeModelOutputWithPast = _safe_import(
 
 # if dataclass parent imports fail and they are MagicMock objects,
 # they are replaced with empty classes to prevent dataclass inheritance errors
-if MoeCausalLMOutputWithPast.__name__ == "MagicMock":
+if isinstance(MoeCausalLMOutputWithPast, MagicMock):
 
     class MoeCausalLMOutputWithPast:
         """Empty placeholder for MoeCausalLMOutputWithPast when import fails."""
@@ -49,7 +50,7 @@ if MoeCausalLMOutputWithPast.__name__ == "MagicMock":
         pass
 
 
-if MoeModelOutputWithPast.__name__ == "MagicMock":
+if isinstance(MoeModelOutputWithPast, MagicMock):
 
     class MoeModelOutputWithPast:
         """Empty placeholder for MoeModelOutputWithPast when import fails."""
