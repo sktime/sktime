@@ -72,6 +72,7 @@ def test_columnselect_int():
 def test_columnselect_as_first_step_in_transformedtargetforecaster():
     """Test that ColumnSelect works as the first step in TransformedTargetForecaster."""
     from sktime.forecasting.naive import NaiveForecaster
+
     y = load_longley()[1][["GNP", "UNEMP"]]
     fc = ColumnSelect(["GNP"]) * NaiveForecaster()
     fc.fit(y)
