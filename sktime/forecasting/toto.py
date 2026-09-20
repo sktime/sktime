@@ -458,6 +458,35 @@ class TotoForecaster(BaseForecaster):
         # Record the device as a picklable pretrained attribute
         self.pretrain_device_ = self._device
 
+    def _forecast(self, fh, X):
+        """Generate Toto samples for a forecasting horizon."""
+        import torch
+
+        prediction_length = max(fh.to_relative(self._cutoff))
+        future_exog = self._build_future_exog(X, prediction_length)
+
+        forecaster = _CachedTotoForecaster(
+            key=self._get_toto_key(),
+            toto_kwargs=self._get_toto_kwargs(),
+            device=self._device,
+        ).load_from_checkpoint()
+
+        torch.manual_seed(self._seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self._seed)
+
+        forecast = forecaster.forecast(
+            self._series,
+            prediction_length=prediction_length,
+            num_samples=self.num_samples,
+            samples_per_batch=self.samples_per_batch,
+            future_exogenous_variables=future_exog,
+        )
+        pred_index = fh.to_absolute(self._cutoff)._values
+        relative_indices = fh.to_relative(self._cutoff) - 1
+
+        return forecast, pred_index, relative_indices
+
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
@@ -485,37 +514,13 @@ class TotoForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
-        import torch
-
-        prediction_length = max(fh.to_relative(self._cutoff))
-
-        future_exog = self._build_future_exog(X, prediction_length)
-
-        forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
-            toto_kwargs=self._get_toto_kwargs(),
-            device=self._device,
-        ).load_from_checkpoint()
-
-        torch.manual_seed(self._seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self._seed)
-
-        forecast = forecaster.forecast(
-            self._series,
-            prediction_length=prediction_length,
-            num_samples=self.num_samples,
-            samples_per_batch=self.samples_per_batch,
-            future_exogenous_variables=future_exog,
-        )
+        forecast, pred_index, relative_indices = self._forecast(fh, X)
         if self.prediction_type.lower() == "median":
             all_predictions = forecast.median.cpu().squeeze(0).numpy().T
         else:
             all_predictions = forecast.mean.cpu().squeeze(0).numpy().T
 
         all_predictions = all_predictions[:, : self._n_targets_]
-        pred_index = fh.to_absolute(self._cutoff)._values
-        relative_indices = fh.to_relative(self._cutoff) - 1
         selected_predictions = all_predictions[relative_indices]
 
         y_pred = pd.DataFrame(
@@ -558,46 +563,59 @@ class TotoForecaster(BaseForecaster):
         """
         import torch
 
-        prediction_length = max(fh.to_relative(self._cutoff))
-
-        future_exog = self._build_future_exog(X, prediction_length)
-
-        forecaster = _CachedTotoForecaster(
-            key=self._get_toto_key(),
-            toto_kwargs=self._get_toto_kwargs(),
-            device=self._device,
-        ).load_from_checkpoint()
-
-        torch.manual_seed(self._seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(self._seed)
-
-        forecast = forecaster.forecast(
-            self._series,
-            prediction_length=prediction_length,
-            num_samples=self.num_samples,
-            samples_per_batch=self.samples_per_batch,
-            future_exogenous_variables=future_exog,
-        )
+        samples, pred_index = self._get_forecast_samples(fh, X)
         var_names = self._y.columns
         cols_idx = pd.MultiIndex.from_product([var_names, alpha])
-        pred_index = fh.to_absolute(self._cutoff)._values
-        relative_indices = fh.to_relative(self._cutoff) - 1
 
         pred_quantiles = pd.DataFrame(index=pred_index, columns=cols_idx)
-        alpha_tensor = torch.tensor(alpha, device=self._device)
-
-        quantiles = forecast.quantile(alpha_tensor)
-        if quantiles.dim() > 3:
-            quantile_values = quantiles.cpu().squeeze(1).numpy()
-        else:
-            quantile_values = quantiles.cpu().numpy()
+        sorted_samples = torch.sort(samples, dim=0).values
+        alpha_tensor = torch.as_tensor(alpha, device=samples.device)
+        quantile_indices = (
+            torch.ceil(alpha_tensor * samples.shape[0]).to(dtype=torch.long) - 1
+        )
+        quantile_indices = quantile_indices.clamp(min=0, max=samples.shape[0] - 1)
+        quantile_values = sorted_samples[quantile_indices].cpu().numpy()
 
         for i, var_name in enumerate(var_names):
             for j, a in enumerate(alpha):
-                selected_quantiles = quantile_values[j, i, relative_indices]
+                selected_quantiles = quantile_values[j, :, i]
                 pred_quantiles[(var_name, a)] = selected_quantiles
         return pred_quantiles
+
+    def _get_forecast_samples(self, fh, X):
+        """Return selected Toto samples as (sample, time, target)."""
+        import torch
+
+        forecast, pred_index, relative_indices = self._forecast(fh, X)
+        if forecast.samples is None:
+            raise ValueError(
+                "TotoForecaster probabilistic predictions require num_samples "
+                "to be set to an integer."
+            )
+        samples = forecast.samples.squeeze(0)[: self._n_targets_]
+        relative_indices = torch.as_tensor(
+            relative_indices, device=samples.device, dtype=torch.long
+        )
+        samples = samples[:, relative_indices, :]
+        return samples.permute(2, 1, 0), pred_index
+
+    def _predict_proba(self, marginal=True, **kwargs):
+        """Compute a probabilistic forecast from Toto's generated samples."""
+        from skpro.distributions.empirical import Empirical
+
+        fh = kwargs["fh"]
+        X = kwargs.get("X")
+        samples, pred_index = self._get_forecast_samples(fh, X)
+        samples_df_values = samples.reshape(-1, self._n_targets_).cpu().numpy()
+
+        sample_index = pd.MultiIndex.from_product(
+            [range(samples.shape[0]), pred_index],
+            names=["sample", "time"],
+        )
+        samples_df = pd.DataFrame(
+            samples_df_values, index=sample_index, columns=self._y.columns
+        )
+        return Empirical(samples_df, time_indep=marginal)
 
     def _build_future_exog(self, X, prediction_length):
         """Build the future exogenous tensor for Toto's ``forecast`` call.
