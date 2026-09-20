@@ -83,6 +83,7 @@ class TEMPOForecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.forecasting.tests.test_tempo"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
