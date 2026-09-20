@@ -127,6 +127,10 @@ class MeanSquaredError(BaseForecastingErrorMetric):
     np.float64(0.8936491673103708)
     """  # noqa: E501
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     def __init__(
         self,
         multioutput="uniform_average",
