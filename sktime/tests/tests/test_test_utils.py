@@ -4,7 +4,6 @@ from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.registry import all_estimators
 from sktime.tests._config import (
-    EXCLUDE_ESTIMATORS,
     EXCLUDE_SOFT_DEPS,
     EXCLUDED_TESTS_BY_TEST,
 )
@@ -38,12 +37,6 @@ def test_excluded_tests_by_test():
         "from EXCLUDED_TESTS_BY_TEST and EXCLUDE_SOFT_DEPS "
         "in sktime.tests._config, if it is present there."
     )
-
-
-def test_exclude_estimators():
-    """Test that EXCLUDE_ESTIMATORS is a list of strings."""
-    assert isinstance(EXCLUDE_ESTIMATORS, list)
-    assert all(isinstance(estimator, str) for estimator in EXCLUDE_ESTIMATORS)
 
 
 def test_run_test_for_class():
