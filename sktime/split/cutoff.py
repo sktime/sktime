@@ -315,9 +315,6 @@ class CutoffFhSplitter(BaseSplitter):
         # CI and test flags
         # -----------------
         "tests:specific": ["sktime.split.tests.test_cutoff"],
-        # splitters excluded with undiagnosed failures, see #6194
-        # these are temporarily skipped to allow merging of the base test framework
-        "tests:skip_all": True,
     }
 
     def __init__(self, cutoff, fh=None):
@@ -342,11 +339,20 @@ class CutoffFhSplitter(BaseSplitter):
         test : pd.Index
             Test window indices, loc references to test indices in y
         """
+        if isinstance(y, pd.MultiIndex):
+            # hierarchical index: fall back to base default, which broadcasts
+            # over instances via split (iloc) and maps back to loc
+            yield from super()._split_loc(y)
+            return
+
         cutoff = self.cutoff
         fh = self.fh
 
         if not isinstance(cutoff, pd.Index):
             cutoff = pd.Index(cutoff)
+
+        def is_date_like(x):
+            return is_datetime64_any_dtype(x) or isinstance(x, pd.PeriodDtype)
 
         if fh is not None:
             from sktime.forecasting.base import ForecastingHorizon
@@ -354,8 +360,14 @@ class CutoffFhSplitter(BaseSplitter):
             if not isinstance(fh, ForecastingHorizon):
                 fh = ForecastingHorizon(fh)
 
-        def is_date_like(x):
-            return is_datetime64_any_dtype(x) or isinstance(x, pd.PeriodDtype)
+            # scalar cutoffs carry no freq, so take it from y if fh lacks one;
+            # y may have lost freq (e.g., per-instance slice of a MultiIndex)
+            if fh.freq is None and is_date_like(y):
+                freq = getattr(y, "freq", None)
+                if freq is None and len(y) >= 3:
+                    freq = pd.infer_freq(y)
+                if freq is not None:
+                    fh = fh._new(freq=freq)
 
         if is_date_like(y) and not is_date_like(cutoff):
             cutoff = y[cutoff]
@@ -371,8 +383,7 @@ class CutoffFhSplitter(BaseSplitter):
     def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
 
-        Since this splitter returns a single train/test split,
-        this number is trivially 1.
+        This is the number of cutoff points.
 
         Parameters
         ----------
