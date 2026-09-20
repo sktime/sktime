@@ -4,12 +4,22 @@ __author__ = ["miraep8", "fkiraly", "klam-data", "pyyim", "mgorlin"]
 __all__ = []
 
 import pandas as pd
+import pytest
 
 from sktime.detection._datatypes._check import _is_valid_detection
+from sktime.exceptions import NotFittedError
+from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.detection import make_detection_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils.validation.detection import check_learning_type, check_task
+
+
+def _make_pretrain_panel():
+    """Make panel data for pretrain, 2 time series with 50 time points each."""
+    return _make_hierarchical(
+        hierarchy_levels=(2,), min_timepoints=50, max_timepoints=50
+    )
 
 
 class DetectorFixtureGenerator(BaseFixtureGenerator):
@@ -119,13 +129,8 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         estimator = object_instance
         distribution_type = estimator.get_tag("distribution_type")
 
-        X_pretrain = _make_hierarchical(
-            hierarchy_levels=(2,), min_timepoints=50, max_timepoints=50
-        )
-        estimator.pretrain(X_pretrain)
+        estimator.pretrain(_make_pretrain_panel())
         assert estimator.state == "pretrained"
-        if not estimator.get_tag("capability:pretrain"):
-            assert estimator.get_pretrained_params() == {}
 
         X_train = make_detection_problem(
             n_timepoints=50, estimator_type=distribution_type
@@ -140,6 +145,80 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         # as some detectors skip that test
         y_pred = estimator.predict(X_test)
         assert isinstance(y_pred, pd.DataFrame)
+
+    @pytest.mark.parametrize(
+        "y", [None, pd.DataFrame({"ilocs": [3, 7]})], ids=["y_none", "y_events"]
+    )
+    def test_pretrain_is_noop(self, object_instance, y):
+        """Test pretrain is callable, and stores nothing without the capability."""
+        estimator = object_instance
+        attrs_before = dict(vars(estimator))
+
+        result = estimator.pretrain(_make_pretrain_panel(), y=y)
+
+        assert result is estimator
+        assert estimator.state == "pretrained"
+        assert not estimator.is_fitted
+        if not estimator.get_tag("capability:pretrain"):
+            assert estimator.get_pretrained_params() == {}
+            # nothing is stored, only the state changes
+            assert vars(estimator).keys() == attrs_before.keys()
+            unchanged = {k: v for k, v in attrs_before.items() if k != "_state"}
+            assert all(vars(estimator)[k] is v for k, v in unchanged.items())
+
+    def test_pretrain_state(self, object_instance):
+        """Test the state moves to pretrained, then fitted, then pretrained again."""
+        estimator = object_instance
+        distribution_type = estimator.get_tag("distribution_type")
+        X_train = make_detection_problem(
+            n_timepoints=50, estimator_type=distribution_type
+        )
+        X_test = make_detection_problem(
+            n_timepoints=10, estimator_type=distribution_type
+        )
+
+        estimator.pretrain(_make_pretrain_panel())
+        assert estimator.state == "pretrained"
+        assert not estimator.is_fitted
+        with pytest.raises(NotFittedError):
+            estimator.predict(X_test)
+
+        estimator.fit(X_train)
+        assert estimator.state == "fitted"
+        assert estimator.is_fitted
+
+        # as for forecasters, pretrain after fit sets the state to pretrained
+        estimator.pretrain(_make_pretrain_panel())
+        assert estimator.state == "pretrained"
+        assert not estimator.is_fitted
+
+    def test_pretrain_twice(self, object_instance):
+        """Test a second pretrain call keeps the state, and stores nothing."""
+        estimator = object_instance
+        estimator.pretrain(_make_pretrain_panel())
+        attrs_before = dict(vars(estimator))
+
+        estimator.pretrain(_make_pretrain_panel())
+
+        assert estimator.state == "pretrained"
+        if not estimator.get_tag("capability:pretrain"):
+            assert estimator.get_pretrained_params() == {}
+            assert vars(estimator).keys() == attrs_before.keys()
+
+    def test_clone_after_pretrain(self, object_instance):
+        """Test clone after pretrain uses the pretrain clone plugin."""
+        estimator = object_instance
+        assert _PretrainedCloner in estimator._get_clone_plugins()
+
+        estimator.pretrain(_make_pretrain_panel())
+        estimator_clone = estimator.clone()
+
+        assert estimator_clone is not estimator
+        assert not estimator_clone.is_fitted
+        assert estimator.state == "pretrained"
+        if not estimator.get_tag("capability:pretrain"):
+            assert estimator_clone.state == "new"
+            assert estimator_clone.get_pretrained_params() == {}
 
     def test_detector_tags(self, object_class):
         """Check the learning_type and task tags are valid."""
