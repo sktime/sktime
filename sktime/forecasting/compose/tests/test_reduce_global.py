@@ -24,7 +24,6 @@ from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 # HistGradientBoostingRegressor requires experimental flag in old sklearn versions
@@ -122,12 +121,6 @@ def y_dict():
     return y_dict
 
 
-# Get different WindowSummarizer functions
-kwargs = WindowSummarizer.get_test_params()[0]
-kwargs_alternames = WindowSummarizer.get_test_params()[1]
-kwargs_variant = WindowSummarizer.get_test_params()[2]
-
-
 def check_eval(test_input, expected):
     """Test which columns are returned for different arguments."""
     if test_input is not None:
@@ -164,11 +157,16 @@ def check_eval(test_input, expected):
 )
 def test_recursive_reduction(y, index_names, y_dict):
     """Test index column names match input names for recursive reduction."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = y_dict[y]
 
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
+
+    # Get different WindowSummarizer functions
+    kwargs = WindowSummarizer.get_test_params()[0]
 
     forecaster2 = make_reduction(
         regressor,
@@ -211,11 +209,16 @@ def test_recursive_reduction(y, index_names, y_dict):
 )
 def test_direct_reduction(y, index_names, y_dict):
     """Test index column names match input names for direct reduction."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = y_dict[y]
 
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
+
+    # Get different WindowSummarizer functions
+    kwargs = WindowSummarizer.get_test_params()[0]
 
     forecaster2 = make_reduction(
         regressor,
@@ -257,11 +260,17 @@ def test_direct_reduction(y, index_names, y_dict):
 )
 def test_list_reduction(y, index_names, y_dict):
     """Test index column names match input names for recursive reduction."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = y_dict[y]
 
     regressor = make_pipeline(
         RandomForestRegressor(random_state=1),
     )
+
+    # Get different WindowSummarizer functions
+    kwargs = WindowSummarizer.get_test_params()[0]
+    kwargs_variant = WindowSummarizer.get_test_params()[2]
 
     forecaster2 = make_reduction(
         regressor,
@@ -290,6 +299,8 @@ def test_list_reduction(y, index_names, y_dict):
 )
 def test_equality_transfo_nontranso(regressor):
     """Test that recursive reducers return same results for global / local forecasts."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = load_airline()[:36]
     y_train, y_test = temporal_train_test_split(y, test_size=12)
     fh = ForecastingHorizon(y_test.index, is_relative=False)
@@ -327,6 +338,8 @@ def test_equality_transfo_nontranso(regressor):
 )
 def test_nofreq_pass():
     """Test that recursive reducers return same results with / without freq given."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     regressor = make_pipeline(
         LinearRegression(),
     )
@@ -376,6 +389,9 @@ def test_nofreq_pass():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_timezoneaware_index():
+    """Test that recursive reducers handle timezone-aware indices correctly."""
+    from sktime.transformations.summarize import WindowSummarizer
+
     y = load_solar(api_version=None)
     y_notz = y.copy().tz_localize(None)
 

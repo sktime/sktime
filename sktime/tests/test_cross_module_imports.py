@@ -155,11 +155,6 @@ KNOWN_EXCEPTIONS = frozenset(
         ("detection/eagglo.py", "detection", "transformations"),
         ("detection/stray.py", "detection", "transformations"),
         (
-            "forecasting/compose/tests/test_groupbycategoryforecaster.py",
-            "forecasting",
-            "transformations",
-        ),
-        (
             "forecasting/compose/tests/test_hierarchy_ensemble.py",
             "forecasting",
             "transformations",
@@ -172,11 +167,6 @@ KNOWN_EXCEPTIONS = frozenset(
         ("forecasting/compose/tests/test_reduce.py", "forecasting", "regression"),
         (
             "forecasting/compose/tests/test_reduce.py",
-            "forecasting",
-            "transformations",
-        ),
-        (
-            "forecasting/compose/tests/test_reduce_global.py",
             "forecasting",
             "transformations",
         ),
