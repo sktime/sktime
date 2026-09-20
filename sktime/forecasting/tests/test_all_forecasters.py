@@ -708,31 +708,52 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         actual = y_pred.index
         np.testing.assert_array_equal(actual, expected)
 
-    def test_cutoff_and_cur_y(self, object_instance, n_columns):
-        """Check cutoff; and ``_cur_y`` when the estimator keeps a fit snapshot."""
+    def test_cutoff(self, object_instance, n_columns):
+        """Check cutoff update."""
+        # check cutoff is None after construction
         f = object_instance
 
         y = _make_series(n_columns=n_columns)
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
-        # baseforecaster does not preset/store _cur_y/_cur_X
-        assert getattr(f, "_cur_y", None) is None
+        # check that _cutoff is empty when estimator is constructed
         assert f.cutoff is None
 
+        # check cutoff is updated during fit
         f.fit(y_train, fh=FH0)
         assert f.cutoff == y_train.index[-1]
 
-        # Leaf estimators that need history store it as ``_cur_y`` / ``_cur_X``.
-        if getattr(f, "_cur_y", None) is not None:
-            assert len(f._cur_y) > 0
-            np.testing.assert_array_equal(f._cur_y.index, y_train.index)
-
+        # check that _y and cutoff is updated during update
         f.update(y_test, update_params=False)
         assert f.cutoff == y_test.index[-1]
-        # Note on why not assert _cur_y.index == append(y_train.index, y_test.index):
-        # ``_cur_y`` is a fit snapshot thing. estimators relying on defualt _update
-        # does not refresh it on update
-        # e.g. window/reducer dont require append for all subclasses having `_cur_y`
+
+    def test__y_remember_data(self, object_instance, n_columns):
+        """Check _y.
+
+        Only applies when remember_data config is True.
+        """
+        # check _y and cutoff is None after construction
+        f = object_instance.clone()
+        f.set_config(**{"remember_data": True})
+
+        y = _make_series(n_columns=n_columns)
+        y_train, y_test = temporal_train_test_split(y, train_size=0.75)
+
+        # check that _y is empty when estimator is constructed
+        assert f._y is None
+
+        # check that _y is updated during fit
+        f.fit(y_train, fh=FH0)
+        assert len(f._y) > 0
+
+        # check data pointers
+        np.testing.assert_array_equal(f._y.index, y_train.index)
+
+        # check that _y and cutoff is updated during update
+        f.update(y_test, update_params=False)
+        np.testing.assert_array_equal(
+            f._y.index, np.append(y_train.index, y_test.index)
+        )
 
     def test_update_with_exogenous_variables(
         self, object_instance, n_columns, update_params
@@ -773,6 +794,21 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         # Verify that the forecaster state is correctly updated
         assert object_instance.cutoff == y_test.index[-1]
         assert object_instance._is_fitted
+
+    def test__y_when_refitting(self, object_instance, n_columns):
+        """Test that _y is updated when forecaster is refitted.
+
+        Only applies when remember_data config is True.
+        """
+        object_instance = object_instance.clone()
+        object_instance.set_config(**{"remember_data": True})
+
+        y_train = _make_series(n_columns=n_columns)
+        object_instance.fit(y_train, fh=FH0)
+        object_instance.fit(y_train[3:], fh=FH0)
+        # using np.squeeze to make the test flexible to shape differences like
+        # (50,) and (50, 1)
+        assert np.all(np.squeeze(object_instance._y) == np.squeeze(y_train[3:]))
 
     def test_cur_y_when_refitting(self, object_instance, n_columns):
         """Test that ``_cur_y`` is replaced when forecaster is refitted."""
