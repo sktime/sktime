@@ -161,16 +161,19 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         super().__init__()
 
-        # todo 1.2.0: change default of remember_data to False and remove this warning
+        # todo 1.3.0: change default of remember_data to False and remove this warning
         if self.get_config()["remember_data"]:
             self._y = None
             self._X = None
             warn(
                 "The default of config ``remember_data`` will change from ``True`` "
-                "to ``False`` in sktime 1.2.0. After 1.2.0, ``BaseForecaster`` will "
+                "to ``False`` in sktime 1.3.0. After 1.3.0, ``BaseForecaster`` will "
                 "no longer store incremental data in ``_X`` and ``_y`` by default. "
                 "To silence this warning and adopt the new default early, set "
                 "``remember_data=False`` via ``set_config``. "
+                "For forecasters that do not have update natively supported,"
+                " i.e., the capability:update tag is not True,"
+                " the default ``update`` will not refit. "
                 "To keep storing incremental data and refitting on every update "
                 "after the default change, set ``remember_data=True`` explicitly, "
                 "or use ``UpdateRefitsEvery`` with ``refit_interval=0``.",
@@ -2528,49 +2531,48 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # Leaf estimators that need a current snapshot should override `_update`
         # to append to their own `_cur_y` / `_cur_X`. To pool and refit, use
         # forecasting.stream compositors (e.g. UpdateRefitsEvery).
-        if update_params:
-            if self.get_config()["remember_data"]:
-                # default to re-fitting if update is not implemented
-                warn(
-                    f"NotImplementedWarning: {self.__class__.__name__} "
-                    f"does not have a custom `update` method implemented. "
-                    f"{self.__class__.__name__} will be refit each time "
-                    f"`update` is called with update_params=True. "
-                    "To pool data and control refit frequency, wrap with "
-                    "``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` "
-                    "(e.g. ``refit_interval=0`` to refit every update, or a "
-                    "larger interval / ``UpdateEvery`` to refit less often).",
-                    obj=self,
-                )
-                # we need to overwrite the mtype last seen and converter store,
-                # since the _y may have been converted
-                mtype_last_seen = self._y_mtype_last_seen
-                y_metadata = self._y_metadata
-                _converter_store_y = self._converter_store_y
-                # refit with updated data, not only passed data
-                self.fit(y=self._y, X=self._X, fh=self._fh)
-                # todo: should probably be self._fit, not self.fit
-                # but looping to self.fit for now to avoid interface break
-                self._y_mtype_last_seen = mtype_last_seen
-                self._y_metadata = y_metadata
-                self._converter_store_y = _converter_store_y
-            else:
-                # cutoff was already advanced by public ``update``; parameters
-                # are intentionally left unchanged when there is no base data
-                # pool and no leaf ``_update`` override
-                warn(
-                    f"NotImplementedWarning: {type(self).__name__} "
-                    "does not have a custom `update` method implemented, "
-                    "and ``remember_data=False``, so `update` with "
-                    "update_params=True leaves model parameters unchanged "
-                    "(only the cutoff advances). "
-                    "To pool history and refit on update, wrap with "
-                    "``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` "
-                    "with ``refit_interval=0`` to refit every update. "
-                    "To keep the legacy base data pool while it exists, set "
-                    "``remember_data=True`` via ``set_config``.",
-                    obj=self,
-                )
+        if update_params and self.get_config()["remember_data"]:
+            # default to re-fitting if update is not implemented
+            warn(
+                f"NotImplementedWarning: {self.__class__.__name__} "
+                f"does not have a custom `update` method implemented. "
+                f"{self.__class__.__name__} will be refit each time "
+                f"`update` is called with update_params=True. "
+                "To pool data and control refit frequency, wrap with "
+                "``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` "
+                "(e.g. ``refit_interval=0`` to refit every update, or a "
+                "larger interval / ``UpdateEvery`` to refit less often).",
+                obj=self,
+            )
+            # we need to overwrite the mtype last seen and converter store,
+            # since the _y may have been converted
+            mtype_last_seen = self._y_mtype_last_seen
+            y_metadata = self._y_metadata
+            _converter_store_y = self._converter_store_y
+            # refit with updated data, not only passed data
+            self.fit(y=self._y, X=self._X, fh=self._fh)
+            # todo: should probably be self._fit, not self.fit
+            # but looping to self.fit for now to avoid interface break
+            self._y_mtype_last_seen = mtype_last_seen
+            self._y_metadata = y_metadata
+            self._converter_store_y = _converter_store_y
+        elif not self.get_config()["remember_data"]:
+            # cutoff was already advanced by public ``update``; parameters
+            # are intentionally left unchanged when there is no base data
+            # pool and no leaf ``_update`` override
+            warn(
+                f"NotImplementedWarning: {type(self).__name__} "
+                "does not have a custom `update` method implemented, "
+                "and ``remember_data=False``, so `update` with "
+                "update_params=True leaves model parameters unchanged "
+                "(only the cutoff advances). "
+                "To pool history and refit on update, wrap with "
+                "``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` "
+                "with ``refit_interval=0`` to refit every update. "
+                "To keep the legacy base data pool while it exists, set "
+                "``remember_data=True`` via ``set_config``.",
+                obj=self,
+            )
 
         # if update_params=False, and there are no components, do nothing
         # if update_params=False, and there are components, we update cutoffs
