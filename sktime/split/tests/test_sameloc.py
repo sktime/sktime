@@ -79,8 +79,8 @@ def test_same_loc_splitter_hierarchical():
 def test_sameloc_split_loc_returns_template_locs():
     """split_loc returns exactly the template's locs, see #11201.
 
-    Template locs missing from y must not be silently dropped; they surface
-    as a KeyError in split_series, which SyncToLongest relies on.
+    Test params use y_template=None, so TestAllSplitters does not cover the
+    case of a template distinct from y. This test covers it explicitly.
     """
     from sktime.datasets import load_airline
 
@@ -91,10 +91,67 @@ def test_sameloc_split_loc_returns_template_locs():
 
     expected = list(cv.split_loc(y_template))
     actual = list(splitter.split_loc(y))
+
     assert len(actual) == len(expected)
     for (train, test), (train_exp, test_exp) in zip(actual, expected):
         assert train.equals(train_exp)
         assert test.equals(test_exp)
 
+
+@pytest.mark.skipif(
+    not run_test_for_class([ExpandingWindowSplitter, SameLocSplitter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_sameloc_split_loc_template_locs_outside_y():
+    """Template locs absent from y are returned, not silently dropped.
+
+    Dropping them would let a downstream fold silently use a different index
+    set than the template prescribes; instead the missing locs surface as a
+    KeyError in split_series. SyncToLongest relies on this, see
+    test_sync_to_longest_explicit_cv_x_needs_same_loc.
+    """
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    y_template = y[:60]
+    cv = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+    splitter = SameLocSplitter(cv, y_template)
+
+    # partial overlap: y_partial starts 12 periods after the template
+    y_partial = y[12:72]
+    splits = list(splitter.split_loc(y_partial))
+    expected = list(cv.split_loc(y_template))
+
+    assert len(splits) == len(expected)
+    for (train, test), (train_exp, test_exp) in zip(splits, expected):
+        assert train.equals(train_exp)
+        assert test.equals(test_exp)
+
+    # the first train window starts before y_partial, so locs fall outside it
+    assert not splits[0][0].isin(y_partial.index).all()
+
     with pytest.raises(KeyError):
-        list(splitter.split_series(y[12:72]))
+        list(splitter.split_series(y_partial))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([ExpandingWindowSplitter, SameLocSplitter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_sameloc_none_template_uses_y():
+    """y_template=None uses y itself as the template, see get_test_params."""
+    from sktime.datasets import load_airline
+
+    y = load_airline()[:60]
+    cv = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+    splitter = SameLocSplitter(cv)
+
+    for train, test in splitter.split_loc(y):
+        assert train.isin(y.index).all()
+        assert test.isin(y.index).all()
+
+    for (train, test), (train_exp, test_exp) in zip(
+        splitter.split_loc(y), cv.split_loc(y)
+    ):
+        assert train.equals(train_exp)
+        assert test.equals(test_exp)
