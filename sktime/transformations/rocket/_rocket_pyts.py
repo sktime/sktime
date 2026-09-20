@@ -92,6 +92,8 @@ class RocketPyts(_PytsAdapter, BaseTransformer):
         # estimator type
         # --------------
         "capability:multivariate": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
