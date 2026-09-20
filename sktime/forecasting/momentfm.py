@@ -7,11 +7,6 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
-from sktime.utils.dependencies import _safe_import
-
-torch = _safe_import("torch")
-empty_cache = _safe_import("torch.cuda.empty_cache")
-Dataset = _safe_import("torch.utils.data.Dataset")
 
 
 class MomentFMForecaster(BaseForecaster):
@@ -190,9 +185,6 @@ class MomentFMForecaster(BaseForecaster):
         config=None,
         return_model_to_cpu=False,
     ):
-        super().__init__()
-        from torch.nn import MSELoss
-
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
         self.freeze_encoder = freeze_encoder
         self.freeze_embedder = freeze_embedder
@@ -210,11 +202,28 @@ class MomentFMForecaster(BaseForecaster):
         self.train_val_split = train_val_split
         self.transformer_backbone = transformer_backbone
         self.config = config
-        self._config = config if config is not None else {}
         self.criterion = criterion
+        self.return_model_to_cpu = return_model_to_cpu
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        from torch.nn import MSELoss
+
+        self._config = self.config if self.config is not None else {}
         self._criterion = self.criterion if self.criterion else MSELoss()
         self._moment_seq_len = 512
-        self.return_model_to_cpu = return_model_to_cpu
 
     def _fit(self, y, X=None, fh=None):
         """Assumes y is a single or multivariate time series."""
@@ -303,6 +312,7 @@ class MomentFMForecaster(BaseForecaster):
         y_train, y_test = temporal_train_test_split(
             y, train_size=1 - self.train_val_split, test_size=self.train_val_split
         )
+        MomentPytorchDataset = _get_dataset_class()
 
         train_dataset = MomentPytorchDataset(
             y=y_train,
@@ -370,6 +380,8 @@ class MomentFMForecaster(BaseForecaster):
             )
 
         if self.return_model_to_cpu:
+            from torch.cuda import empty_cache
+
             self.model.to("cpu")
             empty_cache()
 
@@ -479,6 +491,8 @@ class MomentFMForecaster(BaseForecaster):
         df_pred.index.names = y_index_names
 
         if self.return_model_to_cpu:
+            from torch.cuda import empty_cache
+
             self.model.to("cpu")
             empty_cache()
 
@@ -567,6 +581,7 @@ def _run_epoch(
     train_dataloader,
     val_dataloader,
 ):
+    import torch
     import torch.cuda.amp
     from tqdm import tqdm
 
@@ -678,78 +693,84 @@ def _check_device(device):
     return _device
 
 
-class MomentPytorchDataset(Dataset):
-    """Customized Pytorch dataset for the momentfm model."""
+def _get_dataset_class():
+    """Soft dependency import for the MomentPytorchDataset class."""
+    from torch.utils.data import Dataset
 
-    def __init__(self, y, fh, seq_len, device):
-        self.y = y
-        self.moment_seq_len = 512  # forced seq_len by pre-trained model
-        self.seq_len = seq_len
-        self.fh = fh
-        self.shape = y.shape
-        self.device = device
+    class MomentPytorchDataset(Dataset):
+        """Customized Pytorch dataset for the momentfm model."""
 
-        self.y = np.expand_dims(y.values, axis=0)
+        def __init__(self, y, fh, seq_len, device):
+            self.y = y
+            self.moment_seq_len = 512  # forced seq_len by pre-trained model
+            self.seq_len = seq_len
+            self.fh = fh
+            self.shape = y.shape
+            self.device = device
 
-        # n_timestamps should be the seq length for a single series in both
-        # cases, multivariate dataframe
-        # or a panel/hierarchical dataset
-        # if hier/panel, self.n_sequences will be > 1, else will be = 1 if
-        # # a regular multivariate df
-        self.n_sequences, self.n_timestamps, self.n_columns = self.y.shape
+            self.y = np.expand_dims(y.values, axis=0)
 
-        # self.single_length is defined as the length of one series under
-        # one instance in the panel/hier case
-        # else it is just the seq_len of the multivariate data
-        self.single_length = self.n_timestamps - self.seq_len - self.fh + 1
+            # n_timestamps should be the seq length for a single series in both
+            # cases, multivariate dataframe
+            # or a panel/hierarchical dataset
+            # if hier/panel, self.n_sequences will be > 1, else will be = 1 if
+            # # a regular multivariate df
+            self.n_sequences, self.n_timestamps, self.n_columns = self.y.shape
 
-        # code block to figure out masking sizes in case seq_len < 512
-        if self.seq_len < self.moment_seq_len:
-            self._pad_shape = (self.moment_seq_len - self.seq_len, self.n_columns)
-            self.input_mask = _create_mask(
-                self.seq_len, self.moment_seq_len - self.seq_len
-            ).float()
-            # Concatenate the tensors
-        elif self.seq_len > self.moment_seq_len:
-            # for now if seq_len > 512 than we reduce it back to 512
-            self.seq_len = 512
-            self.input_mask = _create_mask(self.seq_len).float()
-        else:
-            self.input_mask = _create_mask(self.seq_len).float()
+            # self.single_length is defined as the length of one series under
+            # one instance in the panel/hier case
+            # else it is just the seq_len of the multivariate data
+            self.single_length = self.n_timestamps - self.seq_len - self.fh + 1
 
-    def __len__(self):
-        """Return length of dataset."""
-        # in the case of a regular multivariate df, we just return the trivial case
-        # self.n_timestamps - self.seq_len - self.fh + 1
-        # but in case the data is panel/hier, we need to count the total
-        # #number of instances
-        # i.e self.n_sequences
-        return self.single_length * self.n_sequences
+            # code block to figure out masking sizes in case seq_len < 512
+            if self.seq_len < self.moment_seq_len:
+                self._pad_shape = (self.moment_seq_len - self.seq_len, self.n_columns)
+                self.input_mask = _create_mask(
+                    self.seq_len, self.moment_seq_len - self.seq_len
+                ).float()
+                # Concatenate the tensors
+            elif self.seq_len > self.moment_seq_len:
+                # for now if seq_len > 512 than we reduce it back to 512
+                self.seq_len = 512
+                self.input_mask = _create_mask(self.seq_len).float()
+            else:
+                self.input_mask = _create_mask(self.seq_len).float()
 
-    def __getitem__(self, i):
-        """Return dataset items from index i."""
-        # batches must be returned in format (B, C, S)
-        # where B = batch_size, C = channels, S = sequence_length
-        from torch import from_numpy
+        def __len__(self):
+            """Return length of dataset."""
+            # in the case of a regular multivariate df, we just return the trivial case
+            # self.n_timestamps - self.seq_len - self.fh + 1
+            # but in case the data is panel/hier, we need to count the total
+            # #number of instances
+            # i.e self.n_sequences
+            return self.single_length * self.n_sequences
 
-        # select the correct instance
-        n = i // self.single_length
-        # select the correct timepoint starting index based on the selected instance
-        m = i % self.single_length
+        def __getitem__(self, i):
+            """Return dataset items from index i."""
+            # batches must be returned in format (B, C, S)
+            # where B = batch_size, C = channels, S = sequence_length
+            from torch import from_numpy
 
-        hist_end = m + self.seq_len
-        pred_end = m + self.seq_len + self.fh
+            # select the correct instance
+            n = i // self.single_length
+            # select the correct timepoint starting index based on the selected instance
+            m = i % self.single_length
 
-        historical_y = from_numpy(self.y[n, m:hist_end, :]).float()
-        # historical_y = historical_y.reshape(historical_y.shape[1], -1)
+            hist_end = m + self.seq_len
+            pred_end = m + self.seq_len + self.fh
 
-        if self.seq_len < self.moment_seq_len:
-            historical_y = _create_padding(historical_y, self._pad_shape)
-        historical_y = historical_y.float().T
-        future_y = from_numpy(self.y[n, hist_end:pred_end, :]).float().T
-        # future_y = future_y.reshape(future_y.shape[1], -1).T
-        return {
-            "future_y": future_y,
-            "historical_y": historical_y,
-            "input_mask": self.input_mask,
-        }
+            historical_y = from_numpy(self.y[n, m:hist_end, :]).float()
+            # historical_y = historical_y.reshape(historical_y.shape[1], -1)
+
+            if self.seq_len < self.moment_seq_len:
+                historical_y = _create_padding(historical_y, self._pad_shape)
+            historical_y = historical_y.float().T
+            future_y = from_numpy(self.y[n, hist_end:pred_end, :]).float().T
+            # future_y = future_y.reshape(future_y.shape[1], -1).T
+            return {
+                "future_y": future_y,
+                "historical_y": historical_y,
+                "input_mask": self.input_mask,
+            }
+
+    return MomentPytorchDataset

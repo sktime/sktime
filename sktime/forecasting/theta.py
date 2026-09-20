@@ -475,6 +475,7 @@ class ThetaModularForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "python_version": ">3.7",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

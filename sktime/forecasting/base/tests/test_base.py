@@ -523,12 +523,12 @@ def test_panel_with_inner_freq():
 
     y = load_airline()
     ind = pd.date_range(
-        start="1960-01-01", periods=len(y.index), freq="H", name="datetime"
+        start="1960-01-01", periods=len(y.index), freq="h", name="datetime"
     )
     y = pd.DataFrame(y.values, index=ind, columns=["passengers"])
 
     y_pan = y.set_index([y.index.hour.rename("hour"), y.index]).sort_index()
-    assert y_pan.loc[0].index.freq == pd.Timedelta("24H"), "Expected 24H frequency"
+    assert y_pan.loc[0].index.freq == pd.Timedelta("24h"), "Expected 24H frequency"
 
     fh = [1, 2]
     y_train, y_test = temporal_train_test_split(y_pan, test_size=len(fh))

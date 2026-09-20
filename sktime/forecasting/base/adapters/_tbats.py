@@ -24,13 +24,13 @@ class _TbatsAdapter(BaseForecaster):
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        # todo 1.2.0: check whether numpy and scipy bounds are still needed
-        "python_dependencies": ["tbats", "numpy<2", "scipy<1.16"],
+        "python_dependencies": ["pmdarima"],
         # CI and testing tags
         # -------------------
         "tests:vm": True,
         # libs tag is set so child classes get tested if this file changes
         "tests:libs": ["sktime.forecasting.base.adapters._tbats"],
+        "tests:specific": ["sktime.libs.tbats.tests"],
     }
 
     def __init__(

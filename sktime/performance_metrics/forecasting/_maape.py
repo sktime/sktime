@@ -112,15 +112,21 @@ class MeanArctangentAbsolutePercentageError(BaseForecastingErrorMetric):
     ----------
     Kim, S., & Kim, H. (2016). "A new metric of absolute percentage error
     for intermittent demand forecasts". International Journal of Systems Science.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.performance_metrics.forecasting import (
+    ...     MeanArctangentAbsolutePercentageError,
+    ... )
+    >>> y_true = np.array([1.0, 2.0, 3.0])
+    >>> y_pred = np.array([1.0, 2.0, 4.0])
+    >>> maape = MeanArctangentAbsolutePercentageError()
+    >>> round(float(maape(y_true, y_pred)), 3)
+    0.107
     """
 
     func = mean_arctangent_absolute_percentage_error
-
-    _tags = {
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
-    }
 
     def __init__(
         self,

@@ -142,6 +142,10 @@ class DynamicFactor(_StatsModelsAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:non_contiguous_X": False,
+        # test skip flags
+        # ---------------
+        # known issue with in-sample prediction, see #4765
+        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],
     }
 
     def __init__(

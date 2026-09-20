@@ -52,7 +52,6 @@ class Deseasonalizer(BaseTransformer):
     multiplicative models see
     `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
-
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
 
     Examples
@@ -250,10 +249,10 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     """Remove seasonal components from time series, conditional on seasonality test.
 
     Fit tests for :term:`seasonality <Seasonality>` and if the passed time series
-    has a seasonal component it applies seasonal decomposition provided by `statsmodels
-    <https://www.statsmodels.org>`
+    has a seasonal component it applies seasonal decomposition provided by
+    `statsmodels <https://www.statsmodels.org>`_
     to compute the seasonal component.
-    If the test is negative ``_seasonal`` is set
+    If the test is negative ``seasonal_`` is set
     to all ones (if ``model`` is "multiplicative")
     or to all zeros (if ``model`` is "additive").
 
@@ -291,7 +290,6 @@ class ConditionalDeseasonalizer(Deseasonalizer):
     multiplicative models see
     `Forecasting: Principles and Practice <https://otexts.com/fpp3/components.html>`_.
     Seasonal decomposition is computed using `statsmodels
-
     <https://www.statsmodels.org/stable/generated/statsmodels.tsa.seasonal.seasonal_decompose.html>`_.
 
     Examples

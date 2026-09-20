@@ -4,23 +4,13 @@
 
 __author__ = ["fkiraly", "khrapovs", "mateuja", "mloning"]
 
-from collections.abc import Iterator
-
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseObject
 from sktime.datatypes import check_is_scitype, convert
-from sktime.split.base._common import (
-    ACCEPTED_Y_TYPES,
-    DEFAULT_FH,
-    DEFAULT_WINDOW_LENGTH,
-    PANDAS_MTYPES,
-    SPLIT_GENERATOR_TYPE,
-    SPLIT_TYPE,
-)
-from sktime.utils.validation import NON_FLOAT_WINDOW_LENGTH_TYPES
+from sktime.split.base._common import PANDAS_MTYPES
 from sktime.utils.validation.forecasting import check_fh
 
 
@@ -32,10 +22,8 @@ class BaseSplitter(BaseObject):
     <https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.TimeSeriesSplit.html>`__
     which implements only expanding window split strategy, and only integer based.
 
-    The most important method in this class is `.split(y)` which generates indices
-    of non-overlapping train/test splits of a time series `y`.
-    The length of the train split is determined by `window_length`.
-    The length of the test split is determined by forecasting horizon `fh`.
+    The most important method in this class is ``.split(y)`` which generates indices
+    of non-overlapping train/test splits of a time series ``y``.
 
     In general, splitting a time series :math:`y=(y_1,\ldots,y_T)`
     into train/test splits means separating it into two non-overlapping series:
@@ -44,45 +32,41 @@ class BaseSplitter(BaseObject):
     where :math:`k,l` are all integers greater than zero,
     and :math:`t(k)<t(k+1)` are ordered time indices.
     The exact set of indices depends on a concrete splitter.
-    Method `.split` is used to generate a pair of index sets:
+    Method ``.split(y)`` is used to generate a pair of index sets:
     train :math:`(t(1),\ldots,t(k))` and test :math:`(t(k+1),\ldots,t(k+l))`.
 
-    In case `window_length` and `fh` are integer valued,
-    they translate into :math:`k` and :math:`l`, respectively.
-
-    In case `window_length` and `fh` can be interpreted
-    as time interval length (time deltas), then they correspond to
-    :math:`t(k)-t(1)` and :math:`t(k+l)-t(k+1)`, respectively.
-
-    Method `.get_n_splits` returns the number of splitting iterations.
+    Method ``.get_n_splits`` returns the number of splitting iterations.
     This number depends on a concrete splitting strategy and splitter parameters.
 
-    Method `.get_cutoffs` returns the cutoff points between each train/test split.
+    Method  ``.get_cutoffs`` returns the cutoff points between each train/test split.
     Using the above notation, for a single split it corresponds
     to the last integer index of the training window, :math:`k`
 
     In order to illustrate the difference in integer/interval arithmetic
     in calculating train/test indices, let us consider the following examples.
-    Suppose, the arguments of a splitter are `cutoff = 10` and `window_length = 6`.
-    Then, we have `train_start = cutoff - window_length = 4`.
+    Suppose, the arguments of a splitter are ``cutoff = 10`` and ``window_length = 6``.
+    Then, we have ``train_start = cutoff - window_length = 4``.
     For timedelta-like values the logic is a bit more complicated.
-    The time point corresponding to the `cutoff`
-    (index value of the `y` series) is shifted back
-    by the timedelta `window_length`,
+    The time point corresponding to the ``cutoff``
+    (index value of the ``y`` series) is shifted back
+    by the timedelta ``window_length``,
     and then the integer position of the resulting datetime
     is considered to be the training window start.
-    For example, for `cutoff = 10`, and `window_length = pd.Timedelta(6, freq="D")`,
-    we have `y[cutoff] = pd.Timestamp("2021-01-10")`,
-    and `y[cutoff] - window_length = pd.Timestamp("2021-01-04")`,
-    which leads to `train_start = y.loc(y[cutoff] - window_length) = 4`.
+    For example, for ``cutoff = 10``, and ``window_length = pd.Timedelta(6, freq="D")``,
+    we have ``y[cutoff] = pd.Timestamp("2021-01-10")``,
+    and ``y[cutoff] - window_length = pd.Timestamp("2021-01-04")``,
+    which leads to ``train_start = y.loc(y[cutoff] - window_length) = 4``.
     Similar timedelta arithmetic applies to other splitter arguments.
 
     Parameters
     ----------
-    window_length : int or timedelta or pd.DateOffset
-        Length of rolling window
-    fh : array-like  or int, optional, (default=None)
-        Single step ahead or array of steps ahead to forecast.
+    fh : array-like or int, optional, (default=None)
+        Forecasting horizon with the steps ahead to predict, if splits are used
+        for forecasting or backtesting.
+
+        * if integer, the indices to forecast are 1, 2, ..., fh, periods ahead.
+        * if array-like, the indices to forecast are given by the values in fh,
+          values must be coercible to integer.
     """
 
     _tags = {
@@ -103,14 +87,7 @@ class BaseSplitter(BaseObject):
         "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(
-        self,
-        fh=DEFAULT_FH,
-        window_length: NON_FLOAT_WINDOW_LENGTH_TYPES = DEFAULT_WINDOW_LENGTH,
-    ) -> None:
-        self.window_length = window_length
-        self.fh = fh
-
+    def __init__(self) -> None:
         super().__init__()
 
         # this block has a double purpose:
@@ -128,9 +105,10 @@ class BaseSplitter(BaseObject):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        pass
+        if not hasattr(self, "fh"):
+            self.fh = self._default_fh()
 
-    def split(self, y: ACCEPTED_Y_TYPES) -> SPLIT_GENERATOR_TYPE:
+    def split(self, y):
         """Get iloc references to train/test splits of `y`.
 
         Parameters
@@ -160,7 +138,7 @@ class BaseSplitter(BaseObject):
         for train, test in split(y_index):
             yield train[train >= 0], test[test >= 0]
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y):
         """Get iloc references to train/test splits of `y`.
 
         private _split containing the core logic, called from split
@@ -183,7 +161,7 @@ class BaseSplitter(BaseObject):
             test_iloc = y.get_indexer(test_loc)
             yield train_iloc, test_iloc
 
-    def _split_vectorized(self, y: pd.MultiIndex) -> SPLIT_GENERATOR_TYPE:
+    def _split_vectorized(self, y):
         """Get iloc references to train/test splits of `y`, for pd.MultiIndex.
 
         This applies _split per time series instance in the multiindex.
@@ -218,7 +196,7 @@ class BaseSplitter(BaseObject):
 
         yield from zip(train, test)
 
-    def split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[tuple[pd.Index, pd.Index]]:
+    def split_loc(self, y):
         """Get loc references to train/test splits of `y`.
 
         Parameters
@@ -240,7 +218,7 @@ class BaseSplitter(BaseObject):
 
         yield from self._split_loc(y_index)
 
-    def _split_loc(self, y: ACCEPTED_Y_TYPES) -> Iterator[tuple[pd.Index, pd.Index]]:
+    def _split_loc(self, y):
         """Get loc references to train/test splits of `y`.
 
         private _split containing the core logic, called from split_loc
@@ -264,7 +242,7 @@ class BaseSplitter(BaseObject):
             # default gets loc index from iloc index
             yield y[train], y[test]
 
-    def split_series(self, y: ACCEPTED_Y_TYPES) -> Iterator[SPLIT_TYPE]:
+    def split_series(self, y):
         """Split `y` into training and test windows.
 
         Parameters
@@ -308,7 +286,7 @@ class BaseSplitter(BaseObject):
             y_test = convert(y_test, from_type=y_inner_mtype, to_type=y_orig_mtype)
             yield y_train, y_test
 
-    def _coerce_to_index(self, y: ACCEPTED_Y_TYPES) -> pd.Index:
+    def _coerce_to_index(self, y) -> pd.Index:
         """Check and coerce y to pandas index.
 
         Parameters
@@ -422,7 +400,7 @@ class BaseSplitter(BaseObject):
 
         return y_inner, y_mtype, y_inner_mtype
 
-    def get_n_splits(self, y: ACCEPTED_Y_TYPES | None = None) -> int:
+    def get_n_splits(self, y) -> int:
         """Return the number of splits.
 
         Parameters
@@ -440,7 +418,7 @@ class BaseSplitter(BaseObject):
         """
         return len(list(self.split(y)))
 
-    def get_cutoffs(self, y: ACCEPTED_Y_TYPES | None = None) -> np.ndarray:
+    def get_cutoffs(self, y=None) -> np.ndarray:
         """Return the cutoff points in .iloc[] context.
 
         Parameters
@@ -455,20 +433,105 @@ class BaseSplitter(BaseObject):
         """
         raise NotImplementedError("abstract method")
 
-    def get_fh(self):
-        """Return the forecasting horizon.
+    def _default_fh(self):
+        """Forecasting horizon, in integer resp array of integer, relative to cutoff.
+
+        Should not be overridden by inheriting classes, use _fh instead.
+
+        Returns the indices of the test splits, relative to the last index of the
+        corresponding training split, in relative integer format,
+        in the unit of periods.
+
+        Returns ``None`` if the forecasting horizon is not defined, or not the same
+        across all train/test folds, or if the training splits have no natural period.
 
         Returns
         -------
-        fh : ForecastingHorizon
-            The forecasting horizon
+        fh : 1D np.array of int, or None
+            Forecasting horizon with the steps ahead to predict, if splits are used
+            for forecasting or backtesting.
+
+            * if np.array, the indices to forecast are given by the values in ``fh``,
+              values must be coercible to integer.
+            * ``None`` if no forecasting horizon is set. This is returned for splitters
+              that do not have a natural forecasting horizon associated to them.
+
+            Can return ``ForecastingHorizon`` type, for legacy compatibility reasons,
+            but this is not recommended.
         """
-        return check_fh(self.fh)
+        from sktime.forecasting.base import ForecastingHorizon
+
+        fh = self._fh()
+        # if ForecastingHorizon type, return (legacy behaviour to be reviewed)
+        if isinstance(fh, ForecastingHorizon):
+            return fh
+        if isinstance(fh, pd.Timedelta) or isinstance(fh, pd.DateOffset):
+            return fh
+        # if integer type, coerce to range np.array
+        if fh is not None and (isinstance(fh, int) or isinstance(fh, np.integer)):
+            if fh > 0:
+                fh = np.arange(fh) + 1
+        # if fh is not None and not isinstance(fh, np.ndarray):
+        #     fh = np.asarray(fh, dtype=int)
+        return fh
+
+    def _fh(self):
+        """Forecasting horizon, in integer resp array of integer, relative to cutoff.
+
+        Private method called by property ``fh``,
+        can be overridden by inheriting classes.
+
+        Default is to return a forecasting horizon of ``1`` for temporal splitters,
+        and ``None`` for instance splitters.
+
+        If the attribute ``_fh_`` is set, then it is returned instead.
+
+        Returns
+        -------
+        fh : array-like or int, optional, (default=None)
+            Forecasting horizon with the steps ahead to predict, if splits are used
+            for forecasting or backtesting.
+
+            * if integer, the indices to forecast are ``1, 2, ..., fh``, periods ahead.
+            * if array-like, the indices to forecast are given by the values in ``fh``,
+              values must be coercible to integer.
+            * ``None`` if no forecasting horizon is set. This is returned for splitters
+              that do not have a natural forecasting horizon associated to them.
+        """
+        if hasattr(self, "_fh_"):
+            return self._fh_
+        if self.get_tag("split_type") == "temporal":
+            return 1
+        return None
+
+    def get_fh(self):
+        """Forecasting horizon, in ForecastingHorizon format, relative to cutoff.
+
+        Returns the indices of the test splits, relative to the last index of the
+        corresponding training split, in ``ForecastingHorizon`` format.
+
+        This is the same as the property ``fh``, coerced to ``ForecastingHorizon`` type.
+
+        Returns ``None`` if the forecasting horizon is not defined, or not the same
+        across all train/test folds.
+
+        Returns
+        -------
+        fh : ForecastingHorizon, or None
+            Forecasting horizon with the steps ahead to predict, if splits are used
+            for forecasting or backtesting.
+
+            * if ``ForecastingHorizon``, same as ``self.fh`` coerced
+              to ``ForecastingHorizon`` type.
+            * ``None`` if no forecasting horizon is set. This is returned for splitters
+              that do not have a natural forecasting horizon associated to them.
+        """
+        fh = self.fh
+        fh = check_fh(fh)  # coerce to ForecastingHorizon
+        return fh
 
     @staticmethod
-    def _get_train_window(
-        y: pd.Index, train_start: int, split_point: int
-    ) -> np.ndarray:
+    def _get_train_window(y: pd.Index, train_start: int, split_point: int):
         """Get train window.
 
         For formal definition of the train window see docstring of the `BaseSplitter`
