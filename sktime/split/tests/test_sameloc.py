@@ -70,3 +70,30 @@ def test_same_loc_splitter_hierarchical():
     for (t1, tt1), (t2, tt2) in zip(split_template_loc, split_templated_loc):
         assert np.all(t1 == t2)
         assert np.all(tt1 == tt2)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([ExpandingWindowSplitter, SameLocSplitter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_sameloc_split_loc_returns_locs_in_y():
+    """split_loc(y) must return locs from y.index, not from y_template.
+
+    Regression test for #11201: _split_loc yielded the template's locs
+    verbatim, so locs not present in y were returned.
+    """
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+    y_template = y[:60]
+    y_other = y[12:72]  # overlaps the template but has a different index
+
+    cv = ExpandingWindowSplitter(fh=[2, 4], initial_window=24, step_length=12)
+    splitter = SameLocSplitter(cv, y_template)
+
+    splits = list(splitter.split_loc(y_other))
+    assert len(splits) > 0
+    assert any(len(train) > 0 for train, _ in splits)
+    for train, test in splits:
+        assert train.isin(y_other.index).all()
+        assert test.isin(y_other.index).all()

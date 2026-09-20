@@ -72,7 +72,6 @@ class SameLocSplitter(BaseSplitter):
         "tests:specific": ["sktime.split.tests.test_sameloc"],
         # splitters excluded with undiagnosed failures, see #6194
         # these are temporarily skipped to allow merging of the base test framework
-        "tests:skip_all": True,
     }
 
     def __init__(self, cv, y_template=None):
@@ -109,13 +108,17 @@ class SameLocSplitter(BaseSplitter):
         test : pd.Index
             Test window indices, loc references to test indices in y
         """
-        cv = self.cv
         if self.y_template is None:
             y_template = y
         else:
             y_template = self.y_template
 
-        yield from cv.split_loc(y_template)
+        # keep only template locs that are present in y, consistent with _split
+        for train_loc, test_loc in self.cv.split_loc(y_template):
+            yield (
+                train_loc[train_loc.isin(y)],
+                test_loc[test_loc.isin(y)],
+            )
 
     def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
