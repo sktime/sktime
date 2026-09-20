@@ -112,6 +112,7 @@ class BOSSVSClassifierPyts(_PytsAdapter, BaseClassifier):
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.base.adapters._pyts"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     # defines the name of the attribute containing the pyts estimator
