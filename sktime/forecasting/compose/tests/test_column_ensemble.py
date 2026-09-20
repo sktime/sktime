@@ -102,7 +102,6 @@ def test_column_ensemble_hierarchical():
     """Tests column ensemble with hierarchical reconciliation, see bug #3784."""
     from sktime.datatypes import get_examples
     from sktime.datatypes._utilities import get_window
-
     from sktime.transformations.hierarchical.aggregate import Aggregator
     from sktime.transformations.hierarchical.reconcile import Reconciler
 
