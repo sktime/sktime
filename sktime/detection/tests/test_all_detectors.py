@@ -22,12 +22,17 @@ def _make_pretrain_panel():
 
 
 def _make_pretrain_events():
-    """Make known events for the pretrain panel, indexed by instance.
+    """Make known events for the pretrain panel, one event per instance.
 
-    Panel shaped, as detectors that pretrain on labels expect, one event
-    per instance of the panel returned by ``_make_pretrain_panel``.
+    Row MultiIndex ``(instance, event_no)`` with an ``"ilocs"`` column, as
+    detectors that pretrain on labels expect.
     """
-    return pd.DataFrame({"ilocs": [3, 7]}, index=pd.Index(["h0_0", "h0_1"], name="h0"))
+    return pd.DataFrame(
+        {"ilocs": [3, 7]},
+        index=pd.MultiIndex.from_tuples(
+            [("h0_0", 0), ("h0_1", 0)], names=["h0", "event_no"]
+        ),
+    )
 
 
 class DetectorFixtureGenerator(BaseFixtureGenerator):

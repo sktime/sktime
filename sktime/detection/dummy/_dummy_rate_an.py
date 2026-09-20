@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.detection.base import BaseDetector
-from sktime.utils.multiindex import flatten_multiindex
 
 
 class DummyRateAnomalies(BaseDetector):
@@ -47,7 +46,10 @@ class DummyRateAnomalies(BaseDetector):
     ...     {"value": range(40)},
     ...     index=pd.MultiIndex.from_product([["a", "b"], range(20)]),
     ... )
-    >>> y_pretrain = pd.DataFrame({"ilocs": [5, 15, 10]}, index=["a", "a", "b"])
+    >>> y_pretrain = pd.DataFrame(
+    ...     {"ilocs": [5, 15, 10]},
+    ...     index=pd.MultiIndex.from_tuples([("a", 0), ("a", 1), ("b", 0)]),
+    ... )
     >>> d = DummyRateAnomalies().pretrain(X_pretrain, y_pretrain)
     >>> d.pretrain_event_rate_
     0.075
@@ -90,9 +92,9 @@ class DummyRateAnomalies(BaseDetector):
             to this format by ``pretrain``.
         y : pd.DataFrame, optional
             Known events in ``X``, one row per event, with an ``"ilocs"``
-            column, indexed by the instance the event belongs to.
-            Instance labels are flattened as ``pretrain`` flattens ``X``,
-            so the instance ``("h0_0", "h1_0")`` becomes ``"h0_0__h1_0"``.
+            column, and row ``MultiIndex`` ``(instance, event_no)``.
+            ``pretrain`` has flattened the instance levels, so the instance
+            ``("h0_0", "h1_0")`` is ``"h0_0__h1_0"`` here.
             Events of instances that are not in ``X`` are ignored.
             If None, no events are seen, and no alarms will be fired.
 
@@ -179,13 +181,13 @@ class DummyRateAnomalies(BaseDetector):
     def _count_events(y, instances):
         """Count events in y that belong to one of the instances.
 
-        Instance labels of ``y`` are flattened the same way as ``pretrain``
-        flattens the instance levels of ``X``.
+        ``pretrain`` has flattened the instance levels of ``y``, so the
+        instance of an event is its row index without the last level.
 
         Parameters
         ----------
         y : pd.DataFrame, or None
-            Known events, indexed by the instance the event belongs to.
+            Known events, with row ``MultiIndex`` ``(instance, event_no)``.
         instances : pd.Index
             Instances of the time series pretrained on.
 
@@ -199,6 +201,6 @@ class DummyRateAnomalies(BaseDetector):
 
         y_instances = y.index
         if isinstance(y_instances, pd.MultiIndex):
-            y_instances = flatten_multiindex(y_instances)
+            y_instances = y_instances.droplevel(-1)
 
         return int(y_instances.isin(instances).sum())

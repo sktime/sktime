@@ -25,7 +25,10 @@ def _make_panel_and_events():
         ),
     )
     y = pd.DataFrame(
-        {"ilocs": [5, 15, 10]}, index=pd.Index(["a", "a", "b"], name="instance")
+        {"ilocs": [5, 15, 10]},
+        index=pd.MultiIndex.from_tuples(
+            [("a", 0), ("a", 1), ("b", 0)], names=["instance", "event_no"]
+        ),
     )
     return X, y
 
@@ -74,8 +77,13 @@ def test_pretrain_flattens_y_instance_labels():
     y = pd.DataFrame(
         {"ilocs": [1, 2, 3, 4]},
         index=pd.MultiIndex.from_tuples(
-            [("h0_0", "h1_0"), ("h0_0", "h1_1"), ("h0_1", "h1_0"), ("nope", "h1_0")],
-            names=["h0", "h1"],
+            [
+                ("h0_0", "h1_0", 0),
+                ("h0_0", "h1_1", 0),
+                ("h0_1", "h1_0", 0),
+                ("nope", "h1_0", 0),
+            ],
+            names=["h0", "h1", "event_no"],
         ),
     )
 
@@ -107,7 +115,12 @@ def test_predict_fires_at_pretrained_rate(n_timepoints, expected):
     """Test alarms come every round(1 / rate) points, on the series passed."""
     X, _ = _make_panel_and_events()
     # 4 events in 40 time points, so the rate is 0.1, and the step is 10
-    y = pd.DataFrame({"ilocs": [1, 2, 3, 4]}, index=["a", "a", "b", "b"])
+    y = pd.DataFrame(
+        {"ilocs": [1, 2, 3, 4]},
+        index=pd.MultiIndex.from_tuples(
+            [("a", 0), ("a", 1), ("b", 0), ("b", 1)], names=["instance", "event_no"]
+        ),
+    )
     detector = DummyRateAnomalies().pretrain(X, y)
 
     X_live = _make_series(n_timepoints)
