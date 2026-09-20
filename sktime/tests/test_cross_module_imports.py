@@ -45,21 +45,6 @@ _CHECKED_SOURCES = TYPE_MODULES | {_NETWORKS}
 KNOWN_EXCEPTIONS = frozenset(
     {
         (
-            "classification/dictionary_based/_boss.py",
-            "classification",
-            "transformations",
-        ),
-        (
-            "classification/dictionary_based/_muse.py",
-            "classification",
-            "transformations",
-        ),
-        (
-            "classification/dictionary_based/_tde.py",
-            "classification",
-            "transformations",
-        ),
-        (
             "classification/dictionary_based/_weasel.py",
             "classification",
             "transformations",
@@ -166,11 +151,6 @@ KNOWN_EXCEPTIONS = frozenset(
             "transformations",
         ),
         ("clustering/compose/_as_transform.py", "clustering", "transformations"),
-        (
-            "clustering/compose/tests/test_pipeline.py",
-            "clustering",
-            "transformations",
-        ),
         ("detection/compose/_as_transform.py", "detection", "transformations"),
         ("detection/eagglo.py", "detection", "transformations"),
         ("detection/stray.py", "detection", "transformations"),
