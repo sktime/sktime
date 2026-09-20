@@ -10,6 +10,7 @@ import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.tempo import TEMPOForecaster
+from sktime.tests.test_switch import run_test_for_class
 
 
 class _FakeTEMPO:
@@ -47,6 +48,10 @@ def fake_tempo(monkeypatch):
     monkeypatch.setitem(sys.modules, "tempo.models.TEMPO", fake_model_module)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TEMPOForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_tempo_tags_and_get_test_params():
     params = TEMPOForecaster.get_test_params()
     assert isinstance(params, dict)
@@ -59,6 +64,10 @@ def test_tempo_tags_and_get_test_params():
     assert tags["capability:missing_values"] is False
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TEMPOForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_tempo_point_prediction(fake_tempo):
     y = pd.Series(np.arange(10.0), index=pd.RangeIndex(10))
     forecaster = TEMPOForecaster(model_path="Melady/TEMPO", device="cpu")
@@ -70,6 +79,10 @@ def test_tempo_point_prediction(fake_tempo):
     assert np.allclose(y_pred.to_numpy(), np.array([9.0, 10.0, 11.0]))
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TEMPOForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_tempo_relative_and_absolute_fh(fake_tempo):
     y = pd.Series(np.arange(12.0), index=pd.RangeIndex(12))
 
@@ -89,6 +102,10 @@ def test_tempo_relative_and_absolute_fh(fake_tempo):
     assert np.allclose(pred_abs.to_numpy(), np.array([13.0, 15.0]))
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(TEMPOForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_tempo_serialization_reuses_cached_model(fake_tempo):
     y = pd.Series(np.arange(10.0), index=pd.RangeIndex(10))
     forecaster = TEMPOForecaster(model_path="Melady/TEMPO", device="cpu")

@@ -61,10 +61,13 @@ class TEMPOForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["idevede", "yongchand", "aryamanDutta"],
         "maintainers": ["sktime developers"],
-        "python_version": ">=3.10",
         "python_dependencies": ["timeagi"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "None",
         "capability:multivariate": False,
@@ -76,7 +79,10 @@ class TEMPOForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        # CI and test flags
+        # -----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.forecasting.tests.test_tempo"],
     }
 
     def __init__(
