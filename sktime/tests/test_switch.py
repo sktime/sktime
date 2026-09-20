@@ -113,13 +113,8 @@ def run_test_for_class(cls, return_reason=False):
             return run, reason
         return run
 
-    # if object is passed, obtain the class - objects are not hashable
-    if hasattr(cls, "get_class_tag") and not isclass(cls):
-        cls = cls.__class__
-    # check whether estimator is on the exclude override list
-    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
-        return _return(False, "False_exclude_list")
-
+    # if list and tuple, recurse to individual elements
+    # False if at least one of the elements should not be tested
     if isinstance(cls, (list, tuple)):
         runs = [run_test_for_class(x, return_reason=True) for x in cls]
         reasons = [x[1] for x in runs]
@@ -136,6 +131,7 @@ def run_test_for_class(cls, return_reason=False):
         NEG_REASONS = [
             "False_exclude_list",
             "False_required_deps_missing",
+            "False_requires_vm",
         ]
         for neg_reason in NEG_REASONS:
             if any(reason == neg_reason for reason in reasons):
@@ -157,6 +153,13 @@ def run_test_for_class(cls, return_reason=False):
 
         # otherwise, we do not run, and the reason is "no change"
         return _return(False, "False_no_change")
+
+    # if object is passed, obtain the class - objects are not hashable
+    if hasattr(cls, "get_class_tag") and not isclass(cls):
+        cls = cls.__class__
+    # check whether estimator is on the exclude override list
+    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
+        return _return(False, "False_exclude_list")
 
     # now we know that cls is a class or function,
     # and not on the exclude list
@@ -201,7 +204,7 @@ def _run_test_for_class(
         whether to run tests only for classes impacted by changed modules.
         If False, will only check active "False" conditions to skip.
     only_vm_required : boolean, default=False
-        whether th return only classes that require their own VM.
+        whether to return only classes that require their own VM.
         If True, will only return classes with tag "tests:vm"=True.
         If False, will only return classes with tag "tests:vm"=False.
 
