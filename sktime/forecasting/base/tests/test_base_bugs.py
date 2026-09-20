@@ -13,8 +13,6 @@ from sktime.forecasting.reconcile import ReconcilerForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.difference import Differencer
-from sktime.transformations.hierarchical.aggregate import Aggregator
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
 
@@ -25,6 +23,8 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 )
 def test_heterogeneous_get_fitted_params():
     """Regression test for bugfix #4574, related to get_fitted_params."""
+    from sktime.transformations.hierarchical.aggregate import Aggregator
+
     y = _make_hierarchical(hierarchy_levels=(2, 2), min_timepoints=7, max_timepoints=7)
     agg = Aggregator()
     y_agg = agg.fit_transform(y)
@@ -71,6 +71,7 @@ def test_predict_residuals_conversion():
     """Regression test for bugfix #4766, related to predict_residuals internal type."""
     from sktime.datasets import load_longley
     from sktime.split import temporal_train_test_split
+    from sktime.transformations.difference import Differencer
 
     y, X = load_longley()
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X)
