@@ -214,10 +214,15 @@ class VECM(_StatsModelsAdapter):
 
         # in-sample prediction by means of residuals
         if fh_int.min() <= 0:
-            # .resid returns np.ndarray
-            # both values need to be pd DataFrame for subtraction
-            y_pred_insample = self._y - pd.DataFrame(self._fitted_forecaster.resid)
-            y_pred_insample = y_pred_insample.values
+            # .resid returns np.ndarray, aligned with the last len(resid)
+            # rows of self._y; the first len(self._y) - len(resid) rows
+            # (lost to differencing and lags) have no in-sample prediction
+            resid = self._fitted_forecaster.resid
+            offset = len(self._y) - len(resid)
+            y_pred_insample = np.full(self._y.shape, np.nan)
+            y_pred_insample[offset:] = (
+                self._y.values[offset:] - resid[:, : self._y.shape[1]]
+            )
 
         if y_pred_insample is not None and y_pred_outsample is not None:
             y_pred = np.concatenate([y_pred_outsample, y_pred_insample], axis=0)
