@@ -8,7 +8,6 @@ import pytest
 
 from sktime.detection._datatypes._check import _is_valid_detection
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.tests.test_all_estimators import BaseFixtureGenerator, QuickTester
 from sktime.utils._testing.detection import make_detection_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
@@ -207,6 +206,8 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
 
     def test_clone_after_pretrain(self, object_instance):
         """Test clone after pretrain uses the pretrain clone plugin."""
+        from sktime.forecasting.base._clone_plugin import _PretrainedCloner
+
         estimator = object_instance
         assert _PretrainedCloner in estimator._get_clone_plugins()
 

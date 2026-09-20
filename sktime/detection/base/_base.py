@@ -30,14 +30,12 @@ from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
-from sktime.forecasting.base._clone_plugin import _PretrainedCloner
-from sktime.forecasting.base._state_at import _StateAtMixin
 from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.series import check_series
 
 
-class BaseDetector(_StateAtMixin, BaseEstimator):
+class BaseDetector(BaseEstimator):
     """Base class for time series detectors.
 
     Developers should set the task and learning_type tags in the derived class.
@@ -132,6 +130,10 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
         list
             List containing ``_PretrainedCloner`` plugin class.
         """
+        # imported here and not at module level, as detection must not
+        # import forecasting at module level, see the cross module import test
+        from sktime.forecasting.base._clone_plugin import _PretrainedCloner
+
         return [_PretrainedCloner]
 
     def __rmul__(self, other):
@@ -274,7 +276,10 @@ class BaseDetector(_StateAtMixin, BaseEstimator):
         X, X_metadata = self._check_X_pretrain(X)
 
         # detectors without pretrain capability: no-op, only the state changes
-        if not self._has_pretrain_capability():
+        can_pretrain = self.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+        if not can_pretrain:
             self._state = "pretrained"
             return self
 
