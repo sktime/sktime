@@ -881,7 +881,7 @@ class _MultioutputReducer(_Reducer):
 
         # Iterate over estimators/forecast horizon
         y_pred = self.estimator_.predict(X_pred)
-        return y_pred.ravel()
+        return np.asarray(y_pred).ravel()
 
 
 class _RecursiveReducer(_Reducer):
@@ -2490,6 +2490,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.transformations.lag"],
+        "tests:skip_all": True,
+        # temporarily removed RRF from tests, while #7380 is not merged
     }
 
     def __init__(

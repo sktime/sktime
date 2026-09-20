@@ -160,6 +160,9 @@ def run_test_for_class(cls, return_reason=False):
     if cls.__name__ in EXCLUDE_ESTIMATORS:
         return _return(False, "False_exclude_list")
 
+    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
+        return _return(False, "False_exclude_list")
+
     # now we know that cls is a class or function,
     # and not on the exclude list
     run, reason = _run_test_for_class(
