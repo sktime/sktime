@@ -139,6 +139,10 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "capability:random_state": True,
         "property:randomness": "stochastic",
         "capability:categorical_in_X": False,
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
+        # creates nested numpy shapelets sporadically, see #6171
     }
 
     _estimator_attr = "_pyts_shapelet_transform"

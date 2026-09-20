@@ -224,7 +224,7 @@ class FourierFeatures(BaseTransformer):
                     f"does not match the frequency given:{self.freq}.",
                     stacklevel=2,
                 )
-            time_index = time_index.to_period(self.freq_)
+            time_index = time_index.to_period(_get_period_freq(self.freq_))
         # this is used to make sure that time t is calculated with reference to
         # the data passed on fit
         # store the integer form of the minimum date in the prediod index
@@ -253,7 +253,7 @@ class FourierFeatures(BaseTransformer):
         X_df = pd.DataFrame(X)
 
         if isinstance(X.index, pd.DatetimeIndex):
-            time_index = X.index.to_period(self.freq_)
+            time_index = X.index.to_period(_get_period_freq(self.freq_))
         else:
             time_index = X.index
 
@@ -361,6 +361,21 @@ class FourierFeatures(BaseTransformer):
             {"sp_list": ["Y", "Q"], "fourier_terms_list": [3, 4]},
         ]
         return params
+
+
+def _get_period_freq(freq):
+    """Coerce a frequency to one accepted by ``to_period``.
+
+    Periods have no start/end variant, and pandas 3 no longer accepts begin
+    offsets such as ``MonthBegin`` in ``to_period``, use the period alias instead.
+    """
+    if isinstance(freq, pd.offsets.MonthBegin):
+        return f"{freq.n}M"
+    if isinstance(freq, pd.offsets.QuarterBegin):
+        return f"{freq.n}Q"
+    if isinstance(freq, pd.offsets.YearBegin):
+        return f"{freq.n}Y"
+    return freq
 
 
 class FourierTransform(BaseTransformer):
