@@ -194,8 +194,11 @@ class UpdateRefitsEvery(_DelegatedForecaster):
         #   and replace integers with timedelta quantities before proceeding
         if _is_time_difference(time_since_last_fit):
             if isinstance(refit_window_lag, int):
-                lag = min(refit_window_lag, len(_y))
-                refit_window_lag = self.cutoff[0] - _y.index[-lag]
+                if refit_window_lag == 0:
+                    refit_window_lag = self.cutoff[0] - self.cutoff[0]
+                else:
+                    lag = min(refit_window_lag, len(_y))
+                    refit_window_lag = self.cutoff[0] - _y.index[-lag]
             if isinstance(refit_window_size, int):
                 _y_lag = get_window(_y, lag=refit_window_lag)
                 window_size = min(refit_window_size + 1, len(_y_lag))
@@ -409,8 +412,11 @@ class UpdateEvery(_DelegatedForecaster):
         #   and replace integers with timedelta quantities before proceeding
         if _is_time_difference(time_since_last_update):
             if isinstance(update_interval, int):
-                index = min(update_interval, len(_y))
-                update_interval = self.cutoff[0] - _y.index[-index]
+                if update_interval == 0:
+                    update_interval = self.cutoff[0] - self.cutoff[0]
+                else:
+                    index = min(update_interval, len(_y))
+                    update_interval = self.cutoff[0] - _y.index[-index]
         # case distinction based on whether the update_interval period has elapsed
         # (None update_interval means infinite update_interval)
         #   if yes: call inner update with update_params=True, aka "true" update
