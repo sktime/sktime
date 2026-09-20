@@ -45,6 +45,7 @@ if MoeCausalLMOutputWithPast.__name__ == "MagicMock":
 
     class MoeCausalLMOutputWithPast:
         """Empty placeholder for MoeCausalLMOutputWithPast when import fails."""
+
         pass
 
 
@@ -52,6 +53,7 @@ if MoeModelOutputWithPast.__name__ == "MagicMock":
 
     class MoeModelOutputWithPast:
         """Empty placeholder for MoeModelOutputWithPast when import fails."""
+
         pass
 
 
