@@ -1,4 +1,4 @@
-"""Mean advance time, of alarms raised ahead of true events."""
+"""Mean detection offset, signed distance from each event to its earliest alarm."""
 
 import numpy as np
 import pandas as pd
@@ -11,16 +11,21 @@ from sktime.performance_metrics.detection.utils._match import (
 )
 
 __author__ = ["yash-sangwan"]
-__all__ = ["MeanAdvanceTime"]
+__all__ = ["MeanDetectionOffset"]
 
 
-class MeanAdvanceTime(BaseDetectionMetric):
-    """Mean advance time, how early the earliest alarm comes before each event.
+class MeanDetectionOffset(BaseDetectionMetric):
+    """Mean detection offset, how far the earliest alarm is from each event.
 
     A true event at time ``T`` counts as hit if at least one alarm falls in the
     window ``[T + min_offset, T + max_offset]``. For each hit event, the
-    advance time is ``T`` minus the time of the earliest alarm in its window.
-    The score is the mean advance time over hit events only.
+    detection offset is the time of the earliest alarm in its window, minus
+    ``T``. The score is the mean detection offset over hit events only.
+
+    The offset is signed in the same way as the window: it is negative for an
+    alarm before the event, and positive for a late hit, which can only happen
+    if ``max_offset`` is above 0. An earlier alarm gives a smaller score, so
+    lower is better.
 
     The offsets are signed, negative is before the event and positive is after
     it. With offsets in the units of ``X.index``, for an event at ``T``:
@@ -43,9 +48,6 @@ class MeanAdvanceTime(BaseDetectionMetric):
     If ``X`` has a time index, the offsets are time offsets, for instance
     ``pd.Timedelta("-3s")``, and the score is returned as a number of
     ``time_unit``. Otherwise all values are in the units of ``X.index``.
-
-    The advance time is positive for alarms before the event. It is negative
-    for a late hit, which can only happen if ``max_offset`` is above 0.
 
     Only point events are scored, so interval ``ilocs`` (segments) in
     ``y_true`` or ``y_pred`` raise a ``ValueError``.
@@ -74,21 +76,21 @@ class MeanAdvanceTime(BaseDetectionMetric):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.performance_metrics.detection import MeanAdvanceTime
+    >>> from sktime.performance_metrics.detection import MeanDetectionOffset
     >>> index = pd.date_range("2020-01-01", periods=20, freq="s")
     >>> X = pd.DataFrame({"foo": range(20)}, index=index)
     >>> y_true = pd.DataFrame({"ilocs": [5, 15]})
     >>> y_pred = pd.DataFrame({"ilocs": [2, 14]})
-    >>> metric = MeanAdvanceTime(min_offset=pd.Timedelta("-3s"))
+    >>> metric = MeanDetectionOffset(min_offset=pd.Timedelta("-3s"))
     >>> metric(y_true, y_pred, X)
-    2.0
+    -2.0
     """
 
     _tags = {
         "scitype:y": "points",
         "requires_X": True,  # event positions are mapped through X.index
         "requires_y_true": True,
-        "lower_is_better": False,  # earlier alarms are better
+        "lower_is_better": True,  # an earlier alarm gives a smaller offset
     }
 
     def __init__(self, min_offset=0, max_offset=0, time_unit="s"):
@@ -108,7 +110,7 @@ class MeanAdvanceTime(BaseDetectionMetric):
         return super()._coerce_to_detection_type(y, X, allow_none=allow_none)
 
     def _evaluate(self, y_true, y_pred, X):
-        """Evaluate the mean advance time on given inputs.
+        """Evaluate the mean detection offset on given inputs.
 
         private _evaluate containing core logic, called from evaluate
 
@@ -124,7 +126,7 @@ class MeanAdvanceTime(BaseDetectionMetric):
         Returns
         -------
         float
-            Mean of event time minus earliest hit time, over hit events only,
+            Mean of earliest hit time minus event time, over hit events only,
             or ``nan`` if no event is hit.
         """
         match = _match_alarms_to_events(
@@ -140,13 +142,13 @@ class MeanAdvanceTime(BaseDetectionMetric):
 
         hit_times = match.event_times[match.hit]
         earliest_alarm_times = match.alarm_times[match.earliest_hit[match.hit]]
-        advance = hit_times - earliest_alarm_times
+        offset = earliest_alarm_times - hit_times
 
         # a time index gives a TimedeltaIndex, which has a mean in time units,
         # a plain numeric Index has no mean method, so go through numpy
         if _is_time_index(X.index):
-            return float(advance.mean() / pd.Timedelta(1, unit=self.time_unit))
-        return float(np.mean(advance.to_numpy()))
+            return float(offset.mean() / pd.Timedelta(1, unit=self.time_unit))
+        return float(np.mean(offset.to_numpy()))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

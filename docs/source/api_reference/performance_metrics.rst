@@ -226,7 +226,7 @@ Event detection - anomalies, outliers
     WindowedF1Score
     TimeSeriesAUPRC
     EventTPR
-    MeanAdvanceTime
+    MeanDetectionOffset
     FalseAlarmRate
 
 Segment detection

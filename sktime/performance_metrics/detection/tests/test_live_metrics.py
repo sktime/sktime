@@ -5,7 +5,9 @@ import pytest
 
 from sktime.performance_metrics.detection._event_tpr import EventTPR
 from sktime.performance_metrics.detection._false_alarm_rate import FalseAlarmRate
-from sktime.performance_metrics.detection._mean_advance_time import MeanAdvanceTime
+from sktime.performance_metrics.detection._mean_detection_offset import (
+    MeanDetectionOffset,
+)
 from sktime.tests.test_switch import run_test_module_changed
 
 SKIP_IF_UNCHANGED = pytest.mark.skipif(
@@ -15,7 +17,9 @@ SKIP_IF_UNCHANGED = pytest.mark.skipif(
 
 
 @SKIP_IF_UNCHANGED
-@pytest.mark.parametrize("metric_class", [EventTPR, MeanAdvanceTime, FalseAlarmRate])
+@pytest.mark.parametrize(
+    "metric_class", [EventTPR, MeanDetectionOffset, FalseAlarmRate]
+)
 def test_live_metrics_refuse_interval_ground_truth(metric_class):
     """Interval ground truth raises, instead of becoming its end points.
 
