@@ -109,7 +109,7 @@ class BaseDeepRegressorTorch(_PytorchDeepAdapter, BaseRegressor):
     # be overridden.
     _instantiate_activation_vars = ("activation", "activation_hidden")
 
-    _default_criterion = "torch.nn.MSELoss"
+    _default_criterion = "MSELoss"
 
     @property
     def _validated_criterion(self):

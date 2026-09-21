@@ -1,7 +1,7 @@
 """Implements adapter for pytorch deep learning estimators."""
 
-__all__ = ["_PytorchDeepAdapter", "PytorchDataset"]
-__authors__ = ["geetu040", "RecreationalMath"]
+__all__ = ["_PytorchDeepAdapter"]
+__authors__ = ["geetu040", "RecreationalMath", "srupat"]
 
 import abc
 from collections.abc import Callable
@@ -10,8 +10,6 @@ import numpy as np
 
 from sktime.utils._lookup import _lc_class_dict, _lookup_class
 from sktime.utils.dependencies import _safe_import
-
-ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 
 TORCH_NN = "torch.nn"
 TORCH_MODULE = "torch.nn.Module"
@@ -26,13 +24,14 @@ class _PytorchDeepAdapter:
     """Mixin adapter class for pytorch deep learning estimators."""
 
     _default_criterion = None
-    _y_dtype = "torch.float"
+    _y_dtype = "float"
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
 
         This method should be used for setting dynamic tags only.
         """
+        super().__dynamic_tags__()
         if self.metrics is not None:
             self.set_tags(**{"tests:python_dependencies": "torchmetrics"})
 
@@ -45,10 +44,12 @@ class _PytorchDeepAdapter:
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
-        # set random seed for torch
+        super().__post_init__()
+
         if self.random_state is not None:
-            torchManual_seed = _safe_import("torch.manual_seed")
-            torchManual_seed(self.random_state)
+            from torch import manual_seed
+
+            manual_seed(self.random_state)
 
         activation_map = {}
         for var in self._instantiate_activation_vars:
@@ -57,15 +58,19 @@ class _PytorchDeepAdapter:
         self._metrics_objects = None
 
     def _activation_spec(self, var):
+        """Get the activation to instantiate, for the parameter named ``var``."""
         return getattr(self, var, None)
 
     def _align_pred(self, y_pred, outputs):
+        """Align the shape of the network output with the shape of the target."""
         return y_pred
 
     def _metric_kwargs(self, metric):
+        """Get the kwargs to construct ``metric`` from ``torchmetrics`` with."""
         return {}
 
     def _run_epoch(self, epoch, dataloader):
+        """Train the network for one epoch, and step the schedulers."""
         losses = []
         metric_values = {name: [] for name in (self._metrics_objects or {})}
 
@@ -90,6 +95,8 @@ class _PytorchDeepAdapter:
         epoch_loss = np.average(losses)
         # step the schedulers, if any
         if self._schedulers:
+            from torch.optim.lr_scheduler import ReduceLROnPlateau
+
             for scheduler in self._schedulers:
                 if isinstance(scheduler, ReduceLROnPlateau):
                     # if ReduceLROnPlateau is used,
@@ -111,19 +118,20 @@ class _PytorchDeepAdapter:
     def _instantiate_activations(
         self, activations: dict[str, str | Callable | None]
     ) -> dict[str, Callable | None]:
-        """Instantiate PyTorch activations from string or module specifications.
+        """Instantiate the activations of the estimator.
 
         Parameters
         ----------
-        activations : dict[str, str | Callable | None]
-            A mapping where each key is the name of an activation attribute, and the
-            value is either the activation specified by the user or a default provided
-            by the estimator.
+        activations : dict of str to str, torch.nn.Module, or None
+            The activations to instantiate, keyed by the name of the parameter
+            they belong to. Values are the activation passed by the user, or the
+            default of the estimator if the user passed none.
 
         Returns
         -------
-        callable_activations : dict[str, torch.nn.Module | None]
-            A dictionary of activation functions, keyed by the attribute name.
+        dict of str to torch.nn.Module or None
+            The instantiated activations, keyed as in ``activations``.
+            The value is None wherever the activation passed was None.
         """
         import torch
 
@@ -160,24 +168,24 @@ class _PytorchDeepAdapter:
         return callable_activations
 
     def _instantiate_schedulers(self):
-        """Instantiate the schedulers to be used during training.
+        """Instantiate the learning rate schedulers to be used during training.
 
         Currently, only learning rate schedulers are supported as callbacks.
-        If more than one scheduler is passed, they are applied sequentially
-        in the order they are passed.
+        If more than one scheduler is passed, they are applied sequentially,
+        in the order in which they are passed.
 
-        Note: Since PyTorch learning rate schedulers need to be initialized with
-        the optimizer object, we only accept the class name (str) of the scheduler here
-        and do not accept an instance of the scheduler. As that can lead to errors
-        and unexpected behavior.
+        Only the names of schedulers are accepted, and not instances, since
+        PyTorch learning rate schedulers must be constructed with the optimizer
+        object, which does not exist before ``fit`` is called.
 
-        Sets
-        ------
-        self._schedulers : None or str or a tuple of str, each string
-            representing the name of a valid learning rate scheduler
-            implemented in PyTorch. For list of supported learning rate schedulers
-            see: https://docs.pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
-            The list of instantiated schedulers to be used during training.
+        Returns
+        -------
+        list of torch.optim.lr_scheduler.LRScheduler, or None
+            The schedulers named in ``callbacks``, constructed on the optimizer,
+            in the order in which they were passed.
+            None if no callbacks were passed.
+            For the schedulers that can be named, see
+            https://docs.pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
         """
         if self.callbacks is None:
             return None
@@ -221,12 +229,19 @@ class _PytorchDeepAdapter:
         return schedulers
 
     def _instantiate_optimizer(self):
-        # import the base class for all optimizers in PyTorch
-        torchOptimizer = _safe_import(TORCH_OPTIMIZER)
+        """Instantiate the optimizer, on the parameters of the network.
+
+        Returns
+        -------
+        torch.optim.Optimizer
+            The optimizer, constructed on ``self.network.parameters()``,
+            with ``lr`` and ``optimizer_kwargs``.
+        """
+        from torch.optim import Adam, Optimizer
 
         # if no optimizer is passed, use Adam as default
         if self.optimizer is None:
-            optimizer_class = _safe_import("torch.optim.Adam")
+            optimizer_class = Adam
             optimizer_params = {"lr": self.lr}
         # if optimizer is a string, look up the optimizer of that name
         # in torch.optim, case insensitively
@@ -244,16 +259,14 @@ class _PytorchDeepAdapter:
                 )
             optimizer_params = {"lr": self.lr}
         # if optimizer is an optimizer class, use it as is
-        elif isinstance(self.optimizer, type) and issubclass(
-            self.optimizer, torchOptimizer
-        ):
+        elif isinstance(self.optimizer, type) and issubclass(self.optimizer, Optimizer):
             optimizer_class = self.optimizer
             optimizer_params = {"lr": self.lr}
         # if optimizer is an instance of torch.optim.Optimizer, it cannot be used
         # directly: it is bound to the parameters it was constructed with, which
         # are never the parameters of self.network. Its hyperparameters are carried
         # over to a new optimizer of the same class, bound to the network instead.
-        elif isinstance(self.optimizer, torchOptimizer):
+        elif isinstance(self.optimizer, Optimizer):
             optimizer_class = type(self.optimizer)
             optimizer_params = dict(self.optimizer.defaults)
             # the learning rate of the instance is retained,
@@ -276,10 +289,18 @@ class _PytorchDeepAdapter:
         return optimizer_class(self.network.parameters(), **optimizer_params)
 
     def _instantiate_criterion(self):
+        """Instantiate the loss function to train the network with.
+
+        Returns
+        -------
+        torch.nn.modules.loss._Loss
+            The loss function, constructed with ``criterion_kwargs``.
+        """
+        from torch import nn
+        from torch.nn.modules.loss import _Loss
+
         if not self._validated_criterion:
-            return _safe_import(self._default_criterion)()
-        # import the base class for all loss functions in PyTorch
-        torchLossFunction = _safe_import(TORCH_LOSS)
+            return getattr(nn, self._default_criterion)()
         # if criterion is a string, look up the loss function of that name
         # in torch.nn, case insensitively
         if isinstance(self._validated_criterion, str):
@@ -299,7 +320,7 @@ class _PytorchDeepAdapter:
             else:
                 return criterion_class()
         # if criterion is already an instance of torch.nn.modules.loss._Loss, use it
-        elif isinstance(self._validated_criterion, torchLossFunction):
+        elif isinstance(self._validated_criterion, _Loss):
             return self._validated_criterion
         else:
             # if criterion is neither a string nor an instance of
@@ -406,9 +427,47 @@ class _PytorchDeepAdapter:
         pass
 
     def _build_dataloader(self, X, y=None):
-        dataset = PytorchDataset(X, y, self._y_dtype)
-        DataLoader = _safe_import("torch.utils.data.DataLoader")
+        """Build the dataloader iterated over in fit and predict."""
+        from torch.utils.data import DataLoader
+
+        dataset = self._get_dataset_class()(X, y, self._y_dtype)
         return DataLoader(dataset, self.batch_size)
+
+    def _get_dataset_class(self):
+        """Get the pytorch dataset class of the estimator."""
+        from torch.utils.data import Dataset
+
+        class PytorchDataset(Dataset):
+            """Dataset for use in sktime deep learning estimators based on pytorch."""
+
+            def __init__(self, X, y=None, y_dtype="float"):
+                # X.shape = (batch_size, n_dims, n_timestamps)
+                X = np.transpose(X, (0, 2, 1))
+                # X.shape = (batch_size, n_timestamps, n_dims)
+
+                self.X = X
+                self.y = y
+                self.y_dtype = y_dtype
+
+            def __len__(self):
+                """Get length of dataset."""
+                return len(self.X)
+
+            def __getitem__(self, i):
+                """Get item at index."""
+                import torch
+
+                x = torch.tensor(self.X[i], dtype=torch.float)
+                inputs = {"X": x}
+                # to make it reusable for predict
+                if self.y is None:
+                    return inputs
+
+                # return y during fit
+                y = torch.tensor(self.y[i], dtype=getattr(torch, self.y_dtype))
+                return inputs, y
+
+        return PytorchDataset
 
     def _internal_convert(self, X, y=None):
         """Override to enforce strict 3D input validation for PyTorch estimators.
@@ -426,62 +485,3 @@ class _PytorchDeepAdapter:
 
         # Call parent method for other conversions
         return super()._internal_convert(X, y)
-
-    @classmethod
-    def get_test_params(cls, parameter_set="default"):
-        """Return testing parameter settings for the estimator.
-
-        Parameters
-        ----------
-        parameter_set : str, default="default"
-            Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
-            Reserved values for estimators:
-                "results_comparison" - used for identity testing in some estimators
-                    should contain parameter settings comparable to "TSC bakeoff"
-
-        Returns
-        -------
-        params : dict or list of dict, default = {}
-            Parameters to create testing instances of the class
-            Each dict are parameters to construct an "interesting" test instance, i.e.,
-            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
-            `create_test_instance` uses the first (or only) dictionary in `params`
-        """
-        return []
-
-
-Dataset = _safe_import("torch.utils.data.Dataset")
-
-
-class PytorchDataset(Dataset):
-    """Dataset for use in sktime deep learning estimators based on pytorch."""
-
-    def __init__(self, X, y=None, y_dtype="torch.float"):
-        # X.shape = (batch_size, n_dims, n_timestamps)
-        X = np.transpose(X, (0, 2, 1))
-        # X.shape = (batch_size, n_timestamps, n_dims)
-
-        self.X = X
-        self.y = y
-        self.y_dtype = y_dtype
-
-    def __len__(self):
-        """Get length of dataset."""
-        return len(self.X)
-
-    def __getitem__(self, i):
-        """Get item at index."""
-        torchTensor = _safe_import("torch.tensor")
-        torchFloat = _safe_import("torch.float")
-        x = self.X[i]
-        x = torchTensor(x, dtype=torchFloat)
-        inputs = {"X": x}
-        # to make it reusable for predict
-        if self.y is None:
-            return inputs
-
-        # return y during fit
-        y = self.y[i]
-        y = torchTensor(y, dtype=_safe_import(self.y_dtype))
-        return inputs, y

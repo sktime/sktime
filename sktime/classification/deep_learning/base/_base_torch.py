@@ -133,8 +133,8 @@ class BaseDeepClassifierPytorch(_PytorchDeepAdapter, BaseClassifier):
     # be overridden.
     _instantiate_activation_vars = ("activation", "activation_hidden")
 
-    _default_criterion = "torch.nn.CrossEntropyLoss"
-    _y_dtype = "torch.long"
+    _default_criterion = "CrossEntropyLoss"
+    _y_dtype = "long"
 
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes."""
