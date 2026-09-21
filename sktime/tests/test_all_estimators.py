@@ -940,10 +940,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
 
         forbidden_tags = self.LEGACY_DEPRECATED_TAGS + list(ALIAS_DICT.keys())
 
-        # todo 1.2.0: remove the exception for capability:global_forecasting
-        # for now, the tag is still fine due to special deprecation process
-        forbidden_tags.remove("capability:global_forecasting")
-
         for tag in object_class._get_class_flags(flag_attr_name="_tags"):
             if tag in forbidden_tags:
                 msg = (
@@ -971,10 +967,6 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
         ALIAS_DICT = TagAliaserMixin.alias_dict.copy()
 
         forbidden_tags = self.LEGACY_DEPRECATED_TAGS + list(ALIAS_DICT.keys())
-
-        # todo 1.2.0: remove the exception for capability:global_forecasting
-        # for now, the tag is still fine due to special deprecation process
-        forbidden_tags.remove("capability:global_forecasting")
 
         for tag in object_instance._get_flags(flag_attr_name="_tags"):
             if tag in forbidden_tags:
