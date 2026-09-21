@@ -154,6 +154,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         forecasters = [x[1] for x in self.forecasters_]
 
         # get training data for meta-model
@@ -224,7 +226,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     @classmethod
@@ -389,6 +391,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         self._fit_forecasters(None, y, X, fh)
         return self
 
