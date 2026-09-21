@@ -39,6 +39,12 @@ class FalseAlarmRate(BaseDetectionMetric):
     The scored duration is the span of ``X.index``, last value minus first
     value, so ``X`` should hold only the part of the stream that is scored.
 
+    This metric counts unmatched alarms only. With ``min_offset=0`` and
+    ``max_offset=0``, the window is the event time itself, so an alarm is
+    unmatched unless it lands exactly on an event. The default is therefore
+    close to the number of alarms divided by the length of ``X``, but an alarm
+    that lands exactly on an event is not a false alarm.
+
     Positions in ``y_true`` and ``y_pred`` are ``iloc`` references into ``X``,
     and are mapped through ``X.index`` before matching, so ``X`` is required.
     If ``X`` has a time index, the offsets are time offsets, for instance
