@@ -27,6 +27,10 @@ class _StatsModelsAdapter(BaseForecaster):
         # estimator type
         # --------------
         "capability:exogenous": False,
+        # statsmodels ``predict(start, end, exog=...)`` needs exog for every
+        # step from ``start`` to ``end``, so gapped forecasting horizons are
+        # not supported when exogenous variables are present
+        "capability:non_contiguous_X": False,
         "capability:categorical_in_X": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
@@ -59,6 +63,8 @@ class _StatsModelsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         # save info needed for _predict: should these be saved to self._y_metadata?
         self._y_len = len(y)
         self._y_first_index = y.index[0]
@@ -72,7 +78,7 @@ class _StatsModelsAdapter(BaseForecaster):
 
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
-        if isinstance(y, pd.Series) and pd.api.types.is_integer_dtype(y.index):
+        if pd.api.types.is_integer_dtype(y.index):
             y, X = _coerce_int_to_range_index(y, X)
         self._fit_forecaster(y, X)
         return self
@@ -81,8 +87,29 @@ class _StatsModelsAdapter(BaseForecaster):
         """Log used internally in fit."""
         raise NotImplementedError("abstract method")
 
+    def _coerce_y_to_statsmodels(self, y):
+        """Coerce y to the shape the wrapped statsmodels model was fitted with.
+
+        Descendants that reshape y inside ``_fit_forecaster`` should override this.
+        ``_cur_y`` retains the shape seen in ``fit``, so that refitting passes
+        through ``_fit_forecaster`` again, while data passed directly to the
+        fitted statsmodels object must be reshaped the same way as in fit.
+        """
+        return y
+
+    def _append_fit_data(self, y, X=None):
+        """Append new observations to estimator-owned fit data."""
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+
     def _update(self, y, X=None, update_params=True):
         """Update used internally in update."""
+        # Keep pooled history in sync (formerly BaseForecaster._update_y_X).
+        self._append_fit_data(y, X)
+
         if update_params or self.is_composite():
             super()._update(y, X, update_params=update_params)
         else:
@@ -102,7 +129,9 @@ class _StatsModelsAdapter(BaseForecaster):
                     y = y.loc[index_diff]
                     X = X.loc[index_diff].set_index(y.index) if X is not None else None
 
-                self._fitted_forecaster = self._fitted_forecaster.append(y, exog=X)
+                self._fitted_forecaster = self._fitted_forecaster.append(
+                    self._coerce_y_to_statsmodels(y), exog=X
+                )
 
     def _predict(self, fh, X):
         """Make forecasts.
@@ -129,14 +158,14 @@ class _StatsModelsAdapter(BaseForecaster):
         # bug fix for evaluate function as test_plus_train indices are passed
         # statsmodels exog must contain test indices only.
         # For discussion see https://github.com/sktime/sktime/issues/3830
-        if X is not None and self._X is not None:
-            ind_drop = self._X.index
+        if X is not None and self._cur_X is not None:
+            ind_drop = self._cur_X.index
             X = X.loc[~X.index.isin(ind_drop)]
             # Entire range of the forecast horizon is required
             X = X.iloc[: (fh_int[-1] + 1)]  # include end point
 
         if "exog" in inspect.signature(self._forecaster.__init__).parameters.keys():
-            if self._X is None:
+            if self._cur_X is None:
                 X = None  # change X passed in predict to None if X wasn't passed to fit
             y_pred = self._fitted_forecaster.predict(start=start, end=end, exog=X)
         else:
@@ -222,8 +251,27 @@ class _StatsModelsAdapter(BaseForecaster):
 
         get_prediction_arguments = {"start": start, "end": end}
 
+        # Only pass random_state when supported by get_prediction.
         if hasattr(self, "random_state"):
-            get_prediction_arguments["random_state"] = self.random_state
+            get_prediction_params = inspect.signature(
+                self._fitted_forecaster.get_prediction
+            ).parameters
+
+            if "simulate_kwargs" in get_prediction_params:
+                simulate_params = inspect.signature(
+                    self._fitted_forecaster.simulate
+                ).parameters
+
+                if "rng" in simulate_params:
+                    get_prediction_arguments["simulate_kwargs"] = {
+                        "rng": self.random_state
+                    }
+                else:
+                    get_prediction_arguments["simulate_kwargs"] = {
+                        "random_state": self.random_state
+                    }
+            elif "random_state" in get_prediction_params:
+                get_prediction_arguments["random_state"] = self.random_state
 
         if inspect.signature(self._fitted_forecaster.get_prediction).parameters.get(
             "exog"

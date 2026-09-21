@@ -124,6 +124,10 @@ class MCDCNNRegressorTorch(BaseDeepRegressorTorch):
         "authors": ["hfawaz", "James-Large", "noxthot"],
         "python_dependencies": "torch",
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.mcdcnn._mcdcnn_torch"],
     }
 
     def __init__(

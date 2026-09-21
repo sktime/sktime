@@ -221,6 +221,12 @@ class _PytorchForecastingAdapter(BaseForecaster):
             raise NotImplementedError(
                 f"No in sample predict support, but found fh with in sample index: {fh}"
             )
+        # snapshot y and X as passed, since _Xy_to_dataset renames columns and
+        # index levels in place, on the frames from _series_to_frame below.
+        # X is snapshotted before the dummy below is created: `_predict` creates
+        # its own dummy, spanning the index extended to the forecasting horizon
+        self._cur_y = y
+        self._cur_X = X
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
@@ -268,6 +274,22 @@ class _PytorchForecastingAdapter(BaseForecaster):
             import torch
 
             torch.set_rng_state(torch_state)
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update the data snapshot that ``_predict`` conditions on.
+
+        ``_predict`` encodes the most recent observations from ``_cur_y``, so
+        appending keeps them contiguous with the cutoff, which advances in
+        ``update``.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        if update_params:
+            self._fit(y=self._cur_y, fh=self._fh, X=self._cur_X)
         return self
 
     def _predict(
@@ -443,11 +465,11 @@ class _PytorchForecastingAdapter(BaseForecaster):
         return output.loc[dateindex]
 
     def _Xy_precheck(self, X):
-        y = deepcopy(self._y)
+        y = deepcopy(self._cur_y)
         if X is None:
-            X = deepcopy(self._X)
-        elif self._X is not None:
-            X = pd.concat([deepcopy(self._X), X])
+            X = deepcopy(self._cur_X)
+        elif self._cur_X is not None:
+            X = pd.concat([deepcopy(self._cur_X), X])
         return X, y
 
     def _Xy_to_dataset(

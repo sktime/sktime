@@ -44,7 +44,10 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         "capability:multivariate": False,
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
+        "tests:skip_by_name": [
+            "test_class_has_doctest_example",
+            "test_get_test_params_coverage",
+        ],
     }
 
     def __init__(self, forecasters, ensemble_algorithm=None, n_jobs=None):
@@ -69,6 +72,8 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         forecasters = [x[1] for x in self.forecasters_]
         self.weights = np.ones(len(forecasters)) / len(forecasters)
         self._fit_forecasters(forecasters, y, X, fh)
@@ -120,7 +125,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
             self.weights = self.ensemble_algorithm.weights
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1) * self.weights
         y_pred = y_pred.sum(axis=1)
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     @classmethod

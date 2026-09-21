@@ -17,7 +17,6 @@ class BaseForecastingDataset(BaseDataset):
 
     Tags
     ----
-
     is_univariate: bool, default=True
         Whether the dataset is univariate. In the case of Forecasting dataset,
         this refers to the dimensionality of the `y` dataframe.
@@ -59,8 +58,6 @@ class BaseForecastingDataset(BaseDataset):
     n_hierarchy_levels: int, default=0
         Number of levels in the hierarchy of the dataset. This is the number of
         index levels in the `y` dataframe, excluding the time index.
-
-
     """
 
     _tags = {

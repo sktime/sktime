@@ -52,6 +52,15 @@ class InceptionTimeRegressor(BaseDeepRegressor):
     -----
     ..[1] Fawaz et. al, InceptionTime: Finding AlexNet for Time Series
     Classification, Data Mining and Knowledge Discovery, 34, 2020
+
+    Examples
+    --------
+    >>> from sktime.regression.deep_learning.inceptiontime import InceptionTimeRegressor
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> regressor = InceptionTimeRegressor(n_epochs=20, batch_size=4)  # doctest: +SKIP
+    >>> regressor.fit(X_train, y_train)  # doctest: +SKIP
+    InceptionTimeRegressor(...)
     """
 
     _tags = {
@@ -60,6 +69,10 @@ class InceptionTimeRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "james-large", "noxthot"],
         "maintainers": ["james-large", "niles05apr"],
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_tf"],
     }
 
     def __init__(
