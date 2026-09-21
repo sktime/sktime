@@ -2088,11 +2088,16 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
         "maintainers": "hliebert",
+        # estimator type
+        # --------------
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
@@ -2506,10 +2511,15 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
