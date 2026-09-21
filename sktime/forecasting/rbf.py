@@ -98,6 +98,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
     >>> y = load_airline()
     >>> forecaster = RBFForecaster(window_length=12, hidden_size=16, epochs=10)
     >>> forecaster.fit(y)
+    RBFForecaster(epochs=10, hidden_size=16, window_length=12)
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
