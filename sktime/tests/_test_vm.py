@@ -19,8 +19,7 @@ def run_test_vm(cls_name):
 
     Does not run the test if python and operating system versions
     are incompatible with the estimator's dependencies,
-    as checked via ``_check_estimator_deps``,
-    or if the estimator has the ``tests:skip_all`` tag set to ``True``.
+    as checked via ``_check_estimator_deps``.
 
     Parameters
     ----------
@@ -62,12 +61,6 @@ def run_test_vm(cls_name):
         # to allow hf-xet to download models on macos runners on version `latest`
         if platform.system() == "Darwin":
             os.environ["HF_XET_NUM_CONCURRENT_RANGE_GETS"] = "4"
-
-    if cls.get_class_tag("tests:skip_all", False):
-        # check_estimator is passed the class directly, so it does not go through
-        # the fixture generation that would otherwise apply the tag
-        print(f"Skipping estimator: {cls}, as it has the tests:skip_all tag set.")
-        return
 
     skips = cls.get_class_tag("tests:skip_by_name", None)
     check_estimator(cls, raise_exceptions=True, tests_to_exclude=skips)
