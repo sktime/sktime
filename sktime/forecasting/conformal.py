@@ -179,6 +179,7 @@ class ConformalIntervals(BaseForecaster):
             "capability:missing_values",
             "X-y-must-have-same-index",
             "enforce_index_type",
+            "capability:update",
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 
