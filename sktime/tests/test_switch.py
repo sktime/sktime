@@ -154,12 +154,8 @@ def run_test_for_class(cls, return_reason=False):
     # if object is passed, obtain the class - objects are not hashable
     if hasattr(cls, "get_class_tag") and not isclass(cls):
         cls = cls.__class__
-    # check whether estimator is on the exclude override list
-    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
-        return _return(False, "False_exclude_list")
-
-    # now we know that cls is a class or function,
-    # and not on the exclude list
+    # now we know that cls is a class or function;
+    # the exclude list (tests:skip_all) is checked in _run_test_for_class
     run, reason = _run_test_for_class(
         cls,
         only_changed_modules=ONLY_CHANGED_MODULES,
@@ -226,6 +222,15 @@ def _run_test_for_class(
 
         If multiple reasons are present, the first one in the above list is returned.
     """
+    # Condition 0:
+    # if the class is on the exclude override list, do not run the test.
+    # This is the single place the class selection logic checks the tag, so that
+    # every way of selecting classes to test inherits it: the public
+    # run_test_for_class, and the VM job lists built by _get_all_changed_classes
+    # and _get_all_vm_classes.
+    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
+        return False, "False_exclude_list"
+
     from skbase.utils.dependencies import _check_estimator_deps
 
     from sktime.utils.git_diff import (
@@ -315,14 +320,6 @@ def _run_test_for_class(
         return run_test_module_changed(
             modules, only_changed_modules=only_changed_modules
         )
-
-    # Condition 0:
-    # if the class is on the exclude override list, do not run the test.
-    # this is checked here rather than only in ``run_test_for_class``, so that
-    # every caller of this function inherits it - the VM job matrix is built
-    # from ``_get_all_changed_classes``, which calls this function directly.
-    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
-        return False, "False_exclude_list"
 
     # Condition 1:
     # if any of the required soft dependencies are not present, do not run the test
@@ -513,9 +510,14 @@ def _get_all_vm_classes():
     """
     from sktime.registry import all_estimators
 
+    def _vm_class(cls):
+        # regardless of changes, same selection logic as the changed-class list
+        run, _ = _run_test_for_class(
+            cls, ignore_deps=True, only_changed_modules=False, only_vm_required=True
+        )
+        return run
+
     # Get all estimators with tests:vm = True tag, except those on the exclude list
-    vm_estimators = all_estimators(
-        filter_tags={"tests:vm": True, "tests:skip_all": False}
-    )
-    names = [name for name, est in vm_estimators]
+    vm_estimators = all_estimators(filter_tags={"tests:vm": True})
+    names = [name for name, est in vm_estimators if _vm_class(est)]
     return names
