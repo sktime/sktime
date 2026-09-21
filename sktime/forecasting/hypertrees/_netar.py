@@ -150,7 +150,10 @@ class HyperTreeNetARForecaster(BaseForecaster):
 
         self._series_id = 0
         self._train_len = len(y)
-        freq = getattr(y.index, "freqstr", None)
+        # the offset object's freqstr is used rather than ``index.freqstr``:
+        # for a PeriodIndex the latter is a period alias, e.g., "M" or "Q-DEC",
+        # which is not a valid DateOffset alias for pd.date_range in pandas 3
+        freq = getattr(getattr(y.index, "freq", None), "freqstr", None)
         if freq is None and isinstance(y.index, pd.DatetimeIndex):
             try:
                 freq = pd.infer_freq(y.index)
