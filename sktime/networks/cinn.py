@@ -3,22 +3,13 @@
 __author__ = ["benHeid"]
 
 import numpy as np
-from skbase.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
+torch = _safe_import("torch", severity="none")
+nn = _safe_import("torch.nn", severity="none")
 
-    NNModule = nn.Module
-else:
-
-    class NNModule:
-        """Dummy class if torch is unavailable."""
-
-
-if _check_soft_dependencies("FrEIA", severity="none"):
-    import FrEIA.framework as Ff
-    import FrEIA.modules as Fm
+Ff = _safe_import("FrEIA.framework", severity="none")
+Fm = _safe_import("FrEIA.modules", severity="none")
 
 
 class CINNNetwork:

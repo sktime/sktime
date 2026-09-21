@@ -77,6 +77,32 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
         super().__init__()
 
+    def _init_network(self, net_predlen):
+        """Initialize network-related objects based on the network's prediction length.
+
+        Initializes:
+
+        * self.network: the neural network model, via self._build_network(net_predlen)
+        * self._criterion: the loss criterion, via self._instantiate_criterion()
+        * self._optimizer: the optimizer, via self._instantiate_optimizer()
+
+        Parameters
+        ----------
+        net_predlen : int
+            The prediction length of the network.
+
+        Returns
+        -------
+        Reference to self.network
+        """
+        if not hasattr(self, "network") or self.network is None:
+            self.network = self._build_network(net_predlen)
+
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer()
+
+        return self.network
+
     def _fit(self, y, fh, X=None):
         """Fit the network, preserving pretrained weights if available.
 
@@ -108,14 +134,10 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                     f"or create a new forecaster with a larger pred_len."
                 )
 
-        if not hasattr(self, "network") or self.network is None:
-            self.network = self._build_network(list(fh)[-1])
-
-        self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instantiate_optimizer()
-
         dataloader = self.build_pytorch_train_dataloader(y)
-        self.network.train()
+
+        network = self._init_network(list(fh)[-1])
+        network.train()
 
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
@@ -148,13 +170,11 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
         self._y = all_series[0]
         self._y_len = len(all_series[0])
 
-        self.network = self._build_network(pred_len)
+        network = self._init_network(pred_len)
         dataloader = self._build_panel_dataloader(y, all_series, pred_len)
 
-        self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instantiate_optimizer()
+        network.train()
 
-        self.network.train()
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
 

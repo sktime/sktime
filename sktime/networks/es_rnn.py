@@ -4,20 +4,13 @@ __author__ = ["Ankit-1204"]
 
 from warnings import warn
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-
-    NNModule = nn.Module
-else:
-
-    class NNModule:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch", severity="none")
+nn = _safe_import("torch.nn", severity="none")
 
 
-class PinballLoss(NNModule):
+class PinballLoss(nn.Module):
     """
     Default Pinball/Quantile Loss.
 
@@ -42,7 +35,7 @@ class PinballLoss(NNModule):
         return loss.mean()
 
 
-class _ESRNN(NNModule):
+class _ESRNN(nn.Module):
     def __init__(
         self,
         input_shape,
