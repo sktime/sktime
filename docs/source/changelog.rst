@@ -26,6 +26,11 @@ Highlights
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
+* ``pandas 3.X`` is now supported by the ``sktime`` framework.
+* ``numpy`` upper bounds have been updated to ``<2.6``.
+* ``scikit-learn`` upper bounds have been updated to ``<1.10``.
+* ``joblib`` upper bounds have been updated to ``<1.7``.
+
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
