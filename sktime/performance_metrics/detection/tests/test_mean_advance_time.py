@@ -30,7 +30,7 @@ def _events(ilocs):
 def test_mean_advance_time_one_hit():
     """The advance time is the event time minus the alarm time."""
     X = _make_X()
-    score = MeanAdvanceTime(earliest_offset=-3)(_events([5]), _events([3]), X)
+    score = MeanAdvanceTime(min_offset=-3)(_events([5]), _events([3]), X)
 
     assert score == 2.0
 
@@ -43,7 +43,7 @@ def test_mean_advance_time_miss_is_ignored():
     y_true = _events([5, 15])
     y_pred = _events([3])
 
-    score = MeanAdvanceTime(earliest_offset=-3)(y_true, y_pred, X)
+    score = MeanAdvanceTime(min_offset=-3)(y_true, y_pred, X)
 
     assert score == 2.0
 
@@ -52,7 +52,7 @@ def test_mean_advance_time_miss_is_ignored():
 def test_mean_advance_time_no_events():
     """With no true events, the score is missing."""
     X = _make_X()
-    score = MeanAdvanceTime(earliest_offset=-3)(_events([]), _events([2]), X)
+    score = MeanAdvanceTime(min_offset=-3)(_events([]), _events([2]), X)
 
     assert isinstance(score, float)
     assert np.isnan(score)
@@ -62,7 +62,7 @@ def test_mean_advance_time_no_events():
 def test_mean_advance_time_no_alarms():
     """With no alarms, no event is hit, so the score is missing."""
     X = _make_X()
-    score = MeanAdvanceTime(earliest_offset=-3)(_events([4, 7]), _events([]), X)
+    score = MeanAdvanceTime(min_offset=-3)(_events([4, 7]), _events([]), X)
 
     assert isinstance(score, float)
     assert np.isnan(score)
@@ -73,7 +73,7 @@ def test_mean_advance_time_no_hits():
     """With alarms but no hit, the score is missing."""
     X = _make_X()
     # windows are [1, 4] and [4, 7], both alarms fall outside
-    score = MeanAdvanceTime(earliest_offset=-3)(_events([4, 7]), _events([0, 12]), X)
+    score = MeanAdvanceTime(min_offset=-3)(_events([4, 7]), _events([0, 12]), X)
 
     assert isinstance(score, float)
     assert np.isnan(score)
@@ -86,10 +86,10 @@ def test_mean_advance_time_time_index():
     y_true = _events([5])
     y_pred = _events([2])  # 3 seconds early
 
-    metric = MeanAdvanceTime(earliest_offset=pd.Timedelta("-4s"))
+    metric = MeanAdvanceTime(min_offset=pd.Timedelta("-4s"))
     assert metric(y_true, y_pred, X) == 3.0
 
-    metric_ms = MeanAdvanceTime(earliest_offset=pd.Timedelta("-4s"), time_unit="ms")
+    metric_ms = MeanAdvanceTime(min_offset=pd.Timedelta("-4s"), time_unit="ms")
     assert metric_ms(y_true, y_pred, X) == 3000.0
 
 
@@ -100,7 +100,7 @@ def test_mean_advance_time_integer_index():
     y_true = _events([3])  # index value 30
     y_pred = _events([1])  # index value 10, two positions earlier
 
-    score = MeanAdvanceTime(earliest_offset=-25)(y_true, y_pred, X)
+    score = MeanAdvanceTime(min_offset=-25)(y_true, y_pred, X)
 
     assert score == 20.0
 
@@ -113,7 +113,7 @@ def test_mean_advance_time_two_hits_take_earliest():
     y_true = _events([10])
     y_pred = _events([9, 7])
 
-    score = MeanAdvanceTime(earliest_offset=-4)(y_true, y_pred, X)
+    score = MeanAdvanceTime(min_offset=-4)(y_true, y_pred, X)
 
     assert score == 3.0
 
@@ -121,7 +121,7 @@ def test_mean_advance_time_two_hits_take_earliest():
 @SKIP_IF_UNCHANGED
 def test_mean_advance_time_requires_X():
     """Without X there is no index to map positions through, so it raises."""
-    metric = MeanAdvanceTime(earliest_offset=-3)
+    metric = MeanAdvanceTime(min_offset=-3)
 
     with pytest.raises(TypeError):
         metric(_events([5]), _events([3]))

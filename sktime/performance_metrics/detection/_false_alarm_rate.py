@@ -18,21 +18,21 @@ class FalseAlarmRate(BaseDetectionMetric):
     """False alarm rate, number of alarms that hit no event, per unit of time.
 
     A true event at time ``T`` counts as hit by an alarm that falls in the
-    window ``[T + earliest_offset, T + latest_offset]``. An alarm that falls in
+    window ``[T + min_offset, T + max_offset]``. An alarm that falls in
     no event window is a false alarm. Further alarms inside a window that is
     already hit are not false alarms.
 
     The offsets are signed, negative is before the event and positive is after
     it. With offsets in the units of ``X.index``, for an event at ``T``:
 
-    * ``earliest_offset=0, latest_offset=0``: only an alarm exactly at ``T``.
-    * ``earliest_offset=-3, latest_offset=0``: advance only, an alarm from 3
+    * ``min_offset=0, max_offset=0``: only an alarm exactly at ``T``.
+    * ``min_offset=-3, max_offset=0``: advance only, an alarm from 3
       before ``T`` up to ``T``. Late alarms do not count.
-    * ``earliest_offset=0, latest_offset=2``: late only, an alarm from ``T`` up
+    * ``min_offset=0, max_offset=2``: late only, an alarm from ``T`` up
       to 2 after ``T``. Early alarms do not count.
-    * ``earliest_offset=-3, latest_offset=2``: before and after, an alarm from 3
+    * ``min_offset=-3, max_offset=2``: before and after, an alarm from 3
       before ``T`` up to 2 after ``T``.
-    * ``earliest_offset=-10, latest_offset=-2``: at least 2 before ``T``, and not
+    * ``min_offset=-10, max_offset=-2``: at least 2 before ``T``, and not
       earlier than 10 before ``T``. An alarm at ``T`` does not count.
 
     The score is the number of false alarms, divided by the scored duration.
@@ -56,17 +56,17 @@ class FalseAlarmRate(BaseDetectionMetric):
 
     Parameters
     ----------
-    earliest_offset : int, float, or time offset, default=0
+    min_offset : int, float, or time offset, default=0
         Start of the hit window, relative to the event time ``T``.
         Negative values let alarms before the event count.
         A time offset, for instance ``pd.Timedelta("-3s")``, if ``X`` has a
         time index, otherwise a number in the units of ``X.index``.
-        A ``ValueError`` is raised if it is NaN, or after ``latest_offset``.
-    latest_offset : int, float, or time offset, default=0
+        A ``ValueError`` is raised if it is NaN, or after ``max_offset``.
+    max_offset : int, float, or time offset, default=0
         End of the hit window, relative to the event time ``T``.
         Positive values let alarms after the event count, with the default of
         0, alarms after the event are false alarms.
-        Same unit as ``earliest_offset``. NaN raises a ``ValueError``.
+        Same unit as ``min_offset``. NaN raises a ``ValueError``.
     time_unit : str, default="hour"
         Unit in which the duration is counted, if ``X`` has a time index,
         so the score is false alarms per ``time_unit``.
@@ -81,7 +81,7 @@ class FalseAlarmRate(BaseDetectionMetric):
     >>> X = pd.DataFrame({"foo": range(7)}, index=index)
     >>> y_true = pd.DataFrame({"ilocs": [5]})
     >>> y_pred = pd.DataFrame({"ilocs": [1, 4]})
-    >>> metric = FalseAlarmRate(earliest_offset=pd.Timedelta("-20min"))
+    >>> metric = FalseAlarmRate(min_offset=pd.Timedelta("-20min"))
     >>> metric(y_true, y_pred, X)
     0.5
     """
@@ -93,9 +93,9 @@ class FalseAlarmRate(BaseDetectionMetric):
         "lower_is_better": True,  # fewer false alarms per unit time is better
     }
 
-    def __init__(self, earliest_offset=0, latest_offset=0, time_unit="hour"):
-        self.earliest_offset = earliest_offset
-        self.latest_offset = latest_offset
+    def __init__(self, min_offset=0, max_offset=0, time_unit="hour"):
+        self.min_offset = min_offset
+        self.max_offset = max_offset
         self.time_unit = time_unit
 
         super().__init__()
@@ -134,8 +134,8 @@ class FalseAlarmRate(BaseDetectionMetric):
             y_true,
             y_pred,
             X,
-            earliest_offset=self.earliest_offset,
-            latest_offset=self.latest_offset,
+            min_offset=self.min_offset,
+            max_offset=self.max_offset,
         )
         n_false_alarms = int(match.false_alarm.sum())
 
@@ -174,7 +174,7 @@ class FalseAlarmRate(BaseDetectionMetric):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         param0 = {}
-        param1 = {"earliest_offset": -2}
-        param2 = {"earliest_offset": -3, "latest_offset": 1, "time_unit": "min"}
+        param1 = {"min_offset": -2}
+        param2 = {"min_offset": -3, "max_offset": 1, "time_unit": "min"}
 
         return [param0, param1, param2]

@@ -194,18 +194,18 @@ def _coerce_offset(value, index, var_name):
     return offset
 
 
-def _match_alarms_to_events(y_true, y_pred, X, earliest_offset=0, latest_offset=0):
+def _match_alarms_to_events(y_true, y_pred, X, min_offset=0, max_offset=0):
     """Match detected alarms to true events, on the time axis of ``X``.
 
     An alarm hits a true event at time ``T`` if it falls in the closed window
-    ``[T + earliest_offset, T + latest_offset]``. The offsets are signed,
+    ``[T + min_offset, T + max_offset]``. The offsets are signed,
     negative is before the event and positive is after it.
 
     Positions in ``y_true`` and ``y_pred`` are ``iloc`` references into ``X``,
     and are mapped through ``X.index`` before matching. If ``X`` has a time
     index, windows and returned times are in time units. Otherwise they are
     in the units of ``X.index``, not in positions: on an index ``[0, 10, 20]``,
-    an ``earliest_offset`` of -10 reaches back one point, not ten.
+    an ``min_offset`` of -10 reaches back one point, not ten.
 
     An alarm may hit more than one event, if event windows overlap. Alarms
     that hit no event are false alarms. Further alarms inside a window that
@@ -219,13 +219,13 @@ def _match_alarms_to_events(y_true, y_pred, X, earliest_offset=0, latest_offset=
         Detected alarms, in points format, with an ``"ilocs"`` column.
     X : pd.DataFrame or pd.Series
         Time series the events refer to. Only its index is used.
-    earliest_offset : int, float, or time offset, default=0
+    min_offset : int, float, or time offset, default=0
         Start of the hit window, relative to the event time ``T``.
         A number in the units of ``X.index``, or a time offset such as
         ``pd.Timedelta("-3s")`` if ``X`` has a time index.
-    latest_offset : int, float, or time offset, default=0
+    max_offset : int, float, or time offset, default=0
         End of the hit window, relative to the event time ``T``.
-        Same unit as ``earliest_offset``. Must not be before ``earliest_offset``.
+        Same unit as ``min_offset``. Must not be before ``min_offset``.
 
     Returns
     -------
@@ -237,7 +237,7 @@ def _match_alarms_to_events(y_true, y_pred, X, earliest_offset=0, latest_offset=
     ------
     ValueError
         If an ``"ilocs"`` value is outside ``[0, len(X))``, if an offset is NaN,
-        or if ``earliest_offset`` is after ``latest_offset``.
+        or if ``min_offset`` is after ``max_offset``.
     TypeError
         If the unit of an offset does not fit ``X.index``.
 
@@ -250,7 +250,7 @@ def _match_alarms_to_events(y_true, y_pred, X, earliest_offset=0, latest_offset=
     >>> X = pd.DataFrame({"foo": range(10)})
     >>> y_true = pd.DataFrame({"ilocs": [5]})
     >>> y_pred = pd.DataFrame({"ilocs": [3, 8]})
-    >>> match = _match_alarms_to_events(y_true, y_pred, X, earliest_offset=-2)
+    >>> match = _match_alarms_to_events(y_true, y_pred, X, min_offset=-2)
     >>> match.hit
     array([ True])
     >>> match.earliest_hit
@@ -261,16 +261,16 @@ def _match_alarms_to_events(y_true, y_pred, X, earliest_offset=0, latest_offset=
     event_times = _event_times(y_true, X, "y_true")
     alarm_times = _event_times(y_pred, X, "y_pred")
 
-    earliest = _coerce_offset(earliest_offset, X.index, "earliest_offset")
-    latest = _coerce_offset(latest_offset, X.index, "latest_offset")
+    min_off = _coerce_offset(min_offset, X.index, "min_offset")
+    max_off = _coerce_offset(max_offset, X.index, "max_offset")
 
     # an inverted window would silently match nothing, so refuse it
-    if earliest > latest:
+    if min_off > max_off:
         raise ValueError(
-            "earliest_offset must not be after latest_offset, but found "
-            f"earliest_offset={earliest_offset!r} and "
-            f"latest_offset={latest_offset!r}. "
-            "The hit window is [T + earliest_offset, T + latest_offset]."
+            "min_offset must not be after max_offset, but found "
+            f"min_offset={min_offset!r} and "
+            f"max_offset={max_offset!r}. "
+            "The hit window is [T + min_offset, T + max_offset]."
         )
 
     n_events = len(event_times)
@@ -294,8 +294,8 @@ def _match_alarms_to_events(y_true, y_pred, X, earliest_offset=0, latest_offset=
     sorted_alarms = alarm_times[order]
 
     # half-open positions of the window bounds, in the sorted alarms
-    start = sorted_alarms.searchsorted(event_times + earliest, side="left")
-    stop = sorted_alarms.searchsorted(event_times + latest, side="right")
+    start = sorted_alarms.searchsorted(event_times + min_off, side="left")
+    stop = sorted_alarms.searchsorted(event_times + max_off, side="right")
 
     hit = stop > start
     earliest_hit[hit] = order[start[hit]]

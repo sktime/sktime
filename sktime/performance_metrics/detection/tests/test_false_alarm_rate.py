@@ -31,7 +31,7 @@ def test_false_alarm_rate_unmatched_alarm():
     """An alarm that hits no event counts, over the span of X."""
     X = _make_X()  # index 0 to 8, span 8
     # window is [3, 5], so the alarm at 4 hits and the alarm at 1 does not
-    score = FalseAlarmRate(earliest_offset=-2)(_events([5]), _events([1, 4]), X)
+    score = FalseAlarmRate(min_offset=-2)(_events([5]), _events([1, 4]), X)
 
     assert score == 1 / 8
 
@@ -41,7 +41,7 @@ def test_false_alarm_rate_alarm_in_hit_window_is_not_false():
     """Extra alarms inside a hit window are not false alarms."""
     X = _make_X()
     # window is [3, 5], all three alarms are inside it
-    score = FalseAlarmRate(earliest_offset=-2)(_events([5]), _events([3, 4, 5]), X)
+    score = FalseAlarmRate(min_offset=-2)(_events([5]), _events([3, 4, 5]), X)
 
     assert score == 0.0
 
@@ -50,7 +50,7 @@ def test_false_alarm_rate_alarm_in_hit_window_is_not_false():
 def test_false_alarm_rate_no_events():
     """With no true events the rate is defined, every alarm is false."""
     X = _make_X()
-    score = FalseAlarmRate(earliest_offset=-2)(_events([]), _events([2, 6]), X)
+    score = FalseAlarmRate(min_offset=-2)(_events([]), _events([2, 6]), X)
 
     assert score == 2 / 8
 
@@ -59,7 +59,7 @@ def test_false_alarm_rate_no_events():
 def test_false_alarm_rate_no_alarms():
     """With no alarms, the rate is 0."""
     X = _make_X()
-    score = FalseAlarmRate(earliest_offset=-2)(_events([4, 7]), _events([]), X)
+    score = FalseAlarmRate(min_offset=-2)(_events([4, 7]), _events([]), X)
 
     assert score == 0.0
 
@@ -72,10 +72,10 @@ def test_false_alarm_rate_time_index():
     y_pred = _events([1, 4])  # alarms at 20 and 80 minutes
 
     # window is [80min, 100min], so one false alarm in two hours
-    metric = FalseAlarmRate(earliest_offset=pd.Timedelta("-20min"))
+    metric = FalseAlarmRate(min_offset=pd.Timedelta("-20min"))
     assert metric(y_true, y_pred, X) == 0.5
 
-    metric_min = FalseAlarmRate(earliest_offset=pd.Timedelta("-20min"), time_unit="min")
+    metric_min = FalseAlarmRate(min_offset=pd.Timedelta("-20min"), time_unit="min")
     assert metric_min(y_true, y_pred, X) == pytest.approx(1 / 120)
 
 
@@ -87,9 +87,9 @@ def test_false_alarm_rate_integer_index():
     y_pred = _events([0, 2])  # index values 0 and 20
 
     # window is [20, 30], so the alarm at 0 is the one false alarm
-    assert FalseAlarmRate(earliest_offset=-10)(y_true, y_pred, X) == 1 / 40
+    assert FalseAlarmRate(min_offset=-10)(y_true, y_pred, X) == 1 / 40
     # time_unit has no effect without a time index
-    metric = FalseAlarmRate(earliest_offset=-10, time_unit="min")
+    metric = FalseAlarmRate(min_offset=-10, time_unit="min")
     assert metric(y_true, y_pred, X) == 1 / 40
 
 
@@ -108,7 +108,7 @@ def test_false_alarm_rate_uneven_time_spacing():
     y_true = _events([2, 4])  # events at 20s and 34s
     y_pred = _events([1, 3])  # alarms at 10s and 30s
 
-    metric = FalseAlarmRate(earliest_offset=pd.Timedelta("-5s"), time_unit="s")
+    metric = FalseAlarmRate(min_offset=pd.Timedelta("-5s"), time_unit="s")
     score = metric(y_true, y_pred, X)
 
     assert score == pytest.approx(1 / 34)
@@ -127,7 +127,7 @@ def test_false_alarm_rate_zero_span():
 @SKIP_IF_UNCHANGED
 def test_false_alarm_rate_requires_X():
     """Without X there is no index to map positions through, so it raises."""
-    metric = FalseAlarmRate(earliest_offset=-2)
+    metric = FalseAlarmRate(min_offset=-2)
 
     with pytest.raises(TypeError):
         metric(_events([5]), _events([1]))

@@ -16,20 +16,20 @@ class EventTPR(BaseDetectionMetric):
     """Event true positive rate, share of true events hit by an alarm.
 
     A true event at time ``T`` counts as hit if at least one alarm falls in the
-    window ``[T + earliest_offset, T + latest_offset]``. The score is the number
+    window ``[T + min_offset, T + max_offset]``. The score is the number
     of hit events, divided by the number of true events.
 
     The offsets are signed, negative is before the event and positive is after
     it. With offsets in the units of ``X.index``, for an event at ``T``:
 
-    * ``earliest_offset=0, latest_offset=0``: only an alarm exactly at ``T``.
-    * ``earliest_offset=-3, latest_offset=0``: advance only, an alarm from 3
+    * ``min_offset=0, max_offset=0``: only an alarm exactly at ``T``.
+    * ``min_offset=-3, max_offset=0``: advance only, an alarm from 3
       before ``T`` up to ``T``. Late alarms do not count.
-    * ``earliest_offset=0, latest_offset=2``: late only, an alarm from ``T`` up
+    * ``min_offset=0, max_offset=2``: late only, an alarm from ``T`` up
       to 2 after ``T``. Early alarms do not count.
-    * ``earliest_offset=-3, latest_offset=2``: before and after, an alarm from 3
+    * ``min_offset=-3, max_offset=2``: before and after, an alarm from 3
       before ``T`` up to 2 after ``T``.
-    * ``earliest_offset=-10, latest_offset=-2``: at least 2 before ``T``, and not
+    * ``min_offset=-10, max_offset=-2``: at least 2 before ``T``, and not
       earlier than 10 before ``T``. An alarm at ``T`` does not count.
 
     Positions in ``y_true`` and ``y_pred`` are ``iloc`` references into ``X``,
@@ -47,17 +47,17 @@ class EventTPR(BaseDetectionMetric):
 
     Parameters
     ----------
-    earliest_offset : int, float, or time offset, default=0
+    min_offset : int, float, or time offset, default=0
         Start of the hit window, relative to the event time ``T``.
         Negative values let alarms before the event count.
         A time offset, for instance ``pd.Timedelta("-3s")``, if ``X`` has a
         time index, otherwise a number in the units of ``X.index``.
-        A ``ValueError`` is raised if it is NaN, or after ``latest_offset``.
-    latest_offset : int, float, or time offset, default=0
+        A ``ValueError`` is raised if it is NaN, or after ``max_offset``.
+    max_offset : int, float, or time offset, default=0
         End of the hit window, relative to the event time ``T``.
         Positive values let alarms after the event count, the default of 0
         means that alarms after the event do not count.
-        Same unit as ``earliest_offset``. NaN raises a ``ValueError``.
+        Same unit as ``min_offset``. NaN raises a ``ValueError``.
 
     Examples
     --------
@@ -66,7 +66,7 @@ class EventTPR(BaseDetectionMetric):
     >>> X = pd.DataFrame({"foo": range(10)})
     >>> y_true = pd.DataFrame({"ilocs": [4, 8]})
     >>> y_pred = pd.DataFrame({"ilocs": [3]})
-    >>> metric = EventTPR(earliest_offset=-2)
+    >>> metric = EventTPR(min_offset=-2)
     >>> metric(y_true, y_pred, X)
     0.5
     """
@@ -78,9 +78,9 @@ class EventTPR(BaseDetectionMetric):
         "lower_is_better": False,  # higher share of hit events is better
     }
 
-    def __init__(self, earliest_offset=0, latest_offset=0):
-        self.earliest_offset = earliest_offset
-        self.latest_offset = latest_offset
+    def __init__(self, min_offset=0, max_offset=0):
+        self.min_offset = min_offset
+        self.max_offset = max_offset
 
         super().__init__()
 
@@ -117,8 +117,8 @@ class EventTPR(BaseDetectionMetric):
             y_true,
             y_pred,
             X,
-            earliest_offset=self.earliest_offset,
-            latest_offset=self.latest_offset,
+            min_offset=self.min_offset,
+            max_offset=self.max_offset,
         )
 
         if len(match.hit) == 0:
@@ -146,7 +146,7 @@ class EventTPR(BaseDetectionMetric):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         param0 = {}
-        param1 = {"earliest_offset": -2}
-        param2 = {"earliest_offset": -3, "latest_offset": 1}
+        param1 = {"min_offset": -2}
+        param2 = {"min_offset": -3, "max_offset": 1}
 
         return [param0, param1, param2]
