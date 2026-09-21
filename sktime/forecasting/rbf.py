@@ -90,6 +90,15 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         ``"gelu"``.
     dropout_rate : float, optional (default=0.1)
         Dropout rate applied after each hidden layer. A value of 0 disables dropout.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.rbf import RBFForecaster
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = RBFForecaster(window_length=12, hidden_size=16, epochs=10)
+    >>> forecaster.fit(y)
+    >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
     _tags = {
