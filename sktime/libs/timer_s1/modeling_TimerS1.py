@@ -1047,6 +1047,14 @@ class TimerS1ForPrediction(TimerS1PreTrainedModel, TSGenerationMixin):
                 attention_mask = attention_mask[:, -max_cache_length:]
 
         position_ids = kwargs.get("position_ids", None)
+        if (
+            position_ids is not None
+            and position_ids.shape[-1]
+            != input_ids.shape[-1] // self.config.input_token_len
+        ):
+            # transformers>=5 supplies time-step position ids during generation,
+            # while TimerS1 applies positional embeddings to input patches.
+            position_ids = None
         if attention_mask is not None and position_ids is None:
             position_ids = attention_mask.long().cumsum(-1) - 1
             position_ids.masked_fill_(attention_mask == 0, 1)
