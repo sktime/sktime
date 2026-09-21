@@ -170,6 +170,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         -------
         self : returns an instance of self.
         """
+        self._store_fit_data(y, X)
         # X_train is ignored
         sp = self.sp or 1
 
@@ -358,7 +359,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         strategy = self.strategy
         sp = self.sp
-        _y = self._y
+        _y = self._cur_y
         cutoff = self.cutoff
 
         if isinstance(_y.index, pd.DatetimeIndex) and hasattr(_y.index, "freq"):
@@ -427,12 +428,12 @@ class NaiveForecaster(_BaseWindowForecaster):
             y_pred = y_pred.iloc[:, 0]
 
         # check for in-sample prediction, if first time point needs to be imputed
-        if self._y.index[0] in y_pred.index:
-            if y_pred.loc[[self._y.index[0]]].hasnans:
+        if self._cur_y.index[0] in y_pred.index:
+            if y_pred.loc[[self._cur_y.index[0]]].hasnans:
                 # fill NaN with observed values
-                y_pred.loc[self._y.index[0]] = self._y[self._y.index[1]]
+                y_pred.loc[self._cur_y.index[0]] = self._cur_y[self._cur_y.index[1]]
 
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
 
         return y_pred
 
@@ -510,7 +511,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         ----------
         .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
         """
-        y = self._y
+        y = self._cur_y
         y = convert_to(y, "pd.Series")
         T = len(y)
         sp = self.sp
@@ -712,6 +713,8 @@ class NaiveVariance(BaseForecaster):
         self.clone_tags(self.forecaster, tags_to_clone)
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         self.fh_early_ = fh is not None
         self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y, X=X, fh=fh)
@@ -727,11 +730,16 @@ class NaiveVariance(BaseForecaster):
         return self.forecaster_.predict(fh=fh, X=X)
 
     def _update(self, y, X=None, update_params=True):
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         self.forecaster_.update(y, X, update_params=update_params)
         if update_params and self._fh is not None:
             self.residuals_matrix_ = self._compute_sliding_residuals(
-                y=self._y,
-                X=self._X,
+                y=self._cur_y,
+                X=self._cur_X,
                 forecaster=self.forecaster,
                 initial_window=self.initial_window,
             )
@@ -810,8 +818,8 @@ class NaiveVariance(BaseForecaster):
             residuals_matrix = self.residuals_matrix_
         else:
             residuals_matrix = self._compute_sliding_residuals(
-                y=self._y,
-                X=self._X,
+                y=self._cur_y,
+                X=self._cur_X,
                 forecaster=self.forecaster,
                 initial_window=self.initial_window,
             )
@@ -841,8 +849,8 @@ class NaiveVariance(BaseForecaster):
                 np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
                 for offset in fh_relative
             ]
-            if hasattr(self._y, "columns"):
-                columns = self._y.columns
+            if hasattr(self._cur_y, "columns"):
+                columns = self._cur_y.columns
                 pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute_ix)
             else:
                 pred_var = pd.DataFrame(variance, index=fh_absolute_ix)
