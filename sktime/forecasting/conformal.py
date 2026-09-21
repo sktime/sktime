@@ -131,6 +131,7 @@ class ConformalIntervals(BaseForecaster):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:update": True,
         "X_inner_mtype": MTYPE_LIST_SERIES,
         "y_inner_mtype": MTYPE_LIST_SERIES,
         # CI and test flags

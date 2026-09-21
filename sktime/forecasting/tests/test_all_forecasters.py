@@ -756,6 +756,20 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         f.update(y_test, update_params=False)
         assert f.cutoff == y_test.index[-1]
 
+        if not f.get_class_tag("capability:update", False):
+            return
+
+        # test now with update_params=True
+        f = f.clone()
+
+        # check cutoff is updated during fit
+        f.fit(y_train, fh=FH0)
+        assert f.cutoff == y_train.index[-1]
+
+        # check that _y and cutoff is updated during update
+        f.update(y_test, update_params=True)
+        assert f.cutoff == y_test.index[-1]
+
     def test__y_remember_data(self, object_instance, n_columns):
         """Check _y.
 
