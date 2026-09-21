@@ -27,11 +27,12 @@ class TimesFM3Forecaster(BaseForecaster):
     and past-and-future covariates. See [1]_ and [2]_ for details.
 
     Exogenous variables are supplied via ``X`` in ``fit`` and ``predict``.
-    Columns listed in ``past_covariates`` are treated as past-only covariates
-    (known only over the historical context). All other ``X`` columns supplied
-    in ``fit`` are treated as past-and-future covariates and must also be
-    provided in ``predict`` for every step ``1 .. max(fh)`` ahead of the
-    cutoff.
+    The split between past-only and past-and-future covariates is inferred
+    from the data: fit-time ``X`` columns that are also present in the
+    predict-time ``X`` are treated as past-and-future covariates (their future
+    values are read from the predict-time ``X`` for every step
+    ``1 .. max(fh)`` ahead of the cutoff); fit-time ``X`` columns absent from
+    the predict-time ``X`` are treated as past-only covariates.
 
     Point forecasts use the upstream median quantile. Probabilistic forecasts
     are available through ``predict_quantiles``. Native checkpoint levels
@@ -48,9 +49,6 @@ class TimesFM3Forecaster(BaseForecaster):
         upstream selects CUDA when available, otherwise CPU.
     batch_size : int, default=4
         Batch size passed to upstream ``ModelConfig.per_core_batch_size``.
-    past_covariates : list of str or None, default=None
-        Column names in ``X`` known only for the historical context window.
-        Remaining ``X`` columns are treated as past-and-future covariates.
     config : dict or None, default=None
         Additional keyword arguments forwarded to upstream ``ModelConfig``.
         Reserved keys ``checkpoint_path``, ``device``, and
@@ -105,14 +103,14 @@ class TimesFM3Forecaster(BaseForecaster):
     >>> forecaster.fit(y_multi)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2])  # doctest: +SKIP
 
-    Forecast with mixed past-only and past-and-future covariates:
+    Forecast with mixed past-only and past-and-future covariates. The split is
+    inferred from the data: ``past_only`` appears only in the fit-time ``X``,
+    while ``future_known`` appears in both the fit-time and predict-time ``X``:
 
     >>> y = pd.Series([1.0, 2.0, 3.0, 4.0])
     >>> X = pd.DataFrame({"past_only": [0.1, 0.2, 0.3, 0.4],
     ...                   "future_known": [1.0, 1.0, 1.0, 1.0]})
-    >>> forecaster = TimesFM3Forecaster(
-    ...     past_covariates=["past_only"], license_accepted=True
-    ... )  # doctest: +SKIP
+    >>> forecaster = TimesFM3Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y, X=X)  # doctest: +SKIP
     >>> X_future = pd.DataFrame({"future_known": [2.0, 2.0]})
     >>> y_pred = forecaster.predict(fh=[1, 2], X=X_future)  # doctest: +SKIP
@@ -149,7 +147,6 @@ class TimesFM3Forecaster(BaseForecaster):
         model_path: str = "google/timesfm-3.0-pytorch",
         device: str | None = None,
         batch_size: int = 4,
-        past_covariates: list[str] | None = None,
         config: dict | None = None,
         use_symmetric_averaging: bool = False,
         make_positive: bool = False,
@@ -162,7 +159,6 @@ class TimesFM3Forecaster(BaseForecaster):
         self.model_path = model_path
         self.device = device
         self.batch_size = batch_size
-        self.past_covariates = past_covariates
         self.config = config
         self.use_symmetric_averaging = use_symmetric_averaging
         self.make_positive = make_positive
@@ -263,39 +259,31 @@ class TimesFM3Forecaster(BaseForecaster):
         forecaster = self._load_model()
         return forecaster.model.transformer_config.transformer.max_variates
 
-    def _validate_past_covariates(self, x_columns):
-        """Validate ``past_covariates`` against available ``X`` columns."""
-        if self.past_covariates is None:
-            return []
-        if len(self.past_covariates) != len(set(self.past_covariates)):
-            raise ValueError(
-                "`past_covariates` must contain unique column names, "
-                f"but got duplicates in {self.past_covariates}."
-            )
-        unknown = set(self.past_covariates) - set(x_columns)
+    def _partition_exog_columns(self, X):
+        """Split fit-time ``X`` columns into past-only and past-future groups.
+
+        The split is inferred from the data: fit-time columns that also appear
+        in the predict-time ``X`` are past-and-future (their future values are
+        known); fit-time columns absent from the predict-time ``X`` are
+        past-only.
+        """
+        if self._X is None:
+            if X is not None:
+                raise ValueError(
+                    "Exogenous `X` was provided in predict but none was provided "
+                    "in fit."
+                )
+            return [], []
+        fit_cols = list(self._X.columns)
+        predict_cols = [] if X is None else list(X.columns)
+        unknown = set(predict_cols) - set(fit_cols)
         if unknown:
             raise ValueError(
-                "`past_covariates` contains columns not present in fit-time `X`: "
+                "Prediction-time `X` contains columns not seen in fit-time `X`: "
                 f"{sorted(unknown)}."
             )
-        return list(self.past_covariates)
-
-    @staticmethod
-    def _validate_numeric_exog(X, label):
-        """Ensure exogenous columns are numeric."""
-        non_numeric = [
-            col for col in X.columns if not pd.api.types.is_numeric_dtype(X[col])
-        ]
-        if non_numeric:
-            raise ValueError(
-                f"{label} must contain numeric columns only; "
-                f"non-numeric columns found: {non_numeric}."
-            )
-
-    def _partition_exog_columns(self, x_columns):
-        """Split fit-time ``X`` columns into past-only and past-future groups."""
-        past_only = self._validate_past_covariates(x_columns)
-        past_future = [col for col in x_columns if col not in past_only]
+        past_future = [col for col in fit_cols if col in predict_cols]
+        past_only = [col for col in fit_cols if col not in predict_cols]
         return past_only, past_future
 
     def _validate_variate_limit(self, n_targets, n_past_only, n_past_future):
@@ -309,78 +297,23 @@ class TimesFM3Forecaster(BaseForecaster):
                 "Reduce the number of target columns and/or exogenous columns."
             )
 
-    def _truncate_context(self, y, X):
-        """Return trailing context windows for ``y`` and optional ``X``."""
-        forecaster = self._load_model()
-        max_len = forecaster.global_context
-        y_ctx = y.iloc[-max_len:] if len(y) > max_len else y
-        if X is None:
-            return y_ctx, None
-        x_ctx = X.loc[y_ctx.index]
-        return y_ctx, x_ctx
-
     def _fit(self, y, X, fh):
-        """Fit forecaster to training data."""
+        """Fit forecaster to training data.
+
+        Only loads the upstream model and stores ``y`` and ``X`` (retained by
+        the base class). The past-only vs past-and-future covariate split is
+        inferred at predict time from the columns supplied in the predict-time
+        ``X``.
+        """
         self._check_license()
         self._load_model()
-
-        if self.past_covariates and X is None:
-            raise ValueError(
-                "`past_covariates` were specified but no exogenous `X` was "
-                "provided in fit."
-            )
-
-        if X is not None:
-            self._validate_numeric_exog(X, "fit-time `X`")
-
-        y_ctx, x_ctx = self._truncate_context(y, X)
-        past_only_cols, past_future_cols = self._partition_exog_columns(
-            [] if x_ctx is None else list(x_ctx.columns)
-        )
-
-        self._validate_variate_limit(
-            n_targets=y_ctx.shape[1],
-            n_past_only=len(past_only_cols),
-            n_past_future=len(past_future_cols),
-        )
-
-        self._context_ = y_ctx
-        self._past_only_cols_ = past_only_cols
-        self._past_future_cols_ = past_future_cols
         self._y_index_names = y.index.names
         return self
 
-    def _build_future_exog(self, X, horizon):
-        """Validate and return prediction-time exogenous data."""
-        if not self._past_future_cols_:
-            if X is not None:
-                raise ValueError(
-                    "Exogenous `X` was provided in predict but no past-and-future "
-                    "covariates were supplied in fit."
-                )
+    def _build_future_exog(self, X, past_future_cols, horizon):
+        """Validate and return prediction-time past-and-future covariates."""
+        if not past_future_cols:
             return None
-
-        if X is None:
-            raise ValueError(
-                "Past-and-future covariates were supplied in fit, so exogenous `X` "
-                f"must also be provided in predict for steps 1..{horizon}."
-            )
-
-        self._validate_numeric_exog(X, "prediction-time `X`")
-
-        missing = set(self._past_future_cols_) - set(X.columns)
-        if missing:
-            raise ValueError(
-                "Prediction-time `X` is missing past-and-future covariate columns "
-                f"seen in fit: {sorted(missing)}."
-            )
-
-        extra = set(X.columns) - set(self._past_future_cols_)
-        if extra:
-            raise ValueError(
-                "Prediction-time `X` contains columns that were not declared as "
-                f"past-and-future covariates in fit: {sorted(extra)}."
-            )
 
         if len(X) < horizon:
             raise ValueError(
@@ -388,23 +321,21 @@ class TimesFM3Forecaster(BaseForecaster):
                 f"ahead of the cutoff, but only {len(X)} rows were provided."
             )
 
-        return X.iloc[:horizon]
+        return X[past_future_cols].iloc[:horizon]
 
-    def _to_upstream_arrays(self, horizon, X_future):
-        """Convert stored context and exogenous data to upstream numpy arrays."""
-        target = self._context_.values.T.astype(np.float32)
+    def _to_upstream_arrays(self, y_ctx, past_only_cols, past_future_cols, X_future):
+        """Convert context and exogenous data to upstream numpy arrays."""
+        target = y_ctx.values.T.astype(np.float32)
 
         past_only = None
-        if self._past_only_cols_:
-            past_only = self._X.loc[
-                self._context_.index, self._past_only_cols_
-            ].values.T
+        if past_only_cols:
+            past_only = self._X.loc[y_ctx.index, past_only_cols].values.T
             past_only = past_only.astype(np.float32)
 
         past_future = None
-        if self._past_future_cols_:
-            past = self._X.loc[self._context_.index, self._past_future_cols_].values.T
-            future = X_future[self._past_future_cols_].values.T
+        if past_future_cols:
+            past = self._X.loc[y_ctx.index, past_future_cols].values.T
+            future = X_future[past_future_cols].values.T
             past_future = np.concatenate([past, future], axis=1).astype(np.float32)
 
         return target, past_only, past_future
@@ -415,8 +346,21 @@ class TimesFM3Forecaster(BaseForecaster):
         forecaster = self._load_model()
 
         horizon = int(max(fh.to_relative(self.cutoff)))
-        X_future = self._build_future_exog(X, horizon)
-        target, past_only, past_future = self._to_upstream_arrays(horizon, X_future)
+
+        max_len = forecaster.global_context
+        y_ctx = self._y.iloc[-max_len:] if len(self._y) > max_len else self._y
+
+        past_only_cols, past_future_cols = self._partition_exog_columns(X)
+        self._validate_variate_limit(
+            n_targets=y_ctx.shape[1],
+            n_past_only=len(past_only_cols),
+            n_past_future=len(past_future_cols),
+        )
+
+        X_future = self._build_future_exog(X, past_future_cols, horizon)
+        target, past_only, past_future = self._to_upstream_arrays(
+            y_ctx, past_only_cols, past_future_cols, X_future
+        )
 
         output = forecaster.predict(
             context=target,
@@ -434,7 +378,7 @@ class TimesFM3Forecaster(BaseForecaster):
         index = (
             ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
         )
-        pred_out = fh.get_expected_pred_idx(self._context_.values.T, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(target, cutoff=self.cutoff)
         return output, index, pred_out, horizon
 
     def _predict(self, fh, X):
@@ -487,11 +431,7 @@ class TimesFM3Forecaster(BaseForecaster):
         """Return testing parameter settings for the estimator."""
         return [
             {"license_accepted": True, "device": "cpu"},
-            {
-                "license_accepted": True,
-                "device": "cpu",
-                "past_covariates": [],
-            },
+            {"license_accepted": True, "device": "cpu", "make_positive": True},
         ]
 
 
