@@ -454,6 +454,8 @@ class PatchTSTForecaster(BaseForecaster):
         -------
         self : a reference to the object
         """
+        self._cur_y = y
+        self._cur_X = X
         if isinstance(self.model_path, PatchTSTModel):
             self.model = self.model_path
             config = self.model.config
@@ -599,7 +601,7 @@ class PatchTSTForecaster(BaseForecaster):
         y_pred : sktime time series object
             pandas DataFrame
         """
-        y = self._y
+        y = self._cur_y
         if fh is None:
             fh = self.fh_
         else:
