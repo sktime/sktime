@@ -179,7 +179,7 @@ def craft(spec, safe=False, namespace_plugin=None):
     if namespace_plugin is None:
         namespace_plugin = {}
     elif isinstance(namespace_plugin, dict):
-        namespace_plugin = namespace_plugin
+        pass
     else:
         namespace_plugin = dict(namespace_plugin)
 
