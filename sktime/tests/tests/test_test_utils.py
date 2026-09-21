@@ -175,3 +175,77 @@ def test_run_test_for_class():
         assert reason == "False_no_change"
         assert reason_wdep in ["False_no_change", "False_requires_vm"]
         assert reason_nodep == "False_no_change"
+
+
+def _skip_all_vm_class():
+    """Return a class with tests:skip_all and tests:vm both set, or None."""
+    ests = all_estimators(filter_tags={"tests:vm": True}, return_names=False)
+    for est in ests:
+        if est.get_class_tag("tests:skip_all", False):
+            return est
+    return None
+
+
+def test_skip_all_not_in_vm_class_list():
+    """Test that tests:skip_all classes are not scheduled for VM testing.
+
+    The VM job matrix is built from ``_get_all_vm_classes`` and
+    ``_get_all_changed_classes``, neither of which goes through the public
+    ``run_test_for_class``. Both must still honour the ``tests:skip_all`` tag.
+    """
+    from sktime.tests.test_switch import _get_all_vm_classes, _run_test_for_class
+
+    ests = dict(all_estimators())
+    on_exclude_list = [
+        name
+        for name in _get_all_vm_classes()
+        if ests[name].get_class_tag("tests:skip_all", False)
+    ]
+    assert on_exclude_list == [], (
+        "classes with the tests:skip_all tag must not be scheduled for VM testing, "
+        f"but these were: {on_exclude_list}"
+    )
+
+    cls = _skip_all_vm_class()
+    if cls is None:
+        return
+    # the private helper is what the changed-class list is built from,
+    # so it must return the skip reason on its own, not only via the public wrapper
+    assert _run_test_for_class(cls, ignore_deps=True, only_vm_required=True) == (
+        False,
+        "False_exclude_list",
+    )
+
+
+def test_run_test_vm_skips_skip_all(monkeypatch):
+    """Test that run_test_vm does not test a class with the tests:skip_all tag.
+
+    ``run_test_vm`` passes the class to ``check_estimator`` directly, which does not
+    go through the fixture generation where ``is_excluded`` would apply the tag.
+    """
+    import skbase.utils.dependencies
+
+    import sktime.utils
+    from sktime.tests._test_vm import run_test_vm
+
+    cls = _skip_all_vm_class()
+    if cls is None:
+        return
+
+    called = []
+
+    def _spy(*args, **kwargs):
+        called.append((args, kwargs))
+
+    # both are imported inside run_test_vm, so patch them at their source
+    monkeypatch.setattr(sktime.utils, "check_estimator", _spy)
+    # ensure the early return for missing soft dependencies cannot mask the tag check
+    monkeypatch.setattr(
+        skbase.utils.dependencies, "_check_estimator_deps", lambda *a, **k: True
+    )
+
+    run_test_vm(cls.__name__)
+
+    assert called == [], (
+        f"run_test_vm ran tests for {cls.__name__}, which has the tests:skip_all tag"
+    )
