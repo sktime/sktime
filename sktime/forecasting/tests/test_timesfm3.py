@@ -27,7 +27,10 @@ from sktime.tests.test_switch import run_test_for_class
 
 # Golden references generated against the `google/timesfm-3.0-pytorch` checkpoint on CPU
 EXPECTED_AIRLINE = [418.6311950683594, 399.6155700683594, 462.0848693847656]
-EXPECTED_COV = [[-0.7916899919509888, 0.22182999551296234], [-0.7092300057411194, 0.15444999933242798]]  # noqa: E501
+EXPECTED_COV = [
+    [-0.7916899919509888, 0.22182999551296234],
+    [-0.7092300057411194, 0.15444999933242798],
+]
 
 
 @pytest.mark.skipif(
@@ -53,10 +56,6 @@ def test_timesfm3_airline_matches_source_reference():
 @pytest.mark.skipif(
     not run_test_for_class(TimesFM3Forecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
-)
-@pytest.mark.skipif(
-    not _GOLDEN_READY,
-    reason="golden values not filled in; run `python scripts/golden-timesfm3.py`",
 )
 def test_timesfm3_covariates_match_source_reference():
     """Multivariate + mixed covariate forecast matches the upstream reference.
