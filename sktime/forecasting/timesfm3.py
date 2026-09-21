@@ -58,8 +58,6 @@ class TimesFM3Forecaster(BaseForecaster):
     make_positive : bool, default=False
         Whether to clip forecasts to be non-negative when the context is
         non-negative.
-    sort_quantiles : bool, default=True
-        Whether to sort quantile outputs upstream before returning them.
     use_znorm : bool, default=False
         Whether to apply per-variate z-normalization upstream during inference.
     padding_mode : str, default="none"
@@ -150,7 +148,6 @@ class TimesFM3Forecaster(BaseForecaster):
         config: dict | None = None,
         use_symmetric_averaging: bool = False,
         make_positive: bool = False,
-        sort_quantiles: bool = True,
         use_znorm: bool = False,
         padding_mode: str = "none",
         license_accepted: bool = False,
@@ -162,7 +159,6 @@ class TimesFM3Forecaster(BaseForecaster):
         self.config = config
         self.use_symmetric_averaging = use_symmetric_averaging
         self.make_positive = make_positive
-        self.sort_quantiles = sort_quantiles
         self.use_znorm = use_znorm
         self.padding_mode = padding_mode
         self.license_accepted = license_accepted
@@ -340,8 +336,13 @@ class TimesFM3Forecaster(BaseForecaster):
 
         return target, past_only, past_future
 
-    def _run_forecast(self, fh, X, return_quantiles):
-        """Run upstream inference and return raw output plus index helpers."""
+    def _run_forecast(self, fh, X):
+        """Run upstream inference and return raw output plus index helpers.
+
+        Always requests quantiles so a single forward pass serves ``_predict``,
+        ``_predict_quantiles`` and ``_predict_proba``. Quantiles are always
+        sorted, since sktime promises a consistent output.
+        """
         self._ensure_model_loaded()
         forecaster = self._load_model()
 
@@ -367,10 +368,10 @@ class TimesFM3Forecaster(BaseForecaster):
             horizon=horizon,
             past_only_covariates=past_only,
             past_future_covariates=past_future,
-            return_quantiles=return_quantiles,
+            return_quantiles=True,
             use_symmetric_averaging=self.use_symmetric_averaging,
             make_positive=self.make_positive,
-            sort_quantiles=self.sort_quantiles,
+            sort_quantiles=True,
             use_znorm=self.use_znorm,
             padding_mode=self.padding_mode,
         )
@@ -383,7 +384,7 @@ class TimesFM3Forecaster(BaseForecaster):
 
     def _predict(self, fh, X):
         """Forecast time series at future horizon."""
-        output, index, pred_out, _ = self._run_forecast(fh, X, return_quantiles=False)
+        output, index, pred_out, _ = self._run_forecast(fh, X)
 
         forecast = np.asarray(output.forecast)
         if forecast.ndim == 1:
@@ -406,7 +407,7 @@ class TimesFM3Forecaster(BaseForecaster):
         quantile grid. ``np.interp`` saturates outside the grid, so levels
         beyond the native range are clamped to the nearest native quantile.
         """
-        output, index, pred_out, _ = self._run_forecast(fh, X, return_quantiles=True)
+        output, index, pred_out, _ = self._run_forecast(fh, X)
 
         available = np.asarray(self.forecaster_.config.quantiles, dtype=float)
         quantiles = np.asarray(output.quantiles)
@@ -425,6 +426,43 @@ class TimesFM3Forecaster(BaseForecaster):
 
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
         return pred_df.loc[dateindex]
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Compute/return a fully probabilistic forecast.
+
+        Returns a ``skpro`` ``HistogramQPD`` built from the checkpoint's native
+        quantile grid (``0.1, 0.2, ..., 0.9``). ``tails="mass"`` places the
+        residual tail probability as point masses at the outermost native
+        quantiles, matching the clamping behavior of ``predict_quantiles``.
+        """
+        from skpro.distributions import HistogramQPD
+
+        output, index, pred_out, _ = self._run_forecast(fh, X)
+
+        levels = np.asarray(self.forecaster_.config.quantiles, dtype=float)
+        quantiles = np.asarray(output.quantiles)
+        if quantiles.ndim == 2:
+            quantiles = quantiles[np.newaxis, :, :]
+        # quantiles: (n_targets, n_fh, n_quantiles)
+
+        var_names = self._get_varnames()
+        pred_index = pd.Index(index)
+        pred_index.names = self._y_index_names
+
+        mask = np.array([x in pred_out for x in pred_index], dtype=bool)
+        sel_index = pred_index[mask]
+        q_sel = quantiles[:, mask, :]
+
+        # HistogramQPD rows indexed by (quantile level, time), columns by target
+        stacked = np.transpose(q_sel, (2, 1, 0)).reshape(
+            len(levels) * len(sel_index), len(var_names)
+        )
+        row_index = pd.MultiIndex.from_product([levels, sel_index])
+        quantile_df = pd.DataFrame(stacked, index=row_index, columns=var_names)
+
+        return HistogramQPD(
+            quantile_df, tails="mass", index=sel_index, columns=var_names
+        )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
