@@ -430,8 +430,8 @@ class TagAliaserMixin(_TagAliaserMixin):
     # when removing tags from here,
     # add to LEGACY_DEPRECATED_TAGS in TestAllObjects
     # (permanent graveyard to check for legacy tags in CI)
-    alias_dict = {"capability:global_forecasting": ""}
-    deprecate_dict = {"capability:global_forecasting": "1.2.0"}
+    alias_dict = {}
+    deprecate_dict = {}
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
@@ -715,7 +715,7 @@ class TagAliaserMixin(_TagAliaserMixin):
     _package_name = "sktime"
 
 
-class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
+class BaseEstimator(_BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.

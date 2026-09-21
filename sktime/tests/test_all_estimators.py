@@ -921,6 +921,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
         "ignores-exogeneous-X",
         "python_dependencies_alias",
         "univariate-metric",
+        "capability:global_forecasting"
     ]
 
     def test_valid_object_class_tags(self, object_class):
