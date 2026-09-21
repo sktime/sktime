@@ -134,9 +134,9 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
                     f"or create a new forecaster with a larger pred_len."
                 )
 
+        network = self._init_network(list(fh)[-1])
         dataloader = self.build_pytorch_train_dataloader(y)
 
-        network = self._init_network(list(fh)[-1])
         network.train()
 
         for epoch in range(self.num_epochs):
