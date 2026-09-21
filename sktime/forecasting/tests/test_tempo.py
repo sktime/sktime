@@ -54,8 +54,9 @@ def fake_tempo(monkeypatch):
 )
 def test_tempo_tags_and_get_test_params():
     params = TEMPOForecaster.get_test_params()
-    assert isinstance(params, dict)
-    assert params["model_path"] == "Melady/TEMPO"
+    assert isinstance(params, list)
+    assert len(params) >= 2
+    assert params[0]["model_path"] == "Melady/TEMPO"
 
     tags = TEMPOForecaster._tags
     assert tags["authors"]

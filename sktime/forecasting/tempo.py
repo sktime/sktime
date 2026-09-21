@@ -112,7 +112,10 @@ class TEMPOForecaster(BaseForecaster):
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the forecaster."""
-        return {"model_path": "Melady/TEMPO", "device": "cpu"}
+        return [
+            {"model_path": "Melady/TEMPO", "device": "cpu"},
+            {"model_path": "Melady/TEMPO", "device": "cpu", "filename": "TEMPO-80M_v2.pth"},
+        ]
 
     def _fit(self, y, X=None, fh=None):
         """Fit the forecaster by loading the upstream model instance."""
