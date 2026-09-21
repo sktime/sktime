@@ -192,7 +192,7 @@ def _extract_freq_from_cutoff(x) -> pd.offsets.BaseOffset | None:
     pandas offset, or None if x carries no frequency information
     """
     if isinstance(x, (pd.Period, pd.PeriodIndex, pd.DatetimeIndex)):
-        return x.freq
+        return _to_offset_compat(x.freqstr)
     else:
         return None
 
