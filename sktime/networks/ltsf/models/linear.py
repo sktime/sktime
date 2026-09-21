@@ -269,7 +269,7 @@ class LTSFNLinearNetwork:
         "maintainers": ["luca-miniati"],
     }
 
-    class _LTSFNLinearNetwork(nn_module):
+    class _LTSFNLinearNetwork(nn.Module):
         def __init__(
             self,
             seq_len,

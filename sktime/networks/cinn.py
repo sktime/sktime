@@ -32,7 +32,7 @@ class CINNNetwork:
         Activation function to use in the subnet.
     """
 
-    class _CINNNetwork(NNModule):
+    class _CINNNetwork(nn.Module):
         def __init__(
             self,
             horizon,

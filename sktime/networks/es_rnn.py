@@ -208,7 +208,6 @@ class _ESRNN(nn.Module):
             out_list = [last_output]
             for t in range(self.pred_len - 1):
                 next_out = self.input_layer(last_output)
-                next_out = next_out
                 lstm_out, (h, c) = self.lstm(next_out, (h, c))
                 next_output = self.output_layer(lstm_out)
                 out_list.append(next_output)
@@ -226,7 +225,6 @@ class _ESRNN(nn.Module):
             out_list = [last_output]
             for t in range(self.pred_len - 1):
                 next_out = self.input_layer(last_output)
-                next_out = next_out
                 lstm_out, (h, c) = self.lstm(next_out, (h, c))
                 next_output = self.output_layer(lstm_out)
                 out_list.append(next_output)
@@ -245,7 +243,6 @@ class _ESRNN(nn.Module):
             out_list = [last_output]
             for t in range(self.pred_len - 1):
                 next_out = self.input_layer(last_output)
-                next_out = next_out
                 lstm_out, (h, c) = self.lstm(next_out, (h, c))
                 next_output = self.output_layer(lstm_out)
                 out_list.append(next_output)
