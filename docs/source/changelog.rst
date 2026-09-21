@@ -20,6 +20,22 @@ For our long-term plan, see our :ref:`roadmap`.
 Version 1.2.0 - 2026-09-22
 --------------------------
 
+Highlights
+~~~~~~~~~~
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Deprecation of the ``capability:global_forecasting`` tag is complete, it has been removed entirely.
+  Users should use the ``capability:pretrain`` tag instead.
+
+
 Enhancements
 ~~~~~~~~~~~~
 
