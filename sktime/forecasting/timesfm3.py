@@ -70,11 +70,6 @@ class TimesFM3Forecaster(BaseForecaster):
     ignore_deps : bool, default=False
         If ``True``, skip soft-dependency checks (for testing).
 
-    Attributes
-    ----------
-    forecaster_ : timesfm3.TimesFM3Forecaster
-        Loaded upstream forecaster used for inference.
-
     References
     ----------
     .. [1] https://github.com/google-research/timesfm/
@@ -121,7 +116,7 @@ class TimesFM3Forecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["hasanfaesal"],
+        "authors": ["rajatsen91", "siriuz42", "hasanfaesal"],
         "maintainers": ["hasanfaesal"],
         "python_dependencies": ["timesfm[torch]>=3.0.0,<4.0.0"],
         "capability:multivariate": True,
@@ -164,7 +159,7 @@ class TimesFM3Forecaster(BaseForecaster):
         self.license_accepted = license_accepted
         self.ignore_deps = ignore_deps
 
-        self.forecaster_ = None
+        self.forecaster = None
 
         super().__init__()
 
@@ -176,8 +171,8 @@ class TimesFM3Forecaster(BaseForecaster):
     def __getstate__(self):
         """Return state for pickling, excluding the unpickleable upstream model."""
         state = self.__dict__.copy()
-        if hasattr(self, "forecaster_"):
-            state["forecaster_"] = None
+        if hasattr(self, "forecaster"):
+            state["forecaster"] = None
         return state
 
     def __setstate__(self, state):
@@ -235,20 +230,20 @@ class TimesFM3Forecaster(BaseForecaster):
 
     def _load_model(self):
         """Load or retrieve the cached upstream TimesFM 3 forecaster."""
-        if hasattr(self, "forecaster_") and self.forecaster_ is not None:
-            return self.forecaster_
+        if hasattr(self, "forecaster") and self.forecaster is not None:
+            return self.forecaster
 
-        self.forecaster_ = _CachedTimesFM3(
+        self.forecaster = _CachedTimesFM3(
             key=self._get_unique_key(),
             config_kwargs=self._get_config_kwargs(),
         ).load()
-        return self.forecaster_
+        return self.forecaster
 
     def _ensure_model_loaded(self):
         """Reload upstream forecaster if needed after unpickling."""
-        if not hasattr(self, "forecaster_") or self.forecaster_ is None:
+        if not hasattr(self, "forecaster") or self.forecaster is None:
             if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.forecaster_ = self._load_model()
+                self.forecaster = self._load_model()
 
     def _get_max_variates(self):
         """Return maximum supported target plus covariate variates."""
@@ -409,7 +404,7 @@ class TimesFM3Forecaster(BaseForecaster):
         """
         output, index, pred_out, _ = self._run_forecast(fh, X)
 
-        available = np.asarray(self.forecaster_.config.quantiles, dtype=float)
+        available = np.asarray(self.forecaster.config.quantiles, dtype=float)
         quantiles = np.asarray(output.quantiles)
         if quantiles.ndim == 2:
             quantiles = quantiles[np.newaxis, :, :]
@@ -439,7 +434,7 @@ class TimesFM3Forecaster(BaseForecaster):
 
         output, index, pred_out, _ = self._run_forecast(fh, X)
 
-        levels = np.asarray(self.forecaster_.config.quantiles, dtype=float)
+        levels = np.asarray(self.forecaster.config.quantiles, dtype=float)
         quantiles = np.asarray(output.quantiles)
         if quantiles.ndim == 2:
             quantiles = quantiles[np.newaxis, :, :]
