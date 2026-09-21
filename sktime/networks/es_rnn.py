@@ -99,7 +99,7 @@ class _ESRNN(nn.Module):
         batch, seq_length, num_features = x.shape
         season1_length = self.season1_length
         if self.season1_length > seq_length:
-            warn(f"Input window should atleast cover one season,{seq_length}")
+            warn(f"Input window should at least cover one season,{seq_length}")
             season1_length = seq_length
         level = x[:, :season1_length, :].mean(dim=1, keepdim=True)
         initial_seasonality_1 = x[:, :season1_length, :] / level
