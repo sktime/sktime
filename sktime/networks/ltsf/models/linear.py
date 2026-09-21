@@ -1,9 +1,49 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 
+from skbase.utils.dependencies import _safe_import
 
-def _LTSFLinearNetwork():
-    """Return the LTSF-Linear network class."""
-    import torch.nn as nn
+nn = _safe_import("torch.nn")
+
+
+class LTSFLinearNetwork:
+    """LTSF-Linear Forecaster.
+
+    Implementation of the Long-Term Short-Term Feature (LTSF) linear forecaster,
+    aka LTSF-Linear, by Zeng et al [1]_.
+
+    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
+    which is unfortunately not available as a package.
+
+    Parameters
+    ----------
+    seq_len : int
+        length of input sequence
+    pred_len : int
+        length of prediction (forecast horizon)
+    in_channels : int, default=None
+        number of input channels passed to network
+    individual : bool, default=False
+        boolean flag that controls whether the network treats each channel individually"
+        "or applies a single linear layer across all channels. If individual=True, the"
+        "a separate linear layer is created for each input channel. If"
+        "individual=False, a single shared linear layer is used for all channels."
+
+    References
+    ----------
+    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
+    Are transformers effective for time series forecasting?
+    Proceedings of the AAAI conference on artificial intelligence 2023
+    (Vol. 37, No. 9, pp. 11121-11128).
+    .. [2] https://github.com/cure-lab/LTSF-Linear
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
+        # mixiancmx, ailingzengzzz for cure-lab code
+        "maintainers": ["luca-miniati"],
+    }
 
     class _LTSFLinearNetwork(nn.Module):
         def __init__(
@@ -53,14 +93,23 @@ def _LTSFLinearNetwork():
                 x = self.Linear(x.permute(0, 2, 1)).permute(0, 2, 1)
             return x  # [Batch, Output Length, Channel]
 
-    return _LTSFLinearNetwork
+    def __init__(self, seq_len, pred_len, in_channels=1, individual=False):
+        self.seq_len = seq_len
+        self.pred_len = pred_len
+        self.in_channels = in_channels
+        self.individual = individual
+
+    def _build(self):
+        return self._LTSFLinearNetwork(
+            self.seq_len, self.pred_len, self.in_channels, self.individual
+        )
 
 
-class LTSFLinearNetwork:
-    """LTSF-Linear Forecaster.
+class LTSFDLinearNetwork:
+    """LTSF-DLinear Forecaster.
 
-    Implementation of the Long-Term Short-Term Feature (LTSF) linear forecaster,
-    aka LTSF-Linear, by Zeng et al [1]_.
+    Implementation of the Long-Term Short-Term Feature (LTSF) decomposition linear
+    forecaster, aka LTSF-DLinear, by Zeng et al [1]_.
 
     Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
     which is unfortunately not available as a package.
@@ -95,22 +144,6 @@ class LTSFLinearNetwork:
         # mixiancmx, ailingzengzzz for cure-lab code
         "maintainers": ["luca-miniati"],
     }
-
-    def __init__(self, seq_len, pred_len, in_channels=1, individual=False):
-        self.seq_len = seq_len
-        self.pred_len = pred_len
-        self.in_channels = in_channels
-        self.individual = individual
-
-    def _build(self):
-        return _LTSFLinearNetwork()(
-            self.seq_len, self.pred_len, self.in_channels, self.individual
-        )
-
-
-def _LTSFDLinearNetwork():
-    """Return the LTSF-DLinear Network class."""
-    from torch import nn
 
     class _LTSFDLinearNetwork(nn.Module):
         def __init__(
@@ -184,14 +217,23 @@ def _LTSFDLinearNetwork():
             x = seasonal_output + trend_output
             return x.permute(0, 2, 1)  # to [Batch, Output length, Channel]
 
-    return _LTSFDLinearNetwork
+    def __init__(self, seq_len, pred_len, in_channels=1, individual=False):
+        self.seq_len = seq_len
+        self.pred_len = pred_len
+        self.in_channels = in_channels
+        self.individual = individual
+
+    def _build(self):
+        return self._LTSFDLinearNetwork(
+            self.seq_len, self.pred_len, self.in_channels, self.individual
+        )
 
 
-class LTSFDLinearNetwork:
-    """LTSF-DLinear Forecaster.
+class LTSFNLinearNetwork:
+    """LTSF-NLinear Forecaster.
 
-    Implementation of the Long-Term Short-Term Feature (LTSF) decomposition linear
-    forecaster, aka LTSF-DLinear, by Zeng et al [1]_.
+    Implementation of the Long-Term Short-Term Feature (LTSF) normalization linear
+    forecaster, aka LTSF-NLinear, by Zeng et al [1]_.
 
     Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
     which is unfortunately not available as a package.
@@ -226,22 +268,6 @@ class LTSFDLinearNetwork:
         # mixiancmx, ailingzengzzz for cure-lab code
         "maintainers": ["luca-miniati"],
     }
-
-    def __init__(self, seq_len, pred_len, in_channels=1, individual=False):
-        self.seq_len = seq_len
-        self.pred_len = pred_len
-        self.in_channels = in_channels
-        self.individual = individual
-
-    def _build(self):
-        return _LTSFDLinearNetwork()(
-            self.seq_len, self.pred_len, self.in_channels, self.individual
-        )
-
-
-def _LTSFNLinearNetwork():
-    """Return the LTSF-NLinear Network class."""
-    from torch import nn
 
     class _LTSFNLinearNetwork(nn.Module):
         def __init__(
@@ -295,49 +321,6 @@ def _LTSFNLinearNetwork():
             x = x + seq_last
             return x  # [Batch, Output length, Channel]
 
-    return _LTSFNLinearNetwork
-
-
-class LTSFNLinearNetwork:
-    """LTSF-NLinear Forecaster.
-
-    Implementation of the Long-Term Short-Term Feature (LTSF) normalization linear
-    forecaster, aka LTSF-NLinear, by Zeng et al [1]_.
-
-    Core logic is directly copied from the cure-lab LTSF-Linear implementation [2]_,
-    which is unfortunately not available as a package.
-
-    Parameters
-    ----------
-    seq_len : int
-        length of input sequence
-    pred_len : int
-        length of prediction (forecast horizon)
-    in_channels : int, default=None
-        number of input channels passed to network
-    individual : bool, default=False
-        boolean flag that controls whether the network treats each channel individually"
-        "or applies a single linear layer across all channels. If individual=True, the"
-        "a separate linear layer is created for each input channel. If"
-        "individual=False, a single shared linear layer is used for all channels."
-
-    References
-    ----------
-    .. [1] Zeng A, Chen M, Zhang L, Xu Q. 2023.
-    Are transformers effective for time series forecasting?
-    Proceedings of the AAAI conference on artificial intelligence 2023
-    (Vol. 37, No. 9, pp. 11121-11128).
-    .. [2] https://github.com/cure-lab/LTSF-Linear
-    """
-
-    _tags = {
-        # packaging info
-        # --------------
-        "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
-        # mixiancmx, ailingzengzzz for cure-lab code
-        "maintainers": ["luca-miniati"],
-    }
-
     def __init__(self, seq_len, pred_len, in_channels=1, individual=False):
         self.seq_len = seq_len
         self.pred_len = pred_len
@@ -345,6 +328,6 @@ class LTSFNLinearNetwork:
         self.individual = individual
 
     def _build(self):
-        return _LTSFNLinearNetwork()(
+        return self._LTSFNLinearNetwork(
             self.seq_len, self.pred_len, self.in_channels, self.individual
         )
