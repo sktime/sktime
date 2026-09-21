@@ -41,6 +41,8 @@ class PlateauFinder(BaseTransformer):
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
+        # CI and test tags
+        # ----------------
         "tests:skip_all": True,  # PlateauFinder seems to be broken, see #2259
     }
 
@@ -239,6 +241,9 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "pd_Series_Table",  # and for y?
+        # CI and test flags
+        # -----------------
+        "tests:skip_all": True,  # mac failures, see #3103
         "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
