@@ -410,19 +410,33 @@ class PatchTSTForecaster(BaseForecaster):
         # dataset and training parameters
         self.validation_split = validation_split
         self.config = config
-        self._config = self.config if self.config else {}
         self.training_args = training_args
-        self._training_args = self.training_args if self.training_args else {}
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
         self.device = device
 
-        self._config = self.config if self.config else {}
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        self._config = self.config if self.config else {}
+        self._training_args = self.training_args if self.training_args else {}
+
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
 
-        if self.model_path is None and self.fit_strategy != "full":
+        model_path = self.model_path
+        if model_path is None and self.fit_strategy != "full":
             raise ValueError(f"model_path={model_path} requires fit_strategy=='full'")
 
     def _fit(self, y, X=None, fh=None):
