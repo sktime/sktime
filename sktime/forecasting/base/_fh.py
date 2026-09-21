@@ -898,11 +898,7 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             absolute = _coerce_to_period(absolute, freq=fh._freq)
             cutoff = _coerce_to_period(cutoff, freq=fh._freq)
 
-        pandas_version_with_bugfix = _is_pandas_arithmetic_bug_fixed()
-        if pandas_version_with_bugfix:
-            relative = absolute - cutoff
-        else:
-            relative = pd.Index([date - cutoff[0] for date in absolute])
+        relative = absolute - cutoff
 
         # Coerce durations (time deltas) into integer values for given frequency
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
@@ -1062,28 +1058,3 @@ def _index_range(relative, cutoff):
         # coerce back to DatetimeIndex after operation
         absolute = absolute.to_timestamp(cutoff.freqstr)
     return absolute
-
-
-def _is_pandas_arithmetic_bug_fixed():
-    """Check if pandas supports correct arithmetic without a workaround."""
-    # TODO 1.2.0:
-    # Check at every minor release whether lower pandas bound >=1.5.0
-    # if yes, can remove the workaround in the "else" condition and the check
-    #
-    # context:
-    # there is a bug in pandas
-    # that requires a workaround when computing index diff below
-    # bug report: https://github.com/pandas-dev/pandas/issues/45999
-    # fix, present from 1.5.0 on: https://github.com/pandas-dev/pandas/pull/46006
-    #
-    # example with bug and workaround:
-    # periods = pd.period_range(start="2021-01-01", periods=3, freq="2H")
-    # periods - periods[0]
-    # Out: Index([<0 * Hours>, <4 * Hours>, <8 * Hours>], dtype = 'object')
-    # [v - periods[0] for v in periods]
-    # Out: Index([<0 * Hours>, <2 * Hours>, <4 * Hours>], dtype='object')
-    #
-    # Below checks pandas version
-    # "True" represents that is expected to work
-    # "False" has the workaround for versions strictly lower than pandas 1.5.0
-    return _check_soft_dependencies("pandas>=1.5.0", severity="none")
