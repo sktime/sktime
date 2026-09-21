@@ -5,11 +5,11 @@ __author__ = ["benHeid"]
 import numpy as np
 from skbase.utils.dependencies import _safe_import
 
-torch = _safe_import("torch", severity="none")
-nn = _safe_import("torch.nn", severity="none")
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
-Ff = _safe_import("FrEIA.framework", severity="none")
-Fm = _safe_import("FrEIA.modules", severity="none")
+Ff = _safe_import("FrEIA.framework")
+Fm = _safe_import("FrEIA.modules")
 
 
 class CINNNetwork:

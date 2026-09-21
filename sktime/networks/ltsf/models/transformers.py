@@ -2,7 +2,7 @@
 
 from skbase.utils.dependencies import _safe_import
 
-nn = _safe_import("torch.nn", severity="none")
+nn = _safe_import("torch.nn")
 
 
 class LTSFTransformerNetwork:
