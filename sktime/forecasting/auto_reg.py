@@ -222,7 +222,7 @@ class AutoREG(_StatsModelsAdapter):
         valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(
-            start=start, end=end, exog=self._X, exog_oos=X, dynamic=self.dynamic
+            start=start, end=end, exog=self._cur_X, exog_oos=X, dynamic=self.dynamic
         )
         y_pred.name = self._y_name
 
