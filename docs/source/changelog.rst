@@ -34,9 +34,26 @@ Dependency changes
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+* From version 1.3.0, forecasters will no longer universally provide "refitting " ``update`` capability by default
+  and as a consequence no longer store all data seen so far in ``self._y`` and/or ``self._X``.
+  Forecasters with an available "update" mode can now be queried via the ``capability:update`` tag.
+  To replicate the former default behaviour of "memorize all data and refit" in an upwards compatible way,
+  users can use the ``UpdateRefitsEvery`` compositor from ``sktime.forecasting.stream``.
+* In line with the forecaster update default change, from version 1.3.0, ``self._y`` and ``self._X`` will no longer store all data seen so far by default.
+  Users who wish to retain the previous behavior in an upwards compatible way
+  can set the config ``remember_data`` to ``True`` via the ``.set_config(remember_data=True)`` (prior to forecaster use).
+  
+
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+* From version 1.3.0, forecasters will no longer universally provide "refitting " ``update`` capability by default
+  and as a consequence no longer store all data seen so far in ``self._y`` and/or ``self._X``.
+  Forecasters with an available "update" mode can now be queried via the ``capability:update`` tag.
+  To replicate the former default behaviour of "memorize all data and refit" in an upwards compatible way,
+  users can use the ``UpdateRefitsEvery`` compositor from ``sktime.forecasting.stream``.
+  In order to test future post-1.3.0 behaviour, users can set the config ``remember_data`` to ``False``,
+  via the ``.set_config(remember_data=False)`` (prior to forecaster use).
 * Deprecation of the ``capability:global_forecasting`` tag is complete, it has been removed entirely.
   Users should use the ``capability:pretrain`` tag instead.
 
