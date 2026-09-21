@@ -114,7 +114,11 @@ class TEMPOForecaster(BaseForecaster):
         """Return testing parameter settings for the forecaster."""
         return [
             {"model_path": "Melady/TEMPO", "device": "cpu"},
-            {"model_path": "Melady/TEMPO", "device": "cpu", "filename": "TEMPO-80M_v2.pth"},
+            {
+                "model_path": "Melady/TEMPO",
+                "device": "cpu",
+                "filename": "TEMPO-80M_v2.pth",
+            },
         ]
 
     def _fit(self, y, X=None, fh=None):
