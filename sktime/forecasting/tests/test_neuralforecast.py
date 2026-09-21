@@ -46,7 +46,9 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
 def test_neural_forecast_univariate_y_without_X(model_class) -> None:
     """Test with single endogenous without exogenous."""
     # define model
-    model = model_class(freq="A-DEC", max_steps=5, trainer_kwargs={"logger": False})
+    model = model_class(
+        freq=y_train.index.freqstr, max_steps=5, trainer_kwargs={"logger": False}
+    )
 
     # attempt fit with negative fh
     with pytest.raises(NotImplementedError):
@@ -91,7 +93,7 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
 
     # define model
     model = model_class(
-        freq="A-DEC",
+        freq=y_train.index.freqstr,
         futr_exog_list=exog_list,
         max_steps=5,
         trainer_kwargs={"logger": False},
@@ -145,7 +147,9 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
 def test_neural_forecast_multivariate_y_without_X(model_class) -> None:
     """Test with multiple endogenous without exogenous."""
     # define model
-    model = model_class(freq="A-DEC", max_steps=5, trainer_kwargs={"logger": False})
+    model = model_class(
+        freq=y_train.index.freqstr, max_steps=5, trainer_kwargs={"logger": False}
+    )
 
     # train model
     model.fit(X_train, fh=[1, 2, 3, 4])
@@ -186,7 +190,7 @@ def test_neural_forecast_with_non_default_loss(model_class) -> None:
 
     # define model
     model = model_class(
-        freq="A-DEC",
+        freq=y_train.index.freqstr,
         loss=HuberQLoss(0.5),
         valid_loss=MASE(1),
         max_steps=5,
@@ -232,7 +236,7 @@ def test_neural_forecast_fail_with_multiple_predictions(model_class) -> None:
 
     # define model
     model = model_class(
-        freq="A-DEC",
+        freq=y_train.index.freqstr,
         loss=MQLoss(quantiles=[0.25, 0.5, 0.75]),
         max_steps=5,
         trainer_kwargs={"logger": False},
@@ -304,19 +308,15 @@ def test_neural_forecast_with_auto_freq(model_class) -> None:
         "B",
         "D",
         "W",
-        "M",
-        "Q",
-        "A",
-        "Y",
-        "H",
-        "T",
+        "ME",
+        "QE",
+        "YE",
+        "h",
         "min",
-        "S",
-        "L",
+        "s",
         "ms",
-        "U",
         "us",
-        "N",
+        "ns",
     ],
 )
 @pytest.mark.skipif(
@@ -497,3 +497,34 @@ def test_neural_forecast_with_auto_freq_on_missing_date_like(
         ValueError, match="(could not interpret freq).*(use a valid offset in index)"
     ):
         model.fit(y, fh=[1, 2, 3])
+
+
+@pytest.mark.parametrize("period_freq", ["M", "Q", "Y", "D"])
+@pytest.mark.skipif(
+    not run_test_for_class(NeuralForecastRNN),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_neural_forecast_period_index_own_freqstr(period_freq) -> None:
+    """Test that the freq string reported by a PeriodIndex is accepted.
+
+    Regression test, see bug report #11228.
+
+    ``PeriodIndex.freqstr`` returns period aliases such as ``"M"`` or ``"Y-DEC"``,
+    which ``pandas.tseries.frequencies.to_offset`` rejects from pandas 3 onwards.
+    Passing the index's own ``freqstr`` as ``freq`` used to raise ``ValueError``,
+    both inside ``_handle_PeriodIndex`` and inside ``neuralforecast`` itself.
+    """
+    index = pandas.period_range(start="2000-01-01", periods=12, freq=period_freq)
+    y = pandas.Series(data=range(len(index)), index=index, dtype="float64")
+
+    model = NeuralForecastRNN(
+        freq=index.freqstr,
+        max_steps=1,
+        trainer_kwargs={"logger": False},
+    )
+    model.fit(y, fh=[1, 2, 3])
+    y_pred = model.predict()
+
+    assert isinstance(y_pred.index, pandas.PeriodIndex)
+    assert y_pred.index.freq == index.freq
+    assert len(y_pred) == 3
