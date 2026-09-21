@@ -63,9 +63,13 @@ class _PmdArimaAdapter(BaseForecaster):
         self._cur_y = y
         self._cur_X = X
         if X is not None:
-            X = X.loc[y.index]
+            X = X.loc[y.index].reset_index(drop=True)
+        # statsmodels >= 0.15 raises on out-of-sample prediction if the index
+        # is not supported, e.g., an integer index not starting at 0,
+        # so we pass a RangeIndex. Predictions are re-indexed in _predict.
+        y_fit = y.reset_index(drop=True)
         self._forecaster = self._instantiate_model()
-        self._forecaster.fit(y, X=X)
+        self._forecaster.fit(y_fit, X=X)
         self._y_name = y.name
         return self
 
