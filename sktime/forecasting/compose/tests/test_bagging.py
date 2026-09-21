@@ -29,6 +29,8 @@ def test_bagging_forecaster_transformer_type_error(transformer):
     y = load_airline()
 
     with pytest.raises(TypeError) as ex:
+        from sktime.forecasting.naive import NaiveForecaster
+
         f = BaggingForecaster(
             bootstrap_transformer=transformer, forecaster=NaiveForecaster(sp=12)
         )
