@@ -48,11 +48,19 @@ class TimesFM3Forecaster(BaseForecaster):
         PyTorch device string, e.g. ``"cpu"`` or ``"cuda"``. If ``None``,
         upstream selects CUDA when available, otherwise CPU.
     batch_size : int, default=4
-        Batch size passed to upstream ``ModelConfig.per_core_batch_size``.
+        Batch size passed to upstream ``ModelConfig.per_core_batch_size`` [3]_.
     config : dict or None, default=None
-        Additional keyword arguments forwarded to upstream ``ModelConfig``.
-        Reserved keys ``checkpoint_path``, ``device``, and
-        ``per_core_batch_size`` must not appear here.
+        Additional keyword arguments forwarded to upstream ``ModelConfig`` [3]_.
+        Commonly useful keys include ``input_patch_length`` (int),
+        ``output_patch_length`` (int), ``quantiles`` (list of float),
+        ``use_stitching`` (bool), ``use_linear_detrending`` (bool),
+        ``linear_detrending_threshold`` (float), ``use_iterative_cpm_revin``
+        (bool), ``use_variate_attention`` (bool), ``use_sdpa`` (bool), and the
+        Hugging Face Hub download keys ``cache_dir``, ``force_download``,
+        ``token``, ``revision`` and ``local_files_only``. See [3]_ for the full
+        list. The reserved keys ``checkpoint_path``, ``device`` and
+        ``per_core_batch_size`` are set via the ``model_path``, ``device`` and
+        ``batch_size`` parameters and must not appear here.
     use_symmetric_averaging : bool, default=False
         Whether to enable upstream symmetric averaging during inference.
     make_positive : bool, default=False
@@ -74,6 +82,8 @@ class TimesFM3Forecaster(BaseForecaster):
     ----------
     .. [1] https://github.com/google-research/timesfm/
     .. [2] https://research.google/blog/timesfm-3-a-zero-shot-foundation-model-for-multivariate-forecasting/
+    .. [3] ``ModelConfig`` fields (upstream source):
+       https://github.com/google-research/timesfm/blob/master/src/timesfm3/torch/timesfm3_forecaster.py
 
     Examples
     --------
