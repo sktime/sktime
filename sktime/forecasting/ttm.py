@@ -144,7 +144,8 @@ class TinyTimeMixerForecaster(BaseForecaster):
 
     device : str, default="cpu"
         Device for model inference and fine-tuning, for example ``"cpu"``,
-        ``"cuda"``, or ``"cuda:0"``.
+        ``"cuda"``, ``"cuda:0"``, or ``"auto"``. ``"auto"`` is passed to
+        transformers ``device_map`` and selects an available accelerator.
 
     freq : str or None, default=None
         Frequency to pass to models that use resolution prefix tuning,
@@ -674,6 +675,8 @@ class TinyTimeMixerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         return self._fit_or_pretrain(y=y, X=X, fh=fh)
 
     def _fit_or_pretrain(self, y, X=None, fh=None):
@@ -865,7 +868,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
                 "prediction_length, or provide a compatible config."
             )
 
-        _y = self._y
+        _y = self._cur_y
 
         hist = np.expand_dims(_y.values, axis=0)
 
@@ -1427,7 +1430,8 @@ class _CachedTinyTimeMixer:
 
         config = self._build_config()
         self.model_, info = self._load_model(config)
-        self.model_ = self.model_.to(self.device)
+        if self.device != "auto":
+            self.model_ = self.model_.to(self.device)
         self._set_training_parameters(info)
 
         return self.model_
@@ -1507,6 +1511,7 @@ class _CachedTinyTimeMixer:
             config=config,
             output_loading_info=True,
             ignore_mismatched_sizes=True,
+            device_map=self.device,
         )
 
     def _load_from_config(self, config):
