@@ -531,9 +531,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             self._fit(y=y_inner, X=X_inner, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize(
-                "fit", y=y_inner, X=X_inner, y_data=y_data, X_data=X_data, fh=fh
-            )
+            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
         # this should happen last
         self._state = "fitted"
@@ -595,7 +593,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             y_pred = self._predict(fh=fh, X=X_inner)
         else:
             # otherwise we call the vectorized version of predict
-            y_pred = self._vectorize("predict", X=X_inner, X_data=X_data, fh=fh)
+            y_pred = self._vectorize("predict", X=X_inner, fh=fh)
 
         # convert to output mtype, identical with last y mtype seen
         y_out = convert_to(
@@ -704,9 +702,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             self._fit(y=y_inner, X=X_inner, fh=fh)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize(
-                "fit", y=y_inner, X=X_inner, y_data=y_data, X_data=X_data, fh=fh
-            )
+            self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
         self._state = "fitted"
         # public predict reconverts X; pass original so schema-only wrappers
@@ -803,7 +799,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 "predict_quantiles",
                 fh=fh,
                 X=X_inner,
-                X_data=X_data,
                 alpha=alpha,
             )
 
@@ -899,7 +894,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 "predict_interval",
                 fh=fh,
                 X=X_inner,
-                X_data=X_data,
                 coverage=coverage,
             )
 
@@ -985,9 +979,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             pred_var = self._predict_var(fh=fh, X=X_inner, cov=cov)
         else:
             # otherwise we call the vectorized version of predict_interval
-            pred_var = self._vectorize(
-                "predict_var", fh=fh, X=X_inner, X_data=X_data, cov=cov
-            )
+            pred_var = self._vectorize("predict_var", fh=fh, X=X_inner, cov=cov)
 
         return pred_var
 
@@ -1388,8 +1380,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 "update",
                 y=y_inner,
                 X=X_inner,
-                y_data=y_data,
-                X_data=X_data,
                 update_params=update_params,
             )
 
@@ -1629,8 +1619,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 "update_predict_single",
                 y=y_inner,
                 X=X_inner,
-                y_data=y_data,
-                X_data=X_data,
                 fh=fh,
                 update_params=update_params,
             )
@@ -2389,8 +2377,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # retrieve data arguments
         X = kwargs.pop("X", None)
         y = kwargs.get("y", None)
-        # X_data = kwargs.pop("X_data", None)
-        # y_data = kwargs.pop("y_data", None)
 
         # add some common arguments to kwargs
         kwargs["args_rowvec"] = {"X": X}
