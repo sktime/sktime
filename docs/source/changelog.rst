@@ -424,6 +424,7 @@ Forecasting
 * [BUG] Disable ``capability:non_contiguous_X`` for ``SARIMAX`` (:pr:`10741`) :user:`Faakhir30`
 * [BUG] Fix mutable defaults in LagLlama estimator (:pr:`10879`) :user:`tarundb2005-create`
 * [BUG] Preserve pretrained ``PatchTSMixer`` configuration (:pr:`10921`) :user:`dhruvb2028`
+* [BUG] fix off-by-one in ``PatchTST`` ``prediction_length`` derived from ``fh`` (:pr:`10940`) :user:`Nischal1425`
 
 Neural network layers and components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
