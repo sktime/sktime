@@ -117,6 +117,7 @@ class EnbPIForecaster(BaseForecaster):
         "capability:insample": False,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": False,  # ... for in-sample horizons?
+        "capability:update": True,  # can estimator update its parameters with new data?
         "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 

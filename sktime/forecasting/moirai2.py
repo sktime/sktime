@@ -105,6 +105,7 @@ class Moirai2Forecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,
