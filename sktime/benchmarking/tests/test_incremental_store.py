@@ -15,7 +15,7 @@ from sktime.benchmarking._storage_handlers import (
     CSVStorageHandler,
     JSONStorageHandler,
 )
-from sktime.benchmarking.benchmarks import _BenchmarkingResults
+from sktime.benchmarking.benchmarks import BenchmarkingResults
 from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.performance_metrics.forecasting import MeanSquaredPercentageError
@@ -138,11 +138,11 @@ def test_benchmarking_results_loads_from_parts_on_resume(tmp_path):
     store.save_result(_sample_result(task_id="val_1", model_id="model_1"))
     store.save_result(_sample_result(task_id="val_2", model_id="model_2"))
 
-    results = _BenchmarkingResults(path=str(output_file))
+    results = BenchmarkingResults(path=str(output_file))
 
     assert len(results.results) == 2
-    assert results.contains("val_1", "model_1")
-    assert results.contains("val_2", "model_2")
+    assert results._contains("val_1", "model_1")
+    assert results._contains("val_2", "model_2")
 
 
 def test_benchmarking_results_prefers_final_output_file(tmp_path):
@@ -154,7 +154,7 @@ def test_benchmarking_results_prefers_final_output_file(tmp_path):
     final_result = _sample_result(task_id="val_1", model_id="model_1", accuracy=0.99)
     JSONStorageHandler(output_file).save([final_result])
 
-    results = _BenchmarkingResults(path=str(output_file))
+    results = BenchmarkingResults(path=str(output_file))
 
     assert len(results.results) == 1
     assert results.results[0].folds[0].scores["accuracy"] == 0.99
@@ -172,16 +172,16 @@ def test_benchmarking_results_incremental_save_and_final_merge(
 ):
     """Test merging incremental artifacts into the final output file."""
     output_file = tmp_path / f"results{file_extension}"
-    results = _BenchmarkingResults(path=str(output_file))
+    results = BenchmarkingResults(path=str(output_file))
 
-    results.update(_sample_result(task_id="val_1", model_id="model_1"))
-    results.update(_sample_result(task_id="val_2", model_id="model_2"))
+    results._update(_sample_result(task_id="val_1", model_id="model_1"))
+    results._update(_sample_result(task_id="val_2", model_id="model_2"))
 
     parts_dir = IncrementalResultStore(output_file).parts_dir
     assert parts_dir.exists()
     assert len(list(parts_dir.glob("*.json"))) == 2
 
-    results.save()
+    results._save()
 
     assert output_file.exists()
     assert not IncrementalResultStore(output_file).parts_dir.exists()
@@ -193,10 +193,10 @@ def test_benchmarking_results_incremental_save_and_final_merge(
 def test_benchmarking_results_update_replaces_existing_result(tmp_path):
     """Test replacing an existing result when the same task-model pair is updated."""
     output_file = tmp_path / "results.json"
-    results = _BenchmarkingResults(path=str(output_file))
+    results = BenchmarkingResults(path=str(output_file))
 
-    results.update(_sample_result(task_id="val_1", model_id="model_1", accuracy=0.5))
-    results.update(_sample_result(task_id="val_1", model_id="model_1", accuracy=0.99))
+    results._update(_sample_result(task_id="val_1", model_id="model_1", accuracy=0.5))
+    results._update(_sample_result(task_id="val_1", model_id="model_1", accuracy=0.99))
 
     assert len(results.results) == 1
     assert results.results[0].folds[0].scores["accuracy"] == 0.99
@@ -248,7 +248,7 @@ def test_results_saved_after_each_step(tmp_path, monkeypatch, output_suffix):
     benchmark = _setup_benchmark()
     results_path = tmp_path / f"results{output_suffix}"
 
-    original_update = _BenchmarkingResults.update
+    original_update = BenchmarkingResults._update
     n_completed = 0
 
     def counting_update(self, new_result):
@@ -261,7 +261,7 @@ def test_results_saved_after_each_step(tmp_path, monkeypatch, output_suffix):
         assert len(store.load_results()) == n_completed
         assert not results_path.exists()
 
-    monkeypatch.setattr(_BenchmarkingResults, "update", counting_update)
+    monkeypatch.setattr(BenchmarkingResults, "_update", counting_update)
 
     results_df = benchmark.run(str(results_path))
 
@@ -292,7 +292,7 @@ def test_benchmark_resumes_after_crash(tmp_path, monkeypatch, output_suffix):
 
     monkeypatch.setattr(benchmark, "_run_validation", crashing_run_validation)
 
-    original_save = _BenchmarkingResults.save
+    original_save = BenchmarkingResults._save
     save_calls = 0
 
     def crashing_save_once(self):
@@ -303,7 +303,7 @@ def test_benchmark_resumes_after_crash(tmp_path, monkeypatch, output_suffix):
         return original_save(self)
 
     # Validation failures are caught; simulate a crash during final save instead.
-    monkeypatch.setattr(_BenchmarkingResults, "save", crashing_save_once)
+    monkeypatch.setattr(BenchmarkingResults, "_save", crashing_save_once)
 
     with pytest.raises(RuntimeError, match="Simulated benchmark failure"):
         benchmark.run(str(results_path))
