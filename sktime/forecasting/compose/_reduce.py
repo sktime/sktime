@@ -1717,7 +1717,7 @@ def make_reduction(
     >>> forecaster = make_reduction(regressor, window_length=15, strategy="recursive")
     >>> forecaster.fit(y)
     RecursiveTabularRegressionForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
 
     References
     ----------

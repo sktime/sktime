@@ -69,7 +69,7 @@ class MOIRAIForecaster(BaseForecaster):
     ...     columns=["x1", "x2"],
     ...     index=pd.date_range("2020-01-31", periods=10, freq="D"),
     ... )
-    >>> forecast = morai_forecaster.predict(fh=range(1, 11), X=X_test)  # doctest: +SKIP
+    >>> forecast = morai_forecaster.predict(fh=10, X=X_test)  # doctest: +SKIP
 
     References
     ----------
