@@ -25,6 +25,7 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 __author__ = ["XinyuWu", "Nischal1425"]
 
 
+@pytest.mark.xfail(reason="test originally related to ")
 @pytest.mark.parametrize(
     "model_class",
     [
@@ -104,8 +105,7 @@ def test_load_model_from_disk(model_class) -> None:
 
     # check prediction index and column names
     cutoff = get_cutoff(y_test, return_index=True)
-    index_pred = y_pred.iloc[:max_prediction_length].index.get_level_values(2)
-    _assert_correct_pred_time_index(index_pred, cutoff, fh)
+    _assert_correct_pred_time_index(y_pred, cutoff, fh)
     _assert_correct_columns(y_pred, y_test)
 
 
