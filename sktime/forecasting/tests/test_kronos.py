@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from skbase.utils.dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 from sktime.datasets import load_airline
 from sktime.forecasting.kronos import KronosForecaster
