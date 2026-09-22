@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 from pandas import Timedelta
 from pandas.tseries.frequencies import to_offset
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.utils.datetime import _coerce_duration_to_int, _to_offset_compat
 from sktime.utils.validation import (
