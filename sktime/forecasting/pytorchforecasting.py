@@ -126,7 +126,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_all": True,  # ptf global models fail the tests, see #7997
         "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
@@ -414,7 +413,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
         "capability:multivariate": False,
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
-        "tests:skip_all": True,  # ptf global models fail tests, see #7997
         "tests:skip_by_name": [
             "test_pred_int_tag",
             "test_save_estimators_to_file",
@@ -722,9 +720,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
         "capability:pred_int": True,
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
-        # test skip flags
-        # ---------------
-        "tests:skip_all": True,  # ptf global models fail tests, see #7997
     }
 
     def __init__(
@@ -1009,7 +1004,6 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
         # CI and test flags
         # -----------------
         "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
-        "tests:skip_all": True,  # ptf global models fail tests, see #7997
     }
 
     def __init__(
