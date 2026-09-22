@@ -430,44 +430,10 @@ class _PytorchDeepAdapter:
         """Build the dataloader iterated over in fit and predict."""
         from torch.utils.data import DataLoader
 
-        dataset = self._get_dataset_class()(X, y, self._y_dtype)
+        from sktime.base.adapters._pytorch_dataset import PytorchDataset
+
+        dataset = PytorchDataset(X, y, self._y_dtype)
         return DataLoader(dataset, self.batch_size)
-
-    def _get_dataset_class(self):
-        """Get the pytorch dataset class of the estimator."""
-        from torch.utils.data import Dataset
-
-        class PytorchDataset(Dataset):
-            """Dataset for use in sktime deep learning estimators based on pytorch."""
-
-            def __init__(self, X, y=None, y_dtype="float"):
-                # X.shape = (batch_size, n_dims, n_timestamps)
-                X = np.transpose(X, (0, 2, 1))
-                # X.shape = (batch_size, n_timestamps, n_dims)
-
-                self.X = X
-                self.y = y
-                self.y_dtype = y_dtype
-
-            def __len__(self):
-                """Get length of dataset."""
-                return len(self.X)
-
-            def __getitem__(self, i):
-                """Get item at index."""
-                import torch
-
-                x = torch.tensor(self.X[i], dtype=torch.float)
-                inputs = {"X": x}
-                # to make it reusable for predict
-                if self.y is None:
-                    return inputs
-
-                # return y during fit
-                y = torch.tensor(self.y[i], dtype=getattr(torch, self.y_dtype))
-                return inputs, y
-
-        return PytorchDataset
 
     def _internal_convert(self, X, y=None):
         """Override to enforce strict 3D input validation for PyTorch estimators.
