@@ -5,7 +5,6 @@ import os
 
 import pandas as pd
 import pytest
-from sklearn.model_selection import train_test_split
 
 from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base._fh import ForecastingHorizon
@@ -15,6 +14,7 @@ from sktime.forecasting.pytorchforecasting import (
     PytorchForecastingNHiTS,
     PytorchForecastingTFT,
 )
+from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.forecasting import (
     _assert_correct_columns,
@@ -22,10 +22,9 @@ from sktime.utils._testing.forecasting import (
 )
 from sktime.utils._testing.hierarchical import _make_hierarchical
 
-__author__ = ["XinyuWu", "Nischal1425"]
+__author__ = ["XinyuWu", "Nischal1425", "adity1raut"]
 
 
-@pytest.mark.xfail(reason="skip, unknown failure reason, see #11257")
 @pytest.mark.parametrize(
     "model_class",
     [
@@ -61,10 +60,12 @@ def test_load_model_from_disk(model_class) -> None:
     )
     x = data["c0"].to_frame()
     y = data["c1"].to_frame()
-    X_train, X_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.2, train_size=0.8, shuffle=False
-    )
     max_prediction_length = 3
+    # split along time, per instance, so X_test is the future X of the
+    # instances the model is fitted on
+    y_train, _, X_train, X_test = temporal_train_test_split(
+        y, x, test_size=max_prediction_length
+    )
     fh = ForecastingHorizon(range(1, max_prediction_length + 1), is_relative=True)
 
     # fit the model to generate the checkpoint
@@ -94,19 +95,14 @@ def test_load_model_from_disk(model_class) -> None:
     except AttributeError:  # noqa: S110
         pass
 
-    # remove max_prediction_length from the end of y_test
-    len_levels = len(y_test.index.names)
-    y_test = y_test.groupby(level=list(range(len_levels - 1))).apply(
-        lambda x: x.droplevel(list(range(len_levels - 1))).iloc[:-max_prediction_length]
-    )
-
     # predict with model loaded from disk
     y_pred = model.predict(fh=fh, X=X_test)
 
     # check prediction index and column names
-    cutoff = get_cutoff(y_test, return_index=True)
-    _assert_correct_pred_time_index(y_pred, cutoff, fh)
-    _assert_correct_columns(y_pred, y_test)
+    # instance order of y_pred is not guaranteed, hence sort before comparing
+    cutoff = get_cutoff(y_train, return_index=True)
+    _assert_correct_pred_time_index(y_pred.sort_index().index, cutoff, fh)
+    _assert_correct_columns(y_pred, y_train)
 
 
 @pytest.mark.parametrize(
