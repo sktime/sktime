@@ -209,7 +209,9 @@ class AutoTS(BaseForecaster):
     >>> from sktime.forecasting.autots import AutoTS
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
-    >>> forecaster = AutoTS(model_list="superfast", max_generations=1)
+>>> forecaster = AutoTS(
+...     model_list="superfast", max_generations=1, num_validations=0, verbose=-2
+... )
     >>> forecaster.fit(y, fh=3)
     AutoTS(...)
     >>> y_pred = forecaster.predict()
