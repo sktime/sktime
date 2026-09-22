@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.classification.base import BaseClassifier
+from sktime.utils._lookup import _lookup
 from sktime.utils.dependencies import _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
@@ -145,7 +146,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # CI and test tags
         # ----------------
         "tests:vm": True,
-        "tests:libs": ["sktime.classification.deep_learning.base._base_torch"],
+        "tests:libs": [
+            "sktime.classification.deep_learning.base._base_torch",
+            "sktime.utils._lookup",
+        ],
     }
 
     # _instantiate_activation_vars is an iterable of attribute names of activations
