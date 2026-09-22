@@ -406,7 +406,7 @@ class LagLlamaForecaster(BaseForecaster):
     LagLlamaForecaster(...)
     >>> # Now fit to specific series and predict
     >>> y = load_airline()  # doctest: +SKIP
-    >>> forecaster.fit(y, fh=[1, 2, 3, 4, 5, 6])  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=6)  # doctest: +SKIP
     LagLlamaForecaster(...)
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
 

@@ -128,10 +128,10 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     ...     device="cpu",
     ...     random_state=42
     ... )  # doctest: +SKIP
-    >>> forecaster.fit(y, fh=[1,2,3,4,5,6,7,8,9,10,11,12])  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=12)  # doctest: +SKIP
     ConvTimeNetForecaster(...)
     >>> # Make predictions
-    >>> y_pred = forecaster.predict(fh=[1,2,3,4,5,6,7,8,9,10,11,12])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=12)  # doctest: +SKIP
     >>> print(y_pred)  # doctest: +SKIP
 
     References

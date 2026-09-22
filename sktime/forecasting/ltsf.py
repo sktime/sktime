@@ -58,7 +58,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     >>> from sktime.datasets import load_airline
     >>> model = LTSFLinearForecaster(10, 3) # doctest: +SKIP
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> model.fit(y, fh=3) # doctest: +SKIP
     LTSFLinearForecaster(pred_len=3, seq_len=10)
     >>> y_pred = model.predict() # doctest: +SKIP
     >>> y_pred # doctest: +SKIP
@@ -410,7 +410,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
     >>> from sktime.datasets import load_airline
     >>> model = LTSFDLinearForecaster(10, 3) # doctest: +SKIP
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> model.fit(y, fh=3) # doctest: +SKIP
     LTSFDLinearForecaster(pred_len=3, seq_len=10)
     >>> y_pred = model.predict() # doctest: +SKIP
     >>> y_pred # doctest: +SKIP
@@ -603,7 +603,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     >>> from sktime.datasets import load_airline
     >>> model = LTSFNLinearForecaster(10, 3) # doctest: +SKIP
     >>> y = load_airline()
-    >>> model.fit(y, fh=[1,2,3]) # doctest: +SKIP
+    >>> model.fit(y, fh=3) # doctest: +SKIP
     LTSFNLinearForecaster(pred_len=3, seq_len=10)
     >>> y_pred = model.predict() # doctest: +SKIP
     >>> y_pred # doctest: +SKIP
@@ -984,7 +984,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     >>> y = load_airline()
     >>>
     >>> model = LTSFTransformerForecaster(10, 5, 5) # doctest: +SKIP
-    >>> model.fit(y, fh=[1, 2, 3, 4, 5]) # doctest: +SKIP
+    >>> model.fit(y, fh=5) # doctest: +SKIP
     LTSFTransformerForecaster(context_len=5, pred_len=5, seq_len=10)
     >>> pred = model.predict() # doctest: +SKIP
     """
