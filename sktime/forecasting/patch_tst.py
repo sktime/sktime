@@ -391,7 +391,6 @@ class PatchTSTForecaster(BaseForecaster):
         # Tests and CI tags
         # -----------------
         "tests:vm": True,
-        "tests:specific": ["sktime.forecasting.tests.test_patch_tst"],
     }
 
     def __init__(
