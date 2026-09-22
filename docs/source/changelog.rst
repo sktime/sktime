@@ -193,7 +193,7 @@ Forecasting
 * [ENH] consistent automatic CPU/GPU placement for foundation-model forecasters (:pr:`11167`) :user:`geetu040`
 * [ENH] Tafsut foundation model forecaster (:pr:`11053`) :user:`aryamanDutta`
 * [ENH] in ``AutoTS``, make silent ``verbose=-2`` parameter the default (:pr:`11263`) :user:`fkiraly`
-* [ENH] add `NeuralProphet` soft dependency bound for `pandas<3` (:pr:`11259`) :user:`amarjaleelbanbhan`
+* [ENH] add ``NeuralProphet`` soft dependency bound for ``pandas<3`` (:pr:`11259`) :user:`amarjaleelbanbhan`
 
 Neural network layers and components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -245,7 +245,7 @@ Time series classification
 * [ENH] replace ``TimeSeriesForestClassifier`` in more second party tests (:pr:`11182`) :user:`fkiraly`
 * [ENH] remove scikit-learn inheritance from ``TimeSeriesForestClassifier`` and ``TimeSeriesForestRegressor`` (:pr:`11178`) :user:`InnoxCodes`
 * [ENH] further ``scikit-learn 1.8.X`` compatibility fixes (:pr:`11185`) :user:`fkiraly`
-* [ENH] skip ``sktime``-in-``scikit-learn`` compatibility tests (:pr:`11186`) :user:`fkiraly`
+* [ENH] skip ``sktime`` in ``scikit-learn`` compatibility tests (:pr:`11186`) :user:`fkiraly`
 * [ENH] add ``scikit-learn<1.8`` bounds to ``pyts`` estimators (:pr:`11210`) :user:`fkiraly`
 * [ENH] remove cross-module imports in ``classification``, ``regression``, ``transformation``, and ``clustering`` modules (:pr:`11213`) :user:`fkiraly`
 * [ENH] remove ``tests:skip_all`` from ``SARIMAX`` and ``FreshPRINCE`` (:pr:`11233`) :user:`8rulerstar`
