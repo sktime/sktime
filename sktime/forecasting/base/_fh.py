@@ -967,11 +967,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         else:
             if isinstance(cutoff, pd.Index):
                 cutoff = cutoff[[0] * len(relative)]
-            # pandas bugfix patch
-            if not _is_pandas_arithmetic_bug_fixed() and is_timelike:
-                absolute = type(cutoff)(cutoff.to_list() + relative, freq=fh._freq)
-            else:
-                absolute = cutoff + relative
+            absolute = cutoff + relative
 
         if old_tz is not None:
             absolute = absolute.tz_convert(old_tz)
