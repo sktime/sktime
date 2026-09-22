@@ -59,6 +59,15 @@ class GRUClassifier(BaseDeepClassifierPytorch):
         Empirical Evaluation of Gated Recurrent Neural Networks on Sequence Modeling.
         arXiv preprint arXiv:1412.3555 (2014).
     .. [3] https://pytorch.org/docs/stable/generated/torch.nn.GRU.html
+
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.gru import GRUClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> clf = GRUClassifier(num_epochs=20, batch_size=4)  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    GRUClassifier(...)
     """
 
     _tags = {
@@ -273,6 +282,14 @@ class GRUFCNNClassifier(BaseDeepClassifierPytorch):
     .. [2] https://github.com/NellyElsayed/GRU-FCN-model-for-univariate-time-series-classification
     .. [3] https://github.com/titu1994/LSTM-FCN
 
+    Examples
+    --------
+    >>> from sktime.classification.deep_learning.gru import GRUFCNNClassifier
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> clf = GRUFCNNClassifier(num_epochs=20, batch_size=4)  # doctest: +SKIP
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    GRUFCNNClassifier(...)
     """
 
     _tags = {

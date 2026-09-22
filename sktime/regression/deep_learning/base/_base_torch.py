@@ -109,6 +109,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         "capability:random_state": True,
         "property:randomness": "stochastic",
         "tests:vm": True,
+        "tests:libs": ["sktime.regression.deep_learning.base._base_torch"],
     }
 
     # _instantiate_activation_vars is an iterable of attribute names of activations
@@ -205,6 +206,15 @@ class BaseDeepRegressorTorch(BaseRegressor):
 
         for inputs, outputs in dataloader:
             y_pred = self.network(**inputs)
+            # some networks emit (batch_size, 1) while targets are (batch_size,);
+            # without this the loss broadcasts to (batch_size, batch_size)
+            if (
+                y_pred.ndim == 2
+                and y_pred.shape[1] == 1
+                and outputs.ndim == 1
+                and y_pred.shape[0] == outputs.shape[0]
+            ):
+                y_pred = y_pred.squeeze(-1)
             loss = self._criterion(y_pred, outputs)
             self._optimizer.zero_grad()
             loss.backward()
@@ -215,16 +225,6 @@ class BaseDeepRegressorTorch(BaseRegressor):
             if self._metrics_objects:
                 import torch
 
-                # # Some networks output shape (batch_size, 1) while sktime targets are
-                # # (batch_size,). Metrics expect y_pred to be in the same shape
-                # # as outputs.
-                if (
-                    y_pred.ndim == 2
-                    and y_pred.shape[1] == 1
-                    and outputs.ndim == 1
-                    and y_pred.shape[0] == outputs.shape[0]
-                ):
-                    y_pred = y_pred.squeeze(-1)
                 with torch.no_grad():
                     for metric_name, metric_obj in self._metrics_objects.items():
                         metric_value = metric_obj(y_pred, outputs)
@@ -405,7 +405,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
                 optimizer_class = _safe_import(
                     f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
                 )
-                if self.callback_kwargs:
+                if self.optimizer_kwargs:
                     return optimizer_class(
                         self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
                     )
@@ -629,12 +629,9 @@ class BaseDeepRegressorTorch(BaseRegressor):
         y_pred = cat(y_pred, dim=0)
         y_pred = y_pred.numpy()
 
-        # For single-output regression, squeeze if needed
-        # if y_pred has shape (n_instances, 1), convert to (n_instances,)
-        # to conform to expected output shape
-        # (n_instances, 1) -> (n_instances,)
+        # (n_instances, 1) -> (n_instances,), also for n_instances == 1
         if y_pred.ndim == 2 and y_pred.shape[1] == 1:
-            y_pred = y_pred.squeeze()
+            y_pred = y_pred.squeeze(-1)
         return y_pred
 
     def _internal_convert(self, X, y=None):
