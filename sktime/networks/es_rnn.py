@@ -4,20 +4,13 @@ __author__ = ["Ankit-1204"]
 
 from warnings import warn
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
-
-    NNModule = nn.Module
-else:
-
-    class NNModule:
-        """Dummy class if torch is unavailable."""
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
 
-class PinballLoss(NNModule):
+class PinballLoss(nn.Module):
     """
     Default Pinball/Quantile Loss.
 
@@ -42,7 +35,7 @@ class PinballLoss(NNModule):
         return loss.mean()
 
 
-class _ESRNN(NNModule):
+class _ESRNN(nn.Module):
     def __init__(
         self,
         input_shape,
@@ -106,7 +99,7 @@ class _ESRNN(NNModule):
         batch, seq_length, num_features = x.shape
         season1_length = self.season1_length
         if self.season1_length > seq_length:
-            warn(f"Input window should atleast cover one season,{seq_length}")
+            warn(f"Input window should at least cover one season,{seq_length}")
             season1_length = seq_length
         level = x[:, :season1_length, :].mean(dim=1, keepdim=True)
         initial_seasonality_1 = x[:, :season1_length, :] / level
@@ -215,7 +208,6 @@ class _ESRNN(NNModule):
             out_list = [last_output]
             for t in range(self.pred_len - 1):
                 next_out = self.input_layer(last_output)
-                next_out = next_out
                 lstm_out, (h, c) = self.lstm(next_out, (h, c))
                 next_output = self.output_layer(lstm_out)
                 out_list.append(next_output)
@@ -233,7 +225,6 @@ class _ESRNN(NNModule):
             out_list = [last_output]
             for t in range(self.pred_len - 1):
                 next_out = self.input_layer(last_output)
-                next_out = next_out
                 lstm_out, (h, c) = self.lstm(next_out, (h, c))
                 next_output = self.output_layer(lstm_out)
                 out_list.append(next_output)
@@ -252,7 +243,6 @@ class _ESRNN(NNModule):
             out_list = [last_output]
             for t in range(self.pred_len - 1):
                 next_out = self.input_layer(last_output)
-                next_out = next_out
                 lstm_out, (h, c) = self.lstm(next_out, (h, c))
                 next_output = self.output_layer(lstm_out)
                 out_list.append(next_output)
