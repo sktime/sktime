@@ -93,7 +93,7 @@ class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     >>> y2 = y.iloc[-10:]
     >>> forecaster = TrendForecaster()
     >>> forecaster = UpdateRefitsEvery(forecaster, refit_interval=12)
-    >>> forecaster.fit(y0, fh=[1,2,3])
+    >>> forecaster.fit(y0, fh=3)
     UpdateRefitsEvery(...)
     >>> # predict etc could be called here
     >>> # e.g., forecaster.predict()
@@ -325,7 +325,7 @@ class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     >>> y2 = y.iloc[-10:]
     >>> inner_forecaster = TrendForecaster()
     >>> forecaster = UpdateEvery(inner_forecaster, update_interval=12)
-    >>> forecaster.fit(y0, fh=[1,2,3])
+    >>> forecaster.fit(y0, fh=3)
     UpdateEvery(...)
     >>> # predict etc could be called here
     >>> # e.g., forecaster.predict()
@@ -514,7 +514,7 @@ class DontUpdate(_DelegatedForecaster):
     >>> y2 = y.iloc[-10:]
     >>> inner_forecaster = TrendForecaster()
     >>> forecaster = DontUpdate(inner_forecaster)
-    >>> forecaster.fit(y0, fh=[1,2,3])
+    >>> forecaster.fit(y0, fh=3)
     DontUpdate(...)
     >>> # predict etc could be called here
     >>> # e.g., forecaster.predict()

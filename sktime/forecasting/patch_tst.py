@@ -264,7 +264,7 @@ class PatchTSTForecaster(BaseForecaster):
     ...         "per_device_train_batch_size":16,
     ...    }
     ... ) #initialize an full model
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> forecaster.fit(y, fh=3) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
     >>> #Example full fine-tuning with a pre-trained model
@@ -291,7 +291,7 @@ class PatchTSTForecaster(BaseForecaster):
     ...         "per_device_train_batch_size":16,
     ...     }
     ... ) # doctest: +SKIP
-    >>> forecaster.fit(y = df, fh = list(range(1,4))) # doctest: +SKIP
+    >>> forecaster.fit(y = df, fh = 3) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
     >>> #Example of minimal fine-tuning with a pre-trained model and an altered config
@@ -328,7 +328,7 @@ class PatchTSTForecaster(BaseForecaster):
     ...         "per_device_train_batch_size":16,
     ...     }
     ... ) # doctest: +SKIP
-    >>> forecaster.fit(y = df, fh = list(range(1,63))) # doctest: +SKIP
+    >>> forecaster.fit(y = df, fh = 62) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
     >>> #Example with a pre-trained model to do zero-shot forecasting
@@ -355,7 +355,7 @@ class PatchTSTForecaster(BaseForecaster):
     ...         "per_device_train_batch_size":16,
     ...     }
     ... ) # doctest: +SKIP
-    >>> forecaster.fit(y = df, fh = [1,2,3,4,5]) # doctest: +SKIP
+    >>> forecaster.fit(y = df, fh = 5) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 
