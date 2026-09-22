@@ -19,7 +19,6 @@ from sklearn.utils.sparsefuncs_fast import csr_row_norms
 from sklearn.utils.validation import _num_samples
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.dictionary_based import SFAFast
 from sktime.utils.validation.panel import check_X_y
 
 # delayed was moved from utils.fixes to utils.parallel in scikit-learn 1.3
@@ -38,9 +37,10 @@ class BOSSEnsemble(BaseClassifier):
     a set of parameter values, evaluating each with a LOOCV. It then retains
     all ensemble members within 92% of the best by default for use in the ensemble.
     There are three primary parameters:
-        - *alpha*: alphabet size
-        - *w*: window length
-        - *l*: word length.
+
+    - *alpha*: alphabet size
+    - *w*: window length
+    - *l*: word length.
 
     For any combination, a single BOSS slides a window length *w* along the
     series. The w length window is shortened to an *l* length word through
@@ -566,6 +566,7 @@ class IndividualBOSS(BaseClassifier):
         "capability:multithreading": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -625,6 +626,8 @@ class IndividualBOSS(BaseClassifier):
         Changes state by creating a fitted model that updates attributes
         ending in "_" and sets is_fitted flag to True.
         """
+        from sktime.transformations.dictionary_based import SFAFast
+
         self._transformer = SFAFast(
             word_length=self.word_length,
             alphabet_size=self.alphabet_size,

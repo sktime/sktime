@@ -1,5 +1,7 @@
 """Sequential self-attention layer implemented in PyTorch."""
 
+import copy
+
 from sktime.utils.dependencies import _safe_import
 
 NNModule = _safe_import("torch.nn.Module")
@@ -287,17 +289,22 @@ class SeqSelfAttentionTorch(NNModule):
         if mask is not None:
             e = self._apply_mask(e, mask)
 
-        self.intensity = e
+        # kept for inspection only, and detached so that the layer stays
+        # copyable and picklable once it has been run
+        self.intensity = e.detach()
         e = e - e.max(dim=-1, keepdim=True)[0]
         torch_exp = self._torch_op("torch.exp")
         torch_finfo = self._torch_op("torch.finfo")
         a = torch_exp(e)
         a = a / (a.sum(dim=-1, keepdim=True) + torch_finfo(a.dtype).eps)
-        self.attention = a
+        self.attention = a.detach()
 
         torch_bmm = self._torch_op("torch.bmm")
         v = torch_bmm(a, x)
         if self.attention_regularizer_weight > 0.0:
+            # deliberately kept attached to the graph: callers add this term to
+            # their training loss, so detaching it here would silently turn the
+            # regularizer into a no-op. ``__deepcopy__`` below drops it instead.
             self.attention_regularizer_loss = self._attention_regularizer(a)
         else:
             self.attention_regularizer_loss = None
@@ -305,6 +312,36 @@ class SeqSelfAttentionTorch(NNModule):
         if self.return_attention:
             return v, a
         return v
+
+    def __deepcopy__(self, memo):
+        """Deep-copy the layer, dropping the graph from transient state.
+
+        ``attention_regularizer_loss`` is intentionally left attached to the
+        autograd graph by ``forward``, so that callers can add it to their
+        training loss. Non-leaf tensors do not support the deepcopy protocol,
+        which would make any fitted estimator containing this layer
+        uncopyable. The copy therefore carries a detached clone of the value,
+        which is all a copy can meaningfully hold.
+
+        Parameters
+        ----------
+        memo : dict
+            Memoisation dictionary used by :func:`copy.deepcopy`.
+
+        Returns
+        -------
+        SeqSelfAttentionTorch
+            A deep copy of this layer.
+        """
+        cls = self.__class__
+        new = cls.__new__(cls)
+        memo[id(self)] = new
+        for key, value in self.__dict__.items():
+            if key == "attention_regularizer_loss" and value is not None:
+                new.__dict__[key] = value.detach().clone()
+            else:
+                new.__dict__[key] = copy.deepcopy(value, memo)
+        return new
 
     def _call_additive_emission(self, x):
         """Compute additive attention logits for every pair of time steps.
