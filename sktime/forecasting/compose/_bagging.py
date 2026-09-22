@@ -98,6 +98,7 @@ class BaggingForecaster(BaseForecaster):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # ... for in-sample horizons?
+        "capability:update": True,  # can estimator update its parameters with new data?
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "tests:skip_by_name": ["test_get_test_params_coverage"],
@@ -133,6 +134,7 @@ class BaggingForecaster(BaseForecaster):
         tags_to_clone = [
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
+            "capability:update",  # can estimator update its parameters with new data?
         ]
         if self.forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)
