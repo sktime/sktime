@@ -113,6 +113,7 @@ class MOIRAIForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
         "capability:pretrain": False,
+        "capability:update": True,
         "property:randomness": "stochastic",
         # CI and test flags
         # -----------------

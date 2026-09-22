@@ -80,6 +80,7 @@ class _PytorchForecastingAdapter(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,
