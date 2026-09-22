@@ -88,7 +88,7 @@ _KRONOS_REFERENCE_CASES = [
 
 
 pytestmark = pytest.mark.skipif(
-    not _check_estimator_deps(KronosForecaster, severity="none"),
+    not run_test_for_class(FlowStateForecaster),
     reason="run test only if KronosForecaster soft dependencies are present",
 )
 
