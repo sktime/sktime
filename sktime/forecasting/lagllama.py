@@ -929,6 +929,14 @@ class LagLlamaForecaster(BaseForecaster):
         from sktime.datatypes import update_data
 
         self._cur_y = update_data(self._cur_y, y)
+
+        n_obs = self.context_length + max(self.estimator_.lags_seq)
+
+        if isinstance(self._cur_y.index, pd.MultiIndex):
+            levels = list(range(self._cur_y.index.nlevels - 1))
+            self._cur_y = self._cur_y.groupby(level=levels, as_index=False).tail(n_obs)
+        else:
+            self._cur_y = self._cur_y.tail(n_obs)
         if X is not None:
             self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         return self
