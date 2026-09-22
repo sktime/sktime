@@ -230,6 +230,12 @@ class _PytorchForecastingAdapter(BaseForecaster):
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
+        # store series name if pd.Series
+        if isinstance(y, pd.Series):
+            self._series_name = y.name
+            self._was_series = True
+        else
+            self._was_series = False
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
@@ -369,7 +375,10 @@ class _PytorchForecastingAdapter(BaseForecaster):
         dateindex = output.index.get_level_values(-1).map(
             lambda x: x in absolute_horizons
         )
-        return output.loc[dateindex]
+        ret = output.loc[dateindex]
+        if self._was_series and isinstance(ret, pd.Series):
+            ret.name = self._series_name
+        return ret
 
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
