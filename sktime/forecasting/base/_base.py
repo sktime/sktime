@@ -515,8 +515,8 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # check and convert X/y
         X_inner, y_inner, X_data, y_data = self._check_X_y(X=X, y=y)
 
-        # set internal X/y to the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y (subclasses may also pool data here, e.g. streams)
+        # if remember_data is True, update internal X/y also
         self._update_y_X(y_data, X_data)
 
         # check forecasting horizon and coerce to ForecastingHorizon object
