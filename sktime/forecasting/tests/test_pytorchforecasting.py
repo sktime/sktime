@@ -60,10 +60,7 @@ def test_load_model_from_disk(model_class) -> None:
     )
     x = data["c0"].to_frame()
     y = data["c1"].to_frame()
-    X_train, _, y_train, _ = train_test_split(
-        x, y, test_size=0.1, train_size=0.9, shuffle=False
-    )
-    _, X_test, _, y_test = train_test_split(
+    X_train, X_test, y_train, y_test = train_test_split(
         x, y, test_size=0.2, train_size=0.8, shuffle=False
     )
     max_prediction_length = 3
