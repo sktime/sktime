@@ -140,6 +140,7 @@ class FlowStateForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "requires-fh-in-fit": False,
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_flowstate"],
     }
 
     def __init__(
