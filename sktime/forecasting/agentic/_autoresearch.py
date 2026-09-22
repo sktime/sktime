@@ -516,13 +516,13 @@ class AutoResearchForecaster(BaseForecaster):
     >>> from sktime.split import SingleWindowSplitter
     >>> y = load_airline()
     >>> forecaster = AutoResearchForecaster(  # doctest: +SKIP
-    ...     cv=SingleWindowSplitter(fh=[1, 2, 3]),
+    ...     cv=SingleWindowSplitter(fh=3),
     ...     model="openai/gpt-4o-mini",
     ...     n_iterations=2,
     ...     n_blueprints=3,
     ... )
-    >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=3)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {

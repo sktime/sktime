@@ -429,7 +429,7 @@ class ARARForecaster(BaseForecaster):
     >>> forecaster = ARARForecaster()
     >>> forecaster.fit(y)
     ARARForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
 
     Prediction intervals and coefficients:
     >>> from sktime.split import temporal_train_test_split
@@ -443,8 +443,8 @@ class ARARForecaster(BaseForecaster):
     >>> forecaster = ARARForecaster()
     >>> forecaster.fit(y_train)
     ARARForecaster(...)
-    >>> y_pred = forecaster.predict(fh=list(range(1, 13)))
-    >>> pred_int = forecaster.predict_interval(fh=list(range(1, 13)))
+    >>> y_pred = forecaster.predict(fh=12)
+    >>> pred_int = forecaster.predict_interval(fh=12)
     >>>
     >>> # Plot results
     >>> plot_series(
