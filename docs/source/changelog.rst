@@ -213,6 +213,7 @@ Time series anomalies, changepoints, segmentation
 * [ENH] replace ``SubLOF`` in tests with dummy detectors (:pr:`11152`) :user:`fkiraly`
 * [ENH] make ``SubLOF`` ``pandas 3`` compatible (:pr:`11136`, :pr:`11141`) :user:`fkiraly`, :user:`TayfurYldz`
 * [ENH] ``EventTPR``, ``MeanDetectionOffset`` and ``FalseAlarmRate`` for live detection (:pr:`11197`) :user:`yash-sangwan`
+* [ENH] remove ``detection.all`` based aliasing in ``detection`` root imports (:pr:`11261`) :user:`fkiraly`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
