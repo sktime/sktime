@@ -30,6 +30,7 @@ class _PmdArimaAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:non_contiguous_X": False,
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,
@@ -60,10 +61,22 @@ class _PmdArimaAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         if X is not None:
             X = X.loc[y.index]
+        # statsmodels >= 0.15 raises on out-of-sample prediction if the index
+        # is not supported, e.g., an integer index not starting at 0,
+        # so we pass a RangeIndex in this case. Predictions are re-indexed in _predict.
+        y_fit = y
+        if pd.api.types.is_integer_dtype(y.index) and not isinstance(
+            y.index, pd.RangeIndex
+        ):
+            y_fit = y.reset_index(drop=True)
+            if X is not None:
+                X = X.reset_index(drop=True)
         self._forecaster = self._instantiate_model()
-        self._forecaster.fit(y, X=X)
+        self._forecaster.fit(y_fit, X=X)
         self._y_name = y.name
         return self
 
@@ -187,7 +200,7 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred = pd.Series(index=fh_abs_full, dtype="float64")
 
         # for in-sample predictions, pmdarima requires zero-based integer indices
-        start, end = fh.to_absolute_int(self._y.index[0], self.cutoff)[[0, -1]]
+        start, end = fh.to_absolute_int(self._cur_y.index[0], self.cutoff)[[0, -1]]
         if start < 0:
             # Can't forecasts earlier to train starting point
             raise ValueError("Can't make predictions earlier to train starting point")
