@@ -192,6 +192,7 @@ Forecasting
 * [ENH] golden output tests for ``PatchTSTForecaster`` (:pr:`10941`) :user:`Nischal1425`
 * [ENH] consistent automatic CPU/GPU placement for foundation-model forecasters (:pr:`11167`) :user:`geetu040`
 * [ENH] Tafsut foundation model forecaster (:pr:`11053`) :user:`aryamanDutta`
+* [ENH] in ``AutoTS``, make silent ``verbose=-2`` parameter the default (:pr:`11263`) :user:`fkiraly`
 
 Neural network layers and components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
