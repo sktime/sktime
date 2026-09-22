@@ -102,7 +102,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     ...     ("naive", NaiveForecaster())
     ... ]
     >>> forecaster = FallbackForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y=y, fh=[1, 2, 3])
+    >>> forecaster.fit(y=y, fh=3)
     FallbackForecaster(...)
     >>> y_pred = forecaster.predict()
     """
