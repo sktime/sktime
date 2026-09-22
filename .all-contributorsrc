@@ -4207,11 +4207,31 @@
       ]
     },
     {
+      "login": "hasanfaesal",
+      "name": "Hasan Faisal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/120083366?v=4",
+      "profile": "https://github.com/hasanfaesal",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
       "login": "Belagum",
       "name": "Belagum",
       "avatar_url": "https://avatars.githubusercontent.com/u/140494656?v=4",
       "profile": "https://github.com/Belagum",
       "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "mccool1010",
+      "name": "Hari Krishna",
+      "avatar_url": "https://avatars.githubusercontent.com/u/134476480?v=4",
+      "profile": "https://github.com/mccool1010",
+      "contributions": [
+        "bug",
         "code"
       ]
     }
