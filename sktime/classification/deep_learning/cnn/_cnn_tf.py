@@ -95,7 +95,8 @@ class CNNClassifier(BaseDeepClassifier):
         #
         # testing configuration
         # ---------------------
-        "tests:vm": True,  # run in VM due to memory requirement
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.cnn._cnn_tf"],
     }
 
     # TODO (release 0.42.0)

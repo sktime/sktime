@@ -105,6 +105,7 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     requires_fh_in_fit
     fit_is_empty
     property__randomness
+    X_y_must_have_same_index
 
 
 .. _panel_tags:
@@ -135,6 +136,7 @@ these types of objects.
     capability__multithreading
     capability__random_state
     property__randomness
+    X_y_must_have_same_index
 
 
 .. _transformer_tags:
@@ -159,6 +161,7 @@ transform a single time series object (``"transformer"`` type).
     requires_x
     requires_y
     capability__missing_values
+    capability__missing_values__removes
     capability__unequal_length
     capability__unequal_length__adds
     capability__unequal_length__removes
@@ -171,6 +174,7 @@ transform a single time series object (``"transformer"`` type).
     transform_returns_same_time_index
     skip_inverse_transform
     property__randomness
+    X_y_must_have_same_index
 
 
 .. _pairwise_transformer_tags:
@@ -232,6 +236,7 @@ This section lists tags applying to time series metrics (``"metric"`` type).
 
     lower_is_better
     capability__sample_weight
+    scitype__y
     scitype__y_pred
     requires_y_true
     requires_y_pred_benchmark
@@ -274,8 +279,28 @@ This section lists tags applying to parameter estimators (``"param_est"`` type).
     :nosignatures:
 
     scitype__X
+    scitype__y
     capability__multivariate
     capability__pairwise
+
+
+.. _splitter_tags:
+
+Tags for splitters
+------------------
+
+This section lists tags applying to time series splitters (``"splitter"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    split_type
+    split_series_uses
+    split_hierarchical
 
 
 Common developer tags
@@ -299,6 +324,7 @@ The tags below have limited use in retrieval or inspection of objects.
     x_inner_mtype
     y_inner_mtype
     visual_block_kind
+    remember_data
 
 .. _dev_testing_tags:
 

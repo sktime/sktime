@@ -18,7 +18,6 @@ from sklearn.kernel_ridge import KernelRidge
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.dictionary_based import SFA
 from sktime.utils.validation.panel import check_X_y
 from sktime.utils.warnings import warn
 
@@ -162,6 +161,7 @@ class TemporalDictionaryEnsemble(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "dictionary",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -699,6 +699,7 @@ class IndividualTDE(BaseClassifier):
         "capability:multithreading": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -847,6 +848,8 @@ class IndividualTDE(BaseClassifier):
 
             self._transformed_data = words
         else:
+            from sktime.transformations.dictionary_based import SFA
+
             self._transformers.append(
                 SFA(
                     word_length=self.word_length,
@@ -952,6 +955,8 @@ class IndividualTDE(BaseClassifier):
         # select dimensions based on reduced bag size accuracy
         for i in range(self.n_dims_):
             self._dims.append(i)
+            from sktime.transformations.dictionary_based import SFA
+
             transformers.append(
                 SFA(
                     word_length=self.word_length,

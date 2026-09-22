@@ -13,7 +13,7 @@ from sktime.detection.plotting.utils import (
 def time_series_data():
     ts_data = np.random.rand(100)
     ts = pd.DataFrame({"Data": ts_data})
-    dates = pd.date_range(start="2026-05-07", periods=len(ts_data), freq="H")
+    dates = pd.date_range(start="2026-05-07", periods=len(ts_data), freq="h")
     true_cps = [4, 8]
     true_cps_dates = dates[[4, 8]]
     font_size = 12

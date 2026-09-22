@@ -61,9 +61,13 @@ The release process is as follows, on high-level:
 ``pypi`` release and release validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-5. publish the GitHub draft release. Creation of the new tag will trigger the ``pypi`` release CI/CD.
+5. publish the GitHub draft release. Creation of the new tag will trigger the
+   ``pypi`` release CI/CD and the website documentation release workflow. The
+   documentation workflow builds and deploys the new ``Latest`` docs, publishes
+   the durable versioned archive, and starts the website model-manifest refresh.
 
-6. wait for the ``pypi`` release CI/CD to finish. If tests fail due to sporadic unrelated failure, restart.
+6. wait for the ``pypi`` and website documentation release workflows to finish.
+  If tests fail due to sporadic unrelated failure, restart.
   If tests fail genuinely, something went wrong in the above steps, investigate, fix, and repeat.
   Common possibilities are core devs not respecting the feature freeze period,
   new releases of dependencies that happen in the ca one day period between release PR and release.

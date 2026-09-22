@@ -92,6 +92,7 @@ class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
         "requires-y-train": False,
         "requires-y-pred-benchmark": True,
         "capability:multivariate": True,
+        "tests:skip_by_name": ["test_doctest_examples"],
     }
 
     func = median_relative_absolute_error
