@@ -112,6 +112,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:non_contiguous_X": True,  # support non-contiguous X?
+        "capability:update": False,  # can the estimator update its state with new data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
@@ -2602,8 +2603,8 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 f"NotImplementedWarning: {type(self).__name__} "
                 "does not have a custom `update` method implemented, "
                 "and ``remember_data=False``, so `update` with "
-                "update_params=True leaves model parameters unchanged "
-                "(only the cutoff advances). "
+                "update_params=True leaves model parameters unchanged - "
+                "only the cutoff advances, same as update_params=False. "
                 "To pool history and refit on update, wrap with "
                 "``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` "
                 "with ``refit_interval=0`` to refit every update. "

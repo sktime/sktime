@@ -43,11 +43,14 @@ class BaseDeepNetworkPyTorch(BaseForecaster):
 
     _tags = {
         "python_dependencies": ["torch"],
+        # estimator type
+        # --------------
         "y_inner_mtype": "pd.DataFrame",
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:multivariate": True,
         "capability:exogenous": False,
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,
