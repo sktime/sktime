@@ -352,6 +352,7 @@ Documentation
 * [DOC] add doctest examples for ``TimeBinAggregate`` (:pr:`10826`) :user:`chintam-dhanush`
 * [DOC] add doctest example for ``WindowSegmenter`` (:pr:`10863`) :user:`chintam-dhanush`
 * [DOC] add ``capability:multivariate`` and ``capability:pairwise`` to docs (:pr:`10880`) :user:`AanchalGupta1162`
+* [DOC] add docstring example for ``AutoTS`` forecaster (:pr:`11262`) :user:`fkiraly`
 
 Maintenance
 ~~~~~~~~~~~
