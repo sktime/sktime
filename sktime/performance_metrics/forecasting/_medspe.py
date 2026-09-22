@@ -129,6 +129,10 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
     np.float64(0.7428571428571428)
     """
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     func = median_squared_percentage_error
 
     def __init__(

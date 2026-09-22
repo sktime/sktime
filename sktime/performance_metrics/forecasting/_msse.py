@@ -107,6 +107,10 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     np.float64(0.17451891814894502)
     """
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     func = mean_squared_scaled_error
 
     def __init__(

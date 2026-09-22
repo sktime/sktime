@@ -257,6 +257,7 @@ class PatchTSMixerForecaster(BaseForecaster):
         "capability:global_forecasting": False,
         "requires-fh-in-fit": False,
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_patch_tsmixer"],
     }
 
     def __init__(
@@ -340,11 +341,12 @@ class PatchTSMixerForecaster(BaseForecaster):
         cfg.setdefault("context_length", context_length)
         cfg.setdefault("prediction_length", prediction_length)
         cfg.setdefault("num_input_channels", n_channels)
-        cfg.setdefault(
-            "patch_stride",
-            cfg.get("patch_length", _DEFAULT_CONFIG["patch_length"]),
-        )
-        cfg.setdefault("scaling", _DEFAULT_CONFIG["scaling"])
+        if self.model_path is None:
+            cfg.setdefault(
+                "patch_stride",
+                cfg.get("patch_length", _DEFAULT_CONFIG["patch_length"]),
+            )
+            cfg.setdefault("scaling", _DEFAULT_CONFIG["scaling"])
         return cfg
 
     def _load_model(self, config):
@@ -366,6 +368,8 @@ class PatchTSMixerForecaster(BaseForecaster):
         )
 
     def _fit(self, y, X=None, fh=None):
+        self._cur_y = y
+        self._cur_X = X
         from tsfm_public.toolkit.dataset import ForecastDFDataset
         from tsfm_public.toolkit.time_series_preprocessor import TimeSeriesPreprocessor
 
@@ -515,7 +519,7 @@ class PatchTSMixerForecaster(BaseForecaster):
             fh = self.fh
         fh_rel = fh.to_relative(self.cutoff)
 
-        batch = self._inference_batch(self._y)
+        batch = self._inference_batch(self._cur_y)
         out = self._forward_window(batch)
         pred = self._point_predictions(out).detach().cpu().numpy()[0]
         n_cols = len(self._target_columns)
@@ -526,7 +530,7 @@ class PatchTSMixerForecaster(BaseForecaster):
 
         index = fh.to_absolute(self._cutoff)._values
         pred_df = pd.DataFrame(values, index=index, columns=self._target_columns)
-        pred_df.index.names = self._y.index.names
+        pred_df.index.names = self._cur_y.index.names
         return pred_df
 
     @classmethod
