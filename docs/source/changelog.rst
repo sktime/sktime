@@ -353,6 +353,7 @@ Documentation
 * [DOC] add doctest example for ``WindowSegmenter`` (:pr:`10863`) :user:`chintam-dhanush`
 * [DOC] add ``capability:multivariate`` and ``capability:pairwise`` to docs (:pr:`10880`) :user:`AanchalGupta1162`
 * [DOC] add docstring example for ``AutoTS`` forecaster (:pr:`11262`) :user:`fkiraly`
+* [DOC] add doctest examples for detection cost functions (:pr:`10982`) :user:`jvsch`
 
 Maintenance
 ~~~~~~~~~~~
@@ -531,6 +532,7 @@ Contributors
 :user:`JamesBoardman27`,
 :user:`jbbqqf`,
 :user:`jgyasu`,
+:user:`jvsch`,
 :user:`kajal-jotwani`,
 :user:`Keykyrios`,
 :user:`KingLizard1020`,
