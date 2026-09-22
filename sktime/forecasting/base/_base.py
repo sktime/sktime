@@ -1074,7 +1074,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         fh = self._check_fh(fh, pred_int=True)
 
         # check and convert X
-        X_inner, _ = self._check_X(X=X)
+        X_inner = self._check_X(X=X)
 
         # pass to inner _predict_proba
         try:  # try/except for handling notification about missing skpro softdep
