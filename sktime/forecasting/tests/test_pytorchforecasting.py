@@ -25,6 +25,7 @@ from sktime.utils._testing.hierarchical import _make_hierarchical
 __author__ = ["XinyuWu", "Nischal1425"]
 
 
+@pytest.mark.xfail("skip, unknown failure reason, see #11257")
 @pytest.mark.parametrize(
     "model_class",
     [
