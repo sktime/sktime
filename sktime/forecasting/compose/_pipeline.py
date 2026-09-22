@@ -424,6 +424,7 @@ class ForecastingPipeline(_Pipeline):
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:pred_int": True,
+        "capability:update": True,
         "X-y-must-have-same-index": False,
         "capability:categorical_in_X": True,
         # CI and test flags
@@ -448,6 +449,7 @@ class ForecastingPipeline(_Pipeline):
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
+            "capability:update",  # can the estimator update parameters with new data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -892,6 +894,7 @@ class TransformedTargetForecaster(_Pipeline):
         "capability:pred_int": True,
         "X-y-must-have-same-index": False,
         "capability:unequal_length": False,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -915,6 +918,7 @@ class TransformedTargetForecaster(_Pipeline):
             "capability:pred_int",  # can the estimator produce prediction intervals?
             "capability:pred_int:insample",  # ... for in-sample horizons?
             "capability:insample",  # can the estimator make in-sample predictions?
+            "capability:update",  # can the estimator update parameters with new data?
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",  # index type that needs to be enforced in X/y
         ]
@@ -1531,7 +1535,11 @@ class ForecastX(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["fkiraly", "benheid", "yarnabrina"],
+        # estimator type
+        # --------------
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
         "capability:multivariate": True,
@@ -1541,6 +1549,7 @@ class ForecastX(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:missing_values": True,
+        "capability:update": True,
     }
 
     def __init__(

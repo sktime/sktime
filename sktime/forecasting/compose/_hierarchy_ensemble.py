@@ -151,6 +151,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -182,6 +183,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 "requires-fh-in-fit",
                 "capability:exogenous",
                 "capability:missing_values",
+                "capability:update",
             ]
             self.clone_tags(forecasters, tags_to_clone)
         else:
@@ -191,6 +193,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             self._anytagis_then_set(
                 "capability:missing_values", False, True, l_forecasters
             )
+            self._anytagis_then_set("capability:update", False, True, l_forecasters)
 
     @property
     def _forecasters(self):
