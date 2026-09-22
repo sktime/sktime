@@ -31,6 +31,7 @@ Highlights
 * interface to ``hypertrees-forecasting``: ``HyperTreeARForecaster`` (:pr:`11076`) :user:`oberoir080`
 * forecasting ``evaluate`` utility now can run benchmarks for ``pretrain``-able forecasters (:pr:`10560`) :user:`jgyasu`
 * new transformations: ``SavitzkyGolayTransformer``, ``HilbertTransformer``, and ``WaveletPacketTransformer`` (:pr:`10810`) :user:`ved197338`
+* ``EventTPR``, ``MeanDetectionOffset`` and ``FalseAlarmRate`` for live event detection (:pr:`11197`) :user:`yash-sangwan`
 * Hierarchical/agglomerative clustering for time series (:pr:`9187`) :user:`Muhammad-Rebaal`
 
 Dependency changes
@@ -89,15 +90,14 @@ Enhancements
 BaseObject and base framework
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [ENH] Migrate ``sktime_version`` tag to ``_BaseTag`` class (:pr:`10805`) :user:`Spicy-source`
-* [ENH] migrate sktime_version tag to class (:pr:`10812`) :user:`Partharsid`
+* [ENH] migrate ``sktime_version`` tag to ``_BaseTag`` class (:pr:`10805`, :pr:`10812`) :user:`Spicy-source`, :user:`Partharsid`
 * [ENH] ensure ``sktime_version`` tag is set dynamically to ensure inclusion in object serialization (:pr:`10831`) :user:`fkiraly`
-* [ENH] Migrate ``skip-inverse-transform`` tag to ``_BaseTag`` class (:pr:`10811`) :user:`DebojitNath`
+* [ENH] migrate ``skip-inverse-transform`` tag to ``_BaseTag`` class (:pr:`10811`) :user:`DebojitNath`
 * [ENH] remove task and duplicate distribution_type from ESTIMATOR_TAG_REGISTER (:pr:`10859`) :user:`AanchalGupta1162`
-* [ENH] Migrate ``scitype:X`` tag to ``_BaseTag`` class (:pr:`10876`) :user:`AanchalGupta1162`
+* [ENH] migrate ``scitype:X`` tag to ``_BaseTag`` class (:pr:`10876`) :user:`AanchalGupta1162`
 * [ENH] migrate ``symmetric`` tag to ``BaseTag`` class (:pr:`10847`) :user:`aryamanDutta`
-* [ENH] Migrate ``scitype:instancewise`` tag to ``_BaseTag`` class (:pr:`10886`) :user:`anupamkr1708`
-* [ENH] Migrate ``capability:multithreading`` tag to ``_BaseTag`` class (:pr:`10848`) :user:`wunianze666-netizen`
+* [ENH] migrate ``scitype:instancewise`` tag to ``_BaseTag`` class (:pr:`10886`) :user:`anupamkr1708`
+* [ENH] migrate ``capability:multithreading`` tag to ``_BaseTag`` class (:pr:`10848`) :user:`wunianze666-netizen`
 * [ENH] migrate ``split_type`` tag to ``_BaseTag`` class (:pr:`10937`) :user:`Valentino-source-dev`
 * [ENH] migrate ``X-y-must-have-same-index`` from tuple to class based registry (:pr:`10981`) :user:`PiyushKumar74110`
 * [ENH] "safe" mode in ``craft`` utility (:pr:`11086`) :user:`fkiraly`
@@ -111,9 +111,9 @@ BaseObject and base framework
 * [ENH] use ``ME`` for monthly ``date_range`` in tests on ``pandas 2.2+`` (:pr:`11122`) :user:`yash-sangwan`
 * [ENH] migrate ``remember_data`` tag to ``_BaseTag`` class (:pr:`11115`) :user:`KingLizard1020`
 * [ENH] update ``scikit-learn`` ``_version_bridge`` to also deal with ``force_all_finite`` / ``ensure_all_finite`` rename (:pr:`11181`) :user:`fkiraly`
-* [ENH] Migrate ``learning_type`` tag to ``_BaseTag`` class (:pr:`10806`) :user:`Nikunjsaini07`
+* [ENH] migrate ``learning_type`` tag to ``_BaseTag`` class (:pr:`10806`) :user:`Nikunjsaini07`
 * [ENH] migrate ``split_hierarchical`` tag to ``_BaseTag`` class (:pr:`10935`) :user:`Valentino-source-dev`
-* [ENH] Migrate capability:missing_values:removes tag to class (:pr:`10909`) :user:`luziyi123448-gif`
+* [ENH] migrate capability:missing_values:removes tag to class (:pr:`10909`) :user:`luziyi123448-gif`
 * [ENH] migrate ``split_series_uses`` tag to ``_BaseTag`` class (:pr:`10938`) :user:`Valentino-source-dev`
 
 Benchmarking, Metrics, Splitters
