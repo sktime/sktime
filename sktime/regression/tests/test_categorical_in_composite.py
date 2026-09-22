@@ -3,12 +3,13 @@ from sklearn.preprocessing import OneHotEncoder
 
 from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
 from sktime.regression.model_selection import TSRGridSearchCV
-from sktime.transformations.adapt import TabularToSeriesAdaptor
-from sktime.transformations.subset import ColumnSelect
 
 
 def test_pipeline_with_categorical():
     """Test that pipeline with categorical feature works."""
+    from sktime.transformations.adapt import TabularToSeriesAdaptor
+    from sktime.transformations.subset import ColumnSelect
+
     data = pd.DataFrame(
         {
             "id": [1, 1, 2, 2, 3, 3, 4, 4],
@@ -45,6 +46,10 @@ def test_pipeline_with_categorical():
 
 
 def test_gridsearch_with_categorical():
+    """Test that grid search works with categorical features."""
+    from sktime.transformations.adapt import TabularToSeriesAdaptor
+    from sktime.transformations.subset import ColumnSelect
+
     data = pd.DataFrame(
         {
             "id": [1, 1, 2, 2, 3, 3, 4, 4],
