@@ -189,6 +189,7 @@ Forecasting
 * [ENH] golden output tests for ``Chronos2Forecaster`` (:pr:`10677`) :user:`geetu040`
 * [ENH] golden output tests for ``KronosForecaster`` (:pr:`10997`) :user:`dongwonmoon`
 * [ENH] golden output tests for ``FlowStateForecaster`` (:pr:`11048`) :user:`AbdulAliMamnun`
+* [ENH] golden output tests for ``PatchTSTForecaster`` (:pr:`10941`) :user:`Nischal1425`
 * [ENH] consistent automatic CPU/GPU placement for foundation-model forecasters (:pr:`11167`) :user:`geetu040`
 * [ENH] Tafsut foundation model forecaster (:pr:`11053`) :user:`aryamanDutta`
 
