@@ -45,7 +45,8 @@ def test_patch_tst_predictions_match_transformers_reference():
     values = np.random.RandomState(0).randn(_CONTEXT_LENGTH, _N_CHANNELS)
     columns = [f"c{i}" for i in range(_N_CHANNELS)]
     y = pd.DataFrame(values.astype("float32"), columns=columns)
-    fh = list(range(1, 25))
+    # first 3 for matching outputs, 96 for testing max prediction length
+    fh = [1, 2, 3, 96]
 
     forecaster = PatchTSTForecaster(
         model_path=_PATCHTST_MODEL, fit_strategy="zero-shot"
