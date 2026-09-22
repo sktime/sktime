@@ -196,7 +196,7 @@ class Model(nn.Module):
             self.bert_config.output_hidden_states = True
 
             self.llm_model = BertModel(self.bert_config)
-            self.tokenizer = BertTokenizer()
+            self.tokenizer = _tiny_random_bert_tokenizer()
         else:
             raise Exception("LLM model is not defined")
 
