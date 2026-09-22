@@ -88,6 +88,16 @@ class SupervisedIntervals(BaseTransformer):
     .. [2] Cabello, N., Naghizade, E., Qi, J. and Kulik, L., 2021. Fast, accurate and
         interpretable time series classification through randomization. arXiv preprint
         arXiv:2105.14876.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.transformations.supervised_intervals import SupervisedIntervals
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> t = SupervisedIntervals(n_intervals=1, random_state=1)
+    >>> Xt = t.fit_transform(X_train, y_train)
+    >>> Xt.shape
+    (20, 26)
     """
 
     _tags = {
@@ -110,7 +120,9 @@ class SupervisedIntervals(BaseTransformer):
         "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
+        "tests:skip_by_name": [
+            "test_get_test_params_coverage",
+        ],
     }
 
     def __init__(

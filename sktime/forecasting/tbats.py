@@ -112,7 +112,12 @@ class TBATS(_TbatsAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
     """  # noqa: E501
 
-    _tags = {"tests:specific": ["sktime.forecasting.tests.test_tbats"]}
+    _tags = {
+        "tests:specific": [
+            "sktime.forecasting.tests.test_tbats",
+            "sktime.libs.tbats.tests",
+        ]
+    }
 
     _fitted_param_names = "aic"
 
@@ -120,7 +125,7 @@ class TBATS(_TbatsAdapter):
         """Create model class."""
         # both bats and tbats inherit the same interface from the base class and only
         # instantiate a different model class internally
-        from tbats import TBATS as _TBATS
+        from sktime.libs.tbats import TBATS as _TBATS
 
         self._ModelClass = _TBATS
 
