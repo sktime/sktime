@@ -235,6 +235,7 @@ class _Reducer(_BaseWindowForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:update": True,
     }
 
     def __init__(

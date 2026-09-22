@@ -138,6 +138,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "capability:exogenous": False,
         "capability:multivariate": False,
         "capability:pred_int": True,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
