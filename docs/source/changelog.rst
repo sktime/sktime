@@ -49,7 +49,7 @@ Core interface changes
 * In line with the forecaster update default change, from version 1.3.0, ``self._y`` and ``self._X`` will no longer store all data seen so far by default.
   Users who wish to retain the previous behavior in an upwards compatible way
   can set the config ``remember_data`` to ``True`` via the ``.set_config(remember_data=True)`` (prior to forecaster use).
-  
+
 
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
