@@ -104,6 +104,29 @@ class L2Cost(BaseCost):
     param : float or array-like, optional (default=None)
         Fixed mean for the cost calculation. If ``None``, the optimal mean is
         calculated.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.costs import L2Cost
+    >>> X = np.concatenate([np.zeros(5), 10 * np.ones(5)]).reshape(-1, 1)
+    >>> cost = L2Cost()
+    >>> cost.evaluate(X, [[0, 5], [5, 10], [0, 10]])
+    array([[  0.],
+           [  0.],
+           [250.]])
+
+    The first two intervals each cover a constant level, so their cost is zero.
+    The third spans the change and is therefore expensive.
+
+    Passing ``param`` evaluates the cost at a fixed mean instead of the optimal
+    one, which makes the second interval costly as well:
+
+    >>> cost = L2Cost(param=0.0)
+    >>> cost.evaluate(X, [[0, 5], [5, 10], [0, 10]])
+    array([[  0.],
+           [500.],
+           [500.]])
     """
 
     _tags = {
