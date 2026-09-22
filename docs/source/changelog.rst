@@ -193,6 +193,7 @@ Forecasting
 * [ENH] consistent automatic CPU/GPU placement for foundation-model forecasters (:pr:`11167`) :user:`geetu040`
 * [ENH] Tafsut foundation model forecaster (:pr:`11053`) :user:`aryamanDutta`
 * [ENH] in ``AutoTS``, make silent ``verbose=-2`` parameter the default (:pr:`11263`) :user:`fkiraly`
+* [ENH] add `NeuralProphet` soft dependency bound for `pandas<3` (:pr:`11259`) :user:`amarjaleelbanbhan`
 
 Neural network layers and components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -489,6 +490,7 @@ Contributors
 :user:`AH64-dll`,
 :user:`AlejandroCoronadoN`,
 :user:`AlvaroBalbin`,
+:user:`amarjaleelbanbhan`,
 :user:`Anai-Guo`,
 :user:`andoriyaprashant`,
 :user:`anupamkr1708`,
