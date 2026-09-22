@@ -234,7 +234,7 @@ class _PytorchForecastingAdapter(BaseForecaster):
         if isinstance(y, pd.Series):
             self._series_name = y.name
             self._was_series = True
-        else
+        else:
             self._was_series = False
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
