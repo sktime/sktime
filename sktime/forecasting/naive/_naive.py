@@ -138,6 +138,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         "capability:exogenous": False,
         "capability:multivariate": False,
         "capability:pred_int": True,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -693,6 +694,7 @@ class NaiveVariance(BaseForecaster):
         "capability:missing_values": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
+        "capability:update": True,
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
@@ -705,6 +707,7 @@ class NaiveVariance(BaseForecaster):
             "requires-fh-in-fit",
             "capability:exogenous",
             "capability:missing_values",
+            "capability:update",
             "y_inner_mtype",
             "X_inner_mtype",
             "X-y-must-have-same-index",
