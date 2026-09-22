@@ -108,7 +108,7 @@ def test_raises_at_fit():
     y = make_forecasting_problem(random_state=42)
     forecaster = DummyForecaster(raise_at="fit")
     with pytest.raises(ForecastingError):
-        forecaster.fit(y=y, fh=[1, 2, 3])
+        forecaster.fit(y=y, fh=3)
 
 
 @pytest.mark.skipif(
@@ -120,7 +120,7 @@ def test_raises_at_predict():
     # Start with negative time series, Theta model will fail here
     y = make_forecasting_problem(random_state=42)
     forecaster = DummyForecaster(raise_at="predict")
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     with pytest.raises(ForecastingError):
         forecaster.predict()
 
@@ -134,7 +134,7 @@ def test_raises_at_update():
     # Start with negative time series, Theta model will fail here
     y = make_forecasting_problem(random_state=42)
     forecaster = DummyForecaster(raise_at="update")
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     forecaster.predict()
     with pytest.raises(ForecastingError):
         forecaster.update(y)
@@ -148,7 +148,7 @@ def test_predicts_nans():
     """Test dummy forecaster predict nans"""
     y = make_forecasting_problem(random_state=42)
     forecaster = DummyForecaster(raise_at=None, predict_nans=True)
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     y_pred = forecaster.predict()
     assert y_pred.isna().sum() > 0
 
@@ -184,10 +184,10 @@ def test_fallbackforecaster_fails_at_fit():
             ),
         ]
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     y_pred_actual = forecaster.predict()
 
-    forecaster2.fit(y=y, fh=[1, 2, 3])
+    forecaster2.fit(y=y, fh=3)
     y_pred_expected = forecaster2.predict()
 
     # Assert that the first valid forecaster is trained
@@ -229,12 +229,12 @@ def test_fallbackforecaster_fails_at_predict():
             ("forecaster2_succeeded", forecaster2),
         ]
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
 
     # Assert predictions line up with the correct forecaster
     y_pred_actual = forecaster.predict()
 
-    forecaster2.fit(y=y, fh=[1, 2, 3])
+    forecaster2.fit(y=y, fh=3)
     y_pred_expected = forecaster2.predict()
 
     # Assert correct forecaster name
@@ -280,10 +280,10 @@ def test_fallbackforecaster_fails_twice():
             ("forecaster4_notcalled", forecaster4),
         ]
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     y_pred_actual = forecaster.predict()
 
-    forecaster3.fit(y=y, fh=[1, 2, 3])
+    forecaster3.fit(y=y, fh=3)
     y_pred_expected = forecaster3.predict()
 
     # Assert correct forecaster name
@@ -340,12 +340,12 @@ def test_fallbackforecaster_fails_fit_twice():
             ("forecaster4_notcalled", forecaster4),
         ]
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
 
     # Assert predictions line up with the correct forecaster
     y_pred_actual = forecaster.predict()
 
-    forecaster3.fit(y=y, fh=[1, 2, 3])
+    forecaster3.fit(y=y, fh=3)
     y_pred_expected = forecaster3.predict()
 
     # Assert correct forecaster name
@@ -380,7 +380,7 @@ def test_all_forecasters_fail1():
     forecaster3 = ("raise_fit2", DummyForecaster(raise_at="fit"))
     forecaster = FallbackForecaster([forecaster1, forecaster2, forecaster3])
     with pytest.raises(RuntimeError):
-        forecaster.fit(y=y, fh=[1, 2, 3])
+        forecaster.fit(y=y, fh=3)
         forecaster.predict()
 
 
@@ -397,7 +397,7 @@ def test_all_forecasters_fail2():
     forecaster3 = ("raise_fit3", DummyForecaster(raise_at="fit"))
     forecaster = FallbackForecaster([forecaster1, forecaster2, forecaster3])
     with pytest.raises(RuntimeError):
-        forecaster.fit(y=y, fh=[1, 2, 3])
+        forecaster.fit(y=y, fh=3)
 
 
 @pytest.mark.skipif(
@@ -413,7 +413,7 @@ def test_all_forecasters_fail3():
     forecaster3 = ("raise_predict3", DummyForecaster(raise_at="predict"))
     forecaster = FallbackForecaster([forecaster1, forecaster2, forecaster3])
     with pytest.raises(RuntimeError):
-        forecaster.fit(y=y, fh=[1, 2, 3])
+        forecaster.fit(y=y, fh=3)
         forecaster.predict()
 
 
@@ -433,11 +433,11 @@ def test_many_forecasters_fail1():
     forecaster = FallbackForecaster(
         [forecaster1, forecaster2, forecaster3, forecaster4, forecaster5]
     )
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
     y_pred_actual = forecaster.predict()
     y_name_actual = forecaster.current_name_
     expected_forecaster = forecaster5[1]
-    expected_forecaster.fit(y, fh=[1, 2, 3])
+    expected_forecaster.fit(y, fh=3)
     y_pred_expected = expected_forecaster.predict()
     y_name_expected = forecaster5[0]
     pd.testing.assert_series_equal(y_pred_actual, y_pred_expected)
@@ -487,10 +487,10 @@ def test_fallbackforecaster_fails_twice_simple():
             ("forecaster4_notcalled", forecaster4),
         ]
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     y_pred_actual = forecaster.predict()
 
-    forecaster3.fit(y=y, fh=[1, 2, 3])
+    forecaster3.fit(y=y, fh=3)
     y_pred_expected = forecaster3.predict()
 
     # Assert correct forecaster name
@@ -544,10 +544,10 @@ def test_fallbackforecaster_fails_many_simple():
             ("notcalled", forecaster10),
         ]
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     y_pred_actual = forecaster.predict()
 
-    forecaster9.fit(y=y, fh=[1, 2, 3])
+    forecaster9.fit(y=y, fh=3)
     y_pred_expected = forecaster9.predict()
 
     # Assert correct forecaster name
@@ -583,7 +583,7 @@ def test_fallbackforecaster_pred_int():
     forecaster = FallbackForecaster(
         [("naive_mean", forecaster1), ("naive_last", forecaster2)]
     )
-    fh = [1, 2, 3]
+    fh = 3
     forecaster.fit(y, fh=fh)
     pred_int_actual = forecaster.predict_interval()
 
@@ -606,7 +606,7 @@ def test_fallbackforecaster_pred_int_raises():
     forecaster = FallbackForecaster(
         [("naive_mean", forecaster1), ("ensemble", forecaster2)]
     )
-    fh = [1, 2, 3]
+    fh = 3
     forecaster.fit(y, fh=fh)
     with pytest.raises(NotImplementedError):
         forecaster.predict_interval()
@@ -628,10 +628,10 @@ def test_fallbackforecaster_predict_nan_allow():
         ],
         nan_predict_policy="ignore",
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     y_pred_actual = forecaster.predict()
 
-    forecaster2.fit(y=y, fh=[1, 2, 3])
+    forecaster2.fit(y=y, fh=3)
     y_pred_expected = forecaster2.predict()
 
     assert y_pred_actual.isna().sum() > 0
@@ -660,10 +660,10 @@ def test_fallbackforecaster_predict_nan():
         ],
         nan_predict_policy="raise",
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     y_pred_actual = forecaster.predict()
 
-    forecaster3.fit(y=y, fh=[1, 2, 3])
+    forecaster3.fit(y=y, fh=3)
     y_pred_expected = forecaster3.predict()
 
     # Assert correct forecaster name
@@ -700,7 +700,7 @@ def test_fallbackforecaster_warns():
         ],
         nan_predict_policy="warn",
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     with pytest.warns(UserWarning):
         forecaster.predict()
 
@@ -721,7 +721,7 @@ def test_fallbackforecaster_raises():
         ],
         nan_predict_policy="raise",
     )
-    forecaster.fit(y=y, fh=[1, 2, 3])
+    forecaster.fit(y=y, fh=3)
     with pytest.raises(RuntimeError):
         forecaster.predict()
 
@@ -756,11 +756,11 @@ def test_forecastbylevel_nan_predict():
             nan_predict_policy="raise",
         )
     )
-    fh = [1, 2, 3]
+    fh = 3
     forecaster.fit(y=df, fh=fh)
     y_pred_actual = forecaster.predict()
 
-    forecaster2.fit(y=df, fh=[1, 2, 3])
+    forecaster2.fit(y=df, fh=3)
     y_pred_expected = forecaster2.predict()
 
     pd.testing.assert_frame_equal(y_pred_expected, y_pred_actual)

@@ -154,7 +154,7 @@ def test_DynamicFactor_with_integer_index():
 
     forecaster = DynamicFactor(k_factors=K_FACTORS, factor_order=FACTOR_ORDER)
     forecaster.fit(y)
-    y_pred = forecaster.predict(fh=[1, 2, 3])
+    y_pred = forecaster.predict(fh=3)
 
     assert y_pred.shape == (3, 2)
     pd.testing.assert_index_equal(y_pred.index, pd.Index([35, 36, 37]))

@@ -177,7 +177,7 @@ def test_recursive_reduction(y, index_names, y_dict):
         pooling="global",
     )
 
-    forecaster2.fit(y, fh=[1, 2])
+    forecaster2.fit(y, fh=2)
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)
 
@@ -228,7 +228,7 @@ def test_direct_reduction(y, index_names, y_dict):
         pooling="global",
     )
 
-    forecaster2.fit(y, fh=[1, 2])
+    forecaster2.fit(y, fh=2)
     y_pred = forecaster2.predict(fh=[1, 2, 12])
     check_eval(y_pred.index.names, index_names)
 
@@ -377,8 +377,8 @@ def test_nofreq_pass():
     forecaster_global.fit(y)
     forecaster_global_freq.fit(y_no_freq)
 
-    y_pred_global = forecaster_global.predict(fh=[1, 2])
-    y_pred_nofreq = forecaster_global_freq.predict(fh=[1, 2])
+    y_pred_global = forecaster_global.predict(fh=2)
+    y_pred_nofreq = forecaster_global_freq.predict(fh=2)
     np.testing.assert_almost_equal(
         y_pred_global["c0"].values, y_pred_nofreq["c0"].values
     )

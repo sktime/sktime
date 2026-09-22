@@ -282,7 +282,7 @@ class ForecastingHorizon:
     >>> forecaster = NaiveForecaster(strategy="drift")
     >>> forecaster.fit(y_train)
     NaiveForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     >>> forecaster.fh  # doctest: +SKIP
     >>> # ForecastingHorizon([1, 2, 3], dtype='int64', is_relative=True)
 

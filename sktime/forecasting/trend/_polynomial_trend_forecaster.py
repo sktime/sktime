@@ -86,7 +86,7 @@ class PolynomialTrendForecaster(BaseForecaster):
     >>> forecaster = PolynomialTrendForecaster(degree=1)
     >>> forecaster.fit(y)
     PolynomialTrendForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {

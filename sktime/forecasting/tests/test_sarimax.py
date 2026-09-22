@@ -107,7 +107,7 @@ def test_SARIMAX_for_exogenous_features():
     y_train, _, _, X_test = temporal_train_test_split(y, X)
     forecaster = SARIMAX()
     forecaster.fit(y_train)
-    forecaster.predict(fh=[1, 2, 3, 4], X=X_test)
+    forecaster.predict(fh=4, X=X_test)
 
 
 @pytest.mark.skipif(

@@ -80,7 +80,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
     ... )
     >>> forecaster.fit(y)
     SplineTrendForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _delegate_name = "forecaster_"

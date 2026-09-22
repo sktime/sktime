@@ -91,7 +91,7 @@ class VAR(_StatsModelsAdapter):
     >>> forecaster = VAR()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     VAR(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _fitted_param_names = ("aic", "fpe", "hqic", "bic")

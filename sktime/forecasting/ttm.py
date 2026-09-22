@@ -410,7 +410,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
     ... )
     >>> forecaster.fit(y)
     TinyTimeMixerForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
 
     Automatically select the best compatible model revision from the context
     length and prediction length:
@@ -422,7 +422,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
     ...     model_path="ibm-research/ttm-r3",
     ...     revision=None,
     ... )
-    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=3)
     TinyTimeMixerForecaster(...)
     >>> y_pred = forecaster.predict()
 
@@ -436,7 +436,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
     >>> forecaster = TinyTimeMixerForecaster(
     ...     model_path="ibm-research/ttm-r3",
     ... )
-    >>> forecaster.fit(y_train, X=X_train, fh=[1, 2])
+    >>> forecaster.fit(y_train, X=X_train, fh=2)
     TinyTimeMixerForecaster(...)
     >>> y_pred = forecaster.predict(X=X_future)
 
@@ -465,7 +465,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
     ... )
     >>> forecaster.fit(y)
     TinyTimeMixerForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
 
     Initialize a random model when ``model_path`` is ``None``
     and preform full fine-tuning:
@@ -485,7 +485,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
     ... )
     >>> forecaster.fit(y)
     TinyTimeMixerForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
 
     Pretrain on panel data before fitting to the target forecasting series:
 
@@ -511,7 +511,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
     TinyTimeMixerForecaster(...)
     >>> forecaster.fit(y)
     TinyTimeMixerForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {

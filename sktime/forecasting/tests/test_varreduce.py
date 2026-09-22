@@ -19,6 +19,6 @@ def test_VAR_against_statsmodels():
     """Compares default VARReduce to statmodels VAR."""
     y = load_longley()[1]
 
-    y_var = VAR().fit_predict(y, fh=[1, 2, 3])
-    y_varr = VARReduce().fit_predict(y, fh=[1, 2, 3])
+    y_var = VAR().fit_predict(y, fh=3)
+    y_varr = VARReduce().fit_predict(y, fh=3)
     np.testing.assert_allclose(y_var.values, y_varr.values)
