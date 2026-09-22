@@ -106,7 +106,7 @@ class TimeMoEForecaster(BaseForecaster):
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
     >>> forecaster.fit(y)
     TimeMoEForecaster(model_path='Maple728/TimeMoE-50M')
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {
