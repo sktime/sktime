@@ -583,7 +583,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self.check_is_fitted()
 
         # input check and conversion for X
-        X_inner, X_data = self._check_X(X=X)
+        X_inner = self._check_X(X=X)
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
@@ -788,7 +788,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         alpha = check_alpha(alpha, name="alpha")
 
         # input check and conversion for X
-        X_inner, X_data = self._check_X(X=X)
+        X_inner = self._check_X(X=X)
 
         # we call the ordinary _predict_quantiles if no looping/vectorization needed
         if not self._is_vectorized:
@@ -883,7 +883,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         coverage = check_alpha(coverage, name="coverage")
 
         # check and convert X
-        X_inner, X_data = self._check_X(X=X)
+        X_inner = self._check_X(X=X)
 
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
@@ -972,7 +972,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         fh = self._check_fh(fh, pred_int=True)
 
         # check and convert X
-        X_inner, X_data = self._check_X(X=X)
+        X_inner = self._check_X(X=X)
 
         # we call the ordinary _predict_interval if no looping/vectorization needed
         if not self._is_vectorized:
@@ -2126,10 +2126,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         Returns
         -------
         X_inner : converted X or VectorizedDF schema
-        X_data : same as X_inner when not vectorized; multiindex when vectorized
         """
-        X_inner, _, X_data, _ = self._check_X_y(X=X)
-        return X_inner, X_data
+        X_inner, _, _, _ = self._check_X_y(X=X)
+        return X_inner
 
     def _update_X(self, X, enforce_index_type=None):
         if X is not None and self.get_config()["remember_data"]:
