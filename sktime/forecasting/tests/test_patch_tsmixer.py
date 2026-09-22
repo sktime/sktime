@@ -3,9 +3,9 @@
 import numpy as np
 import pandas as pd
 import pytest
-from sktime.tests.test_switch import run_test_for_class
 
 from sktime.forecasting.patch_tsmixer import PatchTSMixerForecaster
+from sktime.tests.test_switch import run_test_for_class
 
 _MODEL_PATH = "ibm-granite/granite-timeseries-patchtsmixer"
 _MODEL_REVISION = "90dc5a88d45f032b7dceefb5d814ca2af54f2ff9"
