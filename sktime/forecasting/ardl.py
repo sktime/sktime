@@ -346,6 +346,9 @@ class ARDL(_StatsModelsAdapter):
         from statsmodels.tsa.ardl import ARDL as _ARDL
         from statsmodels.tsa.ardl import ardl_select_order as _ardl_select_order
 
+        self._cur_y = y
+        self._cur_X = X
+
         # statsmodels does not support the pd.Int64Index as required,
         # so we coerce them here to pd.RangeIndex
         if isinstance(y, pd.Series) and pd.api.types.is_integer_dtype(y.index):
@@ -444,7 +447,7 @@ class ARDL(_StatsModelsAdapter):
         valid_indices = fh.to_absolute_index(self.cutoff)
 
         y_pred = self._fitted_forecaster.predict(
-            start=start, end=end, exog=self._X, exog_oos=X, fixed_oos=self.fixed_oos
+            start=start, end=end, exog=self._cur_X, exog_oos=X, fixed_oos=self.fixed_oos
         )
         y_pred.name = self._y_name
         return y_pred.loc[valid_indices]
@@ -486,8 +489,13 @@ class ARDL(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        from sktime.datatypes import update_data
+
         warnings.warn("Defaulting to `update_params=True`", stacklevel=2)
         update_params = True
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         if update_params:
             # default to re-fitting if update is not implemented
             warnings.warn(
@@ -501,7 +509,7 @@ class ARDL(_StatsModelsAdapter):
             #    may have been converted
             mtype_last_seen = self._y_mtype_last_seen
             # refit with updated data, not only passed data
-            self.fit(y=self._y, X=self._X, fh=self._fh)
+            self.fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
             # todo: should probably be self._fit, not self.fit
             # but looping to self.fit for now to avoid interface break
             self._y_mtype_last_seen = mtype_last_seen
@@ -550,7 +558,7 @@ class ARDL(_StatsModelsAdapter):
                 self._fitted_forecaster.params
             )
         else:
-            if self._X is not None:
+            if self._cur_X is not None:
                 fitted_params["score"] = self._fitted_forecaster.model.score(
                     self._fitted_forecaster.params
                 )
