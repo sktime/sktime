@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 import pytest
-from skbase.utils.dependencies import _check_estimator_deps
+from sktime.tests.test_switch import run_test_for_class
 
 from sktime.forecasting.patch_tsmixer import PatchTSMixerForecaster
 
@@ -13,7 +13,7 @@ _TARGET_COLUMNS = ["HUFL", "HULL", "MUFL", "MULL", "LUFL", "LULL", "OT"]
 
 
 @pytest.mark.skipif(
-    not _check_estimator_deps(PatchTSMixerForecaster, severity="none"),
+    not run_test_for_class(PatchTSMixerForecaster),
     reason="PatchTSMixerForecaster soft dependencies not available",
 )
 def test_patch_tsmixer_predictions_match_source_reference():
