@@ -947,7 +947,7 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
                 return r * to_offset(fh.freq)
 
         is_timestamp = isinstance(cutoff, pd.DatetimeIndex)
-        is_timelike = isinstance(cutoff, (pd.PeriodIndex, pd.DatetimeIndex))
+        # is_timelike = isinstance(cutoff, (pd.PeriodIndex, pd.DatetimeIndex))
 
         if is_timestamp:
             # coerce back to DatetimeIndex after operation
