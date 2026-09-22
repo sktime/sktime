@@ -28,8 +28,10 @@ Highlights
 * New foundation model forecasters: Tafsut, TimesFM3, TiRex-2, TFC-T0 (:pr:`10447`, :pr:`10786`, :pr:`10976`, :pr:`11053`) :user:`aryamanDutta`, :user:`hasanfaesal`, :user:`siddharth7113`, :user:`yash-sangwan`
 * Recursive reduction using Monte-Carlo to probabilistic tabular regressors, ``MCRecursiveProbaReductionForecaster`` (:pr:`9242`) :user:`marrov`
 * CRAN ``fable::ARIMA`` forecaster (via ``rpy2``) (:pr:`8641`) :user:`ericjb`
+* interface to ``hypertrees-forecasting``: ``HyperTreeARForecaster`` (:pr:`11076`) :user:`oberoir080`
 * forecasting ``evaluate`` utility now can run benchmarks for ``pretrain``-able forecasters (:pr:`10560`) :user:`jgyasu`
 * new transformations: ``SavitzkyGolayTransformer``, ``HilbertTransformer``, and ``WaveletPacketTransformer`` (:pr:`10810`) :user:`ved197338`
+* Hierarchical/agglomerative clustering for time series (:pr:`9187`) :user:`Muhammad-Rebaal`
 
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
@@ -106,6 +108,13 @@ BaseObject and base framework
 * [ENH] migrate test skip lists to estimator tags (Task 2) (:pr:`10663`) :user:`sudo-muneeb`
 * [ENH] centralize lookup module skip configs in ``registry``, and fix ``libs`` not skipped in ``sklearn`` estimator lookup (:pr:`11222`) :user:`fkiraly`
 * [ENH] migrate ``test_doctest_examples`` skips from ``_config`` to class tags (:pr:`11221`) :user:`Me-Priyank`
+* [ENH] use ``ME`` for monthly ``date_range`` in tests on ``pandas 2.2+`` (:pr:`11122`) :user:`yash-sangwan`
+* [ENH] migrate ``remember_data`` tag to ``_BaseTag`` class (:pr:`11115`) :user:`KingLizard1020`
+* [ENH] update ``scikit-learn`` ``_version_bridge`` to also deal with ``force_all_finite`` / ``ensure_all_finite`` rename (:pr:`11181`) :user:`fkiraly`
+* [ENH] Migrate ``learning_type`` tag to ``_BaseTag`` class (:pr:`10806`) :user:`Nikunjsaini07`
+* [ENH] migrate ``split_hierarchical`` tag to ``_BaseTag`` class (:pr:`10935`) :user:`Valentino-source-dev`
+* [ENH] Migrate capability:missing_values:removes tag to class (:pr:`10909`) :user:`luziyi123448-gif`
+* [ENH] migrate ``split_series_uses`` tag to ``_BaseTag`` class (:pr:`10938`) :user:`Valentino-source-dev`
 
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -179,8 +188,16 @@ Forecasting
 * [ENH] golden output tests for ``ChronosForecaster`` (:pr:`10692`) :user:`geetu040`
 * [ENH] golden output tests for ``Moirai2Forecaster`` (:pr:`10687`) :user:`geetu040`
 * [ENH] golden output tests for ``Chronos2Forecaster`` (:pr:`10677`) :user:`geetu040`
+* [ENH] golden output tests for ``KronosForecaster`` (:pr:`10997`) :user:`dongwonmoon`
+* [ENH] golden output tests for ``FlowStateForecaster`` (:pr:`11048`) :user:`AbdulAliMamnun`
 * [ENH] consistent automatic CPU/GPU placement for foundation-model forecasters (:pr:`11167`) :user:`geetu040`
 * [ENH] Tafsut foundation model forecaster (:pr:`11053`) :user:`aryamanDutta`
+
+Neural network layers and components
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] clean up soft dependency isolation patterns in ``networks`` module (:pr:`11088`) :user:`fkiraly`
+* [ENH] Revert #11088 soft dependency isolation as it compromises pickleability, use ``_safe_import`` instead (:pr:`11231`) :user:`fkiraly`
 
 Parameter estimation and hypothesis testing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -195,7 +212,7 @@ Time series anomalies, changepoints, segmentation
 * [ENH] make ``SubLOF`` ``pandas 3`` compatible (:pr:`11136`) :user:`fkiraly`
 * [ENH] bound ``SubLOF`` ``pandas<3`` due to incompatibility (:pr:`11139`) :user:`fkiraly`
 * [ENH] add ``pandas<3`` restriction to ``SubLOF`` and replace it in tests with dummy detectors (:pr:`11152`) :user:`fkiraly`
-* [ENH] make SubLOF pandas 3 compatible (:pr:`11141`) :user:`TayfurYldz`
+* [ENH] make ``SubLOF`` ``pandas 3`` compatible (:pr:`11141`) :user:`TayfurYldz`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -203,13 +220,13 @@ Time series classification
 * [ENH] ``FreshPRINCE`` classifier - unskip tests, fix tags (:pr:`10711`) :user:`fkiraly`
 * [ENH] Add second test param sets for ``ElasticEnsemble``, ``DistFromAligner`` (:pr:`10815`) :user:`NAME-ASHWANIYADAV`
 * [ENH] Add second test parameter sets for RandomIntervalClassifier, DummyRegressor, and StackingForecaster (:pr:`10785`) :user:`NAME-ASHWANIYADAV`
-* [BUG] Add ``_get_keras_custom_objects`` method to base classifier classes for loading deep learning models involving custom layers (:pr:`10637`) :user:`srupat`
+* [ENH] Add ``_get_keras_custom_objects`` method to base classifier classes for loading deep learning models involving custom layers (:pr:`10637`) :user:`srupat`
 * [ENH] Torch-based FCN time series classifier and regressor (:pr:`9489`) :user:`kajal-jotwani`
 * [ENH] Fix mutable default arguments in ``ConvTimeNet`` backbone (:pr:`10835`) :user:`Boubker10`
 * [ENH] add testing tags to deep learning base classes so changes in them trigger tests in child classes (:pr:`10944`) :user:`fkiraly`
 * [ENH] ``torch``-based CNTC time-series classifier and regressor (:pr:`10920`) :user:`srupat`
 * [ENH] torch based ``cntc`` time series classifier and regressor (:pr:`9397`) :user:`fnhirwa`
-* [MNT] Migrate WEASEL test skip config from ``tests._config`` to estimator tags (:pr:`10904`) :user:`JamesBoardman27`
+* [ENH] Migrate WEASEL test skip config from ``tests._config`` to estimator tags (:pr:`10904`) :user:`JamesBoardman27`
 * [ENH] Move ``MACNNClassifier`` test skip config to tags (:pr:`9814`) :user:`archittmittal`
 * [ENH] Add doctest examples to deep learning classes (:pr:`10956`) :user:`srupat`
 * [ENH] Add second test parameter set for ``SummaryClassifier``, ``SupervisedTimeSeriesForest`` (:pr:`10871`) :user:`Keykyrios`
@@ -219,7 +236,7 @@ Time series classification
 * [ENH] Add second test parameter sets for ``TSFreshClassifier`` (:pr:`10999`) :user:`oberoir080`
 * [ENH] native grid search for ``TSCGridSearchCV`` and ``TSRGridSearchCV`` (:pr:`10818`) :user:`yash-sangwan`
 * [ENH] Make LSTMFCN TensorFlow conv layers dynamic via filter_sizes and kernel_sizes (:pr:`11078`) :user:`nicolasdmolina`
-* [BUG] ``pandas 3`` compatibility patches to estimators (:pr:`11153`) :user:`yash-sangwan`
+* [ENH] ``pandas 3`` compatibility patches to estimators (:pr:`11153`) :user:`yash-sangwan`
 * [ENH] add upper ``scikit-learn`` bound to ``ElasticEnsemble`` (:pr:`11154`) :user:`fkiraly`
 * [ENH] add ``scikit-learn`` compatibility bound to ``TimeSeriesForestClassifier``, remove as test case (:pr:`11176`) :user:`fkiraly`
 * [ENH] register ``TimeSeriesForestClassifier`` tests in tag (:pr:`11179`) :user:`fkiraly`
@@ -229,13 +246,15 @@ Time series classification
 * [ENH] skip ``sktime``-in-``scikit-learn`` compatibility tests (:pr:`11186`) :user:`fkiraly`
 * [ENH] add ``scikit-learn<1.8`` bounds to ``pyts`` estimators (:pr:`11210`) :user:`fkiraly`
 * [ENH] remove cross-module imports in ``classification``, ``regression``, ``transformation``, and ``clustering`` modules (:pr:`11213`) :user:`fkiraly`
-* [MNT] remove ``tests:skip_all`` from ``SARIMAX`` and ``FreshPRINCE`` (:pr:`11233`) :user:`8rulerstar`
+* [ENH] remove ``tests:skip_all`` from ``SARIMAX`` and ``FreshPRINCE`` (:pr:`11233`) :user:`8rulerstar`
+* [ENH] ResNet network migration from tf to torch (:pr:`10762`) :user:`srupat`
+* [BUG] Add ``_get_keras_custom_objects`` method to base classifier classes for loading deep learning models involving custom layers (:pr:`10637`) :user:`srupat`
 
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] Hierarchical/Agglomerative Clustering for Time Series (:pr:`9187`) :user:`Muhammad-Rebaal`
-* [ENH] Add second test parameter set for TimeSeriesKMedoids (:pr:`10870`) :user:`Harshavardhan-28`
+* [ENH] Add second test parameter set for ``TimeSeriesKMedoids`` (:pr:`10870`) :user:`Harshavardhan-28`
 * [ENH] remove cross-module imports in ``classification``, ``regression``, ``transformation``, and ``clustering`` modules (:pr:`11213`) :user:`fkiraly`
 
 Time series regression
@@ -254,6 +273,7 @@ Time series regression
 * [ENH] Make LSTMFCN TensorFlow conv layers dynamic via filter_sizes and kernel_sizes (:pr:`11078`) :user:`nicolasdmolina`
 * [ENH] remove scikit-learn inheritance from ``TimeSeriesForestClassifier`` and ``TimeSeriesForestRegressor`` (:pr:`11178`) :user:`InnoxCodes`
 * [ENH] remove cross-module imports in ``classification``, ``regression``, ``transformation``, and ``clustering`` modules (:pr:`11213`) :user:`fkiraly`
+* [ENH] ResNet network migration from tf to torch (:pr:`10762`) :user:`srupat`
 
 Transformations
 ^^^^^^^^^^^^^^^
@@ -268,9 +288,11 @@ Transformations
 * [ENH] make ``Imputer`` mean/median compatible with pandas 3 (:pr:`10924`) :user:`yash-sangwan`
 * [ENH] Add unconditional ``HolidayFeatures`` test parameters (:pr:`11045`) :user:`Sharon-study`
 * [ENH] make ``TimeSince`` tests ``pandas 3`` compatible (:pr:`11134`) :user:`fkiraly`
-* [BUG] ``pandas 3`` compatibility patches to estimators (:pr:`11153`) :user:`yash-sangwan`
+* [ENH] ``pandas 3`` compatibility patches to estimators (:pr:`11153`) :user:`yash-sangwan`
 * [ENH] add ``scikit-learn<1.8`` bounds to ``pyts`` estimators (:pr:`11210`) :user:`fkiraly`
 * [ENH] remove cross-module imports in ``classification``, ``regression``, ``transformation``, and ``clustering`` modules (:pr:`11213`) :user:`fkiraly`
+* [ENH] Add second test parameter set for ``DilationMappingTransformer`` (:pr:`10657`) :user:`OfficialAbhinavSingh`
+* [ENH] Add second test parameter sets for ``PAAlegacy``, ``SAXlegacy``, and ``Hidalgo`` (:pr:`10732`) :user:`NAME-ASHWANIYADAV`
 
 Test framework
 ^^^^^^^^^^^^^^
@@ -281,20 +303,6 @@ Test framework
 * [ENH] Refactor test framework step 4: Inherit ``TestAllObjects`` and remove redundant test bodies (:pr:`11079`) :user:`yash-sangwan`
 * [ENH] add test that all classes have docstrings and at least one doctest example (:pr:`10776`) :user:`fkiraly`
 * [ENH] remove legacy ``EXCLUDE_ESTIMATORS`` mechanism from ``tests._config`` (:pr:`11208`) :user:`fkiraly`
-
-Other
-^^^^^
-
-* [BUG] Add ``_get_keras_custom_objects`` method to base classifier classes for loading deep learning models involving custom layers (:pr:`10637`) :user:`srupat`
-* [BUG] fix B006 mutable default args in convtimenet backbones (:pr:`10730`) :user:`WAHIB-EL-KHADIRI`
-* [ENH] ResNet network migration from tf to torch (:pr:`10762`) :user:`srupat`
-* [ENH] clean up soft dependency isolation patterns in ``networks`` module (:pr:`11088`) :user:`fkiraly`
-* [ENH] update ``scikit-learn`` ``_version_bridge`` to also deal with ``force_all_finite`` / ``ensure_all_finite`` rename (:pr:`11181`) :user:`fkiraly`
-* [ENH] Revert #11088 soft dependency isolation as it compromises pickleability, use ``_safe_import`` instead (:pr:`11231`) :user:`fkiraly`
-
-* [ENH] Add second test parameter set for ``DilationMappingTransformer`` (:pr:`10657`) :user:`OfficialAbhinavSingh`
-* [ENH] use ``ME`` for monthly ``date_range`` in tests on pandas 2.2+ (:pr:`11122`) :user:`yash-sangwan`
-* [ENH] migrate ``remember_data`` tag to ``_BaseTag`` class (:pr:`11115`) :user:`KingLizard1020`
 
 Documentation
 ~~~~~~~~~~~~~
@@ -309,7 +317,6 @@ Documentation
 * [DOC] add Python 3.14 to supported versions in get started guide (:pr:`10830`) :user:`AH64-dll`
 * [DOC] add doctest examples for five classes (:pr:`10796`) :user:`baremetaldevx86`
 * [DOC] fix ``DontUpdate`` docstring (:pr:`10834`) :user:`fkiraly`
-* [ENH] Migrate ``learning_type`` tag to ``_BaseTag`` class (:pr:`10806`) :user:`Nikunjsaini07`
 * [DOC] add doctest examples for SlidingWindowSegmenter (:pr:`10836`) :user:`chintam-dhanush`
 * [DOC] complete ``VAR`` docstring for ``method``, ``missing``, ``freq``, ``dates`` (:pr:`10698`) :user:`shivamlalakiya`
 * [DOC] fix undocumented configs in various foundation models (:pr:`10630`) :user:`Faakhir30`
@@ -323,18 +330,14 @@ Documentation
 * [DOC] Update links to contributor emoji key (:pr:`10884`) :user:`JamesBoardman27`
 * [DOC] Fix FABBA docstring parameter names to match the actual signature (:pr:`10942`) :user:`godarrenw`
 * [DOC] add doctest example for ``CutoffFhSplitter`` (:pr:`10939`) :user:`Valentino-source-dev`
-* [ENH] migrate ``split_hierarchical`` tag to ``_BaseTag`` class (:pr:`10935`) :user:`Valentino-source-dev`
 * [DOC] Add missing randomness tags to forecasting template (:pr:`10889`) :user:`Siddhartha23i`
 * [DOC] document ``property:randomness`` and ``capability:random_state`` in extension templates (:pr:`10908`) :user:`chala2001`
-* [ENH] Migrate capability:missing_values:removes tag to class (:pr:`10909`) :user:`luziyi123448-gif`
-* [ENH] migrate ``split_series_uses`` tag to ``_BaseTag`` class (:pr:`10938`) :user:`Valentino-source-dev`
 * [DOC] document estimator serialization format (:pr:`10596`) :user:`dannymaaz`
 * [DOC] Update governance guidelines link in bug reporting documentation (:pr:`10913`) :user:`JamesBoardman27`
 * [DOC] add doctest example for ``FittedParamExtractor`` (:pr:`10963`) :user:`OfficialAbhinavSingh`
 * [DOC] fix capability:categorical_in_X tag description and incorrect tag defaults in tag registry (:pr:`10854`) :user:`siddharth7113`
 * [DOC] add doctest example for ``SqueezeHierarchy`` (:pr:`11013`) :user:`chrisprown902-wq`
 * [DOC] add doctest example for ``IgnoreX`` (:pr:`11034`) :user:`oberoir080`
-* [ENH] Add second test parameter sets for PAAlegacy, SAXlegacy, and Hidalgo (:pr:`10732`) :user:`NAME-ASHWANIYADAV`
 * [DOC] Fix broken links in vendored fracdiff README (:pr:`11052`) :user:`blackorange-mega`
 * [DOC] Add doctest example to ``SAXlegacy`` (:pr:`11066`) :user:`adan-shahid`
 * [DOC] add doctest example for ``DistFromAligner`` (:pr:`11090`) :user:`LouisDeconinck`
@@ -401,11 +404,6 @@ Benchmarking, Metrics, Splitters
 * [BUG] make ``BaseObject.__eq__`` check the class, not just the params (:pr:`10781`) :user:`yash-sangwan`
 * [BUG] ``mean_squared_log_error``: remove leftover debug print and stack trace (:pr:`10816`) :user:`AlejandroCoronadoN`
 
-Time series distances and kernels
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* [BUG] fix typo in ``DistFromAligner._transform`` causing ``TypeError`` when ``X2`` is ``None`` (:pr:`10841`) :user:`NAME-ASHWANIYADAV`
-
 Forecasting
 ^^^^^^^^^^^
 
@@ -428,6 +426,11 @@ Forecasting
 * [BUG] Disable ``capability:non_contiguous_X`` for ``SARIMAX`` (:pr:`10741`) :user:`Faakhir30`
 * [BUG] Fix mutable defaults in LagLlama estimator (:pr:`10879`) :user:`tarundb2005-create`
 
+Neural network layers and components
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix B006 mutable default args in convtimenet backbones (:pr:`10730`) :user:`WAHIB-EL-KHADIRI`
+
 Time series anomalies, changepoints, segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -442,6 +445,11 @@ Time series classification
 * [BUG] fix optimizer passed as an instance not being bound to the network in BaseDeepClassifierPytorch (:pr:`11035`) :user:`srupat`
 * [BUG] remove moved ensemble classifiers from ``classification.compose.__all__`` (:pr:`11104`) :user:`Anai-Guo`
 * [BUG] fix ``ConvTimeNetClassifier`` deepcopy and pickling failures (:pr:`11099`) :user:`adity1raut`
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix typo in ``DistFromAligner._transform`` causing ``TypeError`` when ``X2`` is ``None`` (:pr:`10841`) :user:`NAME-ASHWANIYADAV`
 
 Time series regression
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -496,6 +504,7 @@ Contributors
 :user:`DebojitNath`,
 :user:`dhairya-motta`,
 :user:`direkkakkar319-ops`,
+:user:`dongwonmoon`,
 :user:`ericjb`,
 :user:`Faakhir30`,
 :user:`fathirramadhan-web`,
