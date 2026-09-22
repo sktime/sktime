@@ -275,7 +275,7 @@ class AutoTS(BaseForecaster):
         model_interrupt: bool = True,
         generation_timeout: int = None,
         current_model_file: str = None,
-        verbose: int = 1,
+        verbose: int = -2,
         n_jobs: int = -2,
     ):
         self.model_name = model_name
