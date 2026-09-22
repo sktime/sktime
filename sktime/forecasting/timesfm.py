@@ -191,7 +191,6 @@ class TimesFMForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         # testing configuration
         # ---------------------
@@ -266,7 +265,6 @@ class TimesFMForecaster(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.Series",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 
