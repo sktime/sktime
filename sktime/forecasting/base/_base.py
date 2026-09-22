@@ -1376,12 +1376,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         if not self._is_vectorized:
             self._update(y=y_inner, X=X_inner, update_params=update_params)
         else:
-            self._vectorize(
-                "update",
-                y=y_inner,
-                X=X_inner,
-                update_params=update_params,
-            )
+            self._vectorize("update", y=y_inner, X=X_inner, update_params=update_params)
 
         return self
 
