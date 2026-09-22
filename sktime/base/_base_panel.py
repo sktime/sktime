@@ -363,7 +363,7 @@ class BasePanelMixin(BaseEstimator):
 
         if y is None:
             if return_to_mtype:
-                return None, None, None, None
+                return None, None, None
             else:
                 return None, None
 
