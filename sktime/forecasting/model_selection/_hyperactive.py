@@ -234,6 +234,9 @@ class ForecastingOptCV(_DelegatedForecaster):
         self.backend_params = backend_params
         super().__init__()
 
+        if forecaster is not None:
+            self.clone_tags(forecaster, ["capability:categorical_in_X"])
+
     @classmethod
     def get_test_params(self, parameter_set="default"):
         """Return testing parameter settings for the estimator.

@@ -72,6 +72,7 @@ class _DelegatedForecaster(BaseForecaster):
             "capability:insample",
             "capability:pred_int",
             "capability:pred_int:insample",
+            "capability:categorical_in_X",
             "capability:missing_values",
             "requires-fh-in-fit",
             "X-y-must-have-same-index",
