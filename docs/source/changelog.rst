@@ -23,6 +23,10 @@ Version 1.2.0 - 2026-09-22
 Highlights
 ~~~~~~~~~~
 
+* better memory management: smaller ``sktime`` package size, smaller estimator memory footpring (:pr:`10459`, :pr:`10892`) :user:`faakhir30`, :user:`fkiraly`
+* forecasting ``evaluate`` utility now can run benchmarks for ``pretrain``-able forecasters (:pr:`10560`) :user:`jgyasu`
+* new transformations: ``SavitzkyGolayTransformer``, ``HilbertTransformer``, and ``WaveletPacketTransformer`` (:pr:`10810`) :user:`ved197338`
+
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
@@ -34,6 +38,9 @@ Dependency changes
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
 
+* The ``craft`` utility for deserializing estimator specifications now has a ``safe`` argument which
+  prevents arbitrary serialized code in the estimator definition.
+  Only a restricted syntax with estimator names in ``sktime`` is allowed.
 * From version 1.3.0, forecasters will no longer universally provide "refitting " ``update`` capability by default
   and as a consequence no longer store all data seen so far in ``self._y`` and/or ``self._X``.
   Forecasters with an available "update" mode can now be queried via the ``capability:update`` tag.
@@ -69,18 +76,17 @@ BaseObject and base framework
 * [ENH] ensure ``sktime_version`` tag is set dynamically to ensure inclusion in object serialization (:pr:`10831`) :user:`fkiraly`
 * [ENH] Migrate ``skip-inverse-transform`` tag to ``_BaseTag`` class (:pr:`10811`) :user:`DebojitNath`
 * [ENH] remove task and duplicate distribution_type from ESTIMATOR_TAG_REGISTER (:pr:`10859`) :user:`AanchalGupta1162`
-* [ENH] Migrate scitype:X tag to _BaseTag class (:pr:`10876`) :user:`AanchalGupta1162`
-* [ENH] migrate ``symmetric`` tag to ``BaseTag`` (:pr:`10847`) :user:`aryamanDutta`
-* [ENH] Migrate ``scitype:instancewise`` tag to ``_BaseTag`` (:pr:`10886`) :user:`anupamkr1708`
-* [ENH] Migrate ``capability:multithreading`` tag to ``_BaseTag`` (:pr:`10848`) :user:`wunianze666-netizen`
+* [ENH] Migrate ``scitype:X`` tag to ``_BaseTag`` class (:pr:`10876`) :user:`AanchalGupta1162`
+* [ENH] migrate ``symmetric`` tag to ``BaseTag`` class (:pr:`10847`) :user:`aryamanDutta`
+* [ENH] Migrate ``scitype:instancewise`` tag to ``_BaseTag`` class (:pr:`10886`) :user:`anupamkr1708`
+* [ENH] Migrate ``capability:multithreading`` tag to ``_BaseTag`` class (:pr:`10848`) :user:`wunianze666-netizen`
 * [ENH] migrate ``split_type`` tag to ``_BaseTag`` class (:pr:`10937`) :user:`Valentino-source-dev`
 * [ENH] migrate ``X-y-must-have-same-index`` from tuple to class based registry (:pr:`10981`) :user:`PiyushKumar74110`
-* [ENH] Refactor test framework step 4: Inherit ``TestAllObjects`` and remove redundant test bodies (:pr:`11079`) :user:`yash-sangwan`
 * [ENH] "safe" mode in ``craft`` utility (:pr:`11086`) :user:`fkiraly`
-* [ENH] migrate scitype:y tag from tuple to _BaseTag class (:pr:`10985`) :user:`gabrielemidulla`
+* [ENH] migrate ``scitype:y`` tag from tuple to ``_BaseTag`` class (:pr:`10985`) :user:`gabrielemidulla`
 * [ENH] make string coercion in ``scikit-learn`` adapter ``pandas 3`` compatible (:pr:`11137`) :user:`fkiraly`
 * [ENH] remove leftover ``X-y-must-have-same-index`` tuple from ``ESTIMATOR_TAG_REGISTER`` (:pr:`11149`) :user:`shubham5080`
-* [MNT] migrate ``test_get_test_params_coverage`` skips from ``_config`` to class tags (:pr:`11193`) :user:`Keykyrios`
+* [ENH] migrate ``test_get_test_params_coverage`` skips from ``_config`` to class tags (:pr:`11193`) :user:`Keykyrios`
 * [ENH] migrate test skip lists to estimator tags (Task 2) (:pr:`10663`) :user:`sudo-muneeb`
 * [ENH] centralize lookup module skip configs in ``registry``, and fix ``libs`` not skipped in ``sklearn`` estimator lookup (:pr:`11222`) :user:`fkiraly`
 * [ENH] migrate ``test_doctest_examples`` skips from ``_config`` to class tags (:pr:`11221`) :user:`Me-Priyank`
@@ -88,7 +94,6 @@ BaseObject and base framework
 Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-* [BUG] mean_squared_log_error: remove leftover debug print and stack trace (:pr:`10816`) :user:`AlejandroCoronadoN`
 * [ENH] raise on incomplete benchmark spec instead of returning empty results (:pr:`10764`) :user:`yash-sangwan`
 * [ENH] Adapt forecasting ``evaluate`` to the new ``pretrain`` API (global benchmarking) (:pr:`10560`) :user:`jgyasu`
 * [ENH] Make ``BenchmarkingResults`` public (:pr:`10873`) :user:`jgyasu`
@@ -231,12 +236,12 @@ Transformations
 
 * [ENH] ``ClaSPTransformer`` second test parameter set (:pr:`8868`) :user:`Udayan853`
 * [ENH] address ``numpy.trapz`` deprecation and fix test tags in related estimators (:pr:`10727`) :user:`fkiraly`
-* [ENH] Add second test parameter set for ClearSky (:pr:`10788`) :user:`coding-cosmos`
+* [ENH] Add second test parameter set for ``ClearSky`` (:pr:`10788`) :user:`coding-cosmos`
 * [ENH] Migrate ``skip-inverse-transform`` tag to ``_BaseTag`` class (:pr:`10811`) :user:`DebojitNath`
-* [ENH] Add second FeatureSelection test parameter set (:pr:`10232`) :user:`snoopuppy582`
-* [ENH] Add SavitzkyGolayTransformer, HilbertTransformer, and WaveletPacketTransformer (:pr:`10810`) :user:`ved197338`
+* [ENH] Add second ``FeatureSelection`` test parameter set (:pr:`10232`) :user:`snoopuppy582`
+* [ENH] Add ``SavitzkyGolayTransformer``, ``HilbertTransformer``, and ``WaveletPacketTransformer`` (:pr:`10810`) :user:`ved197338`
 * [ENH] make ``FourierFeatures`` transformation compatible with ``pandas 3`` frequency aliases (:pr:`10895`) :user:`yash-sangwan`
-* [ENH] make Imputer mean/median compatible with pandas 3 (:pr:`10924`) :user:`yash-sangwan`
+* [ENH] make ``Imputer`` mean/median compatible with pandas 3 (:pr:`10924`) :user:`yash-sangwan`
 * [ENH] Add unconditional ``HolidayFeatures`` test parameters (:pr:`11045`) :user:`Sharon-study`
 * [ENH] make ``TimeSince`` tests ``pandas 3`` compatible (:pr:`11134`) :user:`fkiraly`
 * [BUG] ``pandas 3`` compatibility patches to estimators (:pr:`11153`) :user:`yash-sangwan`
@@ -247,16 +252,17 @@ Test framework
 ^^^^^^^^^^^^^^
 
 * [ENH] Refactor test framework step 1: behaviour-preserving fixture rename (#10647) (:pr:`10661`):user:`Faareh-Ahmed`,  :user:`yash-sangwan`
-* [ENH] add test that all classes have docstrings and at least one doctest example (:pr:`10776`) :user:`fkiraly`
-* [ENH] Refactor test framework step 2: PackageConfig mixin and attribute alignment (#10647) (:pr:`10807`) :user:`yash-sangwan`
+* [ENH] Refactor test framework step 2: ``PackageConfig`` mixin and attribute alignment (#10647) (:pr:`10807`) :user:`yash-sangwan`
 * [ENH] Refactor test framework step 3: inherit fixture engine from ``skbase`` (#10647) (:pr:`10862`) :user:`yash-sangwan`
+* [ENH] Refactor test framework step 4: Inherit ``TestAllObjects`` and remove redundant test bodies (:pr:`11079`) :user:`yash-sangwan`
+* [ENH] add test that all classes have docstrings and at least one doctest example (:pr:`10776`) :user:`fkiraly`
 * [ENH] remove legacy ``EXCLUDE_ESTIMATORS`` mechanism from ``tests._config`` (:pr:`11208`) :user:`fkiraly`
 
 Other
 ^^^^^
 
 * [BUG] Add ``_get_keras_custom_objects`` method to base classifier classes for loading deep learning models involving custom layers (:pr:`10637`) :user:`srupat`
-* [MNT] fix B006 mutable default args in convtimenet backbones (:pr:`10730`) :user:`WAHIB-EL-KHADIRI`
+* [BUG] fix B006 mutable default args in convtimenet backbones (:pr:`10730`) :user:`WAHIB-EL-KHADIRI`
 * [ENH] ResNet network migration from tf to torch (:pr:`10762`) :user:`srupat`
 * [ENH] clean up soft dependency isolation patterns in ``networks`` module (:pr:`11088`) :user:`fkiraly`
 * [ENH] add missing license statement to ``libs.tbats`` vendor (:pr:`11157`) :user:`fkiraly`
@@ -304,10 +310,10 @@ Documentation
 * [DOC] add doctest example for ``IgnoreX`` (:pr:`11034`) :user:`oberoir080`
 * [ENH] Add second test parameter sets for PAAlegacy, SAXlegacy, and Hidalgo (:pr:`10732`) :user:`NAME-ASHWANIYADAV`
 * [DOC] Fix broken links in vendored fracdiff README (:pr:`11052`) :user:`blackorange-mega`
-*  [DOC] Add doctest example to SAXlegacy (:pr:`11066`) :user:`adan-shahid`
-* [DOC] add doctest example for DistFromAligner (:pr:`11090`) :user:`LouisDeconinck`
-* [DOC] add doctest example for MatrixProfileFeatures (:pr:`11109`) :user:`shubham5080`
-* [DOC] update README in sktime.libs (:pr:`11160`) :user:`Ayushagrawal-cse`
+* [DOC] Add doctest example to ``SAXlegacy`` (:pr:`11066`) :user:`adan-shahid`
+* [DOC] add doctest example for ``DistFromAligner`` (:pr:`11090`) :user:`LouisDeconinck`
+* [DOC] add doctest example for ``MatrixProfileFeatures`` (:pr:`11109`) :user:`shubham5080`
+* [DOC] update README in ``sktime.libs`` (:pr:`11160`) :user:`Ayushagrawal-cse`
 * [DOC] add doctest example for ``SignatureKernel`` (:pr:`11130`) :user:`shubham5080`
 * [DOC] add doctest examples for dummy catalogues (:pr:`11077`) :user:`HuzaifaAbdulRehman`
 * [DOC] Add usage example to ``BoxCoxBiasAdjustedForecaster`` (:pr:`9429`) :user:`YadavAkash96`
@@ -333,9 +339,7 @@ Maintenance
 * [MNT] remove extraneous material from package wheel (:pr:`10892`) :user:`fkiraly`
 * [MNT] Trigger website docs on stable releases (:pr:`10638`) :user:`gthay`
 * [MNT] all-contributors update (:pr:`10946`) :user:`github-actions[bot]`
-* [MNT] bound ``torch<2.14`` due to import failure (:pr:`11030`) :user:`fkiraly`
 * [MNT] remove unnecessary ``from future`` imports for defunct python 3.9 and lower versions (:pr:`11033`) :user:`fkiraly`
-* Revert "[MNT] bound ``torch<2.14`` due to import failure" (:pr:`11037`) :user:`fkiraly`
 * [MNT] all-contributors update (:pr:`11042`) :user:`github-actions[bot]`
 * [MNT] Dummy ``__init__.py`` to avoid test fails in the CI (:pr:`11075`) :user:`jgyasu`
 * [MNT] Ensure ``skpro>=2`` in CI (:pr:`11081`) :user:`fkiraly`
@@ -367,6 +371,7 @@ Benchmarking, Metrics, Splitters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] make ``BaseObject.__eq__`` check the class, not just the params (:pr:`10781`) :user:`yash-sangwan`
+* [BUG] mean_squared_log_error: remove leftover debug print and stack trace (:pr:`10816`) :user:`AlejandroCoronadoN`
 
 Forecasting
 ^^^^^^^^^^^
@@ -478,7 +483,6 @@ Contributors
 :user:`dannymaaz`,
 :user:`DebD-max`,
 :user:`DebojitNath`,
-:user:`dependabot[bot]`,
 :user:`dhairya-motta`,
 :user:`direkkakkar319-ops`,
 :user:`ericjb`,
@@ -489,7 +493,6 @@ Contributors
 :user:`fnhirwa`,
 :user:`gabrielemidulla`,
 :user:`geetu040`,
-:user:`github-actions[bot]`,
 :user:`godarrenw`,
 :user:`goyaladitya05`,
 :user:`gthay`,
