@@ -426,6 +426,7 @@ Forecasting
 * [BUG] Fix mutable defaults in LagLlama estimator (:pr:`10879`) :user:`tarundb2005-create`
 * [BUG] Preserve pretrained ``PatchTSMixer`` configuration (:pr:`10921`) :user:`dhruvb2028`
 * [BUG] fix off-by-one in ``PatchTST`` ``prediction_length`` derived from ``fh`` (:pr:`10940`) :user:`Nischal1425`
+* [BUG] fix incorrect ``pd.Series`` ``_predict`` return name in ``_PytorchForecastingAdapter`` (:pr:`11253`) :user:`fkiraly`
 
 Neural network layers and components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -776,15 +777,15 @@ Documentation
 * [DOC] fix a number of broken links in API reference (:pr:`10436`) :user:`fkiraly`
 * [DOC] fix make_forecasting_scorer func docstring (:pr:`9382`) :user:`adan-shahid`
 * [DOC] clarify make_forecasting_scorer signature (:pr:`10435`) :user:`adrynalean`
-* [DOC] fix incorrect data type in PanelGluontsPandas docstring (:pr:`10408`) :user:`harish885`
+* [DOC] fix incorrect data type in ``PanelGluontsPandas`` docstring (:pr:`10408`) :user:`harish885`
 * [DOC] fix minor typo in ``AcorrLjungbox`` docstring (:pr:`10473`) :user:`fkiraly`
 * [DOC] update developer documentation for estimators with cython dependency (:pr:`10471`) :user:`fkiraly`
 * [DOC] update soft dependency management guide for developers to 1.0 patterns (:pr:`10472`) :user:`fkiraly`
 * [DOC] add missing ``TiRexForeaster`` to API reference (:pr:`10505`) :user:`fkiraly`
 * [DOC] fix docstrings of ``__post_init__`` (:pr:`10506`) :user:`fkiraly`
 * [DOC] fix broken contributors hall of fame badge in README (:pr:`10547`) :user:`Nischal1425`
-* [DOC] Document HierarchicalPolarsEager mtype (:pr:`10318`) :user:`AMBRA7592`
-* [DOC] fix typo in fracdiff README (imcorporate → incorporate) (:pr:`9424`) :user:`Si-ra-kri`
+* [DOC] Document ``HierarchicalPolarsEager`` mtype (:pr:`10318`) :user:`AMBRA7592`
+* [DOC] fix typo in ``fracdiff`` README (imcorporate → incorporate) (:pr:`9424`) :user:`Si-ra-kri`
 * [DOC] document the cov parameter in BaseForecaster.predict_var (:pr:`10587`) :user:`SAY-5`
 * [DOC] fix stale ``no-update_params`` description in add_task and evaluate (:pr:`10593`) :user:`Nischal1425`
 * [DOC] fix formatting in augmenter docstrings (:pr:`10643`) :user:`fkiraly`
