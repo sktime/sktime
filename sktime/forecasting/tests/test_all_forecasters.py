@@ -756,7 +756,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         f.update(y_test, update_params=False)
         assert f.cutoff == y_test.index[-1]
 
-        if not f.get_class_tag("capability:update", False):
+        if not f.get_tag("capability:update", False):
             return
 
         # test now with update_params=True
