@@ -13,9 +13,9 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of abandoned package from July 2024,
   see [issue 6700](https://github.com/sktime/sktime/issues/6700).
 
-* `pykalman` - a package implementing the Kálmán Filter and variants.
-  Unofficial fork of abandoned package from June 2024 onwards,
-  see [pykalman issue 109](https://github.com/pykalman/pykalman/issues/109).
+* `tbats` - a package implementing BATS and TBATS.
+  Unofficial fork of abandoned package from September 2026 onwards,
+  see [sktime issue 11097](https://github.com/sktime/sktime/issues/11097).
 
 * `vmdpy` - a package implementing Variational Mode Decomposition.
   Official fork, `vmdpy` is maintained in `sktime` since August 2023.
@@ -23,8 +23,19 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 
 # private vendor forks in `sktime`
 
+* `chronos` - a package implementing Chronos and Chronos-Bolt.
+  Unofficial fork of the `amazon-science/chronos-forecasting` package from https://github.com/amazon-science/chronos-forecasting. Licensed under Apache 2.0.
+
+* `falcon_tst` - unofficial fork of the `ant-intl/Falcon-TST_Large`
+  model code from https://huggingface.co/ant-intl/Falcon-TST_Large.
+  Licensed under Apache 2.0.
+
 * `granite_ttm` - a package implementing TinyTimeMixer.
   Unofficial fork of package which is not available on pypi.
+
+* `kronos` - a package implementing Kronos.
+  Unofficial fork of the `shiyu-coder/Kronos` model code from
+  https://github.com/shiyu-coder/Kronos. Licensed under MIT.
 
 * `mira` - partial fork of MIRA, from [microsoft/MIRA](https://github.com/microsoft/MIRA).
   Unofficial fork of partial code specific to the forecaster. An official package on
@@ -41,7 +52,17 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
   Licensed under Apache 2.0.
 
-* `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
+* `time_llm` - partial fork of the `time_llm` package, from [KimMeen/time-LLM](https://github.com/KimMeen/Time-LLM). Unofficial fork of partial code
+  specific to the forecaster. An official package on pypi is not available.
+
+* `timer` - a package implementing Timer.
+  Unofficial fork of the `thuml/timer-base-84m` model code from
+  https://huggingface.co/thuml/timer-base-84m.
+  Licensed under Apache 2.0.
+
+* `timer_s1` - a package implementing Timer-S1.
+  Unofficial fork of the `bytedance-research/Timer-S1` model code from
+  https://huggingface.co/bytedance-research/Timer-S1. Licensed under Apache 2.0.
 
 * `timemoe` - partial fork of `time-moe` package, from [Time-MoE/Time-MoE](https://github.com/Time-MoE/Time-MoE). Unofficial fork of partial code specific to the forecaster. An official package on pypi is not available.
 
@@ -56,7 +77,7 @@ This folder contains libraries directly distributed with, and maintained by, `sk
   Unofficial fork of partial code specific to the forecaster. An official
   package on pypi is not available.
 
- * `xlstm_time` - fork of the [repository of the same name](https://github.com/muslehal/xLSTMTime), implementing the xLSTM forecaster, by `mushlehal`.
+* `xlstm_time` - fork of the [repository of the same name](https://github.com/muslehal/xLSTMTime), implementing the xLSTM forecaster, by `mushlehal`.
 
 
 # Snippets from other libraries
@@ -64,8 +85,11 @@ This folder contains libraries directly distributed with, and maintained by, `sk
 The `libs` folder contains also some private snippets from other libraries,
 in folders starting with underscore. These should not be accessed by users of `sktime` directly.
 
-* `_aws_fortuna-enbpi` - Parts of the `EnbPI` class from aws-fortuna.
+* `_aws_fortuna_enbpi` - Parts of the `EnbPI` class from aws-fortuna.
   The installation of the original package is not working due to dependency
   mismatches.
 
 * `_keras_self_attention` - fork of some layers from the [abandoned package `keras-self-attention`](https://github.com/CyberZHG/keras-self-attention), archived in March 2024.
+
+* `_torch_self_attention` - PyTorch implementation of a sequential
+  self-attention layer used by the TapNet model.

@@ -6,15 +6,6 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
-
-
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __author__ = ["benheid", "geetu040"]
@@ -183,6 +174,15 @@ class HFTransformersForecaster(BaseForecaster):
         When ``fit_strategy`` is set to "peft",
         this will be used to set up PEFT parameters for the model.
         See the ``peft`` documentation for details [2]_.
+    device : str, optional (default=None)
+        Device on which to load the model, passed to the transformers
+        ``device_map``, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
+        ``"auto"`` selects an available accelerator. If ``None``, the
+        transformers default placement is used. Ignored when ``model_path`` is
+        an already initialized model object, which keeps its own device.
+        Setting ``device`` requires the ``accelerate`` package, which is not
+        part of the base ``transformers`` install. Install it with
+        ``pip install accelerate`` or ``pip install "transformers[torch]"``.
 
     References
     ----------
@@ -308,6 +308,13 @@ class HFTransformersForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_hf_transformers_forecaster"],
         "tests:python_dependencies": ["peft"],
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": [
+            # networks do not support negative fh
+            "test_predict_time_index_in_sample_full",
+            "test_get_test_params_coverage",
+        ],
     }
 
     def __init__(
@@ -321,8 +328,8 @@ class HFTransformersForecaster(BaseForecaster):
         deterministic=False,
         callbacks=None,
         peft_config=None,
+        device=None,
     ):
-        super().__init__()
         self.model_path = model_path
         self.fit_strategy = fit_strategy
         self.validation_split = validation_split
@@ -337,8 +344,29 @@ class HFTransformersForecaster(BaseForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
         self.peft_config = peft_config
+        self.device = device
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Validate optional device placement dependencies."""
+        if self.device is not None:
+            _check_soft_dependencies(
+                "accelerate",
+                severity="error",
+                obj=self,
+                msg=(
+                    f"Error in {self.__class__.__name__}: the 'accelerate' "
+                    "package is required when 'device' is set, because "
+                    "transformers uses it for device_map. Install it with "
+                    "`pip install accelerate` or "
+                    '`pip install "transformers[torch]"`.'
+                ),
+            )
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         from transformers import AutoConfig, PreTrainedModel, Trainer, TrainingArguments
 
         if isinstance(self.model_path, PreTrainedModel):
@@ -370,6 +398,7 @@ class HFTransformersForecaster(BaseForecaster):
             config = config.from_dict(_config)
 
             # Load model and info
+            import torch
             import transformers
 
             prediction_model_class = None
@@ -383,6 +412,10 @@ class HFTransformersForecaster(BaseForecaster):
             else:
                 raise ValueError("The model type cannot be inferred from the config.")
 
+            load_kwargs = {}
+            if self.device is not None:
+                load_kwargs["device_map"] = self.device
+
             self.model, self.info = getattr(
                 transformers, prediction_model_class
             ).from_pretrained(
@@ -390,6 +423,7 @@ class HFTransformersForecaster(BaseForecaster):
                 config=config,
                 output_loading_info=True,
                 ignore_mismatched_sizes=True,
+                **load_kwargs,
             )
 
             # Freeze loaded parameters and reinitialize mismatched layers
@@ -403,6 +437,8 @@ class HFTransformersForecaster(BaseForecaster):
                     _model.weight.masked_fill(_model.weight.isnan(), 0.001),
                     requires_grad=True,
                 )
+
+        PyTorchDataset = _get_dataset_class()
 
         # Dataset preparation
         if self.validation_split is not None:
@@ -477,6 +513,7 @@ class HFTransformersForecaster(BaseForecaster):
             callbacks=self._callbacks,
         )
         trainer.train()
+        self.model = trainer.model
 
     def _predict(self, fh, X=None):
         import transformers
@@ -491,10 +528,10 @@ class HFTransformersForecaster(BaseForecaster):
         self.model.eval()
         from torch import from_numpy
 
-        hist = self._y.values.reshape((1, -1))
+        hist = self._cur_y.values.reshape((1, -1))
         if X is not None:
-            hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-            x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+            hist_x = self._cur_X.values.reshape((1, -1, self._cur_X.shape[-1]))
+            x_ = X.values.reshape((1, -1, self._cur_X.shape[-1]))
             if x_.shape[1] < self.model.config.prediction_length:
                 # TODO raise exception here?
                 x_ = np.resize(
@@ -538,8 +575,8 @@ class HFTransformersForecaster(BaseForecaster):
             index=ForecastingHorizon(range(1, len(pred) + 1))
             .to_absolute(self._cutoff)
             ._values,
-            # columns=self._y.columns
-            name=self._y.name,
+            # columns=self._cur_y.columns
+            name=self._cur_y.name,
         )
         return pred.loc[fh.to_absolute(self.cutoff)._values]
 
@@ -606,38 +643,44 @@ class HFTransformersForecaster(BaseForecaster):
         return test_params
 
 
-class PyTorchDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
+def _get_dataset_class():
+    """Soft dependency import for the MomentPytorchDataset class."""
+    from torch.utils.data import Dataset
 
-    def __init__(self, y, seq_len, fh=None, X=None):
-        self.y = y.values
-        self.X = X.values if X is not None else X
-        self.seq_len = seq_len
-        self.fh = fh
+    class PyTorchDataset(Dataset):
+        """Dataset for use in sktime deep learning forecasters."""
 
-    def __len__(self):
-        """Return length of dataset."""
-        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+        def __init__(self, y, seq_len, fh=None, X=None):
+            self.y = y.values
+            self.X = X.values if X is not None else X
+            self.seq_len = seq_len
+            self.fh = fh
 
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import from_numpy, tensor
+        def __len__(self):
+            """Return length of dataset."""
+            return max(len(self.y) - self.seq_len - self.fh + 1, 0)
 
-        hist_y = tensor(self.y[i : i + self.seq_len]).float()
-        if self.X is not None:
-            exog_data = tensor(
-                self.X[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float()
-            hist_exog = tensor(self.X[i : i + self.seq_len]).float()
-        else:
-            exog_data = tensor([[]] * self.fh)
-            hist_exog = tensor([[]] * self.seq_len)
-        return {
-            "past_values": hist_y,
-            "past_time_features": hist_exog,
-            "future_time_features": exog_data,
-            "past_observed_mask": (~hist_y.isnan()).to(int),
-            "future_values": from_numpy(
-                self.y[i + self.seq_len : i + self.seq_len + self.fh]
-            ).float(),
-        }
+        def __getitem__(self, i):
+            """Return data point."""
+            from torch import from_numpy, tensor
+
+            hist_y = tensor(self.y[i : i + self.seq_len]).float()
+            if self.X is not None:
+                exog_data = tensor(
+                    self.X[i + self.seq_len : i + self.seq_len + self.fh]
+                ).float()
+                hist_exog = tensor(self.X[i : i + self.seq_len]).float()
+            else:
+                exog_data = tensor([[]] * self.fh)
+                hist_exog = tensor([[]] * self.seq_len)
+            return {
+                "past_values": hist_y,
+                "past_time_features": hist_exog,
+                "future_time_features": exog_data,
+                "past_observed_mask": (~hist_y.isnan()).to(int),
+                "future_values": from_numpy(
+                    self.y[i + self.seq_len : i + self.seq_len + self.fh]
+                ).float(),
+            }
+
+    return PyTorchDataset
