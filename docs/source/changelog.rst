@@ -154,7 +154,6 @@ Forecasting
 * [ENH] CRAN ``fable::ARIMA`` forecaster (via ``rpy2``) (:pr:`8641`) :user:`ericjb`
 * [ENH] Move ``DynamicFactor`` test skip to estimator tag (:pr:`10861`) :user:`LunarScoop`
 * [ENH] Adapt forecasting ``evaluate`` to the new ``pretrain`` API (global benchmarking) (:pr:`10560`) :user:`jgyasu`
-* [BUG] Fix mutable default arguments in ``ConvTimeNet`` backbone (:pr:`10835`) :user:`Boubker10`
 * [ENH] Add test parameter sets to estimators (:pr:`9527`) :user:`maarcosrmz`
 * [ENH] ``ForecastingHorizon`` pandas 3 compatibility (:pr:`10868`) :user:`yash-sangwan`
 * [ENH] golden output tests for ``LagLlamaForecaster`` (:pr:`10682`) :user:`geetu040`
@@ -209,10 +208,9 @@ Time series anomalies, changepoints, segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [ENH] Add second test param sets for ``ElasticEnsemble``, ``DistFromAligner`` (:pr:`10815`) :user:`NAME-ASHWANIYADAV`
-* [ENH] make ``SubLOF`` ``pandas 3`` compatible (:pr:`11136`) :user:`fkiraly`
-* [ENH] bound ``SubLOF`` ``pandas<3`` due to incompatibility (:pr:`11139`) :user:`fkiraly`
-* [ENH] add ``pandas<3`` restriction to ``SubLOF`` and replace it in tests with dummy detectors (:pr:`11152`) :user:`fkiraly`
-* [ENH] make ``SubLOF`` ``pandas 3`` compatible (:pr:`11141`) :user:`TayfurYldz`
+* [ENH] replace ``SubLOF`` in tests with dummy detectors (:pr:`11152`) :user:`fkiraly`
+* [ENH] make ``SubLOF`` ``pandas 3`` compatible (:pr:`11136`, :pr:`11141`) :user:`fkiraly`, :user:`TayfurYldz`
+* [ENH] ``EventTPR``, ``MeanDetectionOffset`` and ``FalseAlarmRate`` for live detection (:pr:`11197`) :user:`yash-sangwan`
 
 Time series classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -248,7 +246,7 @@ Time series classification
 * [ENH] remove cross-module imports in ``classification``, ``regression``, ``transformation``, and ``clustering`` modules (:pr:`11213`) :user:`fkiraly`
 * [ENH] remove ``tests:skip_all`` from ``SARIMAX`` and ``FreshPRINCE`` (:pr:`11233`) :user:`8rulerstar`
 * [ENH] ResNet network migration from tf to torch (:pr:`10762`) :user:`srupat`
-* [BUG] Add ``_get_keras_custom_objects`` method to base classifier classes for loading deep learning models involving custom layers (:pr:`10637`) :user:`srupat`
+* [ENH] Add ``_get_keras_custom_objects`` method to base classifier classes for loading deep learning models involving custom layers (:pr:`10637`) :user:`srupat`
 
 Time series clustering
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -431,6 +429,7 @@ Neural network layers and components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 * [BUG] fix B006 mutable default args in convtimenet backbones (:pr:`10730`) :user:`WAHIB-EL-KHADIRI`
+* [BUG] Fix mutable default arguments in ``ConvTimeNet`` backbone (:pr:`10835`) :user:`Boubker10`
 
 Time series anomalies, changepoints, segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
