@@ -425,6 +425,7 @@ Forecasting
 * [BUG] Mutable default argument in ``WindowWarp`` for LagLLama (:pr:`10097`) :user:`direkkakkar319-ops`
 * [BUG] Disable ``capability:non_contiguous_X`` for ``SARIMAX`` (:pr:`10741`) :user:`Faakhir30`
 * [BUG] Fix mutable defaults in LagLlama estimator (:pr:`10879`) :user:`tarundb2005-create`
+* [BUG] Preserve pretrained ``PatchTSMixer`` configuration (:pr:`10921`) :user:`dhruvb2028`
 
 Neural network layers and components
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
