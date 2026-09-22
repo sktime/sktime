@@ -505,6 +505,7 @@ Contributors
 :user:`DebD-max`,
 :user:`DebojitNath`,
 :user:`dhairya-motta`,
+:user:`dhruvb2028`,
 :user:`direkkakkar319-ops`,
 :user:`dongwonmoon`,
 :user:`ericjb`,
