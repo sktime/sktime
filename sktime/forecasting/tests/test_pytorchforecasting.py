@@ -103,7 +103,7 @@ def test_load_model_from_disk(model_class) -> None:
     )
 
     # predict with model loaded from disk
-    y_pred = model.predict(fh=fh, X=X_test, y=y_test)
+    y_pred = model.predict(fh=fh, X=X_test)
 
     # check prediction index and column names
     cutoff = get_cutoff(y_test, return_index=True)
