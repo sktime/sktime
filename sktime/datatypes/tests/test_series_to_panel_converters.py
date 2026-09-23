@@ -73,3 +73,73 @@ def test_convert_df_panel_to_series():
     assert isinstance(X_series, pd.DataFrame)
     assert len(X_series) == len(X_panel)
     assert (X_series.values == X_panel.values).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+def test_convert_polars_series_to_panel():
+    """Test output format of series-to-panel for polars DataFrame input."""
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    if not _check_soft_dependencies("polars", severity="none"):
+        pytest.skip("polars not available")
+
+    import polars as pl
+
+    from sktime.datatypes._series_as_panel import convert_Series_to_Panel
+
+    df_series = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    panel = convert_Series_to_Panel(df_series)
+
+    assert isinstance(panel, pl.DataFrame)
+    panel_with_mtype, mtype = convert_Series_to_Panel(df_series, return_to_mtype=True)
+    assert mtype == "polars_panel"
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+def test_convert_polars_panel_to_series():
+    """Test output format of panel-to-series for polars DataFrame input."""
+    from sktime.utils.dependencies import _check_soft_dependencies
+
+    if not _check_soft_dependencies("polars", severity="none"):
+        pytest.skip("polars not available")
+
+    import polars as pl
+
+    from sktime.datatypes._series_as_panel import (
+        convert_Panel_to_Series,
+        convert_Series_to_Panel,
+    )
+
+    df_series = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    panel = convert_Series_to_Panel(df_series)
+
+    recovered_series = convert_Panel_to_Series(panel)
+    assert isinstance(recovered_series, pl.DataFrame)
+    assert recovered_series.shape == df_series.shape
+
+    recovered, mtype = convert_Panel_to_Series(panel, return_to_mtype=True)
+    assert mtype == "polars_series"
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+def test_convert_series_panel_unsupported_type_raises():
+    """Test TypeError is raised on unsupported mtypes."""
+    from sktime.datatypes._series_as_panel import (
+        convert_Panel_to_Series,
+        convert_Series_to_Panel,
+    )
+
+    with pytest.raises(TypeError):
+        convert_Series_to_Panel("invalid_series")
+
+    with pytest.raises(TypeError):
+        convert_Panel_to_Series("invalid_panel")
