@@ -69,6 +69,9 @@ def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
             return [obj]
 
     if isinstance(obj, np.ndarray):
+        # from numpy2D to numpy3D
+        # numpy2D = (time, variables)
+        # numpy3D = (instances, variables, time)
         if len(obj.shape) == 2:
             obj = np.expand_dims(obj, 0)
             obj = np.swapaxes(obj, 1, 2)
@@ -84,11 +87,22 @@ def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
             return obj
 
     if _HAS_POLARS and isinstance(obj, (pl.DataFrame, pl.LazyFrame)):
-        res = obj.with_columns(pl.lit(0).alias("__index__instances"))
-        cols = ["__index__instances"] + [
-            c for c in obj.columns if c != "__index__instances"
+        mi_cols = get_mi_cols(obj)
+        exprs = [pl.lit(0).alias("__index__instances")]
+        time_col = None
+        if len(mi_cols) == 0:
+            time_col = "__index__time"
+            if hasattr(pl, "int_range"):
+                exprs.append(pl.int_range(0, pl.len()).alias(time_col))
+            else:
+                exprs.append(pl.arange(0, pl.len()).alias(time_col))
+        else:
+            time_col = mi_cols[0]
+        res = obj.with_columns(exprs)
+        other_cols = [
+            c for c in res.columns if c not in ["__index__instances", time_col]
         ]
-        res = res.select(cols)
+        res = res.select(["__index__instances", time_col] + other_cols)
         obj_mtype = "polars_panel"
         if return_to_mtype:
             return res, obj_mtype
@@ -144,6 +158,9 @@ def convert_Panel_to_Series(obj, store=None, return_to_mtype=False):
             return obj
 
     if isinstance(obj, np.ndarray):
+        # from numpy3D to numpy2D
+        # numpy3D = (instances, variables, time)
+        # numpy2D = (time, variables)
         if obj.ndim != 3 or obj.shape[0] != 1:
             raise ValueError("if obj is np.ndarray, must be of dim 3, with shape[0]=1")
         obj = np.reshape(obj, (obj.shape[1], obj.shape[2]))
@@ -172,7 +189,7 @@ def convert_Panel_to_Series(obj, store=None, return_to_mtype=False):
             )
 
         res = obj.drop(instance_col)
-        obj_mtype = "polars_series"
+        obj_mtype = "pl.DataFrame" if isinstance(obj, pl.DataFrame) else "pl.LazyFrame"
         if return_to_mtype:
             return res, obj_mtype
         else:
@@ -185,19 +202,43 @@ def convert_Panel_to_Series(obj, store=None, return_to_mtype=False):
 
 
 def convert_Series_to_Hierarchical(obj, store=None, return_to_mtype=False):
-    """Convert series to a single-series hierarchical object."""
+    """Convert series to a single-series hierarchical object.
+
+    Adds two hierarchy levels to the series.
+
+    Parameters
+    ----------
+    obj: an object of scitype Series
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
+
+    Returns
+    -------
+    if obj was pd.Series or pd.DataFrame, returns pd_multiindex_hier
+    if obj was polars.DataFrame or LazyFrame, returns polars_hierarchical
+    """
     if _HAS_POLARS and isinstance(obj, (pl.DataFrame, pl.LazyFrame)):
-        target_mtype = "polars_hierarchical"
-        res = obj.with_columns(
-            [
-                pl.lit(0).alias("__index__hier0"),
-                pl.lit(0).alias("__index__hier1"),
-            ]
-        )
-        cols = ["__index__hier0", "__index__hier1"] + [
-            c for c in obj.columns if c not in ("__index__hier0", "__index__hier1")
+        mi_cols = get_mi_cols(obj)
+        exprs = [
+            pl.lit(0).alias("__index__hier0"),
+            pl.lit(0).alias("__index__hier1"),
         ]
-        res = res.select(cols)
+        time_col = None
+        if len(mi_cols) == 0:
+            time_col = "__index__time"
+            if hasattr(pl, "int_range"):
+                exprs.append(pl.int_range(0, pl.len()).alias(time_col))
+            else:
+                exprs.append(pl.arange(0, pl.len()).alias(time_col))
+        else:
+            time_col = mi_cols[0]
+        res = obj.with_columns(exprs)
+        hier_cols = ["__index__hier0", "__index__hier1", time_col]
+        other_cols = [c for c in res.columns if c not in hier_cols]
+        res = res.select(hier_cols + other_cols)
+        target_mtype = "polars_hierarchical"
         if return_to_mtype:
             return res, target_mtype
         else:
@@ -219,17 +260,33 @@ def convert_Series_to_Hierarchical(obj, store=None, return_to_mtype=False):
 
 
 def convert_Hierarchical_to_Series(obj, store=None, return_to_mtype=False):
-    """Convert single-series hierarchical object to a series."""
+    """Convert single-series hierarchical object to a series.
+
+    Parameters
+    ----------
+    obj: an object of scitype Hierarchical
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
+
+    Returns
+    -------
+    pd.DataFrame or polars DataFrame/LazyFrame
+    """
     if _HAS_POLARS and isinstance(obj, (pl.DataFrame, pl.LazyFrame)):
         mi_cols = get_mi_cols(obj)
         # remove top hierarchy levels, keep only the time index if present
         if len(mi_cols) >= 2:
-            drop_cols = mi_cols[:-1] if len(mi_cols) > 1 else mi_cols
+            drop_cols = mi_cols[:-1]
             res = obj.drop(drop_cols)
         else:
             res = obj
+        target_mtype = (
+            "pl.DataFrame" if isinstance(obj, pl.DataFrame) else "pl.LazyFrame"
+        )
         if return_to_mtype:
-            return res, "polars_series"
+            return res, target_mtype
         else:
             return res
 
@@ -244,7 +301,20 @@ def convert_Hierarchical_to_Series(obj, store=None, return_to_mtype=False):
 
 
 def convert_Panel_to_Hierarchical(obj, store=None, return_to_mtype=False):
-    """Convert panel to a single-panel hierarchical object."""
+    """Convert panel to a single-panel hierarchical object.
+
+    Parameters
+    ----------
+    obj: an object of scitype Panel
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
+
+    Returns
+    -------
+    pd_multiindex_hier or polars_hierarchical
+    """
     if _HAS_POLARS and isinstance(obj, (pl.DataFrame, pl.LazyFrame)):
         res = obj.with_columns(pl.lit(0).alias("__index__hier0"))
         cols = ["__index__hier0"] + [c for c in obj.columns if c != "__index__hier0"]
@@ -267,7 +337,20 @@ def convert_Panel_to_Hierarchical(obj, store=None, return_to_mtype=False):
 
 
 def convert_Hierarchical_to_Panel(obj, store=None, return_to_mtype=False):
-    """Convert single-series hierarchical object to a panel."""
+    """Convert single-series hierarchical object to a panel.
+
+    Parameters
+    ----------
+    obj: an object of scitype Hierarchical
+    store: dict, optional
+        converter store for back-conversion
+    return_to_mtype: bool, optional (default=False)
+        if True, also returns the str of the mtype converted to
+
+    Returns
+    -------
+    pd-multiindex or polars_panel
+    """
     if _HAS_POLARS and isinstance(obj, (pl.DataFrame, pl.LazyFrame)):
         mi_cols = get_mi_cols(obj)
         if len(mi_cols) > 0:
