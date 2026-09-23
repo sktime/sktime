@@ -385,12 +385,12 @@ class PatchTSTForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
         # Tests and CI tags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_patch_tst"],
     }
 
     def __init__(
