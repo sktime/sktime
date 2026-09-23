@@ -254,6 +254,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         """
+        self._cur_y = y
+        self._cur_X = X
         fh = fh.to_relative(self.cutoff)
 
         # Validate fh against pretrained network's output dimension
@@ -797,6 +799,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         """
+        self._cur_y = y
+        self._cur_X = X
         fh = fh.to_relative(self.cutoff)
 
         # Validate fh against pretrained network's output dimension
@@ -1168,7 +1172,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.transformers import LTSFTransformerNetwork
 
-        num_features = self._y.shape[-1]
+        num_features = self._cur_y.shape[-1]
         self.enc_in = num_features
         self.dec_in = num_features
         self.c_out = num_features
@@ -1178,7 +1182,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         self._pred_len = fh
 
         if self.temporal_encoding:
-            if isinstance(self._y.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+            if isinstance(self._cur_y.index, (pd.DatetimeIndex, pd.PeriodIndex)):
                 self._temporal_encoding = self.temporal_encoding
             else:
                 self._temporal_encoding = False

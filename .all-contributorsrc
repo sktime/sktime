@@ -3779,6 +3779,15 @@
       ]
     },
     {
+      "login": "YadavAkash96",
+      "name": "Akash Yadav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32175280?v=4",
+      "profile": "https://github.com/YadavAkash96",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
       "login": "Ashish-Kumar-Dash",
       "name": "Ashish Kumar Dash",
       "avatar_url": "https://avatars.githubusercontent.com/Ashish-Kumar-Dash",
@@ -4125,6 +4134,15 @@
       ]
     },
     {
+      "login": "jvsch",
+      "name": "Jasper Victor Schneider",
+      "avatar_url": "https://avatars.githubusercontent.com/u/95355765?v=4",
+      "profile": "https://github.com/jvsch",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
       "login": "oberoir080",
       "name": "Rahul Oberoi",
       "avatar_url": "https://avatars.githubusercontent.com/u/118175583?v=4",
@@ -4150,6 +4168,15 @@
       "profile": "https://github.com/Sharon-study",
       "contributions": [
         "test"
+      ]
+    },
+    {
+      "login": "HuzaifaAbdulRehman",
+      "name": "Huzaifa Abdul Rehman",
+      "avatar_url": "https://avatars.githubusercontent.com/u/143286445?v=4",
+      "profile": "https://github.com/HuzaifaAbdulRehman",
+      "contributions": [
+        "doc"
       ]
     },
     {
@@ -4189,12 +4216,43 @@
       ]
     },
     {
+      "login": "hasanfaesal",
+      "name": "Hasan Faisal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/120083366?v=4",
+      "profile": "https://github.com/hasanfaesal",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
       "login": "Belagum",
       "name": "Belagum",
       "avatar_url": "https://avatars.githubusercontent.com/u/140494656?v=4",
       "profile": "https://github.com/Belagum",
       "contributions": [
         "code"
+      ]
+    },
+    {
+      "login": "mccool1010",
+      "name": "Hari Krishna",
+      "avatar_url": "https://avatars.githubusercontent.com/u/134476480?v=4",
+      "profile": "https://github.com/mccool1010",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "dhruvb2028",
+      "name": "Dhruv Bansal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/177777094?v=4",
+      "profile": "https://github.com/dhruvb2028",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
       ]
     }
   ]

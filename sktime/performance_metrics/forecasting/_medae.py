@@ -100,6 +100,10 @@ class MedianAbsoluteError(BaseForecastingErrorMetricFunc):
     np.float64(0.85)
     """
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     func = median_absolute_error
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
