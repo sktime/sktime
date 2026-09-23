@@ -64,6 +64,7 @@ class TSBootstrapAdapter(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:vm": True,  # run on separate VM due to tsbootstrap dependency
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

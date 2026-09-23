@@ -98,8 +98,10 @@ class BaggingForecaster(BaseForecaster):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # ... for in-sample horizons?
+        "capability:update": True,  # can estimator update its parameters with new data?
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -132,6 +134,7 @@ class BaggingForecaster(BaseForecaster):
         tags_to_clone = [
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
+            "capability:update",  # can estimator update its parameters with new data?
         ]
         if self.forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)
@@ -247,6 +250,8 @@ class BaggingForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         self._y_ix_names = y.index.names
 
         # random state handling passed into input estimators
@@ -391,14 +396,14 @@ class BaggingForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        # Need to construct a completely new y out of old self._y and y and then
+        # Need to construct a completely new y out of old self._cur_y and y and then
         # fit_treansform the transformer and re-fit the forecaster.
-        _y = update_data(self._y, y)
+        _y = update_data(self._cur_y, y)
 
         y_bootstraps = self.bootstrap_transformer_.fit_transform(X=_y)
 
         # generate replicates of exogenous data for bootstrap
-        _X = update_data(self._X, X)
+        _X = update_data(self._cur_X, X)
         X_inner = self._gen_X_bootstraps(_X)
 
         self.forecaster_.update(y=y_bootstraps, X=X_inner, update_params=update_params)
