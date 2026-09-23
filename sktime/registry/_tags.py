@@ -4137,16 +4137,6 @@ ESTIMATOR_TAG_REGISTER = [
         "int",
         "max iters for bisection method in ppf",
     ),
-    # ---------------------------
-    # to be deprecated or removed
-    # ---------------------------
-    # the following tags are to be deprecated or removed
-    (
-        "capability:global_forecasting",
-        ["forecaster"],
-        "bool",
-        "can the estimator make global forecasting?",
-    ),
 ]
 
 # construct the tag register from all classes in this module
