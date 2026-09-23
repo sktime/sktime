@@ -137,7 +137,6 @@ class _PytorchForecastingAdapter(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.Series",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
         super().__init__()
