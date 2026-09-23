@@ -127,6 +127,7 @@ Naive Baselines
     DummyPatternAnomalies
     DummyRateAnomalies
     DummyRegularAnomalies
+    DummyTimeFreqAnomalies
     ZeroAnomalies
 
 .. currentmodule:: sktime.detection.naive
