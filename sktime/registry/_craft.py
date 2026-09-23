@@ -20,10 +20,72 @@ will have the same effect as new_est = spec.clone()
 __author__ = ["fkiraly"]
 
 import ast
+import datetime
 import re
+
+import numpy as np
+import pandas as pd
 
 from sktime.registry._lookup import all_estimators
 from sktime.registry._lookup_sklearn import _all_sklearn_estimators
+
+DEFAULT_NAMESPACE = {
+    "array": np.array,
+    "dtype": np.dtype,
+    "inf": np.inf,
+    "nan": np.nan,
+    "CategoricalIndex": pd.CategoricalIndex,
+    "DatetimeIndex": pd.DatetimeIndex,
+    "Index": pd.Index,
+    "Interval": pd.Interval,
+    "NaT": pd.NaT,
+    "Period": pd.Period,
+    "PeriodIndex": pd.PeriodIndex,
+    "RangeIndex": pd.RangeIndex,
+    "Timedelta": pd.Timedelta,
+    "TimedeltaIndex": pd.TimedeltaIndex,
+    "Timestamp": pd.Timestamp,
+}
+
+DEFAULT_ATTRIBUTE_NAMESPACE = {
+    "np": (
+        np,
+        frozenset(
+            {
+                "False_",
+                "True_",
+                "bytes_",
+                "clongdouble",
+                "complex64",
+                "complex128",
+                "datetime64",
+                "float16",
+                "float32",
+                "float64",
+                "int8",
+                "int16",
+                "int32",
+                "int64",
+                "longdouble",
+                "str_",
+                "timedelta64",
+                "uint8",
+                "uint16",
+                "uint32",
+                "uint64",
+                "void",
+            }
+        ),
+    ),
+    "datetime": (
+        datetime,
+        frozenset({"date", "datetime", "time", "timedelta"}),
+    ),
+}
+
+NAMESPACE_NAMES = set(DEFAULT_NAMESPACE).union(
+    *(leaves for _, leaves in DEFAULT_ATTRIBUTE_NAMESPACE.values())
+)
 
 
 def _extract_class_names(spec):
@@ -78,7 +140,11 @@ def craft(spec, safe=False):
     unfitted estimator.
 
     ``craft`` recognizes estimators present in ``sktime`` and ``scikit-learn``,
-    and base python (built-in types and functions).
+    base python (built-in types and functions), and the ``numpy`` and ``pandas``
+    containers and scalar types that occur in ``str`` coercions of estimators,
+    for instance ``array``, ``Timestamp``, ``Period``, and ``np.float64``.
+    This ensures that ``craft`` is inverse to ``str`` coercion for estimators
+    with ``numpy`` or ``pandas`` valued parameters.
 
     If ``safe=True`` mode is enabled, only simple propositional expressions are allowed.
 
@@ -87,7 +153,8 @@ def craft(spec, safe=False):
     .. code-block:: text
 
         expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
-                        | UNARYOP expression
+                        | UNARYOP expression | ATTRIBUTE
+                        | ATTRIBUTE "(" arguments ")"
 
         arguments  ::= positional_argument | keyword_argument | arguments "," arguments
 
@@ -99,6 +166,10 @@ def craft(spec, safe=False):
     .. code-block:: text
 
         NAME       ::= valid Python identifier, object name in ``sktime`` or ``sklearn``
+                       or a name in the default namespace
+        ATTRIBUTE  ::= NAMESPACE "." LEAF, where NAMESPACE is a key of
+                       the default attribute namespace and LEAF is an allowed
+                       leaf name for that namespace, e.g., ``np.float64``
         CONSTANT   ::= literal value (e.g., number, string, boolean)
         BINOP      ::= valid Python binary operator (e.g., +, -, *, /)
         UNARYOP    ::= valid Python unary operator (e.g., +, -, ~)
@@ -106,8 +177,9 @@ def craft(spec, safe=False):
     This permits simple constructor calls such as ``A(a=42)``,
     or nested constructor calls such as ``A(a=42, b=B("test"))``, and only such calls.
 
-    In particular, does not permit attribute access, lambdas, comprehensions,
-    imports, assignments, function calls through arbitrary expressions, etc,
+    In particular, does not permit attribute access outside the allow-listed
+    leaf names above, lambdas, comprehensions, imports, assignments,
+    function calls through arbitrary expressions, etc,
     which are "unsafe" in the sense of allowing arbitrary code injection.
 
     Parameters
@@ -172,7 +244,11 @@ def craft(spec, safe=False):
     # retrieve all estimators from sktime and sklearn for namespace resolution
     register_sktime = dict(all_estimators())  # noqa: F841
     register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
-    register = {**register_sklearn, **register_sktime}
+    register = {**DEFAULT_NAMESPACE, **register_sklearn, **register_sktime}
+    namespace = {
+        **register,
+        **{alias: mod for alias, (mod, _) in DEFAULT_ATTRIBUTE_NAMESPACE.items()},
+    }
 
     # Parse the specification once.
     # Both safe and unsafe modes operate on the resulting AST.
@@ -204,7 +280,7 @@ def craft(spec, safe=False):
             obj = eval(
                 compile(expr_tree, "<craft>", "eval"),
                 {"__builtins__": {}} if safe else globals(),
-                register,
+                namespace,
             )
         except Exception as e:
             if safe:
@@ -235,8 +311,8 @@ def build_obj():
             + spec_fun
         )
 
-        exec(spec_fun, register, register)
-        obj = eval("build_obj()", register, register)
+        exec(spec_fun, namespace, namespace)
+        obj = eval("build_obj()", namespace, namespace)
 
     return obj
 
@@ -249,7 +325,8 @@ def _validate_ast(tree, register):
     .. code-block:: text
 
         expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
-                        | UNARYOP expression
+                        | UNARYOP expression | ATTRIBUTE
+                        | ATTRIBUTE "(" arguments ")"
 
         arguments  ::= positional_argument | keyword_argument | arguments "," arguments
 
@@ -261,6 +338,10 @@ def _validate_ast(tree, register):
     .. code-block:: text
 
         NAME       ::= valid Python identifier, object name in ``sktime`` or ``sklearn``
+                       or a name in the default namespace
+        ATTRIBUTE  ::= NAMESPACE "." LEAF, where NAMESPACE is a key of
+                       the default attribute namespace and LEAF is an allowed
+                       leaf name for that namespace, e.g., ``np.float64``
         CONSTANT   ::= literal value (e.g., number, string, boolean)
         BINOP      ::= valid Python binary operator (e.g., +, -, *, /)
         UNARYOP    ::= valid Python unary operator (e.g., +, -, ~)
@@ -270,8 +351,9 @@ def _validate_ast(tree, register):
         A(a=42, b=B("test"))
 
     and only such calls.
-    In particular, does not permit attribute access, lambdas, comprehensions,
-    imports, assignments, function calls through arbitrary expressions, etc.
+    In particular, does not permit attribute access outside the allow-listed
+    leaf names above, lambdas, comprehensions, imports, assignments,
+    function calls through arbitrary expressions, etc.
 
     Parameters
     ----------
@@ -303,6 +385,14 @@ def _validate_ast(tree, register):
     # In particular, this allows strings, numbers, booleans, None, etc.
     if isinstance(tree, ast.Constant):
         return True
+
+    if isinstance(tree, ast.Attribute):
+        if not isinstance(tree.value, ast.Name):
+            return False
+        if tree.value.id not in DEFAULT_ATTRIBUTE_NAMESPACE:
+            return False
+        _, leaf_names = DEFAULT_ATTRIBUTE_NAMESPACE[tree.value.id]
+        return tree.attr in leaf_names
 
     # Literal containers are also safe provided all nested elements are safe.
     if isinstance(tree, (ast.List, ast.Tuple, ast.Set)):
@@ -350,13 +440,14 @@ def _validate_ast(tree, register):
         return _validate_ast(tree.operand, reg)
 
     if isinstance(tree, ast.Call):
-        # Only direct calls such as A(...) are allowed.
+        # Only direct calls such as A(...), or calls on allow-listed attributes
+        # of the default attribute namespace such as np.float64(...), are allowed.
         #
         # This deliberately rejects:
         #   obj.A(...)
         #   getattr(...)(...)
         #   (lambda: ...)(...)
-        if not isinstance(tree.func, ast.Name):
+        if not isinstance(tree.func, (ast.Name, ast.Attribute)):
             return False
 
         if not _validate_ast(tree.func, reg):
@@ -413,10 +504,13 @@ def deps(spec, include_test_deps=False):
     """
     register = dict(all_estimators())
 
+    reqs = []
     dep_strs = []
 
     for x in _extract_class_names(spec):
         if x not in register.keys():
+            if x in NAMESPACE_NAMES:
+                continue
             raise RuntimeError(
                 f"class {x} is required to build spec, but was not found "
                 "in all_estimators scope"
@@ -488,6 +582,8 @@ def imports(spec):
 
     for x in _extract_class_names(spec):
         if x not in register.keys():
+            if x in NAMESPACE_NAMES:
+                continue
             raise RuntimeError(
                 f"class {x} is required to build spec, but was not found "
                 "in all_estimators scope"
@@ -552,10 +648,13 @@ def _r_deps(spec, include_test_deps=False):
     """
     register = dict(all_estimators())
 
+    reqs = []
     dep_strs = []
 
     for x in _extract_class_names(spec):
         if x not in register.keys():
+            if x in NAMESPACE_NAMES:
+                continue
             raise RuntimeError(
                 f"class {x} is required to build spec, but was not found "
                 "in all_estimators scope"
