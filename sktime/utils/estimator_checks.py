@@ -3,6 +3,8 @@
 __author__ = ["fkiraly"]
 __all__ = ["check_estimator"]
 
+import warnings
+
 
 def check_estimator(
     estimator,
@@ -158,6 +160,21 @@ def check_estimator(
     from sktime.tests.test_class_register import get_test_classes_for_obj
 
     test_clss_for_est = get_test_classes_for_obj(estimator)
+
+    if tests_to_run is not None:
+        requested_tests = (
+            [tests_to_run] if isinstance(tests_to_run, str) else tests_to_run
+        )
+        available_tests = set(_get_test_names_for_obj(estimator))
+        unknown_tests = set(requested_tests) - available_tests
+
+        if unknown_tests:
+            warnings.warn(
+                f"The following tests in tests_to_run were not found: "
+                f"{sorted(unknown_tests)}",
+                UserWarning,
+                stacklevel=2,
+            )
 
     results = {}
 
