@@ -874,6 +874,12 @@ def test_extract_freq_from_cutoff(freq: str) -> None:
     )
 
 
+def test_extract_freq_from_period_index() -> None:
+    """Test extract frequency from PeriodIndex."""
+    cutoff = pd.period_range("2020-01", periods=3, freq="M")
+    assert _extract_freq_from_cutoff(cutoff) == _to_offset_compat("M")
+
+
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
     reason="run only if base module has changed or datatypes module has changed",
