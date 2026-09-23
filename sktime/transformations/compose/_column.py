@@ -297,7 +297,8 @@ class ColumnEnsembleTransformer(
 
         self.transformers_ = []
         self._Xcolumns = list(X.columns)
-
+        self._cur_X = X
+        self._cur_y = y
         for name, transformer, index in transformers:
             transformer_ = transformer.clone()
 

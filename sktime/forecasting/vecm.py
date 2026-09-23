@@ -156,6 +156,8 @@ class VECM(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         # if univariate, add a shifted copy of the data
         if y.shape[1] == 1:
             y = y.copy()
@@ -216,7 +218,7 @@ class VECM(_StatsModelsAdapter):
         if fh_int.min() <= 0:
             # .resid returns np.ndarray
             # both values need to be pd DataFrame for subtraction
-            y_pred_insample = self._y - pd.DataFrame(self._fitted_forecaster.resid)
+            y_pred_insample = self._cur_y - pd.DataFrame(self._fitted_forecaster.resid)
             y_pred_insample = y_pred_insample.values
 
         if y_pred_insample is not None and y_pred_outsample is not None:

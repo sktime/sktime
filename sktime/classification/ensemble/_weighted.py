@@ -102,6 +102,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         ],
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

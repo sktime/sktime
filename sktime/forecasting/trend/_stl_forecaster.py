@@ -139,15 +139,20 @@ class STLForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
+        "capability:update": True,  # can estimator handle incremental updates?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -215,6 +220,8 @@ class STLForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         from statsmodels.tsa.seasonal import STL as _STL
 
         from sktime.forecasting.naive import NaiveForecaster
@@ -279,7 +286,7 @@ class STLForecaster(BaseForecaster):
         y_pred_trend = self.forecaster_trend_.predict(fh=fh, X=X)
         y_pred_resid = self.forecaster_resid_.predict(fh=fh, X=X)
         y_pred = y_pred_seasonal + y_pred_trend + y_pred_resid
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -342,7 +349,7 @@ class STLForecaster(BaseForecaster):
 
         fig, ax = plt.subplots(4, 1, sharex=True)
 
-        plot_series(self._y, ax=ax[0], markers=[""])
+        plot_series(self._cur_y, ax=ax[0], markers=[""])
         plot_series(self.trend_, ax=ax[1], markers=[""])
         plot_series(self.seasonal_, ax=ax[2], markers=[""])
         plot_series(self.resid_, ax=ax[3])

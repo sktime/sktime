@@ -282,6 +282,8 @@ class VARReduce(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         from sklearn.multioutput import MultiOutputRegressor
 
         from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
@@ -333,7 +335,7 @@ class VARReduce(BaseForecaster):
         # ---- insample forecasts  -----
         if fh_int.min() <= 0:
             # Reproduce the original X we used for fitting
-            X, _ = self._prepare_for_fit(self._y, return_as_ndarray=False)
+            X, _ = self._prepare_for_fit(self._cur_y, return_as_ndarray=False)
 
             self._y_pred_insample = pd.DataFrame(
                 self.regressor_.predict(X),
@@ -350,7 +352,7 @@ class VARReduce(BaseForecaster):
         # ---- outsample forecasts ----
         if fh_int.max() > 0:
             # Get the last available values for prediction
-            y_last = self._y.iloc[-self.lags :]
+            y_last = self._cur_y.iloc[-self.lags :]
 
             # Initialize a list to store out-of-sample predictions
             y_pred_outsample = []

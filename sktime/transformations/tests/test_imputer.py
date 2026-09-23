@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 from sktime.datatypes import get_examples
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.compose import TransformByLevel
 from sktime.transformations.impute import Imputer
@@ -35,7 +34,7 @@ z.iloc[-1] = np.nan
     not run_test_for_class(Imputer),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("forecaster", [None, NaiveForecaster()])
+@pytest.mark.parametrize("forecaster", [None, "NaiveForecaster"])
 @pytest.mark.parametrize("value", [None, 1])
 @pytest.mark.parametrize("Z", [y, X, z])
 @pytest.mark.parametrize(
@@ -55,7 +54,11 @@ z.iloc[-1] = np.nan
 )
 def test_imputer(method, Z, value, forecaster):
     """Test univariate and multivariate Imputer with all methods."""
-    forecaster = NaiveForecaster() if method == "forecaster" else forecaster
+    if forecaster == "NaiveForecaster" or method == "forecaster":
+        from sktime.forecasting.naive import NaiveForecaster
+
+        forecaster = NaiveForecaster()
+
     value = 1 if method == "constant" else value
     t = Imputer(method=method, forecaster=forecaster, value=value)
     y_hat = t.fit_transform(Z)

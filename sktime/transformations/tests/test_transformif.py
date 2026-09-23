@@ -2,20 +2,21 @@
 
 import pytest
 
-from sktime.param_est.seasonality import SeasonalityACF
-from sktime.tests.test_switch import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.transformations.compose import Id, TransformIf
 from sktime.transformations.detrend import Deseasonalizer
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([SeasonalityACF, Deseasonalizer, TransformIf]),
+    not run_test_for_class([Deseasonalizer, TransformIf])
+    and not run_test_module_changed("sktime.param_est.seasonality"),
     reason="skip test only if softdeps are present and incrementally (if requested)",
 )
 def test_conditional_deseasonalization():
     """Test deaseaonalizer TransformIf, same as docstring."""
     # pipeline with deseasonalization conditional on seasonality test
     from sktime.datasets import load_airline
+    from sktime.param_est.seasonality import SeasonalityACF
 
     y = load_airline()
 

@@ -34,6 +34,20 @@ else:
             """Dummy class if torch is unavailable."""
 
 
+def _resolve_device(device):
+    """Resolve automatic device selection while preserving explicit values."""
+    if device != "auto":
+        return device
+
+    import torch
+
+    if torch.cuda.is_available():
+        return "cuda"
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 def _tirex_cache_key(model: str, device: str) -> str:
     """Create a deterministic cache key for the TiRex model."""
     model_str = str(model)
@@ -73,7 +87,8 @@ class TiRexForecaster(BaseForecaster):
     model : str (default = "NX-AI/TiRex")
         "Model identifier to load via the vendored TiRex loader"
     device : {"cpu", "cuda", ...}, default="cpu"
-        Compute device used by the underlying TiRex model.
+        Compute device used by the underlying TiRex model. ``"auto"`` selects
+        CUDA, then MPS, then CPU.
     license_accepted : bool, default=False
         Whether the user accepts the license terms of TiRex.
         Must be set to True to use the model.
@@ -150,6 +165,10 @@ class TiRexForecaster(BaseForecaster):
                 "call `TiRexForecaster.print_license()`"
             )
 
+    def __post_init__(self):
+        """Post-initialization setup."""
+        self._device = _resolve_device(self.device)
+
     @classmethod
     def print_license(self):
         """Print the license terms of TiRex."""
@@ -188,10 +207,12 @@ class TiRexForecaster(BaseForecaster):
         self : TiRexForecaster
             Fitted forecaster (with ``model_`` set).
         """
-        key = _tirex_cache_key(self.model, self.device)
-        self.model_ = _cached_TiRex(
-            key=key, model=self.model, device=self.device
-        ).load()
+        self._cur_y = y
+        self._cur_X = X
+        device = self._device
+
+        key = _tirex_cache_key(self.model, device)
+        self.model_ = _cached_TiRex(key=key, model=self.model, device=device).load()
         return self
 
     def _predict(self, fh, X):
@@ -222,7 +243,7 @@ class TiRexForecaster(BaseForecaster):
         """
         # implement here
 
-        y = self._y
+        y = self._cur_y
         context_values = y.to_numpy()[None, :]
 
         context_tensor = torch.as_tensor(context_values, dtype=torch.float32)

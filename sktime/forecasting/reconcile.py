@@ -109,6 +109,7 @@ class ReconcilerForecaster(BaseForecaster):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
         "capability:unequal_length": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         "fit_is_empty": False,
         # CI and test flags
         # -----------------

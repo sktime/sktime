@@ -905,7 +905,8 @@ class _ColumnEstimator:
             y_preds += [getattr(est, methodname)(**kwargs)]
             keys += [index]
 
-        keys = self._get_indices(self._y, keys)
+        y_ref = getattr(self, "_cur_y", None)
+        keys = self._get_indices(y_ref, keys)
 
         if col_multiindex:
             y_pred = pd.concat(y_preds, axis=1, keys=keys)

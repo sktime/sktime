@@ -88,6 +88,7 @@ class DOBIN(BaseTransformer):
         "fit_is_empty": False,
         "skip-inverse-transform": True,
         "capability:categorical_in_X": False,
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

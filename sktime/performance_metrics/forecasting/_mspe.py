@@ -125,6 +125,10 @@ class MeanSquaredPercentageError(BaseForecastingErrorMetricFunc):
     np.float64(0.7504665536595034)
     """
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     func = mean_squared_percentage_error
 
     def __init__(

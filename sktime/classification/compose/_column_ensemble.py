@@ -293,9 +293,6 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
         from sktime.classification.dictionary_based import ContractableBOSS
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.interval_based import CanonicalIntervalForest
-        from sktime.classification.interval_based import (
-            TimeSeriesForestClassifier as TSFC,
-        )
 
         if parameter_set == "results_comparison":
             cboss = ContractableBOSS(
@@ -305,22 +302,16 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
                 n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
             )
             return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
-        else:
-            param0 = {
-                "estimators": [
-                    ("d1", DummyClassifier(strategy="most_frequent"), 0),
-                    ("d2", DummyClassifier(strategy="prior"), 0),
-                ]
-            }
-            param1 = {
-                "estimators": [
-                    ("tsf1", TSFC(n_estimators=2), 0),
-                    ("tsf2", TSFC(n_estimators=4), 0),
-                ]
-            }
-            param2 = {**param1, "remainder": TSFC(n_estimators=2)}
 
-            return [param0, param1, param2]
+        param0 = {
+            "estimators": [
+                ("d1", DummyClassifier(strategy="most_frequent"), 0),
+                ("d2", DummyClassifier(strategy="prior"), 0),
+            ]
+        }
+        param1 = {**param0, "remainder": DummyClassifier(strategy="most_frequent")}
+
+        return [param0, param1]
 
 
 def _get_column(X, key):

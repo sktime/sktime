@@ -104,6 +104,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         "capability:missing_values": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -137,6 +138,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 "capability:pred_int",
                 "capability:exogenous",
                 "capability:missing_values",
+                "capability:update",
             ]
             self.clone_tags(self.forecasters, tags_to_clone)
         else:
@@ -147,6 +149,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             self._anytagis_then_set(
                 "capability:missing_values", False, True, l_forecasters
             )
+            self._anytagis_then_set("capability:update", False, True, l_forecasters)
 
     @property
     def _forecasters(self):
@@ -196,11 +199,13 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
 
         self.forecasters_ = []
         self.y_columns = list(y.columns)
+        self._cur_y = y
+        self._cur_X = X
 
         for name, forecaster, index in forecasters:
             forecaster_ = forecaster.clone()
 
-            pd_index = self._coerce_to_pd_index(index, self._y.columns)
+            pd_index = self._coerce_to_pd_index(index, self.y_columns)
 
             forecaster_.fit(y.loc[:, pd_index], X, fh)
             self.forecasters_.append((name, forecaster_, index))
@@ -221,7 +226,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         self : an instance of self.
         """
         for _, forecaster, index in self.forecasters_:
-            pd_index = self._coerce_to_pd_index(index, self._y.columns)
+            pd_index = self._coerce_to_pd_index(index, self.y_columns)
             forecaster.update(y.loc[:, pd_index], X, update_params=update_params)
         return self
 

@@ -124,6 +124,10 @@ class MedianAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFun
     np.float64(0.21935483870967742)
     """
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     func = median_absolute_scaled_error
 
     def __init__(

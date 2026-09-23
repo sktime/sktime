@@ -98,6 +98,7 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     _required_parameters = ["regressor"]

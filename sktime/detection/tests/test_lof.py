@@ -6,9 +6,32 @@ import datetime
 
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.detection.lof import SubLOF
 from sktime.tests.test_switch import run_test_for_class
+
+
+def _daily_datetime_case():
+    """Return daily DatetimeIndex interval test data."""
+    return (
+        pd.date_range("2024-01-01", periods=5, freq="D"),
+        pd.IntervalIndex.from_breaks(
+            pd.date_range("2024-01-01", periods=6, freq="D"), closed="left"
+        ),
+    )
+
+
+def _month_end_datetime_case():
+    """Return month-end interval test data across supported pandas versions."""
+    freq = "ME" if _check_soft_dependencies("pandas>=2.2", severity="none") else "M"
+    return (
+        pd.date_range("2024-01-31", periods=5, freq=freq),
+        pd.IntervalIndex.from_breaks(
+            pd.to_datetime(["2024-01-31", "2024-03-31", "2024-05-31", "2024-07-31"]),
+            closed="left",
+        ),
+    )
 
 
 @pytest.mark.skipif(
@@ -40,22 +63,27 @@ from sktime.tests.test_switch import run_test_for_class
             ),
             datetime.timedelta(days=1),
             pd.IntervalIndex.from_breaks(
-                [
-                    "2024-01-01 00:00:00",
-                    "2024-01-02 00:00:00",
-                    "2024-01-03 00:00:00",
-                    "2024-01-04 00:00:00",
-                    "2024-01-05 00:00:00",
-                    "2024-01-06 00:00:00",
-                ],
+                pd.to_datetime(
+                    [
+                        "2024-01-01 00:00:00",
+                        "2024-01-02 00:00:00",
+                        "2024-01-03 00:00:00",
+                        "2024-01-04 00:00:00",
+                        "2024-01-05 00:00:00",
+                        "2024-01-06 00:00:00",
+                    ]
+                ),
                 closed="left",
-                dtype="interval[datetime64[ns], left]",
             ),
         ),
+        (_daily_datetime_case, 1, None),
+        (_month_end_datetime_case, 2, None),
     ],
 )
 def test_cut_into_intervals(x, interval_size, expected_intervals):
     """Check if the predicted change points match."""
+    if callable(x):
+        x, expected_intervals = x()
     actual_intervals = SubLOF._split_into_intervals(x, interval_size)
     assert (actual_intervals == expected_intervals).all()
 

@@ -35,6 +35,8 @@ Community Council Observers
 
    * - Name
      - GitHub ID
+   * - Aryan Saini
+     - :user:`phoeenniixx`
    * - Benedikt Heidrich
      - :user:`benheid`
    * - Felipe Angelim Vieira
@@ -79,6 +81,8 @@ Core Developers
      - :user:`benheid`
    * - Eric J Berger
      - :user:`ericjb`
+   * - Faakhir Zahid
+     - :user:`faakhir30`
    * - Felipe Angelim Vieira
      - :user:`felipeangelimvieira`
    * - Felix Hirwa Nshuti
@@ -111,8 +115,7 @@ Core Developers
      - :user:`SveaMeyer13`
    * - Ugochukwu Onyeka
      - :user:`onyekaugochukwu`
-   * - Xinyu Wu
-     - :user:`XinyuWuu`
+
 
 Former Core Developers
 ----------------------
@@ -174,5 +177,7 @@ Former Core Developers
      - :user:`sajaysurya`
    * - Stanislav Khrapov
      - :user:`khrapovs`
+   * - Xinyu Wu
+     - :user:`XinyuWuu`
    * - Anonymous upon contributor's request
      - :user:`big-o`

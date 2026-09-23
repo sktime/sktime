@@ -246,6 +246,8 @@ class TotoForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         import torch
         from toto.data.util.dataset import MaskedTimeseries
 
@@ -519,7 +521,7 @@ class TotoForecaster(BaseForecaster):
         selected_predictions = all_predictions[relative_indices]
 
         y_pred = pd.DataFrame(
-            selected_predictions, index=pred_index, columns=self._y.columns
+            selected_predictions, index=pred_index, columns=self._cur_y.columns
         )
         return y_pred
 
@@ -579,7 +581,7 @@ class TotoForecaster(BaseForecaster):
             samples_per_batch=self.samples_per_batch,
             future_exogenous_variables=future_exog,
         )
-        var_names = self._y.columns
+        var_names = self._cur_y.columns
         cols_idx = pd.MultiIndex.from_product([var_names, alpha])
         pred_index = fh.to_absolute(self._cutoff)._values
         relative_indices = fh.to_relative(self._cutoff) - 1

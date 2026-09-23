@@ -293,6 +293,8 @@ class SkforecastAutoreg(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         del fh  # avoid being detected as unused by ``vulture`` like tools
 
         self._forecaster = self._create_forecaster()
@@ -362,7 +364,7 @@ class SkforecastAutoreg(BaseForecaster):
         final_point_predictions = pd.Series(
             point_predictions[horizon_positions],
             index=absolute_horizons,
-            name=None if self._y.name is None else str(self._y.name),
+            name=None if self._cur_y.name is None else str(self._cur_y.name),
         )
 
         return final_point_predictions
@@ -765,6 +767,8 @@ class SkforecastRecursive(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         del fh  # avoid being detected as unused by ``vulture`` like tools
 
         self._forecaster = self._create_forecaster()
@@ -840,7 +844,7 @@ class SkforecastRecursive(BaseForecaster):
         final_point_predictions = pd.Series(
             point_predictions[horizon_positions],
             index=absolute_horizons,
-            name=None if self._y.name is None else str(self._y.name),
+            name=None if self._cur_y.name is None else str(self._cur_y.name),
         )
 
         return final_point_predictions

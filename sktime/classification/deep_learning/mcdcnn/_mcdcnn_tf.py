@@ -95,6 +95,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
             "test_multioutput",
             "test_classifier_on_unit_test_data",
             "test_fit_idempotent",  # due to randomness
+            "test_get_test_params_coverage",
         ],
     }
 

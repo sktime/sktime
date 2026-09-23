@@ -118,7 +118,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
@@ -127,7 +126,6 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_all": True,
         "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
@@ -409,7 +407,6 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        "capability:global_forecasting": True,
         "capability:exogenous": False,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -717,7 +714,6 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
@@ -1000,12 +996,13 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
-        "capability:global_forecasting": True,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
         "capability:pred_int": True,
         "capability:unequal_length": False,
+        # CI and test flags
+        # -----------------
         "tests:specific": ["sktime.forecasting.tests.test_pytorchforecasting"],
     }
 
@@ -1032,6 +1029,19 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
             random_log_path,
             broadcasting,
         )
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
         if self._model_loss is None:
             from pytorch_forecasting import QuantileLoss
 
