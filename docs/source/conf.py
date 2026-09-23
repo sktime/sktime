@@ -604,6 +604,65 @@ def _process_in_page_toc(app, exception):
             f.write(str(soup))
 
 
+def _add_tags_table(app, what, name, obj, options, lines):
+    """Append a tags table to estimator docstrings during autodoc processing."""
+    if what != "class":
+        return
+
+    try:
+        from sktime.base import BaseObject
+
+        if not (isinstance(obj, type) and issubclass(obj, BaseObject)):
+            return
+
+        tags = obj.get_class_tags()
+        if not tags:
+            return
+
+        # retrieve user-facing tag names from the tag class registry
+        import inspect
+        import sys
+
+        from sktime.registry._tags import _BaseTag
+
+        user_facing = set()
+        for _, tag_cls in inspect.getmembers(
+            sys.modules["sktime.registry._tags"], inspect.isclass
+        ):
+            if issubclass(tag_cls, _BaseTag) and tag_cls is not _BaseTag:
+                if tag_cls.get_class_tag("user_facing", False):
+                    user_facing.add(tag_cls.get_class_tag("tag_name", ""))
+
+        tags = {k: v for k, v in tags.items() if k in user_facing}
+        if not tags:
+            return
+
+        tags_ref_url = "https://www.sktime.net/en/latest/api_reference/tags.html"
+
+        table_lines = [
+            "",
+            ".. rubric:: Tags",
+            "",
+            f"For an explanation of tags, see the `tags API reference <{tags_ref_url}>`_.",
+            "",
+            ".. list-table::",
+            "   :header-rows: 1",
+            "",
+            "   * - Tag",
+            "     - Value",
+        ]
+
+        for tag_name, tag_val in sorted(tags.items()):
+            table_lines.append(f"   * - ``{tag_name}``")
+            table_lines.append(f"     - ``{tag_val}``")
+
+        table_lines.append("")
+        lines.extend(table_lines)
+
+    except Exception:
+        pass
+
+
 def setup(app):
     """Set up sphinx builder.
 
@@ -620,6 +679,7 @@ def setup(app):
 
     app.connect("builder-inited", _make_estimator_overview)
     app.connect("build-finished", _process_in_page_toc)
+    app.connect("autodoc-process-docstring", _add_tags_table)
 
 
 # -- Extension configuration -------------------------------------------------
