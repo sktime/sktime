@@ -65,6 +65,22 @@ class RankCost(BaseCost):
     .. [1] Lung-Yut-Fong, A., Levy-Leduc, C., & Cappe, O. (2015).
        Homogeneity and change-point detection tests for multivariate data
        using rank statistics.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.costs import RankCost
+    >>> X = np.array([[0., 0.], [2., 1.], [0., 1.], [2., 0.],
+    ...               [10., 5.], [12., 6.], [10., 6.], [12., 5.]])
+    >>> cost = RankCost()
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [1, 5]]).round(2)
+    array([[-3.37],
+           [-3.37],
+           [-0.84]])
+
+    The cost is based on rank statistics and is therefore distribution free.
+    The first two intervals each cover a homogeneous part of the series and
+    attain a low cost, while the third straddles the change and is more costly.
     """
 
     _tags = {

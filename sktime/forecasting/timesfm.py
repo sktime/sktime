@@ -192,7 +192,6 @@ class TimesFMForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         # testing configuration
         # ---------------------
@@ -250,7 +249,7 @@ class TimesFMForecaster(BaseForecaster):
         if not self.ignore_deps:
             if self.use_source_package:
                 # Use timesfm with a version bound if use_source_package is True
-                # todo 1.2.0: Regularly check whether timesfm version can be updated
+                # todo 1.3.0: Regularly check whether timesfm version can be updated
                 # if changed, also needs to be changed in docstring
                 self.set_tags(python_dependencies=["timesfm<1.2.0"])
         else:
@@ -267,7 +266,6 @@ class TimesFMForecaster(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.Series",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 

@@ -2548,7 +2548,7 @@ class capability__update(_BaseTag):
 
     _tags = {
         "tag_name": "capability:update",
-        "parent_type": ["transformer", "detector"],
+        "parent_type": ["transformer", "detector", "forecaster"],
         "tag_type": "bool",
         "short_descr": "does the estimator provided stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
@@ -4187,16 +4187,6 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "max iters for bisection method in ppf",
-    ),
-    # ---------------------------
-    # to be deprecated or removed
-    # ---------------------------
-    # the following tags are to be deprecated or removed
-    (
-        "capability:global_forecasting",
-        ["forecaster"],
-        "bool",
-        "can the estimator make global forecasting?",
     ),
 ]
 

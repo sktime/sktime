@@ -148,7 +148,6 @@ class MomentFMForecaster(BaseForecaster):
             "accelerate",
             "transformers",
         ],
-        "capability:global_forecasting": True,
         "python_version": ">= 3.10",
         "capability:insample": False,
         "capability:pred_int:insample": False,
