@@ -592,3 +592,45 @@ def test_msle_no_stdout_on_index_mismatch():
     with contextlib.redirect_stdout(buf):
         mean_squared_log_error(y_true, y_pred)
     assert buf.getvalue() == ""
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_gmae_class_matches_function_on_zero_error():
+    """GeometricMeanAbsoluteError class must match the function on zero error.
+
+    A single exactly-correct forecast (zero absolute error) must not collapse the
+    metric to 0.0: like the function, the class replaces zero errors with machine
+    epsilon before taking the geometric mean.
+    """
+    from sktime.performance_metrics.forecasting import (
+        GeometricMeanAbsoluteError,
+        geometric_mean_absolute_error,
+    )
+
+    y_true = np.array([3.0, -0.5, 2.0, 7.0, 2.0])
+    y_pred = np.array([3.0, 0.0, 2.0, 8.0, 1.25])  # two exact matches -> zero errors
+
+    cls = GeometricMeanAbsoluteError()(y_true, y_pred)
+    fn = geometric_mean_absolute_error(y_true, y_pred)
+
+    assert np.allclose(cls, fn)
+    assert cls > 0  # no longer collapses to zero
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_gmae_by_index_finite_with_zero_error():
+    """GeometricMeanAbsoluteError.evaluate_by_index stays finite on zero error."""
+    from sktime.performance_metrics.forecasting import GeometricMeanAbsoluteError
+
+    y_true = pd.DataFrame([3.0, -0.5, 2.0, 7.0, 2.0])
+    y_pred = pd.DataFrame([3.0, 0.0, 2.0, 8.0, 1.25])
+
+    res = GeometricMeanAbsoluteError().evaluate_by_index(y_true, y_pred)
+
+    assert np.isfinite(res.values).all()
