@@ -2,6 +2,8 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+import numpy as np
+import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
@@ -14,6 +16,63 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
+
+
+@pytest.mark.parametrize("n_columns", [1, 2])
+def test_update_predict_with_numpy_series(n_columns):
+    """Regression test for #3291: update_predict supports NumPy input."""
+    y = np.arange(10, dtype=float)
+    if n_columns == 2:
+        y = np.column_stack([y, y + 100])
+    forecaster = NaiveForecaster(strategy="last").fit(y[:5])
+
+    y_pred = forecaster.update_predict(y[5:])
+
+    assert isinstance(y_pred, np.ndarray)
+    expected = y[5:-1, None] if n_columns == 1 else y[5:-1]
+    np.testing.assert_array_equal(y_pred, expected)
+
+
+def test_update_predict_with_numpy_series_and_multiple_horizons():
+    """NumPy rolling predictions preserve the fitted series time axis."""
+    y = np.arange(10, dtype=float)
+    cv = ExpandingWindowSplitter(fh=[1, 2], initial_window=2, step_length=1)
+
+    numpy_forecaster = NaiveForecaster(strategy="last").fit(y[:5])
+    numpy_pred = numpy_forecaster.update_predict(y[5:], cv=cv, update_params=False)
+
+    pandas_y = pd.Series(y)
+    pandas_forecaster = NaiveForecaster(strategy="last").fit(pandas_y.iloc[:5])
+    pandas_pred = pandas_forecaster.update_predict(
+        pandas_y.iloc[5:], cv=cv, update_params=False
+    )
+
+    pd.testing.assert_frame_equal(numpy_pred, pandas_pred)
+
+
+def test_update_predict_with_numpy_exogenous_series():
+    """NumPy exogenous data uses the same continuation index as NumPy y."""
+    y = np.arange(10, dtype=float)
+    X = np.arange(20, dtype=float).reshape(10, 2)
+    forecaster = NaiveForecaster(strategy="last").fit(y[:5], X=X[:5])
+
+    y_pred = forecaster.update_predict(y[5:], X=X[5:], update_params=False)
+
+    np.testing.assert_array_equal(y_pred, y[5:-1, None])
+
+
+def test_update_predict_with_numpy_after_datetime_series():
+    """NumPy updates continue a fitted datetime index and return NumPy output."""
+    y_train = pd.Series(
+        np.arange(5, dtype=float),
+        index=pd.date_range("2026-01-01", periods=5, freq="D"),
+    )
+    forecaster = NaiveForecaster(strategy="last").fit(y_train)
+
+    y_pred = forecaster.update_predict(np.arange(5, 10, dtype=float))
+
+    assert isinstance(y_pred, np.ndarray)
+    np.testing.assert_array_equal(y_pred, np.arange(5, 9, dtype=float)[:, None])
 
 
 @pytest.mark.skipif(
