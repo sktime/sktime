@@ -76,7 +76,22 @@ DEFAULT_ALPHA = 0.05
 
 
 def _coerce_to_list(obj):
-    """Return [obj] if obj is not a list, otherwise obj."""
+    """
+    Ensure the input is returned as a list.
+
+    If the input object is not already a list, it is wrapped inside a list.
+    If it is already a list, it is returned unchanged.
+
+    Parameters
+    ----------
+    obj : any
+        Input object to be converted into a list if not already one.
+
+    Returns
+    -------
+    list
+        A list containing the input object, or the original list if input was already a list.
+    """
     if not isinstance(obj, list):
         return [obj]
     else:
