@@ -26,7 +26,8 @@ class MOIRAIForecaster(BaseForecaster):
     num_samples : int, default=100
         Number of samples to draw.
     map_location : str, default=None
-        Hardware to use for the model.
+        Hardware to use for the model. ``None`` lets the GluonTS
+        predictor select CUDA when available, otherwise CPU.
     target_dim : int, default=2
         Dimension of the target.
     deterministic : bool, default=False
@@ -110,9 +111,9 @@ class MOIRAIForecaster(BaseForecaster):
         ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "capability:pretrain": False,
+        "capability:update": True,
         "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
@@ -160,7 +161,6 @@ class MOIRAIForecaster(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.DataFrame",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 
@@ -347,6 +347,8 @@ class MOIRAIForecaster(BaseForecaster):
                 return MoiraiForecast.load_from_checkpoint(**model_kwargs)
 
     def _fit(self, y, X=None, fh=None):
+        self._cur_y = y
+        self._cur_X = X
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
         else:
@@ -367,7 +369,23 @@ class MOIRAIForecaster(BaseForecaster):
 
         # Lazy-init: load model on first access; reuse on subsequent fit() calls.
         self.model_ = self._init_model(prediction_length)
-        self.model_.to(self.map_location)
+
+    def _update(self, y, X=None, update_params=True):
+        """Extend the context series that ``_predict`` conditions on.
+
+        Appending is required for the predictions to line up with the cutoff,
+        which advances in ``update``: the forecast starts right after the last
+        context timepoint.
+
+        ``update_params`` has no effect, the model is used zero-shot: ``_fit``
+        does not train, it loads the pretrained module.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        return self
 
     def _predict(self, fh, X=None):
         if fh is None:
@@ -390,10 +408,10 @@ class MOIRAIForecaster(BaseForecaster):
                 "The MORAI adapter is not supporting insample predictions."
             )
 
-        _y = self._y.copy()
+        _y = self._cur_y.copy()
         _X = None
-        if self._X is not None:
-            _X = self._X.copy()
+        if self._cur_X is not None:
+            _X = self._cur_X.copy()
 
         # Zero shot case with X and fit data as context
         _use_fit_data_as_context = X is not None
@@ -417,7 +435,7 @@ class MOIRAIForecaster(BaseForecaster):
 
         if _X is not None:
             feat_dynamic_real = [
-                f"feat_dynamic_real_{i}" for i in range(self._X.shape[1])
+                f"feat_dynamic_real_{i}" for i in range(self._cur_X.shape[1])
             ]
             _X.columns = feat_dynamic_real
 
