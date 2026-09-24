@@ -3,6 +3,10 @@
 
 __author__ = ["fkiraly"]
 
+import datetime
+
+import numpy as np
+import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -101,6 +105,52 @@ def test_craft(spec, safe):
     assert crafted_again == crafted_obj
 
 
+namespace_objs = [
+    np.array([1, 2, 3]),
+    np.dtype("int64"),
+    np.float64(0.5),
+    np.int64(12),
+    np.bool_(True),
+    np.str_("ab"),
+    np.datetime64("2020-01-01"),
+    np.timedelta64(1, "D"),
+    pd.Timestamp("2020-01-01"),
+    pd.Timedelta("1D"),
+    pd.Period("2020-01", "M"),
+    pd.Interval(0, 1),
+    pd.Index(["a", "b"]),
+    pd.RangeIndex(0, 5),
+    pd.DatetimeIndex(["2020-01-01"]),
+    pd.TimedeltaIndex(["1 days"]),
+    pd.PeriodIndex(["2020-01"], freq="M"),
+    pd.CategoricalIndex(["a", "b"]),
+    datetime.timedelta(days=25),
+]
+
+
+@pytest.mark.parametrize("obj", namespace_objs, ids=lambda x: type(x).__name__)
+@pytest.mark.parametrize("safe", [True, False])
+def test_craft_default_namespace_roundtrip(obj, safe):
+    """Check that crafting is inverse to repr for numpy and pandas objects."""
+    spec = repr(obj)
+
+    crafted = craft(spec, safe=safe)
+
+    assert repr(crafted) == spec
+    assert type(crafted) is type(obj)
+
+
+@pytest.mark.parametrize("safe", [True, False])
+def test_craft_roundtrip_estimator_numpy_param(safe):
+    """Check that crafting is inverse to str coercion for numpy valued params."""
+    spec = "NaiveForecaster(sp=np.int64(12))"
+
+    crafted = craft(spec, safe=safe)
+
+    assert str(crafted) == spec
+    assert isinstance(crafted.get_params()["sp"], np.int64)
+
+
 @pytest.mark.parametrize(
     "spec",
     [
@@ -108,6 +158,14 @@ def test_craft(spec, safe):
         "NaiveForecaster().fit",
         "NaiveForecaster().foo()",
         "NaiveForecaster.__init__",
+        "np",
+        "pd",
+        "datetime",
+        "np.load('x')",
+        "np.fromfile('x')",
+        "np.random",
+        "np.float64.__class__",
+        "datetime.datetime.now()",
         # Indirect / arbitrary function calls
         "getattr(NaiveForecaster(), 'fit')",
         "(lambda: NaiveForecaster())()",
@@ -174,6 +232,12 @@ def test_deps(spec):
     # example with two dependencies, should be identified, order does not matter
     expected_deps = {"statsmodels", "torch"}
     assert set(deps(dunder_spec_with_deps)) == expected_deps
+
+
+@pytest.mark.parametrize("spec", ["2", "Timestamp('2020-01-01')", "array([1, 2])"])
+def test_deps_without_estimator_names(spec):
+    """Check that deps returns no requirements if no estimator names occur."""
+    assert deps(spec) == []
 
 
 def test_imports():
