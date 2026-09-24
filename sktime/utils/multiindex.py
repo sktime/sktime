@@ -159,6 +159,10 @@ def apply_method_per_series(y, method_name, *args, **kwargs):
         y_series = y.loc[group_keys]
         y_series = getattr(y_series, method_name)(*args, **kwargs)
         # Add multiindex
+        # Ensure group_keys is always a tuple for unpacking
+        # For 2-level MultiIndex, droplevel(-1).unique() returns scalars
+        if not isinstance(group_keys, tuple):
+            group_keys = (group_keys,)
         y_series.index = pd.MultiIndex.from_tuples(
             [(*group_keys, idx) for idx in y_series.index], names=y.index.names
         )
