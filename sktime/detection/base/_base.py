@@ -148,7 +148,7 @@ class BaseDetector(BaseEstimator):
             Training data to fit model to (time series).
 
         y : pd.DataFrame with RangeIndex, optional.
-            Known events for traininmg, in ``X``, if detector is supervised.
+            Known events for training, in ``X``, if detector is supervised.
 
             Each row ``y`` is a known event.
             Can have the following columns:
@@ -856,7 +856,7 @@ class BaseDetector(BaseEstimator):
         pd.Series
             A series with an index of ``index`` is returned.
             * If ``y_sparse`` is a series of changepoints/anomalies then the returned
-              series is labelled 0 and 1 dependendy on whether the index is associated
+              series is labelled 0 and 1 depending on whether the index is associated
               with an anomaly/changepoint. Where 1 means anomaly/changepoint.
             * If ``y_sparse`` is a series of segments then the returned series is
               labelled depending on the segment its indexes fall into. Indexes that
