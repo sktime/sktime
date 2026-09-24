@@ -45,6 +45,29 @@ class GaussianCost(BaseCost):
     param : 2-tuple of float or np.ndarray, or None (default=None)
         Fixed mean(s) and variance(s) for the cost calculation.
         If ``None``, the maximum likelihood estimates are used.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.costs import GaussianCost
+    >>> X = np.array([0., 2., 0., 2., 10., 12., 10., 12.]).reshape(-1, 1)
+    >>> cost = GaussianCost()
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[11.35],
+           [11.35],
+           [48.77]])
+
+    The first two intervals are each well described by a single Gaussian, so
+    their cost is low. The third spans the change in mean and is expensive.
+
+    Passing ``param`` evaluates the cost at a fixed mean and variance instead
+    of the maximum likelihood estimates of the interval:
+
+    >>> cost = GaussianCost(param=(1.0, 1.0))
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[ 11.35],
+           [411.35],
+           [422.7 ]])
     """
 
     _tags = {
