@@ -20,11 +20,15 @@ There are three types of dependencies in ``sktime``: **core**, **soft**, or **de
 
 We try to keep the number of core dependencies to a minimum and rely on other packages as soft dependencies when feasible.
 
+This chapter covers two related topics: **maintaining** optional dependencies for the ``sktime`` package (extras, ``pyproject.toml``),
+and **using** them in code (estimators, modules, tests). The sections below move from estimator-level isolation to module-level patterns,
+then to packaging maintenance.
+
 Handling soft dependencies
 --------------------------
 
-This section explains how to handle existing soft dependencies.
-For adding a new soft dependency, see the section "adding a new soft dependency".
+This section explains how to handle existing soft dependencies in code.
+For adding a new soft dependency to the distribution, see the section "Adding and maintaining soft dependencies".
 
 **Best practice:**
 
@@ -91,18 +95,56 @@ In certain scenarios, it is hard to avoid soft dependency import at the module l
 Where such scenarios can be avoided, they should be avoided, and soft dependencies should be isolated to estimators as described above.
 
 However, if a soft dependency must be imported at the module level,
-the ``_safe_import`` utility can be used.
+the ``_safe_import`` utility should be used (see below).
 
-``_safe_import`` is a utility that attempts to import a module and returns a mock object if the import is not present.
+The ``_safe_import`` utility
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The pattern for using ``_safe_import`` is ``object_name = _safe_import("module.module2.object_name")``,
-with an optional argument ``package_name`` if the package name is different from the top-level module name.
+**What it does.** ``_safe_import`` attempts to import a module or object by dotted path.
+If the dependency is installed and import succeeds, the real object is returned.
+If the dependency is missing or import fails, a stand-in is returned so that **importing**
+``sktime`` still succeeds. Runtime use of that dependency still requires the package to be
+installed; keep estimator tags and ``_check_soft_dependencies`` checks as described above.
 
-``object_name`` is a mock, i.e., any method or attribute call will return a mock object, instead of failing.
-This will ensure that the module can be imported without exception, even if the soft dependency is not installed.
-Of course, attempts at using the module will result in runtime failures or unexpected behaviour.
+**Where it lives.** The implementation is maintained in ``skbase``; ``sktime`` re-exports it for developers as
+``from sktime.utils.dependencies import _safe_import``. The upstream source is
+`skbase/utils/dependencies/_import.py <https://github.com/sktime/skbase/blob/main/skbase/utils/dependencies/_import.py>`__.
 
-**Example using ``_safe_import``:**
+**Basic usage.** Assign the return value at module level using a dotted import path:
+
+.. code-block:: python
+
+    from sktime.utils.dependencies import _safe_import
+
+    nn = _safe_import("torch.nn")
+    Linear = _safe_import("torch.nn.Linear")
+
+**How paths are resolved.** The string is split on ``.`` and interpreted as follows:
+
+* No dots (e.g. ``"torch"``): import the top-level module.
+* One or more dots: import the parent module with ``importlib``, then ``getattr`` for the final name
+  (e.g. ``"torch.nn"`` → submodule ``nn``; ``"torch.nn.Linear"`` → class ``Linear``).
+
+**Optional arguments.**
+
+* ``pkg_name``: PyPI / distribution name when it differs from the first segment of ``import_path``, e.g.
+  ``_safe_import("sklearn.clone", pkg_name="scikit-learn")``. If omitted, the first segment of ``import_path`` is used to
+  detect whether the package is installed.
+* ``condition``: if ``False``, the import is skipped and the fallback is returned (same as a failed import).
+* ``return_object``: ``"MagicMock"`` (default) or ``"None"`` for the fallback when the package is missing or the import fails.
+
+**Fallback behaviour.** When the dependency is not available, ``_safe_import`` returns a unique mock type per import path
+that accepts arbitrary attribute access, calls, and subclassing, so patterns such as ``class MyNet(nn.Module): ...`` parse without
+raising ``ImportError``. Code that actually runs model logic will still need the real package installed.
+
+**Limitations and caveats.**
+
+* Do not use ``_safe_import`` return values with ``@dataclass`` or as bases for dataclasses; that combination is unsupported.
+* Prefer lazy imports inside estimator methods when there is no need for a module-level base class or decorator from the optional package.
+* Mock objects are not a substitute for runtime dependency checks: keep ``python_dependencies`` tags accurate and use
+  ``_check_soft_dependencies`` where users need an explicit error message.
+
+**Example (submodule as base class):**
 
 .. code-block:: python
 
@@ -111,9 +153,16 @@ Of course, attempts at using the module will result in runtime failures or unexp
     nn = _safe_import("torch.nn")
 
 
-    class ChronosModel(nn.Module):
+    class MyNetwork(nn.Module):
+        ...
 
-WARNING: ``_safe_import`` returns are incompatible with ``dataclass`` decorators and should not be used as parent of a dataclass.
+**Example (distribution name differs from import name):**
+
+.. code-block:: python
+
+    from sktime.utils.dependencies import _safe_import
+
+    clone = _safe_import("sklearn.clone", pkg_name="scikit-learn")
 
 Concluding by repeating the important note at the top:
 
