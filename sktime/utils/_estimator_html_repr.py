@@ -3,6 +3,7 @@
 
 import html
 import importlib
+import inspect
 import uuid
 from contextlib import closing
 from inspect import isclass
@@ -10,7 +11,10 @@ from io import StringIO
 from pathlib import Path
 from string import Template
 
+import numpy as np
 from packaging.version import parse as parse_version
+
+from sktime.utils._estimator_html_repr_params import ParamsDict
 
 __author__ = ["RNKuhns", "mateuszkasprowicz"]
 
@@ -70,13 +74,25 @@ def _write_label_html(
     inner_class="sk-label",
     checked=False,
     doc_link="",
+    params="",
+    param_prefix="",
 ):
-    """Write labeled html with or without a dropdown with named details."""
+    """Write labeled html with or without a dropdown with named details.
+
+    Parameters
+    ----------
+    params : str, default=""
+        HTML representation of parameters table. When non-empty, used instead
+        of name_details in the dropdown.
+    param_prefix : str, default=""
+        Prefix for parameter names (e.g. "pipeline__step__") for copy functionality.
+    """
     out.write(f'<div class={outer_class!r}><div class="{inner_class} sk-toggleable">')
     name = html.escape(name)
 
-    if name_details is not None:
-        name_details = html.escape(str(name_details))
+    if name_details is not None or params:
+        if name_details is not None:
+            name_details = html.escape(str(name_details))
         label_class = "sk-toggleable__label sk-toggleable__label-arrow"
 
         checked_str = "checked" if checked else ""
@@ -85,18 +101,27 @@ def _write_label_html(
             doc_label = "<span>Online documentation</span>"
             if name is not None:
                 doc_label = f"<span>Documentation for {name}</span>"
-            doc_link = (
+            doc_link_html = (
                 f'<a class="sk-estimator-doc-link"'
                 f' rel="noreferrer" target="_blank" href="{doc_link}">?{doc_label}</a>'
             )
+        else:
+            doc_link_html = ""
 
         out.write(
             '<input class="sk-toggleable__control sk-hidden--visually" '
             f'id={est_id!r} type="checkbox" {checked_str}>'
-            f"<label for={est_id!r} class={label_class!r}>{name}{doc_link}</label>"
-            f'<div class="sk-toggleable__content"><pre>{name_details}'
-            "</pre></div>"
+            f"<label for={est_id!r} class={label_class!r}>{name}{doc_link_html}</label>"
         )
+        content_attrs = (
+            f' data-param-prefix="{html.escape(param_prefix)}"' if param_prefix else ""
+        )
+        out.write(f'<div class="sk-toggleable__content"{content_attrs}>')
+        if params:
+            out.write(params)
+        elif name_details is not None:
+            out.write(f"<pre>{name_details}</pre>")
+        out.write("</div>")
     else:
         out.write(f"<label>{name}</label>")
     out.write("</div></div>")  # outer_class inner_class
@@ -138,7 +163,12 @@ def _get_visual_block(base_object):
 
 
 def _write_base_object_html(
-    out, base_object, base_object_label, base_object_label_details, first_call=False
+    out,
+    base_object,
+    base_object_label,
+    base_object_label_details,
+    first_call=False,
+    param_prefix="",
 ):
     """Write BaseObject to html in serial, parallel, or by itself (single)."""
     est_block = _get_visual_block(base_object)
@@ -148,14 +178,34 @@ def _write_base_object_html(
     else:
         doc_link = ""
 
+    def _get_params_html_for_estimator(estimator, deep=False, est_doc_link=None):
+        """Get params HTML if estimator supports it."""
+        if hasattr(estimator, "_get_params_html"):
+            try:
+                link = est_doc_link if est_doc_link is not None else doc_link
+                params_obj = estimator._get_params_html(deep=deep, doc_link=link)
+                if hasattr(params_obj, "_repr_html_inner"):
+                    return params_obj._repr_html_inner()
+            except Exception:  # noqa: BLE001, S110
+                pass
+        return ""
+
     if est_block.kind in ("serial", "parallel"):
         dashed_wrapped = first_call or est_block.dash_wrapped
         dash_cls = " sk-dashed-wrapped" if dashed_wrapped else ""
         out.write(f'<div class="sk-item{dash_cls}">')
 
         if base_object_label:
+            params = _get_params_html_for_estimator(
+                base_object, deep=False, est_doc_link=doc_link
+            )
             _write_label_html(
-                out, base_object_label, base_object_label_details, doc_link=doc_link
+                out,
+                base_object_label,
+                base_object_label_details,
+                doc_link=doc_link,
+                params=params,
+                param_prefix=param_prefix,
             )
 
         kind = est_block.kind
@@ -163,17 +213,30 @@ def _write_base_object_html(
         est_infos = zip(est_block.estimators, est_block.names, est_block.name_details)
 
         for est, name, name_details in est_infos:
+            # Build param_prefix for nested estimators (e.g. "step__" or "stepname__")
+            step_name = name.split(":")[0].strip() if hasattr(name, "split") else ""
+            if param_prefix and step_name:
+                new_prefix = f"{param_prefix}{step_name}__"
+            elif step_name:
+                new_prefix = f"{step_name}__"
+            else:
+                new_prefix = param_prefix
+
             if kind == "serial":
-                _write_base_object_html(out, est, name, name_details)
+                _write_base_object_html(
+                    out, est, name, name_details, param_prefix=new_prefix
+                )
             else:  # parallel
                 out.write('<div class="sk-parallel-item">')
-                # wrap element in a serial visualblock
                 serial_block = _VisualBlock("serial", [est], dash_wrapped=False)
-                _write_base_object_html(out, serial_block, name, name_details)
+                _write_base_object_html(
+                    out, serial_block, name, name_details, param_prefix=new_prefix
+                )
                 out.write("</div>")  # sk-parallel-item
 
         out.write("</div></div>")
     elif est_block.kind == "single":
+        params = _get_params_html_for_estimator(base_object, deep=False)
         _write_label_html(
             out,
             est_block.names,
@@ -182,6 +245,8 @@ def _write_base_object_html(
             inner_class="sk-estimator",
             checked=first_call,
             doc_link=doc_link,
+            params=params,
+            param_prefix=param_prefix,
         )
 
 
@@ -190,6 +255,11 @@ with open(
 ) as style_file:
     # use the style defined in the css file
     _STYLE = style_file.read()
+
+with open(
+    Path(__file__).parent / "_estimator_html_repr.js", encoding="utf-8"
+) as script_file:
+    _SCRIPT = script_file.read()
 
 
 def _object_html_repr(base_object):
@@ -238,7 +308,9 @@ def _object_html_repr(base_object):
             base_object_str,
             first_call=True,
         )
-        out.write("</div></div>")
+        out.write("</div>")
+        out.write(f"<script>{_SCRIPT}</script>")
+        out.write("</div>")
 
         html_output = out.getvalue()
         return html_output
@@ -262,6 +334,22 @@ def _get_reduced_path(input_path_string):
     return result_string
 
 
+def _is_param_equal(value, default):
+    """Check if parameter value equals default (handles NaN, arrays, etc.)."""
+    if value is default:
+        return True
+    if default is inspect.Parameter.empty:
+        return False
+    try:
+        if isinstance(value, np.ndarray) and isinstance(default, np.ndarray):
+            return np.array_equal(value, default, equal_nan=True)
+        if isinstance(value, (float, np.floating)) and np.isnan(value):
+            return isinstance(default, (float, np.floating)) and np.isnan(default)
+        return value == default
+    except (TypeError, ValueError):
+        return False
+
+
 class _HTMLDocumentationLinkMixin:
     """Mixin class allowing to generate a link to the API documentation.
 
@@ -274,6 +362,54 @@ class _HTMLDocumentationLinkMixin:
     """
 
     _doc_link_module = "sktime"
+
+    def _get_params_html(self, deep=False, doc_link=""):
+        """Get parameters for HTML representation with structured table display.
+
+        Parameters
+        ----------
+        deep : bool, default=False
+            If True, will return the parameters for this estimator and
+            contained subobjects that are estimators.
+
+        doc_link : str, default=""
+            URL to the estimator documentation. Reserved for future param doc links.
+
+        Returns
+        -------
+        params : ParamsDict
+            Parameter names mapped to their values, with HTML table representation.
+        """
+        out = self.get_params(deep=deep)
+        # Only use top-level params (no __) for display
+        param_names = self.get_param_names()
+        defaults = self.get_param_defaults()
+
+        def is_non_default(name, val):
+            if name not in defaults:
+                return True
+            default = defaults[name]
+            return not _is_param_equal(val, default)
+
+        non_default_params = [
+            name
+            for name in param_names
+            if name in out and is_non_default(name, out[name])
+        ]
+        default_params = [
+            name
+            for name in param_names
+            if name in out and name not in non_default_params
+        ]
+
+        params = {name: out[name] for name in non_default_params + default_params}
+
+        return ParamsDict(
+            params=params,
+            non_default=tuple(non_default_params),
+            estimator_class=self.__class__,
+            doc_link=doc_link,
+        )
 
     @classmethod
     def _generate_doc_link(cls):
