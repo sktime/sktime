@@ -299,9 +299,19 @@ class _HTMLDocumentationLinkMixin:
         if self.__class__.__module__.split(".")[0] != self._doc_link_module:
             return ""
 
-        # TODO: add check if link is well-structured
-        # TODO: add fallback to stable version (?)
-        return self.__class__._generate_doc_link()
+        url = self.__class__._generate_doc_link()
+        try:
+            import urllib.request
+
+            req = urllib.request.Request(url, method="HEAD")
+            with urllib.request.urlopen(req, timeout=1.0):
+                pass
+            return url
+        except Exception:
+            # Fallback to stable version
+            module = importlib.import_module(self._doc_link_module)
+            version = parse_version(module.__version__).base_version
+            return url.replace(f"/v{version}/", "/stable/")
 
     @property
     def _repr_html_(self):
