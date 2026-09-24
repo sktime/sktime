@@ -442,7 +442,7 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel):
             C_gamma[9 // 2] = G1
 
             start = dilation
-            end = input_length - padding
+            end = input_length - 1 - padding
 
             for gamma_index in range(9 // 2):
                 C_alpha[-end:] = C_alpha[-end:] + A1[:end]

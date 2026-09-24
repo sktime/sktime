@@ -428,7 +428,13 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
         num_features_per_dilation,
         biases,
     ) = parameters
-    _, _, dilations1, num_features_per_dilation1, biases1 = parameters1
+    (
+        num_channels_per_combination1,
+        channel_indices1,
+        dilations1,
+        num_features_per_dilation1,
+        biases1,
+    ) = parameters1
 
     # equivalent to:
     # >>> from itertools import combinations
@@ -875,7 +881,7 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
             C_gamma[9 // 2] = G1
 
             start = dilation
-            end = input_length - padding
+            end = input_length - 1 - padding
 
             for gamma_index in range(9 // 2):
                 C_alpha[:, -end:] = C_alpha[:, -end:] + A1[:, :end]
@@ -892,13 +898,13 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
             for kernel_index in range(num_kernels):
                 feature_index_end = feature_index_start + num_features_this_dilation
 
-                num_channels_this_combination = num_channels_per_combination[
+                num_channels_this_combination = num_channels_per_combination1[
                     combination_index
                 ]
 
                 num_channels_end = num_channels_start + num_channels_this_combination
 
-                channels_this_combination = channel_indices[
+                channels_this_combination = channel_indices1[
                     num_channels_start:num_channels_end
                 ]
 
@@ -988,5 +994,8 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
                         )
 
                 feature_index_start = feature_index_end
+
+                combination_index += 1
+                num_channels_start = num_channels_end
 
     return features
