@@ -419,7 +419,7 @@ class PanelPdMultiIndex(ScitypePanel):
     An object ``obj: pd.DataFrame`` follows the specification iff:
 
     * structure convention: ``obj.index`` must be a pair multi-index of
-      type ``(Index, t)``, where ``t`` is one of ``Int64Index``, ``RangeIndex``,
+      type ``(Index, t)``, where ``t`` is one of ``Index`` (integer-typed), ``RangeIndex``,
       ``DatetimeIndex``, ``PeriodIndex`` and monotonic.
       ``obj.index`` must have two levels (can be named or not).
     * instance index: the first element of pairs in ``obj.index`` (0-th level value)
