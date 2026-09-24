@@ -77,7 +77,8 @@ class Fracdiff(TransformerMixin, BaseEstimator):
 
     Examples
     --------
-    >>> from fracdiff.sklearn import Fracdiff
+    >>> from sktime.libs.fracdiff.sklearn.fracdiff import Fracdiff
+    >>> import numpy
     >>> X = numpy.arange(10).reshape(5, 2)
     >>> fracdiff = Fracdiff(0.5, window=3)
     >>> fracdiff.fit_transform(X)
@@ -121,6 +122,7 @@ class Fracdiff(TransformerMixin, BaseEstimator):
 
         Examples
         --------
+        >>> from sktime.libs.fracdiff.sklearn.fracdiff import Fracdiff
         >>> Fracdiff(0.5)
         Fracdiff(d=0.5, window=10, mode=same, window_policy=fixed)
         """
