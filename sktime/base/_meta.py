@@ -734,6 +734,81 @@ class _HeterogenousMetaEstimator:
         else:
             self.set_tags(**{mid_tag_name: mid_tag_val_not})
 
+    def _deps(self):
+        """Collect python_dependencies from all components recursively.
+
+        Returns
+        -------
+        list
+            Union of python_dependencies from all components, preserving nested
+            lists for disjunctive dependencies and maintaining deterministic ordering.
+        """
+        steps = getattr(self, self._steps_attr, [])
+        all_deps = []
+
+        for _, estimator in steps:
+            if isinstance(estimator, _HeterogenousMetaEstimator):
+                # Read only the nested composite's direct class/default tag;
+                # its instance tag may already contain an aggregated value.
+                deps = estimator.get_class_tag("python_dependencies", None)
+                if deps is not None:
+                    all_deps.append(deps)
+                component_deps = estimator._deps()
+                if component_deps:
+                    all_deps.append(component_deps)
+                continue
+
+            # Leaf estimators expose their dependency expression directly.
+            deps = estimator.get_tag("python_dependencies", None)
+            if deps is not None:
+                all_deps.append(deps)
+
+        # Combine and deduplicate while preserving dependency expressions.
+        return self._combine_dependencies(all_deps)
+
+    def _combine_dependencies(self, dep_list):
+        """Combine dependency lists while preserving disjunctive expressions.
+
+        Parameters
+        ----------
+        dep_list : list
+            List of component dependency specifications. Each item is either a
+            string or a component's top-level list of dependency specifications.
+
+        Returns
+        -------
+        list
+            Combined and deduplicated dependencies. Top-level lists are combined as
+            conjunctions, while nested lists remain disjunctions.
+        """
+        if not dep_list:
+            return []
+
+        def _deduplicate_structure(dep):
+            """Deduplicate nested dependency expressions while preserving order."""
+            if isinstance(dep, list):
+                result = []
+                for item in dep:
+                    item = _deduplicate_structure(item)
+                    if item not in result:
+                        result.append(item)
+                return result
+            return dep
+
+        combined = []
+        for dep in dep_list:
+            # A component's top-level list is an AND expression and can be
+            # combined with the composite's top-level list. Nested lists are OR.
+            dependencies = dep if isinstance(dep, list) else [dep]
+            for dependency in dependencies:
+                if dependency is None or dependency == "":
+                    continue
+                dependency = _deduplicate_structure(dependency)
+                if dependency not in combined:
+                    combined.append(dependency)
+
+        return combined
+
     def _sk_visual_block_(self):
         steps = getattr(self, self._steps_attr)
 
