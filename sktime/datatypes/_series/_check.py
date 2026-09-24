@@ -1035,6 +1035,33 @@ class SeriesGluontsList(ScitypeSeries):
 class SeriesGluontsPandas(ScitypeSeries):
     """Data type: gluonts PandasDataset based specification of single time series.
 
+    Name: ``"gluonts_PandasDataset_series"``
+
+    Short description:
+    A ``gluonts.dataset.pandas.PandasDataset`` representation of a single
+    time series, backed by a pandas ``DataFrame``.
+
+    Long description:
+    The ``"gluonts_PandasDataset_series"`` :term:`mtype` is a concrete
+    specification of the ``Series`` :term:`scitype`, which represents a single
+    time series.
+
+    An object ``obj: gluonts.dataset.pandas.PandasDataset`` follows the
+    specification iff:
+
+    * structure convention: ``obj`` is a GluonTS ``PandasDataset`` containing
+      one pandas ``DataFrame`` data entry.
+    * time index: the pandas ``DataFrame`` index represents the time index.
+    * variables: columns of the pandas ``DataFrame`` correspond to variables.
+    * variable names: variable names are taken from the pandas ``DataFrame``
+      columns.
+
+    Capabilities:
+
+    * can represent univariate and multivariate series.
+    * can represent unequally spaced series.
+    * can represent missing values.
+
     Parameters
     ----------
     is_univariate: bool
