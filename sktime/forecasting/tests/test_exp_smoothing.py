@@ -43,6 +43,68 @@ def test_set_params():
     not run_test_for_class(ExponentialSmoothing),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+def test_update_params_true():
+    """Test update advances cutoff and refits."""
+    y = load_airline()
+    y_train, y_update = y[:100], y[100:110]
+
+    f = ExponentialSmoothing(trend="add", seasonal="mul", sp=12)
+    f.fit(y_train)
+    cutoff_before = f.cutoff
+
+    f.update(y_update, update_params=True)
+
+    assert f.cutoff > cutoff_before
+    pred = f.predict(fh=[1, 2, 3])
+    assert len(pred) == 3
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExponentialSmoothing),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+def test_update_params_false_preserves_smoothing_params():
+    """Test update_params=False preserves fitted smoothing params."""
+    y = load_airline()
+    y_train, y_update = y[:100], y[100:110]
+
+    f = ExponentialSmoothing(trend="add", seasonal="mul", sp=12)
+    f.fit(y_train)
+    level_before = f._fitted_forecaster.params["smoothing_level"]
+    trend_before = f._fitted_forecaster.params["smoothing_trend"]
+
+    f.update(y_update, update_params=False)
+
+    assert f._fitted_forecaster.params["smoothing_level"] == level_before
+    assert f._fitted_forecaster.params["smoothing_trend"] == trend_before
+    pred = f.predict(fh=[1, 2, 3])
+    assert len(pred) == 3
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExponentialSmoothing),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.filterwarnings("ignore::FutureWarning")
+def test_update_simple_no_trend_no_seasonal():
+    """Test update for simple exponential smoothing."""
+    y = load_airline()
+    y_train, y_update = y[:100], y[100:105]
+
+    f = ExponentialSmoothing()
+    f.fit(y_train)
+    f.update(y_update, update_params=False)
+    pred = f.predict(fh=[1, 2])
+    assert len(pred) == 2
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExponentialSmoothing),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def check_panel_expsmooth():
     """Test exponential smoothing on panel data with datetime index."""
     # make panel with hour of day panel and datetime index
