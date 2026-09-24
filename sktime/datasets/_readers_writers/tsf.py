@@ -130,11 +130,12 @@ def load_tsf_to_dataframe(
     value_column_name: str, default="series_value"
         Any name that is preferred to have as the name of the column containing series
         values in the returning dataframe.
-    return_type : str - "pd_multiindex_hier" (default), "tsf_default", or valid sktime
+    return_type : str - "pd_multiindex_hier" (default), "default_tsf", or valid sktime
         mtype string for in-memory data container format specification of the
         return type:
         - "pd_multiindex_hier" = pd.DataFrame of sktime type ``pd_multiindex_hier``
-        - "tsf_default" = container that faithfully mirrors tsf format from the original
+        - "default_tsf" = container that faithfully mirrors tsf format from the
+            original
             implementation in: https://github.com/rakshitha123/TSForecasting/
             blob/master/utils/data_loader.py.
         - other valid mtype strings are Panel or Hierarchical mtypes in
@@ -152,6 +153,20 @@ def load_tsf_to_dataframe(
         "frequency", "forecast_horizon", "contain_missing_values",
         "contain_equal_length"
     """
+    if not isinstance(return_type, str):
+        raise TypeError(
+            f"return_type must be a str, but found type {type(return_type)}"
+        )
+
+    valid_return_types = {"default_tsf", "pd_multiindex_hier"}.union(
+        set(MTYPE_LIST_HIERARCHICAL)
+    )
+    if return_type not in valid_return_types:
+        raise ValueError(
+            f"return_type must be one of {sorted(valid_return_types)}, "
+            f"but found {return_type}"
+        )
+
     col_names = []
     col_types = []
     all_data = {}
