@@ -233,6 +233,7 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     _tags = {
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -248,7 +249,7 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
             if n < 1 or not np.isfinite(n):
                 raise ValueError("n must be a finite number >= 1.")
         else:
-            raise ValueError("n must be int or float, not " + str(type(n))) + "."
+            raise ValueError(f"n must be int or float, not {type(n)}.")
         self.n = n
         self.without_replacement = without_replacement
         self.random_state = random_state

@@ -1,0 +1,2 @@
+class BatsWarning(UserWarning):
+    pass

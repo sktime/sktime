@@ -203,6 +203,18 @@ class AutoTS(BaseForecaster):
         Number of cores available to pass to parallel processing.
         A joblib context manager can be used instead (pass None in this case).
         Also 'auto'.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.autots import AutoTS
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = AutoTS(
+    ...     model_list="superfast", max_generations=1, num_validations=0, verbose=-2
+    ... )
+    >>> forecaster.fit(y, fh=3)
+    AutoTS(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
@@ -263,7 +275,7 @@ class AutoTS(BaseForecaster):
         model_interrupt: bool = True,
         generation_timeout: int = None,
         current_model_file: str = None,
-        verbose: int = 1,
+        verbose: int = -2,
         n_jobs: int = -2,
     ):
         self.model_name = model_name

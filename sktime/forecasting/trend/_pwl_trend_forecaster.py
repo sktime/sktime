@@ -206,8 +206,8 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
         y_pred = out.loc[:, "trend"]
         y_pred.index = future.index
 
-        if isinstance(self._y.columns[0], str):
-            y_pred.name = self._y.columns[0]
+        if isinstance(self._cur_y.columns[0], str):
+            y_pred.name = self._cur_y.columns[0]
         else:
             y_pred.name = None
 

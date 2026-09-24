@@ -4,18 +4,9 @@
 __author__ = ["benheid"]
 
 import pandas as pd
-from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
-
-if _check_soft_dependencies(["pykan", "torch"], severity="none"):
-    import torch
-    from torch.utils.data import Dataset
-else:
-
-    class Dataset:
-        """Dummy class if torch is unavailable."""
 
 
 class PyKANForecaster(BaseForecaster):
@@ -52,6 +43,11 @@ class PyKANForecaster(BaseForecaster):
     ----------
     .. [1] Liu, Ziming, et al. "KAN: Kolmogorov-Arnold Networks."
       arXiv preprint arXiv:2404.19756 (2024).
+
+    Examples
+    --------
+    >>> from sktime.forecasting.pykan import PyKANForecaster
+    >>> forecaster = PyKANForecaster()
     """
 
     _tags = {
@@ -131,7 +127,13 @@ class PyKANForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        import torch
         from kan import KAN
+
+        self._cur_y = y
+        self._cur_X = X
+
+        PyTorchTrainDataset = _get_dataset_class()
 
         output_size = max(fh.to_relative(self.cutoff)._values)
         if X is not None:
@@ -223,6 +225,7 @@ class PyKANForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        import torch
         from kan import KAN
 
         model = KAN(width=self._layer_sizes, grid=self._best_grid, **self._model_params)
@@ -230,16 +233,16 @@ class PyKANForecaster(BaseForecaster):
         if X is not None:
             input_ = torch.cat(
                 [
-                    torch.from_numpy(self._y.values[-self._input_layer_size :]).reshape(
-                        (1, -1)
-                    ),
+                    torch.from_numpy(
+                        self._cur_y.values[-self._input_layer_size :]
+                    ).reshape((1, -1)),
                     torch.from_numpy(X.values).reshape((1, -1)),
                 ],
                 dim=-1,
             ).type(torch.float32)
         else:
             input_ = (
-                torch.from_numpy(self._y.values[-self._input_layer_size :])
+                torch.from_numpy(self._cur_y.values[-self._input_layer_size :])
                 .reshape((1, -1))
                 .type(torch.float32)
             )
@@ -247,7 +250,9 @@ class PyKANForecaster(BaseForecaster):
         prediction = model(input_).detach().numpy().reshape((-1,))
         index = list(fh.to_absolute(self.cutoff))
         return pd.Series(
-            prediction[fh.to_relative(self._cutoff) - 1], index=index, name=self._y.name
+            prediction[fh.to_relative(self._cutoff) - 1],
+            index=index,
+            name=self._cur_y.name,
         )
 
     @classmethod
@@ -289,35 +294,41 @@ class PyKANForecaster(BaseForecaster):
         return params
 
 
-class PyTorchTrainDataset(Dataset):
-    """Dataset for use in sktime deep learning forecasters."""
+def _get_dataset_class():
+    """Get the PyTorch dataset class for the forecaster."""
+    from torch.utils.data import Dataset
 
-    def __init__(self, y, seq_len, fh=None, X=None):
-        self.y = y.values
-        self.X = X.values if X is not None else X
-        self.seq_len = seq_len
-        self.fh = fh
+    class PyTorchTrainDataset(Dataset):
+        """Dataset for use in sktime deep learning forecasters."""
 
-    def __len__(self):
-        """Return length of dataset."""
-        return max(len(self.y) - self.seq_len - self.fh + 1, 0)
+        def __init__(self, y, seq_len, fh=None, X=None):
+            self.y = y.values
+            self.X = X.values if X is not None else X
+            self.seq_len = seq_len
+            self.fh = fh
 
-    def __getitem__(self, i):
-        """Return data point."""
-        from torch import from_numpy, tensor
+        def __len__(self):
+            """Return length of dataset."""
+            return max(len(self.y) - self.seq_len - self.fh + 1, 0)
 
-        hist_y = tensor(self.y[i : i + self.seq_len]).type(torch.float32)
-        if self.X is not None:
-            exog_data = (
-                tensor(self.X[i + self.seq_len : i + self.seq_len + self.fh])
-                .type(torch.float32)
-                .flatten()
+        def __getitem__(self, i):
+            """Return data point."""
+            from torch import cat, float32, from_numpy, tensor
+
+            window_end = i + self.seq_len
+
+            hist_y = tensor(self.y[i:window_end]).type(float32)
+            if self.X is not None:
+                exog_data = (
+                    tensor(self.X[window_end : window_end + self.fh])
+                    .type(float32)
+                    .flatten()
+                )
+            else:
+                exog_data = tensor([], dtype=float32)
+            return (
+                cat([hist_y, exog_data]),
+                from_numpy(self.y[window_end : window_end + self.fh]).type(float32),
             )
-        else:
-            exog_data = tensor([])
-        return (
-            torch.cat([hist_y, exog_data]),
-            from_numpy(self.y[i + self.seq_len : i + self.seq_len + self.fh]).type(
-                torch.float32
-            ),
-        )
+
+    return PyTorchTrainDataset

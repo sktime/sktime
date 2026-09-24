@@ -60,14 +60,21 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "fkiraly", "indinewton"],
+        # estimator type
+        # --------------
         "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "capability:multivariate": False,
+        "capability:update": True,
         "X-y-must-have-same-index": True,
+        # CI and test flags
+        # -----------------
         "tests:skip_by_name": ["test_predict_time_index_with_X"],
     }
 
@@ -97,6 +104,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         forecasters = [x[1] for x in self.forecasters_]
         self.regressor_ = check_regressor(
             regressor=self.regressor, random_state=self.random_state
@@ -169,7 +178,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y_pred = self.regressor_.predict(y_preds)
         # index = y_preds.index
         index = self.fh.to_absolute_index(self.cutoff)
-        return pd.Series(y_pred, index=index, name=self._y.name)
+        return pd.Series(y_pred, index=index, name=self._cur_y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
