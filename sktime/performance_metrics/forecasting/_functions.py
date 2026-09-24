@@ -436,6 +436,9 @@ def mean_absolute_scaled_error(
     """
     y_train = _get_kwarg("y_train", metric_name="mean_absolute_scaled_error", **kwargs)
 
+    if not isinstance(sp, int) or sp <= 0:
+        raise ValueError(f"sp must be a positive integer, got sp={sp}.")
+
     # Other input checks
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -566,6 +569,9 @@ def median_absolute_scaled_error(
     y_train = _get_kwarg(
         "y_train", metric_name="median_absolute_scaled_error", **kwargs
     )
+
+    if not isinstance(sp, int) or sp <= 0:
+        raise ValueError(f"sp must be a positive integer, got sp={sp}.")
 
     # Other input checks
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
@@ -706,6 +712,9 @@ def mean_squared_scaled_error(
     """  # noqa: E501
     y_train = _get_kwarg("y_train", metric_name="mean_squared_scaled_error", **kwargs)
 
+    if not isinstance(sp, int) or sp <= 0:
+        raise ValueError(f"sp must be a positive integer, got sp={sp}.")
+
     # Other input checks
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
     if horizon_weight is not None:
@@ -837,6 +846,9 @@ def median_squared_scaled_error(
     np.float64(0.16914781383660782)
     """  # noqa: E501
     y_train = _get_kwarg("y_train", metric_name="median_squared_scaled_error", **kwargs)
+
+    if not isinstance(sp, int) or sp <= 0:
+        raise ValueError(f"sp must be a positive integer, got sp={sp}.")
 
     # Other input checks
     _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
