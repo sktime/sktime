@@ -34,6 +34,7 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.datatypes._base import BaseConverter
 from sktime.datatypes._convert_utils._convert import _extend_conversions
 
 # this needs to be refactored with the convert module
@@ -54,190 +55,306 @@ MTYPE_LIST_TABLE = [
 convert_dict = dict()
 
 
-def convert_identity(obj, store=None):
-    return obj
+class TableIdentity(BaseConverter):
+    """Identity converter for Table mtypes."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": None,
+        "mtype_to": None,
+        "multiple_conversions": True,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    @classmethod
+    def get_conversions(cls):
+        return [(tp, tp) for tp in MTYPE_LIST_TABLE]
+
+    def _convert(self, obj, store=None):
+        return obj
 
 
-# assign identity function to type conversion to self
-for tp in MTYPE_LIST_TABLE:
-    convert_dict[(tp, tp, "Table")] = convert_identity
+class Numpy1DToNumpy2D(BaseConverter):
+    """Convert numpy1D to numpy2D."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy1D",
+        "mtype_to": "numpy2D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj: np.ndarray, store=None) -> np.ndarray:
+        if not isinstance(obj, np.ndarray):
+            raise TypeError("input must be a np.ndarray")
+
+        if len(obj.shape) == 1:
+            res = np.reshape(obj, (-1, 1))
+        else:
+            raise TypeError("input must be 1D np.ndarray")
+
+        return res
 
 
-def convert_1D_to_2D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
-    if not isinstance(obj, np.ndarray):
-        raise TypeError("input must be a np.ndarray")
+class Numpy2DToNumpy1D(BaseConverter):
+    """Convert numpy2D to numpy1D."""
 
-    if len(obj.shape) == 1:
-        res = np.reshape(obj, (-1, 1))
-    else:
-        raise TypeError("input must be 1D np.ndarray")
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy2D",
+        "mtype_to": "numpy1D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    return res
+    def _convert(self, obj: np.ndarray, store=None) -> np.ndarray:
+        if not isinstance(obj, np.ndarray):
+            raise TypeError("input must be a np.ndarray")
 
+        if len(obj.shape) == 2:
+            res = obj.flatten()
+        else:
+            raise TypeError("input must be 2D np.ndarray")
 
-convert_dict[("numpy1D", "numpy2D", "Table")] = convert_1D_to_2D_numpy_as_Table
-
-
-def convert_2D_to_1D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
-    if not isinstance(obj, np.ndarray):
-        raise TypeError("input must be a np.ndarray")
-
-    if len(obj.shape) == 2:
-        res = obj.flatten()
-    else:
-        raise TypeError("input must be 2D np.ndarray")
-
-    return res
+        return res
 
 
-convert_dict[("numpy2D", "numpy1D", "Table")] = convert_2D_to_1D_numpy_as_Table
+class PandasDataFrameToNumpy2D(BaseConverter):
+    """Convert pd_DataFrame_Table to numpy2D."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "numpy2D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj: pd.DataFrame, store=None) -> np.ndarray:
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError("input must be a pd.DataFrame")
+
+        if isinstance(store, dict):
+            store["columns"] = obj.columns
+
+        return obj.to_numpy()
 
 
-def convert_df_to_2Dnp_as_Table(obj: pd.DataFrame, store=None) -> np.ndarray:
-    if not isinstance(obj, pd.DataFrame):
-        raise TypeError("input must be a pd.DataFrame")
+class PandasDataFrameToNumpy1D(BaseConverter):
+    """Convert pd_DataFrame_Table to numpy1D."""
 
-    if isinstance(store, dict):
-        store["columns"] = obj.columns
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "numpy1D",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    return obj.to_numpy()
+    def _convert(self, obj: pd.DataFrame, store=None) -> np.ndarray:
+        converter = PandasDataFrameToNumpy2D(
+            mtype_from="pd_DataFrame_Table",
+            mtype_to="numpy2D",
+        )
+        return converter(obj, store=store).flatten()
 
 
-convert_dict[("pd_DataFrame_Table", "numpy2D", "Table")] = convert_df_to_2Dnp_as_Table
+class Numpy2DToPandasDataFrame(BaseConverter):
+    """Convert numpy2D to pd_DataFrame_Table."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy2D",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj: np.ndarray, store=None) -> pd.DataFrame:
+        if not isinstance(obj, np.ndarray) and len(obj.shape) != 2:
+            raise TypeError("input must be a 2D np.ndarray")
+
+        if len(obj.shape) == 1:
+            obj = np.reshape(obj, (-1, 1))
+
+        if (
+            isinstance(store, dict)
+            and "columns" in store.keys()
+            and len(store["columns"]) == obj.shape[1]
+        ):
+            res = pd.DataFrame(obj, columns=store["columns"])
+        else:
+            res = pd.DataFrame(obj)
+
+        return res
 
 
-def convert_df_to_1Dnp_as_Table(obj: pd.DataFrame, store=None) -> np.ndarray:
-    return convert_df_to_2Dnp_as_Table(obj=obj, store=store).flatten()
+class Numpy1DToPandasDataFrame(BaseConverter):
+    """convert numpy1D to pd_DataFrame_Table."""
 
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "numpy1D",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-convert_dict[("pd_DataFrame_Table", "numpy1D", "Table")] = convert_df_to_1Dnp_as_Table
+    def _convert(self, obj: np.ndarray, store=None) -> pd.DataFrame:
+        if not isinstance(obj, np.ndarray) and len(obj.shape) != 1:
+            raise TypeError("input must be a 1D np.ndarray")
 
-
-def convert_2Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
-    if not isinstance(obj, np.ndarray) and len(obj.shape) != 2:
-        raise TypeError("input must be a 2D np.ndarray")
-
-    if len(obj.shape) == 1:
         obj = np.reshape(obj, (-1, 1))
 
-    if (
-        isinstance(store, dict)
-        and "columns" in store.keys()
-        and len(store["columns"]) == obj.shape[1]
-    ):
-        res = pd.DataFrame(obj, columns=store["columns"])
-    else:
-        res = pd.DataFrame(obj)
+        if (
+            isinstance(store, dict)
+            and "columns" in store.keys()
+            and len(store["columns"]) == obj.shape[1]
+        ):
+            res = pd.DataFrame(obj, columns=store["columns"])
+        else:
+            res = pd.DataFrame(obj)
 
-    return res
-
-
-convert_dict[("numpy2D", "pd_DataFrame_Table", "Table")] = convert_2Dnp_to_df_as_Table
+        return res
 
 
-def convert_1Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
-    if not isinstance(obj, np.ndarray) and len(obj.shape) != 1:
-        raise TypeError("input must be a 1D np.ndarray")
+class PandasSeriesToPandasDataFrame(BaseConverter):
+    """convert pd_Series_Table to pd_DataFrame_Table."""
 
-    obj = np.reshape(obj, (-1, 1))
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_Series_Table",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    if (
-        isinstance(store, dict)
-        and "columns" in store.keys()
-        and len(store["columns"]) == obj.shape[1]
-    ):
-        res = pd.DataFrame(obj, columns=store["columns"])
-    else:
-        res = pd.DataFrame(obj)
+    def _convert(self, obj: pd.Series, store=None) -> pd.DataFrame:
+        if not isinstance(obj, pd.Series):
+            raise TypeError("input must be a pd.Series")
 
-    return res
+        if (
+            isinstance(store, dict)
+            and "columns" in store.keys()
+            and len(store["columns"]) == 1
+        ):
+            res = pd.DataFrame(obj, columns=store["columns"])
+        else:
+            res = pd.DataFrame(obj)
 
-
-convert_dict[("numpy1D", "pd_DataFrame_Table", "Table")] = convert_1Dnp_to_df_as_Table
-
-
-def convert_s_to_df_as_table(obj: pd.Series, store=None) -> pd.DataFrame:
-    if not isinstance(obj, pd.Series):
-        raise TypeError("input must be a pd.Series")
-
-    if (
-        isinstance(store, dict)
-        and "columns" in store.keys()
-        and len(store["columns"]) == 1
-    ):
-        res = pd.DataFrame(obj, columns=store["columns"])
-    else:
-        res = pd.DataFrame(obj)
-
-    return res
+        return res
 
 
 convert_dict[("pd_Series_Table", "pd_DataFrame_Table", "Table")] = (
-    convert_s_to_df_as_table
+    PandasSeriesToPandasDataFrame()
 )
 
 
-def convert_df_to_s_as_table(obj: pd.DataFrame, store=None) -> pd.Series:
-    if not isinstance(obj, pd.DataFrame):
-        raise TypeError("input is not a pd.DataFrame")
+class PandasDataFrameToPandasSeries(BaseConverter):
+    """Convert pd_DataFrame_Table to pd_Series_Table."""
 
-    if len(obj.columns) != 1:
-        raise ValueError("input must be univariate pd.DataFrame, with one column")
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "pd_Series_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    if isinstance(store, dict):
-        store["columns"] = obj.columns[[0]]
+    def _convert(self, obj: pd.DataFrame, store=None) -> pd.Series:
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError("input is not a pd.DataFrame")
 
-    y = obj[obj.columns[0]]
-    y.name = None
+        if len(obj.columns) != 1:
+            raise ValueError("input must be univariate pd.DataFrame, with one column")
 
-    return y
+        if isinstance(store, dict):
+            store["columns"] = obj.columns[[0]]
+
+        y = obj[obj.columns[0]]
+        y.name = None
+
+        return y
 
 
 convert_dict[("pd_DataFrame_Table", "pd_Series_Table", "Table")] = (
-    convert_df_to_s_as_table
+    PandasDataFrameToPandasSeries()
 )
 
 
-def convert_list_of_dict_to_df_as_table(obj: list, store=None) -> pd.DataFrame:
-    if not isinstance(obj, list):
-        raise TypeError("input must be a list of dict")
+class ListOfDictToPandasDataFrame(BaseConverter):
+    """Convert list_of_dict to pd_DataFrame_Table."""
 
-    if not np.all([isinstance(x, dict) for x in obj]):
-        raise TypeError("input must be a list of dict")
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "list_of_dict",
+        "mtype_to": "pd_DataFrame_Table",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    res = pd.DataFrame(obj)
+    def _convert(self, obj: list, store=None) -> pd.DataFrame:
+        if not isinstance(obj, list):
+            raise TypeError("input must be a list of dict")
 
-    if (
-        isinstance(store, dict)
-        and "index" in store.keys()
-        and len(store["index"]) == len(res)
-    ):
-        res.index = store["index"]
+        if not np.all([isinstance(x, dict) for x in obj]):
+            raise TypeError("input must be a list of dict")
 
-    return res
+        res = pd.DataFrame(obj)
+
+        if (
+            isinstance(store, dict)
+            and "index" in store.keys()
+            and len(store["index"]) == len(res)
+        ):
+            res.index = store["index"]
+
+        return res
 
 
 convert_dict[("list_of_dict", "pd_DataFrame_Table", "Table")] = (
-    convert_list_of_dict_to_df_as_table
+    ListOfDictToPandasDataFrame()
 )
 
 
-def convert_df_to_list_of_dict_as_table(obj: pd.DataFrame, store=None) -> list:
-    if not isinstance(obj, pd.DataFrame):
-        raise TypeError("input is not a pd.DataFrame")
+class PandasDataFrameToListOfDict(BaseConverter):
+    """Convert pd_DataFrame_Table to list_of_dict."""
 
-    ret_dict = [obj.loc[i].to_dict() for i in obj.index]
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd_DataFrame_Table",
+        "mtype_to": "list_of_dict",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    if isinstance(store, dict):
-        store["index"] = obj.index
+    def _convert(self, obj: pd.DataFrame, store=None) -> list:
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError("input is not a pd.DataFrame")
 
-    return ret_dict
+        ret_dict = [obj.loc[i].to_dict() for i in obj.index]
+
+        if isinstance(store, dict):
+            store["index"] = obj.index
+
+        return ret_dict
 
 
 convert_dict[("pd_DataFrame_Table", "list_of_dict", "Table")] = (
-    convert_df_to_list_of_dict_as_table
+    PandasDataFrameToListOfDict()
 )
-
 
 _extend_conversions(
     "pd_Series_Table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
@@ -246,9 +363,116 @@ _extend_conversions(
     "list_of_dict", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
 )
 
-
 if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
     import polars as pl
+
+    class PandasDataFrameToPolarsEager(BaseConverter):
+        """Convert pd_DataFrame_Table to polars_eager_table."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd_DataFrame_Table",
+            "mtype_to": "polars_eager_table",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj: pd.DataFrame, store=None):
+            if not isinstance(obj, pd.DataFrame):
+                raise TypeError("input is not a pd.DataFrame")
+
+            return pl.DataFrame(obj)
+
+    class PandasDataFrameToPolarsLazy(BaseConverter):
+        """Convert pd_DataFrame_Table to polars_lazy_table."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd_DataFrame_Table",
+            "mtype_to": "polars_lazy_table",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj: pd.DataFrame, store=None):
+            if not isinstance(obj, pd.DataFrame):
+                raise TypeError("input is not a pd.DataFrame")
+
+            return pl.LazyFrame(obj)
+
+    class PolarsEagerToPandasDataFrame(BaseConverter):
+        """Convert polars_eager_table to pd_DataFrame_Table."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "polars_eager_table",
+            "mtype_to": "pd_DataFrame_Table",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj: pl.DataFrame, store=None):
+            if not isinstance(obj, pl.DataFrame):
+                raise TypeError("input is not a polars frame")
+
+            return obj.to_pandas()
+
+    class PolarsLazyToPandasDataFrame(BaseConverter):
+        """Convert polars_lazy_table to pd_DataFrame_Table."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "polars_lazy_table",
+            "mtype_to": "pd_DataFrame_Table",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj: pl.LazyFrame, store=None):
+            if not isinstance(obj, pl.LazyFrame):
+                raise TypeError("input is not a polars frame")
+
+            return obj.collect().to_pandas()
+
+    class PolarsLazyToPolarsEager(BaseConverter):
+        """Convert polars_lazy_table to polars_eager_table."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "polars_lazy_table",
+            "mtype_to": "polars_eager_table",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj: pl.LazyFrame, store=None):
+            if not isinstance(obj, pl.LazyFrame):
+                raise TypeError("input is not a pl.LazyFrame")
+
+            return obj.collect()
+
+    class PolarsEagerToPolarsLazy(BaseConverter):
+        """Convert polars_eager_table to polars_lazy_table."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "polars_eager_table",
+            "mtype_to": "polars_lazy_table",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj: pl.DataFrame, store=None):
+            if not isinstance(obj, pl.DataFrame):
+                raise TypeError("input is not a pl.DataFrame")
+
+            return obj.lazy()
 
     def convert_polars_to_pandas(obj, store=None):
         if not isinstance(obj, (pl.LazyFrame, pl.DataFrame)):
@@ -284,24 +508,18 @@ if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
         return obj.collect()
 
     convert_dict[("pd_DataFrame_Table", "polars_eager_table", "Table")] = (
-        convert_pandas_to_polars_eager
-    )
-    convert_dict[("pd_DataFrame_Table", "polars_lazy_table", "Table")] = (
-        convert_pandas_to_polars_lazy
+        PandasDataFrameToPolarsEager()
     )
 
     convert_dict[("polars_eager_table", "pd_DataFrame_Table", "Table")] = (
-        convert_polars_to_pandas
+        PolarsEagerToPandasDataFrame()
     )
     convert_dict[("polars_lazy_table", "pd_DataFrame_Table", "Table")] = (
-        convert_polars_to_pandas
+        PolarsLazyToPandasDataFrame()
     )
 
-    convert_dict[("polars_lazy_table", "polars_eager_table", "Table")] = (
-        convert_polars_lazy_to_eager
-    )
-    convert_dict[("polars_eager_table", "polars_lazy_table", "Table")] = (
-        convert_polars_eager_to_lazy
+    convert_dict[("pd_DataFrame_Table", "polars_lazy_table", "Table")] = (
+        PandasDataFrameToPolarsLazy()
     )
 
     _extend_conversions(
