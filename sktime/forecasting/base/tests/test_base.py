@@ -598,3 +598,40 @@ def test_pretrain_respects_preexisting_attrs():
     msg = "pretrain should not misclassify preexisting attrs as set by pretrain"
     assert len(forecaster._pretrained_attrs) == 0, msg
     assert len(forecaster.get_pretrained_params()) == 0, msg
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base"]),
+    reason="run only if forecasting base module has changed",
+)
+@pytest.mark.parametrize(
+    "hierarchy_levels, X_mtype",
+    [((2,), "pd-multiindex"), ((2, 2), "pd_multiindex_hier")],
+)
+def test_pretrain_with_exogenous_X(hierarchy_levels, X_mtype):
+    """Test that pretrain accepts Panel and Hierarchical exogenous X.
+
+    Regression test for bug #10555, where pretrain raised a TypeError about
+    vectorization if X was passed, since only y_inner_mtype, but not
+    X_inner_mtype, was expanded to Panel and Hierarchical mtypes.
+    """
+    from sktime.forecasting.dummy_global import DummyGlobalForecaster
+
+    class _XRecordingForecaster(DummyGlobalForecaster):
+        def _pretrain(self, y, X=None, fh=None):
+            self._X_pretrain = X
+            return super()._pretrain(y=y, X=X, fh=fh)
+
+    y_panel = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels, min_timepoints=6, max_timepoints=6
+    )
+    X_panel = _make_hierarchical(
+        hierarchy_levels=hierarchy_levels, min_timepoints=6, max_timepoints=6
+    )
+
+    forecaster = _XRecordingForecaster()
+    forecaster.pretrain(y_panel, X=X_panel, fh=[1])
+
+    assert forecaster.state == "pretrained"
+    assert forecaster._X_pretrain is not None
+    assert check_is_mtype(forecaster._X_pretrain, X_mtype)
