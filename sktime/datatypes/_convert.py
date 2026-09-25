@@ -65,6 +65,7 @@ __all__ = [
 ]
 
 from copy import deepcopy
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
@@ -80,7 +81,7 @@ from sktime.datatypes._table import convert_dict_Table
 from sktime.utils.retrieval import _all_classes
 
 
-def generate_convert_dict():
+def _generate_convert_dict():
     """Generate conversion dictionary from BaseConverter classes."""
     classes = _all_classes("sktime.datatypes")
     classes = [x[1] for x in classes]
@@ -112,14 +113,17 @@ def generate_convert_dict():
 
 
 # pool convert_dict-s and infer_mtype_dict-s
-convert_dict = dict()
-convert_dict.update(convert_dict_Series)
-convert_dict.update(convert_dict_Panel)
-convert_dict.update(convert_dict_Hierarchical)
-convert_dict.update(convert_dict_Table)
-convert_dict.update(convert_dict_Proba)
-
-_converter_dict_generated = False
+@lru_cache(maxsize=1)
+def _get_convert_dict():
+    """Generate and return the complete conversion dictionary."""
+    convert_dict = dict()
+    convert_dict.update(convert_dict_Series)
+    convert_dict.update(convert_dict_Panel)
+    convert_dict.update(convert_dict_Hierarchical)
+    convert_dict.update(convert_dict_Table)
+    convert_dict.update(convert_dict_Proba)
+    convert_dict.update(_generate_convert_dict())
+    return convert_dict
 
 
 def convert(
@@ -198,11 +202,7 @@ def convert(
     if store_behaviour is None and store != {}:
         store_behaviour = "freeze"
 
-    global _converter_dict_generated
-
-    if not _converter_dict_generated:
-        convert_dict.update(generate_convert_dict())
-        _converter_dict_generated = True
+    convert_dict = _get_convert_dict()
 
     key = (from_type, to_type, as_scitype)
 
@@ -368,11 +368,7 @@ def _conversions_defined(scitype: str):
             entry of row i, col j is 1 if conversion from i to j is defined,
                                 0 if conversion from i to j is not defined
     """
-    global _converter_dict_generated
-
-    if not _converter_dict_generated:
-        convert_dict.update(generate_convert_dict())
-        _converter_dict_generated = True
+    convert_dict = _get_convert_dict()
 
     pairs = [(x[0], x[1]) for x in list(convert_dict.keys()) if x[2] == scitype]
     cols0 = {x[0] for x in list(convert_dict.keys()) if x[2] == scitype}
