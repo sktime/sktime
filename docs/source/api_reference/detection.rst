@@ -124,6 +124,7 @@ Naive Baselines
     :toctree: auto_generated/
     :template: class.rst
 
+    DummyPretrainedAnomalies
     DummyRegularAnomalies
     ZeroAnomalies
 
