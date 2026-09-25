@@ -5,9 +5,11 @@ __author__ = ["yash-sangwan"]
 import numpy as np
 import pandas as pd
 import pytest
+from sklearn.model_selection import KFold, LeaveOneOut
 
 from sktime.benchmarking.detection import (
     DetectionBenchmark,
+    _cv_global_splits,
     _events_after_warmup,
     _leave_one_series_out,
     _replay_live,
@@ -23,6 +25,7 @@ from sktime.performance_metrics.detection import (
     FalseAlarmRate,
     MeanDetectionOffset,
 )
+from sktime.split import ExpandingWindowSplitter, InstanceSplitter
 from sktime.tests.test_switch import run_test_module_changed
 
 pytestmark = pytest.mark.skipif(
@@ -603,3 +606,201 @@ def test_replay_settings_cannot_be_set_on_the_constructor(setting):
     """Test the constructor refuses warmup and chunk_size, which go to add_task."""
     with pytest.raises(TypeError):
         DetectionBenchmark(**setting)
+
+
+def test_default_split_is_leave_one_series_out():
+    """Test a task without cv_global is still evaluated leave-one-series-out."""
+    X, y = _make_panel(), _make_events()
+
+    benchmark = DetectionBenchmark()
+    benchmark.add_task((X, y))
+    benchmark.add_task((X, y), cv_global=KFold(n_splits=3))
+
+    default_id = "[dataset=_]_[split=leave_one_series_out]_[warmup=1]_[chunk_size=1]"
+    kfold_id = "[dataset=_]_[split=KFold]_[warmup=1]_[chunk_size=1]"
+    assert list(benchmark.tasks.entities) == [default_id, kfold_id]
+    assert benchmark.tasks.entities[default_id].cv_global is None
+
+    folds = benchmark._run_validation(
+        benchmark.tasks.entities[default_id], DummyRateAnomalies()
+    )
+    assert list(folds) == list(range(len(NAMES)))
+
+
+def test_leave_one_out_as_cv_global_equals_the_default():
+    """Test cv_global=LeaveOneOut() gives the same folds as the default."""
+    X, y = _make_panel(), _make_events()
+
+    default = list(_leave_one_series_out(X, y))
+    loo = list(_cv_global_splits(X, y, InstanceSplitter(LeaveOneOut())))
+
+    assert len(loo) == len(default)
+    for split_default, split_loo in zip(default, loo):
+        assert split_default[0] == split_loo[0]
+        for part_default, part_loo in zip(split_default[1:], split_loo[1:]):
+            assert part_default.equals(part_loo)
+
+    # and the benchmark replays and scores both the same
+    scorers = [
+        EventTPR(min_offset=-1, max_offset=0),
+        FalseAlarmRate(min_offset=-1, max_offset=0, time_unit="s"),
+    ]
+    runs = []
+    for cv_global in [None, LeaveOneOut()]:
+        benchmark = DetectionBenchmark(return_data=True)
+        benchmark.add_task(
+            (X, y), scorers, "t", warmup=2, chunk_size=3, cv_global=cv_global
+        )
+        task = benchmark.tasks.entities["t"]
+        runs.append(
+            benchmark._run_validation(task, DummyPatternAnomalies(random_state=0))
+        )
+
+    assert list(runs[0]) == list(runs[1])
+    for fold_default, fold_loo in zip(runs[0].values(), runs[1].values()):
+        assert fold_default.scores == fold_loo.scores
+        assert fold_default.predictions.equals(fold_loo.predictions)
+        assert fold_default.ground_truth.equals(fold_loo.ground_truth)
+
+
+def test_kfold_pretrains_on_the_train_side_only():
+    """Test each live series pretrains on the train side of its split only."""
+    X = _panel_with_lengths([10, 10, 10, 10])
+    y = _events_at([(name, 3) for name in ["a", "b", "c", "d"]])
+
+    splits = list(_cv_global_splits(X, y, InstanceSplitter(KFold(n_splits=2))))
+
+    # KFold(2) on a, b, c, d: test a, b with train c, d, then test c, d with a, b
+    assert [split[0] for split in splits] == ["a", "b", "c", "d"]
+    train_side = {"a": {"c", "d"}, "b": {"c", "d"}, "c": {"a", "b"}, "d": {"a", "b"}}
+    for instance, X_pretrain, y_pretrain, X_live, y_live in splits:
+        pretrain = set(X_pretrain.index.droplevel(-1))
+        # neither the live series, nor the other test series of its split
+        assert pretrain == train_side[instance]
+        assert set(y_pretrain.index.droplevel(-1)) == pretrain
+        assert len(X_live) == 10
+        assert not isinstance(X_live.index, pd.MultiIndex)
+        assert list(y_live["ilocs"]) == [3]
+
+
+def test_kfold_never_pretrains_a_detector_on_its_live_series():
+    """Test no fold under cv_global sees its live series, even if pretrain adds up."""
+    X = _panel_with_lengths([5, 5, 5, 5])
+
+    benchmark = DetectionBenchmark(return_data=True)
+    benchmark.add_task(X, task_id="kfold", cv_global=KFold(n_splits=2))
+    task = benchmark.tasks.entities["kfold"]
+    detector = _SeenSeriesDetector()
+
+    folds = benchmark._run_validation(task, detector)
+
+    # one fold per live series, each a fresh clone that never saw its series;
+    # one detector reused across the folds would fire on c and d
+    assert len(folds) == 4
+    assert all(len(fold.predictions) == 0 for fold in folds.values())
+    assert detector.state == "new"
+
+
+class _FixedSplitter:
+    """sklearn-style splitter with one split, given as positions of series."""
+
+    def __init__(self, train, test):
+        self.train = train
+        self.test = test
+
+    def split(self, X, y=None, groups=None):
+        yield np.array(self.train, dtype=int), np.array(self.test, dtype=int)
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        return 1
+
+
+@pytest.mark.parametrize(
+    "train, test, match",
+    [
+        ([0, 1, 2], [0], "on both sides"),
+        ([], [0, 1, 2], "no series on its train side"),
+    ],
+    ids=["overlap", "empty_train"],
+)
+def test_bad_cv_global_split_raises(train, test, match):
+    """Test a live series on the train side, or an empty train side, is refused."""
+    benchmark = DetectionBenchmark()
+    benchmark.add_task(
+        (_make_panel(), _make_events()),
+        task_id="bad",
+        cv_global=_FixedSplitter(train, test),
+    )
+    task = benchmark.tasks.entities["bad"]
+
+    with pytest.raises(ValueError, match=match):
+        benchmark._run_validation(task, DummyRateAnomalies())
+
+
+def test_temporal_splitter_as_cv_global_raises():
+    """Test a splitter of time is refused as cv_global, before registration."""
+    benchmark = DetectionBenchmark()
+
+    with pytest.raises(TypeError, match="splits time"):
+        benchmark.add_task(
+            (_make_panel(), _make_events()),
+            cv_global=ExpandingWindowSplitter(fh=1, initial_window=5),
+        )
+
+    assert benchmark.tasks.entities == {}
+
+
+def test_instance_splitter_as_cv_global_is_accepted():
+    """Test an InstanceSplitter passed to add_task is kept as it is, and runs."""
+    X = _panel_with_lengths([5, 5, 5, 5])
+    splitter = InstanceSplitter(KFold(n_splits=2))
+
+    benchmark = DetectionBenchmark(return_data=True)
+    benchmark.add_task(X, cv_global=splitter)
+
+    task_id = "[dataset=_]_[split=KFold]_[warmup=1]_[chunk_size=1]"
+    assert list(benchmark.tasks.entities) == [task_id]
+    task = benchmark.tasks.entities[task_id]
+    assert task.cv_global is splitter
+
+    detector = _SeenSeriesDetector()
+    folds = benchmark._run_validation(task, detector)
+
+    # one fold per live series, none pretrained on its own series
+    assert len(folds) == 4
+    assert all(len(fold.predictions) == 0 for fold in folds.values())
+    assert detector.state == "new"
+
+
+def test_non_splitter_as_cv_global_raises():
+    """Test an object that is not a splitter is refused, before registration."""
+    benchmark = DetectionBenchmark()
+
+    with pytest.raises(TypeError, match="must be an sklearn splitter"):
+        benchmark.add_task((_make_panel(), _make_events()), cv_global=3)
+
+    assert benchmark.tasks.entities == {}
+
+
+def test_two_scorers_of_the_same_class_keep_two_score_columns():
+    """Test two EventTPR with different windows are both kept in the results."""
+    scorers = [
+        EventTPR(min_offset=0, max_offset=0),
+        EventTPR(min_offset=0, max_offset=1),
+    ]
+
+    benchmark = DetectionBenchmark()
+    benchmark.add_estimator(_ChunkPositionDetector(positions=(1,)))
+    benchmark.add_task(
+        _make_scoring_panel(), scorers, task_id="toy", warmup=2, chunk_size=4
+    )
+
+    results = benchmark.run()
+
+    # alarms at 5 and 9, events at 4 and 9
+    # window [T, T]: event 4 is missed, event 9 is hit, so 0.5
+    # window [T, T + 1]: the alarm at 5 also hits event 4, so 1.0
+    assert results["EventTPR_fold_0_test"].iloc[0] == 0.5
+    assert results["EventTPR_2_fold_0_test"].iloc[0] == 1.0
+    assert "EventTPR_mean" in results.columns
+    assert "EventTPR_2_mean" in results.columns
