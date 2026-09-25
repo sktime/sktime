@@ -76,3 +76,20 @@ def test_multirocket_difference_features_match_base():
     half = full.shape[1] // 2
 
     np.testing.assert_allclose(full[:, half:], base[:, :half], rtol=1e-4, atol=1e-5)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(MultiRocket),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_multirocket_original_implementation():
+    """original_implementation=True must restore the reference behaviour."""
+    X = np.random.RandomState(0).normal(size=(4, 1, 65))
+    X_diff = np.diff(X, 1)
+
+    trf = MultiRocket(random_state=0, original_implementation=True)
+    full = trf.fit(X).transform(X).to_numpy()
+    base = trf.fit(X_diff).transform(X_diff).to_numpy()
+    half = full.shape[1] // 2
+
+    assert not np.allclose(full[:, half:], base[:, :half], rtol=1e-4, atol=1e-5)

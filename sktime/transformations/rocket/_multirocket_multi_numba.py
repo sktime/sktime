@@ -413,12 +413,19 @@ def _quantiles(n):
 @njit(
     "float32[:,:](float64[:,:,:],float64[:,:,:],"
     "Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),"
-    "Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),int32)",
+    "Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),int32,boolean)",
     fastmath=True,
     parallel=True,
     cache=True,
 )
-def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
+def _transform(
+    X,
+    X1,
+    parameters,
+    parameters1,
+    n_features_per_kernel=4,
+    original_implementation=False,
+):
     num_examples, num_channels, input_length = X.shape
 
     (
@@ -712,6 +719,18 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
     )
     n_features_per_transform = np.int64(features.shape[1] / 2)
 
+    # the original implementation reuses the base pass's channel selection for
+    # the differenced pass, and sizes its convolution windows from the
+    # undifferenced length; see the class docstring
+    if original_implementation:
+        num_channels_per_combination_diff = num_channels_per_combination
+        channel_indices_diff = channel_indices
+        end_length1 = input_length
+    else:
+        num_channels_per_combination_diff = num_channels_per_combination1
+        channel_indices_diff = channel_indices1
+        end_length1 = input_length - 1
+
     for example_index in prange(num_examples):
         _X = X[example_index]
 
@@ -881,7 +900,7 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
             C_gamma[9 // 2] = G1
 
             start = dilation
-            end = input_length - 1 - padding
+            end = end_length1 - padding
 
             for gamma_index in range(9 // 2):
                 C_alpha[:, -end:] = C_alpha[:, -end:] + A1[:, :end]
@@ -898,13 +917,13 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
             for kernel_index in range(num_kernels):
                 feature_index_end = feature_index_start + num_features_this_dilation
 
-                num_channels_this_combination = num_channels_per_combination1[
+                num_channels_this_combination = num_channels_per_combination_diff[
                     combination_index
                 ]
 
                 num_channels_end = num_channels_start + num_channels_this_combination
 
-                channels_this_combination = channel_indices1[
+                channels_this_combination = channel_indices_diff[
                     num_channels_start:num_channels_end
                 ]
 
@@ -995,7 +1014,8 @@ def _transform(X, X1, parameters, parameters1, n_features_per_kernel=4):
 
                 feature_index_start = feature_index_end
 
-                combination_index += 1
-                num_channels_start = num_channels_end
+                if not original_implementation:
+                    combination_index += 1
+                    num_channels_start = num_channels_end
 
     return features
