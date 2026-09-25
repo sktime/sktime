@@ -34,6 +34,8 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.datatypes._base import BaseConverter
+
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
@@ -52,42 +54,97 @@ MTYPE_LIST_SERIES = [
     "gluonts_PandasDataset_series",
 ]
 
+
+class SeriesIdentity(BaseConverter):
+    """Identity converter for Series mtypes."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": None,
+        "mtype_to": None,
+        "multiple_conversions": True,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    @classmethod
+    def get_conversions(cls):
+        return [(tp, tp) for tp in MTYPE_LIST_SERIES]
+
+    def _convert(self, obj, store=None):
+        obj = _coerce_df_dtypes(obj)
+        return obj
+
+
 convert_dict = dict()
 
 
-def convert_identity(obj, store=None):
-    # coerces pandas nullable dtypes; does nothing if obj is not pandas
-    obj = _coerce_df_dtypes(obj)
-    return obj
+class SeriesToDataFrame(BaseConverter):
+    """Convert pd.Series to pd.DataFrame."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.Series",
+        "mtype_to": "pd.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj: pd.Series, store=None) -> pd.DataFrame:
+        if not isinstance(obj, pd.Series):
+            raise TypeError("input must be a pd.Series")
+
+        obj = _coerce_df_dtypes(obj)
+
+        if isinstance(store, dict):
+            store["name"] = obj.name
+
+        res = pd.DataFrame(obj)
+
+        if (
+            isinstance(store, dict)
+            and "columns" in store.keys()
+            and len(store["columns"]) == 1
+        ):
+            res.columns = store["columns"]
+
+        return res
 
 
-# assign identity function to type conversion to self
-for tp in MTYPE_LIST_SERIES:
-    convert_dict[(tp, tp, "Series")] = convert_identity
+class DataFrameToSeries(BaseConverter):
+    """Convert pd.DataFrame to pd.Series."""
 
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.DataFrame",
+        "mtype_to": "pd.Series",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
-    if not isinstance(obj, pd.Series):
-        raise TypeError("input must be a pd.Series")
+    def _convert(self, obj: pd.DataFrame, store=None) -> pd.Series:
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError("input is not a pd.DataFrame")
 
-    obj = _coerce_df_dtypes(obj)
+        obj = _coerce_df_dtypes(obj)
 
-    if isinstance(store, dict):
-        store["name"] = obj.name
+        if len(obj.columns) != 1:
+            raise ValueError("input must be univariate pd.DataFrame, with one column")
 
-    res = pd.DataFrame(obj)
+        if isinstance(store, dict):
+            store["columns"] = obj.columns[[0]]
 
-    if (
-        isinstance(store, dict)
-        and "columns" in store.keys()
-        and len(store["columns"]) == 1
-    ):
-        res.columns = store["columns"]
+        y = obj[obj.columns[0]]
 
-    return res
+        if isinstance(store, dict) and "name" in store.keys():
+            # column name becomes attr name
+            y.name = store["name"]
+        else:
+            y.name = None
 
-
-convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_UvS_to_MvS_as_Series
+        return y
 
 
 def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
@@ -113,141 +170,195 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
     return y
 
 
-convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
+class DataFrameToNumpy(BaseConverter):
+    """Convert pd.DataFrame to np.ndarray."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.DataFrame",
+        "mtype_to": "np.ndarray",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj: pd.DataFrame, store=None) -> np.ndarray:
+        if not isinstance(obj, pd.DataFrame):
+            raise TypeError("input must be a pd.DataFrame")
+
+        obj = _coerce_df_dtypes(obj)
+
+        if isinstance(store, dict):
+            store["columns"] = obj.columns
+            store["index"] = obj.index
+
+        return obj.to_numpy(dtype="float")
 
 
-def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
-    if not isinstance(obj, pd.DataFrame):
-        raise TypeError("input must be a pd.DataFrame")
+class SeriesToNumpy(BaseConverter):
+    """Convert pd.Series to np.ndarray."""
 
-    obj = _coerce_df_dtypes(obj)
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.Series",
+        "mtype_to": "np.ndarray",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    if isinstance(store, dict):
-        store["columns"] = obj.columns
-        store["index"] = obj.index
+    def _convert(self, obj: pd.Series, store=None) -> np.ndarray:
+        if not isinstance(obj, pd.Series):
+            raise TypeError("input must be a pd.Series")
 
-    return obj.to_numpy(dtype="float")
+        obj = _coerce_df_dtypes(obj)
 
+        if isinstance(store, dict):
+            store["index"] = obj.index
+            store["name"] = obj.name
 
-convert_dict[("pd.DataFrame", "np.ndarray", "Series")] = convert_MvS_to_np_as_Series
-
-
-def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
-    if not isinstance(obj, pd.Series):
-        raise TypeError("input must be a pd.Series")
-
-    obj = _coerce_df_dtypes(obj)
-
-    if isinstance(store, dict):
-        store["index"] = obj.index
-        store["name"] = obj.name
-
-    return pd.DataFrame(obj).to_numpy(dtype="float")
+        return pd.DataFrame(obj).to_numpy(dtype="float")
 
 
-convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Series
+class NumpyToDataFrame(BaseConverter):
+    """Convert np.ndarray to pd.DataFrame."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "np.ndarray",
+        "mtype_to": "pd.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj: np.ndarray, store=None) -> pd.DataFrame:
+        if not isinstance(obj, np.ndarray) and len(obj.shape) > 2:
+            raise TypeError("input must be a np.ndarray of dim 1 or 2")
+
+        if len(obj.shape) == 1:
+            obj = np.reshape(obj, (-1, 1))
+
+        res = pd.DataFrame(obj)
+
+        # add column names or index from store if stored and length fits
+        if (
+            isinstance(store, dict)
+            and "columns" in store.keys()
+            and len(store["columns"]) == obj.shape[1]
+        ):
+            res.columns = store["columns"]
+        if (
+            isinstance(store, dict)
+            and "index" in store.keys()
+            and len(store["index"]) == obj.shape[0]
+        ):
+            res.index = store["index"]
+
+        return res
 
 
-def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
-    if not isinstance(obj, np.ndarray) and len(obj.shape) > 2:
-        raise TypeError("input must be a np.ndarray of dim 1 or 2")
+class NumpyToSeries(BaseConverter):
+    """Convert np.ndarray to pd.Series."""
 
-    if len(obj.shape) == 1:
-        obj = np.reshape(obj, (-1, 1))
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "np.ndarray",
+        "mtype_to": "pd.Series",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-    res = pd.DataFrame(obj)
+    def _convert(self, obj: np.ndarray, store=None) -> pd.Series:
+        if not isinstance(obj, np.ndarray) or obj.ndim > 2:
+            raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
 
-    # add column names or index from store if stored and length fits
-    if (
-        isinstance(store, dict)
-        and "columns" in store.keys()
-        and len(store["columns"]) == obj.shape[1]
-    ):
-        res.columns = store["columns"]
-    if (
-        isinstance(store, dict)
-        and "index" in store.keys()
-        and len(store["index"]) == obj.shape[0]
-    ):
-        res.index = store["index"]
+        if obj.ndim == 2 and obj.shape[1] != 1:
+            raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
 
-    return res
+        res = pd.Series(obj.flatten())
 
+        # add index from store if stored and length fits
+        if (
+            isinstance(store, dict)
+            and "index" in store.keys()
+            and len(store["index"]) == obj.shape[0]
+        ):
+            res.index = store["index"]
 
-convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Series
+        if isinstance(store, dict) and "name" in store.keys():
+            res.name = store["name"]
 
-
-def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
-    if not isinstance(obj, np.ndarray) or obj.ndim > 2:
-        raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
-
-    if obj.ndim == 2 and obj.shape[1] != 1:
-        raise TypeError("input must be a one-column np.ndarray of dim 1 or 2")
-
-    res = pd.Series(obj.flatten())
-
-    # add index from store if stored and length fits
-    if (
-        isinstance(store, dict)
-        and "index" in store.keys()
-        and len(store["index"]) == obj.shape[0]
-    ):
-        res.index = store["index"]
-
-    if isinstance(store, dict) and "name" in store.keys():
-        res.name = store["name"]
-
-    return res
-
-
-convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
+        return res
 
 
 if _check_soft_dependencies("xarray", severity="none"):
     import xarray as xr
 
-    def convert_xrdataarray_to_Mvs_as_Series(
-        obj: xr.DataArray, store=None
-    ) -> pd.DataFrame:
-        if not isinstance(obj, xr.DataArray):
-            raise TypeError("input must be a xr.DataArray")
+    class XrDataArrayToDataFrame(BaseConverter):
+        """Convert xr.DataArray to pd.DataFrame."""
 
-        if isinstance(store, dict):
-            store["coords"] = list(obj.coords.keys())
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "xr.DataArray",
+            "mtype_to": "pd.DataFrame",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
 
-        index = obj.indexes[obj.dims[0]]
-        columns = obj.indexes[obj.dims[1]] if len(obj.dims) == 2 else None
-        df = pd.DataFrame(obj.values, index=index, columns=columns)
-        # int64 coercions are needed due to inconsistencies specifically on windows
-        df = df.astype(
-            dict.fromkeys(df.select_dtypes(include="int32").columns, "int64")
-        )
-        if df.index.dtype == "int32":
-            df.index = df.index.astype("int64")
-        return df
+        def _convert(self, obj: xr.DataArray, store=None) -> pd.DataFrame:
+            if not isinstance(obj, xr.DataArray):
+                raise TypeError("input must be a xr.DataArray")
 
-    convert_dict[("xr.DataArray", "pd.DataFrame", "Series")] = (
-        convert_xrdataarray_to_Mvs_as_Series
-    )
+            if isinstance(store, dict):
+                store["coords"] = list(obj.coords.keys())
 
-    def convert_Mvs_to_xrdatarray_as_Series(
-        obj: pd.DataFrame, store=None
-    ) -> xr.DataArray:
-        if not isinstance(obj, pd.DataFrame):
-            raise TypeError("input must be a xr.DataArray")
+            index = obj.indexes[obj.dims[0]]
+            columns = obj.indexes[obj.dims[1]] if len(obj.dims) == 2 else None
+            df = pd.DataFrame(obj.values, index=index, columns=columns)
 
-        obj = _coerce_df_dtypes(obj)
-
-        result = xr.DataArray(obj.values, coords=[obj.index, obj.columns])
-        if isinstance(store, dict) and "coords" in store:
-            result = result.rename(
-                dict(zip(list(result.coords.keys()), store["coords"]))
+            # int64 coercions are needed due to inconsistencies specifically on windows
+            df = df.astype(
+                dict.fromkeys(df.select_dtypes(include="int32").columns, "int64")
             )
-        return result
 
-    convert_dict[("pd.DataFrame", "xr.DataArray", "Series")] = (
-        convert_Mvs_to_xrdatarray_as_Series
-    )
+            if df.index.dtype == "int32":
+                df.index = df.index.astype("int64")
+
+            return df
+
+    class DataFrameToXrDataArray(BaseConverter):
+        """Convert pd.DataFrame to xr.DataArray."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd.DataFrame",
+            "mtype_to": "xr.DataArray",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj: pd.DataFrame, store=None) -> xr.DataArray:
+            if not isinstance(obj, pd.DataFrame):
+                raise TypeError("input must be a xr.DataArray")
+
+            obj = _coerce_df_dtypes(obj)
+
+            result = xr.DataArray(obj.values, coords=[obj.index, obj.columns])
+
+            if isinstance(store, dict) and "coords" in store:
+                result = result.rename(
+                    dict(zip(list(result.coords.keys()), store["coords"]))
+                )
+
+            return result
+
+    convert_dict[("xr.DataArray", "pd.DataFrame", "Series")] = XrDataArrayToDataFrame()
+
+    convert_dict[("pd.DataFrame", "xr.DataArray", "Series")] = DataFrameToXrDataArray()
 
     _extend_conversions(
         "xr.DataArray", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
@@ -260,19 +371,39 @@ if _check_soft_dependencies("dask", severity="none"):
         convert_pandas_to_dask,
     )
 
-    def convert_dask_to_mvs_as_series(obj, store=None):
-        return convert_dask_to_pandas(obj)
+    class DaskToDataFrame(BaseConverter):
+        """Convert dask_series to pd.DataFrame."""
 
-    convert_dict[("dask_series", "pd.DataFrame", "Series")] = (
-        convert_dask_to_mvs_as_series
-    )
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "dask_series",
+            "mtype_to": "pd.DataFrame",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
 
-    def convert_mvs_to_dask_as_series(obj, store=None):
-        return convert_pandas_to_dask(obj)
+        def _convert(self, obj, store=None) -> pd.DataFrame:
+            return convert_dask_to_pandas(obj)
 
-    convert_dict[("pd.DataFrame", "dask_series", "Series")] = (
-        convert_mvs_to_dask_as_series
-    )
+    class DataFrameToDask(BaseConverter):
+        """Convert pd.DataFrame to dask_series."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd.DataFrame",
+            "mtype_to": "dask_series",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandas_to_dask(obj)
+
+    convert_dict[("dask_series", "pd.DataFrame", "Series")] = DaskToDataFrame()
+
+    convert_dict[("pd.DataFrame", "dask_series", "Series")] = DataFrameToDask()
 
     _extend_conversions(
         "dask_series", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
@@ -285,34 +416,66 @@ if _check_soft_dependencies("polars", severity="none"):
         convert_polars_to_pandas,
     )
 
-    def convert_polars_to_uvs_as_series(obj, store=None):
-        pd_df = convert_polars_to_pandas(obj)
-        return convert_MvS_to_UvS_as_Series(pd_df, store=store)
+    class PolarsToSeries(BaseConverter):
+        """Convert pl.DataFrame to pd.Series."""
 
-    convert_dict[("pl.DataFrame", "pd.Series", "Series")] = (
-        convert_polars_to_uvs_as_series
-    )
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pl.DataFrame",
+            "mtype_to": "pd.Series",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
 
-    def convert_polars_to_mvs_as_series(obj, store=None):
-        return convert_polars_to_pandas(obj)
+        def _convert(self, obj, store=None) -> pd.Series:
+            pd_df = convert_polars_to_pandas(obj)
+            return convert_MvS_to_UvS_as_Series(pd_df, store=store)
 
-    convert_dict[("pl.DataFrame", "pd.DataFrame", "Series")] = (
-        convert_polars_to_mvs_as_series
-    )
+    class PolarsToDataFrame(BaseConverter):
+        """Convert pl.DataFrame to pd.DataFrame."""
 
-    def convert_mvs_to_polars_as_series(obj, store=None):
-        return convert_pandas_to_polars(obj)
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pl.DataFrame",
+            "mtype_to": "pd.DataFrame",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
 
-    convert_dict[("pd.DataFrame", "pl.DataFrame", "Series")] = (
-        convert_mvs_to_polars_as_series
-    )
+        def _convert(self, obj, store=None) -> pd.DataFrame:
+            return convert_polars_to_pandas(obj)
 
-    def convert_uvs_to_polars_as_series(obj, store=None):
-        return convert_pandas_to_polars(obj)
+    class DataFrameToPolars(BaseConverter):
+        """Convert a pandas DataFrame to a polars DataFrame."""
 
-    convert_dict[("pd.Series", "pl.DataFrame", "Series")] = (
-        convert_uvs_to_polars_as_series
-    )
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd.DataFrame",
+            "mtype_to": "pl.DataFrame",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandas_to_polars(obj)
+
+    class SeriesToPolars(BaseConverter):
+        """Convert a pandas Series to a polars DataFrame."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd.Series",
+            "mtype_to": "pl.DataFrame",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandas_to_polars(obj)
 
     def convert_polars_lazy_to_mvs_as_series(obj, store=None):
         return convert_polars_to_pandas(obj)
@@ -337,34 +500,81 @@ if _check_soft_dependencies("gluonts", severity="none"):
         convert_pandasDataset_to_pandas_dataframe,
     )
 
-    # Utilizing functions defined in _adapter/gluonts.py
-    def convert_gluonts_listDataset_to_pandas(obj, store=None):
-        return convert_listDataset_to_pandas(obj)
+    class GluontsListDatasetToDataFrame(BaseConverter):
+        """Convert a GluonTS ListDataset to a pandas DataFrame."""
 
-    def convert_pandas_to_gluonts_listDataset(obj, store=None):
-        return convert_pandas_to_listDataset(obj)
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "gluonts_ListDataset_series",
+            "mtype_to": "pd.DataFrame",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
 
-    def convert_gluonts_PandasDataset_to_pandas(obj, store=None):
-        return convert_pandasDataset_to_pandas_dataframe(obj)
+        def _convert(self, obj, store=None):
+            return convert_listDataset_to_pandas(obj)
 
-    def convert_pandas_to_gluonts_PandasDataset(obj, store=None):
-        return convert_pandas_dataframe_to_pandasDataset(obj)
+    class DataFrameToGluontsListDataset(BaseConverter):
+        """Convert a pandas DataFrame to a GluonTS ListDataset."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd.DataFrame",
+            "mtype_to": "gluonts_ListDataset_series",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandas_to_listDataset(obj)
+
+    class GluontsPandasDatasetToDataFrame(BaseConverter):
+        """Convert a GluonTS PandasDataset to a pandas DataFrame."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "gluonts_PandasDataset_series",
+            "mtype_to": "pd.DataFrame",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandasDataset_to_pandas_dataframe(obj)
+
+    class DataFrameToGluontsPandasDataset(BaseConverter):
+        """Convert a pandas DataFrame to a GluonTS PandasDataset."""
+
+        _tags = {
+            "object_type": "converter",
+            "mtype_from": "pd.DataFrame",
+            "mtype_to": "gluonts_PandasDataset_series",
+            "multiple_conversions": False,
+            "python_version": None,
+            "python_dependencies": None,
+        }
+
+        def _convert(self, obj, store=None):
+            return convert_pandas_dataframe_to_pandasDataset(obj)
 
     # Storing functions in convert_dict
     convert_dict[("pd.DataFrame", "gluonts_ListDataset_series", "Series")] = (
-        convert_pandas_to_gluonts_listDataset
+        DataFrameToGluontsListDataset()
     )
 
     convert_dict[("gluonts_ListDataset_series", "pd.DataFrame", "Series")] = (
-        convert_gluonts_listDataset_to_pandas
+        GluontsListDatasetToDataFrame()
     )
 
     convert_dict[("pd.DataFrame", "gluonts_PandasDataset_series", "Series")] = (
-        convert_pandas_to_gluonts_PandasDataset
+        DataFrameToGluontsPandasDataset()
     )
 
     convert_dict[("gluonts_PandasDataset_series", "pd.DataFrame", "Series")] = (
-        convert_gluonts_PandasDataset_to_pandas
+        GluontsPandasDatasetToDataFrame()
     )
 
     # Extending conversions
