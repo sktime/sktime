@@ -295,11 +295,21 @@ class MSTL(BaseTransformer):
 
         seasonal = self.seasonal_
 
+        # ``periods`` is a user parameter and may be a single int, so coerce
+        # before iterating
+        periods = self.periods
+        if not isinstance(periods, Sequence):
+            periods = [periods]
+
         fcsts = []
-        for period in self.periods:
+        for period in periods:
             nf = NaiveForecaster(strategy="last", sp=period)
             fh = ForecastingHorizon(X.index, is_relative=False)
             sp_ix = f"seasonal_{period}"
+            if sp_ix not in seasonal.columns:
+                # for a single period, statsmodels returns one unsuffixed
+                # "seasonal" column rather than "seasonal_<period>"
+                sp_ix = seasonal.columns[0]
             nf_pred = nf.fit(seasonal[sp_ix], fh=fh).predict()
             fcsts.append(nf_pred)
         fcsts = pd.DataFrame(fcsts).T
