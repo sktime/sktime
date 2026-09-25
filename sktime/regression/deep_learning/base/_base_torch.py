@@ -579,7 +579,7 @@ class BaseDeepRegressorTorch(BaseRegressor):
         return metrics_dict if metrics_dict else None
 
     @abc.abstractmethod
-    def _build_network(self):
+    def _build_network(self, X):
         pass
 
     def _build_dataloader(self, X, y=None):
