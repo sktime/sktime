@@ -1,6 +1,8 @@
 """Benchmarking for detection estimators."""
 
 from collections.abc import Callable
+from dataclasses import dataclass
+from numbers import Integral
 
 import pandas as pd
 
@@ -215,6 +217,48 @@ def _scorer_names(scorers):
     return names
 
 
+def _check_replay_setting(value, name):
+    """Return value if it is an integer of at least 1, otherwise raise.
+
+    Parameters
+    ----------
+    value : object
+        Value passed as ``warmup`` or ``chunk_size``.
+    name : str
+        Name of the argument, for the error message.
+
+    Returns
+    -------
+    int
+
+    Raises
+    ------
+    ValueError
+        If ``value`` is not an integer, or is smaller than 1.
+    """
+    if isinstance(value, bool) or not isinstance(value, Integral) or value < 1:
+        raise ValueError(
+            f"{name} must be an integer of at least 1, but found {value!r}"
+        )
+    return int(value)
+
+
+@dataclass
+class _DetectionTask(TaskObject):
+    """Detection task, a ``TaskObject`` with the settings of the live replay.
+
+    Parameters
+    ----------
+    warmup : int, default=1
+        Number of points at the start of a live series used to fit.
+    chunk_size : int, default=1
+        Number of points passed to ``update_predict`` at a time.
+    """
+
+    warmup: int = 1
+    chunk_size: int = 1
+
+
 class DetectionBenchmark(BaseBenchmark):
     """Detection benchmark.
 
@@ -231,7 +275,8 @@ class DetectionBenchmark(BaseBenchmark):
     deployment: the detector is fitted on a warm-up prefix, and the rest of
     the series is passed to ``update_predict`` in chunks, without known
     events. Every alarm of a chunk is credited at the last point of that
-    chunk, see ``_replay_live``.
+    chunk, see ``_replay_live``. The warm-up length and the chunk size are
+    set per task, in ``add_task``.
 
     The alarms of a fold are scored once, at the end of the replay, against
     the known events of that live series, with the detection metrics passed
@@ -244,41 +289,7 @@ class DetectionBenchmark(BaseBenchmark):
 
     return_data : bool, optional (default=False)
         Whether to return the data in the results.
-
-    warmup : int, optional (default=1)
-        Number of points at the start of a live series used to fit the
-        detector. These points are not replayed, and alarms are never
-        reported on them. Must be at least 1.
-
-    chunk_size : int, optional (default=1)
-        Number of points passed to ``update_predict`` at a time. Alarms of a
-        chunk are credited at the last point of the chunk, so ``1`` reports
-        the alarm positions unchanged. Must be at least 1.
     """
-
-    def __init__(
-        self,
-        id_format: str | None = None,
-        backend=None,
-        backend_params=None,
-        return_data=False,
-        warmup: int = 1,
-        chunk_size: int = 1,
-    ):
-        super().__init__(
-            id_format=id_format,
-            backend=backend,
-            backend_params=backend_params,
-            return_data=return_data,
-        )
-
-        if warmup < 1:
-            raise ValueError(f"warmup must be at least 1, but found {warmup}")
-        if chunk_size < 1:
-            raise ValueError(f"chunk_size must be at least 1, but found {chunk_size}")
-
-        self.warmup = warmup
-        self.chunk_size = chunk_size
 
     def _add_estimator(
         self,
@@ -315,6 +326,8 @@ class DetectionBenchmark(BaseBenchmark):
         dataset_loader: Callable | tuple,
         scorers: list | None = None,
         task_id: str | None = None,
+        warmup: int = 1,
+        chunk_size: int = 1,
     ):
         """Register a detection task to the benchmark.
 
@@ -340,29 +353,54 @@ class DetectionBenchmark(BaseBenchmark):
 
         task_id : str, optional (default=None)
             Identifier for the benchmark task. If none given, it is derived
-            from the dataset name.
+            from the dataset name, the warm-up length and the chunk size, so
+            two tasks on the same data with different replay settings get
+            different identifiers.
+
+        warmup : int, optional (default=1)
+            Number of points at the start of a live series used to fit the
+            detector. These points are not replayed, and neither their alarms
+            nor their known events are scored. Must be an integer of at
+            least 1.
+
+        chunk_size : int, optional (default=1)
+            Number of points passed to ``update_predict`` at a time. Alarms of
+            a chunk are credited at the last point of the chunk, so ``1``
+            reports the alarm positions unchanged. Must be an integer of at
+            least 1.
 
         Returns
         -------
         None
+
+        Raises
+        ------
+        ValueError
+            If ``warmup`` or ``chunk_size`` is not an integer of at least 1.
         """
+        warmup = _check_replay_setting(warmup, "warmup")
+        chunk_size = _check_replay_setting(chunk_size, "chunk_size")
+
         if task_id is None:
             task_id = (
                 f"[dataset={_get_dataset_name(dataset_loader)}]"
                 + "_[split=leave_one_series_out]"
+                + f"_[warmup={warmup}]_[chunk_size={chunk_size}]"
             )
 
         # the split is leave-one-series-out, so there is no cv_splitter
         self._add_task(
             task_id,
-            TaskObject(
+            _DetectionTask(
                 data=dataset_loader,
                 cv_splitter=None,
                 scorers=list(scorers) if scorers is not None else [],
+                warmup=warmup,
+                chunk_size=chunk_size,
             ),
         )
 
-    def _run_validation(self, task: TaskObject, estimator: BaseDetector):
+    def _run_validation(self, task: _DetectionTask, estimator: BaseDetector):
         """Pretrain, replay and score the detector once per held-out series.
 
         One fold per series of the panel. In each fold, the detector is a
@@ -373,8 +411,9 @@ class DetectionBenchmark(BaseBenchmark):
 
         Parameters
         ----------
-        task : TaskObject
-            Task registered via ``add_task``.
+        task : _DetectionTask
+            Task registered via ``add_task``, with its warm-up length and chunk
+            size.
         estimator : BaseDetector
             Detector registered via ``add_estimator``. Not modified.
 
@@ -414,10 +453,10 @@ class DetectionBenchmark(BaseBenchmark):
             detector = _clone_unpretrained(estimator)
             detector.pretrain(X_pretrain, y_pretrain)
 
-            y_pred = _replay_live(detector, X_live, self.warmup, self.chunk_size)
+            y_pred = _replay_live(detector, X_live, task.warmup, task.chunk_size)
 
             # the warm-up is not replayed, so its events are not scored
-            y_true = _events_after_warmup(y_live, self.warmup)
+            y_true = _events_after_warmup(y_live, task.warmup)
 
             scores = {
                 name: scorer(y_true=y_true, y_pred=y_pred, X=X_live)

@@ -2,6 +2,8 @@
 
 __author__ = ["yash-sangwan"]
 
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,6 +11,7 @@ import pytest
 from sktime.detection.dummy import DummyRateAnomalies
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.deep_equals import deep_equals
 
 pytestmark = pytest.mark.skipif(
     not run_test_module_changed("sktime.detection"),
@@ -186,3 +189,75 @@ def test_clone_keeps_pretrained_rate():
 
     X_live = _make_series(30)
     assert list(detector_clone.fit(X_live).predict(X_live)["ilocs"]) == [12, 25]
+
+
+def _replay(detector, X, warmup, chunk_size):
+    """Fit on the first warmup points, then update_predict the rest in chunks.
+
+    Returns the alarms as times-from-start of X, and checks that every iloc
+    returned by update_predict is inside its chunk.
+    """
+    detector.fit(X.iloc[:warmup])
+    times = []
+    for start in range(warmup, len(X), chunk_size):
+        chunk = X.iloc[start : start + chunk_size]
+        ilocs = list(detector.update_predict(chunk)["ilocs"])
+        assert all(0 <= iloc < len(chunk) for iloc in ilocs)
+        times += [start + iloc for iloc in ilocs]
+    return times
+
+
+def _pretrained():
+    """Make a detector pretrained on the panel, at rate 3 / 40, so step 13."""
+    X, y = _make_panel_and_events()
+    return DummyRateAnomalies().pretrain(X, y)
+
+
+@pytest.mark.parametrize("chunk_size", [1, 3, 7])
+def test_chunked_replay_equals_one_shot_predict(chunk_size):
+    """Test update_predict on chunks fires where predict on the whole series does."""
+    X = _make_series(40)
+
+    expected = list(_pretrained().fit(X).predict(X)["ilocs"])
+    times = _replay(_pretrained(), X, warmup=4, chunk_size=chunk_size)
+
+    # step 13, so the alarms are at time-from-start 12, 25 and 38
+    assert expected == [12, 25, 38]
+    assert times == expected
+
+
+def test_ilocs_stay_inside_the_chunk():
+    """Test predict after update returns ilocs on the chunk, not on the stream."""
+    X = _make_series(40)
+    detector = _pretrained().fit(X.iloc[:4])
+
+    # the chunk holds times-from-start 4 to 15, the alarm at 12 is iloc 8
+    assert list(detector.update_predict(X.iloc[4:16])["ilocs"]) == [8]
+    # the next chunk holds 16 to 29, the alarm at 25 is iloc 9
+    assert list(detector.update_predict(X.iloc[16:30])["ilocs"]) == [9]
+
+
+def test_predict_after_update_does_not_change_the_detector():
+    """Test predict leaves the detector unchanged, also after update."""
+    X = _make_series(40)
+    detector = _pretrained().fit(X.iloc[:4]).update(X.iloc[4:16])
+    before = deepcopy(vars(detector))
+
+    detector.predict(X.iloc[4:16])
+
+    assert deep_equals(vars(detector), before)
+
+
+def test_second_fit_resets_the_cursor():
+    """Test fit starts the stream again at time-from-start 0."""
+    X = _make_series(40)
+    detector = _pretrained().fit(X.iloc[:4])
+    detector.update(X.iloc[4:16]).update(X.iloc[16:30])
+    assert detector.cursor_ == 16
+    assert detector.n_timepoints_seen_ == 30
+
+    detector.fit(X)
+
+    assert detector.cursor_ == 0
+    assert detector.n_timepoints_seen_ == 40
+    assert list(detector.predict(X)["ilocs"]) == [12, 25, 38]
