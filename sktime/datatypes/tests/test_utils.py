@@ -440,12 +440,21 @@ def test_get_slice_expected_result():
     """
     X_df = get_examples(mtype="pd.DataFrame")[0]
     assert len(get_slice(X_df, start=1, end=3)) == 2
+    assert len(get_slice(X_df, start=0, end=0)) == 0
+    assert len(get_slice(X_df, start=None, end=0)) == 0
+    assert len(get_slice(X_df, start=2, end=0)) == 0
 
     X_s = get_examples(mtype="pd.Series")[0]
     assert len(get_slice(X_s, start=1, end=3)) == 2
+    assert len(get_slice(X_s, start=0, end=0)) == 0
+    assert len(get_slice(X_s, start=None, end=0)) == 0
+    assert len(get_slice(X_s, start=2, end=0)) == 0
 
     X_np = get_examples(mtype="numpy3D")[0]
     assert get_slice(X_np, start=1, end=3).shape == (2, 2, 3)
+    assert get_slice(X_np, start=0, end=0).shape == (0, 2, 3)
+    assert get_slice(X_np, start=None, end=0).shape == (0, 2, 3)
+    assert get_slice(X_np, start=2, end=0).shape == (0, 2, 3)
 
 
 @pytest.mark.skipif(
