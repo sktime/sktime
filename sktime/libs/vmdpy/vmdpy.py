@@ -93,48 +93,60 @@ def VMD(f, alpha, tau, K, DC, init, tol):
     if DC:
         omega_plus[0, 0] = 0
 
-    # start with empty dual variables
-    lambda_hat = np.zeros([Niter, len(freqs)], dtype=complex)
+    # Keep only the current dual variable; its history is not returned.
+    lambda_hat_previous = np.zeros(len(freqs), dtype=complex)
 
     # other inits
     uDiff = tol + np.spacing(1)  # update step
     n = 0  # loop counter
     sum_uk = 0  # accumulator
-    # matrix keeping track of every iterant // could be discarded for mem
-    u_hat_plus = np.zeros([Niter, len(freqs), K], dtype=complex)
+    # Only adjacent iterants are needed for the update and convergence check.
+    # Rolling buffers avoid allocating an Niter x len(freqs) x K history tensor.
+    u_hat_plus_previous = np.zeros([len(freqs), K], dtype=complex)
+    u_hat_plus_current = np.zeros_like(u_hat_plus_previous)
 
     # *** Main loop for iterative updates***
 
     while uDiff > tol and n < Niter - 1:  # not converged and below iterations limit
         # update first mode accumulator
         k = 0
-        sum_uk = u_hat_plus[n, :, K - 1] + sum_uk - u_hat_plus[n, :, 0]
+        sum_uk = (
+            u_hat_plus_previous[:, K - 1]
+            + sum_uk
+            - u_hat_plus_previous[:, 0]
+        )
 
         # update spectrum of first mode through Wiener filter of residuals
-        u_hat_plus_enumerator = f_hat_plus - sum_uk - lambda_hat[n, :] / 2
+        u_hat_plus_enumerator = f_hat_plus - sum_uk - lambda_hat_previous / 2
         u_hat_plus_denominator = 1.0 + Alpha[k] * (freqs - omega_plus[n, k]) ** 2
-        u_hat_plus[n + 1, :, k] = u_hat_plus_enumerator / u_hat_plus_denominator
+        u_hat_plus_current[:, k] = u_hat_plus_enumerator / u_hat_plus_denominator
 
         # update first omega if not held at 0
         if not DC:
-            wts = abs(u_hat_plus[n + 1, T // 2 : T, k]) ** 2
+            wts = abs(u_hat_plus_current[T // 2 : T, k]) ** 2
             omega_plus[n + 1, k] = _safe_average(freqs[T // 2 : T], weights=wts)
 
         # update of any other mode
         for k in np.arange(1, K):
             # accumulator
-            sum_uk = u_hat_plus[n + 1, :, k - 1] + sum_uk - u_hat_plus[n, :, k]
+            sum_uk = (
+                u_hat_plus_current[:, k - 1]
+                + sum_uk
+                - u_hat_plus_previous[:, k]
+            )
             # mode spectrum
-            u_hat_plus_enumerator = f_hat_plus - sum_uk - lambda_hat[n, :] / 2
+            u_hat_plus_enumerator = f_hat_plus - sum_uk - lambda_hat_previous / 2
             u_hat_plus_denominator = 1.0 + Alpha[k] * (freqs - omega_plus[n, k]) ** 2
-            u_hat_plus[n + 1, :, k] = u_hat_plus_enumerator / u_hat_plus_denominator
+            u_hat_plus_current[:, k] = (
+                u_hat_plus_enumerator / u_hat_plus_denominator
+            )
             # center frequencies
-            wts = abs(u_hat_plus[n + 1, T // 2 : T, k]) ** 2
+            wts = abs(u_hat_plus_current[T // 2 : T, k]) ** 2
             omega_plus[n + 1, k] = _safe_average(freqs[T // 2 : T], weights=wts)
 
         # Dual ascent
-        lambda_update = tau * (np.sum(u_hat_plus[n + 1, :, :], axis=1) - f_hat_plus)
-        lambda_hat[n + 1, :] = lambda_hat[n, :] + lambda_update
+        lambda_update = tau * (np.sum(u_hat_plus_current, axis=1) - f_hat_plus)
+        lambda_hat_current = lambda_hat_previous + lambda_update
 
         # loop counter
         n = n + 1
@@ -142,11 +154,19 @@ def VMD(f, alpha, tau, K, DC, init, tol):
         # converged yet?
         uDiff = np.spacing(1)
         for i in range(K):
-            dot_left = u_hat_plus[n, :, i] - u_hat_plus[n - 1, :, i]
-            dot_right = np.conj(u_hat_plus[n, :, i] - u_hat_plus[n - 1, :, i])
+            dot_left = u_hat_plus_current[:, i] - u_hat_plus_previous[:, i]
+            dot_right = np.conj(
+                u_hat_plus_current[:, i] - u_hat_plus_previous[:, i]
+            )
             uDiff = uDiff + (1 / T) * np.dot(dot_left, dot_right)
 
         uDiff = np.abs(uDiff)
+
+        u_hat_plus_previous, u_hat_plus_current = (
+            u_hat_plus_current,
+            u_hat_plus_previous,
+        )
+        lambda_hat_previous = lambda_hat_current
 
     # Postprocessing and cleanup
 
@@ -158,8 +178,10 @@ def VMD(f, alpha, tau, K, DC, init, tol):
 
     # Signal reconstruction
     u_hat = np.zeros([T, K], dtype=complex)
-    u_hat[T // 2 : T, :] = u_hat_plus[Niter - 1, T // 2 : T, :]
-    u_hat[idxs, :] = np.conj(u_hat_plus[Niter - 1, T // 2 : T, :])
+    # The reference implementation reconstructs from iterant Niter - 1.
+    # After the final swap, that iterant is in the reusable current buffer.
+    u_hat[T // 2 : T, :] = u_hat_plus_current[T // 2 : T, :]
+    u_hat[idxs, :] = np.conj(u_hat_plus_current[T // 2 : T, :])
     u_hat[0, :] = np.conj(u_hat[-1, :])
 
     u = np.zeros([K, len(t)])
