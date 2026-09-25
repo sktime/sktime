@@ -9,6 +9,8 @@ import pandas as pd
 from sktime.benchmarking._benchmarking_dataclasses import FoldResults, TaskObject
 from sktime.benchmarking.benchmarks import BaseBenchmark, _get_dataset_name
 from sktime.detection.base import BaseDetector
+from sktime.split import InstanceSplitter
+from sktime.split.base import BaseSplitter
 from sktime.utils.parallel import parallelize
 
 __author__ = ["yash-sangwan"]
@@ -229,7 +231,8 @@ def _run_fold(split, meta):
     Parameters
     ----------
     split : tuple
-        One fold, as yielded by ``_leave_one_series_out``.
+        One fold, as yielded by ``_leave_one_series_out`` or
+        ``_cv_global_splits``.
     meta : dict
         With keys ``"estimator"``, the registered detector, ``"scorers"`` and
         ``"names"``, the scorers of the task and their column names,
@@ -266,6 +269,127 @@ def _run_fold(split, meta):
     if meta["return_data"]:
         return FoldResults(scores=scores, ground_truth=y_true, predictions=y_pred)
     return FoldResults(scores=scores)
+
+
+def _cv_global_splits(X, y, cv_global):
+    """Split a panel into live series and pretrain panels, as per a series splitter.
+
+    For every split of ``cv_global``, every series on its test side is the
+    live series of one fold, and the panel the detector pretrains on is the
+    train side of that split only. Folds come in the order of the splits, then
+    in the order of the series in ``X``.
+
+    Parameters
+    ----------
+    X : pd.DataFrame with row MultiIndex (instance, time)
+        Panel of time series.
+    y : pd.DataFrame, optional
+        Known events in ``X``, as for ``_leave_one_series_out``.
+    cv_global : InstanceSplitter
+        Splitter of the series of ``X``, as returned by ``_check_cv_global``.
+
+    Yields
+    ------
+    instance, X_pretrain, y_pretrain, X_live, y_live
+        As for ``_leave_one_series_out``.
+
+    Raises
+    ------
+    ValueError
+        If a split has no series on its train side, or if a series on its test
+        side is also on its train side, as the detector would then pretrain on
+        nothing, or on the series it is scored on.
+    """
+    instances = X.index.droplevel(-1)
+    instance_index = instances.unique()
+    instance_levels = list(range(X.index.nlevels - 1))
+    y_instances = None if y is None else y.index.droplevel(-1)
+
+    # the splitter is applied to the index of series, as InstanceSplitter does,
+    # but not via its split_series, which fails on an empty side of a split
+    for train_iloc, test_iloc in cv_global.cv.split(instance_index):
+        train = instance_index[train_iloc]
+
+        if len(train) == 0:
+            raise ValueError(
+                "A split of cv_global has no series on its train side, so there "
+                "is nothing for the detector to pretrain on."
+            )
+
+        for instance in instance_index[test_iloc]:
+            if instance in train:
+                raise ValueError(
+                    f"Series {instance!r} is on both sides of a split of "
+                    "cv_global. A live series must not be in the panel the "
+                    "detector pretrains on."
+                )
+
+            X_pretrain = X[instances.isin(train)]
+            X_live = X[instances.isin([instance])].droplevel(instance_levels)
+
+            if y is None:
+                y_pretrain = None
+                y_live = None
+            else:
+                y_pretrain = y[y_instances.isin(train)]
+                y_is_live = y_instances.isin([instance])
+                y_live = y[y_is_live].droplevel(list(range(y.index.nlevels - 1)))
+
+            yield instance, X_pretrain, y_pretrain, X_live, y_live
+
+
+def _check_cv_global(cv_global):
+    """Return cv_global as a splitter of series, or None; refuse splitters of time.
+
+    Parameters
+    ----------
+    cv_global : None, sklearn splitter, or sktime splitter of series
+        Splitter of the series of the panel, as passed to ``add_task``.
+
+    Returns
+    -------
+    None, or InstanceSplitter
+        None if ``cv_global`` is None, ``cv_global`` itself if it is an
+        ``InstanceSplitter``, otherwise ``cv_global`` wrapped in
+        ``InstanceSplitter``.
+
+    Raises
+    ------
+    TypeError
+        If ``cv_global`` is an sktime splitter of time, or not a splitter.
+    """
+    if cv_global is None:
+        return None
+
+    if isinstance(cv_global, InstanceSplitter):
+        return cv_global
+
+    name = type(cv_global).__name__
+
+    # InstanceSplitter is the only sktime splitter of series, the others
+    # split time
+    if isinstance(cv_global, BaseSplitter):
+        raise TypeError(
+            f"cv_global must split the series of the panel, but {name} splits "
+            "time. Pass an sklearn splitter, for instance KFold, or an "
+            "InstanceSplitter. The live series are replayed in time via "
+            "warmup and chunk_size."
+        )
+
+    if not (hasattr(cv_global, "split") and hasattr(cv_global, "get_n_splits")):
+        raise TypeError(
+            "cv_global must be an sklearn splitter, for instance KFold, or an "
+            f"InstanceSplitter, but found {name}."
+        )
+
+    return InstanceSplitter(cv_global)
+
+
+def _splitter_name(cv_global):
+    """Return the class name of a splitter of series, unwrapping InstanceSplitter."""
+    if isinstance(cv_global, InstanceSplitter):
+        return type(cv_global.cv).__name__
+    return type(cv_global).__name__
 
 
 def _check_replay_setting(value, name):
@@ -316,11 +440,14 @@ class DetectionBenchmark(BaseBenchmark):
     Run a series of detectors against a series of tasks, defined via a panel
     of time series and their known events, and return the results.
 
-    Each task is evaluated leave-one-series-out: every series of the panel is
-    the live series of one fold, and the detector pretrains on the other
-    series of that panel only. The detector of a fold is always a fresh clone
-    of the detector registered with the benchmark, so nothing learnt in one
-    fold can reach the next one.
+    By default, each task is evaluated leave-one-series-out: every series of
+    the panel is the live series of one fold, and the detector pretrains on the
+    other series of that panel only. With ``cv_global`` in ``add_task``, the
+    series are split by a splitter of series instead: for every split, every
+    series on the test side is a live series, and the detector pretrains on
+    the series of the train side only. In both cases, the detector of a fold
+    is always a fresh clone of the detector registered with the benchmark, so
+    nothing learnt in one fold can reach the next one.
 
     A detector added in state ``"pretrained"``, i.e., pretrained before it was
     added, is not pretrained again: every fold starts from a clone that keeps
@@ -394,6 +521,7 @@ class DetectionBenchmark(BaseBenchmark):
         task_id: str | None = None,
         warmup: int = 1,
         chunk_size: int = 1,
+        cv_global=None,
     ):
         """Register a detection task to the benchmark.
 
@@ -435,6 +563,16 @@ class DetectionBenchmark(BaseBenchmark):
             reports the alarm positions unchanged. Must be an integer of at
             least 1.
 
+        cv_global : sklearn splitter, or sktime splitter of series, optional
+            Splitter of the series of the panel, for instance
+            ``KFold(n_splits=2)``. If None, the default, the task is evaluated
+            leave-one-series-out. Otherwise, for every split, every series on
+            the test side is a live series, and the detector pretrains on the
+            series of the train side only. An sklearn splitter is applied to
+            the series via ``InstanceSplitter``. Splitters of time, such as
+            ``ExpandingWindowSplitter``, are refused, as the live series are
+            replayed in time via ``warmup`` and ``chunk_size``.
+
         Returns
         -------
         None
@@ -443,24 +581,34 @@ class DetectionBenchmark(BaseBenchmark):
         ------
         ValueError
             If ``warmup`` or ``chunk_size`` is not an integer of at least 1.
+        TypeError
+            If ``cv_global`` splits time, or is not a splitter.
         """
         warmup = _check_replay_setting(warmup, "warmup")
         chunk_size = _check_replay_setting(chunk_size, "chunk_size")
+        cv_global = _check_cv_global(cv_global)
 
         if task_id is None:
+            if cv_global is None:
+                split = "leave_one_series_out"
+            else:
+                split = _splitter_name(cv_global)
             task_id = (
                 f"[dataset={_get_dataset_name(dataset_loader)}]"
-                + "_[split=leave_one_series_out]"
+                + f"_[split={split}]"
                 + f"_[warmup={warmup}]_[chunk_size={chunk_size}]"
             )
 
-        # the split is leave-one-series-out, so there is no cv_splitter
+        # the series are split leave-one-series-out or by cv_global, and the
+        # live series is replayed in time via warmup and chunk_size, so
+        # there is no cv_splitter
         self._add_task(
             task_id,
             _DetectionTask(
                 data=dataset_loader,
                 cv_splitter=None,
                 scorers=list(scorers) if scorers is not None else [],
+                cv_global=cv_global,
                 warmup=warmup,
                 chunk_size=chunk_size,
             ),
@@ -469,11 +617,13 @@ class DetectionBenchmark(BaseBenchmark):
     def _run_validation(self, task: _DetectionTask, estimator: BaseDetector):
         """Pretrain, replay and score the detector once per held-out series.
 
-        One fold per series of the panel. In each fold, the detector is a
-        fresh clone of the registered detector. If the registered detector is
-        in state ``"pretrained"``, the clone keeps what it learnt, and is not
-        pretrained again. Otherwise, the clone is pretrained on the series of
-        the panel other than the live one. The live series is then replayed,
+        One fold per live series: every series of the panel if the task is
+        evaluated leave-one-series-out, otherwise every series on the test side
+        of every split of ``cv_global``. In each fold, the detector is a fresh
+        clone of the registered detector. If the registered detector is in
+        state ``"pretrained"``, the clone keeps what it learnt, and is not
+        pretrained again. Otherwise, the clone is pretrained on the pretrain
+        panel of that fold only. The live series is then replayed,
         see ``_replay_live``, and its alarms are scored with the scorers of
         the task.
 
@@ -488,7 +638,10 @@ class DetectionBenchmark(BaseBenchmark):
         Returns
         -------
         dict of int to FoldResults
-            One entry per fold, in the order of the series in the panel.
+            One entry per fold. Leave-one-series-out, folds come in the order
+            of the series in the panel. With ``cv_global``, they come in the
+            order of the splits, then of the series in the panel, so a series
+            on the test side of several splits has one fold per such split.
             Scores are keyed by the class name of the scorer, and empty if
             the task has no scorers. If ``return_data``, the alarms of the
             replay and the scored known events of the live series are
@@ -498,6 +651,12 @@ class DetectionBenchmark(BaseBenchmark):
         ------
         ValueError
             If the task has scorers, but no known events to score against.
+        ValueError
+            If a split of ``cv_global`` has no series on its train side, or if
+            a series on its test side is also on its train side.
+        ValueError
+            If the registered detector is not in state ``"new"``, so a clone of
+            it would carry what it learnt elsewhere, see ``_clone_unpretrained``.
         """
         data = task.get_y_X("detection")
         X = data["X"]
@@ -522,11 +681,16 @@ class DetectionBenchmark(BaseBenchmark):
             "return_data": self.return_data,
         }
 
+        if task.cv_global is None:
+            splits = _leave_one_series_out(X, y)
+        else:
+            splits = _cv_global_splits(X, y, task.cv_global)
+
         # folds are independent, so they can run on the parallel backend;
-        # results come back in the order of the series in the panel
+        # results come back in the order the splits yield the folds
         results = parallelize(
             fun=_run_fold,
-            iter=_leave_one_series_out(X, y),
+            iter=splits,
             meta=meta,
             backend=self.backend,
             backend_params=self.backend_params,
