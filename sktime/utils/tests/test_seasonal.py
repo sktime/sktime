@@ -125,7 +125,17 @@ def test_pivot_sp_consistent(sp, index_type, n_timepoints, anchor_side):
     reason="Run if utils module has changed.",
 )
 @pytest.mark.parametrize("anchor_side", ["start", "end"])
-@pytest.mark.parametrize("freq", ["MS", "3MS", "QS", "QS-FEB", "YS-JUL"])
+@pytest.mark.parametrize(
+    "freq",
+    [
+        "MS",
+        "3MS",
+        "QS",
+        "QS-FEB",
+        # offset, not the "YS-JUL" alias, which older pandas spells "AS-JUL"
+        pytest.param(pd.offsets.YearBegin(month=7), id="YS-JUL"),
+    ],
+)
 def test_pivot_sp_start_of_period_freq(freq, anchor_side):
     """Test _pivot_sp/_unpivot_sp round trip for start-of-period frequencies.
 
