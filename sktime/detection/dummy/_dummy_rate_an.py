@@ -16,14 +16,24 @@ class DummyRateAnomalies(BaseDetector):
     per time point, over a collection of time series and their known events.
     A second call to ``pretrain`` replaces the rate learnt by the first call.
 
-    In ``predict``, fires alarms at that rate on the time series passed, at
-    regular distance ``step = round(1 / rate)``, with the first alarm at
-    ``iloc`` position ``step - 1``. Alarms are ``iloc`` references to the
-    time series passed to ``predict``.
+    In ``predict``, fires alarms at that rate, at regular distance
+    ``step = round(1 / rate)``: at every time-from-start ``t`` with
+    ``(t + 1) % step == 0``, so the first alarm of a series is at ``iloc``
+    position ``step - 1``. Alarms are ``iloc`` references to the time series
+    passed to ``predict``.
 
     If ``pretrain`` was not called, the rate is learnt in ``fit``, from the
     known events ``y`` of the series fitted to. If no ``y`` is passed to
     ``fit`` either, no alarms are fired.
+
+    The series is treated as a stream. ``fit`` starts the stream at
+    time-from-start 0, and ``update`` adds the points it is passed to the
+    stream, without refitting. ``predict`` labels the latest points passed to
+    ``fit`` or ``update``, at their time-from-start, so ``update_predict`` on
+    consecutive chunks fires the same alarms as ``predict`` on the whole
+    series at once. Each chunk passed to ``update`` must follow the points
+    already seen, with no overlap and no gap, as time-from-start is counted
+    in points.
 
     Attributes
     ----------
@@ -37,6 +47,11 @@ class DummyRateAnomalies(BaseDetector):
         Rate used by ``predict``, set in ``fit``. The rate from ``pretrain``
         if the detector was pretrained, otherwise the rate of the ``y``
         passed to ``fit``, otherwise 0.
+    cursor_ : int
+        Time-from-start of the first point passed in the latest call to
+        ``fit`` or ``update``, where ``predict`` starts. 0 after ``fit``.
+    n_timepoints_seen_ : int
+        Number of time points passed to ``fit`` and ``update`` so far.
 
     Examples
     --------
@@ -65,6 +80,7 @@ class DummyRateAnomalies(BaseDetector):
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:pretrain": True,
+        "capability:update": True,
         "fit_is_empty": False,
         "task": "anomaly_detection",
         "learning_type": "supervised",
@@ -119,6 +135,8 @@ class DummyRateAnomalies(BaseDetector):
 
         Writes to self:
             Sets ``event_rate_``, the rate used by ``predict``.
+            Sets ``cursor_`` to 0, and ``n_timepoints_seen_`` to the length of
+            ``X``.
 
         Parameters
         ----------
@@ -139,6 +157,36 @@ class DummyRateAnomalies(BaseDetector):
             self.event_rate_ = self._rate(len(y), len(X))
         else:
             self.event_rate_ = 0.0
+
+        # the stream starts with the series fitted to
+        self.cursor_ = 0
+        self.n_timepoints_seen_ = len(X)
+        return self
+
+    def _update(self, X, y=None):
+        """Add the points in X to the stream, without refitting.
+
+        private _update containing the core logic, called from update
+
+        Writes to self:
+            Sets ``cursor_`` to the number of points seen before ``X``, the
+            time-from-start of the first point of ``X``, then adds the length
+            of ``X`` to ``n_timepoints_seen_``.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            New points of the time series, following the points seen so far.
+        y : pd.DataFrame, optional
+            Known events in ``X``. Ignored, nothing is refitted.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+        """
+        self.cursor_ = self.n_timepoints_seen_
+        self.n_timepoints_seen_ += len(X)
         return self
 
     def _predict(self, X):
@@ -150,6 +198,7 @@ class DummyRateAnomalies(BaseDetector):
         ----------
         X : pd.DataFrame
             Time series subject to detection, which will be assigned labels or scores.
+            It starts at time-from-start ``cursor_``.
 
         Returns
         -------
@@ -163,7 +212,10 @@ class DummyRateAnomalies(BaseDetector):
             return BaseDetector._empty_sparse()
 
         step = max(1, int(round(1 / rate)))
-        ilocs = np.arange(step - 1, len(X), step)
+        # alarms are at every time-from-start t with (t + 1) % step == 0, and X
+        # starts at time-from-start cursor_, so the first alarm in X is at
+        first = (step - 1 - self.cursor_) % step
+        ilocs = np.arange(first, len(X), step)
 
         if len(ilocs) == 0:
             return BaseDetector._empty_sparse()

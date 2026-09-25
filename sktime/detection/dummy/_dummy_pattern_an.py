@@ -26,6 +26,15 @@ class DummyPatternAnomalies(BaseDetector):
     known events ``y`` of the series fitted to. If no ``y`` is passed to
     ``fit`` either, no alarms are fired.
 
+    The series is treated as a stream. ``fit`` starts the stream at
+    time-from-start 0, and ``update`` adds the points it is passed to the
+    stream, without refitting. ``predict`` labels the latest points passed to
+    ``fit`` or ``update``, at their time-from-start, so ``update_predict`` on
+    consecutive chunks fires the same alarms as ``predict`` on the whole
+    series at once. Each chunk passed to ``update`` must follow the points
+    already seen, with no overlap and no gap, as time-from-start is counted
+    in points.
+
     Parameters
     ----------
     random_state : int, np.random.RandomState, or None, optional, default=None
@@ -43,6 +52,11 @@ class DummyPatternAnomalies(BaseDetector):
         Pattern replayed by ``predict``, picked in ``fit``. One of
         ``patterns_`` if the detector was pretrained, otherwise the pattern
         of the ``y`` passed to ``fit``, otherwise empty.
+    cursor_ : int
+        Time-from-start of the first point passed in the latest call to
+        ``fit`` or ``update``, where ``predict`` starts. 0 after ``fit``.
+    n_timepoints_seen_ : int
+        Number of time points passed to ``fit`` and ``update`` so far.
 
     Examples
     --------
@@ -72,6 +86,7 @@ class DummyPatternAnomalies(BaseDetector):
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:pretrain": True,
+        "capability:update": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "fit_is_empty": False,
@@ -141,6 +156,8 @@ class DummyPatternAnomalies(BaseDetector):
 
         Writes to self:
             Sets ``pattern_``, the pattern replayed by ``predict``.
+            Sets ``cursor_`` to 0, and ``n_timepoints_seen_`` to the length of
+            ``X``.
 
         Parameters
         ----------
@@ -161,6 +178,36 @@ class DummyPatternAnomalies(BaseDetector):
             self.pattern_ = self._to_pattern(y)
         else:
             self.pattern_ = ()
+
+        # the stream starts with the series fitted to
+        self.cursor_ = 0
+        self.n_timepoints_seen_ = len(X)
+        return self
+
+    def _update(self, X, y=None):
+        """Add the points in X to the stream, without refitting.
+
+        private _update containing the core logic, called from update
+
+        Writes to self:
+            Sets ``cursor_`` to the number of points seen before ``X``, the
+            time-from-start of the first point of ``X``, then adds the length
+            of ``X`` to ``n_timepoints_seen_``.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            New points of the time series, following the points seen so far.
+        y : pd.DataFrame, optional
+            Known events in ``X``. Ignored, nothing is refitted.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+        """
+        self.cursor_ = self.n_timepoints_seen_
+        self.n_timepoints_seen_ += len(X)
         return self
 
     def _predict(self, X):
@@ -173,6 +220,7 @@ class DummyPatternAnomalies(BaseDetector):
         X : pd.DataFrame
             Time series subject to detection, which will be assigned labels or scores.
             Only the length of ``X`` is used, its values are ignored.
+            It starts at time-from-start ``cursor_``.
 
         Returns
         -------
@@ -180,7 +228,9 @@ class DummyPatternAnomalies(BaseDetector):
             Labels for sequence ``X``, in sparse format.
             Values are ``iloc`` references to indices of ``X``.
         """
-        ilocs = [iloc for iloc in self.pattern_ if iloc < len(X)]
+        # the pattern holds times-from-start, and X starts at cursor_
+        start = self.cursor_
+        ilocs = [t - start for t in self.pattern_ if start <= t < start + len(X)]
 
         if len(ilocs) == 0:
             return BaseDetector._empty_sparse()

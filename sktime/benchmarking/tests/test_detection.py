@@ -13,7 +13,11 @@ from sktime.benchmarking.detection import (
     _replay_live,
 )
 from sktime.detection.base import BaseDetector
-from sktime.detection.dummy import DummyRateAnomalies, DummyTimeFreqAnomalies
+from sktime.detection.dummy import (
+    DummyPatternAnomalies,
+    DummyRateAnomalies,
+    DummyTimeFreqAnomalies,
+)
 from sktime.performance_metrics.detection import (
     EventTPR,
     FalseAlarmRate,
@@ -216,8 +220,10 @@ def test_no_known_events_are_passed_to_update():
 
 def test_run_validation_replays_every_live_series():
     """Test the benchmark replays the live series of every fold."""
-    benchmark = DetectionBenchmark(return_data=True, warmup=2, chunk_size=1)
-    benchmark.add_task((_make_panel(), _make_events()), task_id="toy")
+    benchmark = DetectionBenchmark(return_data=True)
+    benchmark.add_task(
+        (_make_panel(), _make_events()), task_id="toy", warmup=2, chunk_size=1
+    )
     task = benchmark.tasks.entities["toy"]
 
     folds = benchmark._run_validation(task, _ChunkPositionDetector(positions=(0,)))
@@ -265,9 +271,11 @@ def _make_scoring_panel():
 
 def test_result_table_has_the_three_score_columns():
     """Test the three metrics reach the results table of a run."""
-    benchmark = DetectionBenchmark(warmup=2, chunk_size=4)
+    benchmark = DetectionBenchmark()
     benchmark.add_estimator(_ChunkPositionDetector(positions=(1,)))
-    benchmark.add_task(_make_scoring_panel(), _make_scorers(), task_id="toy")
+    benchmark.add_task(
+        _make_scoring_panel(), _make_scorers(), task_id="toy", warmup=2, chunk_size=4
+    )
 
     results = benchmark.run()
 
@@ -281,8 +289,10 @@ def test_result_table_has_the_three_score_columns():
 
 def test_event_tpr_on_a_toy_series():
     """Test one hand-checkable EventTPR score of a fold."""
-    benchmark = DetectionBenchmark(return_data=True, warmup=2, chunk_size=4)
-    benchmark.add_task(_make_scoring_panel(), _make_scorers(), task_id="toy")
+    benchmark = DetectionBenchmark(return_data=True)
+    benchmark.add_task(
+        _make_scoring_panel(), _make_scorers(), task_id="toy", warmup=2, chunk_size=4
+    )
     task = benchmark.tasks.entities["toy"]
 
     folds = benchmark._run_validation(task, _ChunkPositionDetector(positions=(1,)))
@@ -298,9 +308,11 @@ def test_event_tpr_on_a_toy_series():
 
 def test_empty_alarms_still_produce_a_row():
     """Test a detector that never fires is still scored, and still reported."""
-    benchmark = DetectionBenchmark(warmup=2, chunk_size=4)
+    benchmark = DetectionBenchmark()
     benchmark.add_estimator(_ChunkPositionDetector(positions=()), "NeverFires")
-    benchmark.add_task(_make_scoring_panel(), _make_scorers(), task_id="toy")
+    benchmark.add_task(
+        _make_scoring_panel(), _make_scorers(), task_id="toy", warmup=2, chunk_size=4
+    )
 
     results = benchmark.run()
 
@@ -388,8 +400,8 @@ def test_run_validation_pretrains_on_the_held_out_panel():
     X = _panel_with_lengths([3, 3, 8])
     y = _events_at([("c", 5)])
 
-    benchmark = DetectionBenchmark(return_data=True, warmup=1, chunk_size=7)
-    benchmark.add_task((X, y), task_id="held_out")
+    benchmark = DetectionBenchmark(return_data=True)
+    benchmark.add_task((X, y), task_id="held_out", warmup=1, chunk_size=7)
     task = benchmark.tasks.entities["held_out"]
 
     folds = benchmark._run_validation(task, DummyTimeFreqAnomalies(random_state=0))
@@ -401,8 +413,8 @@ def test_run_validation_pretrains_on_the_held_out_panel():
     X_control = _panel_with_lengths([8, 8, 8])
     y_control = _events_at([("a", 5), ("b", 5)])
 
-    control = DetectionBenchmark(return_data=True, warmup=1, chunk_size=7)
-    control.add_task((X_control, y_control), task_id="control")
+    control = DetectionBenchmark(return_data=True)
+    control.add_task((X_control, y_control), task_id="control", warmup=1, chunk_size=7)
     control_task = control.tasks.entities["control"]
 
     control_folds = control._run_validation(
@@ -417,9 +429,13 @@ def test_run_validation_drops_warmup_events_before_scoring():
     X = _panel_with_lengths([10, 10])
     y = _events_at([("a", 1), ("a", 9), ("b", 1), ("b", 9)])
 
-    benchmark = DetectionBenchmark(return_data=True, warmup=4, chunk_size=4)
+    benchmark = DetectionBenchmark(return_data=True)
     benchmark.add_task(
-        (X, y), [EventTPR(min_offset=-1, max_offset=0)], task_id="warmup"
+        (X, y),
+        [EventTPR(min_offset=-1, max_offset=0)],
+        task_id="warmup",
+        warmup=4,
+        chunk_size=4,
     )
     task = benchmark.tasks.entities["warmup"]
 
@@ -481,8 +497,8 @@ def test_reusing_one_detector_across_folds_would_leak():
     """
     X = _panel_with_lengths([5, 5, 5])
 
-    benchmark = DetectionBenchmark(return_data=True, warmup=1, chunk_size=1)
-    benchmark.add_task(X, task_id="reuse")
+    benchmark = DetectionBenchmark(return_data=True)
+    benchmark.add_task(X, task_id="reuse", warmup=1, chunk_size=1)
     task = benchmark.tasks.entities["reuse"]
 
     detector = _SeenSeriesDetector()
@@ -629,8 +645,8 @@ def test_pretrained_detector_folds_cannot_update_each_other(monkeypatch):
 
     detector = _OnlineLearningDetector().pretrain(_panel_with_lengths([3]))
 
-    benchmark = DetectionBenchmark(warmup=1, chunk_size=2)
-    benchmark.add_task(X, task_id="isolation")
+    benchmark = DetectionBenchmark()
+    benchmark.add_task(X, task_id="isolation", warmup=1, chunk_size=2)
     task = benchmark.tasks.entities["isolation"]
 
     benchmark._run_validation(task, detector)
@@ -656,12 +672,16 @@ def test_parallel_backend_gives_the_same_folds_as_sequential(backend):
     """Test folds run on a parallel backend come back as when run in sequence."""
 
     def run_folds(**kwargs):
-        benchmark = DetectionBenchmark(
-            return_data=True, warmup=2, chunk_size=4, **kwargs
-        )
+        benchmark = DetectionBenchmark(return_data=True, **kwargs)
         # series of 10, 20 and 15 points with events at 3, 7 and 5, so every
         # fold has its own alarms and scores, and swapped folds would differ
-        benchmark.add_task((_make_panel(), _make_events()), _make_scorers(), "toy")
+        benchmark.add_task(
+            (_make_panel(), _make_events()),
+            _make_scorers(),
+            task_id="toy",
+            warmup=2,
+            chunk_size=4,
+        )
         task = benchmark.tasks.entities["toy"]
         return benchmark._run_validation(task, _ChunkPositionDetector(positions=(1,)))
 
@@ -681,3 +701,85 @@ def test_parallel_backend_gives_the_same_folds_as_sequential(backend):
         )
         pd.testing.assert_frame_equal(parallel[i].predictions, fold.predictions)
         pd.testing.assert_frame_equal(parallel[i].ground_truth, fold.ground_truth)
+
+
+def test_pattern_dummy_keeps_time_from_start_across_chunks():
+    """Test DummyPatternAnomalies hits every event with chunks of one point."""
+    names = ["a", "b", "c"]
+    X = _panel_with_lengths([30, 30, 30])
+    y = _events_at([(name, t) for name in names for t in (9, 19, 29)])
+
+    benchmark = DetectionBenchmark(return_data=True)
+    benchmark.add_estimator(DummyPatternAnomalies(random_state=0))
+    benchmark.add_task(
+        (X, y),
+        [EventTPR(min_offset=0, max_offset=0)],
+        task_id="stream",
+        warmup=1,
+        chunk_size=1,
+    )
+
+    results = benchmark.run()
+
+    # every series has events at 9, 19 and 29, so every stored pattern is
+    # (9, 19, 29), and a replay that keeps time-from-start hits all of them
+    for fold in range(len(names)):
+        assert results[f"EventTPR_fold_{fold}_test"].iloc[0] == 1.0
+        # EventTPR ignores false alarms, so pin the alarms themselves:
+        # exactly the events, and nothing else
+        alarms = results[f"predictions_fold_{fold}"].iloc[0]
+        assert list(alarms["ilocs"]) == [9, 19, 29]
+    assert results["EventTPR_mean"].iloc[0] == 1.0
+
+
+def test_chunk_size_is_set_per_task():
+    """Test two tasks on the same panel, chunk sizes 1 and 4, credit alarms apart."""
+    names = ["a", "b", "c"]
+    X = _panel_with_lengths([30, 30, 30])
+    y = _events_at([(name, t) for name in names for t in (9, 19, 29)])
+
+    benchmark = DetectionBenchmark(return_data=True)
+    benchmark.add_estimator(DummyPatternAnomalies(random_state=0))
+    benchmark.add_task((X, y), warmup=1, chunk_size=1)
+    benchmark.add_task((X, y), warmup=1, chunk_size=4)
+
+    results = benchmark.run().set_index("validation_id")
+
+    # the default ids differ by chunk size, so the two tasks do not collide
+    id_1 = "[dataset=_]_[split=leave_one_series_out]_[warmup=1]_[chunk_size=1]"
+    id_4 = "[dataset=_]_[split=leave_one_series_out]_[warmup=1]_[chunk_size=4]"
+    assert sorted(results.index) == sorted([id_1, id_4])
+
+    # chunks of one point report every event where it happens
+    alarms_1 = results.loc[id_1, "predictions_fold_0"]
+    assert list(alarms_1["ilocs"]) == [9, 19, 29]
+
+    # chunks of four are [1, 5), [5, 9), [9, 13), ..., [25, 29), [29, 30), and
+    # each event is credited at the end of its chunk: 9 at 12, 19 at 20, 29 at 29
+    alarms_4 = results.loc[id_4, "predictions_fold_0"]
+    assert list(alarms_4["ilocs"]) == [12, 20, 29]
+
+
+@pytest.mark.parametrize(
+    "setting",
+    [{"warmup": 0}, {"chunk_size": 0}, {"warmup": 1.5}],
+    ids=["warmup_0", "chunk_size_0", "warmup_not_int"],
+)
+def test_invalid_replay_settings_raise_in_add_task(setting):
+    """Test add_task refuses a warm-up or chunk size below 1, or not an integer."""
+    benchmark = DetectionBenchmark()
+
+    with pytest.raises(ValueError, match="must be an integer of at least 1"):
+        benchmark.add_task((_make_panel(), _make_events()), **setting)
+
+    # the task is refused before anything is registered
+    assert benchmark.tasks.entities == {}
+
+
+@pytest.mark.parametrize(
+    "setting", [{"warmup": 2}, {"chunk_size": 2}], ids=["warmup", "chunk_size"]
+)
+def test_replay_settings_cannot_be_set_on_the_constructor(setting):
+    """Test the constructor refuses warmup and chunk_size, which go to add_task."""
+    with pytest.raises(TypeError):
+        DetectionBenchmark(**setting)

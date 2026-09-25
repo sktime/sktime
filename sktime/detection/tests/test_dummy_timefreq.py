@@ -2,6 +2,8 @@
 
 __author__ = ["yash-sangwan"]
 
+from copy import deepcopy
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -9,6 +11,7 @@ import pytest
 from sktime.detection.dummy import DummyTimeFreqAnomalies
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
+from sktime.utils.deep_equals import deep_equals
 
 pytestmark = pytest.mark.skipif(
     not run_test_module_changed("sktime.detection"),
@@ -277,3 +280,93 @@ def test_clone_keeps_pretrained_probabilities():
 
     X_live = _make_series(20)
     assert list(detector_clone.fit(X_live).predict(X_live)["ilocs"]) == [5]
+
+
+def _replay(detector, X, warmup, chunk_size):
+    """Fit on the first warmup points, then update_predict the rest in chunks.
+
+    Returns the alarms as times-from-start of X, and checks that every iloc
+    returned by update_predict is inside its chunk.
+    """
+    detector.fit(X.iloc[:warmup])
+    times = []
+    for start in range(warmup, len(X), chunk_size):
+        chunk = X.iloc[start : start + chunk_size]
+        ilocs = list(detector.update_predict(chunk)["ilocs"])
+        assert all(0 <= iloc < len(chunk) for iloc in ilocs)
+        times += [start + iloc for iloc in ilocs]
+    return times
+
+
+def _half_prob_detector(random_state=0):
+    """Make a detector with probability 0.5 at every time-from-start 0 to 19."""
+    X = _make_panel([20, 20])
+    y = _make_events([("a", t) for t in range(20)])
+    return DummyTimeFreqAnomalies(random_state=random_state).pretrain(X, y)
+
+
+@pytest.mark.parametrize("chunk_size", [1, 3, 7])
+def test_chunked_replay_equals_one_shot_predict(chunk_size):
+    """Test update_predict on chunks fires where predict on the whole series does."""
+    X = _make_series(20)
+
+    expected = list(_half_prob_detector().fit(X).predict(X)["ilocs"])
+    times = _replay(_half_prob_detector(), X, warmup=2, chunk_size=chunk_size)
+
+    # the one-shot alarms are a real random draw, neither all nor none
+    assert 0 < len(expected) < 20
+    assert times == [t for t in expected if t >= 2]
+
+
+def test_same_seed_same_cursor_same_length_same_alarms():
+    """Test the same seed, cursor and length of X give the same alarms."""
+    X = _make_series(20)
+    first = _half_prob_detector(3).fit(X.iloc[:4]).update(X.iloc[4:14])
+    second = _half_prob_detector(3).fit(X.iloc[:4]).update(X.iloc[4:14])
+    assert first.cursor_ == second.cursor_ == 4
+
+    alarms = list(first.predict(X.iloc[4:14])["ilocs"])
+
+    assert alarms == list(second.predict(X.iloc[4:14])["ilocs"])
+    assert alarms == list(first.predict(X.iloc[4:14])["ilocs"])
+
+
+def test_ilocs_stay_inside_the_chunk():
+    """Test predict after update returns ilocs on the chunk, not on the stream."""
+    X_pretrain = _make_panel([20, 20])
+    y_pretrain = _make_events([("a", 5), ("b", 5)])
+    X = _make_series(20)
+    detector = DummyTimeFreqAnomalies(random_state=0).pretrain(X_pretrain, y_pretrain)
+    detector.fit(X.iloc[:4])
+
+    # the chunk holds times-from-start 4 to 9, the event at 5 is iloc 1
+    assert list(detector.update_predict(X.iloc[4:10])["ilocs"]) == [1]
+    # the next chunk holds 10 to 19, where the probability is 0
+    assert len(detector.update_predict(X.iloc[10:20])) == 0
+
+
+def test_predict_after_update_does_not_change_the_detector():
+    """Test predict leaves the detector unchanged, also after update."""
+    X = _make_series(20)
+    detector = _half_prob_detector().fit(X.iloc[:4]).update(X.iloc[4:14])
+    before = deepcopy(vars(detector))
+
+    detector.predict(X.iloc[4:14])
+
+    assert deep_equals(vars(detector), before)
+
+
+def test_second_fit_resets_the_cursor():
+    """Test fit starts the stream again at time-from-start 0."""
+    X = _make_series(20)
+    detector = _half_prob_detector().fit(X.iloc[:4])
+    detector.update(X.iloc[4:10]).update(X.iloc[10:16])
+    assert detector.cursor_ == 10
+    assert detector.n_timepoints_seen_ == 16
+
+    detector.fit(X)
+
+    assert detector.cursor_ == 0
+    assert detector.n_timepoints_seen_ == 20
+    fresh = _half_prob_detector().fit(X)
+    assert list(detector.predict(X)["ilocs"]) == list(fresh.predict(X)["ilocs"])

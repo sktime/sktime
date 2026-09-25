@@ -29,12 +29,23 @@ class DummyTimeFreqAnomalies(BaseDetector):
     each time-from-start where that series had an event, zero elsewhere.
     If no ``y`` is passed to ``fit`` either, no alarms are fired.
 
+    The series is treated as a stream. ``fit`` starts the stream at
+    time-from-start 0, and ``update`` adds the points it is passed to the
+    stream, without refitting. ``predict`` labels the latest points passed to
+    ``fit`` or ``update``, at their time-from-start, so ``update_predict`` on
+    consecutive chunks fires the same alarms as ``predict`` on the whole
+    series at once. Each chunk passed to ``update`` must follow the points
+    already seen, with no overlap and no gap, as time-from-start is counted
+    in points.
+
     Parameters
     ----------
     random_state : int, np.random.RandomState, or None, optional, default=None
-        Seed used to draw the alarms in ``predict``. With an integer seed,
-        ``predict`` fires the same alarms every time it is passed a series of
-        the same length. If None, the alarms can differ between runs.
+        Seed used to draw the alarms in ``predict``, one draw per
+        time-from-start. With an integer seed, a time-from-start gets the same
+        draw in every call, so ``predict`` fires the same alarms for the same
+        ``cursor_`` and length of ``X``. If None, the alarms can differ
+        between runs.
 
     Attributes
     ----------
@@ -53,6 +64,11 @@ class DummyTimeFreqAnomalies(BaseDetector):
         Probabilities used by ``predict``, set in ``fit``. ``event_prob_`` if
         the detector was pretrained, otherwise one at each time-from-start
         where the ``y`` passed to ``fit`` had an event, otherwise empty.
+    cursor_ : int
+        Time-from-start of the first point passed in the latest call to
+        ``fit`` or ``update``, where ``predict`` starts. 0 after ``fit``.
+    n_timepoints_seen_ : int
+        Number of time points passed to ``fit`` and ``update`` so far.
 
     Examples
     --------
@@ -84,6 +100,7 @@ class DummyTimeFreqAnomalies(BaseDetector):
         "capability:multivariate": True,
         "capability:missing_values": True,
         "capability:pretrain": True,
+        "capability:update": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "fit_is_empty": False,
@@ -160,6 +177,8 @@ class DummyTimeFreqAnomalies(BaseDetector):
 
         Writes to self:
             Sets ``prob_``, the probabilities used by ``predict``.
+            Sets ``cursor_`` to 0, and ``n_timepoints_seen_`` to the length of
+            ``X``.
 
         Parameters
         ----------
@@ -180,6 +199,36 @@ class DummyTimeFreqAnomalies(BaseDetector):
             self.prob_ = self._prob_of_series(y, len(X))
         else:
             self.prob_ = np.zeros(0, dtype="float64")
+
+        # the stream starts with the series fitted to
+        self.cursor_ = 0
+        self.n_timepoints_seen_ = len(X)
+        return self
+
+    def _update(self, X, y=None):
+        """Add the points in X to the stream, without refitting.
+
+        private _update containing the core logic, called from update
+
+        Writes to self:
+            Sets ``cursor_`` to the number of points seen before ``X``, the
+            time-from-start of the first point of ``X``, then adds the length
+            of ``X`` to ``n_timepoints_seen_``.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            New points of the time series, following the points seen so far.
+        y : pd.DataFrame, optional
+            Known events in ``X``. Ignored, nothing is refitted.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+        """
+        self.cursor_ = self.n_timepoints_seen_
+        self.n_timepoints_seen_ += len(X)
         return self
 
     def _predict(self, X):
@@ -195,6 +244,7 @@ class DummyTimeFreqAnomalies(BaseDetector):
         X : pd.DataFrame
             Time series subject to detection, which will be assigned labels or scores.
             Only the length of ``X`` is used, its values are ignored.
+            It starts at time-from-start ``cursor_``.
 
         Returns
         -------
@@ -202,14 +252,19 @@ class DummyTimeFreqAnomalies(BaseDetector):
             Labels for sequence ``X``, in sparse format.
             Values are ``iloc`` references to indices of ``X``.
         """
-        # nothing is fired beyond the last time-from-start seen in pretrain
-        prob = self.prob_[: len(X)]
+        # X starts at time-from-start cursor_, and nothing is fired beyond
+        # the last time-from-start seen in pretrain
+        start = self.cursor_
+        prob = self.prob_[start : start + len(X)]
 
         if len(prob) == 0:
             return BaseDetector._empty_sparse()
 
+        # one draw per time-from-start, so a time-from-start gets the same
+        # draw whichever chunk it is in
         rng = check_random_state(self.random_state)
-        ilocs = np.flatnonzero(rng.uniform(size=len(prob)) < prob)
+        draws = rng.uniform(size=len(self.prob_))[start : start + len(prob)]
+        ilocs = np.flatnonzero(draws < prob)
 
         if len(ilocs) == 0:
             return BaseDetector._empty_sparse()
