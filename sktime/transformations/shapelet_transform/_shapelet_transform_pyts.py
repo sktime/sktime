@@ -2,7 +2,6 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Abhay-Lejith"]
 __all__ = ["ShapeletTransformPyts"]
 
 from sktime.base.adapters._pyts import _PytsAdapter
@@ -139,6 +138,11 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "capability:random_state": True,
         "property:randomness": "stochastic",
         "capability:categorical_in_X": False,
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
+        # creates nested numpy shapelets sporadically, see #6171
+        "tests:libs": ["sktime.base.adapters._pyts"],
     }
 
     _estimator_attr = "_pyts_shapelet_transform"

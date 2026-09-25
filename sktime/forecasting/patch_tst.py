@@ -385,12 +385,12 @@ class PatchTSTForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
         # Tests and CI tags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_patch_tst"],
     }
 
     def __init__(
@@ -410,19 +410,33 @@ class PatchTSTForecaster(BaseForecaster):
         # dataset and training parameters
         self.validation_split = validation_split
         self.config = config
-        self._config = self.config if self.config else {}
         self.training_args = training_args
-        self._training_args = self.training_args if self.training_args else {}
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
         self.device = device
 
-        self._config = self.config if self.config else {}
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        self._config = self.config if self.config else {}
+        self._training_args = self.training_args if self.training_args else {}
+
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
 
-        if self.model_path is None and self.fit_strategy != "full":
+        model_path = self.model_path
+        if model_path is None and self.fit_strategy != "full":
             raise ValueError(f"model_path={model_path} requires fit_strategy=='full'")
 
     def _fit(self, y, X=None, fh=None):
@@ -440,6 +454,8 @@ class PatchTSTForecaster(BaseForecaster):
         -------
         self : a reference to the object
         """
+        self._cur_y = y
+        self._cur_X = X
         if isinstance(self.model_path, PatchTSTModel):
             self.model = self.model_path
             config = self.model.config
@@ -457,7 +473,7 @@ class PatchTSTForecaster(BaseForecaster):
             _config["num_input_channels"] = len(y.columns)
             if fh is not None:
                 _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
+                    *fh.to_relative(self._cutoff)._values,
                     _config["prediction_length"],
                 )
 
@@ -585,7 +601,7 @@ class PatchTSTForecaster(BaseForecaster):
         y_pred : sktime time series object
             pandas DataFrame
         """
-        y = self._y
+        y = self._cur_y
         if fh is None:
             fh = self.fh_
         else:

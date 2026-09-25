@@ -2,7 +2,6 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
 __all__ = ["KNeighborsTimeSeriesClassifierPyts"]
 
 from sktime.base.adapters._pyts import _PytsAdapter
@@ -99,7 +98,8 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": "pyts",
+        "python_dependencies": ["pyts", "scikit-learn<1.8"],
+        # todo 1.3.0: check whether the sklearn bound can be removed, see #11209
         # estimator type
         # --------------
         "capability:multivariate": False,
@@ -110,6 +110,7 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:libs": ["sktime.base.adapters._pyts"],
     }
 
     # defines the name of the attribute containing the pyts estimator

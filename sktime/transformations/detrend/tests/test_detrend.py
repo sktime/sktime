@@ -5,9 +5,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.forecasting.trend.tests.test_trend import get_expected_polynomial_coefs
-from sktime.tests.test_switch import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.transformations.detrend import Detrender
 
 __author__ = ["mloning", "KishManani"]
@@ -25,11 +23,15 @@ def y_dataframe():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    not run_test_for_class([Detrender])
+    and not run_test_module_changed("sktime.transformations.detrend"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_polynomial_detrending():
     """Test that transformer results agree with manual detrending."""
+    from sktime.forecasting.trend import PolynomialTrendForecaster
+    from sktime.forecasting.trend.tests.test_trend import get_expected_polynomial_coefs
+
     y = pd.Series(np.arange(20) * 0.5) + np.random.normal(0, 1, size=20)
     forecaster = PolynomialTrendForecaster(degree=1, with_intercept=True)
     transformer = Detrender(forecaster)
@@ -56,11 +58,14 @@ def test_polynomial_detrending():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    not run_test_for_class([Detrender])
+    and not run_test_module_changed("sktime.transformations.detrend"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_multiplicative_detrending_series(y_series):
     """Tests we get the expected result when setting `model=multiplicative`."""
+    from sktime.forecasting.trend import PolynomialTrendForecaster
+
     # Load test dataset
     y = y_series
 
@@ -79,11 +84,14 @@ def test_multiplicative_detrending_series(y_series):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    not run_test_for_class([Detrender])
+    and not run_test_module_changed("sktime.transformations.detrend"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_multiplicative_detrending_dataframe(y_dataframe):
     """Tests we get the expected result when setting `model=multiplicative`."""
+    from sktime.forecasting.trend import PolynomialTrendForecaster
+
     # Load test dataset
     y = y_dataframe
 
@@ -102,11 +110,14 @@ def test_multiplicative_detrending_dataframe(y_dataframe):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    not run_test_for_class([Detrender])
+    and not run_test_module_changed("sktime.transformations.detrend"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_additive_detrending_series(y_series):
     """Tests we get the expected result when setting `model=additive`."""
+    from sktime.forecasting.trend import PolynomialTrendForecaster
+
     # Load test dataset
     y = y_series
 
@@ -125,11 +136,14 @@ def test_additive_detrending_series(y_series):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([Detrender, PolynomialTrendForecaster]),
+    not run_test_for_class([Detrender])
+    and not run_test_module_changed("sktime.transformations.detrend"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_additive_detrending_dataframe(y_dataframe):
     """Tests we get the expected result when setting `model=additive`."""
+    from sktime.forecasting.trend import PolynomialTrendForecaster
+
     # Load test dataset
     y = y_dataframe
 

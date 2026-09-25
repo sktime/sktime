@@ -57,6 +57,32 @@ class LinearRegressionCost(BaseCost):
         except the response column are used as predictors.
     param : array-like, optional (default=None)
         Fixed regression coefficients.
+
+    Examples
+    --------
+    The first column of ``X`` is the response, the remaining columns are the
+    predictors. Here the response is proportional to the predictor, with a
+    change in the proportionality constant halfway through.
+
+    >>> import numpy as np
+    >>> from sktime.detection.costs import LinearRegressionCost
+    >>> covariate = np.arange(1., 9.)
+    >>> response = np.concatenate([2 * covariate[:4], 5 * covariate[4:]])
+    >>> X = np.column_stack([response, covariate])
+    >>> cost = LinearRegressionCost()
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[  0.  ],
+           [  0.  ],
+           [230.29]])
+
+    The regression has no implicit intercept term. To fit one, add a column of
+    ones to ``X``, which is then picked up as a predictor:
+
+    >>> X = np.column_stack([response, np.ones(8), covariate])
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[  0.  ],
+           [  0.  ],
+           [109.29]])
     """
 
     _tags = {

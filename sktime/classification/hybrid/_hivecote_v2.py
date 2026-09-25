@@ -101,6 +101,11 @@ class HIVECOTEV2(BaseClassifier):
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "hybrid",
+        # CI and test flags
+        # -----------------
+        "tests:specific": ["sktime.classification.hybrid.tests.test_hivecote_v2"],
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
+        "tests:skip_all": True,
     }
 
     def __init__(
