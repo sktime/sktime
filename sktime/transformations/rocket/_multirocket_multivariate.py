@@ -43,6 +43,15 @@ class MultiRocketMultivariate(BaseTransformer):
         The number of jobs to run in parallel for `transform`. ``-1`` means using all
         processors.
     random_state : None or int, default = None
+    original_implementation : bool, default=False
+        whether to reproduce the original reference implementation by the
+        authors, rather than the algorithm as specified in [1]_.
+        If False (default), the corrected transform is used.
+        If True, the transform reproduces the reference implementation
+        of [2]_, which deviates from the specification in [1]_; this is
+        retained for reproducibility of published results, and for users
+        with downstream models fitted on features produced by it.
+        See the notes on the differences below.
 
     Attributes
     ----------
@@ -69,6 +78,33 @@ class MultiRocketMultivariate(BaseTransformer):
     for fast and effective time series classification",2022,
     https://link.springer.com/article/10.1007/s10618-022-00844-1
     https://arxiv.org/abs/2102.00457
+
+    .. [2] Tan, Chang Wei, "MultiRocket reference implementation",
+    https://github.com/ChangWeiTan/MultiRocket
+
+    Notes
+    -----
+    The transform implemented here follows the algorithm as specified in [1]_,
+    and is not identical to the reference implementation [2]_ by the same
+    authors, which deviates from the specification. Set
+    ``original_implementation=True`` to reproduce [2]_ exactly.
+
+    The differences, all confined to the pass over the first order difference:
+
+    * the convolution windows are sized from the undifferenced series length,
+      while [1]_ specifies that "the length, weights and padding are the same
+      for both base and first order difference time series".
+    * the combination and channel cursors are not advanced per kernel, so every
+      kernel reuses the first combination's channel selection. Acknowledged as
+      a bug by one of the authors in aeon-toolkit/aeon#2967.
+    * the channel selection fitted on the differenced series is discarded in
+      favour of the one fitted on the base series. The authors consider either
+      choice acceptable; the fitted one is used here, so that the biases are
+      applied to the channels they were fitted on.
+
+    The multivariate extension is not specified in [1]_, which covers
+    univariate series only; it derives from the facility provided with
+    MiniRocket, described by its authors as naive.
 
     Examples
     --------
@@ -117,6 +153,7 @@ class MultiRocketMultivariate(BaseTransformer):
         normalise=False,
         n_jobs=1,
         random_state=None,
+        original_implementation=False,
     ):
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
@@ -124,6 +161,7 @@ class MultiRocketMultivariate(BaseTransformer):
         self.num_kernels_ = None
         self.normalise = normalise
         self.n_jobs = n_jobs
+        self.original_implementation = original_implementation
         self.random_state = random_state if isinstance(random_state, int) else None
 
         self.parameter = None
@@ -211,6 +249,7 @@ class MultiRocketMultivariate(BaseTransformer):
             self.parameter,
             self.parameter1,
             self.n_features_per_kernel,
+            self.original_implementation,
         )
         X = np.nan_to_num(X)
 
@@ -295,5 +334,6 @@ class MultiRocketMultivariate(BaseTransformer):
                 "num_kernels": 20,
                 "max_dilations_per_kernel": 16,
                 "random_state": 0,
+                "original_implementation": True,
             },  # Second parameter set
         ]
