@@ -188,7 +188,13 @@ class Pipeline(BaseEstimator):
 
         self.kwargs = {}
         self.steps = steps
-        self._steps = steps if steps is not None else []
+        self._steps = []
+        for step in steps or []:
+            step_information = copy(step)
+            step_information["edges"] = copy(step_information["edges"])
+            step_information["method"] = step_information.get("method")
+            step_information["kwargs"] = copy(step_information.get("kwargs", {}))
+            self._steps.append(step_information)
 
         object_types = [step["skobject"].get_tag("object_type") for step in self._steps]
         if len(set(object_types)) == 1:
@@ -202,10 +208,6 @@ class Pipeline(BaseEstimator):
             pass
 
         for step_information in self._steps:
-            if "method" not in step_information:
-                step_information["method"] = None
-            if "kwargs" not in step_information:
-                step_information["kwargs"] = {}
             self.clone_tags(step_information["skobject"])
 
     def _get_unique_id(self, skobject):
