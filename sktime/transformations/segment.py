@@ -191,6 +191,23 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by ``np.random``.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.segment import RandomIntervalSegmenter
+    >>> X = pd.DataFrame(
+    ...     {"a": [1.0, 2.0, 3.0, 4.0], "b": [4.0, 3.0, 2.0, 1.0]},
+    ...     index=pd.MultiIndex.from_product(
+    ...         [["i0", "i1"], [0, 1]], names=["instance", "time"]
+    ...     ),
+    ... )
+    >>> t = RandomIntervalSegmenter(n_intervals=1, random_state=42)
+    >>> Xt = t.fit_transform(X)
+    >>> Xt.shape
+    (4, 2)
+    >>> list(Xt.columns)
+    ['a_0_2', 'b_0_2']
     """
 
     _tags = {
