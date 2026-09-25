@@ -8,7 +8,7 @@ __author__ = ["ciaran-g", "felipeangelimvieira"]
 import numpy as np
 import pandas as pd
 
-from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.base import BaseForecaster
 from sktime.utils.warnings import warn
 
 
@@ -233,11 +233,7 @@ class ReconcilerForecaster(BaseForecaster):
         # In this case, the totals are required
         y = self._add_totals(y)
         self.forecaster_.fit(y=y, X=X, fh=fh)
-        # bug in self.forecaster_.predict_residuals() for heir data
-        fh_resid = ForecastingHorizon(
-            y.index.get_level_values(-1).unique(), is_relative=False
-        )
-        self.residuals_ = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        self.residuals_ = self.forecaster_.predict_residuals(y=y, X=X)
 
         # now define recon matrix
         if self.method == "mint_cov":
@@ -343,11 +339,7 @@ class ReconcilerForecaster(BaseForecaster):
             return self
 
         # update self.residuals_
-        # bug in self.forecaster_.predict_residuals() for heir data
-        fh_resid = ForecastingHorizon(
-            y.index.get_level_values(-1).unique(), is_relative=False
-        )
-        update_residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        update_residuals = self.forecaster_.predict_residuals(y=y, X=X)
         self.residuals_ = pd.concat([self.residuals_, update_residuals], axis=0)
         self.residuals_ = self.residuals_.sort_index()
 
