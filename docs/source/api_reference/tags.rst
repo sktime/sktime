@@ -214,6 +214,7 @@ detectors.
     task
     learning_type
     capability__update
+    capability__pretrain
     capability__multivariate
     capability__missing_values
     capability__random_state
