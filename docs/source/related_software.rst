@@ -223,4 +223,4 @@ Time series databases and frameworks
 Acknowledgements
 ================
 
-Thanks to `Max Christ <https://github.com/MaxBenChrist/>`_ who started the list `here <https://github.com/MaxBenChrist/awesome_time_series_in_python/blob/main/README.md>`_.
+Thanks to `Max Christ <https://github.com/MaxBenChrist/>`_ who started the list `here <https://github.com/MaxBenChrist/awesome_time_series_in_python/blob/master/README.md>`_.
