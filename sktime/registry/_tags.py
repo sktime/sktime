@@ -712,6 +712,24 @@ class tests__python_dependencies(_BaseTag):
 # most tags in this group apply to estimators
 
 
+class reserved_params(_BaseTag):
+    """Parameters reserved by the base class and present in all child estimators.
+
+    - String name: ``"reserved_params"``
+    - Public tag
+    - Values: list of strings
+    """
+
+    _tags = {
+        "tag_name": "reserved_params",
+        "parent_type": "estimator",
+        "tag_type": ("list", "str"),
+        "short_descr": "parameters reserved by the base class and "
+        "present in all child estimators",
+        "user_facing": True,
+    }
+
+
 class capability__missing_values(_BaseTag):
     """Capability: the estimator can handle missing data, e.g,, NaNs.
 
@@ -1429,6 +1447,38 @@ class capability__categorical_in_y(_BaseTag):
 
 # tags related to panel data, typically:
 # classification, regression, clustering, and transformations
+
+
+class classifier_type(_BaseTag):
+    """Which type the classifier falls under in the taxonomy of time series.
+
+    Classification algorithms taxonomy.
+
+    - String name: ``"classifier_type"``
+    - Public tag
+    - Values: string or list of strings from ``"dictionary"``, ``"distance"``,
+      ``"feature"``, ``"hybrid"``, ``"interval"``, ``"kernel"``, ``"shapelet"``
+    """
+
+    _tags = {
+        "tag_name": "classifier_type",
+        "parent_type": "classifier",
+        "tag_type": (
+            "list",
+            [
+                "dictionary",
+                "distance",
+                "feature",
+                "hybrid",
+                "interval",
+                "kernel",
+                "shapelet",
+            ],
+        ),
+        "short_descr": "which type the classifier falls under in the taxonomy of "
+        "time series classification algorithms.",
+        "user_facing": True,
+    }
 
 
 class capability__multivariate(_BaseTag):
@@ -2433,6 +2483,24 @@ class capability__unequal_length__adds(_BaseTag):
         "parent_type": "transformer",
         "tag_type": "bool",
         "short_descr": "can outputs be unequal length even if inputs are equal length?",
+        "user_facing": True,
+    }
+
+
+class pwtrafo_type(_BaseTag):
+    """Mathematical type of pairwise transformer.
+
+    - String name: ``"pwtrafo_type"``
+    - Public tag
+    - Values: string, one of ``"distance"``, ``"kernel"``, ``"other"``
+    """
+
+    _tags = {
+        "tag_name": "pwtrafo_type",
+        "parent_type": ["transformer-pairwise", "transformer-pairwise-panel"],
+        "tag_type": ("str", ["distance", "kernel", "other"]),
+        "short_descr": "mathematical type of pairwise transformer "
+        "- distance, kernel, or other",
         "user_facing": True,
     }
 
@@ -4029,6 +4097,23 @@ class info__source(_BaseTag):
     }
 
 
+class enforce_index_type(_BaseTag):
+    """Passed to input checks, input conversion index type to enforce.
+
+    - String name: ``"enforce_index_type"``
+    - Public tag
+    - Values: type
+    """
+
+    _tags = {
+        "tag_name": "enforce_index_type",
+        "parent_type": ["forecaster", "regressor"],
+        "tag_type": "type",
+        "short_descr": "passed to input checks, input conversion index type to enforce",
+        "user_facing": True,
+    }
+
+
 class X_y_must_have_same_index(_BaseTag):
     """Do X/y in fit/update and X/fh in predict have to be same indices.
 
@@ -4048,42 +4133,6 @@ class X_y_must_have_same_index(_BaseTag):
 
 
 ESTIMATOR_TAG_REGISTER = [
-    (
-        "enforce_index_type",
-        ["forecaster", "regressor"],
-        "type",
-        "passed to input checks, input conversion index type to enforce",
-    ),
-    (
-        "pwtrafo_type",
-        ["transformer-pairwise", "transformer-pairwise-panel"],
-        ("str", ["distance", "kernel", "other"]),
-        "mathematical type of pairwise transformer - distance, kernel, or other",
-    ),
-    (
-        "classifier_type",
-        "classifier",
-        (
-            "list",
-            [
-                "dictionary",
-                "distance",
-                "feature",
-                "hybrid",
-                "interval",
-                "kernel",
-                "shapelet",
-            ],
-        ),
-        "which type the classifier falls under in the taxonomy of time series "
-        "classification algorithms.",
-    ),
-    (
-        "reserved_params",
-        "estimator",
-        ("list", "str"),
-        "parameters reserved by the base class and present in all child estimators",
-    ),
     # -------------------------
     # tags to be moved to skpro
     # -------------------------
