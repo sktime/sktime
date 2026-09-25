@@ -4030,11 +4030,36 @@ class info__source(_BaseTag):
 
 
 class X_y_must_have_same_index(_BaseTag):
-    """Do X/y in fit/update and X/fh in predict have to be same indices.
+    """Whether X and y must have the same index in fit, update, and predict.
 
     - String name: ``"X-y-must-have-same-index"``
-    - Values: bool
+    - Public tag
+    - Values: boolean, ``True`` / ``False``
     - Example: ``True``
+    - Default: ``True`` (forecasters), ``False`` (transformers)
+
+    This tag applies to forecasters, regressors, and transformers.
+
+    It specifies whether the estimator requires the exogenous data ``X``
+    and the target data ``y`` (or the forecasting horizon ``fh``) to have
+    aligned indices. This tag is only relevant when ``X`` is passed,
+    i.e., when the estimator uses exogenous data
+    (``capability:exogenous=True``).
+
+    If the tag is ``True``, the following index constraints are enforced:
+
+    * In ``fit`` and ``update``: the index of ``X`` must contain the index
+      of ``y``, i.e., ``y.index`` must be a subset of ``X.index``.
+    * In ``predict``: the index of ``X`` must contain the time points
+      specified by the forecasting horizon ``fh``.
+
+    If the tag is ``False``, ``X`` and ``y`` (or ``fh``) are not required
+    to have aligned indices. The estimator can handle the case where the
+    index of ``X`` differs from that of ``y`` or ``fh``.
+
+    The tag ``X-y-must-have-same-index`` is used in conjunction with the
+    ``capability:exogenous`` tag. If ``capability:exogenous`` is ``False``,
+    ``X`` is ignored entirely and the index alignment check is not performed.
     """
 
     _tags = {
