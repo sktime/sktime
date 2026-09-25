@@ -451,8 +451,11 @@ class BaseDistribution(BaseObject):
         warn(self._method_error_msg("pdfnorm", fill_in=approx_method))
 
         # uses formula int p(x)^a dx = E[p(X)^{a-1}], and MC approximates the RHS
+        # keys=range(...) ensures a 2-level (sample, time) MultiIndex, so that
+        # groupby over level 1 aggregates the Monte Carlo samples per time index
         spl = [self.pdf(self.sample()) ** (a - 1) for _ in range(approx_spl_size)]
-        return pd.concat(spl, axis=0).groupby(level=1, sort=False).mean()
+        spl = pd.concat(spl, keys=range(approx_spl_size))
+        return spl.groupby(level=1, sort=False).mean()
 
     def _coerce_to_self_index_df(self, x):
         x = np.array(x)

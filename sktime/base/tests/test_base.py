@@ -33,10 +33,13 @@ __all__ = [
     "test_nested_set_params_and_alias",
     "test_get_fitted_params",
     "test_eq_dunder",
+    "test_pdfnorm_flat_index",
 ]
 
 from copy import deepcopy
 
+import numpy as np
+import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -566,3 +569,32 @@ def test_eq_dunder_checks_class():
 
     # comparison against a non-BaseObject must not raise, and must be unequal
     assert unrelated_1 != 42
+
+
+def test_pdfnorm_flat_index():
+    """Test that the pdfnorm Monte Carlo fill-in works with flat-index distributions.
+
+    Regression test for #11006: pdfnorm failed with
+    ValueError: level > 0 or level < -1 only valid with MultiIndex
+    for directly constructed distributions whose index is not a MultiIndex.
+    """
+    from sktime.base._proba._normal import Normal
+
+    idx = pd.RangeIndex(3)
+    distr = Normal(
+        mu=[[0.1], [0.4], [0.9]],
+        sigma=[[1.0], [1.0], [1.0]],
+        index=idx,
+        columns=pd.Index(["a"]),
+    )
+
+    res = distr.pdfnorm(a=2)
+
+    # result must have same rows and columns as the distribution
+    assert isinstance(res, pd.DataFrame)
+    assert (res.index == distr.index).all()
+    assert (res.columns == distr.columns).all()
+
+    # Normal with sigma=1: 2-norm of pdf is 1/(2*sigma*sqrt(pi)), MC approximates it
+    expected = 1 / (2 * np.sqrt(np.pi))
+    assert np.allclose(res.to_numpy(), expected, atol=0.1)
