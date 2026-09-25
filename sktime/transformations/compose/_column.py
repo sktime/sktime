@@ -7,10 +7,10 @@ __author__ = ["fkiraly", "mloning"]
 __all__ = ["ColumnEnsembleTransformer", "ColumnwiseTransformer"]
 
 import pandas as pd
+from skbase.base._pretty_printing._object_html_repr import _VisualBlock
 
 from sktime.base._meta import _ColumnEstimator, _HeterogenousMetaEstimator
 from sktime.transformations.base import BaseTransformer
-from sktime.utils._estimator_html_repr import _VisualBlock
 from sktime.utils.multiindex import rename_multiindex
 from sktime.utils.validation.series import check_series
 
