@@ -7,7 +7,7 @@
 Scitype defining methods:
     pretraining          - pretrain(self, X, y=None)
     fitting              - fit(self, X, y=None)
-    annotating           - predict(self, X)
+    detecting            - predict(self, X)
     updating (temporal)  - update(self, X, y=None)
     update&annotate      - update_predict(self, X, y=None)
 
