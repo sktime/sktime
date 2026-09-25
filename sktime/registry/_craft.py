@@ -52,7 +52,7 @@ def _extract_class_names(spec):
     return cls_name_list
 
 
-def craft(spec, safe=False):
+def craft(spec, safe=False, namespace_plugin=None):
     """Instantiate an object from the specification string.
 
     The ``craft`` utility can be used to deserialize an estimator specification string,
@@ -129,6 +129,12 @@ def craft(spec, safe=False):
           rules, see above for the exact rules.
         * if False, allow all expressions (default behavior).
 
+    namespace_plugin : dict or iterable of (str, object) tuples, optional
+        additional namespace for resolving names in the specification.
+        If a dict is provided, it should map names to objects.
+        If an iterable of tuples is provided, each
+        tuple should be of the form (name, object).
+
     Returns
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
@@ -169,10 +175,18 @@ def craft(spec, safe=False):
     ... '''
     >>> est = craft(spec)
     """
+    # normalize namespace_plugin to dict
+    if namespace_plugin is None:
+        namespace_plugin = {}
+    elif isinstance(namespace_plugin, dict):
+        pass
+    else:
+        namespace_plugin = dict(namespace_plugin)
+
     # retrieve all estimators from sktime and sklearn for namespace resolution
     register_sktime = dict(all_estimators())  # noqa: F841
     register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
-    register = {**register_sklearn, **register_sktime}
+    register = {**register_sklearn, **register_sktime, **namespace_plugin}
 
     # Parse the specification once.
     # Both safe and unsafe modes operate on the resulting AST.
