@@ -25,7 +25,6 @@ from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
-    VectorizedDF,
     check_is_scitype,
     convert,
     scitype_to_mtype,
@@ -474,9 +473,6 @@ class BaseParamFitter(BaseEstimator):
         """
         X = data
         if X is not None:
-            # unwrap X if VectorizedDF
-            if isinstance(X, VectorizedDF):
-                X = X.X_multiindex
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 setattr(self, self_data, X)

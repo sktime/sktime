@@ -60,6 +60,7 @@ from sktime.datatypes import (
     convert_to,
     get_cutoff,
     mtype_to_scitype,
+    prepare_VectorizedDF,
     scitype_to_mtype,
     update_data,
 )
@@ -512,11 +513,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             self._reset_at("pretrained")
 
         # check and convert X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        X_inner, y_inner, X_data, y_data = self._check_X_y(X=X, y=y)
 
         # update cutoff from y (subclasses may also pool data here, e.g. streams)
         # if remember_data is True, update internal X/y also
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(y_data, X_data)
 
         # check forecasting horizon and coerce to ForecastingHorizon object
         fh = self._check_fh(fh)
@@ -684,11 +685,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self._is_fitted = False
 
         # check and convert X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        X_inner, y_inner, X_data, y_data = self._check_X_y(X=X, y=y)
 
         # update cutoff from y (subclasses may also pool data here, e.g. streams)
         # if remember_data is True, update internal X/y also
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(y_data, X_data)
 
         # check fh and coerce to ForecastingHorizon
         fh = self._check_fh(fh)
@@ -704,9 +705,9 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             self._vectorize("fit", y=y_inner, X=X_inner, fh=fh)
 
         self._state = "fitted"
-        # call the public predict to avoid duplicating output conversions
-        #  input conversions are skipped since we are using X_inner
-        return self.predict(fh=fh, X=X_inner)
+        # public predict reconverts X; pass original so schema-only wrappers
+        # are not fed back into _check_X
+        return self.predict(fh=fh, X=X)
 
     def predict_quantiles(self, fh=None, X=None, alpha=None):
         """Compute/return quantile forecasts.
@@ -1182,7 +1183,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # pretrain accepts multivariate panel data even for univariate forecasters,
         # because _pretrain can split columns into separate univariate series.
         # Pass multivariate=True to prevent column vectorization.
-        X_inner, y_inner = self._check_X_y(
+        X_inner, y_inner, _, _ = self._check_X_y(
             X=X, y=y, y_inner_mtype=pretrain_y_mtypes, multivariate=True
         )
 
@@ -1365,11 +1366,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             return self
 
         # input checks and minor coercions on X, y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        X_inner, y_inner, X_data, y_data = self._check_X_y(X=X, y=y)
 
         # update cutoff from y (subclasses may also pool data here, e.g. streams)
         # if remember_data is True, update internal X/y also
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(y_data, X_data)
 
         # checks and conversions complete, pass to inner fit
         if not self._is_vectorized:
@@ -1497,14 +1498,14 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self.check_is_fitted()
 
         # input checks and minor coercions on X, y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        _, _, X_data, y_data = self._check_X_y(X=X, y=y)
 
         cv = check_cv(cv)
 
         return self._predict_moving_cutoff(
-            y=y_inner,
+            y=y_data,
             cv=cv,
-            X=X_inner,
+            X=X_data,
             update_params=update_params,
             reset_forecaster=reset_forecaster,
         )
@@ -1594,11 +1595,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self.check_is_fitted()
 
         # input checks and minor coercions on X, y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        X_inner, y_inner, X_data, y_data = self._check_X_y(X=X, y=y)
 
         # update cutoff from y (subclasses may also pool data here, e.g. streams)
         # if remember_data is True, update internal X/y also
-        self._update_y_X(y_inner, X_inner)
+        self._update_y_X(y_data, X_data)
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
         fh = self._check_fh(fh)
@@ -1834,28 +1835,35 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             Time series to check.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series.
+        y_inner_mtype : str, list of str, or None, optional (default=None)
+            inner mtype(s) to convert y to; if None, uses ``y_inner_mtype`` tag
+        multivariate : None, True or False, optional (default=None)
+            if not-None, overrides the capability tag ``capability:multivariate``
+            in internal behaviour. Overridden currently from: the ``pretrain`` method.
 
         Returns
         -------
-        y_inner : Series, Panel, or Hierarchical object, or VectorizedDF
-                compatible with self.get_tag("y_inner_mtype") format
-            Case 1: self.get_tag("y_inner_mtype") supports scitype of y, then
-                converted/coerced version of y, mtype determined by "y_inner_mtype" tag
-            Case 2: self.get_tag("y_inner_mtype") does not support scitype of y, then
-                VectorizedDF of y, iterated as the most complex supported scitype
-                    (complexity order: Hierarchical > Panel > Series)
-            Case 3: None if y was None
         X_inner : Series, Panel, or Hierarchical object, or VectorizedDF
                 compatible with self.get_tag("X_inner_mtype") format
             Case 1: self.get_tag("X_inner_mtype") supports scitype of X, then
                 converted/coerced version of X, mtype determined by "X_inner_mtype" tag
             Case 2: self.get_tag("X_inner_mtype") does not support scitype of X, then
-                VectorizedDF of X, iterated as the most complex supported scitype
+                VectorizedDF schema of X, iterated as the most complex supported scitype
             Case 3: None if X was None
-        multivariate : None, True or False
-            if not-None, overrides the capability tag "capability:multivariate"
-            in internal behaviour.
-            Overridden currently from: the ``pretrain`` method.
+        y_inner : Series, Panel, or Hierarchical object, or VectorizedDF
+                compatible with self.get_tag("y_inner_mtype") format
+            Case 1: self.get_tag("y_inner_mtype") supports scitype of y, then
+                converted/coerced version of y, mtype determined by "y_inner_mtype" tag
+            Case 2: self.get_tag("y_inner_mtype") does not support scitype of y, then
+                VectorizedDF schema of y, iterated as the most complex supported scitype
+                    (complexity order: Hierarchical > Panel > Series)
+            Case 3: None if y was None
+        X_data : same as X_inner when not vectorized; multiindex frame when vectorized
+            Already-converted data for ``vectorize_est`` slices and ``remember_data``.
+            None if X was None.
+        y_data : same as y_inner when not vectorized; multiindex frame when vectorized
+            Already-converted data for ``vectorize_est`` slices and ``remember_data``.
+            None if y was None.
 
         Raises
         ------
@@ -1869,7 +1877,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         _converter_store_y : dict, metadata from conversion for back-conversion
         """
         if X is None and y is None:
-            return None, None
+            return None, None, None, None
 
         def _most_complex_scitype(scitypes, smaller_equal_than=None):
             """Return most complex scitype in a list of str."""
@@ -2079,29 +2087,43 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
                 to_type=X_inner_mtype,
                 as_scitype=X_scitype,  # we are dealing with series
             )
+            y_data = y_inner
+            X_data = X_inner
         else:
             iterate_as = _most_complex_scitype(
                 y_inner_scitype, smaller_equal_than=y_scitype
             )
             if y is not None:
-                y_inner = VectorizedDF(
+                y_inner, y_data = prepare_VectorizedDF(
                     X=y,
                     iterate_as=iterate_as,
                     is_scitype=y_scitype,
                     iterate_cols=req_vec_because_cols,
+                    store=self._converter_store_y,
+                    store_behaviour="reset",
                 )
             else:
                 y_inner = None
+                y_data = None
             if X is not None:
-                X_inner = VectorizedDF(X=X, iterate_as=iterate_as, is_scitype=X_scitype)
+                X_inner, X_data = prepare_VectorizedDF(
+                    X=X, iterate_as=iterate_as, is_scitype=X_scitype
+                )
             else:
                 X_inner = None
+                X_data = None
 
-        return X_inner, y_inner
+        return X_inner, y_inner, X_data, y_data
 
     def _check_X(self, X=None):
-        """Shorthand for _check_X_y with one argument X, see _check_X_y."""
-        return self._check_X_y(X=X)[0]
+        """Shorthand for _check_X_y with one argument X, see _check_X_y.
+
+        Returns
+        -------
+        X_inner : converted X or VectorizedDF schema
+        """
+        X_inner, _, _, _ = self._check_X_y(X=X)
+        return X_inner
 
     def _update_X(self, X, enforce_index_type=None):
         if X is not None and self.get_config()["remember_data"]:
@@ -2123,13 +2145,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         enforce_index_type : type, optional (default=None)
             Ignored by the base implementation; kept for subclass overrides.
         """
-        if y is not None:
-            # unwrap y if VectorizedDF
-            if isinstance(y, VectorizedDF):
-                y = y.X_multiindex
-            self._set_cutoff_from_y(y)
-
-        # if remember_data config is set, update stored _y
         if y is not None and self.get_config()["remember_data"]:
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
@@ -2141,9 +2156,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             self._set_cutoff_from_y(y)
 
         if X is not None and self.get_config()["remember_data"]:
-            # unwrap X if VectorizedDF
-            if isinstance(X, VectorizedDF):
-                X = X.X_multiindex
             # if _X does not exist yet, initialize it with X
             if not hasattr(self, "_X") or self._X is None or not self.is_fitted:
                 self._X = X
@@ -2671,11 +2683,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # set cutoff to time point before data
         y_first_index = get_cutoff(y, return_index=True, reverse_order=True)
         self_copy._set_cutoff(_shift(y_first_index, by=-1, return_index=True))
-
-        if isinstance(y, VectorizedDF):
-            y = y.X
-        if isinstance(X, VectorizedDF):
-            X = X.X
 
         # iterate over data
         for new_window, _ in cv.split(y):
