@@ -194,7 +194,7 @@ class ElbowClassSum(BaseTransformer):
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "capability:multivariate": True,  # can the transformer handle multivariate X?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "numpy1D",  # which mtypes do _fit/_predict support for y?
         "requires_y": True,  # does y need to be passed in fit?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
@@ -243,12 +243,12 @@ class ElbowClassSum(BaseTransformer):
         start = int(round(time.time() * 1000))
         centroid_obj = _shrunk_centroid(1e-5)
 
-        X_np = convert(X, "nested_univ", "numpy3D")
-        centroids = centroid_obj.create_centroid(X_np, y)
+        X_nested = convert(X, from_type="numpy3D", to_type="nested_univ")
+        centroids = centroid_obj.create_centroid(X, y)
         centroids_no_y = centroids.drop("class_vals", axis=1)
-        centroids_no_y.columns = X.columns
+        centroids_no_y.columns = X_nested.columns
 
-        dists = [t(X[[c]]).sum() for c in X.columns]
+        dists = [t(X_nested[[c]]).sum() for c in X_nested.columns]
         dists = pd.Series(dists)
         self.distance_frame_ = dists
 
@@ -258,7 +258,7 @@ class ElbowClassSum(BaseTransformer):
         idx = _detect_knee_point(distance, indices)[0]
 
         self.channels_selected_ = idx
-        self.channels_selected_idx_ = [X.columns[i] for i in idx]
+        self.channels_selected_idx_ = [X_nested.columns[i] for i in idx]
 
         self.train_time_ = int(round(time.time() * 1000)) - start
 
@@ -277,7 +277,7 @@ class ElbowClassSum(BaseTransformer):
         output : pandas DataFrame
             X with a subset of channels
         """
-        return X[self.channels_selected_idx_]
+        return X[:, self.channels_selected_, :]
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
