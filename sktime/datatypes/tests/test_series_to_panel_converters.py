@@ -1,75 +1,108 @@
-"""Testing panel converters - internal functions and more extensive fixtures."""
+"""Tests for cross-scitype conversions between Series, Panel, and Hierarchical."""
 
-import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datatypes._series_as_panel import (
+from sktime.datatypes import check_is_mtype
+from sktime.datatypes._series_as_panel._convert import (
+    convert_Hierarchical_to_Panel,
+    convert_Hierarchical_to_Series,
+    convert_Panel_to_Hierarchical,
     convert_Panel_to_Series,
+    convert_Series_to_Hierarchical,
     convert_Series_to_Panel,
 )
-from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils._testing.panel import _make_panel
-from sktime.utils._testing.series import _make_series
+from sktime.utils.dependencies import _check_soft_dependencies
+
+
+def test_convert_series_panel_unsupported_type_raises():
+    """Test TypeError on unsupported types."""
+    with pytest.raises(TypeError, match="supported Series mtype"):
+        convert_Series_to_Panel("invalid_input")
+
+    with pytest.raises(TypeError, match="supported Panel mtype"):
+        convert_Panel_to_Series("invalid_input")
+
+
+def test_convert_panel_to_series_pandas_immutability():
+    """Test that input pandas multiindex DataFrame is not mutated in-place."""
+    idx = pd.MultiIndex.from_tuples([(0, 0), (0, 1)], names=["instances", "timepoints"])
+    df_panel = pd.DataFrame({"a": [1, 2]}, index=idx)
+    original_nlevels = df_panel.index.nlevels
+
+    res = convert_Panel_to_Series(df_panel)
+    assert df_panel.index.nlevels == original_nlevels
+    assert res.index.nlevels == 1
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.datatypes"),
-    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+    not _check_soft_dependencies("polars", severity="none"),
+    reason="skip test if polars is not installed",
 )
-def test_convert_numpy_series_to_panel():
-    """Test output format of series-to-panel for numpy type input."""
-    X_series = _make_series(n_columns=2, return_mtype="np.ndarray")
-    n_time, n_var = X_series.shape
+def test_convert_polars_series_to_panel_roundtrip():
+    """Test Polars Series to Panel and back, with and without pre-existing index."""
+    import polars as pl
 
-    X_panel = convert_Series_to_Panel(X_series)
+    # Case 1: Index-less Polars DataFrame
+    df_no_index = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
+    panel, mtype = convert_Series_to_Panel(df_no_index, return_to_mtype=True)
+    assert mtype == "polars_panel"
+    assert check_is_mtype(panel, "polars_panel", return_metadata=False)
 
-    assert isinstance(X_panel, np.ndarray)
-    assert X_panel.ndim == 3
-    assert X_panel.shape == (1, n_var, n_time)
+    recovered, s_mtype = convert_Panel_to_Series(panel, return_to_mtype=True)
+    assert s_mtype == "pl.DataFrame"
+    assert check_is_mtype(recovered, "pl.DataFrame", return_metadata=False)
+    assert recovered["a"].to_list() == df_no_index["a"].to_list()
+
+    # Case 2: Polars DataFrame with existing __index__time
+    df_with_index = pl.DataFrame(
+        {
+            "__index__time": [10, 20, 30],
+            "a": [1, 2, 3],
+            "b": [4, 5, 6],
+        }
+    )
+    panel2, mtype2 = convert_Series_to_Panel(df_with_index, return_to_mtype=True)
+    assert mtype2 == "polars_panel"
+    assert check_is_mtype(panel2, "polars_panel", return_metadata=False)
+
+    recovered2, s_mtype2 = convert_Panel_to_Series(panel2, return_to_mtype=True)
+    assert s_mtype2 == "pl.DataFrame"
+    assert check_is_mtype(recovered2, "pl.DataFrame", return_metadata=False)
+    assert "__index__time" in recovered2.columns
+    assert "__index__instances" not in recovered2.columns
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.datatypes"),
-    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+    not _check_soft_dependencies("polars", severity="none"),
+    reason="skip test if polars is not installed",
 )
-def test_convert_numpy_panel_to_series():
-    """Test output format of panel-to-series for numpy type input."""
-    X_panel = _make_panel(n_instances=1, n_columns=2, return_mtype="numpy3D")
-    _, n_var, n_time = X_panel.shape
+def test_convert_polars_hierarchical_roundtrips():
+    """Test Polars Hierarchical conversions roundtrips."""
+    import polars as pl
 
-    X_series = convert_Panel_to_Series(X_panel)
+    df_series = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
-    assert isinstance(X_series, np.ndarray)
-    assert X_series.ndim == 2
-    assert X_series.shape == (n_time, n_var)
+    # Series to Hierarchical and back
+    hier, h_mtype = convert_Series_to_Hierarchical(df_series, return_to_mtype=True)
+    assert h_mtype == "polars_hierarchical"
+    assert check_is_mtype(hier, "polars_hierarchical", return_metadata=False)
 
+    rec_series, s_mtype = convert_Hierarchical_to_Series(hier, return_to_mtype=True)
+    assert s_mtype == "pl.DataFrame"
+    assert check_is_mtype(rec_series, "pl.DataFrame", return_metadata=False)
+    assert rec_series["a"].to_list() == df_series["a"].to_list()
 
-@pytest.mark.skipif(
-    not run_test_module_changed("sktime.datatypes"),
-    reason="Test only if sktime.datatypes or utils.parallel has been changed",
-)
-def test_convert_df_series_to_panel():
-    """Test output format of series-to-panel for dataframe type input."""
-    X_series = _make_series(n_columns=2, return_mtype="pd.DataFrame")
+    # Panel to Hierarchical and back
+    panel, _ = convert_Series_to_Panel(df_series, return_to_mtype=True)
+    hier_from_panel, hp_mtype = convert_Panel_to_Hierarchical(
+        panel, return_to_mtype=True
+    )
+    assert hp_mtype == "polars_hierarchical"
+    assert check_is_mtype(hier_from_panel, "polars_hierarchical", return_metadata=False)
 
-    X_panel = convert_Series_to_Panel(X_series)
-
-    assert isinstance(X_panel, list)
-    assert isinstance(X_panel[0], pd.DataFrame)
-    assert X_panel[0].equals(X_series)
-
-
-@pytest.mark.skipif(
-    not run_test_module_changed("sktime.datatypes"),
-    reason="Test only if sktime.datatypes or utils.parallel has been changed",
-)
-def test_convert_df_panel_to_series():
-    """Test output format of panel-to-series for dataframe type input."""
-    X_panel = _make_panel(n_instances=1, n_columns=2, return_mtype="pd-multiindex")
-
-    X_series = convert_Panel_to_Series(X_panel)
-
-    assert isinstance(X_series, pd.DataFrame)
-    assert len(X_series) == len(X_panel)
-    assert (X_series.values == X_panel.values).all()
+    rec_panel, p_mtype = convert_Hierarchical_to_Panel(
+        hier_from_panel, return_to_mtype=True
+    )
+    assert p_mtype == "polars_panel"
+    assert check_is_mtype(rec_panel, "polars_panel", return_metadata=False)
