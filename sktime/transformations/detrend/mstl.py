@@ -81,6 +81,8 @@ class MSTL(BaseTransformer):
     stl_kwargs : dict, optional
         Arguments to pass to STL.
     return_components : bool, default=False
+        Whether to return components of the decomposition or only transformed series.
+
         * if False, will return only the MSTL transformed series, same
           as trend plus residual component. The resulting series has the same
           number of columns as the input.
@@ -199,6 +201,10 @@ class MSTL(BaseTransformer):
         "skip-inverse-transform": False,
         "fit_is_empty": False,
         "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:specific": "sktime.transformations.detrend.tests.test_mstl",
+        "tests:vm": True,
     }
 
     def __init__(
