@@ -168,6 +168,37 @@ class MIRAForecaster(BaseForecaster):
         self.model.eval()
         return self
 
+    def _update(self, y, X=None, update_params=True):
+        """Update forecaster with new data.
+
+        MIRA is a zero-shot foundation model: prediction only uses the last
+        ``context_length`` observations (see ``_prepare_context``). Retaining
+        all historical data in ``self._y`` is therefore unnecessary, so we
+        trim ``self._y`` to the latest ``context_length`` points after the
+        base update.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Endogenous time series (univariate, one column).
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables. Ignored.
+        update_params : bool, optional (default=True)
+            Whether model parameters should be updated.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        super()._update(y=y, X=X, update_params=update_params)
+
+        if self.context_length is not None and self.get_config()["remember_data"]:
+            y_stored = self._y
+            if y_stored is not None and len(y_stored) > self.context_length:
+                self._y = y_stored.iloc[-self.context_length:]
+
+        return self
+
     def _predict(self, fh, X=None):
         if self.model is None:
             self.model = self._load_model()
