@@ -313,16 +313,13 @@ def _generate_holidays(
     # Holidays just outside the time index can still affect it through
     # their windows or bridge days, so we look them up in an extended range.
     windows = holiday_windows.values() if holiday_windows is not None else []
-    max_before = max([before for before, _ in windows], default=0)
-    max_after = max([after for _, after in windows], default=0)
-    margin = 1 if include_bridge_days else 0
+    pad = max([max(window) for window in windows], default=0)
+    if include_bridge_days:
+        pad = max(pad, 1)
+    pad = datetime.timedelta(days=pad)
     lookup_dates = []
     if len(dates) > 0:
-        lookup_dates = pd.date_range(
-            start=dates[0] - datetime.timedelta(days=max(max_after, margin)),
-            end=dates[-1] + datetime.timedelta(days=max(max_before, margin)),
-            freq="D",
-        ).date
+        lookup_dates = pd.date_range(dates[0] - pad, dates[-1] + pad, freq="D").date
 
     # We check each date for membership instead of iterating over the calendar,
     # since HolidayBase objects only populate years on lookup.
@@ -361,12 +358,11 @@ def _generate_holidays(
             # We then get the number of days before and after
             # the holiday.
             before, after = window
-            neg_before = -before
             # For each holiday, we iterate over dates.
             for dte in holidays_by_name[name]:
                 # Finally, we add all days within the window to the
                 # holiday, keeping already existing holidays.
-                for days in range(neg_before, after + 1):
+                for days in range(-before, after + 1):
                     date_window = dte + datetime.timedelta(days=days)
                     names = holidays_by_date.setdefault(date_window, [])
                     if name not in names:
@@ -377,24 +373,12 @@ def _generate_holidays(
         for name, holiday_dates in holidays_by_name.items():
             # For each holiday, iterate over all dates.
             for dte in holiday_dates:
-                # Get the weekday of the holiday.
-                weekday = dte.weekday()
-
-                # If the holiday is on Tuesday, we add Monday as a bridge day.
-                if weekday == 1:
-                    bridge_day = dte - datetime.timedelta(days=1)
-
-                    # We only add bridge days if they are not holidays already.
-                    if bridge_day not in holidays_by_date:
-                        holidays_by_date[bridge_day] = [name]
-
-                # If the holiday is on Thursday, we add Friday as a bridge day.
-                if weekday == 3:
-                    bridge_day = dte + datetime.timedelta(days=1)
-
-                    # We only add bridge days if they are not holidays already.
-                    if bridge_day not in holidays_by_date:
-                        holidays_by_date[bridge_day] = [name]
+                # Monday is a bridge day for a Tuesday holiday, Friday for a
+                # Thursday holiday. Existing holidays are not overwritten.
+                offset = {1: -1, 3: 1}.get(dte.weekday())
+                if offset is not None:
+                    bridge_day = dte + datetime.timedelta(days=offset)
+                    holidays_by_date.setdefault(bridge_day, [name])
 
     # Generate categorical variable.
     labels_by_date = {dte: ", ".join(names) for dte, names in holidays_by_date.items()}
