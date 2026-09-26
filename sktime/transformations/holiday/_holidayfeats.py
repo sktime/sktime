@@ -316,7 +316,7 @@ def _generate_holidays(
     pad = max([max(window) for window in windows], default=0)
     if include_bridge_days:
         pad = max(pad, 1)
-    pad = datetime.timedelta(days=pad)
+    pad = datetime.timedelta(days=int(pad))
     lookup_dates = []
     if len(dates) > 0:
         lookup_dates = pd.date_range(dates[0] - pad, dates[-1] + pad, freq="D").date
