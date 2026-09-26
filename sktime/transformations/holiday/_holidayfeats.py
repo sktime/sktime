@@ -48,6 +48,15 @@ class HolidayFeatures(BaseTransformer):
         point is a holiday or not.
     keep_original_columns : bool, default=False
         Keep original columns in X passed to ``.transform()``.
+    return_offsets : bool, default=False
+        If True, label holidays and their window days with the holiday name and
+        the signed offset in days, e.g., "Christmas-2", "Christmas+0", "Easter+1".
+        Every date gets a single label: in overlapping windows, the nearest holiday
+        wins, and on a tie the upcoming one. This differs from the default mode,
+        where overlapping windows get combined labels. Names joined by "; " in
+        the calendar are treated as separate holidays. Names are used as given,
+        e.g., including "(observed)". To avoid this, pass ``observed=False`` to
+        a ``holidays`` calendar or use a dict.
 
 
     Examples
@@ -132,6 +141,7 @@ class HolidayFeatures(BaseTransformer):
         return_categorical: bool = False,
         return_indicator: bool = False,
         keep_original_columns: bool = False,
+        return_offsets: bool = False,
     ) -> None:
         self.calendar = calendar
         self.holiday_windows = holiday_windows
@@ -141,6 +151,7 @@ class HolidayFeatures(BaseTransformer):
         self.return_dummies = return_dummies
         self.return_indicator = return_indicator
         self.keep_original_columns = keep_original_columns
+        self.return_offsets = return_offsets
         super().__init__()
 
     def _transform(self, X, y=None):
@@ -178,6 +189,7 @@ class HolidayFeatures(BaseTransformer):
             return_dummies=self.return_dummies,
             return_indicator=self.return_indicator,
             keep_original_columns=self.keep_original_columns,
+            return_offsets=self.return_offsets,
         )
 
         holidays = _generate_holidays(
@@ -189,6 +201,7 @@ class HolidayFeatures(BaseTransformer):
             return_categorical=self.return_categorical,
             return_dummies=self.return_dummies,
             return_indicator=self.return_indicator,
+            return_offsets=self.return_offsets,
             warning_instance=self,
         )
 
@@ -244,6 +257,13 @@ class HolidayFeatures(BaseTransformer):
                 "return_categorical": True,
                 "keep_original_columns": True,
             },
+            {
+                "calendar": {date(2022, 5, 17): "Regional Holiday"},
+                "holiday_windows": {"Regional Holiday": (2, 1)},
+                "include_bridge_days": True,
+                "return_indicator": True,
+                "return_offsets": True,
+            },
         ]
         return params
 
@@ -257,6 +277,7 @@ def _generate_holidays(
     return_dummies: bool = True,
     return_categorical: bool = False,
     return_indicator: bool = False,
+    return_offsets: bool = False,
     warning_instance: HolidayFeatures = None,
 ) -> pd.DataFrame:
     """Generate holidays.
@@ -283,6 +304,9 @@ def _generate_holidays(
     return_indicator : bool, default=False
         Whether or not to return an indicator variable equal to 1 if a time
         point is a holiday or not.
+    return_offsets : bool, default=False
+        Whether or not to label holidays and window days with the holiday name
+        and the signed offset in days, e.g., "Christmas-2".
     warning_instance : HolidayFeatures, default=None
         Instance of HolidayFeatures to raise warnings.
 
@@ -330,29 +354,49 @@ def _generate_holidays(
                 holidays_by_name["Weekend"].append(dte)
 
     for dte in filtered_dates:
-        name = calendar[dte]
+        # In offset mode, several holidays on one date are separate holidays.
+        names = calendar[dte].split("; ") if return_offsets else [calendar[dte]]
         if not (include_weekend and dte.weekday() in [5, 6]):
-            holidays_by_name[name].append(dte)
+            for name in names:
+                holidays_by_name[name].append(dte)
+
+    for name in holiday_windows or {}:
+        if name not in holidays_by_name:
+            warn(
+                f"Holiday '{name}' not found in calendar. Skipping.",
+                obj=warning_instance,
+                stacklevel=2,
+            )
 
     # Invert dictionary so that we can later map holidays to
     # dates in the time index. Values are lists, since windows
     # of different holidays may overlap.
     holidays_by_date = {}
-    for name, holiday_dates in holidays_by_name.items():
-        for dte in holiday_dates:
-            holidays_by_date[dte] = [name]
+    if return_offsets:
+        # Each date gets one label: the nearest holiday wins, on a tie the
+        # upcoming one (negative offset), then the first one found.
+        ranked = {}
+        for name, holiday_dates in holidays_by_name.items():
+            before, after = (holiday_windows or {}).get(name, (0, 0))
+            for dte in holiday_dates:
+                for days in range(-before, after + 1):
+                    date_window = dte + datetime.timedelta(days=days)
+                    rank = (abs(days), days > 0)
+                    if date_window not in ranked or rank < ranked[date_window][0]:
+                        label = name if name == "Weekend" else f"{name}{days:+d}"
+                        ranked[date_window] = (rank, label)
+        holidays_by_date = {dte: [label] for dte, (_, label) in ranked.items()}
+    else:
+        for name, holiday_dates in holidays_by_name.items():
+            for dte in holiday_dates:
+                holidays_by_date[dte] = [name]
 
     # Add window around holidays.
-    if holiday_windows is not None:
+    if holiday_windows is not None and not return_offsets:
         # Iterate over holidays.
         for name, window in holiday_windows.items():
             # First, we look up the dates of the holiday.
             if name not in holidays_by_name:
-                warn(
-                    f"Holiday '{name}' not found in calendar. Skipping.",
-                    obj=warning_instance,
-                    stacklevel=2,
-                )
                 continue
 
             # We then get the number of days before and after
@@ -378,7 +422,8 @@ def _generate_holidays(
                 offset = {1: -1, 3: 1}.get(dte.weekday())
                 if offset is not None:
                     bridge_day = dte + datetime.timedelta(days=offset)
-                    holidays_by_date.setdefault(bridge_day, [name])
+                    label = f"{name}{offset:+d}" if return_offsets else name
+                    holidays_by_date.setdefault(bridge_day, [label])
 
     # Generate categorical variable.
     labels_by_date = {dte: ", ".join(names) for dte, names in holidays_by_date.items()}
@@ -427,6 +472,7 @@ def _check_params(
     return_categorical: bool,
     return_indicator: bool,
     keep_original_columns: bool,
+    return_offsets: bool = False,
 ):
     """Check input params.
 
@@ -441,6 +487,7 @@ def _check_params(
     return_categorical : bool
     return_indicator : bool
     keep_original_columns : bool
+    return_offsets : bool
     """
     from holidays import HolidayBase
 
@@ -478,6 +525,10 @@ def _check_params(
         raise ValueError(
             f"`keep_original_columns` must be boolean,"
             f"but found; {keep_original_columns}"
+        )
+    if not isinstance(return_offsets, bool):
+        raise ValueError(
+            f"`return_offsets` must be a boolean, but found: {return_offsets}"
         )
     if not (return_dummies or return_categorical or return_indicator):
         raise ValueError(

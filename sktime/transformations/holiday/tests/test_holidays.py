@@ -407,3 +407,111 @@ def test_negative_window_raises():
     )
     with pytest.raises(ValueError, match="non-negative"):
         transformer.fit_transform(X)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_return_offsets_nearest_holiday_wins():
+    """Tests offset labels, with the nearest holiday winning in overlaps."""
+    transformer = HolidayFeatures(
+        calendar=CHRISTMAS_NEW_YEAR,
+        holiday_windows={"Christmas": (2, 4), "New Year": (3, 0)},
+        return_categorical=True,
+        return_offsets=True,
+    )
+    labels = _holiday_labels(transformer, "2025-12-22", "2026-01-02")
+    assert labels == {
+        "2025-12-22": "no_holiday",
+        "2025-12-23": "Christmas-2",
+        "2025-12-24": "Christmas-1",
+        "2025-12-25": "Christmas+0",
+        "2025-12-26": "Christmas+1",
+        "2025-12-27": "Christmas+2",
+        "2025-12-28": "Christmas+3",
+        "2025-12-29": "New Year-3",
+        "2025-12-30": "New Year-2",
+        "2025-12-31": "New Year-1",
+        "2026-01-01": "New Year+0",
+        "2026-01-02": "no_holiday",
+    }
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_return_offsets_tie_goes_to_upcoming_holiday():
+    """Tests that on equal distance, the upcoming holiday wins."""
+    transformer = HolidayFeatures(
+        calendar={date(2025, 1, 1): "A", date(2025, 1, 5): "B"},
+        holiday_windows={"A": (0, 2), "B": (2, 0)},
+        return_offsets=True,
+    )
+    X = pd.DataFrame(
+        {"values": 0.0}, index=pd.date_range("2025-01-01", "2025-01-05", freq="D")
+    )
+    dummies = transformer.fit_transform(X)
+    assert list(dummies.columns) == ["A+0", "A+1", "B+0", "B-1", "B-2"]
+    assert dummies.loc["2025-01-03", "B-2"] == 1
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_return_offsets_splits_joined_names():
+    """Tests that names joined by '; ' are separate holidays in offset mode only."""
+    calendar = {date(2008, 5, 1): "Erster Mai; Christi Himmelfahrt"}
+    holiday_windows = {"Christi Himmelfahrt": (1, 0)}
+    offsets = HolidayFeatures(
+        calendar=calendar,
+        holiday_windows=holiday_windows,
+        return_categorical=True,
+        return_offsets=True,
+    )
+    assert _holiday_labels(offsets, "2008-04-30", "2008-05-01") == {
+        "2008-04-30": "Christi Himmelfahrt-1",
+        "2008-05-01": "Erster Mai+0",
+    }
+
+    default = HolidayFeatures(calendar=calendar, return_categorical=True)
+    assert _holiday_labels(default, "2008-04-30", "2008-05-01") == {
+        "2008-04-30": "no_holiday",
+        "2008-05-01": "Erster Mai; Christi Himmelfahrt",
+    }
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_return_offsets_weekend_and_bridge_days():
+    """Tests that weekends win over windows and bridge days get offset labels."""
+    calendar = {date(2025, 12, 25): "Christmas"}  # Thursday
+    weekend = HolidayFeatures(
+        calendar=calendar,
+        holiday_windows={"Christmas": (0, 3)},
+        include_weekend=True,
+        return_categorical=True,
+        return_offsets=True,
+    )
+    assert _holiday_labels(weekend, "2025-12-25", "2025-12-28") == {
+        "2025-12-25": "Christmas+0",
+        "2025-12-26": "Christmas+1",
+        "2025-12-27": "Weekend",
+        "2025-12-28": "Weekend",
+    }
+
+    bridge = HolidayFeatures(
+        calendar=calendar,
+        include_bridge_days=True,
+        return_categorical=True,
+        return_offsets=True,
+    )
+    assert _holiday_labels(bridge, "2025-12-24", "2025-12-26") == {
+        "2025-12-24": "no_holiday",
+        "2025-12-25": "Christmas+0",
+        "2025-12-26": "Christmas+1",
+    }
