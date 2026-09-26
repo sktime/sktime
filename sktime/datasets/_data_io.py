@@ -305,7 +305,7 @@ def _load_provided_dataset(
         X = convert(X, from_type="nested_univ", to_type=return_type)
         return X, y
     else:
-        X["class_val"] = pd.Series(y)
+        X["class_val"] = pd.Series(y, dtype="object")
         X = convert(X, from_type="nested_univ", to_type=return_type)
         return X
 
