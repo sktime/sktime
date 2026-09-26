@@ -148,6 +148,11 @@ class TimeMoEForecaster(BaseForecaster):
     >>> from sktime.forecasting.model_selection import temporal_train_test_split
     >>> y = load_airline()
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
+<<<<<<< HEAD
+    >>> forecaster.fit(y)
+    TimeMoEForecaster(model_path='Maple728/TimeMoE-50M')
+    >>> y_pred = forecaster.predict(fh=3)
+=======
     >>> forecaster.fit(y_train)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3], y = y_test)  # doctest: +SKIP
 
@@ -188,6 +193,7 @@ class TimeMoEForecaster(BaseForecaster):
     >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
     >>> forecaster.fit(load_airline())  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+>>>>>>> upstream/main
     """
 
     _tags = {

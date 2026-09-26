@@ -464,7 +464,7 @@ class StatsForecastBackAdapter:
             trend_forecaster=trend_forecaster
         )
     >>> fitted_model = model.fit(y=y) # doctest: +SKIP
-    >>> y_pred = fitted_model.predict(fh=[1,2,3]) # doctest: +SKIP
+    >>> y_pred = fitted_model.predict(fh=3) # doctest: +SKIP
     """
 
     _tags = {

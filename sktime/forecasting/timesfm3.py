@@ -96,7 +96,7 @@ class TimesFM3Forecaster(BaseForecaster):
     >>> y_train, y_test = temporal_train_test_split(y, test_size=12)
     >>> forecaster = TimesFM3Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y_train)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Multivariate forecast:
 
@@ -104,7 +104,7 @@ class TimesFM3Forecaster(BaseForecaster):
     >>> y_multi = pd.DataFrame({"a": [1, 2, 3, 4], "b": [4, 3, 2, 1]})
     >>> forecaster = TimesFM3Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y_multi)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=2)  # doctest: +SKIP
 
     Forecast with mixed past-only and past-and-future covariates. The split is
     inferred from the data: ``past_only`` appears only in the fit-time ``X``,
@@ -116,12 +116,12 @@ class TimesFM3Forecaster(BaseForecaster):
     >>> forecaster = TimesFM3Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y, X=X)  # doctest: +SKIP
     >>> X_future = pd.DataFrame({"future_known": [2.0, 2.0]})
-    >>> y_pred = forecaster.predict(fh=[1, 2], X=X_future)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=2, X=X_future)  # doctest: +SKIP
 
     Quantile forecast:
 
     >>> y_quantiles = forecaster.predict_quantiles(
-    ...     fh=[1, 2], alpha=[0.1, 0.5, 0.9]
+    ...     fh=2, alpha=[0.1, 0.5, 0.9]
     ... )  # doctest: +SKIP
     """
 

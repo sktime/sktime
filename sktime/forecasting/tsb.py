@@ -36,7 +36,7 @@ class TSB(BaseForecaster):
     >>> forecaster = TSB(alpha=0.4, beta=0.05)
     >>> forecaster.fit(y)
     TSB(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
 
     See Also
     --------

@@ -459,7 +459,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train = _make_series(n_timepoints=15, n_columns=1)
         y_train.name = "foo"
 
-        object_instance.fit(y_train, fh=[1, 2, 3])
+        object_instance.fit(y_train, fh=3)
         y_pred = object_instance.predict()
 
         _assert_correct_columns(y_pred, y_train)
@@ -959,7 +959,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         X.columns = ["foo", "bar"]
         X_train = get_window(X, lag=2)
         X_test = get_window(X, window_length=2)
-        fh = [1, 2]
+        fh = 2
 
         object_instance.fit(y=y_train, X=X_train, fh=fh)
         y_pred = object_instance.predict(X=X_test)
@@ -1043,7 +1043,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
                 same_cutoff=False,
             )
 
-            fh = [1, 2]
+            fh = 2
 
             estimator.fit(y, fh=fh)
             y_pred = estimator.predict()

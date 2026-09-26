@@ -464,7 +464,7 @@ def test_make_reduction_with_catboost():
     forecaster = make_reduction(estimator, scitype="infer")
     assert forecaster._estimator_scitype == "tabular-regressor"
 
-    fh = [1, 2, 3]
+    fh = 3
     y, X = make_forecasting_problem(make_X=True)
     y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=fh)
     forecaster.fit(y_train, X_train, fh=fh).predict(fh, X_test)
@@ -696,13 +696,13 @@ def test_recursive_reducer_X_not_fit_to_fh():
     )
     forecaster.fit(y_train, X_train)
 
-    pred1 = forecaster.predict(X=X_test[:1], fh=[1, 2, 3])
+    pred1 = forecaster.predict(X=X_test[:1], fh=3)
     assert pred1.shape == (3,)
-    pred2 = forecaster.predict(X=X_test[:2], fh=[1, 2, 3])
+    pred2 = forecaster.predict(X=X_test[:2], fh=3)
     assert pred2.shape == (3,)
-    pred3 = forecaster.predict(X=X_test[:3], fh=[1, 2, 3])
+    pred3 = forecaster.predict(X=X_test[:3], fh=3)
     assert pred3.shape == (3,)
-    pred4 = forecaster.predict(X=X_test, fh=[1])
+    pred4 = forecaster.predict(X=X_test, fh=1)
     assert pred4.shape == (1,)
 
 
@@ -747,7 +747,7 @@ def test_reduction_without_X(strategy):
         scitype="tabular-regressor",
         pooling="local",
     )
-    forecaster.fit(y, fh=[1])
+    forecaster.fit(y, fh=1)
 
     manual_pred = manual_reg.predict([[3, 4]])
     forecaster_pred = forecaster.predict()
@@ -790,7 +790,7 @@ def test_direct_reduction_with_X(x_treatment):
     forecaster = DirectReductionForecaster(
         LinearRegression(), window_length=2, X_treatment=x_treatment
     )
-    forecaster.fit(y, X=X, fh=[1])
+    forecaster.fit(y, X=X, fh=1)
     lr.fit(X_manual, y_manual)
 
     input_X = X[3:4]
