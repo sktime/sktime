@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract holiday features from datetime index."""
 
-__author__ = ["mloning", "VyomkeshVyas"]
+__author__ = ["mloning", "VyomkeshVyas", "RobKuebler"]
 __all__ = ["HolidayFeatures"]
 
 import datetime
@@ -515,7 +515,7 @@ def _check_holiday_windows(holiday_windows: dict[str, tuple]):
                 "and values tuples of length 2"
             )
         for days in window:
-            if not (isinstance(days, (int, np.integer)) and days >= 0):
+            if not (isinstance(days, int) and days >= 0):
                 raise ValueError(
                     "days in `holiday_windows` must all be non-negative, "
                     f"but found: {holiday}: {window}"
