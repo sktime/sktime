@@ -31,6 +31,8 @@ class HolidayFeatures(BaseTransformer):
     holiday_windows : Dict[str, tuple], default=None
         Dictionary for specifying a window of days around holidays, with keys
         being holiday names and values being (n_days_before, n_days_after) tuples.
+        Days in overlapping windows of different holidays are labeled with
+        both names, e.g., "Christmas, New Year".
     include_bridge_days: bool, default=False
         If True, include bridge days. Bridge days include Monday if a holiday
         is on Tuesday and Friday if a holiday is on Thursday.
@@ -308,67 +310,73 @@ def _generate_holidays(
     dates = np.unique(index.date)
     holidays_by_name = defaultdict(list)
 
-    filtered_dates = [dte for dte in dates if dte in calendar]
-    weekends = []
+    # Holidays just outside the time index can still affect it through
+    # their windows or bridge days, so we look them up in an extended range.
+    windows = holiday_windows.values() if holiday_windows is not None else []
+    max_before = max([before for before, _ in windows], default=0)
+    max_after = max([after for _, after in windows], default=0)
+    margin = 1 if include_bridge_days else 0
+    lookup_dates = []
+    if len(dates) > 0:
+        lookup_dates = pd.date_range(
+            start=dates[0] - datetime.timedelta(days=max(max_after, margin)),
+            end=dates[-1] + datetime.timedelta(days=max(max_before, margin)),
+            freq="D",
+        ).date
+
+    # We check each date for membership instead of iterating over the calendar,
+    # since HolidayBase objects only populate years on lookup.
+    filtered_dates = [dte for dte in lookup_dates if dte in calendar]
     if include_weekend:
         for dte in dates:
             if dte.weekday() in [5, 6]:
                 holidays_by_name["Weekend"].append(dte)
-        weekends = holidays_by_name["Weekend"]
 
     for dte in filtered_dates:
         name = calendar[dte]
-        if dte not in weekends:
+        if not (include_weekend and dte.weekday() in [5, 6]):
             holidays_by_name[name].append(dte)
 
     # Invert dictionary so that we can later map holidays to
-    # dates in the time index.
+    # dates in the time index. Values are lists, since windows
+    # of different holidays may overlap.
     holidays_by_date = {}
-    for name, dates in holidays_by_name.items():
-        for dte in dates:
-            holidays_by_date[dte] = name
+    for name, holiday_dates in holidays_by_name.items():
+        for dte in holiday_dates:
+            holidays_by_date[dte] = [name]
 
     # Add window around holidays.
     if holiday_windows is not None:
         # Iterate over holidays.
         for name, window in holiday_windows.items():
             # First, we look up the dates of the holiday.
-            if name in holidays_by_name:
-                dates = holidays_by_name[name]
-            else:
+            if name not in holidays_by_name:
                 warn(
                     f"Holiday '{name}' not found in calendar. Skipping.",
                     obj=warning_instance,
                     stacklevel=2,
                 )
+                continue
 
             # We then get the number of days before and after
             # the holiday.
             before, after = window
             neg_before = -before
             # For each holiday, we iterate over dates.
-            for dte in dates:
+            for dte in holidays_by_name[name]:
                 # Finally, we add all days within the window to the
-                # holiday, making sure that we do not overwrite
-                # already existing holidays.
+                # holiday, keeping already existing holidays.
                 for days in range(neg_before, after + 1):
                     date_window = dte + datetime.timedelta(days=days)
-                    if date_window not in holidays_by_date:
-                        holidays_by_date[date_window] = name
-                    elif holidays_by_date[date_window] != name:
-                        holidays_by_date[date_window] = f", {name}"
-                    else:
-                        warn(
-                            f"Conflict with holiday '{name}' on {date_window}",
-                            obj=warning_instance,
-                            stacklevel=2,
-                        )
+                    names = holidays_by_date.setdefault(date_window, [])
+                    if name not in names:
+                        names.append(name)
 
     if include_bridge_days:
         # Iterate over holidays.
-        for name, dates in holidays_by_name.items():
+        for name, holiday_dates in holidays_by_name.items():
             # For each holiday, iterate over all dates.
-            for dte in dates:
+            for dte in holiday_dates:
                 # Get the weekday of the holiday.
                 weekday = dte.weekday()
 
@@ -378,7 +386,7 @@ def _generate_holidays(
 
                     # We only add bridge days if they are not holidays already.
                     if bridge_day not in holidays_by_date:
-                        holidays_by_date[bridge_day] = name
+                        holidays_by_date[bridge_day] = [name]
 
                 # If the holiday is on Thursday, we add Friday as a bridge day.
                 if weekday == 3:
@@ -386,12 +394,13 @@ def _generate_holidays(
 
                     # We only add bridge days if they are not holidays already.
                     if bridge_day not in holidays_by_date:
-                        holidays_by_date[bridge_day] = name
+                        holidays_by_date[bridge_day] = [name]
 
     # Generate categorical variable.
+    labels_by_date = {dte: ", ".join(names) for dte, names in holidays_by_date.items()}
     holidays = (
         index.to_series()
-        .dt.date.map(holidays_by_date)
+        .dt.date.map(labels_by_date)
         .fillna(no_holiday_value)
         .astype("category")
         .to_frame(name=categorical_column)
@@ -522,7 +531,7 @@ def _check_holiday_windows(holiday_windows: dict[str, tuple]):
                 "and values tuples of length 2"
             )
         for days in window:
-            if not isinstance(days, int) and days >= 0:
+            if not (isinstance(days, (int, np.integer)) and days >= 0):
                 raise ValueError(
                     "days in `holiday_windows` must all be non-negative, "
                     f"but found: {holiday}: {window}"
