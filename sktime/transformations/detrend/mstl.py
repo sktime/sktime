@@ -203,7 +203,7 @@ class MSTL(BaseTransformer):
         "capability:categorical_in_X": False,
         # CI and test flags
         # -----------------
-        "tests:specific": "sktime.transformations.detrend.tests.test_mstl",
+        "tests:specific": ["sktime.transformations.detrend.tests.test_mstl"],
         "tests:vm": True,
     }
 
