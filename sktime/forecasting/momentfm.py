@@ -137,6 +137,7 @@ class MomentFMForecaster(BaseForecaster):
         "capability:missing_values": False,
         "y_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
+        "fm": True,
         "requires-fh-in-fit": True,
         "python_dependencies": [
             "torch",
