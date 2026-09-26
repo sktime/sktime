@@ -103,13 +103,14 @@ class TapNetClassifier(BaseDeepClassifier):
         "maintainers": ["jnrusson1", "achieveordie"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.tapnet._tapnet_tf"],
         # deepcopy of a fitted instance loses model_, see #10712
         "tests:skip_by_name": [
             "test_deepcopy_fitted_predict",
         ],
-        # Run tests in a dedicated VM due to sporadic crashes and possible
-        # memory leaks (see #8518)
-        "tests:vm": True,
     }
 
     def __init__(
