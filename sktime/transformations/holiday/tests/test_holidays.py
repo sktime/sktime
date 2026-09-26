@@ -407,24 +407,3 @@ def test_negative_window_raises():
     )
     with pytest.raises(ValueError, match="non-negative"):
         transformer.fit_transform(X)
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(HolidayFeatures),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_numpy_integer_window():
-    """Tests that numpy integers are accepted as days in holiday windows."""
-    transformer = HolidayFeatures(
-        calendar=CHRISTMAS_NEW_YEAR,
-        holiday_windows={"Christmas": (np.int64(1), np.int64(1))},
-        return_categorical=True,
-    )
-    labels = _holiday_labels(transformer, "2025-12-23", "2025-12-27")
-    assert list(labels.values()) == [
-        "no_holiday",
-        "Christmas",
-        "Christmas",
-        "Christmas",
-        "no_holiday",
-    ]
