@@ -245,17 +245,43 @@ class Moirai2Forecaster(BaseForecaster):
 
         Appending is required for the predictions to line up with the cutoff,
         which advances in ``update``: the forecast starts right after the last
-        context timepoint.
+        context timepoint. Only the most recent ``context_length`` timepoints
+        are retained afterwards, since the zero-shot model does not condition
+        on anything further back than that.
 
         ``update_params`` has no effect, the model is used zero-shot: ``_fit``
         does not train, it loads the pretrained module.
         """
         from sktime.datatypes import update_data
 
-        self._cur_y = update_data(self._cur_y, y)
+        self._cur_y = self._trim_to_context(update_data(self._cur_y, y))
         if X is not None:
             self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+            self._cur_X = self._trim_to_context(self._cur_X)
         return self
+
+    def _trim_to_context(self, obj):
+        """Keep only the most recent ``context_length`` timepoints.
+
+        Parameters
+        ----------
+        obj : pd.Series or pd.DataFrame or None
+            Series, Panel, or Hierarchical mtype container.
+
+        Returns
+        -------
+        ``obj`` sliced to the last ``self.context_length`` timepoints, taken
+        per instance if ``obj`` has a Panel/Hierarchical (MultiIndex) index.
+        ``obj`` unchanged if ``obj`` or ``self.context_length`` is None.
+        """
+        if obj is None or self.context_length is None:
+            return obj
+        if isinstance(obj.index, pd.MultiIndex):
+            n_levels = obj.index.nlevels
+            return obj.groupby(level=list(range(n_levels - 1))).tail(
+                self.context_length
+            )
+        return obj.tail(self.context_length)
 
     def _predict(self, fh, X=None):
         if fh is None:
