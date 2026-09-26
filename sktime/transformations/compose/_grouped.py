@@ -348,11 +348,21 @@ class GroupbyCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
         """
         if X.index.nlevels == 1:
             return [(category.values[0], None)]
-        # dropna=False: a categorizer can return NaN for a degenerate series, and
-        # an instance with no learned category (inverse_transform on instances
-        # unseen in fit) is NaN as well. Both must be routed to the fallback or
-        # raise, never silently dropped from the output.
-        return list(category.groupby(category, dropna=False))
+        # A categorizer can return NaN for a degenerate series, and an instance
+        # with no learned category (inverse_transform on instances unseen in fit)
+        # is NaN as well. Both must be routed to the fallback or raise, never
+        # silently dropped from the output, which is what the groupby default
+        # dropna=True would do. Passing dropna=False is not an option: pandas
+        # builds the group keys as a Categorical, and a null key raises
+        # ValueError("Categorical categories cannot be null") - checked on
+        # pandas 1.5.3, 2.0.3, 2.1.4, 2.2.3 and 2.3.3. So the non-null labels
+        # are grouped as before, and the null ones are appended as one further
+        # group keyed by NaN.
+        is_na = category.isna()
+        groups = list(category[~is_na].groupby(category[~is_na]))
+        if is_na.any():
+            groups.append((float("nan"), category[is_na]))
+        return groups
 
     def _get_transformer_for_category(self, category, fitted):
         """Look up the (fitted or blueprint) transformer for a category.

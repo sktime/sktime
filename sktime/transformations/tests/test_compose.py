@@ -597,6 +597,10 @@ def test_groupby_category_transformer_nan_category_not_dropped():
 
     assert len(Xt) == len(X)
     assert Xt.index.equals(X.index)
+    # the NaN instance must reach the fallback (power=1, unchanged), not merely
+    # survive the row count: routing it to the "5" transformer would square it
+    assert (Xt.loc["inst_0"] == 0.0).all().all()
+    assert (Xt.loc["inst_1"] == 25.0).all().all()
 
 
 @pytest.mark.skipif(
