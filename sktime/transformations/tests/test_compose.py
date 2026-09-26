@@ -607,6 +607,35 @@ def test_groupby_category_transformer_nan_category_not_dropped():
     not run_test_module_changed("sktime.transformations"),
     reason="run test only if anything in sktime.transformations module has changed",
 )
+def test_groupby_category_transformer_nested_params():
+    """Test the nested parameter interface reaches the wrapped transformers.
+
+    ``_HeterogenousMetaEstimator`` has to come first in the bases for this, as it
+    does in ``TransformerPipeline``, ``FeatureUnion``, ``CombineTransformers`` and
+    ``MultiplexTransformer``; otherwise ``get_params``/``set_params`` resolve to
+    ``BaseObject`` and the ``transformers`` entries are not addressable.
+    """
+    t = GroupbyCategoryTransformer(
+        transformers={"a": ExponentTransformer(power=2)},
+        categorizer=_MeanCategorizer(),
+        fallback_transformer=ExponentTransformer(power=1),
+    )
+
+    assert "a__power" in t.get_params(deep=True)
+
+    t.set_params(**{"a__power": 5})
+    assert t.transformers["a"].power == 5
+
+    # replacing a whole step by name goes through the _steps setter
+    t.set_params(**{"a": ExponentTransformer(power=9)})
+    assert t.transformers["a"].power == 9
+    assert t.fallback_transformer.power == 1
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.transformations"),
+    reason="run test only if anything in sktime.transformations module has changed",
+)
 def test_groupby_category_transformer_unknown_category_raises():
     """Test that a category with no transformer and no fallback raises."""
     X = _make_category_panel([1.0, 500.0])

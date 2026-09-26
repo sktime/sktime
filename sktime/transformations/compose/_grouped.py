@@ -147,7 +147,7 @@ class TransformByLevel(_DelegatedTransformer):
         return params
 
 
-class GroupbyCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
+class GroupbyCategoryTransformer(_HeterogenousMetaEstimator, BaseTransformer):
     """Apply different transformers by time series category or cluster.
 
     Programmatic generalization of "categorize, then transform by category"
@@ -195,6 +195,14 @@ class GroupbyCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
         time for a category that was not encountered at all during ``fit``,
         since no category-specific fallback state exists to use for it.
         ``None`` if ``fallback_transformer`` was not provided.
+
+    Notes
+    -----
+    ``transform`` and ``inverse_transform`` group the instances by category, so
+    the per-category results are concatenated in category order rather than in
+    the order the instances arrived. The output is sorted by index afterwards,
+    as elsewhere in ``transformations``, so a panel whose instances are not in
+    sorted order is returned sorted rather than in its input order.
 
     Examples
     --------
@@ -291,6 +299,18 @@ class GroupbyCategoryTransformer(BaseTransformer, _HeterogenousMetaEstimator):
     @property
     def _steps(self):
         return [self._coerce_estimator_tuple(self.categorizer)] + self._transformers
+
+    @_steps.setter
+    def _steps(self, new_steps):
+        """Write a replaced step list back to the parameters it was built from.
+
+        ``_HeterogenousMetaEstimator._replace_estimator`` sets ``_steps_attr``
+        wholesale, so the getter above needs an inverse: the first entry is the
+        categorizer, the rest are the category transformers and the fallback.
+        """
+        (_, categorizer), *transformers = new_steps
+        self.categorizer = categorizer
+        self._transformers = transformers
 
     @property
     def steps_(self):
