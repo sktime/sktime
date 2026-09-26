@@ -64,7 +64,7 @@ class Toto2Forecaster(BaseForecaster):
 
     >>> forecaster = Toto2Forecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Probabilistic forecasting. Toto-2 emits a fixed quantile grid (0.1, ..., 0.9);
     other levels come from a HistogramQPD (linear interpolation, clamped tails):
@@ -74,7 +74,7 @@ class Toto2Forecaster(BaseForecaster):
     ... )  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> intervals = forecaster.predict_interval(
-    ...     fh=[1, 2, 3], coverage=0.9
+    ...     fh=3, coverage=0.9
     ... )  # doctest: +SKIP
 
     Long-horizon forecasting with block decoding. Block decoding only engages

@@ -61,7 +61,7 @@ def test_invalid_forecasters_indices(forecasters):
     y = pd.DataFrame(np.random.randint(0, 100, size=(100, 3)), columns=list("ABC"))
     forecaster = ColumnEnsembleForecaster(forecasters=forecasters)
     with pytest.raises(ValueError, match=r"column"):
-        forecaster.fit(y, fh=[1, 2])
+        forecaster.fit(y, fh=2)
 
 
 @pytest.mark.skipif(

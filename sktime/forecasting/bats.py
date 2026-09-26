@@ -107,7 +107,7 @@ class BATS(_TbatsAdapter):
     ...     n_jobs=1)
     >>> forecaster.fit(y)  # doctest: +SKIP
     BATS(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """  # noqa: E501
 
     _fitted_param_names = "aic"

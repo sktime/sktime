@@ -22,7 +22,7 @@ def test_SkforecastAutoreg_predict_against_ForecasterAutoreg():
     from sklearn.linear_model import LinearRegression
 
     df = make_forecasting_problem(n_timepoints=10)
-    fh = [1, 2, 3]
+    fh = 3
 
     sktime_model = SkforecastAutoreg(LinearRegression(), 2)
     sktime_model.fit(df)
@@ -46,7 +46,7 @@ def test_SkforecastAutoreg_predict_with_exog_against_ForecasterAutoreg():
     from sklearn.linear_model import LinearRegression
 
     y, X = make_forecasting_problem(n_timepoints=10, make_X=True, index_type="range")
-    fh = [1, 2, 3]
+    fh = 3
     X_train = X.head(7)
     X_test = X.tail(3)
     y_train = y.head(7)
@@ -84,7 +84,7 @@ def test_SkforecastAutoreg_predict_interval_against_ForecasterAutoreg():
     from sklearn.linear_model import LinearRegression
 
     df = make_forecasting_problem(n_timepoints=10)
-    fh = [1, 2, 3]
+    fh = 3
 
     sktime_model = SkforecastAutoreg(LinearRegression(), 2)
     sktime_model.fit(df)
@@ -117,7 +117,7 @@ def test_SkforecastAutoreg_predict_quantile_against_ForecasterAutoreg():
     from sklearn.linear_model import LinearRegression
 
     df = make_forecasting_problem(n_timepoints=10)
-    fh = [1, 2, 3]
+    fh = 3
 
     sktime_model = SkforecastAutoreg(LinearRegression(), 2)
     sktime_model.fit(df)
@@ -142,7 +142,7 @@ def test_SkforecastRecursive_predict_against_ForecasterRecursive():
     from sklearn.linear_model import LinearRegression
 
     df = make_forecasting_problem(n_timepoints=10)
-    fh = [1, 2, 3]
+    fh = 3
 
     sktime_model = SkforecastRecursive(LinearRegression(), 2)
     sktime_model.fit(df)
@@ -165,7 +165,7 @@ def test_SkforecastRecursive_predict_with_exog_against_ForecasterRecursive():
     from sklearn.linear_model import LinearRegression
 
     y, X = make_forecasting_problem(n_timepoints=10, make_X=True, index_type="range")
-    fh = [1, 2, 3]
+    fh = 3
     X_train = X.head(7)
     X_test = X.tail(3)
     y_train = y.head(7)
@@ -205,7 +205,7 @@ def test_SkforecastRecursive_predict_interval_against_ForecasterRecursive(
     from sklearn.linear_model import LinearRegression
 
     df = make_forecasting_problem(n_timepoints=10)
-    fh = [1, 2, 3]
+    fh = 3
 
     sktime_model = SkforecastRecursive(
         LinearRegression(),
@@ -253,7 +253,7 @@ def test_SkforecastRecursive_predict_quantile_against_ForecasterRecursive(
     from sklearn.linear_model import LinearRegression
 
     df = make_forecasting_problem(n_timepoints=10)
-    fh = [1, 2, 3]
+    fh = 3
 
     sktime_model = SkforecastRecursive(
         LinearRegression(),

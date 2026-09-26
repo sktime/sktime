@@ -93,7 +93,7 @@ class ThetaForecaster(ExponentialSmoothing):
     >>> forecaster = ThetaForecaster(sp=12)
     >>> forecaster.fit(y)
     ThetaForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _fitted_param_names = ("initial_level", "smoothing_level")
@@ -466,7 +466,7 @@ class ThetaModularForecaster(BaseForecaster):
     ... )
     >>> forecaster.fit(y)
     ThetaModularForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {
