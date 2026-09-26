@@ -24,6 +24,7 @@ import re
 
 from sktime.registry._lookup import all_estimators
 from sktime.registry._lookup_sklearn import _all_sklearn_estimators
+from sktime.registry._namespace import _namespace
 
 
 def _extract_class_names(spec):
@@ -170,9 +171,7 @@ def craft(spec, safe=False):
     >>> est = craft(spec)
     """
     # retrieve all estimators from sktime and sklearn for namespace resolution
-    register_sktime = dict(all_estimators())  # noqa: F841
-    register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
-    register = {**register_sklearn, **register_sktime}
+    register = _namespace(include_deps=True)
 
     # Parse the specification once.
     # Both safe and unsafe modes operate on the resulting AST.
