@@ -92,11 +92,11 @@ def _all_sklearn_estimators(
     if package_scope not in [None, "scikit-learn", "sktime"]:
         raise ValueError(f"Invalid package_scope: {package_scope}")
     if package_scope is None:
-        package_scope = ["sktime", "sklearn"]
+        package_scope = ("sktime", "sklearn")
     elif package_scope == "scikit-learn":
-        package_scope = ["sklearn"]
+        package_scope = ("sklearn",)
     else:
-        package_scope = [package_scope]
+        package_scope = (package_scope,)
 
     return _all_sklearn_estimators_cached(
         return_names=return_names,

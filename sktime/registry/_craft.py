@@ -23,7 +23,6 @@ import ast
 import re
 
 from sktime.registry._lookup import all_estimators
-from sktime.registry._lookup_sklearn import _all_sklearn_estimators
 from sktime.registry._namespace import _namespace
 
 
