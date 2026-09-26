@@ -156,8 +156,7 @@ def test_craft_safe_rejects_unsafe_specs(spec):
         craft(spec, safe=True)
 
 
-@pytest.mark.parametrize("spec", specs)
-def test_deps(spec):
+def test_deps():
     """Check that deps retrieves the correct requirement sets."""
     # should return length 0 list since has no deps
     assert deps(simple_spec) == []
