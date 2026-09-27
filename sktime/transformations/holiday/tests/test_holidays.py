@@ -453,7 +453,7 @@ def test_return_offsets_tie_goes_to_upcoming_holiday():
         {"values": 0.0}, index=pd.date_range("2025-01-01", "2025-01-05", freq="D")
     )
     dummies = transformer.fit_transform(X)
-    assert list(dummies.columns) == ["A+0", "A+1", "B+0", "B-1", "B-2"]
+    assert list(dummies.columns) == ["A+0", "A+1", "B-2", "B-1", "B+0"]
     assert dummies.loc["2025-01-03", "B-2"] == 1
 
 
@@ -515,3 +515,64 @@ def test_return_offsets_weekend_and_bridge_days():
         "2025-12-25": "Christmas+0",
         "2025-12-26": "Christmas+1",
     }
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_return_distances():
+    """Tests distance columns, one per window holiday, NaN outside the window."""
+    transformer = HolidayFeatures(
+        calendar={**CHRISTMAS_NEW_YEAR, date(2025, 4, 20): "Easter"},
+        holiday_windows={"Christmas": (2, 4), "New Year": (3, 0), "Easter": (1, 1)},
+        return_dummies=False,
+        return_distances=True,
+    )
+    X = pd.DataFrame(
+        {"values": 0.0}, index=pd.date_range("2025-12-22", "2026-01-02", freq="D")
+    )
+    distances = transformer.fit_transform(X)
+    nan = np.nan
+    expected = pd.DataFrame(
+        {
+            "Christmas_distance": [nan, -2, -1, 0, 1, 2, 3, 4] + [nan] * 4,
+            "New Year_distance": [nan] * 7 + [-3, -2, -1, 0, nan],
+            "Easter_distance": [nan] * 12,
+        },
+        index=X.index,
+    )
+    assert_frame_equal(distances, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_return_distances_nearest_occurrence():
+    """Tests that the nearest occurrence counts, on a tie the upcoming one."""
+    transformer = HolidayFeatures(
+        calendar={date(2025, 1, 1): "A", date(2025, 1, 5): "A"},
+        holiday_windows={"A": (2, 2)},
+        return_dummies=False,
+        return_distances=True,
+    )
+    X = pd.DataFrame(
+        {"values": 0.0}, index=pd.date_range("2025-01-01", "2025-01-05", freq="D")
+    )
+    distances = transformer.fit_transform(X)["A_distance"]
+    assert distances.tolist() == [0, 1, -2, -1, 0]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_return_distances_requires_windows():
+    """Tests that distances without holiday windows raise."""
+    transformer = HolidayFeatures(calendar=CHRISTMAS_NEW_YEAR, return_distances=True)
+    X = pd.DataFrame(
+        {"values": 0.0}, index=pd.date_range("2025-12-20", "2025-12-31", freq="D")
+    )
+    with pytest.raises(ValueError, match="requires `holiday_windows`"):
+        transformer.fit_transform(X)
