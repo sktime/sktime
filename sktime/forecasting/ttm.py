@@ -534,7 +534,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
@@ -588,7 +587,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.DataFrame",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 
@@ -675,6 +673,8 @@ class TinyTimeMixerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         return self._fit_or_pretrain(y=y, X=X, fh=fh)
 
     def _fit_or_pretrain(self, y, X=None, fh=None):
@@ -866,7 +866,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
                 "prediction_length, or provide a compatible config."
             )
 
-        _y = self._y
+        _y = self._cur_y
 
         hist = np.expand_dims(_y.values, axis=0)
 

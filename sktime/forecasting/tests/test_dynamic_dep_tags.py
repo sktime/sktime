@@ -20,6 +20,7 @@ from sktime.forecasting.cisco_tsm import CiscoTSMForecaster
 from sktime.forecasting.mantis import MantisForecaster
 from sktime.forecasting.timemoe import TimeMoEForecaster
 from sktime.forecasting.timesfm import TimesFMForecaster
+from sktime.forecasting.timesfm3 import TimesFM3Forecaster
 from sktime.tests.test_switch import run_test_module_changed
 
 CLASSES_AND_KWARGS = [
@@ -29,6 +30,7 @@ CLASSES_AND_KWARGS = [
     (MantisForecaster, {}),
     (TimeMoEForecaster, {"model_path": "Maple728/TimeMoE-50M"}),
     (TimesFMForecaster, {}),
+    (TimesFM3Forecaster, {}),
 ]
 
 
