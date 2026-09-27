@@ -118,6 +118,9 @@ def _all_sklearn_estimators_cached(
     Cached version of _all_sklearn_estimators, see above for docstring.
     """
     from sklearn.base import BaseEstimator
+    from sklearn.model_selection import BaseCrossValidator, BaseShuffleSSplit
+
+    sklearn_base_classes = (BaseEstimator, BaseCrossValidator, BaseShuffleSSplit)
 
     results = []
 
@@ -128,7 +131,7 @@ def _all_sklearn_estimators_cached(
 
     for pkg in package_scope:
         result_pkg = all_objects(
-            object_types=BaseEstimator,
+            object_types=sklearn_base_classes,
             package_name=pkg,
             modules_to_ignore=modules_to_ignore.get(pkg, {}),
             as_dataframe=as_dataframe,
