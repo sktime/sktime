@@ -18,3 +18,13 @@ results = all_estimators()
 from sktime.registry import craft
 
 craft("NaiveForecaster")
+
+# test: check that soft dependencies are isolated in the sktime.libs module
+# since all_estimators does not crawl this by default,
+# we use all_objects from skbase
+from pathlib import Path
+
+from skbase.lookup import all_objects as _all_objects
+
+LIBS = str(Path(__file__).parent / "libs")
+_all_objects(package_name="sktime.libs", path=LIBS)
