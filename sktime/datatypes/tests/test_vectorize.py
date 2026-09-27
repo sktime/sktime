@@ -507,14 +507,14 @@ def test_vectorize_est(
         X=fixture, iterate_as=iterate_as, is_scitype=None, iterate_cols=iterate_cols
     )
 
-    kwargs = {"fh": [1, 2], "X": X_vect, "X_data": X_mi}
+    kwargs = {"fh": [1, 2], "X": (X_mi, X_vect)}
 
     if varname_used:
         kwargs["varname_of_self"] = "y"
-        kwargs["data"] = X_mi
+        kwargs["pass_self_slice"] = True
+        kwargs["y"] = (X_mi, X_vect)
     else:
-        kwargs["y"] = X_vect
-        kwargs["y_data"] = X_mi
+        kwargs["y"] = (X_mi, X_vect)
 
     kwargs.update(backend)
 

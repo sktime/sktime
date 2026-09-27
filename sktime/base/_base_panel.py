@@ -49,6 +49,7 @@ class BasePanelMixin(BaseEstimator):
         Stores one estimator per loop index.
         """
         # retrieve data arguments
+        # y is ``(y_inner, y_schema)``: frame and VectorizedDF
         X = kwargs.pop("X", None)
         y = kwargs.pop("y", None)
 
@@ -59,10 +60,11 @@ class BasePanelMixin(BaseEstimator):
         kwargs["backend_params"] = self.get_config()["backend:parallel:params"]
 
         if methodname == "fit":
-            self._yvec = y
+            _, y_schema = y
+            self._y_schema = y_schema
 
-            ests_ = self._yvec.vectorize_est(self, method="clone", **kwargs)
-            ests_fit = self._yvec.vectorize_est(
+            ests_ = self._y_schema.vectorize_est(self, method="clone", **kwargs)
+            ests_fit = self._y_schema.vectorize_est(
                 ests_,
                 method=methodname,
                 args={"y": y},
@@ -73,7 +75,7 @@ class BasePanelMixin(BaseEstimator):
             return self
         else:  # methodname == "predict" or methodname == "predict_proba":
             ests_ = getattr(self, self.VECTORIZATION_ATTR)
-            y_preds = self._yvec.vectorize_est(
+            y_preds = self._y_schema.vectorize_est(
                 ests_,
                 method=methodname,
                 X=X,
@@ -347,14 +349,13 @@ class BasePanelMixin(BaseEstimator):
         -------
         y_inner : object of sktime compatible time series type
             can be Series, Panel, Hierarchical
+            converted y, or the pandas frame when vectorized
         y_metadata : dict
             metadata of y, returned by check_is_scitype
         y_mtype : str, only returned if return_to_mtype=True
             mtype of y_inner, after convert
-        y_data : pd.DataFrame or same as y_inner, only returned if return_to_mtype=True
-            already-converted data for vectorization / reconstruct.
-            If vectorization is required, the multiindex frame used to build
-            ``VectorizedDF``. Otherwise, same as ``y_inner``.
+        y_schema : VectorizedDF or None, only returned if return_to_mtype=True
+            VectorizedDF of y when vectorized. None otherwise.
         """
         from sktime.datatypes import (
             MTYPE_LIST_TABLE,
@@ -412,7 +413,7 @@ class BasePanelMixin(BaseEstimator):
                 as_scitype="Table",
                 store=self._converter_store_y,
             )
-            y_vec, y_data = prepare_VectorizedDF(
+            y_schema, y_inner = prepare_VectorizedDF(
                 [y_df],
                 iterate_as="Series",
                 is_scitype="Panel",
@@ -420,9 +421,9 @@ class BasePanelMixin(BaseEstimator):
                 store=self._converter_store_y,
             )
             if return_to_mtype:
-                return y_vec, y_metadata, "pd_DataFrame_Table", y_data
+                return y_inner, y_metadata, "pd_DataFrame_Table", y_schema
             else:
-                return y_vec, y_metadata
+                return y_inner, y_metadata
 
         y_inner, y_inner_mtype = convert(
             y,
@@ -434,7 +435,7 @@ class BasePanelMixin(BaseEstimator):
         )
 
         if return_to_mtype:
-            return y_inner, y_metadata, y_inner_mtype, y_inner
+            return y_inner, y_metadata, y_inner_mtype, None
         else:
             return y_inner, y_metadata
 

@@ -139,7 +139,7 @@ def prepare_VectorizedDF(
     vec : VectorizedDF
         vectorization schema (no retained data copy beyond index metadata)
     X_mi : pd.DataFrame
-        ``X`` converted to pandas multiindex format (single conversion)
+        ``X`` converted to pandas multiindex format
     """
     X_mi, is_scitype, X_orig_mtype, store, freq = coerce_to_multiindex(
         X,
@@ -163,9 +163,9 @@ class VectorizedDF:
     """Schema for vectorization/iteration over instances.
 
     Stores iteration metadata only (instance keys, columns, mtype, freq).
-    Does not retain data and is not iterable. Pass already-converted
-    multiindex data into ``items``, ``as_list``, or
-    ``vectorize_est(..., data=)`` / ``*_data`` kwargs to slice at call time.
+    Does not retain data and is not iterable. Pass an already-converted
+    multiindex frame into ``items`` or ``as_list``. In ``vectorize_est``,
+    pass ``(frame, VectorizedDF)`` so the schema slices that frame.
 
     Construct via ``prepare_VectorizedDF`` (preferred), which converts once, or
     pass an already-converted multiindex ``X`` with resolved ``is_scitype``.
@@ -478,7 +478,7 @@ class VectorizedDF:
 
         Parameters
         ----------
-        df_list : iterable of slice frames in the same order as ``as_list(X)``
+        df_list : iterable of objects of same type & sequence as ``as_list(X)`` returns.
             typically produced by applying an operation to each ``as_list`` slice
             Example: ``[some_operation(df) for df in vec.as_list(X=X_mi)]``
         convert_back : bool, optional, default = False
@@ -592,14 +592,15 @@ class VectorizedDF:
         rowname_default="estimators",
         colname_default="estimators",
         varname_of_self=None,
+        pass_self_slice=False,
         backend=None,
         backend_params=None,
         **kwargs,
     ):
         """Vectorize application of estimator method, return results DataFrame or list.
 
-        This function returns a `pd.DataFrame` with `estimator` applied to
-        vectorization slices of ``data`` / ``*_data``, using the schema in `self`.
+        This function returns a `pd.DataFrame` with `estimator` fitted on
+        vectorization slices of ``kwargs[varname_of_self]``, using the schema in `self`.
         Row and column indices are the same as obtained from `get_iter_indices`.
 
         This function:
@@ -609,25 +610,28 @@ class VectorizedDF:
         3. returns the result, a list or pd.DataFrame with estimator values
 
         If `estimator` is a single estimator, it is broadcast to a `pd.DataFrame`.
-        Elements of `args`, `args_rowvec` can be `VectorizedDF`, in which case
-        they are broadcast in the application step 2, sliced from the matching
-        ``<name>_data`` kwarg (e.g. ``X_data`` for arg ``X``).
 
         For a row and column of the return,
         the entry is `estimator` at the same entry (if `DataFrame`) or `estimator`,
-        where `method` has been executed with the following arguments:
+        where `method` has been executed with the following arguments.
 
-        * `varname=value`, where `varname`/`value` are key-value pair of `kwargs`,
-          and `value` is not an instance of `VectorizedDF`, for all such `value`
-        * `varname=value.loc[row,col]`,
+        Entries of `kwargs`, `args`, and `args_rowvec` are ``key=value``.
+        A 2-tuple ``value`` is ``(data, schema)``. If ``schema`` is a
+        `VectorizedDF`, ``data`` is sliced. Otherwise ``data`` is broadcast.
+        Any other ``value`` is broadcast unchanged.
+
+        * `varname=data`, where `varname`/`value` are key-value pair of `kwargs`,
+          and `value` is ``(data, schema)`` with `schema` not a `VectorizedDF`,
+          for all such `value`. A `value` that is not a 2-tuple is passed unchanged.
+        * `varname=data.loc[row,col]`,
           where `varname`/`value` are key-value pair of `kwargs` or `args`,
           and `row` and `col` are `loc` indices corresponding to row/column,
-          and `value` is an instance of `VectorizedDF`, for all such `value`
-        * `varname=value.loc[row]`,
+          and `value` is a ``(data, schema)`` pair, for all such `value`
+        * `varname=data.loc[row]`,
           where `varname`/`value` are key-value pair of `args_rowvec`,
           and `row` and `col` are `loc` indices corresponding to row/column,
-          and `value` is an instance of `VectorizedDF`, for all such `value`
-        * `varname_of_self=self`, if `varname_of_self` is not `None`. Here,
+          and `value` is a ``(data, schema)`` pair, for all such `value`
+        * `varname_of_self=data`, if `pass_self_slice` is True. Here,
           `varname_of_self` should be read as the `str` value of that variable.
 
         Parameters
@@ -653,13 +657,12 @@ class VectorizedDF:
         colname_default : str, optional, default="estimators"
             used as index name of single column if no column vectorization is performed
         varname_of_self : str, optional, default=None
-            if not None, each slice of ``data`` is passed as kwarg under this name
-        data : already-converted multiindex frame, optional, default=None
-            passed to ``items`` so ``varname_of_self`` receives slices of ``data``.
-            Should be the converted frame that this schema was built from.
-        X_data, y_data, <name>_data : already-converted multiindex frame, optional
-            call-time values sliced when the matching arg is a ``VectorizedDF``.
-            ``X_data`` is used for arg ``X``, ``y_pred_data`` for ``y_pred``, etc.
+            Name of the kwarg that holds this schema's multiindex frame.
+            That frame is passed to ``self.items``. It is not passed to
+            ``method`` unless ``pass_self_slice`` is True.
+        pass_self_slice : bool, optional, default=False
+            If True, each slice from ``self.items`` is passed to ``method``
+            under the name ``varname_of_self``.
 
         backend : string, by default "None".
             Parallelization backend to use for runs.
@@ -706,11 +709,10 @@ class VectorizedDF:
         iterate_as = self.iterate_as
         iterate_cols = self.iterate_cols
 
-        data = kwargs.pop("data", None)
-        data_for = {}
-        for k in list(kwargs):
-            if k.endswith("_data"):
-                data_for[k[: -len("_data")]] = kwargs.pop(k)
+        if pass_self_slice and varname_of_self is None:
+            raise ValueError(
+                "Error at vectorize_est: pass_self_slice requires varname_of_self"
+            )
 
         if args is None:
             args = kwargs
@@ -727,17 +729,23 @@ class VectorizedDF:
         if varname_of_self and not isinstance(varname_of_self, str):
             raise TypeError("varname_of_self must be a string")
 
+        def _as_data_schema(value):
+            # a 2-tuple is (data, schema); anything else is data with no schema
+            if isinstance(value, tuple) and len(value) == 2:
+                return value
+            return value, None
+
         def explode(d: dict, iterate_as, iterate_cols):
             if not d:
                 yield from itertools.cycle([{}])
 
-            def _to_iter(k, e):
-                eX = data_for.get(k)
+            def _to_iter(value):
+                X, e = _as_data_schema(value)
                 if isinstance(e, VectorizedDF):
                     it = (
                         inst
                         for _, _, inst in e.items(
-                            X=eX, iterate_as=iterate_as, iterate_cols=iterate_cols
+                            X=X, iterate_as=iterate_as, iterate_cols=iterate_cols
                         )
                     )
 
@@ -749,10 +757,10 @@ class VectorizedDF:
 
                     return it
                 else:
-                    return itertools.cycle([e])
+                    return itertools.cycle([X])
 
-            keys, _ = zip(*d.items())
-            for values_inst in zip(*itertools.starmap(_to_iter, d.items())):
+            keys, values = zip(*d.items())
+            for values_inst in zip(*map(_to_iter, values)):
                 yield dict(zip(keys, values_inst))
 
         if isinstance(estimator, pd.DataFrame):
@@ -768,7 +776,7 @@ class VectorizedDF:
             estimators = itertools.cycle([estimator])
 
         vec_zip = zip(
-            self.items(X=data),
+            self.items(X=_as_data_schema(kwargs.get(varname_of_self))[0]),
             explode(args, iterate_as=iterate_as, iterate_cols=iterate_cols),
             explode(args_rowvec, iterate_as=iterate_as, iterate_cols=False),
             estimators,
@@ -777,6 +785,7 @@ class VectorizedDF:
         meta = {
             "method": method,
             "varname_of_self": varname_of_self,
+            "pass_self_slice": pass_self_slice,
             "rowname_default": rowname_default,
             "colname_default": colname_default,
         }
@@ -820,13 +829,14 @@ class VectorizedDF:
         """Single loop iteration of _vectorize_est_[backend]."""
         method = meta["method"]
         varname_of_self = meta["varname_of_self"]
+        pass_self_slice = meta["pass_self_slice"]
         rowname_default = meta["rowname_default"]
         colname_default = meta["colname_default"]
 
         (group_name, col_name, group), args_i, args_i_rowvec, est_i = vec_tuple
         args_i.update(args_i_rowvec)
 
-        if varname_of_self is not None:
+        if pass_self_slice:
             args_i[varname_of_self] = group
 
         est_i_method = getattr(est_i, method)
