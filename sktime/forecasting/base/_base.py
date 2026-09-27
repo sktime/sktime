@@ -1497,7 +1497,27 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self.check_is_fitted()
 
         # input checks and minor coercions on X, y
+        y_is_numpy_series = isinstance(y, np.ndarray) and y.ndim <= 2
+        X_is_numpy_series = isinstance(X, np.ndarray) and X.ndim <= 2
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        def _coerce_numpy_series(obj):
+            if obj is None:
+                return None
+            pandas_obj = obj.X_multiindex if isinstance(obj, VectorizedDF) else obj
+            # NumPy has no index, so continue the fitted time axis instead of
+            # retaining the zero-based index introduced by mtype conversion.
+            relative_index = np.arange(1, len(pandas_obj) + 1)
+            absolute_index = ForecastingHorizon(
+                relative_index, is_relative=True
+            ).to_absolute_index(self.cutoff)
+            pandas_obj.index = absolute_index
+            return pandas_obj
+
+        if y_is_numpy_series:
+            y_inner = _coerce_numpy_series(y_inner)
+        if X_is_numpy_series:
+            X_inner = _coerce_numpy_series(X_inner)
 
         cv = check_cv(cv)
 
@@ -2692,14 +2712,19 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             y_preds.append(y_pred)
             cutoffs.append(self_copy.cutoff)
 
-            for i in range(len(y_preds)):
-                y_preds[i] = convert_to(
-                    y_preds[i],
-                    self._y_metadata["mtype"],
-                    store=self._converter_store_y,
-                    store_behaviour="freeze",
-                )
-        return _format_moving_cutoff_predictions(y_preds, cutoffs)
+        y_pred = _format_moving_cutoff_predictions(y_preds, cutoffs)
+
+        # A single horizon per cutoff has no duplicate absolute time points, so
+        # restore the mtype seen at the public interface after pandas formatting.
+        if len(y_preds) > 0 and len(y_preds[0]) == 1:
+            y_pred = convert_to(
+                y_pred,
+                self._y_metadata["mtype"],
+                store=self._converter_store_y,
+                store_behaviour="freeze",
+            )
+
+        return y_pred
 
     def _get_varnames(self):
         """Return variable column for DataFrame-like returns.
