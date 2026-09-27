@@ -136,7 +136,7 @@ def _all_sklearn_estimators_cached(
             suppress_import_stdout=suppress_import_stdout,
         )
         if as_dataframe:
-            result_pkg = [pd.DataFrame()]
+            result_pkg = [pd.DataFrame(result_pkg)]
         results.extend(result_pkg)
 
     if as_dataframe:
