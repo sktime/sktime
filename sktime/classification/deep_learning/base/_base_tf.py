@@ -49,6 +49,10 @@ class BaseDeepClassifier(BaseClassifier):
             "achieveordie",
             "noxthot",
         ],
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.classification.deep_learning.base._base_tf"],
     }
 
     @abstractmethod
@@ -334,6 +338,26 @@ class BaseDeepClassifier(BaseClassifier):
         shutil.rmtree(path)
         return ZipFile(path.with_name(f"{path.stem}.zip"))
 
+    @staticmethod
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
+
+        Passed as the ``custom_objects`` argument to ``keras.models.load_model``
+        when reloading ``model_`` from a saved ``.keras``/h5 file. Only needs to
+        be overridden by child classes whose ``build_model`` uses custom Keras
+        layers, losses, metrics, or other objects that Keras cannot resolve by
+        name on its own (e.g., classes not registered via
+        ``keras.saving.register_keras_serializable``).
+
+        Returns
+        -------
+        dict of str to type, or None
+            Mapping from the custom object's registered name (as stored in the
+            saved model config) to the Python class/function implementing it.
+            ``None`` if the model does not use any custom Keras objects.
+        """
+        return None
+
     @classmethod
     def load_from_serial(cls, serial):
         """Load object from serialized memory container.
@@ -381,7 +405,10 @@ class BaseDeepClassifier(BaseClassifier):
                 tmpfile.write(in_memory_model)
                 tmpfile.close()
 
-                cls.model_ = load_model(tmpfilepath)
+                cls.model_ = load_model(
+                    tmpfilepath,
+                    custom_objects=cls._get_keras_custom_objects(),
+                )
                 os.remove(tmpfilepath)
 
         cls.history = pickle.loads(in_memory_history)
@@ -417,9 +444,15 @@ class BaseDeepClassifier(BaseClassifier):
         keras_location_legacy = temp_unzip_loc / "keras"
         keras_location = temp_unzip_loc / "keras" / "model.keras"
         if keras_location.exists():
-            cls.model_ = keras.models.load_model(keras_location)
+            cls.model_ = keras.models.load_model(
+                keras_location,
+                custom_objects=cls._get_keras_custom_objects(),
+            )
         elif keras_location_legacy.exists():
-            cls.model_ = keras.models.load_model(keras_location_legacy)
+            cls.model_ = keras.models.load_model(
+                keras_location_legacy,
+                custom_objects=cls._get_keras_custom_objects(),
+            )
         else:
             cls.model_ = None
 

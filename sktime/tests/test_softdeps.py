@@ -19,7 +19,6 @@ import pytest
 from skbase.utils.dependencies import _check_python_version, _check_soft_dependencies
 
 from sktime.registry import all_estimators
-from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 
@@ -215,7 +214,7 @@ def _python_compat(est):
 
 
 # all estimators - exclude estimators on the global exclusion list
-all_ests = all_estimators(return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS)
+all_ests = all_estimators(return_names=False, filter_tags={"tests:skip_all": False})
 
 
 # estimators that should fail to construct because of python version
