@@ -508,6 +508,29 @@ class AutoETS(_StatsModelsAdapter):
         """
         return self._fitted_forecaster.summary()
 
+    def _get_fitted_params(self):
+        """Get fitted parameters.
+
+        Returns
+        -------
+        fitted_params : dict
+            Information criteria, the estimated smoothing parameters and
+            initial states, and the error, trend, seasonal and damped_trend
+            components of the fitted (or auto-selected) model.
+        """
+        fitted_params = super()._get_fitted_params()
+        model = getattr(self._fitted_forecaster, "model", None)
+        if model is None:
+            return fitted_params
+
+        params = zip(model.param_names, self._fitted_forecaster.params)
+        fitted_params.update(dict(params))
+        fitted_params["error"] = model.error
+        fitted_params["trend"] = model.trend
+        fitted_params["seasonal"] = model.seasonal
+        fitted_params["damped_trend"] = model.damped_trend
+        return fitted_params
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
