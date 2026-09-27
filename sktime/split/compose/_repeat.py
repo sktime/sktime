@@ -35,6 +35,16 @@ class Repeat(BaseSplitter):
         If True, repetitions are random, ``splitter`` is cloned for each repetition.
         Note: if a random seed is set in ``splitter``, the effect is the same
         as setting ``random_repeat`` to False, even if ``random_repeat`` is True.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.split import SingleWindowSplitter
+    >>> from sktime.split.compose import Repeat
+    >>> y = pd.Series(range(6), index=pd.period_range("2020-01", periods=6, freq="M"))
+    >>> spl = Repeat(SingleWindowSplitter(fh=[1], window_length=4), times=2)
+    >>> list(spl.split(y))
+    [(array([1, 2, 3, 4]), array([5])), (array([1, 2, 3, 4]), array([5]))]
     """
 
     _tags = {
