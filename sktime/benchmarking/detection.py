@@ -382,6 +382,7 @@ def _check_cv_global(cv_global):
             f"InstanceSplitter, but found {name}."
         )
 
+    # the same wrap as in forecasting evaluate, gen_y_X_train_test_global
     return InstanceSplitter(cv_global)
 
 
@@ -563,7 +564,7 @@ class DetectionBenchmark(BaseBenchmark):
             reports the alarm positions unchanged. Must be an integer of at
             least 1.
 
-        cv_global : sklearn splitter, or sktime splitter of series, optional
+        cv_global : sklearn splitter, or sktime instance splitter, optional
             Splitter of the series of the panel, for instance
             ``KFold(n_splits=2)``. If None, the default, the task is evaluated
             leave-one-series-out. Otherwise, for every split, every series on
