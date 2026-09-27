@@ -147,20 +147,21 @@ def test_run_validation_pretrains_one_fold_per_series():
     assert all(fold.scores == {} for fold in folds.values())
 
 
-def test_pretrained_detector_raises():
-    """Test a detector that is not in state new when pretrained is refused."""
+def test_pretrained_then_fitted_detector_raises():
+    """Test a detector fitted after pretrain is refused, as its clone keeps state."""
     X, y = _make_panel(), _make_events()
 
     benchmark = DetectionBenchmark()
     benchmark.add_task((X, y), task_id="toy")
     task = benchmark.tasks.entities["toy"]
 
-    # a detector that already carries pretrained state, as its clone would
-    pretrained = DummyRateAnomalies().pretrain(X, y)
-    assert pretrained.clone().state == "pretrained"
+    # fitted, so not in state pretrained, but its clone carries pretrained state
+    fitted = DummyRateAnomalies().pretrain(X, y).fit(_make_series(10))
+    assert fitted.state == "fitted"
+    assert fitted.clone().state == "pretrained"
 
-    with pytest.raises(ValueError, match="must be in state 'new'"):
-        benchmark._run_validation(task, pretrained)
+    with pytest.raises(ValueError, match="in state 'new', which the benchmark"):
+        benchmark._run_validation(task, fitted)
 
 
 def test_warmup_alarms_are_dropped():
@@ -505,3 +506,178 @@ def test_reusing_one_detector_across_folds_would_leak():
     reused.pretrain(X_pretrain_1)
 
     assert len(_replay_live(reused, X_live_1, warmup=1, chunk_size=1)) > 0
+
+
+def test_pretrained_detector_is_not_pretrained_again(monkeypatch):
+    """Test a detector pretrained before it is added is not pretrained again."""
+    X, y = _make_panel(), _make_events()
+
+    # pretrained on a panel of its own: 5 events in 20 points, so rate 0.25
+    X_own = _panel_with_lengths([10, 10])
+    y_own = _events_at([("a", 1), ("a", 3), ("a", 5), ("b", 2), ("b", 4)])
+    detector = DummyRateAnomalies().pretrain(X_own, y_own)
+
+    pretrained_on = []
+    rate_at_fit = []
+    pretrain, fit = DummyRateAnomalies.pretrain, DummyRateAnomalies.fit
+
+    def pretrain_spy(self, X, y=None):
+        pretrained_on.append(sorted(set(X.index.get_level_values(0))))
+        return pretrain(self, X, y)
+
+    def fit_spy(self, X, y=None):
+        rate_at_fit.append(self.pretrain_event_rate_)
+        return fit(self, X, y)
+
+    monkeypatch.setattr(DummyRateAnomalies, "pretrain", pretrain_spy)
+    monkeypatch.setattr(DummyRateAnomalies, "fit", fit_spy)
+
+    benchmark = DetectionBenchmark()
+    benchmark.add_task((X, y), task_id="toy")
+    task = benchmark.tasks.entities["toy"]
+
+    folds = benchmark._run_validation(task, detector)
+
+    assert list(folds) == list(range(len(NAMES)))
+    # no fold pretrains, neither on the other series nor on the live one
+    assert pretrained_on == []
+    # every fold starts from the rate the detector was pretrained with
+    assert rate_at_fit == [0.25] * len(NAMES)
+    # the detector passed in is left as it was
+    assert detector.state == "pretrained"
+    assert detector.pretrain_event_rate_ == 0.25
+
+    # the same holds in a run, where the benchmark registers a clone of it
+    benchmark.add_estimator(detector)
+    benchmark.run()
+
+    assert benchmark.failed_experiments == []
+    assert pretrained_on == []
+    assert rate_at_fit == [0.25] * (2 * len(NAMES))
+
+
+def test_new_detector_is_still_pretrained(monkeypatch):
+    """Test a new detector is pretrained in every fold, on the other series only."""
+    X, y = _make_panel(), _make_events()
+
+    pretrained_on = []
+    pretrain = DummyRateAnomalies.pretrain
+
+    def pretrain_spy(self, X, y=None):
+        pretrained_on.append(sorted(set(X.index.get_level_values(0))))
+        return pretrain(self, X, y)
+
+    monkeypatch.setattr(DummyRateAnomalies, "pretrain", pretrain_spy)
+
+    benchmark = DetectionBenchmark()
+    benchmark.add_task((X, y), task_id="toy")
+    task = benchmark.tasks.entities["toy"]
+
+    detector = DummyRateAnomalies()
+    benchmark._run_validation(task, detector)
+
+    # one pretrain per fold, each on the series other than the live one
+    assert pretrained_on == [["b", "c"], ["a", "c"], ["a", "b"]]
+    # the detector passed in is left as it was
+    assert detector.state == "new"
+
+
+class _OnlineLearningDetector(BaseDetector):
+    """Test detector that keeps learning in update, on top of its pretrain.
+
+    ``pretrain`` stores the values it sees in the list ``seen_``, and
+    ``update`` appends the values of every chunk to that same list, in place.
+    ``fit`` records a copy of ``seen_`` in the class attribute
+    ``seen_at_fit``, so a test can see what every fold started from.
+    """
+
+    _tags = {
+        "task": "anomaly_detection",
+        "learning_type": "unsupervised",
+        "capability:pretrain": True,
+        "fit_is_empty": False,
+        "tests:skip_all": True,
+    }
+
+    seen_at_fit = []
+
+    def _pretrain(self, X, y=None):
+        self.seen_ = list(X.iloc[:, 0])
+        return self
+
+    def _fit(self, X, y=None):
+        type(self).seen_at_fit.append(list(self.seen_))
+        return self
+
+    def _update(self, X, y=None):
+        # in place, so a detector shared by two folds would carry it over
+        self.seen_.extend(X.iloc[:, 0])
+        return self
+
+    def _predict(self, X):
+        return BaseDetector._empty_sparse()
+
+
+def test_pretrained_detector_folds_cannot_update_each_other(monkeypatch):
+    """Test the live series of one fold cannot update the detector of another.
+
+    The detector is pretrained before it is added, and keeps learning in
+    update, in place. Every fold must still start from its pretrain only.
+    """
+    monkeypatch.setattr(_OnlineLearningDetector, "seen_at_fit", [])
+    X = _panel_with_lengths([5, 5, 5])
+
+    detector = _OnlineLearningDetector().pretrain(_panel_with_lengths([3]))
+
+    benchmark = DetectionBenchmark(warmup=1, chunk_size=2)
+    benchmark.add_task(X, task_id="isolation")
+    task = benchmark.tasks.entities["isolation"]
+
+    benchmark._run_validation(task, detector)
+
+    # every fold starts from the 3 pretrained values, and from nothing that
+    # the live series of an earlier fold added in update
+    assert _OnlineLearningDetector.seen_at_fit == [[0.0, 1.0, 2.0]] * 3
+    # the detector passed in is left as it was
+    assert detector.state == "pretrained"
+    assert detector.seen_ == [0.0, 1.0, 2.0]
+
+    # control: one detector reused for two live series carries the first one
+    (_, _, _, X_live_0, _), (_, _, _, X_live_1, _), _ = list(_leave_one_series_out(X))
+    reused = detector.clone()
+    _replay_live(reused, X_live_0, warmup=1, chunk_size=2)
+    _replay_live(reused, X_live_1, warmup=1, chunk_size=2)
+
+    assert _OnlineLearningDetector.seen_at_fit[-1] != [0.0, 1.0, 2.0]
+
+
+@pytest.mark.parametrize("backend", ["loky", "threading"])
+def test_parallel_backend_gives_the_same_folds_as_sequential(backend):
+    """Test folds run on a parallel backend come back as when run in sequence."""
+
+    def run_folds(**kwargs):
+        benchmark = DetectionBenchmark(
+            return_data=True, warmup=2, chunk_size=4, **kwargs
+        )
+        # series of 10, 20 and 15 points with events at 3, 7 and 5, so every
+        # fold has its own alarms and scores, and swapped folds would differ
+        benchmark.add_task((_make_panel(), _make_events()), _make_scorers(), "toy")
+        task = benchmark.tasks.entities["toy"]
+        return benchmark._run_validation(task, _ChunkPositionDetector(positions=(1,)))
+
+    sequential = run_folds()
+    parallel = run_folds(backend=backend, backend_params={"n_jobs": 2})
+
+    # the folds fire, so the comparison is not between two empty results
+    assert all(len(fold.predictions) > 0 for fold in sequential.values())
+    # and no two folds give the same alarms, so fold order is checked too
+    alarms = [tuple(fold.predictions["ilocs"]) for fold in sequential.values()]
+    assert len(set(alarms)) == len(alarms)
+
+    assert list(parallel) == list(sequential)
+    for i, fold in sequential.items():
+        pd.testing.assert_series_equal(
+            pd.Series(parallel[i].scores), pd.Series(fold.scores)
+        )
+        pd.testing.assert_frame_equal(parallel[i].predictions, fold.predictions)
+        pd.testing.assert_frame_equal(parallel[i].ground_truth, fold.ground_truth)

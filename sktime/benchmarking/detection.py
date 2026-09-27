@@ -7,6 +7,7 @@ import pandas as pd
 from sktime.benchmarking._benchmarking_dataclasses import FoldResults, TaskObject
 from sktime.benchmarking.benchmarks import BaseBenchmark, _get_dataset_name
 from sktime.detection.base import BaseDetector
+from sktime.utils.parallel import parallelize
 
 __author__ = ["yash-sangwan"]
 __all__ = ["DetectionBenchmark"]
@@ -66,11 +67,12 @@ def _leave_one_series_out(X, y=None):
 def _clone_unpretrained(estimator):
     """Return a clone of the estimator, and check it has not been pretrained.
 
-    Every fold must start from a detector that has learnt nothing, so that
-    ``pretrain`` runs ``_pretrain`` and not ``_pretrain_update``. The clone
-    plugin of ``BaseDetector`` carries pretrained attributes over to clones,
-    so a detector that was already pretrained would silently keep what it
-    learnt elsewhere.
+    A fold that pretrains must start from a detector that has learnt nothing,
+    so that ``pretrain`` runs ``_pretrain`` and not ``_pretrain_update``. The
+    clone plugin of ``BaseDetector`` carries pretrained attributes over to
+    clones, so a detector that was pretrained and then fitted would silently
+    keep what it learnt elsewhere. A detector in state ``"pretrained"`` is not
+    passed here, its clones are used as they are, see ``_run_validation``.
 
     Parameters
     ----------
@@ -93,9 +95,10 @@ def _clone_unpretrained(estimator):
     if detector.state != "new":
         raise ValueError(
             f"{type(estimator).__name__} added to DetectionBenchmark is in state "
-            f"{detector.state!r}, but a detector must be in state 'new' when the "
-            "benchmark pretrains it. Add a detector that has not been pretrained "
-            "or fitted, so that no state can leak between folds."
+            f"{estimator.state!r}, and its clone in state {detector.state!r}. Add "
+            "a detector in state 'new', which the benchmark pretrains in every "
+            "fold, or in state 'pretrained', which every fold uses as it is, so "
+            "that no state can leak between folds."
         )
 
     return detector
@@ -215,6 +218,54 @@ def _scorer_names(scorers):
     return names
 
 
+def _run_fold(split, meta):
+    """Pretrain, replay and score the detector on one fold.
+
+    A module level function, so that parallel backends can pickle it, see
+    ``DetectionBenchmark._run_validation``.
+
+    Parameters
+    ----------
+    split : tuple
+        One fold, as yielded by ``_leave_one_series_out``.
+    meta : dict
+        With keys ``"estimator"``, the registered detector, ``"scorers"`` and
+        ``"names"``, the scorers of the task and their column names,
+        ``"warmup"``, ``"chunk_size"`` and ``"return_data"``, as set on the
+        benchmark.
+
+    Returns
+    -------
+    FoldResults
+        Scores of the fold, and its alarms and scored known events if
+        ``return_data``.
+    """
+    _, X_pretrain, y_pretrain, X_live, y_live = split
+    estimator = meta["estimator"]
+
+    if estimator.state == "pretrained":
+        # pretrained before it was added, so the clone keeps what it
+        # learnt, and the other series are not pretrained on
+        detector = estimator.clone()
+    else:
+        detector = _clone_unpretrained(estimator)
+        detector.pretrain(X_pretrain, y_pretrain)
+
+    y_pred = _replay_live(detector, X_live, meta["warmup"], meta["chunk_size"])
+
+    # the warm-up is not replayed, so its events are not scored
+    y_true = _events_after_warmup(y_live, meta["warmup"])
+
+    scores = {
+        name: scorer(y_true=y_true, y_pred=y_pred, X=X_live)
+        for name, scorer in zip(meta["names"], meta["scorers"])
+    }
+
+    if meta["return_data"]:
+        return FoldResults(scores=scores, ground_truth=y_true, predictions=y_pred)
+    return FoldResults(scores=scores)
+
+
 class DetectionBenchmark(BaseBenchmark):
     """Detection benchmark.
 
@@ -226,6 +277,10 @@ class DetectionBenchmark(BaseBenchmark):
     series of that panel only. The detector of a fold is always a fresh clone
     of the detector registered with the benchmark, so nothing learnt in one
     fold can reach the next one.
+
+    A detector added in state ``"pretrained"``, i.e., pretrained before it was
+    added, is not pretrained again: every fold starts from a clone that keeps
+    what it learnt, and the other series of the panel are not pretrained on.
 
     Within a fold, the live series is replayed as it would arrive in
     deployment: the detector is fitted on a warm-up prefix, and the rest of
@@ -241,6 +296,17 @@ class DetectionBenchmark(BaseBenchmark):
     ----------
     id_format: str, optional (default=None)
         A regex used to enforce task/estimator ID to match a certain format.
+
+    backend : str, optional (default=None)
+        Parallelization backend for the folds of a task, passed to
+        ``sktime.utils.parallel.parallelize``, for instance ``"loky"``,
+        ``"multiprocessing"``, ``"threading"``, ``"dask"`` or ``"ray"``.
+        If None, the folds run one after the other.
+
+    backend_params : dict, optional (default=None)
+        Additional parameters passed to the backend, for instance
+        ``{"n_jobs": 2}`` for the ``joblib`` backends, see
+        ``sktime.utils.parallel.parallelize``.
 
     return_data : bool, optional (default=False)
         Whether to return the data in the results.
@@ -366,7 +432,9 @@ class DetectionBenchmark(BaseBenchmark):
         """Pretrain, replay and score the detector once per held-out series.
 
         One fold per series of the panel. In each fold, the detector is a
-        fresh clone of the registered detector, pretrained on the series of
+        fresh clone of the registered detector. If the registered detector is
+        in state ``"pretrained"``, the clone keeps what it learnt, and is not
+        pretrained again. Otherwise, the clone is pretrained on the series of
         the panel other than the live one. The live series is then replayed,
         see ``_replay_live``, and its alarms are scored with the scorers of
         the task.
@@ -406,29 +474,23 @@ class DetectionBenchmark(BaseBenchmark):
                 "them. Pass the data of the task as a tuple (X, y)."
             )
 
-        folds = {}
+        meta = {
+            "estimator": estimator,
+            "scorers": scorers,
+            "names": names,
+            "warmup": self.warmup,
+            "chunk_size": self.chunk_size,
+            "return_data": self.return_data,
+        }
 
-        for i, split in enumerate(_leave_one_series_out(X, y)):
-            _, X_pretrain, y_pretrain, X_live, y_live = split
+        # folds are independent, so they can run on the parallel backend;
+        # results come back in the order of the series in the panel
+        results = parallelize(
+            fun=_run_fold,
+            iter=_leave_one_series_out(X, y),
+            meta=meta,
+            backend=self.backend,
+            backend_params=self.backend_params,
+        )
 
-            detector = _clone_unpretrained(estimator)
-            detector.pretrain(X_pretrain, y_pretrain)
-
-            y_pred = _replay_live(detector, X_live, self.warmup, self.chunk_size)
-
-            # the warm-up is not replayed, so its events are not scored
-            y_true = _events_after_warmup(y_live, self.warmup)
-
-            scores = {
-                name: scorer(y_true=y_true, y_pred=y_pred, X=X_live)
-                for name, scorer in zip(names, scorers)
-            }
-
-            if self.return_data:
-                folds[i] = FoldResults(
-                    scores=scores, ground_truth=y_true, predictions=y_pred
-                )
-            else:
-                folds[i] = FoldResults(scores=scores)
-
-        return folds
+        return dict(enumerate(results))
