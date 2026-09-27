@@ -118,9 +118,9 @@ def _all_sklearn_estimators_cached(
     Cached version of _all_sklearn_estimators, see above for docstring.
     """
     from sklearn.base import BaseEstimator
-    from sklearn.model_selection import BaseCrossValidator, BaseShuffleSSplit
+    from sklearn.model_selection import BaseCrossValidator, BaseShuffleSplit
 
-    sklearn_base_classes = (BaseEstimator, BaseCrossValidator, BaseShuffleSSplit)
+    sklearn_base_classes = (BaseEstimator, BaseCrossValidator, BaseShuffleSplit)
 
     results = []
 
