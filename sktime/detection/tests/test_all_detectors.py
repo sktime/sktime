@@ -21,6 +21,20 @@ def _make_pretrain_panel():
     )
 
 
+def _make_pretrain_events():
+    """Make known events for the pretrain panel, one event per instance.
+
+    Row MultiIndex ``(instance, event_no)`` with an ``"ilocs"`` column, as
+    detectors that pretrain on labels expect.
+    """
+    return pd.DataFrame(
+        {"ilocs": [3, 7]},
+        index=pd.MultiIndex.from_tuples(
+            [("h0_0", 0), ("h0_1", 0)], names=["h0", "event_no"]
+        ),
+    )
+
+
 class DetectorFixtureGenerator(BaseFixtureGenerator):
     """Fixture generator for time series detector (outlier, change point, etc) tests.
 
@@ -146,7 +160,7 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
         assert isinstance(y_pred, pd.DataFrame)
 
     @pytest.mark.parametrize(
-        "y", [None, pd.DataFrame({"ilocs": [3, 7]})], ids=["y_none", "y_events"]
+        "y", [None, _make_pretrain_events()], ids=["y_none", "y_events"]
     )
     def test_pretrain_is_noop(self, object_instance, y):
         """Test pretrain is callable, and stores nothing without the capability."""

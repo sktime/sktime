@@ -250,9 +250,14 @@ class BaseDetector(BaseEstimator):
             instance levels into one level, for instance, the instance
             ``("h0_0", "h1_0")`` becomes ``"h0_0__h1_0"``.
 
-        y : optional, default=None
+        y : pd.DataFrame, optional, default=None
             Known events in ``X``, for detectors that learn from labels.
-            Not checked or converted, passed on to ``_pretrain`` as is.
+            One row per event, with an ``"ilocs"`` column, and a row
+            ``MultiIndex`` ``(instance, event_no)``, where the instance can
+            have more than one level, as for ``X``.
+            Instance levels are flattened into one level, the same way as
+            for ``X``, so the instance ``("h0_0", "h1_0")`` becomes
+            ``"h0_0__h1_0"``. Not otherwise checked or converted.
             Ignored by detectors without the ``capability:pretrain`` tag.
 
         Returns
@@ -293,6 +298,9 @@ class BaseDetector(BaseEstimator):
             from_type=X_metadata["mtype"],
             to_type=list(X_inner_mtype) + ["pd-multiindex"],
         )
+
+        # instance levels of y are flattened the same way as those of X
+        y = self._flatten_y_pretrain(y)
 
         prior_attrs = {
             a for a in dir(self) if a.endswith("_") and not a.startswith("_")
@@ -844,6 +852,63 @@ class BaseDetector(BaseEstimator):
         X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
         return X_inner
 
+    @staticmethod
+    def _flatten_instance_levels(index):
+        """Flatten all levels but the last of a row MultiIndex into one level.
+
+        The last level is kept as is: the time index for ``X``, the event
+        counter for ``y``. Instance levels are joined by
+        ``flatten_multiindex``, so ``("h0_0", "h1_0")`` becomes
+        ``"h0_0__h1_0"``.
+
+        Parameters
+        ----------
+        index : pd.MultiIndex
+            Row index with at least two instance levels, and a last level
+            that is not an instance level.
+
+        Returns
+        -------
+        pd.MultiIndex
+            2-level index, the flattened instance level and the last level.
+        """
+        instances = flatten_multiindex(index.droplevel(-1))
+        last = index.get_level_values(-1)
+
+        return pd.MultiIndex.from_arrays(
+            [instances, last], names=[None, index.names[-1]]
+        )
+
+    def _flatten_y_pretrain(self, y):
+        """Flatten instance levels of y, the same way as for X in pretrain.
+
+        Known events ``y`` of a collection of time series are indexed by
+        ``(instance, event_no)``, so, as for ``X``, the instance levels are
+        all levels but the last.
+
+        Does not write to self, and does not change ``y``.
+
+        Parameters
+        ----------
+        y : object
+            Known events, as passed to ``pretrain``.
+
+        Returns
+        -------
+        y : object
+            ``y`` with instance levels flattened into one level, if ``y``
+            has more than one instance level. Otherwise ``y`` unchanged.
+        """
+        has_instance_levels = (
+            hasattr(y, "index")
+            and isinstance(y.index, pd.MultiIndex)
+            and y.index.nlevels > 2
+        )
+        if not has_instance_levels:
+            return y
+
+        return y.set_axis(self._flatten_instance_levels(y.index), axis=0)
+
     def _check_X_pretrain(self, X):
         """Check input data to pretrain, and flatten Hierarchical data to Panel.
 
@@ -892,12 +957,7 @@ class BaseDetector(BaseEstimator):
         # flatten all instance levels into one level, then continue as Panel
         if X_valid and X_metadata["scitype"] == "Hierarchical":
             X = convert(X, from_type=X_metadata["mtype"], to_type="pd_multiindex_hier")
-            instances = flatten_multiindex(X.index.droplevel(-1))
-            times = X.index.get_level_values(-1)
-            flat_index = pd.MultiIndex.from_arrays(
-                [instances, times], names=[None, times.name]
-            )
-            X = X.set_axis(flat_index, axis=0)
+            X = X.set_axis(self._flatten_instance_levels(X.index), axis=0)
             X_valid, X_msg, X_metadata = check_is_scitype(
                 X, scitype="Panel", return_metadata=[]
             )
@@ -929,8 +989,10 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame with 2-level row MultiIndex, or other Panel mtype
             Data to pretrain the detector on, a collection of time series.
-        y : optional, default=None
-            Known events in ``X``, as passed to ``pretrain``.
+        y : pd.DataFrame, optional, default=None
+            Known events in ``X``, as passed to ``pretrain``, with instance
+            levels flattened into one, so the row ``MultiIndex`` is
+            ``(instance, event_no)``.
 
         Returns
         -------
@@ -954,8 +1016,10 @@ class BaseDetector(BaseEstimator):
         ----------
         X : pd.DataFrame with 2-level row MultiIndex, or other Panel mtype
             Data to pretrain the detector on, a collection of time series.
-        y : optional, default=None
-            Known events in ``X``, as passed to ``pretrain``.
+        y : pd.DataFrame, optional, default=None
+            Known events in ``X``, as passed to ``pretrain``, with instance
+            levels flattened into one, so the row ``MultiIndex`` is
+            ``(instance, event_no)``.
 
         Returns
         -------
