@@ -33,7 +33,9 @@ def _namespace(include_deps=False):
 
     if include_deps:
         namespace_dict_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
-        namespace_dict = {**namespace_dict_sklearn, **namespace_dict_sktime}
+        # in case of clashes sktime takes precedence
+        namespace_dict_sklearn.update(namespace_dict_sktime)
+        namespace_dict = namespace_dict_sklearn
     else:
         namespace_dict = namespace_dict_sktime
 
