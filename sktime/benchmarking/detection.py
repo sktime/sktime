@@ -451,7 +451,7 @@ class DetectionBenchmark(BaseBenchmark):
 
     A detector added in state ``"pretrained"``, i.e., pretrained before it was
     added, is not pretrained again: every fold starts from a clone that keeps
-    what it learnt, and the other series of the panel are not pretrained on.
+    what it learnt, and no series of the panel is pretrained on.
 
     Within a fold, the live series is replayed as it would arrive in
     deployment: the detector is fitted on a warm-up prefix, and the rest of
@@ -655,8 +655,10 @@ class DetectionBenchmark(BaseBenchmark):
             If a split of ``cv_global`` has no series on its train side, or if
             a series on its test side is also on its train side.
         ValueError
-            If the registered detector is not in state ``"new"``, so a clone of
-            it would carry what it learnt elsewhere, see ``_clone_unpretrained``.
+            If the registered detector is neither in state ``"new"`` nor in
+            state ``"pretrained"``, and its clone carries pretrained state, for
+            instance a detector pretrained and then fitted, see
+            ``_clone_unpretrained``.
         """
         data = task.get_y_X("detection")
         X = data["X"]
