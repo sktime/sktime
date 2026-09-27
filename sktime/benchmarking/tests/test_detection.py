@@ -24,6 +24,7 @@ from sktime.performance_metrics.detection import (
     MeanDetectionOffset,
 )
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils.parallel import parallelize
 
 pytestmark = pytest.mark.skipif(
     not run_test_module_changed(["sktime.benchmarking", "sktime.detection"]),
@@ -709,17 +710,15 @@ def test_backend_is_passed_to_parallelize(monkeypatch):
     The test above compares results only, and those also match if the backend
     is dropped and the folds run in sequence.
     """
-    import sktime.benchmarking.detection as detection_module
-
     calls = []
-    parallelize = detection_module.parallelize
 
     def parallelize_spy(**kwargs):
         calls.append((kwargs["backend"], kwargs["backend_params"]))
         # the parallel run itself is tested above, so run in sequence here
         return parallelize(**{**kwargs, "backend": None, "backend_params": None})
 
-    monkeypatch.setattr(detection_module, "parallelize", parallelize_spy)
+    # the name the benchmark module calls, not the one in sktime.utils.parallel
+    monkeypatch.setattr("sktime.benchmarking.detection.parallelize", parallelize_spy)
 
     benchmark = DetectionBenchmark(backend="loky", backend_params={"n_jobs": 2})
     benchmark.add_task((_make_panel(), _make_events()), task_id="toy")
