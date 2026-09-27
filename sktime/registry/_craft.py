@@ -442,6 +442,9 @@ def deps(spec, include_test_deps=False):
             else:
                 return dep
 
+        if not hasattr(cls, "get_class_tag"):
+            continue
+
         new_deps = cls.get_class_tag("python_dependencies")
         dep_strs += _coerce_dep_strs(new_deps)
 
@@ -449,7 +452,7 @@ def deps(spec, include_test_deps=False):
             test_deps = cls.get_class_tag("tests:python_dependencies")
             dep_strs += _coerce_dep_strs(test_deps)
 
-        reqs = list(set(dep_strs))
+    reqs = list(set(dep_strs))
 
     return reqs
 
