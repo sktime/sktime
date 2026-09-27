@@ -703,6 +703,34 @@ def test_parallel_backend_gives_the_same_folds_as_sequential(backend):
         pd.testing.assert_frame_equal(parallel[i].ground_truth, fold.ground_truth)
 
 
+def test_backend_is_passed_to_parallelize(monkeypatch):
+    """Test the backend set on the benchmark reaches parallelize.
+
+    The test above compares results only, and those also match if the backend
+    is dropped and the folds run in sequence.
+    """
+    import sktime.benchmarking.detection as detection_module
+
+    calls = []
+    parallelize = detection_module.parallelize
+
+    def parallelize_spy(**kwargs):
+        calls.append((kwargs["backend"], kwargs["backend_params"]))
+        # the parallel run itself is tested above, so run in sequence here
+        return parallelize(**{**kwargs, "backend": None, "backend_params": None})
+
+    monkeypatch.setattr(detection_module, "parallelize", parallelize_spy)
+
+    benchmark = DetectionBenchmark(backend="loky", backend_params={"n_jobs": 2})
+    benchmark.add_task((_make_panel(), _make_events()), task_id="toy")
+    task = benchmark.tasks.entities["toy"]
+
+    folds = benchmark._run_validation(task, _ChunkPositionDetector())
+
+    assert calls == [("loky", {"n_jobs": 2})]
+    assert list(folds) == list(range(len(NAMES)))
+
+
 def test_pattern_dummy_keeps_time_from_start_across_chunks():
     """Test DummyPatternAnomalies hits every event with chunks of one point."""
     names = ["a", "b", "c"]
