@@ -421,8 +421,6 @@ def deps(spec, include_test_deps=False):
             )
         cls = register[x]
 
-        new_deps = cls.get_class_tag("python_dependencies")
-
         def _resolve_disjunctions(dep):
             """Resolve disjunctions in dependencies by picking first."""
             if isinstance(dep, list):
