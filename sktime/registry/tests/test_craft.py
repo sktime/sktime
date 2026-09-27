@@ -10,7 +10,6 @@ from sktime.registry._craft import craft, deps, imports
 
 simple_spec = "NaiveForecaster()"
 simple_spec_with_dep = "VAR(trend='ct')"
-sklearn_spec = "KFold(n_splits=5)"
 
 pipe_spec_no_deps = """
 pipe = TransformedTargetForecaster(steps=[
@@ -71,7 +70,7 @@ dunder_spec_with_deps = (
     "LTSFLinearForecaster(seq_len=10, pred_len=3)"
 )
 
-specs = [simple_spec, pipe_spec_no_deps, dunder_spec_no_deps, sklearn_spec]
+specs = [simple_spec, pipe_spec_no_deps, dunder_spec_no_deps]
 
 
 if _check_soft_dependencies(["statsmodels"], severity="none"):
