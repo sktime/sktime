@@ -388,8 +388,7 @@ def test_bridge_day_of_holiday_outside_index(calendar, start, end, bridge_day):
         return_categorical=True,
     )
     labels = _holiday_labels(transformer, start, end)
-    assert labels.pop(bridge_day) == "Holiday"
-    assert set(labels.values()) == {"no_holiday"}
+    assert labels == {**dict.fromkeys(labels, "no_holiday"), bridge_day: "Holiday"}
 
 
 @pytest.mark.skipif(
