@@ -120,7 +120,7 @@ def _all_sklearn_estimators_cached(
     from sklearn.base import BaseEstimator
     from sklearn.model_selection import BaseCrossValidator, BaseShuffleSplit
 
-    sklearn_base_classes = (BaseEstimator, BaseCrossValidator, BaseShuffleSplit)
+    sklearn_base_classes = [BaseEstimator, BaseCrossValidator, BaseShuffleSplit]
 
     results = []
 
