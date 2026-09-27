@@ -65,7 +65,7 @@ def _all_sklearn_estimators(
 
         1. list of estimators, if ``return_names=False``, and ``return_tags`` is None
 
-        2. list of tuples (optional estimator name, class, ~ptional estimator
+        2. list of tuples (optional estimator name, class, optional estimator
         tags), if ``return_names=True`` or ``return_tags`` is not ``None``.
 
         3. ``pandas.DataFrame`` if ``as_dataframe = True``
