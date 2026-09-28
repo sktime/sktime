@@ -109,6 +109,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "capability:multivariate": True,
         "capability:exogenous": True,
         "capability:pred_int": True,
+        "capability:update": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
         "visual_block_kind": "parallel",
@@ -171,6 +172,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
             "capability:insample": True,
             "capability:pred_int": True,
             "capability:pred_int:insample": True,
+            "capability:update": True,
         }
 
         # Extrapolating values for flags that should be True if they are

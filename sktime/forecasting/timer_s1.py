@@ -181,8 +181,11 @@ class TimerS1Forecaster(BaseForecaster):
         # WenWeiTHU for bytedance-research/Timer-S1
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers[torch]>4.57.0,<5.0.0"],
+        # CI and test flags
+        # -----------------
         "tests:vm": True,
         "serialization:skip": ("model_",),
+        "tests:libs": ["sktime.libs.timer_s1"],
     }
 
     def __init__(

@@ -39,6 +39,10 @@ class BaseDeepRegressor(BaseRegressor):
         "capability:random_state": True,
         "serialization:native_artifacts": ("model_",),
         "serialization:skip": ("history", "optimizer", "optimizer_"),
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.regression.deep_learning.base._base_tf"],
     }
 
     @abstractmethod
@@ -75,9 +79,21 @@ class BaseDeepRegressor(BaseRegressor):
         return y_pred
 
     @staticmethod
-    def get_custom_objects():
-        """Return the custom objects needed for loading the model.
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
 
-        Will be overridden in child classes if necessary.
+        Passed as the ``custom_objects`` argument to ``keras.models.load_model``
+        when reloading ``model_`` from a saved ``.keras``/h5 file. Only needs to
+        be overridden by child classes whose ``build_model`` uses custom Keras
+        layers, losses, metrics, or other objects that Keras cannot resolve by
+        name on its own (e.g., classes not registered via
+        ``keras.saving.register_keras_serializable``).
+
+        Returns
+        -------
+        dict of str to type, or None
+            Mapping from the custom object's registered name (as stored in the
+            saved model config) to the Python class/function implementing it.
+            ``None`` if the model does not use any custom Keras objects.
         """
         return None

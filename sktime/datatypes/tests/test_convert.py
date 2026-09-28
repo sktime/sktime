@@ -4,13 +4,12 @@ __author__ = ["fkiraly"]
 
 import pytest
 
-from sktime.datatypes import SCITYPE_REGISTER, scitype_to_mtype
+from sktime.datatypes import scitype_to_mtype
 from sktime.datatypes._convert import _conversions_defined, convert
 from sktime.datatypes._examples import get_examples
+from sktime.datatypes._registry import generate_scitype_list
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
-
-SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
 
 # scitypes which have no conversions defined
 # should be listed here to avoid false positive test errors
@@ -22,7 +21,7 @@ def _generate_fixture_tuples():
     # collect fixture tuples here
     fixture_tuples = []
 
-    for scitype in SCITYPES:
+    for scitype in generate_scitype_list():
         # if we know there are no conversions defined, skip this scitype
         if scitype in SCITYPES_NO_CONVERSIONS:
             continue

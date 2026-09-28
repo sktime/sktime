@@ -70,6 +70,10 @@ class SimpleRNNRegressor(BaseDeepRegressor):
         "tests:skip_by_name": [
             "test_fit_idempotent",
         ],
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.rnn._rnn_tf"],
     }
 
     def __init__(

@@ -118,9 +118,13 @@ class _KerasArtifactBackend(_NativeArtifactBackend):
         from tensorflow import keras
 
         custom_objects = None
-        get_custom_objects = getattr(estimator, "get_custom_objects", None)
-        if callable(get_custom_objects):
+        for method_name in ("get_custom_objects", "_get_keras_custom_objects"):
+            get_custom_objects = getattr(estimator, method_name, None)
+            if not callable(get_custom_objects):
+                continue
             custom_objects = get_custom_objects()
+            if custom_objects:
+                break
 
         model = keras.models.load_model(
             path / "model.keras",

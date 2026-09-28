@@ -15,6 +15,20 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
 
+def _resolve_device(device):
+    """Resolve automatic device selection while preserving explicit values."""
+    if device != "auto":
+        return device
+
+    import torch
+
+    if torch.cuda.is_available():
+        return "cuda"
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
+
+
 class KronosForecaster(BaseForecaster):
     """Kronos zero-shot forecaster for financial K-line/OHLC data.
 
@@ -34,7 +48,8 @@ class KronosForecaster(BaseForecaster):
         The default is the Kronos-Tokenizer-base checkpoint [6]_. The released
         2k tokenizer is also available [7]_.
     device : str, default="cpu"
-        Device used for model and tokenizer inference.
+        Device used for model and tokenizer inference. ``"auto"`` selects CUDA,
+        then MPS, then CPU.
     columns : list of str or None, default=None
         Optional positional mapping from columns in ``y`` to Kronos internal
         columns. Positions map to ``"open"``, ``"high"``, ``"low"``,
@@ -144,6 +159,7 @@ class KronosForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:libs": ["sktime.libs.kronos"],
         "serialization:skip": ("tokenizer_", "model_"),
+        "tests:specific": ["sktime.forecasting.tests.test_kronos"],
     }
 
     _kronos_columns = ["open", "high", "low", "close", "volume", "amount"]
@@ -171,6 +187,10 @@ class KronosForecaster(BaseForecaster):
         self.deterministic = deterministic
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-initialization setup."""
+        self._device = _resolve_device(self.device)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -270,7 +290,7 @@ class KronosForecaster(BaseForecaster):
         predictor = KronosPredictor(
             self.model_,
             self.tokenizer_,
-            device=self.device,
+            device=self._device,
             max_context=self.max_context_,
             clip=self.clip,
         )
@@ -408,7 +428,7 @@ class KronosForecaster(BaseForecaster):
             key=self._get_unique_key(),
             model_path=self.model_path,
             tokenizer_path=self.tokenizer_path,
-            device=self.device,
+            device=self._device,
         ).load()
 
         return tokenizer, model
@@ -418,7 +438,7 @@ class KronosForecaster(BaseForecaster):
         key = {
             "model_path": self.model_path,
             "tokenizer_path": self.tokenizer_path,
-            "device": self.device,
+            "device": self._device,
         }
         return str(sorted(key.items()))
 

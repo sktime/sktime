@@ -84,6 +84,7 @@ class MantisForecaster(BaseForecaster):
         # relevant issue: https://github.com/sktime/sktime/issues/10491
         # deepcopy fails during `update_predict(..., reset_forecaster=False)`
         "tests:skip_by_name": ["test_update_predict_predicted_index"],
+        "tests:specific": ["sktime.forecasting.tests.test_mantis"],
     }
 
     def __init__(

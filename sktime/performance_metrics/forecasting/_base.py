@@ -374,8 +374,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         try:
             index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
             return index_df.mean(axis=0)
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except RecursionError as e:
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            ) from e
 
     def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
         """Vectorized version of _evaluate.
@@ -628,8 +630,10 @@ class BaseForecastingErrorMetric(BaseMetric):
                 )
                 out_series.loc[idx] = pseudovalue
             return out_series
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except RecursionError as e:
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            ) from e
 
     def _check_consistent_input(self, y_true, y_pred, multioutput, multilevel):
         y_true_orig = y_true
@@ -888,7 +892,23 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
 
 
 class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
-    """Class for defining forecasting error metrics from a function dynamically."""
+    """Class for defining forecasting error metrics from a function dynamically.
+
+    Returned by ``make_forecasting_scorer``, in adaptation use cases.
+
+    Example
+    -------
+    >>> from sktime.performance_metrics.forecasting import make_forecasting_scorer
+    >>> from sktime.performance_metrics.forecasting import mean_squared_error
+    >>>
+    >>> my_metric = make_forecasting_scorer(
+    ...     func=mean_squared_error,
+    ...     name="my_mse",
+    ...     greater_is_better=False,
+    ...     multioutput="uniform_average",
+    ...     multilevel="uniform_average",
+    ... )
+    """
 
     def __init__(
         self,
