@@ -218,7 +218,7 @@ class DropNA(BaseTransformer):
 
         if remember:
             if dropped_index_values is not None:
-                return X.drop(labels=dropped_index_values, axis=axis)
+                return X.drop(labels=dropped_index_values, axis=axis, errors="ignore")
             else:
                 return X
         else:
