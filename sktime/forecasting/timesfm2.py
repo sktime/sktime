@@ -329,6 +329,7 @@ class TimesFM2Forecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:exogenous": False,
+        "fm": True,
         "requires-fh-in-fit": False,
         "capability:insample": False,
         "capability:pred_int": True,

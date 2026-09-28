@@ -79,6 +79,7 @@ class Chronos2Forecaster(BaseForecaster):
         "maintainers": ["priyanshuharshbodhi1"],
         "python_dependencies": ["chronos-forecasting>=2.0.0"],
         "capability:exogenous": True,
+        "fm": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": False,
         "capability:missing_values": False,

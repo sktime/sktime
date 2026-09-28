@@ -11,7 +11,7 @@ import sys
 
 import numpy as np
 from sklearn import preprocessing
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
 
@@ -19,7 +19,7 @@ from sktime.exceptions import NotFittedError
 from sktime.utils.sklearn._version_bridge import _SklVersionBridgeMixin
 
 
-class ContinuousIntervalTree(_SklVersionBridgeMixin, BaseEstimator):
+class ContinuousIntervalTree(_SklVersionBridgeMixin, ClassifierMixin, BaseEstimator):
     """Continuous interval tree (CIT) vector classifier (aka Time Series Tree).
 
     The ``Time Series Tree`` described in the Time Series Forest (TSF) paper Deng et al

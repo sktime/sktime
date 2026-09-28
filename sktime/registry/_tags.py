@@ -1040,6 +1040,57 @@ class remember_data(_BaseTag):
 # -----------
 
 
+class fm(_BaseTag):
+    """Property: Whether the forecaster is a Foundation Model.
+
+    - String name: ``"fm"``
+    - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the forecaster is considered a Foundation Model (FM).
+    Foundation Models are typically large models pre-trained on vast amounts of data,
+    capable of zero-shot or few-shot forecasting on unseen time series.
+
+    If the tag is ``False``, the forecaster is not a Foundation Model.
+    """
+
+    _tags = {
+        "tag_name": "fm",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "is the forecaster a Foundation Model (FM)?",
+        "user_facing": True,
+    }
+
+
+class few_shot(_BaseTag):
+    """Capability: the forecaster supports few-shot learning.
+
+    - String name: ``"few-shot"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    If the tag is ``True``, the forecaster supports few-shot forecasting,
+    which means it can adapt to a new time series given a small amount
+    of target data (few shots).
+
+    If the tag is ``False``, the forecaster does not support few-shot learning,
+    or operates purely in a zero-shot or fully trained manner.
+    """
+
+    _tags = {
+        "tag_name": "few-shot",
+        "parent_type": "forecaster",
+        "tag_type": "bool",
+        "short_descr": "does the forecaster support few-shot learning?",
+        "user_facing": True,
+    }
+
+
 class capability__exogenous(_BaseTag):
     """Capability: the forecaster can use exogenous data.
 
