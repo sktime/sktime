@@ -185,6 +185,7 @@ class TimerS1Forecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.timer_s1"],
+        "tests:specific": ["sktime.forecasting.tests.test_timer_s1"],
     }
 
     def __init__(
