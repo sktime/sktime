@@ -28,7 +28,7 @@ def test_autots_prediction_intervals():
         random_seed=42,  # Ensure reproducibility
     )
 
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
 
     # Test successful prediction with single coverage
     intervals = forecaster.predict_interval(coverage=coverage)
@@ -95,7 +95,7 @@ def test_autots_exogenous():
     )
 
     # Create future X for prediction
-    fh = [1, 2, 3]
+    fh = 3
 
     # Test fit with X
     forecaster.fit(y, X=X, fh=fh)

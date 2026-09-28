@@ -40,7 +40,7 @@ def _llm_returning(blueprints):
 
 def _make_forecaster(blueprints):
     return AutoResearchForecaster(
-        cv=SingleWindowSplitter(fh=[1, 2, 3]),
+        cv=SingleWindowSplitter(fh=3),
         model="dummy",
         n_iterations=1,
         n_blueprints=len(blueprints),
@@ -71,7 +71,7 @@ def test_nan_score_does_not_mask_finite_blueprint(blueprints):
     y = load_airline()[:60]
     forecaster = _make_forecaster(blueprints)
 
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
 
     assert forecaster.best_blueprint_["name"] == "good_blueprint"
     assert math.isfinite(forecaster.best_score_)
@@ -92,7 +92,7 @@ def test_selection_is_order_independent():
     )
     for blueprints in orderings:
         forecaster = _make_forecaster(blueprints)
-        forecaster.fit(y, fh=[1, 2, 3])
+        forecaster.fit(y, fh=3)
         scores.append(forecaster.best_score_)
 
     assert scores[0] == scores[1]
@@ -108,4 +108,4 @@ def test_all_nan_blueprints_still_raise():
     forecaster = _make_forecaster([NAN_BLUEPRINT])
 
     with pytest.raises(RuntimeError, match="No blueprint succeeded"):
-        forecaster.fit(y, fh=[1, 2, 3])
+        forecaster.fit(y, fh=3)

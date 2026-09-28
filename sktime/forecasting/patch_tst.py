@@ -264,7 +264,7 @@ class PatchTSTForecaster(BaseForecaster):
     ...         "per_device_train_batch_size":16,
     ...    }
     ... ) #initialize an full model
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> forecaster.fit(y, fh=3) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
     >>> #Example full fine-tuning with a pre-trained model

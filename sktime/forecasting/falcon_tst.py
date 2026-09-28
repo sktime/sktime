@@ -170,7 +170,7 @@ class FalconTSTForecaster(BaseForecaster):
     >>> # By default, loads ant-intl/Falcon-TST_Large.
     >>> forecaster = FalconTSTForecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Reduced-memory inference with device placement and quantization:
 
@@ -184,7 +184,7 @@ class FalconTSTForecaster(BaseForecaster):
     ...     quantization_config=BitsAndBytesConfig(load_in_8bit=True),
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Randomly initialized local model, useful for tests or local experimentation.
     This model is not trained by ``fit``; the weights stay random and should not

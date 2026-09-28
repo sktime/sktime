@@ -118,6 +118,6 @@ def test_series_without_panel_level():
     )
 
     forecaster.fit(y, X)
-    y_pred = forecaster.predict(X=X, fh=[1, 2, 3])
+    y_pred = forecaster.predict(X=X, fh=3)
 
     assert y_pred.index.nlevels == 1
