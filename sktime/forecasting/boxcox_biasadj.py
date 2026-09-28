@@ -2,7 +2,9 @@
 
 """BoxCoxBiasAdjustedForecaster implementation."""
 
-__author__ = ["sanskarmodi8"]
+__author__ = ["sanskarmodi8", "SalmanDeveloperz"]
+
+import warnings
 
 import pandas as pd
 from scipy.special import inv_boxcox
@@ -73,10 +75,6 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:pred_int": True,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
-        # sporadic scipy.optimize bracketing failures, bug report #10301
     }
 
     def __init__(self, forecaster, lambda_fixed=None):
@@ -109,7 +107,25 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         from sktime.transformations.boxcox import BoxCoxTransformer
 
         self.boxcox_transformer_ = BoxCoxTransformer(lambda_fixed=self.lambda_fixed)
-        y_transformed = self.boxcox_transformer_.fit_transform(y)
+        try:
+            y_transformed = self.boxcox_transformer_.fit_transform(y)
+        except RuntimeError as e:
+            # scipy's bracketing optimizers (e.g. ``brent``, ``minimize_scalar``)
+            # raise a ``RuntimeError`` subclass (``BracketError``) when they fail
+            # to find a valid bracket, e.g. on near-constant or short update
+            # windows. Fall back to the identity transform in that case instead
+            # of letting the whole fit fail sporadically, see bug report #10301.
+            warnings.warn(
+                f"BoxCoxBiasAdjustedForecaster: Box-Cox lambda estimation failed "
+                f"({type(e).__name__}: {e}). "
+                "Falling back to lambda=1.0 (identity transform).",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            self.boxcox_transformer_ = BoxCoxTransformer(
+                method="fixed", lambda_fixed=1.0
+            )
+            y_transformed = self.boxcox_transformer_.fit_transform(y)
 
         self.forecaster_ = self.forecaster.clone()
         self.forecaster_.fit(y=y_transformed, X=X, fh=fh)
