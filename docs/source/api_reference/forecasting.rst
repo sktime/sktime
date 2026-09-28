@@ -991,7 +991,7 @@ Ensembles and stacking
 
     HyperTreeARForecaster
     HyperTreeNetARForecaster
-
+    HyperTreeSTLForecaster
 
 Causal Forecasting
 ------------------
