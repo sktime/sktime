@@ -150,6 +150,18 @@ class PCATransformer(BaseTransformer):
         -------
         self: reference to self
         """
+        # Recreate PCA from the current public parameters so changes made through
+        # set_params before fit are respected by the wrapped sklearn estimator.
+        self.pca = PCA(
+            self.n_components,
+            copy=self.copy,
+            whiten=self.whiten,
+            svd_solver=self.svd_solver,
+            tol=self.tol,
+            iterated_power=self.iterated_power,
+            random_state=self.random_state,
+        )
+
         N, num_var, num_time = X.shape
         X = X.reshape(N, num_time * num_var)
 
