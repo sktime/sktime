@@ -1,18 +1,16 @@
-"""ConvTimeNet (PyTorch) classifier for time series classification."""
+"""ConvTimeNet (PyTorch) regressor for time series extrinsic regression."""
 
 __authors__ = ["Tanuj-Taneja1"]
-__all__ = ["ConvTimeNetClassifier"]
+__all__ = ["ConvTimeNetRegressor"]
 
 from collections.abc import Callable
 
-import numpy as np
-
-from sktime.classification.deep_learning.base import BaseDeepClassifierPytorch
 from sktime.networks.convtimenet import ConvTimeNetNetworkTorch
+from sktime.regression.deep_learning.base import BaseDeepRegressorTorch
 
 
-class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
-    """ConvTimeNet for time series classification.
+class ConvTimeNetRegressor(BaseDeepRegressorTorch):
+    """ConvTimeNet for time series extrinsic regression.
 
     ConvTimeNet is a hierarchical pure convolutional model designed.
     Unlike prevalent methods centered around self-attention mechanisms,
@@ -29,7 +27,10 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
     within a single model, addressing common challenges in time series analysis
     such as adaptive perception of local patterns and multi-scale dependency capture.
 
-    This classifier has been wrapped around implementations from [1]_ and [2]_.
+    This regressor shares the network of
+    ``sktime.classification.deep_learning.ConvTimeNetClassifier``, with a single
+    output unit in the head, and has been wrapped around implementations
+    from [1]_ and [2]_.
 
     Parameters
     ----------
@@ -51,8 +52,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         Permitted values:
 
         - ``None``: no activation is applied to the output layer and the network
-          returns raw outputs (logits). This is typically required when using
-          ``CrossEntropyLoss``, which expects logits as input.
+          returns raw outputs. This is the usual choice for regression.
         - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
           recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
           Lowercase aliases for common activations are also accepted
@@ -89,7 +89,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
     criterion : case insensitive str or an instance of a loss function
         defined in PyTorch, optional (default=None)
         The loss function to be used in training the neural network.
-        If None, CrossEntropyLoss is used.
+        If None, MSELoss is used.
         List of available loss functions:
         https://pytorch.org/docs/stable/nn.html#loss-functions
     criterion_kwargs : dict or None, optional (default=None)
@@ -120,7 +120,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         the loss. Metrics are computed from the torchmetrics library.
         If a string/Callable is passed, it must be one of the metrics defined in
         https://lightning.ai/docs/torchmetrics/stable/
-        Examples: "Accuracy", "F1Score", "Precision", "Recall"
+        Examples: "MeanSquaredError", "MeanAbsoluteError", "R2Score"
     lr : float, optional (default=0.001)
         The learning rate to use for the optimizer.
     verbose : bool, optional (default=False)
@@ -130,14 +130,14 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
 
     Examples
     --------
-    >>> from sktime.classification.deep_learning import ConvTimeNetClassifier
+    >>> from sktime.regression.deep_learning import ConvTimeNetRegressor
     >>> import numpy as np
     >>> # Create a sample multivariate time series dataset
     >>> # 48 samples, 3 variables, length 128
-    >>> X = np.random.randn(16 * 3, 3, 128).astype("float32")
-    >>> y = np.array([0, 1, 2] * 16)  # 3 classes
-    >>> # Create and fit the classifier
-    >>> clf = ConvTimeNetClassifier(
+    >>> X = np.random.randn(48, 3, 128).astype("float32")
+    >>> y = np.random.randn(48)
+    >>> # Create and fit the regressor
+    >>> reg = ConvTimeNetRegressor(
     ...     patch_size=4,
     ...     patch_stride=2,
     ...     d_model=64,
@@ -147,11 +147,10 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
     ...     device="cpu",
     ...     random_state=10
     ... ) # doctest: +SKIP
-    >>> clf.fit(X, y)  # doctest: +SKIP
-    ConvTimeNetClassifier(...)
+    >>> reg.fit(X, y)  # doctest: +SKIP
+    ConvTimeNetRegressor(...)
     >>> # Make predictions
-    >>> y_pred = clf.predict(X)  # doctest: +SKIP
-    >>> y_proba = clf.predict_proba(X)  # doctest: +SKIP
+    >>> y_pred = reg.predict(X)  # doctest: +SKIP
 
     References
     ----------
@@ -169,8 +168,9 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         "python_dependencies": ["torch"],
         # estimator type
         # --------------
+        "capability:multivariate": True,
         "capability:random_state": True,
-        "property:randomness": "derandomized",
+        "property:randomness": "stochastic",
         # CI and testing
         # --------------
         "tests:vm": True,
@@ -182,7 +182,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
     }
 
     def __init__(
-        self: "ConvTimeNetClassifier",
+        self: "ConvTimeNetRegressor",
         # model specific
         d_model: int = 64,
         patch_size: int = 4,
@@ -193,7 +193,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         activation: str | None | Callable = None,
         activation_hidden: str | None | Callable = "gelu",
         device: str = "cpu",
-        # base classifier specific
+        # base regressor specific
         num_epochs: int = 16,
         batch_size: int = 8,
         criterion: str | None | Callable = None,
@@ -232,7 +232,6 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         super().__init__(
             num_epochs=self.num_epochs,
             batch_size=self.batch_size,
-            activation=self.activation,
             criterion=self.criterion,
             criterion_kwargs=self.criterion_kwargs,
             optimizer=self.optimizer,
@@ -260,23 +259,21 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         else:
             self._dw_ks = list(self.dw_ks)
 
-        # enc_in, seq_len and num_classes are inferred from the data
+        # enc_in and seq_len are inferred from the data
         # and will be set in _build_network
         self.enc_in = None
         self.seq_len = None
-        self.num_classes = None
+        self.num_classes = 1  # for regression
 
         super().__post_init__()
 
-    def _build_network(self, X, y):
+    def _build_network(self, X):
         """Build the ConvTimeNet network.
 
         Parameters
         ----------
         X : numpy.ndarray
             Input data containing the time series data.
-        y : numpy.ndarray
-            Target labels corresponding to the input data.
 
         Returns
         -------
@@ -284,7 +281,6 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             An instance of the ConvTimeNetNetworkTorch class initialized with the
             appropriate parameters.
         """
-        self.num_classes = len(np.unique(y))
         self.enc_in = X.shape[1]
         self.seq_len = X.shape[2]
 
@@ -313,19 +309,18 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
-            For classifiers, a "default" set of parameters should be provided for
-            general testing, and a "results_comparison" set for comparing against
-            previously recorded results if the general set does not produce suitable
-            probabilities to compare against.
+            Reserved values for regressors:
+                "results_comparison" - used for identity testing in some regressors
+                    should contain parameter settings comparable to "TSC bakeoff"
 
         Returns
         -------
-        params : dict or list of dict, default={}
-            Parameters to create testing instances of the class.
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
             Each dict are parameters to construct an "interesting" test instance, i.e.,
             ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
             instance.
-            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         params1 = {
             "d_model": 16,
@@ -351,6 +346,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "d_ff": 64,
             "batch_size": 4,
             "optimizer": "Adam",
+            "criterion": "L1Loss",
             "lr": 5e-4,
             "device": "cpu",
             "verbose": False,
@@ -369,9 +365,7 @@ class ConvTimeNetClassifier(BaseDeepClassifierPytorch):
             "d_ff": 128,
             "batch_size": 8,
             "optimizer": "SGD",  # different optimizer
-            "criterion": "NLLLoss",
-            "activation": "logsoftmax",
-            "lr": 1e-2,
+            "lr": 1e-3,
             "device": "cpu",
             "verbose": False,
             "dropout": 0.2,
