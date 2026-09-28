@@ -1,6 +1,9 @@
 """Regression tests for the LagLlama forecaster."""
 
+from types import SimpleNamespace
+
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
@@ -57,4 +60,22 @@ def test_lagllama_airline_predictions_match_source_reference(
         np.asarray(expected_head, dtype=np.float32),
         rtol=1e-5,
         atol=1e-4,
+    )
+
+
+def test_lagllama_update_retains_required_context_only():
+    """Update keeps only the history required by the LagLlama model."""
+    forecaster = LagLlamaForecaster(context_length=3)
+
+    forecaster._cur_y = pd.DataFrame({"y": range(10)})
+    forecaster.estimator_ = SimpleNamespace(lags_seq=[0, 2])
+
+    y_new = pd.DataFrame({"y": [10, 11]}, index=pd.RangeIndex(10, 12))
+
+    forecaster._update(y_new)
+
+    assert len(forecaster._cur_y) == 5
+    np.testing.assert_array_equal(
+        forecaster._cur_y["y"].to_numpy(),
+        np.array([7, 8, 9, 10, 11]),
     )
