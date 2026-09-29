@@ -225,6 +225,7 @@ class FalconTSTForecaster(BaseForecaster):
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers[torch]>=4.23.0,<5.0.0"],
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_falcon_tst"],
     }
 
     def __init__(
