@@ -30,6 +30,7 @@ Composition
 
     DetectorPipeline
     DetectorAsTransformer
+    StreamCalibrateFPR
 
 
 Change Point Detection
