@@ -1867,13 +1867,31 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     -------
     A pandas dataframe or series
     """
-    if not isinstance(target_date, ForecastingHorizon):
-        ix = pd.Index(target_date)
-        fh = ForecastingHorizon(ix, is_relative=False)
-    else:
-        fh = target_date.to_absolute()
+    fh_idx_flat = pd.Index(target_date)
 
-    index = fh.get_expected_pred_idx(origin_df)
+    origin_index = origin_df.index
+
+    # Fast path for panel data (MultiIndex): build the cartesian product of
+    # instance identifiers × fh time-points directly, without calling
+    # get_expected_pred_idx which iterates over every series and calls
+    # get_cutoff / check_is_mtype once per instance (the dominant bottleneck
+    # for global-pooled recursive forecasting, see sktime/sktime#11329).
+    if isinstance(origin_index, pd.MultiIndex):
+        y_inst_idx = origin_index.droplevel(-1).unique()
+        if isinstance(y_inst_idx, pd.MultiIndex):
+            fh_list = [x + (z,) for x in y_inst_idx for z in fh_idx_flat]
+        else:
+            fh_list = [(x, z) for x in y_inst_idx for z in fh_idx_flat]
+        index = pd.Index(fh_list)
+        if hasattr(origin_index, "names") and origin_index.names is not None:
+            index.names = origin_index.names
+    else:
+        # Scalar / flat index: the original single-series path (fast already).
+        if not isinstance(fh_idx_flat, ForecastingHorizon):
+            fh = ForecastingHorizon(fh_idx_flat, is_relative=False)
+        else:
+            fh = fh_idx_flat.to_absolute()
+        index = fh.get_expected_pred_idx(origin_df)
 
     if isinstance(origin_df, pd.Series):
         columns = [origin_df.name]
@@ -1892,6 +1910,7 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         res.name = origin_df.name
 
     return res
+
 
 
 def slice_at_ix(df, ix):
