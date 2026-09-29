@@ -397,7 +397,7 @@ class _SerializationMixin:
         * ``_obj`` - serialized self
         * ``_artifacts/`` - optional framework-native model artifacts
 
-        See :ref:`serialization_ref` for archive and artifact layouts.
+        See :ref:`model_serialization_format` for archive and artifact layouts.
 
         Parameters
         ----------
@@ -529,8 +529,8 @@ def load(serial):
             `serial` then points to the `.zip` file into which the
             object was stored using class method `.save()` of an estimator.
 
-        See :ref:`serialization_ref` for in-memory, archive, and native artifact
-        layouts.
+        See :ref:`model_serialization_format` for in-memory, archive, and native
+        artifact layouts.
 
     Returns
     -------
