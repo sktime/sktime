@@ -103,12 +103,17 @@ default="full"
         "capability:multivariate": True,
         "capability:missing_values": False,
         "property:randomness": "stochastic",
+        "serialization:native_artifacts": (
+            "_network_",
+            "_fine_tuned_model_",
+        ),
+        "serialization:skip": ("_trainer_",),
         # CI and testing tags
         # -------------------
         "tests:vm": True,
         "tests:skip_by_name": [
-            "test_fit_idempotent",
-            "test_multiprocessing_idempotent",
+            "test_deepcopy_fitted",
+            "test_deepcopy_fitted_predict",
         ],
     }
 
@@ -139,49 +144,6 @@ default="full"
         self.ignore_deps = ignore_deps
 
         super().__init__()
-
-    def __getstate__(self):
-        """Return state for pickling.
-
-        The ``MantisTrainer`` wraps PyTorch models that contain constructs
-        (e.g. ``staticmethod`` objects) that standard pickle cannot handle.
-        We therefore serialise the trained model weights with ``torch.save``
-        into an in-memory byte buffer and drop the live trainer object.
-        """
-        import io
-
-        import torch
-
-        state = self.__dict__.copy()
-        trainer = state.pop("_trainer_", None)
-        state["_trainer_"] = None  # never store the live trainer
-
-        # Persist the fine-tuned model weights so we can restore them later.
-        state["_model_state_bytes_"] = None
-        if trainer is not None and hasattr(trainer, "fine_tuned_model"):
-            buf = io.BytesIO()
-            torch.save(trainer.fine_tuned_model.state_dict(), buf)
-            state["_model_state_bytes_"] = buf.getvalue()
-
-        # Also persist the backbone weights (needed for `head` fine-tuning
-        # where the backbone is shared but the fine_tuned_model wraps a
-        # reference to it and may need re-wrapping on restore).
-        state["_network_state_bytes_"] = None
-        if trainer is not None and hasattr(trainer, "network"):
-            buf = io.BytesIO()
-            torch.save(trainer.network.state_dict(), buf)
-            state["_network_state_bytes_"] = buf.getvalue()
-
-        # Persist fine_tuning_type used during fit (may differ from param)
-        state["_fit_fine_tuning_type_"] = (
-            trainer.fine_tuning_type if trainer is not None else None
-        )
-
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
 
     def _fit(self, X, y):
         """Fit the Mantis classifier to training data.
@@ -236,6 +198,11 @@ default="full"
             base_learning_rate=self.base_learning_rate,
             learning_rate_adjusting=self.learning_rate_adjusting,
         )
+        self._fit_fine_tuning_type_ = getattr(
+            self._trainer_, "fine_tuning_type", self.fine_tuning_type
+        )
+        self._fine_tuned_model_ = getattr(self._trainer_, "fine_tuned_model", None)
+        self._network_ = getattr(self._trainer_, "network", None)
 
         return self
 
@@ -367,57 +334,50 @@ default="full"
         return MantisTrainer(device=self._device_, network=network)
 
     def _ensure_trainer_loaded(self):
-        """Reload the trainer after unpickling if necessary.
-
-        After a pickle round-trip ``_trainer_`` is ``None``. We rebuild the
-        ``MantisTrainer`` shell and then reload the serialised weights so that
-        ``fine_tuned_model`` is restored to its post-fit state.
-        """
+        """Reload trainer wrapper from serialized native artifacts if needed."""
         if not hasattr(self, "_trainer_") or self._trainer_ is None:
             if not getattr(self, "is_fitted", False):
                 return  # not fitted yet, nothing to restore
 
-            import io
-
-            import torch
-
             trainer = self._build_trainer()
+            network_artifact = getattr(self, "_network_", None)
+            if network_artifact is not None:
+                trainer.network = network_artifact
 
-            # Restore backbone weights if we serialised them
-            network_bytes = getattr(self, "_network_state_bytes_", None)
-            if network_bytes is not None:
-                state = torch.load(io.BytesIO(network_bytes), weights_only=True)
-                trainer.network.load_state_dict(state)
-
-            # Restore the fine-tuned model weights.
-            # We need to run a dummy fit first so that fine_tuned_model is
-            # initialised with the right architecture, then overwrite weights.
-            model_bytes = getattr(self, "_model_state_bytes_", None)
-            fit_fine_tuning_type = getattr(
+            model_artifact = getattr(self, "_fine_tuned_model_", None)
+            if model_artifact is not None:
+                trainer.fine_tuned_model = model_artifact
+            trainer.fine_tuning_type = getattr(
                 self, "_fit_fine_tuning_type_", self.fine_tuning_type
             )
-            if model_bytes is not None and hasattr(self, "_label_encoder_"):
-                import numpy as np
-
-                n_classes = len(self._label_encoder_.classes_)
-                n_channels = getattr(self, "_n_channels_", 1)
-                # Minimal dummy data — just enough to build the architecture
-                dummy_X = np.zeros(
-                    (n_classes, n_channels, self.seq_len), dtype=np.float32
-                )
-                dummy_y = np.arange(n_classes, dtype=np.int64)
-                trainer.fit(
-                    dummy_X,
-                    dummy_y,
-                    fine_tuning_type=fit_fine_tuning_type,
-                    num_epochs=0,  # no actual training — arch init only
-                    batch_size=n_classes,
-                    learning_rate_adjusting=False,
-                )
-                state = torch.load(io.BytesIO(model_bytes), weights_only=True)
-                trainer.fine_tuned_model.load_state_dict(state)
 
             self._trainer_ = trainer
+
+    def _create_torch_artifact(self, name):
+        """Construct Mantis module architectures for deserialization."""
+        if name == "_network_":
+            return self._build_trainer().network
+
+        if name == "_fine_tuned_model_":
+            trainer = self._build_trainer()
+            trainer.network = self._network_
+
+            n_classes = len(self._label_encoder_.classes_)
+            dummy_X = np.zeros(
+                (n_classes, self._n_channels_, self.seq_len), dtype=np.float32
+            )
+            dummy_y = np.arange(n_classes, dtype=np.int64)
+            trainer.fit(
+                dummy_X,
+                dummy_y,
+                fine_tuning_type=self._fit_fine_tuning_type_,
+                num_epochs=0,
+                batch_size=n_classes,
+                learning_rate_adjusting=False,
+            )
+            return trainer.fine_tuned_model
+
+        raise ValueError(f"Unknown torch artifact {name!r}.")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

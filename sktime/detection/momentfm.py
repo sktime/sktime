@@ -163,6 +163,7 @@ class MomentFMAnomalyDetector(BaseDetector):
         "python_version": ">= 3.10",
         "tests:vm": True,
         "tests:libs": ["sktime.libs.momentfm"],
+        "serialization:native_artifacts": ("model",),
     }
 
     def __init__(
@@ -440,6 +441,7 @@ class MomentFMAnomalyDetector(BaseDetector):
         input_mask = torch.ones((batch_size, 512)).to(self._device)
 
         # Get reconstruction from model
+        self.model = self.model.to(self._device)
         self.model.eval()
         with torch.no_grad():
             output = self.model(x_enc=X_tensor, input_mask=input_mask)

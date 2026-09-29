@@ -105,6 +105,8 @@ class TapNetClassifier(BaseDeepClassifier):
         # estimator type handled by parent class
         # CI and test tags
         # ----------------
+        # Run tests in a dedicated VM due to sporadic crashes and possible
+        # memory leaks (see #8518)
         "tests:vm": True,
         "tests:libs": ["sktime.networks.tapnet._tapnet_tf"],
         # deepcopy of a fitted instance loses model_, see #10712
@@ -350,3 +352,8 @@ class TapNetClassifier(BaseDeepClassifier):
             )
 
         return test_params
+
+    @staticmethod
+    def get_custom_objects():
+        """Return the custom objects needed for loading the model."""
+        return TapNetClassifier._get_keras_custom_objects()

@@ -4,6 +4,10 @@ from sktime.utils.dependencies import _safe_import
 
 keras = _safe_import("tensorflow.keras")
 K = _safe_import("tensorflow.keras.backend")
+register_keras_serializable = _safe_import(
+    "tensorflow.keras.utils.register_keras_serializable",
+    return_object="None",
+)
 
 
 class SeqSelfAttention(keras.layers.Layer):
@@ -302,3 +306,7 @@ class SeqSelfAttention(keras.layers.Layer):
     def get_custom_objects():
         """Get custom objects for Keras."""
         return {"SeqSelfAttention": SeqSelfAttention}
+
+
+if register_keras_serializable is not None:
+    SeqSelfAttention = register_keras_serializable(package="sktime")(SeqSelfAttention)
