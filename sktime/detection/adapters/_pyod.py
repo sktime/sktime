@@ -75,7 +75,7 @@ class PyODDetector(BaseDetector):
         ----------
         X : pd.DataFrame
             training data to fit model to, time series
-        Y : pd.Series, optional
+        y : pd.Series, optional
             ground truth detections for training if detector is supervised
 
         Returns

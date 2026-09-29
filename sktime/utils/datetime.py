@@ -118,7 +118,7 @@ def set_hier_freq(x):
 
     Parameters
     ----------
-    y : Panel, or Hierarchical object, or VectorizedDF with timeindex as
+    x : Panel, or Hierarchical object, or VectorizedDF with timeindex as
         pd.DatetimeIndex or pd.PeriodIndex
 
     Returns

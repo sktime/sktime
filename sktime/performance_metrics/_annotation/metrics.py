@@ -101,8 +101,8 @@ def padded_f1(true_change_points, pred_change_points, pad):
     ----------
     true_change_points: pd.Series
         True change point positions. Can be integers, floats or datetimes.
-    precicted_change_points: pd.Series
-        Precicted change point positions. Can be integers, floats or datetimes.
+    pred_change_points: pd.Series
+        Predicted change point positions. Can be integers, floats or datetimes.
     pad: int, float, timedelta
         Used to pad the true change points. If a predicted change point falls within
         the range of the padded change then then change point has been correctly

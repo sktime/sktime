@@ -216,7 +216,7 @@ def _roc_auc_score(y_score, y_true):
     ----------
     y_true : array-like, shape=[n-m+1], dtype = int
         True integer labels for each subsequence
-    y_pred : array-like, shape=[n-m+1], dtype = int
+    y_score : array-like, shape=[n-m+1], dtype = int
         Predicted integer labels for each subsequence
 
     Returns

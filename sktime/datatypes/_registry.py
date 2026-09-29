@@ -72,7 +72,7 @@ def generate_mtype_cls_list(soft_deps="present"):
 
     Parameters
     ----------
-    softdeps : str, optional, default = "present"
+    soft_deps : str, optional, default = "present"
         how inclusion in relation to presence of soft dependencies is handled
 
         * "exclude" = only classes that do not require soft dependencies are returned
@@ -181,13 +181,13 @@ def generate_mtype_register(scitype=None, soft_deps="all"):
 
     Parameters
     ----------
-    scitype str or None, optional, default = None
+    scitype : str or None, optional, default = None
         optional scitype to restrict the mtypes to
 
         * if None, all mtypes are returned
         * if str, must be scitype string, only mtypes for the scitype are returned
 
-    softdeps : str, optional, default = "all"
+    soft_deps : str, optional, default = "all"
         how inclusion in relation to presence of soft dependencies is handled
 
         * "exclude" = only classes that do not require soft dependencies are returned
@@ -241,13 +241,13 @@ def generate_mtype_list(scitype=None, soft_deps="all"):
 
     Parameters
     ----------
-    scitype str or None, optional, default = None
+    scitype : str or None, optional, default = None
         optional scitype to restrict the mtypes to
 
         * if None, all mtypes are returned
         * if str, must be scitype string, only mtypes for the scitype are returned
 
-    softdeps : str, optional, default = "all"
+    soft_deps : str, optional, default = "all"
         how inclusion in relation to presence of soft dependencies is handled
 
         * "exclude" = only classes that do not require soft dependencies are returned
