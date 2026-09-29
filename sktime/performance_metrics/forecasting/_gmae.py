@@ -7,6 +7,7 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 
@@ -116,9 +117,6 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
     np.float64(0.7000014418652152)
     """
 
-    _tags = {
-        "tests:skip_by_name": ["test_doctest_examples"],
-    }
 
     def _evaluate(self, y_true, y_pred, sample_weight=None, **kwargs):
         """Evaluate the Geometric Mean Absolute Error (GMAE) metric on given inputs.
@@ -154,7 +152,9 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
               if `multioutput="raw_values"``
               i-th entry is the, metric calculated for i-th variable
         """
+        EPS = np.finfo(np.float64).eps
         abs_err_np = (y_true - y_pred).abs().values.flatten()
+        abs_err_np = np.where(abs_err_np == 0.0, EPS, abs_err_np)
         gmae = gmean(abs_err_np, axis=0, weights=sample_weight)
         gmae = pd.Series(gmae, index=y_true.columns)
 
@@ -189,7 +189,9 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         """
         multioutput = self.multioutput
 
+        EPS = np.finfo(np.float64).eps
         raw_values = (y_true - y_pred).abs()
+        raw_values = raw_values.where(raw_values != 0.0, EPS)
 
         n = raw_values.shape[0]
         gmae = gmean(raw_values, axis=0)

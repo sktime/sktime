@@ -238,7 +238,7 @@ def test_vectorization_preserves_row_index_names(method):
     y = _make_hierarchical(hierarchy_levels=hierarchy_levels, random_state=84)
 
     est = _get_exog_proba_fcst()
-    est.fit(y, fh=[1, 2, 3])
+    est.fit(y, fh=3)
     y_pred = getattr(est, method)()
 
     msg = (
@@ -274,7 +274,7 @@ def test_vectorization_multivariate(mtype, exogeneous):
         X_pred = None
 
     est = YfromX.create_test_instance()
-    est.fit(y=y_fit, X=X_fit, fh=[1, 2, 3])
+    est.fit(y=y_fit, X=X_fit, fh=3)
     y_pred = est.predict(X=X_pred)
     valid, _, metadata = check_is_mtype(
         y_pred, mtype, return_metadata=True, msg_return_dict="list"
@@ -326,7 +326,7 @@ def test_col_vectorization_correct_col_order():
     # force univariate tag to trigger vectorization over columns for sure
     f.set_tags(**{"capability:multivariate": False})
 
-    f.fit(y=y, fh=[1])
+    f.fit(y=y, fh=1)
     y_pred = f.predict()
 
     # last value, so entries of last y column and y_pred should all be exactly equal
@@ -357,7 +357,7 @@ def test_row_vectorization_correct_row_order():
         }
     ).set_index(["id", "timestamp"])
 
-    fh = [1]
+    fh = 1
 
     forecaster = NaiveForecaster(strategy="last")
 
@@ -510,7 +510,7 @@ def test_remember_data(remember_data):
     f = _MinimalForecaster()
     f.set_config(**{"remember_data": remember_data})
 
-    f.fit(y, X=X, fh=[1, 2, 3])
+    f.fit(y, X=X, fh=3)
 
     if not remember_data:
         assert not hasattr(f, "_y") or f._y is None
@@ -537,7 +537,7 @@ def test_panel_with_inner_freq():
     y_pan = y.set_index([y.index.hour.rename("hour"), y.index]).sort_index()
     assert y_pan.loc[0].index.freq == pd.Timedelta("24h"), "Expected 24H frequency"
 
-    fh = [1, 2]
+    fh = 2
     y_train, y_test = temporal_train_test_split(y_pan, test_size=len(fh))
 
     # fit update predict

@@ -58,7 +58,7 @@ class ResidualBoostingForecaster(BaseForecaster):
     >>> from sktime.forecasting.compose import make_reduction
     >>> from sklearn.linear_model import LinearRegression
     >>> y, X = load_longley()
-    >>> fh = [1, 2, 3]
+    >>> fh = 3
     >>> base = NaiveForecaster(strategy="last")
     >>> resid = make_reduction(
     ...     estimator=LinearRegression(),
