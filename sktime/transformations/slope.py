@@ -3,10 +3,8 @@
 import math
 import statistics
 
-import numpy as np
 import pandas as pd
 
-from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
 __all__ = ["SlopeTransformer"]
@@ -34,7 +32,7 @@ class SlopeTransformer(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd-multiindex",
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": True,
         "capability:unequal_length:removes": True,
@@ -53,54 +51,41 @@ class SlopeTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of X must contain pandas.Series
-            Data to fit transform to
+        X : pd.DataFrame with pd.MultiIndex
+            Panel data in pd-multiindex format. MultiIndex has two levels:
+            first level is instance index, second level is time index.
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Xt : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of Xt contains pandas.Series
+        Xt : pd.DataFrame with pd.MultiIndex, same format as X
             transformed version of X
         """
-        # Get information about the dataframe
-        n_timepoints = len(X.iloc[0, 0])
-        num_instances = X.shape[0]
-        col_names = X.columns
+        instances = X.index.get_level_values(0).unique()
 
-        self._check_parameters(n_timepoints)
+        # validate against first instance
+        first_len = len(X.loc[instances[0]])
+        self._check_parameters(first_len)
 
-        Xt = pd.DataFrame()
+        result_frames = []
+        for inst_id in instances:
+            inst_data = X.loc[inst_id]
 
-        for x in col_names:
-            # Convert one of the columns in the dataframe to numpy array
-            arr = convert(
-                pd.DataFrame(X[x]),
-                from_type="nested_univ",
-                to_type="numpyflat",
-                as_scitype="Panel",
+            transformed = {}
+            for col in X.columns:
+                transformed[col] = self._get_gradients_of_lines(
+                    inst_data[col].values
+                )
+
+            inst_df = pd.DataFrame(transformed)
+            inst_df.index = pd.MultiIndex.from_arrays(
+                [[inst_id] * len(inst_df), range(len(inst_df))],
+                names=X.index.names,
             )
+            result_frames.append(inst_df)
 
-            # Calculate gradients
-            transformedData = []
-            for y in range(num_instances):
-                res = self._get_gradients_of_lines(arr[y])
-                transformedData.append(res)
-
-            # Convert to Numpy array
-            transformedData = np.asarray(transformedData)
-
-            # Add it to the dataframe
-            colToAdd = []
-            for i in range(len(transformedData)):
-                inst = transformedData[i]
-                colToAdd.append(pd.Series(inst))
-
-            Xt[x] = colToAdd
-
-        return Xt
+        return pd.concat(result_frames)
 
     def _get_gradients_of_lines(self, X):
         """Get gradients of lines.
