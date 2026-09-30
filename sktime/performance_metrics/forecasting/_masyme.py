@@ -155,6 +155,55 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
             multilevel=multilevel,
             by_index=by_index,
         )
+  def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+    """Return the metric evaluated at each time point.
+
+    private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+    Parameters
+    ----------
+    y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+        Ground truth (correct) target values.
+        Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+    y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+        Predicted values to evaluate.
+        Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+    Returns
+    -------
+    loss : pd.Series or pd.DataFrame
+        Calculated metric, by time point.
+
+        * pd.Series if self.multioutput="uniform_average" or array-like;
+          index is equal to index of y_true;
+          entry at index i is metric at time i, averaged over variables.
+        * pd.DataFrame if self.multioutput="raw_values";
+          index and columns equal to those of y_true;
+          i,j-th entry is metric at time i, at variable j.
+    """
+    multioutput = self.multioutput
+
+    # Compute pointwise error (y_true - y_pred), no aggregation
+    raw_errors = y_true - y_pred
+
+    # Apply asymmetric loss elementwise
+    below_threshold = raw_errors < self.asymmetric_threshold
+
+    if self.left_error_function == "squared":
+        left_loss = self.left_error_penalty * raw_errors**2
+    else:  # "absolute"
+        left_loss = self.left_error_penalty * raw_errors.abs()
+
+    if self.right_error_function == "squared":
+        right_loss = self.right_error_penalty * raw_errors**2
+    else:  # "absolute"
+        right_loss = self.right_error_penalty * raw_errors.abs()
+
+    raw_values = below_threshold * left_loss + (~below_threshold) * right_loss
+    raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+    return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -183,4 +232,5 @@ class MeanAsymmetricError(BaseForecastingErrorMetricFunc):
             "left_error_penalty": 2.0,
             "right_error_penalty": 0.5,
         }
-        return [params1, params2]
+       param3 ={"by_index":True}
+        return [params1, params2,params3]
