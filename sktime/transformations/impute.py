@@ -161,6 +161,19 @@ class Imputer(BaseTransformer):
         if method in "forecaster":
             self.set_tags(**{"y_inner_mtype": ["pd.DataFrame"]})
 
+        # these methods do not use any information from fit,
+        # so transform can be applied to instances not seen in fit
+        if method in [
+            "constant",
+            "backfill",
+            "bfill",
+            "pad",
+            "ffill",
+            "nearest",
+            "linear",
+        ]:
+            self.set_tags(**{"fit_is_empty": True})
+
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
 
@@ -221,6 +234,9 @@ class Imputer(BaseTransformer):
         X : pd.Series or pd.DataFrame, same type as X
             transformed version of X
         """
+        # _fit is skipped if fit_is_empty, so method needs to be checked here too
+        self._check_method()
+
         X = X.copy()
 
         # replace missing_values with np.nan

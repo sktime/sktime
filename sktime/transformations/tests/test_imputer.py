@@ -129,3 +129,24 @@ def test_imputer_forecaster_y():
 
     transformer.fit(X=X, y=y)
     transformer.transform(X=X, y=y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "method", ["constant", "backfill", "bfill", "pad", "ffill", "nearest", "linear"]
+)
+def test_imputer_transform_unseen_instances(method):
+    """Test Imputer transforms panels with instances not seen in fit, see #3588."""
+    rng = np.random.default_rng(42)
+    X_train = rng.uniform(size=(3, 10, 20))
+    X_test = rng.uniform(size=(5, 10, 20))
+    X_test[2, :, 5] = np.nan
+
+    t = Imputer(method=method, value=0)
+    t.fit(X_train)
+    Xt = t.transform(X_test)
+
+    assert not np.isnan(np.asarray(Xt, dtype=float)).any()
