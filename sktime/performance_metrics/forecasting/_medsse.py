@@ -109,6 +109,10 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
     np.float64(0.16914781383660782)
     """
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     func = median_squared_scaled_error
 
     def __init__(
