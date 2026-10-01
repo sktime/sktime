@@ -196,10 +196,10 @@ def _binary_f1_score(y_true, y_pred):
         fp = np.sum(np.logical_and(y_true != label, y_pred == label))
         fn = np.sum(np.logical_and(y_true == label, y_pred != label))
 
-        pr = tp / (tp + fp)
-        re = tp / (tp + fn)
+        pr = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        re = tp / (tp + fn) if (tp + fn) > 0 else 0.0
 
-        f1 = 2 * (pr * re) / (pr + re)
+        f1 = 2 * (pr * re) / (pr + re) if (pr + re) > 0 else 0.0
         f1_scores[label] = f1
 
     return np.mean(f1_scores)
