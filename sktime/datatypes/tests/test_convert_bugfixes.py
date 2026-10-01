@@ -2,9 +2,12 @@
 
 __author__ = ["fkiraly", "ericjb"]
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.datatypes import convert_to
 from sktime.datatypes._series._convert import convert_MvS_to_UvS_as_Series
 from sktime.tests.test_switch import run_test_module_changed
 
@@ -41,3 +44,26 @@ def test_convert_MvS_to_UvS_as_Series():
     w = convert_MvS_to_UvS_as_Series(z)
 
     assert y.name == w.name
+
+
+def test_multiindex_to_numpy3d_rejects_different_time_indices():
+    """An array cannot retain the different time axes of panel instances."""
+    index = pd.MultiIndex.from_tuples(
+        [(0, 0), (0, 1), (1, 2), (1, 3)], names=["instance", "time"]
+    )
+    panel = pd.DataFrame({"value": [1.0, 2.0, 3.0, 4.0]}, index=index)
+
+    with pytest.raises(ValueError, match="same time index"):
+        convert_to(panel, "numpy3D", as_scitype="Panel")
+
+
+def test_multiindex_to_numpy3d_keeps_interleaved_instances_separate():
+    """Conversion groups instance rows before forming each array slice."""
+    index = pd.MultiIndex.from_tuples(
+        [(0, 0), (1, 0), (0, 1), (1, 1)], names=["instance", "time"]
+    )
+    panel = pd.DataFrame({"value": [10.0, 20.0, 11.0, 21.0]}, index=index)
+
+    converted = convert_to(panel, "numpy3D", as_scitype="Panel")
+
+    np.testing.assert_array_equal(converted, [[[10.0, 11.0]], [[20.0, 21.0]]])
