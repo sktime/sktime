@@ -45,21 +45,6 @@ _CHECKED_SOURCES = TYPE_MODULES | {_NETWORKS}
 KNOWN_EXCEPTIONS = frozenset(
     {
         (
-            "classification/dictionary_based/_boss.py",
-            "classification",
-            "transformations",
-        ),
-        (
-            "classification/dictionary_based/_muse.py",
-            "classification",
-            "transformations",
-        ),
-        (
-            "classification/dictionary_based/_tde.py",
-            "classification",
-            "transformations",
-        ),
-        (
             "classification/dictionary_based/_weasel.py",
             "classification",
             "transformations",
@@ -166,35 +151,9 @@ KNOWN_EXCEPTIONS = frozenset(
             "transformations",
         ),
         ("clustering/compose/_as_transform.py", "clustering", "transformations"),
-        ("clustering/compose/_pipeline.py", "clustering", "transformations"),
-        (
-            "clustering/compose/tests/test_pipeline.py",
-            "clustering",
-            "transformations",
-        ),
         ("detection/compose/_as_transform.py", "detection", "transformations"),
         ("detection/eagglo.py", "detection", "transformations"),
         ("detection/stray.py", "detection", "transformations"),
-        (
-            "forecasting/base/tests/test_base_bugs.py",
-            "forecasting",
-            "transformations",
-        ),
-        (
-            "forecasting/compose/tests/test_bagging.py",
-            "forecasting",
-            "transformations",
-        ),
-        (
-            "forecasting/compose/tests/test_column_ensemble.py",
-            "forecasting",
-            "transformations",
-        ),
-        (
-            "forecasting/compose/tests/test_groupbycategoryforecaster.py",
-            "forecasting",
-            "transformations",
-        ),
         (
             "forecasting/compose/tests/test_hierarchy_ensemble.py",
             "forecasting",
@@ -208,11 +167,6 @@ KNOWN_EXCEPTIONS = frozenset(
         ("forecasting/compose/tests/test_reduce.py", "forecasting", "regression"),
         (
             "forecasting/compose/tests/test_reduce.py",
-            "forecasting",
-            "transformations",
-        ),
-        (
-            "forecasting/compose/tests/test_reduce_global.py",
             "forecasting",
             "transformations",
         ),
@@ -232,37 +186,6 @@ KNOWN_EXCEPTIONS = frozenset(
         ("param_est/plugin/_transformer.py", "param_est", "transformations"),
         ("param_est/tests/test_plugin.py", "param_est", "forecasting"),
         ("param_est/tests/test_plugin.py", "param_est", "transformations"),
-        (
-            "regression/tests/test_categorical_in_composite.py",
-            "regression",
-            "transformations",
-        ),
-        (
-            "transformations/detrend/tests/test_detrend.py",
-            "transformations",
-            "forecasting",
-        ),
-        (
-            "transformations/summarize/tests/test_FittedParamExtractor.py",
-            "transformations",
-            "forecasting",
-        ),
-        (
-            "transformations/tests/test_imputer.py",
-            "transformations",
-            "forecasting",
-        ),
-        (
-            "transformations/tests/test_multiplexer.py",
-            "transformations",
-            "forecasting",
-        ),
-        ("transformations/tests/test_subset.py", "transformations", "forecasting"),
-        (
-            "transformations/tests/test_transformif.py",
-            "transformations",
-            "param_est",
-        ),
     }
 )
 

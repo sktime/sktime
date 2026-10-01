@@ -15,7 +15,7 @@ from sktime.utils.dependencies import _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
 
-LC_TO_UC_ACTIVATIONS = {
+LC_TO_ACTUAL_ACTIVATIONS = {
     "elu": "ELU",
     "hardshrink": "Hardshrink",
     "hardsigmoid": "Hardsigmoid",
@@ -54,7 +54,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
     Parameters
     ----------
-    num_epochs : int, default = 100
+    num_epochs : int, default = 16
         The number of epochs to train the model
     batch_size : int, default = 8
         The size of each mini-batch during training
@@ -84,13 +84,26 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         https://pytorch.org/docs/stable/nn.html#loss-functions
     criterion_kwargs : dict or None, default = None
         The keyword arguments to be passed to the loss function.
-    optimizer : case insensitive str or an instance of an optimizer
+    optimizer : case insensitive str, or a class or instance of an optimizer
         defined in PyTorch, default = None
         The optimizer to use for training the model. If None, Adam optimizer is used.
-        If a string/Callable is passed, it must be one of the optimizers defined in
-        https://pytorch.org/docs/stable/optim.html#algorithms
+
+        Permitted values:
+
+        - ``None``: the ``Adam`` optimizer is used.
+        - ``str``: case insensitive name of an optimizer defined in ``torch.optim``,
+          for example ``"adam"`` or ``"SGD"``. Must be one of the optimizers in
+          https://pytorch.org/docs/stable/optim.html#algorithms
+        - ``class``: a subclass of ``torch.optim.Optimizer``, for example
+          ``torch.optim.SGD``.
+        - instance of a subclass of ``torch.optim.Optimizer``, for example
+          ``torch.optim.SGD(model.parameters(), lr=0.01)``.
+
+        In all cases the optimizer is constructed on the parameters of the network,
+        with ``lr`` and ``optimizer_kwargs``.
     optimizer_kwargs : dict or None, default = None
-        The keyword arguments to be passed to the optimizer.
+        The keyword arguments to be passed to the optimizer. These take precedence
+        over ``lr``, and over the hyperparameters of an ``optimizer`` instance.
     callbacks : None or str or a tuple of str, default = None
         Currently only learning rate schedulers are supported as callbacks.
         If more than one scheduler is passed, they are applied sequentially in the
@@ -320,7 +333,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
                     f"But got {type(activation)} instead."
                 )
 
-            uc_activation = LC_TO_UC_ACTIVATIONS.get(activation, activation)
+            uc_activation = LC_TO_ACTUAL_ACTIVATIONS.get(activation, activation)
             if not _safe_import(f"torch.nn.{uc_activation}"):
                 raise ValueError(
                     f"Activation '{uc_activation}' is not a valid PyTorch activation"
@@ -571,12 +584,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         return schedulers
 
     def _instantiate_optimizer(self):
-        # if no optimizer is passed, use Adam as default
-        if not self.optimizer:
-            opt = _safe_import("torch.optim.Adam")(
-                self.network.parameters(), lr=self.lr
-            )
-            return opt
         if self._all_optimizers is None:
             self._all_optimizers = {
                 "adadelta": "Adadelta",
@@ -595,35 +602,53 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             }
         # import the base class for all optimizers in PyTorch
         torchOptimizer = _safe_import("torch.optim.Optimizer")
+
+        # if no optimizer is passed, use Adam as default
+        if self.optimizer is None:
+            optimizer_class = _safe_import("torch.optim.Adam")
+            optimizer_params = {"lr": self.lr}
         # if optimizer is a string, look it up in the available optimizers
-        if isinstance(self.optimizer, str):
-            if self.optimizer.lower() in self._all_optimizers:
-                optimizer_class = _safe_import(
-                    f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
-                )
-                if self.optimizer_kwargs:
-                    return optimizer_class(
-                        self.network.parameters(), lr=self.lr, **self.optimizer_kwargs
-                    )
-                else:
-                    return optimizer_class(self.network.parameters(), lr=self.lr)
-            else:
+        elif isinstance(self.optimizer, str):
+            if self.optimizer.lower() not in self._all_optimizers:
                 raise ValueError(
                     f"Unknown optimizer: {self.optimizer}. Please pass one of "
                     f"{', '.join(self._all_optimizers)} for `optimizer`."
                 )
-        # if optimizer is already an instance of torch.optim.Optimizer, use it directly
+            optimizer_class = _safe_import(
+                f"torch.optim.{self._all_optimizers[self.optimizer.lower()]}"
+            )
+            optimizer_params = {"lr": self.lr}
+        # if optimizer is an optimizer class, use it as is
+        elif isinstance(self.optimizer, type) and issubclass(
+            self.optimizer, torchOptimizer
+        ):
+            optimizer_class = self.optimizer
+            optimizer_params = {"lr": self.lr}
+        # if optimizer is an instance of torch.optim.Optimizer, it cannot be used
+        # directly: it is bound to the parameters it was constructed with, which
+        # are never the parameters of self.network. Its hyperparameters are carried
+        # over to a new optimizer of the same class, bound to the network instead.
         elif isinstance(self.optimizer, torchOptimizer):
-            return self.optimizer
-        # if optimizer is neither a string nor an instance of
+            optimizer_class = type(self.optimizer)
+            optimizer_params = dict(self.optimizer.defaults)
+            # the learning rate of the instance is retained,
+            # unless `lr` was explicitly set to a non-default value
+            if self.lr != self.get_param_defaults().get("lr", self.lr):
+                optimizer_params["lr"] = self.lr
+        # if optimizer is neither None, nor a string, nor a class or instance of
         # a valid PyTorch optimizer, raise an error
         else:
             raise TypeError(
-                "`optimizer` can either be None, a str or an instance of "
+                "`optimizer` can either be None, a str, or a class or instance of "
                 "optimizers defined in torch.optim. "
                 "See https://pytorch.org/docs/stable/optim.html#algorithms. "
                 f"But got {type(self.optimizer)} instead."
             )
+
+        if self.optimizer_kwargs:
+            optimizer_params.update(self.optimizer_kwargs)
+
+        return optimizer_class(self.network.parameters(), **optimizer_params)
 
     def _instantiate_criterion(self):
         # if no criterion is passed, use CrossEntropyLoss as default
@@ -814,11 +839,11 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         -------
         y : should be of mtype in self.get_tag("y_inner_mtype")
             1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
+            or 2D iterable, of shape [n_instances, n_outputs]
             predicted class labels
             indices correspond to instance indices in X
-            if self.get_tag("capaility:multioutput") = False, should be 1D
-            if self.get_tag("capaility:multioutput") = True, should be 2D
+            if self.get_tag("capability:multioutput") = False, should be 1D
+            if self.get_tag("capability:multioutput") = True, should be 2D
         """
         y_pred_prob = self._predict_proba(X)
         y_pred = np.argmax(y_pred_prob, axis=-1)
@@ -850,7 +875,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         Returns
         -------
-        y : 2D array of shape [n_instances, n_classes] - predicted class probabilities
+        y : 2D array of shape [n_instances, n_outputs] - predicted class probabilities
             1st dimension indices correspond to instance indices in X
             2nd dimension indices correspond to possible labels (integers)
             (i, j)-th entry is predictive probability that i-th instance is of class j

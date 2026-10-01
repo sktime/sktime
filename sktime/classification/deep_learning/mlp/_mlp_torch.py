@@ -74,7 +74,7 @@ class MLPClassifierTorch(BaseDeepClassifierPytorch):
         connected output layer, with dropout probability equal to fc_dropout.
     num_epochs : int, default = 100
         The number of epochs to train the model.
-    optimizer : case insensitive str or None or an instance of optimizers
+    optimizer : case insensitive str or None, or a class or instance of optimizers
         defined in torch.optim, default = "Adam"
         The optimizer to use for training the model. List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
