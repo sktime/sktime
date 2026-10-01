@@ -615,15 +615,40 @@ def from_multi_index_to_3d_numpy(X):
     if X.index.nlevels != 2:
         raise ValueError("Multi-index DataFrame should have 2 levels.")
 
-    n_instances = len(X.index.get_level_values(0).unique())
-    n_timepoints = len(X.index.get_level_values(1).unique())
     n_columns = X.shape[1]
+    if len(X) == 0:
+        return _coerce_df_dtypes(X).to_numpy().reshape(0, n_columns, 0)
 
-    X_coerced = _coerce_df_dtypes(X)
-    X_values = X_coerced.values
-    X_3d = X_values.reshape(n_instances, n_timepoints, n_columns).swapaxes(1, 2)
+    instance_codes, instances = pd.factorize(
+        X.index.get_level_values(0), sort=False, use_na_sentinel=False
+    )
+    n_instances = len(instances)
+    n_timepoints = len(X) // n_instances
+    unequal_index_msg = (
+        "All instances must have the same time index to convert "
+        "pd-multiindex to numpy3D."
+    )
+    if not np.all(np.bincount(instance_codes) == n_timepoints):
+        raise ValueError(unequal_index_msg)
 
-    return X_3d
+    # Keep the first appearance order of instances, even if their rows interleave.
+    order = None
+    if not np.all(instance_codes[:-1] <= instance_codes[1:]):
+        order = np.argsort(instance_codes, kind="stable")
+
+    time_index = X.index.get_level_values(1)
+    if order is not None:
+        time_index = time_index.take(order)
+    expected_time_index = time_index[:n_timepoints].take(
+        np.tile(np.arange(n_timepoints), n_instances)
+    )
+    if not time_index.equals(expected_time_index):
+        raise ValueError(unequal_index_msg)
+
+    values = _coerce_df_dtypes(X).to_numpy()
+    if order is not None:
+        values = values[order]
+    return values.reshape(n_instances, n_timepoints, n_columns).swapaxes(1, 2)
 
 
 def from_multi_index_to_3d_numpy_adp(obj, store=None):
