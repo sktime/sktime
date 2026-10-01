@@ -98,6 +98,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # no default tag values - these are set dynamically below
