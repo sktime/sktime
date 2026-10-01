@@ -63,6 +63,20 @@ class RandIndex(BaseDetectionMetric):
     If an existing "label" column is present in y_true/y_pred, those labels are used
     directly for matching; otherwise, segments are considered to be numbered
     consecutively, starting from 0.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.detection._randindex import RandIndex
+    >>> y_true = pd.DataFrame({
+    ...     "ilocs": pd.IntervalIndex.from_tuples([(0, 5), (5, 10)], closed="left")
+    ... })
+    >>> y_pred = pd.DataFrame({
+    ...     "ilocs": pd.IntervalIndex.from_tuples([(0, 6), (6, 10)], closed="left")
+    ... })
+    >>> rand_index = RandIndex()
+    >>> rand_index.evaluate(y_true, y_pred)
+    0.8
     """  # noqa: E501
 
     _tags = {
@@ -71,9 +85,6 @@ class RandIndex(BaseDetectionMetric):
         "requires_X": False,
         "requires_y_true": True,
         "lower_is_better": False,  # Higher Rand Index is better
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, use_loc=True):
