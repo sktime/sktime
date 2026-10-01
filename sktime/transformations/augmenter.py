@@ -224,6 +224,16 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
         If None, rely on ``self.random_state``.
         Default is None." [1]
 
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.augmenter import RandomSamplesAugmenter
+    >>> X = pd.DataFrame({"value": [1, 2, 3, 4]})
+    >>> augmenter = RandomSamplesAugmenter(n=2, random_state=0)
+    >>> X_augmented = augmenter.fit_transform(X)
+    >>> len(X_augmented)
+    2
+
     References and Footnotes
     ----------
 
