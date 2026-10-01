@@ -372,6 +372,89 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
         with ZipFile(serial, "r") as file:
             return pickle.loads(file.open("_obj").read())
 
+    def reset(self):
+        """Reset the object to a clean post-init state.
+
+        Equivalent to ``clone``, with the exception that ``reset``
+        mutates ``self`` instead of returning a new object.
+
+        Preserves transient callback context or parent attributes attached
+        by scikit-learn (e.g., ``_parent_callback_ctx``, ``_skl_callbacks``).
+
+        Returns
+        -------
+        self : BaseObject
+            Instance of class reset to a clean post-init state but retaining
+            the current hyper-parameter values.
+        """
+        sklearn_attrs = {}
+        for attr in ("_parent_callback_ctx", "_skl_callbacks"):
+            if hasattr(self, attr):
+                sklearn_attrs[attr] = getattr(self, attr)
+
+        res = super().reset()
+
+        for attr, val in sklearn_attrs.items():
+            setattr(self, attr, val)
+
+        return res
+
+    def __sklearn_tags__(self):
+        """Get sklearn tags for compatibility with sklearn tag system.
+
+        Returns
+        -------
+        tags : sklearn.utils._tags.Tags
+            Tags describing the estimator for scikit-learn.
+        """
+        try:
+            from sklearn.utils._tags import (
+                ClassifierTags,
+                RegressorTags,
+                Tags,
+                TargetTags,
+                TransformerTags,
+            )
+        except ImportError:
+            raise AttributeError(
+                f"{type(self).__name__} does not have __sklearn_tags__ "
+                "because scikit-learn < 1.6 is installed."
+            )
+
+        from sktime.registry import is_scitype
+
+        est_type = getattr(self, "_estimator_type", None)
+        target_tags = TargetTags(required=False)
+        classifier_tags = None
+        regressor_tags = None
+        transformer_tags = None
+
+        if est_type == "classifier" or is_scitype(self, "classifier"):
+            est_type = "classifier"
+            target_tags = TargetTags(required=True)
+            classifier_tags = ClassifierTags()
+        elif est_type == "regressor" or is_scitype(self, "regressor"):
+            est_type = "regressor"
+            target_tags = TargetTags(required=True)
+            regressor_tags = RegressorTags()
+        elif (
+            est_type == "transformer"
+            or is_scitype(self, "transformer")
+            or hasattr(self, "transform")
+        ):
+            transformer_tags = TransformerTags()
+
+        requires_fit = not self.get_tag("fit_is_empty", False, raise_error=False)
+
+        return Tags(
+            estimator_type=est_type,
+            target_tags=target_tags,
+            transformer_tags=transformer_tags,
+            regressor_tags=regressor_tags,
+            classifier_tags=classifier_tags,
+            requires_fit=requires_fit,
+        )
+
 
 class TagAliaserMixin(_TagAliaserMixin):
     """Mixin class for tag aliasing and deprecation of old tags.
