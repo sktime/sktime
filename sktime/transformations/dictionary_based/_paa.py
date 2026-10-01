@@ -1,8 +1,8 @@
 """Piecewise Aggregate Approximation Transformer (PAA)."""
 
+import numpy as np
 import pandas as pd
 
-from sktime.datatypes._panel._convert import from_nested_to_2d_array
 from sktime.transformations.base import BaseTransformer
 
 __author__ = ["MatthewMiddlehurst"]
@@ -36,7 +36,7 @@ class PAAlegacy(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd.DataFrame",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "capability:categorical_in_X": False,
     }
@@ -56,75 +56,79 @@ class PAAlegacy(BaseTransformer):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_dims]
-            Nested dataframe with multivariate time-series in cells.
+        X : pd.DataFrame
+            Time series with time points in rows and variables in columns.
 
         Returns
         -------
-        dims: Pandas data frame with first dimension in column zero,
-              second in column one etc.
+        pd.DataFrame
+            Transformed time series with ``num_intervals`` rows and
+            the same number of columns as ``X``.
         """
-        # Get information about the dataframe
-        num_atts = len(X.iloc[0, 0])
-        col_names = X.columns
+        # Get the number of time points
+        num_timepoints = X.shape[0]
 
         # Check the parameters are appropriate
-        self._check_parameters(num_atts)
+        self._check_parameters(num_timepoints)
 
         # On each dimension, perform PAA
-        dataFrames = []
-        for x in col_names:
-            dataFrames.append(self._perform_paa_along_dim(pd.DataFrame(X[x])))
+        transformed = []
+        for column in X.columns:
+            values = X[column].to_numpy()
+
+            paa_values = self._perform_paa_along_dim(values)
+
+            transformed.append(paa_values)
 
         # Combine the dimensions together
-        result = pd.concat(dataFrames, axis=1, sort=False)
-        result.columns = col_names
+        result = np.column_stack(transformed)
 
-        return result
+        return pd.DataFrame(
+            result,
+            columns=X.columns,
+        )
 
-    def _perform_paa_along_dim(self, X):
-        X = from_nested_to_2d_array(X, return_numpy=True)
+    def _perform_paa_along_dim(self, series):
+        """Perform PAA on one time series.
 
-        num_atts = X.shape[1]
-        num_insts = X.shape[0]
-        dims = pd.DataFrame()
-        data = []
+        Parameters
+        ----------
+        series : np.ndarray
+            One-dimensional time series.
 
-        for i in range(num_insts):
-            series = X[i, :]
+        Returns
+        -------
+        np.ndarray
+            PAA representation containing ``num_intervals`` values.
+        """
+        series = np.asarray(series, dtype=float)
+        n = len(series)
+        frame_length = n / self.num_intervals
 
-            frames = []
-            current_frame = 0
-            current_frame_size = 0
-            frame_length = num_atts / self.num_intervals
-            frame_sum = 0
+        frames = np.zeros(self.num_intervals, dtype=float)
 
-            for n in range(num_atts):
-                remaining = frame_length - current_frame_size
+        for i in range(self.num_intervals):
+            start = i * frame_length
+            end = (i + 1) * frame_length
 
-                if remaining > 1:
-                    frame_sum += series[n]
-                    current_frame_size += 1
-                else:
-                    frame_sum += remaining * series[n]
-                    current_frame_size += remaining
+            total = 0.0
 
-                if current_frame_size == frame_length:
-                    frames.append(frame_sum / frame_length)
-                    current_frame += 1
+            # Determine all data points that overlap this interval.
+            first = int(np.floor(start))
+            last = int(np.ceil(end))
 
-                    frame_sum = (1 - remaining) * series[n]
-                    current_frame_size = 1 - remaining
+            for j in range(first, min(last, n)):
+                # Calculate how much of data point j belongs to this interval.
+                overlap_start = max(start, j)
+                overlap_end = min(end, j + 1)
 
-            # if the last frame was lost due to double imprecision
-            if current_frame == self.num_intervals - 1:
-                frames.append(frame_sum / frame_length)
+                overlap = max(0.0, overlap_end - overlap_start)
 
-            data.append(pd.Series(frames))
+                total += series[j] * overlap
 
-        dims[0] = data
+            frames[i] = total / frame_length
 
-        return dims
+        return frames
 
     def _check_parameters(self, num_atts):
         """Check parameters of PAA.
