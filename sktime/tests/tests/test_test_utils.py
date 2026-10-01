@@ -4,7 +4,6 @@ from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.registry import all_estimators
 from sktime.tests._config import (
-    EXCLUDE_ESTIMATORS,
     EXCLUDE_SOFT_DEPS,
     EXCLUDED_TESTS_BY_TEST,
 )
@@ -40,12 +39,6 @@ def test_excluded_tests_by_test():
     )
 
 
-def test_exclude_estimators():
-    """Test that EXCLUDE_ESTIMATORS is a list of strings."""
-    assert isinstance(EXCLUDE_ESTIMATORS, list)
-    assert all(isinstance(estimator, str) for estimator in EXCLUDE_ESTIMATORS)
-
-
 def test_run_test_for_class():
     """Test that run_test_for_class runs tests for various cases."""
     # estimator on the exception list
@@ -61,9 +54,10 @@ def test_run_test_for_class():
     from sktime.tests._config import ONLY_CHANGED_MODULES
 
     # test that assumptions on being on exception list are correct
-    assert "HIVECOTEV2" in EXCLUDE_ESTIMATORS  # if this fails, switch the example
-    assert "NaiveForecaster" not in EXCLUDE_ESTIMATORS  # same here
-    assert "Prophet" not in EXCLUDE_ESTIMATORS  # same here
+    assert HIVECOTEV2.get_class_tag("tests:skip_all", False)
+    # if this fails, switch the example
+    assert not NaiveForecaster.get_class_tag("tests:skip_all", False)  # same here
+    assert not Prophet.get_class_tag("tests:skip_all", False)  # same here
 
     f_on_excl_list = HIVECOTEV2
     f_no_deps = NaiveForecaster

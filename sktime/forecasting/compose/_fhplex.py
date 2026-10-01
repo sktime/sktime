@@ -103,6 +103,7 @@ class FhPlexForecaster(BaseForecaster):
         "X_inner_mtype": PANDAS_TS_MTYPES,
         "fit_is_empty": False,
         "capability:pred_int": True,
+        "capability:update": True,
     }
 
     def __init__(

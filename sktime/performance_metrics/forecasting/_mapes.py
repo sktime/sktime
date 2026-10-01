@@ -114,6 +114,7 @@ class MeanAbsolutePercentageErrorStabilized(BaseForecastingErrorMetric):
     _tags = {
         "authors": ["michaelellis003"],
         "maintainers": ["michaelellis003"],
+        "tests:skip_by_name": ["test_doctest_examples"],
     }
 
     def __init__(

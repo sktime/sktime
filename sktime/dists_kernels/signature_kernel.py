@@ -895,6 +895,13 @@ class SignatureKernel(BasePairwiseTransformerPanel):
         a hard threshold for the rank of the level matrices
         used only if lowrank = True
 
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.dists_kernels import SignatureKernel
+    >>> X, _ = load_unit_test(return_type="pd-multiindex")
+    >>> kern_mat = SignatureKernel().transform(X)
+
     References
     ----------
     .. [1] F. Kiraly, H. Oberhauser. 2016. "Kernels for sequentially ordered data.",

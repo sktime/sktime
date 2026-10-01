@@ -139,3 +139,25 @@ def test_fit_transform_behaviour():
     # fit_transform the entire dataset
     y_tr_complete = transformer.fit_transform(Y)
     assert_frame_equal(pd.concat([y_tr_1, y_tr_2]), y_tr_complete)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_fit_transform_month_start_outputs():
+    """Tests expected outputs for a month start pd.DatetimeIndex, see pandas 3."""
+    y = Y.iloc[:3].copy()
+    y.index = y.index.to_timestamp()
+    assert isinstance(y.index.freq, pd.offsets.MonthBegin)
+    y_transformed = FourierFeatures(
+        sp_list=[12], fourier_terms_list=[2], keep_original_columns=True
+    ).fit_transform(y)
+    expected = (
+        y.to_frame()
+        .assign(sin_12_1=[np.sin(2 * np.pi * i / 12) for i in range(3)])
+        .assign(cos_12_1=[np.cos(2 * np.pi * i / 12) for i in range(3)])
+        .assign(sin_12_2=[np.sin(4 * np.pi * i / 12) for i in range(3)])
+        .assign(cos_12_2=[np.cos(4 * np.pi * i / 12) for i in range(3)])
+    )
+    assert_frame_equal(y_transformed, expected)

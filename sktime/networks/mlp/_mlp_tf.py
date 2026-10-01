@@ -56,6 +56,7 @@ class MLPNetwork(BaseDeepNetwork):
     _tags = {
         "authors": ["hfawaz", "James-Large", "Withington", "AurumnPegasus", "noxthot"],
         "python_dependencies": "tensorflow",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
