@@ -503,9 +503,6 @@ class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -1139,9 +1136,6 @@ class _DirRecReducer(_Reducer):
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": False,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -1275,6 +1269,17 @@ class DirectTabularRegressionForecaster(_DirectReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.compose import DirectTabularRegressionForecaster
+    >>> y = load_airline()
+    >>> forecaster = DirectTabularRegressionForecaster(LinearRegression())
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    DirectTabularRegressionForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     def __init__(
@@ -1353,13 +1358,21 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.compose import RecursiveTabularRegressionForecaster
+    >>> y = load_airline()
+    >>> forecaster = RecursiveTabularRegressionForecaster(LinearRegression())
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    RecursiveTabularRegressionForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -1411,6 +1424,17 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.compose import DirRecTabularRegressionForecaster
+    >>> y = load_airline()
+    >>> forecaster = DirRecTabularRegressionForecaster(LinearRegression())
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    DirRecTabularRegressionForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _estimator_scitype = "tabular-regressor"
@@ -1429,6 +1453,17 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+
+    Examples
+    --------
+    >>> from sktime.regression.dummy import DummyRegressor
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.compose import DirectTimeSeriesRegressionForecaster
+    >>> y = load_airline()
+    >>> forecaster = DirectTimeSeriesRegressionForecaster(DummyRegressor())
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    DirectTimeSeriesRegressionForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _estimator_scitype = "time-series-regressor"
@@ -1502,13 +1537,21 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+
+    Examples
+    --------
+    >>> from sktime.regression.dummy import DummyRegressor
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.compose import RecursiveTimeSeriesRegressionForecaster
+    >>> y = load_airline()
+    >>> forecaster = RecursiveTimeSeriesRegressionForecaster(DummyRegressor())
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    RecursiveTimeSeriesRegressionForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     _estimator_scitype = "time-series-regressor"
@@ -1567,6 +1610,17 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
+
+    Examples
+    --------
+    >>> from sktime.regression.dummy import DummyRegressor
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.compose import DirRecTimeSeriesRegressionForecaster
+    >>> y = load_airline()
+    >>> forecaster = DirRecTimeSeriesRegressionForecaster(DummyRegressor())
+    >>> forecaster.fit(y, fh=[1, 2, 3])
+    DirRecTimeSeriesRegressionForecaster(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _estimator_scitype = "time-series-regressor"
