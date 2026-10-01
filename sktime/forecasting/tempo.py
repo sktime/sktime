@@ -27,7 +27,7 @@ class _CachedTEMPO:
         if self.model is not None:
             return self.model
 
-        from tempo.models.TEMPO import TEMPO
+        from sktime.libs.tempo import TEMPO
 
         self.model = TEMPO.load_pretrained_model(
             device=self.device,
@@ -41,9 +41,8 @@ class _CachedTEMPO:
 class TEMPOForecaster(BaseForecaster):
     """Zero-shot forecasting adapter for the TEMPO foundation model.
 
-    This is a thin sktime wrapper around the upstream TEMPO implementation from the
-    ``timeagi`` package. The upstream API exposes the model via
-    ``from tempo.models.TEMPO import TEMPO`` and loads checkpoints using
+    This is a thin sktime wrapper around the vendored TEMPO foundation model
+    implementation. The model loads checkpoints using
     ``TEMPO.load_pretrained_model(...)``.
 
     Parameters
@@ -65,7 +64,14 @@ class TEMPOForecaster(BaseForecaster):
         # --------------
         "authors": ["idevede", "yongchand", "aryamanDutta"],
         "maintainers": ["sktime developers"],
-        "python_dependencies": ["timeagi"],
+        "python_dependencies": [
+            "torch",
+            "transformers",
+            "einops",
+            "peft",
+            "huggingface-hub",
+            "omegaconf",
+        ],
         # estimator type
         # --------------
         "y_inner_mtype": "pd.Series",

@@ -1,8 +1,6 @@
 """Tests for TEMPOForecaster."""
 
 import pickle
-import sys
-import types
 
 import numpy as np
 import pandas as pd
@@ -31,21 +29,15 @@ class _FakeTEMPO:
 
 @pytest.fixture
 def fake_tempo(monkeypatch):
-    """Install a fake TEMPO module at the import boundary."""
+    """Install a fake TEMPO model at the vendored import boundary."""
     monkeypatch.setattr(
         "sktime.forecasting.base._base._check_estimator_deps",
         lambda *args, **kwargs: True,
     )
-    fake_tempo_module = types.ModuleType("tempo")
-    fake_models_module = types.ModuleType("tempo.models")
-    fake_model_module = types.ModuleType("tempo.models.TEMPO")
-    fake_model_module.TEMPO = _FakeTEMPO
-    fake_models_module.TEMPO = fake_model_module
-    fake_tempo_module.models = fake_models_module
-
-    monkeypatch.setitem(sys.modules, "tempo", fake_tempo_module)
-    monkeypatch.setitem(sys.modules, "tempo.models", fake_models_module)
-    monkeypatch.setitem(sys.modules, "tempo.models.TEMPO", fake_model_module)
+    monkeypatch.setattr(
+        "sktime.libs.tempo.TEMPO",
+        _FakeTEMPO,
+    )
 
 
 @pytest.mark.skipif(
