@@ -107,6 +107,60 @@ def _get_freq(x):
         return None
 
 
+def _coerce_datetime_to_period(x, y, freq):
+    """Coerce datetime-like x, y to period-like, if freq is not a fixed frequency.
+
+    Coercion to integer of a ``pd.Timedelta`` is possible only for fixed
+    frequencies, e.g., ``D`` or ``h``, and not for non-fixed ones, e.g., ``ME``,
+    ``QE``, ``YE``, ``W``, since months, years or weeks are not of fixed length.
+    Differences of ``pd.Period`` are ``pd.DateOffset``, which carry the number of
+    intervals, so coercion to integer is exact for non-fixed frequencies as well.
+
+    Parameters
+    ----------
+    x : pd.DatetimeIndex, pd.Timestamp, or other; only the former two are coerced
+    y : pd.Timestamp, or other; only coerced if both x and y are pd.Timestamp
+    freq : str, pd.tseries.offsets.BaseOffset, or None
+        Frequency of x, y. If None, no coercion takes place.
+
+    Returns
+    -------
+    x, y : coerced to pd.PeriodIndex, pd.Period, at frequency freq,
+        if datetime-like and freq is non-fixed; otherwise returned unchanged.
+
+    Raises
+    ------
+    ValueError : if freq has no equivalent period frequency, e.g., SME
+    """
+    if freq is None:
+        return x, y
+
+    with _suppress_pd22_warning():
+        offset = pd.tseries.frequencies.to_offset(freq)
+
+    # fixed frequencies are left to the pd.Timedelta based coercion, unchanged
+    if isinstance(offset, pd.tseries.offsets.Tick):
+        return x, y
+
+    # the offset object is passed to to_period, and not the frequency string,
+    # since offset and period frequency strings differ from pandas 2.2 onwards,
+    # e.g., the offset "YE-DEC" corresponds to the period frequency "Y-DEC"
+    try:
+        if isinstance(x, pd.DatetimeIndex):
+            x = x.to_period(offset)
+        elif isinstance(x, pd.Timestamp) and isinstance(y, pd.Timestamp):
+            x, y = pd.DatetimeIndex([x, y]).to_period(offset)
+    except ValueError as e:
+        raise ValueError(
+            f"Error in _get_duration, the frequency {offset.freqstr} has no "
+            "equivalent period frequency, therefore durations at this frequency "
+            "cannot be coerced to integer. Please consider using a different "
+            "frequency, or pd.PeriodIndex."
+        ) from e
+
+    return x, y
+
+
 def set_hier_freq(x):
     """Set frequency for multiindex dataframes without frequency.
 
@@ -261,6 +315,14 @@ def _get_duration(x, y=None, coerce_to_int=False, unit=None):
     ret : duration type
         Duration
     """
+    if coerce_to_int:
+        if unit is None:
+            # try to get the unit from the data if not given
+            unit = _get_freq(x)
+        # for non-fixed frequencies, e.g., ME, QE, YE, W, the difference of
+        # datetimes cannot be coerced to integer, so we take it between periods
+        x, y = _coerce_datetime_to_period(x, y, unit)
+
     if y is None:
         x = check_time_index(x)
         duration = x[-1] - x[0]
@@ -276,8 +338,5 @@ def _get_duration(x, y=None, coerce_to_int=False, unit=None):
     if coerce_to_int and isinstance(
         x, (pd.PeriodIndex, pd.DatetimeIndex, pd.Period, pd.Timestamp)
     ):
-        if unit is None:
-            # try to get the unit from the data if not given
-            unit = _get_freq(x)
         duration = _coerce_duration_to_int(duration, freq=unit)
     return duration

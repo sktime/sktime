@@ -6,7 +6,9 @@ __author__ = ["mloning"]
 __all__ = []
 
 import numpy as np
+import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.detrend import Deseasonalizer
@@ -14,6 +16,12 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 
 MODELS = ["additive", "multiplicative"]
 TEST_SPS = [3, 12]
+
+# frequencies of non-fixed duration, the "XE" aliases require pandas >= 2.1
+NON_FIXED_FREQ_STRS = ["W-WED", "MS"]
+
+if _check_soft_dependencies("pandas>=2.1.0", severity="none"):
+    NON_FIXED_FREQ_STRS += ["ME", "QE-DEC", "YE-DEC"]
 
 
 @pytest.mark.skipif(
@@ -91,6 +99,24 @@ def test_transform_inverse_transform_equivalence(sp, model):
     yit = transformer.inverse_transform(transformer.transform(y_train))
     np.testing.assert_array_equal(y_train.index, yit.index)
     np.testing.assert_array_almost_equal(y_train, yit)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Deseasonalizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("freqstr", NON_FIXED_FREQ_STRS)
+def test_deseasonalizer_non_fixed_freq(freqstr):
+    """Test deseasonalizer on DatetimeIndex of non-fixed freq, see issue #7883."""
+    index = pd.date_range(start="2000-01-31", periods=24, freq=freqstr)
+    y = pd.Series(np.arange(24, dtype=float), index=index)
+
+    transformer = Deseasonalizer(sp=4)
+    yt = transformer.fit_transform(y)
+    yit = transformer.inverse_transform(yt)
+
+    np.testing.assert_array_equal(y.index, yt.index)
+    np.testing.assert_array_almost_equal(y, yit)
 
 
 @pytest.mark.skipif(
