@@ -1,0 +1,5 @@
+This PR uploads the Moirai-MoE model weights to the sktime Hugging Face organization and adds model cards with usage examples for the MoiraiMoEForecaster introduced in PR #9544. This follows the precedent set by the original Moirai model.
+
+Motivation
+
+PR #9544 introduces a new forecaster that depends on publicly hosted weights. Hosting them under the sktime organization ensures reproducibility, accessibility, and seamless integration with sktime.
