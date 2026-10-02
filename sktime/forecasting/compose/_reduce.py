@@ -213,6 +213,7 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     else:
         Xt = X_from_y_cut
 
+    Xt.columns = Xt.columns.astype(str)
     return yt, Xt
 
 
@@ -495,6 +496,7 @@ class _Reducer(_BaseWindowForecaster):
         else:
             X = X_from_y_cut
 
+        X.columns = X.columns.astype(str)
         y = _cut_df(y_raw)
         return y, X
 
