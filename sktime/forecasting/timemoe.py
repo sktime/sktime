@@ -145,7 +145,7 @@ class TimeMoEForecaster(BaseForecaster):
 
     >>> from sktime.forecasting.timemoe import TimeMoEForecaster
     >>> from sktime.datasets import load_airline
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> y = load_airline()
     >>> forecaster = TimeMoEForecaster("Maple728/TimeMoE-50M")
     >>> forecaster.fit(y_train)  # doctest: +SKIP
