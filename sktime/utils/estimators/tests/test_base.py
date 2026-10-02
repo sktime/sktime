@@ -2,6 +2,8 @@
 
 __author__ = ["ltsaprounis"]
 
+from functools import cache
+
 import pytest
 from pandas.testing import assert_series_equal
 
@@ -206,3 +208,30 @@ def test_make_mock_estimator_with_kwargs(estimator_class, estimator_kwargs):
         and (mock_estimator_instance.sp == estimator_kwargs["sp"])
         and (mock_estimator_instance.window_length == estimator_kwargs["window_length"])
     )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.utils.estimators"),
+    reason="Run test if estimators module has changed.",
+)
+def test_make_mock_estimator_uninspectable_callable():
+    """Test make_mock_estimator skips callables without an inspectable signature.
+
+    Failure case of bug #11361, where make_mock_estimator raised TypeError
+    for the lru_cache wrapped methods of scikit-base>=1.1.0.
+    """
+
+    class _CachedNaiveForecaster(NaiveForecaster):
+        @staticmethod
+        @cache
+        def _cached_method(value):
+            """Cached static method, here for testing purposes."""
+            return value
+
+    mock_estimator = make_mock_estimator(_CachedNaiveForecaster)
+    mock_estimator_instance = mock_estimator()
+    mock_estimator_instance.fit(y_series)
+    methods_called = [entry[0] for entry in mock_estimator_instance.log]
+
+    assert mock_estimator._cached_method is _CachedNaiveForecaster._cached_method
+    assert set(methods_called) >= {"fit", "_fit"}

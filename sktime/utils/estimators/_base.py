@@ -52,6 +52,14 @@ def _method_logger(method):
     return wrapper
 
 
+def _takes_self(method):
+    """Check whether a callable takes a self argument, i.e., is an instance method."""
+    try:
+        return "self" in getfullargspec(method).args
+    except TypeError:
+        return False
+
+
 def make_mock_estimator(
     estimator_class: BaseEstimator, method_regex: str = ".*"
 ) -> BaseEstimator:
@@ -104,10 +112,7 @@ def make_mock_estimator(
         if not re.match(dunder_methods_regex, attr_name) and callable(attr):
             # match the given regex pattern
             # exclude static and class methods from logging
-            if (
-                re.match(method_regex, attr_name)
-                and "self" in getfullargspec(attr).args
-            ):
+            if re.match(method_regex, attr_name) and _takes_self(attr):
                 setattr(_MockEstimator, attr_name, _method_logger(attr))
 
     return _MockEstimator
