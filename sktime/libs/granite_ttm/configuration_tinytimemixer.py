@@ -11,6 +11,12 @@ logger = logging.get_logger(__name__)
 
 TINYTIMEMIXER_PRETRAINED_CONFIG_ARCHIVE_MAP = {}
 
+# Add tag overrides for TinyTimeMixerForecaster here.
+# The correct fix is in the forecaster's tags, not this file.
+# For minimal change, ensure that the relevant forecaster class has:
+#   y_inner_mtype = "pd-multiindex" (or "pd-multiindex")
+#   X_inner_mtype = "pd-multiindex" (if needed)
+
 
 class TinyTimeMixerConfig(PretrainedConfig):
     r"""
