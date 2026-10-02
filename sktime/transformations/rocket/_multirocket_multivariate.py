@@ -143,10 +143,6 @@ class MultiRocketMultivariate(BaseTransformer):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "capability:categorical_in_X": False,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_categorical_y_raises_error"],
-        # unclear failure "No matching definition for argument type(s)"
     }
 
     def __init__(
@@ -237,6 +233,7 @@ class MultiRocketMultivariate(BaseTransformer):
             X = (X - X.mean(axis=-1, keepdims=True)) / (
                 X.std(axis=-1, keepdims=True) + 1e-8
             )
+        X = X.astype(np.float64)
 
         _X1 = np.diff(X, 1)
 
