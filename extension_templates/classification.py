@@ -107,6 +107,9 @@ class MyTimeSeriesClassifier(BaseClassifier):
         "capability:contractable": False,
         "capability:multithreading": False,
         "capability:class_weight": False,  # ability to handle class weights
+        "capability:categorical_in_X": False,  # can handle categorical columns in X?
+        "capability:categorical_in_y": False,  # can handle categorical columns in y?
+        "capability:predict_proba": True,  # implements non-default _predict_proba?
         #
         # property:randomness = does the estimator behave deterministically or randomly?
         "property:randomness": "deterministic",

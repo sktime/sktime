@@ -87,6 +87,12 @@ class MySplitter(BaseSplitter):
         # calls split ("iloc") or split_loc ("loc"). Setting this can give
         # performance advantages, e.g., if "loc" is faster to obtain.
         #
+        # split_type = axis / strategy used by the splitter
+        "split_type": "temporal",
+        # valid values: "temporal" or "instance"
+        # "temporal": splits along the time index
+        # "instance": splits along the instance / panel axis
+        #
         # property:randomness = is the estimator deterministic or stochastic?
         "property:randomness": "deterministic",
         # valid values: str, one of "deterministic", "stochastic", "derandomized"
