@@ -4,6 +4,9 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
+from sktime.transformations.rocket._multirocket import (
+    _check_n_features_per_kernel,
+)
 
 __author__ = ["ChangWeiTan", "fstinner", "angus924"]
 
@@ -36,8 +39,9 @@ class MultiRocketMultivariate(BaseTransformer):
        data will rounded down to the next positive multiple of 84.
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
-    n_features_per_kernel : int, default =4
-        number of features per kernel.
+    n_features_per_kernel : int, default="deprecated"
+        Deprecated, and will be removed in sktime 1.4.0. MultiRocket always
+        computes 4 features per kernel, so any value passed is ignored.
     normalise : bool, default False
     n_jobs : int, default=1
         The number of jobs to run in parallel for `transform`. ``-1`` means using all
@@ -65,7 +69,7 @@ class MultiRocketMultivariate(BaseTransformer):
         The true number of kernels used in the rocket transform. This is
         num_kernels rounded down to the nearest multiple of 84. It is 84 if
         num_kernels is less than 84. The calculated number of features is given
-        as 2*n_features_per_kernel*num_kernels_.
+        as 8*num_kernels_.
 
     See Also
     --------
@@ -149,7 +153,7 @@ class MultiRocketMultivariate(BaseTransformer):
         self,
         num_kernels=6_250,
         max_dilations_per_kernel=32,
-        n_features_per_kernel=4,
+        n_features_per_kernel="deprecated",
         normalise=False,
         n_jobs=1,
         random_state=None,
@@ -157,6 +161,7 @@ class MultiRocketMultivariate(BaseTransformer):
     ):
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
+        _check_n_features_per_kernel(self)
         self.num_kernels = num_kernels
         self.num_kernels_ = None
         self.normalise = normalise
@@ -248,7 +253,6 @@ class MultiRocketMultivariate(BaseTransformer):
             _X1,
             self.parameter,
             self.parameter1,
-            self.n_features_per_kernel,
             self.original_implementation,
         )
         X = np.nan_to_num(X)

@@ -19,6 +19,9 @@ from sktime.transformations.rocket import (
     MultiRocketMultivariate,
     Rocket,
 )
+from sktime.transformations.rocket._multirocket import (
+    _check_n_features_per_kernel,
+)
 
 
 class RocketClassifier(_DelegatedClassifier):
@@ -57,8 +60,10 @@ class RocketClassifier(_DelegatedClassifier):
         Valid inputs = ["rocket", "minirocket", "multirocket"]
     max_dilations_per_kernel : int, optional, default=32
         MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
-    n_features_per_kernel : int, optional, default=4
-        MultiRocket only. The number of features per kernel.
+    n_features_per_kernel : int, optional, default="deprecated"
+        MultiRocket only. Deprecated, and will be removed in sktime 1.4.0.
+        MultiRocket always computes 4 features per kernel, so any value passed
+        is ignored.
     use_multivariate : str, ["auto", "yes", "no"], optional, default="auto"
         whether to use multivariate rocket transforms or univariate ones
         "auto" = multivariate iff data seen in fit is multivariate, otherwise univariate
@@ -137,7 +142,7 @@ class RocketClassifier(_DelegatedClassifier):
         num_kernels=10000,
         rocket_transform="rocket",
         max_dilations_per_kernel=32,
-        n_features_per_kernel=4,
+        n_features_per_kernel="deprecated",
         use_multivariate="auto",
         n_jobs=1,
         random_state=None,
@@ -156,6 +161,7 @@ class RocketClassifier(_DelegatedClassifier):
 
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
+        _check_n_features_per_kernel(self)
         self.use_multivariate = use_multivariate
 
         self.n_jobs = n_jobs
@@ -190,7 +196,6 @@ class RocketClassifier(_DelegatedClassifier):
             univar_rocket = MiniRocket(**common_params)
 
         elif self.rocket_transform == "multirocket":
-            common_params["n_features_per_kernel"] = self.n_features_per_kernel
             multivar_rocket = MultiRocketMultivariate(**common_params)
             univar_rocket = MultiRocket(**common_params)
 

@@ -413,7 +413,7 @@ def _quantiles(n):
 @njit(
     "float32[:,:](float64[:,:,:],float64[:,:,:],"
     "Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),"
-    "Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),int32,boolean)",
+    "Tuple((int32[:],int32[:],int32[:],int32[:],float32[:])),boolean)",
     fastmath=True,
     parallel=True,
     cache=True,
@@ -423,7 +423,6 @@ def _transform(
     X1,
     parameters,
     parameters1,
-    n_features_per_kernel=4,
     original_implementation=False,
 ):
     num_examples, num_channels, input_length = X.shape
@@ -714,7 +713,7 @@ def _transform(
     num_features1 = num_kernels * np.sum(num_features_per_dilation1)
 
     features = np.zeros(
-        (num_examples, (num_features + num_features1) * n_features_per_kernel),
+        (num_examples, (num_features + num_features1) * 4),
         dtype=np.float32,
     )
     n_features_per_transform = np.int64(features.shape[1] / 2)
