@@ -664,6 +664,7 @@ intersphinx_mapping = {
     "joblib": ("https://joblib.readthedocs.io/en/stable/", None),
     "scikit-learn": ("https://scikit-learn.org/stable/", None),
     "statsmodels": ("https://www.statsmodels.org/stable/", None),
+    "skbase": ("https://skbase.readthedocs.io/en/stable/", None),
 }
 
 # -- Options for _todo extension ----------------------------------------------
