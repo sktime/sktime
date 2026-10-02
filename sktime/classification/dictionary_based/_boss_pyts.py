@@ -101,7 +101,7 @@ class BOSSVSClassifierPyts(_PytsAdapter, BaseClassifier):
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": "pyts",
+        "python_dependencies": ["pyts", "scikit-learn<1.8"],
         # estimator type
         # --------------
         "capability:multivariate": False,

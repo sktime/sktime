@@ -125,7 +125,7 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         # --------------
         "authors": ["johannfaouzi", "Abhay-Lejith"],
         # johannfaouzi is author of upstream pyts code
-        "python_dependencies": "pyts",
+        "python_dependencies": ["pyts", "scikit-learn<1.8"],
         # capability:multivariate controls whether internal X can be multivariate
         # if False (only univariate), always applies vectorization over variables
         "capability:multivariate": False,
