@@ -6,6 +6,8 @@ Implemented in TensorFlow & PyTorch backends.
 __all__ = [
     "MLPNetwork",
     "MLPNetworkTorch",
+    "MLPForecastNetwork",
 ]
+from sktime.networks.mlp._mlp_forecast import MLPForecastNetwork
 from sktime.networks.mlp._mlp_tf import MLPNetwork
 from sktime.networks.mlp._mlp_torch import MLPNetworkTorch
