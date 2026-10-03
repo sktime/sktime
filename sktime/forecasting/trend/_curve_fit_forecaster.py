@@ -123,8 +123,10 @@ class CurveFitForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         x = _get_X_numpy_int_from_pandas(y.index)[:, 0]
-        start = _get_X_numpy_int_from_pandas(self._y.index[:1])[:, 0]
+        start = _get_X_numpy_int_from_pandas(self._cur_y.index[:1])[:, 0]
 
         if self.origin == "first_index":
             x = x - start
@@ -161,7 +163,7 @@ class CurveFitForecaster(BaseForecaster):
         """
         fh = self.fh.to_absolute_index(self.cutoff)
         x = _get_X_numpy_int_from_pandas(fh)[:, 0]
-        start = _get_X_numpy_int_from_pandas(self._y.index[:1])[:, 0]
+        start = _get_X_numpy_int_from_pandas(self._cur_y.index[:1])[:, 0]
 
         if self.origin == "first_index":
             x = x - start
@@ -171,7 +173,7 @@ class CurveFitForecaster(BaseForecaster):
         return pd.Series(
             self.function(x, *self.params_[0]),
             index=fh,
-            name=self._y.name,
+            name=self._cur_y.name,
         )
 
     @classmethod

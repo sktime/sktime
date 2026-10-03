@@ -315,9 +315,6 @@ class CutoffFhSplitter(BaseSplitter):
         # CI and test flags
         # -----------------
         "tests:specific": ["sktime.split.tests.test_cutoff"],
-        # splitters excluded with undiagnosed failures, see #6194
-        # these are temporarily skipped to allow merging of the base test framework
-        "tests:skip_all": True,
     }
 
     def __init__(self, cutoff, fh=None):
@@ -342,6 +339,10 @@ class CutoffFhSplitter(BaseSplitter):
         test : pd.Index
             Test window indices, loc references to test indices in y
         """
+        if isinstance(y, pd.MultiIndex):
+            yield from super()._split_loc(y)
+            return
+
         cutoff = self.cutoff
         fh = self.fh
 
@@ -353,6 +354,9 @@ class CutoffFhSplitter(BaseSplitter):
 
             if not isinstance(fh, ForecastingHorizon):
                 fh = ForecastingHorizon(fh)
+
+            if fh.freq is None and isinstance(y, pd.DatetimeIndex):
+                fh.freq = y.freq or y.inferred_freq
 
         def is_date_like(x):
             return is_datetime64_any_dtype(x) or isinstance(x, pd.PeriodDtype)

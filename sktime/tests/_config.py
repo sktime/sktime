@@ -39,38 +39,7 @@ EXCLUDED_TESTS = {}
 # exclude tests but keyed by test name
 EXCLUDED_TESTS_BY_TEST = {
     "test_get_test_params_coverage": [],
-    "test_doctest_examples": [
-        # between-versions inconsistency how doctest handles np.float64.
-        # on lower version, prints 0.123456
-        # on higher version, prints np.float64(0.123456)
-        # therefore these doctests will fail either on lower or higher versions
-        "MedianSquaredScaledError",
-        "RMSEnormalizedByIQR",
-        "KLDivergenceDoubleExponential",
-        "KLDivergenceNormal",
-        "KLDivergenceSingleExponential",
-        "MSEnormalizedBySD",
-        "GeometricMeanAbsoluteError",
-        "MedianRelativeAbsoluteError",
-        "MeanSquaredScaledError",
-        "GeometricMeanRelativeAbsoluteError",
-        "GeometricMeanRelativeSquaredError",
-        "MedianSquaredPercentageError",
-        "MedianAbsoluteScaledError",
-        "MedianSquaredError",
-        "MeanAbsoluteError",
-        "MeanAbsolutePercentageError",
-        "MeanAbsolutePercentageErrorStabilized",
-        "MeanAbsoluteScaledError",
-        "MedianAbsoluteError",
-        "MeanSquaredPercentageError",
-        "MedianAbsolutePercentageError",
-        "MeanSquaredError",
-        "PinballLoss",
-        "RelativeLoss",
-        "TheilU2",
-        "MeanRelativeAbsoluteError",
-    ],
+    "test_doctest_examples": [],
 }
 
 # estimators that have 2 test params only when their soft dependency is installed
