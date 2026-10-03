@@ -207,23 +207,31 @@ def test_metric_coercion_bug():
         "median_squared_scaled_error",
     ],
 )
-def test_median_metrics_horizon_weight_array_like(metric_name):
+@pytest.mark.parametrize("multioutput", [False, True])
+def test_median_metrics_horizon_weight_array_like(metric_name, multioutput):
     """Check median metrics accept non-numpy array-like horizon_weight."""
     from sktime.performance_metrics import forecasting
 
     metric = getattr(forecasting, metric_name)
 
-    y_true = pd.Series([3.0, -0.5, 2.0, 7.0, 2.0])
-    y_pred = pd.Series([2.5, 0.0, 2.0, 8.0, 1.25])
-    y_train = pd.Series([5.0, 0.5, 4.0, 6.0, 3.0, 5.0, 2.0])
+    y_true = pd.DataFrame({"a": [3.0, -0.5, 2.0, 7.0, 2.0], "b": [1.0, 2, 3, 4, 5]})
+    y_pred = pd.DataFrame({"a": [2.5, 0.0, 2.0, 8.0, 1.25], "b": [1.5, 2, 2, 4.5, 5.5]})
+    y_train = pd.DataFrame(
+        {"a": [5.0, 0.5, 4, 6, 3, 5, 2], "b": [1.0, 2, 3, 4, 5, 6, 7]}
+    )
+    if not multioutput:
+        y_true, y_pred, y_train = y_true["a"], y_pred["a"], y_train["a"]
     weights = [1.0, 2.0, 1.0, 2.0, 1.0]
 
-    expected = metric(y_true, y_pred, horizon_weight=np.array(weights), y_train=y_train)
+    kwargs = {"y_train": y_train, "multioutput": "raw_values"}
+    expected = metric(y_true, y_pred, horizon_weight=np.array(weights), **kwargs)
     for weights_array_like in (weights, tuple(weights), pd.Series(weights)):
-        result = metric(
-            y_true, y_pred, horizon_weight=weights_array_like, y_train=y_train
-        )
+        result = metric(y_true, y_pred, horizon_weight=weights_array_like, **kwargs)
         assert np.allclose(result, expected)
+
+    # horizon_weight of wrong length must still raise
+    with pytest.raises(ValueError):
+        metric(y_true, y_pred, horizon_weight=[1.0, 2.0], **kwargs)
 
 
 @pytest.mark.skipif(
