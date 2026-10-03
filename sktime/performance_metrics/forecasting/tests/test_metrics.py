@@ -198,6 +198,38 @@ def test_metric_coercion_bug():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+@pytest.mark.parametrize(
+    "metric_name",
+    [
+        "median_squared_error",
+        "median_absolute_percentage_error",
+        "median_squared_percentage_error",
+        "median_squared_scaled_error",
+    ],
+)
+def test_median_metrics_horizon_weight_array_like(metric_name):
+    """Check median metrics accept non-numpy array-like horizon_weight."""
+    from sktime.performance_metrics import forecasting
+
+    metric = getattr(forecasting, metric_name)
+
+    y_true = pd.Series([3.0, -0.5, 2.0, 7.0, 2.0])
+    y_pred = pd.Series([2.5, 0.0, 2.0, 8.0, 1.25])
+    y_train = pd.Series([5.0, 0.5, 4.0, 6.0, 3.0, 5.0, 2.0])
+    weights = [1.0, 2.0, 1.0, 2.0, 1.0]
+
+    expected = metric(y_true, y_pred, horizon_weight=np.array(weights), y_train=y_train)
+    for weights_array_like in (weights, tuple(weights), pd.Series(weights)):
+        result = metric(
+            y_true, y_pred, horizon_weight=weights_array_like, y_train=y_train
+        )
+        assert np.allclose(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_msmape_class():
     """Test MeanAbsolutePercentageErrorStabilized (msMAPE).
 
