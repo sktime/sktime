@@ -552,8 +552,44 @@ def _create_df(fold_gts):
     df_params = {}
     for name, value in fold_gts.items():
         if isinstance(value, str):
-            df_params[name.split(".")[-1]] = ast.literal_eval(value)
+            df_params[name.split(".")[-1]] = _parse_frame_literal(value)
         else:
             df_params[name.split(".")[-1]] = value
     df = pd.DataFrame.from_dict(df_params, orient="tight")
     return df.astype("float64")
+
+
+def _parse_frame_literal(value):
+    """Read CSV frame literals, allowing only pandas time constructors.
+
+    Pandas tight dictionaries contain Period and Timestamp objects in time
+    indexes. Their repr is not a Python literal, so ast.literal_eval alone
+    cannot read it. All other function calls remain invalid.
+    """
+    constructors = {"Period": pd.Period, "Timestamp": pd.Timestamp}
+
+    def convert(node):
+        if isinstance(node, ast.List):
+            return [convert(item) for item in node.elts]
+        if isinstance(node, ast.Tuple):
+            return tuple(convert(item) for item in node.elts)
+        if isinstance(node, ast.Dict):
+            return {
+                convert(key): convert(val) for key, val in zip(node.keys, node.values)
+            }
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id in constructors
+            and all(keyword.arg is not None for keyword in node.keywords)
+        ):
+            return constructors[node.func.id](
+                *(ast.literal_eval(arg) for arg in node.args),
+                **{
+                    keyword.arg: ast.literal_eval(keyword.value)
+                    for keyword in node.keywords
+                },
+            )
+        return ast.literal_eval(node)
+
+    return convert(ast.parse(value, mode="eval").body)
