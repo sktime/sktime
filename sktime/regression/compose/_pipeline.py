@@ -98,7 +98,6 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     _required_parameters = ["regressor"]
@@ -310,8 +309,6 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
-        from skbase.utils.dependencies import _check_estimator_deps
-
         from sktime.regression.distance_based import KNeighborsTimeSeriesRegressor
         from sktime.transformations.exponent import ExponentTransformer
 
@@ -322,14 +319,13 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
         params1 = {"transformers": [t1, t2], "regressor": r}
 
-        if _check_estimator_deps(KNeighborsTimeSeriesRegressor, severity="none"):
-            c = KNeighborsTimeSeriesRegressor()
+        # KNeighborsTimeSeriesRegressor has no soft dependencies, so the second
+        # set is unconditional
+        c = KNeighborsTimeSeriesRegressor()
 
-            # construct without names
-            params2 = {"transformers": [t1, t2], "regressor": c}
-            return [params1, params2]
-        else:
-            return params1
+        # construct without names
+        params2 = {"transformers": [t1, t2], "regressor": c}
+        return [params1, params2]
 
 
 class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):

@@ -480,9 +480,6 @@ class ThetaModularForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:update": True,  # can estimator update its parameters with new data?
-        # test and CI flags
-        # -----------------
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -595,13 +592,24 @@ class ThetaModularForecaster(BaseForecaster):
                 ("naive1", NaiveForecaster(), 1),
             ]
         }
+        # second unconditional set: explicit dependency-free forecasters with
+        # non-default theta values and weighted aggregation, so the two-set
+        # requirement holds regardless of whether statsmodels is installed.
+        params0b = {
+            "forecasters": [
+                ("naive", NaiveForecaster(), 0),
+                ("drift", NaiveForecaster(strategy="drift"), 1),
+            ],
+            "theta_values": (0, 3),
+            "weights": [0.3, 0.7],
+        }
         params1 = {"theta_values": (0, 3)}
         params2 = {"weights": [1.0, 0.8]}
 
         # params1 and params2 invoke ExponentialSmoothing which requires statsmodels
         if _check_estimator_deps(ExponentialSmoothing, severity="none"):
-            params = [params0, params1, params2]
+            params = [params0, params0b, params1, params2]
         else:
-            params = params0
+            params = [params0, params0b]
 
         return params
