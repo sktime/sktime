@@ -165,15 +165,18 @@ _TIMEMOE_UPSTREAM_REFERENCE_CASES = [
 ]
 
 
-# The references were generated on arm64 (macOS). TimeMoE runs in float32 and
-# feeds its own output back in as context, so differences between the BLAS
-# kernels of different CPU architectures accumulate over long horizons: on
-# x86-64 (linux and windows) the tail of the 200M model's 100 step forecast
-# deviates from the references by a relative 6.4e-5, and by slightly different
-# amounts on different x86-64 machines. The tolerance leaves headroom for
-# that, and is still orders of magnitude below the deviation caused by an
-# actual change in the forecasting logic.
-_RTOL = 1e-3
+# Tolerances. The references were generated on arm64 (macOS). TimeMoE runs in
+# float32 and feeds its own output back in as context, so differences between
+# the BLAS kernels of different CPU architectures accumulate along the
+# forecast: on x86-64 (linux and windows), the values around step 100 of the
+# 200M model's forecast deviate from the arm64 references by a relative 6.4e-5
+# at most, and by slightly different amounts on different x86-64 machines.
+# The looser tolerance therefore applies only to the tail of long horizons,
+# and is about 8 times the largest observed drift; heads, and the tails of
+# short horizons, are compared at the default tolerance.
+_RTOL = 1e-5
+_RTOL_LONG_HORIZON_TAIL = 5e-4
+_LONG_HORIZON = 100
 
 
 pytestmark = pytest.mark.skipif(
@@ -207,6 +210,6 @@ def test_timemoe_predictions_match_upstream_reference(
     np.testing.assert_allclose(
         y_pred.iloc[-3:].to_numpy().ravel(),
         np.asarray(expected_tail, dtype=np.float32),
-        rtol=_RTOL,
+        rtol=_RTOL_LONG_HORIZON_TAIL if horizon >= _LONG_HORIZON else _RTOL,
         atol=1e-4,
     )
