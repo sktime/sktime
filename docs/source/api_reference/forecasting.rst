@@ -777,6 +777,14 @@ Domain agnostic foundation models
 
     TafsutForecaster
 
+.. currentmodule:: sktime.forecasting.tempo
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TEMPOForecaster
+
 .. currentmodule:: sktime.forecasting.time_llm
 
 .. autosummary::
