@@ -107,6 +107,7 @@ class SquaringResiduals(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         # testing and CI flags
         # --------------------
         # issue when prediction intervals, see #3479 and #4504

@@ -111,9 +111,9 @@ class MOIRAIForecaster(BaseForecaster):
         ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "capability:pretrain": False,
+        "capability:update": True,
         "property:randomness": "stochastic",
         # CI and test flags
         # -----------------
@@ -161,7 +161,6 @@ class MOIRAIForecaster(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.DataFrame",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 

@@ -96,7 +96,6 @@ class _NeuralForecastAdapter(BaseForecaster):
         "X-y-must-have-same-index": True,
         "capability:missing_values": False,
         "capability:insample": False,
-        "capability:global_forecasting": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,
@@ -139,7 +138,6 @@ class _NeuralForecastAdapter(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.Series",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 
