@@ -672,13 +672,17 @@ class ProximityStump(BaseClassifier):
 
     Parameters
     ----------
-    random_state: integer, the random state
+    random_state: int or np.RandomState, default=None
+        random seed for the random number generator
     distance_measure: ``None`` (default) or str; if str, one of
-        "euclidean", "dtw", "ddtw", "wdtw", "wddtw", "msm", "lcss", "erp"
-        distance measure to use
+        ``euclidean``, ``dtw``, ``ddtw``, ``wdtw``, ``wddtw``, ``msm``,
+        ``lcss``, ``erp`` distance measure to use
         if ``None``, selects distances randomly from the list of available distances
-    verbosity: logging verbosity
-    n_jobs: number of jobs to run in parallel *across threads"
+    verbosity: 0 or 1, default=0
+        number reflecting the verbosity of logging
+        0 = no logging, 1 = verbose logging
+    n_jobs: int or None, default=1
+        number of parallel threads to use while fitting
 
     Examples
     --------
