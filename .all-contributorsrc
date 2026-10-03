@@ -3820,7 +3820,11 @@
       "name": "Srujan Patwardhan",
       "avatar_url": "https://avatars.githubusercontent.com/u/131141745?v=4",
       "profile": "https://github.com/srupat",
-      "contributions": ["code", "doc", "bug"]
+      "contributions": [
+        "code",
+        "doc",
+        "bug"
+      ]
     },
     {
       "login": "Spandan-Mishra",
@@ -4180,11 +4184,11 @@
       ]
     },
     {
-      "login":"Ayushagrawal-cse",
+      "login": "Ayushagrawal-cse",
       "name": "Ayush Agrawal",
       "avatar_url": "https://avatars.githubusercontent.com/u/191835489?v=4",
-      "profile" : "https://www.linkedin.com/in/bgp-ayush-agrawal/",
-      "contributions" : [
+      "profile": "https://www.linkedin.com/in/bgp-ayush-agrawal/",
+      "contributions": [
         "code"
       ]
     },
@@ -4253,6 +4257,15 @@
         "bug",
         "code",
         "test"
+      ]
+    },
+    {
+      "login": "Ishaan-Gpt",
+      "name": "Ishaan Gupta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/191627877?v=4",
+      "profile": "https://github.com/Ishaan-Gpt",
+      "contributions": [
+        "doc"
       ]
     }
   ]
