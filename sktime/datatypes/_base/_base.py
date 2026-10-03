@@ -309,6 +309,7 @@ class BaseConverter(BaseObject):
         "mtype_from": None,  # type to convert from - BaseDatatype class or str
         "mtype_to": None,  # type to convert to - BaseDatatype class or str
         "multiple_conversions": False,  # whether converter encodes multiple conversions
+        "lossy": False,  # whether the conversion loses information
         "python_version": None,
         "python_dependencies": None,
     }
@@ -323,6 +324,22 @@ class BaseConverter(BaseObject):
         if mtype_to is not None:
             self.set_tags(**{"mtype_to": mtype_to})
 
+        self._check_conversion_defined()
+
+    def _check_conversion_defined(self):
+        """Check that the conversion of self is fully and validly specified.
+
+        Raises
+        ------
+        ValueError if ``mtype_from`` or ``mtype_to`` are not set, or if the pair
+        is not one of the conversions defined by the class, see
+        ``get_conversions``.
+
+        Notes
+        -----
+        Converters whose conversion is determined by constructor arguments rather
+        than by class defaults, e.g., ``ConverterChain``, should override this.
+        """
         mtype_from = self.get_tag("mtype_from")
         mtype_to = self.get_tag("mtype_to")
 
