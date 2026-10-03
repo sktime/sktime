@@ -7,8 +7,10 @@
 更新时间:  2023-06-25 08:18
 """
 
-import torch
-import torch.nn as nn
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
 
 class RevIn(nn.Module):

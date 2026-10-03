@@ -2,22 +2,21 @@
 import os
 import warnings
 
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from einops import rearrange
-from huggingface_hub import hf_hub_download
-from omegaconf import OmegaConf
-from peft import (
-    LoraConfig,
-    get_peft_model,
-)
-from transformers import GPT2Tokenizer
-from transformers.models.gpt2.configuration_gpt2 import GPT2Config
-from transformers.models.gpt2.modeling_gpt2 import GPT2Model
+from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
-from sktime.libs.tempo.embed import DataEmbedding, DataEmbedding_wo_time
+import numpy as np
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
+rearrange = _safe_import("einops.rearrange")
+hf_hub_download = _safe_import("huggingface_hub.hf_hub_download")
+OmegaConf = _safe_import("omegaconf.OmegaConf")
+LoraConfig = _safe_import("peft.LoraConfig")
+get_peft_model = _safe_import("peft.get_peft_model")
+GPT2Tokenizer = _safe_import("transformers.GPT2Tokenizer")
+GPT2Config = _safe_import("transformers.models.gpt2.configuration_gpt2.GPT2Config")
+GPT2Model = _safe_import("transformers.models.gpt2.modeling_gpt2.GPT2Model")
+
 from sktime.libs.tempo.rev_in import RevIn
 
 criterion = nn.MSELoss()
@@ -102,6 +101,10 @@ class moving_avg(nn.Module):
 
 class TEMPO(nn.Module):
     def __init__(self, configs, device):
+        _check_soft_dependencies(
+            ["torch", "transformers", "einops", "peft", "huggingface_hub", "omegaconf"],
+            severity="error",
+        )
         super(TEMPO, self).__init__()
         self.is_gpt = configs.is_gpt
         self.patch_size = configs.patch_size
@@ -168,7 +171,7 @@ class TEMPO(nn.Module):
                     self.prompt_record_id = 0
                     self.diversify = True
 
-            except:
+            except AttributeError:
                 self.pool = False
 
             if self.pool:
@@ -391,11 +394,11 @@ class TEMPO(nn.Module):
         summary = summary_mapped.view(-1, 768)
         summary_embed_norm = self.l2_normalize(summary, dim=1)
         similarity = torch.matmul(summary_embed_norm, prompt_norm.t())
-        if not prompt_mask == None:
+        if prompt_mask is not None:
             idx = prompt_mask
         else:
             topk_sim, idx = torch.topk(similarity, k=self.top_k, dim=1)
-        if prompt_mask == None:
+        if prompt_mask is None:
             count_of_keys = torch.bincount(torch.flatten(idx), minlength=15)
             for i in range(len(count_of_keys)):
                 self.prompt_record[f"id_{i}"] += count_of_keys[i].item()
@@ -440,6 +443,8 @@ class TEMPO(nn.Module):
         return x
 
     def get_emb(self, x, tokens=None, type="Trend"):
+        reduce_sim = torch.tensor(0.0, device=x.device)
+        selected_prompts = []
         if tokens is None:
             if type == "Trend":
                 x = self.gpt2_trend(inputs_embeds=x).last_hidden_state
@@ -483,7 +488,6 @@ class TEMPO(nn.Module):
                     prompt_x = self.prompt_layer_season(prompt_x)
 
                 x = torch.cat((prompt_x, x), dim=1)
-                # x = self.gpt2_trend(inputs_embeds =x_all).last_hidden_state
 
             elif type == "Residual":
                 if self.pool:
@@ -500,8 +504,6 @@ class TEMPO(nn.Module):
                     prompt_x = self.gpt2_trend.wte(tokens)
                     prompt_x = prompt_x.repeat(a, 1, 1)
                     prompt_x = self.prompt_layer_noise(prompt_x)
-                # prompt_x, reduce_sim_trend = self.select_prompt(x, prompt_mask=None)
-
                 x = torch.cat((prompt_x, x), dim=1)
 
             if self.pool:
@@ -514,7 +516,7 @@ class TEMPO(nn.Module):
 
         x = self.rev_in_trend(x, "norm")
 
-        original_x = x
+        loss_local = None
 
         # Moving average for trend
         trend_local = self.moving_avg(x)
@@ -587,10 +589,6 @@ class TEMPO(nn.Module):
         else:
             noise = self.get_emb(noise)
 
-        # print(noise_selected_prompts)
-
-        # self.store_tensors_in_dict(original_x, trend_local, season_local, noise_local, trend_selected_prompts, season_selected_prompts, noise_selected_prompts)
-
         x_all = torch.cat((trend, season, noise), dim=1)
         x = self.gpt2_trend(inputs_embeds=x_all).last_hidden_state
 
@@ -628,8 +626,6 @@ class TEMPO(nn.Module):
 
         # outputs = outputs * stdev + means
         outputs = self.rev_in_trend(outputs, "denorm")
-        # if self.pool:
-        #     return outputs, loss_local #loss_local - reduce_sim_trend - reduce_sim_season - reduce_sim_noise
         if self.loss_func == "prob":
             outputs = rearrange(outputs, "b l m-> b m l", b=B).squeeze()
 
@@ -702,12 +698,6 @@ class TEMPO(nn.Module):
         # Ensure x is on the same device as the model
         x = x.to(self.device)
 
-        # with torch.no_grad():
-        #     outputs, _ = self.forward(x, test=True)
-        # # Extract the predicted values
-        # predicted_values = outputs.squeeze().numpy()[-pred_length:]
-        # return predicted_values
-
         with torch.no_grad():
             current_input = x.clone()
             all_predictions = []
@@ -750,52 +740,3 @@ class TEMPO(nn.Module):
         - Predicted output
         """
         pass
-        # self.eval()  # Set the model to evaluation mode
-
-        # x = torch.FloatTensor(x).unsqueeze(0).unsqueeze(2).to(self.device)  # Shape: [1, 336, 1]
-        # x = self.rev_in_trend(x, 'norm')
-
-        # B, L, M = x.shape
-        # target_length = self.seq_len  # Maximum supported length
-
-        # if L > target_length:
-        #     warnings.warn(f"Input length {L} is larger than the maximum supported length of {target_length}. "
-        #                   f"This may influence performance. Cutting the input to the last {target_length} time steps.")
-        #     x = x[:, -target_length:, :]
-        # elif L < target_length:
-        #     pad_length = target_length - L
-        #     if pad_length <= L:
-        #         # Pad by repeating the time series
-        #         x_padded = torch.cat([x] * (target_length // L + 1), dim=1)[:, :target_length, :]
-        #     else:
-        #         # Pad with zeros at the beginning
-        #         padding = torch.zeros(B, pad_length, M, device=x.device)
-        #         x_padded = torch.cat([padding, x], dim=1)
-
-        #     x = x_padded
-        #     warnings.warn(f"Input length {L} is smaller than the required length of {target_length}. "
-        #                   f"The time series has been {'repeated' if pad_length <= L else 'zero-padded'} to reach the required length.")
-
-        # # Ensure x is on the same device as the model
-        # x = x.to(self.device)
-
-        # with torch.no_grad():
-        #     current_input = x.clone()
-        #     all_predictions = []
-
-        #     while len(all_predictions) < pred_length:
-        #         # Forward pass
-        #         outputs, _ = self.forward(current_input, test=True)
-        #         outputs = self.rev_in_trend(outputs, 'denorm')
-        #         step_size = outputs.shape[1]
-        #         # Extract the predicted values
-        #         predicted_values = outputs.cpu().squeeze().numpy()[-step_size:]
-
-        #         # Append to all predictions
-        #         all_predictions.extend(predicted_values)
-
-        #         # Update the input for the next iteration
-        #         new_sequence = np.concatenate([current_input.cpu().squeeze().numpy()[step_size:], predicted_values])
-        #         current_input = torch.FloatTensor(new_sequence).unsqueeze(0).unsqueeze(2)
-        # # Trim to the desired length
-        # return np.array(all_predictions[:pred_length])
