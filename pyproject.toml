@@ -1,6 +1,6 @@
 [project]
 name = "sktime"
-version = "1.1.0"
+version = "1.2.0"
 description = "A unified framework for machine learning with time series"
 readme = "README.md"
 keywords = [
@@ -56,9 +56,9 @@ dependencies = [
   "joblib>=1.2.0,<1.7",  # required for parallel processing
   "numpy>=1.21,<2.6",  # required for framework layer and base class logic
   "packaging",  # for estimator specific dependency parsing
-  "pandas<3.1.0,>=1.1",  # pandas is the main in-memory data container
+  "pandas<3.1.0,>=1.5",  # pandas is the main in-memory data container
   "scikit-base>=1.0.0,<1.2.0",  # base module for sklearn compatible base API
-  "scikit-learn>=0.24,<1.8.0",  # required for estimators and framework layer
+  "scikit-learn>=0.24,<1.10.0",  # required for estimators and framework layer
   "scipy<2.0.0,>=1.2",  # required for estimators and framework layer
 ]
 
@@ -129,14 +129,14 @@ forecasting = [
   'skforecast<0.19,>=0.12.1; python_version < "3.14"',
   "skpro>=2,<2.16.0",
   'statsforecast<2.1.0,>=1.0.0; python_version < "3.13"',
-  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'statsmodels<0.16,>=0.12.1; python_version < "3.15"',
 ]
 networks = [
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
 ]
 param_est = [
   'seasonal<0.4,>=0.3.1; python_version < "3.13"',
-  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'statsmodels<0.16,>=0.12.1; python_version < "3.15"',
 ]
 regression = [
   'numba>=0.53,<0.68',
@@ -147,7 +147,7 @@ transformations = [
   'numba>=0.53,<0.68',
   'pycatch22>=0.4,<0.4.6; python_version < "3.13"',
   'simdkalman',
-  'statsmodels<0.15,>=0.12.1; python_version < "3.13"',
+  'statsmodels<0.16,>=0.12.1; python_version < "3.15"',
   'tsfresh<0.22,>=0.17; python_version < "3.12"',
 ]
 
@@ -176,13 +176,13 @@ docs = [
   "Sphinx!=7.2.0,<9.0.0",
   "sphinx-copybutton",
   "sphinx-design<0.7.0",
-  "sphinx-gallery<0.22.0",
+  "sphinx-gallery<0.23.0",
   "sphinx-issues<7.0.0",
   "tabulate",
 ]
 tests = [
   "pytest>=7.4,<9.2",
-  "pytest-randomly>=3.15,<4.2",
+  "pytest-randomly>=3.15,<5.1",
   "pytest-timeout>=2.1,<2.5",
   "pytest-xdist>=3.3,<3.9",
 ]

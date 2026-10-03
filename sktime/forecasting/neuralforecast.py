@@ -179,7 +179,6 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
@@ -587,7 +586,6 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
@@ -980,7 +978,6 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
@@ -1384,7 +1381,6 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
@@ -1786,7 +1782,6 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
