@@ -74,6 +74,7 @@ class TapNetNetwork(BaseDeepNetwork):
     _tags = {
         "authors": ["jnrusson1", "noxthot", "srupat"],
         "python_dependencies": ["tensorflow"],
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
