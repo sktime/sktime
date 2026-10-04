@@ -54,6 +54,11 @@ from sktime.utils.random_state import set_random_state
 from sktime.utils.sampling import random_partition
 
 
+def _rng_states_equal(state_before, state_after):
+    """Return whether two NumPy random states are equal."""
+    return deep_equals(state_before, state_after)
+
+
 def subsample_by_version_os(x):
     """Subsample objects by operating system and python version.
 
@@ -1065,12 +1070,7 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         scenario.run(object_instance)
         state_after = np.random.get_state()
 
-        assert all(
-            np.array_equal(before, after)
-            if isinstance(before, np.ndarray)
-            else before == after
-            for before, after in zip(state_before, state_after)
-        ), (
+        assert _rng_states_equal(state_before, state_after), (
             f"Estimator: {type(object_instance).__name__}, "
             f"scenario: {type(scenario).__name__} modifies the "
             "process-global numpy RNG state"

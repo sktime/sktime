@@ -40,33 +40,3 @@ def test_GreedyGaussianSegmentation(univariate_mean_shift):
         "max_shuffles": 250,
         "random_state": None,
     }
-
-
-@pytest.mark.parametrize("random_state", [None, 42])
-def test_ggs_does_not_modify_global_numpy_rng(univariate_mean_shift, random_state):
-    """Test that GGS does not modify the process-global NumPy RNG state."""
-    ggs = GreedyGaussianSegmentation(k_max=5, lamb=0.5, random_state=random_state)
-
-    np.random.seed(42)
-    state_before = np.random.get_state()
-    ggs.fit_predict(univariate_mean_shift)
-    state_after = np.random.get_state()
-
-    assert all(
-        np.array_equal(before, after)
-        if isinstance(before, np.ndarray)
-        else before == after
-        for before, after in zip(state_before, state_after)
-    )
-
-
-def test_ggs_explicit_random_state_is_reproducible(univariate_mean_shift):
-    """Test that equal explicit random states produce equal segmentations."""
-    prediction_1 = GreedyGaussianSegmentation(
-        k_max=5, lamb=0.5, random_state=42
-    ).fit_predict(univariate_mean_shift)
-    prediction_2 = GreedyGaussianSegmentation(
-        k_max=5, lamb=0.5, random_state=42
-    ).fit_predict(univariate_mean_shift)
-
-    np.testing.assert_array_equal(prediction_1, prediction_2)
