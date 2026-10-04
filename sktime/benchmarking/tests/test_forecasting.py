@@ -356,6 +356,77 @@ def test_raise_id_restraint():
     assert error_msg in exc_info.value.args[0], "Error msg is not raised"
 
 
+def data_loader_period_index() -> pd.Series:
+    """Return simple data with a period index for use in testing."""
+    index = pd.period_range("2000-01", periods=6, freq="M")
+    return pd.Series([1.0, 2.0, 4.0, 3.0, 5.0, 6.0], index=index, name="y")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+@pytest.mark.parametrize("return_data", [True, False])
+@pytest.mark.parametrize("file_extension", [".csv", ".json"])
+def test_rerun_with_existing_result_file(tmp_path, return_data, file_extension):
+    """Test that a benchmark can be run again on an existing result file.
+
+    Regression test for bug #11372, where the second run failed for
+    ``return_data=True``, as stored data with a period index could not be loaded.
+    """
+
+    def _run_benchmark():
+        benchmark = ForecastingBenchmark(return_data=return_data)
+        benchmark.add_estimator(NaiveForecaster(strategy="last"), "naive_last")
+        cv_splitter = ExpandingWindowSplitter(initial_window=3, step_length=1, fh=1)
+        scorers = [MeanAbsoluteError()]
+        benchmark.add_task(data_loader_period_index, cv_splitter, scorers, "task")
+        return benchmark.run(results_file)
+
+    results_file = tmp_path / f"results{file_extension}"
+    data_cols = [
+        f"{name}_fold_{fold}"
+        for name in ["ground_truth", "predictions", "train_data"]
+        for fold in range(3)
+    ]
+
+    first_df = _run_benchmark()
+    assert results_file.exists()
+    second_df = _run_benchmark()
+    assert results_file.exists()
+
+    assert list(second_df.columns) == list(first_df.columns)
+    assert set(data_cols).issubset(second_df.columns) == return_data
+
+    score_cols = ["validation_id", "model_id", "MeanAbsoluteError_mean"]
+    score_cols += [f"MeanAbsoluteError_fold_{fold}_test" for fold in range(3)]
+    pd.testing.assert_frame_equal(second_df[score_cols], first_df[score_cols])
+    np.testing.assert_allclose(
+        second_df.loc[0, score_cols[3:]].to_numpy(dtype="float64"), [1.0, 2.0, 1.0]
+    )
+
+    if not return_data:
+        return
+
+    expected_data = {
+        "ground_truth": [[3.0], [5.0], [6.0]],
+        "predictions": [[4.0], [3.0], [5.0]],
+        "train_data": [
+            [1.0, 2.0, 4.0],
+            [1.0, 2.0, 4.0, 3.0],
+            [1.0, 2.0, 4.0, 3.0, 5.0],
+        ],
+    }
+    for name, expected_folds in expected_data.items():
+        for fold, expected in enumerate(expected_folds):
+            data = second_df.loc[0, f"{name}_fold_{fold}"]
+            np.testing.assert_allclose(np.asarray(data).ravel(), expected)
+            # json storage does not store the index, csv storage does
+            if file_extension == ".csv":
+                first_data = first_df.loc[0, f"{name}_fold_{fold}"]
+                assert data.index.equals(first_data.index)
+
+
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
