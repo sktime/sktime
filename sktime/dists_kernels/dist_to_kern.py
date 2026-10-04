@@ -42,6 +42,17 @@ class KernelFromDist(BasePairwiseTransformerPanel):
     dist_diag : pairwise transformer of BasePairwiseTransformer scitype, or
         series-to-panel transformer of Basetransformer scitype, or
         callable np.ndarray (n_samples, nd) -> (n_samples, )
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.dists_kernels import FlatDist, ScipyDist
+    >>> from sktime.dists_kernels.dist_to_kern import KernelFromDist
+    >>> X = np.array([[[0.0, 0.0, 0.0]], [[1.0, 1.0, 1.0]]])
+    >>> kern = KernelFromDist(dist=FlatDist(ScipyDist()))
+    >>> kern.transform(X)
+    array([[ 0. , -1.5],
+           [-1.5,  0. ]])
     """
 
     _tags = {
@@ -54,7 +65,6 @@ class KernelFromDist(BasePairwiseTransformerPanel):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, dist, dist_diag=None):
@@ -179,6 +189,17 @@ class DistFromKernel(BasePairwiseTransformerPanel):
     ----------
     kernel : pairwise transformer of BasePairwiseTransformer scitype, or
         callable np.ndarray (n_samples, nd) x (n_samples, nd) -> (n_samples x n_samples)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.dists_kernels import SignatureKernel
+    >>> from sktime.dists_kernels.dist_to_kern import DistFromKernel
+    >>> X = np.array([[[0.0, 0.0, 0.0]], [[1.0, 1.0, 1.0]]])
+    >>> dist = DistFromKernel(kernel=SignatureKernel())
+    >>> np.round(dist.transform(X), 3)
+    array([[0.   , 4.243],
+           [4.243, 0.   ]])
     """
 
     _tags = {
@@ -191,7 +212,6 @@ class DistFromKernel(BasePairwiseTransformerPanel):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, kernel):
