@@ -4263,6 +4263,16 @@
       "contributions": [
         "doc"
       ]
+    },
+    {
+      "login": "VividhDesign",
+      "name": "Vividh Yadav",
+      "avatar_url": "https://avatars.githubusercontent.com/u/178728541?v=4",
+      "profile": "https://github.com/VividhDesign",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }
