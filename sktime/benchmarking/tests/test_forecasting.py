@@ -427,6 +427,53 @@ def test_rerun_with_existing_result_file(tmp_path, return_data, file_extension):
                 assert data.index.equals(first_data.index)
 
 
+def data_loader_missing_value() -> pd.Series:
+    """Return simple data with a missing value for use in testing."""
+    index = pd.period_range("2000-01", periods=6, freq="M")
+    return pd.Series([1.0, np.nan, 4.0, 3.0, 5.0, 6.0], index=index, name="y")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.benchmarking"),
+    reason="run test only if benchmarking module has changed",
+)
+def test_rerun_with_existing_result_file_missing_value(tmp_path):
+    """Test that a csv result file with a missing value in the data is loaded.
+
+    Covers re-running with ``return_data=True``, see bug #11372, where the
+    returned data contains a missing value, which is stored as ``nan``.
+    """
+
+    def _run_benchmark():
+        benchmark = ForecastingBenchmark(return_data=True)
+        benchmark.add_estimator(NaiveForecaster(strategy="last"), "naive_last")
+        cv_splitter = ExpandingWindowSplitter(initial_window=3, step_length=1, fh=1)
+        scorers = [MeanAbsoluteError()]
+        benchmark.add_task(data_loader_missing_value, cv_splitter, scorers, "task")
+        return benchmark.run(results_file)
+
+    results_file = tmp_path / "results.csv"
+
+    first_df = _run_benchmark()
+    assert np.isnan(first_df.loc[0, "train_data_fold_0"].iloc[1])
+    second_df = _run_benchmark()
+
+    expected_train_data = [
+        [1.0, np.nan, 4.0],
+        [1.0, np.nan, 4.0, 3.0],
+        [1.0, np.nan, 4.0, 3.0, 5.0],
+    ]
+    for fold, expected in enumerate(expected_train_data):
+        train_data = np.asarray(second_df.loc[0, f"train_data_fold_{fold}"]).ravel()
+        assert np.isnan(train_data[1])
+        np.testing.assert_array_equal(train_data, expected)
+
+    score_cols = [f"MeanAbsoluteError_fold_{fold}_test" for fold in range(3)]
+    np.testing.assert_allclose(
+        second_df.loc[0, score_cols].to_numpy(dtype="float64"), [1.0, 2.0, 1.0]
+    )
+
+
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.benchmarking"),
     reason="run test only if benchmarking module has changed",
