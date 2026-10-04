@@ -5,6 +5,7 @@ import warnings
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 import numpy as np
+
 torch = _safe_import("torch")
 nn = _safe_import("torch.nn")
 F = _safe_import("torch.nn.functional")
