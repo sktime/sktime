@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_PBS_dataset
+from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.croston import Croston
 from sktime.tests.test_switch import run_test_for_class
 
@@ -202,3 +203,63 @@ def test_croston_update_params_false_does_not_change_forecast():
     after = forecaster.predict(fh=fh).to_numpy()
 
     np.testing.assert_allclose(before, after, rtol=1e-12)
+
+
+@pytest.mark.parametrize("remember_data", [True, False])
+@pytest.mark.parametrize("index_kind", ["integer", "period", "datetime"])
+@pytest.mark.parametrize("horizon_kind", ["relative", "absolute"])
+@pytest.mark.parametrize(
+    "steps, expected",
+    [
+        ([-3, -2, -1, 0], [2, 2, 3, 3]),
+        ([-2, 0, 1, 4], [2, 3, 11 / 3, 11 / 3]),
+        ([1, 4], [11 / 3, 11 / 3]),
+    ],
+)
+def test_croston_in_sample_forecasts(
+    remember_data, index_kind, horizon_kind, steps, expected
+):
+    """Return historical one-step forecasts and constant future forecasts."""
+    if index_kind == "integer":
+        index = pd.RangeIndex(10, 14)
+    elif index_kind == "period":
+        index = pd.period_range("2020-01", periods=4, freq="M")
+    else:
+        index = pd.date_range("2020-01-01", periods=4, freq="D")
+    y = pd.Series([2.0, 4.0, 0.0, 8.0], index=index, name="demand")
+    forecaster = Croston(smoothing=0.5).set_config(remember_data=remember_data).fit(y)
+    fh = ForecastingHorizon(steps, is_relative=True)
+    if horizon_kind == "absolute":
+        fh = fh.to_absolute(forecaster.cutoff)
+
+    result = forecaster.predict(fh=fh)
+
+    # q/a before each observation: 2, 2, 3, 3; the final update is 5.5/1.5.
+    np.testing.assert_allclose(result, expected)
+    pd.testing.assert_index_equal(result.index, fh.to_absolute_index(forecaster.cutoff))
+    assert result.name == y.name
+
+
+@pytest.mark.parametrize("remember_data", [True, False])
+def test_croston_in_sample_after_update(remember_data):
+    """Incremental updates retain forecasts for the earlier and new dates."""
+    index = pd.date_range("2020-01-01", periods=6, freq="D")
+    y = pd.Series([2.0, 4.0, 0.0, 8.0, 0.0, 6.0], index=index)
+    forecaster = Croston(0.5).set_config(remember_data=remember_data).fit(y.iloc[:4])
+    forecaster.update(y.iloc[4:])
+
+    result = forecaster.predict(fh=[-5, -4, -3, -2, -1, 0, 1])
+
+    np.testing.assert_allclose(result, [2, 2, 3, 3, 11 / 3, 11 / 3, 23 / 7])
+
+
+@pytest.mark.parametrize("remember_data", [True, False])
+def test_croston_unobserved_historical_dates(remember_data):
+    """Never wrap negative positions or invent estimates for unobserved dates."""
+    y = pd.Series([2.0, 4.0, 0.0, 8.0], index=[10, 12, 15, 20])
+    forecaster = Croston(0.5).set_config(remember_data=remember_data).fit(y)
+    fh = ForecastingHorizon([9, 10, 11, 12, 15, 20, 21], is_relative=False)
+
+    result = forecaster.predict(fh=fh)
+
+    np.testing.assert_allclose(result, [np.nan, 2, np.nan, 2, 3, 3, 11 / 3])

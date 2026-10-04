@@ -21,6 +21,9 @@ class Croston(BaseForecaster):
     Croston's method essentially provides another notion for the average value
     of a time series.
 
+    In-sample predictions use the stored one-step forecasts. Historical dates
+    absent from the training history return NaN.
+
     The method is (equivalent to) the following:
 
     - Let :math:`v_0,\ldots,v_n` be the non-zero values of the time series
@@ -107,6 +110,7 @@ class Croston(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._f_index = y.index.copy()
         n_timepoints = len(y)  # Historical period: i.e the input array's length
         smoothing = self.smoothing
 
@@ -169,6 +173,7 @@ class Croston(BaseForecaster):
         if not update_params:
             return self
 
+        new_index = y.index
         y = y.to_numpy().flatten()
         n_new = len(y)
         if n_new == 0:
@@ -200,6 +205,7 @@ class Croston(BaseForecaster):
                 p += 1
 
         self._f = np.concatenate([self._f, f[1:]])
+        self._f_index = self._f_index.append(new_index)
         self._q_last = q[-1]
         self._a_last = a[-1]
         self._p = p
@@ -226,13 +232,18 @@ class Croston(BaseForecaster):
         forecast : pd.series
             Predicted forecasts.
         """
-        len_fh = len(self.fh)
-        f = self._f
+        index = fh.to_absolute_index(self.cutoff)
+        # Overlapping update windows can revisit a date; use its latest forecast.
+        retained = np.flatnonzero(~self._f_index.duplicated(keep="last"))
+        positions = self._f_index[retained].get_indexer(index)
+        y_pred = np.full(len(fh), self._f[-1])
+        # Historical forecasts were formed before the corresponding observation.
+        # Unknown historical dates have no stored forecast.
+        in_sample = fh.to_relative(self.cutoff).to_numpy() <= 0
+        y_pred[in_sample] = np.nan
+        observed = positions >= 0
+        y_pred[observed] = self._f[retained[positions[observed]]]
 
-        # Predicting future forecasts:to_numpy()
-        y_pred = np.full(len_fh, f[-1])
-
-        index = self.fh.to_absolute_index(self.cutoff)
         return pd.DataFrame(y_pred, index=index, columns=self._get_varnames())
 
     @classmethod
