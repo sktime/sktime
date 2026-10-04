@@ -97,6 +97,7 @@ def _weighted_geometric_mean(y, weights=None, axis=None):
     geometric_mean : float
         Weighted geometric mean
     """
+    weights = np.asarray(weights)
     if weights.ndim == 1:
         if axis == 0:
             check_consistent_length(y, weights)
