@@ -7,8 +7,14 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+import pandas as pd
+from scipy.stats import gmean
+
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+from sktime.performance_metrics.forecasting._common import _relative_error
 from sktime.performance_metrics.forecasting._functions import (
+    EPS,
     geometric_mean_relative_squared_error,
 )
 
@@ -105,6 +111,29 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
     }
 
     func = geometric_mean_relative_squared_error
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return jackknife pseudo-values of GMRSE at each time point."""
+        y_pred_benchmark = kwargs["y_pred_benchmark"]
+        relative_errors = np.square(_relative_error(y_true, y_pred, y_pred_benchmark))
+        relative_errors = pd.DataFrame(
+            np.where(relative_errors == 0.0, EPS, relative_errors),
+            index=y_true.index,
+            columns=y_true.columns,
+        )
+
+        n = relative_errors.shape[0]
+        gmrse = pd.Series(gmean(relative_errors, axis=0), index=y_true.columns)
+        gmrse_jackknife = (relative_errors ** (-1 / n) * gmrse) ** (1 + 1 / (n - 1))
+
+        if self.square_root:
+            gmrse = np.sqrt(gmrse)
+            gmrse_jackknife = np.sqrt(gmrse_jackknife)
+
+        pseudo_values = n * gmrse - (n - 1) * gmrse_jackknife
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+
+        return self._handle_multioutput(pseudo_values, self.multioutput)
 
     def __init__(
         self,
