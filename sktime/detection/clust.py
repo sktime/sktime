@@ -30,6 +30,16 @@ class ClusterSegmenter(BaseDetector):
         Random state of the default ``KMeans`` clusterer, used if ``clusterer``
         is None. Ignored if ``clusterer`` is passed, in this case randomness
         is controlled by the parameters of ``clusterer``.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.cluster import KMeans
+    >>> from sktime.detection.clust import ClusterSegmenter
+    >>> X = pd.DataFrame({"a": [1, 1, 1, 1, 10, 10, 10, 10]})
+    >>> segmenter = ClusterSegmenter(clusterer=KMeans(n_clusters=2, random_state=42))
+    >>> _ = segmenter.fit(X)
+    >>> y_pred = segmenter.predict(X)
     """
 
     _tags = {
