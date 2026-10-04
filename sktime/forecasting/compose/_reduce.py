@@ -1963,7 +1963,7 @@ class _ReducerMixin:
         fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
             forecasting horizon for which to construct the expected prediction index.
         y_fit_index : pd.Index, optional, default=None
-            index of the fitted endogenous series. If None, uses self._cur_yindex.
+            index of the fitted endogenous series. If None, uses self._cur_y.index.
 
         Returns
         -------
