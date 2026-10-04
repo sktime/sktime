@@ -102,7 +102,6 @@ def test_cutoff_fh_splitter_relative_cutoffs(hierarchical, fh, method):
             pd.testing.assert_frame_equal(train, y.iloc[expected_train])
             pd.testing.assert_frame_equal(test, y.iloc[expected_test])
 
-import pandas as pd
 
 @pytest.mark.skipif(
     not run_test_for_class(CutoffSplitter),

@@ -2,6 +2,8 @@
 """Tests for single window splitter."""
 
 import numpy as np
+import pandas as pd
+
 import pytest
 
 from sktime.forecasting.tests._config import (
@@ -90,7 +92,6 @@ def test_single_window_splitter_default_window_length(y, fh):
         )
     np.testing.assert_array_equal(test_window, test_window_expected)
 
-import pandas as pd
 
 @pytest.mark.skipif(
     not run_test_for_class(SingleWindowSplitter),
