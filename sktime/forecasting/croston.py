@@ -4,8 +4,21 @@
 
 import numpy as np
 import pandas as pd
+from scipy.signal import lfilter
 
 from sktime.forecasting.base import BaseForecaster
+
+
+def _exp_smooth(x, start, smoothing):
+    """Exponentially smooth ``x``, starting from ``start``.
+
+    Computes ``out[0] = smoothing * x[0] + (1 - smoothing) * start`` and
+    ``out[k] = smoothing * x[k] + (1 - smoothing) * out[k - 1]`` for ``k >= 1``,
+    in compiled code. This is exactly the recursion Croston's method applies
+    at non-zero demand observations.
+    """
+    zi = np.asarray([start * (1.0 - smoothing)])
+    return lfilter([smoothing], [1.0, -(1.0 - smoothing)], x, zi=zi)[0]
 
 
 class Croston(BaseForecaster):
@@ -111,38 +124,55 @@ class Croston(BaseForecaster):
         smoothing = self.smoothing
 
         y = y.to_numpy().flatten()  # Transform the input into a numpy array
-        # Fit the parameters: level(q), periodicity(a) and forecast(f)
-        q, a, f = np.full((3, n_timepoints + 1), np.nan)
-        p = 1  # periods since last demand observation
 
-        # Initialization:
-        first_occurrence = np.argmax(y[:n_timepoints] > 0)
-        q[0] = y[first_occurrence]
-        a[0] = 1 + first_occurrence
-        f[0] = q[0] / a[0]
+        # Fit the parameters: level (q), periodicity (a) and forecast (f).
+        #
+        # The recursion below only changes state at non-zero observations, so
+        # it is equivalent to exponential smoothing over the subsequence of
+        # non-zero demands, with the smoothed values held constant in between.
+        # The vectorized form computes the same values without the
+        # Python-level loop over all time points, which dominates fit time
+        # on long series.
+        demand_idx = np.flatnonzero(y > 0)
 
-        # Create t+1 forecasts:
-        for t in range(0, n_timepoints):
-            if y[t] > 0:
-                q[t + 1] = smoothing * y[t] + (1 - smoothing) * q[t]
-                a[t + 1] = smoothing * p + (1 - smoothing) * a[t]
-                f[t + 1] = q[t + 1] / a[t + 1]
-                p = 1
-            else:
-                q[t + 1] = q[t]
-                a[t + 1] = a[t]
-                f[t + 1] = f[t]
-                p += 1
+        if len(demand_idx) == 0:
+            # no non-zero demand: same degenerate state the loop would produce,
+            # as argmax on a series without positive values returns 0
+            self._f = np.full(n_timepoints + 1, y[0])
+            self._q_last = y[0]
+            self._a_last = 1.0
+            self._p = 1 + n_timepoints
+            self._seen_demand = False
+            return self
+
+        demands = y[demand_idx]
+        # periods between consecutive non-zero demands; the first entry also
+        # counts the leading zeros plus one, mirroring the loop's p
+        gaps = np.diff(demand_idx, prepend=-1).astype(float)
+
+        q_smooth = _exp_smooth(demands, demands[0], smoothing)
+        a_smooth = _exp_smooth(gaps, gaps[0], smoothing)
+        ratio = q_smooth / a_smooth
+
+        # f[t] is the smoothed forecast after t observations; it only changes
+        # right after a non-zero demand and stays constant otherwise
+        f = np.empty(n_timepoints + 1)
+        f[0] = demands[0] / gaps[0]
+        n_demands_seen = np.searchsorted(
+            demand_idx + 1, np.arange(1, n_timepoints + 1), side="right"
+        )
+        # before the first demand the forecast stays at its initial value
+        f[1:] = np.where(n_demands_seen == 0, f[0], ratio[n_demands_seen - 1])
         self._f = f
 
         # terminal state of the recursion, so that ``_update`` can continue it
         # incrementally instead of refitting from scratch. ``p`` in particular
         # is not recoverable from ``f`` alone, but is needed to smooth the
         # interval estimate at the next non-zero observation.
-        self._q_last = q[-1]
-        self._a_last = a[-1]
-        self._p = p
-        self._seen_demand = bool(np.any(y > 0))
+        self._q_last = q_smooth[-1]
+        self._a_last = a_smooth[-1]
+        self._p = int(n_timepoints - demand_idx[-1])
+        self._seen_demand = True
 
         return self
 
@@ -182,28 +212,36 @@ class Croston(BaseForecaster):
             return self._fit(y=self._y, X=X, fh=None)
 
         smoothing = self.smoothing
+        demand_idx = np.flatnonzero(y > 0)
 
-        q, a, f = np.full((3, n_new + 1), np.nan)
-        q[0], a[0], f[0] = self._q_last, self._a_last, self._f[-1]
-        p = self._p
+        if len(demand_idx) == 0:
+            # no new demand: the smoothed state is unchanged, only the
+            # periods-since-last-demand counter advances
+            self._f = np.concatenate([self._f, np.full(n_new, self._f[-1])])
+            self._p = self._p + n_new
+            return self
 
-        for t in range(0, n_new):
-            if y[t] > 0:
-                q[t + 1] = smoothing * y[t] + (1 - smoothing) * q[t]
-                a[t + 1] = smoothing * p + (1 - smoothing) * a[t]
-                f[t + 1] = q[t + 1] / a[t + 1]
-                p = 1
-            else:
-                q[t + 1] = q[t]
-                a[t + 1] = a[t]
-                f[t + 1] = f[t]
-                p += 1
+        demands = y[demand_idx]
+        # gaps[0] continues the counter carried over from the previous data
+        gaps = np.diff(demand_idx, prepend=-self._p).astype(float)
 
-        self._f = np.concatenate([self._f, f[1:]])
-        self._q_last = q[-1]
-        self._a_last = a[-1]
-        self._p = p
-        self._seen_demand = self._seen_demand or bool(np.any(y > 0))
+        q_smooth = _exp_smooth(demands, self._q_last, smoothing)
+        a_smooth = _exp_smooth(gaps, self._a_last, smoothing)
+        ratio = q_smooth / a_smooth
+
+        f_new = np.empty(n_new + 1)
+        f_new[0] = self._f[-1]
+        n_demands_seen = np.searchsorted(
+            demand_idx + 1, np.arange(1, n_new + 1), side="right"
+        )
+        # before the first new demand, the forecast stays at its old value
+        f_new[1:] = np.where(n_demands_seen == 0, f_new[0], ratio[n_demands_seen - 1])
+
+        self._f = np.concatenate([self._f, f_new[1:]])
+        self._q_last = q_smooth[-1]
+        self._a_last = a_smooth[-1]
+        self._p = int(n_new - demand_idx[-1])
+        self._seen_demand = True
 
         return self
 

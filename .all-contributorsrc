@@ -4254,6 +4254,15 @@
         "code",
         "test"
       ]
+    },
+    {
+      "login": "Ishaan-Gpt",
+      "name": "Ishaan Gupta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/191627877?v=4",
+      "profile": "https://github.com/Ishaan-Gpt",
+      "contributions": [
+        "code"
+      ]
     }
   ]
 }
