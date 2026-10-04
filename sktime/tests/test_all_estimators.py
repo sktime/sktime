@@ -1271,10 +1271,8 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
         )
 
-    def test_no_global_numpy_random_state_side_effects(
-        self, object_instance, scenario, method_nsc
-    ):
-        """Check that fit and predict-like methods leave the global numpy RNG as is.
+    def test_no_global_numpy_random_state_side_effects(self, object_instance, scenario):
+        """Check that running the scenario leaves the global numpy RNG as is.
 
         Estimators should neither set the process-global ``numpy`` random seed,
         e.g., via ``np.random.seed``, nor draw from the global ``numpy`` RNG
@@ -1282,48 +1280,58 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
         and any other code relying on the global random state, see #11306, #11388.
 
         Checks that ``np.random.get_state()`` is the same before and after
-        ``fit``, and before and after the non-state-changing method ``method_nsc``.
+        running the default method sequence of the scenario.
         """
         estimator = object_instance
         set_random_state(estimator)
 
-        state_fields = ["bit generator", "key", "pos", "has_gauss", "cached_gaussian"]
-
-        def _assert_global_random_state_unchanged(state_before, method):
-            state_after = np.random.get_state()
-            changed = [
-                field
-                for field, before, after in zip(state_fields, state_before, state_after)
-                if not np.array_equal(before, after)
-            ]
-            assert len(changed) == 0, (
-                f"Estimator: {type(estimator).__name__} changes the global numpy "
-                f"random state in {method}, changed elements of "
-                f"np.random.get_state(): {changed}. Estimators should not call "
-                "np.random.seed or draw from the global numpy random number "
-                "generator, but use a local generator instead, e.g., "
-                "sklearn.utils.check_random_state(self.random_state)."
-            )
+        # default method sequence of the scenario, restricted to methods that
+        # the estimator has, e.g., not all classifiers have decision_function
+        method_sequence = getattr(scenario, "default_method_sequence", None)
+        arg_sequence = getattr(scenario, "default_arg_sequence", None)
+        if method_sequence is None:
+            method_sequence = arg_sequence
+        if arg_sequence is None:
+            arg_sequence = method_sequence
+        sequence = [
+            (method, arg)
+            for method, arg in zip(method_sequence, arg_sequence)
+            if hasattr(estimator, method)
+        ]
+        method_sequence = [method for method, _ in sequence]
+        arg_sequence = [arg for _, arg in sequence]
 
         # advance the global state by one draw, so that reseeding with the seed
         # which the global state was last seeded with is also detected
         np.random.rand()
 
         state_before = np.random.get_state()
-        scenario.run(estimator, method_sequence=["fit"])
-        _assert_global_random_state_unchanged(state_before, "fit")
+        scenario.run(
+            estimator, method_sequence=method_sequence, arg_sequence=arg_sequence
+        )
+        if deep_equals(state_before, np.random.get_state()):
+            return None
 
-        # skip test if vectorization would be necessary and method predict_proba
-        # this is since vectorization is not implemented for predict_proba
-        if method_nsc in ["predict_proba", "predict_var"]:
-            with ValidProbaErrors() as handler:
-                scenario.run(estimator, method_sequence=[method_nsc])
-            if handler.skipped:
-                return None
+        # state has changed - for the error message, find the methods changing it,
+        # by running the method sequence step by step, on a fresh clone
+        estimator = estimator.clone()
+        changed = []
+        for method, arg in sequence:
+            np.random.rand()
+            state_before = np.random.get_state()
+            scenario.run(estimator, method_sequence=[method], arg_sequence=[arg])
+            if not deep_equals(state_before, np.random.get_state()):
+                changed += [method]
 
-        state_before = np.random.get_state()
-        scenario.run(estimator, method_sequence=[method_nsc])
-        _assert_global_random_state_unchanged(state_before, method_nsc)
+        raise AssertionError(
+            f"Estimator: {type(estimator).__name__} changes the global numpy "
+            f"random state, i.e., np.random.get_state(), when running scenario "
+            f"{type(scenario).__name__}, with method sequence {method_sequence}. "
+            f"Methods changing the state, when run step by step: {changed}. "
+            "Estimators should not call np.random.seed or draw from the global "
+            "numpy random number generator, but use a local generator instead, "
+            "e.g., sklearn.utils.check_random_state(self.random_state)."
+        )
 
     def test_persistence_via_pickle(
         self, object_instance, scenario, method_nsc_arraylike
