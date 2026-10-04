@@ -1057,6 +1057,25 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             f"Estimator: {object_instance} does not return self when calling fit"
         )
 
+    def test_scenario_does_not_modify_global_numpy_rng(self, object_instance, scenario):
+        """Check that an estimator scenario does not modify the process-global NumPy
+        random state.
+        """
+        state_before = np.random.get_state()
+        scenario.run(object_instance)
+        state_after = np.random.get_state()
+
+        assert all(
+            np.array_equal(before, after)
+            if isinstance(before, np.ndarray)
+            else before == after
+            for before, after in zip(state_before, state_after)
+        ), (
+            f"Estimator: {type(object_instance).__name__}, "
+            f"scenario: {type(scenario).__name__} modifies the "
+            "process-global numpy RNG state"
+        )
+
     def test_raises_not_fitted_error(self, object_instance, scenario, method_nsc):
         """Check exception raised for non-fit method calls to unfitted estimators.
 

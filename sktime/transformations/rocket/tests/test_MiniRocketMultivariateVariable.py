@@ -1,6 +1,7 @@
 """MiniRocketMultivariateVariable test code."""
 
 import numpy as np
+import pandas as pd
 import pytest
 from sklearn.linear_model import RidgeClassifierCV
 from sklearn.metrics import accuracy_score
@@ -67,3 +68,31 @@ def test_minirocket_multivariate_variable_on_japanese_vowels():
 
     # test accuracy, mean usually .987, and minimum .983
     assert accuracy > 0.97, "Test accuracy should be greater than 0.97"
+
+
+@pytest.mark.parametrize("random_state", [None, 42])
+def test_minirocket_multivariate_variable_does_not_modify_global_numpy_rng(
+    random_state,
+):
+    """Test that fitting does not modify the process-global NumPy RNG state."""
+    X = [
+        pd.DataFrame(np.arange(20, dtype=np.float32).reshape(10, 2)),
+        pd.DataFrame(np.arange(20, 40, dtype=np.float32).reshape(10, 2)),
+    ]
+    estimator = MiniRocketMultivariateVariable(
+        num_kernels=84,
+        max_dilations_per_kernel=1,
+        random_state=random_state,
+    )
+
+    np.random.seed(42)
+    state_before = np.random.get_state()
+    estimator.fit(X)
+    state_after = np.random.get_state()
+
+    assert all(
+        np.array_equal(before, after)
+        if isinstance(before, np.ndarray)
+        else before == after
+        for before, after in zip(state_before, state_after)
+    )
