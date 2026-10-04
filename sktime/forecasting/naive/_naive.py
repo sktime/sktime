@@ -438,7 +438,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return y_pred
 
-    def _predict_quantiles(self, fh, X, alpha):
+    def _predict_quantiles(self, fh, X, alpha) -> pd.DataFrame:
         """Compute/return prediction quantiles for a forecast.
 
         Uses normal distribution as predictive distribution to compute the
@@ -482,7 +482,7 @@ class NaiveForecaster(_BaseWindowForecaster):
 
         return pred_quantiles
 
-    def _predict_var(self, fh, X=None, cov=False):
+    def _predict_var(self, fh, X=None, cov=False) -> pd.DataFrame:
         """Compute/return prediction variance for naive forecasts.
 
         Variance are computed according to formulas from (Table 5.2)
