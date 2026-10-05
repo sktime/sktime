@@ -887,3 +887,250 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+class _SpyRegressor(LinearRegression):
+    """LinearRegression that records the feature matrices it sees."""
+
+    fit_calls = []
+    predict_calls = []
+
+    def fit(self, X, y):
+        _SpyRegressor.fit_calls.append((np.asarray(X, float), np.asarray(y, float)))
+        return super().fit(X, y)
+
+    def predict(self, X):
+        _SpyRegressor.predict_calls.append(np.asarray(X, float))
+        return super().predict(X)
+
+
+def _rrf_trafo_data(kind):
+    """Return y for the RRF transformers tests; int index, deterministic."""
+    from sktime.utils._testing.hierarchical import _make_hierarchical
+
+    if kind == "single":
+        y = load_airline().reset_index(drop=True).to_frame()
+        return y.astype(float)
+    levels = {"panel": (3,), "hierarchical": (2, 3)}[kind]
+    return _make_hierarchical(
+        levels, min_timepoints=40, max_timepoints=40, index_type="int", random_state=1
+    )
+
+
+def _rrf_trafo_ws():
+    from sktime.transformations.summarize import WindowSummarizer
+
+    # window ending at t (lag 0), as the RRF convention is "features at t predict t+1"
+    lag_feature = {"mean": [[0, 3]], "std": [[0, 6]], "min": [[2, 4]]}
+    return WindowSummarizer(lag_feature=lag_feature, truncate=None)
+
+
+def _rrf_trafo_instances(y):
+    """Split y into a dict of single series, one per lowest-level instance."""
+    if not isinstance(y.index, pd.MultiIndex):
+        return {(): y.iloc[:, 0]}
+    inst = list(range(y.index.nlevels - 1))
+    return {
+        (k if isinstance(k, tuple) else (k,)): g.droplevel(inst)
+        for k, g in y.iloc[:, 0].groupby(level=inst)
+    }
+
+
+def _rrf_trafo_expected(s, window_length=3):
+    """Features expected to predict y(t), computed by hand for one series.
+
+    columns: y(t-1), ..., y(t-window_length), then WindowSummarizer outputs at t-1
+    """
+    ws_out = _rrf_trafo_ws().fit_transform(s.to_frame())
+    lags = pd.concat({f"lag{k}": s.shift(k) for k in range(window_length)}, axis=1)
+    return pd.concat([lags, ws_out], axis=1).shift(1)
+
+
+def _rows(arr):
+    return sorted(map(tuple, np.round(arr, 6)))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize("pooling", ["local", "global"])
+@pytest.mark.parametrize("kind", ["single", "panel", "hierarchical"])
+def test_recursive_reduction_transformers_features_in_fit(kind, pooling):
+    """Regressor in RRF with transformers sees lags and all WindowSummarizer stats."""
+    if kind == "single" and pooling == "global":
+        pytest.skip("same as local for a single series")
+    y = _rrf_trafo_data(kind)
+
+    _SpyRegressor.fit_calls.clear()
+    f = RecursiveReductionForecaster(
+        _SpyRegressor(),
+        window_length=3,
+        transformers=[_rrf_trafo_ws()],
+        pooling=pooling,
+        impute_method=None,
+    )
+    f.fit(y)
+
+    instances = _rrf_trafo_instances(y)
+    n_fits = len(instances) if pooling == "local" else 1
+    assert len(_SpyRegressor.fit_calls) == n_fits
+
+    expected = []
+    for s in instances.values():
+        feats = _rrf_trafo_expected(s)
+        ok = feats.notna().all(axis=1)
+        expected.append(np.column_stack([feats[ok].values, s[ok].values]))
+    expected = np.vstack(expected)
+
+    seen = np.vstack([np.column_stack([X, yy]) for X, yy in _SpyRegressor.fit_calls])
+    # 3 lags + mean, std, min
+    assert _SpyRegressor.fit_calls[0][0].shape[1] == 6
+    assert _rows(seen) == _rows(expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize("pooling", ["local", "global"])
+@pytest.mark.parametrize("kind", ["single", "panel", "hierarchical"])
+def test_recursive_reduction_transformers_features_in_predict(kind, pooling):
+    """Regressor sees correct features in recursive out-of-sample and in-sample."""
+    if kind == "single" and pooling == "global":
+        pytest.skip("same as local for a single series")
+    y = _rrf_trafo_data(kind)
+    is_multi = isinstance(y.index, pd.MultiIndex)
+
+    f = RecursiveReductionForecaster(
+        _SpyRegressor(),
+        window_length=3,
+        transformers=[_rrf_trafo_ws()],
+        pooling=pooling,
+        impute_method=None,
+    )
+    f.fit(y)
+
+    # out-of-sample: features at step h use the predictions of steps < h
+    _SpyRegressor.predict_calls.clear()
+    y_pred = f.predict(fh=[1, 2, 3])
+    seen = set(_rows(np.vstack(_SpyRegressor.predict_calls)))
+    n_steps = len(_SpyRegressor.predict_calls)
+    assert n_steps == 3 * (len(_rrf_trafo_instances(y)) if pooling == "local" else 1)
+
+    for key, s in _rrf_trafo_instances(y).items():
+        s_ext = s.copy()
+        for h in [1, 2, 3]:
+            t = s.index[-1] + h
+            ext = pd.concat([s_ext, pd.Series([np.nan], index=[t])])
+            row = _rrf_trafo_expected(ext).loc[t].values
+            assert tuple(np.round(row, 6)) in seen
+            pred = y_pred.loc[(*key, t)] if is_multi else y_pred.loc[t]
+            s_ext = pd.concat([s_ext, pd.Series([float(np.ravel(pred)[0])], index=[t])])
+
+    # in-sample
+    _SpyRegressor.predict_calls.clear()
+    y_pred_ins = f.predict(fh=[-20, -10, -1, 0])
+    assert len(y_pred_ins) == 4 * len(_rrf_trafo_instances(y))
+    seen = set(_rows(np.vstack(_SpyRegressor.predict_calls)))
+    for s in _rrf_trafo_instances(y).values():
+        feats = _rrf_trafo_expected(s)
+        for h in [-20, -10, -1, 0]:
+            assert tuple(np.round(feats.loc[s.index[-1] + h].values, 6)) in seen
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize("kind", ["single", "panel", "hierarchical"])
+def test_recursive_reduction_transformers_matches_make_reduction(kind):
+    """RRF with transformers gives same forecasts as make_reduction (recursive)."""
+    from sktime.transformations.summarize import WindowSummarizer
+
+    y = _rrf_trafo_data(kind)
+    # make_reduction convention: windows end at t-1, RRF shifts by one itself
+    mr_ws = WindowSummarizer(
+        lag_feature={
+            "lag": [1, 2, 3],
+            "mean": [[1, 3]],
+            "std": [[1, 6]],
+            "min": [[3, 4]],
+        },
+        truncate=None,
+    )
+    fh = [1, 2, 3, 4]
+    est = LinearRegression()
+    f_mr = make_reduction(
+        est,
+        window_length=None,
+        transformers=[mr_ws],
+        strategy="recursive",
+        pooling="global",
+    )
+    f_rrf = RecursiveReductionForecaster(
+        est,
+        window_length=3,
+        transformers=[_rrf_trafo_ws()],
+        pooling="global",
+        impute_method=None,
+    )
+    y_mr = f_mr.fit(y).predict(fh=fh).sort_index()
+    y_rrf = f_rrf.fit(y).predict(fh=fh).sort_index()
+    np.testing.assert_allclose(y_mr.values, y_rrf.values, rtol=1e-6)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_recursive_reduction_transformers_local_equals_per_series_fits():
+    """Local pooling on panel data equals separate RRF fits on each series."""
+    y = _rrf_trafo_data("panel")
+    kwargs = {
+        "window_length": 3,
+        "transformers": [_rrf_trafo_ws()],
+        "impute_method": None,
+    }
+    y_pred = (
+        RecursiveReductionForecaster(LinearRegression(), pooling="local", **kwargs)
+        .fit(y)
+        .predict(fh=[1, 2, 3])
+    )
+
+    for key, s in _rrf_trafo_instances(y).items():
+        y_pred_s = (
+            RecursiveReductionForecaster(LinearRegression(), **kwargs)
+            .fit(s.to_frame())
+            .predict(fh=[1, 2, 3])
+        )
+        np.testing.assert_allclose(
+            y_pred.loc[key].values.ravel(), y_pred_s.values.ravel(), rtol=1e-6
+        )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+def test_recursive_reduction_transformers_with_exogenous():
+    """Exogenous columns come first, then lags, then transformer features."""
+    y = _rrf_trafo_data("single")
+    X = pd.DataFrame({"x": np.arange(len(y), dtype=float)}, index=y.index)
+
+    _SpyRegressor.fit_calls.clear()
+    f = RecursiveReductionForecaster(
+        _SpyRegressor(),
+        window_length=3,
+        transformers=[_rrf_trafo_ws()],
+        impute_method=None,
+    )
+    f.fit(y, X=X)
+    X_seen, y_seen = _SpyRegressor.fit_calls[0]
+    assert X_seen.shape[1] == 1 + 3 + 3
+
+    feats = _rrf_trafo_expected(y.iloc[:, 0])
+    feats.insert(0, "x", X["x"])
+    ok = feats.notna().all(axis=1)
+    expected = np.column_stack([feats[ok].values, y.iloc[:, 0][ok].values])
+    assert _rows(np.column_stack([X_seen, y_seen])) == _rows(expected)
