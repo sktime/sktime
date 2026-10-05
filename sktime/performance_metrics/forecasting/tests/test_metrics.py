@@ -86,6 +86,41 @@ def test_gmse_function():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_geometric_mean_horizon_weight_array_like():
+    """Check that array-like horizon_weight works, see issue #4988."""
+    from sktime.performance_metrics.forecasting import (
+        geometric_mean_absolute_error,
+        geometric_mean_squared_error,
+    )
+
+    y_true = np.array([3, -0.5, 2, 7, 2])
+    y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    expected_gmse = geometric_mean_squared_error(
+        y_true, y_pred, horizon_weight=np.array([1.0, 2.0, 1.0, 2.0, 1.0])
+    )
+    expected_gmae = geometric_mean_absolute_error(
+        y_true, y_pred, horizon_weight=np.array([1.0, 2.0, 1.0, 2.0, 1.0])
+    )
+
+    for weights in (
+        [1.0, 2.0, 1.0, 2.0, 1.0],
+        (1.0, 2.0, 1.0, 2.0, 1.0),
+        pd.Series([1.0, 2.0, 1.0, 2.0, 1.0]),
+    ):
+        assert np.allclose(
+            geometric_mean_squared_error(y_true, y_pred, horizon_weight=weights),
+            expected_gmse,
+        )
+        assert np.allclose(
+            geometric_mean_absolute_error(y_true, y_pred, horizon_weight=weights),
+            expected_gmae,
+        )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_linex_class():
     """Doctest from MeanLinexError."""
     from sktime.performance_metrics.forecasting import MeanLinexError

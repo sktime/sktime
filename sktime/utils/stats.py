@@ -87,7 +87,7 @@ def _weighted_geometric_mean(y, weights=None, axis=None):
     ----------
     y : np.ndarray
         Values to take the weighted geometric mean of.
-    weights: np.ndarray
+    weights: array-like
         Weights for each value in `array`. Must be same shape as `array` or
         of shape `(array.shape[0],)` if axis=0 or `(array.shape[1], ) if axis=1.
     axis : int
@@ -98,6 +98,8 @@ def _weighted_geometric_mean(y, weights=None, axis=None):
     geometric_mean : float
         Weighted geometric mean
     """
+    if weights is not None:
+        weights = np.asarray(weights)
     if weights.ndim == 1:
         if axis == 0:
             check_consistent_length(y, weights)
