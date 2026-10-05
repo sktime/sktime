@@ -632,3 +632,34 @@ def test_msle_no_stdout_on_index_mismatch():
     with contextlib.redirect_stdout(buf):
         mean_squared_log_error(y_true, y_pred)
     assert buf.getvalue() == ""
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_geometric_mean_errors_accept_array_like_horizon_weight():
+    """Regression: list/tuple horizon weights must match ndarray weights.
+
+    ``horizon_weight`` is documented as array-like. Lists previously failed
+    in ``_weighted_geometric_mean`` because it read ``weights.ndim``.
+    See sktime#4988.
+    """
+    from sktime.performance_metrics.forecasting import (
+        geometric_mean_absolute_error,
+        geometric_mean_squared_error,
+    )
+
+    y_true = np.array([3.0, -0.5, 2.0, 7.0])
+    y_pred = np.array([2.5, 0.0, 2.0, 8.0])
+    weights = [1.0, 2.0, 1.0, 2.0]
+
+    for metric in (geometric_mean_absolute_error, geometric_mean_squared_error):
+        expected = metric(y_true, y_pred, horizon_weight=np.asarray(weights))
+        assert np.allclose(metric(y_true, y_pred, horizon_weight=weights), expected)
+        assert np.allclose(
+            metric(y_true, y_pred, horizon_weight=tuple(weights)), expected
+        )
+        assert np.allclose(
+            metric(y_true, y_pred, horizon_weight=pd.Series(weights)), expected
+        )
+
