@@ -224,14 +224,21 @@ def test_make_mock_estimator_uninspectable_callable():
     class _CachedNaiveForecaster(NaiveForecaster):
         @staticmethod
         @cache
-        def _cached_method(value):
+        def _cached_static_method(value):
             """Cached static method, here for testing purposes."""
             return value
+
+        @classmethod
+        @cache
+        def _cached_class_method(cls):
+            """Cached class method, here for testing purposes."""
+            return cls
 
     mock_estimator = make_mock_estimator(_CachedNaiveForecaster)
     mock_estimator_instance = mock_estimator()
     mock_estimator_instance.fit(y_series)
     methods_called = [entry[0] for entry in mock_estimator_instance.log]
 
-    assert mock_estimator._cached_method is _CachedNaiveForecaster._cached_method
+    assert "_cached_static_method" not in vars(mock_estimator)
+    assert "_cached_class_method" not in vars(mock_estimator)
     assert set(methods_called) >= {"fit", "_fit"}
