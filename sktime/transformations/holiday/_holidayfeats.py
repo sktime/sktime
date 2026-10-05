@@ -38,6 +38,8 @@ class HolidayFeatures(BaseTransformer):
         If True, include weekends as holidays.
     return_dummies : bool, default=True
         Whether or not to return a dummy variable for each holiday.
+        The columns are the holidays present at ``fit``. A later index keeps
+        that column set, with zeros where a fitted holiday does not occur.
     return_categorical : bool, default=False
         Whether or not to return a categorical variable with holidays
         beings categories.
@@ -106,7 +108,7 @@ class HolidayFeatures(BaseTransformer):
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
         "X-y-must-have-same-index": False,
-        "fit_is_empty": True,
+        "fit_is_empty": False,
         "requires_y": False,
         "enforce_index_type": [pd.DatetimeIndex, pd.PeriodIndex],
         "transform-returns-same-time-index": True,
@@ -140,6 +142,28 @@ class HolidayFeatures(BaseTransformer):
         self.return_indicator = return_indicator
         self.keep_original_columns = keep_original_columns
         super().__init__()
+
+    def _fit(self, X, y=None):
+        """Remember the holiday categories present in the fitting index.
+
+        ``transform`` then keeps those columns, in this order, on any later index.
+        """
+        index = X.index
+        if isinstance(index, pd.PeriodIndex):
+            index = index.to_timestamp()
+        labelled = _generate_holidays(
+            index,
+            calendar=self.calendar,
+            holiday_windows=self.holiday_windows,
+            include_bridge_days=self.include_bridge_days,
+            include_weekend=self.include_weekend,
+            return_categorical=True,
+            return_dummies=False,
+            return_indicator=False,
+            warning_instance=self,
+        )
+        self._holiday_categories_ = list(labelled["holiday"].cat.categories)
+        return self
 
     def _transform(self, X, y=None):
         """Transform data.
@@ -188,6 +212,7 @@ class HolidayFeatures(BaseTransformer):
             return_dummies=self.return_dummies,
             return_indicator=self.return_indicator,
             warning_instance=self,
+            categories=getattr(self, "_holiday_categories_", None),
         )
 
         if self.keep_original_columns:
@@ -256,6 +281,7 @@ def _generate_holidays(
     return_categorical: bool = False,
     return_indicator: bool = False,
     warning_instance: HolidayFeatures = None,
+    categories: list[str] | None = None,
 ) -> pd.DataFrame:
     """Generate holidays.
 
@@ -398,6 +424,13 @@ def _generate_holidays(
         .set_index(index)
     )
 
+    # Keep the categories seen at fit. A holiday that was not in the fitting
+    # index has no downstream coefficient, so it is labelled "no_holiday".
+    if categories is not None:
+        values = holidays[categorical_column].astype(str)
+        values = values.where(values.isin(categories), no_holiday_value)
+        holidays[categorical_column] = pd.Categorical(values, categories=categories)
+
     # Generate dummies.
     if return_dummies:
         dummies = pd.get_dummies(
@@ -409,6 +442,9 @@ def _generate_holidays(
         )
         if no_holiday_value in dummies.columns:
             dummies = dummies.drop(columns=no_holiday_value)
+        if categories is not None:
+            dummy_columns = [name for name in categories if name != no_holiday_value]
+            dummies = dummies.reindex(columns=dummy_columns, fill_value=0).astype(int)
         holidays = pd.concat([holidays, dummies], axis=1)
 
     # Generate indicator.
