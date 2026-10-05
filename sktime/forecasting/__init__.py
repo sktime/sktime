@@ -23,8 +23,6 @@ _MODULE_ALIASES = {
 # imports do not need to be updated in the codebase
 
 
-for _module, _new_name in _MODULE_ALIASES.items():
-    sys.modules[f"{__name__}.{_module}"] = import_module(f".{_new_name}", __name__)
 
 
 def __getattr__(name):
