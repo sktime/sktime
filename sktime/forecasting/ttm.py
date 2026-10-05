@@ -538,6 +538,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         "property:randomness": "stochastic",
         "capability:random_state": False,
         "capability:pretrain": True,
+        "serialization:skip": ("model_",),
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -581,6 +582,16 @@ class TinyTimeMixerForecaster(BaseForecaster):
         self.fit_strategy = fit_strategy
         self.padding_mask = padding_mask
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Set tags conditional on fit strategy and broadcasting."""
+        if self.fit_strategy != "zero-shot":
+            self.set_tags(
+                **{
+                    "serialization:native_artifacts": ("model_",),
+                    "serialization:skip": (),
+                }
+            )
 
         if self.broadcasting:
             self.set_tags(
@@ -723,6 +734,12 @@ class TinyTimeMixerForecaster(BaseForecaster):
             self._freq_token = None
 
         if not any(param.requires_grad for param in self.model_.parameters()):
+            self.set_tags(
+                **{
+                    "serialization:native_artifacts": (),
+                    "serialization:skip": ("model_",),
+                }
+            )
             return
 
         if self.validation_split is not None:
