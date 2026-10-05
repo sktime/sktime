@@ -189,6 +189,7 @@ class SundialForecaster(BaseForecaster):
         "python_dependencies": ["transformers[torch]~=4.40.0"],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.sundial"],
+        "tests:specific": ["sktime.forecasting.tests.test_sundial_golden"],
     }
 
     def __init__(
@@ -682,7 +683,7 @@ class _CachedSundial:
             config=config,
             ignore_mismatched_sizes=True,
             device_map=self.device,
-            dtype=self.dtype,
+            torch_dtype=self.dtype,
         )
 
     def _load_randomly(self):
