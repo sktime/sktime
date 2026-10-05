@@ -1,11 +1,13 @@
 """Unified high-level interface for various time series related learning tasks."""
 
 from inspect import signature
+from warnings import warn
 
 import numpy as np
 import pandas as pd
 
 from sktime.base import BaseObject
+from sktime.benchmarking.base import _V1_DEPRECATION_MSG
 
 
 class BaseTask(BaseObject):
@@ -19,6 +21,10 @@ class BaseTask(BaseObject):
     including compatibility checks between the concrete task type and
     passed metadata.
 
+    .. deprecated:: 1.1.0
+        Part of the deprecated v1 benchmarking framework; will be removed in
+        sktime 1.3.0. Use the v2 framework instead. See #10464.
+
     Parameters
     ----------
     target : str
@@ -31,6 +37,7 @@ class BaseTask(BaseObject):
     """
 
     def __init__(self, target, features=None, metadata=None):
+        warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
         # TODO input checks on target and feature args
         self._target = target
         self._features = features if features is None else pd.Index(features)

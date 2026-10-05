@@ -37,19 +37,49 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         The kernel sizes of Conv1D layers within each MACNN Block.
     reduction : int, default=16
         The factor by which the first dense layer of a MACNN Block will be divided by.
-    activation : str or Callable or None, default=None
-        Activation function used for final output layer.
-        Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
-        'SELU', 'GELU', None
-    activation_hidden : str or Callable, default="ReLU"
-        Activation function used for the hidden layers.
-        Recommended Callable instance of 'ReLU', 'Tanh', 'Sigmoid', 'LeakyReLU', 'ELU',
-        'SELU', 'GELU', None
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
+        ``ELU``, ``SELU``, ``GELU``.
+    activation_hidden : str, Callable, or None, default="ReLU"
+        Activation applied to the hidden layers.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the hidden layers.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
+        ``ELU``, ``SELU``, ``GELU``.
     num_epochs : int, default=1500
         The number of epochs to train the model.
     batch_size : int, default=4
         The size of each mini-batch during training.
-    optimizer : case insensitive str or None or an instance of optimizers
+    optimizer : case insensitive str or None, or a class or instance of optimizers
         defined in torch.optim, default = "RMSprop"
         The optimizer to use for training the model.
     optimizer_kwargs : dict or None, default = None
@@ -97,10 +127,13 @@ class MACNNClassifierTorch(BaseDeepClassifierPytorch):
         # --------------
         "authors": ["jnrusson1", "noxthot", "Faakhir30"],
         "maintainers": ["Faakhir30"],
-        "python_version": ">=3.10",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.macnn._macnn_torch"],
     }
 
     def __init__(

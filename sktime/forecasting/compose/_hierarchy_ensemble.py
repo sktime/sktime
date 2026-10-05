@@ -10,7 +10,6 @@ import pandas as pd
 from sktime.base._meta import flatten
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._meta import _HeterogenousEnsembleForecaster
-from sktime.transformations.hierarchical.aggregate import _check_index_no_total
 from sktime.utils.parallel import parallelize
 from sktime.utils.warnings import warn
 
@@ -152,6 +151,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -183,6 +183,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 "requires-fh-in-fit",
                 "capability:exogenous",
                 "capability:missing_values",
+                "capability:update",
             ]
             self.clone_tags(forecasters, tags_to_clone)
         else:
@@ -192,6 +193,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
             self._anytagis_then_set(
                 "capability:missing_values", False, True, l_forecasters
             )
+            self._anytagis_then_set("capability:update", False, True, l_forecasters)
 
     @property
     def _forecasters(self):
@@ -241,6 +243,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         # Creating aggregated levels in data
         if _check_index_no_total(y):
             z = self._aggregate(y)
@@ -414,6 +418,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : an instance of self.
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         z = y
         if _check_index_no_total(y):
             z = self._aggregate(y)
@@ -458,6 +464,8 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred : pd.Series
             Point predictions
         """
+        from sktime.transformations.hierarchical.aggregate import _check_index_no_total
+
         if X is not None:
             if _check_index_no_total(X):
                 X = self._aggregate(X)

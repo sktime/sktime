@@ -34,6 +34,13 @@ class MACNNNetwork(BaseDeepNetwork):
         Activation function used for hidden layers;
         List of available keras activation functions:
         https://keras.io/api/layers/activations/
+
+    Examples
+    --------
+    >>> from sktime.networks.macnn import MACNNNetwork
+    >>> network = MACNNNetwork(
+    ...     filter_sizes=(32, 64, 128), kernel_size=(3, 6, 12), random_state=42
+    ... )
     """
 
     _tags = {

@@ -571,7 +571,7 @@ def from_long_to_nested_adp(obj, store=None):
     return from_long_to_nested(X_long=obj)
 
 
-convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
+convert_dict[("pd-long", "nested_univ", "Panel")] = from_long_to_nested_adp
 
 
 def from_multiindex_to_long(obj, store=None):

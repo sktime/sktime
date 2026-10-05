@@ -3,12 +3,12 @@
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import BaseForecaster, _GlobalForecastingDeprecationMixin
+from sktime.forecasting.base import BaseForecaster
 
 __author__ = ["gorold", "chenghaoliu89", "liu-jc", "priyanshuharshbodhi1"]
 
 
-class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class Moirai2Forecaster(BaseForecaster):
     """
     Adapter for using MOIRAI 2.0 Forecasters.
 
@@ -103,12 +103,13 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
         ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.uni2ts"],
+        "tests:specific": ["sktime.forecasting.tests.test_moirai2"],
     }
 
     def __init__(
@@ -144,7 +145,6 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.DataFrame",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 
@@ -189,6 +189,8 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             return Moirai2Forecast.load_from_checkpoint(**model_kwargs)
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         if fh is not None:
             prediction_length = max(fh.to_relative(self.cutoff))
         else:
@@ -238,6 +240,23 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
             self.model = self._instantiate_patched_model(model_kwargs)
             self.model.to(self.map_location)
 
+    def _update(self, y, X=None, update_params=True):
+        """Extend the context series that ``_predict`` conditions on.
+
+        Appending is required for the predictions to line up with the cutoff,
+        which advances in ``update``: the forecast starts right after the last
+        context timepoint.
+
+        ``update_params`` has no effect, the model is used zero-shot: ``_fit``
+        does not train, it loads the pretrained module.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        return self
+
     def _predict(self, fh, X=None):
         if fh is None:
             fh = self.fh
@@ -250,15 +269,12 @@ class Moirai2Forecaster(_GlobalForecastingDeprecationMixin, BaseForecaster):
                 "The Moirai2 adapter is not supporting insample predictions."
             )
 
-        _y = self._y.copy()
+        _y = self._cur_y.copy()
         _X = None
-        if self._X is not None:
-            _X = self._X.copy()
+        if self._cur_X is not None:
+            _X = self._cur_X.copy()
 
         # Zero shot case with X and fit data as context.
-        # The _GlobalForecastingDeprecationMixin handles the legacy y parameter
-        # by temporarily swapping self._y before calling _predict, so here we
-        # only need to detect whether predict-time X was supplied.
         _use_fit_data_as_context = X is not None
 
         if isinstance(_y, pd.Series):

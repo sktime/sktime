@@ -149,3 +149,31 @@ def test_knn_kneighbors():
     assert dist.shape == (5, 1)
     assert isinstance(ind, np.ndarray)
     assert ind.shape == (5, 1)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(KNeighborsTimeSeriesClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_knn_brute_algorithm():
+    """Tests kneighbors with algorithm 'brute' and absence of bug #6515."""
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+
+    knn = KNeighborsTimeSeriesClassifier(algorithm="brute")
+    knn.fit(X_train, y_train)
+    ret = knn.kneighbors(X_test)
+    assert isinstance(ret, tuple)
+    assert len(ret) == 2
+
+
+def test_knn_ball_tree_algorithm():
+    """Tests kneighbors with algorithm 'ball_tree' and absence of bug #6515."""
+    X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    X_test, y_test = load_unit_test(split="test", return_X_y=True)
+
+    knn = KNeighborsTimeSeriesClassifier(algorithm="ball_tree")
+    knn.fit(X_train, y_train)
+    ret = knn.kneighbors(X_test)
+    assert isinstance(ret, tuple)
+    assert len(ret) == 2

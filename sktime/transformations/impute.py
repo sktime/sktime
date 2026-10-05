@@ -9,8 +9,6 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
-from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.transformations.base import BaseTransformer
 
 
@@ -196,6 +194,8 @@ class Imputer(BaseTransformer):
             if self.method in ["drift", "forecaster"]:
                 self._y = y.copy() if y is not None else None
                 if self.method == "drift":
+                    from sktime.forecasting.trend import PolynomialTrendForecaster
+
                     self._forecaster = PolynomialTrendForecaster(degree=1)
                 elif self.method == "forecaster":
                     self._forecaster = self.forecaster.clone()
@@ -247,9 +247,9 @@ class Imputer(BaseTransformer):
             elif self.method in ["pad", "ffill"]:
                 X = X.groupby(level=X_group_levels).ffill()
             elif self.method == "mean":
-                X = X.groupby(level=X_group_levels).fillna(value=self._mean)
+                X = X.fillna(value=self._mean)
             elif self.method == "median":
-                X = X.groupby(level=X_group_levels).fillna(value=self._median)
+                X = X.fillna(value=self._median)
             else:
                 raise AssertionError("Code should not be reached")
 
@@ -354,6 +354,8 @@ class Imputer(BaseTransformer):
         Xt : pd.DataFrame
             Series with imputed values.
         """
+        from sktime.forecasting.base import ForecastingHorizon
+
         for col in X.columns:
             if _has_missing_values(X[col]):
                 # define fh based on index of missing values

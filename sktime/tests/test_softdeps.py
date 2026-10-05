@@ -12,13 +12,13 @@ __author__ = ["mloning", "fkiraly"]
 import pkgutil
 import re
 from importlib import import_module
+from importlib.abc import MetaPathFinder
 from unittest.mock import patch
 
 import pytest
 from skbase.utils.dependencies import _check_python_version, _check_soft_dependencies
 
 from sktime.registry import all_estimators
-from sktime.tests._config import EXCLUDE_ESTIMATORS
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils._testing.scenarios_getter import retrieve_scenarios
 
@@ -129,6 +129,46 @@ def test_module_softdeps(module):
         ) from e
 
 
+def test_moirai_forecaster_import_is_lazy_for_forecasting_imports(monkeypatch):
+    """Test MOIRAI does not import vendored forecast when importing forecasters."""
+    import sys
+
+    import skbase.utils.dependencies as skbase_dependencies
+
+    original_check_soft_dependencies = skbase_dependencies._check_soft_dependencies
+
+    def mocked_check_soft_dependencies(packages, *args, **kwargs):
+        if packages == ["lightning", "huggingface_hub"]:
+            return True
+        return original_check_soft_dependencies(packages, *args, **kwargs)
+
+    class BlockMoiraiForecastImport(MetaPathFinder):
+        attempts = 0
+
+        def find_spec(self, fullname, path=None, target=None):
+            if fullname == "sktime.libs.uni2ts.forecast":
+                self.attempts += 1
+                raise AssertionError(f"{fullname} imported eagerly")
+            return None
+
+    blocker = BlockMoiraiForecastImport()
+    monkeypatch.setattr(
+        skbase_dependencies,
+        "_check_soft_dependencies",
+        mocked_check_soft_dependencies,
+    )
+    for module in list(sys.modules):
+        if module == "sktime.forecasting" or module.startswith("sktime.forecasting."):
+            monkeypatch.delitem(sys.modules, module, raising=False)
+    monkeypatch.delitem(sys.modules, "sktime.libs.uni2ts.forecast", raising=False)
+    monkeypatch.setattr(sys, "meta_path", [blocker, *sys.meta_path])
+
+    from sktime.forecasting.naive import NaiveForecaster
+
+    assert NaiveForecaster.__name__ == "NaiveForecaster"
+    assert blocker.attempts == 0
+
+
 def _has_soft_dep(est):
     """Return whether an estimator has soft dependencies."""
     softdep = est.get_class_tag("python_dependencies", None)
@@ -174,7 +214,7 @@ def _python_compat(est):
 
 
 # all estimators - exclude estimators on the global exclusion list
-all_ests = all_estimators(return_names=False, exclude_estimators=EXCLUDE_ESTIMATORS)
+all_ests = all_estimators(return_names=False, filter_tags={"tests:skip_all": False})
 
 
 # estimators that should fail to construct because of python version

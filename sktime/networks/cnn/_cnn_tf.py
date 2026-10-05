@@ -34,6 +34,13 @@ class CNNNetwork(BaseDeepNetwork):
     ----------
     .. [1] Zhao et al. Convolutional neural networks for time series classification,
     Journal of Systems Engineering and Electronics 28(1), 162--169, 2017
+
+    Examples
+    --------
+    >>> from sktime.networks.cnn import CNNNetwork
+    >>> network = CNNNetwork(
+    ...     kernel_size=5, n_conv_layers=2, random_state=42
+    ... )
     """
 
     _tags = {
@@ -41,6 +48,10 @@ class CNNNetwork(BaseDeepNetwork):
         # --------------
         "authors": ["hfawaz", "James-Large", "Withington", "TonyBagnall", "noxthot"],
         "python_dependencies": "tensorflow",
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_inheritance"],
+        # not a registered base class, WiP, see #3028
     }
 
     def __init__(
@@ -70,7 +81,6 @@ class CNNNetwork(BaseDeepNetwork):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         if self.filter_sizes is None:

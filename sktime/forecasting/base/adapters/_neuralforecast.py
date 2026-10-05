@@ -11,11 +11,7 @@ import numpy as np
 import pandas
 from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.warnings import warn
 
 __all__ = ["_NeuralForecastAdapter"]
@@ -26,7 +22,7 @@ _SUPPORTED_LOCAL_SCALAR_TYPES = Literal[
 ]
 
 
-class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class _NeuralForecastAdapter(BaseForecaster):
     """Base adapter class for NeuralForecast models.
 
     Parameters
@@ -100,7 +96,6 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         "X-y-must-have-same-index": True,
         "capability:missing_values": False,
         "capability:insample": False,
-        "capability:global_forecasting": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,
@@ -143,7 +138,6 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
                 **{
                     "y_inner_mtype": "pd.Series",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 
@@ -374,6 +368,9 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         # | Index                   | B2.2.1    |
         # | Index (Missing)         | B2.2.2    |
         # | Other                   | unreached |
+        self._cur_y = y
+        self._cur_X = X
+
         y_time_index = y.index.get_level_values(-1)
         if self.freq != "auto":  # A: freq is given as non-auto
             self._freq = self.freq
@@ -514,7 +511,7 @@ class _NeuralForecastAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster)
         del fh  # to avoid being detected as unused by ``vulture`` etc.
 
         predict_parameters: dict = {"verbose": self.verbose_predict}
-        y = self._y
+        y = self._cur_y
 
         if self.futr_exog_list and X is None:
             raise ValueError("Missing exogenous data, 'futr_exog_list' is non-empty.")

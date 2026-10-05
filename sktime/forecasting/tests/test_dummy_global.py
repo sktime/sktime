@@ -215,6 +215,34 @@ class TestDummyGlobalForecaster:
         np.testing.assert_almost_equal(forecaster.global_mean_, pretrained_mean)
         np.testing.assert_almost_equal(forecaster.global_std_, pretrained_std)
 
+    def test_preserves_pretrained_params_across_refits(self):
+        """Repeated fit calls preserve values learned during pretraining."""
+        forecaster = DummyGlobalForecaster(strategy="last")
+        y_panel = _make_hierarchical(
+            hierarchy_levels=(3,), min_timepoints=10, max_timepoints=10
+        )
+        forecaster.pretrain(y_panel)
+
+        pretrained_mean = forecaster.global_mean_
+        pretrained_std = forecaster.global_std_
+
+        y_first = pd.Series([10.0, 20.0, 30.0])
+        forecaster.fit(y_first, fh=[1, 2, 3])
+
+        assert forecaster.state == "fitted"
+        assert forecaster.last_value_ == y_first.iloc[-1]
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrained_mean)
+        np.testing.assert_almost_equal(forecaster.global_std_, pretrained_std)
+
+        y_second = pd.Series([100.0, 200.0, 300.0, 400.0])
+        forecaster.fit(y_second, fh=[1, 2, 3])
+
+        assert forecaster.state == "fitted"
+        assert forecaster.last_value_ == y_second.iloc[-1]
+        np.testing.assert_almost_equal(forecaster.global_mean_, pretrained_mean)
+        np.testing.assert_almost_equal(forecaster.global_std_, pretrained_std)
+        assert forecaster.get_pretrained_params(deep=False)
+
     def test_pretrain_rejects_single_series(self):
         """Test that pretrain() raises TypeError when passed a single Series."""
         forecaster = DummyGlobalForecaster()

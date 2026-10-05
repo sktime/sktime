@@ -1,4 +1,4 @@
-"""Implemenents Box-Cox and Log Transformations."""
+"""Implements Box-Cox and Log Transformations."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file).
 

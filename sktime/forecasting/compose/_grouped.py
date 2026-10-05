@@ -8,7 +8,6 @@ from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.registry import coerce_scitype
-from sktime.transformations.base import BaseTransformer
 
 __author__ = ["fkiraly", "felipeangelimvieira"]
 __all__ = ["ForecastByLevel", "GroupbyCategoryForecaster"]
@@ -237,6 +236,14 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["felipeangelimvieira", "shlok191"],
+        "maintainers": ["felipeangelimvieira"],
+        "python_version": None,
+        # estimator type
+        # --------------
+        "visual_block_kind": "parallel",
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -250,12 +257,9 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "capability:multivariate": True,
         "capability:exogenous": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
-        "authors": ["felipeangelimvieira", "shlok191"],
-        "maintainers": ["felipeangelimvieira"],
-        "python_version": None,
-        "visual_block_kind": "parallel",
     }
 
     def __init__(
@@ -264,21 +268,38 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         transformer=None,
         fallback_forecaster=None,
     ):
-        # saving arguments to object storage
-        if transformer is not None:
-            self.transformer = transformer
-
-        else:
-            from sktime.transformations.adi_cv import ADICVTransformer
-
-            self.transformer = ADICVTransformer(features=["class"])
+        self.transformer = transformer
 
         self.forecasters = forecasters
         self.fallback_forecaster = fallback_forecaster
 
-        self.transformer_ = coerce_scitype(self.transformer, "transformer").clone()
-
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        transformer = self.transformer
+        forecasters = self.forecasters
+        fallback_forecaster = self.fallback_forecaster
+
+        # saving arguments to object storage
+        if transformer is not None:
+            _transformer = transformer.clone()
+
+        else:
+            from sktime.transformations.adi_cv import ADICVTransformer
+
+            _transformer = ADICVTransformer(features=["class"])
+
+        self.transformer_ = coerce_scitype(_transformer, "transformer").clone()
+
+        from sktime.transformations.base import BaseTransformer
 
         # validating passed arguments
         assert isinstance(self.transformer_, BaseTransformer)

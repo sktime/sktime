@@ -66,6 +66,14 @@ Density-based
 
     TimeSeriesDBSCAN
 
+Hierarchical
+------------
+.. currentmodule:: sktime.clustering.agglomerative
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+    TimeSeriesAgglomerativeClustering
+
 Graph- or network-based
 -----------------------
 

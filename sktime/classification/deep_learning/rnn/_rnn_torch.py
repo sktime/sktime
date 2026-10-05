@@ -23,12 +23,41 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         Setting n_layers=2 would mean stacking two RNNs together to form
         a stacked RNN, with the second RNN taking in outputs of the first RNN
         and computing the final results.
-    activation : str or None or an instance of activation functions defined in
-        torch.nn, default = None
-        Activation function used in the fully connected output layer.
-    activation_hidden : str or Callable, default = "ReLU"
-        The activation function applied inside the RNN. Recommended callable instance
-        of 'ReLU', 'Tanh'.
+    activation : str, Callable, or None, default=None
+        Activation applied to the output layer.
+
+        Permitted values:
+
+        - ``None``: no activation is applied to the output layer and the network
+          returns raw outputs (logits). This is typically required when using
+          ``CrossEntropyLoss``, which expects logits as input.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+    activation_hidden : str, Callable, or None, default="ReLU"
+        Activation applied inside the RNN.
+
+        Permitted values:
+
+        - ``None``: no activation is applied inside the RNN.
+        - ``str``: name of a class in ``torch.nn``. Case-sensitive names are
+          recommended and must match PyTorch (e.g., ``"ReLU"``, ``"LeakyReLU"``).
+          Lowercase aliases for common activations are also accepted
+          (e.g., ``"relu"`` is resolved to ``"ReLU"``). The class is instantiated
+          with default constructor arguments. Must be a valid ``torch.nn``
+          activation; see
+          https://pytorch.org/docs/stable/nn.html#non-linear-activations-weighted-sum-nonlinearity
+        - ``torch.nn.Module``: an instance of a ``torch.nn.Module`` subclass,
+          for example ``torch.nn.ReLU()``. Arbitrary callables are not supported.
+
+        Recommended activations: ``ReLU``, ``Tanh``.
         Because currently PyTorch only supports these two activations inside the RNN.
         https://docs.pytorch.org/docs/stable/generated/torch.nn.RNN.html#torch.nn.RNN
     bias : bool, default = True
@@ -45,7 +74,7 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         If True, then the RNN is bidirectional.
     num_epochs : int, default = 100
         The number of epochs to train the model.
-    optimizer : case insensitive str or None or an instance of optimizers
+    optimizer : case insensitive str or None, or a class or instance of optimizers
         defined in torch.optim, default = "RMSprop"
         The optimizer to use for training the model. List of available optimizers:
         https://pytorch.org/docs/stable/optim.html#algorithms
@@ -101,10 +130,13 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
         # --------------
         "authors": ["RecreationalMath"],
         "maintainers": ["RecreationalMath"],
-        "python_version": ">=3.9",
         "python_dependencies": "torch",
         "property:randomness": "stochastic",
         "capability:random_state": True,
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.rnn._rnn_torch"],
     }
 
     def __init__(
@@ -179,7 +211,6 @@ class SimpleRNNClassifierTorch(BaseDeepClassifierPytorch):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # Note: we do not validate activation_hidden here.

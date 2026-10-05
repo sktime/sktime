@@ -38,8 +38,6 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
 from sktime.registry import is_scitype, scitype
-from sktime.transformations.compose import FeatureUnion
-from sktime.transformations.summarize import WindowSummarizer
 from sktime.utils.datetime import _shift
 from sktime.utils.estimators.dispatch import construct_dispatch
 from sktime.utils.multiindex import apply_method_per_series
@@ -200,6 +198,8 @@ def _sliding_window_transform_global(y, window_length, X, transformers):
     if len(transformers) == 1:
         tf_fit = transformers[0].fit(y)
     else:
+        from sktime.transformations.compose import FeatureUnion
+
         feat = [("trafo_" + str(index), i) for index, i in enumerate(transformers)]
         tf_fit = FeatureUnion(feat).fit(y)
     X_from_y = tf_fit.transform(y)
@@ -235,6 +235,7 @@ class _Reducer(_BaseWindowForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:update": True,
     }
 
     def __init__(
@@ -331,8 +332,9 @@ class _Reducer(_BaseWindowForecaster):
         """
         from skbase.utils.dependencies import _check_soft_dependencies
         from sklearn.linear_model import LinearRegression
-        from sklearn.pipeline import make_pipeline
+        from sklearn.tree import DecisionTreeRegressor
 
+        from sktime.pipeline import make_pipeline
         from sktime.transformations.reduce import Tabularizer
 
         # naming convention is as follows:
@@ -345,6 +347,20 @@ class _Reducer(_BaseWindowForecaster):
             est = make_pipeline(Tabularizer(), est)
 
         params = [{"estimator": est, "window_length": 3}]
+
+        # second parameter set: a different regressor and a different window
+        # length. The regressor is a decision tree rather than a linear model,
+        # so the two sets cover both a linear and a non-linear reduction
+        # estimator, and the differing window length varies the number of lag
+        # features the reduction produces. The tree depth is left unrestricted
+        # so that recursive forecasts vary across the horizon; a shallow tree
+        # reaches a fixed point after few steps, which would weaken tests that
+        # catch horizon or index bugs.
+        est2 = DecisionTreeRegressor(random_state=0)
+        if "TimeSeries" in cls.__name__:
+            est2 = make_pipeline(Tabularizer(), est2)
+
+        params = params + [{"estimator": est2, "window_length": 4}]
 
         PROBA_IMPLEMENTED = ["DirectTabularRegressionForecaster"]
         self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
@@ -441,11 +457,11 @@ class _Reducer(_BaseWindowForecaster):
                 index_range = index_range.tz_localize(cutoff.tzinfo)
         # index_range will convert the indices to the date format of cutoff
 
-        y_raw = _create_fcst_df(index_range, self._y)
+        y_raw = _create_fcst_df(index_range, self._cur_y)
         # y_raw is a dataframe window_length forecasting steps into the past in order to
         # calculate the new X from y features based on the transformer provided
 
-        y_raw.update(self._y)
+        y_raw.update(self._cur_y)
         # Historical values are passed here for all time steps of y_raw that lie in
         # the past .
 
@@ -456,6 +472,8 @@ class _Reducer(_BaseWindowForecaster):
         if len(self.transformers_) == 1:
             X_from_y = self.transformers_[0].fit_transform(y_raw)
         else:
+            from sktime.transformations.compose import FeatureUnion
+
             ref = self.transformers_
             feat = [("trafo_" + str(index), i) for index, i in enumerate(ref)]
             X_from_y = FeatureUnion(feat).fit_transform(y_raw)
@@ -466,9 +484,9 @@ class _Reducer(_BaseWindowForecaster):
         # We are only interested in the last observation, since only that one
         # contains the value the window is summarized to.
 
-        if self._X is not None:
-            X = _create_fcst_df([index_range[-1]], self._X)
-            X.update(self._X)
+        if self._cur_X is not None:
+            X = _create_fcst_df([index_range[-1]], self._cur_X)
+            X.update(self._cur_X)
             if X_update is not None:
                 X.update(X_update)
             X_cut = _cut_df(X)
@@ -485,6 +503,9 @@ class _DirectReducer(_Reducer):
     strategy = "direct"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -533,6 +554,7 @@ class _DirectReducer(_Reducer):
         self : Estimator
             An fitted instance of self.
         """
+        self._store_fit_data(y, X)
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
@@ -577,6 +599,8 @@ class _DirectReducer(_Reducer):
                     "lag": list(range(1, self.window_length + 1)),
                 }
             }
+            from sktime.transformations.summarize import WindowSummarizer
+
             self.transformers_ = [WindowSummarizer(**kwargs, n_jobs=1)]
 
         if self.window_length is None:
@@ -660,7 +684,7 @@ class _DirectReducer(_Reducer):
         est_type = self._est_type
         # "regressor" for sklearn, "regressor_proba" for skpro
 
-        if self._X is not None and X is None:
+        if self._cur_X is not None and X is None:
             raise ValueError(
                 "`X` must be passed to `predict` if `X` is given in `fit`."
             )
@@ -707,7 +731,9 @@ class _DirectReducer(_Reducer):
             for i, estimator in enumerate(self.estimators_):
                 y_pred_est = getattr(estimator, method)(X_last, **kwargs)
                 if est_type == "regressor":
-                    y_pred_i = _create_fcst_df([fh_abs[i]], self._y, fill=y_pred_est)
+                    y_pred_i = _create_fcst_df(
+                        [fh_abs[i]], self._cur_y, fill=y_pred_est
+                    )
                 else:  # est_type == "regressor_proba"
                     y_pred_v = _coerce_to_numpy(y_pred_est)
                     y_pred_i = _create_fcst_df([fh_abs[i]], y_pred_est, fill=y_pred_v)
@@ -716,12 +742,12 @@ class _DirectReducer(_Reducer):
 
         else:
             # Pre-allocate arrays.
-            if self._X is None:
+            if self._cur_X is None:
                 n_columns = 1
             else:
                 # X is ignored here, since we currently only look at lagged values for
                 # exogenous variables and not contemporaneous ones.
-                n_columns = self._X.shape[1] + 1
+                n_columns = self._cur_X.shape[1] + 1
 
             # Pre-allocate arrays.
             window_length = self.window_length_
@@ -729,7 +755,7 @@ class _DirectReducer(_Reducer):
 
             # Fill pre-allocated arrays with available data.
             X_pred[:, 0, :] = y_last
-            if self._X is not None:
+            if self._cur_X is not None:
                 X_pred[:, 1:, :] = X_last.T
 
             # We need to make sure that X has the same order as used in fit.
@@ -756,7 +782,7 @@ class _DirectReducer(_Reducer):
                 y_pred = pool_preds(y_preds)
 
         # coerce index and columns to expected
-        index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+        index = fh.get_expected_pred_idx(y=self._cur_y, cutoff=self.cutoff)
         columns = self._get_columns(method=method, **kwargs)
         if isinstance(y_pred, pd.DataFrame):
             y_pred.index = index
@@ -771,6 +797,9 @@ class _MultioutputReducer(_Reducer):
     strategy = "multioutput"
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -799,6 +828,7 @@ class _MultioutputReducer(_Reducer):
         -------
         self : returns an instance of self.
         """
+        self._store_fit_data(y, X)
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
@@ -834,12 +864,12 @@ class _MultioutputReducer(_Reducer):
         if not self._is_predictable(y_last):
             return self._predict_nan(fh)
 
-        if self._X is None:
+        if self._cur_X is None:
             n_columns = 1
         else:
             # X is ignored here, since we currently only look at lagged values for
             # exogenous variables and not contemporaneous ones.
-            n_columns = self._X.shape[1] + 1
+            n_columns = self._cur_X.shape[1] + 1
 
         # Pre-allocate arrays.
         window_length = self.window_length_
@@ -847,7 +877,7 @@ class _MultioutputReducer(_Reducer):
 
         # Fill pre-allocated arrays with available data.
         X_pred[:, 0, :] = y_last
-        if self._X is not None:
+        if self._cur_X is not None:
             X_pred[:, 1:, :] = X_last.T
 
         # We need to make sure that X has the same order as used in fit.
@@ -856,7 +886,7 @@ class _MultioutputReducer(_Reducer):
 
         # Iterate over estimators/forecast horizon
         y_pred = self.estimator_.predict(X_pred)
-        return y_pred.ravel()
+        return np.asarray(y_pred).ravel()
 
 
 class _RecursiveReducer(_Reducer):
@@ -893,6 +923,7 @@ class _RecursiveReducer(_Reducer):
         -------
         self : returns an instance of self.
         """
+        self._store_fit_data(y, X)
         if self.pooling is not None and self.pooling not in ["local", "global"]:
             raise ValueError(
                 "pooling must be one of local, global" + f" but found {self.pooling}"
@@ -932,6 +963,8 @@ class _RecursiveReducer(_Reducer):
             self.transformers_ = clone(self.transformers)
 
         if self.transformers is None and self.pooling == "global":
+            from sktime.transformations.summarize import WindowSummarizer
+
             kwargs = {
                 "lag_feature": {
                     "lag": list(range(1, self.window_length + 1)),
@@ -994,7 +1027,7 @@ class _RecursiveReducer(_Reducer):
         -------
         y_return = pd.Series or pd.DataFrame
         """
-        if self._X is not None and X is None:
+        if self._cur_X is not None and X is None:
             raise ValueError(
                 "`X` must be passed to `predict` if `X` is given in `fit`."
             )
@@ -1020,13 +1053,13 @@ class _RecursiveReducer(_Reducer):
                 if self.cutoff.tzinfo is not None:
                     index_range = index_range.tz_localize(self.cutoff.tzinfo)
 
-            y_pred = _create_fcst_df(index_range, self._y)
+            y_pred = _create_fcst_df(index_range, self._cur_y)
 
             for i in range(fh_max):
                 # Generate predictions.
                 y_pred_vector = self.estimator_.predict(X_last)
                 y_pred_curr = _create_fcst_df(
-                    [index_range[i]], self._y, fill=y_pred_vector
+                    [index_range[i]], self._cur_y, fill=y_pred_vector
                 )
                 y_pred.update(y_pred_curr)
 
@@ -1087,8 +1120,8 @@ class _RecursiveReducer(_Reducer):
         # requested ones.
         fh_idx = fh.to_indexer(self.cutoff)
 
-        if isinstance(self._y.index, pd.MultiIndex):
-            yi_grp = self._y.index.names[0:-1]
+        if isinstance(self._cur_y.index, pd.MultiIndex):
+            yi_grp = self._cur_y.index.names[0:-1]
             y_return = y_pred.groupby(yi_grp, as_index=False).nth(fh_idx.to_list())
         elif isinstance(y_pred, pd.Series) or isinstance(y_pred, pd.DataFrame):
             y_return = y_pred.iloc[fh_idx]
@@ -1106,6 +1139,9 @@ class _DirRecReducer(_Reducer):
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _transform(self, y, X=None):
@@ -1137,6 +1173,7 @@ class _DirRecReducer(_Reducer):
         self : Estimator
             An fitted instance of self.
         """
+        self._store_fit_data(y, X)
         # todo: logic for X below is broken. Escape X until fixed.
         if X is not None:
             X = None
@@ -1320,6 +1357,9 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -1393,6 +1433,43 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
 
     _estimator_scitype = "time-series-regressor"
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.pipeline import make_pipeline
+        from sktime.transformations.panel.reduce import Tabularizer
+
+        params1 = {
+            "estimator": make_pipeline(Tabularizer(), LinearRegression()),
+            "window_length": 2,
+        }
+        params2 = {
+            "estimator": make_pipeline(Tabularizer(), RandomForestRegressor()),
+            "window_length": 3,
+        }
+
+        params = [params1, params2]
+        return params
+
 
 class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
     """Multioutput reduction from forecasting to time series regression.
@@ -1429,9 +1506,49 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
 
     _tags = {
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     _estimator_scitype = "time-series-regressor"
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        from sklearn.ensemble import RandomForestRegressor
+        from sklearn.linear_model import LinearRegression
+
+        from sktime.pipeline import make_pipeline
+        from sktime.transformations.panel.reduce import Tabularizer
+
+        params1 = {
+            "estimator": make_pipeline(Tabularizer(), LinearRegression()),
+            "window_length": 2,
+        }
+        params2 = {
+            "estimator": make_pipeline(Tabularizer(), RandomForestRegressor()),
+            "window_length": 3,
+        }
+
+        params = [params1, params2]
+        return params
 
 
 class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
@@ -1820,12 +1937,33 @@ def _get_notna_idx(df):
 class _ReducerMixin:
     """Common utilities for reducers."""
 
-    def _get_expected_pred_idx(self, fh):
+    def _store_fit_data(self, y, X=None):
+        """Store fit-time endogenous/exogenous snapshot as ``_cur_y`` / ``_cur_X``."""
+        self._cur_y = y
+        self._cur_X = X
+
+    def _append_fit_data(self, y, X=None):
+        """Append new observations to estimator-owned ``_cur_y`` / ``_cur_X``."""
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+
+    def _update(self, y, X=None, update_params=True):
+        """Refresh estimator-owned current snapshot; cutoff updated by base."""
+        self._append_fit_data(y, X)
+        return self
+
+    def _get_expected_pred_idx(self, fh, y_fit_index=None):
         """Construct DataFrame Index expected in y_pred, return of _predict.
 
         Parameters
         ----------
         fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
+            forecasting horizon for which to construct the expected prediction index.
+        y_fit_index : pd.Index, optional, default=None
+            index of the fitted endogenous series. If None, uses self._cur_y.index.
 
         Returns
         -------
@@ -1836,7 +1974,7 @@ class _ReducerMixin:
             fh_idx = pd.Index(fh.to_absolute_index(self.cutoff))
         else:
             fh_idx = pd.Index(fh)
-        y_index = self._y.index
+        y_index = y_fit_index if y_fit_index is not None else self._cur_y.index
 
         if isinstance(y_index, pd.MultiIndex):
             y_inst_idx = y_index.droplevel(-1).unique()
@@ -1851,7 +1989,7 @@ class _ReducerMixin:
         return fh_idx
 
 
-class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
+class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
     """Direct reduction forecaster, incl single-output, multi-output, exogenous Dir.
 
     Implements direct reduction, of forecasting to tabular regression.
@@ -1954,17 +2092,23 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
         "maintainers": "hliebert",
+        # estimator type
+        # --------------
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
         "tests:libs": ["sktime.transformations.lag"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -2018,6 +2162,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment and windows_identical."""
+        self._store_fit_data(y, X)
         # shifted X (future X unknown) and identical windows reduce to
         # multioutput regression, o/w fit multiple individual estimators
         if (self.X_treatment == "shifted") and (self.windows_identical is True):
@@ -2031,7 +2176,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
             if self.windows_identical is True:
                 return self._predict_multioutput(X=X, fh=fh)
             else:
-                return self._predict_multiple(X=self._X, fh=fh)
+                return self._predict_multiple(X=self._cur_X, fh=fh)
         else:
             return self._predict_multiple(X=X, fh=fh)
 
@@ -2088,8 +2233,9 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
     def _predict_multioutput(self, fh=None, X=None):
         """Predict core logic."""
-        y_cols = self._y.columns
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_cols = self._cur_y.columns
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
 
         if self.empty_lags_:
             ret = pd.DataFrame(index=fh_idx, columns=y_cols)
@@ -2099,7 +2245,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
         lagger_y_to_X = self.lagger_y_to_X_
 
-        Xt = lagger_y_to_X.transform(X=self._y, y=self._X)
+        Xt = lagger_y_to_X.transform(X=self._cur_y, y=self._cur_X)
         Xt_lastrow = slice_at_ix(Xt, self.cutoff)
         Xt_lastrow = prep_skl_df(Xt_lastrow)
 
@@ -2196,15 +2342,16 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         """Fit to training data."""
         from sktime.transformations.lag import Lag
 
-        if X is not None and self._X is not None:
-            X_pool = X.combine_first(self._X)
-        elif X is None and self._X is not None:
-            X_pool = self._X
+        if X is not None and self._cur_X is not None:
+            X_pool = X.combine_first(self._cur_X)
+        elif X is None and self._cur_X is not None:
+            X_pool = self._cur_X
         else:
             X_pool = X
 
-        fh_idx = self._get_expected_pred_idx(fh=fh)
-        y_cols = self._y.columns
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
+        y_cols = self._cur_y.columns
 
         lagger_y_to_X = self.lagger_y_to_X_
 
@@ -2220,7 +2367,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
 
             lag_plus = Lag(lag, index_out="extend", keep_column_names=True)
 
-            Xt = lagger_y_to_X[-lag].transform(X=self._y, y=X_pool)
+            Xt = lagger_y_to_X[-lag].transform(X=self._cur_y, y=X_pool)
             Xtt = lag_plus.fit_transform(Xt)
             Xtt_predrow = slice_at_ix(Xtt, predict_idx)
             Xtt_predrow = prep_skl_df(Xtt_predrow)
@@ -2313,7 +2460,7 @@ class DirectReductionForecaster(BaseForecaster, _ReducerMixin):
         return params
 
 
-class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
+class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
     """Recursive reduction forecaster, incl exogenous Rec.
 
     Implements recursive reduction, of forecasting to tabular regression.
@@ -2370,15 +2517,22 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.transformations.lag"],
+        "tests:skip_all": True,
+        # temporarily removed RRF from tests, while #7380 is not merged
     }
 
     def __init__(
@@ -2473,6 +2627,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         -------
         self : reference to self
         """
+        self._store_fit_data(y, X)
         # todo: very similar to _fit_concurrent of DirectReductionForecaster - refactor?
         from sktime.transformations.lag import Lag
 
@@ -2534,10 +2689,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_pred : pd.DataFrame, same type as y in _fit
             Point predictions
         """
-        if X is not None and self._X is not None:
-            X_pool = X.combine_first(self._X)
-        elif X is None and self._X is not None:
-            X_pool = self._X
+        if X is not None and self._cur_X is not None:
+            X_pool = X.combine_first(self._cur_X)
+        elif X is None and self._cur_X is not None:
+            X_pool = self._cur_X
         else:
             X_pool = X
 
@@ -2563,8 +2718,8 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
         from sktime.transformations.lag import Lag
 
-        fh_idx = self._get_expected_pred_idx(fh=fh)
-        y_cols = self._y.columns
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=self._cur_y.index)
+        y_cols = self._cur_y.columns
 
         lagger_y_to_X = self.lagger_y_to_X_
 
@@ -2579,7 +2734,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         y_abs_no_gaps = y_abs_no_gaps.to_absolute_index(self._cutoff)
 
         # we will keep growing y_plus_preds recursively
-        y_plus_preds = self._y
+        y_plus_preds = self._cur_y
         y_pred_list = []
 
         for _ in y_lags_no_gaps:
@@ -2618,7 +2773,10 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
             else:
                 y_pred_i = estimator.predict(Xtt_predrow)
 
-            y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
+            y_fit_index = self._cur_y.index
+            y_pred_new_idx = self._get_expected_pred_idx(
+                fh=[predict_idx], y_fit_index=y_fit_index
+            )
             y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
 
             y_pred_list.append(y_pred_new)
@@ -2633,13 +2791,13 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""
         from sktime.transformations.lag import Lag
 
-        fh_idx = self._get_expected_pred_idx(fh=fh)
-        y_cols = self._y.columns
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=self._cur_y.index)
+        y_cols = self._cur_y.columns
 
         lagger_y_to_X = self.lagger_y_to_X_
 
         fh_abs = fh.to_absolute(self.cutoff)
-        y = self._y
+        y = self._cur_y
 
         Xt = lagger_y_to_X.transform(y)
 
@@ -2740,7 +2898,7 @@ class RecursiveReductionForecaster(BaseForecaster, _ReducerMixin):
         return [params1, params2, params3, params4, params5, params6]
 
 
-class YfromX(BaseForecaster, _ReducerMixin):
+class YfromX(_ReducerMixin, BaseForecaster):
     """Simple reduction predicting endogeneous from concurrent exogenous variables.
 
     Tabulates all seen ``X`` and ``y`` by time index and applies
@@ -2904,6 +3062,7 @@ class YfromX(BaseForecaster, _ReducerMixin):
         -------
         self : reference to self
         """
+        self._store_fit_data(y, X)
         _est_type = self._est_type
 
         if X is None:
@@ -2952,13 +3111,14 @@ class YfromX(BaseForecaster, _ReducerMixin):
         """
         _est_type = self._est_type
 
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
 
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict(X_idx)
 
         if _est_type == "regressor":
-            y_cols = self._y.columns
+            y_cols = self._cur_y.columns
             y_pred = pd.DataFrame(y_pred, index=fh_idx, columns=y_cols)
 
         return y_pred
@@ -2996,7 +3156,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_quantiles(X_idx, alpha=alpha)
         return y_pred
@@ -3039,7 +3200,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_interval(X_idx, coverage=coverage)
         return y_pred
@@ -3081,7 +3243,8 @@ class YfromX(BaseForecaster, _ReducerMixin):
                     covariance between time index in row and col.
                 Note: no covariance forecasts are returned between different variables.
         """
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_var(X_idx)
         return y_pred
@@ -3111,18 +3274,19 @@ class YfromX(BaseForecaster, _ReducerMixin):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_proba(X_idx)
         return y_pred
 
     def _get_pred_X(self, X, fh_idx):
-        y_cols = self._y.columns
+        y_cols = self._cur_y.columns
 
-        if X is not None and self._X is not None:
-            X_pool = X.combine_first(self._X)
-        elif X is None and self._X is not None:
-            X_pool = self._X
+        if X is not None and self._cur_X is not None:
+            X_pool = X.combine_first(self._cur_X)
+        elif X is None and self._cur_X is not None:
+            X_pool = self._cur_X
         elif X is not None:
             X_pool = X
         else:

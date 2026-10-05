@@ -80,6 +80,7 @@ class SignatureTransformer(BaseTransformer):
         # ---------------------
         "tests:libs": ["sktime.transformations.signature_based"],
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.signature_based.tests.test_method"],
     }
 
     def __init__(
@@ -118,7 +119,6 @@ class SignatureTransformer(BaseTransformer):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         if self.backend not in ["esig", "iisignature"]:

@@ -213,7 +213,6 @@ class MyForecastingMetricHierarchical(BaseForecastingErrorMetric):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # todo: optional, parameter checking or coercion should happen here

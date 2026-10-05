@@ -113,7 +113,7 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         # testing configuration
         # ---------------------
         "tests:skip_by_name": ["test_fit_idempotent"],
-        "tests:libs": ["sktime.networks.inceptiontime"],
+        "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_tf"],
         "tests:vm": True,
     }
 
@@ -165,7 +165,6 @@ class InceptionTimeClassifier(BaseDeepClassifier):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         network_params = {

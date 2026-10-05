@@ -5,6 +5,7 @@ __all__ = [
     "RocketPyts",
     "MiniRocket",
     "MiniRocketMultivariate",
+    "MiniRocketMultivariateCython",
     "MiniRocketMultivariateVariable",
     "MultiRocket",
     "MultiRocketMultivariate",
@@ -13,6 +14,9 @@ __all__ = [
 from sktime.transformations.rocket._minirocket import MiniRocket
 from sktime.transformations.rocket._minirocket_multivariate import (
     MiniRocketMultivariate,
+)
+from sktime.transformations.rocket._minirocket_multivariate_cython_est import (
+    MiniRocketMultivariateCython,
 )
 from sktime.transformations.rocket._minirocket_multivariate_variable import (
     MiniRocketMultivariateVariable,

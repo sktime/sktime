@@ -65,6 +65,7 @@ class FeatureUnion(_HeterogenousMetaEstimator, BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator

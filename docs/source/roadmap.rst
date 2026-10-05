@@ -11,7 +11,7 @@ The roadmap for ``sktime`` is managed through:
 
 Follow the below link to the roadmap issues:
 
-`sktime roadmap issues <https://github.com/sktime/sktime/issues?q=is%3Aopen+is%3Aissue+label%3Aroadmap>`_
+`sktime roadmap issues <https://github.com/sktime/sktime/issues?q=is%3Aissue+label%3Aroadmap+sort%3Acreated-asc>`_
 
 Roadmap planning events are announced on the ``sktime`` discord and on social media.
 

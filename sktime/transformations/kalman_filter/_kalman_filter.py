@@ -303,6 +303,7 @@ class KalmanFilterTransformerPK(BaseKalmanFilter, BaseTransformer):
         # test and CI flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_kalman_filter"],
     }
 
     def __init__(
@@ -795,6 +796,7 @@ class KalmanFilterTransformerFP(BaseKalmanFilter, BaseTransformer):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_kalman_filter"],
     }
 
     def __init__(
