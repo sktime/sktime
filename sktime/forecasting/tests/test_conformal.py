@@ -1,5 +1,6 @@
 """Tests for the ConformalIntervals probability wrapper."""
 
+import numpy as np
 import pytest
 
 from sktime.datasets import load_airline
@@ -8,7 +9,7 @@ from sktime.forecasting.conformal import ConformalIntervals
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_switch import run_test_for_class
 
-__author__ = ["fkiraly"]
+__author__ = ["fkiraly", "shivamlalakiya"]
 
 
 @pytest.mark.skipif(
@@ -108,3 +109,43 @@ def test_conformal_with_hierarchical():
 
     forecaster.predict(X=X_test)
     forecaster.predict_interval(X=X_test)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ConformalIntervals),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_conformal_empirical_residual_quantile():
+    """Test that method="empirical_residual" uses the coverage quantile.
+
+    Failure case of bug #10757, where the (1-coverage)/2 quantile of the absolute
+    residuals was used as the interval half-width, so that a requested coverage
+    of 0.9 produced an empirical coverage of about 0.08.
+    """
+    coverage = 0.9
+    y = load_airline()
+
+    forecaster = ConformalIntervals(
+        forecaster=NaiveForecaster(strategy="mean"),
+        method="empirical_residual",
+        initial_window=100,
+    )
+    forecaster.fit(y, fh=[1])
+
+    pred_int = forecaster.predict_interval(fh=[1], coverage=[coverage])
+    y_pred = float(forecaster.predict(fh=[1]).iloc[0])
+
+    lower = float(pred_int.iloc[0, 0])
+    upper = float(pred_int.iloc[0, 1])
+
+    resids = np.diagonal(
+        np.asarray(forecaster.residuals_matrix_, dtype=float), offset=1
+    )
+    abs_resids = np.abs(resids[~np.isnan(resids)])
+
+    expected = np.quantile(abs_resids, coverage)
+    too_narrow = np.quantile(abs_resids, 0.5 - 0.5 * coverage)
+
+    assert np.isclose(upper - y_pred, expected)
+    assert np.isclose(y_pred - lower, expected)
+    assert upper - y_pred > too_narrow
