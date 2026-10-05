@@ -11,6 +11,7 @@ __author__ = [
     "Lovkush-A",
     "fkiraly",
     "benheid",
+    "RobKuebler",
 ]
 
 __all__ = [
