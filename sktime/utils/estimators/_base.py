@@ -5,7 +5,7 @@ __author__ = ["ltsaprounis"]
 import re
 from copy import deepcopy
 from functools import wraps
-from inspect import getcallargs, getfullargspec
+from inspect import getcallargs, getfullargspec, isfunction
 
 from sktime.base import BaseEstimator
 
@@ -50,6 +50,17 @@ def _method_logger(method):
         return method(self, *args, **kwargs)
 
     return wrapper
+
+
+def _takes_self(method):
+    """Check whether a callable takes a self argument, i.e., is an instance method.
+
+    Only callables whose underlying function is a python function are inspected,
+    as ``getfullargspec`` cannot inspect callables such as ``functools.lru_cache``
+    wrappers.
+    """
+    func = getattr(method, "__func__", method)
+    return isfunction(func) and "self" in getfullargspec(method).args
 
 
 def make_mock_estimator(
@@ -104,10 +115,7 @@ def make_mock_estimator(
         if not re.match(dunder_methods_regex, attr_name) and callable(attr):
             # match the given regex pattern
             # exclude static and class methods from logging
-            if (
-                re.match(method_regex, attr_name)
-                and "self" in getfullargspec(attr).args
-            ):
+            if re.match(method_regex, attr_name) and _takes_self(attr):
                 setattr(_MockEstimator, attr_name, _method_logger(attr))
 
     return _MockEstimator
