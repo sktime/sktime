@@ -126,7 +126,7 @@ class GRU(NNModule):
 
         Parameters
         ----------
-        x : torch.Tensor
+        X : torch.Tensor
             Input tensor.
         """
         if isinstance(X, np.ndarray):
