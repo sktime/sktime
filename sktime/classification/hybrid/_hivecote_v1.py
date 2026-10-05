@@ -7,6 +7,7 @@ representations, using the weighted probabilistic CAWPE as an ensemble controlle
 __author__ = ["MatthewMiddlehurst"]
 __all__ = ["HIVECOTEV1"]
 
+import logging
 from datetime import datetime
 
 import numpy as np
@@ -21,6 +22,8 @@ from sktime.classification.interval_based import (
     TimeSeriesForestClassifier,
 )
 from sktime.classification.shapelet_based import ShapeletTransformClassifier
+
+logger = logging.getLogger(__name__)
 
 
 class HIVECOTEV1(BaseClassifier):
@@ -49,7 +52,7 @@ class HIVECOTEV1(BaseClassifier):
         Parameters for the ContractableBOSS module. If None, uses the default
         parameters.
     verbose : int, default=0
-        Level of output printed to the console (for information only).
+        Level of progress information logged (for information only).
     n_jobs : int, default=1
         The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``-1`` means using all processors.
@@ -195,7 +198,7 @@ class HIVECOTEV1(BaseClassifier):
         self._stc.fit(X, y)
 
         if self.verbose > 0:
-            print("STC ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
+            logger.info("STC %s", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
 
         # Find STC weight using train set estimate
         train_probs = self._stc._get_train_probs(X, y)
@@ -203,11 +206,11 @@ class HIVECOTEV1(BaseClassifier):
         self.stc_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print(
-                "STC train estimate ",
+            logger.info(
+                "STC train estimate %s",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("STC weight = " + str(self.stc_weight_))
+            logger.info("STC weight = %s", self.stc_weight_)
 
         # Build TSF
         self._tsf = TimeSeriesForestClassifier(
@@ -218,7 +221,7 @@ class HIVECOTEV1(BaseClassifier):
         self._tsf.fit(X, y)
 
         if self.verbose > 0:
-            print("TSF ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
+            logger.info("TSF %s", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
 
         # Find TSF weight using train set estimate found through CV
         train_preds = cross_val_predict(
@@ -233,11 +236,11 @@ class HIVECOTEV1(BaseClassifier):
         self.tsf_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print(
-                "TSF train estimate ",
+            logger.info(
+                "TSF train estimate %s",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("TSF weight = " + str(self.tsf_weight_))
+            logger.info("TSF weight = %s", self.tsf_weight_)
 
         # Build RISE
         self._rise = RandomIntervalSpectralEnsemble(
@@ -248,7 +251,7 @@ class HIVECOTEV1(BaseClassifier):
         self._rise.fit(X, y)
 
         if self.verbose > 0:
-            print("RISE ", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
+            logger.info("RISE %s", datetime.now().strftime("%H:%M:%S %d/%m/%Y"))
 
         # Find RISE weight using train set estimate found through CV
         train_preds = cross_val_predict(
@@ -264,11 +267,11 @@ class HIVECOTEV1(BaseClassifier):
         self.rise_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print(
-                "RISE train estimate ",
+            logger.info(
+                "RISE train estimate %s",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("RISE weight = " + str(self.rise_weight_))
+            logger.info("RISE weight = %s", self.rise_weight_)
 
         # Build cBOSS
         self._cboss = ContractableBOSS(
@@ -284,11 +287,11 @@ class HIVECOTEV1(BaseClassifier):
         self.cboss_weight_ = accuracy_score(y, train_preds) ** 4
 
         if self.verbose > 0:
-            print(
-                "cBOSS (estimate included)",
+            logger.info(
+                "cBOSS (estimate included) %s",
                 datetime.now().strftime("%H:%M:%S %d/%m/%Y"),
             )
-            print("cBOSS weight = " + str(self.cboss_weight_))
+            logger.info("cBOSS weight = %s", self.cboss_weight_)
 
         return self
 
