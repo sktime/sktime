@@ -423,7 +423,7 @@ def run_test_module_changed(module, only_changed_modules=None):
     -------
     bool : switch to run or skip the test
         True iff: at least one of the modules or its submodules have changed,
-        or if ``ONLY_CHANGED_MODULES`` is False
+        or if ``only_changed_modules`` is False
     """
     # default value for only_changed_modules
     if only_changed_modules is None:
