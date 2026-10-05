@@ -120,7 +120,8 @@ def mean_linex_error(
     b : int or float
         Multiplicative penalty to apply to calculated errors.
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -255,7 +256,8 @@ def mean_asymmetric_error(
         An additional multiplicative penalty to apply to error values greater
         than the asymmetric threshold.
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -376,7 +378,8 @@ def mean_absolute_scaled_error(
         Seasonal periodicity of training data.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -506,7 +509,8 @@ def median_absolute_scaled_error(
         Seasonal periodicity of training data.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -643,7 +647,8 @@ def mean_squared_scaled_error(
         Seasonal periodicity of training data.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -781,7 +786,8 @@ def median_squared_scaled_error(
     sp : int
         Seasonal periodicity of training data.
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -894,7 +900,8 @@ def mean_absolute_error(
              where fh is the forecasting horizon
         Forecasted values.
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -977,7 +984,8 @@ def mean_squared_error(
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1084,7 +1092,8 @@ def median_absolute_error(
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1173,7 +1182,8 @@ def median_squared_error(
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1286,7 +1296,8 @@ def geometric_mean_absolute_error(
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1395,7 +1406,8 @@ def geometric_mean_squared_error(
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1534,7 +1546,8 @@ def mean_absolute_percentage_error(
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape (n_outputs,),\
                   default='uniform_average'
@@ -1665,7 +1678,8 @@ def median_absolute_percentage_error(
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1803,7 +1817,8 @@ def mean_squared_percentage_error(
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -1947,7 +1962,8 @@ def median_squared_percentage_error(
         Forecasted values.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -2080,7 +2096,8 @@ def mean_relative_absolute_error(
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -2194,7 +2211,8 @@ def median_relative_absolute_error(
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -2309,7 +2327,8 @@ def geometric_mean_relative_absolute_error(
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -2433,7 +2452,8 @@ def geometric_mean_relative_squared_error(
         Forecasted values from benchmark method.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -2579,7 +2599,8 @@ def relative_loss(
         requiring y_train or y_pred_benchmark are not supported.
 
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
 
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
@@ -2733,7 +2754,8 @@ def _linex_error(y_true, y_pred, a=1.0, b=1.0):
              where fh is the forecasting horizon
         Forecasted values.
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
     multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines how to aggregate metric for multivariate (multioutput) data.
@@ -2778,7 +2800,8 @@ def mean_squared_log_error(
     y_pred : pd.Series, pd.DataFrame or np.array of shape (fh,) or (fh, n_outputs)
         Estimated target values.
     horizon_weight : array-like of shape (fh,), default=None
-        Forecast horizon weights.
+        Forecast horizon weights, aligned with ``y_true`` by position,
+        e.g., the index of a ``pd.Series`` is ignored.
     multioutput : {'raw_values', 'uniform_average'}, default='uniform_average'
         Defines aggregating of multiple output values.
     square_root : bool, default=False
