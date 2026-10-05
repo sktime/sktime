@@ -5,8 +5,8 @@ import pytest
 from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
 from sktime.datasets import load_longley
 from sktime.pipeline.pipeline import MethodNotImplementedError, Pipeline
-from sktime.transformations.series.boxcox import BoxCoxTransformer
-from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.transformations.boxcox import BoxCoxTransformer
+from sktime.transformations.exponent import ExponentTransformer
 
 
 @pytest.mark.parametrize(

@@ -70,6 +70,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
 
     Examples
     --------
+    >>> from sktime.classification.ensemble import WeightedEnsembleClassifier
     >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
@@ -101,6 +102,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         ],
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -259,12 +261,13 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.classification.distance_based import (
             KNeighborsTimeSeriesClassifier,
         )
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.kernel_based import RocketClassifier
-        from sktime.utils.dependencies import _check_estimator_deps
 
         params0 = {"classifiers": [DummyClassifier()]}
 

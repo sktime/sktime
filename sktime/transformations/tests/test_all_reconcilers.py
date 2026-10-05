@@ -17,9 +17,9 @@ class ReconciliationTransformerFixtureGenerator(BaseFixtureGenerator):
 
     Fixtures parameterized
     ----------------------
-    estimator_class: estimator inheriting from BaseTransformer and
+    object_class: estimator inheriting from BaseTransformer and
         reconciler object type.
-    estimator_instance: instance of estimator inheriting from BaseTransformer
+    object_instance: instance of estimator inheriting from BaseTransformer
         and reconciler object type.
     scenario: instance of TestScenario
     ranges over all scenarios returned by retrieve_scenarios
@@ -29,7 +29,7 @@ class ReconciliationTransformerFixtureGenerator(BaseFixtureGenerator):
     #   additional fixtures, parameters, etc should be added here
     #   TestAllTransformers should contain the tests only
 
-    estimator_type_filter = "reconciler"
+    object_type_filter = "reconciler"
 
 
 class TestAllReconciliationTransformers(
@@ -43,7 +43,7 @@ class TestAllReconciliationTransformers(
     @pytest.mark.parametrize("aggregate", [True, False])
     def test_hierarchical_reconcilers(
         self,
-        estimator_instance,
+        object_instance,
         no_levels,
         flatten_single_levels,
         unnamed_levels,
@@ -82,7 +82,7 @@ class TestAllReconciliationTransformers(
         X = X + np.random.normal(0, 10, (X.shape[0], 1))
 
         # reconcile forecasts
-        reconciler = estimator_instance
+        reconciler = object_instance
         Xt = reconciler.fit_transform(X)
         prds = Xt + np.random.normal(0, 10, (Xt.shape[0], 1))
         prds_recon = reconciler._inverse_transform_reconciler(prds)
@@ -99,24 +99,24 @@ class TestAllReconciliationTransformers(
         prds_recon_bottomlevel = prds_recon_bottomlevel.loc[prds_recon.index]
         assert_frame_equal(prds_recon, prds_recon_bottomlevel)
 
-    def test_implement_inverse_transform(self, estimator_instance):
+    def test_implement_inverse_transform(self, object_instance):
         """Test that the reconciler has implemented the inverse_transform method."""
         methods_to_implement = [
             "_inverse_transform_reconciler",
         ]
 
         for method in methods_to_implement:
-            assert method in estimator_instance.__class__.__dict__
+            assert method in object_instance.__class__.__dict__
 
     @pytest.mark.parametrize("n_instances", [1, 10])
     def test_behaves_as_identity_if_input_not_hierarchical(
-        self, estimator_instance, n_instances
+        self, object_instance, n_instances
     ):
         """Test that the reconciler behaves as identity when required."""
         X = _make_panel(n_instances=20)
 
         # reconcile forecasts
-        reconciler = estimator_instance
+        reconciler = object_instance
         Xt = reconciler.fit_transform(X)
 
         assert reconciler._no_hierarchy

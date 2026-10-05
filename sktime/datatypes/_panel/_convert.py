@@ -33,9 +33,10 @@ __all__ = [
     "convert_dict",
 ]
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
 from sktime.datatypes._convert_utils._convert import _extend_conversions
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.pandas import df_map
 
 # this needs to be refactored with the convert module
@@ -570,7 +571,7 @@ def from_long_to_nested_adp(obj, store=None):
     return from_long_to_nested(X_long=obj)
 
 
-convert_dict[("pd-long", "nested_univ", "Panel")] = from_nested_to_long_adp
+convert_dict[("pd-long", "nested_univ", "Panel")] = from_long_to_nested_adp
 
 
 def from_multiindex_to_long(obj, store=None):

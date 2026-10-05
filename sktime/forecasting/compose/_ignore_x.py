@@ -28,6 +28,17 @@ class IgnoreX(_DelegatedForecaster):
     ----------
     forecaster_ : clone of forecaster
         The fitted forecaster.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import IgnoreX
+    >>> from sktime.forecasting.sarimax import SARIMAX
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
+    >>> forecaster = IgnoreX(SARIMAX())
+    >>> forecaster.fit(y, X=X, fh=[1, 2, 3])
+    IgnoreX(forecaster=SARIMAX())
+    >>> y_pred = forecaster.predict(X=X)
     """
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -66,6 +77,9 @@ class IgnoreX(_DelegatedForecaster):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         self.forecaster_ = self.forecaster.clone()
 

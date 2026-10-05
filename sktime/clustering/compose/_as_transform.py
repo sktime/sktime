@@ -207,9 +207,10 @@ class ClustererAsTransformer(BaseTransformer):
             `create_test_instance` uses the first (or only) dictionary in `params`.
         """
         # imports
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.clustering.dbscan import TimeSeriesDBSCAN
         from sktime.clustering.k_means import TimeSeriesKMeansTslearn
-        from sktime.utils.dependencies import _check_estimator_deps
 
         params = []
 

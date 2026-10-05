@@ -14,17 +14,13 @@ import numpy as np
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 
-from sktime.forecasting.base import (
-    BaseForecaster,
-    ForecastingHorizon,
-    _GlobalForecastingDeprecationMixin,
-)
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
 __all__ = ["_PytorchForecastingAdapter"]
 __author__ = ["XinyuWu"]
 
 
-class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecaster):
+class _PytorchForecastingAdapter(BaseForecaster):
     """Base adapter class for pytorch-forecasting models.
 
     Parameters
@@ -52,7 +48,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
     References
     ----------
-    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries._timeseries.TimeSeriesDataSet.html
+    .. [1] https://pytorch-forecasting.readthedocs.io/en/stable/api/pytorch_forecasting.data.timeseries.TimeSeriesDataSet.html
     """  # noqa: E501
 
     _tags = {
@@ -61,7 +57,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         "authors": ["XinyuWu"],
         "maintainers": ["XinyuWu"],
         "python_dependencies": [
-            "pytorch-forecasting>=1.0.0",
+            "pytorch-forecasting>=1.8.0",
             "torch",
             "lightning",
         ],
@@ -84,6 +80,16 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
+        "capability:update": True,
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        # libs tag is set so child classes get tested if this file changes
+        "tests:libs": ["sktime.forecasting.base.adapters._pytorchforecasting"],
+        "tests:skip_by_name": [
+            "test_save_estimators_to_file",
+            "test_persistence_via_pickle",
+        ],
     }
 
     def __init__(
@@ -103,9 +109,13 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         self.train_to_dataloader_params = train_to_dataloader_params
         self.validation_to_dataloader_params = validation_to_dataloader_params
         self.model_path = model_path
-        self._model_params = deepcopy(model_params) if model_params is not None else {}
         self._dataset_params = (
             deepcopy(dataset_params) if dataset_params is not None else {}
+        )
+        self._model_loss = model_params.pop("loss", None) if model_params else None
+        self._model_params = deepcopy(model_params) if model_params else {}
+        self._callbacks = (
+            trainer_params.pop("callbacks", None) if trainer_params else None
         )
         self._trainer_params = (
             deepcopy(trainer_params) if trainer_params is not None else {}
@@ -127,7 +137,6 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
                 **{
                     "y_inner_mtype": "pd.Series",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
         super().__init__()
@@ -151,6 +160,8 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
     def _instantiate_model(self: "_PytorchForecastingAdapter", data):
         """Instantiate the model."""
+        if self._model_loss is not None:
+            self._model_params["loss"] = self._model_loss
         algorithm_instance = self.algorithm_class.from_dataset(
             data,
             **self.algorithm_parameters,
@@ -164,7 +175,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
                     self._random_log_dir = self._gen_random_log_dir(data)
                     self._trainer_params["default_root_dir"] = self._random_log_dir
 
-        trainer_instance = pl.Trainer(**self._trainer_params)
+        trainer_instance = pl.Trainer(callbacks=self._callbacks, **self._trainer_params)
         return algorithm_instance, trainer_instance
 
     def _gen_random_log_dir(self, data=None):
@@ -210,13 +221,31 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
             raise NotImplementedError(
                 f"No in sample predict support, but found fh with in sample index: {fh}"
             )
+        # snapshot y and X as passed, since _Xy_to_dataset renames columns and
+        # index levels in place, on the frames from _series_to_frame below.
+        # X is snapshotted before the dummy below is created: `_predict` creates
+        # its own dummy, spanning the index extended to the forecasting horizon
+        self._cur_y = y
+        self._cur_X = X
         # check if dummy X is needed
         # only the TFT model need X to fit, probably a bug in pytorch-forecasting
         X = self._dummy_X(X, y)
+        # store series name if pd.Series
+        if isinstance(y, pd.Series):
+            self._series_name = y.name
+            self._was_series = True
+        else:
+            self._was_series = False
         # convert series to frame
         _y, self._convert_to_series = _series_to_frame(y)
         _X, _ = _series_to_frame(X)
         # convert data to pytorch-forecasting datasets
+        if getattr(self, "deterministic", False):
+            import torch
+
+            torch_state = torch.get_rng_state()
+            torch.manual_seed(0)
+
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
         )
@@ -247,6 +276,26 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         else:
             # load model from disk
             self.best_model = self.algorithm_class.load_from_checkpoint(self.model_path)
+        if getattr(self, "deterministic", False):
+            import torch
+
+            torch.set_rng_state(torch_state)
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update the data snapshot that ``_predict`` conditions on.
+
+        ``_predict`` encodes the most recent observations from ``_cur_y``, so
+        appending keeps them contiguous with the cutoff, which advances in
+        ``update``.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        if update_params:
+            self._fit(y=self._cur_y, fh=self._fh, X=self._cur_X)
         return self
 
     def _predict(
@@ -287,6 +336,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         _y = self._extend_y(_y, fh)
         # check if dummy X is needed
         _X = self._dummy_X(_X, _y)
+        _origin_time_idx_backup = self._origin_time_idx
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -320,12 +370,15 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length
         )
-
+        self._origin_time_idx = _origin_time_idx_backup
         absolute_horizons = self.fh.to_absolute_index(self.cutoff)
         dateindex = output.index.get_level_values(-1).map(
             lambda x: x in absolute_horizons
         )
-        return output.loc[dateindex]
+        ret = output.loc[dateindex]
+        if self._was_series and isinstance(ret, pd.Series):
+            ret.name = self._series_name
+        return ret
 
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
@@ -376,6 +429,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         _y = self._extend_y(_y, fh)
         # check if dummy X is needed
         _X = self._dummy_X(_X, _y)
+        _origin_time_idx_backup = self._origin_time_idx
         # convert data to pytorch-forecasting datasets
         training, validation = self._Xy_to_dataset(
             _X, _y, self._dataset_params, self._max_prediction_length
@@ -411,6 +465,7 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         output = self._predictions_to_dataframe(
             predictions, self._max_prediction_length, alpha=alpha
         )
+        self._origin_time_idx = _origin_time_idx_backup
 
         absolute_horizons = self.fh.to_absolute_index(self.cutoff)
         dateindex = output.index.get_level_values(-1).map(
@@ -419,9 +474,11 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
         return output.loc[dateindex]
 
     def _Xy_precheck(self, X):
-        y = deepcopy(self._y)
+        y = deepcopy(self._cur_y)
         if X is None:
-            X = deepcopy(self._X)
+            X = deepcopy(self._cur_X)
+        elif self._cur_X is not None:
+            X = pd.concat([deepcopy(self._cur_X), X])
         return X, y
 
     def _Xy_to_dataset(
@@ -478,7 +535,9 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
             data = deepcopy(y)
         # if fh is not continuous, there will be NaN after extend_y in prediect
         data = data.copy()
-        data["_target_column"] = data["_target_column"].fillna(0)
+        data["_target_column"] = data["_target_column"].fillna(0).astype(float)
+        for c in time_varying_known_reals:
+            data[c] = data[c].astype(float)
         # add integer time_idx column as pytorch-forecasting requires
         if self._index_len > 1:
             time_idx = (
@@ -558,9 +617,9 @@ class _PytorchForecastingAdapter(_GlobalForecastingDeprecationMixin, BaseForecas
 
         # set the instance columns to multi index
         data.set_index(index_names, inplace=True)
-        self._origin_time_idx.set_index(index_names, inplace=True)
+        _origin_time_idx_indexed = self._origin_time_idx.set_index(index_names)
         # add origin time_idx column to data
-        data = data.join(self._origin_time_idx, on=index_names)
+        data = data.join(_origin_time_idx_indexed, on=index_names)
         # drop _auto_time_idx column
         data.reset_index(level=list(range(len(index_names))), inplace=True)
         data.drop("_auto_time_idx", axis=1, inplace=True)

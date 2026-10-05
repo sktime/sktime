@@ -162,6 +162,9 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         * parameter validation
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
         """
         self.current_forecaster_ = None
         self.current_name_ = None
@@ -214,6 +217,8 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         RuntimeError
             If all forecasters fail to fit.
         """
+        self._cur_y = y
+        self._cur_X = X
         self.first_nonfailing_forecaster_index_ = 0
         self.exceptions_raised_ = dict()
         return self._try_fit_forecasters(y=y, X=X, fh=fh)
@@ -306,7 +311,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
             # Fit the next forecaster and retry prediction
             self.current_forecaster_ = None
-            self._try_fit_forecasters(self._y, self._X, self._fh)
+            self._try_fit_forecasters(self._cur_y, self._cur_X, self._fh)
             y_pred = self.predict(fh, X)
             self._validate_y_pred(y_pred)
             return y_pred

@@ -355,7 +355,7 @@ def _load_fpp3(dataset, temp_folder=None, robust=True):
     The public function is robust (robust=True) and will use the non-latest version,
     protecting users from failures.
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     _check_soft_dependencies(["requests", "rdata"])
 

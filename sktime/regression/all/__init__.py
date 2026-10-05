@@ -1,16 +1,12 @@
 #!/usr/bin/env python3 -u
 """Import all time series regression functionality available in sktime."""
 
-__author__ = ["mloning"]
-__all__ = [
-    "np",
-    "pd",
-    "ComposableTimeSeriesForestRegressor",
-    "TimeSeriesForestRegressor",
-]
+from sktime.registry import all_estimators
 
-import numpy as np
-import pandas as pd
+est_tuples = all_estimators(estimator_types="regressor", return_names=True)
+est_names, ests = zip(*est_tuples)
 
-from sktime.regression.compose import ComposableTimeSeriesForestRegressor
-from sktime.regression.interval_based import TimeSeriesForestRegressor
+for i, x in enumerate(est_tuples):
+    exec(f"{x[0]} = ests[{i}]")
+
+__all__ = list(est_names)

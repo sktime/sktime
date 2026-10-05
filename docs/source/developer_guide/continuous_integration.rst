@@ -13,7 +13,7 @@ up your developer environment, and installed a
 :doc:`development version </installation>`
 of ``sktime``.
 
-``sktime`` use continuous integration (CI) services on GitHub to automatically check
+``sktime`` uses continuous integration (CI) services on GitHub to automatically check
 if new pull requests do not break anything and meet code quality
 standards such as a common `coding style <#Coding-style>`__.
 
@@ -80,13 +80,13 @@ We use `pre-commit`_ for code quality checks (a process we also refer to as "lin
 
 We recommend that you also set this up locally as it will ensure that you never run into code quality errors when you make your first PR!
 These checks run automatically before you make a new commit.
-To setup, simply navigate to the sktime folder and install our pre-commit configuration:
+To set up, simply navigate to the sktime folder and install our pre-commit configuration:
 
    .. code:: bash
 
       pre-commit install
 
-pre-commit should now automatically run anything you make a commit! Please let us know if you encounter any issues getting this setup.
+pre-commit should now automatically run whenever you make a commit! Please let us know if you encounter any issues getting this setup.
 
 For a detailed guide on code quality and linting for developers, see :ref:`coding_standards`.
 
@@ -117,7 +117,7 @@ or, from a console with ``pytest`` in the path, from the repository root:
 
       pytest ./sktime
 
-Further, developer IDEs such as pycharm or vs code will automatically recognize
+Further, developer IDEs such as PyCharm or VS Code will automatically recognize
 the tests via ``pytest``, refer to the documentation of the IDEs for testing
 via the embedded graphical user interface.
 
@@ -161,8 +161,9 @@ We also provide an option to execute the test suite via ``docker`` containers.
 This requires a local docker installation.
 To install, follow the instructions `here <https://docs.docker.com/desktop/>`_.
 
-The docker images for the tests are in the folder ``build_tools/docker``,
-with the image of name ``PYTHON_VERSION`` based on the following python versions:
+The Dockerfiles for the tests are in the folder ``build_tools/docker``
+and follow the naming format ``<PYTHON_VERSION>.dockerfile``.
+The mapping between Python versions and ``PYTHON_VERSION`` values is displayed in the table below.
 
 +----------------+----------------+
 | Python version | PYTHON_VERSION |
@@ -174,12 +175,16 @@ with the image of name ``PYTHON_VERSION`` based on the following python versions
 +----------------+----------------+
 |     3.12    |      py312        |
 +----------------+----------------+
+|     3.13    |      py313        |
++----------------+----------------+
+|     3.14    |      py314        |
++----------------+----------------+
 
 The dockerized tests can be also executed via `make <https://www.gnu.org/software/make/>`_,
 via the command ``make dockertest PYTHON_VERSION=<python version>``.
-The ``PYTHON_VERSION`` argument specifies the python version and is the same string as in the table above.
-For example, to execute the tests in the Python version ``3.8``,
-use ``make dockertest PYTHON_VERSION=py38``.
+The ``PYTHON_VERSION`` argument specifies the Python version and is the same string as in the table above.
+For example, to execute the tests in the Python version ``3.14``,
+use ``make dockertest PYTHON_VERSION=py314``.
 
 
 Continuous integration
@@ -203,10 +208,10 @@ integration services we use.
      - `.github/workflows/ <https://github.com/sktime/sktime/blob/main/.github/workflows/>`__
    * - `Read the Docs <https://readthedocs.org>`__
      - Build/deploy documentation
-     - `.readthedocs.yml <https://github.com/alan-turing-institute/sktime/blob/main/.github/workflows/code-quality.yml>`__
+     - `.readthedocs.yml <https://github.com/sktime/sktime/blob/main/.readthedocs.yml>`__
    * - `Codecov <https://codecov.io>`__
      - Test coverage
-     - `.codecov.yml <https://github.com/sktime/sktime/blob/main/.codecov.yml>`__, `.coveragerc <https://github.com/alan-turing-institute/sktime/blob/main/.coveragerc>`__
+     - `.codecov.yml <https://github.com/sktime/sktime/blob/main/.codecov.yml>`__, `.coveragerc <https://github.com/sktime/sktime/blob/main/.coveragerc>`__
 
 Additional scripts used for building, unit testing and distribution can
 be found in

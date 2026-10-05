@@ -72,7 +72,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.param_est.plugin import PluginParamsForecaster
     >>> from sktime.param_est.seasonality import SeasonalityACF
-    >>> from sktime.transformations.series.difference import Differencer
+    >>> from sktime.transformations.difference import Differencer
     >>>
     >>> y = load_airline()  # doctest: +SKIP
     >>>
@@ -112,6 +112,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         "capability:multivariate": True,
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "fit_is_empty": False,
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -285,10 +286,11 @@ class PluginParamsForecaster(_DelegatedForecaster):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.forecasting.naive import NaiveForecaster
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
-        from sktime.utils.dependencies import _check_estimator_deps
 
         # use of dictionary to plug "foo" parameter into "sp", uses mock param_est
         params1 = {

@@ -4,7 +4,7 @@ __author__ = ["chrisholder", "TonyBagnall"]
 
 import numpy as np
 
-from sktime.distances import pairwise_distance
+from sktime.dists_kernels._numba_distances import pairwise_distance
 
 
 def medoids(

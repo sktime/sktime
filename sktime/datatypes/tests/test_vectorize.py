@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datatypes import MTYPE_REGISTER, SCITYPE_REGISTER
 from sktime.datatypes._check import AMBIGUOUS_MTYPES, check_is_mtype
 from sktime.datatypes._examples import get_examples
+from sktime.datatypes._registry import generate_mtype_register, generate_scitype_list
 from sktime.datatypes._vectorize import VectorizedDF, _enforce_index_freq
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
@@ -32,9 +32,9 @@ def _get_all_mtypes_for_scitype(scitype):
     -------
     mtypes : list of str - list of mtypes for scitype
     """
-    if scitype not in [s[0] for s in SCITYPE_REGISTER]:
+    if scitype not in generate_scitype_list():
         raise RuntimeError(scitype + " is not in the SCITYPE_REGISTER")
-    mtypes = [key[0] for key in MTYPE_REGISTER if key[1] == scitype]
+    mtypes = [key[0] for key in generate_mtype_register() if key[1] == scitype]
     mtypes = [mtype for mtype in mtypes if mtype not in AMBIGUOUS_MTYPES]
 
     if len(mtypes) == 0:

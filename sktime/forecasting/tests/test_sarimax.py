@@ -98,7 +98,7 @@ def test_SARIMAX_multiple_intervals_against_statsmodels():
     not run_test_for_class(SARIMAX),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_SARIMAX_for_exogeneous_features():
+def test_SARIMAX_for_exogenous_features():
     """Checking when X is passed to predict but not fit"""
     from sktime.datasets import load_longley
     from sktime.split import temporal_train_test_split

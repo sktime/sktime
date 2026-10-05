@@ -14,15 +14,17 @@ class AlignerDtwNumba(BaseAligner):
     Interface to simple dynamic time warping (DTW) alignment,
     and the following weighted/derivative versions:
 
-    * WDTW - weighted dynamic tyme warping - ``weighted=True, derivative=False`
+    * WDTW - weighted dynamic time warping - ``weighted=True, derivative=False`
     * DDTW - derivative dynamic time warping - ``weighted=False, derivative=True``
     * WDDTW - weighted derivative dynamic time
       warping - ``weighted=True, derivative=True``
 
     ``sktime`` interface to the efficient ``numba`` implementations
-    provided by ``distance_alignment_path`` in ``sktime.distances``.
+    provided by ``distance_alignment_path``
+    in ``sktime.dists_kernels._numba_distances``.
 
     This estimator provides performant implementation of time warping for:
+
     * time series of equal length
     * the Euclidean pairwise distance
 
@@ -187,7 +189,7 @@ class AlignerDtwNumba(BaseAligner):
         X: list of pd.DataFrame (sequence) of length n - panel of series to align
         Z: pd.DataFrame with n rows, optional; metadata, row correspond to indices of X
         """
-        from sktime.distances import distance_alignment_path
+        from sktime.dists_kernels._numba_distances import distance_alignment_path
 
         X1 = X[0]
         X2 = X[1]

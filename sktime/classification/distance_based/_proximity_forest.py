@@ -20,15 +20,15 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes import convert
-from sktime.distances import (
+from sktime.dists_kernels._numba_distances import (
     dtw_distance,
     erp_distance,
     lcss_distance,
     msm_distance,
     wdtw_distance,
 )
-from sktime.transformations.base import _PanelToPanelTransformer
-from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
+from sktime.transformations.base import BaseTransformer
+from sktime.transformations.summarize import DerivativeSlopeTransformer
 
 # todo unit tests / sort out current unit tests
 # todo logging package rather than print to screen
@@ -38,7 +38,7 @@ from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
 # todo duck-type functions
 
 
-class _CachedTransformer(_PanelToPanelTransformer):
+class _CachedTransformer(BaseTransformer):
     """Transformer container.
 
     Transforms data and adds the transformed version to a cache. If the
@@ -53,6 +53,16 @@ class _CachedTransformer(_PanelToPanelTransformer):
     ----------
     cache       : location to store transforms seen before for fast look up
     """
+
+    _tags = {
+        "scitype:transform-input": "Series",
+        # what is the scitype of X: Series, or Panel
+        "scitype:transform-output": "Series",
+        # what scitype is returned: Primitives, Series, Panel
+        "scitype:instancewise": False,  # is this an instance-wise transform?
+        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "y_inner_mtype": "pd.Series",  # which mtypes do _fit/_predict support for X?
+    }
 
     def __init__(self, transformer):
         self.cache = {}

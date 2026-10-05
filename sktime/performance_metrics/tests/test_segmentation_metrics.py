@@ -2,7 +2,7 @@
 
 import pytest
 
-from sktime.performance_metrics.annotation.metrics import (
+from sktime.performance_metrics._annotation.metrics import (
     count_error,
     hausdorff_error,
     prediction_ratio,

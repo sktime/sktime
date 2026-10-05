@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.classification._delegate import _DelegatedClassifier
 from sktime.pipeline import make_pipeline
-from sktime.transformations.panel.rocket import (
+from sktime.transformations.rocket import (
     MiniRocket,
     MiniRocketMultivariate,
     MultiRocket,

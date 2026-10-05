@@ -6,6 +6,7 @@ __author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.compose import ColumnEnsembleForecaster
@@ -13,9 +14,6 @@ from sktime.forecasting.compose._ensemble import _aggregate
 from sktime.forecasting.compose._pipeline import TransformedTargetForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.trend import PolynomialTrendForecaster
-from sktime.transformations.series.detrend import Deseasonalizer
-from sktime.transformations.series.theta import ThetaLinesTransformer
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.slope_and_trend import _fit_trend
 from sktime.utils.validation.forecasting import check_sp
 from sktime.utils.warnings import warn
@@ -113,6 +111,7 @@ class ThetaForecaster(ExponentialSmoothing):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:random_state": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         "property:randomness": "deterministic",
         # CI and test flags
         # -----------------
@@ -152,8 +151,11 @@ class ThetaForecaster(ExponentialSmoothing):
         -------
         self : returns an instance of self.
         """
+        y_seasonal = y
         deseasonalize = self.deseasonalize
         if isinstance(deseasonalize, bool) and deseasonalize:
+            from sktime.transformations.detrend import Deseasonalizer
+
             self.deseasonalizer_ = Deseasonalizer(
                 sp=self.sp, model=self.deseasonalize_model
             )
@@ -179,6 +181,11 @@ class ThetaForecaster(ExponentialSmoothing):
         # fit exponential smoothing forecaster
         # find theta lines: Theta lines are just SES + drift
         super()._fit(y, X=None, fh=fh)
+        # the parent snapshots the deseasonalized y passed above, but the snapshot
+        # must hold the data as seen in fit: `_update` deseasonalizes it again,
+        # and a refit passes it through `_fit`, which deseasonalizes as well
+        self._cur_y = y_seasonal
+        self._cur_X = X
         self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
 
         # compute and store historical residual standard error
@@ -230,7 +237,7 @@ class ThetaForecaster(ExponentialSmoothing):
             drift = self.trend_ * fh
         else:
             # Calculate drift from SES parameters
-            n_timepoints = len(self._y)
+            n_timepoints = len(self._cur_y)
             drift = self.trend_ * (
                 fh
                 + (1 - (1 - self.initial_level_) ** n_timepoints) / self.initial_level_
@@ -327,7 +334,7 @@ class ThetaForecaster(ExponentialSmoothing):
         super()._update(y, X, update_params=False)  # use custom update_params routine
         if update_params:
             if self.deseasonalize:
-                y = self.deseasonalizer_.transform(self._y)  # use updated y
+                y = self.deseasonalizer_.transform(self._cur_y)  # use updated y
             self.initial_level_ = self._fitted_forecaster.params["smoothing_level"]
             self.trend_ = self._compute_trend(y)
         return self
@@ -360,6 +367,8 @@ class ThetaForecaster(ExponentialSmoothing):
         params = [params0, params1, params2, params3]
 
         if _check_estimator_deps(ExponentialSmoothing, severity="none"):
+            from sktime.transformations.detrend import Deseasonalizer
+
             des = Deseasonalizer(sp=4, model="additive")
             params4 = {"deseasonalize": des}
             params.append(params4)
@@ -396,7 +405,7 @@ class ThetaModularForecaster(BaseForecaster):
 
     Overview: Input :term:`univariate series <Univariate time series>` of length
     "n" and decompose with :class:`ThetaLinesTransformer
-    <sktime.transformations.series.theta>` by modifying the local curvature of
+    <sktime.transformations.theta>` by modifying the local curvature of
     the time series using Theta-coefficient values - ``theta_values`` parameter.
     Thansformation gives a pd.DataFrame of shape ``len(input series) * len(theta)``.
 
@@ -461,12 +470,19 @@ class ThetaModularForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["GuzalBulatova", "fkiraly"],
+        # estimator type
+        # --------------
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "python_version": ">3.7",
+        "capability:update": True,  # can estimator update its parameters with new data?
+        # test and CI flags
+        # -----------------
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -476,14 +492,26 @@ class ThetaModularForecaster(BaseForecaster):
         aggfunc="mean",
         weights=None,
     ):
-        super().__init__()
         self.forecasters = forecasters
         self.aggfunc = aggfunc
         self.weights = weights
         self.theta_values = theta_values
 
-        forecasters_ = self._check_forecasters(forecasters)
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        forecasters_ = self._check_forecasters(self.forecasters)
         self._colens = ColumnEnsembleForecaster(forecasters=forecasters_)
+
+        from sktime.transformations.theta import ThetaLinesTransformer
 
         self.pipe_ = TransformedTargetForecaster(
             steps=[
@@ -521,6 +549,8 @@ class ThetaModularForecaster(BaseForecaster):
         return _forecasters
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         self.pipe_.fit(y=y, X=X, fh=fh)
         return self
 
@@ -529,7 +559,7 @@ class ThetaModularForecaster(BaseForecaster):
         # because of output conversion
         Y_pred = self.pipe_.steps_[-1][-1].predict(fh, X)
         y_pred = _aggregate(Y_pred, aggfunc=self.aggfunc, weights=self.weights)
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):

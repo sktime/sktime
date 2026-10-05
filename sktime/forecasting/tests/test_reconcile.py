@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
@@ -20,7 +21,6 @@ from sktime.utils._testing.hierarchical import (
     _make_hierarchical,
     _make_index,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 # get all the methods
 METHOD_LIST = [x for x in ReconcilerForecaster.METHOD_LIST if not x.endswith("nonneg")]

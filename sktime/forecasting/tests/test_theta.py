@@ -133,7 +133,7 @@ def check_panel_theta_quantiles():
     """Test predict quantiles with theta on panel data with datetime index."""
     # make panel with hour of day panel and datetime index
     y = load_airline()
-    y.index = pd.date_range(start="1960-01-01", periods=len(y.index), freq="H")
+    y.index = pd.date_range(start="1960-01-01", periods=len(y.index), freq="h")
     y.index.names = ["datetime"]
     y.name = "passengers"
     y = y.to_frame()

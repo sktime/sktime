@@ -7,7 +7,7 @@ import pytest
 from sktime.classification.dummy import DummyClassifier
 from sktime.forecasting.dummy import ForecastKnownValues
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
-from sktime.transformations.series.exponent import ExponentTransformer
+from sktime.transformations.exponent import ExponentTransformer
 from sktime.utils.estimator_checks import (
     _get_test_names_for_obj,
     check_estimator,

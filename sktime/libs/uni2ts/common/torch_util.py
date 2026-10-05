@@ -55,6 +55,30 @@ def packed_attention_mask(
     return attention_mask
 
 
+def packed_causal_attention_mask(
+    sample_id,
+    time_id,
+):
+    """
+    Create a packed causal attention mask for self-attention.
+
+    Parameters
+    ----------
+    sample_id: Int[torch.Tensor, "*batch seq_len"]
+    time_id: Int[torch.Tensor, "*batch seq_len"]
+
+    Returns
+    -------
+    Bool[torch.Tensor, "*batch seq_len seq_len"]
+    """
+    attention_mask = packed_attention_mask(sample_id)
+    expanded_id1 = time_id.unsqueeze(-2)
+    expanded_id2 = time_id.unsqueeze(-1)
+    compare_res = expanded_id1 <= expanded_id2
+    attention_mask = attention_mask * compare_res
+    return attention_mask
+
+
 def mask_fill(
     tensor,
     mask,

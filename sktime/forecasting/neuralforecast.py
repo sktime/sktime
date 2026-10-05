@@ -3,11 +3,12 @@
 
 import functools
 
+from skbase.utils.dependencies import _check_soft_dependencies
+
 from sktime.forecasting.base.adapters._neuralforecast import (
     _SUPPORTED_LOCAL_SCALAR_TYPES,
     _NeuralForecastAdapter,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["yarnabrina", "geetu040", "pranavvp16"]
 
@@ -178,7 +179,8 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(
@@ -256,6 +258,18 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
             broadcasting=broadcasting,
         )
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
         # initiate internal variables to avoid AttributeError in future
         self._trainer_kwargs = None
         self._loss = None
@@ -572,7 +586,8 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(
@@ -963,7 +978,8 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(
@@ -1365,7 +1381,8 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(
@@ -1765,7 +1782,8 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         # estimator type
         # --------------
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
-        "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
     }
 
     def __init__(

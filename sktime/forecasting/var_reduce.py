@@ -137,15 +137,31 @@ class VARReduce(BaseForecaster):
     }
 
     def __init__(self, lags=1, regressor=None):
-        from sklearn.base import clone
-        from sklearn.linear_model import LinearRegression
-
         self.regressor = regressor  # not used/modified
         self.lags = lags
-        if regressor is None:
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        if self.regressor is None:
+            from sklearn.linear_model import LinearRegression
+
             self.regressor_ = LinearRegression()
         else:
-            self.regressor_ = clone(regressor)
+            from sklearn.base import clone
+
+            self.regressor_ = clone(self.regressor)
 
         assert hasattr(self.regressor_, "fit"), "Regressor must have 'fit'"
         assert hasattr(self.regressor_, "predict"), "Regressor must have 'predict'"
@@ -154,7 +170,6 @@ class VARReduce(BaseForecaster):
         self.intercept_ = None
         self.num_series = None
         self.var_names = None
-        super().__init__()
 
     def _prepare_for_fit(self, data, return_as_ndarray=True):
         """
@@ -257,7 +272,7 @@ class VARReduce(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            Guaranteed to have a single column if scitype:y=="univariate".
+            Guaranteed to have a single column if capability:multivariate is False.
         fh : ForecastingHorizon, optional (default=None)
             The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
@@ -267,6 +282,8 @@ class VARReduce(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         from sklearn.multioutput import MultiOutputRegressor
 
         from sktime.utils.sklearn._tag_adapter import get_sklearn_tag
@@ -318,7 +335,7 @@ class VARReduce(BaseForecaster):
         # ---- insample forecasts  -----
         if fh_int.min() <= 0:
             # Reproduce the original X we used for fitting
-            X, _ = self._prepare_for_fit(self._y, return_as_ndarray=False)
+            X, _ = self._prepare_for_fit(self._cur_y, return_as_ndarray=False)
 
             self._y_pred_insample = pd.DataFrame(
                 self.regressor_.predict(X),
@@ -335,7 +352,7 @@ class VARReduce(BaseForecaster):
         # ---- outsample forecasts ----
         if fh_int.max() > 0:
             # Get the last available values for prediction
-            y_last = self._y.iloc[-self.lags :]
+            y_last = self._cur_y.iloc[-self.lags :]
 
             # Initialize a list to store out-of-sample predictions
             y_pred_outsample = []

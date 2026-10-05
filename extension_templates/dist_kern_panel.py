@@ -64,6 +64,12 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         # maintainer = algorithm maintainer role, "owner" of the sktime class
         #     for 3rd party interfaces, the scope is the sktime class only
         # remove maintainer tag if maintained by sktime core team
+        #
+        # estimator tags
+        # --------------
+        "property:randomness": "deterministic",  # "deterministic", "stochastic",
+        # or "derandomized" (stochastic, but reproducible if random_state is set)
+        "capability:random_state": False,  # is there a random_state parameter?
     }
     # in case of inheritance, concrete class should typically set tags
     #  alternatively, descendants can set tags in __init__ (avoid this if possible)
@@ -86,6 +92,27 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         # do not put anything else in __init__,
         # use __post_init__ for any further initialization logic
 
+        # do not put anything else in __init__,
+        # use __dynamic_tags__ for dynamic tag setting
+        # use __post_init__ for any further initialization logic
+
+    # todo: add if there is dynamic tag setting logic, otherwise delete this method
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        # todo: if tags of estimator depend on component tags, set these here
+        #  typically only needed if estimator is a composite
+        #  tags set here apply to the instance, and override the class tags
+        #
+        # example 1: conditional setting of a tag based on parameter foo
+        # if self.foo == 42:
+        #   self.set_tags(**{"capability:missing_values": True})
+        # example 2: cloning tags from component estimator component_estimator
+        #   self.clone_tags(self.component_estimator, ["capability:missing_values"])
+
+    # todo: add any post-init logic here, otherwise delete this method
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
@@ -93,7 +120,6 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         # todo: optional, parameter checking or coercion should happen here
@@ -107,16 +133,6 @@ class MyTrafoPwPanel(BasePairwiseTransformerPanel):
         else:
             # estimators should be cloned to avoid side effects
             self._paramc = self.paramc.clone()
-
-        # todo: if tags of estimator depend on component tags, set these here
-        #  only needed if estimator is a composite
-        #  tags set in the constructor apply to the object and override the class
-        #
-        # example 1: conditional setting of a tag
-        # if est.foo == 42:
-        #   self.set_tags(handles-missing-data=True)
-        # example 2: cloning tags from component
-        #   self.clone_tags(est2, ["enforce_index_type", "capability:missing_values"])
 
     # todo: implement this, mandatory
     def _transform(self, X, X2=None):

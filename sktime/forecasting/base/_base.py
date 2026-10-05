@@ -49,6 +49,7 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
 from sktime.base import BaseEstimator
 from sktime.base._proba import _PredictProbaMixin
@@ -65,8 +66,8 @@ from sktime.datatypes import (
 from sktime.datatypes._dtypekind import DtypeKind
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
+from sktime.forecasting.base._state_at import _StateAtMixin
 from sktime.utils.datetime import _shift
-from sktime.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_alpha, check_cv, check_fh, check_X
 from sktime.utils.validation.series import check_equal_time_index
 from sktime.utils.warnings import warn
@@ -82,7 +83,7 @@ def _coerce_to_list(obj):
         return obj
 
 
-class BaseForecaster(_PredictProbaMixin, BaseEstimator):
+class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
     """Base forecaster template class.
 
     The base forecaster specifies the methods and method signatures that all forecasters
@@ -104,12 +105,13 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # --------------
         "object_type": "forecaster",  # type of object
         "capability:multivariate": False,  # which y are fine? False/True
-        "capability:exogenous": True,  # does estimator ignore the exogeneous X?
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": False,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # if yes, also for in-sample horizons?
         "capability:missing_values": False,  # can estimator handle missing data?
         "capability:non_contiguous_X": True,  # support non-contiguous X?
+        "capability:update": False,  # can the estimator update its state with new data?
         "y_inner_mtype": "pd.Series",  # which types do _fit/_predict, support for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit/_predict, support for X?
         "requires-fh-in-fit": True,  # is forecasting horizon already required in fit?
@@ -117,7 +119,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "fit_is_empty": False,  # is fit empty and can be skipped?
         "capability:categorical_in_X": True,
-        # does the forecaster natively support categorical in exogeneous X?
+        # does the forecaster natively support categorical in exogenous X?
+        "capability:unequal_length": True,  # can forecaster handle unequal length TS?
     }
 
     # configs and default config values
@@ -141,15 +144,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             in update. If True, self._X and self._y are stored and updated.
             If False, self._X and self._y are not stored and updated.
             This reduces serialization size when using save,
-            but the update will default to "do nothing" rather than
-            "refit to all data seen".
+            but the default ``update`` with ``update_params=True`` will not
+            refit (only the cutoff advances) and will warn; use
+            ``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` to pool
+            and refit explicitly.
         """,
     }
 
     def __init__(self):
-        self._y = None
-        self._X = None
-
         # forecasting horizon
         self._fh = None
         self._cutoff = None  # reference point for relative fh
@@ -159,6 +161,26 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         self._state = "new"
 
         super().__init__()
+
+        # todo 1.3.0: change default of remember_data to False and remove this warning
+        if self.get_config()["remember_data"]:
+            self._y = None
+            self._X = None
+            warn(
+                "The default of config ``remember_data`` will change from ``True`` "
+                "to ``False`` in sktime 1.3.0. After 1.3.0, ``BaseForecaster`` will "
+                "no longer store incremental data in ``_X`` and ``_y`` by default. "
+                "To silence this warning and adopt the new default early, set "
+                "``remember_data=False`` via ``set_config``. "
+                "For forecasters that do not have update natively supported,"
+                " i.e., the capability:update tag is not True,"
+                " the default ``update`` will not refit. "
+                "To keep storing incremental data and refitting on every update "
+                "after the default change, set ``remember_data=True`` explicitly, "
+                "or use ``UpdateRefitsEvery`` with ``refit_interval=0``.",
+                FutureWarning,
+                self,
+            )
 
         # this block has a double purpose:
         # - emit a warning if dependencies are not met, but allow instantiation
@@ -173,7 +195,6 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass
@@ -214,8 +235,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             not nested, contains only non-TransformerPipeline ``sktime`` transformers
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -246,8 +267,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.forecasting.compose import TransformedTargetForecaster
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -278,8 +299,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             not nested, contains only non-TransformerPipeline ``sktime`` steps
         """
         from sktime.forecasting.compose import ForecastingPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
         from sktime.utils.sklearn import is_sklearn_transformer
 
         # we wrap self in a pipeline, and concatenate with the other
@@ -316,7 +337,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
     def __getitem__(self, key):
         """Magic [...] method, return forecaster with subsetted data.
 
-        First index does subsetting of exogeneous input data.
+        First index does subsetting of exogenous input data.
         Second index does subsetting of the forecast (but not of endogeneous data).
 
         Keys must be valid inputs for ``columns`` in ``ColumnSelect``.
@@ -334,7 +355,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             last
             if only one item is passed in ``key``, only ``columns1`` is applied to input
         """
-        from sktime.transformations.series.subset import ColumnSelect
+        from sktime.transformations.subset import ColumnSelect
 
         def is_noneslice(obj):
             res = isinstance(obj, slice)
@@ -479,17 +500,22 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         _check_estimator_deps(self)
 
         # check y is not None
-        assert y is not None, "y cannot be None, but found None"
+        if y is None:
+            cls_name = self.__class__.__name__
+            raise AssertionError(
+                f"Error in {cls_name}.fit: y cannot be None, but found None"
+            )
 
-        # if fit is called, estimator is reset, including fitted state
+        # skip reset on the first fit after pretrain; on refit, discard
+        # task-specific fitted state while retaining pretrained state
         if not self._state == "pretrained":
-            self.reset()
+            self._reset_at("pretrained")
 
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # set internal X/y to the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y (subclasses may also pool data here, e.g. streams)
+        # if remember_data is True, update internal X/y also
         self._update_y_X(y_inner, X_inner)
 
         # check forecasting horizon and coerce to ForecastingHorizon object
@@ -660,8 +686,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # check and convert X/y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # set internal X/y to the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y (subclasses may also pool data here, e.g. streams)
+        # if remember_data is True, update internal X/y also
         self._update_y_X(y_inner, X_inner)
 
         # check fh and coerce to ForecastingHorizon
@@ -913,6 +939,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             If ``self.get_tag("X-y-must-have-same-index")``,
             ``X.index`` must contain ``fh`` index reference.
 
+        cov : bool, optional (default=False)
+            currently unused, present for downwards compatibility and future extension
+
         Returns
         -------
         pred_var : pd.DataFrame, format dependent on ``cov`` variable
@@ -1146,6 +1175,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
         pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
 
+        prior_attrs = {
+            a for a in dir(self) if a.endswith("_") and not a.startswith("_")
+        }
+
         # pretrain accepts multivariate panel data even for univariate forecasters,
         # because _pretrain can split columns into separate univariate series.
         # Pass multivariate=True to prevent column vectorization.
@@ -1182,6 +1215,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             if a.endswith("_")
             and not a.startswith("_")
             and a not in self._pretrained_attrs
+            and a not in prior_attrs
         ]
         self._pretrained_attrs.extend(new_attrs)
 
@@ -1333,8 +1367,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # update internal X/y with the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y (subclasses may also pool data here, e.g. streams)
+        # if remember_data is True, update internal X/y also
         self._update_y_X(y_inner, X_inner)
 
         # checks and conversions complete, pass to inner fit
@@ -1494,12 +1528,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Accesses in self:
             Fitted model attributes ending in "_".
-            Pointers to seen data, self._y and self.X
             self.cutoff, self._is_fitted
             If update_params=True, model attributes ending in "_".
 
         Writes to self:
-            Update self._y and self._X with ``y`` and ``X``, by appending rows.
             Updates self.cutoff and self._cutoff to last index seen in ``y``.
             If update_params=True,
                 updates fitted model attributes ending in "_".
@@ -1564,8 +1596,8 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # input checks and minor coercions on X, y
         X_inner, y_inner = self._check_X_y(X=X, y=y)
 
-        # update internal _X/_y with the new X/y
-        # this also updates cutoff from y
+        # update cutoff from y (subclasses may also pool data here, e.g. streams)
+        # if remember_data is True, update internal X/y also
         self._update_y_X(y_inner, X_inner)
 
         # check fh and coerce to ForecastingHorizon, if not already passed in fit
@@ -1621,10 +1653,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Time series with ground truth observations, to compute residuals to.
             Must have same type, dimension, and indices as expected return of predict.
 
-            If None, the y seen so far (self._y) are used, in particular:
-
-            * if preceded by a single fit call, then in-sample residuals are produced
-            * if fit requires ``fh``, it must have pointed to index of y in fit
+            Required; ground truth observations to compute residuals against.
 
         X : time series in sktime compatible format, optional (default=None)
             Exogeneous time series for updating and forecasting
@@ -1652,6 +1681,15 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         # if no y is passed, the so far observed y is used
         if y is None and self.get_config()["remember_data"]:
             y = self._y
+        elif y is None:
+            raise ValueError(
+                "Error in predict_residuals, this instance of "
+                f"{self.__class__.__name__} does not retain training data."
+                "To compute in-sample residuals on training data, "
+                "pass the training data as the `y` argument to `predict_residuals` "
+                "explicitly, or set the config remember_data to True,"
+                " via `my_forecaster.set_config(remember_data=True)`."
+            )
 
         # we want residuals, so fh must be the index of y
         # if data frame: take directly from y
@@ -1982,7 +2020,7 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 # replace error with encoding logic in next step.
                 raise TypeError(
                     f"Forecaster {self} does not support categorical features in "
-                    "exogeneous X."
+                    "exogenous X."
                 )
 
             X_scitype = X_metadata["scitype"]
@@ -2071,24 +2109,10 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._X = update_data(self._X, X)
 
     def _update_y_X(self, y, X=None, enforce_index_type=None):
-        """Update internal memory of seen training data.
-
-        Accesses in self:
-        _y : only if exists, then assumed same type as y and same cols
-        _X : only if exists, then assumed same type as X and same cols
-            these assumptions should be guaranteed by calls
+        """Update cutoff from newly seen training data.
 
         Writes to self:
-        _y : same type as y - new rows from y are added to current _y
-            if _y does not exist, stores y as _y
-        _X : same type as X - new rows from X are added to current _X
-            if _X does not exist, stores X as _X
-            this is only done if X is not None
         cutoff : is set to latest index seen in y
-
-        _y and _X are guaranteed to be one of mtypes:
-            pd.DataFrame, pd.Series, np.ndarray, pd-multiindex, numpy3D,
-            pd_multiindex_hier
 
         Parameters
         ----------
@@ -2096,11 +2120,17 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             Endogenous time series
         X : pd.DataFrame or 2D np.ndarray, optional (default=None)
             Exogeneous time series
+        enforce_index_type : type, optional (default=None)
+            Ignored by the base implementation; kept for subclass overrides.
         """
-        if y is not None and self.get_config()["remember_data"]:
+        if y is not None:
             # unwrap y if VectorizedDF
             if isinstance(y, VectorizedDF):
                 y = y.X_multiindex
+            self._set_cutoff_from_y(y)
+
+        # if remember_data config is set, update stored _y
+        if y is not None and self.get_config()["remember_data"]:
             # if _y does not exist yet, initialize it with y
             if not hasattr(self, "_y") or self._y is None or not self.is_fitted:
                 self._y = y
@@ -2194,16 +2224,16 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
 
         Writes fh to self._fh if does not exist.
         Checks equality of fh with self._fh if exists, raises error if not equal.
-        Assigns the frequency inferred from self._y
+        Assigns the frequency inferred from the cutoff
         to the returned forecasting horizon object.
 
         Parameters
         ----------
         fh : int, list, pd.Index coercible, or ``ForecastingHorizon``, default=None
-             If fh is not None and not of type ForecastingHorizon it is coerced to
-             ForecastingHorizon (e.g. in sktime.utils.validation.forecasting.check_fh)
-             In particular, if fh is of type pd.Index it is coerced via
-             ForecastingHorizon(fh, is_relative=False)
+            If fh is not None and not of type ForecastingHorizon it is coerced to
+            ForecastingHorizon (e.g. in sktime.utils.validation.forecasting.check_fh)
+            In particular, if fh is of type pd.Index it is coerced via
+            ForecastingHorizon(fh, is_relative=False)
         pred_int: Check pred_int:insample tag instead of insample tag.
 
         Returns
@@ -2505,6 +2535,9 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
         -------
         self : reference to self
         """
+        # Leaf estimators that need a current snapshot should override `_update`
+        # to append to their own `_cur_y` / `_cur_X`. To pool and refit, use
+        # forecasting.stream compositors (e.g. UpdateRefitsEvery).
         if update_params and self.get_config()["remember_data"]:
             # default to re-fitting if update is not implemented
             warn(
@@ -2512,12 +2545,14 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 f"does not have a custom `update` method implemented. "
                 f"{self.__class__.__name__} will be refit each time "
                 f"`update` is called with update_params=True. "
-                "To refit less often, use the wrappers in the "
-                "forecasting.stream module, e.g., UpdateEvery.",
+                "To pool data and control refit frequency, wrap with "
+                "``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` "
+                "(e.g. ``refit_interval=0`` to refit every update, or a "
+                "larger interval / ``UpdateEvery`` to refit less often).",
                 obj=self,
             )
-            # we need to overwrite the mtype last seen and converter store, since the _y
-            #    may have been converted
+            # we need to overwrite the mtype last seen and converter store,
+            # since the _y may have been converted
             mtype_last_seen = self._y_mtype_last_seen
             y_metadata = self._y_metadata
             _converter_store_y = self._converter_store_y
@@ -2528,6 +2563,23 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
             self._y_mtype_last_seen = mtype_last_seen
             self._y_metadata = y_metadata
             self._converter_store_y = _converter_store_y
+        elif not self.get_config()["remember_data"]:
+            # cutoff was already advanced by public ``update``; parameters
+            # are intentionally left unchanged when there is no base data
+            # pool and no leaf ``_update`` override
+            warn(
+                f"NotImplementedWarning: {type(self).__name__} "
+                "does not have a custom `update` method implemented, "
+                "and ``remember_data=False``, so `update` with "
+                "update_params=True leaves model parameters unchanged - "
+                "only the cutoff advances, same as update_params=False. "
+                "To pool history and refit on update, wrap with "
+                "``UpdateRefitsEvery`` from ``sktime.forecasting.stream`` "
+                "with ``refit_interval=0`` to refit every update. "
+                "To keep the legacy base data pool while it exists, set "
+                "``remember_data=True`` via ``set_config``.",
+                obj=self,
+            )
 
         # if update_params=False, and there are no components, do nothing
         # if update_params=False, and there are components, we update cutoffs
@@ -2649,15 +2701,11 @@ class BaseForecaster(_PredictProbaMixin, BaseEstimator):
                 )
         return _format_moving_cutoff_predictions(y_preds, cutoffs)
 
-    def _get_varnames(self, y=None):
+    def _get_varnames(self):
         """Return variable column for DataFrame-like returns.
 
         Primarily used as helper for probabilistic predict-like methods.
         Assumes that _check_X_y has been called, and self._y_metadata set.
-
-        Parameter
-        ---------
-        y : ignored, present for downwards compatibility
 
         Returns
         -------

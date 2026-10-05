@@ -9,7 +9,7 @@ import pandas as pd
 from sklearn.utils import check_random_state
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.boxcox import BoxCoxTransformer
 
 
 class STLBootstrapTransformer(BaseTransformer):

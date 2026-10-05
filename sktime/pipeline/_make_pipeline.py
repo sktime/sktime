@@ -24,7 +24,7 @@ def make_pipeline(*steps):
     Example 1: forecaster pipeline
 
     >>> from sktime.pipeline import make_pipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> from sktime.forecasting.trend import PolynomialTrendForecaster
     >>> pipe = make_pipeline(ExponentTransformer(), PolynomialTrendForecaster())
     >>> type(pipe).__name__
@@ -33,7 +33,7 @@ def make_pipeline(*steps):
     Example 2: classifier pipeline
 
     >>> from sktime.pipeline import make_pipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
     >>> pipe = make_pipeline(ExponentTransformer(), KNeighborsTimeSeriesClassifier())
     >>> type(pipe).__name__
@@ -42,7 +42,7 @@ def make_pipeline(*steps):
     Example 3: transformer pipeline
 
     >>> from sktime.pipeline import make_pipeline
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> pipe = make_pipeline(ExponentTransformer(), ExponentTransformer())
     >>> type(pipe).__name__
     'TransformerPipeline'

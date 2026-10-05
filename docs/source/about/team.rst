@@ -35,6 +35,8 @@ Community Council Observers
 
    * - Name
      - GitHub ID
+   * - Aryan Saini
+     - :user:`phoeenniixx`
    * - Benedikt Heidrich
      - :user:`benheid`
    * - Felipe Angelim Vieira
@@ -77,10 +79,10 @@ Core Developers
      - :user:`phoeenniixx`
    * - Benedikt Heidrich
      - :user:`benheid`
-   * - Daniel Bartling
-     - :user:`danbartl`
    * - Eric J Berger
      - :user:`ericjb`
+   * - Faakhir Zahid
+     - :user:`faakhir30`
    * - Felipe Angelim Vieira
      - :user:`felipeangelimvieira`
    * - Felix Hirwa Nshuti
@@ -101,20 +103,19 @@ Core Developers
      - :user:`marrov`
    * - Mateusz Kasprowicz
      - :user:`mateuszkasprowicz `
-   * - Mirae Parker
-     - :user:`miraep8`
    * - Pranav Bhat
      - :user:`PranavBhatP`
    * - Pranav Prajapati
      - :user:`pranavvp16`
    * - Sai Revanth Gowravajhala
      - :user:`SaiRevanth25`
+   * - Simon Blanke
+     - :user:`SimonBlanke`
    * - Svea Marie Meyer
      - :user:`SveaMeyer13`
    * - Ugochukwu Onyeka
      - :user:`onyekaugochukwu`
-   * - Xinyu Wu
-     - :user:`XinyuWuu`
+
 
 Former Core Developers
 ----------------------
@@ -132,6 +133,8 @@ Former Core Developers
      - :user:`ayushmaanseth`
    * - Christopher Holder
      - :user:`chrisholder`
+   * - Daniel Bartling
+     - :user:`danbartl`
    * - Freddy A Boulton
      - :user:`freddyaboulton`
    * - George Oastler
@@ -160,6 +163,8 @@ Former Core Developers
      - :user:`matteogales`
    * - Matthew Middlehurst
      - :user:`mattewmiddlehurst`
+   * - Mirae Parker
+     - :user:`miraep8`
    * - Patrick Rockenschaub
      - :user:`prockenschaub`
    * - Patrick Schäfer
@@ -172,5 +177,7 @@ Former Core Developers
      - :user:`sajaysurya`
    * - Stanislav Khrapov
      - :user:`khrapovs`
+   * - Xinyu Wu
+     - :user:`XinyuWuu`
    * - Anonymous upon contributor's request
      - :user:`big-o`

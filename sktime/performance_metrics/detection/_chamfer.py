@@ -32,6 +32,16 @@ class DirectedChamfer(BaseDetectionMetric):
         If unnormalized, making too many detections will be penalized, whereas
         the normalized distance penalizes only the average distance to the
         closest true events, regardless of the number of detections.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.detection import DirectedChamfer
+    >>> y_true = pd.DataFrame({"ilocs": [0, 2, 3]})
+    >>> y_pred = pd.DataFrame({"ilocs": [0, 1, 3, 4, 5]})
+    >>> metric = DirectedChamfer()
+    >>> metric(y_true, y_pred)
+    4.0
     """
 
     _tags = {

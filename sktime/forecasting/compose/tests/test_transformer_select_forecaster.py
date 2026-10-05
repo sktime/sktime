@@ -8,8 +8,8 @@ from sktime.forecasting.croston import Croston
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.series.adi_cv import ADICVTransformer
-from sktime.transformations.series.tests.test_adi_cv import (
+from sktime.transformations.adi_cv import ADICVTransformer
+from sktime.transformations.tests.test_adi_cv import (
     _generate_erratic_series,
     _generate_intermittent_series,
     _generate_smooth_series,

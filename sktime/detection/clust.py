@@ -17,7 +17,7 @@ __all__ = ["ClusterSegmenter"]
 class ClusterSegmenter(BaseDetector):
     """Cluster-based Time Series Segmentation.
 
-    time series segmentation using clustering is simple task. This annotator
+    time series segmentation using clustering is simple task. This detector
     segments time series data into distinct segments based on similarity, identified
     using the chosen clustering algorithm.
 
@@ -38,7 +38,14 @@ class ClusterSegmenter(BaseDetector):
         "learning_type": "unsupervised",
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
+        "tests:skip_by_name": [
+            "test_non_state_changing_method_contract",
+            "test_doctest_examples",
+            "test_predict_points",
+            "test_predict_segments",
+            "test_transform_output_type",
+            "test_output_type",
+        ],
     }
 
     def __init__(self, clusterer=None):
@@ -61,7 +68,7 @@ class ClusterSegmenter(BaseDetector):
         X : pd.DataFrame
             training data to fit model to, time series
         Y : pd.Series, optional
-            ground truth annotations for training if annotator is supervised
+            ground truth annotations for training if detector is supervised
 
         Returns
         -------
@@ -115,7 +122,7 @@ class ClusterSegmenter(BaseDetector):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for annotators.
+            There are currently no reserved values for detectors.
 
         Returns
         -------

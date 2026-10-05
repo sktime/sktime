@@ -5,8 +5,9 @@
 __author__ = ["rnkuhns", "fkiraly"]
 __all__ = ["BaseMetric"]
 
+from skbase.utils.dependencies import _check_estimator_deps
+
 from sktime.base import BaseObject
-from sktime.utils.dependencies import _check_estimator_deps
 
 
 class BaseMetric(BaseObject):
@@ -37,7 +38,6 @@ class BaseMetric(BaseObject):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass
