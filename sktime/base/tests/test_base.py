@@ -566,3 +566,50 @@ def test_eq_dunder_checks_class():
 
     # comparison against a non-BaseObject must not raise, and must be unequal
     assert unrelated_1 != 42
+
+
+def test_sklearn_tags():
+    """Tests __sklearn_tags__ method for sklearn compatibility."""
+    from sktime.classification.dummy import DummyClassifier
+    from sktime.regression.dummy import DummyRegressor
+    from sktime.transformations.reduce import Tabularizer
+
+    clf = DummyClassifier()
+    reg = DummyRegressor()
+    tra = Tabularizer()
+
+    if _check_soft_dependencies("scikit-learn>=1.6", severity="none"):
+        from sklearn.base import is_classifier, is_regressor
+
+        assert is_classifier(clf)
+        assert not is_regressor(clf)
+        assert is_regressor(reg)
+        assert not is_classifier(reg)
+
+        tags_clf = clf.__sklearn_tags__()
+        assert tags_clf.estimator_type == "classifier"
+        assert tags_clf.target_tags.required is True
+
+        tags_reg = reg.__sklearn_tags__()
+        assert tags_reg.estimator_type == "regressor"
+        assert tags_reg.target_tags.required is True
+
+        tags_tra = tra.__sklearn_tags__()
+        assert tags_tra.transformer_tags is not None
+
+
+def test_reset_preserves_sklearn_callback_context():
+    """Tests that reset preserves sklearn callback context attributes."""
+    obj = CompositionDummy(foo=42)
+    obj._parent_callback_ctx = "dummy_ctx"
+    obj._skl_callbacks = ["dummy_cb"]
+    obj.fitted_attribute_ = "should_be_removed"
+
+    obj.reset()
+
+    assert hasattr(obj, "_parent_callback_ctx")
+    assert obj._parent_callback_ctx == "dummy_ctx"
+    assert hasattr(obj, "_skl_callbacks")
+    assert obj._skl_callbacks == ["dummy_cb"]
+    assert not hasattr(obj, "fitted_attribute_")
+

@@ -30,6 +30,8 @@ class MockUnivariateForecasterLogger(BaseForecaster, _MockEstimatorMixin):
     _tags = {
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
+        "fm": False,  # is the forecaster a Foundation Model?
+        "few-shot": False,  # does the forecaster support few-shot learning?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
@@ -216,6 +218,8 @@ class MockForecaster(BaseForecaster):
     _tags = {
         "capability:multivariate": True,  # which y are fine? True/False
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
+        "fm": False,  # is the forecaster a Foundation Model?
+        "few-shot": False,  # does the forecaster support few-shot learning?
         "capability:missing_values": False,  # can estimator handle missing data?
         "y_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?

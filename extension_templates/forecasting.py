@@ -111,6 +111,10 @@ class MyForecaster(BaseForecaster):
         #
         # capability:exogenous = does estimator use exogeneous X nontrivially?
         "capability:exogenous": True,
+        # fm = is the forecaster a Foundation Model?
+        "fm": False,
+        # few-shot = does the forecaster support few-shot learning?
+        "few-shot": False,
         # valid values: boolean False (ignores X), True (uses X in non-trivial manner)
         # CAVEAT: if tag is set to False, inner methods always see X=None
         #
