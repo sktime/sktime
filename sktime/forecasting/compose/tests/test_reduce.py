@@ -921,7 +921,8 @@ def _rrf_trafo_ws():
     from sktime.transformations.summarize import WindowSummarizer
 
     # window ending at t (lag 0), as the RRF convention is "features at t predict t+1"
-    lag_feature = {"mean": [[0, 3]], "std": [[0, 6]], "min": [[2, 4]]}
+    # window 5 is longer than window_length=3, so features are not collinear with lags
+    lag_feature = {"mean": [[0, 5]], "std": [[0, 6]], "min": [[2, 4]]}
     return WindowSummarizer(lag_feature=lag_feature, truncate=None)
 
 
@@ -1053,7 +1054,7 @@ def test_recursive_reduction_transformers_matches_make_reduction(kind):
     mr_ws = WindowSummarizer(
         lag_feature={
             "lag": [1, 2, 3],
-            "mean": [[1, 3]],
+            "mean": [[1, 5]],
             "std": [[1, 6]],
             "min": [[3, 4]],
         },
