@@ -106,13 +106,18 @@ class CNTCClassifier(BaseDeepClassifier):
         "tests:libs": ["sktime.networks.cntc._cntc_tf"],
         "tests:skip_by_name": [
             "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
         ],
         # Run tests in a dedicated VM due to sporadic crashes and possible
         # memory leaks (see #8518)
         "tests:vm": True,
     }
+
+    @classmethod
+    def get_custom_objects(cls):
+        """Return the custom objects needed to load the model."""
+        from sktime.libs._keras_self_attention import SeqSelfAttention
+
+        return SeqSelfAttention.get_custom_objects()
 
     def __init__(
         self,
