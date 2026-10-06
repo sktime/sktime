@@ -242,6 +242,7 @@ class SARIMAX(_StatsModelsAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:non_contiguous_X": False,
+        "tests:specific": ["sktime.forecasting.tests.test_sarimax"],
     }
 
     def __init__(
