@@ -1,7 +1,5 @@
 """Discrete wavelet transform."""
 
-import math
-
 import numpy as np
 import pandas as pd
 
@@ -104,31 +102,28 @@ class DWTTransformer(BaseTransformer):
     def _extract_wavelet_coefficients(self, data):
         """Extract wavelet coefficients of a 2d array of time series.
 
-        The coefficients correspond to the wavelet coefficients from levels 1 to
-        num_levels followed by the approximation coefficients of the highest level.
+        The coefficients correspond to the approximation coefficients of the highest
+        level, followed by the wavelet coefficients from levels num_levels to 1.
         """
-        num_levels = self.num_levels
-        res = []
+        data = np.asarray(data)
+        if self.num_levels == 0:
+            return data
 
-        for x in data:
-            if num_levels == 0:
-                res.append(x)
-            else:
-                coeffs = []
-                current = x
-                approx = None
-                for _ in range(num_levels):
-                    approx = self._get_approx_coefficients(current)
-                    wav_coeffs = self._get_wavelet_coefficients(current)
-                    current = approx
-                    wav_coeffs.reverse()
-                    coeffs.extend(wav_coeffs)
-                approx.reverse()
-                coeffs.extend(approx)
-                coeffs.reverse()
-                res.append(coeffs)
+        wav_coeffs = []
+        approx = data
+        for _ in range(self.num_levels):
+            # a length-1 series is its own approximation and wavelet coefficient
+            if approx.shape[1] == 1:
+                wav_coeffs.append(approx)
+                continue
+            # pairwise Haar step on all instances at once, odd last value dropped
+            n_pairs = approx.shape[1] // 2
+            even = approx[:, 0 : 2 * n_pairs : 2]
+            odd = approx[:, 1 : 2 * n_pairs : 2]
+            wav_coeffs.append((even - odd) / np.sqrt(2))
+            approx = (even + odd) / np.sqrt(2)
 
-        return res
+        return np.hstack([approx] + wav_coeffs[::-1])
 
     def _check_parameters(self):
         """Check the values of parameters passed to DWT.
@@ -147,25 +142,6 @@ class DWTTransformer(BaseTransformer):
                 + type(self.num_levels).__name__
                 + "' instead."
             )
-
-    def _get_approx_coefficients(self, arr):
-        """Get the approximate coefficients at a given level."""
-        new = []
-        if len(arr) == 1:
-            return [arr[0]]
-        for x in range(math.floor(len(arr) / 2)):
-            new.append((arr[2 * x] + arr[2 * x + 1]) / math.sqrt(2))
-        return new
-
-    def _get_wavelet_coefficients(self, arr):
-        """Get the wavelet coefficients at a given level."""
-        new = []
-        # if length is 1, just return the list back
-        if len(arr) == 1:
-            return [arr[0]]
-        for x in range(math.floor(len(arr) / 2)):
-            new.append((arr[2 * x] - arr[2 * x + 1]) / math.sqrt(2))
-        return new
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
