@@ -32,7 +32,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     regressors on various sub-samples of a transformed dataset and uses
     averaging to improve the predictive accuracy and control over-fitting.
     The sub-sample size is always the same as the original input sample size
-    but the samples are drawn with replacement if ``bootstrap=True`` (default).
+    but the samples are drawn with replacement if ``bootstrap=True``.
 
     Parameters
     ----------
@@ -107,11 +107,12 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         left child, and ``N_t_R`` is the number of samples in the right child.
         ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
         if ``sample_weight`` is passed.
-    bootstrap : boolean, optional (default=True)
+    bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
     oob_score : bool (default=False)
         Whether to use out-of-bag samples to estimate
-        the generalization accuracy.
+        the generalization score, as R^2 score.
+        Only available if ``bootstrap=True``.
     n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for both ``fit`` and ``predict``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -159,11 +160,11 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         The feature importances (the higher, the more important the feature).
     oob_score_ : float
         Score of the training dataset obtained using an out-of-bag estimate.
-    oob_decision_function_ : array of shape = [n_samples, n_classes]
-        Decision function computed with out-of-bag estimate on the training
-        set. If n_estimators is small it might be possible that a data point
-        was never left out during the bootstrap. In this case,
-        ``oob_decision_function_`` might contain NaN.
+    oob_prediction_ : array of shape = [n_samples]
+        Prediction computed with out-of-bag estimate on the training set.
+        If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case, a warning is
+        raised, and ``oob_prediction_`` is 0 for that data point.
     class_weight: dict, list of dicts, "balanced", "balanced_subsample" or \
         None, optional (default=None)
         Not needed here, added in the constructor to align with base class \
@@ -379,7 +380,9 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             unsampled_indices = _generate_unsampled_indices(
                 final_estimator.random_state, n_samples, n_samples_bootstrap
             )
-            p_estimator = estimator.predict(X[unsampled_indices, :], check_input=False)
+            p_estimator = estimator.predict(
+                X.iloc[unsampled_indices, :], check_input=True
+            )
 
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]
@@ -448,5 +451,7 @@ class ComposableTimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
             "n_estimators": 10,
             "max_depth": 7,
             "min_samples_split": 0.2,
+            "bootstrap": True,
+            "oob_score": True,
         }
         return [param1, param2, param3]
