@@ -54,6 +54,27 @@ def test_tsf_predict_proba():
     assert y_pred.shape == (1,)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(ComposableTimeSeriesForestClassifier),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_tsf_bootstrap_oob_score():
+    """Test composable TSF with bootstrap samples and out-of-bag score.
+
+    Failure case of bug #11408, where fit failed with ``scikit-learn>=1.9``.
+    """
+    clf = ComposableTimeSeriesForestClassifier(
+        n_estimators=5, bootstrap=True, oob_score=True, max_samples=0.8, random_state=0
+    )
+    clf.fit(X, y)
+
+    assert 0 <= clf.oob_score_ <= 1
+    assert clf.oob_decision_function_.shape == (X.shape[0], n_classes)
+
+    proba = clf.predict_proba(X)
+    assert proba.shape == (X.shape[0], n_classes)
+
+
 # Compare results from different but equivalent implementations
 # @pytest.mark.parametrize("n_intervals", ["log", 1, 3])
 @pytest.mark.skipif(
