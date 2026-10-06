@@ -426,3 +426,99 @@ def test_timezoneaware_index():
 
     # These should give us identical predictions
     np.testing.assert_almost_equal(pred_tzaware.values, pred_tznaive.values)
+
+
+def _make_panel(n_series, n_periods=60, seed=0):
+    """Create a synthetic panel dataset for testing."""
+    rng = np.random.default_rng(seed)
+    t = np.arange(n_periods)
+    rows = []
+    for i in range(n_series):
+        y = 100 + 10 * np.sin(2 * np.pi * t / 4) + rng.normal(0, 5, n_periods).cumsum()
+        idx = pd.MultiIndex.from_product(
+            [[f"s{i}"], t], names=["series", "time"]
+        )
+        rows.append(pd.DataFrame({"y": y}, index=idx))
+    return pd.concat(rows)
+
+
+def test_global_recursive_predict_panel_correctness():
+    """Global recursive reducer gives correct panel predictions.
+
+    Regression test for sktime/sktime#11329: verifies that the optimised
+    _create_fcst_df fast-path produces the same predictions as the pre-fix path.
+    The panel has 10 series so the MultiIndex fast-path is exercised.
+    """
+    y = _make_panel(n_series=10, n_periods=30)
+    fh = list(range(1, 5))
+
+    f = make_reduction(
+        LinearRegression(),
+        strategy="recursive",
+        window_length=4,
+        pooling="global",
+    )
+    f.fit(y, fh=fh)
+    y_pred = f.predict(fh=fh)
+
+    # Output must be a DataFrame / Series with a MultiIndex
+    assert isinstance(y_pred.index, pd.MultiIndex), (
+        "Predictions for panel input must have a MultiIndex"
+    )
+    # Must have one row per (series × fh step)
+    assert len(y_pred) == 10 * len(fh), (
+        f"Expected {10 * len(fh)} predictions, got {len(y_pred)}"
+    )
+    # All predictions must be finite (not NaN / inf)
+    assert np.isfinite(y_pred.to_numpy()).all(), (
+        "Predictions contain NaN or inf values"
+    )
+
+
+def test_global_recursive_predict_panel_no_perf_regression():
+    """Predict time for global recursive reducer must not scale badly with n_series.
+
+    Soft performance guard for sktime/sktime#11329: the predict time with 50 series
+    must not be more than 20× slower than with 5 series (before the fix the ratio
+    was >60×). Uses wall time so it will not catch every regression, but it will
+    catch a complete reversion to the O(n_series) per-series Python loop.
+
+    This test is intentionally lenient (20×) so that it doesn't flake on slow CI.
+    """
+    import time
+
+    fh = list(range(1, 5))
+    window = 4
+
+    # Warm-up run to avoid import / JIT effects.
+    y_small = _make_panel(n_series=5, n_periods=30)
+    f_small = make_reduction(
+        LinearRegression(), strategy="recursive", window_length=window, pooling="global"
+    )
+    f_small.fit(y_small, fh=fh)
+    f_small.predict(fh=fh)
+
+    # Timed small run.
+    t0 = time.perf_counter()
+    f_small.predict(fh=fh)
+    t_small = time.perf_counter() - t0
+
+    # Timed large run (10× more series).
+    y_large = _make_panel(n_series=50, n_periods=30)
+    f_large = make_reduction(
+        LinearRegression(), strategy="recursive", window_length=window, pooling="global"
+    )
+    f_large.fit(y_large, fh=fh)
+
+    t0 = time.perf_counter()
+    f_large.predict(fh=fh)
+    t_large = time.perf_counter() - t0
+
+    ratio = t_large / max(t_small, 1e-6)
+    assert ratio < 20, (
+        f"predict() scaled {ratio:.1f}× for 10× more series "
+        f"(small={t_small:.3f}s, large={t_large:.3f}s). "
+        "This indicates a regression to O(n_series) per-series Python overhead "
+        "(see sktime/sktime#11329)."
+    )
+
