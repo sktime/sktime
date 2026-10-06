@@ -2684,6 +2684,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # enter into a detached cutoff mode, if reset_forecaster is True
         if reset_forecaster:
             self_copy = deepcopy(self)
+            if self._is_vectorized:
+                # pandas deepcopy does not recursively copy objects in its cells.
+                # Detach fitted estimators as well as their containing DataFrame.
+                self_copy.forecasters_ = self.forecasters_.apply(
+                    lambda column: column.map(deepcopy)
+                )
         # otherwise just work with a reference to self
         else:
             self_copy = self
@@ -2697,20 +2703,30 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         if isinstance(X, VectorizedDF):
             X = X.X
 
-        # iterate over data
-        for new_window, _ in cv.split(y):
-            y_new = y.iloc[new_window]
+        # Internal pandas windows must not become the last public input mtype.
+        y_metadata = self._y_metadata
+        mtype_last_seen = self._y_mtype_last_seen
+        converter_store_y = deepcopy(self._converter_store_y)
+        try:
+            for new_window, _ in cv.split(y):
+                y_new = y.iloc[new_window]
 
-            # we use `update_predict_single` here
-            #  this updates the forecasting horizon
-            y_pred = self_copy.update_predict_single(
-                y=y_new,
-                fh=fh,
-                X=X,
-                update_params=update_params,
-            )
-            y_preds.append(y_pred)
-            cutoffs.append(self_copy.cutoff)
+                # we use `update_predict_single` here
+                #  this updates the forecasting horizon
+                y_pred = self_copy.update_predict_single(
+                    y=y_new,
+                    fh=fh,
+                    X=X,
+                    update_params=update_params,
+                )
+                y_preds.append(y_pred)
+                cutoffs.append(self_copy.cutoff)
+        finally:
+            # Keep cutoff/model updates, but restore public conversion metadata,
+            # including when a rolling update fails after making partial progress.
+            self._y_metadata = y_metadata
+            self._y_mtype_last_seen = mtype_last_seen
+            self._converter_store_y = converter_store_y
 
         y_pred = _format_moving_cutoff_predictions(y_preds, cutoffs)
 
