@@ -21,6 +21,26 @@ import pandas as pd
 from sktime.datatypes import convert_to, scitype
 
 
+def generate_convert_dict():
+    """Generate converter dispatch dict for series/panel/hierarchical scitypes."""
+    supported_scitypes = {"Series", "Panel", "Hierarchical"}
+    convert_dict = {}
+
+    for name, func in globals().items():
+        if not callable(func) or not name.startswith("convert_"):
+            continue
+
+        route = name[len("convert_") :]
+        if "_to_" not in route:
+            continue
+
+        from_scitype, to_scitype = route.split("_to_", 1)
+        if from_scitype in supported_scitypes and to_scitype in supported_scitypes:
+            convert_dict[(from_scitype, to_scitype)] = func
+
+    return convert_dict
+
+
 def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
     """Convert series to a single-series panel.
 
@@ -300,7 +320,13 @@ def convert_to_scitype(
     if to_scitype == from_scitype:
         return obj
 
-    func_name = f"convert_{from_scitype}_to_{to_scitype}"
-    func = eval(func_name)
+    dispatch = generate_convert_dict()
+
+    try:
+        func = dispatch[(from_scitype, to_scitype)]
+    except KeyError as exc:
+        raise ValueError(
+            f"conversion from {from_scitype} to {to_scitype} is not supported"
+        ) from exc
 
     return func(obj, store=store, return_to_mtype=return_to_mtype)
