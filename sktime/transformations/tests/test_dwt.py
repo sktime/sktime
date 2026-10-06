@@ -152,6 +152,45 @@ def test_dwt_performs_correctly_along_each_dim():
     assert check_if_dataframes_are_equal(res, orig)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(DWTTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("n_instances", [1, 5])
+@pytest.mark.parametrize("series_length", [1, 7, 16, 101])
+@pytest.mark.parametrize("num_levels", [0, 1, 3, 100])
+def test_matches_loop_reference(n_instances, series_length, num_levels):
+    """Test vectorized coefficients match the original per-element loop version."""
+    X = np.random.default_rng(42).normal(size=(n_instances, series_length))
+
+    res = DWTTransformer(num_levels=num_levels)._extract_wavelet_coefficients(X)
+    expected = np.asarray([_loop_reference(x, num_levels) for x in X])
+
+    np.testing.assert_allclose(res, expected)
+
+
+def _loop_reference(x, num_levels):
+    """Haar DWT of one series, as implemented before vectorization."""
+    if num_levels == 0:
+        return x
+
+    def step(arr, sign):
+        if len(arr) == 1:
+            return [arr[0]]
+        return [
+            (arr[2 * i] + sign * arr[2 * i + 1]) / math.sqrt(2)
+            for i in range(len(arr) // 2)
+        ]
+
+    coeffs = []
+    current = x
+    for _ in range(num_levels):
+        approx = step(current, 1)
+        coeffs = step(current, -1) + coeffs
+        current = approx
+    return approx + coeffs
+
+
 def convert_list_to_dataframe(list_to_convert):
     """Convert a Python list to a Pandas dataframe."""
     df = pd.DataFrame()
