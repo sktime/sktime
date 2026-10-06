@@ -4,6 +4,7 @@
 __author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
@@ -144,3 +145,72 @@ def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
     np.testing.assert_array_equal(test_windows[0], np.array([0, 2]))
     np.testing.assert_array_equal(train_windows[0], np.array([3, 4, 5]))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([SlidingWindowSplitter, ExpandingWindowSplitter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
+@pytest.mark.parametrize("step_length", [1, 5, 24])
+@pytest.mark.parametrize("fh", [[1, 24], [-2, 0], [-2, 24]])
+@pytest.mark.parametrize("duration", [pd.Timedelta, pd.offsets.Hour])
+def test_window_splitter_time_cutoffs_match_integer_cutoffs(
+    CV, step_length, fh, duration
+):
+    """Time-based windows include every valid fold without truncating the horizon."""
+    y = pd.Series(
+        np.arange(168), index=pd.date_range("2022-07-01", periods=168, freq="h")
+    )
+
+    def hours(value):
+        if duration is pd.Timedelta:
+            return duration(hours=value)
+        return duration(value)
+
+    cv_int = CV(fh, 24, step_length=step_length)
+    cv_time = CV(
+        pd.to_timedelta(fh, unit="h"),
+        hours(24),
+        step_length=hours(step_length),
+    )
+    expected = list(cv_int.split(y))
+    actual = list(cv_time.split(y))
+
+    np.testing.assert_array_equal(cv_time.get_cutoffs(y), cv_int.get_cutoffs(y))
+    assert cv_time.get_n_splits(y) == len(expected) == len(actual)
+    for (train, test), (train_expected, test_expected) in zip(actual, expected):
+        np.testing.assert_array_equal(train, train_expected)
+        np.testing.assert_array_equal(test, test_expected)
+        assert len(test) == len(fh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([SlidingWindowSplitter, ExpandingWindowSplitter]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("CV", [SlidingWindowSplitter, ExpandingWindowSplitter])
+def test_window_splitter_time_cutoffs_include_last_hierarchical_fold(CV):
+    """The final complete test window is retained for every instance."""
+    time_index = pd.date_range("2022-07-01", periods=168, freq="h")
+    index = pd.MultiIndex.from_product([["group"], ["a", "b"], time_index])
+    y = pd.DataFrame({"y": np.arange(len(index))}, index=index)
+    cv = CV(
+        pd.to_timedelta(np.arange(1, 25), unit="h"),
+        pd.Timedelta(days=1),
+        step_length=pd.Timedelta(days=1),
+    )
+    windows = list(cv.split(y))
+
+    assert cv.get_n_splits(y) == len(windows) == 6
+    for i, (train, test) in enumerate(windows):
+        cutoff = 23 + i * 24
+        train_start = 0 if CV is ExpandingWindowSplitter else i * 24
+        expected_train = np.arange(train_start, cutoff + 1)
+        expected_test = np.arange(cutoff + 1, cutoff + 25)
+        np.testing.assert_array_equal(
+            train, np.concatenate([expected_train, expected_train + 168])
+        )
+        np.testing.assert_array_equal(
+            test, np.concatenate([expected_test, expected_test + 168])
+        )
