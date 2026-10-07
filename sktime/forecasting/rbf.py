@@ -103,6 +103,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["phoeenniixx"],

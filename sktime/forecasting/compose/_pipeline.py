@@ -416,6 +416,7 @@ class ForecastingPipeline(_Pipeline):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "capability:multivariate": True,
         "y_inner_mtype": SUPPORTED_MTYPES,
@@ -880,6 +881,7 @@ class TransformedTargetForecaster(_Pipeline):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": ["mloning", "fkiraly", "aiwalter"],
@@ -1535,6 +1537,7 @@ class ForecastX(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": ["fkiraly", "benheid", "yarnabrina"],
@@ -2092,6 +2095,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         "authors": "aiwalter",
         "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,

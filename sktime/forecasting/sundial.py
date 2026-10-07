@@ -175,6 +175,7 @@ class SundialForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,

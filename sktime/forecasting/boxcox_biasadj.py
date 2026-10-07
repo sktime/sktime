@@ -67,6 +67,7 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": "sanskarmodi8",

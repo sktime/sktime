@@ -104,6 +104,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # estimator type
         # --------------
         "object_type": "forecaster",  # type of object
+        "forecaster_type": ["statistical"],  # see sktime.registry._tags.forecaster_type
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:insample": True,  # can the estimator make in-sample predictions?

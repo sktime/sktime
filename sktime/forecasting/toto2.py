@@ -88,6 +88,7 @@ class Toto2Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "None",
         "capability:multivariate": True,

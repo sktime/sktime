@@ -57,6 +57,7 @@ class HyperTreeARForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["statistical", "machine_learning"],
         # packaging info
         # --------------
         "authors": ["StatMixedML", "kashif", "oberoir080"],

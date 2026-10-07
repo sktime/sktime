@@ -47,6 +47,7 @@ class IgnoreX(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
+        "forecaster_type": ["composition"],
         # estimator type
         # --------------
         "capability:exogenous": True,

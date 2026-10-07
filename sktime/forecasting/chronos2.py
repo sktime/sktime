@@ -75,6 +75,7 @@ class Chronos2Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         "authors": ["priyanshuharshbodhi1", "fkiraly"],
         "maintainers": ["priyanshuharshbodhi1"],
         "python_dependencies": ["chronos-forecasting>=2.0.0"],

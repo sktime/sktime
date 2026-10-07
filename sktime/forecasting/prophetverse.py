@@ -96,6 +96,7 @@ class Prophetverse(_DelegatedForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": "felipeangelimvieira",
@@ -271,6 +272,7 @@ class HierarchicalProphet(_DelegatedForecaster):
     _delegate_name = "_delegate"
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": "felipeangelimvieira",

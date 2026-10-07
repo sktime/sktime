@@ -143,6 +143,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["Mingyue-Cheng", "0russewt0", "pty12345", "Tanuj-Taneja1"],

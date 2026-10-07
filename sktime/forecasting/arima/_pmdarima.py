@@ -273,6 +273,7 @@ class AutoARIMA(_PmdArimaAdapter):
     """  # noqa: E501
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -703,6 +704,7 @@ class ARIMA(_PmdArimaAdapter):
     """  # noqa: E501
 
     _tags = {
+        "forecaster_type": ["statistical"],
         "authors": [
             "tgsmith61591",  # for pmdarima
             "charlesdrotar",  # for pmdarima

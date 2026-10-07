@@ -71,6 +71,7 @@ class HyperTreeNetARForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["statistical", "machine_learning", "deep_learning"],
         # packaging info
         # --------------
         "authors": ["StatMixedML", "kashif", "aminehd"],

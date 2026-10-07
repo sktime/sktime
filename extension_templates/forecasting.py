@@ -84,6 +84,13 @@ class MyForecaster(BaseForecaster):
         # to list all valid tags with description, use sktime.registry.all_tags
         #   all_tags(estimator_types="forecaster", as_dataframe=True)
         #
+        # forecaster_type = fitting principle of the forecaster
+        # see sktime.registry._tags.forecaster_type
+        # valid values: list of strings, subset of
+        #   "statistical", "machine_learning", "deep_learning",
+        #   "foundation_model", "reduction", "composition", "agentic"
+        "forecaster_type": ["statistical"],
+        #
         # behavioural tags: internal type
         # -------------------------------
         #

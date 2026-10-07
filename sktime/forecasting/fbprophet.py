@@ -142,6 +142,10 @@ class Prophet(_ProphetAdapter):
     >>> y_pred = forecaster.predict(fh=[1,2,3])
     """
 
+    _tags = {
+        "forecaster_type": ["statistical"],
+    }
+
     def __init__(
         self,
         # Args due to wrapping

@@ -53,6 +53,7 @@ class TSB(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": "swetha3456",

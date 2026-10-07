@@ -94,6 +94,7 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     :template: function.rst
     :nosignatures:
 
+    forecaster_type
     capability__exogenous
     capability__multivariate
     capability__insample

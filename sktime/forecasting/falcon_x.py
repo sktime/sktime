@@ -258,6 +258,7 @@ class FalconXForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["Harryx2019", "figolyd", "vedantag17"],

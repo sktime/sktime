@@ -290,6 +290,7 @@ class ChronosForecaster(BaseForecaster):
 
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": [
