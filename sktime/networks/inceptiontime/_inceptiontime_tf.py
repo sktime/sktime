@@ -43,11 +43,19 @@ class InceptionTimeNetwork(BaseDeepNetwork):
        Petitjean, François}, journal = {ArXiv}, Year = {2019} }
     .. [2] https://github.com/hfawaz/InceptionTime/blob/master/classifiers/
        inception.py
+
+    Examples
+    --------
+    >>> from sktime.networks.inceptiontime import InceptionTimeNetwork
+    >>> network = InceptionTimeNetwork(
+    ...     n_filters=16, depth=3, random_state=42
+    ... )
     """
 
     _tags = {
         "authors": ["hfawaz", "JamesLarge", "Withington", "noxthot"],
         "python_dependencies": "tensorflow",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

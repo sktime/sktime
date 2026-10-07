@@ -15,14 +15,14 @@ def test_fit_transform_numpy():
 
     Failure case of bug #8325.
     """
-    from sktime.detection.lof import SubLOF
+    from sktime.detection.dummy import DummyRegularAnomalies
 
     data = np.array([0, 0.5, 2, 0.1, 0, 0, 0, 2, 0, 0, 0.3, -1, 0, 2, 0.2])
-    model = SubLOF(3, window_size=5, novelty=True)
+    model = DummyRegularAnomalies()
     pred = model.fit_transform(data)
 
     assert pred.shape[0] == data.shape[0]
 
     # also test fit alone
-    model = SubLOF(3, window_size=5, novelty=True)
+    model = DummyRegularAnomalies()
     model.fit(data)

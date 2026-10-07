@@ -10,7 +10,8 @@ import pandas as pd
 def _get_X_numpy_int_from_pandas(x):
     """Convert pandas index to an sklearn compatible X, 2D np.ndarray, int type."""
     if isinstance(x, (pd.DatetimeIndex)):
-        x = x.astype("int64") / 864e11
+        # days since epoch, independent of the datetime resolution, e.g., ns or us
+        x = (x - pd.Timestamp(0, tz=x.tz)) / pd.Timedelta(days=1)
     else:
         x = x.astype("int64")
     return x.to_numpy().reshape(-1, 1)
