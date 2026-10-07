@@ -134,12 +134,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         #  "dask": uses `dask`, requires `dask` package in environment
         #  "ray": uses `ray`, requires `ray` package in environment
         "backend:parallel:params": None,  # params for parallelization backend
-        "remember_data": True,  # whether to remember data in fit - self._X, self._y
+        "remember_data": False,  # whether to remember data in fit - self._X, self._y
     }
 
     _config_doc = {
         "remember_data": """
-        remember_data : bool, default=True
+        remember_data : bool, default=False
             whether self._X and self._y are stored in fit, and updated
             in update. If True, self._X and self._y are stored and updated.
             If False, self._X and self._y are not stored and updated.
@@ -161,26 +161,6 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self._state = "new"
 
         super().__init__()
-
-        # todo 1.3.0: change default of remember_data to False and remove this warning
-        if self.get_config()["remember_data"]:
-            self._y = None
-            self._X = None
-            warn(
-                "The default of config ``remember_data`` will change from ``True`` "
-                "to ``False`` in sktime 1.3.0. After 1.3.0, ``BaseForecaster`` will "
-                "no longer store incremental data in ``_X`` and ``_y`` by default. "
-                "To silence this warning and adopt the new default early, set "
-                "``remember_data=False`` via ``set_config``. "
-                "For forecasters that do not have update natively supported,"
-                " i.e., the capability:update tag is not True,"
-                " the default ``update`` will not refit. "
-                "To keep storing incremental data and refitting on every update "
-                "after the default change, set ``remember_data=True`` explicitly, "
-                "or use ``UpdateRefitsEvery`` with ``refit_interval=0``.",
-                FutureWarning,
-                self,
-            )
 
         # this block has a double purpose:
         # - emit a warning if dependencies are not met, but allow instantiation
