@@ -2,7 +2,6 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
 __all__ = ["ShapeletLearningClassifierPyts"]
 
 from sktime.base.adapters._pyts import _PytsAdapter
@@ -163,6 +162,10 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         "capability:missing_values": True,
         "capability:predict_proba": True,
         "classifier_type": "shapelet",
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.base.adapters._pyts"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     # defines the name of the attribute containing the pyts estimator

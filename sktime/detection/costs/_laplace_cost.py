@@ -61,6 +61,30 @@ class LaplaceCost(BaseCost):
         Fixed location and scale parameters of the Laplace distribution.
         If None, the cost is evaluated with location and scale set to
         the MLE estimates of the parameters over each interval.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.costs import LaplaceCost
+    >>> X = np.array([0., 2., 0., 2., 10., 12., 10., 12.]).reshape(-1, 1)
+    >>> cost = LaplaceCost()
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[13.55],
+           [13.55],
+           [52.84]])
+
+    The first two intervals are each well described by a single Laplace
+    distribution, so their cost is low. The third spans the change in location
+    and is expensive.
+
+    Passing ``param`` evaluates the cost at a fixed location and scale instead
+    of the MLE estimates of the interval:
+
+    >>> cost = LaplaceCost(param=(1.0, 1.0))
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[13.55],
+           [85.55],
+           [99.09]])
     """
 
     _tags = {

@@ -255,6 +255,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
                 "damping_trend": 0.28,
                 "method": "SLSQP",
             },
+            {"random_state": 42},  # to cover bug #10968
         ]
 
         return params
