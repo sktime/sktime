@@ -58,7 +58,9 @@ class DetectorAsTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "scitype:instancewise": False,  # is this an instance-wise transform?
         "capability:inverse_transform": False,  # can the transformer inverse transform?
-        "capability:multivariate": True,  # can the transformer handle multivariate X?
+        # X_inner_mtype is pd.Series, which is univariate by construction, so
+        # multivariate X is vectorized over columns by the base class
+        "capability:multivariate": False,  # can the transformer handle multivariate X?
         "X_inner_mtype": MTYPE_LIST_FOR_DETECTORS,
         "y_inner_mtype": MTYPE_LIST_FOR_DETECTORS,
         "requires_y": False,  # does y need to be passed in fit?
