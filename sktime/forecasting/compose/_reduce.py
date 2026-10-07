@@ -385,7 +385,7 @@ class _Reducer(_BaseWindowForecaster):
 
         Will also apply any transformers passed to the recursive reducer to y. This en
         block approach of directly applying the transformers is more efficient than
-        creating all lags first across the window length and then applying the transformers
+        creating all lags first across the window and then applying the transformers
         to the lagged data.
 
         Please see below a graphical representation of the logic using the following
