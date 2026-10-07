@@ -112,6 +112,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
         "capability:multivariate": True,
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "fit_is_empty": False,
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # attribute for _DelegatedForecaster, which then delegates

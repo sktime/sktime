@@ -109,6 +109,7 @@ class TimeSince(BaseTransformer):
             "test_categorical_X_passes",
             "test_categorical_y_raises_error",
         ],
+        "tests:specific": ["sktime.transformations.tests.test_time_since"],
     }
 
     def __init__(

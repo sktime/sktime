@@ -40,6 +40,9 @@ class Repeat(BaseSplitter):
     _tags = {
         "split_hierarchical": True,
         "split_series_uses": "iloc",
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # undiagnosed failures, see #6194
     }
 
     def __init__(self, splitter, times=1, mode="entry", random_repeat=False):

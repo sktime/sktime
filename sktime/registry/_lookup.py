@@ -28,6 +28,7 @@ from sktime.registry._base_classes import (
     get_base_class_for_str,
     get_obj_scitype_list,
 )
+from sktime.registry._config import MODULES_TO_IGNORE
 from sktime.registry._tags import ESTIMATOR_TAG_REGISTER
 
 
@@ -164,22 +165,6 @@ def all_estimators(
     ----------
     Modified version of ``scikit-learn``'s ``all_estimators``.
     """  # noqa: E501
-    MODULES_TO_IGNORE = (
-        "tests",
-        "setup",
-        "contrib",
-        "benchmarking",
-        "utils",
-        "all",
-        "plotting",
-        "_split",
-        "test_split",
-        "registry",
-        "normal",
-        "_normal",
-        "libs",
-    )
-
     ROOT = str(Path(__file__).parent.parent)  # sktime package root directory
 
     def _coerce_to_str(obj):

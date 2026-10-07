@@ -8,6 +8,7 @@ from unittest.mock import patch
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import ForecastingHorizon
 from sktime.forecasting.statsforecast import StatsForecastAutoCES, StatsForecastMSTL
@@ -41,7 +42,11 @@ def test_statsforecast_mstl(mock_autoets):
         return
 
     model.fit(y)
-    fh_index = pd.PeriodIndex(pd.date_range("1961-01", periods=36, freq="M"))
+    if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+        freq = "ME"
+    else:
+        freq = "M"
+    fh_index = pd.PeriodIndex(pd.date_range("1961-01", periods=36, freq=freq))
     fh = ForecastingHorizon(fh_index, is_relative=False)
     model.predict_interval(fh, coverage=0.95)
     predict.assert_called_with(36, X=None, level=[95.0])
