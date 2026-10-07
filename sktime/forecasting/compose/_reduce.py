@@ -346,6 +346,13 @@ class _Reducer(_BaseWindowForecaster):
 
         params = [{"estimator": est, "window_length": 3}]
 
+        if "TimeSeries" in cls.__name__:
+            # sktime's DummyRegressor returns a pd.DataFrame from predict,
+            # unlike the ndarray returned by the pipeline above
+            from sktime.regression.dummy import DummyRegressor
+
+            params = params + [{"estimator": DummyRegressor(), "window_length": 3}]
+
         PROBA_IMPLEMENTED = ["DirectTabularRegressionForecaster"]
         self_supports_proba = cls.__name__ in PROBA_IMPLEMENTED
 
@@ -378,7 +385,7 @@ class _Reducer(_BaseWindowForecaster):
 
         Will also apply any transformers passed to the recursive reducer to y. This en
         block approach of directly applying the transformers is more efficient than
-        creating all lags first across the window and then applying the transformers
+        creating all lags first across the window length and then applying the transformers
         to the lagged data.
 
         Please see below a graphical representation of the logic using the following
