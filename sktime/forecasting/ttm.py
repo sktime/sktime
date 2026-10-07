@@ -534,7 +534,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
@@ -588,7 +587,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.DataFrame",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 
