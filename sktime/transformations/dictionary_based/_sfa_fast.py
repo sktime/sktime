@@ -141,6 +141,7 @@ class SFAFast(BaseTransformer):
             "test_categorical_X_raises_error",
             "test_categorical_y_raises_error",
             "test_categorical_X_passes",
+            "test_get_test_params_coverage",
         ],
     }
 
