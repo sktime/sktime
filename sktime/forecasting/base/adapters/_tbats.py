@@ -17,20 +17,25 @@ class _TbatsAdapter(BaseForecaster):
     """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["cotterpl", "mloning", "aiwalter", "k1m190r", "fkiraly"],
         # cotterpl for tbats package
+        "python_dependencies": ["pmdarima"],
+        # estimator type
+        # --------------
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        # todo 1.2.0: check whether numpy and scipy bounds are still needed
-        "python_dependencies": ["tbats", "numpy<2", "scipy<1.16"],
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,
         # libs tag is set so child classes get tested if this file changes
         "tests:libs": ["sktime.forecasting.base.adapters._tbats"],
+        "tests:specific": ["sktime.libs.tbats.tests"],
     }
 
     def __init__(
@@ -103,6 +108,8 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         self._create_model_class()
         self._forecaster = self._instantiate_model()
         self._forecaster = self._forecaster.fit(y)
@@ -129,15 +136,19 @@ class _TbatsAdapter(BaseForecaster):
         -------
         self : reference to self
         """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+
         if update_params:
             # update model state and refit parameters
             # _fit re-runs model instantiation which triggers refit
-            self._fit(y=self._y, X=None, fh=self._fh)
+            self._fit(y=self._cur_y, X=None, fh=self._fh)
 
         else:
             # update model state without refitting parameters
             # out-of-box fit tbats method will not refit parameters
-            self._forecaster.fit(y=self._y)
+            self._forecaster.fit(y=self._cur_y)
 
         return self
 

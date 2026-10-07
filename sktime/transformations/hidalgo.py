@@ -689,7 +689,7 @@ class Hidalgo(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {
+        params1 = {
             "metric": "euclidean",
             "K": 1,
             "zeta": 0.8,
@@ -707,6 +707,19 @@ class Hidalgo(BaseTransformer):
             "f": None,
             "seed": 1,
         }
+        # second set: two manifolds instead of one, and a different
+        # neighbourhood size q. K=2 exercises the multi-manifold branch of
+        # the sampler, which is the main use case of the algorithm.
+        # n_iter, burn_in and sampling_rate are kept small for test speed.
+        params2 = {
+            "K": 2,
+            "q": 2,
+            "n_iter": 10,
+            "burn_in": 0.5,
+            "sampling_rate": 2,
+            "seed": 3,
+        }
+        return [params1, params2]
 
 
 def binom(N: float, q: float):

@@ -1,15 +1,8 @@
 """Deep Learning Forecaster using LTSF-Transformer Model."""
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch.nn as nn
-
-    nn_module = nn.Module
-else:
-
-    class nn_module:
-        """Dummy class if torch is unavailable."""
+nn = _safe_import("torch.nn")
 
 
 class LTSFTransformerNetwork:
@@ -71,7 +64,7 @@ class LTSFTransformerNetwork:
     .. [2] https://github.com/cure-lab/LTSF-Linear
     """
 
-    class _LTSFTransformerNetwork(nn_module):
+    class _LTSFTransformerNetwork(nn.Module):
         def __init__(
             self,
             seq_len,

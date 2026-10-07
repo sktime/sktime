@@ -13,10 +13,6 @@ _MODULES_FLATTENED = ["skchange_aseg", "skchange_cp"]
 # imports do not need to be updated in the codebase
 
 
-for _module in _MODULES_FLATTENED:
-    sys.modules[f"{__name__}.{_module}"] = import_module(f"{__name__}.all")
-
-
 def __getattr__(name):
     if name in _MODULES_FLATTENED:
         warnings.warn(
