@@ -23,7 +23,7 @@ import ast
 import re
 
 from sktime.registry._lookup import all_estimators
-from sktime.registry._lookup_sklearn import _all_sklearn_estimators
+from sktime.registry._namespace import _namespace
 
 
 def _extract_class_names(spec):
@@ -170,9 +170,7 @@ def craft(spec, safe=False):
     >>> est = craft(spec)
     """
     # retrieve all estimators from sktime and sklearn for namespace resolution
-    register_sktime = dict(all_estimators())  # noqa: F841
-    register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
-    register = {**register_sklearn, **register_sktime}
+    register = _namespace(include_deps=True)
 
     # Parse the specification once.
     # Both safe and unsafe modes operate on the resulting AST.
@@ -411,7 +409,7 @@ def deps(spec, include_test_deps=False):
         each str is PEP 440 compatible requirement string for craft(spec)
         if spec has no requirements, return is [], the length 0 list
     """
-    register = dict(all_estimators())
+    register = _namespace(include_deps=True)
 
     dep_strs = []
 
@@ -422,8 +420,6 @@ def deps(spec, include_test_deps=False):
                 "in all_estimators scope"
             )
         cls = register[x]
-
-        new_deps = cls.get_class_tag("python_dependencies")
 
         def _resolve_disjunctions(dep):
             """Resolve disjunctions in dependencies by picking first."""
@@ -444,6 +440,9 @@ def deps(spec, include_test_deps=False):
             else:
                 return dep
 
+        if not hasattr(cls, "get_class_tag"):
+            continue
+
         new_deps = cls.get_class_tag("python_dependencies")
         dep_strs += _coerce_dep_strs(new_deps)
 
@@ -451,7 +450,7 @@ def deps(spec, include_test_deps=False):
             test_deps = cls.get_class_tag("tests:python_dependencies")
             dep_strs += _coerce_dep_strs(test_deps)
 
-        reqs = list(set(dep_strs))
+    reqs = list(set(dep_strs))
 
     return reqs
 
@@ -482,7 +481,7 @@ def imports(spec):
         python code consisting of all import statements required for spec
         imports cover object/estimator classes found as sub-strings of spec
     """
-    register = dict(all_estimators())
+    register = _namespace(include_deps=True)
 
     import_strs = []
 
