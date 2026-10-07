@@ -181,7 +181,6 @@ class PeakTimeFeature(BaseTransformer):
         # --------------
         "authors": ["ali-parizad"],
         "maintainers": ["ali-parizad"],
-        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
@@ -189,11 +188,14 @@ class PeakTimeFeature(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
+        # only single series are handled natively - `_transform` infers the
+        # frequency from the index, which is not well defined for a panel or
+        # hierarchical frame. Panel and hierarchical input is vectorized over
+        # instances by the base class instead, which is correct here since the
+        # transform is instance-wise.
         "X_inner_mtype": [
             "pd.Series",
             "pd.DataFrame",
-            "pd-multiindex",
-            "pd_multiindex_hier",
         ],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?

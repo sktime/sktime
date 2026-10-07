@@ -1,0 +1,64 @@
+name: Trigger website docs release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    name: Dispatch website docs build
+    if: ${{ !github.event.release.prerelease && !github.event.release.draft }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 1
+
+      - name: Resolve release tag
+        id: release
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Stable release tag must match vMAJOR.MINOR.PATCH; got $RELEASE_TAG."
+            exit 1
+          fi
+
+          release_commit="$(git rev-parse 'HEAD^{commit}')"
+          if [[ ! "$release_commit" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::Could not resolve the release tag to an exact commit."
+            exit 1
+          fi
+
+          echo "tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
+          echo "commit=$release_commit" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/create-github-app-token@v3
+        id: release_automation_token
+        with:
+          client-id: ${{ vars.SKTIME_WEBSITE_RELEASE_AUTOMATION_CLIENT_ID }}
+          private-key: ${{ secrets.SKTIME_WEBSITE_RELEASE_AUTOMATION_PRIVATE_KEY }}
+          owner: sktime
+          repositories: sktime-webpage-docs
+
+      - name: Trigger docs release workflow
+        env:
+          GH_TOKEN: ${{ steps.release_automation_token.outputs.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run docs.yml \
+            --repo sktime/sktime-webpage-docs \
+            --ref main \
+            --field sktime_ref="$RELEASE_TAG" \
+            --field sktime_commit="$RELEASE_COMMIT" \
+            --field release=true

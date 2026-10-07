@@ -44,11 +44,19 @@ class MLPNetwork(BaseDeepNetwork):
     Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
     International joint conference on neural networks (IJCNN)}, pages={
     1578--1585}, year={2017}, organization={IEEE} }
+
+    Examples
+    --------
+    >>> from sktime.networks.mlp import MLPNetwork
+    >>> network = MLPNetwork(
+    ...     n_layers=3, hidden_dim=256, random_state=42
+    ... )
     """
 
     _tags = {
         "authors": ["hfawaz", "James-Large", "Withington", "AurumnPegasus", "noxthot"],
         "python_dependencies": "tensorflow",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

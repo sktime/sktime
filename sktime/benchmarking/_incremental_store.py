@@ -15,8 +15,6 @@ format-specific checkpoint logic for every storage backend.
 Benchmark orchestration code should not import or use it directly.
 """
 
-from __future__ import annotations
-
 import hashlib
 import json
 import logging

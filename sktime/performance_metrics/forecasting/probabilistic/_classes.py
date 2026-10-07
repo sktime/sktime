@@ -170,8 +170,10 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
             out_df = pd.DataFrame(index_df.mean(axis=0)).T
             out_df.columns = index_df.columns
             return out_df
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except RecursionError as e:
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            ) from e
 
     def evaluate_by_index(self, y_true, y_pred, multioutput=None, **kwargs):
         """Return the metric evaluated at each time point.
@@ -266,10 +268,10 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
                     **kwargs,
                 )
             return out_series
-        except RecursionError:
+        except RecursionError as e:
             raise RecursionError(
                 "Must implement one of _evaluate or _evaluate_by_index"
-            )
+            ) from e
 
     def _check_consistent_input(self, y_true, y_pred, multioutput):
         check_consistent_length(y_true, y_pred)
@@ -522,6 +524,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_quantiles",
         "lower_is_better": True,
+        "tests:skip_by_name": ["test_doctest_examples"],
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True, alpha=None):

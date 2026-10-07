@@ -994,6 +994,48 @@ class property__randomness(_BaseTag):
     }
 
 
+class remember_data(_BaseTag):
+    """Behaviour flag: whether the estimator remembers all data seen.
+
+    - String name: ``"remember_data"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False`` (transformers), ``True`` (forecasters)
+
+    Developer tag that modifies behaviour of the boilerplate layer.
+
+    If set to ``True``, the estimator will remember all data seen, and store it
+    internally in the ``self._X`` and/or ``self._y`` attributes, in ``pd.DataFrame``
+    resp hierarchical ``DataFrame`` formats ``pd-multiindex`` or
+    ``pd_multiindex_hier``, if hierarchical data is passed.
+
+    This behaviour can be useful for models with incremental learning capabilities
+    that require access to all previously seen data in their internal logic.
+    Alternatively, the tag can also be useful for debugging.
+
+    If no ``X`` or ``y`` is passed to the estimator,
+    ``self._X`` and ``self._y`` will be set to ``None``.
+
+    Calls to ``update`` will update the data stored in the internal attributes as well,
+    using ``pandas`` update operations.
+
+    If the ``remember_data`` tag is set to ``True``, the ``fit_is_empty`` tag
+    must be ``False``, even if ``_fit`` is empty, because boilerplate
+    writes to ``self._X`` in ``fit``.
+    """
+
+    _tags = {
+        "tag_name": "remember_data",
+        "parent_type": ["forecaster", "transformer"],
+        "tag_type": "bool",
+        "short_descr": (
+            "whether estimator remembers all data seen as self._X, self._y, etc"
+        ),
+        "user_facing": False,
+    }
+
+
 # Forecasters
 # -----------
 
@@ -1007,7 +1049,7 @@ class capability__exogenous(_BaseTag):
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
-    - Default: ``False``
+    - Default: ``True``
 
     Exogenous data are additional time series,
     that can be used to improve forecasting accuracy.
@@ -1042,7 +1084,7 @@ class capability__insample(_BaseTag):
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
-    - Default: ``False``
+    - Default: ``True``
 
     If the tag is ``True``, the forecaster can make in-sample predictions,
     i.e., predict the target series for time points that are part of the training set.
@@ -1158,7 +1200,7 @@ class capability__pred_int__insample(_BaseTag):
 
 
 class capability__pretrain(_BaseTag):
-    """Capability: the forecaster can use pretraining for global learning.
+    """Capability: the forecaster or detector can use pretraining for global learning.
 
     - String name: ``"capability:pretrain"``
     - Public capability tag
@@ -1180,13 +1222,17 @@ class capability__pretrain(_BaseTag):
     and subsequent calls to ``fit`` will preserve the pretrained weights
     (enabling fine-tuning) rather than resetting the estimator.
 
-    If the tag is ``False``, the forecaster does not support pretraining,
-    and calling ``pretrain`` will have no effect.
+    For detectors, the workflow is ``detector.pretrain(X_panel)``,
+    then ``detector.fit(X_series)``, then ``detector.predict(X_series)``.
+
+    If the tag is ``False``, the estimator does not support pretraining.
+    Calling ``pretrain`` does not learn from the data,
+    it only sets the state to ``"pretrained"``.
     """
 
     _tags = {
         "tag_name": "capability:pretrain",
-        "parent_type": "forecaster",
+        "parent_type": ["forecaster", "detector"],
         "tag_type": "bool",
         "short_descr": "can use pretrain for global learning",
         "user_facing": True,
@@ -1310,19 +1356,29 @@ class requires_fh_in_fit(_BaseTag):
 
 
 class capability__categorical_in_X(_BaseTag):
-    """Capability: If estimator can handle categorical variables in the X argument.
-
-    ``False`` = cannot handle categorical natively in X,
-    ``True`` = can handle categorical natively in X
+    """Capability: the estimator can handle categorical variables in the X argument.
 
     - String name: ``"capability:categorical_in_X"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
-    - Default: ``False``
+    - Default: ``True``
 
-    Exogeneous data are additional time series,
-    that can be used to improve forecasting accuracy.
+    This tag applies to the ``X`` argument of forecasters (exogenous data),
+    transformers, classifiers, and regressors.
+
+    A column of ``X`` is categorical if its ``feature_kind``, as inferred by
+    ``sktime.datatypes.check_is_scitype``, is ``DtypeKind.CATEGORICAL``.
+    This is determined by the column dtype, e.g., for ``pandas`` inputs,
+    dtypes ``object``, ``string``, ``category``, and datetime-like are categorical,
+    while numeric and boolean dtypes are not.
+
+    If the tag is ``True``, ``X`` is passed to the estimator unchanged,
+    and the estimator is expected to handle categorical columns natively.
+
+    If the tag is ``False``, the estimator cannot handle categorical columns,
+    and will raise a ``TypeError`` if ``X`` contains one.
+    For forecasters, this applies only if ``capability:exogenous`` is ``True``.
     """
 
     _tags = {
@@ -1335,19 +1391,32 @@ class capability__categorical_in_X(_BaseTag):
 
 
 class capability__categorical_in_y(_BaseTag):
-    """Capability: If estimator can handle categorical variables in the y argument.
-
-    ``False`` = cannot handle categorical natively in y,
-    ``True`` = can handle categorical natively in y
+    """Capability: the estimator can handle categorical variables in the y argument.
 
     - String name: ``"capability:categorical_in_y"``
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
-    - Default: ``False``
+    - Default: ``True`` (transformers)
 
-    Exogeneous data are additional time series,
-    that can be used to improve forecasting accuracy.
+    This tag applies to the ``y`` argument of transformers.
+
+    A column of ``y`` is categorical if its ``feature_kind``, as inferred by
+    ``sktime.datatypes.check_is_scitype``, is ``DtypeKind.CATEGORICAL``.
+    This is determined by the column dtype, e.g., for ``pandas`` inputs,
+    dtypes ``object``, ``string``, ``category``, and datetime-like are categorical,
+    while numeric and boolean dtypes are not.
+    See also the tag ``capability:categorical_in_X``, which uses
+    the same identification for the ``X`` argument.
+
+    If the tag is ``True``, ``y`` is passed to the transformer unchanged,
+    and the transformer is expected to handle categorical columns natively.
+
+    If the tag is ``False``, the transformer cannot handle categorical columns,
+    and will raise a ``TypeError`` if ``y`` contains one.
+
+    Forecasters do not support categorical ``y`` (the endogenous target)
+    and always raise a ``TypeError`` in this case, irrespective of the tag.
     """
 
     _tags = {
@@ -1373,7 +1442,7 @@ class capability__multivariate(_BaseTag):
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
-    - Default: ``False``
+    - Default: ``True`` (transformers, pairwise transformers), ``False`` (otherwise)
 
     If the tag is ``True``, the estimator can handle multivariate time series,
     for its main input data, i.e., the ``X`` parameter in ``fit`` of classifiers,
@@ -1419,7 +1488,7 @@ class capability__unequal_length(_BaseTag):
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
-    - Default: ``False``
+    - Default: ``True`` (forecasters, transformers, aligners), ``False`` (otherwise)
 
     Tag applicable to estimators which can accept panel data,
     i.e., collections of time series.
@@ -1528,7 +1597,7 @@ class capability__predict_proba(_BaseTag):
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
-    - Default: ``False``
+    - Default: ``False`` (classifiers), ``True`` (clusterers)
 
     This tag applies to classifiers and clusterers.
 
@@ -2117,7 +2186,7 @@ class capability__inverse_transform__exact(_BaseTag):
     - Public capability tag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
-    - Default: ``False``
+    - Default: ``True``
 
     This tag applies to transformations that possess an ``inverse_transform`` method,
     as specified by the tag ``capability:inverse_transform``.
@@ -2225,6 +2294,10 @@ class capability__hierarchical_reconciliation(_BaseTag):
 
     - String name: ``"capability:hierarchical_reconciliation"``
     - Public property tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
     This tag applies to transformations that reconcile hierarchical series.
     """
 
@@ -2263,6 +2336,30 @@ class capability__bootstrap_index(_BaseTag):
         "parent_type": "transformer",
         "tag_type": "bool",
         "short_descr": "can the bootstrap return the index of bootstraped time series?",
+        "user_facing": True,
+    }
+
+
+class capability__missing_values__removes(_BaseTag):
+    """Capability: transformer output is guaranteed to have no missing values.
+
+    - String name: ``"capability:missing_values:removes"``
+    - Public capability tag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False``
+
+    This tag specifies whether the transformer result is guaranteed to have
+    no missing values.
+    """
+
+    _tags = {
+        "tag_name": "capability:missing_values:removes",
+        "parent_type": "transformer",
+        "tag_type": "bool",
+        "short_descr": (
+            "is the transformer result guaranteed to have no missing values?"
+        ),
         "user_facing": True,
     }
 
@@ -2404,7 +2501,7 @@ class capability__update(_BaseTag):
 
     _tags = {
         "tag_name": "capability:update",
-        "parent_type": ["transformer", "detector"],
+        "parent_type": ["transformer", "detector", "forecaster"],
         "tag_type": "bool",
         "short_descr": "does the estimator provided stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
@@ -2454,7 +2551,7 @@ class learning_type(_BaseTag):
     - Public property tag
     - Values: string, one of ``"supervised"``, ``"unsupervised"``, ``"semi_supervised"``
     - Example: ``"unsupervised"``
-    - Default: ``"unsupervised"``
+    - Default: ``"None"`` (placeholder, concrete detectors must set the tag)
 
     The tag specifies the type of learning the estimator employs for the detection task.
 
@@ -2714,6 +2811,36 @@ class scitype__X(_BaseTag):
     }
 
 
+class scitype__y(_BaseTag):
+    """Scitype of the target data ``y`` supported by the object.
+
+    - String name: ``"scitype:y"``
+    - Public scitype tag
+    - Values: string, name of the supported scitype
+    - Example: ``"Series"``
+    - Example 2: ``"points"`` (detection metrics)
+
+    This tag applies to parameter estimators and detection metrics
+    (not forecasting metrics).
+
+    For parameter estimators, it specifies which scitype of ``y`` is supported
+    natively, typically ``"Series"``.
+
+    For metrics, it specifies the scientific type of the labels ``y`` that
+    the metric consumes. Detection metrics use values such as ``"points"``
+    (event locations) or ``"segments"`` (interval labels). Other metrics
+    may use the same tag for the scitype of the target series.
+    """
+
+    _tags = {
+        "tag_name": "scitype:y",
+        "parent_type": ["param_est", "metric"],
+        "tag_type": "str",
+        "short_descr": "what scitype of y does the object support? must be scitype string",  # noqa: E501
+        "user_facing": True,
+    }
+
+
 # Benchmark analyzer tags
 # -----------------------
 
@@ -2917,6 +3044,103 @@ class inner_implements_multilevel(_BaseTag):
         "tag_type": "bool",
         "short_descr": "does the metric implement multilevel evaluation internally?",
         "user_facing": False,
+    }
+
+
+# Splitters
+# ---------
+
+
+class split_series_uses(_BaseTag):
+    """Whether split_series dispatches to integer- or label-based location splitting.
+
+    - String name: ``"split_series_uses"``
+    - Developer property tag
+    - Values: str, subset of ``"iloc"``, ``"loc"``, ``"custom"``
+    - Example: ``"iloc"``
+    - Default: ``"iloc"``
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag controls internal dispatch in the high-level ``split_series`` method:
+
+    * ``"iloc"``: ``split_series`` dispatches to positional index
+      splitting (``_split``).
+    * ``"loc"``: ``split_series`` dispatches to label-based index
+      splitting (``_split_loc``).
+    * ``"custom"``: ``split_series`` uses a custom internal splitting routine.
+
+    Developer tag, not user-facing, used to control internal dispatch.
+    """
+
+    _tags = {
+        "tag_name": "split_series_uses",
+        "parent_type": "splitter",
+        "tag_type": ("str", ["iloc", "loc", "custom"]),
+        "short_descr": (
+            "whether split_series uses split (iloc) or split_loc (loc) to split series"
+        ),
+        "user_facing": False,
+    }
+
+
+class split_hierarchical(_BaseTag):
+    """Whether the splitter natively implements splitting for hierarchical data.
+
+    - String name: ``"split_hierarchical"``
+    - Public capability tag
+    - Values: bool (True / False)
+    - Example: True
+    - Default: False
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag specifies whether the splitter natively supports and implements
+    splitting for hierarchical time series data structures (e.g., pandas MultiIndex
+    hierarchies). If False, the base class will use a generic fallback by iterating
+    over individual hierarchy levels or instances.
+
+    Developer tag, not user-facing, used to control internal dispatch.
+    """
+
+    _tags = {
+        "tag_name": "split_hierarchical",
+        "parent_type": "splitter",
+        "tag_type": "bool",
+        "short_descr": (
+            "whether _split is natively implemented for hierarchical y types"
+        ),
+        "user_facing": False,
+    }
+
+
+class split_type(_BaseTag):
+    """The splitting axis/strategy used by the time series splitter.
+
+    - String name: ``"split_type"``
+    - Public property tag
+    - Values: str, subset of ``"temporal"``, ``"instance"``
+    - Example: ``"temporal"``
+    - Default: ``"temporal"``
+
+    This tag applies to time series splitters (``"splitter"`` type) only.
+
+    The tag describes the fundamental axis along which the splitter operates:
+
+    * ``"temporal"``: the splitter splits observations along the time dimension,
+      for instance in expanding window or rolling window time series splits.
+    * ``"instance"``: the splitter splits by individual series or instance identity
+      in panel and hierarchical time series datasets.
+    """
+
+    _tags = {
+        "tag_name": "split_type",
+        "parent_type": "splitter",
+        "tag_type": ("str", ["temporal", "instance"]),
+        "short_descr": (
+            "whether the splitter splits by time or by instance (panel/hierarchy index)"
+        ),
+        "user_facing": True,
     }
 
 
@@ -3343,7 +3567,7 @@ class n_classes(_BaseTag):
     - Public property tag
     - Values: integer
     - Example: ``3``
-    - Default: ``0``
+    - Default: ``2``
 
     If the tag is set, it specifies the number of classes in the dataset.
     """
@@ -3437,7 +3661,7 @@ class n_splits(_BaseTag):
     """
     Property: number of CV splits of a dataset.
 
-    - String name: ```n_splits````
+    - String name: ``"n_splits"``
     - Public property tag
     - Values: positive integers
     - Example: ``1``
@@ -3457,7 +3681,7 @@ class name(_BaseTag):
     """
     Property: name of the dataset.
 
-    - String name: ```name````
+    - String name: ``"name"``
     - Public property tag
     - Values: string
     - Example: ``"GunPoint"``
@@ -3477,7 +3701,7 @@ class n_timepoints(_BaseTag):
     """
     Property: number of timepoints in the dataset.
 
-    - String name: ```n_timepoints````
+    - String name: ``"n_timepoints"``
     - Public property tag
     - Values: positive integers
     - Example: ``100``
@@ -3497,7 +3721,7 @@ class n_timepoints_train(_BaseTag):
     """
     Property: number of timepoints in the training set of the dataset.
 
-    - String name: ```n_timepoints_train````
+    - String name: ``"n_timepoints_train"``
     - Public property tag
     - Values: positive integers
     - Example: ``80``
@@ -3517,7 +3741,7 @@ class n_timepoints_test(_BaseTag):
     """
     Property: number of timepoints in the test set of the dataset.
 
-    - String name: ```n_timepoints_test````
+    - String name: ``"n_timepoints_test"``
     - Public property tag
     - Values: positive integers
     - Example: ``20``
@@ -3555,7 +3779,7 @@ class n_dimensions(_BaseTag):
 class task_type(_BaseTag):
     """Dataset property: the task type of the dataset.
 
-    - String name: ```task_type````
+    - String name: ``"task_type"``
     - Public property tag
     - Values: string, one of ``"classifier"``, ``"regressor"``, ``"forecaster"``
     - Example: ``"classifier"``
@@ -3623,6 +3847,7 @@ class catalogue_type(_BaseTag):
     - Public tag
     - Values: string (e.g., ``"mixed"``, ``"datasets"``, ``"estimators"``)
     - Example: ``"mixed"``
+    - Default: ``None``
     """
 
     _tags = {
@@ -3640,6 +3865,7 @@ class n_items(_BaseTag):
     - String name: ``"n_items"``
     - Values: integer
     - Example: ``5``
+    - Default: ``None``
     """
 
     _tags = {
@@ -3657,6 +3883,7 @@ class n_datasets(_BaseTag):
     - String name: ``"n_datasets"``
     - Values: integer
     - Example: ``2``
+    - Default: ``0``
     """
 
     _tags = {
@@ -3674,6 +3901,7 @@ class n_metrics(_BaseTag):
     - String name: ``"n_metrics"``
     - Values: integer
     - Example: ``1``
+    - Default: ``0``
     """
 
     _tags = {
@@ -3691,6 +3919,7 @@ class n_cv_splitters(_BaseTag):
     - String name: ``"n_cv_splitters"``
     - Values: integer
     - Example: ``1``
+    - Default: ``0``
     """
 
     _tags = {
@@ -3708,6 +3937,7 @@ class n_classifiers(_BaseTag):
     - String name: ``"n_classifiers"``
     - Values: integer
     - Example: ``1``
+    - Default: ``0``
     """
 
     _tags = {
@@ -3725,6 +3955,7 @@ class n_forecasters(_BaseTag):
     - String name: ``"n_forecasters"``
     - Values: integer
     - Example: ``1``
+    - Default: ``0``
     """
 
     _tags = {
@@ -3802,13 +4033,25 @@ class info__source(_BaseTag):
     }
 
 
+class X_y_must_have_same_index(_BaseTag):
+    """Do X/y in fit/update and X/fh in predict have to be same indices.
+
+    - String name: ``"X-y-must-have-same-index"``
+    - Values: bool
+    - Example: ``True``
+    """
+
+    _tags = {
+        "tag_name": "X-y-must-have-same-index",
+        "parent_type": ["forecaster", "regressor", "transformer"],
+        "tag_type": "bool",
+        "short_descr": """do X/y in fit/update and X/fh in predict
+                        have to be same indices?""",
+        "user_facing": True,
+    }
+
+
 ESTIMATOR_TAG_REGISTER = [
-    (
-        "X-y-must-have-same-index",
-        ["forecaster", "regressor", "transformer"],
-        "bool",
-        "do X/y in fit/update and X/fh in predict have to be same indices?",
-    ),
     (
         "enforce_index_type",
         ["forecaster", "regressor"],
@@ -3820,21 +4063,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["transformer-pairwise", "transformer-pairwise-panel"],
         ("str", ["distance", "kernel", "other"]),
         "mathematical type of pairwise transformer - distance, kernel, or other",
-    ),
-    (
-        "scitype:y",
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        ["param_est", "metric"],
-        "str",
-        "what scitype of y does the object support? must be scitype string",
-    ),
-    (
-        "capability:missing_values:removes",
-        "transformer",
-        "bool",
-        "is the transformer result guaranteed to have no missing values?",
     ),
     (
         "classifier_type",
@@ -3855,34 +4083,10 @@ ESTIMATOR_TAG_REGISTER = [
         "classification algorithms.",
     ),
     (
-        "remember_data",
-        ["forecaster", "transformer"],
-        "bool",
-        "whether estimator remembers all data seen as self._X, self._y, etc",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
         "parameters reserved by the base class and present in all child estimators",
-    ),
-    (
-        "split_hierarchical",
-        "splitter",
-        "bool",
-        "whether _split is natively implemented for hierarchical y types",
-    ),
-    (
-        "split_series_uses",
-        "splitter",
-        ("str", ["iloc", "loc", "custom"]),
-        "whether split_series uses split (iloc) or split_loc (loc) to split series",
-    ),
-    (
-        "split_type",
-        "splitter",
-        ("str", ["temporal", "instance"]),
-        "whether the splitter splits by time or by instance (panel/hierarchy index)",
     ),
     # -------------------------
     # tags to be moved to skpro
@@ -3936,16 +4140,6 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "max iters for bisection method in ppf",
-    ),
-    # ---------------------------
-    # to be deprecated or removed
-    # ---------------------------
-    # the following tags are to be deprecated or removed
-    (
-        "capability:global_forecasting",
-        ["forecaster"],
-        "bool",
-        "can the estimator make global forecasting?",
     ),
 ]
 
