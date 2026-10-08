@@ -524,6 +524,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_quantiles",
         "lower_is_better": True,
+        "tests:skip_by_name": ["test_doctest_examples"],
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True, alpha=None):

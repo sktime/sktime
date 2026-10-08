@@ -127,6 +127,8 @@ class ForecastKnownValues(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         # no fitting, we already know the forecast values
         return self
 
@@ -161,7 +163,7 @@ class ForecastKnownValues(BaseForecaster):
         fh_abs = fh.to_absolute_index(self.cutoff)
 
         try:
-            idx = self._y.index
+            idx = self._cur_y.index
             if isinstance(idx, pd.MultiIndex):
                 unique_levels = idx.droplevel(-1).unique()
                 fh_abs = pd.MultiIndex.from_tuples(
@@ -170,11 +172,11 @@ class ForecastKnownValues(BaseForecaster):
                 )
 
             y_pred = self._y_known.reindex(fh_abs, **reindex_params)
-            y_pred = y_pred.reindex(self._y.columns, axis=1, **reindex_params)
+            y_pred = y_pred.reindex(self._cur_y.columns, axis=1, **reindex_params)
         # TypeError happens if indices are incompatible types
         except TypeError:
             y_pred = pd.DataFrame(
-                self.fill_value, index=fh_abs, columns=self._y.columns
+                self.fill_value, index=fh_abs, columns=self._cur_y.columns
             )
 
         return y_pred
