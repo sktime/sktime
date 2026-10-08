@@ -11,6 +11,7 @@ __all__ = [
 
 import os
 import shutil
+import sys
 import tarfile
 import tempfile
 import warnings
@@ -70,6 +71,40 @@ tsibbledata = [
 DATASET_NAMES_FPP3 = fpp3 + tsibble + tsibbledata
 
 
+def _safe_extract_tar(archive_path, dest_dir):
+    """Extract a tar archive, guarding against path traversal.
+
+    On Python 3.12 and later, extraction uses the built-in ``"data"`` filter.
+    On older Python versions, every member is first checked to resolve to a
+    path inside ``dest_dir``.
+
+    Parameters
+    ----------
+    archive_path : str
+        Path to the tar archive to extract.
+    dest_dir : str
+        Directory to extract the archive into.
+
+    Raises
+    ------
+    RuntimeError
+        If a member of the archive would resolve to a path outside ``dest_dir``.
+    """
+    dest_dir = os.path.abspath(dest_dir)
+    with tarfile.open(archive_path) as tar:
+        for member in tar.getmembers():
+            member_path = os.path.abspath(os.path.join(dest_dir, member.name))
+            if not member_path.startswith(dest_dir + os.sep):
+                raise RuntimeError(
+                    "Unsafe tar archive member, would extract outside "
+                    f"{dest_dir}: {member.name}"
+                )
+        if sys.version_info >= (3, 12):
+            tar.extractall(path=dest_dir, filter="data")
+        else:
+            tar.extractall(path=dest_dir)
+
+
 def _decompress_file_to_temp(
     datafile=None, archivedir=None, temp_folder=None, robust=True
 ):
@@ -78,28 +113,45 @@ def _decompress_file_to_temp(
     if temp_folder is None:
         temp_folder = tempfile.gettempdir()
     temp_dir = tempfile.mkdtemp(dir=temp_folder)
-    try:
-        response = requests.get("https://cran.r-project.org/src/contrib/" + datafile)
-        response.raise_for_status()
-    except requests.exceptions.RequestException:
-        if not robust:
-            return None
+
+    def _download():
         try:
             response = requests.get(
-                "https://cran.r-project.org/src/contrib/00Archive/"
-                + archivedir
-                + "/"
-                + datafile
+                "https://cran.r-project.org/src/contrib/" + datafile,
+                timeout=(10, 60),
             )
             response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            raise RuntimeError(f"Failed to download dataset from both URLs: {e}")
-    temp_file = os.path.join(temp_dir, "foo.tar.gz")
-    with open(temp_file, "wb") as f:
-        f.write(response.content)
-    tar = tarfile.open(temp_file)
-    tar.extractall(path=temp_dir)
-    tar.close()
+            return response
+        except requests.exceptions.RequestException:
+            if not robust:
+                return None
+            try:
+                response = requests.get(
+                    "https://cran.r-project.org/src/contrib/00Archive/"
+                    + archivedir
+                    + "/"
+                    + datafile,
+                    timeout=(10, 60),
+                )
+                response.raise_for_status()
+                return response
+            except requests.exceptions.RequestException as e:
+                raise RuntimeError(f"Failed to download dataset from both URLs: {e}")
+
+    try:
+        response = _download()
+        if response is None:
+            # nothing to extract, do not leave the empty directory behind
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            return None
+        temp_file = os.path.join(temp_dir, "foo.tar.gz")
+        with open(temp_file, "wb") as f:
+            f.write(response.content)
+        _safe_extract_tar(temp_file, temp_dir)
+    except Exception:
+        # avoid leaving a half-downloaded or half-extracted directory behind
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise
     return temp_dir
 
 
