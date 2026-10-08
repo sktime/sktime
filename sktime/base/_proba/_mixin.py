@@ -140,7 +140,7 @@ class _PredictProbaMixin:
         # 2. default to proba if proba or var are implemented
 
         if implements_interval:
-            pred_int = pd.DataFrame()
+            quantiles_per_alpha = []
             for a in alpha:
                 # compute quantiles corresponding to prediction interval coverage
                 #  this uses symmetric predictive intervals:
@@ -148,24 +148,24 @@ class _PredictProbaMixin:
 
                 # compute quantile forecasts corresponding to upper/lower
                 pred_a = self._predict_interval(coverage=[coverage], **kwargs)
-                pred_int = pd.concat([pred_int, pred_a], axis=1)
 
-            # now we need to subset to lower/upper depending
-            #   on whether alpha was < 0.5 or >= 0.5
-            #   this formula gives the integer column indices giving lower/upper
-            col_selector_int = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
-            col_selector_bool = np.isin(np.arange(2 * len(alpha)), col_selector_int)
-            num_var = len(pred_int.columns.get_level_values(0).unique())
-            col_selector_bool = np.tile(col_selector_bool, num_var)
+                # the quantile is the lower or upper end of the interval,
+                # depending on whether alpha was < 0.5 or >= 0.5
+                # idx returned by _predict_interval is
+                #   3-level MultiIndex with variable names, coverage, lower/upper
+                # the cross-section has one column per variable, in variable order
+                side = "upper" if a >= 0.5 else "lower"
+                quantiles_per_alpha.append(pred_a.xs(side, axis=1, level=-1).values)
 
-            pred_int = pred_int.iloc[:, col_selector_bool]
-            # change the column labels (multiindex) to the format for intervals
-            # idx returned by _predict_interval is
-            #   3-level MultiIndex with variable names, coverage, lower/upper
+            # stack to shape (n_rows, n_vars, n_alpha), then flatten to
+            #   variable-major column order, as in the index below
+            pred_np = np.stack(quantiles_per_alpha, axis=-1)
+            pred_np = pred_np.reshape(pred_np.shape[0], -1)
+
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
             int_idx = self._get_columns(method="predict_quantiles", alpha=alpha)
-            pred_int.columns = int_idx
+            pred_int = pd.DataFrame(pred_np, index=pred_a.index, columns=int_idx)
 
         elif implements_proba or implements_var:
             pred_proba = self.predict_proba(**kwargs)
