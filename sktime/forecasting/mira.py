@@ -55,7 +55,7 @@ class MIRAForecaster(BaseForecaster):
     >>> y_train, _ = temporal_train_test_split(y)
     >>> f = MIRAForecaster()  # doctest: +SKIP
     >>> f.fit(y_train)  # doctest: +SKIP
-    >>> y_pred = f.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = f.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {

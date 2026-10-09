@@ -31,11 +31,11 @@ def test_avg_mean(forecasters):
     """Assert `mean` aggfunc returns the same values as `average` with equal weights."""
     y = make_forecasting_problem()
     forecaster = EnsembleForecaster(forecasters)
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
     mean_pred = forecaster.predict()
 
     forecaster_1 = EnsembleForecaster(forecasters, aggfunc="mean", weights=[1, 1])
-    forecaster_1.fit(y, fh=[1, 2, 3])
+    forecaster_1.fit(y, fh=3)
     avg_pred = forecaster_1.predict()
 
     pd.testing.assert_series_equal(mean_pred, avg_pred)
@@ -62,7 +62,7 @@ def test_avg_mean(forecasters):
 def test_aggregation_unweighted(forecasters, y, aggfunc):
     """Assert aggfunc returns the correct values."""
     forecaster = EnsembleForecaster(forecasters=forecasters, aggfunc=aggfunc)
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
     actual_pred = forecaster.predict()
 
     predictions = []
@@ -71,7 +71,7 @@ def test_aggregation_unweighted(forecasters, y, aggfunc):
     for _, forecaster in forecasters:
         f = forecaster
         f.fit(y)
-        f_pred = f.predict(fh=[1, 2, 3])
+        f_pred = f.predict(fh=3)
         predictions.append(f_pred)
 
     expected_pred = pd.DataFrame()
@@ -110,14 +110,14 @@ def test_aggregation_weighted(forecasters, y, aggfunc, weights):
     forecaster = EnsembleForecaster(
         forecasters=forecasters, aggfunc=aggfunc, weights=weights
     )
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
     actual_pred = forecaster.predict()
 
     predictions = []
     for _, forecaster in forecasters:
         f = forecaster
         f.fit(y)
-        f_pred = f.predict(fh=[1, 2, 3])
+        f_pred = f.predict(fh=3)
         predictions.append(f_pred)
 
     _aggfunc = VALID_AGG_FUNCS[aggfunc]["weighted"]
@@ -147,6 +147,6 @@ def test_invalid_aggfuncs(forecasters, aggfunc):
     """Check if invalid aggregation functions return Error."""
     y = make_forecasting_problem()
     forecaster = EnsembleForecaster(forecasters=forecasters, aggfunc=aggfunc)
-    forecaster.fit(y, fh=[1, 2])
+    forecaster.fit(y, fh=2)
     with pytest.raises(ValueError, match=r"not recognized"):
         forecaster.predict()

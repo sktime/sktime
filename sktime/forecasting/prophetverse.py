@@ -92,7 +92,7 @@ class Prophetverse(_DelegatedForecaster):
     ...     ],
     ... )
     >>> model.fit(y) # doctest: +SKIP
-    >>> model.predict(fh=[1, 2, 3]) # doctest: +SKIP
+    >>> model.predict(fh=3) # doctest: +SKIP
     """
 
     _tags = {
@@ -265,7 +265,7 @@ class HierarchicalProphet(_DelegatedForecaster):
     >>> y = agg.fit_transform(y)
     >>> forecaster = HierarchicalProphet()
     >>> forecaster.fit(y) # doctest: +SKIP
-    >>> forecaster.predict(fh=[1]) # doctest: +SKIP
+    >>> forecaster.predict(fh=1) # doctest: +SKIP
     """
 
     _delegate_name = "_delegate"

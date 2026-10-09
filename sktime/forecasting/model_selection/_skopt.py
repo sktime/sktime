@@ -218,7 +218,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     >>> from sklearn.ensemble import GradientBoostingRegressor
     >>> from sktime.forecasting.compose import make_reduction
     >>> y = load_shampoo_sales()
-    >>> fh = [1,2,3,4]
+    >>> fh = 4
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = make_reduction(GradientBoostingRegressor(random_state=10))
     >>> param_distributions = {

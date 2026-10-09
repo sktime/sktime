@@ -26,7 +26,7 @@ def test_arar_forecaster_simple():
     forecaster.fit(y)
 
     # Make predictions
-    fh = [1, 2, 3, 4, 5]
+    fh = 5
     y_pred = forecaster.predict(fh=fh)
 
     # Check predictions
@@ -49,7 +49,7 @@ def test_arar_forecaster_with_params():
     forecaster.fit(y)
 
     # Make predictions
-    fh = [1, 2, 3]
+    fh = 3
     y_pred = forecaster.predict(fh=fh)
 
     # Check predictions
@@ -71,7 +71,7 @@ def test_arar_forecaster_prediction_intervals():
     forecaster.fit(y)
 
     # Make predictions with intervals
-    fh = [1, 2, 3]
+    fh = 3
     coverage = [0.80, 0.90]
     pred_int = forecaster.predict_interval(fh=fh, coverage=coverage)
 
@@ -99,7 +99,7 @@ def test_arar_forecaster_quantiles():
     forecaster.fit(y)
 
     # Make quantile predictions
-    fh = [1, 2, 3]
+    fh = 3
     alpha = [0.05, 0.5, 0.95]
     quantiles = forecaster.predict_quantiles(fh=fh, alpha=alpha)
 
@@ -127,7 +127,7 @@ def test_arar_forecaster_short_series():
     forecaster.fit(y)
 
     # Make predictions
-    fh = [1, 2, 3]
+    fh = 3
     y_pred = forecaster.predict(fh=fh)
 
     # Check predictions

@@ -90,7 +90,7 @@ class TotoForecaster(BaseForecaster):
     >>> model = TotoForecaster()
     >>> model.fit(y_train, X=X_train)  # doctest: +SKIP
     TotoForecaster()
-    >>> forecast = model.predict(fh=[1, 2, 3], X=X_test)  # doctest: +SKIP
+    >>> forecast = model.predict(fh=3, X=X_test)  # doctest: +SKIP
     """
 
     _tags = {

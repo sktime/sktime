@@ -320,7 +320,7 @@ def test_evaluate_exog():
     """Test evaluate works when exogenous regressors are present."""
     y, X = load_longley()
     forecaster = UnobservedComponents(level="local linear trend")
-    cv = SlidingWindowSplitter(fh=[1, 2, 3], window_length=4, step_length=1)
+    cv = SlidingWindowSplitter(fh=3, window_length=4, step_length=1)
     results = evaluate(
         forecaster=forecaster,
         y=y,
