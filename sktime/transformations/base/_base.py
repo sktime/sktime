@@ -49,13 +49,13 @@ from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
-    VectorizedDF,
     check_is_error_msg,
     check_is_mtype,
     check_is_scitype,
     convert,
     convert_to,
     mtype_to_scitype,
+    prepare_VectorizedDF,
     update_data,
 )
 from sktime.datatypes._dtypekind import DtypeKind
@@ -507,7 +507,7 @@ class BaseTransformer(BaseEstimator):
             raise ValueError(f"{self.__class__.__name__} requires `y` in `fit`.")
 
         # check and convert X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        X_inner, y_inner, X_schema, y_schema = self._check_X_y(X=X, y=y)
 
         # memorize X as self._X, if remember_data tag is set to True
         if self.get_tag("remember_data", False):
@@ -520,14 +520,18 @@ class BaseTransformer(BaseEstimator):
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        vectorization_needed = X_schema is not None
         self._is_vectorized = vectorization_needed
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
             self._fit(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("fit", X=X_inner, y=y_inner)
+            self._vectorize(
+                "fit",
+                X=(X_inner, X_schema),
+                y=(y_inner, y_schema),
+            )
 
         # this should happen last: fitted state is set to True
         self._is_fitted = True
@@ -632,11 +636,13 @@ class BaseTransformer(BaseEstimator):
         self.check_is_fitted()
 
         # input check and conversion for X/y
-        X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+        X_inner, y_inner, metadata, X_schema, y_schema = self._check_X_y(
+            X=X, y=y, return_metadata=True
+        )
 
         # check if we need to vectorize
         if getattr(self, "_is_vectorized", "unknown") == "unknown":
-            vectorization_needed = isinstance(X_inner, VectorizedDF)
+            vectorization_needed = X_schema is not None
         else:
             vectorization_needed = self._is_vectorized
 
@@ -645,7 +651,11 @@ class BaseTransformer(BaseEstimator):
             Xt = self._transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
-            Xt = self._vectorize("transform", X=X_inner, y=y_inner)
+            Xt = self._vectorize(
+                "transform",
+                X=(X_inner, X_schema),
+                y=(y_inner, y_schema),
+            )
 
         # obtain configs to control input and output control
         configs = self.get_config()
@@ -805,11 +815,13 @@ class BaseTransformer(BaseEstimator):
         self.check_is_fitted()
 
         # input check and conversion for X/y
-        X_inner, y_inner, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+        X_inner, y_inner, metadata, X_schema, y_schema = self._check_X_y(
+            X=X, y=y, return_metadata=True
+        )
 
         # check if we need to vectorize
         if getattr(self, "_is_vectorized", "unknown") == "unknown":
-            vectorization_needed = isinstance(X_inner, VectorizedDF)
+            vectorization_needed = X_schema is not None
         else:
             vectorization_needed = self._is_vectorized
 
@@ -817,15 +829,17 @@ class BaseTransformer(BaseEstimator):
         if not vectorization_needed:
             # capture edge condition where:
             # transformer is univariate, transform produces multivariate
-            # in this case the check_X_y will convert to VectorizedDF,
-            # but inverse_transform expects a DataFrame
+            # in this case the check_X_y will build a schema,
+            # but inverse_transform expects the frame
             # example: time series decomposition algorithms
-            if isinstance(X_inner, VectorizedDF):
-                X_inner = X_inner.X_multiindex
             Xt = self._inverse_transform(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of predict
-            Xt = self._vectorize("inverse_transform", X=X_inner, y=y_inner)
+            Xt = self._vectorize(
+                "inverse_transform",
+                X=(X_inner, X_schema),
+                y=(y_inner, y_schema),
+            )
 
         # convert to output mtype
         configs = self.get_config()
@@ -894,7 +908,7 @@ class BaseTransformer(BaseEstimator):
             raise ValueError(f"{self.__class__.__name__} requires `y` in `update`.")
 
         # check and convert X/y
-        X_inner, y_inner = self._check_X_y(X=X, y=y)
+        X_inner, y_inner, X_schema, y_schema = self._check_X_y(X=X, y=y)
 
         # update memory of X, if remember_data tag is set to True
         if self.get_tag("remember_data", False):
@@ -907,13 +921,17 @@ class BaseTransformer(BaseEstimator):
 
         # checks and conversions complete, pass to inner fit
         #####################################################
-        vectorization_needed = isinstance(X_inner, VectorizedDF)
+        vectorization_needed = X_schema is not None
         # we call the ordinary _fit if no looping/vectorization needed
         if not vectorization_needed:
             self._update(X=X_inner, y=y_inner)
         else:
             # otherwise we call the vectorized version of fit
-            self._vectorize("update", X=X_inner, y=y_inner)
+            self._vectorize(
+                "update",
+                X=(X_inner, X_schema),
+                y=(y_inner, y_schema),
+            )
 
         return self
 
@@ -997,7 +1015,7 @@ class BaseTransformer(BaseEstimator):
 
         Returns
         -------
-        X_inner : Series, Panel, or Hierarchical object, or VectorizedDF
+        X_inner : Series, Panel, or Hierarchical object
                 compatible with self.get_tag("X_inner_mtype") format
             Case 1: self.get_tag("X_inner_mtype") supports scitype of X, then
                 converted/coerced version of X, mtype determined by "X_inner_mtype" tag
@@ -1005,8 +1023,8 @@ class BaseTransformer(BaseEstimator):
                 then X converted to "one-Series" or "one-Panel" sub-case of that scitype
                 always pd-multiindex (Panel) or pd_multiindex_hier (Hierarchical)
             Case 3: self.get_tag("X_inner_mtype") supports only *simpler* scitype than X
-                then VectorizedDF of X, iterated as the most complex supported scitype
-        y_inner : Series, Panel, or Hierarchical object, or VectorizedDF
+                then pandas multiindex version of X. The VectorizedDF is ``X_schema``.
+        y_inner : Series, Panel, or Hierarchical object
                 compatible with self.get_tag("y_inner_mtype") format
             Case 1: self.get_tag("y_inner_mtype") supports scitype of y, then
                 converted/coerced version of y, mtype determined by "y_inner_mtype" tag
@@ -1014,7 +1032,7 @@ class BaseTransformer(BaseEstimator):
                 then X converted to "one-Series" or "one-Panel" sub-case of that scitype
                 always pd-multiindex (Panel) or pd_multiindex_hier (Hierarchical)
             Case 3: self.get_tag("y_inner_mtype") supports only *simpler* scitype than y
-                then VectorizedDF of X, iterated as the most complex supported scitype
+                then pandas multiindex version of y. The VectorizedDF is ``y_schema``.
             Case 4: None if y was None, or self.get_tag("y_inner_mtype") is "None"
 
             Complexity order above: Hierarchical > Panel > Series
@@ -1029,6 +1047,15 @@ class BaseTransformer(BaseEstimator):
                 "case 2: higher scitype supported"
                 "case 3: requires vectorization"
 
+        X_schema : VectorizedDF or None
+            VectorizedDF of X in Case 3. None in Case 1, Case 2, and if X was None.
+        y_schema : VectorizedDF or None
+            VectorizedDF of y in Case 3. None otherwise.
+
+        Always returns ``X_inner, y_inner, X_schema, y_schema``.
+        If ``return_metadata=True``, returns
+        ``X_inner, y_inner, metadata, X_schema, y_schema``.
+
         Raises
         ------
         TypeError if X is None
@@ -1039,16 +1066,16 @@ class BaseTransformer(BaseEstimator):
         """
         if X is None:
             if return_metadata:
-                return X, y, {}
+                return X, y, {}, None, None
             else:
-                return X, y
+                return X, y, None, None
 
         # skip conversion if it is turned off
         if self.get_config()["input_conversion"] != "on":
             if return_metadata:
-                return X, y, None
+                return X, y, None, None, None
             else:
-                return X, y
+                return X, y, None, None
 
         metadata = dict()
         metadata["_converter_store_X"] = dict()
@@ -1247,40 +1274,44 @@ class BaseTransformer(BaseEstimator):
                 )
             else:
                 y_inner = None
+            X_schema = None
+            y_schema = None
 
         # case 3. scitype of X is not supported, only lower complexity one is
         #   then apply vectorization, loop method execution over series/panels
         # elif case == "case 3: requires vectorization":
         else:  # if requires_vectorization
             iterate_X = _most_complex_scitype(X_inner_scitype, X_scitype)
-            X_inner = VectorizedDF(
+            X_schema, X_inner = prepare_VectorizedDF(
                 X=X,
                 iterate_as=iterate_X,
                 is_scitype=X_scitype,
                 iterate_cols=req_vec_because_cols,
+                store=metadata["_converter_store_X"],
+                store_behaviour="reset",
             )
             # we also assume that y must be vectorized in this case
             if y_inner_mtype != ["None"] and y is not None:
-                # raise ValueError(
-                #     f"{type(self).__name__} does not support Panel X if y is not "
-                #     f"None, since {type(self).__name__} supports only Series. "
-                #     "Auto-vectorization to extend Series X to Panel X can only be "
-                #     'carried out if y is None, or "y_inner_mtype" tag is "None". '
-                #     "Consider extending _fit and _transform to handle the following "
-                #     "input types natively: Panel X and non-None y."
-                # )
                 iterate_y = _most_complex_scitype(y_inner_scitype, y_scitype)
-                y_inner = VectorizedDF(X=y, iterate_as=iterate_y, is_scitype=y_scitype)
+                y_schema, y_inner = prepare_VectorizedDF(
+                    X=y, iterate_as=iterate_y, is_scitype=y_scitype
+                )
             else:
                 y_inner = None
+                y_schema = None
 
         if return_metadata:
-            return X_inner, y_inner, metadata
+            return X_inner, y_inner, metadata, X_schema, y_schema
         else:
-            return X_inner, y_inner
+            return X_inner, y_inner, X_schema, y_schema
 
     def _check_X(self, X=None):
-        """Shorthand for _check_X_y with one argument X, see _check_X_y."""
+        """Shorthand for _check_X_y with one argument X, see _check_X_y.
+
+        Returns
+        -------
+        X_inner : converted X, or pandas multiindex frame when vectorized
+        """
         return self._check_X_y(X=X)[0]
 
     def _convert_output(self, X, metadata, inverse=False):
@@ -1467,7 +1498,9 @@ class BaseTransformer(BaseEstimator):
         """
         X = kwargs.get("X")
         y = kwargs.pop("y", None)
+        X_schema = X[1]
         kwargs["args_rowvec"] = {"y": y}
+        kwargs["varname_of_self"] = "X"
         kwargs["rowname_default"] = "transformers"
         kwargs["colname_default"] = "transformers"
 
@@ -1477,7 +1510,7 @@ class BaseTransformer(BaseEstimator):
         # fit-like methods: run method; clone first if fit
         if methodname in FIT_METHODS:
             if methodname == "fit":
-                transformers_ = X.vectorize_est(
+                transformers_ = X_schema.vectorize_est(
                     self,
                     method="clone",
                     rowname_default="transformers",
@@ -1487,7 +1520,7 @@ class BaseTransformer(BaseEstimator):
             else:
                 transformers_ = self.transformers_
 
-            self.transformers_ = X.vectorize_est(
+            self.transformers_ = X_schema.vectorize_est(
                 transformers_,
                 method=methodname,
                 backend=self.get_config()["backend:parallel"],
@@ -1500,7 +1533,7 @@ class BaseTransformer(BaseEstimator):
             # loop through fitted transformers one-by-one, and transform series/panels
             if not self.get_tag("fit_is_empty"):
                 # if not fit_is_empty: check index compatibility, get fitted trafos
-                n_trafos = len(X)
+                n_trafos = len(X_schema)
                 n, m = self.transformers_.shape
                 n_fit = n * m
                 if n_trafos != n_fit:
@@ -1524,14 +1557,14 @@ class BaseTransformer(BaseEstimator):
 
             else:
                 # if fit_is_empty: don't store transformers, run fit/transform in one
-                transformers_ = X.vectorize_est(
+                transformers_ = X_schema.vectorize_est(
                     self,
                     method="clone",
                     rowname_default="transformers",
                     colname_default="transformers",
                     # no backend parallelization necessary for clone
                 )
-                transformers_ = X.vectorize_est(
+                transformers_ = X_schema.vectorize_est(
                     transformers_,
                     method="fit",
                     backend=self.get_config()["backend:parallel"],
@@ -1540,7 +1573,7 @@ class BaseTransformer(BaseEstimator):
                 )
 
             # transform the i-th series/panel with the i-th stored transformer
-            Xts = X.vectorize_est(
+            Xts = X_schema.vectorize_est(
                 transformers_,
                 method=methodname,
                 return_type="list",
@@ -1548,7 +1581,7 @@ class BaseTransformer(BaseEstimator):
                 backend_params=self.get_config()["backend:parallel:params"],
                 **kwargs,
             )
-            Xt = X.reconstruct(Xts, overwrite_index=False)
+            Xt = X_schema.reconstruct(Xts, overwrite_index=False)
 
             return Xt
 
