@@ -126,7 +126,7 @@ class MomentFMForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = MomentFMForecaster(seq_len = 2)
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> forecaster.fit(y, fh=3) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 

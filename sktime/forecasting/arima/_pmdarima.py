@@ -269,7 +269,7 @@ class AutoARIMA(_PmdArimaAdapter):
     ... ) # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     AutoARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """  # noqa: E501
 
     _tags = {
@@ -699,7 +699,7 @@ class ARIMA(_PmdArimaAdapter):
     ...     suppress_warnings=True)
     >>> forecaster.fit(y)  # doctest: +SKIP
     ARIMA(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """  # noqa: E501
 
     _tags = {

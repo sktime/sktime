@@ -861,7 +861,7 @@ class TransformedTargetForecaster(_Pipeline):
     ... ])
     >>> pipe.fit(y)
     TransformedTargetForecaster(...)
-    >>> y_pred = pipe.predict(fh=[1,2,3])
+    >>> y_pred = pipe.predict(fh=3)
 
         Example 2: without strings
 
@@ -2078,7 +2078,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     >>> from sktime.datasets import load_shampoo_sales
     >>> from sktime.forecasting.model_selection import ForecastingGridSearchCV
     >>> from sktime.split import ExpandingWindowSplitter
-    >>> fh = [1,2,3]
+    >>> fh = 3
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> # check which of the two sequences of transformers is better
