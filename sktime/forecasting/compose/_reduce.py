@@ -1463,7 +1463,9 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
             "window_length": 2,
         }
         params2 = {
-            "estimator": make_pipeline(Tabularizer(), RandomForestRegressor()),
+            "estimator": make_pipeline(
+                Tabularizer(), RandomForestRegressor(random_state=0)
+            ),
             "window_length": 3,
         }
 
