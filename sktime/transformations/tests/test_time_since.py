@@ -25,7 +25,7 @@ def df_datetime_15mins_idx():
     """Create timeseries with Datetime index, 15 minute frequency."""
     return pd.DataFrame(
         data={"y": [1, 1, 1, 1, 1]},
-        index=pd.date_range(start="2000-01-01", freq="15T", periods=5),
+        index=pd.date_range(start="2000-01-01", freq="15min", periods=5),
     )
 
 
@@ -151,9 +151,9 @@ def test_fit_transform_datetime_monthly_idx_datetime_output(df_datetime_monthly_
     Xt = transformer.fit_transform(df_datetime_monthly_idx)
     expected = pd.DataFrame(
         data={
-            "time_since_2000-01-01 00:00:00": [
-                pd.Timedelta(i, unit="D") for i in (0, 31, 60, 91, 121)
-            ]
+            "time_since_2000-01-01 00:00:00": (
+                df_datetime_monthly_idx.index - df_datetime_monthly_idx.index[0]
+            )
         },
         index=df_datetime_monthly_idx.index,
     )

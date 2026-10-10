@@ -10,10 +10,6 @@ from numpy.testing import assert_array_equal
 from sklearn.base import clone
 
 from sktime.datasets import load_shampoo_sales
-from sktime.forecasting.compose import TransformedTargetForecaster
-from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection import ForecastingGridSearchCV
-from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.compose import MultiplexTransformer
@@ -59,6 +55,8 @@ def test_multiplex_transformer_alone():
 
 def _find_best_transformer(forecaster, transformers, cv, y):
     """Evaluate all the transformers on y and return the name of best."""
+    from sktime.forecasting.model_evaluation import evaluate
+
     scoring = check_scoring(None)
     scoring_name = f"test_{scoring.name}"
     score = None
@@ -85,6 +83,10 @@ def test_multiplex_transformer_in_grid():
     ForecastingGridSearchCV within a pipeline.  Here we check that when you do that you
     get the expected result.
     """
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.forecasting.model_selection import ForecastingGridSearchCV
+    from sktime.forecasting.naive import NaiveForecaster
+
     y = load_shampoo_sales()
     # randomly make some of the values nans:
     y.iloc[[5, 10, 15, 25, 32]] = -1

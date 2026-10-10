@@ -9,11 +9,17 @@ from functools import lru_cache
 import pandas as pd
 from skbase.lookup import all_objects
 
+from sktime.registry._config import MODULES_TO_IGNORE as MODULES_TO_IGNORE_SKTIME
+from sktime.registry._config import MODULES_TO_IGNORE_SKLEARN
+
+__all__ = ["_all_sklearn_estimators"]
+
 
 def _all_sklearn_estimators(
     return_names=True,
     as_dataframe=False,
     suppress_import_stdout=True,
+    package_scope=None,
 ):
     """List all scikit-learn objects in sktime and sklearn.
 
@@ -46,13 +52,20 @@ def _all_sklearn_estimators(
     suppress_import_stdout : bool, optional. Default=True
         whether to suppress stdout printout upon import.
 
+    package_scope : None or str, optional (default=None)
+        Which packages to retrieve estimators from.
+
+        If None, retrieves from both the ``sktime`` and ``scikit-learn`` packages.
+        If str, only objects from the specified package are considered.
+        Valid strings: ``sktime``, or ``scikit-learn``.
+
     Returns
     -------
     all_estimators will return one of the following:
 
         1. list of estimators, if ``return_names=False``, and ``return_tags`` is None
 
-        2. list of tuples (optional estimator name, class, ~ptional estimator
+        2. list of tuples (optional estimator name, class, optional estimator
         tags), if ``return_names=True`` or ``return_tags`` is not ``None``.
 
         3. ``pandas.DataFrame`` if ``as_dataframe = True``
@@ -76,10 +89,20 @@ def _all_sklearn_estimators(
             passed in return_tags will serve as column names for all columns of
             tags that were optionally requested.
     """  # noqa: E501
+    if package_scope not in [None, "scikit-learn", "sktime"]:
+        raise ValueError(f"Invalid package_scope: {package_scope}")
+    if package_scope is None:
+        package_scope = ("sktime", "sklearn")
+    elif package_scope == "scikit-learn":
+        package_scope = ("sklearn",)
+    else:
+        package_scope = (package_scope,)
+
     return _all_sklearn_estimators_cached(
         return_names=return_names,
         as_dataframe=as_dataframe,
         suppress_import_stdout=suppress_import_stdout,
+        package_scope=package_scope,
     )
 
 
@@ -88,56 +111,40 @@ def _all_sklearn_estimators_cached(
     return_names=True,
     as_dataframe=False,
     suppress_import_stdout=True,
+    package_scope=None,
 ):
     """List all scikit-learn objects in sktime and sklearn.
 
     Cached version of _all_sklearn_estimators, see above for docstring.
     """
     from sklearn.base import BaseEstimator
+    from sklearn.model_selection import BaseCrossValidator, BaseShuffleSplit
 
-    MODULES_TO_IGNORE_SKLEARN = [
-        "array_api_compat",
-        "conftest",
-        "tests",
-        "experimental",
-    ]
-    MODULES_TO_IGNORE_SKTIME = (
-        "conftest",
-        "tests",
-        "setup",
-        "contrib",
-        "benchmarking",
-        "utils",
-        "all",
-        "plotting",
-        "_split",
-        "test_split",
-        "registry",
-        "normal",
-        "_normal",
-    )
+    sklearn_base_classes = [BaseEstimator, BaseCrossValidator, BaseShuffleSplit]
 
-    result_sklearn = all_objects(
-        object_types=BaseEstimator,
-        package_name="sklearn",
-        modules_to_ignore=MODULES_TO_IGNORE_SKLEARN,
-        as_dataframe=as_dataframe,
-        return_names=return_names,
-        suppress_import_stdout=suppress_import_stdout,
-    )
+    results = []
 
-    result_sktime = all_objects(
-        object_types=BaseEstimator,
-        package_name="sktime",
-        modules_to_ignore=MODULES_TO_IGNORE_SKTIME,
-        as_dataframe=as_dataframe,
-        return_names=return_names,
-        suppress_import_stdout=suppress_import_stdout,
-    )
+    modules_to_ignore = {
+        "sklearn": MODULES_TO_IGNORE_SKLEARN,
+        "sktime": MODULES_TO_IGNORE_SKTIME,
+    }
+
+    for pkg in package_scope:
+        result_pkg = all_objects(
+            object_types=sklearn_base_classes,
+            package_name=pkg,
+            modules_to_ignore=modules_to_ignore.get(pkg, {}),
+            as_dataframe=as_dataframe,
+            return_names=return_names,
+            suppress_import_stdout=suppress_import_stdout,
+        )
+        if as_dataframe:
+            result_pkg = [pd.DataFrame(result_pkg)]
+        results.extend(result_pkg)
 
     if as_dataframe:
-        result_sklearn = pd.concat([result_sklearn, result_sktime], ignore_index=True)
+        returns = pd.concat(results, ignore_index=True)
     else:
-        result_sklearn.extend(result_sktime)
+        returns = results
 
-    return result_sklearn
+    return returns

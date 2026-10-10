@@ -8,19 +8,22 @@ __all__ = []
 import pytest
 
 from sktime.datasets import load_gunpoint
-from sktime.forecasting.exp_smoothing import ExponentialSmoothing
-from sktime.tests.test_switch import run_test_for_class
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.transformations.summarize import FittedParamExtractor
 
 X_train, y_train = load_gunpoint("train", return_X_y=True)
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([ExponentialSmoothing, FittedParamExtractor]),
+    not run_test_for_class([FittedParamExtractor])
+    and not run_test_module_changed("sktime.forecasting.exp_smoothing"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("param_names", ["initial_level"])
 def test_FittedParamExtractor(param_names):
+    """Test FittedParamExtractor with ExponentialSmoothing."""
+    from sktime.forecasting.exp_smoothing import ExponentialSmoothing
+
     forecaster = ExponentialSmoothing()
     t = FittedParamExtractor(forecaster=forecaster, param_names=param_names)
     Xt = t.fit_transform(X_train)

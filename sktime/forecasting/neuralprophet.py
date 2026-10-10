@@ -20,6 +20,11 @@ class NeuralProphet(BaseForecaster):
     * integer/range index is interpreted as days since Jan 1, 2000
     * ``PeriodIndex`` is converted using the ``pandas`` method ``to_timestamp``
 
+    Notes
+    -----
+    NeuralProphet does not yet support pandas 3. Until upstream compatibility
+    is restored, this interface requires pandas 2.
+
     Parameters
     ----------
     freq : str, optional
@@ -107,6 +112,8 @@ class NeuralProphet(BaseForecaster):
             # keep scipy below that bound as well
             "numpy<2",
             "scipy<1.16",
+            # neuralprophet uses pandas APIs removed in pandas 3
+            "pandas<3",
         ],
         # neuralprophet causes a C-level segfault on Windows + Python 3.13+
         "env_marker": 'platform_system != "Windows" or python_version < "3.13"',
@@ -247,6 +254,8 @@ class NeuralProphet(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
+        self._cur_y = y
+        self._cur_X = X
         import pandas as pd
         from neuralprophet import NeuralProphet as _NeuralProphet
 
@@ -403,7 +412,7 @@ class NeuralProphet(BaseForecaster):
         ds_to_yhat = dict(zip(forecast_ds, forecast["yhat1"].tolist()))
         yhat = [ds_to_yhat.get(ds, np.nan) for ds in fh_ds]
 
-        return pd.Series(yhat, index=fh_index, name=self._y.name)
+        return pd.Series(yhat, index=fh_index, name=self._cur_y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

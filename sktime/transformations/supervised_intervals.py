@@ -88,6 +88,16 @@ class SupervisedIntervals(BaseTransformer):
     .. [2] Cabello, N., Naghizade, E., Qi, J. and Kulik, L., 2021. Fast, accurate and
         interpretable time series classification through randomization. arXiv preprint
         arXiv:2105.14876.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.transformations.supervised_intervals import SupervisedIntervals
+    >>> X_train, y_train = load_unit_test(split="train", return_X_y=True)
+    >>> t = SupervisedIntervals(n_intervals=1, random_state=1)
+    >>> Xt = t.fit_transform(X_train, y_train)
+    >>> Xt.shape
+    (20, 26)
     """
 
     _tags = {
@@ -525,6 +535,12 @@ class SupervisedIntervals(BaseTransformer):
         from skbase.utils.dependencies import _check_soft_dependencies
 
         params0 = {}
+        params1 = {
+            "n_intervals": 1,
+            "randomised_split_point": False,
+            "min_interval_length": 4,
+        }
+        params = [params0, params1]
 
         if _check_soft_dependencies("numba", severity="none"):
             from sktime.utils.numba.stats import (
@@ -534,17 +550,16 @@ class SupervisedIntervals(BaseTransformer):
                 row_numba_min,
             )
 
-            params1 = {
+            params2 = {
                 "n_intervals": 1,
                 "features": [row_mean, row_numba_min, row_numba_max],
                 "min_interval_length": 4,
             }
-            params2 = {
+            params3 = {
                 "n_intervals": 2,
                 "randomised_split_point": False,
                 "features": row_median,
             }
-            return [params0, params1, params2]
+            params.extend([params2, params3])
 
-        else:
-            return params0
+        return params

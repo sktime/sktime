@@ -1,0 +1,2 @@
+class BatsException(Exception):
+    pass

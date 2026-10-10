@@ -117,6 +117,7 @@ class EnbPIForecaster(BaseForecaster):
         "capability:insample": False,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": False,  # ... for in-sample horizons?
+        "capability:update": True,  # can estimator update its parameters with new data?
         "tests:skip_all": True,  # skip all tests temporarily, issue tracked in #10083
     }
 
@@ -174,6 +175,8 @@ class EnbPIForecaster(BaseForecaster):
             )
 
     def _fit(self, X, y, fh=None):
+        self._cur_y = y
+        self._cur_X = X
         self._fh = fh
         self._y_ix_names = y.index.names
 
@@ -216,7 +219,7 @@ class EnbPIForecaster(BaseForecaster):
         for forecaster in self.forecasters:
             preds.append(forecaster.predict(fh=fh, X=X).values)
 
-        train_targets = self._y.copy()
+        train_targets = self._cur_y.copy()
         train_targets.index = pd.RangeIndex(len(train_targets))
         intervals = []
         for cov in coverage:
@@ -252,7 +255,12 @@ class EnbPIForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self.fit(y=self._y, X=self._X, fh=self._fh)
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        self.fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
         return self
 
     @classmethod
