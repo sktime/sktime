@@ -279,6 +279,11 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     # forecast the next <(n-1) x window_length> hours with periodicity of <sp> hours
     fh = ForecastingHorizon(test_data.index, is_relative=False)
     model = NaiveForecaster(strategy=strategy, sp=sp)
+    if sp > window_length:
+        # no full season fits into the training window, fitting must raise
+        with pytest.raises(ValueError, match="is smaller than `sp`"):
+            model.fit(train_data)
+        return
     model.fit(train_data)
     forecast_data = model.predict(fh)
 
@@ -477,6 +482,24 @@ def test_naive_sp_greater_1_not_nan(freq):
     null_predictions_count = predictions.isna().sum()
 
     assert null_predictions_count == 0
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("strategy", ["last", "mean"])
+@pytest.mark.parametrize("window_length", [None, 10])
+def test_naive_sp_larger_than_window_length_raises(strategy, window_length):
+    """Test that sp larger than the window length raises a ValueError.
+
+    Covers the default window length (None, i.e., the full training series)
+    as well as an explicitly passed window length, see #9969.
+    """
+    y = pd.Series(np.arange(20))
+    f = NaiveForecaster(strategy=strategy, sp=21, window_length=window_length)
+    with pytest.raises(ValueError, match="is smaller than `sp`"):
+        f.fit(y)
 
 
 @pytest.mark.skipif(
