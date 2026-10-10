@@ -923,6 +923,10 @@ class LagLlamaForecaster(BaseForecaster):
         Appending is required for ``_extend_df`` to produce a contiguous index,
         since the cutoff advances in ``update``.
 
+        Only the latest ``context_length`` observations are retained, as the
+        predictor never conditions on older history. This keeps memory bounded
+        no matter how many updates are applied.
+
         ``update_params`` has no effect: the model is used zero-shot, and ``_fit``
         does not train, it loads the pretrained predictor. Fine-tuning on new data
         is only available via ``pretrain``.
@@ -930,6 +934,16 @@ class LagLlamaForecaster(BaseForecaster):
         from sktime.datatypes import update_data
 
         self._cur_y = update_data(self._cur_y, y)
+        # LagLlama conditions only on the last context_length observations,
+        # so older history is dropped to keep memory bounded over updates.
+        # For panel/hierarchical input, each series is trimmed separately.
+        if isinstance(self._cur_y.index, pd.MultiIndex):
+            series_levels = list(range(self._cur_y.index.nlevels - 1))
+            self._cur_y = self._cur_y.groupby(level=series_levels).tail(
+                self.context_length
+            )
+        else:
+            self._cur_y = self._cur_y.iloc[-self.context_length :]
         if X is not None:
             self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         return self
