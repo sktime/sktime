@@ -427,37 +427,41 @@ class BaseDeepClassifier(BaseClassifier):
         deserialized self resulting in output at ``path``, of ``cls.save(path)``
         """
         import pickle
-        from shutil import rmtree
+        import tempfile
+        from pathlib import Path
         from zipfile import ZipFile
 
         from tensorflow import keras
 
-        temp_unzip_loc = serial.parent / "temp_unzip/"
-        temp_unzip_loc.mkdir()
+        if isinstance(serial, str):
+            serial = Path(serial)
 
-        with ZipFile(serial, mode="r") as zip_file:
-            for file in zip_file.namelist():
-                if not file.startswith("keras/"):
-                    continue
-                zip_file.extract(file, temp_unzip_loc)
+        with tempfile.TemporaryDirectory(dir=serial.parent) as temp_dir:
+            temp_unzip_loc = Path(temp_dir)
 
-        keras_location_legacy = temp_unzip_loc / "keras"
-        keras_location = temp_unzip_loc / "keras" / "model.keras"
-        if keras_location.exists():
-            cls.model_ = keras.models.load_model(
-                keras_location,
-                custom_objects=cls._get_keras_custom_objects(),
-            )
-        elif keras_location_legacy.exists():
-            cls.model_ = keras.models.load_model(
-                keras_location_legacy,
-                custom_objects=cls._get_keras_custom_objects(),
-            )
-        else:
-            cls.model_ = None
+            with ZipFile(serial, mode="r") as zip_file:
+                for file in zip_file.namelist():
+                    if not file.startswith("keras/"):
+                        continue
+                    zip_file.extract(file, temp_unzip_loc)
 
-        rmtree(temp_unzip_loc)
-        cls.history = keras.callbacks.History()
-        with ZipFile(serial, mode="r") as file:
-            cls.history.set_params(pickle.loads(file.open("history").read()))
-            return pickle.loads(file.open("_obj").read())
+            keras_location_legacy = temp_unzip_loc / "keras"
+            keras_location = temp_unzip_loc / "keras" / "model.keras"
+            if keras_location.exists():
+                cls.model_ = keras.models.load_model(
+                    keras_location,
+                    custom_objects=cls._get_keras_custom_objects(),
+                )
+            elif keras_location_legacy.exists():
+                cls.model_ = keras.models.load_model(
+                    keras_location_legacy,
+                    custom_objects=cls._get_keras_custom_objects(),
+                )
+            else:
+                cls.model_ = None
+
+            cls.history = keras.callbacks.History()
+            with ZipFile(serial, mode="r") as file:
+                cls.history.set_params(pickle.loads(file.open("history").read()))
+
+                return pickle.loads(file.open("_obj").read())
