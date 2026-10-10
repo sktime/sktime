@@ -411,8 +411,8 @@ class TEASER(BaseEarlyClassifier):
             if min_class < cv_size:
                 cv_size = min_class
 
-            train_probas = cross_val_predict(
-                estimator, X, y=y, cv=cv_size, method="predict_proba"
+            train_probas = estimator.fit_predict_proba(
+                X, y, cv=cv_size, change_state=False
             )
 
         train_preds = [
