@@ -207,10 +207,12 @@ class TiRexForecaster(BaseForecaster):
         self : TiRexForecaster
             Fitted forecaster (with ``model_`` set).
         """
-        key = _tirex_cache_key(self.model, self._device)
-        self.model_ = _cached_TiRex(
-            key=key, model=self.model, device=self._device
-        ).load()
+        self._cur_y = y
+        self._cur_X = X
+        device = self._device
+
+        key = _tirex_cache_key(self.model, device)
+        self.model_ = _cached_TiRex(key=key, model=self.model, device=device).load()
         return self
 
     def _predict(self, fh, X):
@@ -241,7 +243,7 @@ class TiRexForecaster(BaseForecaster):
         """
         # implement here
 
-        y = self._y
+        y = self._cur_y
         context_values = y.to_numpy()[None, :]
 
         context_tensor = torch.as_tensor(context_values, dtype=torch.float32)

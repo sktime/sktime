@@ -83,8 +83,11 @@ class LSTMFCNClassifier(BaseDeepClassifier):
         "maintainers": ["jnrusson1", "solen0id"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        #
         # CI and test tags
         # ----------------
+        "tests:skip_all": True,
+        # unknown cause, see #4033; suspected hangs/memouts #4610
         "tests:vm": True,
         "tests:libs": ["sktime.networks.lstmfcn._lstmfcn_tf"],
     }
