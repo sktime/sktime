@@ -105,9 +105,7 @@ class CNTCClassifier(BaseDeepClassifier):
         # ---------------------
         "tests:libs": ["sktime.networks.cntc._cntc_tf"],
         "tests:skip_by_name": [
-            "test_fit_idempotent",
-            "test_persistence_via_pickle",
-            "test_save_estimators_to_file",
+            "test_deepcopy_fitted_predict",
         ],
         # Run tests in a dedicated VM due to sporadic crashes and possible
         # memory leaks (see #8518)
@@ -204,6 +202,39 @@ class CNTCClassifier(BaseDeepClassifier):
         )
         return model
 
+    def _init_projections(self, X):
+        """Draw the random projections used by ``prepare_input``.
+
+        The projections replace a randomly initialized ``Dense`` layer, and are
+        drawn once, from ``random_state``, so that ``prepare_input`` returns the
+        same result for the same input, in ``fit`` and in ``predict``.
+
+        Arguments
+        ---------
+        X: 3D np.ndarray of shape = (n_instances, series_length, n_dimensions)
+            The data that the projections are drawn for.
+
+        Sets
+        ----
+        self._projections_ : list of 2D np.ndarray
+            One projection matrix per dimension of ``X``, of shape
+            ``(2 * series_length, series_length)``.
+        """
+        import numpy as np
+
+        rng = check_random_state(self.random_state)
+        n_timepoints = X.shape[1]
+        n_projections = 1 if X.shape[2] == 1 else X.shape[2]
+
+        # glorot uniform, the default initializer of keras.layers.Dense
+        limit = np.sqrt(6.0 / (2 * n_timepoints + n_timepoints))
+        self._projections_ = [
+            rng.uniform(
+                low=-limit, high=limit, size=(2 * n_timepoints, n_timepoints)
+            ).astype(np.float32)
+            for _ in range(n_projections)
+        ]
+
     def prepare_input(self, X):
         """
         Prepare input for the CLSTM arm of the model.
@@ -229,7 +260,9 @@ class CNTCClassifier(BaseDeepClassifier):
         """
         import numpy as np
         import pandas as pd
-        from tensorflow import keras
+
+        if not hasattr(self, "_projections_"):
+            self._init_projections(X)
 
         if X.shape[2] == 1:
             # Converting data to pandas
@@ -241,11 +274,7 @@ class CNTCClassifier(BaseDeepClassifier):
             window = window.fillna(0)
 
             trainX2 = np.concatenate((trainX1, window), axis=1)
-            trainX2 = keras.backend.variable(trainX2)
-            trainX2 = keras.layers.Dense(
-                trainX1.shape[1], input_shape=(trainX2.shape[1:])
-            )(trainX2)
-            trainX2 = keras.backend.eval(trainX2)
+            trainX2 = np.matmul(trainX2, self._projections_[0])
             trainX = trainX2.reshape((trainX2.shape[0], trainX2.shape[1], 1))
         else:
             trainXs = []
@@ -257,11 +286,7 @@ class CNTCClassifier(BaseDeepClassifier):
                 window = window.fillna(0)
 
                 trainX2 = np.concatenate((trainX1, window), axis=1)
-                trainX2 = keras.backend.variable(trainX2)
-                trainX2 = keras.layers.Dense(
-                    trainX1.shape[1], input_shape=(trainX2.shape[1:])
-                )(trainX2)
-                trainX2 = keras.backend.eval(trainX2)
+                trainX2 = np.matmul(trainX2, self._projections_[i])
 
                 trainX = trainX2.reshape((trainX2.shape[0], trainX2.shape[1], 1))
                 trainXs.append(trainX)
@@ -285,7 +310,7 @@ class CNTCClassifier(BaseDeepClassifier):
         """
         y_onehot = self._convert_y_to_keras(y)
 
-        check_random_state(self.random_state)
+        self._init_projections(X)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
         X2 = self.prepare_input(X)
@@ -385,3 +410,15 @@ class CNTCClassifier(BaseDeepClassifier):
             params.append(param_callbacks)
 
         return params
+
+    @staticmethod
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
+
+        Returns
+        -------
+        dict of str to type, mapping names to classes
+        """
+        from sktime.libs._keras_self_attention import SeqSelfAttention
+
+        return SeqSelfAttention.get_custom_objects()
