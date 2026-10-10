@@ -2,6 +2,8 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
+import numpy as np
+import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_estimator_deps, _check_soft_dependencies
 
@@ -14,6 +16,152 @@ from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.split import ExpandingWindowSplitter
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
+
+
+@pytest.mark.parametrize("n_columns", [1, 2])
+def test_update_predict_with_numpy_series(n_columns):
+    """Regression test for #3291: update_predict supports NumPy input."""
+    y = np.arange(10, dtype=float)
+    if n_columns == 2:
+        y = np.column_stack([y, y + 100])
+    forecaster = NaiveForecaster(strategy="last").fit(y[:5])
+
+    y_pred = forecaster.update_predict(y[5:])
+
+    assert isinstance(y_pred, np.ndarray)
+    expected = y[5:-1, None] if n_columns == 1 else y[5:-1]
+    np.testing.assert_array_equal(y_pred, expected)
+
+
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize("remember_data", [True, False])
+@pytest.mark.parametrize("reset_forecaster", [True, False])
+def test_update_predict_preserves_numpy_output_state(
+    n_columns, remember_data, reset_forecaster
+):
+    """Internal pandas windows must not replace the public NumPy output type."""
+    y = np.arange(14, dtype=float)
+    if n_columns == 2:
+        y = np.column_stack([y, y + 100])
+    original_y = y.copy()
+    forecaster = (
+        NaiveForecaster(strategy="last")
+        .set_config(remember_data=remember_data)
+        .fit(y[:5])
+    )
+
+    y_pred = forecaster.update_predict(y[5:10], reset_forecaster=reset_forecaster)
+
+    assert isinstance(y_pred, np.ndarray)
+    expected = y[5:9, None] if n_columns == 1 else y[5:9]
+    np.testing.assert_array_equal(y_pred, expected)
+    assert forecaster.cutoff[0] == (4 if reset_forecaster else 8)
+
+    if not reset_forecaster:
+        y_pred = forecaster.update_predict(y[9:14], reset_forecaster=False)
+        assert isinstance(y_pred, np.ndarray)
+        expected = y[9:13, None] if n_columns == 1 else y[9:13]
+        np.testing.assert_array_equal(y_pred, expected)
+        assert forecaster.cutoff[0] == 12
+
+    next_pred = forecaster.predict(fh=[1])
+    assert isinstance(next_pred, np.ndarray)
+    last = 4 if reset_forecaster else 12
+    expected = y[last : last + 1, None] if n_columns == 1 else y[last : last + 1]
+    np.testing.assert_array_equal(next_pred, expected)
+    np.testing.assert_array_equal(y, original_y)
+
+
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize("reset_forecaster", [True, False])
+def test_update_predict_preserves_pandas_output_state(n_columns, reset_forecaster):
+    """Preserve public names and isolate vectorized models for pandas too."""
+    y = pd.Series(np.arange(10, dtype=float), name="target")
+    if n_columns == 2:
+        y = pd.DataFrame({"target": y, "other": y + 100})
+    forecaster = NaiveForecaster(strategy="last").fit(y.iloc[:5])
+
+    y_pred = forecaster.update_predict(y.iloc[5:], reset_forecaster=reset_forecaster)
+    expected = y.iloc[5:9].copy()
+    expected.index = pd.RangeIndex(6, 10)
+    assert_equal = pd.testing.assert_series_equal
+    if n_columns == 2:
+        assert_equal = pd.testing.assert_frame_equal
+    assert_equal(y_pred, expected)
+
+    last = 4 if reset_forecaster else 8
+    expected = y.iloc[last : last + 1].copy()
+    expected.index = pd.RangeIndex(last + 1, last + 2)
+    assert_equal(forecaster.predict(fh=[1]), expected)
+
+
+@pytest.mark.parametrize("n_columns", [1, 2])
+def test_update_predict_preserves_numpy_type_after_error(n_columns, monkeypatch):
+    """A failed rolling update must not leak internal pandas output metadata."""
+    y = np.arange(10, dtype=float)
+    if n_columns == 2:
+        y = np.column_stack([y, y + 100])
+    forecaster = NaiveForecaster(strategy="last").fit(y[:5])
+    original_update_predict_single = NaiveForecaster.update_predict_single
+
+    def update_then_fail(self, *args, **kwargs):
+        prediction = original_update_predict_single(self, *args, **kwargs)
+        if self is forecaster:
+            raise RuntimeError("rolling update failed")
+        return prediction
+
+    monkeypatch.setattr(NaiveForecaster, "update_predict_single", update_then_fail)
+
+    with pytest.raises(RuntimeError, match="rolling update failed"):
+        forecaster.update_predict(y[5:], reset_forecaster=False)
+
+    y_pred = forecaster.predict(fh=[1])
+    assert isinstance(y_pred, np.ndarray)
+    expected = y[5:6, None] if n_columns == 1 else y[5:6]
+    np.testing.assert_array_equal(y_pred, expected)
+    assert forecaster.cutoff[0] == 5
+
+
+def test_update_predict_with_numpy_series_and_multiple_horizons():
+    """NumPy rolling predictions preserve the fitted series time axis."""
+    y = np.arange(10, dtype=float)
+    cv = ExpandingWindowSplitter(fh=[1, 2], initial_window=2, step_length=1)
+
+    numpy_forecaster = NaiveForecaster(strategy="last").fit(y[:5])
+    numpy_pred = numpy_forecaster.update_predict(y[5:], cv=cv, update_params=False)
+
+    pandas_y = pd.Series(y)
+    pandas_forecaster = NaiveForecaster(strategy="last").fit(pandas_y.iloc[:5])
+    pandas_pred = pandas_forecaster.update_predict(
+        pandas_y.iloc[5:], cv=cv, update_params=False
+    )
+
+    pd.testing.assert_frame_equal(numpy_pred, pandas_pred)
+
+
+def test_update_predict_with_numpy_exogenous_series():
+    """NumPy exogenous data uses the same continuation index as NumPy y."""
+    y = np.arange(10, dtype=float)
+    X = np.arange(20, dtype=float).reshape(10, 2)
+    forecaster = NaiveForecaster(strategy="last").fit(y[:5], X=X[:5])
+
+    y_pred = forecaster.update_predict(y[5:], X=X[5:], update_params=False)
+
+    np.testing.assert_array_equal(y_pred, y[5:-1, None])
+
+
+def test_update_predict_with_numpy_after_datetime_series():
+    """NumPy updates continue a fitted datetime index and return NumPy output."""
+    y_train = pd.Series(
+        np.arange(5, dtype=float),
+        index=pd.date_range("2026-01-01", periods=5, freq="D"),
+    )
+    forecaster = NaiveForecaster(strategy="last").fit(y_train)
+
+    y_pred = forecaster.update_predict(np.arange(5, 10, dtype=float))
+
+    assert isinstance(y_pred, np.ndarray)
+    np.testing.assert_array_equal(y_pred, np.arange(5, 9, dtype=float)[:, None])
 
 
 @pytest.mark.skipif(

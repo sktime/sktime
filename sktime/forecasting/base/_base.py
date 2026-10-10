@@ -1497,7 +1497,27 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         self.check_is_fitted()
 
         # input checks and minor coercions on X, y
+        y_is_numpy_series = isinstance(y, np.ndarray) and y.ndim <= 2
+        X_is_numpy_series = isinstance(X, np.ndarray) and X.ndim <= 2
         X_inner, y_inner = self._check_X_y(X=X, y=y)
+
+        def _coerce_numpy_series(obj):
+            if obj is None:
+                return None
+            pandas_obj = obj.X_multiindex if isinstance(obj, VectorizedDF) else obj
+            # NumPy has no index, so continue the fitted time axis instead of
+            # retaining the zero-based index introduced by mtype conversion.
+            relative_index = np.arange(1, len(pandas_obj) + 1)
+            absolute_index = ForecastingHorizon(
+                relative_index, is_relative=True
+            ).to_absolute_index(self.cutoff)
+            pandas_obj.index = absolute_index
+            return pandas_obj
+
+        if y_is_numpy_series:
+            y_inner = _coerce_numpy_series(y_inner)
+        if X_is_numpy_series:
+            X_inner = _coerce_numpy_series(X_inner)
 
         cv = check_cv(cv)
 
@@ -2664,6 +2684,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # enter into a detached cutoff mode, if reset_forecaster is True
         if reset_forecaster:
             self_copy = deepcopy(self)
+            if self._is_vectorized:
+                # pandas deepcopy does not recursively copy objects in its cells.
+                # Detach fitted estimators as well as their containing DataFrame.
+                self_copy.forecasters_ = self.forecasters_.apply(
+                    lambda column: column.map(deepcopy)
+                )
         # otherwise just work with a reference to self
         else:
             self_copy = self
@@ -2677,29 +2703,44 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         if isinstance(X, VectorizedDF):
             X = X.X
 
-        # iterate over data
-        for new_window, _ in cv.split(y):
-            y_new = y.iloc[new_window]
+        # Internal pandas windows must not become the last public input mtype.
+        y_metadata = self._y_metadata
+        mtype_last_seen = self._y_mtype_last_seen
+        converter_store_y = deepcopy(self._converter_store_y)
+        try:
+            for new_window, _ in cv.split(y):
+                y_new = y.iloc[new_window]
 
-            # we use `update_predict_single` here
-            #  this updates the forecasting horizon
-            y_pred = self_copy.update_predict_single(
-                y=y_new,
-                fh=fh,
-                X=X,
-                update_params=update_params,
-            )
-            y_preds.append(y_pred)
-            cutoffs.append(self_copy.cutoff)
-
-            for i in range(len(y_preds)):
-                y_preds[i] = convert_to(
-                    y_preds[i],
-                    self._y_metadata["mtype"],
-                    store=self._converter_store_y,
-                    store_behaviour="freeze",
+                # we use `update_predict_single` here
+                #  this updates the forecasting horizon
+                y_pred = self_copy.update_predict_single(
+                    y=y_new,
+                    fh=fh,
+                    X=X,
+                    update_params=update_params,
                 )
-        return _format_moving_cutoff_predictions(y_preds, cutoffs)
+                y_preds.append(y_pred)
+                cutoffs.append(self_copy.cutoff)
+        finally:
+            # Keep cutoff/model updates, but restore public conversion metadata,
+            # including when a rolling update fails after making partial progress.
+            self._y_metadata = y_metadata
+            self._y_mtype_last_seen = mtype_last_seen
+            self._converter_store_y = converter_store_y
+
+        y_pred = _format_moving_cutoff_predictions(y_preds, cutoffs)
+
+        # A single horizon per cutoff has no duplicate absolute time points, so
+        # restore the mtype seen at the public interface after pandas formatting.
+        if len(y_preds) > 0 and len(y_preds[0]) == 1:
+            y_pred = convert_to(
+                y_pred,
+                self._y_metadata["mtype"],
+                store=self._converter_store_y,
+                store_behaviour="freeze",
+            )
+
+        return y_pred
 
     def _get_varnames(self):
         """Return variable column for DataFrame-like returns.
