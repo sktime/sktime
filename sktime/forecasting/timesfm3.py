@@ -126,6 +126,7 @@ class TimesFM3Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         "authors": ["rajatsen91", "siriuz42", "hasanfaesal"],
         "maintainers": ["hasanfaesal"],
         "python_dependencies": ["timesfm[torch]>=3.0.0,<4.0.0"],

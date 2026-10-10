@@ -363,6 +363,7 @@ def _make_estimator_overview(app):
     # hard-coded for better user experience
     tags_by_object_type = {
         "forecaster": [
+            "forecaster_type",
             "capability:categorical_in_X",
             "capability:insample",
             "capability:pred_int",

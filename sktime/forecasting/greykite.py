@@ -231,6 +231,7 @@ class GreykiteForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "python_dependencies": ["greykite>=1.0.0"],

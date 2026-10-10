@@ -475,6 +475,10 @@ class ArpsExponential(_ArpsDcaBase):
     ArpsExponential(...)
     """
 
+    _tags = {
+        "forecaster_type": ["statistical"],
+    }
+
     def __init__(
         self,
         qi_init=None,
@@ -598,6 +602,10 @@ class ArpsHyperbolic(_ArpsDcaBase):
     >>> forecaster.fit(y, fh=[1, 2, 3])
     ArpsHyperbolic(...)
     """
+
+    _tags = {
+        "forecaster_type": ["statistical"],
+    }
 
     def __init__(
         self,
@@ -723,6 +731,10 @@ class ArpsHarmonic(_ArpsDcaBase):
     >>> forecaster.fit(y, fh=[1, 2, 3])
     ArpsHarmonic(...)
     """
+
+    _tags = {
+        "forecaster_type": ["statistical"],
+    }
 
     def __init__(
         self,

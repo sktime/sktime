@@ -118,6 +118,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -684,6 +685,7 @@ class NaiveVariance(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": ["fkiraly", "bethrice44"],

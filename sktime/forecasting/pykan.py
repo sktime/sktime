@@ -51,6 +51,7 @@ class PyKANForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["benheid"],

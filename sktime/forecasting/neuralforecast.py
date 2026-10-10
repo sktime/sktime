@@ -170,6 +170,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
+        "forecaster_type": ["deep_learning"],
         # packaging info
         # --------------
         # "authors": ["yarnabrina"],
@@ -577,6 +578,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
+        "forecaster_type": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["pranavvp16", "yarnabrina"],
@@ -969,6 +971,7 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
+        "forecaster_type": ["deep_learning"],
         # packaging info
         # --------------
         # "authors": ["yarnabrina"],
@@ -1372,6 +1375,7 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
+        "forecaster_type": ["deep_learning"],
         # packaging info
         # --------------
         # "authors": ["yarnabrina"],
@@ -1773,6 +1777,7 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
+        "forecaster_type": ["deep_learning"],
         # packaging info
         # --------------
         # "authors": ["yarnabrina"],

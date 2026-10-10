@@ -119,6 +119,7 @@ class ConformalIntervals(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": ["fkiraly", "bethrice44"],

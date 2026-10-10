@@ -106,6 +106,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
@@ -327,6 +328,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,

@@ -1277,6 +1277,10 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         a tabular matrix.
     """
 
+    _tags = {
+        "forecaster_type": ["reduction"],
+    }
+
     def __init__(
         self,
         estimator,
@@ -1327,6 +1331,10 @@ class MultioutputTabularRegressionForecaster(_MultioutputReducer):
         a tabular matrix.
     """
 
+    _tags = {
+        "forecaster_type": ["reduction"],
+    }
+
     _estimator_scitype = "tabular-regressor"
 
 
@@ -1356,6 +1364,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     """
 
     _tags = {
+        "forecaster_type": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         # CI and test flags
         # -----------------
@@ -1413,6 +1422,10 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
         a tabular matrix
     """
 
+    _tags = {
+        "forecaster_type": ["reduction"],
+    }
+
     _estimator_scitype = "tabular-regressor"
 
 
@@ -1430,6 +1443,10 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix.
     """
+
+    _tags = {
+        "forecaster_type": ["reduction"],
+    }
 
     _estimator_scitype = "time-series-regressor"
 
@@ -1486,6 +1503,10 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
         a tabular matrix.
     """
 
+    _tags = {
+        "forecaster_type": ["reduction"],
+    }
+
     _estimator_scitype = "time-series-regressor"
 
 
@@ -1505,6 +1526,7 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     """
 
     _tags = {
+        "forecaster_type": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         # CI and test flags
         # -----------------
@@ -1568,6 +1590,10 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix
     """
+
+    _tags = {
+        "forecaster_type": ["reduction"],
+    }
 
     _estimator_scitype = "time-series-regressor"
 
@@ -2092,6 +2118,7 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["reduction"],
         # packaging info
         # --------------
         "authors": "fkiraly",
@@ -2517,6 +2544,7 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["reduction"],
         # packaging info
         # --------------
         "authors": "fkiraly",
@@ -2968,6 +2996,7 @@ class YfromX(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:missing_values": True,

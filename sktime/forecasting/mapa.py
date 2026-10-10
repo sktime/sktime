@@ -132,6 +132,7 @@ class MAPAForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": ["trnnick", "phoeenniixx", "satvshr"],

@@ -141,6 +141,7 @@ class T0Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["siddharth7113"],

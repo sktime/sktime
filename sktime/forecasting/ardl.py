@@ -197,6 +197,7 @@ class ARDL(_StatsModelsAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": ["bashtage", "kcc-lion"],

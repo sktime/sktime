@@ -179,6 +179,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": ["AzulGarza", "yarnabrina"],
@@ -386,6 +387,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -513,6 +515,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -630,6 +633,7 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -754,6 +758,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -898,6 +903,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -1190,6 +1196,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": ["AzulGarza", "yarnabrina", "vedantag17"],

@@ -105,6 +105,7 @@ class HCrystalBallAdapter(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": "MichalChromcak",

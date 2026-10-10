@@ -116,6 +116,7 @@ class CiscoTSMForecaster(BaseForecaster):
     _DEFAULT_QUANTILES = _DEFAULT_QUANTILES  # module-level constant
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["vedantag17"],

@@ -60,6 +60,7 @@ class ForecastKnownValues(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": ["fkiraly", "RobKuebler"],

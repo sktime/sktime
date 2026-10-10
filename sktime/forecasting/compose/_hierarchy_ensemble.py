@@ -139,6 +139,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": ["VyomkeshVyas", "sanskarmodi8"],

@@ -320,6 +320,7 @@ class TimesFM2Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["rajatsen91", "siriuz42", "geetu040"],

@@ -515,6 +515,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["ajati", "wgifford", "vijaye12", "geetu040"],

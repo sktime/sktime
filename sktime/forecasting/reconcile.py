@@ -83,6 +83,7 @@ class ReconcilerForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": ["ciaran-g", "felipeangelimvieira"],

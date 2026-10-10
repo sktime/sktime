@@ -116,6 +116,7 @@ class TiRexForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         # packaging tags
         # --------------
         "maintainers": ["sinemkilicdere", "martinloretzzz"],

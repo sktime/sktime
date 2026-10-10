@@ -75,6 +75,7 @@ class TimeLLMForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         "capability:multivariate": False,
         "authors": ["KimMeen", "jgyasu"],
         # KimMeen for [ICLR 2024] Official implementation of Time-LLM

@@ -102,6 +102,7 @@ class EnbPIForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         "authors": ["benheid"],
         "python_dependencies": ["tsbootstrap>=0.1.0"],
         "capability:multivariate": False,  # which y are fine? False/True

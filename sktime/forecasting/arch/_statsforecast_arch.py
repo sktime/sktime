@@ -43,6 +43,7 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -133,6 +134,7 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
+        "forecaster_type": ["statistical"],
         # packaging info
         # --------------
         "authors": ["eyjo"],

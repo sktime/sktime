@@ -54,6 +54,7 @@ class TafsutForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["deep_learning", "foundation_model"],
         "authors": ["tareq-si-salem", "aryamanDutta"],
         "maintainers": ["sktime developers"],
         "python_version": ">=3.10",

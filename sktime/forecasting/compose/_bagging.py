@@ -80,6 +80,7 @@ class BaggingForecaster(BaseForecaster):
     """
 
     _tags = {
+        "forecaster_type": ["composition"],
         # packaging info
         # --------------
         "authors": ["fkiraly", "ltsaprounis"],
