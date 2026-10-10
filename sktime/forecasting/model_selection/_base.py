@@ -22,6 +22,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:update": True,
     }
 
     def __init__(

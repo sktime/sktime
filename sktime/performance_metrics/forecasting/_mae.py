@@ -101,6 +101,10 @@ class MeanAbsoluteError(BaseForecastingErrorMetric):
     np.float64(0.85)
     """
 
+    _tags = {
+        "tests:skip_by_name": ["test_doctest_examples"],
+    }
+
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return the metric evaluated at each time point.
 

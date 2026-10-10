@@ -103,7 +103,7 @@ class InceptionTimeClassifierTorch(BaseDeepClassifierPytorch):
 
         Recommended activations: ``ReLU``, ``Tanh``, ``Sigmoid``, ``LeakyReLU``,
         ``ELU``, ``SELU``, ``GELU``, None.
-    optimizer : case insensitive str or None or an instance of optimizers
+    optimizer : case insensitive str or None, or a class or instance of optimizers
         defined in torch.optim, default = "Adam"
         The optimizer to use for training the model.
     optimizer_kwargs : dict or None, default = None
