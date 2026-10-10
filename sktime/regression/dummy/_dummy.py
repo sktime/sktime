@@ -64,7 +64,7 @@ class DummyRegressor(BaseRegressor):
         "maintainers": "badrmarani",
         # estimator type
         # --------------
-        "X_inner_mtype": "nested_univ",
+        "X_inner_mtype": ["df-list", "numpy3D"],
         "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:multivariate": True,
@@ -119,7 +119,8 @@ class DummyRegressor(BaseRegressor):
         -------
         self : reference to self.
         """
-        self.sklearn_dummy_regressor.fit(np.zeros(X.shape), y)
+        # Dummy ignores features; use n_instances so df-list and numpy3D both work.
+        self.sklearn_dummy_regressor.fit(np.zeros((len(X), 1)), y)
         return self
 
     def _predict(self, X) -> np.ndarray:
@@ -133,4 +134,4 @@ class DummyRegressor(BaseRegressor):
         -------
         y : predictions of target values for X, np.ndarray
         """
-        return self.sklearn_dummy_regressor.predict(np.zeros(X.shape))
+        return self.sklearn_dummy_regressor.predict(np.zeros((len(X), 1)))
