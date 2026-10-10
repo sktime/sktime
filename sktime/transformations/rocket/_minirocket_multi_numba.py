@@ -417,8 +417,8 @@ def _quantiles(n):
 
 
 def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
-    if seed is not None:
-        np.random.seed(seed)
+    # local random number generator, to avoid side effects on the global numpy RNG
+    rng = np.random.RandomState(seed)
 
     _, n_columns, n_timepoints = X.shape
 
@@ -439,7 +439,7 @@ def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
     max_exponent = np.log2(max_num_channels + 1)
 
     num_channels_per_combination = (
-        2 ** np.random.uniform(0, max_exponent, num_combinations)
+        2 ** rng.uniform(0, max_exponent, num_combinations)
     ).astype(np.int32)
 
     channel_indices = np.zeros(num_channels_per_combination.sum(), dtype=np.int32)
@@ -448,7 +448,7 @@ def _fit_multi(X, num_features=10_000, max_dilations_per_kernel=32, seed=None):
     for combination_index in range(num_combinations):
         num_channels_this_combination = num_channels_per_combination[combination_index]
         num_channels_end = num_channels_start + num_channels_this_combination
-        channel_indices[num_channels_start:num_channels_end] = np.random.choice(
+        channel_indices[num_channels_start:num_channels_end] = rng.choice(
             n_columns, num_channels_this_combination, replace=False
         )
 

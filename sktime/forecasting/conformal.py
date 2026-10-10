@@ -68,6 +68,13 @@ class ConformalIntervals(BaseForecaster):
     n_jobs : int or None, optional, default=1
         The number of jobs to run in parallel for fit.
         -1 means using all processors.
+    random_state : int, RandomState instance or None, optional, default=None
+        Controls the sampling of the y index if ``sample_frac`` is passed,
+        ignored otherwise.
+        If int, ``random_state`` is the seed used by the random number generator;
+        If ``RandomState`` instance, ``random_state`` is the random number generator;
+        If None, the random number generator is the ``RandomState`` instance used
+        by ``np.random``.
 
     References
     ----------
@@ -132,6 +139,8 @@ class ConformalIntervals(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:update": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": MTYPE_LIST_SERIES,
         "y_inner_mtype": MTYPE_LIST_SERIES,
         # CI and test flags
@@ -154,6 +163,7 @@ class ConformalIntervals(BaseForecaster):
         sample_frac=None,
         verbose=False,
         n_jobs=None,
+        random_state=None,
     ):
         if not isinstance(method, str):
             raise TypeError(f"method must be a str, one of {self.ALLOWED_METHODS}")
@@ -169,6 +179,7 @@ class ConformalIntervals(BaseForecaster):
         self.initial_window = initial_window
         self.sample_frac = sample_frac
         self.n_jobs = n_jobs
+        self.random_state = random_state
         self.forecasters_ = []
 
         super().__init__()
@@ -463,7 +474,9 @@ class ConformalIntervals(BaseForecaster):
             overlapping_index = None
 
         if sample_frac:
-            y_sample = y_index.to_series().sample(frac=sample_frac)
+            y_sample = y_index.to_series().sample(
+                frac=sample_frac, random_state=self.random_state
+            )
             if len(y_sample) > 2:
                 y_index = y_sample
 
@@ -544,5 +557,11 @@ class ConformalIntervals(BaseForecaster):
         FORECASTER = NaiveForecaster()
         params1 = {"forecaster": FORECASTER}
         params2 = {"forecaster": FORECASTER, "method": "conformal", "sample_frac": 0.9}
+        params3 = {
+            "forecaster": FORECASTER,
+            "method": "empirical_residual",
+            "sample_frac": 0.8,
+            "random_state": 42,
+        }
 
-        return [params1, params2]
+        return [params1, params2, params3]
