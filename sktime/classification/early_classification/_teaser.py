@@ -12,7 +12,7 @@ import copy
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV, cross_val_predict
+from sklearn.model_selection import GridSearchCV
 from sklearn.svm import OneClassSVM
 from sklearn.utils import check_random_state
 
