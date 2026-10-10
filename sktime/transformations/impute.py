@@ -224,8 +224,7 @@ class Imputer(BaseTransformer):
         X = X.copy()
 
         # replace missing_values with np.nan
-        if self.missing_values:
-            X = X.replace(to_replace=self.missing_values, value=np.nan)
+        X = _replace_missing_values(X, self.missing_values)
 
         if not _has_missing_values(X):
             return X
@@ -363,9 +362,10 @@ class Imputer(BaseTransformer):
                 fh = ForecastingHorizon(values=na_index, is_relative=False)
 
                 # fill NaN before fitting with ffill and backfill (heuristic)
+                X_fit = _replace_missing_values(self._X[col], self.missing_values)
 
                 self._forecaster.fit(
-                    y=self._X[col].ffill().bfill(),
+                    y=X_fit.ffill().bfill(),
                     X=self._y[col].ffill().bfill() if self._y is not None else None,
                     fh=fh,
                 )
@@ -414,6 +414,13 @@ class Imputer(BaseTransformer):
             {"method": "forecaster", "forecaster": TrendForecaster()},
             {"method": "forecaster", "forecaster": linear_forecaster},
         ]
+
+
+def _replace_missing_values(X, missing_values):
+    """Replace user-specified missing values with NaN."""
+    if missing_values is None:
+        return X
+    return X.replace(to_replace=missing_values, value=np.nan)
 
 
 def _has_missing_values(X):
