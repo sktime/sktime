@@ -8,6 +8,7 @@ __author__ = ["sbuse"]
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
@@ -40,7 +41,11 @@ def test_for_changes_in_original():
     # ------original Prophet---------
     prophet = Prophet()
     prophet.fit(pd.DataFrame(data={"ds": y.index, "y": y.values}))
-    future = prophet.make_future_dataframe(periods=12, freq="M", include_history=False)
+    if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+        freq = "ME"
+    else:
+        freq = "M"
+    future = prophet.make_future_dataframe(periods=12, freq=freq, include_history=False)
     forecast = prophet.predict(future)[["ds", "yhat"]]
     y_pred_original = forecast["yhat"]
     y_pred_original.index = forecast["ds"].values

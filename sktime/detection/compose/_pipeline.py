@@ -374,30 +374,28 @@ class DetectorPipeline(_HeterogenousMetaEstimator, BaseDetector):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        import datetime
-
         from sklearn.preprocessing import StandardScaler
 
-        from sktime.detection.lof import SubLOF
+        from sktime.detection.dummy import DummyRegularAnomalies, ZeroAnomalies
         from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.detrend import Detrender
         from sktime.transformations.exponent import ExponentTransformer
 
-        lof = SubLOF(
-            n_neighbors=5, window_size=datetime.timedelta(days=25), novelty=True
-        )
+        dummy_regular = DummyRegularAnomalies.create_test_instance()
+        zero_anomalies = ZeroAnomalies.create_test_instance()
+
         STEPS1 = [
             ("transformer", TabularToSeriesAdaptor(StandardScaler())),
-            ("anomaly", lof),
+            ("anomaly", dummy_regular),
         ]
         params1 = {"steps": STEPS1}
 
         STEPS2 = [
             ("transformer", ExponentTransformer()),
-            ("anomaly", lof),
+            ("anomaly", zero_anomalies),
         ]
         params2 = {"steps": STEPS2}
 
-        params3 = {"steps": [Detrender(), lof]}
+        params3 = {"steps": [Detrender(), dummy_regular]}
 
         return [params1, params2, params3]

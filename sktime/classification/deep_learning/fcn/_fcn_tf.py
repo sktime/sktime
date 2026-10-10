@@ -76,6 +76,10 @@ class FCNClassifier(BaseDeepClassifier):
         # hfawaz for dl-4-tsc
         "maintainers": ["James-Large", "AurumnPegasus"],
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.fcn._fcn_tf"],
         "tests:skip_all": True,
     }
 

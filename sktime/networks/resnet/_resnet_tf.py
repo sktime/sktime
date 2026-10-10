@@ -29,6 +29,11 @@ class ResNetNetwork(BaseDeepNetwork):
     Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
     International joint conference on neural networks (IJCNN)}, pages={
     1578--1585}, year={2017}, organization={IEEE} }
+
+    Examples
+    --------
+    >>> from sktime.networks.resnet import ResNetNetwork
+    >>> network = ResNetNetwork(random_state=42, activation="relu")
     """
 
     _tags = {

@@ -78,6 +78,7 @@ class Croston(BaseForecaster):
         # --------------
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "capability:exogenous": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         "y_inner_mtype": "pd.DataFrame",
         # CI and test flags
         # -----------------
