@@ -26,6 +26,10 @@ class _PytorchDeepAdapter:
     _default_criterion = None
     _y_dtype = "float"
 
+    _tags = {
+        "tests:libs": ["sktime.base.adapters._pytorch"],
+    }
+
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
 
