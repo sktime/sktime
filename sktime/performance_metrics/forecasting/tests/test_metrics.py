@@ -82,6 +82,36 @@ def test_gmse_function():
     )
 
 
+@pytest.mark.parametrize("square_root", [False, True])
+@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values", [0.3, 0.7]])
+def test_gmrse_evaluate_by_index_matches_jackknife(square_root, multioutput):
+    """Test optimized GMRSE pseudo-values against direct jackknife evaluation."""
+    from sktime.performance_metrics.forecasting import (
+        GeometricMeanRelativeSquaredError,
+    )
+
+    y_true = pd.DataFrame({"a": [3.0, 1.0, 4.0], "b": [2.0, 6.0, 5.0]})
+    y_pred = pd.DataFrame({"a": [2.0, 2.0, 3.0], "b": [1.0, 4.0, 7.0]})
+    y_benchmark = pd.DataFrame({"a": [1.0, 4.0, 2.0], "b": [4.0, 3.0, 1.0]})
+    metric = GeometricMeanRelativeSquaredError(
+        square_root=square_root, multioutput=multioutput
+    )
+
+    n = len(y_true)
+    full_value = metric.evaluate(y_true, y_pred, y_pred_benchmark=y_benchmark)
+    expected = []
+    for index in y_true.index:
+        leave_one_out = metric.evaluate(
+            y_true.drop(index),
+            y_pred.drop(index),
+            y_pred_benchmark=y_benchmark.drop(index),
+        )
+        expected.append(n * full_value - (n - 1) * leave_one_out)
+
+    result = metric.evaluate_by_index(y_true, y_pred, y_pred_benchmark=y_benchmark)
+    np.testing.assert_allclose(result, expected)
+
+
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
