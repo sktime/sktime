@@ -149,7 +149,7 @@ class ClustererFitPredictUnequalLength(ClustererTestScenario):
         return {"fit": {"X": X_unequal_length}, "predict": {"X": X_unequal_length}}
 
     default_method_sequence = ["fit", "predict", "predict_proba"]
-    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+    default_arg_sequence = ["fit", "predict", "predict"]
 
 
 class ClustererFitPredictUnequalLengthOutOfSample(ClustererTestScenario):
@@ -182,7 +182,7 @@ class ClustererFitPredictUnequalLengthOutOfSample(ClustererTestScenario):
         }
 
     default_method_sequence = ["fit", "predict", "predict_proba"]
-    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+    default_arg_sequence = ["fit", "predict", "predict"]
 
 
 class ClustererFitPredictMultivariate(ClustererTestScenario):
@@ -203,7 +203,7 @@ class ClustererFitPredictMultivariate(ClustererTestScenario):
         return {"fit": {"X": X_multivariate}, "predict": {"X": X_multivariate}}
 
     default_method_sequence = ["fit", "predict", "predict_proba"]
-    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+    default_arg_sequence = ["fit", "predict", "predict"]
 
 
 scenarios_clustering = [

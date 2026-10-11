@@ -114,7 +114,7 @@ class ClassifierFitPredict(ClassifierTestScenario):
         }
 
     default_method_sequence = ["fit", "predict", "predict_proba"]
-    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+    default_arg_sequence = ["fit", "predict", "predict"]
 
 
 class ClassifierFitPredictThreeClasses(ClassifierTestScenario):
@@ -139,7 +139,7 @@ class ClassifierFitPredictThreeClasses(ClassifierTestScenario):
         }
 
     default_method_sequence = ["fit", "predict", "predict_proba"]
-    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+    default_arg_sequence = ["fit", "predict", "predict"]
 
 
 class ClassifierFitPredictNumpy(ClassifierTestScenario):
@@ -174,7 +174,7 @@ class ClassifierFitPredictNumpy(ClassifierTestScenario):
         }
 
     default_method_sequence = ["fit", "predict", "predict_proba"]
-    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+    default_arg_sequence = ["fit", "predict", "predict"]
 
 
 class ClassifierFitPredictMultivariate(ClassifierTestScenario):
@@ -202,7 +202,7 @@ class ClassifierFitPredictMultivariate(ClassifierTestScenario):
         }
 
     default_method_sequence = ["fit", "predict", "predict_proba"]
-    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+    default_arg_sequence = ["fit", "predict", "predict"]
 
 
 class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
@@ -236,7 +236,7 @@ class ClassifierFitPredictUnequalLength(ClassifierTestScenario):
         }
 
     default_method_sequence = ["fit", "predict", "predict_proba"]
-    default_arg_sequence = ["fit", "predict", "predict", "predict"]
+    default_arg_sequence = ["fit", "predict", "predict"]
 
 
 scenarios_classification = [
