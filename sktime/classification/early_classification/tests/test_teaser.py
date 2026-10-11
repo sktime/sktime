@@ -2,7 +2,7 @@
 
 import numpy as np
 import pytest
-from numpy import testing
+# from numpy import testing
 from sklearn.ensemble import IsolationForest
 
 from sktime.classification.early_classification._teaser import TEASER
