@@ -245,26 +245,19 @@ class Catch22(BaseTransformer):
     replace_nans : bool, optional, default=True
         Replace NaN or inf values from the Catch22 transform with 0.
 
-    col_names : str, one of {"range", "int_feat", "str_feat", "short_str_feat", "auto"}.
+    col_names : str, optional, default="range"
         Names of columns returned by the transformation.
 
-        * "range": column names will be a regular range of integers, as in a RangeIndex.
-        * "int_feat": column names will be the integer feature indices,
-          as defined in pycatch22.
-        * "str_feat": column names will be the string feature names.
-        * "short_str_feat": column names will be the short string feature names
-          as defined in pycatch22.
-        * "auto": column names will be the same as defined in features.
+        One of {"range", "int_feat", "str_feat", "short_str_feat", "auto"}.
 
-    optional, default="range"
-        The type of column names to return. If "range", column names will be
-        a regular range of integers, as in a RangeIndex.
-        * If "int_feat", column names will be the integer feature indices,
+        * If ``"range"``, column names will be
+          a regular range of integers, as in a RangeIndex.
+        * If ``"int_feat"``, column names will be the integer feature indices,
           as defined in pycatch22.
-        * If "str_feat", column names will be the string feature names.
-        * If "short_str_feat", column names will be the short string feature names
+        * If ``"str_feat"``, column names will be the string feature names.
+        * If ``"short_str_feat"``, column names will be the short string feature names
           as defined in pycatch22.
-        * If "auto", column names will be the same as defined in features.
+        * If ``"auto"``, column names will be the same as defined in features.
 
     See Also
     --------
