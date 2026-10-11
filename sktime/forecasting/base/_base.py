@@ -162,6 +162,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         super().__init__()
 
+        if self.get_config()["remember_data"]:
+            self._y = None
+            self._X = None
+
         # this block has a double purpose:
         # - emit a warning if dependencies are not met, but allow instantiation
         # - if dependencies are met, call __post_init__ used by inheriting classes
