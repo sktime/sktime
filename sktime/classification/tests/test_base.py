@@ -728,6 +728,107 @@ def test_pytorch_optimizer_invalid_raises():
             _mlp_torch_clf(optimizer=optimizer).fit(X_train, y_train)
 
 
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_optimizer_str_looked_up_in_torch_optim():
+    """Test that any optimizer in torch.optim can be selected by its name."""
+    import torch
+
+    from sktime.datasets import load_unit_test
+
+    X_train, y_train = load_unit_test(split="train")
+
+    # Adafactor is not in every torch version, and was not selectable by name
+    # while the optimizers were looked up in a manually curated dictionary
+    if not hasattr(torch.optim, "Adafactor"):
+        pytest.skip("torch.optim.Adafactor is not available in this torch version")
+
+    for optimizer in ["adafactor", "Adafactor", "ADAFACTOR"]:
+        clf = _mlp_torch_clf(optimizer=optimizer).fit(X_train, y_train)
+        assert isinstance(clf._optimizer, torch.optim.Adafactor)
+
+    # objects in torch.optim that are not optimizers cannot be selected:
+    # Optimizer is the base class of all optimizers, lr_scheduler a sub-module
+    for optimizer in ["optimizer", "lr_scheduler"]:
+        with pytest.raises(ValueError, match="Unknown optimizer"):
+            _mlp_torch_clf(optimizer=optimizer).fit(X_train, y_train)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_criterion_str_looked_up_in_torch_nn():
+    """Test that any loss function in torch.nn can be selected by its name."""
+    import torch
+
+    from sktime.datasets import load_unit_test
+
+    X_train, y_train = load_unit_test(split="train")
+
+    # softmax with nllloss is not rewritten by the criterion/activation validation
+    for criterion in ["nllloss", "NLLLoss", "NLLLOSS"]:
+        clf = _mlp_torch_clf(criterion=criterion, activation="softmax")
+        clf.fit(X_train, y_train)
+        assert isinstance(clf._criterion, torch.nn.NLLLoss)
+
+    # objects in torch.nn that are not loss functions cannot be selected
+    for criterion in ["not_a_loss", "Linear"]:
+        with pytest.raises(ValueError, match="Unknown criterion"):
+            _mlp_torch_clf(criterion=criterion).fit(X_train, y_train)
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_activation_str_looked_up_in_torch_nn():
+    """Test that any activation in torch.nn can be selected by its name."""
+    import torch
+
+    for activation in ["softmax", "Softmax", "SOFTMAX"]:
+        clf = _mlp_torch_clf(activation=activation, criterion="nllloss")
+        assert isinstance(clf._callable_activations["activation"], torch.nn.Softmax)
+
+    # activations are instantiated in __init__, so an invalid name raises there
+    with pytest.raises(ValueError, match="not a valid PyTorch activation"):
+        _mlp_torch_clf(activation="not_an_activation", criterion="nllloss")
+
+
+@pytest.mark.skipif(
+    not _check_soft_dependencies("torch", severity="none")
+    or not run_test_module_changed("sktime.classification"),
+    reason="skip test if required soft dependency not available",
+)
+def test_pytorch_callbacks_str_looked_up_in_lr_scheduler():
+    """Test that any scheduler in torch.optim.lr_scheduler can be selected by name."""
+    import torch
+
+    from sktime.datasets import load_unit_test
+
+    X_train, y_train = load_unit_test(split="train")
+
+    for callbacks in ["constantlr", "ConstantLR", "CONSTANTLR"]:
+        clf = _mlp_torch_clf(callbacks=callbacks)
+        clf.fit(X_train, y_train)
+        assert isinstance(clf._schedulers[0], torch.optim.lr_scheduler.ConstantLR)
+
+    # several schedulers can be passed, and are applied in the order passed
+    clf = _mlp_torch_clf(callbacks=("constantlr", "ConstantLR"))
+    clf.fit(X_train, y_train)
+    assert len(clf._schedulers) == 2
+
+    # objects in torch.optim.lr_scheduler that are not schedulers cannot be selected
+    for callbacks in ["not_a_scheduler", "LRScheduler"]:
+        with pytest.raises(ValueError, match="Unknown learning rate scheduler"):
+            _mlp_torch_clf(callbacks=callbacks).fit(X_train, y_train)
+
+
 DUMMY_EST_PARAMETERS_FOO = [None, 10.3, "string", {"key": "value"}, lambda x: x**2]
 
 
