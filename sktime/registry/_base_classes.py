@@ -50,7 +50,15 @@ class _BaseScitypeOfObject(BaseObject):
 
 
 class object(_BaseScitypeOfObject):
-    """Universal type for all objects."""
+    """Universal type for all objects in sktime.
+
+    All objects in sktime, including estimators, datasets, and metrics,
+    inherit from the base class documented here.
+
+    Base class: :class:`sktime.base.BaseObject`
+
+    Tutorial: :ref:`/examples/00_sktime_intro.ipynb`
+    """
 
     _tags = {
         "scitype_name": "object",
@@ -71,7 +79,15 @@ class object(_BaseScitypeOfObject):
 
 
 class estimator(_BaseScitypeOfObject):
-    """Estimator objects, i.e., objects with fit method."""
+    """Estimator objects, i.e., objects with fit method.
+
+    Estimators are objects that can be "fitted" to data. They implement
+    a ``fit`` method and store the results of the fitting process.
+
+    Base class: :class:`sktime.base.BaseEstimator`
+
+    Tutorial: :ref:`/examples/00_sktime_intro.ipynb`
+    """
 
     _tags = {
         "scitype_name": "estimator",
@@ -93,7 +109,15 @@ class estimator(_BaseScitypeOfObject):
 
 
 class aligner(_BaseScitypeOfObject):
-    """Time series aligner or sequence aligner."""
+    """Time series aligner or sequence aligner.
+
+    Aligners are objects that can align two or more time series or sequences,
+    typically by finding a mapping between their time indices or elements.
+
+    Base class: :class:`sktime.alignment.base.BaseAligner`
+
+    Tutorial: :ref:`/examples/06_distances_kernels_alignment.ipynb`
+    """
 
     _tags = {
         "scitype_name": "aligner",
@@ -115,7 +139,15 @@ class aligner(_BaseScitypeOfObject):
 
 
 class classifier(_BaseScitypeOfObject):
-    """Time series classifier."""
+    """Time series classifier.
+
+    Classifiers are estimators that can predict a categorical target
+    from one or more time series.
+
+    Base class: :class:`sktime.classification.base.BaseClassifier`
+
+    Tutorial: :ref:`/examples/02_classification.ipynb`
+    """
 
     _tags = {
         "scitype_name": "classifier",
@@ -137,7 +169,15 @@ class classifier(_BaseScitypeOfObject):
 
 
 class clusterer(_BaseScitypeOfObject):
-    """Time series clusterer."""
+    """Time series clusterer.
+
+    Clusterers are estimators that can group one or more time series
+    into clusters based on some measure of similarity.
+
+    Base class: :class:`sktime.clustering.base.BaseClusterer`
+
+    Tutorial: :ref:`/examples/clustering/partition_based_clustering.ipynb`
+    """
 
     _tags = {
         "scitype_name": "clusterer",
@@ -183,7 +223,15 @@ class early_classifier(_BaseScitypeOfObject):
 
 
 class forecaster(_BaseScitypeOfObject):
-    """Time series forecaster."""
+    """Time series forecaster.
+
+    Forecasters are estimators that can predict future values of a
+    time series from its past values and potentially other information.
+
+    Base class: :class:`sktime.forecasting.base.BaseForecaster`
+
+    Tutorial: :ref:`/examples/01_forecasting.ipynb`
+    """
 
     _tags = {
         "scitype_name": "forecaster",
@@ -202,30 +250,6 @@ class forecaster(_BaseScitypeOfObject):
         from sktime.forecasting.tests.test_all_forecasters import TestAllForecasters
 
         return TestAllForecasters
-
-
-class global_forecaster(_BaseScitypeOfObject):
-    """Global time series forecaster."""
-
-    _tags = {
-        "scitype_name": "global_forecaster",
-        "short_descr": "global time series forecaster",
-        "parent_scitype": "forecaster",
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.forecasting.base import _BaseGlobalForecaster
-
-        return _BaseGlobalForecaster
-
-    @classmethod
-    def get_test_class(cls):
-        from sktime.forecasting.tests.test_all_forecasters import (
-            TestAllGlobalForecasters,
-        )
-
-        return TestAllGlobalForecasters
 
 
 class metric(_BaseScitypeOfObject):
@@ -351,7 +375,13 @@ class param_est(_BaseScitypeOfObject):
 
 
 class regressor(_BaseScitypeOfObject):
-    """Time series regressor."""
+    """Time series regressor.
+
+    Regressors are estimators that can predict a continuous target
+    from one or more time series.
+
+    Base class: :class:`sktime.regression.base.BaseRegressor`
+    """
 
     _tags = {
         "scitype_name": "regressor",
@@ -373,7 +403,15 @@ class regressor(_BaseScitypeOfObject):
 
 
 class detector(_BaseScitypeOfObject):
-    """Detector of anomalies, outliers, or change points."""
+    """Detector of anomalies, outliers, or change points.
+
+    Detectors are estimators that can identify unusual patterns,
+    outliers, or structural changes in one or more time series.
+
+    Base class: :class:`sktime.detection.base.BaseDetector`
+
+    Tutorial: :ref:`/examples/07_detection_anomaly_changepoints.ipynb`
+    """
 
     _tags = {
         "scitype_name": "detector",
@@ -417,7 +455,16 @@ class splitter(_BaseScitypeOfObject):
 
 
 class transformer(_BaseScitypeOfObject):
-    """Time series transformer."""
+    """Time series transformer.
+
+    Transformers are estimators that can transform one or more time series
+    into a different representation, such as a feature vector or another
+    time series.
+
+    Base class: :class:`sktime.transformations.base.BaseTransformer`
+
+    Tutorial: :ref:`/examples/03_transformers.ipynb`
+    """
 
     _tags = {
         "scitype_name": "transformer",
@@ -865,97 +912,3 @@ def get_base_class_lookup(mixin=False, include_baseobjs=True):
     register = get_base_class_register(mixin=mixin, include_baseobjs=include_baseobjs)
     base_class_lookup = {x[0]: x[1] for x in register}
     return base_class_lookup
-
-
-# LEGACY types - remove in 1.0.0
-# ------------------------------
-
-
-class series_annotator(_BaseScitypeOfObject):
-    """Time series annotator."""
-
-    _tags = {
-        "scitype_name": "series-annotator",
-        "short_descr": "detector - anomalies, outliers, change points",
-        "parent_scitype": "estimator",
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.detection.base import BaseDetector
-
-        return BaseDetector
-
-    @classmethod
-    def get_test_class(cls):
-        from sktime.detection.tests.test_all_detectors import TestAllDetectors
-
-        return TestAllDetectors
-
-
-class transformer_series_to_primitives(_BaseScitypeOfObject):
-    """LEGACY - time series to primitives transformer."""
-
-    _tags = {
-        "scitype_name": "series-to-primitives-trafo",
-        "short_descr": "time series to primitives transformer",
-        "parent_scitype": "estimator",
-        "mixin": True,
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.transformations.base import _SeriesToPrimitivesTransformer
-
-        return _SeriesToPrimitivesTransformer
-
-
-class transformer_series_to_series(_BaseScitypeOfObject):
-    """LEGACY - time series to time series transformer."""
-
-    _tags = {
-        "scitype_name": "series-to-series-trafo",
-        "short_descr": "time series to time series transformer",
-        "parent_scitype": "estimator",
-        "mixin": True,
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.transformations.base import _SeriesToSeriesTransformer
-
-        return _SeriesToSeriesTransformer
-
-
-class transformer_panel_to_tabular(_BaseScitypeOfObject):
-    """LEGACY - panel to tabular transformer."""
-
-    _tags = {
-        "scitype_name": "panel-to-tabular-trafo",
-        "short_descr": "panel to tabular transformer",
-        "parent_scitype": "estimator",
-        "mixin": True,
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.transformations.base import _PanelToTabularTransformer
-
-        return _PanelToTabularTransformer
-
-
-class transformer_panel_to_panel(_BaseScitypeOfObject):
-    """LEGACY - panel to panel transformer."""
-
-    _tags = {
-        "scitype_name": "panel-to-panel-trafo",
-        "short_descr": "panel to panel transformer",
-        "parent_scitype": "estimator",
-        "mixin": True,
-    }
-
-    @classmethod
-    def get_base_class(cls):
-        from sktime.transformations.base import _PanelToPanelTransformer
-
-        return _PanelToPanelTransformer

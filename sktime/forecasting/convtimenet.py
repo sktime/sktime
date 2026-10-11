@@ -41,6 +41,10 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     patch_sd : int
         Stride length for patch creation. Determines the step size for moving the
         patch window across the input sequence.
+    pred_len : int, optional
+        Length of prediction (forecast horizon). Required for pretraining if fh
+        is not passed to pretrain(). If None, will be determined from fh during
+        fit() or pretrain().
     dw_ks : tuple, optional (default=(9, 3))
         Kernel sizes for depthwise convolution layers.
     d_model : int, optional (default=64)
@@ -144,13 +148,13 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         "authors": ["Mingyue-Cheng", "0russewt0", "pty12345", "Tanuj-Taneja1"],
         "maintainers": ["Tanuj-Taneja1"],
         "tests:skip_by_name": [
-            "test_fit_idempotent",
             "test_update_predict_predicted_index",
         ],
         "python_dependencies": ["torch"],
         # estimator type
         # --------------
         "capability:random_state": True,
+        "capability:pretrain": True,
         "property:randomness": "derandomized",
         # CI and testing
         # --------------
@@ -168,6 +172,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         context_window,
         patch_ks,
         patch_sd,
+        pred_len=None,
         dw_ks=(9, 3),
         d_model=64,
         d_ff=256,
@@ -196,6 +201,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         self.context_window = context_window
         self.patch_ks = patch_ks
         self.patch_sd = patch_sd
+        self.pred_len = pred_len
         self.dw_ks = dw_ks
         self.d_model = d_model
         self.d_ff = d_ff
@@ -332,7 +338,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         dataset = _pytorch.PyTorchTrainDataset(
             y=y,
             seq_len=self.network.seq_len,
-            fh=self._fh.to_relative(self.cutoff)._values[-1],
+            fh=self.network.pred_len,
         )
 
         # Check if we need to drop the last batch to avoid single sample
@@ -360,6 +366,56 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             dataset, batch_size, shuffle=True, drop_last=drop_last, generator=gen
         )
 
+    def _build_panel_dataloader(self, y, all_series, pred_len):
+        """Build PyTorch DataLoader for panel/hierarchical data pretraining.
+
+        Overrides base class to handle BatchNorm edge cases and random_state.
+
+        Parameters
+        ----------
+        y : pd.DataFrame with MultiIndex
+            Panel data (not used directly)
+        all_series : list of pd.DataFrame
+            Pre-extracted series from panel data
+        pred_len : int
+            Prediction length for dataset
+
+        Returns
+        -------
+        dataloader : torch.utils.data.DataLoader
+            DataLoader for panel/hierarchical data
+        """
+        from torch.utils.data import ConcatDataset, DataLoader
+
+        datasets = [
+            _pytorch.PyTorchTrainDataset(
+                y=series, seq_len=self.context_window, fh=pred_len
+            )
+            for series in all_series
+        ]
+
+        combined_dataset = ConcatDataset(datasets)
+
+        # Handle BatchNorm edge case like in build_pytorch_train_dataloader
+        dataset_len = len(combined_dataset)
+        drop_last = (
+            self.norm == "batch"
+            and dataset_len > self.batch_size
+            and dataset_len % self.batch_size == 1
+        )
+
+        gen = torch.Generator()
+        if self.random_state:
+            gen.manual_seed(self.random_state)
+
+        return DataLoader(
+            combined_dataset,
+            self.batch_size,
+            shuffle=True,
+            drop_last=drop_last,
+            generator=gen,
+        )
+
     @classmethod
     def get_test_params(cls, parameter_set="default"):
         """Return testing parameter settings for the estimator.
@@ -382,6 +438,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             "context_window": 10,
             "patch_ks": 6,
             "patch_sd": 3,
+            "pred_len": 3,
             "num_epochs": 1,
         }
 
@@ -389,6 +446,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             "context_window": 8,
             "patch_ks": 8,
             "patch_sd": 4,
+            "pred_len": 4,
             "d_model": 128,
             "d_ff": 512,
             "dropout": 0.1,
@@ -398,6 +456,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             "context_window": 16,
             "patch_ks": 4,
             "patch_sd": 2,
+            "pred_len": 5,
             "dw_ks": (7, 3),
             "d_model": 32,
             "d_ff": 64,

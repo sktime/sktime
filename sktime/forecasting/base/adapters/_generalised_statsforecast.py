@@ -27,7 +27,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # --------------
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
+        "capability:categorical_in_X": False,
         "requires-fh-in-fit": False,
         # "X-y-must-have-same-index": True,  # TODO: need to check (how?)
         # "enforce_index_type": None,  # TODO: need to check (how?)
@@ -35,6 +36,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.forecasting.base.adapters._generalised_statsforecast"],
+        "tests:vm": True,
     }
 
     def __init__(self):
@@ -142,15 +144,16 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         Parameters
         ----------
         y : sktime time series object
-            guaranteed to be of an mtype in self.get_tag("y_inner_mtype")
+            guaranteed to be of a type in self.get_tag("y_inner_mtype")
             Time series to which to fit the forecaster.
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column/variable
-            if self.get_tag("scitype:y")=="multivariate":
-                guaranteed to have 2 or more columns
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+
+            * if self.get_tag("capability:multivariate")==False:
+              guaranteed to be univariate (e.g., single-column for DataFrame)
+            * if self.get_tag("capability:multivariate")==True: no restrictions apply,
+              the method should handle uni- and multivariate y appropriately
+
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X :  sktime time series object, optional (default=None)
@@ -162,6 +165,8 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         self : reference to self
         """
         del fh  # avoid being detected as unused by ``vulture`` like tools
+        self._cur_y = y
+        self._cur_X = X
         self._forecaster = self._instantiate_model()
 
         y_fit_input = y.to_numpy(copy=False)
@@ -276,7 +281,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
@@ -307,7 +312,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
             point_predictions.append(out_of_sample_point_predictions)
 
         final_point_predictions = pandas.concat(point_predictions, copy=False)
-        final_point_predictions.name = self._y.name
+        final_point_predictions.name = self._cur_y.name
 
         return final_point_predictions
 
@@ -327,7 +332,7 @@ class _GeneralisedStatsForecastAdapter(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X :  sktime time series object, optional (default=None)
             guaranteed to be of an mtype in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -505,7 +510,7 @@ class StatsForecastBackAdapter:
         `_predict_in_or_out_of_sample` method of `_GeneralisedStatsForecastAdapter`.
         """
         if self._inner_fh is not None and not self._inner_fh.is_all_in_sample():
-            # Case on which we neeed to calcualte the maximum horizon passing it to MSTL
+            # Case on which we need to calculate the maximum horizon passing it to MSTL
             maximum_forecast_horizon = self._inner_fh[-1]
             return range(1, maximum_forecast_horizon + 1)
         else:
@@ -579,7 +584,7 @@ class StatsForecastBackAdapter:
             Dictionary with entries mean for point predictions and level_* for
             probabilistic predictions.
         """
-        fitted = self.estimator.predict(self.estimator._y.index)[:, 0]
+        fitted = self.estimator.predict(self.estimator._cur_y.index)[:, 0]
 
         if level is None:
             return {"fitted": fitted}
@@ -587,7 +592,9 @@ class StatsForecastBackAdapter:
         level = sorted(level)
         coverage = [round(_l / 100, 2) for _l in level]
         pred_int = self.estimator.predict_interval(
-            fh=self.estimator._y.index, X=self.estimator._X, coverage=coverage
+            fh=self.estimator._cur_y.index,
+            X=self.estimator._cur_X,
+            coverage=coverage,
         )
         return self.format_pred_int("fitted", fitted, pred_int, coverage, level)
 
@@ -628,9 +635,10 @@ class StatsForecastBackAdapter:
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.forecasting.theta import ThetaForecaster
         from sktime.forecasting.var import VAR
-        from sktime.utils.dependencies import _check_estimator_deps
 
         del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
 

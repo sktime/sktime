@@ -14,7 +14,9 @@ class _PytsAdapter:
 
     _tags = {
         "X_inner_mtype": "numpyflat",
-        "python_dependencies": ["pyts"],
+        "python_dependencies": ["pyts", "scikit-learn<1.8"],
+        # todo 1.3.0: check whether sklearn compatibility has been updated
+        "tests:vm": True,  # pyts based estimators get tested in their own VM
     }
 
     # defines the name of the attribute containing the pyts estimator

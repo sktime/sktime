@@ -203,6 +203,18 @@ class AutoTS(BaseForecaster):
         Number of cores available to pass to parallel processing.
         A joblib context manager can be used instead (pass None in this case).
         Also 'auto'.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.autots import AutoTS
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = AutoTS(
+    ...     model_list="superfast", max_generations=1, num_validations=0, verbose=-2
+    ... )
+    >>> forecaster.fit(y, fh=3)
+    AutoTS(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
@@ -214,7 +226,7 @@ class AutoTS(BaseForecaster):
         "python_version": ">=3.6",
         # estimator type
         # --------------
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": True,
@@ -225,6 +237,7 @@ class AutoTS(BaseForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_autots_custom"],
         "tests:python_dependencies": ["matplotlib"],
     }
 
@@ -262,7 +275,7 @@ class AutoTS(BaseForecaster):
         model_interrupt: bool = True,
         generation_timeout: int = None,
         current_model_file: str = None,
-        verbose: int = 1,
+        verbose: int = -2,
         n_jobs: int = -2,
     ):
         self.model_name = model_name
@@ -300,10 +313,17 @@ class AutoTS(BaseForecaster):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
-        # leave this as is
         super().__init__()
 
-        # import inside method to avoid hard dependency
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         from autots import AutoTS as _autots
 
         self._ModelClass = _autots
@@ -322,9 +342,12 @@ class AutoTS(BaseForecaster):
         Parameters
         ----------
         y : pd.DataFrame
-            if self.get_tag("scitype:y")=="univariate":
-                guaranteed to have a single column
-            if self.get_tag("scitype:y")=="both": no restrictions apply
+            Time series to fit.
+
+            - if ``self.get_tag("capability:multivariate") == False``:
+              guaranteed to have a single column
+            - if ``self.get_tag("capability:multivariate") == True``:
+              no restrictions apply
         X : pd.DataFrame, optional (default=None)
             Exogeneous time series to fit to.
         fh : guaranteed to be ForecastingHorizon or None, optional (default=None)

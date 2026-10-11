@@ -76,7 +76,7 @@ class TSB(BaseForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -84,6 +84,8 @@ class TSB(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         n_timepoints = len(y)  # Historical period: i.e the input array's length
         alpha = self.alpha
         beta = self.beta
@@ -125,7 +127,7 @@ class TSB(BaseForecaster):
         Parameters
         ----------
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -141,7 +143,7 @@ class TSB(BaseForecaster):
         y_pred = np.full(len_fh, f[-1])
 
         index = self.fh.to_absolute_index(self.cutoff)
-        return pd.Series(y_pred, index=index, name=self._y.name)
+        return pd.Series(y_pred, index=index, name=self._cur_y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

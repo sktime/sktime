@@ -4,10 +4,12 @@ __all__ = ["Orchestrator"]
 __author__ = ["viktorkaz", "mloning"]
 
 import logging
+from warnings import warn
 
 import pandas as pd
 from sklearn.base import clone
 
+from sktime.benchmarking.base import _V1_DEPRECATION_MSG
 from sktime.benchmarking.tasks import TSCTask, TSRTask
 
 log = logging.getLogger()
@@ -16,9 +18,15 @@ log.addHandler(console)
 
 
 class Orchestrator:
-    """Fit and predict one or more estimators on one or more datasets."""
+    """Fit and predict one or more estimators on one or more datasets.
+
+    .. deprecated:: 1.1.0
+        Part of the deprecated v1 benchmarking framework; will be removed in
+        sktime 1.3.0. Use the v2 framework instead. See #10464.
+    """
 
     def __init__(self, tasks, datasets, strategies, cv, results):
+        warn(_V1_DEPRECATION_MSG, FutureWarning, stacklevel=2)
         # validate datasets and tasks
         self._validate_tasks_and_datasets(tasks, datasets)
         self.tasks = tasks

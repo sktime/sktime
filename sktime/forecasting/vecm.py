@@ -94,7 +94,7 @@ class VECM(_StatsModelsAdapter):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "both",
+        "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -146,7 +146,7 @@ class VECM(_StatsModelsAdapter):
         y : pd.DataFrame, guaranteed to have 2 or more columns
             Time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : pd.DataFrame, optional (default=None)
@@ -156,6 +156,8 @@ class VECM(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         # if univariate, add a shifted copy of the data
         if y.shape[1] == 1:
             y = y.copy()
@@ -188,7 +190,7 @@ class VECM(_StatsModelsAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -216,7 +218,7 @@ class VECM(_StatsModelsAdapter):
         if fh_int.min() <= 0:
             # .resid returns np.ndarray
             # both values need to be pd DataFrame for subtraction
-            y_pred_insample = self._y - pd.DataFrame(self._fitted_forecaster.resid)
+            y_pred_insample = self._cur_y - pd.DataFrame(self._fitted_forecaster.resid)
             y_pred_insample = y_pred_insample.values
 
         if y_pred_insample is not None and y_pred_outsample is not None:
@@ -253,7 +255,7 @@ class VECM(_StatsModelsAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast

@@ -41,3 +41,4 @@ Classification Catalogues
     :template: class.rst
 
     dummy._dummy_classification.DummyClassificationCatalogue
+    bakeoff._bakeoff.BakeOffCatalogue

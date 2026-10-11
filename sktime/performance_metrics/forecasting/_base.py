@@ -374,8 +374,10 @@ class BaseForecastingErrorMetric(BaseMetric):
         try:
             index_df = self._evaluate_by_index(y_true, y_pred, **kwargs)
             return index_df.mean(axis=0)
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except RecursionError as e:
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            ) from e
 
     def _evaluate_vectorized(self, y_true, y_pred, **kwargs):
         """Vectorized version of _evaluate.
@@ -628,8 +630,10 @@ class BaseForecastingErrorMetric(BaseMetric):
                 )
                 out_series.loc[idx] = pseudovalue
             return out_series
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except RecursionError as e:
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            ) from e
 
     def _check_consistent_input(self, y_true, y_pred, multioutput, multilevel):
         y_true_orig = y_true
@@ -831,8 +835,8 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
     """Adapter for numpy metrics."""
 
     # all descendants should have a func class attribute
-    #   of signature func(y_true: np.ndarray, y_pred: np.darray, multioutput: bool)
-    #   additional optional args: y_train: np.darray, y_pred_benchmark: np.darray
+    #   of signature func(y_true: np.ndarray, y_pred: np.ndarray, multioutput: bool)
+    #   additional optional args: y_train: np.ndarray, y_pred_benchmark: np.ndarray
     #                       further args that are parameters
     #       all np.ndarray should be 2D
     # func should return 1D np.ndarray if multioutput="raw_values", otherwise float
@@ -888,7 +892,23 @@ class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
 
 
 class _DynamicForecastingErrorMetric(BaseForecastingErrorMetricFunc):
-    """Class for defining forecasting error metrics from a function dynamically."""
+    """Class for defining forecasting error metrics from a function dynamically.
+
+    Returned by ``make_forecasting_scorer``, in adaptation use cases.
+
+    Example
+    -------
+    >>> from sktime.performance_metrics.forecasting import make_forecasting_scorer
+    >>> from sktime.performance_metrics.forecasting import mean_squared_error
+    >>>
+    >>> my_metric = make_forecasting_scorer(
+    ...     func=mean_squared_error,
+    ...     name="my_mse",
+    ...     greater_is_better=False,
+    ...     multioutput="uniform_average",
+    ...     multilevel="uniform_average",
+    ... )
+    """
 
     def __init__(
         self,
@@ -990,7 +1010,9 @@ def make_forecasting_scorer(
     ----------
     func : callable
         Callable to convert to a forecasting scorer class.
-        Score function (or loss function) with signature ``func(y, y_pred, **kwargs)``.
+        Score function (or loss function) with signature
+        ``func(y_true, y_pred, **kwargs)``.
+        The arguments ``y_true`` and ``y_pred`` are passed as keyword arguments.
 
     name : str, default=None
         Name to use for the forecasting scorer loss class.

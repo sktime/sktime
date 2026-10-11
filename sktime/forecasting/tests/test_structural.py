@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_series_equal
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.model_evaluation import evaluate
@@ -138,9 +139,13 @@ def level_sample_data(request):
     """
     min_date = pd.to_datetime("2017-01-01")
     max_date = pd.to_datetime("2022-01-01")
+    if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+        freq = "ME"
+    else:
+        freq = "M"
 
     data_df = pd.DataFrame(
-        data={"date": pd.date_range(start=min_date, end=max_date, freq="M")}
+        data={"date": pd.date_range(start=min_date, end=max_date, freq=freq)}
     )
 
     n = data_df.shape[0]
