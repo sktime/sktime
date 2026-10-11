@@ -155,17 +155,21 @@ class _PredictProbaMixin:
                 #   3-level MultiIndex with variable names, coverage, lower/upper
                 # the cross-section has one column per variable, in variable order
                 side = "upper" if a >= 0.5 else "lower"
-                quantiles_per_alpha.append(pred_a.xs(side, axis=1, level=-1).values)
+                quantiles_per_alpha.append(pred_a.xs(side, axis=1, level=-1))
 
-            # stack to shape (n_rows, n_vars, n_alpha), then flatten to
-            #   variable-major column order, as in the index below
-            pred_np = np.stack(quantiles_per_alpha, axis=-1)
-            pred_np = pred_np.reshape(pred_np.shape[0], -1)
+            # columns of the concatenation are in alpha-major order,
+            #   reorder them to variable-major order, as in the index below
+            # this is done in pandas to preserve the dtypes of _predict_interval
+            pred_int = pd.concat(quantiles_per_alpha, axis=1)
+            n_var = quantiles_per_alpha[0].shape[1]
+            n_alpha = len(alpha)
+            var_major = [i * n_var + j for j in range(n_var) for i in range(n_alpha)]
+            pred_int = pred_int.iloc[:, var_major]
 
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
             int_idx = self._get_columns(method="predict_quantiles", alpha=alpha)
-            pred_int = pd.DataFrame(pred_np, index=pred_a.index, columns=int_idx)
+            pred_int.columns = int_idx
 
         elif implements_proba or implements_var:
             pred_proba = self.predict_proba(**kwargs)
