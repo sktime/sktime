@@ -416,7 +416,6 @@ class TEASER(BaseEarlyClassifier):
                 train_probas = estimator.fit_predict_proba(
                     X, y, cv=cv_size, change_state=False
                 )
-
             else:
                 train_probas = cross_val_predict(
                     estimator, X, y, cv=cv_size, method="predict_proba"
