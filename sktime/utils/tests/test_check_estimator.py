@@ -8,7 +8,6 @@ from sktime.classification.dummy import DummyClassifier
 from sktime.forecasting.dummy import ForecastKnownValues
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.transformations.exponent import ExponentTransformer
-from sktime.utils._testing.scenarios_classification import ClassifierFitPredict
 from sktime.utils.estimator_checks import (
     _get_test_names_for_obj,
     check_estimator,
@@ -155,25 +154,3 @@ def test_parametrize_with_checks_objects(obj, test_name):
 def test_parametrize_with_checks_instances(foo, bar):
     """Test that parametrize_with_checks works as intended - instances, var names."""
     check_estimator(foo, verbose=False, raise_exceptions=True, tests_to_run=bar)
-
-
-def test_scenario_applicability_for_decision_function():
-    """Test that scenarios with decision_function are skipped for estimators without it.
-
-    This is a regression test for the fix that added decision_function applicability
-    checks to ClassifierTestScenario.is_applicable() to prevent AttributeError when
-    scenarios try to call decision_function on estimators that don't implement it.
-    """
-    # DummyClassifier does not implement decision_function
-    dummy_classifier = DummyClassifier(strategy="most_frequent")
-    assert not hasattr(dummy_classifier, "decision_function")
-
-    # ClassifierFitPredict scenario includes decision_function in its method sequence
-    scenario = ClassifierFitPredict()
-    assert "decision_function" in scenario.default_method_sequence
-
-    # The scenario should not be applicable to DummyClassifier
-    assert not scenario.is_applicable(dummy_classifier), (
-        "ClassifierFitPredict scenario should not be applicable to DummyClassifier "
-        "which lacks decision_function"
-    )

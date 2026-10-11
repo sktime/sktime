@@ -89,16 +89,6 @@ class ClassifierTestScenario(TestScenario, BaseObject):
         if is_unequal_length and not get_tag(obj, "capability:unequal_length"):
             return False
 
-        # if scenario includes decision_function, classifier must have it
-        method_sequence = getattr(self, "default_method_sequence", None)
-        if method_sequence is not None and "decision_function" in method_sequence:
-            if isclass(obj):
-                has_decision_function = hasattr(obj, "decision_function")
-            else:
-                has_decision_function = hasattr(type(obj), "decision_function")
-            if not has_decision_function:
-                return False
-
         return True
 
 
