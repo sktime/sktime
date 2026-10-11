@@ -75,7 +75,7 @@ class SFAFast(BaseTransformer):
         The feature selections strategy to be used.
         Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also
-        reduces the number significantly. None applies not feature selectiona and
+        reduces the number significantly. None applies not feature selection and
         yields large bag of words, e.g. much memory may be needed.
 
     p_threshold: int, default=0.05 (disabled by default)
