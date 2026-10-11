@@ -14,16 +14,6 @@
   "skipCi": true,
   "contributors": [
     {
-      "login": "SumanGouda",
-      "name": "Suman Gouda",
-      "avatar_url": "https://github.com/SumanGouda.png",
-      "profile": "https://github.com/SumanGouda",
-      "contributions": [
-        "code",
-        "bug"
-      ]
-    },
-    {
       "login": "fkiraly",
       "name": "Franz Kiraly",
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
@@ -4263,6 +4253,16 @@
         "bug",
         "code",
         "test"
+      ]
+    },
+    {
+      "login": "SumanGouda",
+      "name": "Suman Gouda",
+      "avatar_url": "https://github.com/SumanGouda.png",
+      "profile": "https://github.com/SumanGouda",
+      "contributions": [
+        "code",
+        "bug"
       ]
     },
     {
