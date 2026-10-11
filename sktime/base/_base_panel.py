@@ -157,7 +157,7 @@ class BasePanelMixin(BaseEstimator):
         y_preds = []
         tt_ixx = []
 
-        if isinstance(X.index, pd.MultiIndex):
+        if isinstance(X, pd.DataFrame) and isinstance(X.index, pd.MultiIndex):
             X_ix = X.index.get_level_values(0).unique()
         else:
             X_ix = np.arange(len(X))
