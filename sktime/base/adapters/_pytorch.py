@@ -3,7 +3,6 @@
 __all__ = ["_PytorchDeepAdapter"]
 __authors__ = ["geetu040", "RecreationalMath", "srupat"]
 
-import abc
 from collections.abc import Callable
 
 import numpy as np
@@ -425,10 +424,6 @@ class _PytorchDeepAdapter:
             metrics_dict[metric_name] = metric_instance
 
         return metrics_dict if metrics_dict else None
-
-    @abc.abstractmethod
-    def _build_network(self):
-        pass
 
     def _build_dataloader(self, X, y=None):
         """Build the dataloader iterated over in fit and predict."""

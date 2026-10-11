@@ -4,6 +4,7 @@ __authors__ = ["geetu040", "RecreationalMath"]
 
 __all__ = ["BaseDeepRegressorTorch"]
 
+import abc
 from collections.abc import Callable
 
 from sktime.base.adapters._pytorch import _PytorchDeepAdapter
@@ -174,6 +175,10 @@ class BaseDeepRegressorTorch(_PytorchDeepAdapter, BaseRegressor):
         self.network.train()
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
+
+    @abc.abstractmethod
+    def _build_network(self, X):
+        pass
 
     def _predict(self, X):
         """Predict target for sequences in X.

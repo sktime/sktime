@@ -4,6 +4,7 @@ __authors__ = ["geetu040", "RecreationalMath"]
 
 __all__ = ["BaseDeepClassifierPytorch"]
 
+import abc
 from collections.abc import Callable
 
 import numpy as np
@@ -214,6 +215,10 @@ class BaseDeepClassifierPytorch(_PytorchDeepAdapter, BaseClassifier):
         self.network.train()
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
+
+    @abc.abstractmethod
+    def _build_network(self, X, y):
+        pass
 
     def _validate_activation_criterion(self):
         """Validate activation function in the output layer w.r.t. criterion specified.
