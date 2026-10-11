@@ -140,31 +140,30 @@ class _PredictProbaMixin:
         # 2. default to proba if proba or var are implemented
 
         if implements_interval:
-            quantiles_per_alpha = []
-            for a in alpha:
-                # compute quantiles corresponding to prediction interval coverage
-                #  this uses symmetric predictive intervals:
-                coverage = abs(1 - 2 * a)
+            # compute quantiles corresponding to prediction interval coverage
+            #  this uses symmetric predictive intervals:
+            #  quantile at alpha is the lower end of the interval with coverage
+            #  1 - 2 * alpha if alpha < 0.5, otherwise the upper end of 2 * alpha - 1
+            alpha_np = np.array(alpha)
+            # rounding ensures that, e.g., alpha = 0.05 and 0.95 share a coverage
+            coverage_per_alpha = np.round(np.abs(1 - 2 * alpha_np), 12)
+            # obtain all intervals in a single call, one coverage per unique value
+            coverage, cov_ix = np.unique(coverage_per_alpha, return_inverse=True)
+            pred_int = self._predict_interval(coverage=list(coverage), **kwargs)
 
-                # compute quantile forecasts corresponding to upper/lower
-                pred_a = self._predict_interval(coverage=[coverage], **kwargs)
+            # idx returned by _predict_interval is
+            #   3-level MultiIndex with variable names, coverage, lower/upper,
+            #   in this order, i.e., variable-major
+            # integer column index of the quantile at alpha, for variable j:
+            #   j * 2 * n_cov + 2 * (index of coverage) + (1 if upper, else 0)
+            n_cov = len(coverage)
+            n_var = pred_int.shape[1] // (2 * n_cov)
+            is_upper = (alpha_np >= 0.5).astype(int)
+            alpha_offset = 2 * cov_ix.reshape(-1) + is_upper
+            col_ix = (2 * n_cov * np.arange(n_var))[:, None] + alpha_offset[None, :]
 
-                # the quantile is the lower or upper end of the interval,
-                # depending on whether alpha was < 0.5 or >= 0.5
-                # idx returned by _predict_interval is
-                #   3-level MultiIndex with variable names, coverage, lower/upper
-                # the cross-section has one column per variable, in variable order
-                side = "upper" if a >= 0.5 else "lower"
-                quantiles_per_alpha.append(pred_a.xs(side, axis=1, level=-1))
-
-            # columns of the concatenation are in alpha-major order,
-            #   reorder them to variable-major order, as in the index below
-            # this is done in pandas to preserve the dtypes of _predict_interval
-            pred_int = pd.concat(quantiles_per_alpha, axis=1)
-            n_var = quantiles_per_alpha[0].shape[1]
-            n_alpha = len(alpha)
-            var_major = [i * n_var + j for j in range(n_var) for i in range(n_alpha)]
-            pred_int = pred_int.iloc[:, var_major]
+            # subset in pandas, to preserve the dtypes of _predict_interval
+            pred_int = pred_int.iloc[:, col_ix.ravel()]
 
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
