@@ -69,6 +69,7 @@ class TSICLForecaster(BaseForecaster):
         "python_version": ">=3.12",
         "python_dependencies": ["tsicl", "torch"],
         "capability:exogenous": False,
+        "capability:multivariate": False,
         "capability:missing_values": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
