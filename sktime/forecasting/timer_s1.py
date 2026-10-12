@@ -184,6 +184,7 @@ class TimerS1Forecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "serialization:skip": ("model_",),
         "tests:libs": ["sktime.libs.timer_s1"],
     }
 

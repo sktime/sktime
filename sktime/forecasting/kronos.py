@@ -158,6 +158,7 @@ class KronosForecaster(BaseForecaster):
         ],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.kronos"],
+        "serialization:skip": ("tokenizer_", "model_"),
         "tests:specific": ["sktime.forecasting.tests.test_kronos"],
     }
 
@@ -265,6 +266,9 @@ class KronosForecaster(BaseForecaster):
             should be of the same type as seen in _fit, as in "y_inner_mtype" tag
             Point predictions
         """
+        if not hasattr(self, "model_") or not hasattr(self, "tokenizer_"):
+            self.tokenizer_, self.model_ = self._load_kronos()
+
         df = pd.DataFrame(index=self.context_.index)
         for internal, original in self.column_mapping_.items():
             df[internal] = self.context_[original].to_numpy()

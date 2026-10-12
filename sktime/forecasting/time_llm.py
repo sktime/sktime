@@ -84,6 +84,7 @@ class TimeLLMForecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": False,
         "requires-fh-in-fit": True,
+        "serialization:skip": ("model_",),
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -261,18 +262,6 @@ class TimeLLMForecaster(BaseForecaster):
         y_pred = y_pred.astype("float64")
 
         return y_pred
-
-    def __getstate__(self):
-        """Return state for pickling, excluding unpickleable TimeLLM model."""
-        state = self.__dict__.copy()
-
-        if "model_" in state:
-            state["model_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state, TimeLLM model will be reloaded on next use."""
-        self.__dict__.update(state)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

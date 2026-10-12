@@ -255,6 +255,7 @@ class PatchTSMixerForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "requires-fh-in-fit": False,
+        "serialization:skip": ("model",),
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_patch_tsmixer"],
     }
@@ -288,6 +289,16 @@ class PatchTSMixerForecaster(BaseForecaster):
         self.device = device
         self.model = None
         super().__init__()
+
+    def __dynamic_tags__(self):
+        """Set serialization tags conditional on model source and training."""
+        if self.train_model or self.model_path is None:
+            self.set_tags(
+                **{
+                    "serialization:native_artifacts": ("model",),
+                    "serialization:skip": (),
+                }
+            )
 
     def __post_init__(self):
         """Post-initialization setup."""

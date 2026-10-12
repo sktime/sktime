@@ -192,6 +192,7 @@ class TimesFMForecaster(BaseForecaster):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
+        "serialization:skip": ("tfm",),
         # testing configuration
         # ---------------------
         "tests:vm": True,

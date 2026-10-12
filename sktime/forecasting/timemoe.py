@@ -211,6 +211,7 @@ class TimeMoEForecaster(BaseForecaster):
         "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "serialization:skip": ("model_",),
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -261,6 +262,15 @@ class TimeMoEForecaster(BaseForecaster):
                     "transformers<=4.40.1",
                     "accelerate<=0.28.0",
                 ]
+            )
+
+        # From-scratch models cannot be rebuilt from a checkpoint.
+        if self.model_path is None:
+            self.set_tags(
+                **{
+                    "serialization:native_artifacts": ("model_",),
+                    "serialization:skip": (),
+                }
             )
 
     def __post_init__(self):
@@ -337,6 +347,13 @@ class TimeMoEForecaster(BaseForecaster):
         trainer.train()
 
         self.model_ = trainer.model
+        # Fine-tuned weights are not recoverable from the original checkpoint.
+        self.set_tags(
+            **{
+                "serialization:native_artifacts": ("model_",),
+                "serialization:skip": (),
+            }
+        )
         return self
 
     def _fit(self, y, X=None, fh=None):
@@ -459,6 +476,9 @@ class TimeMoEForecaster(BaseForecaster):
         import transformers
 
         transformers.set_seed(self._seed)
+        if not hasattr(self, "model_") or self.model_ is None:
+            self.model_ = self._load_model()
+
         if fh is not None:
             prediction_length = int(max(fh.to_relative(self.cutoff)))
         else:
