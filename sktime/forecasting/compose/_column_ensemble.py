@@ -104,6 +104,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         "capability:missing_values": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -137,6 +138,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
                 "capability:pred_int",
                 "capability:exogenous",
                 "capability:missing_values",
+                "capability:update",
             ]
             self.clone_tags(self.forecasters, tags_to_clone)
         else:
@@ -147,6 +149,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
             self._anytagis_then_set(
                 "capability:missing_values", False, True, l_forecasters
             )
+            self._anytagis_then_set("capability:update", False, True, l_forecasters)
 
     @property
     def _forecasters(self):

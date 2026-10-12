@@ -30,6 +30,7 @@ class _PmdArimaAdapter(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:non_contiguous_X": False,
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,

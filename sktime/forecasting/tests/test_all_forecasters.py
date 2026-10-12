@@ -640,6 +640,35 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         #         'The flag "capability:pred_int" should instead be set to True.'
         #     )
 
+    def test_update_tag(self, object_instance):
+        """Checks whether the capability:update tag is correctly set.
+
+        Arguments
+        ---------
+        object_instance : instance of BaseForecaster
+
+        Raises
+        ------
+        ValueError - if capability:update is True,
+            but _update has not been implemented
+        """
+        f = object_instance
+        # we skip the _DelegatedForecaster, since it implements delegation methods
+        #   which may look like the method is implemented, but in fact it is not
+        if isinstance(f, _DelegatedForecaster):
+            return None
+
+        implements_update = f._has_implementation_of("_update")
+
+        cls_tag = f.get_class_tag("capability:update", False)
+
+        if not implements_update and cls_tag:
+            raise ValueError(
+                f"{type(f).__name__} does not implement the _update method, "
+                'but "capability:update" flag has been set to True incorrectly. '
+                'The flag "capability:update" should instead be set to False.'
+            )
+
     @pytest.mark.parametrize(
         "fh_int_oos", TEST_OOS_FHS, ids=[f"fh={fh}" for fh in TEST_OOS_FHS]
     )
@@ -725,6 +754,20 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
 
         # check that _y and cutoff is updated during update
         f.update(y_test, update_params=False)
+        assert f.cutoff == y_test.index[-1]
+
+        if not f.get_tag("capability:update", False):
+            return
+
+        # test now with update_params=True
+        f = f.clone()
+
+        # check cutoff is updated during fit
+        f.fit(y_train, fh=FH0)
+        assert f.cutoff == y_train.index[-1]
+
+        # check that _y and cutoff is updated during update
+        f.update(y_test, update_params=True)
         assert f.cutoff == y_test.index[-1]
 
     def test__y_remember_data(self, object_instance, n_columns):

@@ -443,6 +443,7 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         # test and CI flags
         # -----------------
         "tests:vm": True,

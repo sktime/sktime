@@ -111,6 +111,7 @@ class ThetaForecaster(ExponentialSmoothing):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:random_state": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         "property:randomness": "deterministic",
         # CI and test flags
         # -----------------
@@ -469,12 +470,18 @@ class ThetaModularForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["GuzalBulatova", "fkiraly"],
+        # estimator type
+        # --------------
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "python_version": ">3.7",
+        "capability:update": True,  # can estimator update its parameters with new data?
+        # test and CI flags
+        # -----------------
         "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
