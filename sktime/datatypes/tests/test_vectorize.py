@@ -310,7 +310,7 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     assert isinstance(X_iter1, list)
 
     # testing that iterator comprehension works
-    X_iter2 = [X_idx for X_idx in X_vect]
+    X_iter2 = [*X_vect]
     assert isinstance(X_iter2, list)
 
     # testing that as_list method works

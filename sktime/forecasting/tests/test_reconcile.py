@@ -193,7 +193,7 @@ def test_reconcilerforecaster_singular(alpha):
     index = pd.MultiIndex.from_product(
         levels + [time_index], names=level_names + ["time"]
     )
-    input_data = np.array([i for i in range(24)])
+    input_data = np.array([*range(24)])
     input_data = np.stack([input_data, input_data], 1)
     n_columns = 2
 
