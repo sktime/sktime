@@ -109,7 +109,10 @@ def test_forecaster_regression(method):
 
     pipe = Differencer() * f
     pipe.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4])
-    result = getattr(pipe, method)(X=X_test)
+    params = {"X": X_test}
+    if method == "predict_residuals":
+        params["y"] = y_train  # explicitly pass y to predict_residuals
+    result = getattr(pipe, method)(**params)
     differencer = Differencer()
 
     general_pipeline = Pipeline(
@@ -409,3 +412,55 @@ def _get_fcst_with_exog_and_proba():
 
     yfromx = YfromX(ResidualDouble(LinearRegression()))
     return yfromx
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.pipeline", "sktime.forecasting"]),
+    reason="Run test only if relevant modules have changed",
+)
+def test_step_with_multiple_edge_groups_of_different_size_regression():
+    """Regression test for bug in ``Step._fetch_input_data``, see bug report #11138.
+
+    A step's ``edges`` can have several keys (e.g. ``"y"`` and ``"X"``), each
+    resolving to its own group of predecessor steps. ``transformer_names`` was
+    accumulated across these groups instead of being reset per group, so once
+    an earlier group's predecessor count differed from a later group's,
+    ``pd.concat(results, keys=transformer_names)`` for the later group was
+    called with mismatched lengths. Older pandas silently tolerated this;
+    pandas 3 raises ``ValueError: The length of the keys (...) must match the
+    length of the objects to concatenate (...)``.
+
+    This reproduces it with a first edge-group of size 1 (``"y": "y"``)
+    followed by a second edge-group of size 2 (``"X": ["f_a", "f_b"]``),
+    matching the pattern in the ``05_graphical_pipelines.ipynb`` example that
+    originally surfaced this.
+    """
+    y, X = load_longley()
+    y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, fh=[1, 2, 3])
+
+    general_pipeline = Pipeline(
+        [
+            {
+                "skobject": make_reduction(Ridge(), window_length=3),
+                "name": "f_a",
+                "edges": {"y": "X__GNP"},
+            },
+            {
+                "skobject": make_reduction(Ridge(), window_length=3),
+                "name": "f_b",
+                "edges": {"y": "X__UNEMP"},
+            },
+            {
+                "skobject": make_reduction(
+                    Ridge(), windows_identical=False, window_length=3
+                ),
+                "name": "combined",
+                "edges": {"y": "y", "X": ["f_a", "f_b"]},
+            },
+        ]
+    )
+
+    # should not raise ValueError from pd.concat under pandas 3
+    general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3])
+    result = general_pipeline.predict(X=None)
+    assert result.shape == y_test.shape
