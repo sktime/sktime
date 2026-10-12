@@ -1,6 +1,6 @@
 """Abstract base class for the Pytorch neural network classifiers."""
 
-__authors__ = ["geetu040", "RecreationalMath"]
+__authors__ = ["geetu040", "RecreationalMath", "KingLizard1020"]
 
 __all__ = ["BaseDeepClassifierPytorch"]
 
@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder
 
 from sktime.classification.base import BaseClassifier
-from sktime.utils._lookup import _lc_class_dict, _lookup_class
+from sktime.utils._lookup import _lc_class_dict, _lookup, _lookup_class
 from sktime.utils.dependencies import _safe_import
 
 ReduceLROnPlateau = _safe_import("torch.optim.lr_scheduler.ReduceLROnPlateau")
@@ -77,8 +77,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         Permitted values:
 
         - ``None``: the ``Adam`` optimizer is used.
-        - ``str``: case insensitive name of any optimizer in ``torch.optim``,
-          for example ``"adam"`` or ``"SGD"``. See
+        - ``str``: case insensitive name of any ``torch.optim.Optimizer`` subclass
+          exported by ``torch.optim``, for example ``"adam"`` or ``"SGD"``.
+          Names are resolved from ``torch.optim`` itself, including optimizers
+          added in later PyTorch versions. See
           https://pytorch.org/docs/stable/optim.html#algorithms
         - ``class``: a subclass of ``torch.optim.Optimizer``, for example
           ``torch.optim.SGD``.
@@ -136,7 +138,10 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         # CI and test tags
         # ----------------
         "tests:vm": True,
-        "tests:libs": ["sktime.classification.deep_learning.base._base_torch"],
+        "tests:libs": [
+            "sktime.classification.deep_learning.base._base_torch",
+            "sktime.utils._lookup",
+        ],
     }
 
     # _instantiate_activation_vars is an iterable of attribute names of activations
@@ -211,6 +216,8 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             if var == "activation":
                 activation_map[var] = self._validated_activation
         self._callable_activations = self._instantiate_activations(activation_map)
+        # curated aliases used by optimizer string lookup via ``_lookup``
+        self._all_optimizers = None
         # use this when y has str
         self.label_encoder = None
         self._metrics_objects = None
@@ -559,27 +566,61 @@ class BaseDeepClassifierPytorch(BaseClassifier):
         return schedulers
 
     def _instantiate_optimizer(self):
-        # import the base class for all optimizers in PyTorch
-        torchOptimizer = _safe_import(TORCH_OPTIMIZER)
+        if self._all_optimizers is None:
+            self._all_optimizers = {
+                "adadelta": "Adadelta",
+                "adagrad": "Adagrad",
+                "adam": "Adam",
+                "adamw": "AdamW",
+                "sparseadam": "SparseAdam",
+                "adamax": "Adamax",
+                "asgd": "ASGD",
+                "lbfgs": "LBFGS",
+                "nadam": "NAdam",
+                "radam": "RAdam",
+                "rmsprop": "RMSprop",
+                "rprop": "Rprop",
+                "sgd": "SGD",
+            }
+        # Resolve Optimizer from the live torch.optim module when importable so
+        # subclass checks use the real base class, not a missing-dep placeholder.
+        torch_optim = _safe_import("torch.optim", return_object="None")
+        torchOptimizer = getattr(torch_optim, "Optimizer", None)
+        if not isinstance(torchOptimizer, type):
+            torchOptimizer = _safe_import(TORCH_OPTIMIZER)
 
         # if no optimizer is passed, use Adam as default
         if self.optimizer is None:
             optimizer_class = _safe_import("torch.optim.Adam")
             optimizer_params = {"lr": self.lr}
-        # if optimizer is a string, look up the optimizer of that name
-        # in torch.optim, case insensitively
+        # if optimizer is a string, look it up in torch.optim (case-insensitive)
         elif isinstance(self.optimizer, str):
-            optimizer_class = _lookup_class(
-                self.optimizer,
-                module_path=TORCH_OPTIMIZERS,
-                base_class_path=TORCH_OPTIMIZER,
+            unknown_optimizer_msg = (
+                f"Unknown optimizer: {self.optimizer}. Please pass a valid "
+                "optimizer name from torch.optim "
+                "(https://pytorch.org/docs/stable/optim.html#algorithms), "
+                "or an optimizer class or instance."
             )
-            if optimizer_class is None:
-                all_optimizers = _lc_class_dict(TORCH_OPTIMIZERS, TORCH_OPTIMIZER)
-                raise ValueError(
-                    f"Unknown optimizer: {self.optimizer}. Please pass one of "
-                    f"{', '.join(sorted(all_optimizers))} for `optimizer`."
+            try:
+                optimizer_class = _lookup(
+                    self.optimizer,
+                    TORCH_OPTIMIZERS,
+                    alias_dict=self._all_optimizers,
                 )
+            except ValueError as err:
+                raise ValueError(unknown_optimizer_msg) from err
+            # dir(torch.optim) also exports modules and the abstract Optimizer base
+            try:
+                is_optimizer_cls = (
+                    isinstance(optimizer_class, type)
+                    and isinstance(torchOptimizer, type)
+                    and issubclass(optimizer_class, torchOptimizer)
+                    and optimizer_class is not torchOptimizer
+                )
+            except TypeError:
+                is_optimizer_cls = False
+            if not is_optimizer_cls:
+                raise ValueError(unknown_optimizer_msg)
             optimizer_params = {"lr": self.lr}
         # if optimizer is an optimizer class, use it as is
         elif isinstance(self.optimizer, type) and issubclass(
