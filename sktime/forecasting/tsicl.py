@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements TSICLForecaster — sktime wrapper for TS-ICL foundation model."""
 
-__author__ = ["amruth6002"]
+__author__ = ["TaharNbl", "amruth6002"]
 __all__ = ["TSICLForecaster"]
 
 import pandas as pd
@@ -64,7 +64,7 @@ class TSICLForecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["amruth6002"],
+        "authors": ["TaharNbl", "amruth6002"],
         "maintainers": ["amruth6002"],
         "python_version": ">=3.12",
         "python_dependencies": ["tsicl", "torch"],
