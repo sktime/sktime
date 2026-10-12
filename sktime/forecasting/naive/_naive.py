@@ -831,13 +831,19 @@ class NaiveVariance(BaseForecaster):
         fh_absolute = fh.to_absolute(self.cutoff)
         fh_absolute_ix = fh_absolute.to_pandas()
 
+        # Each row is fitted on observations strictly before its row label,
+        # so the main diagonal contains one-step-ahead residuals.
+        residuals = [
+            np.diagonal(residuals_matrix, offset=horizon - 1) for horizon in fh_relative
+        ]
+
         if cov:
             fh_size = len(fh)
             covariance = np.zeros(shape=(len(fh), fh_size))
             for i in range(fh_size):
-                i_residuals = np.diagonal(residuals_matrix, offset=fh_relative[i])
+                i_residuals = residuals[i]
                 for j in range(i, fh_size):  # since the matrix is symmetric
-                    j_residuals = np.diagonal(residuals_matrix, offset=fh_relative[j])
+                    j_residuals = residuals[j]
                     max_residuals = min(len(j_residuals), len(i_residuals))
                     covariance[i, j] = covariance[j, i] = np.nanmean(
                         i_residuals[:max_residuals] * j_residuals[:max_residuals]
@@ -848,10 +854,7 @@ class NaiveVariance(BaseForecaster):
                 columns=fh_absolute_ix,
             )
         else:
-            variance = [
-                np.nanmean(np.diagonal(residuals_matrix, offset=offset) ** 2)
-                for offset in fh_relative
-            ]
+            variance = [np.nanmean(residual**2) for residual in residuals]
             if hasattr(self._cur_y, "columns"):
                 columns = self._cur_y.columns
                 pred_var = pd.DataFrame(variance, columns=columns, index=fh_absolute_ix)
@@ -877,8 +880,10 @@ class NaiveVariance(BaseForecaster):
         Returns
         -------
         residuals_matrix : pd.DataFrame, row and column index = y.index[initial_window:]
-            [i,j]-th entry is signed residual of forecasting y.loc[j] from y.loc[:i],
-            using a clone of the forecaster passed through the forecaster arg
+            [i,j]-th entry is the signed residual of forecasting y.loc[j] from
+            observations strictly before i, using a clone of the forecaster.
+            The main diagonal therefore contains one-step-ahead residuals;
+            the diagonal at offset h - 1 contains h-step-ahead residuals.
         """
         y = convert_to(y, "pd.Series")
 
