@@ -717,7 +717,6 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
           3D np.ndarray (instance, variable, time index)
         * ``"numpy2d"``/``"np2d"``/``"numpyflat"``:
           2D np.ndarray (instance, time index)
-            
         Exception is raised if the data cannot be stored in the requested type.
 
     Returns
