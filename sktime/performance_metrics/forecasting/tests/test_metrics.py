@@ -82,9 +82,12 @@ def test_gmse_function():
     )
 
 
+@pytest.mark.parametrize(
+    "case", ["basic", "perfect", "benchmark_zero", "two_rows", "random"]
+)
 @pytest.mark.parametrize("square_root", [False, True])
 @pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values", [0.3, 0.7]])
-def test_gmrse_evaluate_by_index_matches_jackknife(square_root, multioutput):
+def test_gmrse_evaluate_by_index_matches_jackknife(case, square_root, multioutput):
     """Test optimized GMRSE pseudo-values against direct jackknife evaluation."""
     from sktime.performance_metrics.forecasting import (
         GeometricMeanRelativeSquaredError,
@@ -93,6 +96,20 @@ def test_gmrse_evaluate_by_index_matches_jackknife(square_root, multioutput):
     y_true = pd.DataFrame({"a": [3.0, 1.0, 4.0], "b": [2.0, 6.0, 5.0]})
     y_pred = pd.DataFrame({"a": [2.0, 2.0, 3.0], "b": [1.0, 4.0, 7.0]})
     y_benchmark = pd.DataFrame({"a": [1.0, 4.0, 2.0], "b": [4.0, 3.0, 1.0]})
+    if case == "perfect":
+        y_pred = y_true.copy()
+    elif case == "benchmark_zero":
+        y_benchmark = y_true.copy()
+    elif case == "two_rows":
+        y_true, y_pred, y_benchmark = (
+            frame.iloc[:2].copy() for frame in (y_true, y_pred, y_benchmark)
+        )
+    elif case == "random":
+        rng = np.random.default_rng(42)
+        index = pd.date_range("2024-01-01", periods=16, name="time")
+        y_true = pd.DataFrame(rng.normal(size=(16, 2)), index=index, columns=["b", "a"])
+        y_pred = y_true + rng.normal(size=(16, 2))
+        y_benchmark = y_true + rng.normal(size=(16, 2))
     metric = GeometricMeanRelativeSquaredError(
         square_root=square_root, multioutput=multioutput
     )
@@ -109,7 +126,21 @@ def test_gmrse_evaluate_by_index_matches_jackknife(square_root, multioutput):
         expected.append(n * full_value - (n - 1) * leave_one_out)
 
     result = metric.evaluate_by_index(y_true, y_pred, y_pred_benchmark=y_benchmark)
-    np.testing.assert_allclose(result, expected)
+    np.testing.assert_allclose(result, expected, rtol=1e-10, atol=1e-12)
+    assert result.index.equals(y_true.index)
+    if isinstance(multioutput, str) and multioutput == "raw_values":
+        assert result.columns.equals(y_true.columns)
+
+
+@pytest.mark.parametrize("square_root", [False, True])
+def test_gmrse_evaluate_by_index_single_observation(square_root):
+    """Keep the fallback's ValueError when leave-one-out has no observations."""
+    from sktime.performance_metrics.forecasting import GeometricMeanRelativeSquaredError
+
+    y_true = pd.DataFrame({"a": [1.0]})
+    metric = GeometricMeanRelativeSquaredError(square_root=square_root)
+    with pytest.raises(ValueError, match="minimum of 1"):
+        metric.evaluate_by_index(y_true, y_true + 1, y_pred_benchmark=y_true + 2)
 
 
 @pytest.mark.skipif(

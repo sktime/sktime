@@ -114,6 +114,9 @@ class GeometricMeanRelativeSquaredError(BaseForecastingErrorMetricFunc):
 
     def _evaluate_by_index(self, y_true, y_pred, **kwargs):
         """Return jackknife pseudo-values of GMRSE at each time point."""
+        if len(y_true) < 2:
+            # Preserve the generic jackknife's validation for an empty remainder.
+            return super()._evaluate_by_index(y_true, y_pred, **kwargs)
         y_pred_benchmark = kwargs["y_pred_benchmark"]
         relative_errors = np.square(_relative_error(y_true, y_pred, y_pred_benchmark))
         relative_errors = pd.DataFrame(
