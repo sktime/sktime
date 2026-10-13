@@ -9,7 +9,12 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
+from sktime.datatypes import VectorizedDF
 from sktime.transformations.base import BaseTransformer
+
+# Methods whose panel application is broadcast by ``BaseTransformer`` rather than
+# implemented on a multi-index frame inside ``Imputer``.
+_VECTORIZED_METHODS = ("drift", "linear", "nearest", "random", "forecaster")
 
 
 class Imputer(BaseTransformer):
@@ -25,10 +30,9 @@ class Imputer(BaseTransformer):
         ``method`` is applied the remaining missing values are filled with ``ffill``
         then ``bfill``.
 
-        * "drift" : drift/trend values by sktime.PolynomialTrendForecaster(degree=1)
-          first, X in transform() is filled with ffill then bfill
-          then PolynomialTrendForecaster(degree=1) is fitted to filled X, and
-          predict values are queried at indices which had missing values
+        * "drift" : drift/trend values by sktime.PolynomialTrendForecaster(degree=1).
+          The forecaster is fitted on data seen in ``fit`` (after ``ffill`` then
+          ``bfill``) and predicts indices which are missing in ``transform``.
         * "linear" : linear interpolation, uses pd.Series.interpolate()
             WARNING: This method can not extrapolate, so it is fitted always on the
             data given to transform().
@@ -40,18 +44,31 @@ class Imputer(BaseTransformer):
           to use data in transform, wrap this estimator in ``FitInTransform``
         * "backfill" to "bfill" : applies ``pd.Series.bfill`` to all data
         * "pad" or "ffill" : applies ``pd.Series.ffill`` to all data
-        * "random" : random values between pd.Series.min() and .max() of *fit* data
+        * "random" : random values between pd.Series.min() and .max() of the series
+          passed to ``transform``, per instance.
           if pd.Series dtype is int, sample is uniform discrete
           if pd.Series dtype is float, sample is uniform continuous
         * "forecaster" : use an sktime forecaster, given in param ``forecaster``.
-          First, X seed in ``fit`` is filled with ``ffill`` then ``bfill``
+          First, X seen in ``fit`` is filled with ``ffill`` then ``bfill``
           then forecaster is fitted to filled X, and ``predict`` values are queried
           at indices of X data in ``transform`` which had missing values.
           ``forecaster`` is always applied by variable and instance.
 
-        The following methods, fit non-trivially to the data seen in ``fit``:
-        "drift", "mean", "median", "random". All other methods
-        do not depend on values seen in ``fit``.
+        The following methods fit non-trivially on data seen in ``fit``:
+        ``drift``, ``mean``, ``median``, and ``forecaster``.
+        ``linear``, ``nearest``, ``constant``, ``ffill``, ``bfill``, ``pad``,
+        ``backfill``, and ``random`` do not use values seen in ``fit``.
+
+        ``transform`` accepts a different number of instances than ``fit``.
+        Parameters estimated per instance are reused when the instance index
+        matches an index seen in ``fit``. For any other instance:
+
+        * ``mean`` and ``median`` fill with the statistic pooled over all
+          values seen in ``fit``
+        * ``drift`` and ``forecaster`` fit that model on the series passed to
+          ``transform``
+        * the remaining methods are applied directly to each series in
+          ``transform``
 
     missing_values : str, int, float, regex, list, or None, default=None
         Value to consider as `np.nan`` and impute, passed to ``DataFrame.replace``
@@ -158,8 +175,34 @@ class Imputer(BaseTransformer):
                 }
             )
 
-        if method in "forecaster":
+        if method == "forecaster":
             self.set_tags(**{"y_inner_mtype": ["pd.DataFrame"]})
+
+    def fit(self, X, y=None):
+        """Fit transformer to X, optionally to y.
+
+        Parameters
+        ----------
+        X : time series in sktime compatible data container format
+            Data to fit transform to.
+        y : time series in sktime compatible data container format, optional
+            Additional data, e.g., labels for transformation.
+
+        Returns
+        -------
+        self : a fitted instance of the estimator
+        """
+        # Validate even when a later vectorized ``fit`` only clones this object.
+        self._check_method()
+        super().fit(X, y)
+        # A single series does not create ``transformers_``. Leave vectorization
+        # undecided so ``transform`` can broadcast that fit across a panel.
+        if (
+            self.method in _VECTORIZED_METHODS
+            and getattr(self, "_is_vectorized", False) is False
+        ):
+            self._is_vectorized = "unknown"
+        return self
 
     def _fit(self, X, y=None):
         """Fit transformer to X and y.
@@ -188,8 +231,11 @@ class Imputer(BaseTransformer):
             X_grouped = X.groupby(level=list(range(index.nlevels - 1)))
             if self.method == "mean":
                 self._mean = X_grouped.mean()
+                # Pooled statistic for instances that were not in ``fit``.
+                self._mean_fallback = X.mean()
             elif self.method == "median":
                 self._median = X_grouped.median()
+                self._median_fallback = X.median()
         else:
             if self.method in ["drift", "forecaster"]:
                 self._y = y.copy() if y is not None else None
@@ -247,9 +293,13 @@ class Imputer(BaseTransformer):
             elif self.method in ["pad", "ffill"]:
                 X = X.groupby(level=X_group_levels).ffill()
             elif self.method == "mean":
-                X = X.fillna(value=self._mean)
+                X = self._fillna_from_fit_statistic(
+                    X, self._mean, getattr(self, "_mean_fallback", None)
+                )
             elif self.method == "median":
-                X = X.fillna(value=self._median)
+                X = self._fillna_from_fit_statistic(
+                    X, self._median, getattr(self, "_median_fallback", None)
+                )
             else:
                 raise AssertionError("Code should not be reached")
 
@@ -270,9 +320,11 @@ class Imputer(BaseTransformer):
             elif self.method == "forecaster":
                 X = self._impute_with_forecaster(X, y)
             elif self.method == "mean":
-                return X.fillna(value=self._mean)
+                stat = self._statistic_for_unindexed(self._mean, "mean")
+                return X.fillna(value=self._align_statistic(stat, X.columns))
             elif self.method == "median":
-                return X.fillna(value=self._median)
+                stat = self._statistic_for_unindexed(self._median, "median")
+                return X.fillna(value=self._align_statistic(stat, X.columns))
             elif self.method in ["nearest", "linear"]:
                 X = X.interpolate(method=self.method)
             else:
@@ -283,6 +335,141 @@ class Imputer(BaseTransformer):
             X = X.ffill().bfill()
 
             return X
+
+    def _vectorize(self, methodname, **kwargs):
+        """Vectorize, allowing panels whose instance set differs from ``fit``."""
+        X = kwargs.get("X")
+        if methodname == "transform" and self._instance_map_does_not_apply(X):
+            return self._transform_unaligned_instances(X, kwargs.get("y"))
+        return super()._vectorize(methodname, **kwargs)
+
+    def _instance_map_does_not_apply(self, X):
+        """Return True when fitted per-instance models cannot be zipped onto ``X``.
+
+        Equal-sized panels keep the base class positional broadcast. A single
+        series, or a panel with a different number of instances, does not.
+        """
+        if self.get_tag("fit_is_empty"):
+            return False
+        fitted = getattr(self, "transformers_", None)
+        if isinstance(X, pd.DataFrame):
+            # ``len`` of a series frame is the number of time points, not instances.
+            return fitted is not None
+        if fitted is None:
+            return isinstance(X, VectorizedDF)
+        if not isinstance(X, VectorizedDF):
+            return False
+        return len(X) != int(np.prod(fitted.shape))
+
+    def _lookup_fitted_transformer(self, fitted, key):
+        """Return the fitted per-instance imputer for ``key``, or None."""
+        if fitted is None or key not in fitted.index:
+            return None
+        cell = fitted.loc[key]
+        if isinstance(cell, pd.DataFrame):
+            cell = cell.iloc[0]
+        return cell.iloc[0]
+
+    def _transform_unaligned_instances(self, X, y=None):
+        """Impute when transform instances are not the fitted instance map.
+
+        Instances whose index was seen in ``fit`` reuse that fitted imputer.
+        Every other series is imputed on its own, which is valid for methods
+        that do not need the identity of a training instance.
+        """
+        if isinstance(X, pd.DataFrame):
+            fresh = self.clone()
+            return fresh.fit(X, y).transform(X, y)
+
+        y_items = list(y.items()) if isinstance(y, VectorizedDF) else None
+        fitted = getattr(self, "transformers_", None)
+        Xts = []
+        for i, (key, _, inst) in enumerate(X.items()):
+            y_inst = None if y_items is None else y_items[i][2]
+            est = self._lookup_fitted_transformer(fitted, key)
+            if est is not None:
+                Xts.append(est.transform(inst, y_inst))
+            elif fitted is None:
+                # One series was fitted; broadcast that model to each instance.
+                Xts.append(self._transform_broadcast_series(inst, y_inst))
+            else:
+                fresh = self.clone()
+                Xts.append(fresh.fit(inst, y_inst).transform(inst, y_inst))
+        return X.reconstruct(Xts, overwrite_index=False)
+
+    def _transform_broadcast_series(self, inst, y_inst):
+        """Apply a model fitted on one series to a single panel instance.
+
+        Numpy series use a positional column name such as ``0``, while numpy
+        panels use ``var_0``. When the width matches, align names for the call.
+        """
+        renamed = None
+        y_renamed = None
+        try:
+            X_fit = getattr(self, "_X", None)
+            if (
+                isinstance(X_fit, pd.DataFrame)
+                and len(X_fit.columns) == len(inst.columns)
+                and not X_fit.columns.equals(inst.columns)
+            ):
+                renamed = X_fit.columns.copy()
+                X_fit.columns = inst.columns
+                y_fit = getattr(self, "_y", None)
+                if (
+                    isinstance(y_fit, pd.DataFrame)
+                    and len(y_fit.columns) == len(inst.columns)
+                ):
+                    y_renamed = y_fit.columns.copy()
+                    y_fit.columns = inst.columns
+            return self._transform(inst, y_inst)
+        finally:
+            if renamed is not None:
+                self._X.columns = renamed
+            if y_renamed is not None:
+                self._y.columns = y_renamed
+
+    def _align_statistic(self, stat, columns):
+        """Reindex a column-wise statistic when only the column names differ."""
+        if (
+            isinstance(stat, pd.Series)
+            and len(stat) == len(columns)
+            and not stat.index.equals(columns)
+        ):
+            return pd.Series(stat.to_numpy(), index=columns)
+        return stat
+
+    def _fillna_from_fit_statistic(self, X, stat, fallback):
+        """Fill missing values from per-instance ``stat``, else pooled ``fallback``.
+
+        Instances present in ``stat`` never take ``fallback``. An instance that
+        was entirely missing in ``fit`` therefore stays missing.
+        """
+        if not isinstance(stat, pd.DataFrame):
+            stat = self._align_statistic(stat, X.columns)
+            return X.fillna(value=stat)
+
+        seen = np.asanyarray(X.index.droplevel(-1).isin(stat.index))
+        if seen.all():
+            return X.fillna(value=stat)
+
+        filled = X.fillna(value=stat)
+        if (~seen).any():
+            fallback = self._align_statistic(fallback, X.columns)
+            filled.loc[~seen] = X.loc[~seen].fillna(value=fallback)
+        return filled
+
+    def _statistic_for_unindexed(self, stat, kind):
+        """Return a column-wise statistic that can fill a single series.
+
+        Per-instance statistics are indexed by instance and do not align with a
+        plain time index. Use the pooled statistic in that case.
+        """
+        if not isinstance(stat, pd.DataFrame):
+            return stat
+        fallback_name = f"_{kind}_fallback"
+        if hasattr(self, fallback_name):
+            return getattr(self, fallback_name)
+        return stat
 
     def _check_method(self):
         method = self.method
