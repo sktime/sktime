@@ -115,6 +115,14 @@ class DummyClassifier(BaseClassifier):
         -------
         self : reference to self.
         """
+        random_state = (
+            np.random.RandomState()
+            if self.random_state is None
+            else self.random_state
+        )
+        self.sklearn_dummy_classifier = SklearnDummyClassifier(
+            strategy=self.strategy, random_state=random_state, constant=self.constant
+        )
         self.sklearn_dummy_classifier.fit(np.zeros(X.shape), y)
         return self
 
