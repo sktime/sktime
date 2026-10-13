@@ -41,3 +41,32 @@ def test_convert_MvS_to_UvS_as_Series():
     w = convert_MvS_to_UvS_as_Series(z)
 
     assert y.name == w.name
+
+
+def test_proba_base_converters():
+    """Test BaseConverter interface for Proba converters."""
+    from sktime.datatypes._examples import get_examples
+    from sktime.datatypes._proba._convert import (
+        ProbaPredIntervalToQuantiles,
+        ProbaPredQuantilesToInterval,
+    )
+    from sktime.utils.deep_equals import deep_equals
+
+    c1 = ProbaPredIntervalToQuantiles()
+    assert c1.get_tag("mtype_from") == "pred_interval"
+    assert c1.get_tag("mtype_to") == "pred_quantiles"
+    assert c1.get_conversions() == [("pred_interval", "pred_quantiles")]
+
+    c2 = ProbaPredQuantilesToInterval()
+    assert c2.get_tag("mtype_from") == "pred_quantiles"
+    assert c2.get_tag("mtype_to") == "pred_interval"
+    assert c2.get_conversions() == [("pred_quantiles", "pred_interval")]
+
+    ex_interval = get_examples(mtype="pred_interval", as_scitype="Proba")[0]
+    ex_quantiles = get_examples(mtype="pred_quantiles", as_scitype="Proba")[0]
+
+    converted_q = c1(ex_interval)
+    assert deep_equals(converted_q, ex_quantiles)
+
+    converted_i = c2(ex_quantiles)
+    assert deep_equals(converted_i, ex_interval)
