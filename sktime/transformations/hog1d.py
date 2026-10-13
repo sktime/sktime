@@ -1,6 +1,5 @@
 """HOG1D transform."""
 
-import math
 import numbers
 
 import numpy as np
@@ -101,7 +100,6 @@ class HOG1DTransformer(BaseTransformer):
             transformed version of X
         """
         # Get information about the dataframe
-        num_insts = X.shape[0]
         col_names = X.columns
         num_atts = len(X.iloc[0, 0])
 
@@ -114,14 +112,8 @@ class HOG1DTransformer(BaseTransformer):
             # Convert one of the columns in the dataframe to a numpy array
             arr = from_nested_to_2d_array(pd.DataFrame(X[x]), return_numpy=True)
 
-            # Get the HOG1Ds of each time series
-            transformedData = []
-            for y in range(num_insts):
-                inst = self._calculate_hog1ds(arr[y])
-                transformedData.append(inst)
-
-            # Convert to numpy array
-            transformedData = np.asarray(transformedData)
+            # Get the HOG1Ds of all time series at once
+            transformedData = self._calculate_hog1ds(arr)
 
             # Add it to the dataframe
             colToAdd = []
@@ -134,64 +126,57 @@ class HOG1DTransformer(BaseTransformer):
         return df
 
     def _calculate_hog1ds(self, X):
-        """Calculate the HOG1Ds given a time series.
+        """Calculate the HOG1Ds given time series.
 
         Parameters
         ----------
-        X : a numpy array of shape = [time_series_length]
+        X : a numpy array of shape = [time_series_length] or
+            [n_instances, time_series_length]
 
         Returns
         -------
-        HOG1Ds : a numpy array of shape = [num_intervals*num_bins].
+        HOG1Ds : a numpy array of shape = [num_intervals*num_bins] or
+                 [n_instances, num_intervals*num_bins].
                  It contains the histogram of each gradient within
                  each interval.
         """
-        # Firstly, split the time series into approx equal
-        # length intervals
         splitTimeSeries = self._split_time_series(X)
-        HOG1Ds = []
+        HOG1Ds = [self._get_hog1d(interval) for interval in splitTimeSeries]
 
-        for x in range(len(splitTimeSeries)):
-            HOG1Ds.extend(self._get_hog1d(splitTimeSeries[x]))
-
-        return HOG1Ds
+        return np.concatenate(HOG1Ds, axis=-1)
 
     def _get_hog1d(self, X):
-        """Get the HOG1D given a portion of a time series.
+        """Get the HOG1D given a portion of time series.
 
-        X : a numpy array of shape = [interval_size]
+        X : a numpy array of shape = [interval_size] or
+            [n_instances, interval_size]
 
         Returns
         -------
-        histogram : a numpy array of shape = [num_bins].
+        histogram : a numpy array of shape = [num_bins] or
+                    [n_instances, num_bins].
         """
         # First step is to pad the portion on both ends once.
-        gradients = [0.0] * (len(X))
-        X = np.pad(X, 1, mode="edge")
-        histogram = [0.0] * self.num_bins
+        X = np.pad(X, [(0, 0)] * (X.ndim - 1) + [(1, 1)], mode="edge")
+        gradients = self.scaling_factor * 0.5 * (X[..., 2:] - X[..., :-2])
+        orients = np.degrees(np.arctan(gradients))
 
-        # Calculate the gradients of each element
-        for i in range(1, len(X) - 1):
-            gradients[(i - 1)] = self.scaling_factor * 0.5 * (X[(i + 1)] - X[(i - 1)])
+        bin_width = 180 / self.num_bins
+        his_boundaries = -90 + bin_width + bin_width * np.arange(self.num_bins)
 
-        # Calculate the orientations
-        orients = [math.degrees(math.atan(x)) for x in gradients]
+        # index of the first boundary that is >= the orientation
+        bin_idx = np.searchsorted(his_boundaries, orients, side="left")
 
-        # Calculate the boundaries of the histogram
-        hisBoundaries = [
-            -90 + (180 / self.num_bins) + ((180 / self.num_bins) * x)
-            for x in range(self.num_bins)
-        ]
+        # count the bin indices per series, ignoring orientations above all bins
+        bin_idx = bin_idx.reshape(-1, bin_idx.shape[-1])
+        n_series = bin_idx.shape[0]
+        offsets = np.arange(n_series)[:, np.newaxis] * self.num_bins
+        in_range = bin_idx < self.num_bins
+        histogram = np.bincount(
+            (bin_idx + offsets)[in_range], minlength=n_series * self.num_bins
+        ).astype(float)
 
-        # Construct the histogram
-        for x in range(len(orients)):
-            orientToAdd = orients[x]
-            for y in range(len(hisBoundaries)):
-                if orientToAdd <= hisBoundaries[y]:
-                    histogram[y] += 1.0
-                    break
-
-        return histogram
+        return histogram.reshape(orients.shape[:-1] + (self.num_bins,))
 
     def _split_time_series(self, X):
         """Split a time series into approximately equal intervals.
@@ -205,12 +190,13 @@ class HOG1DTransformer(BaseTransformer):
             into approx equal length intervals of shape
             [num_intervals,interval_length].
         """
-        avg = len(X) / float(self.num_intervals)
+        length = X.shape[-1]
+        avg = length / float(self.num_intervals)
         output = []
         beginning = 0.0
 
-        while beginning < len(X):
-            output.append(X[int(beginning) : int(beginning + avg)])
+        while beginning < length:
+            output.append(X[..., int(beginning) : int(beginning + avg)])
             beginning += avg
 
         return output
