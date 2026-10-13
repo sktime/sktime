@@ -5,6 +5,7 @@ __all__ = ["WeightedEnsembleClassifier"]
 
 import numpy as np
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import KFold
 
 from sktime.base import _HeterogenousMetaEstimator
 from sktime.classification.base import BaseClassifier
@@ -47,7 +48,9 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             cv test folds must be non-intersecting
         int : equivalent to cv=KFold(cv, shuffle=True, random_state=x),
             i.e., k-fold cross-validation predictions out-of-sample
-            random_state x is taken from self if exists, otherwise x=None
+            random_state x is taken from the classifier if it has a
+            ``random_state`` parameter; otherwise, x is the ``random_state``
+            of the ensemble
     metric : sklearn metric for computing training score, default=accuracy_score
         only used if weights is a float
     metric_type : str, one of "point" or "proba", default="point"
@@ -199,7 +202,19 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         else:
             exponent = self.weights
             for clf_name, clf in self.classifiers_:
-                train_probs = clf.fit_predict_proba(X=X, y=y, cv=self.cv)
+                cv = self.cv
+                # if cv is int, classifiers without random_state parameter would
+                # shuffle folds using the global numpy RNG, to avoid this,
+                # the splitter is constructed here, with random_state of self
+                if (
+                    isinstance(cv, int)
+                    and self.random_state is not None
+                    and "random_state" not in clf.get_params(deep=False)
+                ):
+                    cv = KFold(
+                        n_splits=cv, shuffle=True, random_state=self.random_state
+                    )
+                train_probs = clf.fit_predict_proba(X=X, y=y, cv=cv)
                 train_preds = clf.classes_[np.argmax(train_probs, axis=1)]
                 if self.metric_type == "proba":
                     for i in range(len(train_preds)):

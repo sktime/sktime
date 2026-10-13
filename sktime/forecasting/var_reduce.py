@@ -134,6 +134,10 @@ class VARReduce(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # sklearn's SVR, used in the test parameters, has no random_state parameter
+        # and always draws a libsvm seed from the global numpy RNG in fit,
+        # this is not controllable from VARReduce, see #11388
+        "tests:skip_by_name": ["test_no_global_numpy_random_state_side_effects"],
     }
 
     def __init__(self, lags=1, regressor=None):
