@@ -195,14 +195,11 @@ class HurstExponentTransformer(BaseTransformer):
         y = ts.cumsum() - ts.mean()
         y_len = len(y)
         n_segments = y_len // lag
-        fluctuations = []
-        for i in range(n_segments):
-            segment = y[i * lag : (i + 1) * lag]
-            x = np.arange(lag)
-            coef = np.polyfit(x, segment, 1)
-            trend = np.polyval(coef, x)
-            fluctuation = np.sqrt(np.mean((segment - trend) ** 2))
-            fluctuations.append(fluctuation)
+        segments = y.iloc[: n_segments * lag].to_numpy().reshape(n_segments, lag).T
+        x = np.arange(lag)
+        coef = np.polyfit(x, segments, 1)
+        trend = x[:, np.newaxis] * coef[0] + coef[1]
+        fluctuations = np.sqrt(np.mean((segments - trend) ** 2, axis=0))
         return np.mean(fluctuations)
 
     def _fit_hurst(self, lags: list[int] | range, tau: list[float]) -> float:
