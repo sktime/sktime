@@ -481,7 +481,9 @@ class _CachedTimesFM:
 class _TimesFMTorch:
     """TimesFM 1.0 inference with ``transformers.TimesFmModelForPrediction``.
 
-    Has the interface of ``TimesFm`` in ``timesfm<1.2.0``, and the same forecasts:
+    Replaces ``TimesFm`` of the JAX implementation in ``sktime.libs.timesfm``, with
+    its methods used by ``TimesFMForecaster``, ``load_from_checkpoint``,
+    ``init_from_random_weights`` and ``forecast``, and its forecasting logic:
     autoregressive decoding of ``output_patch_len`` steps at a time, on the last
     ``context_len`` values, with point forecasts from the mean head, truncated at
     zero if all inputs are non-negative.
@@ -579,9 +581,11 @@ class _TimesFMTorch:
         Raises
         ------
         ValueError
-            If the weights do not match the model architecture, as given by
-            ``input_patch_len``, ``output_patch_len``, ``num_layers`` and
-            ``model_dims``.
+            If weights of the model architecture, as given by ``input_patch_len``,
+            ``output_patch_len``, ``num_layers`` and ``model_dims``, are missing,
+            or weights not in the model architecture are given.
+        RuntimeError
+            If the shapes of the weights do not match the model architecture.
         """
         model = self._build_model()
         result = model.load_state_dict(
