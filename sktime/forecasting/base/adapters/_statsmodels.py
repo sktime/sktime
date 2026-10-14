@@ -264,13 +264,9 @@ class _StatsModelsAdapter(BaseForecaster):
                 ).parameters
 
                 if "rng" in simulate_params:
-                    get_prediction_arguments["simulate_kwargs"] = {
-                        "rng": self.random_state
-                    }
+                    get_prediction_arguments["rng"] = self.random_state
                 else:
-                    get_prediction_arguments["simulate_kwargs"] = {
-                        "random_state": self.random_state
-                    }
+                    get_prediction_arguments["random_state"] = self.random_state
             elif "random_state" in get_prediction_params:
                 get_prediction_arguments["random_state"] = self.random_state
 
