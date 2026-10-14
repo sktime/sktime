@@ -30,6 +30,7 @@ Composition
 
     DetectorPipeline
     DetectorAsTransformer
+    StreamCalibrateFPR
 
 
 Change Point Detection
@@ -115,6 +116,14 @@ Reduction to Tabular Anomaly Detection
 
     PyODDetector
 
+.. currentmodule:: sktime.detection.reduce
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    ReducerPretrainDetector
+
 Naive Baselines
 ^^^^^^^^^^^^^^^
 
@@ -124,7 +133,10 @@ Naive Baselines
     :toctree: auto_generated/
     :template: class.rst
 
+    DummyPatternAnomalies
+    DummyRateAnomalies
     DummyRegularAnomalies
+    DummyTimeFreqAnomalies
     ZeroAnomalies
 
 .. currentmodule:: sktime.detection.naive
