@@ -240,6 +240,20 @@ def _evaluate_window(x, meta):
         fh = _select_fh_from_y(y_test)
 
     try:
+        # an empty training window cannot be used to fit or update;
+        # this can happen with splitters that produce formally empty folds,
+        # e.g., ExpandingGreedySplitter with too many folds for the series length.
+        # Fitting on an empty series does not fail reliably in all forecasters,
+        # so we raise here, so that this is handled consistently via error_score
+        if len(y_train) == 0:
+            raise ValueError(
+                f"Training window of the {i}-th data split is empty. "
+                "This usually means that the splitter cv produces more or longer "
+                "folds than the series length admits, e.g., because the number "
+                "of folds, the test size, or the forecasting horizon is too large "
+                "for the series. Please check the splitter settings."
+            )
+
         # fit/update
         start_fit = time.perf_counter()
         if i == 0 or strategy == "refit":
