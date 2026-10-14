@@ -12,7 +12,11 @@ import pandas as pd
 from pandas import Timedelta
 from pandas.tseries.frequencies import to_offset
 
-from sktime.utils.datetime import _coerce_duration_to_int, _to_offset_compat
+from sktime.utils.datetime import (
+    _coerce_duration_to_int,
+    _get_intervals_count_and_unit,
+    _to_offset_compat,
+)
 from sktime.utils.validation import (
     array_is_int,
     array_is_timedelta_or_date_offset,
@@ -190,7 +194,7 @@ def _extract_freq_from_cutoff(x) -> pd.offsets.BaseOffset | None:
     -------
     pandas offset, or None if x carries no frequency information
     """
-    if isinstance(x, (pd.Period, pd.PeriodIndex, pd.DatetimeIndex)):
+    if isinstance(x, (pd.Period, pd.PeriodIndex, pd.DatetimeIndex, pd.TimedeltaIndex)):
         return x.freq
     else:
         return None
@@ -230,6 +234,10 @@ class ForecastingHorizon:
           integer-like, timedelta-like, or date offset-like types.
           absolute, if not relative and values of supported absolute index type:
           time index types, e.g., DatetimeIndex or PeriodIndex.
+        - timedelta-like values are interpreted as relative by default.
+          To use timedelta-like values as absolute forecasting horizon,
+          e.g., for time series indexed by a ``pd.TimedeltaIndex`` such as
+          time since the start of an experiment, pass ``is_relative=False``.
 
     freq : str, pd.Index, pandas offset, or sktime forecaster, optional (default=None)
         object carrying frequency information on values
@@ -896,11 +904,20 @@ def _to_relative(fh: ForecastingHorizon, cutoff=None) -> ForecastingHorizon:
             # time deltas
             absolute = _coerce_to_period(absolute, freq=fh._freq)
             cutoff = _coerce_to_period(cutoff, freq=fh._freq)
+        elif isinstance(absolute, pd.TimedeltaIndex):
+            _check_timedelta_cutoff(cutoff, absolute)
+            if isinstance(cutoff, pd.Index):
+                # pd.TimedeltaIndex arithmetic does not broadcast length 1 indices
+                cutoff = cutoff[0]
 
         relative = absolute - cutoff
 
         # Coerce durations (time deltas) into integer values for given frequency
         if isinstance(absolute, (pd.PeriodIndex, pd.DatetimeIndex)):
+            relative = _coerce_duration_to_int(relative, freq=fh.freq)
+        elif isinstance(absolute, pd.TimedeltaIndex) and fh.freq is not None:
+            # absolute timedelta index, e.g., time since start of an experiment;
+            # with a known frequency, steps are integer multiples of it
             relative = _coerce_duration_to_int(relative, freq=fh.freq)
 
         return fh._new(relative, is_relative=True, freq=fh.freq)
@@ -927,6 +944,9 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
         Absolute representation of forecasting horizon.
     """
     if not fh.is_relative:
+        absolute = fh.to_pandas()
+        if isinstance(absolute, pd.TimedeltaIndex):
+            _check_timedelta_cutoff(cutoff.index, absolute)
         return fh._new()
 
     else:
@@ -964,6 +984,20 @@ def _to_absolute(fh: ForecastingHorizon, cutoff) -> ForecastingHorizon:
                     absolute = pd.DatetimeIndex(absolute)
                 else:
                     raise e
+        elif isinstance(cutoff, pd.TimedeltaIndex) and is_integer_index(relative):
+            # integer steps relative to a timedelta cutoff, e.g., time since start
+            # of an experiment, require the frequency to be known
+            if fh.freq is None:
+                raise ValueError(
+                    "Cannot convert an integer forecasting horizon to absolute "
+                    "values for a cutoff of type pd.TimedeltaIndex without a "
+                    "frequency. Please pass a time series with a freq attribute "
+                    "or set the freq of the ForecastingHorizon."
+                )
+            count, unit = _get_intervals_count_and_unit(fh.freq)
+            absolute = cutoff[[0] * len(relative)] + relative * pd.Timedelta(
+                count, unit
+            )
         else:
             if isinstance(cutoff, pd.Index):
                 cutoff = cutoff[[0] * len(relative)]
@@ -998,6 +1032,32 @@ def _check_cutoff(cutoff, index):
 
     if isinstance(index, pd.DatetimeIndex):
         assert isinstance(cutoff, (pd.Timestamp, pd.DatetimeIndex))
+
+
+def _check_timedelta_cutoff(cutoff, index):
+    """Check that the cutoff is timedelta-like for an absolute pd.TimedeltaIndex fh.
+
+    Parameters
+    ----------
+    cutoff : pd.Timedelta, pd.TimedeltaIndex, or other cutoff type
+        Cutoff value to check
+    index : pd.TimedeltaIndex
+        Absolute forecasting horizon values
+
+    Raises
+    ------
+    TypeError if cutoff is not of type pd.Timedelta or pd.TimedeltaIndex
+    """
+    if not isinstance(cutoff, (pd.Timedelta, pd.TimedeltaIndex)):
+        raise TypeError(
+            "A forecasting horizon with absolute values of type "
+            "pd.TimedeltaIndex requires a cutoff of type pd.Timedelta or "
+            "pd.TimedeltaIndex, i.e., the time series must be indexed by a "
+            f"pd.TimedeltaIndex, but found cutoff of type {type(cutoff)}. "
+            "Note that timedelta-like forecasting horizon values are relative "
+            "by default; for a relative forecasting horizon, use the default "
+            "is_relative=None or is_relative=True."
+        )
 
 
 def _coerce_to_period(x, freq=None):

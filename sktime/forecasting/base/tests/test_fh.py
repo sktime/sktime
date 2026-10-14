@@ -1089,3 +1089,98 @@ def test_timestamp_format_to_absolute():
     fh = ForecastingHorizon([1, 2, 3], freq="D")
     y_pred_idx = fh.to_absolute_index(cutoff)
     assert "12:00:00" in str(y_pred_idx)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+@pytest.mark.parametrize("freqstr", ["s", "10min", "D"])
+def test_fh_absolute_timedelta_index(freqstr):
+    """Test absolute forecasting horizons for series with TimedeltaIndex, #6546.
+
+    Timedelta-like values are relative by default, but can be used as absolute
+    forecasting horizon with ``is_relative=False``, e.g., for series indexed by
+    time since the start of an experiment. Conversions to relative and back
+    must round trip, and relative horizons must use the frequency of the index.
+    """
+    index = pd.timedelta_range(0, periods=13, freq=freqstr)
+    y = pd.Series(np.arange(13, dtype="float64"), index=index)
+    y_train, y_test = temporal_train_test_split(y, test_size=3)
+    cutoff = get_cutoff(y_train, return_index=True)
+    assert isinstance(cutoff, pd.TimedeltaIndex)
+
+    # absolute horizon from the test index
+    fh_abs = ForecastingHorizon(y_test.index, is_relative=False)
+    assert not fh_abs.is_relative
+    assert isinstance(fh_abs.to_pandas(), pd.TimedeltaIndex)
+
+    # conversion to relative gives integer steps in units of the frequency
+    fh_rel = fh_abs.to_relative(cutoff)
+    assert fh_rel.is_relative
+    assert_array_equal(fh_rel.to_pandas(), np.arange(1, 4))
+
+    # conversion back to absolute recovers the test index
+    fh_abs_2 = fh_rel.to_absolute(cutoff)
+    assert not fh_abs_2.is_relative
+    assert_array_equal(fh_abs_2.to_pandas(), y_test.index)
+    assert_array_equal(fh_abs.to_absolute_index(cutoff), y_test.index)
+
+    # in-sample and out-of-sample detection
+    assert fh_abs.is_all_out_of_sample(cutoff)
+    fh_in_sample = ForecastingHorizon(y_train.index[-2:], is_relative=False)
+    assert fh_in_sample.is_all_in_sample(cutoff)
+
+    # relative timedelta horizon converts to the same absolute horizon
+    fh_rel_td = ForecastingHorizon(y_test.index - cutoff[0])
+    assert fh_rel_td.is_relative
+    assert_array_equal(fh_rel_td.to_absolute(cutoff).to_pandas(), y_test.index)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+def test_fh_absolute_timedelta_index_predict():
+    """Test forecasting a series with TimedeltaIndex, failure case in #6546."""
+    from sktime.forecasting.trend import PolynomialTrendForecaster
+
+    index = pd.to_timedelta(np.arange(100), unit="s")
+    y = pd.Series(np.arange(100, dtype="float64"), index=index)
+    y_train, y_test = temporal_train_test_split(y, test_size=10)
+
+    fh_abs = ForecastingHorizon(y_test.index, is_relative=False)
+    fh_int = [1, 2, 3]
+    fh_td = ForecastingHorizon(pd.to_timedelta([1, 2, 3], unit="s"))
+
+    forecaster = NaiveForecaster(strategy="last")
+    forecaster.fit(y_train)
+    y_pred = forecaster.predict(fh_abs)
+    assert_array_equal(y_pred.index, y_test.index)
+    assert (y_pred == y_train.iloc[-1]).all()
+
+    for fh in [fh_int, fh_td]:
+        y_pred = forecaster.predict(fh)
+        assert_array_equal(y_pred.index, y_test.index[:3])
+
+    # the trend forecaster fits the linear trend in units of the index
+    forecaster = PolynomialTrendForecaster()
+    forecaster.fit(y_train)
+    y_pred = forecaster.predict(fh_abs)
+    assert_array_equal(y_pred.index, y_test.index)
+    np.testing.assert_allclose(y_pred.to_numpy(), y_test.to_numpy())
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.datatypes"]),
+    reason="run only if base module has changed or datatypes module has changed",
+)
+def test_fh_absolute_timedelta_index_wrong_cutoff():
+    """Test informative error for absolute timedelta fh with non-timedelta cutoff."""
+    y = load_airline()
+    forecaster = NaiveForecaster(strategy="last")
+    forecaster.fit(y)
+
+    fh = ForecastingHorizon(pd.to_timedelta([1, 2, 3], unit="D"), is_relative=False)
+    with pytest.raises(TypeError, match="requires a cutoff of type pd.Timedelta"):
+        forecaster.predict(fh)
