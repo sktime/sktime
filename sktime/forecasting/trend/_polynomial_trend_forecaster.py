@@ -45,6 +45,13 @@ class PolynomialTrendForecaster(BaseForecaster):
     of days since start of 1970. If time stamps are ``pd.PeriodIndex``,
     coefficients are in units of (full) periods since start of 1970.
 
+    For the default regressor (``LinearRegression``), the least squares problem is
+    solved on an affinely rescaled time axis, so that the polynomial features are
+    well-conditioned even when time stamps are large numbers (e.g., days since
+    1970) and ``degree`` is larger than 1. The fitted coefficients are then
+    converted back exactly, so ``regressor_`` and its coefficients are always
+    expressed in the original time units described above.
+
     Parameters
     ----------
     regressor : sklearn regressor estimator object, default = None
@@ -149,8 +156,19 @@ class PolynomialTrendForecaster(BaseForecaster):
         # the sklearn y can be taken as the y seen here
         X_sklearn = _get_X_numpy_int_from_pandas(y.index)
 
-        # fit regressor
-        self.regressor_.fit(X_sklearn, y.iloc[:, 0])
+        # time stamps can be large numbers, e.g., days since 1970, which makes
+        # polynomial features of higher degree severely ill-conditioned.
+        # We therefore fit on an affinely rescaled time axis, see _get_time_rescaling
+        self._t_offset, self._t_scale = self._get_time_rescaling(X_sklearn)
+
+        if self._fits_in_rescaled_time(regressor):
+            # fit in rescaled time, then convert coefficients back exactly,
+            # so regressor_ remains a pipeline in original time units
+            X_fit = self._rescale_time(X_sklearn)
+            self.regressor_.fit(X_fit, y.iloc[:, 0])
+            self._convert_coefs_to_original_time(self.regressor_.steps[-1][1])
+        else:
+            self.regressor_.fit(X_sklearn, y.iloc[:, 0])
 
         if self.prediction_intervals:
             # calculate and save values needed for the prediction interval method
@@ -161,6 +179,91 @@ class PolynomialTrendForecaster(BaseForecaster):
             self.train_index_ = y.index
 
         return self
+
+    def _get_time_rescaling(self, X):
+        """Get offset and scale of the affine time rescaling used in fitting.
+
+        The rescaled time is ``(t - offset) / scale``.
+
+        If ``with_intercept=True``, time is shifted and scaled to the unit interval.
+        If ``with_intercept=False``, the polynomial must vanish at the origin
+        of the original time axis, so time is only scaled, not shifted.
+
+        Parameters
+        ----------
+        X : 2D np.ndarray of shape (n, 1)
+            time stamps in original units, as returned by
+            ``_get_X_numpy_int_from_pandas``
+
+        Returns
+        -------
+        offset : float
+        scale : float, always positive
+        """
+        X = np.asarray(X, dtype="float64").reshape(-1)
+        if self.with_intercept:
+            offset = X.min()
+            scale = X.max() - offset
+        else:
+            offset = 0.0
+            scale = np.max(np.abs(X))
+        if not np.isfinite(scale) or scale == 0:
+            scale = 1.0
+        return float(offset), float(scale)
+
+    def _rescale_time(self, X):
+        """Apply the affine time rescaling obtained in fit to X."""
+        return (np.asarray(X, dtype="float64") - self._t_offset) / self._t_scale
+
+    def _fits_in_rescaled_time(self, regressor):
+        """Whether fitting is done in rescaled time, with exact back-conversion.
+
+        This is the case for an unconstrained ``LinearRegression``, where
+        the fitted polynomial does not depend on the parametrization of time,
+        and the coefficients can be converted back to original units exactly.
+        """
+        if not isinstance(regressor, LinearRegression):
+            return False
+        return not getattr(regressor, "positive", False)
+
+    def _convert_coefs_to_original_time(self, linreg):
+        """Convert coefficients of a fitted linear regressor to original time units.
+
+        ``linreg`` was fitted on polynomial features of the rescaled time
+        ``u = (t - offset) / scale``. Its ``coef_`` and ``intercept_`` are
+        replaced in-place by the coefficients of the same polynomial,
+        expressed in powers of the original time ``t``.
+
+        Parameters
+        ----------
+        linreg : fitted sklearn ``LinearRegression``
+            final step of ``self.regressor_``, fitted on rescaled time
+        """
+        poly = np.polynomial.Polynomial
+        start = 0 if self.with_intercept else 1
+
+        # polynomial in u, coefficients in increasing order of powers
+        coef_u = np.zeros(self.degree + 1)
+        coef_u[start:] = np.asarray(linreg.coef_, dtype="float64").reshape(-1)
+        intercept_u = float(np.asarray(linreg.intercept_).reshape(-1)[0])
+        coef_u[0] += intercept_u
+
+        # substitute u = (t - offset) / scale to obtain polynomial in t
+        u_of_t = poly([-self._t_offset / self._t_scale, 1 / self._t_scale])
+        coef_t = poly(coef_u)(u_of_t).coef
+        coef_t = np.pad(coef_t, (0, self.degree + 1 - len(coef_t)))
+
+        if linreg.fit_intercept:
+            # constant term goes to the intercept; the bias feature, if present,
+            # is centered away by sklearn and gets a zero coefficient
+            linreg.intercept_ = coef_t[0]
+            coef_t = coef_t.copy()
+            coef_t[0] = 0.0
+            linreg.coef_ = coef_t[start:]
+        else:
+            # no shift is applied if with_intercept=False, so coef_t[0] == 0
+            linreg.intercept_ = 0.0
+            linreg.coef_ = coef_t[start:]
 
     def _predict(self, fh=None, X=None):
         """Make forecasts for the given forecast horizon.
@@ -194,7 +297,10 @@ class PolynomialTrendForecaster(BaseForecaster):
             )
 
         # 1. get X (design matrix) and M = (X^t X)^-1
-        t_train = _get_X_numpy_int_from_pandas(self.train_index_).flatten()
+        # the term x_0^t M x_0 below is invariant under affine reparametrization
+        # of time, so we compute it in rescaled time for numerical stability
+        t_train = _get_X_numpy_int_from_pandas(self.train_index_)
+        t_train = self._rescale_time(t_train).flatten()
         X = np.polynomial.polynomial.polyvander(t_train, self.degree)
         if not self.with_intercept:
             X = X[:, 1:]  # remove the column of 1's that handles the intercept
@@ -207,7 +313,7 @@ class PolynomialTrendForecaster(BaseForecaster):
 
         t_fh = fh.to_pandas()
         fh_periods = _get_X_numpy_int_from_pandas(t_fh)
-        t = np.array(fh_periods)
+        t = self._rescale_time(np.array(fh_periods))
 
         # 3. calculate (half-) range of PI (1 + sqrt(x_0^t M x_0)) (up to scaling)
         start = 0 if self.with_intercept else 1
