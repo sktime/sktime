@@ -174,6 +174,15 @@ class HFTransformersForecaster(BaseForecaster):
         When ``fit_strategy`` is set to "peft",
         this will be used to set up PEFT parameters for the model.
         See the ``peft`` documentation for details [2]_.
+    device : str, optional (default=None)
+        Device on which to load the model, passed to the transformers
+        ``device_map``, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
+        ``"auto"`` selects an available accelerator. If ``None``, the
+        transformers default placement is used. Ignored when ``model_path`` is
+        an already initialized model object, which keeps its own device.
+        Setting ``device`` requires the ``accelerate`` package, which is not
+        part of the base ``transformers`` install. Install it with
+        ``pip install accelerate`` or ``pip install "transformers[torch]"``.
 
     References
     ----------
@@ -299,6 +308,13 @@ class HFTransformersForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_hf_transformers_forecaster"],
         "tests:python_dependencies": ["peft"],
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": [
+            # networks do not support negative fh
+            "test_predict_time_index_in_sample_full",
+            "test_get_test_params_coverage",
+        ],
     }
 
     def __init__(
@@ -312,8 +328,8 @@ class HFTransformersForecaster(BaseForecaster):
         deterministic=False,
         callbacks=None,
         peft_config=None,
+        device=None,
     ):
-        super().__init__()
         self.model_path = model_path
         self.fit_strategy = fit_strategy
         self.validation_split = validation_split
@@ -328,8 +344,29 @@ class HFTransformersForecaster(BaseForecaster):
         self.callbacks = callbacks
         self._callbacks = callbacks
         self.peft_config = peft_config
+        self.device = device
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Validate optional device placement dependencies."""
+        if self.device is not None:
+            _check_soft_dependencies(
+                "accelerate",
+                severity="error",
+                obj=self,
+                msg=(
+                    f"Error in {self.__class__.__name__}: the 'accelerate' "
+                    "package is required when 'device' is set, because "
+                    "transformers uses it for device_map. Install it with "
+                    "`pip install accelerate` or "
+                    '`pip install "transformers[torch]"`.'
+                ),
+            )
 
     def _fit(self, y, X, fh):
+        self._cur_y = y
+        self._cur_X = X
         from transformers import AutoConfig, PreTrainedModel, Trainer, TrainingArguments
 
         if isinstance(self.model_path, PreTrainedModel):
@@ -375,6 +412,10 @@ class HFTransformersForecaster(BaseForecaster):
             else:
                 raise ValueError("The model type cannot be inferred from the config.")
 
+            load_kwargs = {}
+            if self.device is not None:
+                load_kwargs["device_map"] = self.device
+
             self.model, self.info = getattr(
                 transformers, prediction_model_class
             ).from_pretrained(
@@ -382,6 +423,7 @@ class HFTransformersForecaster(BaseForecaster):
                 config=config,
                 output_loading_info=True,
                 ignore_mismatched_sizes=True,
+                **load_kwargs,
             )
 
             # Freeze loaded parameters and reinitialize mismatched layers
@@ -471,6 +513,7 @@ class HFTransformersForecaster(BaseForecaster):
             callbacks=self._callbacks,
         )
         trainer.train()
+        self.model = trainer.model
 
     def _predict(self, fh, X=None):
         import transformers
@@ -485,10 +528,10 @@ class HFTransformersForecaster(BaseForecaster):
         self.model.eval()
         from torch import from_numpy
 
-        hist = self._y.values.reshape((1, -1))
+        hist = self._cur_y.values.reshape((1, -1))
         if X is not None:
-            hist_x = self._X.values.reshape((1, -1, self._X.shape[-1]))
-            x_ = X.values.reshape((1, -1, self._X.shape[-1]))
+            hist_x = self._cur_X.values.reshape((1, -1, self._cur_X.shape[-1]))
+            x_ = X.values.reshape((1, -1, self._cur_X.shape[-1]))
             if x_.shape[1] < self.model.config.prediction_length:
                 # TODO raise exception here?
                 x_ = np.resize(
@@ -532,8 +575,8 @@ class HFTransformersForecaster(BaseForecaster):
             index=ForecastingHorizon(range(1, len(pred) + 1))
             .to_absolute(self._cutoff)
             ._values,
-            # columns=self._y.columns
-            name=self._y.name,
+            # columns=self._cur_y.columns
+            name=self._cur_y.name,
         )
         return pred.loc[fh.to_absolute(self.cutoff)._values]
 

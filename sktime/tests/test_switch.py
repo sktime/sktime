@@ -9,8 +9,6 @@ __author__ = ["fkiraly"]
 from functools import lru_cache
 from inspect import getmro, isclass
 
-from sktime.tests._config import EXCLUDE_ESTIMATORS
-
 LOCAL_PACKAGE = "sktime"
 
 
@@ -72,7 +70,7 @@ def run_test_for_class(cls, return_reason=False):
       If ``ONLY_CHANGED_MODULES`` is False, this condition is always True.
 
     Also checks whether the class or function is on the exclude override list,
-    EXCLUDE_ESTIMATORS in sktime.tests._config (a list of strings, of names).
+    as per the ``tests:skip_all`` tag in the estimator set to ``True``.
     If so, the tests are always skipped, irrespective of the other conditions.
 
     Parameters
@@ -157,7 +155,7 @@ def run_test_for_class(cls, return_reason=False):
     if hasattr(cls, "get_class_tag") and not isclass(cls):
         cls = cls.__class__
     # check whether estimator is on the exclude override list
-    if cls.__name__ in EXCLUDE_ESTIMATORS:
+    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
         return _return(False, "False_exclude_list")
 
     # now we know that cls is a class or function,
@@ -203,7 +201,7 @@ def _run_test_for_class(
         whether to run tests only for classes impacted by changed modules.
         If False, will only check active "False" conditions to skip.
     only_vm_required : boolean, default=False
-        whether th return only classes that require their own VM.
+        whether to return only classes that require their own VM.
         If True, will only return classes with tag "tests:vm"=True.
         If False, will only return classes with tag "tests:vm"=False.
 
@@ -425,7 +423,7 @@ def run_test_module_changed(module, only_changed_modules=None):
     -------
     bool : switch to run or skip the test
         True iff: at least one of the modules or its submodules have changed,
-        or if ``ONLY_CHANGED_MODULES`` is False
+        or if ``only_changed_modules`` is False
     """
     # default value for only_changed_modules
     if only_changed_modules is None:

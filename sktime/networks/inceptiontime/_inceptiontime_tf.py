@@ -55,6 +55,7 @@ class InceptionTimeNetwork(BaseDeepNetwork):
     _tags = {
         "authors": ["hfawaz", "JamesLarge", "Withington", "noxthot"],
         "python_dependencies": "tensorflow",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

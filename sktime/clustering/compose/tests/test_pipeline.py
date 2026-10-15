@@ -11,9 +11,6 @@ from sktime.clustering.compose import ClustererPipeline
 from sktime.clustering.dbscan import TimeSeriesDBSCAN
 from sktime.dists_kernels import FlatDist
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.exponent import ExponentTransformer
-from sktime.transformations.impute import Imputer
-from sktime.transformations.padder import PaddingTransformer
 from sktime.utils._testing.estimator_checks import _assert_array_almost_equal
 from sktime.utils._testing.panel import _make_panel_X
 
@@ -24,6 +21,8 @@ from sktime.utils._testing.panel import _make_panel_X
 )
 def test_dunder_mul():
     """Test the mul dunder method."""
+    from sktime.transformations.exponent import ExponentTransformer
+
     RAND_SEED = 42
     X = _make_panel_X(n_instances=10, n_timepoints=12, random_state=RAND_SEED)
     X_test = X
@@ -53,6 +52,8 @@ def test_dunder_mul():
 )
 def test_mul_sklearn_autoadapt():
     """Test auto-adapter for sklearn in mul."""
+    from sktime.transformations.exponent import ExponentTransformer
+
     RAND_SEED = 42
     X = _make_panel_X(n_instances=10, n_timepoints=12, random_state=RAND_SEED)
     X_test = X
@@ -81,6 +82,10 @@ def test_mul_sklearn_autoadapt():
 )
 def test_missing_unequal_tag_inference():
     """Test that ClustererPipeline infers missing/unequal tags correctly."""
+    from sktime.transformations.exponent import ExponentTransformer
+    from sktime.transformations.impute import Imputer
+    from sktime.transformations.padder import PaddingTransformer
+
     c = TimeSeriesDBSCAN(FlatDist.create_test_instance())
     c1 = ExponentTransformer() * PaddingTransformer() * ExponentTransformer() * c
     c2 = ExponentTransformer() * ExponentTransformer() * c

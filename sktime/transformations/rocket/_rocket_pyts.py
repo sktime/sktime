@@ -2,7 +2,6 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
 __all__ = ["RocketPyts"]
 
 from sktime.base.adapters._pyts import _PytsAdapter
@@ -93,12 +92,17 @@ class RocketPyts(_PytsAdapter, BaseTransformer):
         # estimator type
         # --------------
         "capability:multivariate": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "fit_is_empty": False,
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Primitives",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
+        # CI and test flags
+        # -----------------
+        "tests:libs": ["sktime.base.adapters._pyts"],
     }
 
     # defines the name of the attribute containing the pyts estimator
