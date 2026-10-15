@@ -162,6 +162,7 @@ class T0Forecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:non_contiguous_X": False,
+        "capability:update": True,
         "tests:vm": True,
     }
 
@@ -318,6 +319,61 @@ class T0Forecaster(BaseForecaster):
         # T0 expects context as (n_series, n_timesteps); each y column is a series
         self.context_ = context.values.T
         self._y_index_names = y.index.names
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update T0 context without reloading the pretrained model.
+
+        Prediction reads ``self.context_``. Prefer trimming to
+        ``context_length`` when set, instead of unbounded base ``_update``
+        refits or a stale context.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            New endogenous observations.
+        X : pd.DataFrame, optional (default=None)
+            New exogenous observations aligned with ``y``.
+        update_params : bool, optional (default=True)
+            Ignored for this zero-shot estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        import numpy as np
+
+        from sktime.datatypes import update_data
+
+        y_new = y if hasattr(y, "columns") else y.to_frame()
+        self.context_ = np.concatenate(
+            [self.context_, y_new.values.T.astype(self.context_.dtype, copy=False)],
+            axis=1,
+        )
+
+        context_length = self.context_length
+        if context_length is not None and self.context_.shape[1] > context_length:
+            self.context_ = self.context_[:, -context_length:]
+
+        if X is not None and getattr(self, "_X", None) is not None:
+            self._X = update_data(self._X, X)
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if (
+                y_stored is not None
+                and context_length is not None
+                and len(y_stored) > context_length
+            ):
+                self._y = y_stored.iloc[-context_length:]
+            X_stored = getattr(self, "_X", None)
+            if (
+                X_stored is not None
+                and context_length is not None
+                and len(X_stored) > context_length
+            ):
+                self._X = X_stored.iloc[-context_length:]
+
         return self
 
     def _predict(self, fh, X):
