@@ -20,6 +20,11 @@ class NeuralProphet(BaseForecaster):
     * integer/range index is interpreted as days since Jan 1, 2000
     * ``PeriodIndex`` is converted using the ``pandas`` method ``to_timestamp``
 
+    Notes
+    -----
+    NeuralProphet does not yet support pandas 3. Until upstream compatibility
+    is restored, this interface requires pandas 2.
+
     Parameters
     ----------
     freq : str, optional
@@ -107,6 +112,8 @@ class NeuralProphet(BaseForecaster):
             # keep scipy below that bound as well
             "numpy<2",
             "scipy<1.16",
+            # neuralprophet uses pandas APIs removed in pandas 3
+            "pandas<3",
         ],
         # neuralprophet causes a C-level segfault on Windows + Python 3.13+
         "env_marker": 'platform_system != "Windows" or python_version < "3.13"',

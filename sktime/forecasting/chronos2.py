@@ -87,7 +87,6 @@ class Chronos2Forecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:insample": False,
-        "capability:global_forecasting": True,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
