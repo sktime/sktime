@@ -328,6 +328,13 @@ if _check_soft_dependencies("polars", severity="none"):
         convert_mvs_to_polars_lazy_as_series
     )
 
+    _extend_conversions(
+        "pl.DataFrame", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
+    )
+    _extend_conversions(
+        "pl.LazyFrame", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
+    )
+
 
 if _check_soft_dependencies("gluonts", severity="none"):
     from sktime.datatypes._adapter.gluonts import (
