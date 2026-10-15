@@ -514,14 +514,18 @@ class AutoETS(_StatsModelsAdapter):
 
         Parameters
         ----------
-        parameter_set : str, default="default"
+        parameter_set : str, default = "default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
-
+            There are currently no reserved values for forecasters.
 
         Returns
         -------
-        params : dict or list of dict
+        params : dict or list of dict , default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params
         """
         params = [
             # default setting, non-auto
@@ -530,6 +534,18 @@ class AutoETS(_StatsModelsAdapter):
             # TODO: uncomment following line while fixing #4591
             # {"sp": 2, "auto": True},
             # ets (non-auto) with some non-default parameters
+            {
+                "error": "mul",
+                "trend": "mul",
+                "damped_trend": True,
+                "seasonal": "mul",
+                "sp": 2,
+                "initialization_method": "heuristic",
+                "maxiter": 100,
+                "auto": True,
+                "information_criterion": "bic",
+                "allow_multiplicative_trend": True,
+            },
             {"information_criterion": "bic", "trend": "add", "damped_trend": True},
         ]
 
