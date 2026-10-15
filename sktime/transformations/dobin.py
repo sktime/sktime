@@ -88,7 +88,6 @@ class DOBIN(BaseTransformer):
         "fit_is_empty": False,
         "skip-inverse-transform": True,
         "capability:categorical_in_X": False,
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -222,6 +221,29 @@ class DOBIN(BaseTransformer):
             return new_dobin._coords
 
         return self._coords
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        param1 = {"frac": 0.9, "k": 3}
+        param2 = {"frac": 0.95}
+        return [param1, param2]
 
 
 def close_distance_matrix(X: npt.ArrayLike, k: int, frac: float):
