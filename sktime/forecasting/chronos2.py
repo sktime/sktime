@@ -88,6 +88,7 @@ class Chronos2Forecaster(BaseForecaster):
         "capability:multivariate": True,
         "capability:insample": False,
         "capability:non_contiguous_X": False,
+        "capability:update": True,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
         "tests:skip_by_name": [
@@ -213,6 +214,66 @@ class Chronos2Forecaster(BaseForecaster):
 
         self._context = context
         self._y_index_names = y.index.names
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update Chronos-2 context with new observations without refitting.
+
+        Chronos-2 is a zero-shot foundation model: ``_predict`` conditions only on
+        ``self._context``, the trailing ``context_length`` window of endogenous
+        data (and the matching past covariates in ``self._cur_X``).
+
+        The base ``_update`` would either refit on all remembered data
+        (``update_params=True``) or leave ``self._context`` stale
+        (``update_params=False``). Both are wrong for this estimator: refitting is
+        unnecessary and unbounded in memory, and a stale context ignores new
+        observations. Instead we append new data and rebuild the truncated
+        context window.
+
+        ``update_params`` has no effect: the model is used zero-shot and
+        ``_fit`` only loads the pretrained pipeline.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            New endogenous observations.
+        X : pd.DataFrame, optional (default=None)
+            New past exogenous covariates aligned with ``y``.
+        update_params : bool, optional (default=True)
+            Ignored for this zero-shot estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+
+        context_length = self._config["context_length"]
+        if context_length is None:
+            self._ensure_model_pipeline_loaded()
+            context_length = self.model_pipeline.model_context_length
+
+        if len(self._cur_y) > context_length:
+            self._cur_y = self._cur_y.iloc[-context_length:]
+            if self._cur_X is not None:
+                self._cur_X = self._cur_X.iloc[-len(self._cur_y) :]
+
+        self._context = self._cur_y.values.T
+
+        # Public ``update`` may have appended to the base remembered pool via
+        # ``_update_y_X``. Trim it to the same context window when present.
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if y_stored is not None and len(y_stored) > context_length:
+                self._y = y_stored.iloc[-context_length:]
+            X_stored = getattr(self, "_X", None)
+            if X_stored is not None and len(X_stored) > context_length:
+                self._X = X_stored.iloc[-context_length:]
+
         return self
 
     def _predict(self, fh, X=None):
