@@ -64,3 +64,46 @@ def test_clone_nested_sklearn():
 
     # failure condition, see issue #4704: the setting of the copy also sets the orig
     assert original_model.get_params()["estimator__random_state"] == 5
+
+
+def test_load_warns_on_version_mismatch():
+    """Tests that loading an object saved with a different sktime version warns.
+
+    Raises
+    ------
+    AssertionError if a UserWarning mentioning the sktime version mismatch is
+    not raised when deserializing an object saved with a different version.
+    """
+    import warnings
+
+    from sktime.forecasting.naive import NaiveForecaster
+
+    forecaster = NaiveForecaster()
+    # simulate an object that was saved by an older sktime version
+    forecaster.set_tags(sktime_version="0.0.0")
+    cls, stored = forecaster.save()
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        cls.load_from_serial(stored)
+
+    version_warnings = [w for w in caught if "sktime version" in str(w.message)]
+    assert len(version_warnings) == 1
+    assert issubclass(version_warnings[0].category, UserWarning)
+
+
+def test_load_no_warning_on_version_match():
+    """Tests that no version-mismatch warning is raised when versions match."""
+    import warnings
+
+    from sktime.forecasting.naive import NaiveForecaster
+
+    forecaster = NaiveForecaster()
+    cls, stored = forecaster.save()
+
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        cls.load_from_serial(stored)
+
+    version_warnings = [w for w in caught if "sktime version" in str(w.message)]
+    assert len(version_warnings) == 0
