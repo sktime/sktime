@@ -141,6 +141,7 @@ class TimesFM3Forecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:non_contiguous_X": False,
+        "capability:update": True,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_timesfm3"],
     }
@@ -309,6 +310,46 @@ class TimesFM3Forecaster(BaseForecaster):
         self._check_license()
         self._load_model()
         self._y_index_names = y.index.names
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update TimesFM-3 history without reloading the pretrained model.
+
+        Prediction conditions on the trailing ``global_context`` window of
+        ``self._y`` (see ``_run_forecast``). Base ``_update`` would either refit
+        or leave an unbounded/stale history. Append and trim instead.
+
+        ``update_params`` is ignored: TimesFM-3 is used zero-shot.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            New endogenous observations.
+        X : pd.DataFrame, optional (default=None)
+            New exogenous observations aligned with ``y``.
+        update_params : bool, optional (default=True)
+            Ignored for this zero-shot estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        self._y = update_data(self._y, y) if getattr(self, "_y", None) is not None else y
+        if X is not None:
+            self._X = (
+                update_data(self._X, X) if getattr(self, "_X", None) is not None else X
+            )
+
+        forecaster = self._ensure_model_loaded()
+        max_len = forecaster.global_context
+
+        if len(self._y) > max_len:
+            self._y = self._y.iloc[-max_len:]
+        if getattr(self, "_X", None) is not None and len(self._X) > max_len:
+            self._X = self._X.iloc[-max_len:]
+
         return self
 
     def _build_future_exog(self, X, past_future_cols, horizon):
