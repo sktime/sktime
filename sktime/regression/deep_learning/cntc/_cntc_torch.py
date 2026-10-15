@@ -226,6 +226,7 @@ class CNTCRegressorTorch(BaseDeepRegressorTorch):
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.cntc._cntc_torch"],
+        "tests:core": True,
     }
 
     def __init__(
