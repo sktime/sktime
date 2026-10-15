@@ -178,6 +178,12 @@ class ExponentialSmoothing(_StatsModelsAdapter):
 
         super().__init__(random_state=random_state)
 
+        if self.trend in ["mul", "multiplicative"] or self.seasonal in [
+            "mul",
+            "multiplicative",
+        ]:
+            self.set_tags(**{"capability:supports-negative-data": False})
+
     def _fit_forecaster(self, y, X=None):
         from statsmodels.tsa.holtwinters import (
             ExponentialSmoothing as _ExponentialSmoothing,
