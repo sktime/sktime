@@ -156,6 +156,29 @@ class MyForecaster(BaseForecaster):
         # if True, implement _pretrain and optionally _pretrain_update below
         # enables the pretrain -> fit -> predict workflow for global learning
         #
+        # pretrain:fitted_params = attributes that carry pretrained state
+        "pretrain:fitted_params": [],
+        # valid values: list of str, names of instance attributes set by pretrain
+        # only meaningful if capability:pretrain is True
+        # example: ["model_", "network_"]
+        #
+        # capability:categorical_in_X = can estimator handle categorical columns in X?
+        "capability:categorical_in_X": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:categorical_in_y = can estimator handle categorical columns in y?
+        "capability:categorical_in_y": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:non_contiguous_X = handle non-contiguous exogenous X?
+        "capability:non_contiguous_X": True,
+        # valid values: boolean True (yes), False (no)
+        # if False, exogenous X must share a contiguous index with y / fh
+        #
+        # capability:unequal_length = can estimator handle unequal length panel series?
+        "capability:unequal_length": True,
+        # valid values: boolean True (yes), False (no)
+        #
         # property:randomness = does the estimator behave deterministically or randomly?
         "property:randomness": "deterministic",
         # valid values: str, one of "deterministic", "stochastic", "derandomized"
