@@ -67,6 +67,20 @@ def test_get_X_numpy():
     assert (X_idx_int.reshape(-1) == int_ix.to_numpy()).all()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("unit", ["s", "ms", "us", "ns"])
+def test_get_X_numpy_datetime_resolution(unit):
+    """Test _get_X_numpy_int_from_pandas does not depend on datetime resolution."""
+    timestamps = np.array(
+        ["2000-01-01", "2000-01-02", "2000-01-04"], dtype=f"datetime64[{unit}]"
+    )
+    X = _get_X_numpy_int_from_pandas(pd.DatetimeIndex(timestamps))
+    np.testing.assert_array_equal(X.reshape(-1), [10957.0, 10958.0, 10960.0])
+
+
 def get_expected_polynomial_coefs(y, degree, with_intercept=True):
     """Compute expected coefficients from polynomial regression."""
     t_ix = _get_X_numpy_int_from_pandas(y.index).reshape(-1)

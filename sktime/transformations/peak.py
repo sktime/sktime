@@ -181,7 +181,6 @@ class PeakTimeFeature(BaseTransformer):
         # --------------
         "authors": ["ali-parizad"],
         "maintainers": ["ali-parizad"],
-        "python_dependencies": "pandas>=1.2.0",  # from DateTimeProperties
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
