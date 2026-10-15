@@ -23,3 +23,18 @@ def test_bad_input_args(bad_components):
     else:
         with pytest.raises(ValueError):
             PCATransformer(n_components=bad_components).fit(X)
+
+
+def test_set_params_is_applied_to_inner_pca_on_fit():
+    """Check parameters changed after construction are used by sklearn PCA."""
+    X = np.random.default_rng(0).normal(size=(10, 2, 4))
+    transformer = PCATransformer(n_components=1, whiten=False)
+
+    transformer.set_params(n_components=2, whiten=True)
+    transformer.fit(X)
+
+    assert transformer.get_params()["n_components"] == 2
+    assert transformer.get_params()["whiten"] is True
+    assert transformer.pca.n_components == 2
+    assert transformer.pca.whiten is True
+    assert transformer.pca.components_.shape[0] == 2
