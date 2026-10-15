@@ -5,7 +5,7 @@ __author__ = ["fkiraly"]
 import pytest
 
 from sktime.datatypes import scitype_to_mtype
-from sktime.datatypes._convert import _conversions_defined, convert
+from sktime.datatypes._convert import _conversions_defined, convert, convert_to
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import generate_scitype_list
 from sktime.tests.test_switch import run_test_module_changed
@@ -14,6 +14,25 @@ from sktime.utils.deep_equals import deep_equals
 # scitypes which have no conversions defined
 # should be listed here to avoid false positive test errors
 SCITYPES_NO_CONVERSIONS = ["Alignment"]
+
+
+@pytest.mark.parametrize("converter", [convert, convert_to])
+@pytest.mark.parametrize("return_to_mtype", [False, True])
+def test_convert_none_return_type(converter, return_to_mtype):
+    """Test that conversion of None respects the requested return type."""
+    kwargs = {
+        "obj": None,
+        "to_type": "pd.DataFrame",
+        "as_scitype": "Series",
+        "return_to_mtype": return_to_mtype,
+    }
+    if converter is convert:
+        kwargs["from_type"] = "pd.DataFrame"
+
+    converted = converter(**kwargs)
+
+    expected = (None, None) if return_to_mtype else None
+    assert converted == expected
 
 
 def _generate_fixture_tuples():

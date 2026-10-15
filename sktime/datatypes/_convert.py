@@ -131,7 +131,7 @@ def convert(
     TypeError or ValueError if inputs do not match specification
     """
     if obj is None:
-        return None
+        return (None, None) if return_to_mtype else None
 
     # if to_type is a list, we do the following:
     # if on the list, then don't do a conversion (convert to from_type)
@@ -245,7 +245,7 @@ def convert_to(
     TypeError or ValueError if inputs do not match specification
     """
     if obj is None:
-        return None
+        return (None, None) if return_to_mtype else None
 
     # input checks on to_type, as_scitype; coerce to_type, as_scitype to lists
     to_type = _check_str_or_list_of_str(to_type, obj_name="to_type")
