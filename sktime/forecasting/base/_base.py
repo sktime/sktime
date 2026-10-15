@@ -64,6 +64,7 @@ from sktime.datatypes import (
     update_data,
 )
 from sktime.datatypes._dtypekind import DtypeKind
+from sktime.datatypes._utilities import get_time_index
 from sktime.forecasting.base._clone_plugin import _PretrainedCloner
 from sktime.forecasting.base._fh import ForecastingHorizon
 from sktime.forecasting.base._state_at import _StateAtMixin
@@ -2042,10 +2043,13 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # compatibility checks between X and y
         if X is not None and y is not None:
             if self.get_tag("X-y-must-have-same-index"):
-                # currently, check_equal_time_index only works for Series
-                # TODO: fix this so the check is general, using get_time_index
-                if self.get_tag("capability:exogenous") and X_scitype == "Series":
-                    check_equal_time_index(X, y, mode="contains")
+                # X may be longer than y, since it must also cover fh
+                if self.get_tag("capability:exogenous"):
+                    X_time = get_time_index(X)
+                    y_time = get_time_index(y)
+                    check_equal_time_index(
+                        X_time.to_series(), y_time.to_series(), mode="contains"
+                    )
 
             if y_scitype != X_scitype:
                 raise TypeError("X and y must have the same scitype")
