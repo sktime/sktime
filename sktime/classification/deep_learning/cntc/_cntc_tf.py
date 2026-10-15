@@ -105,12 +105,11 @@ class CNTCClassifier(BaseDeepClassifier):
         # ---------------------
         "tests:libs": ["sktime.networks.cntc._cntc_tf"],
         "tests:skip_by_name": [
-            "test_fit_idempotent",
+            "test_deepcopy_fitted_predict",
         ],
         # Run tests in a dedicated VM due to sporadic crashes and possible
         # memory leaks (see #8518)
         "tests:vm": True,
-        "serialization:native_artifacts": ("model_", "input_model_"),
     }
 
     def __init__(
@@ -203,45 +202,38 @@ class CNTCClassifier(BaseDeepClassifier):
         )
         return model
 
-    def build_input_model(self, input_shape):
-        """Construct the Keras model used for CNTC input preprocessing."""
-        from tensorflow import keras
+    def _init_projections(self, X):
+        """Draw the random projections used by ``prepare_input``.
 
-        n_timepoints, n_dimensions = input_shape
-        input_layers = []
-        output_layers = []
+        The projections replace a randomly initialized ``Dense`` layer, and are
+        drawn once, from ``random_state``, so that ``prepare_input`` returns the
+        same result for the same input, in ``fit`` and in ``predict``.
 
-        for _ in range(n_dimensions):
-            input_layer = keras.layers.Input((2 * n_timepoints,))
-            output_layer = keras.layers.Dense(n_timepoints)(input_layer)
-            output_layer = keras.layers.Reshape((n_timepoints, 1))(output_layer)
-            input_layers.append(input_layer)
-            output_layers.append(output_layer)
+        Arguments
+        ---------
+        X: 3D np.ndarray of shape = (n_instances, series_length, n_dimensions)
+            The data that the projections are drawn for.
 
-        if n_dimensions == 1:
-            output_layer = output_layers[0]
-        else:
-            output_layer = keras.layers.Concatenate(axis=2)(output_layers)
-
-        return keras.models.Model(inputs=input_layers, outputs=output_layer)
-
-    def _prepare_window_input(self, X):
-        """Prepare rolling-window inputs for the CNTC preprocessing model."""
+        Sets
+        ----
+        self._projections_ : list of 2D np.ndarray
+            One projection matrix per dimension of ``X``, of shape
+            ``(2 * series_length, series_length)``.
+        """
         import numpy as np
-        import pandas as pd
 
-        window_inputs = []
+        rng = check_random_state(self.random_state)
+        n_timepoints = X.shape[1]
+        n_projections = 1 if X.shape[2] == 1 else X.shape[2]
 
-        for i in range(X.shape[2]):
-            trainX1 = X[:, :, i]
-            pd_trainX = pd.DataFrame(trainX1)
-
-            window = pd_trainX.rolling(window=3).mean()
-            window = window.fillna(0)
-
-            window_inputs.append(np.concatenate((trainX1, window), axis=1))
-
-        return window_inputs
+        # glorot uniform, the default initializer of keras.layers.Dense
+        limit = np.sqrt(6.0 / (2 * n_timepoints + n_timepoints))
+        self._projections_ = [
+            rng.uniform(
+                low=-limit, high=limit, size=(2 * n_timepoints, n_timepoints)
+            ).astype(np.float32)
+            for _ in range(n_projections)
+        ]
 
     def prepare_input(self, X):
         """
@@ -266,12 +258,41 @@ class CNTCClassifier(BaseDeepClassifier):
         trainX: tuple,
             The input to be fed to the two arms of CNTC.
         """
-        window_inputs = self._prepare_window_input(X)
-        return self.input_model_.predict(
-            window_inputs,
-            batch_size=self.batch_size,
-            verbose=0,
-        )
+        import numpy as np
+        import pandas as pd
+
+        if not hasattr(self, "_projections_"):
+            self._init_projections(X)
+
+        if X.shape[2] == 1:
+            # Converting data to pandas
+            trainX1 = X.reshape([X.shape[0], X.shape[1]])
+            pd_trainX = pd.DataFrame(trainX1)
+
+            # Taking rolling window
+            window = pd_trainX.rolling(window=3).mean()
+            window = window.fillna(0)
+
+            trainX2 = np.concatenate((trainX1, window), axis=1)
+            trainX2 = np.matmul(trainX2, self._projections_[0])
+            trainX = trainX2.reshape((trainX2.shape[0], trainX2.shape[1], 1))
+        else:
+            trainXs = []
+            for i in range(X.shape[2]):
+                trainX1 = X[:, :, i]
+                pd_trainX = pd.DataFrame(trainX1)
+
+                window = pd_trainX.rolling(window=3).mean()
+                window = window.fillna(0)
+
+                trainX2 = np.concatenate((trainX1, window), axis=1)
+                trainX2 = np.matmul(trainX2, self._projections_[i])
+
+                trainX = trainX2.reshape((trainX2.shape[0], trainX2.shape[1], 1))
+                trainXs.append(trainX)
+
+            trainX = np.concatenate(trainXs, axis=2)
+        return trainX
 
     def _fit(self, X, y):
         """Fit the classifier on the training set (X, y).
@@ -289,10 +310,9 @@ class CNTCClassifier(BaseDeepClassifier):
         """
         y_onehot = self._convert_y_to_keras(y)
 
-        check_random_state(self.random_state)
+        self._init_projections(X)
         self.input_shape = X.shape[1:]
         self.model_ = self.build_model(self.input_shape, self.n_classes_)
-        self.input_model_ = self.build_input_model(self.input_shape)
         X2 = self.prepare_input(X)
         if self.verbose:
             self.model_.summary()
@@ -392,8 +412,13 @@ class CNTCClassifier(BaseDeepClassifier):
         return params
 
     @staticmethod
-    def get_custom_objects():
-        """Return the custom objects needed for loading the model."""
+    def _get_keras_custom_objects():
+        """Return custom Keras objects required to deserialize the fitted model.
+
+        Returns
+        -------
+        dict of str to type, mapping names to classes
+        """
         from sktime.libs._keras_self_attention import SeqSelfAttention
 
         return SeqSelfAttention.get_custom_objects()
