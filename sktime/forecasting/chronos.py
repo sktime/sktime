@@ -306,6 +306,7 @@ class ChronosForecaster(BaseForecaster):
         # estimator type
         # --------------
         "capability:exogenous": False,
+        "fm": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
         "enforce_index_type": None,

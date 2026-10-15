@@ -163,6 +163,7 @@ class WindFMForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:multivariate": False,
         "capability:exogenous": True,
+        "fm": True,
         "capability:missing_values": False,
         "capability:insample": True,
         "capability:pred_int": True,

@@ -124,6 +124,8 @@ Cointegration
     :template: class.rst
 
     JohansenCointegration
+    EngleGrangerCointegration
+    PhillipsOuliarisCointegration
 
 
 Impulse and Shock Response Estimation

@@ -174,6 +174,7 @@ class TimerS1Forecaster(BaseForecaster):
 
     _tags = {
         "capability:exogenous": False,
+        "fm": True,
         "requires-fh-in-fit": False,
         "capability:insample": False,
         "capability:pred_int": True,
