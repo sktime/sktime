@@ -351,7 +351,7 @@ class BaseRegressor(BasePanelMixin):
         -------
         float (default) or 1D np.array of float
             R-squared score of predict(X) vs y
-            float if multioutput="uniform_average" or "variance_weighted,
+            float if multioutput="uniform_average" or "variance_weighted",
             or y is univariate;
             1D np.array if multioutput="raw_values" and y is multivariate
         """
