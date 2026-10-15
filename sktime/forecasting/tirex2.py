@@ -147,6 +147,7 @@ class TiRex2Forecaster(BaseForecaster):
         "capability:insample": False,
         "capability:categorical_in_X": False,
         "capability:non_contiguous_X": False,
+        "capability:update": True,
         "requires-fh-in-fit": False,
         # CI and test flags
         # -----------------
@@ -299,6 +300,57 @@ class TiRex2Forecaster(BaseForecaster):
         else:
             self._X_context = None
             self._X_columns = []
+
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update TiRex-2 context without reloading the pretrained model.
+
+        Prediction conditions on ``self._context`` (and matching past covariates
+        in ``self._X_context``), truncated to ``model.context_len``. Base
+        ``_update`` would either refit or leave context stale. Append and trim
+        instead.
+
+        ``update_params`` is ignored: TiRex-2 is used zero-shot.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            New endogenous observations.
+        X : pd.DataFrame, optional (default=None)
+            New exogenous observations aligned with ``y``.
+        update_params : bool, optional (default=True)
+            Ignored for this zero-shot estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        model = self._ensure_model_loaded()
+        context_length = model.context_len
+
+        self._context = update_data(self._context, y)
+        if X is not None:
+            if self._X_context is None:
+                self._X_context = X
+                self._X_columns = list(X.columns)
+            else:
+                self._X_context = update_data(self._X_context, X)
+
+        if len(self._context) > context_length:
+            self._context = self._context.iloc[-context_length:]
+        if self._X_context is not None:
+            self._X_context = self._X_context.reindex(self._context.index)
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if y_stored is not None and len(y_stored) > context_length:
+                self._y = y_stored.iloc[-context_length:]
+            X_stored = getattr(self, "_X", None)
+            if X_stored is not None and len(X_stored) > context_length:
+                self._X = X_stored.iloc[-context_length:]
 
         return self
 
