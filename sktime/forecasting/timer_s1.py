@@ -638,5 +638,8 @@ class _CachedTimerS1:
         model = model.to(self.device_map)
         if self.dtype is not None:
             model = model.to(dtype=self.dtype)
+        # ``from_pretrained`` returns models in eval mode; match that here so
+        # dropout is inactive during predict
+        model.eval()
 
         return model
