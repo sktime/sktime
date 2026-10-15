@@ -17,6 +17,19 @@ class RepeatBootstrapTransformer(BaseTransformer):
     ----------
     n_series : int, optional
         The number of repeats that will be generated, by default 10.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.bootstrap import RepeatBootstrapTransformer
+    >>> X = pd.DataFrame({"a": [1.0, 2.0]})
+    >>> t = RepeatBootstrapTransformer(n_series=2)
+    >>> t.fit_transform(X)
+           a
+    0 0  1.0
+      1  2.0
+    1 0  1.0
+      1  2.0
     """
 
     _tags = {
