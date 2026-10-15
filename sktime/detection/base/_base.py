@@ -5,8 +5,9 @@
     class name: BaseDetector
 
 Scitype defining methods:
+    pretraining          - pretrain(self, X, y=None)
     fitting              - fit(self, X, y=None)
-    annotating           - predict(self, X)
+    dtecting             - predict(self, X)
     updating (temporal)  - update(self, X, y=None)
     update&annotate      - update_predict(self, X, y=None)
 
@@ -17,6 +18,7 @@ Inspection methods:
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - check_is_fitted()
+    estimator state         - state, one of "new", "pretrained", "fitted"
 """
 
 __author__ = ["fkiraly", "tveten", "alex-jg3", "satya-pattnaik"]
@@ -29,6 +31,7 @@ from skbase.utils.dependencies import _check_estimator_deps
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
+from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.series import check_series
 
 
@@ -79,6 +82,7 @@ class BaseDetector(BaseEstimator):
         "capability:multivariate": False,
         "capability:missing_values": False,
         "capability:update": False,
+        "capability:pretrain": False,
         "capability:variable_identification": False,
         #
         # todo: distribution_type does not seem to be used - refactor or remove
@@ -88,6 +92,8 @@ class BaseDetector(BaseEstimator):
     }
 
     def __init__(self):
+        self._state = "new"
+
         super().__init__()
 
         # this block has a double purpose:
@@ -106,6 +112,29 @@ class BaseDetector(BaseEstimator):
         * any soft dependency imports in the constructor
         """
         pass
+
+    @classmethod
+    def _get_clone_plugins(cls):
+        """Get clone plugins for BaseDetector.
+
+        Overrides the default skbase clone behavior to preserve
+        pretrained attributes when cloning detectors.
+
+        The ``_PretrainedCloner`` plugin ensures that when a detector
+        with pretrained state is cloned, the pretrained attributes are
+        copied to the clone. Detectors without the ``capability:pretrain``
+        tag are cloned as usual.
+
+        Returns
+        -------
+        list
+            List containing ``_PretrainedCloner`` plugin class.
+        """
+        # imported here and not at module level, as detection must not
+        # import forecasting at module level, see the cross module import test
+        from sktime.forecasting.base._clone_plugin import _PretrainedCloner
+
+        return [_PretrainedCloner]
 
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated DetectorPipeline.
@@ -138,6 +167,213 @@ class BaseDetector(BaseEstimator):
             return TabularToSeriesAdaptor(other) * self
         else:
             return NotImplemented
+
+    @property
+    def _is_fitted(self):
+        """Internal fitted state for backward compatibility with skbase.
+
+        Returns True only after ``fit``, not after ``pretrain``.
+        For pretrain state checks, use ``self.state`` directly.
+
+        Returns
+        -------
+        bool
+            True if the detector has been fitted, False otherwise.
+        """
+        return self._state == "fitted"
+
+    @_is_fitted.setter
+    def _is_fitted(self, value):
+        """Setter for backward compatibility.
+
+        Parameters
+        ----------
+        value : bool
+            If True, sets state to "fitted". If False, sets state to "new".
+        """
+        if value:
+            self._state = "fitted"
+        else:
+            self._state = "new"
+
+    @property
+    def state(self):
+        """State of the detector.
+
+        Possible states for detectors are:
+
+        * "new": post-init state
+        * "pretrained": after ``pretrain`` has been called, until ``fit`` is called
+        * "fitted": after ``fit`` has been called
+
+        Returns
+        -------
+        str, one of {"new", "pretrained", "fitted"}
+            State of the detector.
+        """
+        return self._state
+
+    def pretrain(self, X, y=None):
+        """Pretrain detector on a collection of time series.
+
+        Pretrains the detector on Panel or Hierarchical data, i.e., multiple
+        time series, before it is fitted to a single series via ``fit``.
+
+        Only detectors with the ``capability:pretrain`` tag set to ``True``
+        learn from the data. For all other detectors, ``pretrain`` is a no-op:
+        the data is checked, nothing is stored, and only the state changes.
+
+        For detectors with the ``capability:pretrain`` tag, if ``pretrain`` is
+        called when the detector is already in the ``"pretrained"`` or
+        ``"fitted"`` state, the internal ``_pretrain_update`` method is called
+        instead of ``_pretrain``. By default, this pretrains again on the new
+        data only, replacing the previous pretrained state.
+
+        State change:
+            Changes state to ``"pretrained"``.
+
+        Writes to self:
+
+            * Sets ``self.state`` to ``"pretrained"``.
+            * If the ``capability:pretrain`` tag is ``True``, sets pretrained
+              model attributes ending in ``"_"``, inspectable via
+              ``get_pretrained_params``.
+
+        Parameters
+        ----------
+        X : Panel or Hierarchical data in ``sktime`` compatible format
+            Data to pretrain the detector on, must contain multiple time series.
+            For instance, a ``pd.DataFrame`` with 2-level row ``MultiIndex``
+            ``(instance, time)``, or a 3D ``np.ndarray``
+            ``(instance, variable, time)``.
+            Hierarchical data is flattened to Panel data, by joining all
+            instance levels into one level, for instance, the instance
+            ``("h0_0", "h1_0")`` becomes ``"h0_0__h1_0"``.
+
+        y : optional, default=None
+            Known events in ``X``, for detectors that learn from labels.
+            Not checked or converted, passed on to ``_pretrain`` as is.
+            Ignored by detectors without the ``capability:pretrain`` tag.
+
+        Returns
+        -------
+        self : reference to self
+
+        Raises
+        ------
+        TypeError
+            If ``X`` is a single time series, or not valid Panel
+            or Hierarchical data.
+
+        See Also
+        --------
+        fit : Fit detector to a single series.
+        get_pretrained_params : Retrieve parameters set during pretraining.
+        state : Current state of the detector.
+        """
+        _check_estimator_deps(self)
+
+        X, X_metadata = self._check_X_pretrain(X)
+
+        # detectors without pretrain capability: no-op, only the state changes
+        can_pretrain = self.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+        if not can_pretrain:
+            self._state = "pretrained"
+            return self
+
+        # pretrain accepts panel data independent of what fit and predict
+        # support via X_inner_mtype, so panel mtypes are added here
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        if isinstance(X_inner_mtype, str):
+            X_inner_mtype = [X_inner_mtype]
+        X_inner = convert(
+            X,
+            from_type=X_metadata["mtype"],
+            to_type=list(X_inner_mtype) + ["pd-multiindex"],
+        )
+
+        prior_attrs = {
+            a for a in dir(self) if a.endswith("_") and not a.startswith("_")
+        }
+
+        if self._state == "new":
+            self._pretrain(X=X_inner, y=y)
+        else:
+            self._pretrain_update(X=X_inner, y=y)
+
+        if not hasattr(self, "_pretrained_attrs"):
+            self._pretrained_attrs = []
+
+        # track attributes set by this pretrain call
+        new_attrs = [
+            a
+            for a in dir(self)
+            if a.endswith("_")
+            and not a.startswith("_")
+            and a not in self._pretrained_attrs
+            and a not in prior_attrs
+        ]
+        self._pretrained_attrs.extend(new_attrs)
+
+        self._state = "pretrained"
+        return self
+
+    def get_pretrained_params(self, deep=True):
+        """Get pretrained parameters of this detector.
+
+        Returns a dictionary of attributes that were set during ``pretrain``.
+        These are attributes ending in ``"_"`` that appeared on the detector
+        after ``pretrain`` was called, and are tracked separately from the
+        fitted parameters set by ``fit``.
+
+        Returns an empty dict if the detector has not been pretrained,
+        or does not have the ``capability:pretrain`` tag.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return pretrained parameters of nested estimators.
+
+            * If True, will return a dict of parameter name : value for this
+              object, including pretrained parameters of nested estimators.
+            * If False, will return a dict of parameter name : value for this
+              object, but not include pretrained parameters of nested
+              estimators.
+
+        Returns
+        -------
+        params : dict
+            Dictionary of pretrained parameter names mapped to their values.
+            Keys are attribute names ending in ``"_"`` that were set during
+            pretraining.
+
+            If ``deep=True``, also contains keys/value pairs of nested
+            estimators' pretrained parameters, indexed as
+            ``[attrname]__[paramname]``.
+
+        See Also
+        --------
+        pretrain : Pretrain detector on a collection of time series.
+        get_fitted_params : Get parameters set during ``fit``.
+        """
+        if not hasattr(self, "_pretrained_attrs"):
+            return {}
+
+        params = {}
+        for attr in self._pretrained_attrs:
+            if hasattr(self, attr):
+                value = getattr(self, attr)
+                params[attr] = value
+
+                # Handle nesting: if value is an estimator with pretrained params
+                if deep and hasattr(value, "get_pretrained_params"):
+                    nested = value.get_pretrained_params(deep=True)
+                    for nested_key, nested_val in nested.items():
+                        params[f"{attr}__{nested_key}"] = nested_val
+
+        return params
 
     def fit(self, X, y=None):
         """Fit to training data.
@@ -607,6 +843,127 @@ class BaseDetector(BaseEstimator):
         X_inner_mtype = self.get_tag("X_inner_mtype")
         X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
         return X_inner
+
+    def _check_X_pretrain(self, X):
+        """Check input data to pretrain, and flatten Hierarchical data to Panel.
+
+        Unlike ``_check_X``, does not write to self.
+
+        Panel data is returned unchanged. Hierarchical data is flattened to
+        Panel data, by joining all instance levels into one level with
+        ``flatten_multiindex``, for instance, the instance ``("h0_0", "h1_0")``
+        becomes ``"h0_0__h1_0"``.
+
+        Parameters
+        ----------
+        X : object
+            Input data to ``pretrain``.
+
+        Returns
+        -------
+        X : Panel data
+            ``X`` if it is Panel data, or ``X`` flattened to a ``pd.DataFrame``
+            with 2-level row ``MultiIndex`` if it is Hierarchical data.
+        X_metadata : dict
+            Metadata of the returned ``X``, as returned by ``check_is_scitype``,
+            contains the mtype of ``X`` in the ``"mtype"`` key.
+
+        Raises
+        ------
+        TypeError
+            If ``X`` is a single time series, or not valid Panel
+            or Hierarchical data.
+        """
+        name = type(self).__name__
+
+        if check_is_scitype(X, scitype="Series"):
+            raise TypeError(
+                f"{name}.pretrain requires Panel or Hierarchical data "
+                "(multiple time series), but a single Series was passed. "
+                "Use fit for a single series, or pass Panel data to pretrain, "
+                "for instance a pd.DataFrame with 2-level row MultiIndex "
+                "(instance, time)."
+            )
+
+        X_valid, X_msg, X_metadata = check_is_scitype(
+            X, scitype=["Panel", "Hierarchical"], return_metadata=[]
+        )
+
+        # flatten all instance levels into one level, then continue as Panel
+        if X_valid and X_metadata["scitype"] == "Hierarchical":
+            X = convert(X, from_type=X_metadata["mtype"], to_type="pd_multiindex_hier")
+            instances = flatten_multiindex(X.index.droplevel(-1))
+            times = X.index.get_level_values(-1)
+            flat_index = pd.MultiIndex.from_arrays(
+                [instances, times], names=[None, times.name]
+            )
+            X = X.set_axis(flat_index, axis=0)
+            X_valid, X_msg, X_metadata = check_is_scitype(
+                X, scitype="Panel", return_metadata=[]
+            )
+
+        if not X_valid:
+            check_is_error_msg(
+                X_msg,
+                var_name=f"Unsupported input data type in {name}.pretrain, input X",
+                allowed_msg=(
+                    "Allowed scitypes for X in pretrain are Panel and Hierarchical, "
+                    "for instance a pd.DataFrame with 2-level row MultiIndex "
+                    "(instance, time), or a 3D np.ndarray (instance, variable, time)."
+                ),
+                raise_exception=True,
+            )
+
+        return X, X_metadata
+
+    def _pretrain(self, X, y=None):
+        """Pretrain detector on a collection of time series, first call.
+
+        private _pretrain containing the core logic, called from pretrain
+        if the ``capability:pretrain`` tag is ``True``
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : pd.DataFrame with 2-level row MultiIndex, or other Panel mtype
+            Data to pretrain the detector on, a collection of time series.
+        y : optional, default=None
+            Known events in ``X``, as passed to ``pretrain``.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+        """
+        # the default simply discards the data, i.e., no pretraining happens
+        return self
+
+    def _pretrain_update(self, X, y=None):
+        """Pretrain detector on a collection of time series, if already pretrained.
+
+        private _pretrain_update containing the core logic, called from pretrain
+        if the ``capability:pretrain`` tag is ``True``, and the detector
+        is already in the ``"pretrained"`` or ``"fitted"`` state
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : pd.DataFrame with 2-level row MultiIndex, or other Panel mtype
+            Data to pretrain the detector on, a collection of time series.
+        y : optional, default=None
+            Known events in ``X``, as passed to ``pretrain``.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+        """
+        # the default calls _pretrain, i.e., the new data replaces the old
+        return self._pretrain(X=X, y=y)
 
     def _fit(self, X, y=None):
         """Fit to training data.

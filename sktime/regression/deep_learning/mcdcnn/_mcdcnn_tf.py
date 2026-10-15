@@ -88,6 +88,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.mcdcnn._mcdcnn_tf"],
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

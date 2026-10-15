@@ -4,7 +4,21 @@ from sktime.catalogues.base import BaseCatalogue
 
 
 class DummyForecastingCatalogue(BaseCatalogue):
-    """Dummy catalogue of datasets, forecasters, metrics, and cv."""
+    """Dummy catalogue of datasets, forecasters, metrics, and cv.
+
+    Examples
+    --------
+    >>> from sktime.catalogues import DummyForecastingCatalogue
+    >>> catalogue = DummyForecastingCatalogue()
+    >>> len(catalogue)
+    5
+    >>> "Airline" in catalogue
+    True
+    >>> catalogue.get("dataset")
+    ['Airline']
+    >>> catalogue.get("dataset", as_object=True)[0].__name__
+    'Airline'
+    """
 
     _tags = {
         "authors": "jgyasu",
