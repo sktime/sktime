@@ -62,6 +62,7 @@ Pipelines can also be constructed using ``*``, ``**``, ``+``, and ``|`` dunders.
     FhPlexForecaster
     IgnoreX
     FallbackForecaster
+    FrozenForecaster
 
 Reduction
 ---------
