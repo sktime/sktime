@@ -11,6 +11,7 @@ __author__ = [
     "Lovkush-A",
     "fkiraly",
     "benheid",
+    "RobKuebler",
 ]
 
 __all__ = [
@@ -2507,6 +2508,12 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
           an ``Imputer``.
         * if None, no imputation is done when applying ``Lag`` transformer
 
+    transformers : list of sktime transformers, optional, default=None
+        Transformers applied to ``y``, e.g., ``WindowSummarizer``, whose outputs
+        are added as features, in addition to the lags of ``y``.
+        Features are computed from ``y(t)``, ``y(t-1)``, ... and used to predict
+        ``y(t+1)``, hence no leakage. Transformers must preserve the index of ``y``.
+
     pooling : str, one of ["local", "global", "panel"], optional, default="local"
         level on which data are pooled to fit the supervised regression model
         "local" = unit/instance level, one reduced model per lowest hierarchy level
@@ -2541,7 +2548,9 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
         window_length=10,
         impute_method="bfill",
         pooling="local",
+        transformers=None,
     ):
+        self.transformers = transformers
         self.window_length = window_length
         self.estimator = estimator
         self.impute_method = impute_method
@@ -2636,6 +2645,11 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
         # lagger_y_to_X_ will lag y to obtain the sklearn X
         lags = self._lags
         lagger_y_to_X = Lag(lags=lags, index_out="extend")
+
+        if self.transformers is not None:
+            from sktime.transformations.compose import FeatureUnion
+
+            lagger_y_to_X = FeatureUnion([lagger_y_to_X, *self.transformers])
 
         if impute_method is not None:
             lagger_y_to_X = lagger_y_to_X * impute_method.clone()
@@ -2853,6 +2867,7 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
 
         from sktime.forecasting.compose._reduce import DirectReductionForecaster
         from sktime.transformations.impute import Imputer
+        from sktime.transformations.summarize import WindowSummarizer
 
         est = LinearRegression()
         forecaster_imputer = Imputer(
@@ -2895,7 +2910,28 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
             "impute_method": "pad",
         }
 
-        return [params1, params2, params3, params4, params5, params6]
+        params7 = {
+            "estimator": est,
+            "window_length": 3,
+            "pooling": "local",
+            "impute_method": "bfill",
+            "transformers": [
+                WindowSummarizer(lag_feature={"mean": [[0, 3]]}, truncate="bfill")
+            ],
+        }
+        params8 = {
+            "estimator": est,
+            "window_length": 3,
+            "pooling": "global",
+            "impute_method": "bfill",
+            "transformers": [
+                WindowSummarizer(
+                    lag_feature={"mean": [[0, 3]], "std": [[0, 4]]}, truncate="bfill"
+                )
+            ],
+        }
+
+        return [params1, params2, params3, params4, params5, params6, params7, params8]
 
 
 class YfromX(_ReducerMixin, BaseForecaster):
