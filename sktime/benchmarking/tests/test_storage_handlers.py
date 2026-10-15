@@ -5,6 +5,7 @@ from sktime.benchmarking._benchmarking_dataclasses import FoldResults, ResultObj
 from sktime.benchmarking._storage_handlers import (
     CSVStorageHandler,
     JSONStorageHandler,
+    _parse_frame_literal,
     # ParquetStorageHandler,
 )
 from sktime.benchmarking.benchmarks import BenchmarkingResults
@@ -42,6 +43,60 @@ RESULT_OBJECT_LISTS = [
         )
     ],
 ]
+
+
+@pytest.mark.parametrize(
+    "index",
+    [
+        pd.period_range("2020-01", periods=3, freq="M", name="time"),
+        pd.date_range("2020-01-01", periods=3, name="time"),
+        pd.date_range("2020-01-01", periods=3, tz="UTC", name="time"),
+        pd.MultiIndex.from_product(
+            [["series"], pd.period_range("2020-01", periods=3, freq="M")],
+            names=["instance", "time"],
+        ),
+    ],
+)
+def test_csv_roundtrip_time_index(tmp_path, index):
+    """CSV results retain pandas time indexes in every stored fold frame."""
+    frame = pd.DataFrame({"y": [1.0, 2.0, 3.0]}, index=index)
+    result = ResultObject(
+        model_id="model",
+        task_id="task",
+        folds={
+            0: FoldResults(
+                scores={"error": 0.0},
+                ground_truth=frame,
+                predictions=frame + 1,
+                train_data=frame + 2,
+            )
+        },
+    )
+    handler = CSVStorageHandler(tmp_path / "results.csv")
+    handler.save([result])
+
+    loaded = handler.load()[0].folds[0]
+    for name in ["ground_truth", "predictions", "train_data"]:
+        pd.testing.assert_frame_equal(
+            getattr(loaded, name), getattr(result.folds[0], name), check_freq=False
+        )
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "[open('results.csv')]",
+        "[__import__('os')]",
+        "[Timestamp(__import__('os'))]",
+        "[pd.Timestamp('2020-01-01')]",
+        "[Timestamp('2020-01-01').date()]",
+        "[Period(**{'value': '2020-01', 'freq': 'M'})]",
+    ],
+)
+def test_csv_frame_literal_rejects_other_calls(value):
+    """The CSV parser accepts time literals without evaluating arbitrary calls."""
+    with pytest.raises(ValueError, match="malformed node or string"):
+        _parse_frame_literal(value)
 
 
 @pytest.mark.parametrize(
