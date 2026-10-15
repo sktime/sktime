@@ -119,3 +119,48 @@ def test_autots_exogenous():
     # Test predict_interval with X
     intervals = forecaster.predict_interval(fh=fh, X=X_pred, coverage=0.9)
     assert len(intervals) == 3
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(AutoTS, severity="none"),
+    reason="autots not available",
+)
+def test_autots_predict_quantiles():
+    """Test that AutoTS can produce quantile forecasts."""
+    import numpy as np
+
+    from sktime.datasets import load_airline
+
+    y = load_airline()
+
+    # Fast settings for testing only
+    forecaster = AutoTS(
+        model_list="superfast",
+        max_generations=1,
+        num_validations=0,
+        random_seed=42,
+    )
+
+    forecaster.fit(y, fh=[1, 2, 3])
+
+    # Test with symmetric quantiles
+    alpha = [0.05, 0.5, 0.95]
+    quantiles = forecaster.predict_quantiles(alpha=alpha)
+
+    assert isinstance(quantiles, pd.DataFrame)
+    assert quantiles.shape == (3, 3)
+    assert quantiles.columns.nlevels == 2
+
+    # Quantiles should be monotonically ordered
+    q05 = quantiles.iloc[:, 0]
+    q50 = quantiles.iloc[:, 1]
+    q95 = quantiles.iloc[:, 2]
+    assert (q50 >= q05).all()
+    assert (q95 >= q50).all()
+
+    # alpha=0.5 should match point forecast
+    y_pred = forecaster.predict()
+    np.testing.assert_array_almost_equal(
+        q50.values, y_pred.values.ravel()
+    )
+
