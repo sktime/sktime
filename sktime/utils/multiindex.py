@@ -155,7 +155,9 @@ def apply_method_per_series(y, method_name, *args, **kwargs):
 
     series_idx_tuples = y.index.droplevel(-1).unique().to_list()
     series_list = []
-    for group_keys in series_idx_tuples:
+    for raw_keys in series_idx_tuples:
+        # Guard against scalar string keys unpacking character-by-character
+        group_keys = raw_keys if isinstance(raw_keys, tuple) else (raw_keys,)
         y_series = y.loc[group_keys]
         y_series = getattr(y_series, method_name)(*args, **kwargs)
         # Add multiindex
