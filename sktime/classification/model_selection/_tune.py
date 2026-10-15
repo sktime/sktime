@@ -12,9 +12,6 @@ from sktime.base._panel._tune import (
 from sktime.classification._delegate import _DelegatedClassifier
 
 
-# todo 1.3.0: remove the n_jobs, pre_dispatch and return_train_score parameters,
-# from the signature and the docstring, and remove the calls to
-# _resolve_deprecated_parallel and _check_return_train_score in _fit_tuner
 class TSCGridSearchCV(_DelegatedClassifier):
     """Exhaustive search over specified parameter values for a classifier.
 
@@ -57,14 +54,6 @@ class TSCGridSearchCV(_DelegatedClassifier):
           metric names in ``cv_results_``
         - if None, defaults to ``accuracy_score``
 
-    n_jobs : int, optional, default="deprecated"
-        Number of jobs to run in parallel over the parameter candidates.
-
-        Deprecated, and will be removed in sktime 1.3.0. If passed, the value is
-        written to ``backend_params``, and ``backend`` defaults to ``"loky"``,
-        so behaviour is unchanged. To retain the behaviour after removal, pass
-        ``backend="loky"`` and ``backend_params={"n_jobs": ...}`` instead.
-
     refit : bool, str, or callable, default=True
         Refit ``best_estimator_`` using the best found parameters on the whole
         dataset. If False, ``predict`` and ``predict``-like methods raise, and
@@ -101,27 +90,11 @@ class TSCGridSearchCV(_DelegatedClassifier):
     verbose : int, default=0
         Controls the verbosity. If positive, the number of fits is printed.
 
-    pre_dispatch : int or str, optional, default="deprecated"
-        Number of jobs dispatched during parallel execution, a ``joblib``
-        parameter.
-
-        Deprecated, and will be removed in sktime 1.3.0. If passed, the value is
-        written to ``backend_params``, and ``backend`` defaults to ``"loky"``,
-        so behaviour is unchanged. To retain the behaviour after removal, pass
-        ``backend="loky"`` and ``backend_params={"pre_dispatch": ...}`` instead.
-
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised. If a numeric value is given,
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
-
-    return_train_score : bool, default=False
-        Whether to include training scores in ``cv_results_``.
-
-        Deprecated, and will be removed in sktime 1.3.0. Train scores are not
-        computed by the native grid search, so the value passed is ignored and
-        ``cv_results_`` contains test scores only. Passing True raises a warning.
 
     tune_by_variable : bool, optional (default=False)
         Whether to tune parameter by each time series variable separately,
