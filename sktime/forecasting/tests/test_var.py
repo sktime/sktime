@@ -1,6 +1,6 @@
 """Tests the VAR model."""
 
-__author__ = ["thayeylolu"]
+__author__ = ["thayeylolu", "dhairya-motta"]
 import numpy as np
 import pandas as pd
 import pytest
@@ -50,3 +50,46 @@ def test_VAR_against_statsmodels():
     for i in fh_int:
         new_arr.append(y_pred_stats[i - 1])
     assert_allclose(y_pred, new_arr)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(VAR),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_VAR_ic_aic_k_ar_zero():
+    """Regression test for #4055: VAR with ic='aic' when k_ar=0 is selected.
+
+    Uses a fixed-seed i.i.d. white-noise dataset where AIC reliably selects
+    k_ar=0 (no autoregressive lags), ensuring the statsmodels IndexError fix
+    is exercised deterministically on every test run.
+    """
+    pandas2 = _check_soft_dependencies("pandas>=2.0.0", severity="none")
+    freq = "ME" if pandas2 else "M"
+
+    rng = np.random.default_rng(42)
+    n_obs = 50
+
+    index = pd.date_range(start="2010", periods=n_obs, freq=freq)
+    # Pure i.i.d. white noise: no autocorrelation, so AIC should select k_ar=0
+    data = rng.standard_normal((n_obs, 2))
+    df = pd.DataFrame(data, columns=["A", "B"], index=pd.PeriodIndex(index))
+
+    forecaster = VAR(ic="aic")
+    forecaster.fit(df)
+
+    # Confirm the edge case is actually triggered — if this fails, the dataset
+    # no longer forces k_ar=0 and the test needs to be updated
+    assert forecaster._fitted_forecaster.k_ar == 0, (
+        "Expected k_ar=0 for i.i.d. white noise with ic='aic', "
+        f"but got k_ar={forecaster._fitted_forecaster.k_ar}. "
+        "The test dataset may need adjustment."
+    )
+
+    fh = ForecastingHorizon([1, 3])
+
+    # Both of these must not raise IndexError (the bug this test guards against)
+    y_pred = forecaster.predict(fh=fh)
+    assert y_pred.shape == (2, 2)
+
+    pred_int = forecaster.predict_interval(fh=fh, coverage=[0.9])
+    assert pred_int.shape[0] == 2
