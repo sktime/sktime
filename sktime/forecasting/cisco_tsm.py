@@ -132,6 +132,7 @@ class CiscoTSMForecaster(BaseForecaster):
         "capability:missing_values": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:update": True,
         "requires-fh-in-fit": False,
         # CI and test flags
         # -----------------
@@ -243,6 +244,46 @@ class CiscoTSMForecaster(BaseForecaster):
 
         self._context_ = context
         self._y_name_ = y.name
+
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update Cisco TSM context without reloading or refitting the model.
+
+        Prediction conditions on ``self._context_``, already clipped to
+        ``context_length`` in ``_fit``. Base ``_update`` would either refit or
+        leave that context stale; append and re-trim instead.
+
+        ``update_params`` is ignored for zero-shot / frozen-backbone inference.
+
+        Parameters
+        ----------
+        y : pd.Series
+            New endogenous observations.
+        X : ignored
+        update_params : bool, optional (default=True)
+            Ignored for this estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        y_arr = y.to_numpy(dtype=np.float32).ravel()
+        self._context_ = np.concatenate(
+            [np.asarray(self._context_, dtype=np.float32).ravel(), y_arr]
+        )
+
+        if self.context_length is not None and len(self._context_) > self.context_length:
+            self._context_ = self._context_[-self.context_length :]
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if (
+                y_stored is not None
+                and self.context_length is not None
+                and len(y_stored) > self.context_length
+            ):
+                self._y = y_stored.iloc[-self.context_length :]
 
         return self
 
