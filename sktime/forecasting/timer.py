@@ -94,6 +94,8 @@ class TimerForecaster(BaseForecaster):
         # CI and test tags
         # ----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.timer"],
+        "tests:specific": ["sktime.forecasting.tests.test_timer"],
     }
 
     def __init__(
