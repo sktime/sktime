@@ -85,11 +85,12 @@ def _weighted_geometric_mean(y, weights=None, axis=None):
 
     Parameters
     ----------
-    y : np.ndarray
+    y : array-like
         Values to take the weighted geometric mean of.
-    weights: np.ndarray
-        Weights for each value in `array`. Must be same shape as `array` or
-        of shape `(array.shape[0],)` if axis=0 or `(array.shape[1], ) if axis=1.
+    weights : array-like
+        Weights for each value in `y`. Must be same shape as `y` or
+        of shape `(y.shape[0],)` if axis=0 or `(y.shape[1],)` if axis=1.
+        Lists, tuples, and pandas objects are coerced with ``numpy.asarray``.
     axis : int
         The axis of `y` to apply the weights to.
 
@@ -98,6 +99,10 @@ def _weighted_geometric_mean(y, weights=None, axis=None):
     geometric_mean : float
         Weighted geometric mean
     """
+    # horizon weights are documented as array-like, so accept lists and tuples
+    # as well as ndarrays. See sktime#4988.
+    y = np.asarray(y)
+    weights = np.asarray(weights)
     if weights.ndim == 1:
         if axis == 0:
             check_consistent_length(y, weights)
