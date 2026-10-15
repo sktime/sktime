@@ -4,7 +4,7 @@ __author__ = ["TNTran92", "yarnabrina"]
 
 import pytest
 from numpy.testing import assert_allclose
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 
 from sktime.forecasting.sarimax import SARIMAX
 from sktime.tests.test_switch import run_test_for_class
@@ -139,3 +139,63 @@ def test_SARIMAX_update_with_exogenous_variables():
     # Verify that the forecaster state is correctly updated
     assert forecaster2.cutoff == y_test.index[-1]
     assert forecaster2._is_fitted
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SARIMAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("index_type", ["range", "period"])
+@pytest.mark.parametrize("with_exog", [False, True])
+@pytest.mark.parametrize("full_history", [False, True])
+def test_SARIMAX_update_seen_data(index_type, with_exog, full_history):
+    """Updating with only seen observations does not append an empty batch."""
+    y, X = make_forecasting_problem(
+        n_timepoints=25, index_type=index_type, make_X=True, random_state=0
+    )
+    X = X if with_exog else None
+    y_train = y.iloc[:20]
+    X_train = X.iloc[:20] if with_exog else None
+    X_pred = X.iloc[20:23] if with_exog else None
+    forecaster = SARIMAX(order=(1, 0, 0)).fit(y_train, X=X_train)
+    expected = forecaster.predict(fh=[1, 2, 3], X=X_pred)
+    fitted = forecaster._fitted_forecaster
+
+    y_update = y_train if full_history else y_train.iloc[-5:]
+    X_update = X_train if full_history or not with_exog else X_train.iloc[-5:]
+    result = forecaster.update(y_update, X=X_update, update_params=False)
+
+    assert result is forecaster
+    assert forecaster._fitted_forecaster is fitted
+    assert_series_equal(forecaster.predict(fh=[1, 2, 3], X=X_pred), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SARIMAX),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("index_type", ["range", "period"])
+@pytest.mark.parametrize("with_exog", [False, True])
+def test_SARIMAX_update_overlapping_data(index_type, with_exog):
+    """Append unseen observations once, including when an update is repeated."""
+    y, X = make_forecasting_problem(
+        n_timepoints=25, index_type=index_type, make_X=True, random_state=0
+    )
+    X = X if with_exog else None
+    X_train = X.iloc[:20] if with_exog else None
+    forecaster = SARIMAX(order=(1, 0, 0)).fit(y.iloc[:20], X=X_train)
+    expected_forecaster = SARIMAX(order=(1, 0, 0)).fit(y.iloc[:20], X=X_train)
+    y_update = y.iloc[15:22]
+    X_update = X.iloc[15:22] if with_exog else None
+    X_new = X.iloc[20:22] if with_exog else None
+    X_pred = X.iloc[22:25] if with_exog else None
+
+    forecaster.update(y_update, X=X_update, update_params=False)
+    expected_forecaster.update(y.iloc[20:22], X=X_new, update_params=False)
+    expected = expected_forecaster.predict(fh=[1, 2, 3], X=X_pred)
+    assert forecaster._fitted_forecaster.nobs == 22
+    assert_series_equal(forecaster.predict(fh=[1, 2, 3], X=X_pred), expected)
+
+    forecaster.update(y_update, X=X_update, update_params=False)
+    assert forecaster._fitted_forecaster.nobs == 22
+    assert_series_equal(forecaster.predict(fh=[1, 2, 3], X=X_pred), expected)
