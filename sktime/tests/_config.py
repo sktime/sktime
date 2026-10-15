@@ -54,7 +54,6 @@ EXCLUDE_SOFT_DEPS = [
     "PluginParamsForecaster",
     "PluginParamsTransformer",
     "RegressorPipeline",
-    "SupervisedIntervals",
     "TSBootstrapAdapter",
     "ThetaModularForecaster",
     "WeightedEnsembleClassifier",
