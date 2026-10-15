@@ -1,8 +1,5 @@
 """Slope transformer."""
 
-import math
-import statistics
-
 import numpy as np
 import pandas as pd
 
@@ -10,7 +7,7 @@ from sktime.datatypes import convert
 from sktime.transformations.base import BaseTransformer
 
 __all__ = ["SlopeTransformer"]
-__author__ = ["mloning"]
+__author__ = ["mloning", "AyushAnand413"]
 
 
 class SlopeTransformer(BaseTransformer):
@@ -23,12 +20,24 @@ class SlopeTransformer(BaseTransformer):
 
     Parameters
     ----------
-    num_intervals : int, number of approx equal segments
-                    to split the time series into.
+    num_intervals : int, default=8
+        Number of approximately equal segments to split the time series into.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.slope import SlopeTransformer
+    >>> from sktime.datatypes import convert
+    >>> X_3d = np.random.RandomState(42).normal(size=(5, 1, 20))
+    >>> X = convert(X_3d, from_type="numpy3D", to_type="nested_univ")
+    >>> transformer = SlopeTransformer(num_intervals=4)
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.shape
+    (5, 1)
     """
 
     _tags = {
-        "authors": ["mloning"],
+        "authors": ["mloning", "AyushAnand413"],
         "scitype:transform-input": "Series",
         # what is the scitype of X: Series, or Panel
         "scitype:transform-output": "Series",
@@ -73,6 +82,7 @@ class SlopeTransformer(BaseTransformer):
         self._check_parameters(n_timepoints)
 
         Xt = pd.DataFrame()
+        avg = n_timepoints / float(self.num_intervals)
 
         for x in col_names:
             # Convert one of the columns in the dataframe to numpy array
@@ -83,22 +93,40 @@ class SlopeTransformer(BaseTransformer):
                 as_scitype="Panel",
             )
 
-            # Calculate gradients
-            transformedData = []
-            for y in range(num_instances):
-                res = self._get_gradients_of_lines(arr[y])
-                transformedData.append(res)
+            # Vectorized gradient calculation across all instances simultaneously
+            beginning = 0.0
+            gradients = []
+            while beginning < n_timepoints:
+                start = int(beginning)
+                end = int(beginning + avg)
+                seg = arr[:, start:end]
+                seg_len = seg.shape[1]
 
-            # Convert to Numpy array
-            transformedData = np.asarray(transformedData)
+                if seg_len <= 1:
+                    m = np.zeros(num_instances, dtype=np.float64)
+                else:
+                    x_coord = np.arange(1, seg_len + 1, dtype=np.float64)
+                    mean_x = (seg_len + 1.0) / 2.0
+                    x_dev = x_coord - mean_x
+                    sum_xx = np.sum(x_dev**2)
 
-            # Add it to the dataframe
-            colToAdd = []
-            for i in range(len(transformedData)):
-                inst = transformedData[i]
-                colToAdd.append(pd.Series(inst))
+                    mean_y = np.mean(seg, axis=1, keepdims=True)
+                    y_dev = seg - mean_y
+                    sum_yy = np.sum(y_dev**2, axis=1)
 
-            Xt[x] = colToAdd
+                    w = sum_yy - sum_xx
+                    r = 2.0 * np.dot(y_dev, x_dev)
+
+                    zero_r = r == 0.0
+                    r_safe = np.where(zero_r, 1.0, r)
+                    radicand = np.maximum(w * w + r * r, 0.0)
+                    m = np.where(zero_r, 0.0, (w + np.sqrt(radicand)) / r_safe)
+
+                gradients.append(m)
+                beginning += avg
+
+            transformedData = np.column_stack(gradients)
+            Xt[x] = [pd.Series(transformedData[i]) for i in range(num_instances)]
 
         return Xt
 
@@ -114,18 +142,14 @@ class SlopeTransformer(BaseTransformer):
 
         Returns
         -------
-        gradients : a numpy array of shape = [num_intervals].
-                    It contains the gradients of the line of best fit
-                    for each interval in a time series.
+        gradients : list of float
+            It contains the gradients of the line of best fit
+            for each interval in a time series.
         """
-        # Firstly, split the time series into approx equal length intervals
         splitTimeSeries = self._split_time_series(X)
-        gradients = []
-
-        for x in range(len(splitTimeSeries)):
-            gradients.append(self._get_gradient(splitTimeSeries[x]))
-
-        return gradients
+        return [
+            self._get_gradient(splitTimeSeries[x]) for x in range(len(splitTimeSeries))
+        ]
 
     def _get_gradient(self, Y):
         """Get gradient of lines.
@@ -142,39 +166,27 @@ class SlopeTransformer(BaseTransformer):
 
         Returns
         -------
-        m : an int corresponding to the gradient of the best fit line.
+        m : a float corresponding to the gradient of the best fit line.
         """
-        # Create a list that contains 1,2,3,4,...,len(Y) for the x coordinates.
-        X = [(i + 1) for i in range(len(Y))]
+        Y = np.asarray(Y, dtype=np.float64)
+        seg_len = len(Y)
+        if seg_len <= 1:
+            return 0.0
 
-        # Calculate the mean of both lists
-        meanX = statistics.mean(X)
-        meanY = statistics.mean(Y)
+        X = np.arange(1, seg_len + 1, dtype=np.float64)
+        mean_x = (seg_len + 1.0) / 2.0
+        mean_y = np.mean(Y)
 
-        # Calculate the list (yi-mean(y))^2
-        yminYbar = [(y - meanY) ** 2 for y in Y]
-        # Calculate the list (xi-mean(x))^2
-        xminXbar = [(x - meanX) ** 2 for x in X]
+        x_dev = X - mean_x
+        y_dev = Y - mean_y
 
-        # Sum them to produce w.
-        w = sum(yminYbar) - sum(xminXbar)
+        w = np.sum(y_dev**2) - np.sum(x_dev**2)
+        r = 2.0 * np.dot(x_dev, y_dev)
 
-        # Calculate the list (xi-mean(x))*(yi-mean(y))
-        temp = []
-        for x in range(len(X)):
-            temp.append((X[x] - meanX) * (Y[x] - meanY))
+        if r == 0.0:
+            return 0.0
 
-        # Sum it and multiply by 2 to calculate r
-        r = 2 * sum(temp)
-
-        if r == 0:
-            # remove nans
-            m = 0
-        else:
-            # Gradient is defined as (w+sqrt(w^2+r^2))/r
-            m = (w + math.sqrt(w**2 + r**2)) / r
-
-        return m
+        return float((w + np.sqrt(w**2 + r**2)) / r)
 
     def _split_time_series(self, X):
         """Split a time series into approximately equal intervals.
