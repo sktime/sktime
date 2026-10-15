@@ -254,7 +254,7 @@ def test_evaluate_global_mode(scoring, strategy, backend):
     }
     forecaster = PytorchForecastingDeepAR(**params)
     cv_global = InstanceSplitter(KFold(2))
-    cv = SingleWindowSplitter(fh=[1], window_length=5)
+    cv = SingleWindowSplitter(fh=1, window_length=5)
     out = evaluate(
         forecaster,
         cv,
@@ -393,7 +393,7 @@ def test_evaluate_global_mode_update_refits_each_instance_fold(strategy):
 def test_scoring_list(return_data, return_model, scores):
     y = make_forecasting_problem(n_timepoints=30, index_type="int")
     forecaster = NaiveForecaster()
-    cv = SlidingWindowSplitter(fh=[1, 2, 3], initial_window=15, step_length=5)
+    cv = SlidingWindowSplitter(fh=3, initial_window=15, step_length=5)
 
     out = evaluate(
         forecaster=forecaster,
@@ -482,7 +482,7 @@ def test_evaluate_error_score(
     y = load_airline()
     # add NaN to make ExponentialSmoothing fail
     y.iloc[1] = np.nan
-    fh = [1, 2, 3]
+    fh = 3
     cv = SlidingWindowSplitter(step_length=33, initial_window=36, fh=fh)
     scoring_name = [f"test_{score.name}" for score in scores]
 
@@ -660,7 +660,7 @@ def test_evaluate_hierarchical_unequal_X_y():
 
     y = df[df.index.get_level_values(-1) < "2020-01-08"]
     X = df.copy()
-    cv = ExpandingWindowSplitter(initial_window=2, fh=[1], step_length=1)
+    cv = ExpandingWindowSplitter(initial_window=2, fh=1, step_length=1)
 
     f = NaiveForecaster()
 

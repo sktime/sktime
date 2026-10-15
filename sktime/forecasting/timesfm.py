@@ -134,7 +134,7 @@ class TimesFMForecaster(BaseForecaster):
     ...     context_len=32,
     ...     horizon_len=8,
     ... ) # doctest: +SKIP
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> forecaster.fit(y, fh=3) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
 
     >>> from sktime.forecasting.timesfm import TimesFMForecaster
@@ -154,7 +154,7 @@ class TimesFMForecaster(BaseForecaster):
     ... ) # doctest: +SKIP
     >>>
     >>> # fit sets the context, predict uses it
-    >>> forecaster.fit(y, fh=[1, 2, 3]) # doctest: +SKIP
+    >>> forecaster.fit(y, fh=3) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     """
 

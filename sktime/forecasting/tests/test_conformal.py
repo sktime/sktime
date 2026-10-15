@@ -21,7 +21,7 @@ def test_conformal_standard():
     forecaster = NaiveForecaster(strategy="drift")
 
     conformal_forecaster = ConformalIntervals(forecaster)
-    conformal_forecaster.fit(y, fh=[1, 2, 3])
+    conformal_forecaster.fit(y, fh=3)
     pred_int = conformal_forecaster.predict_interval()
 
     assert check_is_mtype(pred_int, "pred_interval", "Proba", msg_return_dict="list")
@@ -40,7 +40,7 @@ def test_conformal_with_gscv():
     y = load_airline()
 
     # part 1 = grid search
-    cv = ExpandingWindowSplitter(fh=[1, 2, 3])
+    cv = ExpandingWindowSplitter(fh=3)
     forecaster = NaiveForecaster()
     param_grid = {"strategy": ["last", "mean", "drift"]}
     gscv = ForecastingGridSearchCV(
@@ -57,7 +57,7 @@ def test_conformal_with_gscv():
         params={"forecaster": "best_forecaster"},
     )
 
-    gscv_with_conformal.fit(y, fh=[1, 2, 3])
+    gscv_with_conformal.fit(y, fh=3)
 
     y_pred_quantiles = gscv_with_conformal.predict_quantiles()
 

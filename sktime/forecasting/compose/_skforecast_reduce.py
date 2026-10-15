@@ -75,7 +75,7 @@ class SkforecastAutoreg(BaseForecaster):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     SkforecastAutoreg(lags=2, regressor=LinearRegression())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
     ...     fh=[2], coverage=[0.9, 0.95]
     ... )
@@ -97,7 +97,7 @@ class SkforecastAutoreg(BaseForecaster):
     ... )
     >>> forecaster.fit(y_train, X=X_train)  # doctest: +SKIP
     SkforecastAutoreg(lags=[2, 4], regressor=RandomForestRegressor())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_test)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3, X=X_test)  # doctest: +SKIP
     >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
     ...     fh=[1, 3], X=X_test, coverage=[0.6, 0.4]
     ... )
@@ -556,7 +556,7 @@ class SkforecastRecursive(BaseForecaster):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     SkforecastRecursive(lags=2, regressor=LinearRegression())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
     ...     fh=[2], coverage=[0.9, 0.95]
     ... )
@@ -578,7 +578,7 @@ class SkforecastRecursive(BaseForecaster):
     ... )
     >>> forecaster.fit(y_train, X=X_train)  # doctest: +SKIP
     SkforecastRecursive(lags=[2, 4], regressor=RandomForestRegressor())
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_test)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3, X=X_test)  # doctest: +SKIP
     >>> y_pred_int = forecaster.predict_interval(  # doctest: +SKIP
     ...     fh=[1, 3], X=X_test, coverage=[0.6, 0.4]
     ... )

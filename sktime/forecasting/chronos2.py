@@ -71,7 +71,7 @@ class Chronos2Forecaster(BaseForecaster):
     >>> y_train, y_test = temporal_train_test_split(y)
     >>> forecaster = Chronos2Forecaster("amazon/chronos-2")  # doctest: +SKIP
     >>> forecaster.fit(y_train)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {

@@ -39,7 +39,7 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
     >>> forecaster = StatsForecastGARCH(p=2,q=1)
     >>> forecaster.fit(y)
     StatsForecastGARCH(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {
@@ -129,7 +129,7 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
     >>> forecaster = StatsForecastARCH(p=2)
     >>> forecaster.fit(y)
     StatsForecastARCH(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {
