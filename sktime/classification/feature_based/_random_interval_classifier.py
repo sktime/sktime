@@ -225,10 +225,24 @@ class RandomIntervalClassifier(BaseClassifier):
                 ),
             }
         else:
-            return {
+            from sklearn.tree import DecisionTreeClassifier
+
+            params1 = {
                 "n_intervals": 2,
                 "estimator": RandomForestClassifier(n_estimators=2),
                 "interval_transformers": SummaryTransformer(
                     summary_function=("mean", "min", "max"),
                 ),
             }
+            # second set: a different interval count, a single-tree estimator
+            # rather than an ensemble, a different summary feature set, and a
+            # fixed random_state for the interval extraction
+            params2 = {
+                "n_intervals": 3,
+                "estimator": DecisionTreeClassifier(random_state=0),
+                "interval_transformers": SummaryTransformer(
+                    summary_function=("median", "std"),
+                ),
+                "random_state": 0,
+            }
+            return [params1, params2]

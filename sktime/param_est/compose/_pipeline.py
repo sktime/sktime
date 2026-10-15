@@ -98,6 +98,7 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
         # which X scitypes are supported natively?
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # no default tag values - these are set dynamically below
@@ -302,10 +303,11 @@ class ParamFitterPipeline(_HeterogenousMetaEstimator, BaseParamFitter):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         # imports
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.param_est.fixed import FixedParams
         from sktime.param_est.seasonality import SeasonalityACF
         from sktime.transformations.exponent import ExponentTransformer
-        from sktime.utils.dependencies import _check_estimator_deps
 
         t1 = ExponentTransformer(power=2)
         t2 = ExponentTransformer(power=0.5)

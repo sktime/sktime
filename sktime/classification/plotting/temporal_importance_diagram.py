@@ -3,10 +3,10 @@
 __author__ = ["MatthewMiddlehurst"]
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.classification.interval_based import CanonicalIntervalForest
 from sktime.transformations import catch22
-from sktime.utils.dependencies import _check_soft_dependencies
 
 _check_soft_dependencies("matplotlib", severity="warning")
 

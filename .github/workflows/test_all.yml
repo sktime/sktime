@@ -4,6 +4,9 @@ on:
     - cron: 0 0 * * 0
   workflow_dispatch:
 
+env:
+  HF_TOKEN: ${{ secrets.HF_READ_TOKEN }}
+
 jobs:
   code_quality:
     if: ${{ github.repository == 'sktime/sktime' }}
@@ -11,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: repository checkout step
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: python environment step
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -41,7 +44,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: run tests on python ${{ matrix.python-version }}
         uses: ./.github/actions/test-base
@@ -79,7 +82,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: run tests for component ${{ matrix.sktime-component }} on python ${{ matrix.python-version }}
         uses: ./.github/actions/test-component
         with:
@@ -108,7 +111,7 @@ jobs:
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: checkout pull request branch
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: update local git tracking reference
         run: git remote set-branches origin main
@@ -122,7 +125,7 @@ jobs:
           enable-cache: true
 
       - name: create python virtual environment
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -165,7 +168,7 @@ jobs:
 
     steps:
       - name: checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -173,7 +176,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -213,7 +216,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
@@ -221,7 +224,7 @@ jobs:
           enable-cache: true
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 

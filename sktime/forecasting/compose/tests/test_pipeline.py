@@ -713,7 +713,7 @@ def test_transformed_target_forecaster_predict_proba_delegates():
     2. Inner forecaster without native _predict_proba (only quantiles/intervals):
        the pipeline should fall back to the default Normal distribution.
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     if not _check_soft_dependencies("skpro", severity="none"):
         pytest.skip("skpro required for this test")
@@ -829,7 +829,7 @@ def test_transformed_target_forecaster_predict_proba_dunder():
     Addresses issue #9287: pipelines built with transformer * forecaster
     should also correctly delegate predict_proba.
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     if not _check_soft_dependencies("skpro", severity="none"):
         pytest.skip("skpro required for this test")

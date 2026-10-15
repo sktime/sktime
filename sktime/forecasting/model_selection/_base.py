@@ -22,6 +22,7 @@ class BaseGridSearch(_DelegatedForecaster):
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:update": True,
     }
 
     def __init__(
@@ -65,7 +66,6 @@ class BaseGridSearch(_DelegatedForecaster):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self._set_delegated_tags(self.forecaster)

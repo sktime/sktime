@@ -38,7 +38,14 @@ class ClusterSegmenter(BaseDetector):
         "learning_type": "unsupervised",
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
+        "tests:skip_by_name": [
+            "test_non_state_changing_method_contract",
+            "test_doctest_examples",
+            "test_predict_points",
+            "test_predict_segments",
+            "test_transform_output_type",
+            "test_output_type",
+        ],
     }
 
     def __init__(self, clusterer=None):

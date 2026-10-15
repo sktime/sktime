@@ -176,7 +176,7 @@ def _dask_dataframe_equals_plugin(x, y, return_msg=False, deep_equals=None):
     if not hasattr(x, "compute"):
         return None
 
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     dask_available = _check_soft_dependencies("dask", severity="none")
 
@@ -225,7 +225,7 @@ def _gluonts_PandasDataset_equals_plugin(x, y, return_msg=False, deep_equals=Non
     if not hasattr(x, "_data_entries"):
         return None
 
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     gluonts_available = _check_soft_dependencies("gluonts", severity="none")
 
@@ -260,7 +260,7 @@ def _polars_equals_plugin(x, y, return_msg=False):
         if unequal, returns string
     returns None if this function does not apply, i.e., x is not polars
     """
-    from sktime.utils.dependencies import _check_soft_dependencies
+    from skbase.utils.dependencies import _check_soft_dependencies
 
     polars_available = _check_soft_dependencies("polars", severity="none")
 
@@ -306,7 +306,7 @@ def _torchmetrics_metric_equals_plugin(x, y, return_msg=False, deep_equals=None)
     msg : str, optional
         reason for inequality if return_msg=True
     """
-    from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
+    from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
 
     if not _check_soft_dependencies("torchmetrics", severity="none"):
         return None

@@ -8,11 +8,11 @@ __author__ = ["chrisholder", "TonyBagnall", "fkiraly"]
 
 import pytest
 from numpy.testing import assert_almost_equal
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_basic_motions, load_unit_test
 from sktime.dists_kernels._numba_distances._distance import _METRIC_INFOS
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies
 
 distance_parameters = {
     "dtw": [0.0, 0.1, 1.0],  # window

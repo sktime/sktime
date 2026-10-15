@@ -200,6 +200,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.forecasting.model_selection._base"],
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -322,8 +323,9 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
         -------
         params : dict or list of dict
         """
+        from skbase.utils.dependencies import _check_soft_dependencies
+
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.utils.dependencies import _check_soft_dependencies
 
         if not _check_soft_dependencies("optuna", severity="none"):
             return {

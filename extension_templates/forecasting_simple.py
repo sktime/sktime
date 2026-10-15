@@ -65,7 +65,7 @@ class MyForecaster(BaseForecaster):
     #  tags are inherited from parent class if they are not set
     # todo: define the forecaster scitype by setting the tags
     #  the "forecaster scitype" is determined by the tags
-    #   scitype:y - the expected input scitype of y - univariate or multivariate or both
+    #  capability:multivariate controls whether internal y can be multivariate
     # tag values are "safe defaults" which can usually be left as-is
     _tags = {
         # tags and full specifications are available in the tag API reference
@@ -78,7 +78,7 @@ class MyForecaster(BaseForecaster):
         #
         # y_inner_mtype, X_inner_mtype control which format X/y appears in
         # in the inner functions _fit, _predict, etc
-        "y_inner_mtype": "pd.Series",
+        "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         # valid values: str and list of str
         # if str, must be a valid mtype str, in sktime.datatypes.MTYPE_REGISTER

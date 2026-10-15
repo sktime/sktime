@@ -4,9 +4,9 @@
 import abc
 
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 __author__ = ["yarnabrina", "fnhirwa"]
@@ -269,6 +269,8 @@ class _DartsRegressionAdapter(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         del fh  # avoid being detected as unused by ``vulture`` like tools
         endogenous_actuals = self.convert_dataframe_to_timeseries(y)
         unknown_exogenous, known_exogenous = self.convert_exogenous_dataset(X)
@@ -388,7 +390,7 @@ class _DartsRegressionAdapter(BaseForecaster):
 
         if (
             len(endogenous_point_predictions.columns) > 1
-            and self._y.columns.dtype != "object"
+            and self._cur_y.columns.dtype != "object"
         ):
             endogenous_point_predictions.columns = pd.RangeIndex(
                 start=0, stop=len(endogenous_point_predictions.columns), step=1

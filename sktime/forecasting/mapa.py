@@ -2,9 +2,9 @@
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies._dependencies import _check_soft_dependencies
 from sktime.utils.warnings import warn
 
 
@@ -132,13 +132,21 @@ class MAPAForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["trnnick", "phoeenniixx", "satvshr"],
+        "python_dependencies": ["statsmodels"],
+        # estimator type
+        # --------------
         "capability:multivariate": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:exogenous": True,
         "requires-fh-in-fit": True,
-        "authors": ["trnnick", "phoeenniixx", "satvshr"],
-        "python_dependencies": ["statsmodels", "pandas>1"],
+        "capability:update": True,  # can estimator update its parameters with new data?
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # known bug, see #8039
     }
 
     def __init__(

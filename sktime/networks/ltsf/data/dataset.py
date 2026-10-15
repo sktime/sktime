@@ -1,6 +1,6 @@
 """Implements Pytorch Dataset class for LTSF-Formers."""
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 if _check_soft_dependencies("torch", severity="none"):
     import torch

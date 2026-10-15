@@ -2,6 +2,7 @@
 
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 from sktime.tests.test_switch import run_test_module_changed
@@ -9,7 +10,6 @@ from sktime.transformations.adapt import TabularToSeriesAdaptor
 from sktime.transformations.boxcox import BoxCoxTransformer
 from sktime.transformations.compose import ColumnEnsembleTransformer
 from sktime.transformations.subset import ColumnSelect
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(

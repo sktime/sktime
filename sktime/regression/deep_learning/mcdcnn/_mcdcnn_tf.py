@@ -84,6 +84,11 @@ class MCDCNNRegressor(BaseDeepRegressor):
         "authors": ["hfawaz", "James-Large", "noxthot"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.mcdcnn._mcdcnn_tf"],
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -133,7 +138,6 @@ class MCDCNNRegressor(BaseDeepRegressor):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self.history = None

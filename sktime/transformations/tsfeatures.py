@@ -117,6 +117,7 @@ class TSFeaturesTransformer(BaseTransformer):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.transformations.tests.test_tsfeatures"],
     }
 
     def __init__(
@@ -261,7 +262,7 @@ class TSFeaturesTransformer(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         params = [
             {

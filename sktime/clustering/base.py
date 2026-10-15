@@ -6,11 +6,11 @@ __all__ = ["BaseClusterer"]
 import time
 
 import numpy as np
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import check_is_scitype, convert_to, scitype_to_mtype
 from sktime.datatypes._dtypekind import DtypeKind
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.sklearn import is_sklearn_transformer
 from sktime.utils.warnings import warn
 
@@ -64,7 +64,6 @@ class BaseClusterer(BaseEstimator):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         pass

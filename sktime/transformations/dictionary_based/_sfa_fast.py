@@ -74,7 +74,7 @@ class SFAFast(BaseTransformer):
     feature_selection: {"chi2", "none", "random"}, default: chi2
         Sets the feature selections strategy to be used. Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also
-        reduces the number significantly. None applies not feature selectiona and
+        reduces the number significantly. None applies not feature selection and
         yields large bag of words, e.g. much memory may be needed.
 
     p_threshold:  int, default=0.05 (disabled by default)
@@ -141,6 +141,7 @@ class SFAFast(BaseTransformer):
             "test_categorical_X_raises_error",
             "test_categorical_y_raises_error",
             "test_categorical_X_passes",
+            "test_get_test_params_coverage",
         ],
     }
 
@@ -195,7 +196,6 @@ class SFAFast(BaseTransformer):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self.words = []

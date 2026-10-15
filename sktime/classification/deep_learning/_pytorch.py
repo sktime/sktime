@@ -61,7 +61,6 @@ class BaseDeepClassifierPytorch(BaseClassifier):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         import torch
@@ -144,7 +143,7 @@ class BaseDeepClassifierPytorch(BaseClassifier):
             return torch.nn.CrossEntropyLoss()
 
     @abc.abstractmethod
-    def _build_network(self):
+    def _build_network(self, X, y):
         pass
 
     def _build_dataloader(self, X, y=None):

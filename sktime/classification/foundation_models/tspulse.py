@@ -5,9 +5,11 @@ __author__ = ["Faakhir30"]
 __all__ = ["TSPulseClassifier"]
 
 import tempfile
+from copy import deepcopy
 
 from sktime.classification.base import BaseClassifier
 from sktime.utils.dependencies import _safe_import
+from sktime.utils.singleton import _multiton
 
 torch = _safe_import("torch")
 
@@ -26,6 +28,100 @@ _DEFAULT_MODEL_CONFIG = {
 }
 
 LABEL_COLUMN = "__TS_PULSE_LABEL_COLUMN__"
+
+
+def _tspulse_cache_key(model_path, revision, model_config, freeze_backbone, device):
+    """Create a deterministic cache key for a TSPulse pretrained backbone.
+
+    Parameters
+    ----------
+    model_path : str
+        HuggingFace model id or local path.
+    revision : str
+        Model revision on the HuggingFace Hub.
+    model_config : dict
+        Model configuration dict forwarded to ``from_pretrained``.
+    freeze_backbone : bool
+        Whether backbone weights are frozen.
+    device : str
+        Device string, e.g. ``"cpu"`` or ``"cuda"``.
+
+    Returns
+    -------
+    str
+        A string key that uniquely identifies this pretrained configuration.
+    """
+    parts = [
+        str(model_path),
+        str(revision),
+        str(sorted(model_config.items())),
+        str(freeze_backbone),
+        str(device),
+    ]
+    return "_".join(parts)
+
+
+@_multiton
+class _CachedTSPulseBackbone:
+    """Cached TSPulse pretrained backbone; one instance per unique configuration.
+
+    ``TSPulseForClassification.from_pretrained`` downloads and loads large
+    pretrained weights from HuggingFace.  By wrapping the backbone in a
+    multiton, successive ``fit()`` calls with identical parameters skip the
+    expensive download/load and reuse the already-loaded backbone instead.
+
+    The cached backbone is **never trained** — callers must deep-copy it
+    before fine-tuning so that the pristine pretrained weights remain in
+    the cache for subsequent fits.
+
+    Parameters
+    ----------
+    key : str
+        Unique cache key produced by :func:`_tspulse_cache_key`.
+    model_path : str
+        HuggingFace model id or local path.
+    revision : str
+        Model revision on the HuggingFace Hub.
+    model_config : dict
+        Full keyword-argument dict forwarded to ``from_pretrained``.
+    freeze_backbone : bool
+        Whether to freeze backbone weights.
+    device : str
+        Device string used by the model.
+    """
+
+    def __init__(
+        self, key, model_path, revision, model_config, freeze_backbone, device
+    ):
+        self.key = key
+        self.model_path = model_path
+        self.revision = revision
+        self.model_config = model_config
+        self.freeze_backbone = freeze_backbone
+        self.device = device
+        self._model = None
+
+    def load(self):
+        """Load (or return cached) pretrained TSPulse backbone.
+
+        Returns
+        -------
+        TSPulseForClassification
+            The loaded **pretrained** model. Callers must deep-copy
+            before training to keep the cache pristine.
+        """
+        if self._model is None:
+            from tsfm_public.models.tspulse import TSPulseForClassification
+
+            model = TSPulseForClassification.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+                **self.model_config,
+            )
+            if self.freeze_backbone:
+                _freeze_backbone(model)
+            self._model = model.to(self.device)
+        return self._model
 
 
 class TSPulseClassifier(BaseClassifier):
@@ -176,15 +272,106 @@ class TSPulseClassifier(BaseClassifier):
         super().__init__()
 
     def __getstate__(self):
-        """Return state for pickling, excluding unpickleable model pipeline."""
+        """Return state for pickling, serialising fine-tuned weights as a state dict.
+
+        ``TSPulseForClassification`` (a HuggingFace ``PreTrainedModel``) registers
+        a non-picklable local closure (``make_inputs_require_grads``) as a forward
+        hook during training.  Direct pickling of the model object therefore fails.
+
+        Instead we serialise the model's ``state_dict`` as raw bytes via
+        ``torch.save`` and reconstruct the pipeline from those bytes in
+        ``__setstate__``.  This preserves the fine-tuned weights while avoiding the
+        unpicklable hook.
+        """
+        import io
+
+        import torch
+
         state = self.__dict__.copy()
+        if state.get("_model") is not None:
+            buf = io.BytesIO()
+            torch.save(state["_model"].state_dict(), buf)
+            state["_model_state_dict_bytes"] = buf.getvalue()
+        else:
+            state["_model_state_dict_bytes"] = None
         state["_model"] = None
         state["_pipeline"] = None
         return state
 
     def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
+        """Restore state, reconstructing the pipeline from the serialised weights."""
+        import io
+
+        model_state_bytes = state.pop("_model_state_dict_bytes", None)
         self.__dict__.update(state)
+
+        if (
+            model_state_bytes is not None
+            and getattr(self, "_model_config", None) is not None
+        ):
+            import torch
+            from tsfm_public.models.tspulse import TSPulseForClassification
+            from tsfm_public.toolkit.time_series_classification_pipeline import (
+                TimeSeriesClassificationPipeline,
+            )
+
+            # Reconstruct the model architecture from the stored config, then
+            # load the fine-tuned weights from the serialised state dict.
+            model = TSPulseForClassification.from_pretrained(
+                self.model_path,
+                revision=self.revision,
+                **self._model_config,
+            )
+            buf = io.BytesIO(model_state_bytes)
+            model.load_state_dict(
+                torch.load(buf, weights_only=True, map_location=self._device)
+            )
+            self._model = model.to(self._device)
+            self._pipeline = TimeSeriesClassificationPipeline(
+                self._model,
+                feature_extractor=self._preprocessor,
+                device=self._device,
+            )
+
+    def _load_pretrained_backbone(self, model_config):
+        """Lazily load (or retrieve cached) pretrained TSPulse backbone.
+
+        Uses the multiton pattern via :class:`_CachedTSPulseBackbone` so that
+        the expensive ``TSPulseForClassification.from_pretrained()`` call is
+        executed at most once per unique configuration.
+
+        The returned model is **deep-copied** before being returned so that
+        fine-tuning in ``_fit`` does not mutate the cached pretrained weights.
+        This ensures that successive ``fit()`` calls always start from the
+        same pristine pretrained checkpoint (required by ``test_fit_idempotent``).
+
+        Parameters
+        ----------
+        model_config : dict
+            Configuration dict for model construction.
+
+        Returns
+        -------
+        TSPulseForClassification
+            A fresh deep-copy of the cached pretrained model.
+        """
+        key = _tspulse_cache_key(
+            model_path=self.model_path,
+            revision=self.revision,
+            model_config=model_config,
+            freeze_backbone=self.freeze_backbone,
+            device=self._device,
+        )
+        cached_backbone = _CachedTSPulseBackbone(
+            key=key,
+            model_path=self.model_path,
+            revision=self.revision,
+            model_config=model_config,
+            freeze_backbone=self.freeze_backbone,
+            device=self._device,
+        ).load()
+        # Deep-copy so that fine-tuning does not mutate the cached backbone.
+        return deepcopy(cached_backbone)
 
     def _fit(self, X, y):
         f"""Fit the TSPulse classifier to the training data.
@@ -201,7 +388,6 @@ class TSPulseClassifier(BaseClassifier):
         """
         from torch.utils.data import random_split
         from transformers import Trainer, TrainingArguments, set_seed
-        from tsfm_public.models.tspulse import TSPulseForClassification
         from tsfm_public.toolkit.dataset import ClassificationDFDataset
         from tsfm_public.toolkit.time_series_classification_pipeline import (
             TimeSeriesClassificationPipeline,
@@ -237,14 +423,13 @@ class TSPulseClassifier(BaseClassifier):
             df=df,
             user_config=self.config,
         )
-        model = TSPulseForClassification.from_pretrained(
-            self.model_path,
-            revision=self.revision,
-            **model_config,
-        )
-        if self.freeze_backbone:
-            _freeze_backbone(model)
-        model = model.to(self._device)
+        # Store for __setstate__ so it can reconstruct the model architecture
+        # after unpickling without re-reading X and y.
+        self._model_config = model_config
+
+        # Lazy init: load pretrained backbone from multiton cache, then
+        # deep-copy so training does not mutate the cached weights.
+        model = self._load_pretrained_backbone(model_config)
 
         dataset = ClassificationDFDataset(
             df_prep,

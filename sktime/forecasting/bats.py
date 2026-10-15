@@ -116,7 +116,7 @@ class BATS(_TbatsAdapter):
         """Create model class."""
         # both bats and tbats inherit the same interface from the base class and only
         # instantiate a different model class internally
-        from tbats import BATS as _BATS
+        from sktime.libs.tbats import BATS as _BATS
 
         self._ModelClass = _BATS
 

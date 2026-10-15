@@ -72,6 +72,10 @@ class SimpleRNNRegressor(BaseDeepRegressor):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
+        # CI and test tags
+        # ----------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.networks.rnn._rnn_tf"],
     }
 
     def __init__(
@@ -115,7 +119,6 @@ class SimpleRNNRegressor(BaseDeepRegressor):
 
         * parameter validation
         * initialization logic beyond self.param = param
-        * dynamic tag setting
         * any soft dependency imports in the constructor
         """
         self.history = None

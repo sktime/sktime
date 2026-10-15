@@ -2,7 +2,6 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["Abhay-Lejith"]
 __all__ = ["ShapeletTransformPyts"]
 
 from sktime.base.adapters._pyts import _PytsAdapter
@@ -127,8 +126,8 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "authors": ["johannfaouzi", "Abhay-Lejith"],
         # johannfaouzi is author of upstream pyts code
         "python_dependencies": "pyts",
-        # univariate-only controls whether internal X can be univariate/multivariate
-        # if True (only univariate), always applies vectorization over variables
+        # capability:multivariate controls whether internal X can be multivariate
+        # if False (only univariate), always applies vectorization over variables
         "capability:multivariate": False,
         "scitype:transform-input": "Series",
         "scitype:transform-output": "Primitives",
@@ -136,6 +135,14 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         "fit_is_empty": False,
         "y_inner_mtype": "numpy1D",
         "requires_y": True,
+        "capability:random_state": True,
+        "property:randomness": "stochastic",
+        "capability:categorical_in_X": False,
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
+        # creates nested numpy shapelets sporadically, see #6171
+        "tests:libs": ["sktime.base.adapters._pyts"],
     }
 
     _estimator_attr = "_pyts_shapelet_transform"

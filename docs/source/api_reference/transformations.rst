@@ -217,6 +217,7 @@ Shapelets, wavelets, and convolution
     RocketPyts
     MiniRocket
     MiniRocketMultivariate
+    MiniRocketMultivariateCython
     MiniRocketMultivariateVariable
     MultiRocket
     MultiRocketMultivariate
@@ -228,6 +229,15 @@ Shapelets, wavelets, and convolution
     :template: class.rst
 
     DWTTransformer
+
+.. currentmodule:: sktime.transformations.wavelet_packet
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    WaveletPacketTransformer
+
 
 Distance-based features
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -261,7 +271,14 @@ Dictionary-based features
     SFAFast
     PAAlegacy
     SAXlegacy
-    fABBA
+
+.. currentmodule:: sktime.transformations.fabba
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    FABBA
 
 Auto-correlation-based features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -314,7 +331,6 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     TSFeaturesTransformer
-    TSFeaturesWideTransformer
 
 .. currentmodule:: sktime.transformations.catch22
 
@@ -331,6 +347,14 @@ These transformers extract larger collections of features.
     :template: class.rst
 
     Catch22Wrapper
+
+.. currentmodule:: sktime.transformations.evoforest_tswm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EvoForestTSWM
 
 .. currentmodule:: sktime.transformations.tsfel
 
@@ -510,6 +534,23 @@ Filtering and denoising
 
     Bollinger
 
+.. currentmodule:: sktime.transformations.hilbert
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HilbertTransformer
+
+.. currentmodule:: sktime.transformations.savitzky_golay
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    SavitzkyGolayTransformer
+
+
 Differencing, slope, kinematics
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -612,7 +653,7 @@ Binning, sampling and segmentation
     :toctree: auto_generated/
     :template: class.rst
 
-    fABBA
+    FABBA
 
 Missing value treatment
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -750,7 +791,7 @@ Multivariate-to-univariate
 
 These transformers convert multivariate series to univariate.
 
-.. currentmodule:: sktime.transformations.compose
+.. currentmodule:: sktime.transformations.colconcat
 
 .. autosummary::
     :toctree: auto_generated/
@@ -967,6 +1008,8 @@ They compute features that are related to a domain of application.
 
 Energy, weather and climate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: sktime.transformations.clear_sky
 
 .. autosummary::
     :toctree: auto_generated/

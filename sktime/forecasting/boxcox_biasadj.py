@@ -9,7 +9,6 @@ from scipy.special import inv_boxcox
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
-from sktime.transformations.boxcox import BoxCoxTransformer
 
 
 class BoxCoxBiasAdjustedForecaster(BaseForecaster):
@@ -43,6 +42,22 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     Notes
     -----
     This forecaster applies only to univariate, non-hierarchical inner forecasters.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.boxcox_bias_adjusted_forecaster import (
+    ...     BoxCoxBiasAdjustedForecaster,
+    ... )
+    >>> from sktime.forecasting.naive import NaiveForecaster
+    >>> y = load_airline()
+    >>> # Define the forecasting horizon
+    >>> fh = [1, 2, 3]
+    >>> # wrap a forecaster with Box-Cox bias adjustment
+    >>> forecaster = BoxCoxBiasAdjustedForecaster(NaiveForecaster())
+    >>> forecaster.fit(y, fh=fh)
+    BoxCoxBiasAdjustedForecaster(...)
+    >>> y_pred = forecaster.predict()
 
     References
     ----------
@@ -91,6 +106,8 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         -------
         self : returns an instance of self.
         """
+        from sktime.transformations.boxcox import BoxCoxTransformer
+
         self.boxcox_transformer_ = BoxCoxTransformer(lambda_fixed=self.lambda_fixed)
         y_transformed = self.boxcox_transformer_.fit_transform(y)
 

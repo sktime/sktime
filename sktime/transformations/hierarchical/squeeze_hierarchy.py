@@ -28,6 +28,33 @@ class SqueezeHierarchy(BaseTransformer):
     ------
     ValueError
         If there are values that are not the same for the same index.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.hierarchical.squeeze_hierarchy import (
+    ...     SqueezeHierarchy,
+    ... )
+    >>> periods = [pd.Period("2020-01", freq="M"), pd.Period("2020-02", freq="M")]
+    >>> rows = []
+    >>> for t in periods:
+    ...     for region in ["c", "d"]:
+    ...         v = {"c": 1.0, "d": 2.0}[region] + 0.1 * (t == periods[1])
+    ...         # country "__total" rows duplicate country "a" rows, so the
+    ...         # country level is redundant and can be dropped
+    ...         rows.append((("__total", "b", region, t), v))
+    ...         rows.append((("a", "b", region, t), v))
+    >>> tuples = [r[0] for r in rows]
+    >>> vals = [r[1] for r in rows]
+    >>> X = pd.DataFrame({"v": vals}, index=pd.MultiIndex.from_tuples(tuples))
+    >>> trafo = SqueezeHierarchy()
+    >>> Xt = trafo.fit_transform(X)
+    >>> Xt.index.nlevels
+    3
+    >>> list(Xt.index.get_level_values(0).unique())
+    ['b']
+    >>> trafo.levels_to_drop_
+    [-4]
     """
 
     _tags = {

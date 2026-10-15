@@ -72,6 +72,19 @@ class PCATransformer(BaseTransformer):
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.transformations.pca import PCATransformer
+    >>>
+    >>> X = np.random.rand(10, 2, 20)
+    >>> transformer = PCATransformer(n_components=1)
+    >>> Xt = transformer.fit_transform(X)
+    >>> X.shape
+    (10, 2, 20)
+    >>> Xt.shape
+    (10, 2, 20)
     """
 
     _tags = {
@@ -171,3 +184,39 @@ class PCATransformer(BaseTransformer):
         Xt = Xt.reshape(N, num_var, num_time)
 
         return Xt
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"``
+            set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params0 = {}
+        params1 = {
+            "n_components": 1,
+            "whiten": True,
+            "svd_solver": "full",
+        }
+        params2 = {
+            "n_components": 1,
+            "svd_solver": "randomized",
+            "whiten": False,
+            "tol": 0.001,
+            "iterated_power": 1,
+            "random_state": 1,
+        }
+
+        return [params0, params1, params2]
