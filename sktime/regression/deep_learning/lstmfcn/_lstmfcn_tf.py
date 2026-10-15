@@ -85,10 +85,12 @@ class LSTMFCNRegressor(BaseDeepRegressor):
         "maintainers": ["jnrusson1", "solen0id", "nilesh05apr"],
         "python_dependencies": "tensorflow",
         # estimator type handled by parent class
+        #
         # CI and test tags
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.lstmfcn._lstmfcn_tf"],
+        "tests:skip_all": True,  # DL suspected hangs/memouts, see #4610
     }
 
     def __init__(

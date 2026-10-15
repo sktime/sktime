@@ -373,8 +373,6 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
             return pickle.loads(file.open("_obj").read())
 
 
-# todo 1.2.0: remove this class from inheritance in BaseObject
-# or bump removal version if new tags get deprecated
 class TagAliaserMixin(_TagAliaserMixin):
     """Mixin class for tag aliasing and deprecation of old tags.
 
@@ -430,8 +428,8 @@ class TagAliaserMixin(_TagAliaserMixin):
     # when removing tags from here,
     # add to LEGACY_DEPRECATED_TAGS in TestAllObjects
     # (permanent graveyard to check for legacy tags in CI)
-    alias_dict = {"capability:global_forecasting": ""}
-    deprecate_dict = {"capability:global_forecasting": "1.2.0"}
+    alias_dict = {}
+    deprecate_dict = {}
 
     @classmethod
     def get_class_tag(cls, tag_name, tag_value_default=None):
@@ -715,7 +713,7 @@ class TagAliaserMixin(_TagAliaserMixin):
     _package_name = "sktime"
 
 
-class BaseEstimator(TagAliaserMixin, _BaseEstimator, BaseObject):
+class BaseEstimator(_BaseEstimator, BaseObject):
     """Base class for defining estimators in sktime.
 
     Extends sktime's BaseObject to include basic functionality for fittable estimators.

@@ -47,7 +47,8 @@ class SundialForecaster(BaseForecaster):
         fine-tuning is recommended before forecasting.
     device : str, int, or torch.device, default="cpu"
         Device on which to place the model, for example ``"cpu"``,
-        ``"cuda"``, or ``"cuda:0"``.
+        ``"cuda"``, ``"cuda:0"``, or ``"auto"``. ``"auto"`` is passed to
+        transformers ``device_map`` and selects an available accelerator.
     dtype : torch.dtype or str, optional (default=None)
         Data type used for model loading, following the ``transformers``
         ``dtype`` convention, for example ``torch.float16``,
@@ -661,8 +662,10 @@ class _CachedSundial:
             self.model_ = self._load_from_path()
         else:
             self.model_ = self._load_randomly()
-
-        self.model_ = self.model_.to(self.device, dtype=self.dtype)
+            if self.device not in (None, "auto"):
+                self.model_ = self.model_.to(self.device, dtype=self.dtype)
+            elif self.dtype is not None:
+                self.model_ = self.model_.to(dtype=self.dtype)
 
         return self.model_
 
@@ -675,7 +678,11 @@ class _CachedSundial:
             config = SundialConfig.from_dict(config)
 
         return SundialForPrediction.from_pretrained(
-            self.model_path, config=config, ignore_mismatched_sizes=True
+            self.model_path,
+            config=config,
+            ignore_mismatched_sizes=True,
+            device_map=self.device,
+            dtype=self.dtype,
         )
 
     def _load_randomly(self):

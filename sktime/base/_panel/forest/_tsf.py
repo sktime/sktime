@@ -37,11 +37,6 @@ class BaseTimeSeriesForest:
         inner_series_length: int | None = None,
         random_state=None,
     ):
-        super().__init__(
-            self._base_estimator,
-            n_estimators=n_estimators,
-        )
-
         self.random_state = random_state
         self.n_estimators = n_estimators
         self.min_interval = min_interval
@@ -55,24 +50,7 @@ class BaseTimeSeriesForest:
         self.intervals_ = []
         self.classes_ = []
 
-        # We need to add is-fitted state when inheriting from scikit-learn
         self._is_fitted = False
-
-    @property
-    def _estimator(self):
-        """Access first parameter in self, self inheriting from sklearn BaseForest.
-
-        The attribute was renamed from base_estimator to estimator in sklearn 1.2.0.
-        """
-        import sklearn
-        from packaging.specifiers import SpecifierSet
-
-        sklearn_version = sklearn.__version__
-
-        if sklearn_version in SpecifierSet(">=1.2.0"):
-            return self.estimator
-        else:
-            return self.base_estimator
 
     def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -122,7 +100,7 @@ class BaseTimeSeriesForest:
 
         self.estimators_ = Parallel(n_jobs=n_jobs)(
             delayed(_fit_estimator)(
-                _clone_estimator(self._estimator, rng), X, y, self.intervals_[i]
+                _clone_estimator(self._base_estimator, rng), X, y, self.intervals_[i]
             )
             for i in range(self.n_estimators)
         )

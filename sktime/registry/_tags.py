@@ -994,6 +994,48 @@ class property__randomness(_BaseTag):
     }
 
 
+class remember_data(_BaseTag):
+    """Behaviour flag: whether the estimator remembers all data seen.
+
+    - String name: ``"remember_data"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False`` (transformers), ``True`` (forecasters)
+
+    Developer tag that modifies behaviour of the boilerplate layer.
+
+    If set to ``True``, the estimator will remember all data seen, and store it
+    internally in the ``self._X`` and/or ``self._y`` attributes, in ``pd.DataFrame``
+    resp hierarchical ``DataFrame`` formats ``pd-multiindex`` or
+    ``pd_multiindex_hier``, if hierarchical data is passed.
+
+    This behaviour can be useful for models with incremental learning capabilities
+    that require access to all previously seen data in their internal logic.
+    Alternatively, the tag can also be useful for debugging.
+
+    If no ``X`` or ``y`` is passed to the estimator,
+    ``self._X`` and ``self._y`` will be set to ``None``.
+
+    Calls to ``update`` will update the data stored in the internal attributes as well,
+    using ``pandas`` update operations.
+
+    If the ``remember_data`` tag is set to ``True``, the ``fit_is_empty`` tag
+    must be ``False``, even if ``_fit`` is empty, because boilerplate
+    writes to ``self._X`` in ``fit``.
+    """
+
+    _tags = {
+        "tag_name": "remember_data",
+        "parent_type": ["forecaster", "transformer"],
+        "tag_type": "bool",
+        "short_descr": (
+            "whether estimator remembers all data seen as self._X, self._y, etc"
+        ),
+        "user_facing": False,
+    }
+
+
 # Forecasters
 # -----------
 
@@ -1158,7 +1200,7 @@ class capability__pred_int__insample(_BaseTag):
 
 
 class capability__pretrain(_BaseTag):
-    """Capability: the forecaster can use pretraining for global learning.
+    """Capability: the forecaster or detector can use pretraining for global learning.
 
     - String name: ``"capability:pretrain"``
     - Public capability tag
@@ -1180,13 +1222,17 @@ class capability__pretrain(_BaseTag):
     and subsequent calls to ``fit`` will preserve the pretrained weights
     (enabling fine-tuning) rather than resetting the estimator.
 
-    If the tag is ``False``, the forecaster does not support pretraining,
-    and calling ``pretrain`` will have no effect.
+    For detectors, the workflow is ``detector.pretrain(X_panel)``,
+    then ``detector.fit(X_series)``, then ``detector.predict(X_series)``.
+
+    If the tag is ``False``, the estimator does not support pretraining.
+    Calling ``pretrain`` does not learn from the data,
+    it only sets the state to ``"pretrained"``.
     """
 
     _tags = {
         "tag_name": "capability:pretrain",
-        "parent_type": "forecaster",
+        "parent_type": ["forecaster", "detector"],
         "tag_type": "bool",
         "short_descr": "can use pretrain for global learning",
         "user_facing": True,
@@ -2455,7 +2501,7 @@ class capability__update(_BaseTag):
 
     _tags = {
         "tag_name": "capability:update",
-        "parent_type": ["transformer", "detector"],
+        "parent_type": ["transformer", "detector", "forecaster"],
         "tag_type": "bool",
         "short_descr": "does the estimator provided stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
@@ -4037,12 +4083,6 @@ ESTIMATOR_TAG_REGISTER = [
         "classification algorithms.",
     ),
     (
-        "remember_data",
-        ["forecaster", "transformer"],
-        "bool",
-        "whether estimator remembers all data seen as self._X, self._y, etc",
-    ),
-    (
         "reserved_params",
         "estimator",
         ("list", "str"),
@@ -4100,16 +4140,6 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "max iters for bisection method in ppf",
-    ),
-    # ---------------------------
-    # to be deprecated or removed
-    # ---------------------------
-    # the following tags are to be deprecated or removed
-    (
-        "capability:global_forecasting",
-        ["forecaster"],
-        "bool",
-        "can the estimator make global forecasting?",
     ),
 ]
 
