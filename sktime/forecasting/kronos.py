@@ -147,6 +147,7 @@ class KronosForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:insample": True,
         "capability:pretrain": False,
+        "capability:update": True,
         "authors": ["shiyu-coder", "geetu040"],
         "maintainers": ["geetu040"],
         "python_dependencies": [
@@ -237,6 +238,40 @@ class KronosForecaster(BaseForecaster):
                 self.output_columns_.append(original)
 
         self.tokenizer_, self.model_ = self._load_kronos()
+
+    def _update(self, y, X=None, update_params=True):
+        """Update Kronos context without reloading tokenizer/model.
+
+        Prediction uses ``self.context_`` with capacity ``self.max_context_``
+        (set at fit). Append new data and trim to that capacity instead of
+        unbounded base ``_update`` growth.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            New endogenous observations.
+        X : ignored
+        update_params : bool, optional (default=True)
+            Ignored for this estimator's update path.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        self.context_ = update_data(self.context_, y)
+
+        max_context = getattr(self, "max_context_", None)
+        if max_context is not None and len(self.context_) > max_context:
+            self.context_ = self.context_.iloc[-max_context:]
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if y_stored is not None and max_context is not None and len(y_stored) > max_context:
+                self._y = y_stored.iloc[-max_context:]
+
+        return self
 
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
