@@ -1169,11 +1169,14 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             )
 
         # pretrain always requires panel data, independent of what fit/predict
-        # support via y_inner_mtype. Pass expanded mtypes directly to _check_X_y
-        # to decouple pretrain's data requirements from the tag.
+        # support via y_inner_mtype and X_inner_mtype. Pass expanded mtypes directly
+        # to _check_X_y to decouple pretrain's data requirements from the tags.
+        # X is expanded too, since X must have the same scitype as y.
         _PRETRAIN_MTYPES = ["pd-multiindex", "pd_multiindex_hier"]
         orig_y_mtypes = _coerce_to_list(self.get_tag("y_inner_mtype"))
         pretrain_y_mtypes = list(set(orig_y_mtypes + _PRETRAIN_MTYPES))
+        orig_X_mtypes = _coerce_to_list(self.get_tag("X_inner_mtype"))
+        pretrain_X_mtypes = list(set(orig_X_mtypes + _PRETRAIN_MTYPES))
 
         prior_attrs = {
             a for a in dir(self) if a.endswith("_") and not a.startswith("_")
@@ -1183,7 +1186,11 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         # because _pretrain can split columns into separate univariate series.
         # Pass multivariate=True to prevent column vectorization.
         X_inner, y_inner = self._check_X_y(
-            X=X, y=y, y_inner_mtype=pretrain_y_mtypes, multivariate=True
+            X=X,
+            y=y,
+            y_inner_mtype=pretrain_y_mtypes,
+            X_inner_mtype=pretrain_X_mtypes,
+            multivariate=True,
         )
 
         # pretrain does not support vectorization - global learning requires
@@ -1825,7 +1832,14 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
 
         return fitted_params
 
-    def _check_X_y(self, X=None, y=None, y_inner_mtype=None, multivariate=None):
+    def _check_X_y(
+        self,
+        X=None,
+        y=None,
+        y_inner_mtype=None,
+        multivariate=None,
+        X_inner_mtype=None,
+    ):
         """Check and coerce X/y for fit/predict/update functions.
 
         Parameters
@@ -1834,6 +1848,12 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             Time series to check.
         X : pd.DataFrame, or 2D np.array, optional (default=None)
             Exogeneous time series.
+        y_inner_mtype : str or list of str, optional (default=None)
+            if not-None, overrides the tag "y_inner_mtype" in internal behaviour.
+            Overridden currently from: the ``pretrain`` method.
+        X_inner_mtype : str or list of str, optional (default=None)
+            if not-None, overrides the tag "X_inner_mtype" in internal behaviour.
+            Overridden currently from: the ``pretrain`` method.
 
         Returns
         -------
@@ -1909,7 +1929,10 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
             y_inner_mtype = _coerce_to_list(y_inner_mtype)
         if multivariate is None:
             multivariate = self.get_tag("capability:multivariate")
-        X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
+        if X_inner_mtype is None:
+            X_inner_mtype = _coerce_to_list(self.get_tag("X_inner_mtype"))
+        else:
+            X_inner_mtype = _coerce_to_list(X_inner_mtype)
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
 
