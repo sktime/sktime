@@ -1,5 +1,6 @@
 """Test data loaders that download from external sources."""
 
+import tarfile
 from urllib.request import Request, urlopen
 
 import numpy as np
@@ -167,3 +168,82 @@ def test_load_m5():
 
     index = check_raise(loaded_dataset, mtype="pd_multiindex_hier")
     assert index is True
+
+
+def _make_tar_bytes(members):
+    """Build an in-memory gzipped tar archive from (name, content) pairs."""
+    import io
+
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        for name, content in members:
+            info = tarfile.TarInfo(name=name)
+            data = content.encode("utf-8")
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    return buf.getvalue()
+
+
+def test_decompress_file_to_temp_uses_timeout(monkeypatch, tmp_path):
+    """Check that the FPP3 loader passes a timeout to requests.get."""
+    from sktime.datasets._fpp3_loaders import _decompress_file_to_temp
+
+    calls = []
+
+    class FakeResponse:
+        content = _make_tar_bytes([("safe.rda", "x")])
+        def raise_for_status(self):
+            pass
+
+    def fake_get(url, **kwargs):
+        calls.append(kwargs)
+        return FakeResponse()
+
+    monkeypatch.setattr("requests.get", fake_get)
+
+    _decompress_file_to_temp(
+        datafile="prices_0.1.0.tar.gz",
+        archivedir="prices",
+        temp_folder=str(tmp_path),
+    )
+
+    assert calls, "requests.get should have been called"
+    assert all("timeout" in c for c in calls)
+    assert all(c["timeout"] == (10, 60) for c in calls)
+
+
+def test_decompress_file_to_temp_rejects_traversal(tmp_path):
+    """A tar member escaping the temp dir must be rejected."""
+    from sktime.datasets._fpp3_loaders import _extract_tar_safely
+
+    archive = _make_tar_bytes([("../../outside.rda", "evil")])
+    temp_file = tmp_path / "evil.tar.gz"
+    temp_file.write_bytes(archive)
+
+    with tarfile.open(temp_file) as tar:
+        with pytest.raises((ValueError, tarfile.TarError)):
+            _extract_tar_safely(tar, str(tmp_path))
+
+
+def test_decompress_file_to_temp_cleans_up_on_failed_download(monkeypatch, tmp_path):
+    """Temp dir must be removed when both download attempts fail."""
+    import requests as _requests
+
+    from sktime.datasets._fpp3_loaders import _decompress_file_to_temp
+
+    def fake_get(url, **kwargs):
+        raise _requests.exceptions.RequestException("boom")
+
+    monkeypatch.setattr("requests.get", fake_get)
+
+    temp_folder = tmp_path / "t"
+    temp_folder.mkdir()
+
+    with pytest.raises(RuntimeError, match="Failed to download"):
+        _decompress_file_to_temp(
+            datafile="prices_0.1.0.tar.gz",
+            archivedir="prices",
+            temp_folder=str(temp_folder),
+        )
+
+    assert list(temp_folder.iterdir()) == []
