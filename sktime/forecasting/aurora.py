@@ -128,6 +128,7 @@ class AuroraForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:update": True,
         "requires-fh-in-fit": False,
         "property:randomness": "stochastic",
         "tests:vm": True,
@@ -219,6 +220,43 @@ class AuroraForecaster(BaseForecaster):
         self._context = _as_dataframe(y)
         if self.context_length is not None and len(self._context) > self.context_length:
             self._context = self._context.iloc[-self.context_length :]
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update Aurora context without reloading the pretrained model.
+
+        Prediction reads ``self._context``. Prefer trimming to
+        ``context_length`` when set, instead of unbounded base ``_update``
+        refits or a stale context.
+
+        Parameters
+        ----------
+        y : pd.Series or pd.DataFrame
+            New endogenous observations.
+        X : ignored
+        update_params : bool, optional (default=True)
+            Ignored for this zero-shot estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        self._context = update_data(self._context, _as_dataframe(y))
+
+        if self.context_length is not None and len(self._context) > self.context_length:
+            self._context = self._context.iloc[-self.context_length :]
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if (
+                y_stored is not None
+                and self.context_length is not None
+                and len(y_stored) > self.context_length
+            ):
+                self._y = y_stored.iloc[-self.context_length :]
+
         return self
 
     def _predict(self, fh, X=None):
