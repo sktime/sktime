@@ -119,7 +119,7 @@ class TiRex2Forecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = TiRex2Forecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {

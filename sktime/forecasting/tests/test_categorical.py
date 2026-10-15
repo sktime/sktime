@@ -40,7 +40,7 @@ def test_dummy_est_with_categorical_capability():
     X = pd.DataFrame({"col_0": ["a", "b", "c", "a", "b", "c", "a", "b", "c"]})
     Xt = X[:6]
 
-    est.fit(yt, Xt, fh=[1, 2, 3])
+    est.fit(yt, Xt, fh=3)
     est.predict(X=X[6:])
     est.update(y[6:], X[6:])
 

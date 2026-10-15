@@ -110,15 +110,15 @@ class T0Forecaster(BaseForecaster):
     >>> y_train, y_test = temporal_train_test_split(y, test_size=12)
     >>> forecaster = T0Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y_train)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Probabilistic forecast (T0 returns quantiles natively):
 
     >>> y_quantiles = forecaster.predict_quantiles(
-    ...     fh=[1, 2, 3], alpha=[0.1, 0.5, 0.9]
+    ...     fh=3, alpha=[0.1, 0.5, 0.9]
     ... )  # doctest: +SKIP
     >>> y_interval = forecaster.predict_interval(
-    ...     fh=[1, 2, 3], coverage=0.9
+    ...     fh=3, coverage=0.9
     ... )  # doctest: +SKIP
 
     Forecast with known-future exogenous data (``X`` in both fit and predict):
@@ -128,7 +128,7 @@ class T0Forecaster(BaseForecaster):
     >>> y_tr, y_te, X_tr, X_te = temporal_train_test_split(y, X, test_size=3)
     >>> forecaster = T0Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y_tr, X=X_tr)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3], X=X_te)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3, X=X_te)  # doctest: +SKIP
 
     Multivariate forecast on a real dataset (each column forecast independently):
 
@@ -137,7 +137,7 @@ class T0Forecaster(BaseForecaster):
     >>> y_multi_train = y_multi.iloc[:-3]
     >>> forecaster = T0Forecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y_multi_train)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {

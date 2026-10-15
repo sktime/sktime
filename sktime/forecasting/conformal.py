@@ -82,7 +82,7 @@ class ConformalIntervals(BaseForecaster):
     >>> y = load_airline()  # doctest: +SKIP
     >>> forecaster = NaiveForecaster(strategy="drift")  # doctest: +SKIP
     >>> conformal_forecaster = ConformalIntervals(forecaster)  # doctest: +SKIP
-    >>> conformal_forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> conformal_forecaster.fit(y, fh=3)  # doctest: +SKIP
     ConformalIntervals(...)
     >>> pred_int = conformal_forecaster.predict_interval()  # doctest: +SKIP
 
@@ -97,7 +97,7 @@ class ConformalIntervals(BaseForecaster):
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.param_est.plugin import PluginParamsForecaster
     >>> # part 1 = grid search
-    >>> cv = ExpandingWindowSplitter(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> cv = ExpandingWindowSplitter(fh=3)  # doctest: +SKIP
     >>> forecaster = NaiveForecaster()  # doctest: +SKIP
     >>> param_grid = {"strategy" : ["last", "mean", "drift"]}  # doctest: +SKIP
     >>> gscv = ForecastingGridSearchCV(
@@ -113,7 +113,7 @@ class ConformalIntervals(BaseForecaster):
     ...     params={"forecaster": "best_forecaster"},
     ... )  # doctest: +SKIP
     >>> y = load_airline()  # doctest: +SKIP
-    >>> gscv_with_conformal.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> gscv_with_conformal.fit(y, fh=3)  # doctest: +SKIP
     PluginParamsForecaster(...)
     >>> y_pred_quantiles = gscv_with_conformal.predict_quantiles()  # doctest: +SKIP
     """

@@ -128,7 +128,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     >>> scaler=LogTransformer()
     >>> forecaster=ESRNNForecaster(15,6,12,6,'double',20,1,32,100,'MSE')# doctest: +SKIP
     >>> y_new=scaler.fit_transform(y)
-    >>> forecaster.fit(y_new, fh=[1,2,3]) # doctest: +SKIP
+    >>> forecaster.fit(y_new, fh=3) # doctest: +SKIP
     >>> y_pred = forecaster.predict() # doctest: +SKIP
     >>> y_pred=scaler.inverse_transform(y_pred) # doctest: +SKIP
     """
@@ -304,7 +304,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        # pred_len >= 3 because pretrain tests use fh=[1,2,3]
+        # pred_len >= 3 because pretrain tests use fh=3
         # window + pred_len < min_timepoints (10 in pretrain test data)
         params1 = {
             "window": 3,

@@ -139,7 +139,7 @@ class Prophet(_ProphetAdapter):
     ...     yearly_seasonality=True)
     >>> forecaster.fit(y)
     Prophet(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     def __init__(

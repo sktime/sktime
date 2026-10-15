@@ -136,7 +136,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     ... )
     >>>
     >>> # fitting the model
-    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    >>> model.fit(y_train, X=X_train, fh=4)  # doctest: +SKIP
     Seed set to 1
     Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589,
     train_loss_epoc
@@ -547,7 +547,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     ... )
     >>>
     >>> # fitting the model
-    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    >>> model.fit(y_train, X=X_train, fh=4)  # doctest: +SKIP
     Seed set to 1
     Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589, train_loss_epoc
     NeuralForecastLSTM(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
@@ -936,7 +936,7 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
     ... )
     >>>
     >>> # fitting the model
-    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    >>> model.fit(y_train, X=X_train, fh=4)  # doctest: +SKIP
     Seed set to 1
     Epoch 4: 100%|████████████████████████████| 1/1 [00:00<00:00, 20.71it/s, v_num=0, train_loss_step=0.745, train_loss_epoch=0.745]
     NeuralForecastGRU(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
@@ -1340,7 +1340,7 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
     ... )
     >>>
     >>> # fitting the model
-    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    >>> model.fit(y_train, X=X_train, fh=4)  # doctest: +SKIP
     Seed set to 1
     Epoch 4: 100%|████████████████████████████| 1/1 [00:00<00:00, 48.76it/s, v_num=2, train_loss_step=0.798, train_loss_epoch=0.798]
     NeuralForecastDilatedRNN(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
@@ -1741,7 +1741,7 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
     ... )
     >>>
     >>> # fitting the model
-    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    >>> model.fit(y_train, X=X_train, fh=4)  # doctest: +SKIP
     Seed set to 1
     Epoch 4: 100%|████████████████████████████| 1/1 [00:00<00:00, 48.19it/s, v_num=5, train_loss_step=0.833, train_loss_epoch=0.833]
     NeuralForecastTCN(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)

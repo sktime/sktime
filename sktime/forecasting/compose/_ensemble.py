@@ -100,7 +100,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     ("naive", NaiveForecaster()),
     ... ]
     >>> forecaster = AutoEnsembleForecaster(forecasters=forecasters)
-    >>> forecaster.fit(y=y, fh=[1,2,3])
+    >>> forecaster.fit(y=y, fh=3)
     AutoEnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """
@@ -321,7 +321,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     ...     ("naive", NaiveForecaster()),
     ... ]
     >>> forecaster = EnsembleForecaster(forecasters=forecasters, weights=[4, 10])
-    >>> forecaster.fit(y=y, fh=[1,2,3])
+    >>> forecaster.fit(y=y, fh=3)
     EnsembleForecaster(...)
     >>> y_pred = forecaster.predict()
     """

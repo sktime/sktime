@@ -55,7 +55,7 @@ class TrendForecaster(BaseForecaster):
     >>> forecaster = TrendForecaster()
     >>> forecaster.fit(y)
     TrendForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1,2,3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {
