@@ -495,7 +495,7 @@ class FABBA(BaseTransformer):
                 U1, s1, _ = svds(cluster_data, k=1, return_singular_vectors="u")
                 norm_data = U1[:, 0] * s1[0]
             else:
-                norm_data = norm_data[:, 0]
+                norm_data = cluster_data[:, 0]
             # keep direction of sorting consistent
             norm_data = norm_data * np.sign(-norm_data[0])
             # sort this projected data
@@ -503,6 +503,7 @@ class FABBA(BaseTransformer):
 
         # No sorting
         else:
+            cluster_data = data
             norm_data = np.zeros(num_pieces)
             sorted_indicies = np.arange(num_pieces)
 
