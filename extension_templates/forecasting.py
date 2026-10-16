@@ -87,7 +87,7 @@ class MyForecaster(BaseForecaster):
         # category = fitting principle of the estimator
         # see sktime.registry._tags.category
         # valid values: list of strings, subset of
-        #   "statistical", "machine_learning", "deep_learning",
+        #   "statistical", "naive", "machine_learning", "deep_learning",
         #   "foundation_model", "reduction", "composition", "adapter",
         #   "tuning", "agentic"
         "category": ["statistical"],

@@ -728,13 +728,14 @@ class category(_BaseTag):
     such as ``"forecaster"`` or ``"classifier"``.
 
     The value is a list, so an estimator can carry more than one entry.
-    A foundation model is also tagged ``"deep_learning"``.
 
     Valid values are:
 
     * ``"statistical"``: classical statistical method. For forecasters this
       includes naive baselines, exponential smoothing, ARIMA-type models,
       structural models, intermittent-demand methods, and parametric curves.
+    * ``"naive"``: naive baseline, such as last value, mean, or a prescribed
+      playback. Also tagged ``"statistical"``.
     * ``"machine_learning"``: machine learning method that is not a neural
       network, such as a tree ensemble or another tabular learner.
     * ``"deep_learning"``: neural network trained for the task.
@@ -759,6 +760,7 @@ class category(_BaseTag):
             "list",
             [
                 "statistical",
+                "naive",
                 "machine_learning",
                 "deep_learning",
                 "foundation_model",

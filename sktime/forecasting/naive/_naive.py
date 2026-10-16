@@ -118,7 +118,7 @@ class NaiveForecaster(_BaseWindowForecaster):
     """
 
     _tags = {
-        "category": ["statistical"],
+        "category": ["statistical", "naive"],
         # packaging info
         # --------------
         "authors": [

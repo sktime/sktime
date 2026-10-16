@@ -70,7 +70,7 @@ class DummyGlobalForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["statistical"],
+        "category": ["statistical", "naive"],
         # packaging info
         # --------------
         "authors": ["SimonBlanke"],
