@@ -669,8 +669,75 @@ def test_evaluate_hierarchical_unequal_X_y():
 
     # further sanity checks to pin down deterministic properties of return
     assert isinstance(res, pd.DataFrame)
-    assert res.shape == (5, 5)
+    assert res.shape == (5, 6)
 
     expected_cols = np.array([1 / 2, 1 / 3, 1 / 4, 1 / 5, 1 / 6])
     output_metrics = res.loc[:, "test_MeanAbsolutePercentageError"].values
     _assert_array_almost_equal(output_metrics, expected_cols)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_evaluate_fold_fingerprint():
+    """Test that fold fingerprints identify the folds, and nothing else.
+
+    The fingerprint is what lets a caller check that two estimators were scored
+    on the same folds, which paired post-hoc tests such as the Friedman test
+    and critical difference diagrams assume. See bug report #10881.
+    """
+    y = load_airline()[:36]
+    cv = ExpandingWindowSplitter(initial_window=12, step_length=6, fh=[1, 2, 3])
+
+    first = evaluate(NaiveForecaster(strategy="mean", sp=3), cv, y, error_score="raise")
+    second = evaluate(
+        NaiveForecaster(strategy="mean", sp=3), cv, y, error_score="raise"
+    )
+
+    fingerprints = first["fold_fingerprint"]
+
+    # a fingerprint is emitted for every fold, and none of them is missing
+    assert len(fingerprints) == cv.get_n_splits(y)
+    assert fingerprints.notna().all()
+    assert fingerprints.map(lambda x: isinstance(x, str)).all()
+
+    # repeating the same call gives the same fingerprints, in the same order
+    assert fingerprints.equals(second["fold_fingerprint"])
+
+    # a different forecaster on the same folds gives the same fingerprints,
+    # so the fingerprint identifies the fold, not the estimator or its scores
+    other = evaluate(NaiveForecaster(strategy="last"), cv, y, error_score="raise")
+    assert fingerprints.equals(other["fold_fingerprint"])
+    assert not first["test_MeanAbsolutePercentageError"].equals(
+        other["test_MeanAbsolutePercentageError"]
+    )
+
+    # a splitter producing different folds gives different fingerprints
+    other_cv = ExpandingWindowSplitter(initial_window=13, step_length=6, fh=[1, 2, 3])
+    other_folds = evaluate(NaiveForecaster(), other_cv, y, error_score="raise")
+    assert not set(fingerprints) & set(other_folds["fold_fingerprint"])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(evaluate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_evaluate_fold_fingerprint_on_failing_fit():
+    """Test that a fold fingerprint is emitted even when fitting fails.
+
+    The fingerprint describes the fold, so it is available whether or not the
+    forecaster managed to produce a score on it.
+    """
+    y = load_airline()
+    cv = SlidingWindowSplitter(step_length=33, initial_window=36, fh=[1, 2, 3])
+
+    # window_length is longer than any train fold, so fit fails on every fold
+    failing = evaluate(
+        NaiveForecaster(strategy="mean", window_length=1000), cv, y, error_score=np.nan
+    )
+    working = evaluate(NaiveForecaster(), cv, y, error_score="raise")
+
+    assert failing["test_MeanAbsolutePercentageError"].isna().all()
+    assert failing["fold_fingerprint"].notna().all()
+    assert failing["fold_fingerprint"].equals(working["fold_fingerprint"])

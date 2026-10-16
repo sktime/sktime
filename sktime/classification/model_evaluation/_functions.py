@@ -16,6 +16,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes import check_is_scitype, convert
 from sktime.exceptions import FitFailedWarning
+from sktime.utils.index import fold_fingerprint
 from sktime.utils.parallel import parallelize
 
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
@@ -138,6 +139,7 @@ def _get_column_order_and_datatype(
             metrics_metadata[result_key] = "float"
             if return_data:
                 y_metadata[y_pred_key] = "object"
+    fit_metadata["fold_fingerprint"] = "object"
     if return_data:
         fit_metadata.update(y_metadata)
     metrics_metadata.update(fit_metadata)
@@ -168,6 +170,10 @@ def _evaluate_fold(x, meta):
     y_pred = pd.NA
     temp_result = dict()
     y_preds_cache = dict()
+
+    # fingerprint of the fold itself, computed before any fitting, so that it is
+    # also recorded on folds where the classifier fails
+    fingerprint = fold_fingerprint(y_train, y_test)
 
     try:
         # fit
@@ -246,6 +252,7 @@ def _evaluate_fold(x, meta):
 
     # Storing the remaining evaluate detail
     temp_result["fit_time"] = [fit_time]
+    temp_result["fold_fingerprint"] = [fingerprint]
 
     if return_data:
         temp_result["X_train"] = [X_train]
@@ -377,6 +384,16 @@ def evaluate(
         - ``y_train``: pd.Series of train targets (if ``return_data=True``)
         - ``y_pred``: pd.Series of predictions (if ``return_data=True``)
         - ``y_test``: pd.Series of test targets (if ``return_data=True``)
+        - ``fold_fingerprint``: str or None, stable digest of the train and test
+        indices of the i-th split. Two ``evaluate`` calls on the same folds give
+        the same fingerprints, in the same row order, whatever the estimator, the
+        process, or the machine, so "all estimators were scored on the same
+        folds" becomes checkable rather than assumed. Paired post-hoc tests such
+        as the Friedman test and critical difference diagrams are only valid
+        under that. A ``cv`` that shuffles without a ``random_state`` resamples
+        on every call, and shows up here as fingerprints that do not match.
+        None means the fold has no index that could be hashed, so it is not
+        comparable. See ``sktime.utils.index.fold_fingerprint``.
 
     Examples
     --------
@@ -523,6 +540,16 @@ def _evaluate(
         - ``y_train``: pd.Series of train targets (if ``return_data=True``)
         - ``y_pred``: pd.Series of predictions (if ``return_data=True``)
         - ``y_test``: pd.Series of test targets (if ``return_data=True``)
+        - ``fold_fingerprint``: str or None, stable digest of the train and test
+        indices of the i-th split. Two ``evaluate`` calls on the same folds give
+        the same fingerprints, in the same row order, whatever the estimator, the
+        process, or the machine, so "all estimators were scored on the same
+        folds" becomes checkable rather than assumed. Paired post-hoc tests such
+        as the Friedman test and critical difference diagrams are only valid
+        under that. A ``cv`` that shuffles without a ``random_state`` resamples
+        on every call, and shows up here as fingerprints that do not match.
+        None means the fold has no index that could be hashed, so it is not
+        comparable. See ``sktime.utils.index.fold_fingerprint``.
     """
     classifier = estimator
 
