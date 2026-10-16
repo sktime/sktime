@@ -36,9 +36,6 @@ class MultiRocketMultivariate(BaseTransformer):
        data will rounded down to the next positive multiple of 84.
     max_dilations_per_kernel : int, default=32
         maximum number of dilations per kernel.
-    n_features_per_kernel : int, default="deprecated"
-        Deprecated, and will be removed in sktime 1.4.0. MultiRocket always
-        computes 4 features per kernel, so any value passed is ignored.
     normalise : bool, default False
     n_jobs : int, default=1
         The number of jobs to run in parallel for `transform`. ``-1`` means using all
@@ -53,6 +50,9 @@ class MultiRocketMultivariate(BaseTransformer):
         retained for reproducibility of published results, and for users
         with downstream models fitted on features produced by it.
         See the notes on the differences below.
+    n_features_per_kernel : int, default="deprecated"
+        Deprecated, and will be removed in sktime 1.4.0. MultiRocket always
+        computes 4 features per kernel, so any value passed is ignored.
 
     Attributes
     ----------
@@ -146,11 +146,11 @@ class MultiRocketMultivariate(BaseTransformer):
         self,
         num_kernels=6_250,
         max_dilations_per_kernel=32,
-        n_features_per_kernel="deprecated",
         normalise=False,
         n_jobs=1,
         random_state=None,
         original_implementation=False,
+        n_features_per_kernel="deprecated",
     ):
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel

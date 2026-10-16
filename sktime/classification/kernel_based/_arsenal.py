@@ -45,10 +45,6 @@ class Arsenal(BaseClassifier):
         Valid inputs = ["rocket","minirocket","multirocket"]
     max_dilations_per_kernel : int, default=32
         MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
-    n_features_per_kernel : int, default="deprecated"
-        MultiRocket only. Deprecated, and will be removed in sktime 1.4.0.
-        MultiRocket always computes 4 features per kernel, so any value passed
-        is ignored.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
         Default of 0 means n_estimators is used.
@@ -61,6 +57,10 @@ class Arsenal(BaseClassifier):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
+    n_features_per_kernel : int, default="deprecated"
+        MultiRocket only. Deprecated, and will be removed in sktime 1.4.0.
+        MultiRocket always computes 4 features per kernel, so any value passed
+        is ignored.
 
     Attributes
     ----------
@@ -135,12 +135,12 @@ class Arsenal(BaseClassifier):
         n_estimators=25,
         rocket_transform="rocket",
         max_dilations_per_kernel=32,
-        n_features_per_kernel="deprecated",
         time_limit_in_minutes=0.0,
         contract_max_n_estimators=100,
         save_transformed_data=False,
         n_jobs=1,
         random_state=None,
+        n_features_per_kernel="deprecated",
     ):
         self.num_kernels = num_kernels
         self.n_estimators = n_estimators

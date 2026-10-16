@@ -57,10 +57,6 @@ class RocketClassifier(_DelegatedClassifier):
         Valid inputs = ["rocket", "minirocket", "multirocket"]
     max_dilations_per_kernel : int, optional, default=32
         MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
-    n_features_per_kernel : int, optional, default="deprecated"
-        MultiRocket only. Deprecated, and will be removed in sktime 1.4.0.
-        MultiRocket always computes 4 features per kernel, so any value passed
-        is ignored.
     use_multivariate : str, ["auto", "yes", "no"], optional, default="auto"
         whether to use multivariate rocket transforms or univariate ones
         "auto" = multivariate iff data seen in fit is multivariate, otherwise univariate
@@ -71,6 +67,10 @@ class RocketClassifier(_DelegatedClassifier):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
+    n_features_per_kernel : int, optional, default="deprecated"
+        MultiRocket only. Deprecated, and will be removed in sktime 1.4.0.
+        MultiRocket always computes 4 features per kernel, so any value passed
+        is ignored.
 
     Attributes
     ----------
@@ -139,10 +139,10 @@ class RocketClassifier(_DelegatedClassifier):
         num_kernels=10000,
         rocket_transform="rocket",
         max_dilations_per_kernel=32,
-        n_features_per_kernel="deprecated",
         use_multivariate="auto",
         n_jobs=1,
         random_state=None,
+        n_features_per_kernel="deprecated",
     ):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
