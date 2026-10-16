@@ -442,7 +442,7 @@ class FittedParamExtractor(BaseTransformer):
         "tests:python_dependencies": ["statsmodels"],
         "tests:specific": [
             "sktime.transformations.summarize.tests.test_FittedParamExtractor",
-        ], 
+        ],
     }
 
     def __init__(self, forecaster, param_names, n_jobs=None):
