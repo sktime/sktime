@@ -2,7 +2,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Test forecasting tuners."""
 
-__author__ = ["mloning", "fkiraly"]
+__author__ = ["mloning", "fkiraly", "AndrewPrakash1"]
 
 
 from functools import reduce
@@ -15,6 +15,7 @@ from sklearn.model_selection import ParameterGrid, ParameterSampler
 from sktime.datasets import load_airline, load_longley
 from sktime.forecasting.arima import ARIMA
 from sktime.forecasting.compose import TransformedTargetForecaster
+from sktime.forecasting.dummy_global import DummyGlobalForecaster
 from sktime.forecasting.exp_smoothing import ExponentialSmoothing
 from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_selection import (
@@ -530,3 +531,55 @@ def test_return_n_best_forecasters(Forecaster, return_n_best_forecasters, kwargs
             )
             total_combinations = calculate_total_combinations(kwargs[key])
             assert len(searchCV.n_best_forecasters_) == total_combinations
+
+
+class _PretrainedRequiredDummy(DummyGlobalForecaster):
+    """Dummy that fails if pretrained state was dropped before ``fit``."""
+
+    def _fit(self, y, X=None, fh=None):
+        if not hasattr(self, "global_mean_"):
+            raise RuntimeError("pretrained state discarded before fit")
+        return super()._fit(y, X, fh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([ForecastingGridSearchCV, DummyGlobalForecaster]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_gscv_preserves_pretrained_state():
+    """Tuners must retain pretrained state when cloning and setting params.
+
+    ``clone().set_params()`` calls skbase ``reset()``, which drops pretrained
+    attributes. Regression for issue #11503: candidate evaluation and
+    ``best_forecaster_`` construction must use ``_clone_at`` /
+    ``_set_params_at`` so pretraining survives tuning.
+    """
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(3,),
+        min_timepoints=15,
+        max_timepoints=15,
+        n_columns=1,
+    )
+    y = load_airline()[:36]
+
+    forecaster = _PretrainedRequiredDummy(strategy="mean")
+    forecaster.pretrain(y_panel)
+    pretrain_mean = forecaster.global_mean_
+
+    gscv = ForecastingGridSearchCV(
+        forecaster,
+        param_grid={"strategy": ["mean", "last"]},
+        cv=SingleWindowSplitter(fh=1),
+        error_score="raise",
+        refit=False,
+        return_n_best_forecasters=2,
+    )
+    gscv.fit(y)
+
+    assert gscv.best_forecaster_.state == "pretrained"
+    assert hasattr(gscv.best_forecaster_, "global_mean_")
+    np.testing.assert_almost_equal(gscv.best_forecaster_.global_mean_, pretrain_mean)
+
+    for _, tuned in gscv.n_best_forecasters_:
+        assert tuned.state == "pretrained"
+        np.testing.assert_almost_equal(tuned.global_mean_, pretrain_mean)

@@ -247,7 +247,9 @@ class BaseGridSearch(_DelegatedForecaster):
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
-        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
+        self.best_forecaster_ = _clone_and_set_params(
+            self.forecaster, self.best_params_
+        )
 
         # Refit model with best parameters.
         if self.refit:
@@ -268,7 +270,7 @@ class BaseGridSearch(_DelegatedForecaster):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
-            forecaster = self.forecaster.clone().set_params(**params)
+            forecaster = _clone_and_set_params(self.forecaster, params)
             # Refit model with best parameters.
             if self.refit:
                 forecaster.fit(y=y, X=X, fh=fh)
@@ -352,6 +354,34 @@ class BaseGridSearch(_DelegatedForecaster):
         return self
 
 
+def _clone_and_set_params(estimator, params, state="pretrained"):
+    """Clone ``estimator`` and set ``params``, retaining pretrained state.
+
+    ``clone().set_params()`` drops pretrained attributes because skbase
+    ``set_params`` calls ``reset()``. This helper uses the state-aware
+    private variants ``_clone_at`` / ``_set_params_at`` when available.
+
+    Parameters
+    ----------
+    estimator : sktime estimator
+        Estimator to clone.
+    params : dict
+        Parameter dict as in ``set_params``.
+    state : {"pretrained", "new"}, default="pretrained"
+        Upper bound on retained state. See ``BaseForecaster._clone_at``.
+
+    Returns
+    -------
+    clone of ``estimator`` with ``params`` set
+    """
+    if not isinstance(params, dict):
+        params = dict(params)
+    if hasattr(estimator, "_clone_at") and hasattr(estimator, "_set_params_at"):
+        cloned = estimator._clone_at(state)
+        return cloned._set_params_at(state, params)
+    return estimator.clone().set_params(**params)
+
+
 def _fit_and_score(params, meta):
     """Fit and score forecaster with given parameters.
 
@@ -361,9 +391,8 @@ def _fit_and_score(params, meta):
     meta = meta.copy()
     scoring_name = meta.pop("scoring_name")
 
-    # Set parameters.
-    forecaster = meta.pop("forecaster").clone()
-    forecaster.set_params(**params)
+    # Set parameters, retaining pretrained state when present.
+    forecaster = _clone_and_set_params(meta.pop("forecaster"), params)
 
     # Evaluate.
     out = evaluate(forecaster, **meta)
