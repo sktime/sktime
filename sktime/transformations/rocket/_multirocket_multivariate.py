@@ -4,9 +4,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.rocket._multirocket import (
-    _check_n_features_per_kernel,
-)
 
 __author__ = ["ChangWeiTan", "fstinner", "angus924"]
 
@@ -157,7 +154,6 @@ class MultiRocketMultivariate(BaseTransformer):
     ):
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
-        _check_n_features_per_kernel(self)
         self.num_kernels = num_kernels
         self.num_kernels_ = None
         self.normalise = normalise
@@ -169,6 +165,21 @@ class MultiRocketMultivariate(BaseTransformer):
         self.parameter1 = None
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        from sktime.transformations.rocket._multirocket import (
+            _check_n_features_per_kernel,
+        )
+
+        _check_n_features_per_kernel(self)
 
     def _fit(self, X, y=None):
         """Fit dilations and biases to input time series.

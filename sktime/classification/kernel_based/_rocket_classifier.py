@@ -19,9 +19,6 @@ from sktime.transformations.rocket import (
     MultiRocketMultivariate,
     Rocket,
 )
-from sktime.transformations.rocket._multirocket import (
-    _check_n_features_per_kernel,
-)
 
 
 class RocketClassifier(_DelegatedClassifier):
@@ -150,6 +147,36 @@ class RocketClassifier(_DelegatedClassifier):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
 
+        self.max_dilations_per_kernel = max_dilations_per_kernel
+        self.n_features_per_kernel = n_features_per_kernel
+        self.use_multivariate = use_multivariate
+
+        self.n_jobs = n_jobs
+        self.random_state = random_state
+
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        from sktime.transformations.rocket._multirocket import (
+            _check_n_features_per_kernel,
+        )
+        _check_n_features_per_kernel(self)
+
+        from sktime.utils.validation import check_n_jobs
+
+        rocket_transform = self.rocket_transform
+        n_jobs = self.n_jobs
+        use_multivariate = self.use_multivariate
+        num_kernels = self.num_kernels
+
         if rocket_transform in ["multirocket", "minirocket"]:
             if self.num_kernels < 84:
                 self.num_kernels_ = 84
@@ -158,18 +185,6 @@ class RocketClassifier(_DelegatedClassifier):
 
         else:
             self.num_kernels_ = num_kernels
-
-        self.max_dilations_per_kernel = max_dilations_per_kernel
-        self.n_features_per_kernel = n_features_per_kernel
-        _check_n_features_per_kernel(self)
-        self.use_multivariate = use_multivariate
-
-        self.n_jobs = n_jobs
-        self.random_state = random_state
-
-        super().__init__()
-
-        from sktime.utils.validation import check_n_jobs
 
         self._threads_to_use = check_n_jobs(n_jobs)
 

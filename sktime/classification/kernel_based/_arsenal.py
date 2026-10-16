@@ -23,9 +23,6 @@ from sktime.transformations.rocket import (
     MultiRocketMultivariate,
     Rocket,
 )
-from sktime.transformations.rocket._multirocket import (
-    _check_n_features_per_kernel,
-)
 from sktime.utils.validation.panel import check_X_y
 
 
@@ -150,7 +147,6 @@ class Arsenal(BaseClassifier):
         self.rocket_transform = rocket_transform
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
-        _check_n_features_per_kernel(self)
 
         self.time_limit_in_minutes = time_limit_in_minutes
         self.contract_max_n_estimators = contract_max_n_estimators
@@ -170,8 +166,22 @@ class Arsenal(BaseClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        from sktime.transformations.rocket._multirocket import (
+            _check_n_features_per_kernel,
+        )
         from sktime.utils.validation import check_n_jobs
 
+        _check_n_features_per_kernel(self)
+        n_jobs = self.n_jobs
         self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
