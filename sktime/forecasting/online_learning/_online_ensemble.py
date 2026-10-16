@@ -31,7 +31,7 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["magittan", "mloning"],

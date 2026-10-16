@@ -206,7 +206,7 @@ class UnobservedComponents(_StatsModelsAdapter):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["ChadFulton", "bashtage", "juanitorduz"],

@@ -465,7 +465,7 @@ class ARARForecaster(BaseForecaster):
     """  # noqa: E501
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         # packaging info
         "authors": ["Akai01"],
         "maintainers": ["Akai01"],

@@ -111,7 +111,7 @@ class BATS(_TbatsAdapter):
     """  # noqa: E501
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
     }
 
     _fitted_param_names = "aic"

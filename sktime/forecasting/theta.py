@@ -98,7 +98,7 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"],
@@ -471,7 +471,7 @@ class ThetaModularForecaster(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["GuzalBulatova", "fkiraly"],

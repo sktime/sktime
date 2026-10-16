@@ -476,7 +476,7 @@ class ArpsExponential(_ArpsDcaBase):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
     }
 
     def __init__(
@@ -604,7 +604,7 @@ class ArpsHyperbolic(_ArpsDcaBase):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
     }
 
     def __init__(
@@ -733,7 +733,7 @@ class ArpsHarmonic(_ArpsDcaBase):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
     }
 
     def __init__(

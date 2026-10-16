@@ -218,7 +218,7 @@ class AutoTS(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["winedarksea", "MBristle"],  # winedarksea for autots library

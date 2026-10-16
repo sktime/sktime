@@ -91,7 +91,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["GuzalBulatova", "mloning", "fkiraly"],

@@ -162,7 +162,7 @@ class StatsModelsARIMA(_StatsModelsAdapter):
     """  # noqa: E501
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["chadfulton", "bashtage", "jbrockmendel", "arnaujc91"],

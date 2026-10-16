@@ -84,7 +84,7 @@ class ProphetPiecewiseLinearTrendForecaster(_ProphetAdapter):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         "authors": ["sbuse", "bletham", "tcuongd"],
         # bletham, tcuongd for prophet
         "maintainers": ["sbuse"],

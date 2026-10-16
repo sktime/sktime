@@ -70,7 +70,7 @@ class ResidualBoostingForecaster(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         "authors": ["Sanchay117", "felipeangelimvieira"],
         "capability:pred_int": True,
         "capability:exogenous": True,

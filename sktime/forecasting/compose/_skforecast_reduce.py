@@ -108,7 +108,7 @@ class SkforecastAutoreg(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["reduction"],
+        "category": ["reduction"],
         # packaging info
         # --------------
         "authors": [
@@ -590,7 +590,7 @@ class SkforecastRecursive(BaseForecaster):
     """  # noqa: E501
 
     _tags = {
-        "forecaster_type": ["reduction"],
+        "category": ["reduction"],
         # packaging info
         # --------------
         "authors": [

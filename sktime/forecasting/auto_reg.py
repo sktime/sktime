@@ -87,7 +87,7 @@ class AutoREG(_StatsModelsAdapter):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["bashtage", "jonathanbechtel", "mgazian000", "CTFallon"],

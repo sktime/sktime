@@ -104,7 +104,7 @@ class DartsRegressionModel(_DartsRegressionAdapter):
     """
 
     _tags = {
-        "forecaster_type": ["reduction"],
+        "category": ["reduction"],
         # packaging info
         # --------------
         "authors": ["yarnabrina", "fnhirwa"],
@@ -310,7 +310,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
     """
 
     _tags = {
-        "forecaster_type": ["machine_learning"],
+        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["yarnabrina", "fnhirwa"],
@@ -544,7 +544,7 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
     """
 
     _tags = {
-        "forecaster_type": ["machine_learning"],
+        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["fnhirwa"],

@@ -90,7 +90,7 @@ class SquaringResiduals(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["kcc-lion", "fkiraly"],

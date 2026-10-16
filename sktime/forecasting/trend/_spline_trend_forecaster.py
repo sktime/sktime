@@ -86,7 +86,7 @@ class SplineTrendForecaster(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         "authors": ["jgyasu", "Dehelaan"],
         "maintainers": ["jgyasu"],
         "capability:exogenous": False,

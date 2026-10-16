@@ -69,7 +69,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "forecaster_type": ["machine_learning"],
+        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
@@ -422,7 +422,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "forecaster_type": ["machine_learning"],
+        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
@@ -616,7 +616,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "forecaster_type": ["machine_learning"],
+        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
@@ -993,7 +993,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "forecaster_type": ["deep_learning"],
+        "category": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["mixiancmx", "ailingzengzzz", "geetu040"],

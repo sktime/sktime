@@ -143,7 +143,7 @@ class Prophet(_ProphetAdapter):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
     }
 
     def __init__(

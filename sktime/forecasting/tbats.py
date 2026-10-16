@@ -113,7 +113,7 @@ class TBATS(_TbatsAdapter):
     """  # noqa: E501
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         "tests:specific": [
             "sktime.forecasting.tests.test_tbats",
             "sktime.libs.tbats.tests",

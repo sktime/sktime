@@ -81,7 +81,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["kkoralturk", "aiwalter", "fkiraly", "miraep8"],

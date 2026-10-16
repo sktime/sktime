@@ -108,7 +108,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["ninedigits", "RikStarmans"],

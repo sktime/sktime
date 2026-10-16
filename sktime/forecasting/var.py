@@ -97,7 +97,7 @@ class VAR(_StatsModelsAdapter):
     _fitted_param_names = ("aic", "fpe", "hqic", "bic")
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": [

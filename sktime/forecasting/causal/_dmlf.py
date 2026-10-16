@@ -167,7 +167,7 @@ class DoubleMLForecaster(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["machine_learning"],
+        "category": ["machine_learning"],
         "authors": ["geetu040", "XAheli"],
         "maintainers": ["geetu040", "XAheli"],
         "capability:multivariate": False,

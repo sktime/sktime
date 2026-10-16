@@ -175,7 +175,7 @@ class AutoETS(_StatsModelsAdapter):
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["hyang1996"],

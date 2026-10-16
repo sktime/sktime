@@ -237,7 +237,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition", "tuning"],
         # packaging info
         # --------------
         "authors": ["HazrulAkmal"],

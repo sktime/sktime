@@ -158,7 +158,7 @@ class ARCH(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package

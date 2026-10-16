@@ -91,7 +91,7 @@ class FhPlexForecaster(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": "fkiraly",

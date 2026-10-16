@@ -712,6 +712,68 @@ class tests__python_dependencies(_BaseTag):
 # most tags in this group apply to estimators
 
 
+class category(_BaseTag):
+    """Algorithm category of an estimator, by fitting principle.
+
+    - String name: ``"category"``
+    - Public information tag
+    - Applies to: estimators.
+    - Values: list of strings, each from the list below
+    - Example: ``["statistical"]``
+    - Example 2: ``["deep_learning", "foundation_model"]``
+    - Default: ``["statistical"]`` on forecasters.
+
+    ``category`` records how an estimator produces its result.
+    This is the fitting principle, not the scientific type
+    such as ``"forecaster"`` or ``"classifier"``.
+
+    The value is a list, so an estimator can carry more than one entry.
+    A foundation model is also tagged ``"deep_learning"``.
+
+    Valid values are:
+
+    * ``"statistical"``: classical statistical method. For forecasters this
+      includes naive baselines, exponential smoothing, ARIMA-type models,
+      structural models, intermittent-demand methods, and parametric curves.
+    * ``"machine_learning"``: machine learning method that is not a neural
+      network, such as a tree ensemble or another tabular learner.
+    * ``"deep_learning"``: neural network trained for the task.
+    * ``"foundation_model"``: deep learning model pretrained on a large
+      corpus. Also tagged ``"deep_learning"``.
+    * ``"reduction"``: reduction to another learning task. The inner
+      estimator determines the fitting principle of a fitted instance.
+    * ``"composition"``: pipeline, ensemble, wrapper, or other compositor.
+      The wrapped estimator carries its own ``category``.
+    * ``"adapter"``: adapter to a forecaster from another library. The
+      wrapped model determines the fitting principle.
+    * ``"tuning"``: hyperparameter search over a forecaster. Also tagged
+      ``"composition"``. The tuned forecaster carries its own ``category``.
+    * ``"agentic"``: a language model constructs or revises an estimator
+      pipeline. The generated estimator carries its own ``category``.
+    """
+
+    _tags = {
+        "tag_name": "category",
+        "parent_type": "estimator",
+        "tag_type": (
+            "list",
+            [
+                "statistical",
+                "machine_learning",
+                "deep_learning",
+                "foundation_model",
+                "reduction",
+                "composition",
+                "adapter",
+                "tuning",
+                "agentic",
+            ],
+        ),
+        "short_descr": "algorithm category of the estimator, by fitting principle",
+        "user_facing": True,
+    }
+
+
 class capability__missing_values(_BaseTag):
     """Capability: the estimator can handle missing data, e.g,, NaNs.
 
@@ -1038,60 +1100,6 @@ class remember_data(_BaseTag):
 
 # Forecasters
 # -----------
-
-
-class forecaster_type(_BaseTag):
-    """Categorization of forecaster based on fitting principle.
-
-    - String name: ``"forecaster_type"``
-    - Public information tag
-    - Values: list of strings, each from the list below
-    - Example: ``["statistical"]``
-    - Example 2: ``["deep_learning", "foundation_model"]``
-    - Default: ``["statistical"]``
-
-    ``forecaster_type`` records how a forecaster produces forecasts,
-    i.e., the fitting principle.
-
-    The value is a list, so a forecaster can carry more than one entry.
-
-    Valid values are:
-
-    * ``"statistical"``: classical statistical forecaster. Includes naive
-      baselines, exponential smoothing, ARIMA-type models, structural models,
-      intermittent-demand methods, and parametric trend or decline curves.
-    * ``"machine_learning"``: machine learning forecaster that is not a neural
-      network, such as a tree ensemble or another tabular learner used as the
-      forecaster.
-    * ``"deep_learning"``: neural network trained for the forecasting task.
-    * ``"foundation_model"``: deep learning model pretrained on a large corpus.
-      Also tagged ``"deep_learning"``.
-    * ``"reduction"``: forecasting-to-regression reduction. The inner estimator
-      determines the fitting principle of a fitted instance.
-    * ``"composition"``: pipeline, ensemble, wrapper, tuner, or other
-      compositor. The wrapped forecaster carries its own ``forecaster_type``.
-    * ``"agentic"``: a language model constructs or revises a forecasting
-      pipeline. The generated forecaster carries its own ``forecaster_type``.
-    """
-
-    _tags = {
-        "tag_name": "forecaster_type",
-        "parent_type": "forecaster",
-        "tag_type": (
-            "list",
-            [
-                "statistical",
-                "machine_learning",
-                "deep_learning",
-                "foundation_model",
-                "reduction",
-                "composition",
-                "agentic",
-            ],
-        ),
-        "short_descr": "fitting principle of the forecaster",
-        "user_facing": True,
-    }
 
 
 class capability__exogenous(_BaseTag):

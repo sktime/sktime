@@ -62,7 +62,7 @@ class MantisForecaster(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["machine_learning", "deep_learning", "foundation_model"],
+        "category": ["machine_learning", "deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["vedantag17"],

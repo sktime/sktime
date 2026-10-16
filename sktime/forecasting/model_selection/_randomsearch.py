@@ -247,7 +247,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition", "tuning"],
         "capability:random_state": True,
         "property:randomness": "derandomized",
         # CI and test flags

@@ -360,7 +360,7 @@ class PatchTSTForecaster(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["deep_learning", "foundation_model"],
+        "category": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": [

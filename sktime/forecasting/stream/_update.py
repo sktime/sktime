@@ -112,7 +112,7 @@ class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": "fkiraly",
@@ -352,7 +352,7 @@ class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": "fkiraly",
@@ -544,7 +544,7 @@ class DontUpdate(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": "fkiraly",

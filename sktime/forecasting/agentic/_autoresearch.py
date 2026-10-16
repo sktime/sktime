@@ -526,7 +526,7 @@ class AutoResearchForecaster(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["agentic"],
+        "category": ["agentic"],
         # packaging info
         # --------------
         "authors": ["benheid"],

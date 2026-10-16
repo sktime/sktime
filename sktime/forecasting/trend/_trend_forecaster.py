@@ -59,7 +59,7 @@ class TrendForecaster(BaseForecaster):
     """
 
     _tags = {
-        "forecaster_type": ["statistical"],
+        "category": ["statistical"],
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
         "maintainers": ["tensorflow-as-tf"],
         "capability:exogenous": False,

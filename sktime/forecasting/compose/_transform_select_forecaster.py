@@ -97,7 +97,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
-        "forecaster_type": ["composition"],
+        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["shlok191"],
