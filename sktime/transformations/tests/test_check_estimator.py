@@ -12,7 +12,9 @@ class _TransformChangeNInstances(BaseTransformer):
     Examples
     --------
     >>> import pandas as pd
-    >>> from sktime.transformations.tests.test_check_estimator import _TransformChangeNInstances
+    >>> from sktime.transformations.tests.test_check_estimator import (
+    ...     _TransformChangeNInstances
+    ... )
     >>> X = pd.DataFrame({
     ...     "series": [
     ...         pd.Series([1.0, 2.0, 3.0, 4.0]),
