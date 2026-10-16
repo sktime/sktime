@@ -64,7 +64,7 @@ class PyFableARIMA(BaseForecaster):
     --------
     >>> from sktime.datasets import load_airline  # doctest: +SKIP
     >>> from sktime.forecasting.PyFableARIMA import PyFableARIMA  # doctest: +SKIP
-    >>> from sktime.forecasting.model_selection import (  # doctest: +SKIP
+    >>> from sktime.split import (  # doctest: +SKIP
     ...     temporal_train_test_split,
     ... )
     >>> airline = load_airline()  # Series with PeriodIndex freq='M'  # doctest: +SKIP
