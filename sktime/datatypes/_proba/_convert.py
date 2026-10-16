@@ -28,10 +28,16 @@ ValueError and TypeError, if requested conversion is not possible
 
 __author__ = ["fkiraly"]
 
-__all__ = ["convert_dict"]
+__all__ = [
+    "ProbaPredIntervalToQuantiles",
+    "ProbaPredQuantilesToInterval",
+    "convert_dict",
+]
 
 import numpy as np
 import pandas as pd
+
+from sktime.datatypes._base import BaseConverter
 
 # this needs to be refactored with the convert module
 MTYPE_LIST_PROBA = ["pred_interval", "pred_quantiles"]
@@ -109,8 +115,24 @@ def convert_interval_to_quantiles(obj: pd.DataFrame, store=None) -> pd.DataFrame
     return convert_pred_interval_to_quantiles(y_pred=obj)
 
 
+class ProbaPredIntervalToQuantiles(BaseConverter):
+    """Conversion: pred_interval -> pred_quantiles, of Proba scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pred_interval",
+        "mtype_to": "pred_quantiles",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "pandas",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_interval_to_quantiles(obj=obj, store=store)
+
+
 convert_dict[("pred_interval", "pred_quantiles", "Proba")] = (
-    convert_interval_to_quantiles
+    ProbaPredIntervalToQuantiles()
 )
 
 
@@ -166,6 +188,22 @@ def convert_quantiles_to_interval(obj: pd.DataFrame, store=None) -> pd.DataFrame
     return convert_pred_quantiles_to_interval(y_pred=obj)
 
 
+class ProbaPredQuantilesToInterval(BaseConverter):
+    """Conversion: pred_quantiles -> pred_interval, of Proba scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pred_quantiles",
+        "mtype_to": "pred_interval",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "pandas",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_quantiles_to_interval(obj=obj, store=store)
+
+
 convert_dict[("pred_quantiles", "pred_interval", "Proba")] = (
-    convert_quantiles_to_interval
+    ProbaPredQuantilesToInterval()
 )
