@@ -17,8 +17,8 @@ X_train, y_train = load_gunpoint("train", return_X_y=True)
 
 @pytest.mark.skipif(
     not run_test_for_class([FittedParamExtractor])
-    and not run_test_module_changed("sktime.forecasting.exp_smoothing")
-    and not _check_estimator_deps(FittedParamExtractor),
+    or not run_test_module_changed("sktime.forecasting.exp_smoothing")
+    or not _check_estimator_deps(FittedParamExtractor),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 @pytest.mark.parametrize("param_names", ["initial_level"])
