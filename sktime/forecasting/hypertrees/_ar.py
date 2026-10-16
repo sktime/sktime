@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.hypertrees._netar import _period_to_offset_alias
 
 
 class HyperTreeARForecaster(BaseForecaster):
@@ -127,7 +128,9 @@ class HyperTreeARForecaster(BaseForecaster):
         self._freq = freq or "MS"
         fcst_h = int(np.max(fh.to_relative(self.cutoff)._values))
         self._dates = pd.date_range(
-            "2000-01-01", periods=self._train_len + fcst_h, freq=self._freq
+            "2000-01-01",
+            periods=self._train_len + fcst_h,
+            freq=_period_to_offset_alias(self._freq),
         )
 
         times = np.arange(1, self._train_len + 1)
