@@ -124,8 +124,8 @@ Naive Baselines
     :toctree: auto_generated/
     :template: class.rst
 
-    DummyPretrainedAnomalies
     DummyRegularAnomalies
+    DummyPretrainedAnomalies
     ZeroAnomalies
 
 .. currentmodule:: sktime.detection.naive
