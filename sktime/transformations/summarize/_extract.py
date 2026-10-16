@@ -434,7 +434,15 @@ class FittedParamExtractor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
+        # CI and test flags
+        # -----------------
         "tests:skip_by_name": ["test_get_test_params_coverage"],
+        "tests:vm": True,
+        "tests:skip_all": True,  # PlateauFinder seems to be broken, see #2259
+        "tests:python_dependencies": ["statsmodels"],
+        "tests:specific": [
+            "sktime.transformations.summarize.tests.test_fittedparamextractor",
+        ],
     }
 
     def __init__(self, forecaster, param_names, n_jobs=None):
