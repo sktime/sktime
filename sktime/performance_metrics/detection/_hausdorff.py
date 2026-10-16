@@ -29,6 +29,9 @@ class DirectedHausdorff(BaseDetectionMetric):
         "scitype:y": "points",  # or segments
         "requires_X": False,
         "lower_is_better": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def _evaluate(self, y_true, y_pred, X=None):

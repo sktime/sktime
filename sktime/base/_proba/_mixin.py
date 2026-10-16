@@ -140,28 +140,31 @@ class _PredictProbaMixin:
         # 2. default to proba if proba or var are implemented
 
         if implements_interval:
-            pred_int = pd.DataFrame()
-            for a in alpha:
-                # compute quantiles corresponding to prediction interval coverage
-                #  this uses symmetric predictive intervals:
-                coverage = abs(1 - 2 * a)
+            # compute quantiles corresponding to prediction interval coverage
+            #  this uses symmetric predictive intervals:
+            #  quantile at alpha is the lower end of the interval with coverage
+            #  1 - 2 * alpha if alpha < 0.5, otherwise the upper end of 2 * alpha - 1
+            alpha_np = np.array(alpha)
+            # rounding ensures that, e.g., alpha = 0.05 and 0.95 share a coverage
+            coverage_per_alpha = np.round(np.abs(1 - 2 * alpha_np), 12)
+            # obtain all intervals in a single call, one coverage per unique value
+            coverage, cov_ix = np.unique(coverage_per_alpha, return_inverse=True)
+            pred_int = self._predict_interval(coverage=list(coverage), **kwargs)
 
-                # compute quantile forecasts corresponding to upper/lower
-                pred_a = self._predict_interval(coverage=[coverage], **kwargs)
-                pred_int = pd.concat([pred_int, pred_a], axis=1)
-
-            # now we need to subset to lower/upper depending
-            #   on whether alpha was < 0.5 or >= 0.5
-            #   this formula gives the integer column indices giving lower/upper
-            col_selector_int = (np.array(alpha) >= 0.5) + 2 * np.arange(len(alpha))
-            col_selector_bool = np.isin(np.arange(2 * len(alpha)), col_selector_int)
-            num_var = len(pred_int.columns.get_level_values(0).unique())
-            col_selector_bool = np.tile(col_selector_bool, num_var)
-
-            pred_int = pred_int.iloc[:, col_selector_bool]
-            # change the column labels (multiindex) to the format for intervals
             # idx returned by _predict_interval is
-            #   3-level MultiIndex with variable names, coverage, lower/upper
+            #   3-level MultiIndex with variable names, coverage, lower/upper,
+            #   in this order, i.e., variable-major
+            # integer column index of the quantile at alpha, for variable j:
+            #   j * 2 * n_cov + 2 * (index of coverage) + (1 if upper, else 0)
+            n_cov = len(coverage)
+            n_var = pred_int.shape[1] // (2 * n_cov)
+            is_upper = (alpha_np >= 0.5).astype(int)
+            alpha_offset = 2 * cov_ix.reshape(-1) + is_upper
+            col_ix = (2 * n_cov * np.arange(n_var))[:, None] + alpha_offset[None, :]
+
+            # subset in pandas, to preserve the dtypes of _predict_interval
+            pred_int = pred_int.iloc[:, col_ix.ravel()]
+
             # idx returned by _predict_quantiles should be
             #   is 2-level MultiIndex with variable names, alpha
             int_idx = self._get_columns(method="predict_quantiles", alpha=alpha)
@@ -315,7 +318,7 @@ class _PredictProbaMixin:
         # pred_mean and pred_var now have the same format
 
         # default is normal with predict as mean and pred_var as variance
-        from sktime.utils.dependencies import _check_soft_dependencies
+        from skbase.utils.dependencies import _check_soft_dependencies
 
         # silent fork of Normal in sktime if skpro is not installed
         if _check_soft_dependencies("skpro", severity="none"):

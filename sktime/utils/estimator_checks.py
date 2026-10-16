@@ -96,7 +96,7 @@ def check_estimator(
 
     Examples
     --------
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> from sktime.utils.estimator_checks import check_estimator
 
     Running all tests for ExponentTransformer class,
@@ -163,7 +163,7 @@ def check_estimator(
 
     for test_cls in test_clss_for_est:
         test_cls_results = test_cls().run_tests(
-            estimator=estimator,
+            obj=estimator,
             raise_exceptions=raise_exceptions,
             tests_to_run=tests_to_run,
             fixtures_to_run=fixtures_to_run,

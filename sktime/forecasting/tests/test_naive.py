@@ -7,6 +7,7 @@ __author__ = ["mloning", "Piyush1729", "Flix6x"]
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes._utilities import get_cutoff
 from sktime.forecasting.base import ForecastingHorizon
@@ -236,7 +237,7 @@ def test_strategy_mean_and_last_seasonal_additional_combinations(
     strategies should not make a difference.
     """
     # given <window_length> hours of data with a seasonal periodicity of <sp> hours
-    freq = pd.Timedelta("1H")
+    freq = pd.Timedelta("1h")
     kwargs = dict(closed="left") if pd.__version__ < "1.4.0" else dict(inclusive="left")
     data = pd.Series(
         index=pd.date_range(
@@ -331,7 +332,7 @@ def test_naive_predict_var_backwards(strategy, sp, window_length, n_periods):
     .. [1] https://otexts.com/fpp3/prediction-intervals.html#benchmark-methods
     """
     mu, sigma = 0.0, 10.0
-    fake_idx = pd.date_range("1980", periods=n_periods + 1, freq="H")
+    fake_idx = pd.date_range("1980", periods=n_periods + 1, freq="h")
     np.random.seed(42)
     y = pd.Series(np.random.normal(mu, sigma, size=n_periods), index=fake_idx[:-1])
 
@@ -379,7 +380,7 @@ def test_naive_predict_interval_mean(strategy, sp, window_length, fh):
     """
     n_timepoints = 100000
     mu, sigma = 0.0, 10.0
-    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="h")
     np.random.seed(42)
     y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
 
@@ -432,7 +433,7 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     """
     n_timepoints = 100000
     mu, sigma = 0.0, 10.0
-    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="H")
+    fake_idx = pd.date_range("1980", periods=n_timepoints + 1, freq="h")
     np.random.seed(42)
     y = pd.Series(np.random.normal(mu, sigma, size=n_timepoints), index=fake_idx[:-1])
 
@@ -452,11 +453,17 @@ def test_naive_predict_interval_against_R_naive(strategy, sp, lower, upper):
     pd.testing.assert_frame_equal(y_pred_ints, expected)
 
 
+if _check_soft_dependencies("pandas>=2.2.0", severity="none"):
+    MONTH_END_FREQ = "ME"
+else:
+    MONTH_END_FREQ = "M"
+
+
 @pytest.mark.skipif(
     not run_test_for_class(NaiveForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("freq", ["2D", "W", "W-TUE", "M"])
+@pytest.mark.parametrize("freq", ["2D", "W", "W-TUE", MONTH_END_FREQ])
 def test_naive_sp_greater_1_not_nan(freq):
     sample_dates = pd.date_range(start="2001-01-01", periods=30, freq=freq)
     sample_values = np.random.default_rng(seed=0).random(size=len(sample_dates))

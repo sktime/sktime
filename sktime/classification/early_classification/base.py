@@ -29,6 +29,7 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst"]
 from abc import abstractmethod
 
 import numpy as np
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
 from sktime.classification import BaseClassifier
@@ -101,6 +102,7 @@ class BaseEarlyClassifier(BaseEstimator):
         self._converter_store_y = {}
 
         super().__init__()
+        _check_estimator_deps(self, severity="warning")
 
     def fit(self, X, y):
         """Fit time series classifier to training data.

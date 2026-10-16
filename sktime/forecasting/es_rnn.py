@@ -1,10 +1,10 @@
 """Interface for ES RNN for Time Series Forecasting."""
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
 
 from sktime.forecasting.base.adapters._pytorch import BaseDeepNetworkPyTorch
 from sktime.networks.es_rnn import ESRNN
-from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
 
 torch = _safe_import("torch")
 Dataset = _safe_import("torch.utils.data.Dataset")
@@ -123,7 +123,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
     --------
     >>> from sktime.forecasting.es_rnn import ESRNNForecaster # doctest: +SKIP
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.boxcox import LogTransformer
+    >>> from sktime.transformations.boxcox import LogTransformer
     >>> y = load_airline()
     >>> scaler=LogTransformer()
     >>> forecaster=ESRNNForecaster(15,6,12,6,'double',20,1,32,100,'MSE')# doctest: +SKIP
@@ -206,7 +206,7 @@ class ESRNNForecaster(BaseDeepNetworkPyTorch):
             return ESRNN().pin_ball()
 
     def _build_network(self, fh):
-        self.input_shape = self._y.shape[-1]
+        self.input_shape = self._y_metadata["n_features"]
         return ESRNN(
             self.input_shape,
             self.hidden_size,

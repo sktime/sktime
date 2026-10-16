@@ -218,7 +218,7 @@ class VARMAX(_StatsModelsAdapter):
         # packaging info
         # --------------
         "authors": ["ChadFulton", "bashtage", "KatieBuc"],
-        # ChadFulton and bashtage for statsnodels VARMAX
+        # ChadFulton and bashtage for statsmodels VARMAX
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
@@ -233,6 +233,7 @@ class VARMAX(_StatsModelsAdapter):
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "capability:non_contiguous_X": False,
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:skip_by_name": ["test_update_with_exogenous_variables"],
@@ -371,7 +372,7 @@ class VARMAX(_StatsModelsAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
             Default is one-step ahead forecast,
             i.e. np.array([1])
         X : pd.DataFrame, optional (default=None)
