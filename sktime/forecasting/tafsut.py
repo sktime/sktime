@@ -71,6 +71,7 @@ class TafsutForecaster(BaseForecaster):
         "capability:unequal_length": True,
         "requires-fh-in-fit": False,
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_tafsut"],
     }
 
     def __init__(
