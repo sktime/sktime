@@ -441,7 +441,7 @@ class FittedParamExtractor(BaseTransformer):
         "tests:skip_all": True,  # PlateauFinder seems to be broken, see #2259
         "tests:python_dependencies": ["statsmodels"],
         "tests:specific": [
-            "sktime.transformations.summarize.tests.test_FittedParamExtractor",
+            "sktime.transformations.summarize.tests.test_fittedparamextractor",
         ],
     }
 
