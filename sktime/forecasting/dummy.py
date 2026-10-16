@@ -60,12 +60,12 @@ class ForecastKnownValues(BaseForecaster):
     """
 
     _tags = {
-        "category": ["statistical", "naive"],
         # packaging info
         # --------------
         "authors": ["fkiraly", "RobKuebler"],
         # estimator type
         # --------------
+        "category": ["statistical", "naive"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,

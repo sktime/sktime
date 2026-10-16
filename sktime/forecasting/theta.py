@@ -98,7 +98,6 @@ class ThetaForecaster(ExponentialSmoothing):
 
     _fitted_param_names = ("initial_level", "smoothing_level")
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"],
@@ -106,6 +105,7 @@ class ThetaForecaster(ExponentialSmoothing):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -471,12 +471,12 @@ class ThetaModularForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["GuzalBulatova", "fkiraly"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,

@@ -206,7 +206,6 @@ class UnobservedComponents(_StatsModelsAdapter):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["ChadFulton", "bashtage", "juanitorduz"],
@@ -215,6 +214,7 @@ class UnobservedComponents(_StatsModelsAdapter):
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:missing_values": False,

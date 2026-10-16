@@ -81,12 +81,12 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["kkoralturk", "aiwalter", "fkiraly", "miraep8"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:multivariate": True,

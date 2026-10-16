@@ -97,7 +97,6 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["shlok191"],
@@ -105,6 +104,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "python_version": None,
         # estimator type
         # --------------
+        "category": ["composition"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,

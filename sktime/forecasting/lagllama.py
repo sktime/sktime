@@ -418,7 +418,6 @@ class LagLlamaForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["pranavvp16"],
@@ -432,6 +431,7 @@ class LagLlamaForecaster(BaseForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:exogenous": False,
         "capability:multivariate": False,  # LagLlama is univariate only

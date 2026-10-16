@@ -237,7 +237,6 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
     """
 
     _tags = {
-        "category": ["composition", "tuning"],
         # packaging info
         # --------------
         "authors": ["HazrulAkmal"],
@@ -246,6 +245,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
         "python_version": ">= 3.6",
         # estimator type
         # --------------
+        "category": ["composition", "tuning"],
         "capability:multivariate": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,

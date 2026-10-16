@@ -112,12 +112,12 @@ class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": "fkiraly",
         # estimator type
         # --------------
+        "category": ["composition"],
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -352,12 +352,12 @@ class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": "fkiraly",
         # estimator type
         # --------------
+        "category": ["composition"],
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -544,12 +544,12 @@ class DontUpdate(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": "fkiraly",
         # estimator type
         # --------------
+        "category": ["composition"],
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,

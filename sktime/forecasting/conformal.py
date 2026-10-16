@@ -119,13 +119,13 @@ class ConformalIntervals(BaseForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["fkiraly", "bethrice44"],
         "python_dependencies": ["joblib"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,

@@ -123,7 +123,6 @@ class TiRex2Forecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": [
@@ -140,6 +139,7 @@ class TiRex2Forecaster(BaseForecaster):
         "python_dependencies": ["tirex-2", "torch"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,

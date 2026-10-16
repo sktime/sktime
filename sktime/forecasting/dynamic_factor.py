@@ -122,7 +122,6 @@ class DynamicFactor(_StatsModelsAdapter):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["ChadFulton", "bashtage", "Ris-Bali", "lbventura"],
@@ -131,6 +130,7 @@ class DynamicFactor(_StatsModelsAdapter):
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": True,
         "capability:exogenous": True,
         "capability:missing_values": True,

@@ -170,7 +170,6 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         # "authors": ["yarnabrina"],
@@ -179,6 +178,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
@@ -578,7 +578,6 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["pranavvp16", "yarnabrina"],
@@ -587,6 +586,7 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
@@ -971,7 +971,6 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         # "authors": ["yarnabrina"],
@@ -980,6 +979,7 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
@@ -1375,7 +1375,6 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         # "authors": ["yarnabrina"],
@@ -1384,6 +1383,7 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
@@ -1777,7 +1777,6 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
     """  # noqa: E501
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         # "authors": ["yarnabrina"],
@@ -1786,6 +1785,7 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         # inherited from _NeuralForecastAdapter
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "python_dependencies": ["neuralforecast>=1.6.4,<4.0.0"],
         "capability:unequal_length": False,
         "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],

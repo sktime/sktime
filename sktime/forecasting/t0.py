@@ -141,7 +141,6 @@ class T0Forecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["siddharth7113"],
@@ -150,6 +149,7 @@ class T0Forecaster(BaseForecaster):
         "python_version": ">=3.11",
         # estimator type / capability tags
         # --------------------------------
+        "category": ["deep_learning", "foundation_model"],
         "property:randomness": "random",
         "capability:random_state": True,
         "capability:multivariate": True,

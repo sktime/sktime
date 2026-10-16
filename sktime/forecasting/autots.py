@@ -218,7 +218,6 @@ class AutoTS(BaseForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["winedarksea", "MBristle"],  # winedarksea for autots library
@@ -227,6 +226,7 @@ class AutoTS(BaseForecaster):
         "python_version": ">=3.6",
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",

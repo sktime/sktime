@@ -139,7 +139,6 @@ class STLForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
@@ -147,6 +146,7 @@ class STLForecaster(BaseForecaster):
         "python_dependencies": "statsmodels",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?

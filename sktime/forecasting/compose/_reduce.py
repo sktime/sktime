@@ -2118,13 +2118,13 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
-        "category": ["reduction"],
         # packaging info
         # --------------
         "authors": "fkiraly",
         "maintainers": "hliebert",
         # estimator type
         # --------------
+        "category": ["reduction"],
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,
@@ -2544,12 +2544,12 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
-        "category": ["reduction"],
         # packaging info
         # --------------
         "authors": "fkiraly",
         # estimator type
         # --------------
+        "category": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,

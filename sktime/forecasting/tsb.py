@@ -53,13 +53,13 @@ class TSB(BaseForecaster):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": "swetha3456",
         "maintainers": "swetha3456",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
     }
 

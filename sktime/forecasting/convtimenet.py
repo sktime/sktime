@@ -143,7 +143,6 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["Mingyue-Cheng", "0russewt0", "pty12345", "Tanuj-Taneja1"],
@@ -154,6 +153,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         "python_dependencies": ["torch"],
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "capability:random_state": True,
         "capability:pretrain": True,
         "property:randomness": "derandomized",

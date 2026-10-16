@@ -132,13 +132,13 @@ class MAPAForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["trnnick", "phoeenniixx", "satvshr"],
         "python_dependencies": ["statsmodels"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",

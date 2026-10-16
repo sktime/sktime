@@ -175,7 +175,6 @@ class AutoETS(_StatsModelsAdapter):
 
     _fitted_param_names = ("aic", "aicc", "bic", "hqic")
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["hyang1996"],
@@ -183,6 +182,7 @@ class AutoETS(_StatsModelsAdapter):
         "python_dependencies": ["statsmodels", "joblib"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

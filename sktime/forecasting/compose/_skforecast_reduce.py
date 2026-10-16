@@ -108,7 +108,6 @@ class SkforecastAutoreg(BaseForecaster):
     """
 
     _tags = {
-        "category": ["reduction"],
         # packaging info
         # --------------
         "authors": [
@@ -123,6 +122,7 @@ class SkforecastAutoreg(BaseForecaster):
         "maintainers": ["Abhay-Lejith", "yarnabrina"],
         # estimator type
         # --------------
+        "category": ["reduction"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -590,7 +590,6 @@ class SkforecastRecursive(BaseForecaster):
     """  # noqa: E501
 
     _tags = {
-        "category": ["reduction"],
         # packaging info
         # --------------
         "authors": [
@@ -602,6 +601,7 @@ class SkforecastRecursive(BaseForecaster):
         "maintainers": ["yarnabrina"],
         # estimator type
         # --------------
+        "category": ["reduction"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,

@@ -96,7 +96,6 @@ class Prophetverse(_DelegatedForecaster):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": "felipeangelimvieira",
@@ -104,6 +103,7 @@ class Prophetverse(_DelegatedForecaster):
         "python_dependencies": "prophetverse>=0.8.0",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:unequal_length": False,
@@ -272,7 +272,6 @@ class HierarchicalProphet(_DelegatedForecaster):
     _delegate_name = "_delegate"
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": "felipeangelimvieira",
@@ -280,6 +279,7 @@ class HierarchicalProphet(_DelegatedForecaster):
         "python_dependencies": "prophetverse",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:missing_values": False,

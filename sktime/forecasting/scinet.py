@@ -118,7 +118,6 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         "authors": [
@@ -132,6 +131,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["Sohaib-Ahmed21"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["deep_learning"],
         "capability:pretrain": True,
         # test skip flags
         # ---------------

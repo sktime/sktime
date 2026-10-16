@@ -158,7 +158,6 @@ class ARCH(BaseForecaster):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["bashtage", "Vasudeva-bit"],  # bashtage for arch package
@@ -166,6 +165,7 @@ class ARCH(BaseForecaster):
         "python_dependencies": "arch",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",

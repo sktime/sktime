@@ -78,7 +78,6 @@ class MOIRAIForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["gorold", "chenghaoliu89", "liu-jc", "benheid", "pranavvp16"],
@@ -97,6 +96,7 @@ class MOIRAIForecaster(BaseForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,

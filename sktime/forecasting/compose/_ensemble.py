@@ -106,12 +106,12 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,

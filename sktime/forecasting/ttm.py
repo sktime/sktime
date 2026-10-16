@@ -515,7 +515,6 @@ class TinyTimeMixerForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["ajati", "wgifford", "vijaye12", "geetu040"],
@@ -524,6 +523,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate>=0.26.0"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,

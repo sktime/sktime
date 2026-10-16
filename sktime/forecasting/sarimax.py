@@ -223,7 +223,6 @@ class SARIMAX(_StatsModelsAdapter):
     """  # noqa: E501
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -238,6 +237,7 @@ class SARIMAX(_StatsModelsAdapter):
         # "python_dependencnies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": True,
         "capability:random_state": True,
         "capability:pred_int": True,

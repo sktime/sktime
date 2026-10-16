@@ -62,13 +62,13 @@ class MantisForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["machine_learning", "deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["vedantag17"],
         "python_dependencies": ["mantis-tsfm>=1.0.0", "torch"],
         # estimator type
         # --------------
+        "category": ["machine_learning", "deep_learning", "foundation_model"],
         "capability:multivariate": True,
         "capability:exogenous": False,
         "capability:insample": False,

@@ -70,13 +70,13 @@ class Croston(BaseForecaster):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": "Riyabelle25",
         "maintainers": "Riyabelle25",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "capability:exogenous": False,
         "capability:update": True,  # can estimator update its parameters with new data?

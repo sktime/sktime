@@ -83,13 +83,13 @@ class ReconcilerForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["ciaran-g", "felipeangelimvieira"],
         "maintainers": ["ciaran-g", "felipeangelimvieira"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?

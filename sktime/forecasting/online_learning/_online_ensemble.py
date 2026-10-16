@@ -31,13 +31,13 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["magittan", "mloning"],
         "maintainers": ["magittan"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,

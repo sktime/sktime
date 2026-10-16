@@ -116,7 +116,6 @@ class CiscoTSMForecaster(BaseForecaster):
     _DEFAULT_QUANTILES = _DEFAULT_QUANTILES  # module-level constant
 
     _tags = {
-        "category": ["deep_learning", "foundation_model"],
         # packaging info
         # --------------
         "authors": ["vedantag17"],
@@ -125,6 +124,7 @@ class CiscoTSMForecaster(BaseForecaster):
         "python_version": ">=3.11,<3.14",
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "None",
         "capability:multivariate": False,

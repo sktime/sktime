@@ -285,13 +285,13 @@ class HFTransformersForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["benheid", "geetu040"],
         "maintainers": ["benheid", "geetu040"],
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,

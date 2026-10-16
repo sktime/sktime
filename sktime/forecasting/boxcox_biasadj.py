@@ -67,12 +67,12 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": "sanskarmodi8",
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:pred_int": True,
         # CI and test flags
         # -----------------

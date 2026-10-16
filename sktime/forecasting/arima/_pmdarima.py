@@ -273,7 +273,6 @@ class AutoARIMA(_PmdArimaAdapter):
     """  # noqa: E501
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -289,6 +288,7 @@ class AutoARIMA(_PmdArimaAdapter):
         # python_dependencies: "pmdarima" - inherited from _PmdArimaAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:missing_values": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",

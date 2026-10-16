@@ -69,7 +69,6 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
@@ -77,6 +76,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -422,7 +422,6 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
@@ -430,6 +429,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -616,7 +616,6 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["mixiancmx", "ailingzengzzz", "luca-miniati"],
@@ -624,6 +623,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -993,7 +993,6 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["mixiancmx", "ailingzengzzz", "geetu040"],
@@ -1001,6 +1000,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["geetu040"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["deep_learning"],
         "capability:pretrain": True,
     }
 

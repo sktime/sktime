@@ -60,12 +60,12 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["mloning", "fkiraly", "indinewton"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "capability:missing_values": True,

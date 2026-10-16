@@ -108,13 +108,13 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["ninedigits", "RikStarmans"],
         "maintainers": ["ninedigits"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:missing_values": True,
         "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,

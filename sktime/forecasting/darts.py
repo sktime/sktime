@@ -104,13 +104,13 @@ class DartsRegressionModel(_DartsRegressionAdapter):
     """
 
     _tags = {
-        "category": ["reduction"],
         # packaging info
         # --------------
         "authors": ["yarnabrina", "fnhirwa"],
         "maintainers": ["yarnabrina", "fnhirwa"],
         # estimator type
         # --------------
+        "category": ["reduction"],
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:insample": False,
@@ -310,7 +310,6 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
     """
 
     _tags = {
-        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["yarnabrina", "fnhirwa"],
@@ -318,6 +317,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         "python_dependencies": [["u8darts>=0.29", "darts>=0.29"], "xgboost"],
         # estimator type
         # --------------
+        "category": ["machine_learning"],
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
@@ -544,13 +544,13 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
     """
 
     _tags = {
-        "category": ["machine_learning"],
         # packaging info
         # --------------
         "authors": ["fnhirwa"],
         "maintainers": ["fnhirwa"],
         # estimator type
         # --------------
+        "category": ["machine_learning"],
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:pred_int": True,

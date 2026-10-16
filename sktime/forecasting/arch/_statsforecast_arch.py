@@ -43,7 +43,6 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": [
@@ -59,6 +58,7 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
         "maintainers": ["eyjo"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,  # statsforecast ARCH/GARCH ignore X
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -134,13 +134,13 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
     """
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         # --------------
         "authors": ["eyjo"],
         "maintainers": ["eyjo"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,  # statsforecast ARCH/GARCH ignore X
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

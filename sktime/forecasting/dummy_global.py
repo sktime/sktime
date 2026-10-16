@@ -70,12 +70,12 @@ class DummyGlobalForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["statistical", "naive"],
         # packaging info
         # --------------
         "authors": ["SimonBlanke"],
         # estimator type
         # --------------
+        "category": ["statistical", "naive"],
         "capability:multivariate": True,
         "capability:pretrain": True,
         "capability:pred_int": False,

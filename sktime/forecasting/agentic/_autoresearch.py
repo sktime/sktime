@@ -526,13 +526,13 @@ class AutoResearchForecaster(BaseForecaster):
     """
 
     _tags = {
-        "category": ["agentic"],
         # packaging info
         # --------------
         "authors": ["benheid"],
         "python_dependencies": ["litellm"],
         # estimator type
         # --------------
+        "category": ["agentic"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,

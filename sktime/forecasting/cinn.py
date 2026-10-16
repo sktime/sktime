@@ -101,13 +101,13 @@ class CINNForecaster(BaseDeepNetworkPyTorch):
     """
 
     _tags = {
-        "category": ["deep_learning"],
         # packaging info
         # --------------
         "authors": ["benheid"],
         "python_dependencies": ["FrEIA", "torch"],
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,

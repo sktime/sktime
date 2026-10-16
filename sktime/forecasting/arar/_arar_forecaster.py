@@ -465,11 +465,11 @@ class ARARForecaster(BaseForecaster):
     """  # noqa: E501
 
     _tags = {
-        "category": ["statistical"],
         # packaging info
         "authors": ["Akai01"],
         "maintainers": ["Akai01"],
         # estimator type
+        "category": ["statistical"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "requires-fh-in-fit": False,

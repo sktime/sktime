@@ -881,13 +881,13 @@ class TransformedTargetForecaster(_Pipeline):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "capability:multivariate": True,
         # estimator type
         # --------------
+        "category": ["composition"],
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:exogenous": True,
@@ -1537,12 +1537,12 @@ class ForecastX(BaseForecaster):
     """
 
     _tags = {
-        "category": ["composition"],
         # packaging info
         # --------------
         "authors": ["fkiraly", "benheid", "yarnabrina"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
         "capability:multivariate": True,
