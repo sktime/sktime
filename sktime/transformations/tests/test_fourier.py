@@ -1,5 +1,6 @@
 """Tests for the FourierFeatures transformer."""
 
+import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -161,3 +162,35 @@ def test_fit_transform_month_start_outputs():
         .assign(cos_12_2=[np.cos(4 * np.pi * i / 12) for i in range(3)])
     )
     assert_frame_equal(y_transformed, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_no_freq_warning_if_freq_not_given():
+    """No frequency mismatch warning if freq is not given, or matches the index."""
+    y = pd.DataFrame(
+        {"x": np.arange(10.0)},
+        index=pd.date_range("2000-01-01", periods=10, freq="30min"),
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        FourierFeatures(sp_list=[4], fourier_terms_list=[1]).fit_transform(y)
+        FourierFeatures(sp_list=[4], fourier_terms_list=[1], freq="30min").fit(y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_freq_warning_if_freq_given_differs_from_index():
+    """Frequency mismatch warning if freq is given and differs from the index."""
+    y = pd.DataFrame(
+        {"x": np.arange(10.0)},
+        index=pd.date_range("2000-01-01", periods=10, freq="30min"),
+    )
+
+    with pytest.warns(UserWarning, match="Using frequency from index"):
+        FourierFeatures(sp_list=[4], fourier_terms_list=[1], freq="h").fit(y)
