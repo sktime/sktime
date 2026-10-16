@@ -197,7 +197,7 @@ class GGS:
         orig_cov = np.cov(data.T, bias=True)
         orig_ll = self.log_likelihood(data)
         total_sum = m * (orig_cov + np.outer(orig_mean, orig_mean))
-        mu_left = data[0, :] / n
+        mu_left = data[0, :].copy()
         mu_right = (m * orig_mean - data[0, :]) / (m - 1)
         runSum = np.outer(data[0, :], data[0, :])
         # Loop through all samples
