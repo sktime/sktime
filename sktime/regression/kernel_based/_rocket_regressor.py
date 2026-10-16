@@ -13,9 +13,6 @@ from sklearn.preprocessing import StandardScaler
 from sktime.pipeline import make_pipeline
 from sktime.regression._delegate import _DelegatedRegressor
 from sktime.regression.base import BaseRegressor
-from sktime.transformations.rocket._multirocket import (
-    _check_n_features_per_kernel,
-)
 
 
 class RocketRegressor(_DelegatedRegressor, BaseRegressor):
@@ -133,12 +130,9 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
     ):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
-
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
-        _check_n_features_per_kernel(self)
         self.use_multivariate = use_multivariate
-
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -153,6 +147,11 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
+        from sktime.transformations.rocket._multirocket import (
+            _check_n_features_per_kernel,
+        )
+        _check_n_features_per_kernel(self)
+
         n_jobs = self.n_jobs
         use_multivariate = self.use_multivariate
         num_kernels = self.num_kernels
