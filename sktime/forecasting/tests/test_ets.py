@@ -107,3 +107,27 @@ def test_inf_ic_false():
         and np.isinf(fitted_forecaster.bic)
         and np.isinf(fitted_forecaster.aicc)
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(AutoETS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_get_fitted_params():
+    """Fitted smoothing parameters and selected model are in get_fitted_params."""
+    forecaster = AutoETS(auto=True, sp=12)
+    forecaster.fit(y)
+    fitted_params = forecaster.get_fitted_params()
+    fitted_forecaster = forecaster._fitted_forecaster
+
+    for name, value in zip(
+        fitted_forecaster.model.param_names, fitted_forecaster.params
+    ):
+        assert fitted_params[name] == value
+    assert 0 <= fitted_params["smoothing_level"] <= 1
+
+    assert fitted_params["error"] == fitted_forecaster.model.error
+    assert fitted_params["trend"] == fitted_forecaster.model.trend
+    assert fitted_params["seasonal"] == fitted_forecaster.model.seasonal
+    assert fitted_params["damped_trend"] == fitted_forecaster.model.damped_trend
+    assert fitted_params["aic"] == fitted_forecaster.aic
