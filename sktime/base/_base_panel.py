@@ -159,7 +159,7 @@ class BasePanelMixin(BaseEstimator):
         y_preds = []
         tt_ixx = []
 
-        if isinstance(X.index, pd.MultiIndex):
+        if isinstance(X, pd.DataFrame) and isinstance(X.index, pd.MultiIndex):
             X_ix = X.index.get_level_values(0).unique()
         else:
             X_ix = np.arange(len(X))
@@ -220,12 +220,12 @@ class BasePanelMixin(BaseEstimator):
             for i in range(1, len(y_preds)):
                 y_pred = y_pred.combine_first(y_preds[i])
             y_pred = y_pred.reindex(y.index).fillna(-1)
-        else:
+        else:  # if isinstance(y_pred, np.ndarray)
             if y_pred.ndim == 1:
                 sh = y.shape
             else:
                 sh = (y.shape[0], y_pred.shape[1])
-            y_pred = -np.ones(sh, dtype=y.dtype)
+            y_pred = -np.ones(sh, dtype=y_pred.dtype)
             for i, ix in enumerate(tt_ixx):
                 y_preds_i = y_preds[i]
                 if y_pred.ndim == 1:

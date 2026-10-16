@@ -382,8 +382,6 @@ class BaseClassifier(BasePanelMixin):
         if self._is_vectorized:
             return self._vectorize("predict_proba", X=X)
 
-        self.check_is_fitted()
-
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)
 
