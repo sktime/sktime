@@ -150,6 +150,7 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         from sktime.transformations.rocket._multirocket import (
             _check_n_features_per_kernel,
         )
+
         _check_n_features_per_kernel(self)
 
         n_jobs = self.n_jobs

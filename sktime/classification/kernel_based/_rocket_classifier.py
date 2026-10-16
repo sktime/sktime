@@ -168,6 +168,7 @@ class RocketClassifier(_DelegatedClassifier):
         from sktime.transformations.rocket._multirocket import (
             _check_n_features_per_kernel,
         )
+
         _check_n_features_per_kernel(self)
 
         from sktime.utils.validation import check_n_jobs
