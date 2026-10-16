@@ -369,8 +369,12 @@ class BenchmarkMetadata:
     """JSON-serializable description of a benchmark run.
 
     Built from the tasks and estimators registered on a `BaseBenchmark`.
-    Each tag dictionary is the object's full tag set.
+    Each tag dictionary is the object's full ``get_tags`` set.
     Components that do not implement sktime tags keep ``tags`` as ``None``.
+
+    ``save`` writes this document as UTF-8 JSON with two-space indentation
+    and a trailing newline. `BaseBenchmark.run` writes that file beside the
+    results file.
 
     Parameters
     ----------

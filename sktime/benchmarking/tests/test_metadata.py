@@ -11,6 +11,12 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
 
 import sktime
+from sktime.benchmarking._benchmarking_dataclasses import (
+    BenchmarkMetadata,
+    ComponentMetadata,
+    EstimatorMetadata,
+    TaskMetadata,
+)
 from sktime.benchmarking.benchmarks import _json_safe, _object_tags
 from sktime.benchmarking.classification import ClassificationBenchmark
 from sktime.benchmarking.forecasting import ForecastingBenchmark
@@ -211,3 +217,91 @@ def test_json_safe_coerces_numpy_tag_values():
         "index_type": "DatetimeIndex",
     }
     assert json.loads(json.dumps(value)) == value
+
+
+# Exact file produced by BenchmarkMetadata.save for the example document below.
+_EXAMPLE_METADATA_JSON = """\
+{
+  "schema_version": 1,
+  "timestamp_utc": "2026-10-14T09:00:00Z",
+  "sktime_version": "1.2.0",
+  "python_version": "3.12.9",
+  "tasks": [
+    {
+      "task_id": "[dataset=longley]_[cv_splitter=ExpandingWindowSplitter]",
+      "dataset": {
+        "id": "longley",
+        "tags": {
+          "name": "longley",
+          "is_univariate": true
+        }
+      },
+      "cv_splitter": {
+        "id": "KFold",
+        "tags": null
+      },
+      "scorers": [
+        {
+          "id": "MeanAbsoluteError",
+          "tags": {
+            "lower_is_better": true
+          }
+        }
+      ],
+      "cv_global": null
+    }
+  ],
+  "estimators": [
+    {
+      "estimator_id": "naive_last",
+      "class_name": "NaiveForecaster",
+      "tags": {
+        "object_type": "forecaster"
+      }
+    }
+  ]
+}
+"""
+
+
+def _example_metadata():
+    """Return a fixed metadata document, including an untagged component."""
+    return BenchmarkMetadata(
+        schema_version=1,
+        timestamp_utc="2026-10-14T09:00:00Z",
+        sktime_version="1.2.0",
+        python_version="3.12.9",
+        tasks=[
+            TaskMetadata(
+                task_id="[dataset=longley]_[cv_splitter=ExpandingWindowSplitter]",
+                dataset=ComponentMetadata(
+                    id="longley",
+                    tags={"name": "longley", "is_univariate": True},
+                ),
+                cv_splitter=ComponentMetadata(id="KFold", tags=None),
+                scorers=[
+                    ComponentMetadata(
+                        id="MeanAbsoluteError",
+                        tags={"lower_is_better": True},
+                    )
+                ],
+                cv_global=None,
+            )
+        ],
+        estimators=[
+            EstimatorMetadata(
+                estimator_id="naive_last",
+                class_name="NaiveForecaster",
+                tags={"object_type": "forecaster"},
+            )
+        ],
+    )
+
+
+def test_benchmark_metadata_save_writes_example_file(tmp_path):
+    """save writes the example metadata document as UTF-8 JSON."""
+    path = tmp_path / "results_metadata.json"
+    _example_metadata().save(path)
+
+    assert path.read_text(encoding="utf-8") == _EXAMPLE_METADATA_JSON
+    assert not path.with_suffix(path.suffix + ".tmp").exists()
