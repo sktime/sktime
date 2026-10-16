@@ -141,6 +141,7 @@ class LSTMFCNClassifierTorch(BaseDeepClassifierPytorch):
         # ----------------
         "tests:vm": True,
         "tests:libs": ["sktime.networks.lstmfcn._lstmfcn_torch"],
+        "tests:core": True,
     }
 
     def __init__(
