@@ -107,7 +107,6 @@ def _test_trend(degree, with_intercept):
     np.testing.assert_allclose(actual, expected, rtol=1e-5)
 
 
-@pytest.mark.xfail(reason="known bug, needs to be investigated, see #11495")
 @pytest.mark.skipif(
     not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
     reason="run test only if softdeps are present and incrementally (if requested)",
