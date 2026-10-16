@@ -302,3 +302,41 @@ def test_gibbs():
     actual = sampling[[6, 8],]
 
     assert np.allclose(actual, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_update_zeta_prior_counts_neighbour_pairs():
+    """Test the vectorized count of neighbour pairs with the same label."""
+    model = Hidalgo(K=3, q=3, seed=1)
+    _rng = check_random_state(0)
+    N = 12
+    q = model.q
+    Iin = _rng.randint(0, N, N * q)
+    Z = _rng.randint(0, 3, N)
+
+    N_in, f1 = model._update_zeta_prior(Z, N, Iin)
+
+    expected = sum(Z[Iin[q * i + j]] == Z[i] for i in range(N) for j in range(q))
+    assert N_in == expected
+    assert np.array_equal(f1, [1 + expected, 1 + N * q - expected])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Hidalgo),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_partition_function_cached():
+    """Test that the cached partition function equals the uncached one."""
+    from sktime.transformations.hidalgo import (
+        _partition_function_cached,
+        partition_function,
+    )
+
+    for N, N1, zeta, q in [(10, 4, 0.8, 3), (50, 1, 0.5, 2), (100, 100, 0.95, 5)]:
+        expected = partition_function(N, N1, zeta, q)
+        assert _partition_function_cached(N, N1, zeta, q) == expected
+        # second call is served from the cache and must give the same value
+        assert _partition_function_cached(N, N1, zeta, q) == expected
