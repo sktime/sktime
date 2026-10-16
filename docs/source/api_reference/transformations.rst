@@ -85,6 +85,7 @@ Pipeline building - Broadcasting and apply-map
 
     ColumnwiseTransformer
     TransformByLevel
+    GroupbyCategoryTransformer
 
 .. currentmodule:: sktime.transformations.func_transform
 
