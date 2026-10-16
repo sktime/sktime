@@ -7,6 +7,8 @@ from sktime.utils.estimator_checks import check_estimator, parametrize_with_chec
 
 
 class _TransformChangeNInstances(BaseTransformer):
+    """Test transformer that changes the number of instances."""
+
     _tags = {
         # dummy tags for the testing purpose
         #
