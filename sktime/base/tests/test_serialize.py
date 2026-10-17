@@ -13,6 +13,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.base import BaseObject, load
 from sktime.base._serialize import (
+    FORMAT_VERSION,
     _KerasArtifactBackend,
     _LightningCheckpointArtifactBackend,
     _PretrainedArtifactBackend,
@@ -80,6 +81,19 @@ class _ObjectWithUnsupportedArtifact(BaseObject):
         super().__init__()
 
 
+class _ObjectWithConflictingTags(BaseObject):
+    """Object listing the same attribute in both serialization tags."""
+
+    _tags = {
+        "serialization:skip": ("model_",),
+        "serialization:native_artifacts": ("model_",),
+    }
+
+    def __init__(self):
+        self.model_ = "fitted"
+        super().__init__()
+
+
 # test helpers
 def _save_to_file(obj, tmp_path):
     """Save an object to a temporary zip file and return its path."""
@@ -93,6 +107,20 @@ def _roundtrip(obj, storage, tmp_path):
     """Round-trip an object in memory or through a file."""
     serial = obj.save() if storage == "memory" else _save_to_file(obj, tmp_path)
     return load(serial)
+
+
+def _load_archive(metadata, obj, storage, tmp_path):
+    """Write a zip archive by hand, then load it in memory or from a file."""
+    buffer = BytesIO()
+    with ZipFile(buffer, "w") as file:
+        file.writestr("_metadata", pickle.dumps(metadata))
+        file.writestr("_obj", pickle.dumps(obj))
+
+    if storage == "memory":
+        return load((type(obj), buffer.getvalue()))
+    zip_path = tmp_path / "archive.zip"
+    zip_path.write_bytes(buffer.getvalue())
+    return load(zip_path)
 
 
 def _artifact_record(obj):
@@ -150,6 +178,47 @@ def test_standard_serialization_to_file(tmp_path):
         assert set(file.namelist()) == {"_metadata", "_obj"}
 
     assert load(zip_path).value == "saved"
+
+
+def test_metadata_is_versioned_dict(tmp_path):
+    """File saves store the format version, class and format in _metadata."""
+    zip_path = _save_to_file(_TestObject(), tmp_path)
+
+    with ZipFile(zip_path) as file:
+        metadata = pickle.loads(file.read("_metadata"))
+
+    assert metadata == {
+        "format_version": FORMAT_VERSION,
+        "class": _TestObject,
+        "serialization_format": "pickle",
+    }
+
+
+@pytest.mark.parametrize("serialization_format", ["pickle", "cloudpickle"])
+def test_registered_format_roundtrip_to_file(serialization_format, tmp_path):
+    """Each registered format round-trips through a file and is recorded."""
+    if serialization_format == "cloudpickle":
+        pytest.importorskip("cloudpickle")
+
+    obj = _TestObject(value="saved")
+    save_path = tmp_path / "object"
+    obj.save(save_path, serialization_format=serialization_format).close()
+    zip_path = save_path.with_suffix(".zip")
+
+    with ZipFile(zip_path) as file:
+        metadata = pickle.loads(file.read("_metadata"))
+
+    assert obj._get_serializer(serialization_format).__name__ == serialization_format
+    assert metadata["serialization_format"] == serialization_format
+    assert load(zip_path).value == "saved"
+
+
+@pytest.mark.parametrize("storage", ["memory", "file"])
+def test_bare_class_metadata_still_loads(storage, tmp_path):
+    """Older archives storing only the class in _metadata still load."""
+    loaded = _load_archive(_TestObject, _TestObject(value="old"), storage, tmp_path)
+
+    assert loaded.value == "old"
 
 
 # serialization tag tests
@@ -220,6 +289,17 @@ def test_unsupported_artifact_raises_and_restores_object(tmp_path):
     assert obj.artifact_ is original_artifact
 
 
+@pytest.mark.parametrize("storage", ["memory", "file"])
+def test_attribute_in_both_tags_raises(storage, tmp_path):
+    """An attribute listed in both serialization tags gives a clear error."""
+    obj = _ObjectWithConflictingTags()
+
+    with pytest.raises(ValueError, match="tagged both"):
+        _roundtrip(obj, storage, tmp_path)
+
+    assert obj.model_ == "fitted"
+
+
 # input validation tests
 @pytest.mark.parametrize("serialization_format", [None, "json", "joblib"])
 def test_invalid_serialization_format_raises(serialization_format):
@@ -244,6 +324,19 @@ def test_invalid_load_type_raises():
     """Load rejects unsupported input types."""
     with pytest.raises(TypeError, match="serial must either"):
         load(42)
+
+
+@pytest.mark.parametrize("storage", ["memory", "file"])
+def test_future_format_version_raises(storage, tmp_path):
+    """Archives from a newer serialization format version are rejected."""
+    metadata = {
+        "format_version": FORMAT_VERSION + 1,
+        "class": _TestObject,
+        "serialization_format": "pickle",
+    }
+
+    with pytest.raises(ValueError, match="supports at most"):
+        _load_archive(metadata, _TestObject(), storage, tmp_path)
 
 
 # native artifact backend tests
