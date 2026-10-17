@@ -132,7 +132,7 @@ class BaseProbaForecaster(BaseForecaster):
             Concatenated predictive distribution for all instances.
         """
         # Get the vectorized data structure
-        yvec = self._yvec
+        yschema = self._y_schema
 
         # Get the list of forecasters (one per instance)
         forecasters = self.forecasters_
@@ -140,13 +140,16 @@ class BaseProbaForecaster(BaseForecaster):
         # Prepare X for vectorization
         kwargs = {"args_rowvec": {"X": X}}
 
+        backend = self.get_config()["backend:parallel"]
+        backend_params = self.get_config()["backend:parallel:params"]
+
         # Collect distributions from each forecaster
-        dist_list = yvec.vectorize_est(
+        dist_list = yschema.vectorize_est(
             forecasters,
             method="_predict_proba",
             return_type="list",
-            backend=self.get_config()["backend:parallel"],
-            backend_params=self.get_config()["backend:parallel:params"],
+            backend=backend,
+            backend_params=backend_params,
             fh=fh,
             marginal=marginal,
             **kwargs,
