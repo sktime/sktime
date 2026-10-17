@@ -233,8 +233,13 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
     """
 
     _tags = {
+        # packaging data
+        # --------------
         "authors": ["marrov"],
+        "maintainers": ["marrov"],
         "python_dependencies": ["skpro>=2,<3.0.0"],
+        # estimator type
+        # --------------
         "requires-fh-in-fit": False,
         "capability:multivariate": True,
         "capability:exogenous": True,
@@ -244,7 +249,15 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         "capability:random_state": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "tests:libs": ["sktime.transformations.series.lag"],
+        # CI and test flags
+        # -----------------
+        "tests:libs": [
+            "sktime.forecasting.base._base_proba",
+            "sktime.transformations.series.lag",
+        ],
+        "tests:specific": ["sktime.forecasting.compose.tests.test_reduce_proba"],
+        "tests:vm": True,
+        "tests:core": True,  # core to test BaseProbaForecaster
     }
 
     def __init__(
