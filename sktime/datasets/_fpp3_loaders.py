@@ -68,6 +68,25 @@ tsibbledata = [
 ]
 
 DATASET_NAMES_FPP3 = fpp3 + tsibble + tsibbledata
+REQUEST_TIMEOUT = (10, 60)
+
+
+def _safe_extract_tar(tar, destination):
+    """Extract regular files and directories without allowing path traversal."""
+    destination = os.path.realpath(destination)
+
+    for member in tar.getmembers():
+        target = os.path.realpath(os.path.join(destination, member.name))
+        try:
+            contained = os.path.commonpath([destination, target]) == destination
+        except ValueError:
+            contained = False
+        if not contained:
+            raise RuntimeError(f"Refusing to extract unsafe tar member: {member.name}")
+        if not (member.isfile() or member.isdir()):
+            raise RuntimeError(f"Refusing to extract unsafe tar member: {member.name}")
+
+    tar.extractall(path=destination)
 
 
 def _decompress_file_to_temp(
@@ -79,27 +98,36 @@ def _decompress_file_to_temp(
         temp_folder = tempfile.gettempdir()
     temp_dir = tempfile.mkdtemp(dir=temp_folder)
     try:
-        response = requests.get("https://cran.r-project.org/src/contrib/" + datafile)
+        response = requests.get(
+            "https://cran.r-project.org/src/contrib/" + datafile,
+            timeout=REQUEST_TIMEOUT,
+        )
         response.raise_for_status()
     except requests.exceptions.RequestException:
         if not robust:
+            shutil.rmtree(temp_dir, ignore_errors=True)
             return None
         try:
             response = requests.get(
                 "https://cran.r-project.org/src/contrib/00Archive/"
                 + archivedir
                 + "/"
-                + datafile
+                + datafile,
+                timeout=REQUEST_TIMEOUT,
             )
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
+            shutil.rmtree(temp_dir, ignore_errors=True)
             raise RuntimeError(f"Failed to download dataset from both URLs: {e}")
-    temp_file = os.path.join(temp_dir, "foo.tar.gz")
-    with open(temp_file, "wb") as f:
-        f.write(response.content)
-    tar = tarfile.open(temp_file)
-    tar.extractall(path=temp_dir)
-    tar.close()
+    try:
+        temp_file = os.path.join(temp_dir, "foo.tar.gz")
+        with open(temp_file, "wb") as f:
+            f.write(response.content)
+        with tarfile.open(temp_file) as tar:
+            _safe_extract_tar(tar, temp_dir)
+    except Exception:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise
     return temp_dir
 
 
