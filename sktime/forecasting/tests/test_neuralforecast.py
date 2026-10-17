@@ -11,6 +11,7 @@ from sktime.forecasting.neuralforecast import (
     NeuralForecastLSTM,
     NeuralForecastRNN,
     NeuralForecastTCN,
+    NeuralForecastTiDE,
 )
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
@@ -28,6 +29,7 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
         NeuralForecastGRU,
         NeuralForecastLSTM,
         NeuralForecastRNN,
+        NeuralForecastTiDE,
         NeuralForecastTCN,
     ],
 )
@@ -36,6 +38,7 @@ y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
         [
             NeuralForecastLSTM,
             NeuralForecastRNN,
+            NeuralForecastTiDE,
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
@@ -70,6 +73,7 @@ def test_neural_forecast_univariate_y_without_X(model_class) -> None:
         NeuralForecastLSTM,
         NeuralForecastRNN,
         NeuralForecastTCN,
+        NeuralForecastTiDE,
     ],
 )
 @pytest.mark.skipif(
@@ -80,6 +84,7 @@ def test_neural_forecast_univariate_y_without_X(model_class) -> None:
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
+            NeuralForecastTiDE,
         ]
     ),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -127,6 +132,7 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
         NeuralForecastGRU,
         NeuralForecastLSTM,
         NeuralForecastRNN,
+        NeuralForecastTiDE,
         NeuralForecastTCN,
     ],
 )
@@ -135,6 +141,7 @@ def test_neural_forecast_univariate_y_with_X(model_class) -> None:
         [
             NeuralForecastLSTM,
             NeuralForecastRNN,
+            NeuralForecastTiDE,
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
@@ -164,6 +171,7 @@ def test_neural_forecast_multivariate_y_without_X(model_class) -> None:
         NeuralForecastGRU,
         NeuralForecastLSTM,
         NeuralForecastRNN,
+        NeuralForecastTiDE,
         NeuralForecastTCN,
     ],
 )
@@ -172,6 +180,7 @@ def test_neural_forecast_multivariate_y_without_X(model_class) -> None:
         [
             NeuralForecastLSTM,
             NeuralForecastRNN,
+            NeuralForecastTiDE,
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
@@ -210,6 +219,7 @@ def test_neural_forecast_with_non_default_loss(model_class) -> None:
         NeuralForecastGRU,
         NeuralForecastLSTM,
         NeuralForecastRNN,
+        NeuralForecastTiDE,
         NeuralForecastTCN,
     ],
 )
@@ -218,6 +228,7 @@ def test_neural_forecast_with_non_default_loss(model_class) -> None:
         [
             NeuralForecastLSTM,
             NeuralForecastRNN,
+            NeuralForecastTiDE,
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
@@ -255,6 +266,7 @@ def test_neural_forecast_fail_with_multiple_predictions(model_class) -> None:
         NeuralForecastGRU,
         NeuralForecastLSTM,
         NeuralForecastRNN,
+        NeuralForecastTiDE,
         NeuralForecastTCN,
     ],
 )
@@ -263,6 +275,7 @@ def test_neural_forecast_fail_with_multiple_predictions(model_class) -> None:
         [
             NeuralForecastLSTM,
             NeuralForecastRNN,
+            NeuralForecastTiDE,
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
@@ -295,6 +308,7 @@ def test_neural_forecast_with_auto_freq(model_class) -> None:
         NeuralForecastGRU,
         NeuralForecastLSTM,
         NeuralForecastRNN,
+        NeuralForecastTiDE,
         NeuralForecastTCN,
     ],
 )
@@ -324,6 +338,7 @@ def test_neural_forecast_with_auto_freq(model_class) -> None:
         [
             NeuralForecastLSTM,
             NeuralForecastRNN,
+            NeuralForecastTiDE,
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
@@ -377,6 +392,7 @@ def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None
         NeuralForecastGRU,
         NeuralForecastLSTM,
         NeuralForecastRNN,
+        NeuralForecastTiDE,
         NeuralForecastTCN,
     ],
 )
@@ -385,6 +401,7 @@ def test_neural_forecast_with_auto_against_given_freq(model_class, freq) -> None
         [
             NeuralForecastLSTM,
             NeuralForecastRNN,
+            NeuralForecastTiDE,
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
@@ -426,6 +443,7 @@ def test_neural_forecast_with_auto_freq_on_valid_index(
         NeuralForecastGRU,
         NeuralForecastLSTM,
         NeuralForecastRNN,
+        NeuralForecastTiDE,
         NeuralForecastTCN,
     ],
 )
@@ -434,6 +452,7 @@ def test_neural_forecast_with_auto_freq_on_valid_index(
         [
             NeuralForecastLSTM,
             NeuralForecastRNN,
+            NeuralForecastTiDE,
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
@@ -470,6 +489,7 @@ def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) 
         NeuralForecastGRU,
         NeuralForecastLSTM,
         NeuralForecastRNN,
+        NeuralForecastTiDE,
         NeuralForecastTCN,
     ],
 )
@@ -478,6 +498,7 @@ def test_neural_forecast_with_auto_freq_on_missing_int_like(index, model_class) 
         [
             NeuralForecastLSTM,
             NeuralForecastRNN,
+            NeuralForecastTiDE,
             NeuralForecastDilatedRNN,
             NeuralForecastGRU,
             NeuralForecastTCN,
