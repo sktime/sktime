@@ -10,10 +10,62 @@ the class methods `load_from_serial` and `load_from_path`.
 __author__ = ["fkiraly", "achieveordie"]
 
 
+def _load_pickle():
+    """Return the ``pickle`` module."""
+    import pickle
+
+    return pickle
+
+
+def _load_cloudpickle():
+    """Return the ``cloudpickle`` module, a soft dependency."""
+    from skbase.utils.dependencies import _check_soft_dependencies
+
+    _check_soft_dependencies("cloudpickle", severity="error")
+    import cloudpickle
+
+    return cloudpickle
+
+
+# registry of serialization formats for ``_metadata`` and ``_obj``.
+# maps a format name to a function that returns a module with ``dump`` and ``dumps``.
+# to add a format, add one entry here.
 SERIALIZATION_FORMATS = {
-    "pickle",
-    "cloudpickle",
+    "pickle": _load_pickle,
+    "cloudpickle": _load_cloudpickle,
 }
+
+FORMAT_VERSION = 2
+
+
+def _normalize_metadata(metadata):
+    """Return ``_metadata`` content as a dict, after checking its format version.
+
+    Archives written before format version 2 store the bare class of the object
+    in ``_metadata``. These are read as format version 1.
+    """
+    if isinstance(metadata, type):
+        return {
+            "format_version": 1,
+            "class": metadata,
+            "serialization_format": "pickle",
+        }
+
+    if not isinstance(metadata, dict) or "class" not in metadata:
+        raise ValueError(
+            "Unexpected `_metadata` content: expected a class or a dict with a "
+            f"'class' key, but found {type(metadata)!r}."
+        )
+
+    format_version = metadata.get("format_version", 1)
+    if format_version > FORMAT_VERSION:
+        raise ValueError(
+            f"The saved object uses serialization format version {format_version}, "
+            f"but this version of sktime supports at most {FORMAT_VERSION}. "
+            "Please upgrade sktime to load it."
+        )
+
+    return metadata
 
 
 class _NativeArtifactBackend:
@@ -295,6 +347,19 @@ class _NativeArtifactStore:
 class _SerializationMixin:
     """Mixin containing serialization API for sktime base objects."""
 
+    def _validate_serialization_tags(self):
+        """Raise if the serialization tags of self are inconsistent."""
+        skip = self.get_tag("serialization:skip", ())
+        native_artifacts = self.get_tag("serialization:native_artifacts", ())
+
+        both = set(skip) & set(native_artifacts)
+        if both:
+            raise ValueError(
+                f"Attributes {sorted(both)} of {type(self).__name__!r} are tagged "
+                "both 'serialization:skip' and 'serialization:native_artifacts'. "
+                "An attribute may carry at most one of the two tags."
+            )
+
     def _remove_attrs_from_pickle(self, path):
         """Temporarily remove attributes that are stored outside _obj."""
         skip = self.get_tag("serialization:skip", ())
@@ -348,24 +413,14 @@ class _SerializationMixin:
 
     def _get_serializer(self, serialization_format):
         """Return serialization module for the given serialization format."""
-        import pickle
-
-        from skbase.utils.dependencies import _check_soft_dependencies
-
         if serialization_format not in SERIALIZATION_FORMATS:
             raise ValueError(
                 f"The provided `serialization_format`='{serialization_format}' "
                 "is not yet supported. The possible formats are: "
-                f"{SERIALIZATION_FORMATS}."
+                f"{sorted(SERIALIZATION_FORMATS)}."
             )
 
-        if serialization_format == "cloudpickle":
-            _check_soft_dependencies("cloudpickle", severity="error")
-            import cloudpickle
-
-            return cloudpickle
-
-        return pickle
+        return SERIALIZATION_FORMATS[serialization_format]()
 
     def _get_save_path(self, path):
         """Check path and return path used for saving."""
@@ -393,7 +448,7 @@ class _SerializationMixin:
 
         saved files are zip files with following contents:
 
-        * ``_metadata`` - contains class of self, i.e., ``type(self)``
+        * ``_metadata`` - format version, class of self, and serialization format
         * ``_obj`` - serialized self
         * ``_artifacts/`` - optional framework-native model artifacts
 
@@ -426,6 +481,7 @@ class _SerializationMixin:
         from zipfile import ZipFile
 
         serializer = self._get_serializer(serialization_format)
+        self._validate_serialization_tags()
         save_path = self._get_save_path(path)
         removed_attrs = self._remove_attrs_from_pickle(save_path)
         native_artifacts = self.get_tag("serialization:native_artifacts", ())
@@ -436,8 +492,13 @@ class _SerializationMixin:
                 return (type(self), serial)
 
             save_path.mkdir()
+            metadata = {
+                "format_version": FORMAT_VERSION,
+                "class": type(self),
+                "serialization_format": serialization_format,
+            }
             with open(save_path / "_metadata", "wb") as file:
-                serializer.dump(type(self), file)
+                serializer.dump(metadata, file)
             with open(save_path / "_obj", "wb") as file:
                 serializer.dump(self, file)
         finally:
@@ -503,6 +564,10 @@ class _SerializationMixin:
                 file.extractall(tmpdir)
 
             path = Path(tmpdir)
+            if (path / "_metadata").exists():
+                # read for the format version check only
+                with open(path / "_metadata", "rb") as file:
+                    _normalize_metadata(pickle.load(file))
             with open(path / "_obj", "rb") as file:
                 obj = pickle.load(file)
 
@@ -626,7 +691,8 @@ def load(serial):
         if not path.exists():
             raise FileNotFoundError(f"The given save location: {serial}\nwas not found")
         with ZipFile(path) as file:
-            cls = pickle.loads(file.open("_metadata", "r").read())
+            metadata = pickle.loads(file.open("_metadata", "r").read())
+        cls = _normalize_metadata(metadata)["class"]
         return cls.load_from_path(path)
     else:
         raise TypeError(
