@@ -873,6 +873,14 @@ Domain agnostic foundation models
 
     Toto2Forecaster
 
+.. currentmodule:: sktime.forecasting.tsicl
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSICLForecaster
+
 
 Multimodal foundation models
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
