@@ -216,7 +216,7 @@ def test_uv_manager_reuses_ready_environment(tmp_path, monkeypatch):
     def fail_run(*args, **kwargs):
         raise AssertionError("subprocess.run should not be called for a ready env")
 
-    monkeypatch.setattr("sktime.utils.env_managers._uv.subprocess.run", fail_run)
+    monkeypatch.setattr("sktime.utils._env_managers._uv.subprocess.run", fail_run)
     assert manager.get_python_executable(requirements) == python_path
 
 
@@ -234,7 +234,7 @@ def test_uv_manager_create_env_invokes_uv(tmp_path, monkeypatch):
             Path(cmd[2]).mkdir(parents=True, exist_ok=True)
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr("sktime.utils.env_managers._uv.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._uv.subprocess.run", fake_run)
 
     manager = UvEnvironmentManager(
         envs_dir=tmp_path,
@@ -282,7 +282,7 @@ def test_create_env_uses_per_call_python(tmp_path, monkeypatch):
             Path(cmd[2]).mkdir(parents=True, exist_ok=True)
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr("sktime.utils.env_managers._uv.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._uv.subprocess.run", fake_run)
 
     manager = UvEnvironmentManager(
         envs_dir=tmp_path,
