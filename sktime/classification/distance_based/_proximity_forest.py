@@ -178,7 +178,11 @@ def numba_wrapper(distance_measure):
         measures
     """
 
-    def distance(instance_a, instance_b, **params):
+    def distance(instance_a, instance_b, dim_to_use=None, **params):
+        if dim_to_use is not None:
+            a = np.asarray(instance_a.iloc[dim_to_use], dtype=np.float64)
+            b = np.asarray(instance_b.iloc[dim_to_use], dtype=np.float64)
+            return distance_measure(a, b, **params)
         instance_a = convert(instance_a, "nested_univ", "numpyflat")
         instance_b = convert(instance_b, "nested_univ", "numpyflat")
         return distance_measure(instance_a, instance_b, **params)
@@ -308,7 +312,7 @@ def msm_distance_measure_getter(X):
     -------
     ret: distance measure and parameter range dictionary
     """
-    n_dimensions = 1  # todo use other dimensions
+    n_dimensions = X.shape[1]
     return {
         "distance_measure": [numba_wrapper(msm_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
@@ -429,7 +433,7 @@ def erp_distance_measure_getter(X):
     instance_length = _max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
-    n_dimensions = 1  # todo use other dimensions
+    n_dimensions = X.shape[1]
     return {
         "distance_measure": [numba_wrapper(erp_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
@@ -454,7 +458,7 @@ def lcss_distance_measure_getter(X):
     instance_length = _max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
-    n_dimensions = 1  # todo use other dimensions
+    n_dimensions = X.shape[1]
     return {
         "distance_measure": [numba_wrapper(lcss_distance)],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
