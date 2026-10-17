@@ -109,6 +109,46 @@ def test_check_X_pretrain_flattens_hierarchical(hierarchy_levels):
     np.testing.assert_array_equal(X_flat.to_numpy(), X_hier.to_numpy())
 
 
+def test_flatten_y_pretrain_matches_x():
+    """Test instance levels of y are flattened the same way as those of X."""
+    detector = DummyRegularAnomalies()
+    X_hier = _make_hierarchical(
+        hierarchy_levels=(2, 2), min_timepoints=10, max_timepoints=10
+    )
+    y = pd.DataFrame(
+        {"ilocs": [1, 2]},
+        index=pd.MultiIndex.from_tuples(
+            [("h0_0", "h1_0", 0), ("h0_1", "h1_1", 0)], names=["h0", "h1", "event_no"]
+        ),
+    )
+
+    X_flat, _ = detector._check_X_pretrain(X_hier)
+    y_flat = detector._flatten_y_pretrain(y)
+
+    # same flattened instance labels as X, and the event counter is kept
+    assert list(y_flat.index.get_level_values(0)) == ["h0_0__h1_0", "h0_1__h1_1"]
+    assert set(y_flat.index.get_level_values(0)) <= set(
+        X_flat.index.get_level_values(0)
+    )
+    assert list(y_flat.index.get_level_values(-1)) == [0, 0]
+    # the input is not changed
+    assert y.index.nlevels == 3
+
+
+def test_flatten_y_pretrain_keeps_one_instance_level():
+    """Test y with a single instance level is passed on unchanged."""
+    detector = DummyRegularAnomalies()
+    y = pd.DataFrame(
+        {"ilocs": [1, 2]},
+        index=pd.MultiIndex.from_tuples(
+            [("a", 0), ("b", 0)], names=["instance", "event_no"]
+        ),
+    )
+
+    assert detector._flatten_y_pretrain(y) is y
+    assert detector._flatten_y_pretrain(None) is None
+
+
 @pytest.mark.parametrize(
     "X_panel",
     [_make_pretrain_panel(), np.random.default_rng(0).random((3, 1, 20))],
