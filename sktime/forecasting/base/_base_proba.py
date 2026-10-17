@@ -161,18 +161,18 @@ class BaseProbaForecaster(BaseForecaster):
             return dist_list[0]
 
         # Concatenate distributions with proper hierarchical indexing
-        pred_dist = self._concat_distributions_hierarchical(dist_list, yvec)
+        pred_dist = self._concat_distributions_hierarchical(dist_list, yschema)
 
         return pred_dist
 
-    def _concat_distributions_hierarchical(self, dist_list, yvec):
+    def _concat_distributions_hierarchical(self, dist_list, yschema):
         """Concatenate distributions from vectorized prediction.
 
         Parameters
         ----------
         dist_list : list of skpro BaseDistribution
             List of distributions from each instance.
-        yvec : VectorizedDF
+        yschema : VectorizedDF
             The vectorized data structure with instance information.
 
         Returns
@@ -199,7 +199,7 @@ class BaseProbaForecaster(BaseForecaster):
 
         # Get the instance indices from the vectorized structure
         # yvec.get_iter_indices returns (row_idx, col_idx) where row_idx is a MultiIndex
-        row_idx, _ = yvec.get_iter_indices()
+        row_idx, _ = yschema.get_iter_indices()
         if row_idx is None:
             row_idx = pd.RangeIndex(len(dist_list))
 
