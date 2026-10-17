@@ -113,6 +113,8 @@ def test_converter_class_tags(converter_cls, scitype_from, scitype_to):
     assert converter.get_tag("scitype_from") == scitype_from
     assert converter.get_tag("scitype_to") == scitype_to
     assert converter.get_tag("mtype_to") is not None
+    mtype_pair = (converter.get_tag("mtype_from"), converter.get_tag("mtype_to"))
+    assert converter_cls.get_conversions() == [mtype_pair]
 
 
 @pytest.mark.skipif(
@@ -123,8 +125,7 @@ def test_converter_class_roundtrip():
     """Test Series to Panel and back via converter classes."""
     X_series = _make_series(n_columns=2, return_mtype="pd.DataFrame")
 
-    X_panel, mtype = PdDataFrameToDfList()(X_series, return_to_mtype=True)
-    assert mtype == "df-list"
+    X_panel = PdDataFrameToDfList()(X_series)
     assert isinstance(X_panel, list) and len(X_panel) == 1
 
     X_back = DfListToPdDataFrame()(X_panel)

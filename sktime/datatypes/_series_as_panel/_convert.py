@@ -25,9 +25,11 @@ from sktime.datatypes import convert_to, scitype
 class BaseScitypeConverter(BaseObject):
     """Base class for converters between Series, Panel, and Hierarchical scitypes.
 
-    Analogous to ``BaseConverter``, but converts between scitypes, not mtypes.
-    Each subclass implements a single conversion, from one input type to one
-    output type, declared via tags:
+    Mirrors the API of ``BaseConverter``, but for conversions that change the
+    scitype. Kept separate from ``BaseConverter``, so these conversions are not
+    picked up as same-scitype mtype conversions.
+
+    Each subclass implements a single conversion, declared via tags:
 
     * ``scitype_from``, ``scitype_to``: scitypes converted from and to
     * ``mtype_from``, ``mtype_to``: mtypes converted from and to,
@@ -42,34 +44,44 @@ class BaseScitypeConverter(BaseObject):
         "mtype_from": None,  # mtype to convert from, str, None = any
         "mtype_to": None,  # mtype to convert to, str
         "python_type": object,  # python type of inputs converted
+        "multiple_conversions": False,  # whether converter encodes multiple conversions
+        "python_version": None,
+        "python_dependencies": None,
     }
 
-    def __call__(self, obj, store=None, return_to_mtype=False):
+    def __call__(self, obj, store=None):
         """Convert obj, see ``convert``."""
-        return self.convert(obj, store=store, return_to_mtype=return_to_mtype)
+        return self.convert(obj=obj, store=store)
 
-    def convert(self, obj, store=None, return_to_mtype=False):
-        """Convert obj from scitype ``scitype_from`` to scitype ``scitype_to``.
+    def convert(self, obj, store=None):
+        """Convert obj from ``mtype_from`` to ``mtype_to``.
 
         Parameters
         ----------
-        obj : an object of scitype ``scitype_from``
-        store : dict, optional. Converter store for back-conversion.
-        return_to_mtype : bool, optional (default=False)
-            if True, also returns the str of the mtype converted to
+        obj : any
+            Object to convert, of scitype ``scitype_from``.
+        store : dict, optional (default=None)
+            Reference of storage for lossy conversions.
 
         Returns
         -------
-        obj of scitype ``scitype_to``, converted
-        mtype : str, only returned if ``return_to_mtype=True``
+        converted_obj : obj converted to ``mtype_to``, of scitype ``scitype_to``
         """
-        obj_converted = self._convert(obj, store=store)
-        if return_to_mtype:
-            return obj_converted, self.get_tag("mtype_to")
-        return obj_converted
+        return self._convert(obj, store)
 
     def _convert(self, obj, store=None):
         raise NotImplementedError
+
+    @classmethod
+    def get_conversions(cls):
+        """Get the conversion implemented by this class.
+
+        Returns
+        -------
+        list of tuples (str, str)
+            List with the single conversion ``(mtype_from, mtype_to)``.
+        """
+        return [(cls.get_class_tag("mtype_from"), cls.get_class_tag("mtype_to"))]
 
     @classmethod
     def applies_to(cls, obj):
@@ -78,7 +90,7 @@ class BaseScitypeConverter(BaseObject):
 
 
 class PdSeriesToDfList(BaseScitypeConverter):
-    """Convert pd.Series to single-series df-list panel."""
+    """Conversion: pd.Series -> df-list, Series to Panel scitype."""
 
     _tags = {
         "scitype_from": "Series",
@@ -93,7 +105,7 @@ class PdSeriesToDfList(BaseScitypeConverter):
 
 
 class PdDataFrameToDfList(BaseScitypeConverter):
-    """Convert pd.DataFrame to single-series df-list panel."""
+    """Conversion: pd.DataFrame -> df-list, Series to Panel scitype."""
 
     _tags = {
         "scitype_from": "Series",
@@ -108,7 +120,7 @@ class PdDataFrameToDfList(BaseScitypeConverter):
 
 
 class NumpyToNumpy3D(BaseScitypeConverter):
-    """Convert 1D or 2D np.ndarray series to single-series numpy3D panel."""
+    """Conversion: np.ndarray -> numpy3D, Series to Panel scitype."""
 
     _tags = {
         "scitype_from": "Series",
@@ -128,7 +140,7 @@ class NumpyToNumpy3D(BaseScitypeConverter):
 
 
 class DfListToPdDataFrame(BaseScitypeConverter):
-    """Convert single-series df-list panel to pd.DataFrame series."""
+    """Conversion: df-list -> pd.DataFrame, Panel to Series scitype."""
 
     _tags = {
         "scitype_from": "Panel",
@@ -145,7 +157,7 @@ class DfListToPdDataFrame(BaseScitypeConverter):
 
 
 class PdMultiIndexToPdDataFrame(BaseScitypeConverter):
-    """Convert single-series pd-multiindex panel to pd.DataFrame series."""
+    """Conversion: pd-multiindex -> pd.DataFrame, Panel to Series scitype."""
 
     _tags = {
         "scitype_from": "Panel",
@@ -161,7 +173,7 @@ class PdMultiIndexToPdDataFrame(BaseScitypeConverter):
 
 
 class Numpy3DToNumpy(BaseScitypeConverter):
-    """Convert single-series numpy3D panel to 2D np.ndarray series."""
+    """Conversion: numpy3D -> np.ndarray, Panel to Series scitype."""
 
     _tags = {
         "scitype_from": "Panel",
@@ -181,7 +193,7 @@ class Numpy3DToNumpy(BaseScitypeConverter):
 
 
 class SeriesToHierarchical(BaseScitypeConverter):
-    """Convert series to a single-series pd_multiindex_hier object."""
+    """Conversion: any mtype -> pd_multiindex_hier, Series to Hierarchical scitype."""
 
     _tags = {
         "scitype_from": "Series",
@@ -199,7 +211,7 @@ class SeriesToHierarchical(BaseScitypeConverter):
 
 
 class HierarchicalToSeries(BaseScitypeConverter):
-    """Convert single-series hierarchical object to pd.DataFrame series."""
+    """Conversion: any mtype -> pd.DataFrame, Hierarchical to Series scitype."""
 
     _tags = {
         "scitype_from": "Hierarchical",
@@ -217,7 +229,7 @@ class HierarchicalToSeries(BaseScitypeConverter):
 
 
 class PanelToHierarchical(BaseScitypeConverter):
-    """Convert panel to a single-panel pd_multiindex_hier object."""
+    """Conversion: any mtype -> pd_multiindex_hier, Panel to Hierarchical scitype."""
 
     _tags = {
         "scitype_from": "Panel",
@@ -234,7 +246,7 @@ class PanelToHierarchical(BaseScitypeConverter):
 
 
 class HierarchicalToPanel(BaseScitypeConverter):
-    """Convert single-panel hierarchical object to pd-multiindex panel."""
+    """Conversion: any mtype -> pd-multiindex, Hierarchical to Panel scitype."""
 
     _tags = {
         "scitype_from": "Hierarchical",
@@ -258,9 +270,10 @@ def _convert_by_type(converters, obj, store=None, return_to_mtype=False):
     """
     for converter in converters:
         if converter.applies_to(obj):
-            return converter().convert(
-                obj, store=store, return_to_mtype=return_to_mtype
-            )
+            obj_converted = converter().convert(obj, store=store)
+            if return_to_mtype:
+                return obj_converted, converter.get_class_tag("mtype_to")
+            return obj_converted
     if return_to_mtype:
         raise TypeError(f"no converter found for obj of type {type(obj)}")
     return obj
