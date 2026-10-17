@@ -333,6 +333,7 @@ class TimesFM2Forecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pretrain": True,
+        "capability:update": True,
         # test and CI flags
         # -----------------
         "tests:vm": True,
@@ -484,6 +485,51 @@ class TimesFM2Forecaster(BaseForecaster):
         """
         self.model_ = self._load_model()
         self.context_ = y
+
+    def _update(self, y, X=None, update_params=True):
+        """Update TimesFM-2 context without reloading or full refit.
+
+        ``_predict`` conditions on ``self.context_``. Trim to the model
+        ``context_length`` when available so update does not grow unbounded or
+        leave a stale window.
+
+        Parameters
+        ----------
+        y : time series matching ``y_inner_mtype``
+            New endogenous observations.
+        X : ignored
+        update_params : bool, optional (default=True)
+            Ignored for zero-shot update (pretrain is separate).
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        self.context_ = update_data(self.context_, y)
+
+        context_length = None
+        if getattr(self, "model_", None) is not None:
+            context_length = getattr(
+                getattr(self.model_, "config", None), "context_length", None
+            )
+        if context_length is None and isinstance(self.config, dict):
+            context_length = self.config.get("context_length")
+
+        if context_length is not None and len(self.context_) > context_length:
+            self.context_ = self.context_.iloc[-context_length:]
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if (
+                y_stored is not None
+                and context_length is not None
+                and len(y_stored) > context_length
+            ):
+                self._y = y_stored.iloc[-context_length:]
+
+        return self
 
     def _validate_predict_fh(self, fh):
         """Return relative forecasting horizon indices after capacity validation."""
