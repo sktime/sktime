@@ -235,6 +235,58 @@ def test_median_metrics_horizon_weight_array_like(metric_name, multioutput):
 
 
 @pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics", "sktime.utils"]),
+    reason="Run if performance_metrics or utils module has changed.",
+)
+def test_weighted_percentile_invalid_weights():
+    """Check _weighted_percentile raises for negative or all-zero weights, #11377."""
+    from sktime.utils.stats import _weighted_percentile
+
+    array = np.array([1.0, 2.0, 3.0, 4.0])
+    assert _weighted_percentile(array, np.array([1.0, 1.0, 9.0, 10.0])) == 3.0
+
+    with pytest.raises(ValueError, match="non-negative"):
+        _weighted_percentile(array, np.array([1.0, 1.0, -9.0, 10.0]))
+    with pytest.raises(ValueError, match="zero"):
+        _weighted_percentile(array, np.zeros(4))
+
+    # 2D array, zero weights only in one column
+    array_2d = np.array([[1.0, 4.0], [2.0, 3.0], [3.0, 2.0]])
+    weights_2d = np.array([[1.0, 0.0], [1.0, 0.0], [1.0, 0.0]])
+    with pytest.raises(ValueError, match="zero"):
+        _weighted_percentile(array_2d, weights_2d)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics", "sktime.utils"]),
+    reason="Run if performance_metrics or utils module has changed.",
+)
+@pytest.mark.parametrize(
+    "metric_name",
+    [
+        "median_squared_error",
+        "median_absolute_percentage_error",
+        "median_squared_percentage_error",
+        "median_squared_scaled_error",
+    ],
+)
+def test_median_metrics_invalid_horizon_weight(metric_name):
+    """Check median metrics raise for negative or all-zero horizon_weight, #11377."""
+    from sktime.performance_metrics import forecasting
+
+    metric = getattr(forecasting, metric_name)
+
+    y_true = pd.Series([3.0, -0.5, 2.0, 7.0, 2.0])
+    y_pred = pd.Series([2.5, 0.0, 2.0, 8.0, 1.25])
+    y_train = pd.Series([5.0, 0.5, 4.0, 6.0, 3.0, 5.0, 2.0])
+
+    with pytest.raises(ValueError, match="non-negative"):
+        metric(y_true, y_pred, horizon_weight=[1, 1, -9, 10, 1], y_train=y_train)
+    with pytest.raises(ValueError, match="zero"):
+        metric(y_true, y_pred, horizon_weight=np.zeros(5), y_train=y_train)
+
+
+@pytest.mark.skipif(
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
