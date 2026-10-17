@@ -91,7 +91,22 @@ class ForecastingBenchmark(BaseBenchmark):
 
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
+    isolated : bool, optional (default=False)
+        If ``True``, run each task-estimator pair in an isolated
+        environment. Implied ``True`` when ``env_manager`` is passed.
+    env_manager : BaseEnvironmentManager, optional (default=None)
+        Manager used to create environments and launch the worker.
+        ``None`` builds a ``UvEnvironmentManager`` that installs
+        ``cloudpickle`` and the same ``sktime`` version as the parent.
+    envs_dir : str or pathlib.Path, optional (default=None)
+        Directory for isolated environments when ``env_manager`` is
+        ``None``. ``None`` uses ``.benchmark_envs``. The auto-built
+        manager uses the parent interpreter; a different Python
+        version is not supported because the worker unpickles
+        parent objects with ``cloudpickle``.
     """
+
+    _benchmark_kind = "forecasting"
 
     def add_task(
         self,
