@@ -117,6 +117,7 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         # ---------------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_darts"],
+        "tests:skip_by_name": ["test_doctest_examples"],
     }
 
     def __init__(
@@ -326,6 +327,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         # ---------------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_darts"],
+        "tests:skip_by_name": ["test_doctest_examples"],
     }
 
     def __init__(
@@ -558,6 +560,7 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         # ---------------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_darts"],
+        "tests:skip_by_name": ["test_doctest_examples"],
     }
 
     def __init__(
