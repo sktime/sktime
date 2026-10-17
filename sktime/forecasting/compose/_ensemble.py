@@ -33,7 +33,6 @@ VALID_AGG_FUNCS = {
     "gmean": {"unweighted": gmean, "weighted": _weighted_geometric_mean},
 }
 
-
 class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Automatically find best weights for the ensembled forecasters.
 
@@ -83,6 +82,12 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     weights_ : np.array
         The weights based on either ``regressor.feature_importances_`` or
         ``regressor.coef_`` values.
+
+    Notes
+    -----
+    ``regressor_`` and ``weights_`` are not available when the forecaster is
+    vectorized, i.e., fitted on multivariate data. Use
+    ``forecaster.get_fitted_params()`` to access them in that case.
 
     See Also
     --------
@@ -172,7 +177,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         self._fit_forecasters(forecasters, y_train, X_train, fh_test)
 
         if self.method == "feature-importance":
-            self.regressor_ = check_regressor(
+            self._regressor = check_regressor(
                 regressor=self.regressor, random_state=self.random_state
             )
             X_meta = pd.concat(self._predict_forecasters(fh_test, X_test), axis=1)
@@ -180,14 +185,14 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
             # fit meta-model (regressor) on predictions of ensemble models
             # with y_test as endog/target
-            self.regressor_.fit(X=X_meta, y=y_test)
+            self._regressor.fit(X=X_meta, y=y_test)
 
             # check if regressor is a sklearn.Pipeline
-            if isinstance(self.regressor_, Pipeline):
+            if isinstance(self._regressor, Pipeline):
                 # extract regressor from pipeline to access its attributes
-                self.weights_ = _get_weights(self.regressor_.steps[-1][1])
+                self._weights = _get_weights(self._regressor.steps[-1][1])
             else:
-                self.weights_ = _get_weights(self.regressor_)
+                self._weights = _get_weights(self._regressor)
 
         elif self.method == "inverse-variance":
             # get in-sample forecasts
@@ -200,7 +205,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
                 ]
             )
             # standardize the inverse variance
-            self.weights_ = list(inv_var / np.sum(inv_var))
+            self._weights = list(inv_var / np.sum(inv_var))
         else:
             raise NotImplementedError(
                 f"Given method {self.method} does not exist, "
@@ -225,9 +230,47 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
-        y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
+        y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self._weights), axis=1)
         y_pred.name = self._cur_y.name
         return y_pred
+
+    @property
+    def weights_(self):
+        """Return the computed weights.
+
+        Raises
+        ------
+        AttributeError
+            if the forecaster has been vectorized (multivariate data), in which case
+            ``weights_`` is not available on the vectorized wrapper. Use
+            ``forecaster.get_fitted_params()`` instead.
+        """
+        if getattr(self, "_is_vectorized", False):
+            raise AttributeError(
+                "Accessing `weights_` is not supported when the forecaster is "
+                "vectorized (fitted on multivariate data). Please use "
+                "`forecaster.get_fitted_params()` to access the fitted weights."
+            )
+        return self._weights
+
+    @property
+    def regressor_(self):
+        """Return the fitted regressor.
+
+        Raises
+        ------
+        AttributeError
+            if the forecaster has been vectorized (multivariate data), in which case
+            ``regressor_`` is not available on the vectorized wrapper. Use
+            ``forecaster.get_fitted_params()`` instead.
+        """
+        if getattr(self, "_is_vectorized", False):
+            raise AttributeError(
+                "Accessing `regressor_` is not supported when the forecaster is "
+                "vectorized (fitted on multivariate data). Please use "
+                "`forecaster.get_fitted_params()` to access the fitted regressor."
+            )
+        return self._regressor
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -238,7 +281,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
-
 
         Returns
         -------
@@ -260,7 +302,6 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
 
         return [params1, params2]
 
-
 def _get_weights(regressor):
     # tree-based models from sklearn which have feature importance values
     if hasattr(regressor, "feature_importances_"):
@@ -277,7 +318,6 @@ def _get_weights(regressor):
     if weights.sum() == 0:
         weights += 1
     return list(weights)
-
 
 class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """Ensemble of forecasters.
@@ -403,7 +443,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         ----------
         fh : ForecastingHorizon, optional, default=None
         X : pd.DataFrame, optional, default=None, must be of same mtype as y
-            Exogenous data to which to fit the forecaster.
+            Exogenous data to which to make the prediction.
 
         Returns
         -------
@@ -434,7 +474,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
 
-
         Returns
         -------
         params : dict or list of dict
@@ -454,7 +493,6 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         params2 = {"forecasters": [("f", FORECASTER, 2)]}
 
         return [params0, params1, params2]
-
 
 def _aggregate(y, aggfunc, weights):
     """Apply aggregation function by row.
@@ -481,7 +519,6 @@ def _aggregate(y, aggfunc, weights):
         y_agg = aggfunc(y, axis=1, weights=np.array(weights))
 
     return pd.Series(y_agg, index=y.index)
-
 
 def _check_aggfunc(aggfunc, weighted=False):
     _weighted = "weighted" if weighted else "unweighted"
