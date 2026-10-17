@@ -6,7 +6,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from sktime.utils.env_managers._base import (
+from sktime.utils._env_managers._base import (
     BaseEnvironmentManager,
     dependency_env_key,
     env_python,

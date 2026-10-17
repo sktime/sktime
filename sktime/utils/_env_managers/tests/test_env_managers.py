@@ -9,13 +9,13 @@ import pytest
 
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.env_managers import (
+from sktime.utils._env_managers import (
     BaseEnvironmentManager,
     UvEnvironmentManager,
     dependency_env_key,
     env_python,
 )
-from sktime.utils.env_managers._base import resolve_run_target
+from sktime.utils._env_managers._base import resolve_run_target
 
 __author__ = ["jgyasu"]
 
