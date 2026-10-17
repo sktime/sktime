@@ -8,7 +8,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.tree import DecisionTreeClassifier
 
-from sktime.classification.ensemble import ComposableTimeSeriesForestClassifier
+from sktime.classification.ensemble import (
+    BaggingClassifier,
+    ComposableTimeSeriesForestClassifier,
+)
 from sktime.datasets import load_unit_test
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.adapt import TabularToSeriesAdaptor
@@ -143,3 +146,41 @@ def test_tsf_predictions(n_estimators, n_intervals):
     b = clf2.predict_proba(X_test)
 
     np.testing.assert_array_equal(a, b)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(BaggingClassifier),
+    reason="run test only if soft dependency present and increment test module",
+)
+def test_bagging_does_not_reseed_global_numpy_rng():
+    """BaggingClassifier must not reseed the process-global numpy RNG, #11306.
+
+    np.random.seed was called in _fit, so with the default random_state=None
+    the global stream was reseeded from entropy (non-reproducible for other
+    process users), and with an explicit seed the surrounding stream was
+    reset instead of advanced.
+    """
+    import numpy as np
+
+    from sktime.classification.dummy import DummyClassifier
+
+    X = np.zeros((4, 1, 5))
+    y = np.array([0, 1, 0, 1])
+
+    for random_state in [None, 123]:
+        np.random.seed(42)
+        _ = np.random.rand()
+        state_before = np.random.get_state()
+        BaggingClassifier(DummyClassifier(), random_state=random_state).fit(X, y)
+        state_after = np.random.get_state()
+
+        def _states_equal(s1, s2):
+            return all(
+                np.array_equal(a, b) if isinstance(a, np.ndarray) else a == b
+                for a, b in zip(s1, s2)
+            )
+
+        assert _states_equal(state_before, state_after), (
+            "fit mutated the process-global numpy RNG state "
+            f"(random_state={random_state!r})"
+        )

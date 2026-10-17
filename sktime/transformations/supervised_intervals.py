@@ -118,11 +118,6 @@ class SupervisedIntervals(BaseTransformer):
         "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": [
-            "test_get_test_params_coverage",
-        ],
     }
 
     def __init__(
@@ -218,7 +213,7 @@ class SupervisedIntervals(BaseTransformer):
         self.reset()
         if y is None:
             raise ValueError("SupervisedIntervals requires `y` in `fit`.")
-        X, y, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+        X, y, metadata, _, _ = self._check_X_y(X=X, y=y, return_metadata=True)
 
         y = self._fit_setup(X, y)
         X_norm = z_normalise_series_3d(X)
@@ -540,6 +535,12 @@ class SupervisedIntervals(BaseTransformer):
         from skbase.utils.dependencies import _check_soft_dependencies
 
         params0 = {}
+        params1 = {
+            "n_intervals": 1,
+            "randomised_split_point": False,
+            "min_interval_length": 4,
+        }
+        params = [params0, params1]
 
         if _check_soft_dependencies("numba", severity="none"):
             from sktime.utils.numba.stats import (
@@ -549,17 +550,16 @@ class SupervisedIntervals(BaseTransformer):
                 row_numba_min,
             )
 
-            params1 = {
+            params2 = {
                 "n_intervals": 1,
                 "features": [row_mean, row_numba_min, row_numba_max],
                 "min_interval_length": 4,
             }
-            params2 = {
+            params3 = {
                 "n_intervals": 2,
                 "randomised_split_point": False,
                 "features": row_median,
             }
-            return [params0, params1, params2]
+            params.extend([params2, params3])
 
-        else:
-            return params0
+        return params
