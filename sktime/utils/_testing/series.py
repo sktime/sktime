@@ -31,9 +31,9 @@ def _make_series(
         number of time points in the series
     n_columns : int, default=1
         number of columns in the series
-    all_positive : bool, default=False
-        if True, subtracts minimum and adds 1 from values after generating the series
-        ensures all the values generated are greater equal 1
+    all_positive : bool, default=True
+        if True, subtracts each column's minimum and adds 1 before inserting NaNs
+        ensures all non-missing values are positive
     index_type : str, one of "period", "datetime" (default), "range", "int"
         the index of the returned object, if a pandas object; otherwise has no effect
         "period" - `pd.PeriodIndex`, monthly (M) starting at Jan 2000 (incl)
@@ -44,7 +44,8 @@ def _make_series(
         random seed for sampling, if `None`, will use default `np.random` generation
     add_nan : bool, default=False
         whether to include nans in the series.
-        If `True`, data will contain three `np.nan` entries, at start, end and middle
+        If `True`, replace the first, middle and last time points in every column
+        with `np.nan`, after shifting values if `all_positive=True`.
     return_mtype : str, sktime Series mtype str
         default="pd.DataFrame" if `n_columns>1`, and "pd.Series" if `n_columns==1`
         see sktime.datatypes.MTYPE_LIST_SERIES for a full list of admissible strings
@@ -61,13 +62,13 @@ def _make_series(
     """
     rng = check_random_state(random_state)
     data = rng.normal(size=(n_timepoints, n_columns))
+    if all_positive:
+        data -= np.min(data, axis=0) - 1
     if add_nan:
         # add some nan values
         data[int(len(data) / 2)] = np.nan
         data[0] = np.nan
         data[-1] = np.nan
-    if all_positive:
-        data -= np.min(data, axis=0) - 1
 
     # np.ndarray case
     if return_numpy or return_mtype == "np.ndarray":

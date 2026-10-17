@@ -40,7 +40,8 @@ def _make_hierarchical(
     n_columns : int, optional
         number of columns in the output dataframe, by default 1
     all_positive : bool, optional
-        If True the time series will be , by default True
+        If True, shift each generated column to positive values before
+        inserting NaNs, by default True
     index_type : str, optional
         type of index, by default None
         Supported types are "period", "datetime", "range" or "int".
@@ -48,7 +49,8 @@ def _make_hierarchical(
     random_state : int, np.random.RandomState or None
         Controls the randomness of the estimator, by default None
     add_nan : bool, optional
-        If it's true the series will contain NaNs, by default False
+        If True, replace the first, middle and last rows of the generated
+        dataframe with NaNs, by default False
 
     Returns
     -------
@@ -83,13 +85,13 @@ def _make_hierarchical(
 
     total_time_points = len(index)
     data = rng.normal(size=(total_time_points, n_columns))
+    if all_positive:
+        data -= np.min(data, axis=0) - 1
     if add_nan:
         # add some nan values
         data[int(len(data) / 2)] = np.nan
         data[0] = np.nan
         data[-1] = np.nan
-    if all_positive:
-        data -= np.min(data, axis=0) - 1
     df = pd.DataFrame(
         data=data, index=index, columns=[f"c{i}" for i in range(n_columns)]
     )
