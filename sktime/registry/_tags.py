@@ -735,9 +735,9 @@ class category(_BaseTag):
       includes naive baselines, exponential smoothing, ARIMA-type models,
       structural models, intermittent-demand methods, and parametric curves.
     * ``"naive"``: naive baseline, such as last value, mean, or a prescribed
-      playback. Also tagged ``"statistical"``.
+      playback. Naive models are also tagged ``"statistical"``.
     * ``"machine_learning"``: machine learning method that is not a neural
-      network, such as a tree ensemble or another tabular learner.
+      network, such as a tree ensemble or a support vector machine.
     * ``"deep_learning"``: neural network trained for the task.
     * ``"foundation_model"``: deep learning model pretrained on a large
       corpus. Also tagged ``"deep_learning"``.
@@ -745,10 +745,11 @@ class category(_BaseTag):
       estimator determines the fitting principle of a fitted instance.
     * ``"composition"``: pipeline, ensemble, wrapper, or other compositor.
       The wrapped estimator carries its own ``category``.
-    * ``"adapter"``: adapter to a forecaster from another library. The
-      wrapped model determines the fitting principle.
-    * ``"tuning"``: hyperparameter search over a forecaster. Also tagged
-      ``"composition"``. The tuned forecaster carries its own ``category``.
+    * ``"adapter"``: adapter to an API from another library, not a specific estimator.
+      The wrapped model determines the fitting principle.
+    * ``"tuning"``: hyperparameter search over an estimator. Also tagged
+      ``"composition"``, but not all compositions are tuning.
+      The tuned estimator carries its own ``category``.
     * ``"agentic"``: a language model constructs or revises an estimator
       pipeline. The generated estimator carries its own ``category``.
     """
