@@ -101,14 +101,13 @@ def test_statsforecast_mstl_with_fh(request, fh):
     if "different fh predict" in request.node.name:
         # predict with different fh
         fh.append(2)
-    try:
+        with pytest.raises(
+            ValueError,
+            match="A different forecasting horizon `fh` has been provided",
+        ):
+            model.predict(fh=fh)
+    else:
         model.predict(fh=fh)
-    except ValueError:
-        assert "different fh predict" in request.node.name, (
-            "Unexpected exception raised - should have failed with ValueError, "
-            "A different forecasting horizon `fh` has been "
-            "provided from "
-        )
 
 
 @pytest.mark.skipif(
