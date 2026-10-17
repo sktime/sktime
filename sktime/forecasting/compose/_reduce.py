@@ -692,7 +692,7 @@ class _DirectReducer(_Reducer):
         if self.pooling == "global":
             y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
-            if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+            if np.any(np.isnan(ys)) or np.any(np.isinf(ys)):
                 return self._predict_nan(fh, method=method, **kwargs)
         else:
             y_last, X_last = self._get_last_window()
@@ -1038,7 +1038,7 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "global":
             y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
-            if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+            if np.any(np.isnan(ys)) or np.any(np.isinf(ys)):
                 return self._predict_nan(fh)
         else:
             y_last, X_last = self._get_last_window()
