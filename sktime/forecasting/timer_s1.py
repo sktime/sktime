@@ -173,6 +173,7 @@ class TimerS1Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:insample": False,

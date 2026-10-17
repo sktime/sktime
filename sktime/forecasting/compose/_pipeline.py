@@ -184,7 +184,7 @@ class _Pipeline(_HeterogenousMetaEstimator, BaseForecaster):
                         if len(levels) == 1:
                             levels = levels[0]
                         yt[ix] = y.xs(ix, level=levels, axis=1)
-                        # todo 1.2.0 - check why this cannot be easily removed
+                        # todo 1.3.0 - check why this cannot be easily removed
                         # in theory, we should get rid of the "Coverage" case treatment
                         # (the legacy naming convention was removed in 0.23.0)
                         # deal with the "Coverage" case, we need to get rid of this
@@ -416,6 +416,7 @@ class ForecastingPipeline(_Pipeline):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": ["mloning", "fkiraly", "aiwalter"],
         "capability:multivariate": True,
         "y_inner_mtype": SUPPORTED_MTYPES,
@@ -886,6 +887,7 @@ class TransformedTargetForecaster(_Pipeline):
         "capability:multivariate": True,
         # estimator type
         # --------------
+        "category": ["composition"],
         "y_inner_mtype": SUPPORTED_MTYPES,
         "X_inner_mtype": SUPPORTED_MTYPES,
         "capability:exogenous": True,
@@ -1540,6 +1542,7 @@ class ForecastX(BaseForecaster):
         "authors": ["fkiraly", "benheid", "yarnabrina"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "X_inner_mtype": SUPPORTED_MTYPES,
         "y_inner_mtype": SUPPORTED_MTYPES,
         "capability:multivariate": True,
@@ -2092,6 +2095,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": "aiwalter",
         "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,

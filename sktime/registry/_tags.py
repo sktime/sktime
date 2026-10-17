@@ -712,6 +712,71 @@ class tests__python_dependencies(_BaseTag):
 # most tags in this group apply to estimators
 
 
+class category(_BaseTag):
+    """Algorithm category of an estimator, by fitting principle.
+
+    - String name: ``"category"``
+    - Public information tag
+    - Applies to: estimators.
+    - Values: list of strings, each from the list below
+    - Example: ``["statistical"]``
+    - Example 2: ``["deep_learning", "foundation_model"]``
+    - Default: ``["statistical"]`` on forecasters.
+
+    ``category`` records how an estimator produces its result.
+    This is the fitting principle, not the scientific type
+    such as ``"forecaster"`` or ``"classifier"``.
+
+    The value is a list, so an estimator can carry more than one entry.
+
+    Valid values are:
+
+    * ``"statistical"``: classical statistical method. For forecasters this
+      includes naive baselines, exponential smoothing, ARIMA-type models,
+      structural models, intermittent-demand methods, and parametric curves.
+    * ``"naive"``: naive baseline, such as last value, mean, or a prescribed
+      playback. Naive models are also tagged ``"statistical"``.
+    * ``"machine_learning"``: machine learning method that is not a neural
+      network, such as a tree ensemble or a support vector machine.
+    * ``"deep_learning"``: neural network trained for the task.
+    * ``"foundation_model"``: deep learning model pretrained on a large
+      corpus. Also tagged ``"deep_learning"``.
+    * ``"reduction"``: reduction to another learning task. The inner
+      estimator determines the fitting principle of a fitted instance.
+    * ``"composition"``: pipeline, ensemble, wrapper, or other compositor.
+      The wrapped estimator carries its own ``category``.
+    * ``"adapter"``: adapter to an API from another library, not a specific estimator.
+      The wrapped model determines the fitting principle.
+    * ``"tuning"``: hyperparameter search over an estimator. Also tagged
+      ``"composition"``, but not all compositions are tuning.
+      The tuned estimator carries its own ``category``.
+    * ``"agentic"``: a language model constructs or revises an estimator
+      pipeline. The generated estimator carries its own ``category``.
+    """
+
+    _tags = {
+        "tag_name": "category",
+        "parent_type": "estimator",
+        "tag_type": (
+            "list",
+            [
+                "statistical",
+                "naive",
+                "machine_learning",
+                "deep_learning",
+                "foundation_model",
+                "reduction",
+                "composition",
+                "adapter",
+                "tuning",
+                "agentic",
+            ],
+        ),
+        "short_descr": "algorithm category of the estimator, by fitting principle",
+        "user_facing": True,
+    }
+
+
 class capability__missing_values(_BaseTag):
     """Capability: the estimator can handle missing data, e.g,, NaNs.
 
@@ -1200,7 +1265,7 @@ class capability__pred_int__insample(_BaseTag):
 
 
 class capability__pretrain(_BaseTag):
-    """Capability: the forecaster can use pretraining for global learning.
+    """Capability: the forecaster or detector can use pretraining for global learning.
 
     - String name: ``"capability:pretrain"``
     - Public capability tag
@@ -1222,13 +1287,17 @@ class capability__pretrain(_BaseTag):
     and subsequent calls to ``fit`` will preserve the pretrained weights
     (enabling fine-tuning) rather than resetting the estimator.
 
-    If the tag is ``False``, the forecaster does not support pretraining,
-    and calling ``pretrain`` will have no effect.
+    For detectors, the workflow is ``detector.pretrain(X_panel)``,
+    then ``detector.fit(X_series)``, then ``detector.predict(X_series)``.
+
+    If the tag is ``False``, the estimator does not support pretraining.
+    Calling ``pretrain`` does not learn from the data,
+    it only sets the state to ``"pretrained"``.
     """
 
     _tags = {
         "tag_name": "capability:pretrain",
-        "parent_type": "forecaster",
+        "parent_type": ["forecaster", "detector"],
         "tag_type": "bool",
         "short_descr": "can use pretrain for global learning",
         "user_facing": True,
@@ -4136,16 +4205,6 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "max iters for bisection method in ppf",
-    ),
-    # ---------------------------
-    # to be deprecated or removed
-    # ---------------------------
-    # the following tags are to be deprecated or removed
-    (
-        "capability:global_forecasting",
-        ["forecaster"],
-        "bool",
-        "can the estimator make global forecasting?",
     ),
 ]
 

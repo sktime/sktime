@@ -199,6 +199,7 @@ class TimeMoEForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers<=4.40.1", "accelerate<=0.28.0"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
@@ -211,7 +212,6 @@ class TimeMoEForecaster(BaseForecaster):
         "capability:multivariate": False,
         "capability:insample": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         # testing configuration
         # ---------------------
         "tests:vm": True,

@@ -96,6 +96,7 @@ class MOIRAIForecaster(BaseForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
@@ -111,7 +112,6 @@ class MOIRAIForecaster(BaseForecaster):
         ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
         "capability:pretrain": False,
         "capability:update": True,
@@ -162,7 +162,6 @@ class MOIRAIForecaster(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.DataFrame",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 

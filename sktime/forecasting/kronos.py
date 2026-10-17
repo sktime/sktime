@@ -141,6 +141,7 @@ class KronosForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,
@@ -158,6 +159,7 @@ class KronosForecaster(BaseForecaster):
         ],
         "tests:vm": True,
         "tests:libs": ["sktime.libs.kronos"],
+        "tests:specific": ["sktime.forecasting.tests.test_kronos"],
     }
 
     _kronos_columns = ["open", "high", "low", "close", "volume", "amount"]
