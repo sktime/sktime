@@ -82,12 +82,32 @@ def test_get_X_numpy_datetime_resolution(unit):
 
 
 def get_expected_polynomial_coefs(y, degree, with_intercept=True):
-    """Compute expected coefficients from polynomial regression."""
-    t_ix = _get_X_numpy_int_from_pandas(y.index).reshape(-1)
-    poly_matrix = np.vander(t_ix, degree + 1)
-    if not with_intercept:
-        poly_matrix = poly_matrix[:, :-1]
-    return np.linalg.lstsq(poly_matrix, y.to_numpy(), rcond=None)[0]
+    """Compute expected coefficients from polynomial regression.
+
+    Coefficients are in units of the time index, in decreasing order of powers,
+    i.e., the same order as ``np.polyfit``.
+
+    The least squares problem is solved on a scaled time axis, to avoid the
+    ill-conditioning of the Vandermonde matrix for large time stamps,
+    and the coefficients are converted back to the original units afterwards.
+    """
+    t_ix = _get_X_numpy_int_from_pandas(y.index).reshape(-1).astype("float64")
+    if with_intercept:
+        # fit in the domain [-1, 1], then convert back to original time units
+        poly = np.polynomial.Polynomial.fit(t_ix, y.to_numpy(), degree)
+        return poly.convert().coef[::-1]
+
+    # without intercept, the polynomial must vanish at t=0, so we only scale.
+    # The least squares solution is computed by sklearn, so that the
+    # treatment of nearly collinear features (which can occur for short series
+    # far away from t=0) is consistent with the forecaster
+    from sklearn.linear_model import LinearRegression
+
+    scale = np.max(np.abs(t_ix))
+    powers = np.arange(1, degree + 1)
+    poly_matrix = (t_ix.reshape(-1, 1) / scale) ** powers
+    coefs = LinearRegression(fit_intercept=False).fit(poly_matrix, y.to_numpy()).coef_
+    return (coefs / scale**powers)[::-1]
 
 
 @pytest.mark.skipif(
@@ -192,3 +212,110 @@ def test_predict_var():
     fh = ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
     a = forecaster.predict_var(fh=fh)
     np.testing.assert_allclose(a.iloc[0, 0], 1.0, rtol=0.05)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("freq", ["D", "h"])
+def test_polynomial_trend_large_time_stamps(freq):
+    """Test numerical stability for large time stamps and higher degree, see #8686.
+
+    Time stamps in days since 1970 are large numbers, so that the polynomial
+    features of degree 2 or higher are severely ill-conditioned when the
+    regression is carried out on the raw time stamps. In that case, degrees 2, 3
+    and 4 used to yield the same, wrong, fit.
+    """
+    index = pd.date_range("2019-01-01", "2024-12-31", freq=freq)
+    n = len(index)
+    t = np.linspace(-1, 1, n)
+    trend = 1000 + 500 * t + 200 * t**2 - 300 * t**3
+    rng = np.random.default_rng(42)
+    y = pd.Series(trend + rng.normal(0, 20, n), index=index)
+    fh = ForecastingHorizon(index, is_relative=False)
+    X_orig = _get_X_numpy_int_from_pandas(index)
+
+    y_pred = {}
+    for degree in [2, 3, 4]:
+        forecaster = PolynomialTrendForecaster(degree=degree)
+        forecaster.fit(y)
+        y_pred[degree] = forecaster.predict(fh).to_numpy()
+
+        # coefficients are in units of the original time stamps, see docstring,
+        # and must agree with a numerically stable reference fit
+        actual = forecaster.regressor_.steps[-1][1].coef_[::-1]
+        expected = get_expected_polynomial_coefs(y, degree, with_intercept=True)
+        np.testing.assert_allclose(actual, expected, rtol=1e-5, atol=1e-12)
+
+        # the fitted pipeline, applied to original time stamps, agrees with predict
+        np.testing.assert_allclose(
+            forecaster.regressor_.predict(X_orig), y_pred[degree], rtol=1e-8
+        )
+
+    # the fitted cubic trend recovers the true cubic trend up to noise
+    rmse = np.sqrt(np.mean((y_pred[3] - trend) ** 2))
+    assert rmse < 5
+
+    # different degrees yield different fits
+    assert not np.allclose(y_pred[2], y_pred[3])
+    assert not np.allclose(y_pred[3], y_pred[4], rtol=1e-6)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_polynomial_trend_large_time_stamps_no_intercept():
+    """Test fitting with large time stamps and ``with_intercept=False``, see #8686.
+
+    Without intercept, the polynomial must vanish at the origin of the time axis,
+    so time is scaled but not shifted internally. The coefficients must still be
+    in original time units, and the fitted pipeline must agree with ``predict``.
+    """
+    index = pd.date_range("2019-01-01", "2024-12-31", freq="D")
+    n = len(index)
+    t = np.linspace(-1, 1, n)
+    rng = np.random.default_rng(42)
+    y = pd.Series(1000 + 500 * t + 200 * t**2 + rng.normal(0, 20, n), index=index)
+    fh = ForecastingHorizon(index, is_relative=False)
+    X_orig = _get_X_numpy_int_from_pandas(index)
+
+    y_pred = {}
+    for degree in [1, 2]:
+        forecaster = PolynomialTrendForecaster(degree=degree, with_intercept=False)
+        forecaster.fit(y)
+        y_pred[degree] = forecaster.predict(fh).to_numpy()
+
+        linreg = forecaster.regressor_.steps[-1][1]
+        assert linreg.intercept_ == 0
+        assert linreg.coef_.shape == (degree,)
+        np.testing.assert_allclose(
+            forecaster.regressor_.predict(X_orig), y_pred[degree], rtol=1e-8
+        )
+
+    # the quadratic fit, in original units, is close to the stable reference fit
+    expected = get_expected_polynomial_coefs(y, 2, with_intercept=False)[::-1]
+    expected_pred = (X_orig ** np.arange(1, 3)) @ expected
+    np.testing.assert_allclose(y_pred[2], expected_pred, rtol=1e-3)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_polynomial_trend_predict_interval_large_time_stamps():
+    """Test prediction intervals are stable for large time stamps, see #8686."""
+    index = pd.date_range("2019-01-01", "2024-12-31", freq="D")
+    n = len(index)
+    rng = np.random.default_rng(0)
+    y = pd.Series(rng.normal(0, 1, n), index=index)
+
+    forecaster = PolynomialTrendForecaster(degree=3, prediction_intervals=True)
+    forecaster.fit(y)
+    fh = ForecastingHorizon([1, 2, 3], is_relative=True)
+    pred_var = forecaster.predict_var(fh=fh)
+
+    # residual variance is ~1, and the leverage term is small, so var ~ 1
+    assert np.isfinite(pred_var.to_numpy()).all()
+    np.testing.assert_allclose(pred_var.to_numpy(), 1.0, rtol=0.1)
