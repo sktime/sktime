@@ -138,12 +138,8 @@ class EAgglo(BaseTransformer):
             self._update_distances(i, j, K)
 
         def filter_na(i):
-            return list(
-                filter(
-                    lambda v: v == v,
-                    self.progression[i,],
-                )
-            )
+            row = self.progression[i,]
+            return row[~np.isnan(row)]
 
         # penalize the gof_ statistic
         if self.penalty is not None:
@@ -217,77 +213,75 @@ class EAgglo(BaseTransformer):
         )
 
         unique_labels = np.sort(np.unique(self._member))
-        self.n_cluster = len(unique_labels)
+        n_cluster = len(unique_labels)
+        self.n_cluster = n_cluster
 
         # relabel clusters to be consecutive numbers (when user specified)
-        for i in range(self.n_cluster):
-            self._member[np.where(self._member == unique_labels[i])[0]] = i
+        self._member = np.searchsorted(unique_labels, self._member)
 
         # check if sorted
-        if not all(sorted(self._member) == self._member):
+        if np.any(np.diff(self._member) < 0):
             raise ValueError("'_member' should be sorted")
 
-        self.sizes = np.zeros(2 * self.n_cluster)
-        self.sizes[: self.n_cluster] = [
-            sum(self._member == i) for i in range(self.n_cluster)
-        ]  # calculate initial cluster sizes
-
-        # array of within distances
-        grouped = X.copy().set_index(self._member).groupby(level=0)
-        within = grouped.apply(lambda x: get_distance(x, x, self.alpha))
+        self.sizes = np.zeros(2 * n_cluster)
+        # calculate initial cluster sizes
+        cluster_sizes = np.bincount(self._member, minlength=n_cluster)
+        self.sizes[:n_cluster] = cluster_sizes
 
         # array of between-within distances
-        self.distances = np.empty((2 * self.n_cluster, 2 * self.n_cluster))
-
-        for i, xi in grouped:
-            self.distances[: self.n_cluster, i] = (
-                2 * grouped.apply(lambda xj: get_distance(xi, xj, self.alpha))
-                - within[i]
-                - within
-            )
+        self.distances = np.empty((2 * n_cluster, 2 * n_cluster))
+        _initial_distances(
+            np.asarray(X),
+            cluster_sizes,
+            self.alpha,
+            out=self.distances[:n_cluster, :n_cluster],
+        )
 
         np.fill_diagonal(self.distances, 0)
 
         # set up left and right neighbors
         # special case for clusters 0 and n_cluster-1 to allow for cyclic merging
-        self.left = np.zeros(2 * self.n_cluster - 1, dtype=int)
-        self.left[: self.n_cluster] = [
-            i - 1 if i >= 1 else self.n_cluster - 1 for i in range(self.n_cluster)
-        ]
+        self.left = np.zeros(2 * n_cluster - 1, dtype=int)
+        self.left[:n_cluster] = np.arange(-1, n_cluster - 1)
+        self.left[0] = n_cluster - 1
 
-        self.right = np.zeros(2 * self.n_cluster - 1, dtype=int)
-        self.right[: self.n_cluster] = [
-            i + 1 if i + 1 < self.n_cluster else 0 for i in range(self.n_cluster)
-        ]
+        self.right = np.zeros(2 * n_cluster - 1, dtype=int)
+        self.right[:n_cluster] = np.arange(1, n_cluster + 1)
+        self.right[n_cluster - 1] = 0
 
         # True means that a cluster has not been merged_
-        self.open = np.ones(2 * self.n_cluster - 1, dtype=bool)
+        self.open = np.ones(2 * n_cluster - 1, dtype=bool)
 
         # which clusters were merged_ at each step
-        self.merged_ = np.empty((self.n_cluster - 1, 2))
+        self.merged_ = np.empty((n_cluster - 1, 2))
 
         # set initial gof_ value
+        cluster_idx = np.arange(n_cluster)
         self.gof_ = np.array(
             [
-                sum(
-                    self.distances[i, self.left[i]] + self.distances[i, self.right[i]]
-                    for i in range(self.n_cluster)
+                np.sum(
+                    self.distances[cluster_idx, self.left[:n_cluster]]
+                    + self.distances[cluster_idx, self.right[:n_cluster]]
                 )
             ]
         )
 
         # change point progression
-        self.progression = np.empty((self.n_cluster, self.n_cluster + 1))
-        self.progression[0, :] = [
-            sum(self.sizes[:i]) if i > 0 else 0 for i in range(self.n_cluster + 1)
-        ]  # N + 1 for cyclic mergers
+        self.progression = np.empty((n_cluster, n_cluster + 1))
+        self.progression[0, 0] = 0
+        # N + 1 for cyclic mergers
+        np.cumsum(self.sizes[:n_cluster], out=self.progression[0, 1:])
 
         # array to specify the starting point of a cluster
-        self.lm = np.zeros(2 * self.n_cluster - 1, dtype=int)
-        self.lm[: self.n_cluster] = range(self.n_cluster)
+        self.lm = np.zeros(2 * n_cluster - 1, dtype=int)
+        self.lm[:n_cluster] = cluster_idx
 
-    def _gof_update(self, i: int) -> float:
-        """Compute the updated goodness-of-fit statistic, left cluster given by i."""
+    def _gof_update(self, i):
+        """Compute the updated goodness-of-fit statistic, left cluster given by i.
+
+        ``i`` can be an int, or an np.ndarray of int, in which case the
+        statistics for all clusters in ``i`` are returned, as an np.ndarray.
+        """
         fit = self.gof_[-1]
         j = self.right[i]
 
@@ -343,13 +337,16 @@ class EAgglo(BaseTransformer):
         best_fit = -1e10
         result = (0, 0)
 
-        # iterate through each cluster to see how the gof_ value changes if merged_
-        for i in range(K + 1):
-            if self.open[i]:
-                gof_ = self._gof_update(i)
-                if gof_ > best_fit:
-                    best_fit = gof_
-                    result = (i, self.right[i])
+        # see how the gof_ value changes if merged_, for all clusters at once
+        candidates = np.flatnonzero(self.open[: K + 1])
+        if len(candidates) > 0:
+            gof_ = self._gof_update(candidates)
+            # argmax returns the first maximum, as the loop over clusters did
+            best = np.argmax(gof_)
+            if gof_[best] > best_fit:
+                best_fit = gof_[best]
+                i = candidates[best]
+                result = (i, self.right[i])
 
         self.gof_ = np.append(self.gof_, best_fit)
         return result
@@ -388,18 +385,17 @@ class EAgglo(BaseTransformer):
         self.progression[K - self.n_cluster + 2, self.lm[j]] = np.nan
         self.lm[K + 1] = self.lm[i]
 
-        # update distances
-        for k in range(K + 1):
-            if self.open[k]:
-                n3 = self.sizes[k]
-                n = n1 + n2 + n3
-                val = (
-                    (n - n2) * self.distances[i, k]
-                    + (n - n1) * self.distances[j, k]
-                    - n3 * self.distances[i, j]
-                ) / n
-                self.distances[K + 1, k] = val
-                self.distances[k, K + 1] = val
+        # update distances, for all clusters that have not been merged_ at once
+        k = np.flatnonzero(self.open[: K + 1])
+        n3 = self.sizes[k]
+        n = n1 + n2 + n3
+        val = (
+            (n - n2) * self.distances[i, k]
+            + (n - n1) * self.distances[j, k]
+            - n3 * self.distances[i, j]
+        ) / n
+        self.distances[K + 1, k] = val
+        self.distances[k, K + 1] = val
 
     def _get_penalty_func(self) -> Callable:
         """Define penalty function given (possibly string) input."""
@@ -428,6 +424,91 @@ class EAgglo(BaseTransformer):
 def get_distance(X: pd.DataFrame, Y: pd.DataFrame, alpha: float) -> float:
     """Calculate within/between cluster distance."""
     return np.power(cdist(X, Y, "euclidean"), alpha).mean()
+
+
+def _initial_distances(
+    X: np.ndarray,
+    cluster_sizes: np.ndarray,
+    alpha: float,
+    out: np.ndarray,
+    max_block: int = 2**18,
+):
+    """Calculate the between-within distances of the initial clusters.
+
+    Computes, for all pairs of initial clusters, twice the mean distance between
+    the clusters, minus the mean distance within either cluster, where distances
+    are the alpha-th power of the euclidean distance, see equation (4) in [1]_.
+
+    Parameters
+    ----------
+    X : 2D np.ndarray
+        data, rows are observations. Observations of a cluster are assumed to be
+        contiguous, which holds as cluster membership is required to be sorted.
+    cluster_sizes : 1D np.ndarray of int
+        number of observations in each cluster, in order of appearance in ``X``
+    alpha : float
+        moment of the divergence measure, see ``alpha`` parameter of ``EAgglo``
+    out : 2D np.ndarray of shape (len(cluster_sizes), len(cluster_sizes))
+        array to write the result to, updated by side effect. Entry [i, j] of
+        the result is the between-within distance of clusters i and j.
+    max_block : int, optional (default=2**18)
+        upper bound on the number of pairwise distances computed at once.
+        Distances are computed in blocks of observations, so that the full
+        matrix of pairwise distances between observations is not materialized,
+        which would be quadratic in the number of observations.
+    """
+    n_cluster = len(cluster_sizes)
+
+    # observations where each cluster starts
+    starts = np.zeros(n_cluster, dtype=int)
+    np.cumsum(cluster_sizes[:-1], out=starts[1:])
+
+    # if every observation is its own cluster, the sum of distances between two
+    # clusters is the distance between the observations, and summing the blocks
+    # of the distance matrix that the clusters span is not needed
+    singletons = cluster_sizes.max() == 1
+
+    # number of observations per block, at least one cluster per block
+    block_size = max(1, max_block // max(len(X), 1))
+
+    first = 0
+    while first < n_cluster:
+        # take as many clusters as fit into a block of observations
+        last = first + 1
+        n_obs = cluster_sizes[first]
+        while last < n_cluster and n_obs + cluster_sizes[last] <= block_size:
+            n_obs += cluster_sizes[last]
+            last += 1
+
+        start = starts[first]
+        block = cdist(X[start : start + n_obs], X, "euclidean")
+        if alpha != 1:
+            block = np.power(block, alpha)
+
+        if singletons:
+            out[first:last] = block
+        else:
+            # sum over the observations of each cluster, in both dimensions
+            block = np.add.reduceat(block, starts, axis=1)
+            out[first:last] = np.add.reduceat(block, starts[first:last] - start, axis=0)
+
+        first = last
+
+    if singletons:
+        # the within-cluster distances are zero, as the clusters are singletons
+        out *= 2
+        return
+
+    # mean distance between the observations of each pair of clusters
+    out /= np.outer(cluster_sizes, cluster_sizes)
+
+    # mean distance within each cluster, the diagonal of the above.
+    # copied, since the diagonal is a view, and out is updated in place
+    within = np.diag(out).copy()
+
+    out *= 2
+    out -= within[:, None]
+    out -= within[None, :]
 
 
 def len_penalty(x: pd.DataFrame) -> int:
