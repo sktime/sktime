@@ -145,7 +145,7 @@ class T0Forecaster(BaseForecaster):
         # --------------
         "authors": ["siddharth7113"],
         "maintainers": ["siddharth7113"],
-        "python_dependencies": ["tfc-t0", "torch"],
+        "python_dependencies": ["tfc-t0", "torch", "einops"],
         "python_version": ">=3.11",
         # estimator type / capability tags
         # --------------------------------
