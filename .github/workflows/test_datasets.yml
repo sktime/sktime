@@ -21,6 +21,11 @@ jobs:
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
+          - windows-11-arm
+        exclude:
+          # no python 3.10 builds available for Windows on ARM64
+          - python-version: "3.10"
+            operating-system: windows-11-arm
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: repository checkout step
@@ -74,6 +79,11 @@ jobs:
           - ubuntu-latest
           - ubuntu-22.04-arm
           - windows-latest
+          - windows-11-arm
+        exclude:
+          # no python 3.10 builds available for Windows on ARM64
+          - python-version: "3.10"
+            operating-system: windows-11-arm
     runs-on: ${{ matrix.operating-system }}
     steps:
       - name: repository checkout step
