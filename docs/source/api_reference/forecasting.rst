@@ -174,6 +174,14 @@ Naive forecasters
 
     NaiveForecaster
 
+.. currentmodule:: sktime.forecasting.empirical
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    EmpiricalDistributionForecaster
+
 .. currentmodule:: sktime.forecasting.dummy
 
 .. autosummary::
