@@ -8,7 +8,7 @@ __all__ = ["_PmdArimaAdapter"]
 import pandas as pd
 
 from sktime.datatypes._utilities import get_slice
-from sktime.forecasting.base import BaseForecaster
+from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._base import DEFAULT_ALPHA
 
 
@@ -116,13 +116,7 @@ class _PmdArimaAdapter(BaseForecaster):
             Returns series of predicted values.
         """
         fh_abs = fh.to_absolute(self.cutoff).to_pandas()
-        fh_abs_int = fh.to_absolute_int(fh_abs[0], self.cutoff).to_pandas()
-        end_int = fh_abs_int[-1] + 2
-        # +2 because + 1 for "end" (python index), +1 for starting to count at 1 in fh
-
-        if X is not None:
-            X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
-            X = X.iloc[:end_int]
+        X = self._slice_X(fh, X)
 
         # distinguish between in-sample and out-of-sample prediction
         fh_oos = fh.to_out_of_sample(self.cutoff)
@@ -147,6 +141,33 @@ class _PmdArimaAdapter(BaseForecaster):
         y_pred.name = self._y_name
         y_pred.index = fh_abs
         return y_pred
+
+    def _slice_X(self, fh, X):
+        """Slice X to the rows required by pmdarima for out-of-sample prediction.
+
+        pmdarima ``predict`` requires exactly one row of ``X`` per step from
+        the cutoff up to the last out-of-sample step in ``fh``, i.e., the
+        ``n_periods`` rows directly after the cutoff, even if ``fh`` does not
+        start at 1. ``X`` passed by the user may contain more rows, e.g.,
+        the full test set in ``update_predict`` or ``evaluate``.
+        In-sample predictions use the exogenous data seen in ``fit``/``update``.
+        """
+        if X is None:
+            return None
+        n_periods = max(int(fh.to_relative(self.cutoff)[-1]), 0)
+        X = get_slice(X, start=self.cutoff[0], start_inclusive=False)
+        X = X.iloc[:n_periods]
+
+        expected = ForecastingHorizon(range(1, n_periods + 1)).to_absolute(self.cutoff)
+        expected = expected.to_pandas()
+        if not X.index.equals(expected):
+            missing = expected.difference(X.index)
+            raise ValueError(
+                f"{type(self).__name__} requires one row of `X` for every step "
+                f"from the cutoff up to the end of `fh`, "
+                f"missing indices: {list(missing)}."
+            )
+        return X
 
     def _predict_in_sample(
         self, fh, X=None, return_pred_int=False, alpha=DEFAULT_ALPHA
@@ -311,6 +332,8 @@ class _PmdArimaAdapter(BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
+        X = self._slice_X(fh, X)
+
         # initializing cutoff and fh related info
         cutoff = self.cutoff
         fh_oos = fh.to_out_of_sample(cutoff)
