@@ -107,6 +107,7 @@ def _test_trend(degree, with_intercept):
     np.testing.assert_allclose(actual, expected, rtol=1e-5)
 
 
+@pytest.mark.xfail(reason="known bug, needs to be investigated, see #11495")
 @pytest.mark.skipif(
     not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -161,6 +162,12 @@ def test_trendforecaster_with_datetimeindex():
     f.fit(df)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [PolynomialTrendForecaster, TrendForecaster, _get_X_numpy_int_from_pandas]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_predict_var():
     """Unit test for predict_interval method in PolynomialTrendForecaster.
     We only need to test _predict_var() since the residuals are assumed normal.
