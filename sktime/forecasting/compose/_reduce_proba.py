@@ -240,6 +240,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         "python_dependencies": ["skpro>=2,<3.0.0"],
         # estimator type
         # --------------
+        "category": ["reduction"],
         "requires-fh-in-fit": False,
         "capability:multivariate": True,
         "capability:exogenous": True,
