@@ -170,7 +170,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh=None, X=None):
-        """Make forecasts for the given forecast horizon.
+        """Make Forecasts for the given forecast horizon.
 
         Parameters
         ----------
