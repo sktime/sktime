@@ -110,6 +110,7 @@ class DartsRegressionModel(_DartsRegressionAdapter):
         "maintainers": ["yarnabrina", "fnhirwa"],
         # estimator type
         # --------------
+        "category": ["reduction"],
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:insample": False,
@@ -317,6 +318,7 @@ class DartsXGBModel(_DartsRegressionModelsAdapter):
         "python_dependencies": [["u8darts>=0.29", "darts>=0.29"], "xgboost"],
         # estimator type
         # --------------
+        "category": ["machine_learning"],
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
@@ -550,6 +552,7 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         "maintainers": ["fnhirwa"],
         # estimator type
         # --------------
+        "category": ["machine_learning"],
         "capability:multivariate": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
