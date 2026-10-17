@@ -103,6 +103,7 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         "python_dependencies": None,  # str or list of str, package soft dependencies
         # estimator type
         # --------------
+        "category": ["statistical"],  # see sktime.registry._tags.category
         "object_type": "forecaster",  # type of object
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
