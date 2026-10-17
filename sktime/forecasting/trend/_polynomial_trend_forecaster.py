@@ -7,6 +7,7 @@ __all__ = ["PolynomialTrendForecaster"]
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 from sklearn.pipeline import make_pipeline
@@ -135,6 +136,12 @@ class PolynomialTrendForecaster(BaseForecaster):
         # dummy variable in polynomial features
         if self.regressor is None:
             regressor = LinearRegression(fit_intercept=False)
+            # from scikit-learn 1.9, tol is used as the singular value cutoff of
+            # the dense lstsq solver, default 1e-6. The polynomial features of the
+            # time index are ill-conditioned, so this truncates the fit, see #11495.
+            # Machine epsilon restores the lstsq default used in earlier versions.
+            if _check_soft_dependencies("scikit-learn>=1.9", severity="none"):
+                regressor.set_params(tol=np.finfo(np.float64).eps)
         else:
             regressor = clone(self.regressor)
 
@@ -163,7 +170,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh=None, X=None):
-        """Make forecasts for the given forecast horizon.
+        """Make Forecasts for the given forecast horizon.
 
         Parameters
         ----------
