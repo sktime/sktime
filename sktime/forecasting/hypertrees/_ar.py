@@ -8,6 +8,22 @@ import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 
+_FREQ_ALIAS_MAP = {
+    "M": "ME", "Q": "QE", "A": "YE", "Y": "YE",
+    "BM": "BME", "BQ": "BQE", "H": "h",
+    "T": "min", "S": "s", "L": "ms", "U": "us", "N": "ns",
+}
+
+def _normalize_freq(freq):
+    """Normalize deprecated pandas freq aliases to pandas 3+ compatible strings."""
+    if freq is None:
+        return None
+    parts = freq.split("-", 1)
+    base = parts[0].upper()
+    if base in _FREQ_ALIAS_MAP:
+        parts[0] = _FREQ_ALIAS_MAP[base]
+        return "-".join(parts)
+    return freq
 
 class HyperTreeARForecaster(BaseForecaster):
     """Hypertree-AR forecaster, from the ``hypertrees-forecasting`` package.
@@ -125,7 +141,7 @@ class HyperTreeARForecaster(BaseForecaster):
                 freq = pd.infer_freq(y.index)
             except ValueError:
                 freq = None
-        self._freq = freq or "MS"
+        self._freq = _normalize_freq(freq) or "MS"
         fcst_h = int(np.max(fh.to_relative(self.cutoff)._values))
         self._dates = pd.date_range(
             "2000-01-01", periods=self._train_len + fcst_h, freq=self._freq
