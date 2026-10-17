@@ -314,6 +314,22 @@ if _check_soft_dependencies("polars", severity="none"):
         convert_uvs_to_polars_as_series
     )
 
+    def convert_polars_to_np_as_series(obj, store=None):
+        pd_df = convert_polars_to_pandas(obj)
+        return convert_MvS_to_np_as_Series(pd_df, store=store)
+
+    convert_dict[("pl.DataFrame", "np.ndarray", "Series")] = (
+        convert_polars_to_np_as_series
+    )
+
+    def convert_np_to_polars_as_series(obj, store=None):
+        pd_df = convert_np_to_MvS_as_Series(obj, store=store)
+        return convert_pandas_to_polars(pd_df)
+
+    convert_dict[("np.ndarray", "pl.DataFrame", "Series")] = (
+        convert_np_to_polars_as_series
+    )
+
     def convert_polars_lazy_to_mvs_as_series(obj, store=None):
         return convert_polars_to_pandas(obj)
 
