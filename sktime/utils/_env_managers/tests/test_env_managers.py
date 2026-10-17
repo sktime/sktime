@@ -101,7 +101,7 @@ def test_run_module_builds_command(monkeypatch):
         captured["kwargs"] = kwargs
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     manager = _DummyManager()
     manager.run(
@@ -137,7 +137,7 @@ def test_run_script_builds_command(monkeypatch, tmp_path):
         captured["kwargs"] = kwargs
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     _DummyManager().run(script, args=["--flag"], input="stdin-text")
 
@@ -161,7 +161,7 @@ def test_run_callable_builds_payload(monkeypatch):
         captured["payload"] = cloudpickle.loads(kwargs["input"])
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     def add(x, y, z=0):
         return x + y + z
@@ -305,7 +305,7 @@ def test_run_forwards_python_to_get_python_executable(monkeypatch):
     def fake_run(cmd, **kwargs):
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     manager = _DummyManager()
     manager.run("script.py", requirements=["numpy"], python="3.10")
@@ -330,7 +330,7 @@ def test_attach_returns_function_result(monkeypatch):
             stderr=b"",
         )
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     def mean_absolute_error(y_true, y_pred):
         return abs(y_true - y_pred)
@@ -364,7 +364,7 @@ def test_attach_as_decorator(monkeypatch):
             stderr=b"",
         )
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     manager = _DummyManager()
 
