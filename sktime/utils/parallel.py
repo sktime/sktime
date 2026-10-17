@@ -16,6 +16,8 @@ New parallelization or iteration backends can be added easily as follows:
 
 __author__ = ["fkiraly"]
 
+import warnings
+
 
 def parallelize(fun, iter, meta=None, backend=None, backend_params=None):
     """Parallelize loop over iter via backend.
@@ -111,6 +113,37 @@ def _parallelize_none(fun, iter, meta, backend, backend_params):
 para_dict["none"] = _parallelize_none
 
 
+def _run_and_capture_warnings(fun, x, meta):
+    """Run ``fun(x, meta=meta)``, capturing any warnings it raises.
+
+    Used for process-based joblib backends (``"loky"``, ``"multiprocessing"``,
+    and custom joblib backends dispatched via ``backend="joblib"``, e.g.
+    ``"spark"``) and by ``_parallelize_ray``: only the return value of a job
+    crosses the process boundary back to the caller, so anything a worker
+    does with the ``warnings`` module happens in that worker's own process
+    and does not otherwise propagate. As a consequence, the caller only
+    learns about a job's warnings once that job's result is back, so the
+    re-emitting caller (below, and in ``_parallelize_ray``) surfaces them in
+    a batch once all jobs are done, rather than as each one raises.
+
+    ``"threading"`` and sequential execution share the caller's process, so
+    warnings raised there are visible without this wrapper; see
+    ``_parallelize_joblib``, which skips this wrapper for ``"threading"`` -
+    ``warnings.catch_warnings`` mutates module-global filter state and is
+    not safe to enter/exit concurrently from multiple threads.
+
+    Returns
+    -------
+    result : the return value of ``fun(x, meta=meta)``
+    record : list of ``warnings.WarningMessage``, the warnings raised while
+        ``fun`` was running, to be re-emitted by the caller.
+    """
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        result = fun(x, meta=meta)
+    return result, record
+
+
 def _parallelize_joblib(fun, iter, meta, backend, backend_params):
     """Parallelize loop via joblib Parallel."""
     from joblib import Parallel, delayed
@@ -143,7 +176,25 @@ def _parallelize_joblib(fun, iter, meta, backend, backend_params):
     if "n_jobs" not in par_params:
         par_params["n_jobs"] = -1
 
-    ret = Parallel(**par_params)(delayed(fun)(x, meta=meta) for x in iter)
+    # "threading" shares the caller's process, so fun's own warnings.warn
+    # calls already reach the caller - wrapping here would only add
+    # unnecessary overhead and mutate warnings' global filter state
+    # concurrently from multiple threads, see _run_and_capture_warnings.
+    if backend == "threading":
+        return Parallel(**par_params)(delayed(fun)(x, meta=meta) for x in iter)
+
+    raw = Parallel(**par_params)(
+        delayed(_run_and_capture_warnings)(fun, x, meta) for x in iter
+    )
+
+    # re-emit warnings captured by _run_and_capture_warnings; warn_explicit
+    # (rather than warn) preserves the original message, category and
+    # source location, so the caller's own filters apply normally.
+    ret = []
+    for result, record in raw:
+        for w in record:
+            warnings.warn_explicit(w.message, w.category, w.filename, w.lineno)
+        ret.append(result)
     return ret
 
 
@@ -185,11 +236,14 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     def _ray_execute_function(
         fun, params: dict, meta: dict, mute_warnings: bool = False
     ):
+        assert ray.is_initialized()
         if mute_warnings:
             warnings.filterwarnings("ignore")  # silence sktime warnings
-        assert ray.is_initialized()
-        result = fun(params, meta)
-        return result
+            return fun(params, meta), []
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            result = fun(params, meta)
+        return result, record
 
     if not ray.is_initialized():
         logger.info("Starting Ray Parallel")
@@ -213,7 +267,15 @@ def _parallelize_ray(fun, iter, meta, backend, backend_params):
     if shutdown_ray:
         ray.shutdown()
 
-    res = [res_dict[ref] for ref in refs]
+    # each ray task returns (result, record); re-emit the captured warnings
+    # here in the calling process, then return only the results, see
+    # _parallelize_joblib for why this is needed for a remote worker
+    res = []
+    for ref in refs:
+        result, record = res_dict[ref]
+        for w in record:
+            warnings.warn_explicit(w.message, w.category, w.filename, w.lineno)
+        res.append(result)
     return res
 
 

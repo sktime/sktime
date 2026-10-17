@@ -24,7 +24,7 @@ from sklearn.model_selection import KFold
 from sktime.datasets import load_airline, load_longley
 
 # from sktime.exceptions import FitFailedWarning
-# commented out until bugs are resolved, see test_evaluate_error_score
+# commented out until #5959 is resolved, see test_evaluate_error_score
 from sktime.forecasting.arima import ARIMA, AutoARIMA
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.compose._reduce import DirectReductionForecaster
@@ -499,10 +499,8 @@ def test_evaluate_error_score(
     args.update(backend)
 
     if error_score in [np.nan, 1000]:
-        # known bug - loky backend does not pass on warnings, #5307
-        # known bug - warnings are sporadically not raised otherwise, #5959
-
-        # commented out until bugs are resolved
+        # known bug - warnings are sporadically not raised, #5959,
+        # unrelated to which backend is used - re-enable once resolved
 
         # if backend["backend"] not in ["loky", "multiprocessing"]:
         #     with pytest.warns(FitFailedWarning):
