@@ -154,12 +154,8 @@ def run_test_for_class(cls, return_reason=False):
     # if object is passed, obtain the class - objects are not hashable
     if hasattr(cls, "get_class_tag") and not isclass(cls):
         cls = cls.__class__
-    # check whether estimator is on the exclude override list
-    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
-        return _return(False, "False_exclude_list")
-
-    # now we know that cls is a class or function,
-    # and not on the exclude list
+    # now we know that cls is a class or function;
+    # the exclude list (tests:skip_all) is checked in _run_test_for_class
     run, reason = _run_test_for_class(
         cls,
         only_changed_modules=ONLY_CHANGED_MODULES,
@@ -210,6 +206,8 @@ def _run_test_for_class(
     bool : True if class should be tested, False otherwise
     reason : str, reason to run or skip the test, one of:
 
+        * "False_exclude_list" - skip reason, class is on the exclude list,
+          i.e., has the ``tests:skip_all`` tag set to ``True``
         * "False_required_deps_missing" - skip reason, required dependencies are missing
         * "False_requires_vm" - skip reason, class requires its own VM.
         * "False_no_change" - skip reason, no change in class or dependencies.
@@ -224,6 +222,15 @@ def _run_test_for_class(
 
         If multiple reasons are present, the first one in the above list is returned.
     """
+    # Condition 0:
+    # if the class is on the exclude override list, do not run the test.
+    # This is the single place the class selection logic checks the tag, so that
+    # every way of selecting classes to test inherits it: the public
+    # run_test_for_class, and the VM job lists built by _get_all_changed_classes
+    # and _get_all_vm_classes.
+    if hasattr(cls, "get_class_tag") and cls.get_class_tag("tests:skip_all", False):
+        return False, "False_exclude_list"
+
     from skbase.utils.dependencies import _check_estimator_deps
 
     from sktime.utils.git_diff import (
@@ -493,7 +500,8 @@ def _get_all_vm_classes():
     """Get all sktime object classes that require their own VM.
 
     This returns all classes with the ``"tests:vm"=True`` tag,
-    regardless of whether they have changed or not.
+    regardless of whether they have changed or not,
+    except classes with the ``"tests:skip_all"=True`` tag, which are never tested.
     This is useful for comprehensive testing in CRON jobs like test-all.
 
     Returns
@@ -502,7 +510,14 @@ def _get_all_vm_classes():
     """
     from sktime.registry import all_estimators
 
-    # Get all estimators with tests:vm = True tag
+    def _vm_class(cls):
+        # regardless of changes, same selection logic as the changed-class list
+        run, _ = _run_test_for_class(
+            cls, ignore_deps=True, only_changed_modules=False, only_vm_required=True
+        )
+        return run
+
+    # Get all estimators with tests:vm = True tag, except those on the exclude list
     vm_estimators = all_estimators(filter_tags={"tests:vm": True})
-    names = [name for name, est in vm_estimators]
+    names = [name for name, est in vm_estimators if _vm_class(est)]
     return names
