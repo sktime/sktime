@@ -1271,6 +1271,59 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             f"Estimator: {estimator} has side effects on arguments of {method_nsc}"
         )
 
+    def test_methods_do_not_change_random_seed(
+        self, object_instance, scenario, method_nsc
+    ):
+        """Check that calling methods does not mutate the global numpy random seed.
+
+        Estimators should not set or mutate global numpy random seeds,
+        as that causes side effects on other estimators and workflows relying
+        on global random state (see sktime issues #11306 and #11388).
+        """
+        estimator = object_instance
+
+        # skip test for get_fitted_params, as this does not have side effects
+        if method_nsc == "get_fitted_params":
+            return None
+
+        set_random_state(estimator)
+
+        def _states_equal(s1, s2):
+            return all(
+                np.array_equal(a, b) if isinstance(a, np.ndarray) else a == b
+                for a, b in zip(s1, s2)
+            )
+
+        # Check fit does not mutate global numpy RNG state
+        state_before = np.random.get_state()
+        scenario.run(estimator, method_sequence=["fit"])
+        state_after = np.random.get_state()
+
+        assert _states_equal(state_before, state_after), (
+            f"Estimator: {estimator} mutated the process-global numpy RNG state "
+            "during fit. Estimators must not call np.random.seed or mutate "
+            "global RNG state."
+        )
+
+        # skip test if vectorization would be necessary and method predict_proba
+        if method_nsc in ["predict_proba", "predict_var"]:
+            with ValidProbaErrors() as handler:
+                state_before = np.random.get_state()
+                scenario.run(estimator, method_sequence=[method_nsc])
+                state_after = np.random.get_state()
+            if handler.skipped:
+                return None
+        else:
+            state_before = np.random.get_state()
+            scenario.run(estimator, method_sequence=[method_nsc])
+            state_after = np.random.get_state()
+
+        assert _states_equal(state_before, state_after), (
+            f"Estimator: {estimator} mutated the process-global numpy RNG state "
+            f"during {method_nsc}. Estimators must not call np.random.seed or "
+            "mutate global RNG state."
+        )
+
     def test_persistence_via_pickle(
         self, object_instance, scenario, method_nsc_arraylike
     ):
