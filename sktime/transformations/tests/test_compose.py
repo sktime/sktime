@@ -4,6 +4,7 @@
 __author__ = ["fkiraly"]
 __all__ = []
 
+import numpy as np
 import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_estimator_deps
@@ -11,17 +12,20 @@ from sklearn.preprocessing import StandardScaler
 
 from sktime.datasets import load_airline, load_unit_test
 from sktime.datatypes import get_examples
-from sktime.tests.test_switch import run_test_module_changed
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 from sktime.transformations.bootstrap import STLBootstrapTransformer
 from sktime.transformations.boxcox import LogTransformer
 from sktime.transformations.compose import (
+    CombineTransformers,
     FeatureUnion,
+    Id,
     InvertTransform,
     IxToX,
     OptionalPassthrough,
     TransformerPipeline,
 )
 from sktime.transformations.exponent import ExponentTransformer
+from sktime.transformations.func_transform import FunctionTransformer
 from sktime.transformations.impute import Imputer
 from sktime.transformations.padder import PaddingTransformer
 from sktime.transformations.subset import ColumnSelect
@@ -438,3 +442,38 @@ def test_ixtox():
 
     ixtox = IxToX(level=-1)
     assert ixtox.fit_transform(X).columns.tolist() == ["level_2"]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(CombineTransformers),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "op, expected",
+    [
+        (np.add, [3.0, 14.0, 39.0]),
+        (np.subtract, [-1.0, -6.0, -21.0]),
+    ],
+)
+def test_combine_transformers_binary_ufunc_three_outputs(op, expected):
+    """Test that CombineTransformers folds a binary ufunc over three outputs.
+
+    Failure case of #11517: the third output was passed as the ufunc's ``out``,
+    so the result ignored it and the input ``X`` was overwritten via ``Id``.
+    """
+    X = pd.DataFrame({"a": [1.0, 2.0, 3.0]})
+    X_orig = X.copy()
+
+    combined = CombineTransformers(
+        [
+            ("sq", FunctionTransformer(np.square)),
+            ("cube", ExponentTransformer(power=3)),
+            ("id", Id()),
+        ],
+        op=op,
+    )
+    Xt = combined.fit_transform(X)
+
+    # x**2 + x**3 + x and (x**2 - x**3) - x, for x = 1, 2, 3
+    np.testing.assert_allclose(Xt["a"].to_numpy(), expected)
+    pd.testing.assert_frame_equal(X, X_orig)
