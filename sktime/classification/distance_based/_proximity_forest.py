@@ -20,13 +20,9 @@ from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 from sktime.datatypes import convert
-from sktime.dists_kernels._numba_distances import (
-    dtw_distance,
-    erp_distance,
-    lcss_distance,
-    msm_distance,
-    wdtw_distance,
-)
+from sktime.dists_kernels._numba_distances import (dtw_distance, erp_distance,
+                                                   lcss_distance, msm_distance,
+                                                   wdtw_distance)
 from sktime.transformations.base import BaseTransformer
 from sktime.transformations.summarize import DerivativeSlopeTransformer
 
@@ -308,9 +304,17 @@ def msm_distance_measure_getter(X):
     -------
     ret: distance measure and parameter range dictionary
     """
-    n_dimensions = 1  # todo use other dimensions
+    n_dimensions = X.shape[1]
+
+    def msm_distance_at_dim(instance_a, instance_b, dim_to_use, **kwargs):
+        return msm_distance(
+            np.asarray(instance_a.iloc[dim_to_use], dtype=np.float64),
+            np.asarray(instance_b.iloc[dim_to_use], dtype=np.float64),
+            **kwargs,
+        )
+
     return {
-        "distance_measure": [numba_wrapper(msm_distance)],
+        "distance_measure": [msm_distance_at_dim],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "c": [
             0.01,
@@ -429,9 +433,17 @@ def erp_distance_measure_getter(X):
     instance_length = _max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
-    n_dimensions = 1  # todo use other dimensions
+    n_dimensions = X.shape[1]
+
+    def erp_distance_at_dim(instance_a, instance_b, dim_to_use, **kwargs):
+        return erp_distance(
+            np.asarray(instance_a.iloc[dim_to_use], dtype=np.float64),
+            np.asarray(instance_b.iloc[dim_to_use], dtype=np.float64),
+            **kwargs,
+        )
+
     return {
-        "distance_measure": [numba_wrapper(erp_distance)],
+        "distance_measure": [erp_distance_at_dim],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "g": stats.uniform(0.2 * stdp, 0.8 * stdp - 0.2 * stdp),
         "band_size": stats.randint(low=0, high=max_raw_warping_window + 1),
@@ -454,9 +466,17 @@ def lcss_distance_measure_getter(X):
     instance_length = _max_instance_length(X)  # todo should this use the max instance
     # length for unequal length dataset instances?
     max_raw_warping_window = np.floor((instance_length + 1) / 4)
-    n_dimensions = 1  # todo use other dimensions
+    n_dimensions = X.shape[1]
+
+    def lcss_distance_at_dim(instance_a, instance_b, dim_to_use, **kwargs):
+        return lcss_distance(
+            np.asarray(instance_a.iloc[dim_to_use], dtype=np.float64),
+            np.asarray(instance_b.iloc[dim_to_use], dtype=np.float64),
+            **kwargs,
+        )
+
     return {
-        "distance_measure": [numba_wrapper(lcss_distance)],
+        "distance_measure": [lcss_distance_at_dim],
         "dim_to_use": stats.randint(low=0, high=n_dimensions),
         "epsilon": stats.uniform(0.2 * stdp, stdp - 0.2 * stdp),
         # scipy stats randint is exclusive on the max value, hence + 1
