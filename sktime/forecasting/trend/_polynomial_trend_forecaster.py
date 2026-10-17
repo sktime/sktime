@@ -135,6 +135,12 @@ class PolynomialTrendForecaster(BaseForecaster):
         # dummy variable in polynomial features
         if self.regressor is None:
             regressor = LinearRegression(fit_intercept=False)
+            # sklearn 1.9 applies ``tol`` to dense least-squares problems.
+            # Its default can treat absolute time polynomial features as
+            # rank-deficient, so retain the numerical precision used by
+            # earlier sklearn versions. Older versions do not expose ``tol``.
+            if "tol" in regressor.get_params(deep=False):
+                regressor.set_params(tol=np.finfo(float).eps)
         else:
             regressor = clone(self.regressor)
 
