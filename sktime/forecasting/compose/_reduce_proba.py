@@ -326,6 +326,8 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         """
         from sktime.transformations.series.lag import Lag
 
+        self._y_fit_index = y.index
+
         impute_method = self.impute_method
         lags = self._lags
 
@@ -422,7 +424,7 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         else:
             X_pool = X
 
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=self._y_fit_index)
         y_cols = self._y.columns
 
         # Fallback for edge case: no valid training data
