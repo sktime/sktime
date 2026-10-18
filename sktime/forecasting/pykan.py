@@ -58,6 +58,7 @@ class PyKANForecaster(BaseForecaster):
         "python_dependencies": ["pykan", "torch", "matplotlib", "tqdm"],
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
@@ -129,6 +130,9 @@ class PyKANForecaster(BaseForecaster):
         """
         import torch
         from kan import KAN
+
+        self._cur_y = y
+        self._cur_X = X
 
         PyTorchTrainDataset = _get_dataset_class()
 
@@ -230,16 +234,16 @@ class PyKANForecaster(BaseForecaster):
         if X is not None:
             input_ = torch.cat(
                 [
-                    torch.from_numpy(self._y.values[-self._input_layer_size :]).reshape(
-                        (1, -1)
-                    ),
+                    torch.from_numpy(
+                        self._cur_y.values[-self._input_layer_size :]
+                    ).reshape((1, -1)),
                     torch.from_numpy(X.values).reshape((1, -1)),
                 ],
                 dim=-1,
             ).type(torch.float32)
         else:
             input_ = (
-                torch.from_numpy(self._y.values[-self._input_layer_size :])
+                torch.from_numpy(self._cur_y.values[-self._input_layer_size :])
                 .reshape((1, -1))
                 .type(torch.float32)
             )
@@ -247,7 +251,9 @@ class PyKANForecaster(BaseForecaster):
         prediction = model(input_).detach().numpy().reshape((-1,))
         index = list(fh.to_absolute(self.cutoff))
         return pd.Series(
-            prediction[fh.to_relative(self._cutoff) - 1], index=index, name=self._y.name
+            prediction[fh.to_relative(self._cutoff) - 1],
+            index=index,
+            name=self._cur_y.name,
         )
 
     @classmethod

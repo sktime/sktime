@@ -90,6 +90,7 @@ class PolynomialTrendForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["statistical"],
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
         "capability:exogenous": False,

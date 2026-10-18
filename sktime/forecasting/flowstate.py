@@ -115,6 +115,7 @@ class FlowStateForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": [
             "largraf",
             "bohnstingl",
@@ -138,9 +139,9 @@ class FlowStateForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "requires-fh-in-fit": False,
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_flowstate"],
     }
 
     def __init__(

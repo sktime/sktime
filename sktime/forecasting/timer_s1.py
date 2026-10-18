@@ -173,6 +173,7 @@ class TimerS1Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:insample": False,
@@ -181,7 +182,10 @@ class TimerS1Forecaster(BaseForecaster):
         # WenWeiTHU for bytedance-research/Timer-S1
         "maintainers": ["geetu040"],
         "python_dependencies": ["transformers[torch]>4.57.0,<5.0.0"],
+        # CI and test flags
+        # -----------------
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.timer_s1"],
     }
 
     def __init__(

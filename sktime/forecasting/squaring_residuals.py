@@ -7,6 +7,7 @@ __author__ = ["kcc-lion"]
 import pandas as pd
 
 from sktime.datatypes._convert import convert_to
+from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import ExpandingWindowSplitter
@@ -95,6 +96,7 @@ class SquaringResiduals(BaseForecaster):
         "maintainers": ["kcc-lion"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": False,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -106,6 +108,7 @@ class SquaringResiduals(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         # testing and CI flags
         # --------------------
         # issue when prediction intervals, see #3479 and #4504
@@ -193,13 +196,19 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         fh_rel = fh.to_relative(self.cutoff)
         self._res_forecasters = {}
-        self.forecaster_ = self._forecaster.clone()
+        # Rolling residual construction needs refit on expanding windows.
+        # BaseForecaster no longer pools/refits. stream wrapper owns that.
+        from sktime.forecasting.stream import UpdateRefitsEvery
+
+        self.forecaster_ = UpdateRefitsEvery(self._forecaster.clone(), refit_interval=0)
 
         y = convert_to(y, "pd.Series")
         cv = ExpandingWindowSplitter(initial_window=self.initial_window, fh=fh_rel)
-        self.forecaster_.fit(y=y.iloc[: self.initial_window], X=X)
+        self.forecaster_.fit(y=y.iloc[: self.initial_window], X=X, fh=fh_rel)
         y_pred = self.forecaster_.update_predict(y=y, cv=cv, X=X, update_params=True)
 
         for step_ahead in fh_rel:
@@ -270,7 +279,7 @@ class SquaringResiduals(BaseForecaster):
         """
         fh_abs = fh.to_absolute(self.cutoff)
         y_pred = self.forecaster_.predict(X=X, fh=fh_abs)
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -310,9 +319,19 @@ class SquaringResiduals(BaseForecaster):
         -------
         self : reference to self
         """
-        self.forecaster_.update(X=X, y=y, update_params=update_params)
+        # Residual forecasters are fitted on transformed residuals, not on y.
+        # Updating them with raw y corrupts their remembered history (NaNs from
+        # column/name mismatch) and is semantically wrong.
+        self._cur_y = update_data(self._cur_y, y)
+        self._cur_X = update_data(self._cur_X, X)
+
+        if update_params:
+            # Rebuild point + residual models on pooled history (same as fit).
+            return self._fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
+
+        self.forecaster_.update(X=X, y=y, update_params=False)
         for forecaster in self._res_forecasters.values():
-            forecaster.update(X=X, y=y, update_params=update_params)
+            forecaster._set_cutoff_from_y(y)
         return self
 
     def _predict_quantiles(self, fh, X, alpha):

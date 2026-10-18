@@ -89,6 +89,7 @@ class ReconcilerForecaster(BaseForecaster):
         "maintainers": ["ciaran-g", "felipeangelimvieira"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,  # which y are fine? False/True
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
@@ -109,6 +110,7 @@ class ReconcilerForecaster(BaseForecaster):
         "enforce_index_type": None,  # index type that needs to be enforced in X/y
         "capability:pred_int": False,  # does forecaster implement proba forecasts?
         "capability:unequal_length": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         "fit_is_empty": False,
         # CI and test flags
         # -----------------
