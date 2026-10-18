@@ -8,7 +8,67 @@ from collections import defaultdict
 from skbase.base import BaseObject
 from skbase.base._clone_base import _check_clone, _clone
 
+from sktime.base._base import _safe_clone
+
 _VALID_TARGET_STATES = ("new", "pretrained")
+
+
+def _clone_at(obj, state):
+    """Clone any object, retaining state up to ``state`` where supported.
+
+    For use by composites on their components. Calls ``obj._clone_at(state)``
+    if ``obj`` implements it, otherwise falls back to ``_safe_clone(obj)``,
+    i.e., ``obj.clone()``, or sklearn ``clone`` for non-``sktime`` objects.
+
+    Parameters
+    ----------
+    obj : object to clone, e.g., an estimator held by a composite
+    state : str, "pretrained" or "new"
+        Upper bound on the retained state tier, see ``_StateAtMixin._clone_at``.
+
+    Returns
+    -------
+    clone : new object of same type, without shared references to ``obj``.
+
+    Raises
+    ------
+    ValueError
+        If ``state`` is not one of ``"pretrained"``, ``"new"``.
+    """
+    _StateAtMixin._check_target_state(state)
+    if hasattr(obj, "_clone_at"):
+        return obj._clone_at(state)
+    return _safe_clone(obj)
+
+
+def _set_params_at(obj, state, params):
+    """Set parameters of any object, retaining state up to ``state`` if supported.
+
+    For use by composites on their components. Calls
+    ``obj._set_params_at(state, params)`` if ``obj`` implements it, otherwise
+    falls back to ``obj.set_params(**params)``.
+
+    Parameters
+    ----------
+    obj : object to set parameters of, e.g., an estimator held by a composite
+    state : str, "pretrained" or "new"
+        Upper bound on the retained state tier, see ``_StateAtMixin._reset_at``.
+    params : dict
+        Parameters as in ``set_params``, passed as an explicit dict.
+
+    Returns
+    -------
+    obj : reference to ``obj``, with parameters set.
+
+    Raises
+    ------
+    ValueError
+        If ``state`` is not one of ``"pretrained"``, ``"new"``.
+    """
+    _StateAtMixin._check_target_state(state)
+    if hasattr(obj, "_set_params_at"):
+        return obj._set_params_at(state, params)
+    return obj.set_params(**params)
 
 
 class _StateAtMixin:
