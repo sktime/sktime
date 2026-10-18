@@ -128,6 +128,7 @@ class TiRexForecaster(BaseForecaster):
         "python_dependencies": ["torch", "tirex-ts"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
