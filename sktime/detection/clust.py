@@ -25,6 +25,21 @@ class ClusterSegmenter(BaseDetector):
     ----------
     clusterer : sklearn.cluster
         The instance of clustering algorithm used for segmentation.
+        If None, defaults to ``KMeans(random_state=random_state)``.
+    random_state : int, RandomState instance or None, optional, default=None
+        Random state of the default ``KMeans`` clusterer, used if ``clusterer``
+        is None. Ignored if ``clusterer`` is passed, in this case randomness
+        is controlled by the parameters of ``clusterer``.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.cluster import KMeans
+    >>> from sktime.detection.clust import ClusterSegmenter
+    >>> X = pd.DataFrame({"a": [1, 1, 1, 1, 10, 10, 10, 10]})
+    >>> segmenter = ClusterSegmenter(clusterer=KMeans(n_clusters=2, random_state=42))
+    >>> _ = segmenter.fit(X)
+    >>> y_pred = segmenter.predict(X)
     """
 
     _tags = {
@@ -36,6 +51,8 @@ class ClusterSegmenter(BaseDetector):
         # --------------
         "task": "segmentation",
         "learning_type": "unsupervised",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         # CI and test flags
         # -----------------
         "tests:skip_by_name": [
@@ -48,12 +65,13 @@ class ClusterSegmenter(BaseDetector):
         ],
     }
 
-    def __init__(self, clusterer=None):
+    def __init__(self, clusterer=None, random_state=None):
         # estimators should precede parameters
         #  if estimators have default values, set None and initialize below
         self.clusterer = clusterer
+        self.random_state = random_state
         if self.clusterer is None:
-            self._clusterer = KMeans()
+            self._clusterer = KMeans(random_state=self.random_state)
         else:
             self._clusterer = self.clusterer
         super().__init__()
@@ -131,4 +149,5 @@ class ClusterSegmenter(BaseDetector):
         """
         params1 = {"clusterer": KMeans(n_clusters=2)}
         params2 = {}
-        return [params1, params2]
+        params3 = {"random_state": 42}
+        return [params1, params2, params3]
