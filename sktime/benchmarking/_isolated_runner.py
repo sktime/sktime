@@ -12,7 +12,7 @@ import cloudpickle
 from sktime.base import BaseEstimator
 from sktime.benchmarking._benchmarking_dataclasses import TaskObject
 from sktime.benchmarking._isolated_requirements import collect_pair_requirements
-from sktime.utils.env_managers import BaseEnvironmentManager
+from sktime.utils._env_managers import BaseEnvironmentManager
 
 logger = logging.getLogger(__name__)
 

@@ -850,7 +850,7 @@ class BaseBenchmark:
         """
         if self._env_manager is None:
             import sktime
-            from sktime.utils.env_managers import UvEnvironmentManager
+            from sktime.utils._env_managers import UvEnvironmentManager
 
             self._env_manager = UvEnvironmentManager(
                 envs_dir=self.envs_dir or Path.cwd() / _BENCHMARK_ENVS_DIR,

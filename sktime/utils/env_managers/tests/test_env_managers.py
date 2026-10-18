@@ -9,13 +9,13 @@ import pytest
 
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.dependencies import _check_soft_dependencies
-from sktime.utils.env_managers import (
+from sktime.utils._env_managers import (
     BaseEnvironmentManager,
     UvEnvironmentManager,
     dependency_env_key,
     env_python,
 )
-from sktime.utils.env_managers._base import resolve_run_target
+from sktime.utils._env_managers._base import resolve_run_target
 
 __author__ = ["jgyasu"]
 
@@ -36,7 +36,7 @@ class _DummyManager(BaseEnvironmentManager):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_dependency_env_key_is_order_invariant():
@@ -46,7 +46,7 @@ def test_dependency_env_key_is_order_invariant():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_env_python_platform_path():
@@ -60,7 +60,7 @@ def test_env_python_platform_path():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 @pytest.mark.parametrize(
@@ -78,7 +78,7 @@ def test_resolve_run_target(target, expected):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_resolve_existing_file_as_script(tmp_path):
@@ -89,7 +89,7 @@ def test_resolve_existing_file_as_script(tmp_path):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_run_module_builds_command(monkeypatch):
@@ -101,7 +101,7 @@ def test_run_module_builds_command(monkeypatch):
         captured["kwargs"] = kwargs
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     manager = _DummyManager()
     manager.run(
@@ -123,7 +123,7 @@ def test_run_module_builds_command(monkeypatch):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_run_script_builds_command(monkeypatch, tmp_path):
@@ -137,7 +137,7 @@ def test_run_script_builds_command(monkeypatch, tmp_path):
         captured["kwargs"] = kwargs
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     _DummyManager().run(script, args=["--flag"], input="stdin-text")
 
@@ -146,7 +146,7 @@ def test_run_script_builds_command(monkeypatch, tmp_path):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers")
+    not run_test_module_changed("sktime.utils._env_managers")
     or not _check_soft_dependencies("cloudpickle", severity="none"),
     reason="run test only if env_managers changed and cloudpickle is present",
 )
@@ -161,7 +161,7 @@ def test_run_callable_builds_payload(monkeypatch):
         captured["payload"] = cloudpickle.loads(kwargs["input"])
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     def add(x, y, z=0):
         return x + y + z
@@ -172,7 +172,7 @@ def test_run_callable_builds_payload(monkeypatch):
     assert captured["cmd"] == [
         str(Path(sys.executable)),
         "-m",
-        "sktime.utils.env_managers._func_worker",
+        "sktime.utils._env_managers._func_worker",
     ]
     assert captured["payload"]["args"] == (1, 2)
     assert captured["payload"]["kwargs"] == {"z": 3}
@@ -181,19 +181,19 @@ def test_run_callable_builds_payload(monkeypatch):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_uv_manager_requires_uv_executable(tmp_path, monkeypatch):
     """Missing uv executable raises a clear error."""
-    monkeypatch.setattr("sktime.utils.env_managers._uv.shutil.which", lambda _: None)
+    monkeypatch.setattr("sktime.utils._env_managers._uv.shutil.which", lambda _: None)
     manager = UvEnvironmentManager(envs_dir=tmp_path, uv_executable=None)
     with pytest.raises(RuntimeError, match="uv"):
         manager.get_python_executable(["pandas"])
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_uv_manager_reuses_ready_environment(tmp_path, monkeypatch):
@@ -216,12 +216,12 @@ def test_uv_manager_reuses_ready_environment(tmp_path, monkeypatch):
     def fail_run(*args, **kwargs):
         raise AssertionError("subprocess.run should not be called for a ready env")
 
-    monkeypatch.setattr("sktime.utils.env_managers._uv.subprocess.run", fail_run)
+    monkeypatch.setattr("sktime.utils._env_managers._uv.subprocess.run", fail_run)
     assert manager.get_python_executable(requirements) == python_path
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_uv_manager_create_env_invokes_uv(tmp_path, monkeypatch):
@@ -234,7 +234,7 @@ def test_uv_manager_create_env_invokes_uv(tmp_path, monkeypatch):
             Path(cmd[2]).mkdir(parents=True, exist_ok=True)
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr("sktime.utils.env_managers._uv.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._uv.subprocess.run", fake_run)
 
     manager = UvEnvironmentManager(
         envs_dir=tmp_path,
@@ -256,7 +256,7 @@ def test_uv_manager_create_env_invokes_uv(tmp_path, monkeypatch):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_env_key_differs_by_python_version(tmp_path):
@@ -269,7 +269,7 @@ def test_env_key_differs_by_python_version(tmp_path):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_create_env_uses_per_call_python(tmp_path, monkeypatch):
@@ -282,7 +282,7 @@ def test_create_env_uses_per_call_python(tmp_path, monkeypatch):
             Path(cmd[2]).mkdir(parents=True, exist_ok=True)
         return SimpleNamespace(returncode=0, stdout="", stderr="")
 
-    monkeypatch.setattr("sktime.utils.env_managers._uv.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._uv.subprocess.run", fake_run)
 
     manager = UvEnvironmentManager(
         envs_dir=tmp_path,
@@ -296,7 +296,7 @@ def test_create_env_uses_per_call_python(tmp_path, monkeypatch):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers"),
+    not run_test_module_changed("sktime.utils._env_managers"),
     reason="run test only if env_managers module has changed",
 )
 def test_run_forwards_python_to_get_python_executable(monkeypatch):
@@ -305,7 +305,7 @@ def test_run_forwards_python_to_get_python_executable(monkeypatch):
     def fake_run(cmd, **kwargs):
         return SimpleNamespace(returncode=0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     manager = _DummyManager()
     manager.run("script.py", requirements=["numpy"], python="3.10")
@@ -313,7 +313,7 @@ def test_run_forwards_python_to_get_python_executable(monkeypatch):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers")
+    not run_test_module_changed("sktime.utils._env_managers")
     or not _check_soft_dependencies("cloudpickle", severity="none"),
     reason="run test only if env_managers changed and cloudpickle is present",
 )
@@ -330,7 +330,7 @@ def test_attach_returns_function_result(monkeypatch):
             stderr=b"",
         )
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     def mean_absolute_error(y_true, y_pred):
         return abs(y_true - y_pred)
@@ -347,7 +347,7 @@ def test_attach_returns_function_result(monkeypatch):
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.utils.env_managers")
+    not run_test_module_changed("sktime.utils._env_managers")
     or not _check_soft_dependencies("cloudpickle", severity="none"),
     reason="run test only if env_managers changed and cloudpickle is present",
 )
@@ -364,7 +364,7 @@ def test_attach_as_decorator(monkeypatch):
             stderr=b"",
         )
 
-    monkeypatch.setattr("sktime.utils.env_managers._base.subprocess.run", fake_run)
+    monkeypatch.setattr("sktime.utils._env_managers._base.subprocess.run", fake_run)
 
     manager = _DummyManager()
 

@@ -11,7 +11,7 @@ from sktime.benchmarking._benchmarking_dataclasses import TaskObject
 from sktime.benchmarking._isolated_requirements import collect_pair_requirements
 from sktime.benchmarking.forecasting import ForecastingBenchmark
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.env_managers import BaseEnvironmentManager, UvEnvironmentManager
+from sktime.utils._env_managers import BaseEnvironmentManager, UvEnvironmentManager
 
 __author__ = ["jgyasu"]
 
