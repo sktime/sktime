@@ -14,7 +14,7 @@ _VALID_TARGET_STATES = ("new", "pretrained")
 class _StateAtMixin:
     """State-aware private variants of reset, set_params and clone.
 
-    Mixin for ``BaseForecaster``, later also ``BaseTransformer``. Provides
+    Used via ``_PretrainMixin`` by estimator base classes. Provides
     ``_reset_at(state)``, ``_set_params_at(state, params)`` and
     ``_clone_at(state)``. ``state`` is an upper bound on the retained state
     tier, not a guarantee: estimators without pretrain capability or without
