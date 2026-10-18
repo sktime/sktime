@@ -7,6 +7,7 @@
 
 __all__ = ["T0Forecaster"]
 
+import inspect
 from contextlib import nullcontext
 
 import numpy as np
@@ -456,12 +457,16 @@ class T0Forecaster(BaseForecaster):
         else:
             rng_context = torch.random.fork_rng(devices=[])
 
+        sig = inspect.signature(self.model_.predict)
+        if "quantile_levels" in sig.parameters:
+            predict_kwargs["quantile_levels"] = quantiles
+        else:
+            predict_kwargs["quantiles"] = quantiles
+
         with rng_context:
             if self._random_state is not None:
                 torch.manual_seed(self._random_state)
-            out = self.model_.predict(
-                context, horizon=horizon, quantiles=quantiles, **predict_kwargs
-            )
+            out = self.model_.predict(context, horizon=horizon, **predict_kwargs)
 
         index = (
             ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
