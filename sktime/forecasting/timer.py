@@ -84,6 +84,7 @@ class TimerForecaster(BaseForecaster):
         "python_version": "<3.13",
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
