@@ -238,13 +238,10 @@ class TSCGridSearchCV(_DelegatedClassifier):
         estimator,
         param_grid,
         scoring=None,
-        n_jobs="deprecated",
         refit=True,
         cv=None,
         verbose=0,
-        pre_dispatch="deprecated",
         error_score=np.nan,
-        return_train_score=False,
         tune_by_variable=False,
         greater_is_better="auto",
         backend=None,
@@ -253,13 +250,10 @@ class TSCGridSearchCV(_DelegatedClassifier):
         self.estimator = estimator
         self.param_grid = param_grid
         self.scoring = scoring
-        self.n_jobs = n_jobs
         self.refit = refit
         self.cv = cv
         self.verbose = verbose
-        self.pre_dispatch = pre_dispatch
         self.error_score = error_score
-        self.return_train_score = return_train_score
         self.tune_by_variable = tune_by_variable
         self.greater_is_better = greater_is_better
         self.backend = backend
