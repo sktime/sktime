@@ -6,7 +6,10 @@ __author__ = ["oberoir080"]
 import numpy as np
 import pandas as pd
 
+from packaging.version import Version
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+
+_PANDAS_GE_220 = Version(pd.__version__) >= Version("2.2.0")
 
 _FREQ_ALIAS_MAP = {
     "M": "ME", "Q": "QE", "A": "YE", "Y": "YE",
@@ -15,9 +18,11 @@ _FREQ_ALIAS_MAP = {
 }
 
 def _normalize_freq(freq):
-    """Normalize deprecated pandas freq aliases to pandas 3+ compatible strings."""
+    """Normalize deprecated pandas freq aliases to pandas 2.2+ compatible strings."""
     if freq is None:
         return None
+    if not _PANDAS_GE_220:
+        return freq 
     parts = freq.split("-", 1)
     base = parts[0].upper()
     if base in _FREQ_ALIAS_MAP:
