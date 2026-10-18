@@ -1113,11 +1113,15 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         ``pretrain`` is a no-op that still transitions the state.
 
         If called when the forecaster is already in the ``"pretrained"`` or
-        ``"fitted"`` state, the internal ``_pretrain_update`` method is called
-        instead, enabling incremental pretraining on additional data batches.
+        ``"fitted"`` state, fit-level state is first reset via
+        ``_reset_at("pretrained")`` (preserving pretrained attributes), and then
+        the internal ``_pretrain_update`` method is called, enabling incremental
+        pretraining on additional data batches. Any stale fit-level attributes
+        (e.g., ``cutoff``) are removed, so ``is_fitted`` is ``False`` and no
+        stale fitted attributes remain.
 
         State change:
-            Changes ``state`` from ``"new"`` to ``"pretrained"``.
+            Changes ``state`` to ``"pretrained"`` regardless of prior state.
 
         Writes to self:
 
@@ -1217,6 +1221,17 @@ class BaseForecaster(_StateAtMixin, _PredictProbaMixin, BaseEstimator):
         if self._state == "new":
             self._pretrain(y=y_inner, X=X_inner, fh=_fh)
         else:
+            # Reset fit-level state while preserving pretrained attributes, so that
+            # stale fitted attributes (e.g. cutoff, last_value_) do not persist after
+            # a pretrain-on-top-of-fit call. The object is consistently "pretrained"
+            # afterwards, and the next fit() will not see a stale "fitted" state.
+            # See: https://github.com/sktime/sktime/issues/11501
+            self._reset_at("pretrained")
+            # Re-snapshot prior_attrs after reset so that only attributes added by
+            # _pretrain_update are recorded as new pretrained attributes.
+            prior_attrs = {
+                a for a in dir(self) if a.endswith("_") and not a.startswith("_")
+            }
             self._pretrain_update(y=y_inner, X=X_inner, fh=_fh)
 
         if not hasattr(self, "_pretrained_attrs"):

@@ -205,3 +205,55 @@ def test_predict_quantiles_from_interval_multivariate():
             # lower end for alpha < 0.5, upper end for alpha >= 0.5
             expected = y[var].mean() + 10 * (j + 1) * (2 * a - 1)
             np.testing.assert_allclose(pred_q[(var, a)].values, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.base"),
+    reason="run only if base module has changed",
+)
+def test_pretrain_after_fit_no_stale_state():
+    """Regression test for #11501: pretrain after fit leaves stale fitted attrs.
+
+    After pretrain -> fit -> pretrain:
+    - state must be "pretrained" (not "fitted")
+    - is_fitted must be False
+    - cutoff must be None (stale fit cutoff removed)
+    - predict() must raise NotFittedError
+    - a subsequent fit() must succeed and make the forecaster fully fitted
+    """
+    import pytest
+
+    from sktime.forecasting.dummy_global import DummyGlobalForecaster
+    from sktime.utils._testing.series import _make_series
+
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(3,), min_timepoints=12, max_timepoints=12
+    )
+    y_single = _make_series(n_timepoints=20)
+
+    f = DummyGlobalForecaster()
+
+    # pretrain -> fit -> pretrain
+    f.pretrain(y_panel)
+    f.fit(y_single, fh=[1, 2])
+    assert f.is_fitted, "sanity check: must be fitted before second pretrain"
+
+    f.pretrain(y_panel)
+
+    # state must be "pretrained", not "fitted"
+    assert f.state == "pretrained", f"expected 'pretrained', got {f.state!r}"
+    assert not f.is_fitted, "is_fitted must be False after pretrain"
+
+    # stale cutoff from fit must be gone
+    assert f.cutoff is None, f"cutoff must be None after pretrain, got {f.cutoff}"
+
+    # predict must raise because not fitted
+    with pytest.raises(Exception):
+        f.predict()
+
+    # a subsequent fit must work and fully restore fitted state
+    f.fit(y_single, fh=[1, 2])
+    assert f.is_fitted, "must be fitted after fit() following pretrain"
+    assert f.state == "fitted"
+    preds = f.predict()
+    assert preds is not None
