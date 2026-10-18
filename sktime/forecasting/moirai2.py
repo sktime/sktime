@@ -482,7 +482,13 @@ class Moirai2Forecaster(BaseForecaster):
         return dataset, df_config
 
     def infer_freq(self, index):
-        """Infer frequency of the index."""
+        """Infer frequency of the index.
+
+        Handles compound pandas frequency aliases such as ``YS-JAN``, ``QS-MAR``,
+        ``AS-OCT``, etc. that arise when a ``PeriodIndex`` is converted to a
+        ``DatetimeIndex`` via ``.to_timestamp()``.  The month suffix is stripped
+        before the base alias is looked up in the normalisation table.
+        """
         if isinstance(index, pd.PeriodIndex):
             return index.freq
         freq = pd.infer_freq(index[:3])
@@ -496,7 +502,11 @@ class Moirai2Forecaster(BaseForecaster):
             "YE": "Y",
             "AE": "Y",
         }
-        return _offset_to_period.get(freq, freq)
+        if freq is None:
+            return freq
+        # Strip trailing month/anchor suffix (e.g. "YS-JAN" -> "YS", "QS-MAR" -> "QS")
+        base_freq = freq.split("-")[0]
+        return _offset_to_period.get(base_freq, _offset_to_period.get(freq, freq))
 
     def return_time_index(self, df):
         """Return the time index, given any type of index."""
