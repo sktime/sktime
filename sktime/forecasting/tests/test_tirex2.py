@@ -80,7 +80,7 @@ def test_split_covariates_all_known_future():
     forecaster = _fitted_stub(_series(), X=_series(columns=("a",)))
 
     past, future = forecaster._split_covariates(
-        _series(3, columns=("a",), start=_N), pred_len=3
+        _series(3, columns=("a",), start=_N), pred_len=3 
     )
 
     assert past is None
