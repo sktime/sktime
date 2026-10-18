@@ -8,7 +8,6 @@ from types import SimpleNamespace
 import pytest
 
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils._env_managers import (
     BaseEnvironmentManager,
     UvEnvironmentManager,
@@ -16,6 +15,7 @@ from sktime.utils._env_managers import (
     env_python,
 )
 from sktime.utils._env_managers._base import resolve_run_target
+from sktime.utils.dependencies import _check_soft_dependencies
 
 __author__ = ["jgyasu"]
 
