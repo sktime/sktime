@@ -626,8 +626,10 @@ class TopKRouter(nn.Module):
 
     def forward(self, input: torch.Tensor):
         """Compute routing probabilities and map."""
-        if self.weight.device != input.device:
-            self.weight.data = self.weight.data.to(input.device)
+        if self.weight.device != input.device or self.weight.dtype != input.dtype:
+            self.weight.data = self.weight.data.to(
+                device=input.device, dtype=input.dtype
+            )
 
         gating_logits = F.linear(input, self.weight)
         num_tokens = gating_logits.shape[:-1].numel()
