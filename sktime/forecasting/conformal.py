@@ -486,6 +486,8 @@ class ConformalIntervals(BaseForecaster):
                     f"{len(y_train)}.",
                     obj=forecaster,
                 )
+                # Failed residuals are missing observations, not zero errors.
+                residuals = pd.Series(index=y_test.index, dtype=float)
             return residuals
 
         all_residuals = Parallel(n_jobs=self.n_jobs)(
@@ -514,6 +516,8 @@ class ConformalIntervals(BaseForecaster):
                         " with existing forecaster.",
                         obj=forecaster,
                     )
+                    # Retain the already computed residuals for this cutoff.
+                    residuals = self.residuals_matrix_.loc[id].reindex(y_test.index)
                 return residuals
 
             extend_residuals = Parallel(n_jobs=self.n_jobs)(
