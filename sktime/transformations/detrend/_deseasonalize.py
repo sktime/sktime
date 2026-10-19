@@ -196,15 +196,19 @@ class Deseasonalizer(BaseTransformer):
         Xt = self._private_inverse_transform(X, seasonal)
         return Xt
 
-    def _update(self, X, y=None, update_params=False):
+    def _update(self, X, y=None):
         """Update transformer with X and y.
 
         private _update containing the core logic, called from update
 
+        Re-estimates the seasonal components from all data seen so far,
+        i.e., the data passed to ``fit`` and all previous and current ``update``
+        calls.
+
         Parameters
         ----------
         X : pd.Series
-            Data to fit transform to
+            Data to update transformation with
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
@@ -213,9 +217,7 @@ class Deseasonalizer(BaseTransformer):
         self: a fitted instance of the estimator
         """
         X_full = X.combine_first(self._X)
-        self._X = X_full
-        if update_params:
-            self._fit(X_full, update_params=update_params)
+        self._fit(X_full)
         return self
 
     @classmethod
