@@ -76,3 +76,38 @@ def test_fabba_aggregate_pca_single_feature():
     assert labels[0] == labels[2]
     assert len({labels[0], labels[1], labels[4]}) == 3
     assert len(starting_points) == 3
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FABBA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("params", [{"auto_digitize": True}, {"alpha": None}])
+def test_fabba_auto_digitize(params):
+    """auto_digitize determines alpha from the data and uses it in aggregation."""
+    X = _make_series()
+    transformer = FABBA(tolerance=0.2, n_jobs=1, **params)
+    Xt = transformer.fit_transform(X)
+
+    assert len(Xt) > 1
+    assert transformer._alpha is not None and transformer._alpha > 0
+
+    # the automatically determined alpha is used, not the default alpha
+    manual = FABBA(tolerance=0.2, n_jobs=1, alpha=transformer._alpha)
+    pd.testing.assert_frame_equal(manual.fit_transform(X), Xt)
+    assert manual._k == transformer._k
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FABBA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_fabba_auto_digitize_panel():
+    """auto_digitize works for a panel of several series."""
+    X = [_make_series(n=100, seed=i) for i in range(3)]
+    transformer = FABBA(tolerance=0.2, n_jobs=1, auto_digitize=True)
+    Xt = transformer.fit_transform(X)
+
+    # one symbolic series per instance, as a multi-indexed frame
+    assert Xt.index.get_level_values(0).nunique() == 3
+    assert transformer._alpha > 0
