@@ -220,10 +220,16 @@ class FourierFeatures(BaseTransformer):
                 raise ValueError("X has no known frequency and none is supplied")
             # warn only if a frequency was given and it differs from the index freq,
             # which takes precedence
+            if self.freq is not None and time_index.freq is not None:
+                try:
+                    given_freq = _to_offset_compat(self.freq)
+                except ValueError:
+                    # not a valid offset alias, compare as given
+                    given_freq = self.freq
             if (
                 self.freq is not None
                 and time_index.freq is not None
-                and time_index.freq != _to_offset_compat(self.freq)
+                and time_index.freq != given_freq
             ):
                 warnings.warn(
                     f"Using frequency from index: {time_index.freq}, which "

@@ -194,3 +194,18 @@ def test_freq_warning_if_freq_given_differs_from_index():
 
     with pytest.warns(UserWarning, match="Using frequency from index"):
         FourierFeatures(sp_list=[4], fourier_terms_list=[1], freq="h").fit(y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_freq_warning_if_freq_given_is_not_an_offset_alias():
+    """An invalid freq string warns about the mismatch instead of raising."""
+    y = pd.DataFrame(
+        {"x": np.arange(10.0)},
+        index=pd.date_range("2000-01-01", periods=10, freq="30min"),
+    )
+
+    with pytest.warns(UserWarning, match="Using frequency from index"):
+        FourierFeatures(sp_list=[4], fourier_terms_list=[1], freq="not-a-freq").fit(y)
