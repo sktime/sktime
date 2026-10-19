@@ -145,10 +145,16 @@ class T0Forecaster(BaseForecaster):
         # --------------
         "authors": ["siddharth7113"],
         "maintainers": ["siddharth7113"],
-        "python_dependencies": ["tfc-t0"],
+        "python_dependencies": [
+            "tfc-t0",
+            "torch",
+            "einops",
+            "rotary-embedding-torch",
+        ],
         "python_version": ">=3.11",
         # estimator type / capability tags
         # --------------------------------
+        "category": ["deep_learning", "foundation_model"],
         "property:randomness": "random",
         "capability:random_state": True,
         "capability:multivariate": True,
