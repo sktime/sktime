@@ -191,6 +191,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
     """
 
     _tags = {
+        "category": ["composition", "tuning"],
         "authors": ["gareth-brown-86", "mk406", "bastisar"],
         "maintainers": ["gareth-brown-86", "mk406"],
         "capability:multivariate": True,
