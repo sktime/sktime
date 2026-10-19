@@ -280,6 +280,26 @@ class Catch22(BaseTransformer):
     .. [2] Fulcher, B. D., Little, M. A., & Jones, N. S. (2013). Highly comparative
     time-series analysis: the empirical structure of time series and their methods.
     Journal of the Royal Society Interface, 10(83), 20130048.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.transformations.catch22 import Catch22
+    >>> X, _ = load_unit_test(split="train", return_X_y=True)
+    >>> transformer = Catch22()  # doctest: +SKIP
+    >>> Xt = transformer.fit_transform(X)  # doctest: +SKIP
+    >>> Xt.shape  # doctest: +SKIP
+    (20, 22)
+
+    Extract only some of the features, with their short names as column names:
+
+    >>> transformer = Catch22(
+    ...     features=["DN_HistogramMode_5", "CO_f1ecac"],
+    ...     col_names="short_str_feat",
+    ... )  # doctest: +SKIP
+    >>> Xt = transformer.fit_transform(X)  # doctest: +SKIP
+    >>> list(Xt.columns)  # doctest: +SKIP
+    ['mode_5', 'acf_timescale']
     """
 
     _tags = {
@@ -301,7 +321,6 @@ class Catch22(BaseTransformer):
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.transformations._catch22_numba"],
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
