@@ -187,7 +187,7 @@ def test_detrend_panel_unequal_lengths():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_detrend_panel_unequal_start():
-    """Test that Detrender on a panel with staggered start times does not produce NaN."""
+    """Test that Detrender on staggered start panel does not produce NaN."""
     idx_a = pd.MultiIndex.from_product([[0], range(5, 10)], names=["instance", "time"])
     idx_b = pd.MultiIndex.from_product([[1], range(10)], names=["instance", "time"])
     sa = pd.Series([10.0, 20.0, 30.0, 40.0, 50.0], index=idx_a)
@@ -208,7 +208,7 @@ def test_detrend_panel_unequal_start():
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
 def test_detrend_panel_multiindex_hier():
-    """Test that Detrender on a hierarchical panel with unequal lengths preserves the index."""
+    """Test Detrender on unequal hierarchical panel preserves the index."""
     import numpy as np
 
     idx = pd.MultiIndex.from_tuples(
@@ -263,4 +263,3 @@ def test_detrend_panel_inverse_roundtrip():
     assert panel.index.equals(restored.index)
     assert not restored.isna().any().any()
     pd.testing.assert_frame_equal(restored, panel, check_exact=False, atol=1e-10)
-
