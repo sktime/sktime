@@ -76,6 +76,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -430,6 +431,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -623,6 +625,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -1001,6 +1004,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["geetu040"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["deep_learning"],
         "capability:pretrain": True,
     }
 

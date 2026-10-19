@@ -118,6 +118,7 @@ class PytorchForecastingTFT(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
+        "category": ["deep_learning"],
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
@@ -407,6 +408,7 @@ class PytorchForecastingNBeats(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
+        "category": ["deep_learning"],
         "capability:exogenous": False,
         "capability:insample": False,
         "X-y-must-have-same-index": True,
@@ -712,6 +714,7 @@ class PytorchForecastingDeepAR(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
+        "category": ["deep_learning"],
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
@@ -994,6 +997,7 @@ class PytorchForecastingNHiTS(_PytorchForecastingAdapter):
     """  # noqa: E501
 
     _tags = {
+        "category": ["deep_learning"],
         "capability:insample": False,
         "X-y-must-have-same-index": True,
         "capability:multivariate": False,
