@@ -100,7 +100,7 @@ def test_statsforecast_mstl_with_fh(request, fh):
         return
     if "different fh predict" in request.node.name:
         # predict with a horizon other than the one passed to fit
-        fh.append(2)
+        fh = fh + [2]
         with pytest.raises(
             ValueError,
             match="A different forecasting horizon `fh` has been provided",
