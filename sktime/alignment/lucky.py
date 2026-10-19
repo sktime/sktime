@@ -21,6 +21,8 @@ class AlignerLuckyDtw(BaseAligner):
     window: int, optional (default=None)
         Maximum distance between indices of aligned series, aka warping window.
         If None, defaults to max(len(ts1), len(ts2)), i.e., no warping window.
+        Must be at least the difference of the lengths of the two series,
+        otherwise a ``ValueError`` is raised in ``fit``.
 
     References
     ----------
@@ -82,6 +84,14 @@ class AlignerLuckyDtw(BaseAligner):
 
         if window is None:
             window = max(len_ts1, len_ts2)
+        elif window < abs(len_ts1 - len_ts2):
+            # the end points of the alignment are (len_ts1 - 1, len_ts2 - 1),
+            # which cannot be reached without violating the window constraint
+            raise ValueError(
+                f"The warping window of {type(self).__name__} must be at least the "
+                "difference of the lengths of the series to align, but found "
+                f"window={window} for series of lengths {len_ts1} and {len_ts2}."
+            )
 
         def vec_dist(x):
             return np.linalg.norm(x) ** 2
