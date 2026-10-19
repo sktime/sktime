@@ -3,6 +3,7 @@
 import re
 
 import pandas as pd
+from packaging.version import Version
 
 _PANDAS_FREQUENCY_ALIASES = {
     "A": "YE",
@@ -34,7 +35,12 @@ def _normalize_frequency(freq):
 
 
 def _get_frequency(index):
-    """Get a pandas-compatible frequency string from an index."""
+    """Get a pandas-compatible frequency string from an index.
+
+    Normalize legacy aliases only when running with pandas >= 3.0.0. Older
+    pandas versions accept the legacy aliases (or map them themselves), so
+    avoid forcing the newer canonical aliases which might not exist there.
+    """
     freq = getattr(index, "freqstr", None)
     if freq is None and isinstance(index, pd.DatetimeIndex):
         try:
@@ -42,4 +48,12 @@ def _get_frequency(index):
         except ValueError:
             freq = None
 
-    return pd.tseries.frequencies.to_offset(_normalize_frequency(freq or "MS")).freqstr
+    freq = freq or "MS"
+
+    # Only normalize legacy aliases for pandas 3+, where old aliases may be
+    # rejected. For older pandas, keep the original and let pandas accept or
+    # map it as appropriate for that runtime.
+    if Version(pd.__version__) >= Version("3.0.0"):
+        freq = _normalize_frequency(freq)
+
+    return pd.tseries.frequencies.to_offset(freq).freqstr
