@@ -38,6 +38,22 @@ def test_failed_residual_prediction_leaves_missing_calibration(monkeypatch, inde
     assert model.residuals_matrix_.isna().all().all()
 
 
+@pytest.mark.parametrize("method", ["empirical", "empirical_residual", "conformal"])
+def test_predict_interval_rejects_completely_missing_calibration(monkeypatch, method):
+    """Prediction intervals must not substitute zeros for failed calibration."""
+    y = pd.Series(np.arange(9, dtype=float), index=pd.RangeIndex(9))
+    monkeypatch.setattr(NaiveForecaster, "predict_residuals", _raise_index_error)
+
+    model = ConformalIntervals(
+        NaiveForecaster(), method=method, initial_window=3, n_jobs=1
+    )
+    model.fit(y, fh=[1])
+    assert model.residuals_matrix_.isna().all().all()
+
+    with pytest.raises(ValueError, match="no valid calibration residuals"):
+        model.predict_interval(fh=[1], coverage=[0.8])
+
+
 def test_failed_residual_update_preserves_previous_calibration(monkeypatch):
     """An update failure must not erase residuals calibrated during fit."""
     index = pd.period_range("2024-01", periods=9, freq="M")
