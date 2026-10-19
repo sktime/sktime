@@ -306,6 +306,15 @@ class BaseWindowSplitter(BaseSplitter):
                 f"number of splits."
             )
 
+        # a pd.MultiIndex is the index of a Panel or Hierarchical series,
+        # as passed to _split by the base class, e.g., from composite splitters;
+        # n_splits is then based on the time index of the first instance
+        if isinstance(y, pd.MultiIndex):
+            instance_index = y.droplevel(-1)
+            first_instance = instance_index == instance_index[0]
+            instance_time_index = y.get_level_values(-1)[first_instance]
+            return len(self.get_cutoffs(instance_time_index))
+
         multi_scitypes = ["Hierarchical", "Panel"]
         is_non_single, _, metadata = check_is_scitype(y, multi_scitypes, [])
 
