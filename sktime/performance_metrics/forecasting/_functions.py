@@ -8,7 +8,6 @@ the lower the better.
 """
 
 import numpy as np
-import sklearn
 from scipy.stats import gmean
 from sklearn.metrics import mean_absolute_error as _mean_absolute_error
 from sklearn.metrics import mean_squared_error as _mean_squared_error
@@ -23,10 +22,16 @@ from sktime.performance_metrics.forecasting._common import (
     _percentage_error,
     _relative_error,
 )
+from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.sklearn import _check_reg_targets
 from sktime.utils.stats import _weighted_geometric_mean, _weighted_percentile
 
-if sklearn.__version__ >= "1.4.0":
+# sklearn 1.4 introduced root_mean_squared_error, and sklearn 1.6 removed the
+# squared argument of mean_squared_error; the version is compared as a version,
+# not as a string, so that e.g. 1.10 is not considered smaller than 1.4
+_SKLEARN_GE_14 = _check_soft_dependencies("scikit-learn>=1.4.0", severity="none")
+
+if _SKLEARN_GE_14:
     from sklearn.metrics import root_mean_squared_error as _root_mean_squared_error
 
 __author__ = ["mloning", "tch", "RNKuhns"]
@@ -1041,7 +1046,7 @@ def mean_squared_error(
 
     if not square_root:
         metric_function = _mean_squared_error
-    elif sklearn.__version__ < "1.4.0":
+    elif not _SKLEARN_GE_14:
         # Scikit-learn argument `squared` returns MSE when True and RMSE when False
         # Scikit-time argument `square_root` returns RMSE when True and MSE when False
         # Therefore need to pass the opposite of square_root as squared argument
