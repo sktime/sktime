@@ -35,9 +35,7 @@ def medoids(
     if precomputed_pairwise_distance is None:
         precomputed_pairwise_distance = pairwise_distance(X, metric=distance_metric)
 
-    x_size = X.shape[0]
-    distance_matrix = np.zeros((x_size, x_size))
-    for j in range(x_size):
-        for k in range(x_size):
-            distance_matrix[j, k] = precomputed_pairwise_distance[j, k]
-    return X[np.argmin(sum(distance_matrix))]
+    # the medoid is the series with the smallest sum of distances to all others;
+    # sum rows sequentially, as the previous implementation did
+    distance_sums = np.add.reduce(np.asarray(precomputed_pairwise_distance), axis=0)
+    return X[np.argmin(distance_sums)]
