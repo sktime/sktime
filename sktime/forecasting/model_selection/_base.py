@@ -359,7 +359,7 @@ def _clone_and_set_params(estimator, params, state="pretrained"):
 
     ``clone().set_params()`` drops pretrained attributes because skbase
     ``set_params`` calls ``reset()``. This helper uses the state-aware
-    private variants ``_clone_at`` / ``_set_params_at`` when available.
+    private variants ``_clone_at`` / ``_set_params_at``.
 
     Parameters
     ----------
@@ -374,12 +374,8 @@ def _clone_and_set_params(estimator, params, state="pretrained"):
     -------
     clone of ``estimator`` with ``params`` set
     """
-    if not isinstance(params, dict):
-        params = dict(params)
-    if hasattr(estimator, "_clone_at") and hasattr(estimator, "_set_params_at"):
-        cloned = estimator._clone_at(state)
-        return cloned._set_params_at(state, params)
-    return estimator.clone().set_params(**params)
+    cloned = estimator._clone_at(state)
+    return cloned._set_params_at(state, params)
 
 
 def _fit_and_score(params, meta):

@@ -543,10 +543,26 @@ class _PretrainedRequiredDummy(DummyGlobalForecaster):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([ForecastingGridSearchCV, DummyGlobalForecaster]),
+    not run_test_for_class(
+        [ForecastingGridSearchCV, ForecastingRandomizedSearchCV, DummyGlobalForecaster]
+    ),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_gscv_preserves_pretrained_state():
+@pytest.mark.parametrize(
+    "Tuner, search_kwargs",
+    [
+        (ForecastingGridSearchCV, {"param_grid": {"strategy": ["mean", "last"]}}),
+        (
+            ForecastingRandomizedSearchCV,
+            {
+                "param_distributions": {"strategy": ["mean", "last"]},
+                "n_iter": 2,
+                "random_state": 0,
+            },
+        ),
+    ],
+)
+def test_tuner_preserves_pretrained_state(Tuner, search_kwargs):
     """Tuners must retain pretrained state when cloning and setting params.
 
     ``clone().set_params()`` calls skbase ``reset()``, which drops pretrained
@@ -566,20 +582,20 @@ def test_gscv_preserves_pretrained_state():
     forecaster.pretrain(y_panel)
     pretrain_mean = forecaster.global_mean_
 
-    gscv = ForecastingGridSearchCV(
+    tuner = Tuner(
         forecaster,
-        param_grid={"strategy": ["mean", "last"]},
         cv=SingleWindowSplitter(fh=1),
         error_score="raise",
         refit=False,
         return_n_best_forecasters=2,
+        **search_kwargs,
     )
-    gscv.fit(y)
+    tuner.fit(y)
 
-    assert gscv.best_forecaster_.state == "pretrained"
-    assert hasattr(gscv.best_forecaster_, "global_mean_")
-    np.testing.assert_almost_equal(gscv.best_forecaster_.global_mean_, pretrain_mean)
+    assert tuner.best_forecaster_.state == "pretrained"
+    assert hasattr(tuner.best_forecaster_, "global_mean_")
+    np.testing.assert_almost_equal(tuner.best_forecaster_.global_mean_, pretrain_mean)
 
-    for _, tuned in gscv.n_best_forecasters_:
+    for _, tuned in tuner.n_best_forecasters_:
         assert tuned.state == "pretrained"
         np.testing.assert_almost_equal(tuned.global_mean_, pretrain_mean)
