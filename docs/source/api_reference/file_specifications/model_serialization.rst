@@ -27,8 +27,12 @@ The base implementation writes the following members to the archive:
     * - Member
       - Contents
     * - ``_metadata``
-      - The type of the estimator object, i.e., ``type(self)``. Used by
-        :func:`sktime.base.load` to select the loading implementation.
+      - A dict with ``format_version`` (currently ``2``), ``class`` (the type
+        of the estimator object, i.e., ``type(self)``), and
+        ``serialization_format`` (the format used for ``_metadata`` and
+        ``_obj``). Used by :func:`sktime.base.load` to select the loading
+        implementation. Archives whose ``_metadata`` holds only the class
+        are read as format version 1.
     * - ``_obj``
       - The serialized estimator instance, including its fitted state when the
         estimator was fitted before saving. Attributes selected as native
@@ -143,6 +147,10 @@ its native artifacts must be importable in the loading environment. Use
 compatible versions of ``sktime``, Python, and the relevant frameworks when
 moving an archive between environments.
 
+Before ``_obj`` is restored, the format version in ``_metadata`` is checked.
+An archive with a newer ``format_version`` than the installed ``sktime``
+supports raises a ``ValueError``.
+
 The following example saves a fitted forecaster, inspects the archive, and
 loads it back:
 
@@ -211,7 +219,9 @@ Estimators with fitted framework models or reconstructable caches extend that
 format through serialization tags. These tags are private and framework-facing.
 Tag values are tuples or lists of attribute names. Missing attributes and
 attributes whose value is ``None`` do not produce archive entries. The source
-estimator retains all attributes after ``save`` returns.
+estimator retains all attributes after ``save`` returns. An attribute can be
+listed in only one of the two tags; listing it in both raises a
+``ValueError`` in ``save``.
 
 Only attributes of the object on which ``save`` is called are selected.
 Native-artifact discovery does not inspect nested objects.
@@ -234,7 +244,9 @@ Native-artifact discovery does not inspect nested objects.
     Cache or wrapper attributes omitted from the archive. The estimator must
     reconstruct these attributes from its serialized state before use. A
     zero-shot estimator can, for example, reload a cached model from its
-    configured model identifier when prediction is requested.
+    configured model identifier when prediction is requested. Skipped
+    attributes are removed, not set to ``None``, so they are missing after
+    loading.
 
 Trainable estimators should use native artifacts for fitted weights. A
 zero-shot estimator may instead skip a cached model when it can reproduce that
