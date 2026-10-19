@@ -169,6 +169,7 @@ class T0Forecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
+        "serialization:skip": ("model_",),
     }
 
     def __init__(
@@ -221,17 +222,6 @@ class T0Forecaster(BaseForecaster):
             import torch
 
             self._device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    def __getstate__(self):
-        """Return state for pickling, excluding the unpickleable model."""
-        state = self.__dict__.copy()
-        if hasattr(self, "model_"):
-            state["model_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
 
     def _get_model_kwargs(self):
         """Collect arguments that uniquely identify a loaded model instance."""

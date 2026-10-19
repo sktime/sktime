@@ -144,6 +144,7 @@ class TimesFM3Forecaster(BaseForecaster):
         "capability:non_contiguous_X": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_timesfm3"],
+        "serialization:skip": ("forecaster",),
     }
 
     def __init__(
@@ -178,17 +179,6 @@ class TimesFM3Forecaster(BaseForecaster):
         """Dynamic tag setter logic for setting tag values conditional on parameters."""
         if self.ignore_deps:
             self.set_tags(python_dependencies=[])
-
-    def __getstate__(self):
-        """Return state for pickling, excluding the unpickleable upstream model."""
-        state = self.__dict__.copy()
-        if hasattr(self, "forecaster"):
-            state["forecaster"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
 
     @classmethod
     def print_license(cls):

@@ -138,6 +138,7 @@ class CiscoTSMForecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_cisco_tsm"],
+        "serialization:skip": ("_model_",),
     }
 
     def __init__(
@@ -163,16 +164,6 @@ class CiscoTSMForecaster(BaseForecaster):
         """Set tags that depend on constructor parameters."""
         if self.ignore_deps:
             self.set_tags(python_dependencies=None, python_version=None)
-
-    def __getstate__(self):
-        """Return state for pickling, excluding the heavy model object."""
-        state = self.__dict__.copy()
-        state["_model_"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from unpickled dict."""
-        self.__dict__.update(state)
 
     def _get_unique_key(self) -> str:
         """Build a deterministic cache key for the multiton model loader."""
