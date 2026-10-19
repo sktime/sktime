@@ -300,6 +300,14 @@ class ConformalIntervals(BaseForecaster):
                 sample_frac=self.sample_frac,
             )
 
+        # A completely missing calibration matrix cannot yield valid intervals.
+        if not residuals_matrix.notna().to_numpy().any():
+            raise ValueError(
+                "ConformalIntervals cannot predict intervals: no valid "
+                "calibration residuals are available. Check the wrapped "
+                "forecaster's predict_residuals results."
+            )
+
         ABS_RESIDUAL_BASED = ["conformal", "conformal_bonferroni", "empirical_residual"]
 
         var_names = self._get_varnames()
