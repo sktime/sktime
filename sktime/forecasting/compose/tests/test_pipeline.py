@@ -852,3 +852,34 @@ def test_transformed_target_forecaster_predict_proba_dunder():
     quantiles = dist.quantile([0.1, 0.5, 0.9])
     assert not quantiles.isnull().any().any()
     assert quantiles.shape[0] == len(fh)
+
+
+@pytest.mark.parametrize("n_identity", [0, 1, 2])
+@pytest.mark.parametrize(
+    "index",
+    [
+        pd.RangeIndex(20),
+        pd.period_range("2000", periods=20, freq="M"),
+        pd.date_range("2000", periods=20, freq="D"),
+    ],
+)
+def test_forecasting_pipeline_preserves_horizon_for_later_transformer(
+    n_identity, index
+):
+    """Earlier transformers must not consume the horizon needed by YtoX (#6678)."""
+    from sklearn.linear_model import LinearRegression
+
+    from sktime.transformations.compose import Id, IxToX
+
+    index = index.rename("time")
+    y = pd.Series(2.0 * np.arange(20) + 3.0, index=index)
+    X = pd.DataFrame({"feature": np.ones(20)}, index=index)
+    steps = [(f"id{i}", Id()) for i in range(n_identity)]
+    steps += [("ytox", YtoX()), ("index", IxToX())]
+    steps += [("forecaster", YfromX(LinearRegression()))]
+    pipe = ForecastingPipeline(steps)
+    pipe.fit(y.iloc[:15], X.iloc[:15])
+    actual = pipe.predict(fh=[1, 3, 5], X=X.iloc[15:])
+    expected_index = index.take([15, 17, 19])
+    pd.testing.assert_index_equal(actual.index, expected_index)
+    np.testing.assert_allclose(actual, [33.0, 37.0, 41.0])

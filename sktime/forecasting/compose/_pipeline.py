@@ -744,10 +744,9 @@ class ForecastingPipeline(_Pipeline):
                 if isinstance(y, ForecastingHorizon) and requires_y:
                     y_index = y.get_expected_pred_idx(y=self._cur_y, cutoff=self.cutoff)
                     y = pd.DataFrame(index=y_index)
-                elif isinstance(y, ForecastingHorizon) and not requires_y:
-                    y = None
-                # else we just pass on y
-                X = transformer.transform(X=X, y=y)
+                # Do not discard the horizon needed by subsequent transformers.
+                y_trafo = None if isinstance(y, ForecastingHorizon) else y
+                X = transformer.transform(X=X, y=y_trafo)
         return X
 
 
