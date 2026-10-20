@@ -20,6 +20,9 @@ class Catch22Wrapper(BaseTransformer):
     feature sets
     (https://github.com/DynamicsAndNeuralSystems/pycatch22).
 
+    Requires ``pycatch22>=0.4,<0.4.6``. Releases from 0.6 onward change feature
+    values, so they are outside the range this transformer and its tests support.
+
     Overview: Input n series with d dimensions of length m
     Transforms series into the 22 Catch22 [1]_ features extracted from the hctsa [2]_
     toolbox.
@@ -91,7 +94,7 @@ class Catch22Wrapper(BaseTransformer):
         # --------------
         "authors": ["benfulcher", "jmoo2880", "MatthewMiddlehurst", "fkiraly"],
         "maintainers": ["benfulcher", "jmoo2880"],
-        "python_dependencies": "pycatch22",
+        "python_dependencies": "pycatch22>=0.4,<0.4.6",
         # estimator type
         # --------------
         "scitype:transform-input": "Series",
