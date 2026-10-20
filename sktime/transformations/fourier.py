@@ -305,15 +305,6 @@ class FourierFeatures(BaseTransformer):
         numpy array containing the time passed between [previous offset, next offset)
         as fraction in the interval [0, 1) for every datetime in datetimes
         """
-
-        def _get_frac(datetime, offset_boundaries):
-            i = np.searchsorted(offset_boundaries, datetime, side="right")
-            prev = offset_boundaries[i - 1]
-            next = offset_boundaries[i]
-            period_timedelta = next - prev
-            since_prev_timedelta = datetime - prev
-            return since_prev_timedelta / period_timedelta
-
         offset = _to_offset_compat(period_str)
         offset_boundaries = pd.date_range(
             start=np.amin(datetime_index) - offset,
@@ -330,9 +321,10 @@ class FourierFeatures(BaseTransformer):
         if not offset_td <= pd.Timedelta(days=1):
             offset_boundaries = offset_boundaries + pd.Timedelta(days=1)
 
-        fracs = [_get_frac(dt, offset_boundaries) for dt in datetime_index]
-
-        return np.array(fracs)
+        positions = offset_boundaries.searchsorted(datetime_index, side="right")
+        previous = offset_boundaries.take(positions - 1)
+        following = offset_boundaries.take(positions)
+        return np.asarray((datetime_index - previous) / (following - previous))
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
