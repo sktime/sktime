@@ -13,6 +13,8 @@ adds the following options to pytest
     more precisely, only estimators whose class is in a module
     that has changed compared to the main branch
     "off" = runs tests for all estimators
+--exclude_vm_estimators : bool, default False
+    exclude estimators tagged tests:vm, unless only_vm_estimators is enabled
 
 by default, all options are off, including for default local runs of pytest
 if multiple options are turned on, they are combined with AND,
@@ -41,6 +43,11 @@ def pytest_addoption(parser):
         default=False,
         help="flag for test runs on VM - tests only estimators that require a VM run",
     )
+    parser.addoption(
+        "--exclude_vm_estimators",
+        default=False,
+        help="exclude dedicated-VM estimators unless --only_vm_estimators is True",
+    )
 
 
 def pytest_configure(config):
@@ -53,3 +60,7 @@ def pytest_configure(config):
         _config.ONLY_CHANGED_MODULES = True
     if config.getoption("--only_vm_estimators") in [True, "True"]:
         _config.ONLY_VM_ESTIMATORS = True
+    _config.EXCLUDE_VM_ESTIMATORS = config.getoption("--exclude_vm_estimators") in [
+        True,
+        "True",
+    ]

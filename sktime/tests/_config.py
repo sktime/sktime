@@ -5,6 +5,7 @@ to registry or to individual tags, where applicable.
 """
 
 __all__ = [
+    "EXCLUDE_VM_ESTIMATORS",
     "EXCLUDED_TESTS",
     "MATRIXDESIGN",
     "ONLY_CHANGED_MODULES",
@@ -28,6 +29,10 @@ ONLY_CHANGED_MODULES = False
 # whether to test only estimators from modules require a VM to test
 # default is False, can be set to True by pytest --only_vm_estimators True flag
 ONLY_VM_ESTIMATORS = False
+
+# whether to exclude dedicated-VM estimators from a shared test run
+# standalone calls include them; setup.cfg enables exclusion for pytest runs
+EXCLUDE_VM_ESTIMATORS = False
 
 
 # DO NOT ADD ESTIMATORS HERE ANYMORE
