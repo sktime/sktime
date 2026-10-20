@@ -1,55 +1,48 @@
-"""Machine type converters for Series scitype.
+"""Machine type converters for Proba scitype.
 
-Exports conversion and mtype dictionary for Series scitype:
-
-convert_dict: dict indexed by triples of str
-  1st element = convert from - str
-  2nd element = convert to - str
-  3rd element = considered as this scitype - str
-elements are conversion functions of machine type (1st) -> 2nd
-
-Function signature of all elements
-convert_dict[(from_type, to_type, as_scitype)]
-
-Parameters
-----------
-obj : from_type - object to convert
-store : dictionary - reference of storage for lossy conversions, default=None (no store)
-
-Returns
--------
-converted_obj : to_type - object obj converted to to_type
-
-Raises
-------
-ValueError and TypeError, if requested conversion is not possible
-                            (depending on conversion logic)
+Conversions are implemented as ``BaseConverter`` classes, one class per
+conversion, and collected by ``generate_convert_dict`` in ``datatypes._convert``.
 """
 
 __author__ = ["fkiraly"]
 
-__all__ = ["convert_dict"]
-
 import numpy as np
 import pandas as pd
+
+from sktime.datatypes._base import BaseConverter
 
 # this needs to be refactored with the convert module
 MTYPE_LIST_PROBA = ["pred_interval", "pred_quantiles"]
 
-##############################################################
-# methods to convert one machine type to another machine type
-##############################################################
 
-convert_dict = dict()
+class ProbaIdentity(BaseConverter):
+    """All Proba scitype conversions of any mtype to itself.
 
+    This is the identity conversion, the object is returned as is.
+    """
 
-def convert_identity(obj, store=None):
-    return obj
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": None,
+        "mtype_to": None,
+        "multiple_conversions": True,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
+    @classmethod
+    def get_conversions(cls):
+        """Get all conversions.
 
-# assign identity function to type conversion to self
-for tp in MTYPE_LIST_PROBA:
-    convert_dict[(tp, tp, "Proba")] = convert_identity
+        Returns
+        -------
+        list of tuples (str, str)
+            List of all conversions in this class.
+        """
+        return [(tp, tp) for tp in MTYPE_LIST_PROBA]
+
+    def _convert(self, obj, store=None):
+        return obj
 
 
 def convert_pred_interval_to_quantiles(y_pred, inplace=False):
@@ -105,13 +98,20 @@ def convert_pred_interval_to_quantiles(y_pred, inplace=False):
     return y_pred
 
 
-def convert_interval_to_quantiles(obj: pd.DataFrame, store=None) -> pd.DataFrame:
-    return convert_pred_interval_to_quantiles(y_pred=obj)
+class PredIntervalToPredQuantiles(BaseConverter):
+    """Conversion: pred_interval -> pred_quantiles, of Proba scitype."""
 
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pred_interval",
+        "mtype_to": "pred_quantiles",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-convert_dict[("pred_interval", "pred_quantiles", "Proba")] = (
-    convert_interval_to_quantiles
-)
+    def _convert(self, obj, store=None):
+        return convert_pred_interval_to_quantiles(y_pred=obj)
 
 
 def convert_pred_quantiles_to_interval(y_pred, inplace=False):
@@ -162,10 +162,17 @@ def convert_pred_quantiles_to_interval(y_pred, inplace=False):
     return y_pred
 
 
-def convert_quantiles_to_interval(obj: pd.DataFrame, store=None) -> pd.DataFrame:
-    return convert_pred_quantiles_to_interval(y_pred=obj)
+class PredQuantilesToPredInterval(BaseConverter):
+    """Conversion: pred_quantiles -> pred_interval, of Proba scitype."""
 
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pred_quantiles",
+        "mtype_to": "pred_interval",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
 
-convert_dict[("pred_quantiles", "pred_interval", "Proba")] = (
-    convert_quantiles_to_interval
-)
+    def _convert(self, obj, store=None):
+        return convert_pred_quantiles_to_interval(y_pred=obj)

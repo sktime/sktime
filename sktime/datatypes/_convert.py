@@ -65,25 +65,84 @@ __all__ = [
 ]
 
 from copy import deepcopy
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
 
 from sktime.datatypes._check import mtype as infer_mtype
-from sktime.datatypes._hierarchical import convert_dict_Hierarchical
 from sktime.datatypes._panel import convert_dict_Panel
-from sktime.datatypes._proba import convert_dict_Proba
 from sktime.datatypes._registry import mtype_to_scitype
 from sktime.datatypes._series import convert_dict_Series
 from sktime.datatypes._table import convert_dict_Table
 
-# pool convert_dict-s and infer_mtype_dict-s
-convert_dict = dict()
-convert_dict.update(convert_dict_Series)
-convert_dict.update(convert_dict_Panel)
-convert_dict.update(convert_dict_Hierarchical)
-convert_dict.update(convert_dict_Table)
-convert_dict.update(convert_dict_Proba)
+# conversions not yet migrated to BaseConverter classes,
+# these are function based and merged into the generated convert_dict
+_convert_dict_legacy = dict()
+_convert_dict_legacy.update(convert_dict_Series)
+_convert_dict_legacy.update(convert_dict_Panel)
+_convert_dict_legacy.update(convert_dict_Table)
+
+
+def get_convert_dict(soft_deps="present"):
+    """Retrieve convert_dict, caches the first time it is requested.
+
+    This is to avoid repeated, time consuming crawling in generate_convert_dict,
+    which would otherwise be called every time convert_dict is requested.
+
+    Parameters
+    ----------
+    soft_deps : str, optional - one of "present", "all"
+        "present" - only conversions with soft dependencies present are included
+        "all" - all conversions are included
+
+    Returns
+    -------
+    convert_dict : dict of (str, str, str) : callable
+        dictionary of converters, with keys being tuples of
+        (mtype_from, mtype_to, scitype), and values being converters in
+        converter signature ``converter(obj, store=None)``
+    """
+    if soft_deps not in ["present", "all"]:
+        raise ValueError(
+            "Error in get_convert_dict, soft_deps argument must be 'present' or "
+            f"'all', found {soft_deps}"
+        )
+    convert_dict = generate_convert_dict(soft_deps=soft_deps)
+    return convert_dict.copy()
+
+
+@lru_cache(maxsize=2)
+def generate_convert_dict(soft_deps="present"):
+    """Generate convert_dict using lookup of BaseConverter classes.
+
+    Collects all ``BaseConverter`` subclasses in ``sktime.datatypes``,
+    and adds the function based conversions not yet migrated to classes.
+    """
+    from skbase.utils.dependencies import _check_estimator_deps
+
+    from sktime.datatypes._base import BaseConverter
+    from sktime.utils.retrieval import _all_classes
+
+    classes = _all_classes("sktime.datatypes")
+    classes = [x[1] for x in classes]
+    classes = [x for x in classes if issubclass(x, BaseConverter)]
+    classes = [x for x in classes if not x.__name__.startswith("Base")]
+
+    # subset only to converters with soft dependencies present
+    if soft_deps == "present":
+        classes = [x for x in classes if _check_estimator_deps(x, severity="none")]
+
+    convert_dict = dict(_convert_dict_legacy)
+    for cls in classes:
+        if not cls.get_class_tag("multiple_conversions", False):
+            converters = [cls()]
+        else:
+            converters = [cls(*pair) for pair in cls.get_conversions()]
+        for converter in converters:
+            convert_dict[converter._get_key()] = converter
+
+    return convert_dict
 
 
 def convert(
@@ -163,6 +222,7 @@ def convert(
         store_behaviour = "freeze"
 
     key = (from_type, to_type, as_scitype)
+    convert_dict = generate_convert_dict()
 
     if key not in convert_dict.keys():
         raise NotImplementedError(
@@ -326,6 +386,7 @@ def _conversions_defined(scitype: str):
             entry of row i, col j is 1 if conversion from i to j is defined,
                                      0 if conversion from i to j is not defined
     """
+    convert_dict = generate_convert_dict()
     pairs = [(x[0], x[1]) for x in list(convert_dict.keys()) if x[2] == scitype]
     cols0 = {x[0] for x in list(convert_dict.keys()) if x[2] == scitype}
     cols1 = {x[1] for x in list(convert_dict.keys()) if x[2] == scitype}
