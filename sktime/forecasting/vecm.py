@@ -105,7 +105,6 @@ class VECM(_StatsModelsAdapter):
         "capability:non_contiguous_X": False,
         # CI and testing tags
         # -------------------
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
         # sporadic failures in update due to singular matrix error
     }
 

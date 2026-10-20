@@ -119,7 +119,6 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         "category": ["statistical"],
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
         # the test fails due to negative values in the test scenario,
         # which is expected and not a bug
     }
