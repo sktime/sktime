@@ -27,7 +27,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
-from sktime.utils.singleton import _multiton
+from sktime.utils.singleton import _detach_multiton_model, _multiton
 
 
 class TimesFM2Forecaster(BaseForecaster):
@@ -392,7 +392,7 @@ class TimesFM2Forecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self.model_ = self._load_model()
+        self.model_ = _detach_multiton_model(self._load_model())
 
         context_length = self.model_.config.context_length
         horizon_length = self.model_.config.horizon_length
