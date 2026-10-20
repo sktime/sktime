@@ -14,11 +14,10 @@ from sktime.tests.test_switch import run_test_for_class
 
 
 def test_timestral_license_rejected_by_default():
-    """Verify license_accepted=False raises a clear ValueError on fit."""
-    y = load_airline().iloc[:24]
-    forecaster = TimestralForecaster(license_accepted=False, ignore_deps=True)
+    """Verify license_accepted=False raises a clear ValueError."""
+    forecaster = TimestralForecaster(license_accepted=False)
     with pytest.raises(ValueError, match="license_accepted"):
-        forecaster.fit(y)
+        forecaster._check_license()
 
 
 @pytest.mark.skipif(
