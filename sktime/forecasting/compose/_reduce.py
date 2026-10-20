@@ -3107,7 +3107,7 @@ class YfromX(_ReducerMixin, BaseForecaster):
 
             X = prep_skl_df(y, copy_df=True)
         else:
-            X = prep_skl_df(X, copy_df=True)
+            X = prep_skl_df(X.loc[X.index.isin(y.index)], copy_df=True)
             estimator = clone(self.estimator)
 
         if _est_type == "regressor":
