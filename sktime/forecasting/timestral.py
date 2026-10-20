@@ -78,6 +78,31 @@ class TimestralForecaster(BaseForecaster):
     ----------
     .. [1] https://github.com/mistralai/timestral
     .. [2] https://mistral.ai/news/timestral/
+
+    Examples
+    --------
+    Univariate point forecast:
+
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.timestral import TimestralForecaster
+    >>> y = load_airline().iloc[:-12]
+    >>> forecaster = TimestralForecaster(license_accepted=True)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+
+    Multivariate forecast:
+
+    >>> import pandas as pd
+    >>> y_multi = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [3.0, 2.0, 1.0]})
+    >>> forecaster = TimestralForecaster(license_accepted=True)  # doctest: +SKIP
+    >>> forecaster.fit(y_multi)  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=[1, 2])  # doctest: +SKIP
+
+    Quantile forecast:
+
+    >>> y_quantiles = forecaster.predict_quantiles(
+    ...     fh=[1, 2], alpha=[0.1, 0.5, 0.9]
+    ... )  # doctest: +SKIP
     """
 
     _tags = {
@@ -355,6 +380,10 @@ class TimestralForecaster(BaseForecaster):
         forecaster = self._load_model()
 
         horizon = int(max(fh.to_relative(self.cutoff)))
+        if horizon <= 0:
+            raise ValueError(
+                f"Horizon must be strictly positive (out-of-sample), but got {horizon}."
+            )
 
         # Determine context window length
         trained_len = getattr(forecaster, "trained_context_length", 32768)
@@ -404,7 +433,7 @@ class TimestralForecaster(BaseForecaster):
         index = (
             ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
         )
-        pred_out = fh.get_expected_pred_idx(target, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff)
         return forecast, index, pred_out, horizon
 
     def _predict(self, fh, X=None):
@@ -576,4 +605,3 @@ class _CachedTimestral:
 
         self.forecaster = _UpstreamForecaster.from_pretrained(**self.load_kwargs)
         return self.forecaster
-
