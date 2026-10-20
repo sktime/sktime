@@ -194,6 +194,7 @@ def load_from_tsfile_to_dataframe(
                             f"{tokens}"
                         )
                     has_class_labels_tag = True
+                    class_label_list = None
                     metadata_started = True
                 # Check if this line contains the start of data
                 elif line.startswith("@data"):
@@ -257,7 +258,10 @@ def load_from_tsfile_to_dataframe(
                                     # Check if we have reached a class label
                                     if line[char_num] != "(" and class_labels:
                                         class_val = line[char_num:].strip()
-                                        if class_val not in class_label_list:
+                                        if (
+                                            class_label_list is not None
+                                            and class_val not in class_label_list
+                                        ):
                                             raise OSError(
                                                 "the class value '"
                                                 + class_val
