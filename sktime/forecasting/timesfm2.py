@@ -328,6 +328,7 @@ class TimesFM2Forecaster(BaseForecaster):
         "python_dependencies": ["transformers[torch]>=4.52.0"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:insample": False,
