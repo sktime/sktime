@@ -635,3 +635,43 @@ def test_numpy_prediction_time_index(index_kind, as_frame, absolute):
     pd.testing.assert_index_equal(result.index, expected_index)
     assert isinstance(result, type(y))
     np.testing.assert_array_equal(result, np.repeat(np.asarray(y)[-1:], 2, axis=0))
+
+
+@pytest.mark.parametrize("as_frame", [False, True])
+@pytest.mark.parametrize("horizon_kind", ["relative", "absolute", "named_absolute"])
+def test_numpy_prediction_preserves_index_name(as_frame, horizon_kind):
+    """Reconstruct labels without losing the converter's training index name."""
+    from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+
+    class NumpyForecaster(BaseForecaster):
+        _tags = {
+            "y_inner_mtype": "np.ndarray",
+            "capability:multivariate": True,
+            "capability:insample": True,
+            "requires-fh-in-fit": False,
+        }
+
+        def _fit(self, y, X=None, fh=None):
+            self.last_ = y[-1:]
+            return self
+
+        def _predict(self, fh, X=None):
+            result = np.repeat(self.last_, len(fh), axis=0)
+            return result if as_frame else result.ravel()
+
+    if horizon_kind == "relative":
+        index = pd.RangeIndex(4, name="time")
+        fh = [-3, -2, -1, 0]
+    else:
+        index = pd.date_range("2024-01-01", periods=4, freq="D", name="time")
+        horizon_name = "horizon" if horizon_kind == "named_absolute" else None
+        fh = ForecastingHorizon(index.rename(horizon_name), is_relative=False)
+    y = pd.Series([1.0, 2.0, 3.0, 4.0], index=index, name="value")
+    if as_frame:
+        y = pd.DataFrame({"a": y, "b": y * 10})
+    result = NumpyForecaster().fit(y).predict(fh)
+    pd.testing.assert_index_equal(result.index, index)
+    assert isinstance(result, type(y))
+    np.testing.assert_array_equal(result, np.repeat(np.asarray(y)[-1:], 4, axis=0))
+    if horizon_kind != "relative":
+        assert fh.to_pandas().name == horizon_name

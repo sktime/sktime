@@ -547,7 +547,11 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
             and y_pred.ndim <= 2
             and isinstance(y_out, (pd.Series, pd.DataFrame))
         ):
-            y_out.index = fh.to_absolute_index(self.cutoff)
+            index = fh.to_absolute_index(self.cutoff)
+            # Restore training metadata, but never the stored training labels.
+            if "index" in self._converter_store_y:
+                index = index.rename(self._converter_store_y["index"].name)
+            y_out.index = index
 
         return y_out
 
