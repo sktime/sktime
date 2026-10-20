@@ -542,6 +542,12 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
             store=self._converter_store_y,
             store_behaviour="freeze",
         )
+        if (
+            isinstance(y_pred, np.ndarray)
+            and y_pred.ndim <= 2
+            and isinstance(y_out, (pd.Series, pd.DataFrame))
+        ):
+            y_out.index = fh.to_absolute_index(self.cutoff)
 
         return y_out
 
@@ -2070,7 +2076,12 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
         -----
         Set self._cutoff to pandas.Index containing latest index seen in ``y``.
         """
-        cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
+        # NumPy conversion stores the original time index, which defines the cutoff.
+        index = self._converter_store_y.get("index")
+        if isinstance(y, np.ndarray) and y.ndim <= 2 and index is not None and len(y):
+            cutoff_idx = index[-1:]
+        else:
+            cutoff_idx = get_cutoff(y, self.cutoff, return_index=True)
         self._cutoff = cutoff_idx
 
     @property

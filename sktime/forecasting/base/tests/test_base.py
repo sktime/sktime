@@ -598,3 +598,40 @@ def test_pretrain_respects_preexisting_attrs():
     msg = "pretrain should not misclassify preexisting attrs as set by pretrain"
     assert len(forecaster._pretrained_attrs) == 0, msg
     assert len(forecaster.get_pretrained_params()) == 0, msg
+
+
+@pytest.mark.parametrize("index_kind", ["integer", "period", "datetime"])
+@pytest.mark.parametrize("as_frame", [False, True])
+@pytest.mark.parametrize("absolute", [False, True])
+def test_numpy_prediction_time_index(index_kind, as_frame, absolute):
+    """Indexless internal predictions use the requested horizon, see #6640."""
+    from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+
+    class NumpyForecaster(BaseForecaster):
+        _tags = {
+            "y_inner_mtype": "np.ndarray",
+            "capability:multivariate": True,
+            "requires-fh-in-fit": False,
+        }
+
+        def _fit(self, y, X=None, fh=None):
+            self.last_ = y[-1:]
+            return self
+
+        def _predict(self, fh, X=None):
+            return np.repeat(self.last_, len(fh), axis=0)
+
+    index = {
+        "integer": pd.RangeIndex(10, 17),
+        "period": pd.period_range("2024-01", periods=7, freq="M"),
+        "datetime": pd.date_range("2024-01-01", periods=7, freq="MS"),
+    }[index_kind]
+    y = pd.Series([1.0, 2.0, 3.0, 4.0], index=index[:4])
+    if as_frame:
+        y = pd.concat([y, y * 10], axis=1)
+    expected_index = index[[4, 6]]
+    fh = ForecastingHorizon(expected_index, is_relative=False) if absolute else [1, 3]
+    result = NumpyForecaster().fit(y).predict(fh)
+    pd.testing.assert_index_equal(result.index, expected_index)
+    assert isinstance(result, type(y))
+    np.testing.assert_array_equal(result, np.repeat(np.asarray(y)[-1:], 2, axis=0))
