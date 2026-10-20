@@ -183,6 +183,11 @@ Some users have experienced issues when installing NumPy, particularly version 1
     Another option under Windows is to follow the instructions for `Unix-like OS`_, using the Windows Subsystem for Linux (WSL).
     For installing WSL, follow the instructions `here <https://docs.microsoft.com/en-us/windows/wsl/install-win10#step-2---check-requirements-for-running-wsl-2>`_.
 
+For a screenshot-based walkthrough of setting up a Windows development environment with PyCharm and Anaconda, see the
+`Windows/PyCharm installation guide <https://github.com/sktime/sktime/blob/main/_contrib/notebooks/windows_installation.ipynb>`_.
+This guide was written in 2021, and some installation and testing instructions may be outdated. Follow the current
+instructions above where they differ.
+
 Troubleshooting
 ---------------
 
