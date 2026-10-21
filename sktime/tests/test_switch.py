@@ -73,6 +73,11 @@ def run_test_for_class(cls, return_reason=False):
     as per the ``tests:skip_all`` tag in the estimator set to ``True``.
     If so, the tests are always skipped, irrespective of the other conditions.
 
+    Standalone calls do not exclude classes tagged ``tests:vm=True``.
+    Shared pytest runs exclude them through ``--exclude_vm_estimators True``
+    in ``setup.cfg``. Pass ``--exclude_vm_estimators False`` to include them.
+    ``--only_vm_estimators True`` selects only VM estimators and takes priority.
+
     Parameters
     ----------
     cls : class, function or list of classes/functions
@@ -106,7 +111,11 @@ def run_test_for_class(cls, return_reason=False):
         * otherwise, any reasons to run cause the entire list to be run
         * otherwise, the list is not run due to "no change"
     """
-    from sktime.tests._config import ONLY_CHANGED_MODULES, ONLY_VM_ESTIMATORS
+    from sktime.tests._config import (
+        EXCLUDE_VM_ESTIMATORS,
+        ONLY_CHANGED_MODULES,
+        ONLY_VM_ESTIMATORS,
+    )
 
     def _return(run, reason):
         if return_reason:
@@ -160,10 +169,17 @@ def run_test_for_class(cls, return_reason=False):
 
     # now we know that cls is a class or function,
     # and not on the exclude list
+    # No VM partition is imposed on standalone local calls. Shared pytest runs
+    # opt into exclusion through setup.cfg; dedicated VM selection takes priority.
+    only_vm_required = None
+    if ONLY_VM_ESTIMATORS:
+        only_vm_required = True
+    elif EXCLUDE_VM_ESTIMATORS:
+        only_vm_required = False
     run, reason = _run_test_for_class(
         cls,
         only_changed_modules=ONLY_CHANGED_MODULES,
-        only_vm_required=ONLY_VM_ESTIMATORS,
+        only_vm_required=only_vm_required,
     )
     return _return(run, reason)
 
@@ -200,10 +216,11 @@ def _run_test_for_class(
     only_changed_modules : boolean, default=True
         whether to run tests only for classes impacted by changed modules.
         If False, will only check active "False" conditions to skip.
-    only_vm_required : boolean, default=False
+    only_vm_required : boolean or None, default=False
         whether to return only classes that require their own VM.
         If True, will only return classes with tag "tests:vm"=True.
         If False, will only return classes with tag "tests:vm"=False.
+        If None, the "tests:vm" tag does not affect selection.
 
     Returns
     -------
@@ -321,7 +338,7 @@ def _run_test_for_class(
     # otherwise, continue
 
     # if only_vm_required=False, and the class requires a test vm, skip
-    if not only_vm_required and _requires_vm(cls):
+    if only_vm_required is False and _requires_vm(cls):
         return False, "False_requires_vm"
     # if only_vm_required=True, and the class does not require a test vm, skip
     if only_vm_required and not _requires_vm(cls):
