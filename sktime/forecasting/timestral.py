@@ -41,6 +41,13 @@ _NATIVE_QUANTILES = (
 )
 
 
+def _to_numpy(x):
+    """Convert tensor or array-like to CPU numpy array."""
+    if hasattr(x, "detach"):
+        return x.detach().cpu().numpy()
+    return np.asarray(x)
+
+
 class TimestralForecaster(BaseForecaster):
     """Interface to Mistral AI Timestral zero-shot forecaster.
 
@@ -453,7 +460,7 @@ class TimestralForecaster(BaseForecaster):
         forecast, index, pred_out, _ = self._run_forecast(fh, X)
 
         # forecast.median shape: (1, V, horizon) or (V, horizon)
-        median = np.asarray(forecast.median)
+        median = _to_numpy(forecast.median)
         if median.ndim == 3:
             median = median[0]  # (V, horizon)
         elif median.ndim == 1:
@@ -493,7 +500,7 @@ class TimestralForecaster(BaseForecaster):
         forecast, index, pred_out, _ = self._run_forecast(fh, X)
 
         # forecast.quantiles shape: (1, V, horizon, 21) or (V, horizon, 21)
-        quantiles = np.asarray(forecast.quantiles)
+        quantiles = _to_numpy(forecast.quantiles)
         if quantiles.ndim == 4:
             quantiles = quantiles[0]  # (V, horizon, 21)
         elif quantiles.ndim == 2:
@@ -542,7 +549,7 @@ class TimestralForecaster(BaseForecaster):
         forecast, index, pred_out, _ = self._run_forecast(fh, X)
 
         # forecast.quantiles shape: (1, V, horizon, 21) or (V, horizon, 21)
-        quantiles = np.asarray(forecast.quantiles)
+        quantiles = _to_numpy(forecast.quantiles)
         if quantiles.ndim == 4:
             quantiles = quantiles[0]  # (V, horizon, 21)
         elif quantiles.ndim == 2:
