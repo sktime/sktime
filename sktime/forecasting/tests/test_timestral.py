@@ -37,10 +37,9 @@ def test_timestral_univariate_point_forecast():
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh=fh)
 
-    assert isinstance(y_pred, pd.DataFrame)
+    assert isinstance(y_pred, pd.Series)
     assert len(y_pred) == len(fh)
-    assert y_pred.shape[1] == 1
-    assert not y_pred.isna().any().any()
+    assert not y_pred.isna().any()
 
 
 @pytest.mark.skipif(

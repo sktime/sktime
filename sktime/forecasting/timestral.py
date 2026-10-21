@@ -193,7 +193,7 @@ class TimestralForecaster(BaseForecaster):
     def _get_load_kwargs(self):
         """Build upstream from_pretrained loading arguments."""
         kwargs = {
-            "model_path": self.model_path,
+            "path_or_repo_id": self.model_path,
             "local_files_only": self.local_files_only,
         }
         if self.device is not None:
@@ -261,11 +261,7 @@ class TimestralForecaster(BaseForecaster):
 
         def is_cat(col):
             s = self._X[col]
-            return s.dtype.name in [
-                "category",
-                "object",
-                "string",
-            ] or pd.api.types.is_categorical_dtype(s.dtype)
+            return s.dtype.name in ["category", "object", "string"]
 
         cat_past = [col for col in past_cols if is_cat(col)]
         num_past = [col for col in past_cols if not is_cat(col)]
@@ -386,7 +382,7 @@ class TimestralForecaster(BaseForecaster):
             )
 
         # Determine context window length
-        trained_len = getattr(forecaster, "trained_context_length", 32768)
+        trained_len = forecaster.max_context
         if self.max_context is not None:
             limit = min(trained_len, self.max_context)
         else:
