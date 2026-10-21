@@ -96,6 +96,7 @@ class ColumnEnsembleForecaster(_HeterogenousEnsembleForecaster, _ColumnEstimator
         "authors": ["GuzalBulatova", "mloning", "fkiraly"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": True,
         "capability:exogenous": True,
         "y_inner_mtype": PANDAS_MTYPES,
