@@ -169,7 +169,10 @@ class T0Forecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:non_contiguous_X": False,
+        # CI and testing tags
+        # -------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_t0"],
     }
 
     def __init__(
