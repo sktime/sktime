@@ -109,7 +109,10 @@ class TimestralForecaster(BaseForecaster):
         "category": ["deep_learning", "foundation_model"],
         "authors": ["hasanfaesal"],
         "maintainers": ["hasanfaesal"],
-        "python_dependencies": ["timestral", "torch>=2.4.0"],
+        "python_dependencies": [
+            "timestral @ git+https://github.com/mistralai/timestral.git@a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff",
+            "torch>=2.4.0",
+        ],
         "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
