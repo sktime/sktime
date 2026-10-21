@@ -286,9 +286,9 @@ class Catch22(BaseTransformer):
     >>> from sktime.datasets import load_unit_test
     >>> from sktime.transformations.catch22 import Catch22
     >>> X, _ = load_unit_test(split="train", return_X_y=True)
-    >>> transformer = Catch22()  # doctest: +SKIP
-    >>> Xt = transformer.fit_transform(X)  # doctest: +SKIP
-    >>> Xt.shape  # doctest: +SKIP
+    >>> transformer = Catch22()
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.shape
     (20, 22)
 
     Extract only some of the features, with their short names as column names:
@@ -296,9 +296,9 @@ class Catch22(BaseTransformer):
     >>> transformer = Catch22(
     ...     features=["DN_HistogramMode_5", "CO_f1ecac"],
     ...     col_names="short_str_feat",
-    ... )  # doctest: +SKIP
-    >>> Xt = transformer.fit_transform(X)  # doctest: +SKIP
-    >>> list(Xt.columns)  # doctest: +SKIP
+    ... )
+    >>> Xt = transformer.fit_transform(X)
+    >>> list(Xt.columns)
     ['mode_5', 'acf_timescale']
     """
 
