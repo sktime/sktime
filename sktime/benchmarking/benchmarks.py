@@ -343,11 +343,19 @@ class BaseBenchmark:
 
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
-    isolated : bool, optional (default=False)
-        If ``True``, each task-estimator pair is executed in an isolated
-        environment via ``env_manager.run``. Environments are created or
-        reused per dependency set and never activated in the parent
-        process. Implied ``True`` when ``env_manager`` is passed.
+    env_mode : str, optional (default="auto")
+        The environment mode to use. One of "current", "per_task_estimator" or "auto".
+
+        - ``"auto"``: defaults to ``"per_task_estimator"`` if
+          ``env_manager`` is passed, otherwise ``"current"``.
+        - ``"current"``: tasks are executed in the current environment.
+        - ``"per_task_estimator"``: each task-estimator pair is executed in an isolated
+           environment via ``env_manager.run``.
+           Dependency set is determined by the combined dependency requirements
+           of the task and the estimator, resolved by the ``env_manager``.
+           Environments are created or reused per dependency set and never
+           activated in the parent process.
+
     env_manager : BaseEnvironmentManager, optional (default=None)
         Manager that creates environments and launches
         ``sktime.benchmarking._worker``. ``None`` builds a
@@ -358,6 +366,7 @@ class BaseBenchmark:
         unpickles estimators and tasks with ``cloudpickle``.
         To use a local checkout of sktime instead, pass a manager
          with ``editable`` set.
+
     envs_dir : str or pathlib.Path, optional (default=None)
         Directory for isolated environments when ``env_manager`` is
         ``None``. ``None`` uses ``.benchmark_envs`` in the current working
@@ -372,7 +381,7 @@ class BaseBenchmark:
         backend=None,
         backend_params=None,
         return_data=False,
-        isolated=False,
+        env_mode="auto",
         env_manager=None,
         envs_dir=None,
     ):
@@ -380,7 +389,7 @@ class BaseBenchmark:
         self.backend = backend
         self.backend_params = backend_params
         self.return_data = return_data
-        self.isolated = isolated or env_manager is not None
+        self.env_mode = env_mode
         self.env_manager = env_manager
         self.envs_dir = envs_dir
         self.estimators = _SktimeRegistry(id_format)
@@ -391,6 +400,7 @@ class BaseBenchmark:
         self._metrics = []
 
         self._failed_experiments: list[FailedExperimentRecord] = []
+        self._isolated = env_mode == "per_task_estimator" or env_manager is not None
         self._env_manager = env_manager
 
     def add_estimator(
@@ -727,7 +737,7 @@ class BaseBenchmark:
 
             logger.info(f"Running validation - model: {task_id} - {estimator_id}")
             try:
-                if self.isolated:
+                if self._isolated:
                     folds = self._run_validation_isolated(task, estimator)
                 else:
                     folds = self._run_validation(task, estimator)
