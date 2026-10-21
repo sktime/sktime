@@ -114,7 +114,7 @@ class TimestralForecaster(BaseForecaster):
 
     _tags = {
         "category": ["deep_learning", "foundation_model"],
-        "authors": ["hasanfaesal"],
+        "authors": ["Artjom Joosen"],
         "maintainers": ["hasanfaesal"],
         "python_dependencies": [
             "timestral @ git+https://github.com/mistralai/timestral.git@a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff",
