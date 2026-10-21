@@ -49,6 +49,18 @@ def _make(kind, **kwargs):
     return MLPRegressorTorch(**params)
 
 
+def _make_cnn(kind, **kwargs):
+    params = {"num_epochs": 2, "batch_size": 4, "callbacks": None, "random_state": 42}
+    params.update(kwargs)
+    if kind == "classifier":
+        from sktime.classification.deep_learning.cnn import CNNClassifierTorch
+
+        return CNNClassifierTorch(**params)
+    from sktime.regression.deep_learning.cnn import CNNRegressorTorch
+
+    return CNNRegressorTorch(**params)
+
+
 def _data(kind):
     if kind == "classifier":
         from sktime.datasets import load_unit_test
@@ -255,3 +267,24 @@ def test_callbacks_str_looked_up_in_lr_scheduler(kind):
     for callbacks in ["not_a_scheduler", "LRScheduler"]:
         with pytest.raises(ValueError, match="Unknown learning rate scheduler"):
             _make(kind, callbacks=callbacks).fit(X, y)
+
+
+@run_test
+@pytest.mark.parametrize("storage", ["memory", "file"])
+@pytest.mark.parametrize("kind", KINDS)
+def test_cnn_save_load_roundtrip(kind, storage, tmp_path):
+    """Test that a fitted CNN gives the same output after save and load."""
+    from sktime.base import load
+
+    X, y = _data(kind)
+    est = _make_cnn(kind).fit(X, y)
+    method = "predict_proba" if kind == "classifier" else "predict"
+    expected = getattr(est, method)(X)
+
+    if storage == "memory":
+        loaded = load(est.save())
+    else:
+        est.save(tmp_path / "cnn").close()
+        loaded = load(tmp_path / "cnn.zip")
+
+    np.testing.assert_allclose(getattr(loaded, method)(X), expected)

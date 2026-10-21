@@ -153,6 +153,7 @@ class TiRex2Forecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_tirex2"],
+        "serialization:skip": ("model",),
     }
 
     def __init__(
@@ -225,16 +226,6 @@ class TiRex2Forecaster(BaseForecaster):
         if self.revision is not None:
             hf_kwargs.setdefault("revision", self.revision)
         return hf_kwargs
-
-    def __getstate__(self):
-        """Return state for pickling, excluding the unpickleable model."""
-        state = self.__dict__.copy()
-        state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore state from an unpickled state dictionary."""
-        self.__dict__.update(state)
 
     def _get_load_kwargs(self):
         """Return the keyword arguments used to load the model."""

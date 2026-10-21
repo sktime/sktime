@@ -73,6 +73,7 @@ class TafsutForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_tafsut"],
+        "serialization:skip": ("model",),
     }
 
     def __init__(
@@ -87,19 +88,9 @@ class TafsutForecaster(BaseForecaster):
         self.model = None
         super().__init__()
 
-    def __getstate__(self):
-        """Exclude the loaded model from serialized estimator state."""
-        state = self.__dict__.copy()
-        state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Restore serialized estimator state."""
-        self.__dict__.update(state)
-
     def load(self):
         """Load and cache the underlying Tafsut model."""
-        if self.model is not None:
+        if hasattr(self, "model") and self.model is not None:
             return self.model
 
         from tafsut import TafsutConfig, TafsutModel
