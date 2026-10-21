@@ -1,6 +1,7 @@
 """Regression tests for the Moirai 2.0 forecaster."""
 
 import numpy as np
+import pandas as pd
 import pytest
 from skbase.utils.dependencies import _check_estimator_deps
 
@@ -57,3 +58,59 @@ def test_moirai2_airline_predictions_match_uni2ts_reference(
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+# ---------------------------------------------------------------------------
+# Regression tests for issue #11535 – YS-JAN and similar compound freq aliases
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "freq_str,expected",
+    [
+        # compound aliases produced by PeriodIndex.to_timestamp()
+        ("YS-JAN", "Y"),
+        ("YS-DEC", "Y"),
+        ("AS-JAN", "Y"),
+        ("AS-OCT", "Y"),
+        ("QS-JAN", "Q"),
+        ("QS-MAR", "Q"),
+        ("QS-APR", "Q"),
+        # plain aliases – must still work
+        ("MS", "M"),
+        ("ME", "M"),
+        ("QS", "Q"),
+        ("QE", "Q"),
+        ("YS", "Y"),
+        ("YE", "Y"),
+        # pass-through for unrecognised aliases
+        ("D", "D"),
+        ("h", "h"),
+        ("W-SUN", "W-SUN"),  # weekly with anchor – pass-through unchanged
+    ],
+)
+def test_infer_freq_compound_aliases(freq_str, expected):
+    """infer_freq must normalise compound pandas freq aliases to period strings.
+
+    Regression test for GitHub issue #11535:
+    ``Moirai2Forecaster`` failed with ``ValueError: YS-JAN is not supported as
+    period frequency`` when fitted on ``Longley`` (PeriodIndex with freq Y-DEC)
+    because ``PeriodIndex.to_timestamp()`` returns a DatetimeIndex whose
+    ``pd.infer_freq`` yields compound aliases like ``YS-JAN``.
+    """
+    forecaster = Moirai2Forecaster.__new__(Moirai2Forecaster)
+    idx = pd.date_range("2000-01-01", periods=4, freq=freq_str)
+    result = forecaster.infer_freq(idx)
+    assert result == expected, (
+        f"infer_freq({freq_str!r}) == {result!r}, expected {expected!r}"
+    )
+
+
+def test_infer_freq_period_index():
+    """infer_freq returns the PeriodIndex.freq object unchanged for PeriodIndex inputs."""
+    forecaster = Moirai2Forecaster.__new__(Moirai2Forecaster)
+    # Longley-style annual PeriodIndex (Y-DEC)
+    idx = pd.period_range("1947", periods=16, freq="Y-DEC")
+    result = forecaster.infer_freq(idx)
+    # Should return the freq object directly, not a string
+    assert result == idx.freq
