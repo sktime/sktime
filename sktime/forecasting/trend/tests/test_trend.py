@@ -84,6 +84,8 @@ def test_get_X_numpy_datetime_resolution(unit):
 def get_expected_polynomial_coefs(y, degree, with_intercept=True):
     """Compute expected coefficients from polynomial regression."""
     t_ix = _get_X_numpy_int_from_pandas(y.index).reshape(-1)
+    # The forecaster shifts time by the first stamp. Match that here.
+    t_ix = t_ix - t_ix[0]
     poly_matrix = np.vander(t_ix, degree + 1)
     if not with_intercept:
         poly_matrix = poly_matrix[:, :-1]
@@ -107,7 +109,6 @@ def _test_trend(degree, with_intercept):
     np.testing.assert_allclose(actual, expected, rtol=1e-5)
 
 
-@pytest.mark.xfail(reason="known bug, needs to be investigated, see #11495")
 @pytest.mark.skipif(
     not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -117,6 +118,27 @@ def _test_trend(degree, with_intercept):
 def test_trend(degree, with_intercept):
     """Test PolynomialTrendForecaster coefficients."""
     _test_trend(degree, with_intercept)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_polynomial_trend_predict_uses_fit_origin():
+    """A horizon after the training series stays on the origin stored at fit."""
+    y = make_forecasting_problem()
+    forecaster = PolynomialTrendForecaster(degree=1, with_intercept=True)
+    forecaster.fit(y, fh=[1, 2, 3])
+    y_pred = forecaster.predict().to_numpy().reshape(-1)
+
+    coef = forecaster.regressor_.steps[-1][1].coef_
+    t = _get_X_numpy_int_from_pandas(forecaster.fh.to_absolute_index(forecaster.cutoff))
+    t = t.reshape(-1)
+    on_fit_origin = coef[0] + coef[1] * (t - forecaster._trend_origin_)
+    np.testing.assert_allclose(y_pred, on_fit_origin, rtol=1e-5)
+
+    on_horizon_start = coef[0] + coef[1] * (t - t[0])
+    assert not np.allclose(y_pred, on_horizon_start, rtol=1e-5)
 
 
 # zero trend does not work without intercept
