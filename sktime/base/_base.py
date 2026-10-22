@@ -202,6 +202,49 @@ class BaseObject(_HTMLDocumentationLinkMixin, _BaseObject):
 
         return deep_equals(self_params, other_params)
 
+    def reset(self):
+        """Reset the object to a clean post-init state.
+
+        Results in setting ``self`` to the state it had directly
+        after the constructor call, with the same hyper-parameters.
+        Config values set by ``set_config`` are also retained.
+
+        A ``reset`` call deletes any object attributes, except:
+
+        - hyper-parameters = arguments of ``__init__`` written to ``self``,
+          e.g., ``self.paramname`` where ``paramname`` is an argument of ``__init__``
+        - object attributes containing double-underscores, i.e., the string "__".
+          For instance, an attribute named "__myattr" is retained.
+        - config attributes, configs are retained without change.
+          That is, results of ``get_config`` before and after ``reset`` are equal.
+        - the ``_parent_callback_ctx`` attribute, which ``scikit-learn`` 1.9 and
+          later meta-estimators, e.g., ``Pipeline``, set on their components while
+          fitting them, and delete after fitting them.
+
+        Class and object methods, and class attributes are also unaffected.
+
+        Equivalent to ``clone``, with the exception that ``reset``
+        mutates ``self`` instead of returning a new object.
+
+        After a ``self.reset()`` call,
+        ``self`` is equal in value and state, to the object obtained after
+        a constructor call ``type(self)(**self.get_params(deep=False))``.
+
+        Returns
+        -------
+        self
+            Instance of class reset to a clean post-init state but retaining
+            the current hyper-parameter values.
+        """
+        parent_callback_ctx = getattr(self, "_parent_callback_ctx", None)
+
+        super().reset()
+
+        if parent_callback_ctx is not None:
+            self._parent_callback_ctx = parent_callback_ctx
+
+        return self
+
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
 

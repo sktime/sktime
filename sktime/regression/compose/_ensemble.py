@@ -9,15 +9,15 @@ import numbers
 
 import numpy as np
 from sklearn.ensemble._base import _partition_estimators
-from sklearn.ensemble._forest import (
-    _generate_unsampled_indices,
-    _get_n_samples_bootstrap,
-)
 from sklearn.metrics import r2_score
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeRegressor
 
-from sktime.base._panel.forest._composable import BaseTimeSeriesForest
+from sktime.base._panel.forest._composable import (
+    BaseTimeSeriesForest,
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
+)
 from sktime.regression.base import BaseRegressor
 from sktime.utils.slope_and_trend import _slope
 from sktime.utils.validation.panel import check_X, check_X_y

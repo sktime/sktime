@@ -8,16 +8,16 @@ import numbers
 import numpy as np
 from joblib import Parallel, delayed
 from sklearn.ensemble._base import _partition_estimators
-from sklearn.ensemble._forest import (
-    _generate_unsampled_indices,
-    _get_n_samples_bootstrap,
-)
 from sklearn.pipeline import Pipeline
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import compute_sample_weight
 from sklearn.utils.multiclass import check_classification_targets
 
-from sktime.base._panel.forest._composable import BaseTimeSeriesForest
+from sktime.base._panel.forest._composable import (
+    BaseTimeSeriesForest,
+    _generate_unsampled_indices,
+    _get_n_samples_bootstrap,
+)
 from sktime.classification.base import BaseClassifier
 from sktime.transformations.summarize import RandomIntervalFeatureExtractor
 from sktime.utils.slope_and_trend import _slope
