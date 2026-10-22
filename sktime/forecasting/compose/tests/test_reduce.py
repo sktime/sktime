@@ -25,6 +25,7 @@ from sktime.forecasting.compose import (
     RecursiveReductionForecaster,
     RecursiveTabularRegressionForecaster,
     RecursiveTimeSeriesRegressionForecaster,
+    YfromX,
     make_reduction,
 )
 from sktime.forecasting.compose._reduce import _sliding_window_transform
@@ -39,6 +40,41 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils.validation.forecasting import check_fh
+
+
+@pytest.mark.parametrize("pooling", ["local", "global", "panel"])
+@pytest.mark.parametrize("period_index", [False, True])
+@pytest.mark.parametrize("combined", [False, True])
+def test_yfromx_training_exogenous_index(pooling, period_index, combined):
+    """Align training features to y when X also contains future observations."""
+    index = (
+        pd.period_range("2020-01", periods=12, freq="M")
+        if period_index
+        else pd.RangeIndex(12)
+    )
+    X = pd.DataFrame({"feature": np.arange(12, dtype=float)}, index=index)
+    y = (3 * X["feature"] + 5).iloc[:9]
+    original_X = X.copy(deep=True)
+    forecaster = YfromX(LinearRegression(), pooling=pooling)
+    if combined:
+        result = forecaster.fit_predict(y, X=X, fh=[1, 2, 3])
+    else:
+        result = forecaster.fit(y, X=X, fh=[1, 2, 3]).predict(X=X)
+    np.testing.assert_allclose(result, [32, 35, 38])
+    pd.testing.assert_index_equal(result.index, index[9:])
+    np.testing.assert_allclose(forecaster.estimator_.coef_, [3])
+    np.testing.assert_allclose(forecaster.estimator_.intercept_, 5)
+    pd.testing.assert_frame_equal(X, original_X)
+
+
+def test_yfromx_duplicate_training_index():
+    """Filtering exogenous rows must not multiply duplicate training labels."""
+    X = pd.DataFrame({"feature": [1.0, 2.0, 3.0, 4.0]}, index=[0, 0, 1, 2])
+    y = pd.Series([3.0, 5.0, 7.0, 9.0], index=X.index)
+    forecaster = YfromX(LinearRegression()).fit(y, X=X, fh=[1])
+    result = forecaster.predict(X=pd.DataFrame({"feature": [5.0]}, index=[3]))
+    pd.testing.assert_series_equal(result, pd.Series([11.0], index=[3]))
+
 
 N_TIMEPOINTS = [13, 17]
 N_VARIABLES = [1, 3]
