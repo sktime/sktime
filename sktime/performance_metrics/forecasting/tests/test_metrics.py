@@ -81,6 +81,24 @@ def test_gmse_function():
         6.185891035775025,
     )
 
+    assert np.allclose(
+        gmse(
+            np.array([1, 2, 3]),
+            np.array([6, 5, 4]),
+            horizon_weight=np.array([7, 8, 9])
+        ),
+        6.185891035775025,
+    )
+
+    assert np.allclose(
+        gmse(
+            np.array([1, 2, 3]),
+            np.array([6, 5, 4]),
+            horizon_weight=[7, 8, 9],
+        ),
+        6.185891035775025,
+    )
+
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.performance_metrics"]),
