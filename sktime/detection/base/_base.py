@@ -31,6 +31,7 @@ from skbase.utils.dependencies import _check_estimator_deps
 from sktime.base import BaseEstimator
 from sktime.base._pretrain import _PretrainMixin
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
+from sktime.datatypes._utilities import update_data
 from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.series import check_series
@@ -290,7 +291,7 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
             self._is_fitted = True
             return self
 
-        self._X = X
+        self._X = X_inner
         self._y = y
 
         if _method_has_arg(self._fit, "y"):
@@ -448,14 +449,48 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
 
         X_inner = self._check_X(X)
 
+        # For index-free inputs (e.g., np.ndarray), offset the index so new
+        # observations are appended rather than overwriting earlier rows
+        if (
+            not hasattr(X, "index")
+            and hasattr(self, "_X")
+            and self._X is not None
+            and len(self._X) > 0
+        ):
+            if isinstance(self._X.index, pd.MultiIndex) and isinstance(
+                X_inner.index, pd.MultiIndex
+            ):
+                last_time = self._X.index.get_level_values(-1)[-1]
+                if isinstance(last_time, int | np.integer):
+                    time_offset = last_time + 1
+                    new_arrays = [
+                        X_inner.index.get_level_values(i)
+                        for i in range(X_inner.index.nlevels - 1)
+                    ]
+                    new_arrays.append(X_inner.index.get_level_values(-1) + time_offset)
+                    X_inner.index = pd.MultiIndex.from_arrays(
+                        new_arrays, names=X_inner.index.names
+                    )
+            else:
+                last_idx = self._X.index[-1]
+                offset = (
+                    last_idx + 1
+                    if isinstance(last_idx, int | np.integer)
+                    else len(self._X)
+                )
+                X_inner.index = pd.RangeIndex(offset, offset + len(X_inner))
+
         # no update needed if fit is empty
         if self.get_tag("fit_is_empty", False):
             return self
 
-        self._X = X_inner.combine_first(self._X)
+        self._X = update_data(self._X, X_inner)
 
         if y is not None:
-            self._y = y.combine_first(self._y)
+            if self._y is None:
+                self._y = y
+            else:
+                self._y = y.combine_first(self._y)
 
         if _method_has_arg(self._update, "y"):
             self._update(X=X_inner, y=y)
