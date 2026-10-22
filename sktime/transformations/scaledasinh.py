@@ -27,15 +27,17 @@ class ScaledAsinhTransformer(BaseTransformer):
 
     Attributes
     ----------
-    shift_parameter_asinh_ : float
-        shift parameter, denoted as "a" in [1]_, the median of sample data.
+    shift_parameter_asinh_ : np.ndarray of shape (n_columns,)
+        shift parameter, denoted as "a" in [1]_, the median of sample data,
+        computed separately for each column (variable).
         It is fitted, based on the data provided in "fit".
 
-    scale_parameter_asinh_ : float
+    scale_parameter_asinh_ : np.ndarray of shape (n_columns,)
         scale parameter, denoted as "b" in [1]_, the median absolute deviation
         (MAD) around the sample median adjusted by a factor for asymptotically
         normal consistency to the standard deviation (Based on [1]_, [2]_
-        b = median_abs_deviation(sample data) :math:`\times` mad_normalization_factor).
+        b = median_abs_deviation(sample data) :math:`\times` mad_normalization_factor),
+        computed separately for each column (variable).
         It is fitted, based on the data provided in "fit".
 
     See Also
@@ -62,6 +64,8 @@ class ScaledAsinhTransformer(BaseTransformer):
     | where "a" is the shift parameter and "b" is the scale parameter [1]_.
     | a = median(sample data)
     | b = median_abs_deviation(sample data) :math:`\times` mad_normalization_factor
+    | For multivariate data, "a" and "b" are computed per column,
+    | so each column is transformed independently of the others.
 
     References
     ----------
@@ -113,7 +117,7 @@ class ScaledAsinhTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : 2D np.ndarray (n x 1)
+        X : 2D np.ndarray (n_timepoints x n_columns)
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
@@ -122,7 +126,7 @@ class ScaledAsinhTransformer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        self.shift_parameter_asinh_ = np.median(X)
+        self.shift_parameter_asinh_ = np.median(X, axis=0)
 
         self.scale_parameter_asinh_ = (
             stats.median_abs_deviation(X) * self.mad_normalization_factor
