@@ -47,8 +47,8 @@ def run_test_for_class(cls, return_reason=False):
     5. Condition 5 (only checked for core objects):
 
       If the object is an sktime ``BaseObject``,
-      and one of the core framework modules ``datatypes``, ``tests``, ``utils``
-      have changed, then condition 5 is met.
+      and one of the core framework modules ``datatypes``, ``registry``,
+      ``tests``, ``utils`` have changed, then condition 5 is met.
 
     6. Condition 6:
 
@@ -360,10 +360,11 @@ def _run_test_for_class(
 
     # Condition 5 (only for core objects):
     # if the object is an sktime BaseObject, and one of the core framework modules
-    # datatypes, tests, utils have changed, then run the test
+    # datatypes, registry, tests, utils have changed, then run the test
     if cls_is_core:
         FRAMEWORK_MODULES = [
             "sktime.datatypes",
+            "sktime.registry",
             "sktime.tests._config",
             "sktime.tests.test_all_estimators",
             "sktime.tests.test_class_register",
