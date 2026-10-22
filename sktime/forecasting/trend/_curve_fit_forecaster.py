@@ -74,6 +74,7 @@ class CurveFitForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["statistical"],
         "authors": ["benheid"],
         "maintainers": ["benheid"],
         "capability:multivariate": False,

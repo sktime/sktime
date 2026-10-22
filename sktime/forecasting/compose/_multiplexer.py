@@ -86,6 +86,7 @@ class MultiplexForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         "authors": ["kkoralturk", "aiwalter", "fkiraly", "miraep8"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:multivariate": True,

@@ -146,3 +146,62 @@ def test_statsmodels_adapter_random_state_handling():
     ets = MockAdapter(MockETSModel(), random_state=42)
     ets.fit(y, fh=fh)
     ets.predict_interval(fh=fh, coverage=[0.9])
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.base"]),
+    reason="run only if base module has changed",
+)
+def test_predict_quantiles_from_interval_multivariate():
+    """Regression test for quantiles defaulting to intervals, multivariate case.
+
+    Quantiles derived from ``_predict_interval`` were assigned to the wrong
+    variables and alphas if ``y`` had more than one variable.
+    """
+    import numpy as np
+    import pandas as pd
+
+    from sktime.forecasting.base import BaseForecaster
+
+    class _IntervalOnlyForecaster(BaseForecaster):
+        """Forecaster whose interval for variable j has half-width 10 * (j+1) * c."""
+
+        _tags = {
+            "capability:multivariate": True,
+            "capability:pred_int": True,
+            "y_inner_mtype": "pd.DataFrame",
+            "requires-fh-in-fit": False,
+        }
+
+        def _fit(self, y, X, fh):
+            self.means_ = y.mean().values
+            return self
+
+        def _predict(self, fh, X):
+            index = fh.to_absolute_index(self.cutoff)
+            values = np.tile(self.means_, (len(index), 1))
+            return pd.DataFrame(values, index=index, columns=self._y.columns)
+
+        def _predict_interval(self, fh, X, coverage):
+            index = fh.to_absolute_index(self.cutoff)
+            columns = self._get_columns(method="predict_interval", coverage=coverage)
+            values = []
+            for j, mean in enumerate(self.means_):
+                for c in coverage:
+                    values += [mean - 10 * (j + 1) * c, mean + 10 * (j + 1) * c]
+            values = np.tile(values, (len(index), 1))
+            return pd.DataFrame(values, index=index, columns=columns)
+
+    y = pd.DataFrame(
+        {"a": [1.0, 2.0, 3.0], "b": [100.0, 101.0, 102.0], "c": [-5.0, -5.0, -5.0]}
+    )
+    alpha = [0.05, 0.25, 0.75, 0.95]
+
+    f = _IntervalOnlyForecaster().fit(y, fh=[1, 2])
+    pred_q = f.predict_quantiles(alpha=alpha)
+
+    for j, var in enumerate(y.columns):
+        for a in alpha:
+            # lower end for alpha < 0.5, upper end for alpha >= 0.5
+            expected = y[var].mean() + 10 * (j + 1) * (2 * a - 1)
+            np.testing.assert_allclose(pred_q[(var, a)].values, expected)

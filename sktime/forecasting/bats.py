@@ -110,6 +110,10 @@ class BATS(_TbatsAdapter):
     >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """  # noqa: E501
 
+    _tags = {
+        "category": ["statistical"],
+    }
+
     _fitted_param_names = "aic"
 
     def _create_model_class(self):

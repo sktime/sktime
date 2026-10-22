@@ -130,6 +130,7 @@ class DynamicFactor(_StatsModelsAdapter):
         # python_dependencies: "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": True,
         "capability:exogenous": True,
         "capability:missing_values": True,
@@ -142,10 +143,6 @@ class DynamicFactor(_StatsModelsAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:non_contiguous_X": False,
-        # test skip flags
-        # ---------------
-        # known issue with in-sample prediction, see #4765
-        "tests:skip_by_name": ["test_predict_time_index_in_sample_full"],
     }
 
     def __init__(

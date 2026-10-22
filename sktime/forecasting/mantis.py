@@ -68,6 +68,7 @@ class MantisForecaster(BaseForecaster):
         "python_dependencies": ["mantis-tsfm>=1.0.0", "torch"],
         # estimator type
         # --------------
+        "category": ["machine_learning", "deep_learning", "foundation_model"],
         "capability:multivariate": True,
         "capability:exogenous": False,
         "capability:insample": False,
