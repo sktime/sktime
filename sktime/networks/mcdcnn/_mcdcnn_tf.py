@@ -46,7 +46,7 @@ class MCDCNNNetwork(BaseDeepNetwork):
     _tags = {
         "authors": ["hfawaz", "James-Large", "Withington", "noxthot"],
         "python_dependencies": "tensorflow",
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
+        "tests:specific": ["sktime.networks.tests.test_mcdcnn"],
     }
 
     def __init__(
@@ -148,3 +148,29 @@ class MCDCNNNetwork(BaseDeepNetwork):
             new_X.append(X[:, :, i : i + 1])
 
         return new_X
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return.
+
+        Returns
+        -------
+        params : list of dict
+            Parameters to create testing instances of the class.
+        """
+        params1 = {"filter_sizes": (4, 4), "dense_units": 8}
+        params2 = {
+            "kernel_size": 3,
+            "pool_size": 2,
+            "filter_sizes": (4, 8),
+            "dense_units": 16,
+            "conv_padding": "valid",
+            "pool_padding": "valid",
+            "activation": "tanh",
+        }
+        return [params1, params2]
