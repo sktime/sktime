@@ -1048,11 +1048,15 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
         ``pretrain`` is a no-op that still transitions the state.
 
         If called when the forecaster is already in the ``"pretrained"`` or
-        ``"fitted"`` state, the internal ``_pretrain_update`` method is called
-        instead, enabling incremental pretraining on additional data batches.
+        ``"fitted"`` state, fit-level state is first reset via
+        ``_reset_at("pretrained")`` (preserving pretrained attributes), and then
+        the internal ``_pretrain_update`` method is called, enabling incremental
+        pretraining on additional data batches. Any stale fit-level attributes
+        (e.g., ``cutoff``) are removed, so ``is_fitted`` is ``False`` and no
+        stale fitted attributes remain.
 
         State change:
-            Changes ``state`` from ``"new"`` to ``"pretrained"``.
+            Changes ``state`` to ``"pretrained"`` regardless of prior state.
 
         Writes to self:
 

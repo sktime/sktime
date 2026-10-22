@@ -101,13 +101,23 @@ class _PretrainMixin(_StateAtMixin):
         -------
         self : reference to self
         """
-        prior_attrs = {
-            a for a in dir(self) if a.endswith("_") and not a.startswith("_")
-        }
-
         if self._state == "new":
+            prior_attrs = {
+                a for a in dir(self) if a.endswith("_") and not a.startswith("_")
+            }
             self._pretrain(**kwargs)
         else:
+            # Reset fit-level state while preserving pretrained attributes, so that
+            # stale fitted attributes (e.g. cutoff, last_value_) do not persist after
+            # a pretrain-on-top-of-fit call. The object is consistently "pretrained"
+            # afterwards, and the next fit() will not see a stale "fitted" state.
+            # See: https://github.com/sktime/sktime/issues/11501
+            self._reset_at("pretrained")
+            # Re-snapshot prior_attrs after reset so that only attributes added by
+            # _pretrain_update are recorded as new pretrained attributes.
+            prior_attrs = {
+                a for a in dir(self) if a.endswith("_") and not a.startswith("_")
+            }
             self._pretrain_update(**kwargs)
 
         if not hasattr(self, "_pretrained_attrs"):
