@@ -487,3 +487,50 @@ def test_object_support_for_series_scitype() -> None:
     )
 
     assert check_raise(sample_dataset, "pd.Series")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only runs when sktime.datatypes module has changed",
+)
+def test_nested_univ_has_nans_and_equal_length_metadata():
+    """Test has_nans and is_equal_length metadata of nested_univ panels."""
+    from sktime.datatypes._panel._check import (
+        _nested_dataframe_has_nans,
+        _nested_dataframe_has_unequal,
+    )
+
+    s = pandas.Series
+    cases = [
+        # (nested DataFrame, has_nans, has_unequal)
+        (pandas.DataFrame({"a": [s([1.0, 2.0]), s([3.0, 4.0])]}), False, False),
+        (pandas.DataFrame({"a": [s([1.0, np.nan]), s([3.0, 4.0])]}), True, False),
+        (
+            pandas.DataFrame(
+                {
+                    "a": [s([1.0, 2.0]), s([3.0, 4.0])],
+                    "b": [s([1.0, 2.0]), s([3.0, np.nan])],
+                }
+            ),
+            True,
+            False,
+        ),
+        (pandas.DataFrame({"a": [s([1.0, None]), s([3.0, 4.0])]}), True, False),
+        (pandas.DataFrame({"a": [s([1.0, 2.0, 3.0]), s([3.0, 4.0])]}), False, True),
+        (pandas.DataFrame({"a": [s([], dtype=float), s([3.0])]}), False, True),
+        (pandas.DataFrame({"a": [s(["x", "y"]), s(["z", None])]}), True, False),
+        (
+            pandas.DataFrame({"a": [np.array([1.0, np.nan]), np.array([1.0, 2.0])]}),
+            True,
+            False,
+        ),
+    ]
+    for X, has_nans, has_unequal in cases:
+        assert _nested_dataframe_has_nans(X) == has_nans
+        assert _nested_dataframe_has_unequal(X) == has_unequal
+
+    # metadata via the public check
+    X = pandas.DataFrame({"a": [s([1.0, np.nan, 3.0]), s([3.0, 4.0])]})
+    _, _, metadata = check_is_mtype(X, "nested_univ", return_metadata=True)
+    assert metadata["has_nans"]
+    assert not metadata["is_equal_length"]
