@@ -13,7 +13,7 @@ from skbase.utils.stdout_mute import StdoutMute
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
-from sktime.utils.singleton import _multiton
+from sktime.utils.singleton import _detach_multiton_model, _multiton
 from sktime.utils.warnings import warn
 
 torch = _safe_import("torch")
@@ -641,7 +641,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        return self._fit_or_pretrain(y=y, X=X, fh=fh)
+        return self._fit_or_pretrain(y=y, X=X, fh=fh, detach_model=True)
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data.
@@ -678,7 +678,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         self._cur_X = X
         return self._fit_or_pretrain(y=y, X=X, fh=fh)
 
-    def _fit_or_pretrain(self, y, X=None, fh=None):
+    def _fit_or_pretrain(self, y, X=None, fh=None, detach_model=False):
         """Load and optionally train the TTM model for fit or pretrain.
 
         This contains the common logic used by ``_fit`` and ``_pretrain``.
@@ -706,6 +706,10 @@ class TinyTimeMixerForecaster(BaseForecaster):
         fh : ForecastingHorizon or None, optional (default=None)
             Forecasting horizon used to resolve automatic model revisions and
             later consumed by prediction. Required when ``revision=None``.
+        detach_model : bool, optional (default=False)
+            If True and training will run, copy the loaded module before
+            ``Trainer`` updates it. ``pretrain`` sets this so fine-tuning does
+            not change the cached multiton shared with other instances.
         """
         self._freq, self._freq_token = self._resolve_freq(y=y, fh=fh)
         self._revision = self._resolve_revision(y=y, fh=fh)
@@ -725,6 +729,9 @@ class TinyTimeMixerForecaster(BaseForecaster):
 
         if not any(param.requires_grad for param in self.model_.parameters()):
             return
+
+        if detach_model:
+            self.model_ = _detach_multiton_model(self.model_)
 
         if self.validation_split is not None:
             y_train, y_eval = temporal_train_test_split(
