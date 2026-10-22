@@ -144,3 +144,25 @@ def test_hf_transformers_zero_shot_matches_source_reference(model_path, expected
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HFTransformersForecaster),
+    reason="Run test only if soft dependencies are present and incrementally",
+)
+@pytest.mark.parametrize(
+    "mismatched_keys,expected_keys",
+    [
+        ([("key_1", (1, 2), (1, 3))], ["key_1"]),
+        (["key_1"], ["key_1"]),
+    ],
+)
+def test_hf_transformers_mismatched_keys_compatibility(mismatched_keys, expected_keys):
+    """Handles both tuple and string mismatched_keys formats."""
+    keys = []
+
+    for item in mismatched_keys:
+        key = item[0] if isinstance(item, tuple) else item
+        keys.append(key)
+
+    assert keys == expected_keys
