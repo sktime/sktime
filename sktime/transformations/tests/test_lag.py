@@ -136,3 +136,31 @@ def test_lag_fit_transform_column_names(X, index_out, lags):
 
     elif isinstance(Xt, pd.Series):
         assert Xt.name is None
+
+
+@pytest.mark.parametrize("flatten_transform_index", [True, False])
+@pytest.mark.parametrize("lags", [[0, 0], [1, 1, 1], [0, 1, 0, 1]])
+@pytest.mark.parametrize("index_out", index_outs)
+def test_lag_duplicate_offsets(lags, index_out, flatten_transform_index):
+    """Repeated offsets retain every lag with unique, usable column names."""
+    from sktime.transformations.compose import Id
+
+    X = pd.DataFrame({"a": [1.0, 2.0, 4.0], "b": [3.0, 5.0, 7.0]})
+    transformer = Lag(
+        lags=lags,
+        index_out=index_out,
+        flatten_transform_index=flatten_transform_index,
+    )
+    Xt = transformer.fit_transform(X)
+
+    assert Xt.columns.is_unique
+    for i, lag in enumerate(lags):
+        expected = Lag(lag, index_out=index_out, keep_column_names=True).fit_transform(
+            X
+        )
+        expected = expected.reindex(Xt.index)
+        actual = Xt.iloc[:, i * X.shape[1] : (i + 1) * X.shape[1]].copy()
+        actual.columns = X.columns
+        pd.testing.assert_frame_equal(actual, expected)
+
+    pd.testing.assert_frame_equal(Id().fit_transform(Xt), Xt)
