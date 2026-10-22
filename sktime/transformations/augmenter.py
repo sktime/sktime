@@ -224,6 +224,16 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
         If None, rely on ``self.random_state``.
         Default is None." [1]
 
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.augmenter import RandomSamplesAugmenter
+    >>> X = pd.DataFrame({"value": [1, 2, 3, 4]})
+    >>> augmenter = RandomSamplesAugmenter(n=2, random_state=0)
+    >>> X_augmented = augmenter.fit_transform(X)
+    >>> len(X_augmented)
+    2
+
     References and Footnotes
     ----------
 
@@ -233,7 +243,6 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
     _tags = {
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -268,3 +277,27 @@ class RandomSamplesAugmenter(_AugmenterTags, BaseTransformer):
             replace = True
         Xt = rng.choice(values, n, replace)
         return pd.DataFrame(Xt)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return `"default"` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
+            `create_test_instance` uses the first (or only) dictionary in `params`
+        """
+        params = [
+            {"n": 1.0, "without_replacement": True},
+            {"n": 5, "without_replacement": False},
+        ]
+        return params
