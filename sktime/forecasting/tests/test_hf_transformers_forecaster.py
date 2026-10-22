@@ -51,7 +51,7 @@ def test_initialized_model():
     forecaster.fit(y)
 
     # Define the forecasting horizon and predict
-    fh = [1, 2, 3]
+    fh = 3
     y_pred = forecaster.predict(fh)
 
     # Assertions

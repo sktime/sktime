@@ -133,7 +133,7 @@ class DoubleMLForecaster(BaseForecaster):
     ... )
     >>>
     >>> # Fit and predict
-    >>> fh = [1, 2, 3]
+    >>> fh = 3
     >>> dml_forecaster.fit(y_train, X=X_train, fh=fh)
     DoubleMLForecaster(exposure_vars=['GNP'], outcome_fcst=NaiveForecaster(),
                        residual_fcst=RecursiveTabularRegressionForecaster(estimator=LinearRegression(),

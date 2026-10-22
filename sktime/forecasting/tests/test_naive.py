@@ -473,7 +473,7 @@ def test_naive_sp_greater_1_not_nan(freq):
     model = NaiveForecaster(sp=2)
     model.fit(sample_dataset)
 
-    predictions: pd.Series = model.predict(fh=[1, 2, 3])
+    predictions: pd.Series = model.predict(fh=3)
     null_predictions_count = predictions.isna().sum()
 
     assert null_predictions_count == 0

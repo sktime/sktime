@@ -42,7 +42,7 @@ def test_hierarchy_ensemble_level_predict(forecasters):
         forecasters, default=forecasters[0][1].clone()
     )
 
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
     actual_pred = forecaster.predict()
 
     y = agg.fit_transform(y)
@@ -50,14 +50,14 @@ def test_hierarchy_ensemble_level_predict(forecasters):
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
         df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
-        test_frcstr.fit(df, fh=[1, 2, 3])
+        test_frcstr.fit(df, fh=3)
         test_pred = test_frcstr.predict()
         msg = "Level predictions do not match"
         assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
     def_frcstr = forecasters[0][1].clone()
     df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
-    def_frcstr.fit(df, fh=[1, 2, 3])
+    def_frcstr.fit(df, fh=3)
     def_pred = def_frcstr.predict()
     msg = "Level default predictions do not match"
     assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg
@@ -92,7 +92,7 @@ def test_hierarchy_ensemble_level_predict_parallel(forecasters):
         backend_params={"backend": "loky", "n_jobs": -1},
     )
 
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
     actual_pred = forecaster.predict()
 
     y = agg.fit_transform(y)
@@ -100,14 +100,14 @@ def test_hierarchy_ensemble_level_predict_parallel(forecasters):
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
         df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
-        test_frcstr.fit(df, fh=[1, 2, 3])
+        test_frcstr.fit(df, fh=3)
         test_pred = test_frcstr.predict()
         msg = "Level predictions do not match"
         assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
     def_frcstr = forecasters[0][1].clone()
     df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
-    def_frcstr.fit(df, fh=[1, 2, 3])
+    def_frcstr.fit(df, fh=3)
     def_pred = def_frcstr.predict()
     msg = "Level default predictions do not match"
     assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg
@@ -145,7 +145,7 @@ def test_hierarchy_ensemble_node_predict_parallel(forecasters):
         backend_params={"backend": "loky", "n_jobs": -1},
     )
 
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
     actual_pred = forecaster.predict()
 
     y = agg.fit_transform(y)
@@ -153,14 +153,14 @@ def test_hierarchy_ensemble_node_predict_parallel(forecasters):
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
         df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
-        test_frcstr.fit(df, fh=[1, 2, 3])
+        test_frcstr.fit(df, fh=3)
         test_pred = test_frcstr.predict()
         msg = "Node predictions do not match"
         assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
     def_frcstr = forecasters[0][1].clone()
     df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
-    def_frcstr.fit(df, fh=[1, 2, 3])
+    def_frcstr.fit(df, fh=3)
     def_pred = def_frcstr.predict()
     msg = "Node default predictions do not match"
     assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg
@@ -194,7 +194,7 @@ def test_hierarchy_ensemble_node_predict(forecasters):
         forecasters, by="node", default=forecasters[0][1].clone()
     )
 
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
     actual_pred = forecaster.predict()
 
     y = agg.fit_transform(y)
@@ -202,14 +202,14 @@ def test_hierarchy_ensemble_node_predict(forecasters):
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
         df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
-        test_frcstr.fit(df, fh=[1, 2, 3])
+        test_frcstr.fit(df, fh=3)
         test_pred = test_frcstr.predict()
         msg = "Node predictions do not match"
         assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
 
     def_frcstr = forecasters[0][1].clone()
     df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
-    def_frcstr.fit(df, fh=[1, 2, 3])
+    def_frcstr.fit(df, fh=3)
     def_pred = def_frcstr.predict()
     msg = "Node default predictions do not match"
     assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg
@@ -254,7 +254,7 @@ def test_hierarchy_ensemble_exog(forecasters):
     estimator_instance = HierarchyEnsembleForecaster(
         forecasters=forecasters, default=NaiveForecaster()
     )
-    estimator_instance.fit(y=y_train, X=X_train, fh=[1, 2, 3])
+    estimator_instance.fit(y=y_train, X=X_train, fh=3)
     estimator_instance.predict(X=X_test)
     estimator_instance.update(y=y_test, X=X_test)
 
@@ -293,7 +293,7 @@ def test_level_one_data(forecasters, default):
 
     forecaster = HierarchyEnsembleForecaster(forecasters, by="node", default=default)
 
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
     actual_pred = forecaster.predict()
 
     y = agg.fit_transform(y)
@@ -301,7 +301,7 @@ def test_level_one_data(forecasters, default):
     for i in range(len(forecasters)):
         test_frcstr = forecasters[i][1].clone()
         df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[i][1])]
-        test_frcstr.fit(df, fh=[1, 2, 3])
+        test_frcstr.fit(df, fh=3)
         test_pred = test_frcstr.predict()
         msg = "Node predictions do not match"
         assert np.all(actual_pred.loc[test_pred.index] == test_pred), msg
@@ -311,7 +311,7 @@ def test_level_one_data(forecasters, default):
     if default is not None and len(nodes) != len(y.index.droplevel(-1).unique()):
         def_frcstr = default
         df = y[y.index.droplevel(-1).isin(forecaster.fitted_list_[-1][1])]
-        def_frcstr.fit(df, fh=[1, 2, 3])
+        def_frcstr.fit(df, fh=3)
         def_pred = def_frcstr.predict()
         msg = "Node default predictions do not match"
         assert np.all(actual_pred.loc[def_pred.index] == def_pred), msg
@@ -342,7 +342,7 @@ def test_get_fitted_params():
         by="level",
         default=PolynomialTrendForecaster(degree=2),
     )
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
 
     assert forecaster.get_fitted_params()["naive"].is_fitted
     assert forecaster.get_fitted_params()["trend"].is_fitted

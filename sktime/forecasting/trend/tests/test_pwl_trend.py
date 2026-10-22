@@ -130,7 +130,7 @@ def test_pwl_trend_nonnative_index(indextype):
     if indextype == "period":
         y.index = pd.period_range("2000-01-01", periods=4)
 
-    fh = [1, 2]
+    fh = 2
 
     f = ProphetPiecewiseLinearTrendForecaster()
     f.fit(y)
