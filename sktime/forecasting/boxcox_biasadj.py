@@ -74,9 +74,6 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         # --------------
         "category": ["composition"],
         "capability:pred_int": True,
-        # CI and test flags
-        # -----------------
-        # sporadic scipy.optimize bracketing failures, bug report #10301
     }
 
     def __init__(self, forecaster, lambda_fixed=None):

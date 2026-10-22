@@ -119,8 +119,6 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         "category": ["statistical"],
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        # the test fails due to negative values in the test scenario,
-        # which is expected and not a bug
     }
 
     _fitted_param_names = (

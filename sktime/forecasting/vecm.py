@@ -103,9 +103,6 @@ class VECM(_StatsModelsAdapter):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:non_contiguous_X": False,
-        # CI and testing tags
-        # -------------------
-        # sporadic failures in update due to singular matrix error
     }
 
     def __init__(
