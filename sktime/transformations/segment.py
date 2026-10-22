@@ -191,6 +191,16 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by ``np.random``.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.transformations.segment import RandomIntervalSegmenter
+    >>> X, _ = load_unit_test(return_X_y=True, split="train")
+    >>> segmenter = RandomIntervalSegmenter(n_intervals=3, random_state=0)
+    >>> Xt = segmenter.fit_transform(X)
+    >>> Xt.shape
+    (20, 3)
     """
 
     _tags = {
@@ -207,8 +217,9 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "capability:unequal_length:removes": True,
-        "tests:skip_all": True,
         # is transform result always guaranteed to be equal length (and series)?
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     # attribute for _DelegatedTransformer, which then delegates
@@ -315,7 +326,9 @@ class RandomIntervalSegmenter(_DelegatedTransformer):
         """
         # we need to override this, or it inherits from IntervalSegmenter
         #   but this estimator does not have an "intervals" parameter
-        return {}
+        params1 = {}
+        params2 = {"n_intervals": 3, "random_state": 42}
+        return [params1, params2]
 
 
 def _rand_intervals_rand_n(x, random_state=None):
