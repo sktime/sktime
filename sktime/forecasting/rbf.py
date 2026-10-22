@@ -110,6 +110,7 @@ class RBFForecaster(BaseDeepNetworkPyTorch):
         "python_dependencies": "torch",
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "capability:exogenous": False,
