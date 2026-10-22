@@ -37,7 +37,14 @@ def test_period_index_freq_is_offset_alias(forecaster_class, period_freq):
     forecaster = forecaster_class(**params)
     forecaster.fit(y, fh=[1, 2, 3])
 
-    # the resolved frequency must be parseable as a DateOffset, on any pandas
+    # the resolved frequency must be the offset alias of the index frequency,
+    # not the period alias. the two differ for M, Q and Y, where the period
+    # alias is the one pandas 2 deprecated and pandas 3 removed. asserting on
+    # equality rather than on the pandas 3 ValueError keeps this a regression
+    # test on pandas 2 as well, where the period alias still resolves
+    assert forecaster._freq == y.index.freq.freqstr
+
+    # and it must be parseable as a DateOffset, on any pandas
     pd.tseries.frequencies.to_offset(forecaster._freq)
 
     y_pred = forecaster.predict()
