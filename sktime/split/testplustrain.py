@@ -38,9 +38,8 @@ class TestPlusTrainSplitter(BaseSplitter):
     """
 
     _tags = {
-        # test skip flags
-        # ---------------
-        "tests:skip_all": True,  # undiagnosed failures, see #6194
+        # default for split_series_uses, cloned from cv in __dynamic_tags__
+        "split_series_uses": "iloc",
     }
 
     def __init__(self, cv):
