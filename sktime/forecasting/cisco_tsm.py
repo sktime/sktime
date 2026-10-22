@@ -124,6 +124,7 @@ class CiscoTSMForecaster(BaseForecaster):
         "python_version": ">=3.11,<3.14",
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "None",
         "capability:multivariate": False,
