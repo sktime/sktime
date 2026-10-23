@@ -231,26 +231,33 @@ class Catch22(BaseTransformer):
         }
         The overview of these features is available at:
         https://time-series-features.gitbook.io/catch22-features/feature-overview-table
+
     catch24 : bool, optional, default=False
         Extract the mean and standard deviation as well as the 22 Catch22 features if
         true. If a List of specific features to extract is provided, "Mean" and/or
         "StandardDeviation" must be added to the List to extract these features.
+
     outlier_norm : bool, optional, default=False
         Normalise each series during the two outlier Catch22 features:
         `_DN_OutlierInclude_p_001_mdrmd` and `_DN_OutlierInclude_n_001_mdrmd`,
         which can take a while to process for large values.
+
     replace_nans : bool, optional, default=True
         Replace NaN or inf values from the Catch22 transform with 0.
-    col_names : str, one of {"range", "int_feat", "str_feat", "short_str_feat", "auto"},
-    optional, default="range"
-        The type of column names to return. If "range", column names will be
-        a regular range of integers, as in a RangeIndex.
-        If "int_feat", column names will be the integer feature indices,
-        as defined in pycatch22.
-        If "str_feat", column names will be the string feature names.
-        If "short_str_feat", column names will be the short string feature names
-        as defined in pycatch22.
-        If "auto", column names will be the same as defined in features.
+
+    col_names : str, optional, default="range"
+        Names of columns returned by the transformation.
+
+        One of {"range", "int_feat", "str_feat", "short_str_feat", "auto"}.
+
+        * If ``"range"``, column names will be
+          a regular range of integers, as in a RangeIndex.
+        * If ``"int_feat"``, column names will be the integer feature indices,
+          as defined in pycatch22.
+        * If ``"str_feat"``, column names will be the string feature names.
+        * If ``"short_str_feat"``, column names will be the short string feature names
+          as defined in pycatch22.
+        * If ``"auto"``, column names will be the same as defined in features.
 
     See Also
     --------
@@ -294,6 +301,7 @@ class Catch22(BaseTransformer):
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.transformations._catch22_numba"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(

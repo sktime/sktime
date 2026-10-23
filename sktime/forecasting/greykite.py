@@ -236,6 +236,7 @@ class GreykiteForecaster(BaseForecaster):
         "python_dependencies": ["greykite>=1.0.0"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,  # Handles univariate targets here.
         "capability:exogenous": True,  # Can handle exogenous variables.
         "capability:missing_values": True,  # Handles missing data.

@@ -153,6 +153,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         "python_dependencies": ["torch"],
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "capability:random_state": True,
         "capability:pretrain": True,
         "property:randomness": "derandomized",

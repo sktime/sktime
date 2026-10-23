@@ -7,6 +7,7 @@
 
 __all__ = ["T0Forecaster"]
 
+import inspect
 from contextlib import nullcontext
 
 import numpy as np
@@ -145,10 +146,16 @@ class T0Forecaster(BaseForecaster):
         # --------------
         "authors": ["siddharth7113"],
         "maintainers": ["siddharth7113"],
-        "python_dependencies": ["tfc-t0"],
+        "python_dependencies": [
+            "tfc-t0",
+            "torch",
+            "einops",
+            "rotary-embedding-torch",
+        ],
         "python_version": ">=3.11",
         # estimator type / capability tags
         # --------------------------------
+        "category": ["deep_learning", "foundation_model"],
         "property:randomness": "random",
         "capability:random_state": True,
         "capability:multivariate": True,
@@ -162,7 +169,10 @@ class T0Forecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:non_contiguous_X": False,
+        # CI and testing tags
+        # -------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_t0"],
     }
 
     def __init__(
@@ -359,8 +369,7 @@ class T0Forecaster(BaseForecaster):
         )
         pred_df.index.names = self._y_index_names
 
-        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
-        return pred_df.loc[dateindex]
+        return pred_df.loc[pred_df.index.isin(pred_out)]
 
     def _predict_quantiles(self, fh, X, alpha):
         """Compute/return prediction quantiles for a forecast.
@@ -413,8 +422,7 @@ class T0Forecaster(BaseForecaster):
         pred_df = pd.DataFrame(data, index=index, columns=columns)
         pred_df.index.names = self._y_index_names
 
-        dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
-        return pred_df.loc[dateindex]
+        return pred_df.loc[pred_df.index.isin(pred_out)]
 
     def _run_forecast(self, fh, X, quantiles):
         """Run the T0 model for ``fh`` and return the forecast plus index helpers.
@@ -452,18 +460,57 @@ class T0Forecaster(BaseForecaster):
         else:
             rng_context = torch.random.fork_rng(devices=[])
 
+        sig = inspect.signature(self.model_.predict)
+        if "quantile_levels" in sig.parameters:
+            predict_kwargs["quantile_levels"] = quantiles
+        else:
+            predict_kwargs["quantiles"] = quantiles
+
         with rng_context:
             if self._random_state is not None:
                 torch.manual_seed(self._random_state)
-            out = self.model_.predict(
-                context, horizon=horizon, quantiles=quantiles, **predict_kwargs
-            )
+            out = self.model_.predict(context, horizon=horizon, **predict_kwargs)
 
         index = (
             ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
         )
-        pred_out = fh.get_expected_pred_idx(self.context_, cutoff=self.cutoff)
+        pred_out = fh.to_absolute(self.cutoff)._values
         return out, index, pred_out
+
+    def _update(self, y, X=None, update_params=True):
+        """Update forecaster with new observations, extending the context series.
+
+        New observations are appended to the stored context (``self.context_``).
+        If ``context_length`` is set, the context is truncated to the most
+        recent ``context_length`` time points after appending.
+
+        ``update_params`` has no effect: T0 is a zero-shot model and does not
+        train, so there are no parameters to update. The context window is
+        always refreshed with the new data.
+
+        Parameters
+        ----------
+        y : sktime time series in ``y_inner_mtype`` format
+            New observations to append to the context.
+        X : sktime time series in ``X_inner_mtype`` format, optional
+            New exogenous observations (ignored here, handled by base class).
+        update_params : bool, optional (default=True)
+            Ignored; included for interface compatibility.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        new_vals = y.values.T  # shape (n_series, n_new_timesteps)
+        self.context_ = np.concatenate([self.context_, new_vals], axis=1)
+
+        if (
+            self.context_length is not None
+            and self.context_.shape[1] > self.context_length
+        ):
+            self.context_ = self.context_[:, -self.context_length :]
+
+        return self
 
     def _build_future_covariates(self, X, n_series, context_len, horizon):
         """Assemble the ``future_covariates`` tensor for the T0 predict call.

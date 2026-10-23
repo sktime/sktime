@@ -265,6 +265,7 @@ class FalconXForecaster(BaseForecaster):
         "python_dependencies": ["requests"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:exogenous": False,

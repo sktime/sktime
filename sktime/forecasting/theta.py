@@ -105,6 +105,7 @@ class ThetaForecaster(ExponentialSmoothing):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -475,6 +476,7 @@ class ThetaModularForecaster(BaseForecaster):
         "authors": ["GuzalBulatova", "fkiraly"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,

@@ -532,6 +532,7 @@ class AutoResearchForecaster(BaseForecaster):
         "python_dependencies": ["litellm"],
         # estimator type
         # --------------
+        "category": ["agentic"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,

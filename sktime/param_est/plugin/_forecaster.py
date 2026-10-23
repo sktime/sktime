@@ -106,6 +106,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": "fkiraly",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
