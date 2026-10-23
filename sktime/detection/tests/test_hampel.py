@@ -35,6 +35,7 @@ def test_hampel_panel(mtype, method, case):
     actual = getattr(detector, method)(panel)
 
     expected = []
+    # single series worked before, test against this case
     for frame in series:
         single = HampelDetector(window_length=3).fit(frame)
         expected.append(getattr(single, method)(frame))
@@ -52,4 +53,3 @@ def test_hampel_panel(mtype, method, case):
         assert actual["ilocs"].tolist() == (
             [2, 2] if case == "issue" else [2] if case == "unequal" else []
         )
-
