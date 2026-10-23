@@ -374,6 +374,7 @@ class PatchTSTForecaster(BaseForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,

@@ -13,7 +13,7 @@ from sktime.base._base import BaseObject
 
 __author__ = ["jgyasu"]
 
-_FUNC_WORKER_MODULE = "sktime.utils.env_managers._func_worker"
+_FUNC_WORKER_MODULE = "sktime.utils._env_managers._func_worker"
 
 
 def env_python(env_dir: str | Path) -> Path:
@@ -204,7 +204,7 @@ class BaseEnvironmentManager(BaseObject):
 
         * script: ``<env_python> <script_path> *args``
         * module: ``<env_python> -m <module> *args``
-        * callable: ``<env_python> -m sktime.utils.env_managers._func_worker``
+        * callable: ``<env_python> -m sktime.utils._env_managers._func_worker``
           with a cloudpickled payload on stdin
 
         Parameters

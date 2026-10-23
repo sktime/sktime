@@ -115,6 +115,7 @@ class FlowStateForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": [
             "largraf",
             "bohnstingl",

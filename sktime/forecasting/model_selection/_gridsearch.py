@@ -268,6 +268,7 @@ class ForecastingGridSearchCV(BaseGridSearch):
     """
 
     _tags = {
+        "category": ["composition", "tuning"],
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?

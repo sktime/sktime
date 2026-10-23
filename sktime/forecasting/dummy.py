@@ -65,6 +65,7 @@ class ForecastKnownValues(BaseForecaster):
         "authors": ["fkiraly", "RobKuebler"],
         # estimator type
         # --------------
+        "category": ["statistical", "naive"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,

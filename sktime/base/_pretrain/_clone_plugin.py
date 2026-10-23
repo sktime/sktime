@@ -1,5 +1,5 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
-"""Clone plugin for preserving pretrained state in forecasters."""
+"""Clone plugin for preserving pretrained state in estimators."""
 
 from copy import deepcopy
 
@@ -16,7 +16,7 @@ class _PretrainedCloner(BaseCloner):
     (tracked in ``_pretrained_attrs``) and copies them to the clone,
     preserving the pretrained state across clone operations.
 
-    Used in cross-validation and other scenarios where forecasters
+    Used in cross-validation and other scenarios where estimators
     are cloned but pretrained state should be preserved.
     """
 

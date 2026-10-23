@@ -23,7 +23,7 @@ import ast
 import re
 
 from sktime.registry._lookup import all_estimators
-from sktime.registry._lookup_sklearn import _all_sklearn_estimators
+from sktime.registry._namespace import _namespace
 
 
 def _extract_class_names(spec):
@@ -52,7 +52,7 @@ def _extract_class_names(spec):
     return cls_name_list
 
 
-def craft(spec, safe=False):
+def craft(spec, safe=False, namespace_plugin=None):
     """Instantiate an object from the specification string.
 
     The ``craft`` utility can be used to deserialize an estimator specification string,
@@ -129,6 +129,12 @@ def craft(spec, safe=False):
           rules, see above for the exact rules.
         * if False, allow all expressions (default behavior).
 
+    namespace_plugin : dict or iterable of (str, object) tuples, optional
+        additional namespace for resolving names in the specification.
+        If a dict is provided, it should map names to objects.
+        If an iterable of tuples is provided, each
+        tuple should be of the form (name, object).
+
     Returns
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
@@ -169,10 +175,17 @@ def craft(spec, safe=False):
     ... '''
     >>> est = craft(spec)
     """
+    # normalize namespace_plugin to dict
+    if namespace_plugin is None:
+        namespace_plugin = {}
+    elif isinstance(namespace_plugin, dict):
+        pass
+    else:
+        namespace_plugin = dict(namespace_plugin)
+
     # retrieve all estimators from sktime and sklearn for namespace resolution
-    register_sktime = dict(all_estimators())  # noqa: F841
-    register_sklearn = dict(_all_sklearn_estimators())  # noqa: F841
-    register = {**register_sklearn, **register_sktime}
+    register = _namespace(include_deps=True)
+    register.update(namespace_plugin)
 
     # Parse the specification once.
     # Both safe and unsafe modes operate on the resulting AST.
@@ -411,7 +424,7 @@ def deps(spec, include_test_deps=False):
         each str is PEP 440 compatible requirement string for craft(spec)
         if spec has no requirements, return is [], the length 0 list
     """
-    register = dict(all_estimators())
+    register = _namespace(include_deps=True)
 
     dep_strs = []
 
@@ -422,8 +435,6 @@ def deps(spec, include_test_deps=False):
                 "in all_estimators scope"
             )
         cls = register[x]
-
-        new_deps = cls.get_class_tag("python_dependencies")
 
         def _resolve_disjunctions(dep):
             """Resolve disjunctions in dependencies by picking first."""
@@ -444,6 +455,9 @@ def deps(spec, include_test_deps=False):
             else:
                 return dep
 
+        if not hasattr(cls, "get_class_tag"):
+            continue
+
         new_deps = cls.get_class_tag("python_dependencies")
         dep_strs += _coerce_dep_strs(new_deps)
 
@@ -451,7 +465,7 @@ def deps(spec, include_test_deps=False):
             test_deps = cls.get_class_tag("tests:python_dependencies")
             dep_strs += _coerce_dep_strs(test_deps)
 
-        reqs = list(set(dep_strs))
+    reqs = list(set(dep_strs))
 
     return reqs
 
@@ -482,7 +496,7 @@ def imports(spec):
         python code consisting of all import statements required for spec
         imports cover object/estimator classes found as sub-strings of spec
     """
-    register = dict(all_estimators())
+    register = _namespace(include_deps=True)
 
     import_strs = []
 

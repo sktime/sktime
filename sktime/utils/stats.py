@@ -27,7 +27,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     array : 1D or 2D array
         Values to take the weighted percentile of.
 
-    sample_weight: 1D or 2D array
+    sample_weight: 1D or 2D array-like
         Weights for each value in `array`. Must be same shape as `array` or
         of shape `(array.shape[0],)`.
 
@@ -39,6 +39,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     percentile : int if `array` 1D, ndarray if `array` 2D
         Weighted percentile.
     """
+    sample_weight = np.asarray(sample_weight)
     n_dim = array.ndim
     if n_dim == 0:
         return array[()]

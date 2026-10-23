@@ -132,6 +132,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["statistical", "naive"],
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
@@ -689,6 +690,7 @@ class NaiveVariance(BaseForecaster):
         "authors": ["fkiraly", "bethrice44"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
