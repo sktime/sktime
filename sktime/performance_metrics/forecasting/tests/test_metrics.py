@@ -632,3 +632,64 @@ def test_msle_no_stdout_on_index_mismatch():
     with contextlib.redirect_stdout(buf):
         mean_squared_log_error(y_true, y_pred)
     assert buf.getvalue() == ""
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("multioutput", ["raw_values", "uniform_average"])
+def test_msle_square_root(multioutput):
+    """MeanSquaredLogError(square_root=True) must return RMSLE, not MSLE.
+
+    The class stored ``square_root`` but never used it, so it returned MSLE.
+    ``evaluate_by_index`` must return the jackknife pseudo-values of RMSLE.
+    """
+    from sktime.performance_metrics.forecasting import MeanSquaredLogError
+    from sktime.performance_metrics.forecasting._base import (
+        BaseForecastingErrorMetric,
+    )
+
+    rng = np.random.default_rng(42)
+    y_true = pd.DataFrame(rng.random((10, 2)) * 10, columns=["a", "b"])
+    y_pred = y_true * np.exp(rng.normal(0, 0.2, size=(10, 2)))
+
+    log_diff = np.log1p(y_true.values) - np.log1p(y_pred.values)
+    expected = np.sqrt(np.mean(log_diff**2, axis=0))
+    if multioutput == "uniform_average":
+        expected = expected.mean()
+
+    rmsle = MeanSquaredLogError(square_root=True, multioutput=multioutput)
+    assert np.allclose(rmsle(y_true, y_pred), expected)
+
+    # closed-form pseudo-values agree with the generic leave-one-out jackknife
+    by_index = rmsle.evaluate_by_index(y_true, y_pred)
+    jackknife = BaseForecastingErrorMetric._evaluate_by_index(rmsle, y_true, y_pred)
+    assert np.allclose(by_index, jackknife)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_msle_univariate_series_vs_single_column_frame():
+    """mean_squared_log_error must not broadcast a 1D y_true against (fh, 1) y_pred.
+
+    Without input coercion, a pd.Series y_true and a single-column pd.DataFrame
+    y_pred broadcast to an (fh, fh) array and return a wrong value without error.
+    """
+    from sktime.performance_metrics.forecasting import (
+        MeanSquaredLogError,
+        mean_squared_log_error,
+    )
+
+    rng = np.random.default_rng(42)
+    y_true = pd.Series(rng.random(10) * 5 + 1)
+    y_pred = y_true * 1.1
+    expected = mean_squared_log_error(y_true, y_pred)
+
+    y_pred_frame = y_pred.to_frame()
+    assert np.isclose(mean_squared_log_error(y_true, y_pred_frame), expected)
+    assert np.isclose(MeanSquaredLogError()(y_true, y_pred_frame), expected)
+    raw = mean_squared_log_error(y_true, y_pred_frame, multioutput="raw_values")
+    assert raw.shape == (1,)
