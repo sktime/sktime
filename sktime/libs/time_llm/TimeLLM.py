@@ -23,6 +23,31 @@ from sktime.libs.time_llm.layers.StandardNorm import Normalize
 
 transformers.logging.set_verbosity_error()
 
+_TINY_RANDOM_VOCAB = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
+
+
+def _tiny_random_bert_tokenizer():
+    """Build a 5-token BERT tokenizer matching TINY_RANDOM ``vocab_size``.
+
+    ``BertTokenizer()`` requires a ``vocab_file``. The tokens are the standard
+    BERT specials so prompt ids stay inside the tiny embedding table.
+    """
+    import os
+    import tempfile
+
+    fd, path = tempfile.mkstemp(
+        prefix="sktime_time_llm_tiny_", suffix=".txt", text=True
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write("\n".join(_TINY_RANDOM_VOCAB) + "\n")
+        return BertTokenizer(vocab_file=path, do_lower_case=False)
+    finally:
+        try:
+            os.unlink(path)
+        except OSError:
+            pass
+
 
 class FlattenHead(nn.Module):
     """A module that flattens and transforms the input data."""
@@ -171,7 +196,7 @@ class Model(nn.Module):
             self.bert_config.output_hidden_states = True
 
             self.llm_model = BertModel(self.bert_config)
-            self.tokenizer = BertTokenizer()
+            self.tokenizer = _tiny_random_bert_tokenizer()
         else:
             raise Exception("LLM model is not defined")
 

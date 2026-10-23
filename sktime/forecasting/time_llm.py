@@ -89,6 +89,7 @@ class TimeLLMForecaster(BaseForecaster):
         # ---------------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.time_llm"],
+        "tests:specific": ["sktime.forecasting.tests.test_time_llm"],
     }
 
     def __init__(
