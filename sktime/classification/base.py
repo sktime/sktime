@@ -6,15 +6,18 @@ Defining methods:
     fitting         - fit(self, X, y)
     predicting      - predict(self, X)
                     - predict_proba(self, X)
+    pretraining     - pretrain(self, X, y=None)
 
 Inherited inspection methods:
-    hyper-parameter inspection  - get_params()
-    fitted parameter inspection - get_fitted_params()
+    hyper-parameter inspection      - get_params()
+    fitted parameter inspection     - get_fitted_params()
+    pretrained parameter inspection - get_pretrained_params()
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
+    estimator state         - state, one of "new", "pretrained", "fitted"
 """
 
 __all__ = [
@@ -64,6 +67,7 @@ class BaseClassifier(BasePanelMixin):
         "capability:categorical_in_X": True,
         "capability:predict_proba": False,
         "capability:class_weight": False,  # can the classifier use class weights?
+        "capability:pretrain": False,  # can the classifier learn in pretrain?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "requires_cython": False,  # whether C compiler is required in env, e.g., gcc
         "authors": "sktime developers",  # author(s) of the object
@@ -101,6 +105,8 @@ class BaseClassifier(BasePanelMixin):
         self._estimator_type = "classifier"
         self._is_vectorized = False
         self._converter_store_y = {}
+
+        self._state = "new"
 
         super().__init__()
 
@@ -191,6 +197,7 @@ class BaseClassifier(BasePanelMixin):
         Writes to self:
             Sets self.is_fitted to True.
             Sets fitted model attributes ending in "_".
+            Pretrained model attributes, set by ``pretrain``, are retained.
 
         Parameters
         ----------
@@ -227,8 +234,10 @@ class BaseClassifier(BasePanelMixin):
         """
         _check_estimator_deps(self)
 
-        # reset estimator at the start of fit
-        self.reset()
+        # skip reset on the first fit after pretrain; on refit, discard
+        # task-specific fitted state while retaining pretrained state
+        if not self._state == "pretrained":
+            self._reset_at("pretrained")
 
         # fit timer start
         start = int(round(time.time() * 1000))
