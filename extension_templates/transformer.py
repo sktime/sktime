@@ -232,6 +232,33 @@ class MyTransformer(BaseTransformer):
         # applicable only if scitype:transform-output is not "Primitives"
         # used for search index and validity checking, does not raise direct exception
         #
+        # capability:unequal_length:adds = can equal-length input become unequal output?
+        "capability:unequal_length:adds": False,
+        # valid values: boolean True (yes), False (no)
+        # applicable only if scitype:transform-output is not "Primitives"
+        #
+        # capability:categorical_in_X = can estimator handle categorical columns in X?
+        "capability:categorical_in_X": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:categorical_in_y = can estimator handle categorical columns in y?
+        "capability:categorical_in_y": False,
+        # valid values: boolean True (yes), False (no)
+        #
+        # capability:update = does transformer support streaming update?
+        "capability:update": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, implement _update for on-line / stream updates
+        #
+        # capability:bootstrap_index = bootstrap can return bootstrap indices?
+        "capability:bootstrap_index": False,
+        # valid values: boolean True (yes), False (no)
+        # only for bootstrap transformers with a return_indices parameter
+        #
+        # capability:hierarchical_reconciliation = reconciles hierarchical series?
+        "capability:hierarchical_reconciliation": False,
+        # valid values: boolean True (yes), False (no)
+        #
         # handles-missing-data = can the transformer handle missing data (np or pd.NA)?
         "capability:missing_values": False,  # can estimator handle missing data?
         # valid values: boolean True (yes), False (no)
