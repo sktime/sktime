@@ -21,6 +21,25 @@ class DetectionCount(BaseDetectionMetric):
         and the number of detections.
         If True, the count is the number of detections in excess of the target
         if larger, otherwise zero.
+
+    Examples
+    --------
+    ``DetectionCount`` is an unsupervised metric, so only ``y_pred`` is required.
+    The default counts the number of detected events:
+
+    >>> import pandas as pd
+    >>> from sktime.performance_metrics.detection import DetectionCount
+    >>> y_pred = pd.DataFrame({"ilocs": [2, 5, 8]})
+    >>> DetectionCount()(y_pred=y_pred)
+    3.0
+
+    With a non-zero ``target``, the absolute deviation from the target is returned,
+    while ``excess_only`` reports only detections in excess of the target:
+
+    >>> DetectionCount(target=2)(y_pred=y_pred)
+    1.0
+    >>> DetectionCount(target=5, excess_only=True)(y_pred=y_pred)
+    0.0
     """
 
     _tags = {
@@ -28,9 +47,6 @@ class DetectionCount(BaseDetectionMetric):
         "requires_X": False,
         "requires_y_true": False,  # this is an unsupervised metric
         "lower_is_better": True,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, target=0, excess_only=False):
