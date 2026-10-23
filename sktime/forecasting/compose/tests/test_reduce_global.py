@@ -426,3 +426,21 @@ def test_timezoneaware_index():
 
     # These should give us identical predictions
     np.testing.assert_almost_equal(pred_tzaware.values, pred_tznaive.values)
+
+
+@pytest.mark.parametrize("truncate, n_rows", [("bfill", 5), (None, 3)])
+def test_global_reduction_retains_backfilled_rows(truncate, n_rows):
+    """Explicit backfilling preserves usable training rows and aligns exogenous data."""
+    from sktime.forecasting.compose._reduce import _sliding_window_transform_global
+    from sktime.transformations.summarize import WindowSummarizer
+
+    index = pd.period_range("2020-01", periods=5, freq="M")
+    y = pd.DataFrame({"y": [10.0, 12.0, 11.0, 13.0, 15.0]}, index=index)
+    X = pd.DataFrame({"external": np.arange(5, dtype=float)}, index=index)
+    transformer = WindowSummarizer(
+        lag_feature={"lag": [1, 2]}, truncate=truncate, n_jobs=1
+    )
+    yt, Xt = _sliding_window_transform_global(y, 2, X, [transformer])
+    pd.testing.assert_frame_equal(yt, y.iloc[-n_rows:])
+    pd.testing.assert_frame_equal(Xt[["external"]], X.iloc[-n_rows:])
+    assert not Xt.isna().any().any()
