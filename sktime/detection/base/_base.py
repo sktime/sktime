@@ -432,8 +432,29 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         ----------
         X : pd.DataFrame, pd.Series or np.ndarray
             Training data to update model with (time series).
-        y : pd.Series, optional
-            Ground truth labels for training if detector is supervised.
+        y : pd.DataFrame with RangeIndex, optional.
+            Known events for updating, in ``X``, if detector is supervised.
+
+            Each row of ``y`` is a known event.
+            Can have the following columns:
+
+            * ``"ilocs"`` - always. Values encode where/when the event takes place,
+              via ``iloc`` references to indices of ``X``,
+              or ranges to indices of ``X``, as below.
+            * ``"label"`` - if the task, by tags, is supervised or semi-supervised
+              segmentation with labels, or segment clustering.
+
+            The meaning of entries in the ``"ilocs"`` column and ``"labels"``
+            column describe the event in a given row as follows:
+
+            * If ``task`` is ``"anomaly_detection"`` or ``"change_point_detection"``,
+              ``"ilocs"`` contains the iloc index at which the event takes place,
+              relative to the passed batch ``X``.
+            * If ``task`` is ``"segmentation"``, ``"ilocs"`` contains left-closed
+              intervals of iloc based segments, interpreted as the range
+              of indices over which the event takes place, relative to the batch ``X``.
+
+            Labels (if present) in the ``"labels"`` column indicate the type of event.
 
         Returns
         -------
@@ -452,10 +473,43 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         if self.get_tag("fit_is_empty", False):
             return self
 
+        # store length of current X before pooling, to translate batch-local ilocs
+        n_old_X = len(self._X)
+
         self._X = X_inner.combine_first(self._X)
 
         if y is not None:
-            self._y = y.combine_first(self._y)
+            # translate batch-local ilocs in y to positions in the pooled self._X.
+            # for point ilocs (anomaly_detection/change_point_detection):
+            #   shift each iloc by n_old_X
+            # for interval ilocs (segmentation):
+            #   shift both interval endpoints by n_old_X
+            # this ensures self._y always references positions in self._X consistently
+            if "ilocs" in y.columns and len(y) > 0:
+                y_shifted = y.copy()
+                first_iloc = y_shifted["ilocs"].iloc[0]
+                if hasattr(first_iloc, "left"):
+                    # interval-valued ilocs (segmentation task)
+                    y_shifted["ilocs"] = y_shifted["ilocs"].apply(
+                        lambda iv: pd.Interval(
+                            iv.left + n_old_X,
+                            iv.right + n_old_X,
+                            closed=iv.closed,
+                        )
+                    )
+                else:
+                    # scalar ilocs (anomaly_detection / change_point_detection)
+                    y_shifted["ilocs"] = y_shifted["ilocs"] + n_old_X
+            else:
+                y_shifted = y.copy() if y is not None else y
+
+            # pool labels: append new (shifted) events after the previously seen ones.
+            # pd.concat with ignore_index=True re-numbers the RangeIndex, preventing
+            # the combine_first alignment bug that overwrote earlier events.
+            if self._y is None:
+                self._y = y_shifted.reset_index(drop=True)
+            else:
+                self._y = pd.concat([self._y, y_shifted], ignore_index=True)
 
         if _method_has_arg(self._update, "y"):
             self._update(X=X_inner, y=y)
