@@ -34,6 +34,7 @@ from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.series import check_series
+from sktime.utils.warnings import warn
 
 
 class BaseDetector(_PretrainMixin, BaseEstimator):
@@ -91,12 +92,44 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         "X_inner_mtype": "pd.DataFrame",
         "fit_is_empty": False,
     }
+    _config = {
+        "remember_data": True,
+    }
+
+    _config_doc = {
+        "remember_data": """
+        remember_data : bool, default=True
+            Whether self._X and self._y are stored during fit and updated
+            during update. If True, data is stored and updated. If False,
+            data is not stored or updated. This reduces serialization size,
+            but the default update cannot refit without stored data.
+        """,
+    }
 
     def __init__(self):
         self._state = "new"
 
         super().__init__()
 
+        self._y = None
+        self._X = None
+
+        # todo 1.3.0: change default of remember_data to False and remove this warning
+        if self.get_config()["remember_data"]:
+            self._y = None
+            self._X = None
+            warn(
+                "The default of config ``remember_data`` will change from "
+                "``True`` to ``False`` in sktime 1.3.0. After 1.3.0, "
+                "``BaseDetector`` will no longer store incremental data in "
+                "``_X`` and ``_y`` by default. To silence this warning and "
+                "adopt the new default early, set ``remember_data=False`` "
+                "via ``set_config``. To keep storing incremental data and "
+                "refitting on every update after the default change, set "
+                "``remember_data=True`` explicitly.",
+                FutureWarning,
+                self,
+            )
         # this block has a double purpose:
         # - emit a warning if dependencies are not met, but allow instantiation
         # - if dependencies are met, call __post_init__ used by inheriting classes
@@ -290,8 +323,9 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
             self._is_fitted = True
             return self
 
-        self._X = X
-        self._y = y
+        if self.get_config()["remember_data"]:
+            self._X = X
+            self._y = y
 
         if _method_has_arg(self._fit, "y"):
             self._fit(X=X_inner, y=y)  # X_inner is the converted X
@@ -452,10 +486,10 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         if self.get_tag("fit_is_empty", False):
             return self
 
-        self._X = X_inner.combine_first(self._X)
-
-        if y is not None:
-            self._y = y.combine_first(self._y)
+        if self.get_config()["remember_data"]:
+            self._X = X_inner.combine_first(self._X)
+            if y is not None:
+                self._y = y.combine_first(self._y)
 
         if _method_has_arg(self._update, "y"):
             self._update(X=X_inner, y=y)
@@ -983,7 +1017,15 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         Updates fitted model that updates attributes ending in "_".
         """
         # default/fallback: re-fit to all data
-        self._fit(self._X, self._y)
+        if self.get_config()["remember_data"]:
+            self._fit(self._X, self._y)
+        else:
+            warn(
+                "The default `_update` cannot refit because "
+                "`remember_data=False`. The model is unchanged.",
+                UserWarning,
+                self,
+            )
 
         return self
 

@@ -1066,7 +1066,7 @@ class remember_data(_BaseTag):
     - Public behaviour flag
     - Values: boolean, ``True`` / ``False``
     - Example: ``True``
-    - Default: ``False`` (transformers), ``True`` (forecasters)
+    - Default: ``False`` (transformers), ``True`` (forecasters, detectors)
 
     Developer tag that modifies behaviour of the boilerplate layer.
 
@@ -1092,7 +1092,7 @@ class remember_data(_BaseTag):
 
     _tags = {
         "tag_name": "remember_data",
-        "parent_type": ["forecaster", "transformer"],
+        "parent_type": ["forecaster", "transformer", "detector"],
         "tag_type": "bool",
         "short_descr": (
             "whether estimator remembers all data seen as self._X, self._y, etc"
