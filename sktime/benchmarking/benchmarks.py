@@ -357,23 +357,20 @@ class BaseBenchmark:
            activated in the parent process.
 
     env_manager : BaseEnvironmentManager, optional (default=None)
-        Manager that creates environments and launches
-        ``sktime.benchmarking._worker``. ``None`` builds a
+        Manager that creates environments and runs this benchmark's
+        ``_run_validation`` in the child process. ``None`` builds a
         ``UvEnvironmentManager`` that installs ``cloudpickle`` and the
-        same ``sktime`` version as the parent process
-        , using the parent interpreter.
-        A different Python version is not supported because the worker
-        unpickles estimators and tasks with ``cloudpickle``.
-        To use a local checkout of sktime instead, pass a manager
-         with ``editable`` set.
+        same ``sktime`` version as the parent process, using the parent
+        interpreter. A different Python version is not supported because
+        the child unpickles estimators and tasks with ``cloudpickle``.
+        To use a local checkout of sktime instead, pass a manager with
+        ``editable`` set.
 
     envs_dir : str or pathlib.Path, optional (default=None)
         Directory for isolated environments when ``env_manager`` is
         ``None``. ``None`` uses ``.benchmark_envs`` in the current working
         directory.
     """
-
-    _benchmark_kind: str = ""
 
     def __init__(
         self,
@@ -872,21 +869,41 @@ class BaseBenchmark:
             )
         return self._env_manager
 
-    def _run_validation_isolated(self, task: TaskObject, estimator: BaseEstimator):
-        """Run validation for one pair in an isolated ``uv`` subprocess."""
-        if not self._benchmark_kind:
-            raise NotImplementedError(
-                f"{type(self).__name__} must set _benchmark_kind for isolated execution"
-            )
+    def _get_isolated_init_params(self) -> dict:
+        """Return constructor kwargs for the child benchmark.
 
+        The child is ``type(self)(**params)`` and then calls
+        ``_run_validation``. ``env_mode`` is ``"current"`` so the child
+        does not isolate again. Subclasses whose constructor takes further
+        arguments that ``_run_validation`` reads should override this and
+        include them.
+
+        Returns
+        -------
+        dict
+            Keyword arguments for the benchmark constructor.
+        """
+        return {
+            "id_format": self.id_format,
+            "backend": self.backend,
+            "backend_params": self.backend_params,
+            "return_data": self.return_data,
+            "env_mode": "current",
+        }
+
+    def _run_validation_isolated(self, task: TaskObject, estimator: BaseEstimator):
+        """Run this class's ``_run_validation`` in an isolated subprocess.
+
+        The child builds a fresh instance of ``type(self)`` and calls its
+        ``_run_validation``. The parent instance is not pickled, so tasks
+        and estimators registered on it are not sent to the child.
+        """
         from sktime.benchmarking._isolated_runner import run_isolated_validation
 
         return run_isolated_validation(
-            benchmark_kind=self._benchmark_kind,
+            benchmark_cls=type(self),
+            init_params=self._get_isolated_init_params(),
             task=task,
             estimator=estimator,
-            backend=self.backend,
-            backend_params=self.backend_params,
-            return_data=self.return_data,
             env_manager=self._get_env_manager(),
         )

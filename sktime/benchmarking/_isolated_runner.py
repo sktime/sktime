@@ -1,11 +1,10 @@
-# ruff: noqa: S603
-
 """Run benchmark validation in an isolated environment subprocess."""
 
 from __future__ import annotations
 
 import builtins
 import logging
+import traceback
 
 import cloudpickle
 
@@ -16,38 +15,71 @@ from sktime.utils._env_managers import BaseEnvironmentManager
 
 logger = logging.getLogger(__name__)
 
-_WORKER_MODULE = "sktime.benchmarking._worker"
+
+def _execute_validation(benchmark_cls, init_params, task, estimator):
+    """Build a fresh benchmark and call its ``_run_validation``.
+
+    Module-level so the child process receives this function, not a bound
+    method of the parent benchmark. A bound method would pickle the parent
+    and every task and estimator registered on it.
+
+    Parameters
+    ----------
+    benchmark_cls : type
+        Benchmark class to instantiate. Any subclass of ``BaseBenchmark``
+        whose ``_run_validation`` is implemented.
+    init_params : dict
+        Constructor arguments for ``benchmark_cls``. Must not turn isolation
+        back on.
+    task : TaskObject
+        Single task to validate.
+    estimator : estimator
+        Single estimator to validate.
+
+    Returns
+    -------
+    dict
+        ``{"status": "success", "folds": ...}`` or
+        ``{"status": "error", ...}``.
+    """
+    benchmark = benchmark_cls(**init_params)
+    try:
+        folds = benchmark._run_validation(task, estimator)
+    except Exception as exc:
+        return {
+            "status": "error",
+            "exception_type": type(exc).__name__,
+            "exception_message": str(exc),
+            "traceback": traceback.format_exc(),
+        }
+    return {"status": "success", "folds": folds}
 
 
 def run_isolated_validation(
     *,
-    benchmark_kind: str,
+    benchmark_cls: type,
+    init_params: dict,
     task: TaskObject,
     estimator: BaseEstimator,
-    backend,
-    backend_params,
-    return_data: bool,
     env_manager: BaseEnvironmentManager,
 ) -> dict:
-    """Run ``_run_validation`` in a dedicated environment subprocess.
+    """Run ``benchmark_cls._run_validation`` in an isolated environment.
 
     Parameters
     ----------
-    benchmark_kind : str
-        Either ``"classification"`` or ``"forecasting"``.
+    benchmark_cls : type
+        Benchmark class whose ``_run_validation`` performs the validation.
+        The child instantiates this class; it does not receive the parent
+        instance.
+    init_params : dict
+        Constructor arguments for a fresh ``benchmark_cls`` in the child.
     task : TaskObject
         Benchmark task definition.
     estimator : BaseEstimator
         Estimator to evaluate.
-    backend : str or None
-        Parallel backend passed to ``evaluate``.
-    backend_params : dict or None
-        Backend parameters passed to ``evaluate``.
-    return_data : bool
-        Whether fold predictions are returned.
     env_manager : BaseEnvironmentManager
-        Manager used to create or reuse a pair environment and launch
-        ``sktime.benchmarking._worker``.
+        Manager used to create or reuse a pair environment and run
+        ``_execute_validation``.
 
     Returns
     -------
@@ -55,14 +87,6 @@ def run_isolated_validation(
         Fold results mapping, as returned by ``_run_validation``.
     """
     requirements = collect_pair_requirements(estimator, task)
-    payload = {
-        "benchmark_kind": benchmark_kind,
-        "task": task,
-        "estimator": estimator,
-        "backend": backend,
-        "backend_params": backend_params,
-        "return_data": return_data,
-    }
 
     logger.debug(
         "Launching isolated validation (requirements: %s)",
@@ -70,9 +94,9 @@ def run_isolated_validation(
     )
 
     proc = env_manager.run(
-        _WORKER_MODULE,
+        _execute_validation,
         requirements=requirements,
-        input=cloudpickle.dumps(payload),
+        args=(benchmark_cls, init_params, task, estimator),
     )
 
     if proc.returncode != 0:
