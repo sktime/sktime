@@ -1483,3 +1483,24 @@ class TestAllEstimators(BaseFixtureGenerator, QuickTester):
             # skip them for the underlying network
             if vars(estimator._network).get(key) is not None:
                 assert vars(estimator._network)[key] == value
+
+    def test_random_seed_no_side_effects(self, object_instance, scenario):
+
+        estimator = object_instance
+        set_random_state(estimator)
+
+        np.random.seed(42)
+        state_before = np.random.get_state()
+
+        scenario.run(estimator, method_sequence=["fit"])
+
+        state_after = np.random.get_state()
+
+        np.testing.assert_array_equal(
+            state_before[1],
+            state_after[1],
+            err_msg=(
+                f"{type(estimator).__name__}.fit() modified "
+                "the global NumPy random state."
+            ),
+        )  
