@@ -274,9 +274,11 @@ class FalconXForecaster(BaseForecaster):
         "capability:missing_values": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_falcon_x"],
     }
 
     def __init__(
@@ -339,6 +341,46 @@ class FalconXForecaster(BaseForecaster):
         self : reference to self
         """
         self.context_ = y
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update Falcon-X context without API calls or refitting.
+
+        Falcon-X is zero-shot: ``_predict`` builds context from ``self.context_``
+        and only the trailing ``context_length`` observations are used (see
+        ``_build_context``). Base ``_update`` would either refit or leave
+        ``self.context_`` stale. Append new observations and trim instead.
+
+        ``update_params`` is ignored: there are no trainable parameters here.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            New endogenous observations.
+        X : ignored
+        update_params : bool, optional (default=True)
+            Ignored for this zero-shot estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        self.context_ = update_data(self.context_, y)
+
+        if self.context_length is not None and len(self.context_) > self.context_length:
+            self.context_ = self.context_.iloc[-self.context_length :]
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if (
+                y_stored is not None
+                and self.context_length is not None
+                and len(y_stored) > self.context_length
+            ):
+                self._y = y_stored.iloc[-self.context_length :]
+
         return self
 
     def _predict(self, fh, X=None):
