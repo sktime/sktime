@@ -548,11 +548,54 @@ def _get_folds(row, extract_data=True):
     return folds
 
 
+# pandas scalars whose repr can appear in tabular storage, e.g., in the index of
+# stored ground truth, predictions or train data, and their constructors
+_PANDAS_SCALARS = {"Period": pd.Period, "Timestamp": pd.Timestamp}
+
+
+def _literal_eval(value):
+    """Evaluate a stored string like ``ast.literal_eval``, allowing pandas scalars.
+
+    Data frames are stored in tabular formats as the string of their "tight"
+    dictionary. For period or datetime indices, or missing values, that string
+    contains ``Period(...)``, ``Timestamp(...)`` or ``nan``, which
+    ``ast.literal_eval`` rejects. These are reconstructed here, everything else
+    is delegated to ``ast.literal_eval``.
+
+    Parameters
+    ----------
+    value : str or ast.AST
+        String to evaluate, or a node of its parsed expression.
+
+    Returns
+    -------
+    object
+        The evaluated python object.
+    """
+    if isinstance(value, str):
+        value = ast.parse(value.strip(), mode="eval").body
+    if isinstance(value, ast.List):
+        return [_literal_eval(elt) for elt in value.elts]
+    if isinstance(value, ast.Tuple):
+        return tuple(_literal_eval(elt) for elt in value.elts)
+    if isinstance(value, ast.Name) and value.id == "nan":
+        return float("nan")
+    if (
+        isinstance(value, ast.Call)
+        and isinstance(value.func, ast.Name)
+        and value.func.id in _PANDAS_SCALARS
+    ):
+        args = [_literal_eval(arg) for arg in value.args]
+        kwargs = {kw.arg: _literal_eval(kw.value) for kw in value.keywords}
+        return _PANDAS_SCALARS[value.func.id](*args, **kwargs)
+    return ast.literal_eval(value)
+
+
 def _create_df(fold_gts):
     df_params = {}
     for name, value in fold_gts.items():
         if isinstance(value, str):
-            df_params[name.split(".")[-1]] = ast.literal_eval(value)
+            df_params[name.split(".")[-1]] = _literal_eval(value)
         else:
             df_params[name.split(".")[-1]] = value
     df = pd.DataFrame.from_dict(df_params, orient="tight")
