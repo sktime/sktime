@@ -318,6 +318,7 @@ class ChronosForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
+        "capability:update": True,
         # testing configuration
         # ---------------------
         "tests:vm": True,
@@ -441,6 +442,54 @@ class ChronosForecaster(BaseForecaster):
         """
         self.model_pipeline = self._load_pipeline()
         self._context = y
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update Chronos context without reloading the pretrained pipeline.
+
+        Prediction reads ``self._context`` and only the trailing
+        ``context_length`` observations are used. Base ``_update`` would either
+        refit on all remembered data or leave ``self._context`` stale. Append
+        new observations and trim instead.
+
+        ``update_params`` is ignored: Chronos is used zero-shot.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            New endogenous observations.
+        X : ignored
+        update_params : bool, optional (default=True)
+            Ignored for this zero-shot estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        self._context = update_data(self._context, y)
+
+        self._ensure_model_pipeline_loaded()
+        model_config = self.model_pipeline.model.config
+        context_length = getattr(model_config, "context_length", None) or (
+            model_config.chronos_config["context_length"]
+            if hasattr(model_config, "chronos_config")
+            else None
+        )
+
+        if context_length is not None and len(self._context) > context_length:
+            self._context = self._context.iloc[-context_length:]
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if (
+                y_stored is not None
+                and context_length is not None
+                and len(y_stored) > context_length
+            ):
+                self._y = y_stored.iloc[-context_length:]
+
         return self
 
     def _get_chronos_kwargs(self):
