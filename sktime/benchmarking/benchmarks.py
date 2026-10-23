@@ -1,14 +1,23 @@
 """Benchmarking interface for use with sktime objects."""
 
 import logging
+import platform
 import warnings
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
+from sktime import __version__ as SKTIME_VERSION
 from sktime.base import BaseEstimator
 from sktime.benchmarking._benchmarking_dataclasses import (
+    BenchmarkMetadata,
+    ComponentMetadata,
+    EstimatorMetadata,
     ResultObject,
+    TaskMetadata,
     TaskObject,
 )
 from sktime.benchmarking._results_persistence import BenchmarkResultsPersistence
@@ -121,6 +130,84 @@ class FailedExperimentRecord:
     model_id: str
     exception_type: str
     exception_message: str
+
+
+def _metadata_path(results_path: str | Path) -> Path:
+    """Return the metadata JSON path paired with a results file.
+
+    ``results.csv`` is paired with ``results_metadata.json`` in the same
+    directory.
+    """
+    path = Path(results_path)
+    return path.with_name(f"{path.stem}_metadata.json")
+
+
+def _json_safe(value):
+    """Coerce a tag value to a JSON-serializable object."""
+    if value is None or isinstance(value, (str, bool, int, float)):
+        return value
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    if isinstance(value, type):
+        return value.__name__
+    if isinstance(value, np.generic):
+        return _json_safe(value.item())
+    if isinstance(value, np.ndarray):
+        return _json_safe(value.tolist())
+    return str(value)
+
+
+def _object_tags(obj) -> dict | None:
+    """Return all tags for ``obj``.
+
+    Returns ``None`` when ``obj`` does not implement sktime tags. sklearn
+    splitters, sklearn metric functions, and plain dataset callables are
+    left untagged.
+    """
+    if isinstance(obj, type):
+        get_tags = getattr(obj, "get_class_tags", None)
+    else:
+        get_tags = getattr(obj, "get_tags", None)
+    if not callable(get_tags):
+        return None
+
+    raw_tags = get_tags()
+    if not isinstance(raw_tags, dict):
+        return None
+
+    return {name: _json_safe(value) for name, value in sorted(raw_tags.items())}
+
+
+def _component_id(obj) -> str:
+    """Return a stable display id for a task component."""
+    name = getattr(obj, "name", None)
+    if isinstance(name, str) and name:
+        return name
+    obj_name = getattr(obj, "__name__", None)
+    if isinstance(obj_name, str) and obj_name:
+        return obj_name
+    return type(obj).__name__
+
+
+def _component_metadata(obj, component_id: str | None = None) -> ComponentMetadata:
+    """Describe one task component, leaving untagged objects untagged."""
+    if component_id is None:
+        component_id = _component_id(obj)
+    return ComponentMetadata(id=component_id, tags=_object_tags(obj))
+
+
+def _task_metadata(task_id: str, task: TaskObject) -> TaskMetadata:
+    """Describe one registered task from its stored configuration."""
+    cv_global = task.cv_global
+    return TaskMetadata(
+        task_id=task_id,
+        dataset=_component_metadata(task.data, _get_dataset_name(task.data)),
+        cv_splitter=_component_metadata(task.cv_splitter),
+        scorers=[_component_metadata(scorer) for scorer in task.scorers],
+        cv_global=None if cv_global is None else _component_metadata(cv_global),
+    )
 
 
 @dataclass
@@ -359,6 +446,7 @@ class BaseBenchmark:
         self._metrics = []
 
         self._failed_experiments: list[FailedExperimentRecord] = []
+        self._metadata: BenchmarkMetadata | None = None
 
     def add_estimator(
         self,
@@ -579,6 +667,15 @@ class BaseBenchmark:
         """Failed task-estimator pairs from the most recent benchmark run."""
         return list(self._failed_experiments)
 
+    @property
+    def metadata(self) -> BenchmarkMetadata | None:
+        """Metadata from the most recent run requested with ``return_metadata``.
+
+        ``None`` until `run` is called with ``return_metadata=True``. Cleared
+        at the start of every subsequent run.
+        """
+        return self._metadata
+
     def register_stored_tasks(self):
         """Register stored tasks from datasets, metrics, and CV splitters."""
         if not (self._datasets and self._metrics and self._cv_splitters):
@@ -645,7 +742,12 @@ class BaseBenchmark:
         if missing:
             raise ValueError("Benchmark cannot run: " + "; ".join(missing) + ".")
 
-    def _run(self, results_path: str, force_rerun: str | list[str] = "none"):
+    def _run(
+        self,
+        results_path: str,
+        force_rerun: str | list[str] = "none",
+        return_metadata: bool = False,
+    ):
         """Run benchmarking for all registered tasks and estimators.
 
         Parameters
@@ -663,6 +765,9 @@ class BaseBenchmark:
             * ``"all"`` — rerun every task-model pair.
             * list of str — rerun only pairs whose ``model_id`` is in the
               list; other existing results are skipped.
+        return_metadata : bool, optional (default=False)
+            Whether to build a `BenchmarkMetadata` record from the registered
+            tasks and estimators. See `run`.
 
         Returns
         -------
@@ -675,6 +780,7 @@ class BaseBenchmark:
             If no estimators or no tasks are registered, see
             ``_check_ready_to_run``.
         """
+        self._metadata = None
         self._check_ready_to_run()
 
         results = BenchmarkingResults(path=results_path)
@@ -724,7 +830,32 @@ class BaseBenchmark:
 
         if results_path is not None:
             results._save()
+        if return_metadata:
+            self._metadata = self._build_metadata()
+            if results_path is not None:
+                self._metadata.save(_metadata_path(results_path))
         return results.to_df()
+
+    def _build_metadata(self) -> BenchmarkMetadata:
+        """Build metadata from the tasks and estimators registered here."""
+        return BenchmarkMetadata(
+            schema_version=1,
+            timestamp_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            sktime_version=SKTIME_VERSION,
+            python_version=platform.python_version(),
+            tasks=[
+                _task_metadata(task_id, task)
+                for task_id, task in self.tasks.entities.items()
+            ],
+            estimators=[
+                EstimatorMetadata(
+                    estimator_id=estimator_id,
+                    class_name=type(estimator).__name__,
+                    tags=_object_tags(estimator),
+                )
+                for estimator_id, estimator in self.estimators.entities.items()
+            ],
+        )
 
     def _report_failed_experiments(self):
         """Log a summary of failed task-estimator pairs from the current run."""
@@ -762,7 +893,12 @@ class BaseBenchmark:
                 exps.append((task_id, estimator_id, task, estimator))
         return exps
 
-    def run(self, output_file: str = None, force_rerun: str | list[str] = "none"):
+    def run(
+        self,
+        output_file: str = None,
+        force_rerun: str | list[str] = "none",
+        return_metadata: bool = False,
+    ):
         """
         Run the benchmarking for all tasks and estimators.
 
@@ -785,6 +921,13 @@ class BaseBenchmark:
             * ``"all"`` — rerun every task-model pair.
             * list of str — rerun only pairs whose ``model_id`` is in the
               list; other existing results are skipped.
+        return_metadata : bool, optional (default=False)
+            Whether to record a metadata document for this run. The document
+            is built from the tasks and estimators already registered on the
+            benchmark, including their tags. It is stored on
+            `metadata`. When ``output_file`` is also given, it is written
+            next to the results file as ``{stem}_metadata.json``
+            (for example ``results.csv`` produces ``results_metadata.json``).
 
         Returns
         -------
@@ -798,7 +941,7 @@ class BaseBenchmark:
             estimators are registered, or if no tasks are registered because
             a dataset, metric or cv_splitter is missing.
         """
-        return self._run(output_file, force_rerun)
+        return self._run(output_file, force_rerun, return_metadata=return_metadata)
 
     def _run_validation(self, task: TaskObject, estimator: BaseEstimator):
         """Run validation for a single task and estimator."""
