@@ -78,3 +78,75 @@ def test_time_bin_aggregate_bin_mid_uses_midpoints():
     Xt = transformer.fit_transform(X)
 
     assert list(Xt.index) == [1, 3]
+
+
+def _value_range(values):
+    """A scalar-valued aggregation for one variable, including empty bins."""
+    return values.max() - values.min()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimeBinAggregate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("as_interval_index", [False, True])
+@pytest.mark.parametrize(
+    "return_index", ["range", "bin_start", "bin_end", "bin_mid", "bin"]
+)
+@pytest.mark.parametrize(
+    "aggfunc,expected_values",
+    [
+        (None, [[2.0, 102.0], [np.nan, np.nan], [6.0, 106.0]]),
+        (np.sum, [[4.0, 204.0], [0.0, 0.0], [12.0, 212.0]]),
+        (_value_range, [[2.0, 2.0], [np.nan, np.nan], [2.0, 2.0]]),
+    ],
+)
+def test_aggregate_each_variable(
+    as_interval_index, return_index, aggfunc, expected_values
+):
+    """Aggregate columns independently and keep empty bins and variable names."""
+    X = pd.DataFrame(
+        {"low": [1.0, 3.0, 5.0, 7.0], "high": [101.0, 103.0, 105.0, 107.0]},
+        index=[0, 1, 4, 5],
+    )
+    original = X.copy(deep=True)
+    breaks = [-1, 1, 3, 5]
+    intervals = pd.IntervalIndex.from_breaks(breaks)
+    bins = intervals if as_interval_index else breaks
+    expected_index = {
+        "range": pd.RangeIndex(3),
+        "bin_start": pd.Index([-1, 1, 3]),
+        "bin_end": pd.Index([1, 3, 5]),
+        "bin_mid": pd.Index([0, 2, 4]),
+        "bin": intervals,
+    }[return_index]
+    expected = pd.DataFrame(expected_values, index=expected_index, columns=X.columns)
+
+    transformer = TimeBinAggregate(
+        bins=bins, aggfunc=aggfunc, return_index=return_index
+    )
+    if return_index == "bin":
+        # IntervalIndex is not supported by BaseTransformer's output mtype check.
+        # Exercise aggregation directly for this mode; the other modes use the API.
+        transformer.fit(X)
+        result = transformer._transform(X)
+    else:
+        result = transformer.fit_transform(X)
+
+    pd.testing.assert_frame_equal(result, expected)
+    pd.testing.assert_frame_equal(X, original)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimeBinAggregate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("aggfunc,values", [(None, [2.0, 6.0]), (np.sum, [4.0, 12.0])])
+def test_aggregate_named_series(aggfunc, values):
+    """A univariate input keeps its Series name after aggregation."""
+    X = pd.Series([1.0, 3.0, 5.0, 7.0], name="signal")
+    result = TimeBinAggregate(
+        bins=[-1, 1, 3], aggfunc=aggfunc, return_index="range"
+    ).fit_transform(X)
+    expected = pd.Series(values, name="signal")
+    pd.testing.assert_series_equal(result, expected)
