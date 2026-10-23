@@ -8,8 +8,10 @@ from sktime.datatypes._base import BaseConverter
 from sktime.datatypes._convert import get_convert_dict
 from sktime.tests.test_switch import run_test_module_changed
 
-# scitypes whose conversions are fully migrated to BaseConverter classes
-MIGRATED_SCITYPES = ["Hierarchical", "Proba"]
+SCITYPES = ["Series", "Panel", "Hierarchical", "Table", "Proba"]
+
+# mtypes without a datatype class, conversions from/to these stay function based
+MTYPES_WITHOUT_CLASS = ["pd-long", "pd-wide", "pl.LazyFrame"]
 
 
 @pytest.mark.skipif(
@@ -40,20 +42,33 @@ def test_convert_dict_keys_and_values(soft_deps):
     not run_test_module_changed("sktime.datatypes"),
     reason="Test only if sktime.datatypes or utils.parallel has been changed",
 )
-@pytest.mark.parametrize("scitype", MIGRATED_SCITYPES)
-def test_migrated_conversions_are_baseconverters(scitype):
-    """Test that migrated conversions are BaseConverter matching their key."""
+@pytest.mark.parametrize("scitype", SCITYPES)
+def test_conversions_are_baseconverters(scitype):
+    """Test that conversions are BaseConverter matching their key.
+
+    Exceptions are conversions obtained by chaining via ``_extend_conversions``,
+    and conversions from or to mtypes without a datatype class.
+    """
     convert_dict = get_convert_dict(soft_deps="all")
     keys = [k for k in convert_dict if k[2] == scitype]
     assert len(keys) > 0
 
+    n_converters = 0
     for key in keys:
         converter = convert_dict[key]
-        assert isinstance(converter, BaseConverter)
-        assert converter._get_key() == key
         mtype_from, mtype_to, _ = key
-        assert converter.get_tag("mtype_from") == mtype_from
-        assert converter.get_tag("mtype_to") == mtype_to
+        if isinstance(converter, BaseConverter):
+            n_converters += 1
+            assert converter._get_key() == key
+            assert converter.get_tag("mtype_from") == mtype_from
+            assert converter.get_tag("mtype_to") == mtype_to
+        else:
+            no_class = mtype_from in MTYPES_WITHOUT_CLASS
+            no_class = no_class or mtype_to in MTYPES_WITHOUT_CLASS
+            chained = converter.__name__ == "concat_fun"
+            assert no_class or chained, f"{key} is not a BaseConverter"
+
+    assert n_converters > 0
 
 
 @pytest.mark.skipif(

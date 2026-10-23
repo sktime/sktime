@@ -76,8 +76,11 @@ from sktime.datatypes._registry import mtype_to_scitype
 from sktime.datatypes._series import convert_dict_Series
 from sktime.datatypes._table import convert_dict_Table
 
-# conversions not yet migrated to BaseConverter classes,
-# these are function based and merged into the generated convert_dict
+# conversion dicts built in the scitype modules, merged into generate_convert_dict.
+# Direct conversions there are BaseConverter instances, also collected as classes.
+# Remaining function based entries are the conversions obtained by chaining
+# through _extend_conversions, and conversions of mtypes without a datatype class
+# (pd-long, pd-wide, pl.LazyFrame), which cannot be keyed by BaseConverter yet.
 _convert_dict_legacy = dict()
 _convert_dict_legacy.update(convert_dict_Series)
 _convert_dict_legacy.update(convert_dict_Panel)
