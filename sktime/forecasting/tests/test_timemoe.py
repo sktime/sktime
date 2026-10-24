@@ -174,6 +174,19 @@ _TIMEMOE_UPSTREAM_REFERENCE_CASES = [
 # The looser tolerance therefore applies only to the tail of long horizons,
 # and is about 8 times the largest observed drift; heads, and the tails of
 # short horizons, are compared at the default tolerance.
+#
+# The drift is not stochasticity. Prediction is deterministic: the checkpoints
+# have no dropout (``attention_dropout=0.0``, no ``nn.Dropout`` modules),
+# ``from_pretrained`` puts the model in eval mode, the checkpoints' generation
+# config has ``do_sample=False``, and the vendored ``TSGenerationMixin`` only
+# overrides ``_greedy_search``, which uses the regression output directly
+# rather than sampling from it. On one machine, repeated runs of each case
+# below, with ``seed=0``, with ``seed=None``, and calling ``generate``
+# directly without touching the RNG, were bit-identical. Fixing a seed
+# therefore cannot remove the mismatch; only the per-architecture tolerance
+# can. CI showed the same split: before the tolerance was added, all arm64
+# (macOS) jobs passed and the x86-64 (ubuntu, windows) jobs failed, by the
+# relative 6.4e-5 quoted above at most.
 _RTOL = 1e-5
 _RTOL_LONG_HORIZON_TAIL = 5e-4
 _LONG_HORIZON = 100
