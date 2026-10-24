@@ -56,11 +56,13 @@ Questions and feedback are extremely welcome! We strongly believe in the value o
 | :speech_balloon: **General Discussion**        | [GitHub Discussions] |
 | :factory: **Contribution & Development** | `dev-chat` channel · [Discord] |
 | :globe_with_meridians: **Meet-ups and collaboration sessions** | [Discord] - Fridays 13 UTC, dev/meet-ups channel |
+| :robot: **Ask SKTIME Guru** | [Gurubase]                                  |
 
 [github issue tracker]: https://github.com/sktime/sktime/issues
 [github discussions]: https://github.com/sktime/sktime/discussions
 [stack overflow]: https://stackoverflow.com/questions/tagged/sktime
 [discord]: https://discord.com/invite/54ACzaFsn7
+[gurubase]: https://gurubase.io/g/sktime
 
 ## :dizzy: Features
 Our objective is to enhance the interoperability and usability of the time series analysis ecosystem in its entirety. sktime provides a __unified interface for distinct but related time series learning tasks__. It features [__dedicated time series algorithms__](https://www.sktime.net/en/stable/estimator_overview.html) and __tools for composite model building__,  such as pipelining, ensembling, tuning, and reduction, empowering users to apply algorithms designed for one task to another.
