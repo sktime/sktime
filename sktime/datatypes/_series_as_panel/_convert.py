@@ -250,7 +250,9 @@ def convert_Hierarchical_to_Panel(obj, store=None, return_to_mtype=False):
     """
     obj_df = convert_to(obj, to_type="pd_multiindex_hier", as_scitype="Hierarchical")
     obj_df = obj_df.copy()
-    obj_df.index = obj_df.index.get_level_values([-2, -1])
+    # keep the last two levels (instance and time), drop all higher levels
+    n_drop = obj_df.index.nlevels - 2
+    obj_df.index = obj_df.index.droplevel(list(range(n_drop)))
 
     if return_to_mtype:
         return obj_df, "pd-multiindex"
