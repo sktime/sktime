@@ -352,7 +352,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
             and dataset_len % self.batch_size == 1
         )
         gen = torch.Generator()
-        if self.random_state:
+        if self.random_state is not None:
             gen.manual_seed(self.random_state)
         if drop_last:
             warnings.warn(
@@ -406,7 +406,7 @@ class ConvTimeNetForecaster(_pytorch.BaseDeepNetworkPyTorch):
         )
 
         gen = torch.Generator()
-        if self.random_state:
+        if self.random_state is not None:
             gen.manual_seed(self.random_state)
 
         return DataLoader(
