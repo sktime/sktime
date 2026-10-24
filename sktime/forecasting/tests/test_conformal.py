@@ -1,5 +1,7 @@
 """Tests for the ConformalIntervals probability wrapper."""
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
@@ -108,3 +110,31 @@ def test_conformal_with_hierarchical():
 
     forecaster.predict(X=X_test)
     forecaster.predict_interval(X=X_test)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ConformalIntervals),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_conformal_horizon_uses_h_step_residuals():
+    """Horizon h is calibrated on h-step residuals, not (h+1)-step. See #10766."""
+    rng = np.random.default_rng(0)
+    y = pd.Series(np.cumsum(rng.normal(size=200)))
+    f = ConformalIntervals(
+        NaiveForecaster(strategy="last"),
+        method="empirical_residual",
+        initial_window=30,
+    )
+    f.fit(y, fh=[1, 2, 3])
+    A = f.residuals_matrix_.to_numpy(dtype=float)
+    pred_int = f.predict_interval(coverage=0.9)
+
+    for h in [1, 2, 3]:
+        resids_h = np.diagonal(A, offset=h - 1)
+        resids_h = resids_h[~np.isnan(resids_h)]
+        expected = np.quantile(np.abs(resids_h), 0.05)
+        row = pred_int.iloc[h - 1]
+        lower = row.xs("lower", level=-1).iloc[0]
+        upper = row.xs("upper", level=-1).iloc[0]
+        halfwidth = (upper - lower) / 2
+        assert halfwidth == pytest.approx(expected, rel=1e-6)
