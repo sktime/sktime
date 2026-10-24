@@ -164,20 +164,20 @@ class KronosForecaster(BaseForecaster):
         # ----------
         "shorthands": {
             "kronos": (
-                    'KronosForecaster(model_path="NeoQuasar/Kronos-small", '
-                    'tokenizer_path="NeoQuasar/Kronos-Tokenizer-base", ' 
-                    'deterministic=True)'
+                'KronosForecaster(model_path="NeoQuasar/Kronos-small", '
+                'tokenizer_path="NeoQuasar/Kronos-Tokenizer-base", ' 
+                'deterministic=True)'
             ),
             "kronos_mini": (
-                    'KronosForecaster(model_path="NeoQuasar/Kronos-mini", '
-                    'tokenizer_path="NeoQuasar/Kronos-Tokenizer-2k", '
-                    'deterministic=True)'
+                'KronosForecaster(model_path="NeoQuasar/Kronos-mini", '
+                'tokenizer_path="NeoQuasar/Kronos-Tokenizer-2k", '
+                'deterministic=True)'
             ),
             "kronos_base": (
                 'KronosForecaster(model_path="NeoQuasar/Kronos-base", '
                 'tokenizer_path="NeoQuasar/Kronos-Tokenizer-base", deterministic=True)'
             ),
-        }
+        },
     }
 
     _kronos_columns = ["open", "high", "low", "close", "volume", "amount"]
