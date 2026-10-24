@@ -4,6 +4,7 @@ Implementing segmentation using clustering, Read more at
 <https://en.wikipedia.org/wiki/Cluster_analysis>_.
 """
 
+import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.cluster import KMeans
@@ -17,14 +18,28 @@ __all__ = ["ClusterSegmenter"]
 class ClusterSegmenter(BaseDetector):
     """Cluster-based Time Series Segmentation.
 
-    time series segmentation using clustering is simple task. This detector
-    segments time series data into distinct segments based on similarity, identified
-    using the chosen clustering algorithm.
+    Segments a time series by clustering its time points, using the chosen
+    clustering algorithm. Each time point is assigned the label of its cluster;
+    segments are the maximal runs of consecutive time points with the same label.
+
+    For multivariate series, time points are clustered as vectors of all variables.
 
     Parameters
     ----------
     clusterer : sklearn.cluster
         The instance of clustering algorithm used for segmentation.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.cluster import KMeans
+    >>> from sktime.detection.clust import ClusterSegmenter
+    >>> X = pd.DataFrame({"a": [1.0, 1.1, 0.9, 1.0, 10.0, 10.2, 9.8, 10.1]})
+    >>> segmenter = ClusterSegmenter(KMeans(n_clusters=2, random_state=0, n_init=10))
+    >>> segmenter.fit_predict(X)
+        ilocs  labels
+    0  [0, 4)       1
+    1  [4, 8)       0
     """
 
     _tags = {
@@ -36,16 +51,6 @@ class ClusterSegmenter(BaseDetector):
         # --------------
         "task": "segmentation",
         "learning_type": "unsupervised",
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": [
-            "test_non_state_changing_method_contract",
-            "test_doctest_examples",
-            "test_predict_points",
-            "test_predict_segments",
-            "test_transform_output_type",
-            "test_output_type",
-        ],
     }
 
     def __init__(self, clusterer=None):
@@ -78,11 +83,8 @@ class ClusterSegmenter(BaseDetector):
         ------------
         creates fitted model (attributes ending in "_")
         """
-        if isinstance(X, pd.Series):
-            X = X.to_frame()
         cloned_clusterer = clone(self._clusterer)
-        X_flat = X.values.reshape(-1, 1)
-        cloned_clusterer.fit(X_flat)
+        cloned_clusterer.fit(self._to_2d_array(X))
 
         self._clusterer_ = cloned_clusterer
         return self
@@ -99,19 +101,26 @@ class ClusterSegmenter(BaseDetector):
 
         Returns
         -------
-        Y : pd.Series - annotations for sequence X
-            exact format depends on annotation type
+        y : pd.DataFrame with columns "ilocs" and "labels"
+            "ilocs" contains the segments as left-closed ``pd.Interval`` of
+            ``iloc`` indices of ``X``, "labels" the cluster label of each segment
         """
+        labels = np.asarray(self._clusterer_.predict(self._to_2d_array(X)))
+
+        # segments are maximal runs of equal labels, as half-open iloc intervals
+        starts = np.flatnonzero(np.r_[True, labels[1:] != labels[:-1]])
+        ends = np.r_[starts[1:], len(labels)]
+        intervals = [
+            pd.Interval(int(s), int(e), closed="left") for s, e in zip(starts, ends)
+        ]
+        return pd.DataFrame({"ilocs": intervals, "labels": labels[starts]})
+
+    @staticmethod
+    def _to_2d_array(X):
+        """Coerce X to a 2D array of time points (rows) by variables (columns)."""
         if isinstance(X, pd.Series):
             X = X.to_frame()
-        self.n_instances, self.n_timepoints = X.shape
-        X_flat = X.values.reshape(-1, 1)
-        labels = self._clusterer_.predict(X_flat)
-        labels = labels.reshape(self.n_instances, self.n_timepoints)
-        if self.n_instances == 1:
-            return pd.Series(labels.flatten(), index=X.index)
-
-        return pd.Series(labels.flatten(), index=X.index.repeat(self.n_timepoints))
+        return np.asarray(X.values, dtype=float).reshape(len(X), -1)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
