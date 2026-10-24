@@ -107,8 +107,8 @@ class Chronos2Forecaster(BaseForecaster):
                 'config={"device_map": "auto"})'
             ),
             "chronos_2_synth": (
-                    'Chronos2Forecaster(model_path="autogluon/chronos-2-synth", '
-                    'config={"device_map": "auto"})'
+                'Chronos2Forecaster(model_path="autogluon/chronos-2-synth", '
+                'config={"device_map": "auto"})'
             ),
         },
     }
