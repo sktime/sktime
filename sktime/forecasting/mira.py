@@ -59,6 +59,7 @@ class MIRAForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": [
             "Faakhir30",
             # from Microsoft:
