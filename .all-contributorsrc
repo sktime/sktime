@@ -2879,16 +2879,16 @@
         "code"
       ]
     },
-{
-  "login": "Chetansahney",
-  "name": "Chetan Sahney",
-  "avatar_url": "https://avatars.githubusercontent.com/Chetansahney",
-  "profile": "https://github.com/Chetansahney",
-  "contributions": [
-    "code",
-    "bug"
-  ]
-},
+    {
+      "login": "Chetansahney",
+      "name": "Chetan Sahney",
+      "avatar_url": "https://avatars.githubusercontent.com/u/84283700?v=4",
+      "profile": "https://github.com/Chetansahney",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
     {
       "login": "helloplayer1",
       "name": "Julian Haderlein",
