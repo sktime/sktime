@@ -461,6 +461,8 @@ def deps(spec, include_test_deps=False):
         each str is PEP 440 compatible requirement string for craft(spec)
         if spec has no requirements, return is [], the length 0 list
     """
+    spec = _replace_shorthands(spec, _namespace_shorthands())
+
     register = _namespace(include_deps=True)
 
     dep_strs = []
