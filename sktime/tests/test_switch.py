@@ -201,7 +201,7 @@ def _run_test_for_class(
         whether to run tests only for classes impacted by changed modules.
         If False, will only check active "False" conditions to skip.
     only_vm_required : boolean, default=False
-        whether th return only classes that require their own VM.
+        whether to return only classes that require their own VM.
         If True, will only return classes with tag "tests:vm"=True.
         If False, will only return classes with tag "tests:vm"=False.
 
@@ -423,7 +423,7 @@ def run_test_module_changed(module, only_changed_modules=None):
     -------
     bool : switch to run or skip the test
         True iff: at least one of the modules or its submodules have changed,
-        or if ``ONLY_CHANGED_MODULES`` is False
+        or if ``only_changed_modules`` is False
     """
     # default value for only_changed_modules
     if only_changed_modules is None:

@@ -84,6 +84,7 @@ class TimerForecaster(BaseForecaster):
         "python_version": "<3.13",
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
@@ -159,6 +160,8 @@ class TimerForecaster(BaseForecaster):
         -------
         self
         """
+        self._cur_y = y
+        self._cur_X = X
         self._y_train = y.values.astype(np.float32)
         self.model_ = self._load_model()
 
@@ -235,7 +238,7 @@ class TimerForecaster(BaseForecaster):
         fh_abs = fh.to_absolute(self.cutoff)
         index = fh_abs.to_pandas()
 
-        return pd.Series(y_pred_values, index=index, name=self._y.name)
+        return pd.Series(y_pred_values, index=index, name=self._cur_y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

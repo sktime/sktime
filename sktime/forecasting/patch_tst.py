@@ -374,6 +374,7 @@ class PatchTSTForecaster(BaseForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -385,12 +386,12 @@ class PatchTSTForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
         # Tests and CI tags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_patch_tst"],
     }
 
     def __init__(
@@ -454,6 +455,8 @@ class PatchTSTForecaster(BaseForecaster):
         -------
         self : a reference to the object
         """
+        self._cur_y = y
+        self._cur_X = X
         if isinstance(self.model_path, PatchTSTModel):
             self.model = self.model_path
             config = self.model.config
@@ -471,7 +474,7 @@ class PatchTSTForecaster(BaseForecaster):
             _config["num_input_channels"] = len(y.columns)
             if fh is not None:
                 _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
+                    *fh.to_relative(self._cutoff)._values,
                     _config["prediction_length"],
                 )
 
@@ -599,7 +602,7 @@ class PatchTSTForecaster(BaseForecaster):
         y_pred : sktime time series object
             pandas DataFrame
         """
-        y = self._y
+        y = self._cur_y
         if fh is None:
             fh = self.fh_
         else:

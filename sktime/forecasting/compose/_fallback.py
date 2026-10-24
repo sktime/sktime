@@ -114,6 +114,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         "maintainers": ["ninedigits"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:missing_values": True,
         "capability:multivariate": True,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
@@ -217,6 +218,8 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         RuntimeError
             If all forecasters fail to fit.
         """
+        self._cur_y = y
+        self._cur_X = X
         self.first_nonfailing_forecaster_index_ = 0
         self.exceptions_raised_ = dict()
         return self._try_fit_forecasters(y=y, X=X, fh=fh)
@@ -309,7 +312,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
 
             # Fit the next forecaster and retry prediction
             self.current_forecaster_ = None
-            self._try_fit_forecasters(self._y, self._X, self._fh)
+            self._try_fit_forecasters(self._cur_y, self._cur_X, self._fh)
             y_pred = self.predict(fh, X)
             self._validate_y_pred(y_pred)
             return y_pred

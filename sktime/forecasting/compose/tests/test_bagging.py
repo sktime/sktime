@@ -7,22 +7,30 @@ import pytest
 
 from sktime.datasets import load_airline
 from sktime.forecasting.compose import BaggingForecaster
-from sktime.forecasting.naive import NaiveForecaster
-from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.bootstrap import STLBootstrapTransformer
-from sktime.transformations.boxcox import LogTransformer
+from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 
 
 @pytest.mark.skipif(
     not run_test_for_class(BaggingForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("transformer", [LogTransformer, NaiveForecaster])
+@pytest.mark.parametrize("transformer", ["LogTransformer", "NaiveForecaster"])
 def test_bagging_forecaster_transformer_type_error(transformer):
     """Test that the right exception is raised for invalid transformer."""
+    if transformer == "LogTransformer":
+        from sktime.transformations.boxcox import LogTransformer
+
+        transformer = LogTransformer()
+    if transformer == "NaiveForecaster":
+        from sktime.forecasting.naive import NaiveForecaster
+
+        transformer = NaiveForecaster()
+
     y = load_airline()
 
     with pytest.raises(TypeError) as ex:
+        from sktime.forecasting.naive import NaiveForecaster
+
         f = BaggingForecaster(
             bootstrap_transformer=transformer, forecaster=NaiveForecaster(sp=12)
         )
@@ -35,12 +43,19 @@ def test_bagging_forecaster_transformer_type_error(transformer):
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([BaggingForecaster, STLBootstrapTransformer]),
+    not run_test_for_class([BaggingForecaster])
+    and not run_test_module_changed("sktime.transformations.bootstrap"),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("forecaster", [LogTransformer])
+@pytest.mark.parametrize("forecaster", ["LogTransformer"])
 def test_bagging_forecaster_forecaster_type_error(forecaster):
     """Test that the right exception is raised for invalid forecaster."""
+    from sktime.transformations.bootstrap import STLBootstrapTransformer
+    from sktime.transformations.boxcox import LogTransformer
+
+    if forecaster == "LogTransformer":
+        forecaster = LogTransformer()
+
     y = load_airline()
 
     with pytest.raises(TypeError) as ex:
