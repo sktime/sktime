@@ -3,7 +3,7 @@
 
 __all__ = ["_namespace"]
 
-from functools import lru_cache
+from functools import cache
 
 
 def _namespace(include_deps=False):
@@ -44,13 +44,12 @@ def _namespace(include_deps=False):
     return namespace_dict
 
 
-@lru_cache(maxsize=None)
+@cache
 def _namespace_shorthands(raise_if_not_unique=False):
     """Return the namespace for shorthand aliases.
 
     Retrieves shorthands from all estimators in sktime, from the tag
     ``shorthands`` if present.
-    
 
     Parameters
     ----------
@@ -86,7 +85,7 @@ def _namespace_shorthands(raise_if_not_unique=False):
                             f"collision with, or in, class {est.__name__}, "
                             f"please check the shorthands tag for uniqueness. "
                         )
-                
+
                 namespace_shorthands.update(shorthands)
 
     return namespace_shorthands

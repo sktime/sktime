@@ -395,9 +395,6 @@ def _validate_ast(tree, register):
     return False
 
 
-import ast
-
-
 def _replace_shorthands(code: str, shorthands: dict[str, str]) -> str:
     """Replace variables in code with their corresponding replacements.
 
@@ -418,6 +415,7 @@ def _replace_shorthands(code: str, shorthands: dict[str, str]) -> str:
     str
         The modified code with variables replaced.
     """
+
     class Transformer(ast.NodeTransformer):
         def visit_Name(self, node: ast.Name):
             if isinstance(node.ctx, ast.Load) and node.id in shorthands:
