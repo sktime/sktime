@@ -59,10 +59,12 @@ def _namespace_shorthands(raise_if_not_unique=False):
 
     Returns
     -------
-    namespace_aliases : dict
+    namespace_aliases : dict with str keys and str values
         Dictionary of namespace aliases.
 
-        The keys are alias names, and the values are the corresponding full namespace names.
+        * The keys are alias names, valid python variable names.
+        * The values are the corresponding full namespace names,
+          they are expected to be safe-craftable sktime craft specs.
     """
     from sktime.registry._lookup import all_estimators
 
