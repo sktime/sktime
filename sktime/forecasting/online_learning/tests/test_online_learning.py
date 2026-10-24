@@ -112,3 +112,64 @@ def test_weights_for_airline_nnls():
 
     expected = np.array([0.04720766, 0, 1.03410876])
     np.testing.assert_allclose(forecaster.weights, expected, atol=1e-8)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(OnlineEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_ensemble_algorithm_param_not_mutated_and_reset_in_fit():
+    """update must not change the ensemble_algorithm parameter, fit must reset it.
+
+    The ensemble algorithm is stateful. The forecaster used to update the weights
+    of the ensemble_algorithm object passed by the user, so that the parameter
+    changed, and a refit continued from the weights of the previous updates.
+    """
+    y = load_airline()
+    algorithm = NormalHedgeEnsemble(n_estimators=2, loss_func=mean_squared_error)
+    initial_weights = algorithm.weights.copy()
+
+    forecaster = OnlineEnsembleForecaster(
+        [
+            ("last", NaiveForecaster()),
+            ("mean", NaiveForecaster(strategy="mean", window_length=12)),
+        ],
+        ensemble_algorithm=algorithm,
+    )
+    forecaster.fit(y[:100], fh=[1, 2])
+    forecaster.update(y[100:120])
+    weights_after_update = forecaster.weights.copy()
+
+    # the weights were updated, but not those of the parameter
+    assert not np.allclose(weights_after_update, initial_weights)
+    np.testing.assert_array_equal(algorithm.weights, initial_weights)
+    assert forecaster.ensemble_algorithm is algorithm
+
+    # refitting starts again from the initial weights
+    forecaster.fit(y[:100], fh=[1, 2])
+    np.testing.assert_allclose(forecaster.weights, initial_weights)
+
+    # and repeating the updates gives the same weights as before
+    forecaster.update(y[100:120])
+    np.testing.assert_allclose(forecaster.weights, weights_after_update)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(OnlineEnsembleForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_predict_does_not_change_weights():
+    """predict must not write to the forecaster."""
+    y = load_airline()
+    forecaster = OnlineEnsembleForecaster(
+        [("last", NaiveForecaster()), ("drift", NaiveForecaster(strategy="drift"))],
+        ensemble_algorithm=NormalHedgeEnsemble(
+            n_estimators=2, loss_func=mean_squared_error
+        ),
+    )
+    forecaster.fit(y[:100], fh=[1, 2])
+    forecaster.update(y[100:110])
+    weights = forecaster.weights.copy()
+
+    forecaster.predict()
+    np.testing.assert_array_equal(forecaster.weights, weights)
