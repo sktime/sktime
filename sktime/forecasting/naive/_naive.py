@@ -149,7 +149,7 @@ class NaiveForecaster(_BaseWindowForecaster):
             "f_naive_last": 'NaiveForecaster(strategy="last")',
             "f_naive_mean": 'NaiveForecaster(strategy="mean")',
             "f_naive_drift": 'NaiveForecaster(strategy="drift")',
-        }
+        },
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):

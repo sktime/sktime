@@ -177,7 +177,8 @@ class KronosForecaster(BaseForecaster):
                 'KronosForecaster(model_path="NeoQuasar/Kronos-base", '
                 'tokenizer_path="NeoQuasar/Kronos-Tokenizer-base", deterministic=True)'
             ),
-        },
+        }
+    }
 
     _kronos_columns = ["open", "high", "low", "close", "volume", "amount"]
 
