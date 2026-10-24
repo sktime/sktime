@@ -19,3 +19,31 @@ def test_shorthands_craftable():
     for _, sh in shorthands.items():
         # this would raise an exception if there is unsafe code in the shorthand
         craft(sh, safe=True)
+
+
+def test_shorthand_simple_craft():
+    """Test that a simple shorthand can be crafted safely."""
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.registry import craft
+
+    naive_spec = "f_naive_last"
+    naive_inst = craft(naive_spec, safe=True)
+    assert isinstance(naive_inst, NaiveForecaster)
+    assert naive_inst == NaiveForecaster(strategy="last")
+
+
+def test_shorthands_pipe_craft():
+    """Test that a pipeline involving a shorthand can be crafted safely."""
+    from sktime.forecasting.compose import TransformedTargetForecaster as T
+    from sktime.forecasting.naive import NaiveForecaster
+    from sktime.transformations.series.detrend import Deseasonalizer
+    from sktime.registry import craft
+
+    pipe_spec = "Deseasonalizer(sp=12) * f_naive_last"
+    pipe_inst = craft(pipe_spec, safe=True)
+
+    assert isinstance(pipe_inst, T)
+    steps = pipe_inst.get_params().get("steps", None)
+    assert isinstance(steps, list)
+    assert steps[0] == Deseasonalizer(sp=12)
+    assert steps[1] == NaiveForecaster(strategy="last")
