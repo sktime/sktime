@@ -1020,7 +1020,7 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
             * If ``task`` is ``"segmentation"``, the values are segmentation labels.
         """
         self.check_is_fitted()
-        X = check_series(X)
+        X = self._check_X(X)
 
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
@@ -1066,7 +1066,7 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
             The ``"labels"`` are potential labels for the points of interest.
         """
         self.check_is_fitted()
-        X = check_series(X)
+        X = self._check_X(X)
 
         task = self.get_tag("task")
         if task in ["anomaly_detection", "change_point_detection"]:
