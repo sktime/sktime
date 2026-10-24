@@ -187,11 +187,11 @@ def craft(spec, safe=False, namespace_plugin=None):
     register = _namespace(include_deps=True)
     register.update(namespace_plugin)
 
-    spec = _replace_shorthands(spec, _namespace_shorthands())
-
     # Parse the specification once.
     # Both safe and unsafe modes operate on the resulting AST.
     try:
+        spec = _replace_shorthands(spec, _namespace_shorthands())
+
         tree = ast.parse(spec, mode="exec")
     except SyntaxError as e:
         if safe:

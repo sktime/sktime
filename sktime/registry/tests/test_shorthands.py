@@ -1,7 +1,5 @@
 """Tests for shorthand functionality."""
 
-import pytest
-
 from sktime.registry._namespace import _namespace_shorthands
 
 
@@ -36,8 +34,8 @@ def test_shorthands_pipe_craft():
     """Test that a pipeline involving a shorthand can be crafted safely."""
     from sktime.forecasting.compose import TransformedTargetForecaster as T
     from sktime.forecasting.naive import NaiveForecaster
-    from sktime.transformations.series.detrend import Deseasonalizer
     from sktime.registry import craft
+    from sktime.transformations.series.detrend import Deseasonalizer
 
     pipe_spec = "Deseasonalizer(sp=12) * f_naive_last"
     pipe_inst = craft(pipe_spec, safe=True)
