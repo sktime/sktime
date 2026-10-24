@@ -491,7 +491,7 @@ class FABBA(BaseTransformer):
                 U1, s1, _ = svds(cluster_data, k=1, return_singular_vectors="u")
                 norm_data = U1[:, 0] * s1[0]
             else:
-                norm_data = norm_data[:, 0]
+                norm_data = cluster_data[:, 0]
             # keep direction of sorting consistent
             norm_data = norm_data * np.sign(-norm_data[0])
             # sort this projected data
@@ -499,6 +499,7 @@ class FABBA(BaseTransformer):
 
         # No sorting
         else:
+            cluster_data = data
             norm_data = np.zeros(num_pieces)
             sorted_indicies = np.arange(num_pieces)
 
@@ -524,7 +525,7 @@ class FABBA(BaseTransformer):
                     continue
                 else:
                     # if distance from start point is more than tol then break
-                    if (norm_data[j] - norm_data[start]) > self.alpha:
+                    if (norm_data[j] - norm_data[start]) > self._alpha:
                         break
 
                     # above condition doesn't guarantee points are close in actual
@@ -533,7 +534,7 @@ class FABBA(BaseTransformer):
                     # thus we need to confirm actual distance is within tol
                     dist = cluster_data[j, :] - cluster_center
                     distance = np.inner(dist, dist)
-                    if distance < self.alpha**2:
+                    if distance < self._alpha**2:
                         labels[j] = label
                         num_points_in_group += 1
 
@@ -909,7 +910,7 @@ class FABBA(BaseTransformer):
             sum_of_length = len(X[0])
             self._eta = 0.01
         elif len(X) > 1:
-            sum_of_length = [len(ts) for ts in X]
+            sum_of_length = sum(len(ts) for ts in X)
             self._eta = 0.000002
         else:
             raise ValueError("X found is not a list of dataframes")
@@ -925,7 +926,7 @@ class FABBA(BaseTransformer):
                     * (self.tolerance**2)
                     / (
                         max_k
-                        * (self.eta**2)
+                        * (self._eta**2)
                         * (3 * (sum_of_length**4) + 2 - 5 * (max_k**2))
                     ),
                     1 / 4,
