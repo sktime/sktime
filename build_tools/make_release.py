@@ -18,7 +18,7 @@ import os
 import re
 import webbrowser
 
-import colorama
+import colorama  # type: ignore
 
 ROOT_DIR = os.path.abspath(os.path.dirname(__file__)).replace("build_tools", "")
 PACKAGE_NAME = "sktime"
@@ -130,7 +130,7 @@ class Step:
         wait_for_enter()
         os.system(cmd)
 
-    def action(self, context):
+    def action(self, context) -> None:
         """Carry out action."""
         raise NotImplementedError("abstract method")
 
