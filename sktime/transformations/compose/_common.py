@@ -20,7 +20,7 @@ CORE_MTYPES = [
 
 def _coerce_to_sktime(other):
     """Check and format inputs to dunders for compose."""
-    from sktime.transformations.series.adapt import TabularToSeriesAdaptor
+    from sktime.transformations.adapt import TabularToSeriesAdaptor
 
     # if sklearn transformer, adapt to sktime transformer first
     if is_sklearn_transformer(other):

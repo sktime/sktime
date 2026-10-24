@@ -7,8 +7,6 @@ old pickle global, so :func:`torch.load` fails on newer GluonTS unless this
 shim is registered (see :func:`ensure_gluonts_torch_modules_loss_shim`).
 """
 
-from __future__ import annotations
-
 import importlib
 import sys
 import types

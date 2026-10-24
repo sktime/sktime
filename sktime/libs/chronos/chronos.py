@@ -11,7 +11,7 @@ import warnings
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
+from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
 
 torch = _safe_import("torch")
 nn = _safe_import("torch.nn")

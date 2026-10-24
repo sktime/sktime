@@ -215,5 +215,5 @@ class TestFdiff:
     def test_full_deprecated(self):
         np.random.seed(42)
         X = np.random.randn(10, 10)
-        with pytest.raises(DeprecationWarning):
+        with pytest.raises(ValueError):
             _ = fdiff(X, 0.5, mode="full")

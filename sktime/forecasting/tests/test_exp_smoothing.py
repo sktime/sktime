@@ -47,7 +47,7 @@ def check_panel_expsmooth():
     """Test exponential smoothing on panel data with datetime index."""
     # make panel with hour of day panel and datetime index
     y = load_airline()
-    y.index = pd.date_range(start="1960-01-01", periods=len(y.index), freq="H")
+    y.index = pd.date_range(start="1960-01-01", periods=len(y.index), freq="h")
     y.index.names = ["datetime"]
     y.name = "passengers"
     y = y.to_frame()
@@ -68,11 +68,11 @@ def check_panel_with_freq():
     # make panel with hour of day panel and datetime index
     y = load_airline()
     ind = pd.date_range(
-        start="1960-01-01", periods=len(y.index), freq="H", name="datetime"
+        start="1960-01-01", periods=len(y.index), freq="h", name="datetime"
     )
     y = pd.DataFrame(y.values, index=ind, columns=["passengers"])
     y = y.set_index([y.index.hour.rename("hour"), y.index]).sort_index()
-    assert y.loc[0].index.freq == pd.Timedelta("24H"), "Expected 24H frequency"
+    assert y.loc[0].index.freq == pd.Timedelta("24h"), "Expected 24H frequency"
 
     fh = [1, 2]
     y_train, y_test = temporal_train_test_split(y, test_size=len(fh))

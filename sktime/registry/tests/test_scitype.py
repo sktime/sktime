@@ -10,7 +10,7 @@ def test_scitype(coerce_to_list):
     """Test that the scitype function recovers the correct scitype(s)."""
     from sktime.forecasting.arima import ARIMA
     from sktime.forecasting.naive import NaiveForecaster
-    from sktime.transformations.series.exponent import ExponentTransformer
+    from sktime.transformations.exponent import ExponentTransformer
 
     # test that scitype works for classes with soft dependencies
     result_arima = scitype(ARIMA, coerce_to_list=coerce_to_list)

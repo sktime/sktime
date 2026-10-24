@@ -64,7 +64,7 @@ class DummyRegressor(BaseRegressor):
         "maintainers": "badrmarani",
         # estimator type
         # --------------
-        "X_inner_mtype": "nested_univ",
+        "X_inner_mtype": ["df-list", "numpy3D"],
         "capability:missing_values": True,
         "capability:unequal_length": True,
         "capability:multivariate": True,
@@ -79,6 +79,33 @@ class DummyRegressor(BaseRegressor):
         )
         super().__init__()
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        # the second set uses the "quantile" strategy, which is the only
+        # strategy requiring a companion parameter, so both the strategy
+        # dispatch and the quantile parameter are covered
+        return [
+            {"strategy": "mean"},
+            {"strategy": "quantile", "quantile": 0.75},
+        ]
+
     def _fit(self, X, y) -> np.ndarray:
         """Fit the dummy regressor.
 
@@ -92,7 +119,8 @@ class DummyRegressor(BaseRegressor):
         -------
         self : reference to self.
         """
-        self.sklearn_dummy_regressor.fit(np.zeros(X.shape), y)
+        # Dummy ignores features; use n_instances so df-list and numpy3D both work.
+        self.sklearn_dummy_regressor.fit(np.zeros((len(X), 1)), y)
         return self
 
     def _predict(self, X) -> np.ndarray:
@@ -106,4 +134,4 @@ class DummyRegressor(BaseRegressor):
         -------
         y : predictions of target values for X, np.ndarray
         """
-        return self.sklearn_dummy_regressor.predict(np.zeros(X.shape))
+        return self.sklearn_dummy_regressor.predict(np.zeros((len(X), 1)))

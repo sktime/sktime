@@ -1,11 +1,10 @@
 """Multi Layer Perceptron (MLP) (minus the final output layer) in TensorFlow."""
 
 from sktime.networks.base import BaseDeepNetwork
-from sktime.utils.dependencies import _check_dl_dependencies
 
 
 class MLPNetwork(BaseDeepNetwork):
-    """Establish the network structure for a MLP.
+    """Simple MLP Network.
 
     Adapted from the implementation from source code
     https://github.com/hfawaz/dl-4-tsc/blob/master/classifiers/mlp.py
@@ -45,6 +44,13 @@ class MLPNetwork(BaseDeepNetwork):
     Zhiguang and Yan, Weizhong and Oates, Tim}, booktitle={2017
     International joint conference on neural networks (IJCNN)}, pages={
     1578--1585}, year={2017}, organization={IEEE} }
+
+    Examples
+    --------
+    >>> from sktime.networks.mlp import MLPNetwork
+    >>> network = MLPNetwork(
+    ...     n_layers=3, hidden_dim=256, random_state=42
+    ... )
     """
 
     _tags = {
@@ -60,7 +66,25 @@ class MLPNetwork(BaseDeepNetwork):
         n_layers=3,
         hidden_dim=500,
     ):
-        _check_dl_dependencies(severity="error")
+        self.activation = activation
+        self.random_state = random_state
+        self.dropout = dropout
+        self.n_layers = n_layers
+        self.hidden_dim = hidden_dim
+        super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        dropout = self.dropout
+        n_layers = self.n_layers
+        hidden_dim = self.hidden_dim
         # Validate dropout length against n_layers at init time
         if isinstance(dropout, tuple):
             if len(dropout) != n_layers + 1:
@@ -88,12 +112,6 @@ class MLPNetwork(BaseDeepNetwork):
                 "`hidden_dim` should be an int or a list/tuple of ints. "
                 f"But found the type to be: {type(hidden_dim)}"
             )
-        self.activation = activation
-        self.random_state = random_state
-        self.dropout = dropout
-        self.n_layers = n_layers
-        self.hidden_dim = hidden_dim
-        super().__init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -131,3 +149,24 @@ class MLPNetwork(BaseDeepNetwork):
 
         output_layer = keras.layers.Dropout(_dropout[self.n_layers])(x)
         return input_layer, output_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return lightweight test parameter sets for MLPNetwork."""
+        params1 = {
+            "n_layers": 1,
+            "hidden_dim": 8,
+            "dropout": 0.1,
+            "activation": "relu",
+            "random_state": 0,
+        }
+
+        params2 = {
+            "n_layers": 2,
+            "hidden_dim": (8, 4),
+            "dropout": (0.1, 0.2, 0.0),
+            "activation": "tanh",
+            "random_state": 0,
+        }
+
+        return [params1, params2]

@@ -167,6 +167,7 @@ class DoubleMLForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["machine_learning"],
         "authors": ["geetu040", "XAheli"],
         "maintainers": ["geetu040", "XAheli"],
         "capability:multivariate": False,
@@ -176,6 +177,7 @@ class DoubleMLForecaster(BaseForecaster):
         "capability:pred_int:insample": True,
         "capability:missing_values": True,
         "capability:categorical_in_X": True,
+        "capability:unequal_length": False,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "requires-fh-in-fit": False,

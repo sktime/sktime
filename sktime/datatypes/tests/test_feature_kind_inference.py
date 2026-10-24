@@ -3,6 +3,7 @@
 __author__ = ["Abhay-Lejith"]
 
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes._dtypekind import (
     DtypeKind,
@@ -11,7 +12,6 @@ from sktime.datatypes._dtypekind import (
     _get_series_dtypekind,
     _get_table_dtypekind,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 def test_feature_kind_for_series():

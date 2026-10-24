@@ -7,9 +7,9 @@ import datetime
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline
-from sktime.datatypes import VectorizedDF
 from sktime.datatypes._utilities import get_time_index
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _bottom_hier_datagen
@@ -19,7 +19,6 @@ from sktime.utils.datetime import (
     infer_freq,
     set_hier_freq,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
@@ -61,20 +60,20 @@ def test_coerce_duration_to_int() -> None:
     assert _coerce_duration_to_int(duration=3) == 3
 
     duration = pd.offsets.Minute(75)
-    assert _coerce_duration_to_int(duration=duration, freq="25T") == 3
+    assert _coerce_duration_to_int(duration=duration, freq="25min") == 3
 
     duration = pd.Timedelta(minutes=75)
-    assert _coerce_duration_to_int(duration=duration, freq="25T") == 3
+    assert _coerce_duration_to_int(duration=duration, freq="25min") == 3
 
     duration = pd.to_timedelta([75, 100], unit="m")
     pd.testing.assert_index_equal(
-        _coerce_duration_to_int(duration=duration, freq="25T"),
+        _coerce_duration_to_int(duration=duration, freq="25min"),
         pd.Index([3, 4], dtype=int),
     )
 
     duration = pd.Index([pd.offsets.Minute(75), pd.offsets.Minute(100)])
     pd.testing.assert_index_equal(
-        _coerce_duration_to_int(duration=duration, freq="25T"),
+        _coerce_duration_to_int(duration=duration, freq="25min"),
         pd.Index([3, 4], dtype=int),
     )
 
@@ -112,8 +111,10 @@ def test_infer_freq() -> None:
     )
     assert infer_freq(y) in ["M", "ME"]
 
+    from sktime.datatypes import prepare_VectorizedDF
+
     y = _bottom_hier_datagen(no_levels=2)
-    y = VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
+    y, _ = prepare_VectorizedDF(X=y, iterate_as="Series", is_scitype="Hierarchical")
     assert infer_freq(y) in ["M", "ME"]
 
 

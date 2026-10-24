@@ -16,7 +16,7 @@ from sklearn.utils import check_random_state
 
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.rocket import (
+from sktime.transformations.rocket import (
     MiniRocket,
     MiniRocketMultivariate,
     MultiRocket,
@@ -45,8 +45,6 @@ class Arsenal(BaseClassifier):
         Valid inputs = ["rocket","minirocket","multirocket"]
     max_dilations_per_kernel : int, default=32
         MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
-    n_features_per_kernel : int, default=4
-        MultiRocket only. The number of features per kernel.
     time_limit_in_minutes : int, default=0
         Time contract to limit build time in minutes, overriding n_estimators.
         Default of 0 means n_estimators is used.
@@ -59,6 +57,10 @@ class Arsenal(BaseClassifier):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
+    n_features_per_kernel : int, default="deprecated"
+        MultiRocket only. Deprecated, and will be removed in sktime 1.4.0.
+        MultiRocket always computes 4 features per kernel, so any value passed
+        is ignored.
 
     Attributes
     ----------
@@ -133,12 +135,12 @@ class Arsenal(BaseClassifier):
         n_estimators=25,
         rocket_transform="rocket",
         max_dilations_per_kernel=32,
-        n_features_per_kernel=4,
         time_limit_in_minutes=0.0,
         contract_max_n_estimators=100,
         save_transformed_data=False,
         n_jobs=1,
         random_state=None,
+        n_features_per_kernel="deprecated",
     ):
         self.num_kernels = num_kernels
         self.n_estimators = n_estimators
@@ -164,8 +166,22 @@ class Arsenal(BaseClassifier):
 
         super().__init__()
 
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        from sktime.transformations.rocket._multirocket import (
+            _check_n_features_per_kernel,
+        )
         from sktime.utils.validation import check_n_jobs
 
+        _check_n_features_per_kernel(self)
+        n_jobs = self.n_jobs
         self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
@@ -213,13 +229,11 @@ class Arsenal(BaseClassifier):
                 base_rocket = MultiRocketMultivariate(
                     num_kernels=self.num_kernels,
                     max_dilations_per_kernel=self.max_dilations_per_kernel,
-                    n_features_per_kernel=self.n_features_per_kernel,
                 )
             else:
                 base_rocket = MultiRocket(
                     num_kernels=self.num_kernels,
                     max_dilations_per_kernel=self.max_dilations_per_kernel,
-                    n_features_per_kernel=self.n_features_per_kernel,
                 )
         else:
             raise ValueError(f"Invalid Rocket transformer: {self.rocket_transform}")
@@ -480,7 +494,6 @@ class Arsenal(BaseClassifier):
             "n_estimators": 20,
             "rocket_transform": "minirocket",
             "max_dilations_per_kernel": 28,
-            "n_features_per_kernel": 2,
             "contract_max_n_estimators": 113,
             "save_transformed_data": True,
         }

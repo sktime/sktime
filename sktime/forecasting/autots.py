@@ -203,6 +203,18 @@ class AutoTS(BaseForecaster):
         Number of cores available to pass to parallel processing.
         A joblib context manager can be used instead (pass None in this case).
         Also 'auto'.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.autots import AutoTS
+    >>> from sktime.datasets import load_airline
+    >>> y = load_airline()
+    >>> forecaster = AutoTS(
+    ...     model_list="superfast", max_generations=1, num_validations=0, verbose=-2
+    ... )
+    >>> forecaster.fit(y, fh=3)
+    AutoTS(...)
+    >>> y_pred = forecaster.predict()
     """
 
     _tags = {
@@ -214,6 +226,7 @@ class AutoTS(BaseForecaster):
         "python_version": ">=3.6",
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
@@ -225,6 +238,7 @@ class AutoTS(BaseForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_autots_custom"],
         "tests:python_dependencies": ["matplotlib"],
     }
 
@@ -262,7 +276,7 @@ class AutoTS(BaseForecaster):
         model_interrupt: bool = True,
         generation_timeout: int = None,
         current_model_file: str = None,
-        verbose: int = 1,
+        verbose: int = -2,
         n_jobs: int = -2,
     ):
         self.model_name = model_name
@@ -300,10 +314,17 @@ class AutoTS(BaseForecaster):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
-        # leave this as is
         super().__init__()
 
-        # import inside method to avoid hard dependency
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
         from autots import AutoTS as _autots
 
         self._ModelClass = _autots

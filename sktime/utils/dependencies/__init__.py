@@ -11,6 +11,7 @@ from skbase.utils.dependencies._import import _safe_import
 from sktime.utils.dependencies._dependencies import (
     _check_dl_dependencies,
     _check_mlflow_dependencies,
+    _get_lowest_compatible_python_version,
 )
 from sktime.utils.dependencies._isinstance import _isinstance_by_name
 from sktime.utils.dependencies._placeholder import _placeholder_record
@@ -22,6 +23,7 @@ __all__ = [
     "_check_mlflow_dependencies",
     "_check_python_version",
     "_check_soft_dependencies",
+    "_get_lowest_compatible_python_version",
     "_isinstance_by_name",
     "_placeholder_record",
     "_safe_import",

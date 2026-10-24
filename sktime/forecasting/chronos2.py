@@ -75,6 +75,7 @@ class Chronos2Forecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": ["priyanshuharshbodhi1", "fkiraly"],
         "maintainers": ["priyanshuharshbodhi1"],
         "python_dependencies": ["chronos-forecasting>=2.0.0"],
@@ -87,9 +88,9 @@ class Chronos2Forecaster(BaseForecaster):
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
         "capability:insample": False,
-        "capability:global_forecasting": True,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
         "tests:skip_by_name": [
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
@@ -113,24 +114,39 @@ class Chronos2Forecaster(BaseForecaster):
     ):
         self.model_path = model_path
         self.seed = seed
-        self._seed = np.random.randint(0, 2**31) if seed is None else seed
         self.config = config
         self.ignore_deps = ignore_deps
 
-        self._config = self._default_config.copy()
         self.model_pipeline = None
-
-        if ignore_deps:
-            self.set_tags(python_dependencies=[])
 
         super().__init__()
 
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
+        if self.ignore_deps:
+            self.set_tags(python_dependencies=[])
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        self._seed = np.random.randint(0, 2**31) if self.seed is None else self.seed
+
         import torch
 
+        self._config = self._default_config.copy()
         self._config["torch_dtype"] = torch.bfloat16
 
-        if config is not None:
-            self._config.update(config)
+        if self.config is not None:
+            self._config.update(self.config)
 
     def __getstate__(self):
         """Return state for pickling, excluding unpickleable model pipeline."""
@@ -181,6 +197,8 @@ class Chronos2Forecaster(BaseForecaster):
         -------
         self
         """
+        self._cur_y = y
+        self._cur_X = X
         self.model_pipeline = self._load_pipeline()
 
         context_length = self._config["context_length"]
@@ -189,12 +207,13 @@ class Chronos2Forecaster(BaseForecaster):
 
         context = y
 
-        if context.shape[1] > context_length:
+        if context.shape[0] > context_length:
             context = context.iloc[-context_length:]
 
         context = context.values.T
 
         self._context = context
+        self._y_index_names = y.index.names
         return self
 
     def _predict(self, fh, X=None):
@@ -225,15 +244,15 @@ class Chronos2Forecaster(BaseForecaster):
         context = self._context
         input_dict = {"target": context}
 
-        if self._X is not None:
+        if self._cur_X is not None:
             actual_len = context.shape[1]
-            past_X = self._X.values[-actual_len:]
+            past_X = self._cur_X.values[-actual_len:]
             input_dict["past_covariates"] = {
-                col: past_X[:, i] for i, col in enumerate(self._X.columns)
+                col: past_X[:, i] for i, col in enumerate(self._cur_X.columns)
             }
 
         if X is not None:
-            if self._X is None:
+            if self._cur_X is None:
                 raise ValueError(
                     "X was not provided in fit but is provided in predict. "
                     "To use future covariates, provide past covariate values "
@@ -263,14 +282,14 @@ class Chronos2Forecaster(BaseForecaster):
             .to_absolute(self._cutoff)
             ._values
         )
-        pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(context, cutoff=self.cutoff)
 
         pred_df = pd.DataFrame(
             point_forecast.T,
             index=index,
-            columns=self._y.columns,
+            columns=self._get_varnames(),
         )
-        pred_df.index.names = self._y.index.names
+        pred_df.index.names = self._y_index_names
 
         dateindex = pred_df.index.get_level_values(-1).map(lambda x: x in pred_out)
         return pred_df.loc[dateindex]
