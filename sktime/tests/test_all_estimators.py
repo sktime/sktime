@@ -1023,11 +1023,17 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
         shs = object_class.get_class_tag("shorthands")
 
         if shs is not None:
-            for _, sh in shs.items():
+            for sh, spec in shs.items():
+                if not isinstance(spec, str):
+                    raise ValueError(
+                        f"Shorthand spec for {sh} is not a string. Found type: {type(spec)}. "
+                        f"Found value: {spec}"
+                    )
                 # this would raise exception if there is unsafe code in the shorthand
                 # if fails, replace by a safe shorthand, e.g.,
                 # * a class spec str such as "N"aiveForecaster"
                 # * a constructor spec str such as "NaiveForecaster(strategy='mean')"
+                craft(spec, safe=True)
                 craft(sh, safe=True)
 
 
