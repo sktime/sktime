@@ -137,6 +137,15 @@ class TiRexForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "tirex": 'TiRexForecaster(model="NX-AI/TiRex", license_accepted=True)',
+            "tirex_1_1_gifteval": (
+                'TiRexForecaster(model="NX-AI/TiRex-1.1-gifteval", '
+                'license_accepted=True)'
+            ),
+        },
     }
 
     def __init__(

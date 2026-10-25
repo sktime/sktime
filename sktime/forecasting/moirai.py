@@ -121,7 +121,36 @@ class MOIRAIForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:libs": ["sktime.libs.uni2ts"],
         "tests:specific": ["sktime.forecasting.tests.test_moirai"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "moirai_1_0_r_small": (
+                    'MOIRAIForecaster(checkpoint_path="Salesforce/moirai-1.0-R-small", '
+                    'map_location="cpu")'
+            ),
+            "moirai_1_0_r_base": (
+                'MOIRAIForecaster(checkpoint_path="Salesforce/moirai-1.0-R-base", '
+                'map_location="cpu")'
+            ),
+            "moirai_1_0_r_large": (
+                'MOIRAIForecaster(checkpoint_path="Salesforce/moirai-1.0-R-large", '
+                'map_location="cpu")'
+            ),
+            "moirai_1_1_r_small": (
+                'MOIRAIForecaster(checkpoint_path="Salesforce/moirai-1.1-R-small", '
+                'map_location="cpu")'
+            ),
+            "moirai_1_1_r_base": (
+                'MOIRAIForecaster(checkpoint_path="Salesforce/moirai-1.1-R-base", '
+                'map_location="cpu")'
+            ),
+            "moirai_1_1_r_large": (
+                'MOIRAIForecaster(checkpoint_path="Salesforce/moirai-1.1-R-large", '
+                'map_location="cpu")'
+            ),
+        },
     }
+
 
     def __init__(
         self,

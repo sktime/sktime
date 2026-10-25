@@ -173,6 +173,14 @@ class T0Forecaster(BaseForecaster):
         # -------------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_t0"],
+        # Shorthands
+        # -----------
+        "shorthands": {
+            "t0": (
+                'T0Forecaster(model_path="theforecastingcompany/t0-alpha", '
+                'license_accepted=True)'
+            ),
+        },
     }
 
     def __init__(
