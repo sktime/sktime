@@ -14,12 +14,15 @@ def test_shorthands_craftable():
     from sktime.registry import craft
 
     shorthands = _namespace_shorthands()
-    for _, sh in shorthands.items():
+    for sh, spec in shorthands.items():
         # this would raise an exception if there is unsafe code in the shorthand
         try:
+            craft(spec, safe=True)
             craft(sh, safe=True)
         except Exception as e:
-            raise AssertionError(f"Shorthand {sh} is not safe-craftable.") from e
+            raise AssertionError(
+                f"Shorthand {sh} is not safe-craftable. Shorthand spec: {spec}"
+            ) from e
 
 
 def test_shorthand_simple_craft():
