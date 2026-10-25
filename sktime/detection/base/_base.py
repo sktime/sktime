@@ -328,6 +328,12 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         if self.get_config()["remember_data"]:
             self._X = X
             self._y = y
+        else:
+            # remove data stored by an earlier fit, if any
+            if hasattr(self, "_X"):
+                del self._X
+            if hasattr(self, "_y"):
+                del self._y
 
         if _method_has_arg(self._fit, "y"):
             self._fit(X=X_inner, y=y)  # X_inner is the converted X
@@ -1469,3 +1475,7 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
             return BaseDetector._empty_sparse()
         change_points = y_sparse.set_index("ilocs").index.left
         return change_points
+
+
+# initialize dynamic docstrings
+BaseDetector._init_dynamic_doc()
