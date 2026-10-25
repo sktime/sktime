@@ -15,6 +15,11 @@ def test_shorthands_craftable():
 
     shorthands = _namespace_shorthands()
     for sh, spec in shorthands.items():
+        if not isinstance(spec, str):
+            raise ValueError(
+                f"Shorthand spec for {sh} is not a string. Found type: {type(spec)}. "
+                f"Found value: {spec}"
+            )
         # this would raise an exception if there is unsafe code in the shorthand
         try:
             craft(spec, safe=True)

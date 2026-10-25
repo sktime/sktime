@@ -145,15 +145,15 @@ class FlowStateForecaster(BaseForecaster):
         # Shorthands
         # ----------
         "shorthands": {
-            "flowstate": {
+            "flowstate": (
                 'FlowStateForecaster(model_path="ibm-research/flowstate", '
                 'revision="r1.1")'
-            },
-            "flowstate_granite": {
+            ),
+            "flowstate_granite": (
                 "FlowStateForecaster("
                 'model_path="ibm-granite/granite-timeseries-flowstate-r1", '
                 'revision="r1.1")'
-            },
+            ),
         },
     }
 
