@@ -178,7 +178,7 @@ class T0Forecaster(BaseForecaster):
         "shorthands": {
             "t0": (
                 'T0Forecaster(model_path="theforecastingcompany/t0-alpha", '
-                'license_accepted=True)'
+                "license_accepted=True)"
             ),
         },
     }

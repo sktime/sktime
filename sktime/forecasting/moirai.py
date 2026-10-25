@@ -125,8 +125,8 @@ class MOIRAIForecaster(BaseForecaster):
         # ----------
         "shorthands": {
             "moirai_1_0_r_small": (
-                    'MOIRAIForecaster(checkpoint_path="Salesforce/moirai-1.0-R-small", '
-                    'map_location="cpu")'
+                'MOIRAIForecaster(checkpoint_path="Salesforce/moirai-1.0-R-small", '
+                'map_location="cpu")'
             ),
             "moirai_1_0_r_base": (
                 'MOIRAIForecaster(checkpoint_path="Salesforce/moirai-1.0-R-base", '
@@ -150,7 +150,6 @@ class MOIRAIForecaster(BaseForecaster):
             ),
         },
     }
-
 
     def __init__(
         self,
