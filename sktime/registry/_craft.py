@@ -190,7 +190,10 @@ def craft(spec, safe=False, namespace_plugin=None):
     # Parse the specification once.
     # Both safe and unsafe modes operate on the resulting AST.
     try:
-        spec = _replace_shorthands(spec, _namespace_shorthands())
+        # shorthands replacement only for expressions in eval mode, not code blocks
+        # (for code blocks, it is clear how variable names would be resolved)
+        if "return" not in spec:
+            spec = _replace_shorthands(spec, _namespace_shorthands())
 
         tree = ast.parse(spec, mode="exec")
     except SyntaxError as e:
@@ -459,7 +462,10 @@ def deps(spec, include_test_deps=False):
         each str is PEP 440 compatible requirement string for craft(spec)
         if spec has no requirements, return is [], the length 0 list
     """
-    spec = _replace_shorthands(spec, _namespace_shorthands())
+    if "return" not in spec:
+        # shorthands replacement only for expressions in eval mode, not code blocks
+        # (for code blocks, it is clear how variable names would be resolved)
+       spec = _replace_shorthands(spec, _namespace_shorthands())
 
     register = _namespace(include_deps=True)
 
