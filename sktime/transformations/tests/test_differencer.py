@@ -208,6 +208,94 @@ def test_differencer_cutoff():
     gscv.fit(train_model, X=X_train)
 
 
+def _set_index_type(y, index_type):
+    """Return copy of y with PeriodIndex, DatetimeIndex with freq, or RangeIndex."""
+    y = y.copy()
+    if index_type == "datetime":
+        y.index = pd.date_range("2000-01-01", periods=len(y), freq="5min")
+    elif index_type == "int":
+        y = y.reset_index(drop=True)
+    return y
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("update_params", [True, False])
+@pytest.mark.parametrize("memory", ["all", "latest"])
+@pytest.mark.parametrize("lags", [1, [1, 12]])
+@pytest.mark.parametrize("index_type", ["period", "datetime", "int"])
+def test_differencer_update_equals_fit(index_type, lags, memory, update_params):
+    """Test that fit then update remembers the same data as fit on all data.
+
+    Failure mode, see #8715: Differencer did not remember data passed in update,
+    so transform and inverse_transform after update used the data seen in fit.
+    This gave wrong values, or a ValueError for DatetimeIndex with freq.
+    """
+    y = _set_index_type(y_airline, index_type)
+    y_test = y.iloc[100:]
+
+    diff_upd = Differencer(lags=lags, memory=memory).fit(y.iloc[:60])
+    for start, end in [(60, 61), (61, 72), (72, 100)]:
+        diff_upd.update(y.iloc[start:end], update_params=update_params)
+
+    diff_ref = Differencer(lags=lags, memory=memory).fit(y.iloc[:100])
+
+    yt_ref = diff_ref.transform(y_test)
+    _assert_array_almost_equal(diff_upd.transform(y_test), yt_ref)
+    _assert_array_almost_equal(diff_upd.inverse_transform(yt_ref), y_test)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("memory", ["all", "latest"])
+def test_differencer_update_empty(memory):
+    """Test that update with empty data keeps the remembered data."""
+    diff_upd = Differencer(memory=memory).fit(y_airline.iloc[:60])
+    diff_upd.update(y_airline.iloc[60:60])
+
+    diff_ref = Differencer(memory=memory).fit(y_airline.iloc[:60])
+
+    y_test = y_airline.iloc[60:]
+    _assert_array_almost_equal(diff_upd.transform(y_test), diff_ref.transform(y_test))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("index_type", ["period", "datetime", "int"])
+def test_differencer_update_in_pipeline(index_type):
+    """Test that forecasts of pipeline with Differencer after update equal refit.
+
+    Failure mode, see #8715: the second update in the pipeline raised
+    ValueError "Inferred frequency None from passed values does not conform
+    to passed frequency 5min" for DatetimeIndex, and the forecast was wrong
+    for PeriodIndex and RangeIndex.
+    """
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.forecasting.naive import NaiveForecaster
+
+    y = _set_index_type(y_airline.iloc[:40], index_type)
+
+    def _pipeline():
+        steps = [("diff", Differencer(lags=1)), ("naive", NaiveForecaster())]
+        return TransformedTargetForecaster(steps)
+
+    pipe = _pipeline().fit(y.iloc[:10])
+    pipe.update(y.iloc[10:20], update_params=False)
+    pipe.update(y.iloc[20:30])
+    pipe.update(y.iloc[30:40])
+    y_pred = pipe.predict(fh=[1, 2, 3])
+
+    y_pred_refit = _pipeline().fit(y).predict(fh=[1, 2, 3])
+
+    pd.testing.assert_series_equal(y_pred, y_pred_refit)
+
+
 @pytest.mark.skipif(
     not run_test_for_class(Differencer),
     reason="run test only if softdeps are present and incrementally (if requested)",
