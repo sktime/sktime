@@ -465,7 +465,7 @@ def deps(spec, include_test_deps=False):
     if "return" not in spec:
         # shorthands replacement only for expressions in eval mode, not code blocks
         # (for code blocks, it is clear how variable names would be resolved)
-       spec = _replace_shorthands(spec, _namespace_shorthands())
+        spec = _replace_shorthands(spec, _namespace_shorthands())
 
     register = _namespace(include_deps=True)
 
