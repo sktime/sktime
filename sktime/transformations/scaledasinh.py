@@ -27,11 +27,11 @@ class ScaledAsinhTransformer(BaseTransformer):
 
     Attributes
     ----------
-    shift_parameter_asinh_ : float
-        shift parameter, denoted as "a" in [1]_, the median of sample data.
-        It is fitted, based on the data provided in "fit".
+    shift_parameter_asinh_ : np.ndarray of shape (n_columns,)
+        shift parameter, denoted as "a" in [1]_, the per-column median of
+        sample data. It is fitted, based on the data provided in "fit".
 
-    scale_parameter_asinh_ : float
+    scale_parameter_asinh_ : np.ndarray of shape (n_columns,)
         scale parameter, denoted as "b" in [1]_, the median absolute deviation
         (MAD) around the sample median adjusted by a factor for asymptotically
         normal consistency to the standard deviation (Based on [1]_, [2]_
@@ -60,7 +60,9 @@ class ScaledAsinhTransformer(BaseTransformer):
     | The Hyperbolic Sine inverse transformation is applied as:
     |   :math:`b . sinh(x) + a`
     | where "a" is the shift parameter and "b" is the scale parameter [1]_.
-    | a = median(sample data)
+    | For multivariate input, both "a" and "b" are fitted per column,
+    | so each column is transformed independently of the others.
+    | a = median(sample data, per column)
     | b = median_abs_deviation(sample data) :math:`\times` mad_normalization_factor
 
     References
@@ -113,7 +115,7 @@ class ScaledAsinhTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : 2D np.ndarray (n x 1)
+        X : 2D np.ndarray of shape (n_timepoints, n_columns)
             Data to be transformed
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
@@ -122,7 +124,7 @@ class ScaledAsinhTransformer(BaseTransformer):
         -------
         self: a fitted instance of the estimator
         """
-        self.shift_parameter_asinh_ = np.median(X)
+        self.shift_parameter_asinh_ = np.median(X, axis=0)
 
         self.scale_parameter_asinh_ = (
             stats.median_abs_deviation(X) * self.mad_normalization_factor
