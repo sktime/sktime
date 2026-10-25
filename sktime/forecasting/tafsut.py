@@ -70,6 +70,7 @@ class TafsutForecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:unequal_length": True,
+        "capability:update": True,
         "requires-fh-in-fit": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_tafsut"],
@@ -133,6 +134,50 @@ class TafsutForecaster(BaseForecaster):
     def _fit(self, y, X=None, fh=None):
         self.model = self.load()
         self._context = y.copy()
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update Tafsut context without reloading the pretrained model.
+
+        Prediction reads ``self._context``. Prefer trimming to
+        ``context_length`` from ``config`` / model config when set, instead of
+        unbounded base ``_update`` refits or a stale context.
+
+        Parameters
+        ----------
+        y : pd.Series
+            New endogenous observations.
+        X : ignored
+        update_params : bool, optional (default=True)
+            Ignored for this zero-shot estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        self._context = update_data(self._context, y)
+
+        context_length = None
+        if self.config is not None:
+            context_length = self.config.get("context_length")
+        if context_length is None and getattr(self, "model", None) is not None:
+            cfg = getattr(self.model, "cfg", None)
+            context_length = getattr(cfg, "context_length", None)
+
+        if context_length is not None and len(self._context) > context_length:
+            self._context = self._context.iloc[-context_length:]
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if (
+                y_stored is not None
+                and context_length is not None
+                and len(y_stored) > context_length
+            ):
+                self._y = y_stored.iloc[-context_length:]
+
         return self
 
     def _forecast(self, horizon):
