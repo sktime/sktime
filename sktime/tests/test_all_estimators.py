@@ -1031,7 +1031,7 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
                     )
                 # this would raise exception if there is unsafe code in the shorthand
                 # if fails, replace by a safe shorthand, e.g.,
-                # * a class spec str such as "N"aiveForecaster"
+                # * a class spec str such as "NaiveForecaster"
                 # * a constructor spec str such as "NaiveForecaster(strategy='mean')"
                 craft(spec, safe=True)
                 craft(sh, safe=True)
