@@ -142,6 +142,19 @@ class FlowStateForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_flowstate"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "flowstate": {
+                'FlowStateForecaster(model_path="ibm-research/flowstate", '
+                'revision="r1.1")'
+            },
+            "flowstate_granite": {
+                'FlowStateForecaster('
+                'model_path="ibm-granite/granite-timeseries-flowstate-r1", '
+                'revision="r1.1")'
+            },
+        },
     }
 
     def __init__(

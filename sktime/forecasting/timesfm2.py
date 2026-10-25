@@ -338,6 +338,18 @@ class TimesFM2Forecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_timesfm2"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "timesfm_2_5": (
+                'TimesFM2Forecaster(model_path="google/timesfm-2.5-200m-transformers", '
+                'device_map="auto")'
+                ),
+            "timesfm_2": (
+                'TimesFM2Forecaster(model_path="google/timesfm-2.0-500m-pytorch", '
+                'device_map="auto", forward_kwargs={"forecast_context_len": 1024})'
+            ),
+        },
     }
 
     def __init__(
