@@ -169,6 +169,7 @@ class WindFMForecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "capability:pretrain": False,
+        "capability:update": True,
         "authors": ["shiyu-coder", "geetu040"],
         "maintainers": ["geetu040"],
         "python_dependencies": [
@@ -266,6 +267,59 @@ class WindFMForecaster(BaseForecaster):
         self.max_context_ = len(self.y_context_)
         self.column_mapping_ = self._resolve_column_mapping(self.X_context_)
         self.tokenizer_, self.model_ = self._load_windfm()
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update WindFM context without reloading the pretrained model.
+
+        Prediction reads ``self.y_context_`` / ``self.X_context_`` and conditions
+        on at most ``self.max_context_`` observations. Base ``_update`` would
+        either refit or leave context stale. Append and trim instead.
+
+        ``update_params`` is ignored: WindFM is used zero-shot.
+
+        Parameters
+        ----------
+        y : pd.Series
+            New endogenous observations.
+        X : pd.DataFrame, optional (default=None)
+            New exogenous observations aligned with ``y``.
+        update_params : bool, optional (default=True)
+            Ignored for this zero-shot estimator.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        if X is None:
+            X = self._make_fallback_X(y)
+
+        self.y_context_ = update_data(self.y_context_, y)
+        self.X_context_ = update_data(self.X_context_, X)
+
+        max_context = getattr(self, "max_context_", None)
+        if max_context is not None and len(self.y_context_) > max_context:
+            self.y_context_ = self.y_context_.iloc[-max_context:]
+            self.X_context_ = self.X_context_.reindex(self.y_context_.index)
+
+        if self.get_config().get("remember_data"):
+            y_stored = getattr(self, "_y", None)
+            if (
+                y_stored is not None
+                and max_context is not None
+                and len(y_stored) > max_context
+            ):
+                self._y = y_stored.iloc[-max_context:]
+            X_stored = getattr(self, "_X", None)
+            if (
+                X_stored is not None
+                and max_context is not None
+                and len(X_stored) > max_context
+            ):
+                self._X = X_stored.iloc[-max_context:]
+
         return self
 
     def _predict(self, fh, X=None):
