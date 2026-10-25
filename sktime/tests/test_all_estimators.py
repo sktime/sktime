@@ -1026,8 +1026,8 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
             for sh, spec in shs.items():
                 if not isinstance(spec, str):
                     raise ValueError(
-                        f"Shorthand spec for {sh} is not a string. Found type: {type(spec)}. "
-                        f"Found value: {spec}"
+                        f"Shorthand spec for {sh} is not a string. "
+                        f"Found type: {type(spec)}. Found value: {spec}"
                     )
                 # this would raise exception if there is unsafe code in the shorthand
                 # if fails, replace by a safe shorthand, e.g.,
