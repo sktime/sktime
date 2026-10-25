@@ -342,6 +342,9 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
 
         self._y_fit_index = y.index
 
+        self._cur_X = X
+        self._cur_y = y
+
         impute_method = self.impute_method
         lags = self._lags
 
@@ -392,9 +395,6 @@ class MCRecursiveProbaReductionForecaster(BaseProbaForecaster, _ReducerMixin):
         estimator = clone(self.estimator)
         estimator.fit(Xtt, yt)
         self.estimator_ = estimator
-
-        self._cur_X = X
-        self._cur_y = y
 
         return self
 
