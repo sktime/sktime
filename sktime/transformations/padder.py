@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 
 from sktime.transformations.base import BaseTransformer
-from sktime.utils.pandas import df_map
 
 __all__ = ["PaddingTransformer"]
 __author__ = ["abostrom"]
@@ -13,44 +12,27 @@ __author__ = ["abostrom"]
 class PaddingTransformer(BaseTransformer):
     """Padding panel of unequal length time series to equal, fixed length.
 
-    Pads the input dataset to either a optional fixed length
-    (longer than the longest series).
-    Or finds the max length series across all series and dimensions and
-    pads to that with zeroes.
+    Pads the input dataset to either an optional fixed length
+    (longer than the longest series), or finds the max length series across
+    all instances and pads to that with ``fill_value``.
 
     Parameters
     ----------
-    pad_length : int, optional (default=None) length to pad the series too.
-        if None, will find the longest sequence and use instead.
+    pad_length : int, optional (default=None)
+        Length to pad each series to. If ``None``, uses the longest series
+        length observed in ``fit``.
+    fill_value : float, optional (default=0)
+        Value used for padding.
 
     Examples
     --------
-    >>> import pandas as pd
+    >>> from sktime.datasets import load_unit_test
     >>> from sktime.transformations.padder import PaddingTransformer
-    >>>
-    >>> # Create a sample nested DataFrame with unequal length time series
-    >>> data = {
-    ...     'feature1': [
-    ...         pd.Series([1, 2, 3]), pd.Series([4, 5]), pd.Series([6, 7, 8, 9])
-    ...     ],
-    ...     'feature2': [
-    ...         pd.Series([10, 11]), pd.Series([12, 13, 14]), pd.Series([15])
-    ...     ]
-    ... }
-    >>> X = pd.DataFrame(data)
-    >>>
-    >>> # Initialize the PaddingTransformer
-    >>> padder = PaddingTransformer()
-    >>>
-    >>> # Fit the transformer to the data
-    >>> padder.fit(X)
-    PaddingTransformer()
-    >>>
-    >>> # Transform the data
-    >>> Xt = padder.transform(X)
-    >>>
-    >>> # Display the transformed data
-    >>> # print(Xt)
+    >>> X, _ = load_unit_test(return_X_y=True, split="train")
+    >>> padder = PaddingTransformer(pad_length=30, fill_value=0.0)
+    >>> Xt = padder.fit_transform(X)
+    >>> len(Xt.iloc[0, 0])
+    30
     """
 
     _tags = {
@@ -61,10 +43,12 @@ class PaddingTransformer(BaseTransformer):
         "scitype:transform-output": "Series",
         # what scitype is returned: Primitives, Series, Panel
         "scitype:instancewise": False,  # is this an instance-wise transform?
-        "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
+        "X_inner_mtype": "pd-multiindex",
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for X?
         "fit_is_empty": False,
+        "capability:unequal_length": True,
         "capability:unequal_length:removes": True,
+        "capability:multivariate": True,
         "capability:categorical_in_X": False,
         # is transform result always guaranteed to be equal length (and series)?
         # CI and test flags
@@ -84,9 +68,9 @@ class PaddingTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of X must contain pandas.Series
-            Data to fit transform to
+        X : pd.DataFrame with pd.MultiIndex
+            Panel data in ``pd-multiindex`` format. MultiIndex has two levels:
+            first level is instance index, second level is time index.
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
@@ -95,18 +79,30 @@ class PaddingTransformer(BaseTransformer):
         self : reference to self
         """
         if self.pad_length is None:
-            n_instances, _ = X.shape
-            arr = [X.iloc[i, :].values for i in range(n_instances)]
-            self.pad_length_ = _get_max_length(arr)
+            self.pad_length_ = int(X.groupby(level=0).size().max())
         else:
             self.pad_length_ = self.pad_length
 
         return self
 
-    def _create_pad(self, series):
-        out = np.full(self.pad_length_, self.fill_value, float)
-        out[: len(series)] = series.iloc[: len(series)]
-        return out
+    def _pad_instance(self, Xi):
+        """Pad a single instance DataFrame to ``pad_length_`` rows."""
+        n = len(Xi)
+        if n > self.pad_length_:
+            raise ValueError(
+                "Error: max_length of series "
+                "is greater than the one found when fit or set."
+            )
+        if n == self.pad_length_:
+            values = Xi.to_numpy(dtype=float, copy=True)
+        else:
+            values = np.full(
+                (self.pad_length_, Xi.shape[1]), self.fill_value, dtype=float
+            )
+            values[:n] = Xi.to_numpy(dtype=float, copy=False)
+        return pd.DataFrame(
+            values, index=pd.RangeIndex(self.pad_length_), columns=Xi.columns
+        )
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -115,34 +111,32 @@ class PaddingTransformer(BaseTransformer):
 
         Parameters
         ----------
-        X : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of X must contain pandas.Series
-            Data to fit transform to
+        X : pd.DataFrame with pd.MultiIndex
+            Panel data in ``pd-multiindex`` format. MultiIndex has two levels:
+            first level is instance index, second level is time index.
         y : ignored argument for interface compatibility
             Additional data, e.g., labels for transformation
 
         Returns
         -------
-        Xt : nested pandas DataFrame of shape [n_instances, n_features]
-            each cell of Xt contains pandas.Series
-            transformed version of X
+        Xt : pd.DataFrame with pd.MultiIndex, same format as X
+            transformed version of X with equal-length instances
         """
-        n_instances, _ = X.shape
-
-        arr = [X.iloc[i, :].values for i in range(n_instances)]
-
-        max_length = _get_max_length(arr)
-
-        if max_length > self.pad_length_:
+        if X.groupby(level=0).size().max() > self.pad_length_:
             raise ValueError(
-                "Error: max_length of series \
-                    is greater than the one found when fit or set."
+                "Error: max_length of series "
+                "is greater than the one found when fit or set."
             )
 
-        pad = [pd.Series([self._create_pad(series) for series in out]) for out in arr]
-        Xt = df_map(pd.DataFrame(pad))(pd.Series)
-        Xt.columns = X.columns
+        pieces = []
+        for inst, Xi in X.groupby(level=0, sort=False):
+            Xi = Xi.droplevel(0)
+            padded = self._pad_instance(Xi)
+            padded.index = pd.MultiIndex.from_product([[inst], padded.index])
+            pieces.append(padded)
 
+        Xt = pd.concat(pieces, axis=0)
+        Xt.index.names = X.index.names
         return Xt
 
     @classmethod
@@ -170,10 +164,3 @@ class PaddingTransformer(BaseTransformer):
             {"pad_length": 120, "fill_value": -1.0},
         ]
         return params
-
-
-def _get_max_length(X):
-    def get_length(input):
-        return max(map(lambda series: len(series), input))
-
-    return max(map(get_length, X))
