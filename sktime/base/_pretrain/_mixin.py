@@ -31,12 +31,19 @@ class _PretrainMixin(_StateAtMixin):
         the pretrained attributes are copied to the clone. Estimators without
         the ``capability:pretrain`` tag are cloned as usual.
 
+        Plugins defined by parent classes are retained, and come after
+        ``_PretrainedCloner`` in the returned list.
+
         Returns
         -------
         list
-            List containing ``_PretrainedCloner`` plugin class.
+            List of clone plugin classes, ``_PretrainedCloner`` first, followed
+            by the plugins of the parent classes, if any.
         """
-        return [_PretrainedCloner]
+        get_parent_plugins = getattr(super(), "_get_clone_plugins", None)
+        parent_plugins = (get_parent_plugins() if get_parent_plugins else None) or []
+        parent_plugins = [p for p in parent_plugins if p is not _PretrainedCloner]
+        return [_PretrainedCloner, *parent_plugins]
 
     @property
     def _is_fitted(self):
