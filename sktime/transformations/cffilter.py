@@ -45,7 +45,11 @@ class CFFilter(BaseTransformer):
     >>> import pandas as pd # doctest: +SKIP
     >>> import statsmodels.api as sm # doctest: +SKIP
     >>> dta = sm.datasets.macrodata.load_pandas().data # doctest: +SKIP
-    >>> index = pd.date_range(start='1959Q1', end='2009Q4', freq='Q') # doctest: +SKIP
+    >>> index = pd.date_range(  # doctest: +SKIP
+    ...     start="1959-03-31",
+    ...     periods=len(dta),
+    ...     freq=pd.offsets.QuarterEnd(),
+    ... )
     >>> dta.set_index(index, inplace=True) # doctest: +SKIP
     >>> cf = CFFilter(6, 24, True) # doctest: +SKIP
     >>> cycles = cf.fit_transform(X=dta[['realinv']]) # doctest: +SKIP
