@@ -146,10 +146,14 @@ class SubsequenceExtractionTransformer(BaseTransformer):
 
         with warnings.catch_warnings():
             warnings.simplefilter(action="ignore", category=FutureWarning)
-            fnc = partial(self.aggregate_fn, **(self.kwargs or {}))
-            X_aggregate = getattr(X.rolling(window=self.subseq_len), "agg")(
-                fnc.func, **fnc.keywords
-            ).dropna()
+
+            if self.aggregate_fn is np.mean and not self.kwargs:
+                X_aggregate = X.rolling(window=self.subseq_len).mean().dropna()
+            else:
+                fnc = partial(self.aggregate_fn, **(self.kwargs or {}))
+                X_aggregate = getattr(X.rolling(window=self.subseq_len), "agg")(
+                    fnc.func, **fnc.keywords
+                ).dropna()
 
         indices = getattr(X_aggregate, f"idx{self.selector}")()
 
