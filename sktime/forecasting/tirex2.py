@@ -160,7 +160,7 @@ class TiRex2Forecaster(BaseForecaster):
             "tirex_2": 'TiRex2Forecaster(model_path="NX-AI/TiRex-2", device="auto")',
             "tirex_2_gifteval_zs": (
                 'TiRex2Forecaster(model_path="NX-AI/TiRex-2-gifteval-zs", '
-                'device="auto")',
+                'device="auto")'
             ),
             "tirex_2_gifteval_pretrain": (
                 'TiRex2Forecaster(model_path="NX-AI/TiRex-2-gifteval-pretrain", '

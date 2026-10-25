@@ -16,7 +16,10 @@ def test_shorthands_craftable():
     shorthands = _namespace_shorthands()
     for _, sh in shorthands.items():
         # this would raise an exception if there is unsafe code in the shorthand
-        craft(sh, safe=True)
+        try:
+            craft(sh, safe=True)
+        except Exception as e:
+            raise AssertionError(f"Shorthand {sh} is not safe-craftable.") from e
 
 
 def test_shorthand_simple_craft():
