@@ -150,7 +150,7 @@ class FlowStateForecaster(BaseForecaster):
                 'revision="r1.1")'
             },
             "flowstate_granite": {
-                'FlowStateForecaster('
+                "FlowStateForecaster("
                 'model_path="ibm-granite/granite-timeseries-flowstate-r1", '
                 'revision="r1.1")'
             },

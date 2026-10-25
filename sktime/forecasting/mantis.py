@@ -86,16 +86,16 @@ class MantisForecaster(BaseForecaster):
         # ----------
         "shorthands": {
             "mantis": (
-                'MantisForecaster(checkpoint="paris-noah/MantisV2", model_version="v2", '
-                'device="auto", context_length=127)'
+                'MantisForecaster(checkpoint="paris-noah/MantisV2", '
+                'model_version="v2", device="auto", context_length=127)'
             ),
             "mantis_8m": (
-                'MantisForecaster(checkpoint="paris-noah/Mantis-8M", model_version="v1", '
-                'device="auto", context_length=127)'
+                'MantisForecaster(checkpoint="paris-noah/Mantis-8M", '
+                'model_version="v1", device="auto", context_length=127)'
             ),
             "mantis_plus": (
-                'MantisForecaster(checkpoint="paris-noah/MantisPlus", model_version="v1", '
-                'device="auto", context_length=127)'
+                'MantisForecaster(checkpoint="paris-noah/MantisPlus", '
+                'model_version="v1", device="auto", context_length=127)'
             ),
         },
     }

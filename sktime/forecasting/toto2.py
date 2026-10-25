@@ -118,7 +118,7 @@ class Toto2Forecaster(BaseForecaster):
             "toto_2_0_313m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-313m")',
             "toto_2_0_1b": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-1B")',
             "toto_2_0_2_5b": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-2.5B")',
-        }
+        },
     }
 
     def __init__(
