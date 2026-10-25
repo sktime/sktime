@@ -481,6 +481,7 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
             y_mapped = y_df.copy()
             first_iloc = y_mapped["ilocs"].iloc[0]
             if hasattr(first_iloc, "left"):
+
                 def _shift_interval(iv):
                     new_left = int(index_map[iv.left])
                     if iv.closed in ("left", "neither"):
@@ -502,9 +503,7 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
 
                 y_mapped["ilocs"] = y_mapped["ilocs"].apply(_shift_interval)
             else:
-                y_mapped["ilocs"] = y_mapped["ilocs"].apply(
-                    lambda k: int(index_map[k])
-                )
+                y_mapped["ilocs"] = y_mapped["ilocs"].apply(lambda k: int(index_map[k]))
             return y_mapped
 
         if self._y is not None:

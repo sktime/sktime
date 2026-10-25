@@ -151,15 +151,15 @@ def test_update_interval_ilocs_translated():
     from sktime.detection.dummy import DummyPretrainedAnomalies
 
     X = pd.DataFrame({"value": np.arange(20, dtype=float)})
-    y_fit = pd.DataFrame({
-        "ilocs": [
-            pd.Interval(1, 3, closed="left"),
-            pd.Interval(5, 8, closed="left"),
-        ]
-    })
-    y_upd = pd.DataFrame({
-        "ilocs": [pd.Interval(2, 5, closed="left")]
-    })
+    y_fit = pd.DataFrame(
+        {
+            "ilocs": [
+                pd.Interval(1, 3, closed="left"),
+                pd.Interval(5, 8, closed="left"),
+            ]
+        }
+    )
+    y_upd = pd.DataFrame({"ilocs": [pd.Interval(2, 5, closed="left")]})
 
     d = DummyPretrainedAnomalies(strategy="rate").fit(X.iloc[:10], y=y_fit)
     d.update(X.iloc[10:], y=y_upd)
