@@ -144,6 +144,14 @@ class TimesFM3Forecaster(BaseForecaster):
         "capability:non_contiguous_X": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_timesfm3"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "timesfm_3": (
+                'TimesFM3Forecaster(model_path="google/timesfm-3.0-pytorch", '
+                "license_accepted=True)"
+            ),
+        },
     }
 
     def __init__(
