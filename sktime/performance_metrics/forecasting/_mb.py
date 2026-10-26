@@ -10,27 +10,27 @@ the lower the better.
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 
 
-class MeanError(BaseForecastingErrorMetric):
-    r"""Mean error (ME) or Forecast Bias.
+class MeanBias(BaseForecastingErrorMetric):
+    r"""Mean Bias or Mean Signed Error.
 
-    ME output is a floating point number.
-    ME is of the same unit as the input data.
-    An ME of 0.0 indicates an unbiased forecast. A positive ME indicates
-    underforecasting, while a negative ME indicates overforecasting.
+    MB output is a floating point number.
+    MB is of the same unit as the input data.
+    An MB of 0.0 indicates an unbiased forecast. A positive MB indicates
+    underforecasting, while a negative MB indicates overforecasting.
 
     For a univariate, non-hierarchical sample
     of true values :math:`y_1, \dots, y_n` and
     predicted values :math:`\widehat{y}_1, \dots, \widehat{y}_n` (in :math:`mathbb{R}`),
     at time indices :math:`t_1, \dots, t_n`,
-    ``evaluate`` or call returns the Mean Error,
-    :math:`\frac{1}{n}\sum_{i=1}^n (y_i - \widehat{y}_i)`.
+    ``evaluate`` or call returns the Mean Bias,
+    :math:`\frac{1}{n}\sum_{i=1}^n (\widehat{y}_i - y_i)`.
     (the time indices are not used)
 
     ``multioutput`` and ``multilevel`` control averaging across variables and
     hierarchy indices, see below.
 
     ``evaluate_by_index`` returns, at a time index :math:`t_i`,
-    the error at that time index, :math:`(y_i - \widehat{y}_i)`,
+    the error at that time index, :math:`(\widehat{y}_i - y_i)`,
     for all time indices :math:`t_1, \dots, t_n` in the input.
 
     Parameters
@@ -72,12 +72,12 @@ class MeanError(BaseForecastingErrorMetric):
     Examples
     --------
     >>> import numpy as np
-    >>> from sktime.performance_metrics.forecasting import MeanError
+    >>> from sktime.performance_metrics.forecasting import MeanBias
     >>> y_true = np.array([3, -0.5, 2, 7, 2])
     >>> y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
-    >>> me = MeanError()
-    >>> me(y_true, y_pred)
-    np.float64(-0.05)
+    >>> mb = MeanBias()
+    >>> mb(y_true, y_pred)
+    np.float64(0.05)
     """
 
     _tags = {
@@ -114,7 +114,7 @@ def _evaluate_by_index(self, y_true, y_pred, **kwargs):
     """
     multioutput = self.multioutput
 
-    raw_values = y_true - y_pred
+    raw_values = y_pred - y_true
     raw_values = self._get_weighted_df(raw_values, **kwargs)
 
     return self._handle_multioutput(raw_values, multioutput)
