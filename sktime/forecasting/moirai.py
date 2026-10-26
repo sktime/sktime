@@ -96,6 +96,7 @@ class MOIRAIForecaster(BaseForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
