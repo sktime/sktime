@@ -185,6 +185,7 @@ class TimesFMForecaster(BaseForecaster):
         "python_dependencies": ["transformers[torch]>=4.52.0"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.Series",
         "capability:multivariate": False,
         "capability:exogenous": False,
