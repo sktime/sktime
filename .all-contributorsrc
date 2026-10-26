@@ -3860,6 +3860,17 @@
       ]
     },
     {
+      "login": "PragnyaKhandelwal",
+      "name": "Pragnya Khandelwal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/176940846?v=4",
+      "profile": "https://github.com/PragnyaKhandelwal",
+      "contributions": [
+        "bug",
+        "code",
+        "doc"
+      ]
+    },
+    {
       "login": "AYUSH27112021",
       "name": "Ayush Kumar Singh",
       "avatar_url": "https://avatars.githubusercontent.com/u/90300049?v=4",
@@ -4273,6 +4284,25 @@
       "contributions": [
         "bug",
         "code"
+      ]
+    },
+    {
+      "login": "leandrepi",
+      "name": "Leandre",
+      "avatar_url": "https://avatars.githubusercontent.com/u/45395297?v=4",
+      "profile": "https://github.com/leandrepi",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "Harshdeep-creator",
+      "name": "Harshdeep Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/223303066?v=4",
+      "profile": "https://github.com/Harshdeep-creator",
+      "contributions": [
+        "test"
       ]
     }
   ]
