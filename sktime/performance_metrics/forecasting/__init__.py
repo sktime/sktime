@@ -26,6 +26,7 @@ __all__ = [
     "MeanAbsolutePercentageErrorStabilized",
     "MeanAbsoluteScaledError",
     "MeanAsymmetricError",
+    "MeanBias",
     "MeanLinexError",
     "MeanRelativeAbsoluteError",
     "MeanSquaredError",
@@ -123,6 +124,7 @@ from sktime.performance_metrics.forecasting._mapes import (
 )
 from sktime.performance_metrics.forecasting._mase import MeanAbsoluteScaledError
 from sktime.performance_metrics.forecasting._masyme import MeanAsymmetricError
+from sktime.performance_metrics.forecasting._mb import MeanBias
 from sktime.performance_metrics.forecasting._medae import MedianAbsoluteError
 from sktime.performance_metrics.forecasting._medape import MedianAbsolutePercentageError
 from sktime.performance_metrics.forecasting._medase import MedianAbsoluteScaledError

@@ -132,6 +132,15 @@ Under- and over-prediction errors
     MeanAsymmetricError
     MeanLinexError
 
+Measures of bias
+^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    MeanBias
+
 
 Quantile and interval forecasts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
