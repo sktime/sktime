@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.datatypes import check_is_mtype
+from sktime.datatypes import check_is_mtype, convert, convert_to, get_examples
 from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
     convert_Series_to_Panel,
@@ -14,6 +14,8 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+from sktime.utils.deep_equals import deep_equals
+from sktime.utils.dependencies import _check_soft_dependencies
 
 
 @pytest.mark.skipif(
@@ -98,3 +100,94 @@ def test_convert_hierarchical_to_panel(hierarchy_levels):
         X_hier.index.droplevel(list(range(X_hier.index.nlevels - 2)))
     )
     assert (X_panel.values == X_hier.values).all()
+
+
+POLARS_MTYPES = {
+    "Series": "pl.DataFrame",
+    "Panel": "polars_panel",
+    "Hierarchical": "polars_hierarchical",
+}
+PANDAS_MTYPES = {
+    "Series": "pd.DataFrame",
+    "Panel": "pd-multiindex",
+    "Hierarchical": "pd_multiindex_hier",
+}
+
+
+def _polars_fixture(scitype):
+    """Return a single-instance polars fixture of the given scitype."""
+    if scitype == "Series":
+        return get_examples(mtype="pl.DataFrame", as_scitype="Series")[0]
+    if scitype == "Panel":
+        X = _make_panel(n_instances=1, n_columns=2, return_mtype="pd-multiindex")
+        return convert(X, "pd-multiindex", "polars_panel", "Panel")
+    X = _make_hierarchical(hierarchy_levels=(1, 1), n_columns=2)
+    return convert(X, "pd_multiindex_hier", "polars_hierarchical", "Hierarchical")
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes")
+    or not _check_soft_dependencies("polars", severity="none"),
+    reason="Test only if sktime.datatypes changed, and if polars is present",
+)
+@pytest.mark.parametrize(
+    "scitype_from, scitype_to",
+    [
+        ("Series", "Panel"),
+        ("Panel", "Series"),
+        ("Series", "Hierarchical"),
+        ("Hierarchical", "Series"),
+        ("Panel", "Hierarchical"),
+        ("Hierarchical", "Panel"),
+    ],
+)
+def test_convert_to_scitype_polars(scitype_from, scitype_to):
+    """Test polars inputs are converted to the polars mtype of the target scitype.
+
+    The result must be a valid polars mtype, and equal to the pandas conversion
+    of the same data.
+    """
+    X = _polars_fixture(scitype_from)
+
+    Xt, mtype = convert_to_scitype(
+        X, to_scitype=scitype_to, from_scitype=scitype_from, return_to_mtype=True
+    )
+
+    assert mtype == POLARS_MTYPES[scitype_to]
+    assert check_is_mtype(Xt, mtype, scitype_to, return_metadata=False)
+
+    X_pd = convert(
+        X, POLARS_MTYPES[scitype_from], PANDAS_MTYPES[scitype_from], scitype_from
+    )
+    Xt_pd_expected = convert_to_scitype(
+        X_pd, to_scitype=scitype_to, from_scitype=scitype_from
+    )
+    Xt_pd_expected = convert_to(Xt_pd_expected, PANDAS_MTYPES[scitype_to])
+    Xt_pd = convert(Xt, mtype, PANDAS_MTYPES[scitype_to], scitype_to)
+    assert deep_equals(Xt_pd, Xt_pd_expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes")
+    or not _check_soft_dependencies("polars", severity="none"),
+    reason="Test only if sktime.datatypes changed, and if polars is present",
+)
+def test_convert_hierarchical_to_panel_polars_deep():
+    """Test polars hierarchical to panel for more than 3 index levels."""
+    X = _make_hierarchical(hierarchy_levels=(1, 1, 3), n_columns=1)
+    X = convert(X, "pd_multiindex_hier", "polars_hierarchical", "Hierarchical")
+
+    Xt = convert_to_scitype(X, to_scitype="Panel", from_scitype="Hierarchical")
+
+    assert check_is_mtype(Xt, "polars_panel", "Panel", return_metadata=False)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+@pytest.mark.parametrize("fun", [convert_Series_to_Panel, convert_Panel_to_Series])
+def test_unsupported_type_raises_type_error(fun):
+    """Test unsupported input types raise TypeError when the mtype is requested."""
+    with pytest.raises(TypeError, match="obj must be of mtype"):
+        fun(object(), return_to_mtype=True)
