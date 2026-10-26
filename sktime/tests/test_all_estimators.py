@@ -920,6 +920,26 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
         assert deep_equals(cls1.get_param_names(), cls2.get_param_names())
         assert deep_equals(cls1.get_param_defaults(), cls2.get_param_defaults())
 
+    def test_shorthands(self, object_class):
+        """Check that all shorthands in the object are safe-parseable by craft."""
+        from sktime.registry import craft
+
+        shs = object_class.get_class_tag("shorthands")
+
+        if shs is not None:
+            for sh, spec in shs.items():
+                if not isinstance(spec, str):
+                    raise ValueError(
+                        f"Shorthand spec for {sh} is not a string. "
+                        f"Found type: {type(spec)}. Found value: {spec}"
+                    )
+                # this would raise exception if there is unsafe code in the shorthand
+                # if fails, replace by a safe shorthand, e.g.,
+                # * a class spec str such as "NaiveForecaster"
+                # * a constructor spec str such as "NaiveForecaster(strategy='mean')"
+                craft(spec, safe=True)
+                craft(sh, safe=True)
+
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):
     """Package level tests for all sktime estimators, i.e., objects with fit."""
