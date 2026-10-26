@@ -23,8 +23,8 @@ A full table with tag based search is also available on the
 Forecasting
 -----------
 
-Point forecasts - classes
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Point forecasts
+~~~~~~~~~~~~~~~
 
 Average losses
 ^^^^^^^^^^^^^^
@@ -133,38 +133,6 @@ Under- and over-prediction errors
     MeanLinexError
 
 
-Point forecasts - functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.performance_metrics.forecasting
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    make_forecasting_scorer
-    mean_absolute_scaled_error
-    median_absolute_scaled_error
-    mean_squared_scaled_error
-    median_squared_scaled_error
-    mean_absolute_error
-    mean_squared_error
-    median_absolute_error
-    median_squared_error
-    geometric_mean_absolute_error
-    geometric_mean_squared_error
-    mean_absolute_percentage_error
-    median_absolute_percentage_error
-    mean_squared_percentage_error
-    median_squared_percentage_error
-    mean_relative_absolute_error
-    median_relative_absolute_error
-    geometric_mean_relative_absolute_error
-    geometric_mean_relative_squared_error
-    mean_asymmetric_error
-    mean_linex_error
-    relative_loss
-
 Quantile and interval forecasts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -194,6 +162,20 @@ Distribution forecasts
     SquaredDistrLoss
 
 
+User-defined metric factory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``make_forecasting_scorer`` to create user-defined metrics for forecasting tasks.
+
+.. currentmodule:: sktime.performance_metrics.forecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    make_forecasting_scorer
+
+
 Detection tasks
 ---------------
 
@@ -212,7 +194,7 @@ The metrics in ``sktime`` can be used for both types of detection tasks:
 
 
 Event detection - anomalies, outliers
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.performance_metrics.detection
 
@@ -231,7 +213,7 @@ Event detection - anomalies, outliers
     FalseAlarmRate
 
 Segment detection
------------------
+~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.performance_metrics.detection
 
