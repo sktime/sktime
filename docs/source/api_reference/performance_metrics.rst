@@ -161,6 +161,20 @@ Distribution forecasts
     SquaredDistrLoss
 
 
+User-defined metric factory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``make_forecasting_scorer`` to create user-defined metrics for forecasting tasks.
+
+.. currentmodule:: sktime.performance_metrics.forecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    make_forecasting_scorer
+
+
 Detection tasks
 ---------------
 
