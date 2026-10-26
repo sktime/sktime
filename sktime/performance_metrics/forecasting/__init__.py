@@ -21,6 +21,7 @@ __all__ = [
     "KLDivergenceNormal",
     "KLDivergenceSingleExponential",
     "MeanAbsoluteError",
+    "MeanAbsoluteErrorPercentage",
     "MeanAbsolutePercentageError",
     "MeanAbsolutePercentageErrorStabilized",
     "MeanAbsoluteScaledError",
@@ -115,6 +116,7 @@ from sktime.performance_metrics.forecasting._maape import (
     mean_arctangent_absolute_percentage_error,
 )
 from sktime.performance_metrics.forecasting._mae import MeanAbsoluteError
+from sktime.performance_metrics.forecasting._maep import MeanAbsoluteErrorPercentage
 from sktime.performance_metrics.forecasting._mape import MeanAbsolutePercentageError
 from sktime.performance_metrics.forecasting._mapes import (
     MeanAbsolutePercentageErrorStabilized,
