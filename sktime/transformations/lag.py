@@ -38,6 +38,7 @@ class Lag(BaseTransformer):
     When multiple lags are provided, multiple column concatenated copies of the lagged
     time series will be created.
     Names of columns are lagname__variablename, where lagname describes the lag/freq.
+    Repeated lag names receive numbered suffixes, starting at ``_2``.
 
     If data was provided in _fit or _update, Lag transformer memorizes those indices
     and uses them for computing lagged values.
@@ -204,6 +205,7 @@ class Lag(BaseTransformer):
 
     def _yield_shift_param_names(self):
         """Yield string representation of (periods, freq) pairs."""
+        used_names = set()
         for lag, freq in self._yield_shift_params():
             if freq is None:
                 name = str(lag)
@@ -212,6 +214,13 @@ class Lag(BaseTransformer):
             else:
                 name = f"{lag}{freq}"
             name = "lag_" + name
+            # 重复滞后仍保留全部数据列, 用后缀避免输出违反列名唯一性约定。
+            base_name = name
+            occurrence = 2
+            while name in used_names:
+                name = f"{base_name}_{occurrence}"
+                occurrence += 1
+            used_names.add(name)
             yield name
 
     def _transform(self, X, y=None):
