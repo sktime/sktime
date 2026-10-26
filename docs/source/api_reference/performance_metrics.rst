@@ -52,6 +52,7 @@ Percentage errors
     MedianAbsolutePercentageError
     MeanSquaredPercentageError
     MedianSquaredPercentageError
+    MeanAbsoluteErrorPercentage
     MeanSquaredErrorPercentage
     MeanArctangentAbsolutePercentageError
 
