@@ -76,6 +76,7 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -121,25 +122,31 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        import torch
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.linear import LTSFLinearNetwork
@@ -248,6 +255,8 @@ class LTSFLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         """
+        self._cur_y = y
+        self._cur_X = X
         fh = fh.to_relative(self.cutoff)
 
         # Validate fh against pretrained network's output dimension
@@ -420,6 +429,7 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -465,25 +475,31 @@ class LTSFDLinearForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        import torch
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.linear import LTSFDLinearNetwork
@@ -607,6 +623,7 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["luca-miniati"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["machine_learning"],
         "capability:pretrain": True,
     }
 
@@ -652,25 +669,31 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        import torch
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.linear import LTSFNLinearNetwork
@@ -779,6 +802,8 @@ class LTSFNLinearForecaster(BaseDeepNetworkPyTorch):
         X : pd.DataFrame, optional
             Exogenous data (currently not used)
         """
+        self._cur_y = y
+        self._cur_X = X
         fh = fh.to_relative(self.cutoff)
 
         # Validate fh against pretrained network's output dimension
@@ -975,6 +1000,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["geetu040"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["deep_learning"],
         "capability:pretrain": True,
     }
 
@@ -1050,25 +1076,31 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
             lr=lr,
         )
 
-        from sktime.utils.dependencies import _check_soft_dependencies
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
 
-        if _check_soft_dependencies("torch"):
-            import torch
+        This method should be used for:
 
-            self.criterions = {
-                "MSE": torch.nn.MSELoss,
-                "L1": torch.nn.L1Loss,
-                "SmoothL1": torch.nn.SmoothL1Loss,
-                "Huber": torch.nn.HuberLoss,
-            }
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        import torch
 
-            self.optimizers = {
-                "Adadelta": torch.optim.Adadelta,
-                "Adagrad": torch.optim.Adagrad,
-                "Adam": torch.optim.Adam,
-                "AdamW": torch.optim.AdamW,
-                "SGD": torch.optim.SGD,
-            }
+        self.criterions = {
+            "MSE": torch.nn.MSELoss,
+            "L1": torch.nn.L1Loss,
+            "SmoothL1": torch.nn.SmoothL1Loss,
+            "Huber": torch.nn.HuberLoss,
+        }
+
+        self.optimizers = {
+            "Adadelta": torch.optim.Adadelta,
+            "Adagrad": torch.optim.Adagrad,
+            "Adam": torch.optim.Adam,
+            "AdamW": torch.optim.AdamW,
+            "SGD": torch.optim.SGD,
+        }
 
     def build_pytorch_train_dataloader(self, y):
         """Build PyTorch DataLoader for training."""
@@ -1144,7 +1176,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
     def _build_network(self, fh):
         from sktime.networks.ltsf.models.transformers import LTSFTransformerNetwork
 
-        num_features = self._y.shape[-1]
+        num_features = self._cur_y.shape[-1]
         self.enc_in = num_features
         self.dec_in = num_features
         self.c_out = num_features
@@ -1154,7 +1186,7 @@ class LTSFTransformerForecaster(BaseDeepNetworkPyTorch):
         self._pred_len = fh
 
         if self.temporal_encoding:
-            if isinstance(self._y.index, (pd.DatetimeIndex, pd.PeriodIndex)):
+            if isinstance(self._cur_y.index, (pd.DatetimeIndex, pd.PeriodIndex)):
                 self._temporal_encoding = self.temporal_encoding
             else:
                 self._temporal_encoding = False

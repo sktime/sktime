@@ -14,6 +14,7 @@
 #  limitations under the License.
 
 import math
+import sys
 from contextlib import contextmanager
 from copy import deepcopy
 from typing import Any
@@ -41,19 +42,21 @@ if _check_soft_dependencies("torch", severity="none"):
 if _check_soft_dependencies("einops", severity="none"):
     from einops import rearrange, reduce, repeat
 
-Input = _safe_import("gluonts.model.Input")
-InputSpec = _safe_import("gluonts.model.InputSpec")
-
-PyTorchPredictor = _safe_import("gluonts.torch.PyTorchPredictor")
-
-AddObservedValuesIndicator = _safe_import(
-    "gluonts.transform.AddObservedValuesIndicator"
-)
-AsNumpyArray = _safe_import("gluonts.transform.AsNumpyArray")
-ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
-TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
-
-TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
+if sys.version_info < (3, 14):
+    Input = _safe_import("gluonts.model.Input")
+    InputSpec = _safe_import("gluonts.model.InputSpec")
+    PyTorchPredictor = _safe_import("gluonts.torch.PyTorchPredictor")
+    AddObservedValuesIndicator = _safe_import(
+        "gluonts.transform.AddObservedValuesIndicator"
+    )
+    AsNumpyArray = _safe_import("gluonts.transform.AsNumpyArray")
+    ExpandDimArray = _safe_import("gluonts.transform.ExpandDimArray")
+    TestSplitSampler = _safe_import("gluonts.transform.TestSplitSampler")
+    TFTInstanceSplitter = _safe_import("gluonts.transform.split.TFTInstanceSplitter")
+else:
+    Input = InputSpec = PyTorchPredictor = None
+    AddObservedValuesIndicator = AsNumpyArray = ExpandDimArray = None
+    TestSplitSampler = TFTInstanceSplitter = None
 
 
 from sktime.libs.uni2ts.common.torch_util import safe_div

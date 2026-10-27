@@ -1,7 +1,7 @@
 # needs more parameters from the original
 """Parameter estimation for cointegration."""
 
-author = ["PBormann"]
+author = ["OldPatrick"]
 all = ["JohansenCointegration"]
 
 import warnings
@@ -121,7 +121,7 @@ class JohansenCointegration(BaseParamFitter):
         "capability:missing_values": False,
         "capability:multivariate": True,
         "capability:pairwise": True,
-        "authors": "PBormann",
+        "authors": "OldPatrick",
         "python_dependencies": "statsmodels",
     }
 

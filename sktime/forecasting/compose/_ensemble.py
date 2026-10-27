@@ -106,7 +106,12 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
+        # estimator type
+        # --------------
+        "category": ["composition"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
@@ -142,7 +147,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional, default=None
             Exogenous variables are ignored.
 
@@ -150,6 +155,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         forecasters = [x[1] for x in self.forecasters_]
 
         # get training data for meta-model
@@ -220,7 +227,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     @classmethod
@@ -321,6 +328,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
@@ -328,6 +336,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:multivariate": True,
+        "capability:unequal_length": False,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -376,7 +385,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd.DataFrame - Series, Panel, or Hierarchical mtype format.
             Target time series to which to fit the forecaster.
         fh : ForecastingHorizon, optional, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional, default=None, must be of same mtype as y
             Exogenous data to which to fit the forecaster.
 
@@ -384,6 +393,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         self._fit_forecasters(None, y, X, fh)
         return self
 

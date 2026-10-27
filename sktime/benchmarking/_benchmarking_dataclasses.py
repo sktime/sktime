@@ -7,20 +7,19 @@ from dataclasses import dataclass, field, fields
 import numpy as np
 import pandas as pd
 
-from sktime.benchmarking.base import BaseMetric
 from sktime.split.base._base_splitter import BaseSplitter
 from sktime.split.singlewindow import SingleWindowSplitter
 
 
 def _coerce_data_for_evaluate(dataset_loader, task_type=None):
-    """Coerce data input object to a dict to pass to forecasting evaluate.
+    """Coerce data input object to a dict to pass to evaluate.
 
     Parameters
     ----------
     dataset_loader : Callable or tuple
 
         - a function which returns a dataset, like from `sktime.datasets`.
-        - a tuple containing two data container that are sktime comptaible.
+        - a tuple containing two data containers that are sktime compatible.
         - single data container that is sktime compatible (only first argument).
 
     task_type : str, optional (default=None)
@@ -81,7 +80,7 @@ class TaskObject:
         Can be
 
         - a function which returns a dataset, like from `sktime.datasets`.
-        - a tuple containing two data container that are sktime comptaible.
+        - a tuple containing two data containers that are sktime compatible.
         - single data container that is sktime compatible (only endogenous data).
 
     cv_splitter: BaseSplitter object
@@ -107,7 +106,7 @@ class TaskObject:
 
     data: Callable | tuple
     cv_splitter: BaseSplitter
-    scorers: list[BaseMetric]
+    scorers: list
     strategy: str = "refit"
     cv_X = None
     cv_global: BaseSplitter | None = None

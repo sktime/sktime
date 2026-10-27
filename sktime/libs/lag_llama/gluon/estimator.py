@@ -184,7 +184,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         window_slice_reduce_ratio: float = 0.9,
         window_warp_prob: float = 0.0,
         window_warp_window_ratio: float = 0.1,
-        window_warp_scales: list = [0.5, 2.0],
+        window_warp_scales: list | None = None,
         # Continuning model arguments
         distr_output: str = "studentT",
         loss: DistributionLoss = NegativeLogLikelihood(),
@@ -196,10 +196,10 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         validation_sampler: InstanceSampler | None = None,
         time_feat: bool = False,
         dropout: float = 0.0,
-        lags_seq: list = ["Q", "M", "W", "D", "H", "T", "S"],
-        data_id_to_name_map: dict = {},
+        lags_seq: list | None = None,
+        data_id_to_name_map: dict | None = None,
         use_cosine_annealing_lr: bool = False,
-        cosine_annealing_lr_args: dict = {},
+        cosine_annealing_lr_args: dict | None = None,
         track_loss_per_series: bool = False,
         ckpt_path: str | None = None,
         nonnegative_pred_samples: bool = False,
@@ -213,11 +213,23 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
             default_trainer_kwargs.update(trainer_kwargs)
         super().__init__(trainer_kwargs=default_trainer_kwargs)
 
+        if window_warp_scales is None:
+            window_warp_scales = [0.5, 2.0]
+        if lags_seq is None:
+            lags_seq = ["Q", "M", "W", "D", "H", "T", "S"]
+        if data_id_to_name_map is None:
+            data_id_to_name_map = {}
+        if cosine_annealing_lr_args is None:
+            cosine_annealing_lr_args = {}
+
         self.scaling = scaling
         self.input_size = input_size
         self.prediction_length = prediction_length
         self.context_length = context_length
         self.max_context_length = max_context_length
+
+        if lags_seq is None:
+            lags_seq = ["Q", "M", "W", "D", "H", "T", "S"]
 
         lag_indices = []
         for freq in lags_seq:
@@ -282,15 +294,25 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
         self.window_slice_reduce_ratio = window_slice_reduce_ratio
         self.window_warp_prob = window_warp_prob
         self.window_warp_window_ratio = window_warp_window_ratio
+
+        if window_warp_scales is None:
+            window_warp_scales = [0.5, 2.0]
+
         self.window_warp_scales = window_warp_scales
         self.track_loss_per_series = track_loss_per_series
 
         self.time_feat = time_feat
         self.dropout = dropout
+        if data_id_to_name_map is None:
+            data_id_to_name_map = {}
+
         self.data_id_to_name_map = data_id_to_name_map
         self.ckpt_path = ckpt_path
 
         self.use_cosine_annealing_lr = use_cosine_annealing_lr
+        if cosine_annealing_lr_args is None:
+            cosine_annealing_lr_args = {}
+
         self.cosine_annealing_lr_args = cosine_annealing_lr_args
         self.device = device
 
@@ -523,7 +545,7 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
                 prediction_net=module,
                 batch_size=self.batch_size,
                 prediction_length=self.prediction_length,
-                device="cuda" if torch.cuda.is_available() else "cpu",
+                device=self.device,
             )
         else:
             return PyTorchPredictor(
@@ -532,5 +554,5 @@ class LagLlamaEstimator(PyTorchLightningEstimator):
                 prediction_net=module,
                 batch_size=self.batch_size,
                 prediction_length=self.prediction_length,
-                device="cuda" if torch.cuda.is_available() else "cpu",
+                device=self.device,
             )

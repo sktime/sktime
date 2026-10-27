@@ -77,6 +77,7 @@ class ScitypePanel(BaseDatatype):
         "name": None,  # any string
         "name_python": None,  # lower_snake_case
         "name_aliases": [],
+        "description": "panel of uni- or multivariate time series",
         "python_version": None,
         "python_dependencies": None,
     }

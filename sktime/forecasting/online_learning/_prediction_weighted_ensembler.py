@@ -30,6 +30,7 @@ class _PredictionWeightedEnsembler:
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:update": True,
     }
 
     def __init__(self, n_estimators=10, loss_func=None):

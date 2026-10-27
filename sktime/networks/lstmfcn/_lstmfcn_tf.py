@@ -4,12 +4,37 @@ from sktime.networks.base import BaseDeepNetwork
 
 
 class LSTMFCNNetwork(BaseDeepNetwork):
-    """Implementation of LSTMFCNClassifier from Karim et al (2019) [1].
+    """Implementation of LSTMFCNClassifier from Karim et al (2019) [1]_.
 
     Overview
     --------
     Combines an LSTM arm with a CNN arm. Optionally uses an attention mechanism in the
     LSTM which the author indicates provides improved performance.
+
+    Parameters
+    ----------
+    kernel_sizes : list or tuple of int, default=(8, 5, 3)
+        Length of the 1D convolution windows for each convolutional layer.
+        The number of convolutional layers is ``len(kernel_sizes)``.
+        Must have the same length as ``filter_sizes``.
+        Defaults match Karim et al. (2019): three layers with kernels 8, 5, 3.
+    filter_sizes : list or tuple of int, default=(128, 256, 128)
+        Number of filters for each convolutional layer.
+        The number of convolutional layers is ``len(filter_sizes)``.
+        Must have the same length as ``kernel_sizes``.
+        Defaults match Karim et al. (2019): three layers with 128, 256, 128 filters.
+    random_state : int, default=0
+        Seed for any needed random actions.
+    lstm_size : int, default=8
+        Output dimension for LSTM layer.
+    dropout : float, default=0.8
+        Dropout rate of LSTM layer.
+    attention : bool, default=False
+        If True, uses custom attention LSTM layer.
+    activation : str, default="relu"
+        Activation function used for hidden layers.
+        List of available keras activation functions:
+        https://keras.io/api/layers/activations/
 
     Notes
     -----
@@ -19,7 +44,14 @@ class LSTMFCNNetwork(BaseDeepNetwork):
     References
     ----------
     .. [1] Karim et al. Multivariate LSTM-FCNs for Time Series Classification, 2019
-    https://arxiv.org/pdf/1801.04503.pdf
+       https://arxiv.org/pdf/1801.04503.pdf
+
+    Examples
+    --------
+    >>> from sktime.networks.lstmfcn import LSTMFCNNetwork
+    >>> network = LSTMFCNNetwork(
+    ...     kernel_sizes=(5, 3), filter_sizes=(64, 128), random_state=42
+    ... )
     """
 
     _tags = {
@@ -37,28 +69,7 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         attention=False,
         activation="relu",
     ):
-        """Initialize a new LSTMFCNNetwork object.
-
-        Parameters
-        ----------
-        kernel_sizes : List[int], default=[8, 5, 3]
-            specifying the length of the 1D convolution
-         windows
-        filter_sizes : List[int], default=[128, 256, 128]
-            size of filter for each conv layer
-        random_state : int, default=0
-            seed to any needed random actions
-        lstm_size : int, default=8
-            output dimension for LSTM layer
-        dropout : float, default=0.8
-            controls dropout rate of LSTM layer
-        attention : boolean, default=False
-            If True, uses custom attention LSTM layer
-        activation : string, default = "relu"
-            activation function used for hidden layers;
-            List of available keras activation functions:
-            https://keras.io/api/layers/activations/
-        """
+        """Initialize a new LSTMFCNNetwork object."""
         self.activation = activation
         self.random_state = random_state
         self.kernel_sizes = kernel_sizes
@@ -68,6 +79,33 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         self.attention = attention
 
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        if not isinstance(self.filter_sizes, (list, tuple)):
+            raise ValueError(
+                f"filter_sizes must be a list or tuple, "
+                f"but got type {type(self.filter_sizes)}."
+            )
+        if not isinstance(self.kernel_sizes, (list, tuple)):
+            raise ValueError(
+                f"kernel_sizes must be a list or tuple, "
+                f"but got type {type(self.kernel_sizes)}."
+            )
+        if len(self.filter_sizes) != len(self.kernel_sizes):
+            raise ValueError(
+                f"filter_sizes and kernel_sizes must have the same length, "
+                f"but got {len(self.filter_sizes)} and {len(self.kernel_sizes)}."
+            )
+
+        super().__post_init__()
 
     def build_network(self, input_shape, **kwargs):
         """Construct a network and return its input and output layers.
@@ -94,32 +132,16 @@ class LSTMFCNNetwork(BaseDeepNetwork):
         x = keras.layers.LSTM(self.lstm_size)(x)
         x = keras.layers.Dropout(self.dropout)(x)
 
-        y = keras.layers.Conv1D(
-            self.filter_sizes[0],
-            self.kernel_sizes[0],
-            padding="same",
-            kernel_initializer="he_uniform",
-        )(input_layer)
-        y = keras.layers.BatchNormalization()(y)
-        y = keras.layers.Activation(self.activation)(y)
-
-        y = keras.layers.Conv1D(
-            self.filter_sizes[1],
-            self.kernel_sizes[1],
-            padding="same",
-            kernel_initializer="he_uniform",
-        )(y)
-        y = keras.layers.BatchNormalization()(y)
-        y = keras.layers.Activation(self.activation)(y)
-
-        y = keras.layers.Conv1D(
-            self.filter_sizes[2],
-            self.kernel_sizes[2],
-            padding="same",
-            kernel_initializer="he_uniform",
-        )(y)
-        y = keras.layers.BatchNormalization()(y)
-        y = keras.layers.Activation(self.activation)(y)
+        y = input_layer
+        for i in range(len(self.filter_sizes)):
+            y = keras.layers.Conv1D(
+                self.filter_sizes[i],
+                self.kernel_sizes[i],
+                padding="same",
+                kernel_initializer="he_uniform",
+            )(y)
+            y = keras.layers.BatchNormalization()(y)
+            y = keras.layers.Activation(self.activation)(y)
 
         y = keras.layers.GlobalAveragePooling1D()(y)
 
@@ -163,6 +185,16 @@ class LSTMFCNNetwork(BaseDeepNetwork):
                 "attention": False,
             },
             {},
+            # Dynamic number of conv layers via list inputs
+            {
+                "kernel_sizes": [5, 3],
+                "filter_sizes": [64, 128],
+            },
+            # Dynamic number of conv layers via tuple inputs
+            {
+                "kernel_sizes": (5, 3),
+                "filter_sizes": (64, 128),
+            },
         ]
 
         return params

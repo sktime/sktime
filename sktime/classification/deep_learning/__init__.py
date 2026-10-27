@@ -2,29 +2,44 @@
 
 __all__ = [
     "CNNClassifier",
+    "CNNClassifierTorch",
     "CNTCClassifier",
+    "CNTCClassifierTorch",
     "FCNClassifier",
+    "FCNClassifierTorch",
     "InceptionTimeClassifier",
     "InceptionTimeClassifierTorch",
     "LSTMFCNClassifier",
     "MACNNClassifier",
+    "MACNNClassifierTorch",
     "MCDCNNClassifier",
     "MCDCNNClassifierTorch",
     "MLPClassifier",
     "MVTSTransformerClassifier",
     "ResNetClassifier",
+    "ResNetClassifierTorch",
     "SimpleRNNClassifier",
     "SimpleRNNClassifierTorch",
     "TapNetClassifier",
+    "TapNetClassifierTorch",
     "GRUClassifier",
     "GRUFCNNClassifier",
     "ConvTimeNetClassifier",
 ]
 
-from sktime.classification.deep_learning.cnn import CNNClassifier
-from sktime.classification.deep_learning.cntc import CNTCClassifier
+from sktime.classification.deep_learning.cnn import (
+    CNNClassifier,
+    CNNClassifierTorch,
+)
+from sktime.classification.deep_learning.cntc import (
+    CNTCClassifier,
+    CNTCClassifierTorch,
+)
 from sktime.classification.deep_learning.convtimenet import ConvTimeNetClassifier
-from sktime.classification.deep_learning.fcn import FCNClassifier
+from sktime.classification.deep_learning.fcn import (
+    FCNClassifier,
+    FCNClassifierTorch,
+)
 from sktime.classification.deep_learning.gru import (
     GRUClassifier,
     GRUFCNNClassifier,
@@ -34,7 +49,10 @@ from sktime.classification.deep_learning.inceptiontime import (
     InceptionTimeClassifierTorch,
 )
 from sktime.classification.deep_learning.lstmfcn import LSTMFCNClassifier
-from sktime.classification.deep_learning.macnn import MACNNClassifier
+from sktime.classification.deep_learning.macnn import (
+    MACNNClassifier,
+    MACNNClassifierTorch,
+)
 from sktime.classification.deep_learning.mcdcnn import (
     MCDCNNClassifier,
     MCDCNNClassifierTorch,
@@ -43,9 +61,15 @@ from sktime.classification.deep_learning.mlp import MLPClassifier
 from sktime.classification.deep_learning.mvts_transformer import (
     MVTSTransformerClassifier,
 )
-from sktime.classification.deep_learning.resnet import ResNetClassifier
+from sktime.classification.deep_learning.resnet import (
+    ResNetClassifier,
+    ResNetClassifierTorch,
+)
 from sktime.classification.deep_learning.rnn import (
     SimpleRNNClassifier,
     SimpleRNNClassifierTorch,
 )
-from sktime.classification.deep_learning.tapnet import TapNetClassifier
+from sktime.classification.deep_learning.tapnet import (
+    TapNetClassifier,
+    TapNetClassifierTorch,
+)

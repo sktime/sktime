@@ -469,13 +469,13 @@ class ARARForecaster(BaseForecaster):
         "authors": ["Akai01"],
         "maintainers": ["Akai01"],
         # estimator type
+        "category": ["statistical"],
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:exogenous": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
-        "capability:pred_var": False,
         "capability:insample": False,
     }
 

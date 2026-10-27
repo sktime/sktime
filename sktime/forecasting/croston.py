@@ -76,8 +76,10 @@ class Croston(BaseForecaster):
         "maintainers": "Riyabelle25",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "capability:exogenous": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         "y_inner_mtype": "pd.DataFrame",
         # CI and test flags
         # -----------------
@@ -98,7 +100,7 @@ class Croston(BaseForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 
@@ -109,7 +111,8 @@ class Croston(BaseForecaster):
         n_timepoints = len(y)  # Historical period: i.e the input array's length
         smoothing = self.smoothing
 
-        y = y.to_numpy().flatten()  # Transform the input into a numpy array
+        if not isinstance(y, np.ndarray):
+            y = y.to_numpy().flatten()  # Transform the input into a numpy array
         # Fit the parameters: level(q), periodicity(a) and forecast(f)
         q, a, f = np.full((3, n_timepoints + 1), np.nan)
         p = 1  # periods since last demand observation
@@ -134,6 +137,82 @@ class Croston(BaseForecaster):
                 p += 1
         self._f = f
 
+        # terminal state of the recursion, so that ``_update`` can continue it
+        # incrementally instead of refitting from scratch. ``p`` in particular
+        # is not recoverable from ``f`` alone, but is needed to smooth the
+        # interval estimate at the next non-zero observation.
+        self._q_last = q[-1]
+        self._a_last = a[-1]
+        self._p = p
+        self._seen_demand = bool(np.any(y > 0))
+        # if no demand seen, save the number of zeroes
+        if not self._seen_demand:
+            self._n_zeros = n_timepoints
+
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update fitted parameters on new data.
+
+        Continues Croston's recursion from the state persisted by ``_fit``,
+        rather than refitting on the full history.
+
+        Parameters
+        ----------
+        y : pd.DataFrame
+            Time series with which to update the forecaster. Contains only the
+            new observations, not the full history.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables are ignored.
+        update_params : bool, optional (default=True)
+            whether model parameters should be updated
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if not update_params:
+            return self
+
+        y = y.to_numpy().flatten()
+        n_new = len(y)
+        if n_new == 0:
+            return self
+
+        # If ``_fit`` saw no non-zero demand, its initialization was degenerate
+        # (``argmax`` on an all-zero series returns 0), and the recursion state
+        # does not correspond to what a fit on the concatenated series would
+        # produce. Refitting on the accumulated history restores exactness.
+        if not self._seen_demand and np.any(y > 0):
+            y_with_zeros = np.concatenate([np.zeros(self._n_zeros), y])
+            return self._fit(y=y_with_zeros, X=X, fh=None)
+
+        smoothing = self.smoothing
+
+        q, a, f = np.full((3, n_new + 1), np.nan)
+        q[0], a[0], f[0] = self._q_last, self._a_last, self._f[-1]
+        p = self._p
+
+        for t in range(0, n_new):
+            if y[t] > 0:
+                q[t + 1] = smoothing * y[t] + (1 - smoothing) * q[t]
+                a[t + 1] = smoothing * p + (1 - smoothing) * a[t]
+                f[t + 1] = q[t + 1] / a[t + 1]
+                p = 1
+            else:
+                q[t + 1] = q[t]
+                a[t + 1] = a[t]
+                f[t + 1] = f[t]
+                p += 1
+
+        self._f = np.concatenate([self._f, f[1:]])
+        self._q_last = q[-1]
+        self._a_last = a[-1]
+        self._p = p
+        self._seen_demand = self._seen_demand or bool(np.any(y > 0))
+        if not self._seen_demand:
+            self._n_zeros += n_new
+
         return self
 
     def _predict(
@@ -146,7 +225,7 @@ class Croston(BaseForecaster):
         Parameters
         ----------
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored.
 

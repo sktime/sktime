@@ -48,6 +48,7 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets._data_io import (
     _list_available_datasets,
@@ -58,7 +59,6 @@ from sktime.datasets._data_io import (
 from sktime.datasets._dataset_downloader import DatasetDownloader
 from sktime.datasets._readers_writers.tsf import load_tsf_to_dataframe
 from sktime.datasets.tsf_dataset_names import tsf_all, tsf_all_datasets
-from sktime.utils.dependencies import _check_soft_dependencies
 
 DIRNAME = "data"
 MODULE = os.path.dirname(__file__)
@@ -702,14 +702,21 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
         dataframe with columns for features and the target.
     return_type: valid Panel mtype str or None, optional (default=None="nested_univ")
         Memory data format specification to return X in, None = "nested_univ" type.
+
         str can be any supported sktime Panel mtype,
-            for list of mtypes, see datatypes.MTYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+
+        * for list of mtype strings, see datatypes.MTYPE_REGISTER
+        * for specifications, see https://www.sktime.net/docs/api-reference/data-format/
+        * for a tutorial to data formats, see examples/AA_datatypes_and_datasets.ipynb
+
         commonly used specifications:
-            "nested_univ: nested pd.DataFrame, pd.Series in cells
-            "numpy3D"/"numpy3d"/"np3D": 3D np.ndarray (instance, variable, time index)
-            "numpy2d"/"np2d"/"numpyflat": 2D np.ndarray (instance, time index)
-            "pd-multiindex": pd.DataFrame with 2-level (instance, time) MultiIndex
+
+        * ``"pd-multiindex"``: pd.DataFrame with 2-level (instance, time) MultiIndex
+        * ``"nested_univ"``: nested pd.DataFrame, pd.Series in cells
+        * ``"numpy3D"``/``"numpy3d"``/``"np3D"``:
+          3D np.ndarray (instance, variable, time index)
+        * ``"numpy2d"``/``"np2d"``/``"numpyflat"``:
+          2D np.ndarray (instance, time index)
         Exception is raised if the data cannot be stored in the requested type.
 
     Returns
@@ -738,9 +745,6 @@ def load_basic_motions(split=None, return_X_y=True, return_type=None):
     running and badminton. Participants were required to record motion a total of
     five times, and the data is sampled once every tenth of a second, for a ten second
     period.
-
-    Dataset details: http://www.timeseriesclassification.com/description.php?Dataset
-    =BasicMotions
     """
     name = "BasicMotions"
     if return_type == "numpy2d" or return_type == "numpyflat":
@@ -1271,7 +1275,7 @@ def load_solar(
     fname = name + ".csv"
     path = os.path.join(MODULE, DIRNAME, name, fname)
     y = pd.read_csv(path, index_col=0, parse_dates=["datetime_gmt"], dtype={1: float})
-    y = y.asfreq("30MIN")
+    y = y.asfreq("30min")
     y = y.squeeze("columns")
     if api_version is None:
         return y
@@ -1298,7 +1302,7 @@ def load_solar(
             .droplevel(0)
             .sort_index()
         )
-        df = df.asfreq("30T")
+        df = df.asfreq("30min")
         df["generation_pu"] = df["generation_mw"] / df["capacity_mwp"]
 
         if return_full_df:

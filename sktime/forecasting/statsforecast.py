@@ -14,13 +14,13 @@ __all__ = [
 ]
 
 import numpy as np
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base.adapters._generalised_statsforecast import (
     StatsForecastBackAdapter,
     _GeneralisedStatsForecastAdapter,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
@@ -187,6 +187,7 @@ class StatsForecastAutoARIMA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -371,6 +372,18 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
     See Also
     --------
     ThetaForecaster
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoTheta
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoTheta(  # doctest: +SKIP
+    ...     season_length=12, decomposition_type="additive", model="OTM"
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoTheta(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -389,6 +402,7 @@ class StatsForecastAutoTheta(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -486,6 +500,18 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
     See Also
     --------
     AutoETS
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoETS
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoETS(  # doctest: +SKIP
+    ...     season_length=12, model="AAN", damped=True
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoETS(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -504,6 +530,7 @@ class StatsForecastAutoETS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -593,6 +620,16 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
     References
     ----------
     .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autoces
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoCES
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoCES(season_length=12)  # doctest: +SKIP
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoCES(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -612,10 +649,12 @@ class StatsForecastAutoCES(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.1.0"],
+        "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
     }
 
     def __init__(self, season_length: int = 1, model: str = "Z"):
@@ -704,6 +743,18 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
     References
     ----------
     .. [1] https://nixtlaverse.nixtla.io/statsforecast/src/core/models.html#autotbats
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.statsforecast import StatsForecastAutoTBATS
+    >>> y = load_airline()
+    >>> forecaster = StatsForecastAutoTBATS(  # doctest: +SKIP
+    ...     seasonal_periods=12, use_trend=True, use_arma_errors=False
+    ... )
+    >>> forecaster.fit(y)  # doctest: +SKIP
+    StatsForecastAutoTBATS(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
@@ -722,6 +773,7 @@ class StatsForecastAutoTBATS(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
@@ -866,13 +918,18 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
         "python_dependencies": ["statsforecast>=1.2.0"],
+        "tests:specific": ["sktime.forecasting.tests.test_statsforecast"],
         # CI and test flags
         # -----------------
-        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        "tests:skip_by_name": [
+            "test_update_with_exogenous_variables",
+            "test_pred_int_tag",  # failing in probabilistic forecasts, see #5703, #5920
+        ],
         # multiplicative test case does not work on negative valued data, see #9808
     }
 
@@ -945,7 +1002,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon or None
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         y : pd.Series
             The time series data used for fitting.
 
@@ -970,7 +1027,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
         Parameters
         ----------
         fh : ForecastingHorizon or None
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         y : pd.Series
             The time series data used for fitting.
         """
@@ -982,7 +1039,7 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
     def check_fh(self, fh):
         """Check the fh to ensure consistency with `inner_fh` of trend forecaster."""
         inner_fh = getattr(self._trend_forecaster, "_inner_fh", None)
-        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._y)
+        _fh_for_MSTL = self._calculate_fh_for_MSTL(fh, self._cur_y)
 
         msg = (
             f"This is because fitting of the "
@@ -1068,10 +1125,13 @@ class StatsForecastMSTL(_GeneralisedStatsForecastAdapter):
             _check_soft_dependencies("statsmodels")
             from sktime.forecasting.theta import ThetaForecaster
 
+            # MSTL already decomposes seasonality; the trend forecaster must be
+            # non-seasonal. Default ThetaForecaster uses multiplicative
+            # deseasonalization, which fails on signed test series.
             params = [
                 {
                     "season_length": [3, 12],
-                    "trend_forecaster": ThetaForecaster(),
+                    "trend_forecaster": ThetaForecaster(deseasonalize=False),
                 },
                 {
                     "season_length": 4,
@@ -1144,6 +1204,7 @@ class StatsForecastADIDA(_GeneralisedStatsForecastAdapter):
         # inherited from _GeneralisedStatsForecastAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,

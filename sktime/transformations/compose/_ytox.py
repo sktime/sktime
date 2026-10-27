@@ -1,4 +1,4 @@
-"""Use endogeneous as exogeneous features transformer."""
+"""Use endogeneous as exogenous features transformer."""
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
@@ -9,16 +9,16 @@ from sktime.transformations.base import BaseTransformer
 
 
 class YtoX(BaseTransformer):
-    """Create exogeneous features which are a copy of the endogenous data.
+    """Create exogenous features which are a copy of the endogenous data.
 
-    Replaces exogeneous features (``X``) by endogeneous data (``y``).
+    Replaces exogenous features (``X``) by endogeneous data (``y``).
 
     To *add* instead of *replace*, use ``FeatureUnion``.
 
     Common use cases include:
 
-    * creating exogeneous variables from transformed endogenous variables
-    * creating exogeneous data from index, if no exogeneous data is available
+    * creating exogenous variables from transformed endogenous variables
+    * creating exogenous data from index, if no exogenous data is available
     * manual construction of reduction strategies, in combination with ``YfromX``
 
     Parameters
@@ -33,7 +33,7 @@ class YtoX(BaseTransformer):
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import YtoX
-    >>> from sktime.transformations.series.fourier import FourierFeatures
+    >>> from sktime.transformations.fourier import FourierFeatures
     >>> from sktime.forecasting.arima import ARIMA
     >>> from sktime.forecasting.compose import ForecastingPipeline
     >>>
@@ -52,12 +52,12 @@ class YtoX(BaseTransformer):
     >>> # fit and forecast, using Fourier features as exogenous data
     >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
 
-    Use case: using lagged endogenous variables as exogeneous data.
+    Use case: using lagged endogenous variables as exogenous data.
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.transformations.compose import YtoX
-    >>> from sktime.transformations.series.lag import Lag
-    >>> from sktime.transformations.series.impute import Imputer
+    >>> from sktime.transformations.lag import Lag
+    >>> from sktime.transformations.impute import Imputer
     >>> from sktime.forecasting.sarimax import SARIMAX
     >>>
     >>> # data with no exogenous features
@@ -74,10 +74,10 @@ class YtoX(BaseTransformer):
     >>> forecaster.fit(y, fh=[1])  # doctest: +SKIP
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
 
-    Use case: using summarized endogenous variables as exogeneous data.
+    Use case: using summarized endogenous variables as exogenous data.
 
     >>> from sktime.datasets import load_airline
-    >>> from sktime.transformations.series.summarize import WindowSummarizer
+    >>> from sktime.transformations.summarize import WindowSummarizer
     >>> from sktime.transformations.compose import YtoX
     >>> from sktime.forecasting.compose import make_reduction
     >>> from sktime.forecasting.compose import ForecastingPipeline

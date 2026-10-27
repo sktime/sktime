@@ -10,7 +10,10 @@ from sklearn.base import clone
 from sklearn.linear_model import LinearRegression
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
+from sktime.forecasting.trend._util import (
+    _get_X_numpy_int_from_pandas,
+    _trend_time_origin,
+)
 
 
 class TrendForecaster(BaseForecaster):
@@ -59,6 +62,7 @@ class TrendForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["statistical"],
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"],
         "maintainers": ["tensorflow-as-tf"],
         "capability:exogenous": False,
@@ -85,7 +89,7 @@ class TrendForecaster(BaseForecaster):
         X : pd.DataFrame, default=None
             Exogenous variables are ignored
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -99,7 +103,10 @@ class TrendForecaster(BaseForecaster):
         # we regress index on series values
         # the sklearn X is obtained from the index of y
         # the sklearn y can be taken as the y seen here
-        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
+        # Time is shifted to the first training stamp. See _trend_time_origin.
+        X_absolute = _get_X_numpy_int_from_pandas(y.index)
+        self._trend_origin_ = _trend_time_origin(X_absolute)
+        X_sklearn = X_absolute - self._trend_origin_
 
         # fit regressor
         self.regressor_.fit(X_sklearn, y.iloc[:, 0])
@@ -122,7 +129,8 @@ class TrendForecaster(BaseForecaster):
         """
         # use relative fh as time index to predict
         fh = self.fh.to_absolute_index(self.cutoff)
-        X_sklearn = _get_X_numpy_int_from_pandas(fh)
+        origin = getattr(self, "_trend_origin_", 0.0)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh) - origin
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
         cols = self._get_varnames()
         y_pred = pd.DataFrame(y_pred_sklearn, index=fh, columns=cols)

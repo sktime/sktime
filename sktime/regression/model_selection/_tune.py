@@ -1,125 +1,112 @@
 """Tuning for time series regressors."""
 
-__author__ = ["ksharma6"]
+__author__ = ["ksharma6", "yash-sangwan"]
 
 import numpy as np
-from sklearn.model_selection import GridSearchCV
 
+from sktime.base._panel._tune import (
+    _check_refit_for_predict,
+    _coerce_prediction,
+    _fit_tuner,
+)
 from sktime.regression._delegate import _DelegatedRegressor
 
 
+# todo 1.3.0: remove the n_jobs, pre_dispatch and return_train_score parameters,
+# from the signature and the docstring, and remove the calls to
+# _resolve_deprecated_parallel and _check_return_train_score in _fit_tuner
 class TSRGridSearchCV(_DelegatedRegressor):
-    """Exhaustive search over specified parameter values for an estimator.
+    """Exhaustive search over specified parameter values for a regressor.
 
-    Adapts sklearn GridSearchCV for sktime time series regressors
+    Optimizes hyper-parameters of ``estimator`` by exhaustive grid search, using
+    ``sktime`` native backtesting via ``regression.model_evaluation.evaluate``.
 
-    Optimizes hyper-parameters of `estimators` by exhaustive grid search.
+    In ``fit``, each parameter combination in ``param_grid`` is backtested on the
+    data passed, using the cross-validation scheme ``cv`` and the metric
+    ``scoring``. All candidates are evaluated on identical folds.
+
+    The parameter combination with the best mean test score is set as
+    ``best_params_``, and a clone of ``estimator`` with those parameters is set as
+    ``best_estimator_``. If ``refit`` is not False, ``best_estimator_`` is fitted
+    to the entire data, and ``predict`` of the tuner calls ``predict`` of
+    ``best_estimator_``.
 
     Parameters
     ----------
-    estimator : estimator object
-        This is assumed to implement the scikit-learn estimator interface.
-        Either estimator needs to provide a ``score`` function,
-        or ``scoring`` must be passed.
+    estimator : sktime regressor, BaseRegressor instance or interface compatible
+        The regressor to tune, must implement the sktime regressor interface.
 
     param_grid : dict or list of dictionaries
-        Dictionary with parameters names (`str`) as keys and lists of
+        Dictionary with parameters names (``str``) as keys and lists of
         parameter settings to try as values, or a list of such
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : str, callable, list, tuple or dict, default=None
-        Strategy to evaluate the performance of the cross-validated model on
-        the test set.
+    scoring : None, str, callable, sklearn scorer, or list or dict of these
+        Metric or metrics to evaluate the cross-validated model with.
 
-        If `scoring` represents a single score, one can use:
+        - a callable must have signature ``(y_true, y_pred) -> float``, e.g.,
+          ``r2_score`` from ``sklearn.metrics``. Its value is reported as is
+        - a string must name a scikit-learn scorer, e.g., ``"r2"``. Values are
+          reported with the sign convention of the scorer, so values of
+          ``"neg_mean_squared_error"`` are negative
+        - a list or dict selects multiple metrics. The first is used to rank
+          candidates, unless ``refit`` names another. Dict keys are used as the
+          metric names in ``cv_results_``
+        - if None, defaults to ``r2_score``
 
-        - a single string (see :ref:`scoring_parameter`);
-        - a callable (see :ref:`scoring`) that returns a single value.
+    n_jobs : int, optional, default="deprecated"
+        Number of jobs to run in parallel over the parameter candidates.
 
-        If `scoring` represents multiple scores, one can use:
-
-        - a list or tuple of unique strings;
-        - a callable returning a dictionary where the keys are the metric
-          names and the values are the metric scores;
-        - a dictionary with metric names as keys and callables a values.
-
-    n_jobs : int, default=None
-        Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+        Deprecated, and will be removed in sktime 1.3.0. If passed, the value is
+        written to ``backend_params``, and ``backend`` defaults to ``"loky"``,
+        so behaviour is unchanged. To retain the behaviour after removal, pass
+        ``backend="loky"`` and ``backend_params={"n_jobs": ...}`` instead.
 
     refit : bool, str, or callable, default=True
-        Refit an estimator using the best found parameters on the whole
-        dataset. If ``False``, then ``predict`` will not work.
+        Refit ``best_estimator_`` using the best found parameters on the whole
+        dataset. If False, ``predict`` raises, and the tuner can be used only to
+        tune hyper-parameters, e.g., as a parameter estimator via
+        ``get_fitted_params``.
 
-        For multiple metric evaluation, this needs to be a `str` denoting the
-        scorer that would be used to find the best parameters for refitting
-        the estimator at the end.
+        For multi-metric evaluation, this can be a ``str`` naming the metric to
+        select the best parameters by.
 
-        Where there are considerations other than maximum score in
-        choosing a best estimator, ``refit`` can be set to a function which
-        returns the selected ``best_index_`` given ``cv_results_``. In that
-        case, the ``best_estimator_`` and ``best_params_`` will be set
-        according to the returned ``best_index_`` while the ``best_score_``
-        attribute will not be available.
+        Where there are considerations other than the best score in choosing the
+        best parameters, ``refit`` can be a callable, which is applied to
+        ``cv_results_`` and returns the selected ``best_index_``. In that case
+        ``best_score_`` is not available.
 
-        The refitted estimator is made available at the ``best_estimator_``
-        attribute and permits using ``predict`` directly on this
-        ``GridSearchCV`` instance.
+        The refitted estimator is available at the ``best_estimator_``
+        attribute, and permits calling ``predict`` directly on the tuner.
 
-        Also for multiple metric evaluation, the attributes ``best_index_``,
-        ``best_score_`` and ``best_params_`` will only be available if
-        ``refit`` is set and all of them will be determined w.r.t this specific
-        scorer.
-
-        See ``scoring`` parameter to know more about multiple metric
-        evaluation.
-
-    cv : int, cross-validation generator or an iterable, default=None
+    cv : int, cross-validation generator, iterable of splits, or None, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
-        - integer, to specify the number of folds in a `(Stratified)KFold`,
-        - :term:`CV splitter`,
-        - An iterable yielding (train, test) splits as arrays of indices.
+        - None, to use the default 5-fold cross-validation,
+        - integer, to specify the number of folds in a ``KFold``,
+        - a cross-validation splitter with a ``split`` method,
+        - an iterable yielding (train, test) splits as arrays of indices.
 
-        For integer/None inputs, if the estimator is a regressor and ``y`` is
-        either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`KFold` is used. These splitters are instantiated
-        with `shuffle=False` so the splits will be the same across calls.
+        For integer and None inputs, ``KFold`` is used, instantiated with
+        ``shuffle=False``, so the splits are the same across calls.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
-        cross-validation strategies that can be used here.
+        Splits are computed once, before the search, so that all parameter
+        candidates are evaluated on the same folds.
 
-    verbose : int
-        Controls the verbosity: the higher, the more messages.
+    verbose : int, default=0
+        Controls the verbosity. If positive, the number of fits is printed.
 
-        - >1 : the computation time for each fold and parameter candidate is
-          displayed;
-        - >2 : the score is also displayed;
-        - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation.
+    pre_dispatch : int or str, optional, default="deprecated"
+        Number of jobs dispatched during parallel execution, a ``joblib``
+        parameter.
 
-    pre_dispatch : int, or str, default='2*n_jobs'
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
+        Deprecated, and will be removed in sktime 1.3.0. If passed, the value is
+        written to ``backend_params``, and ``backend`` defaults to ``"loky"``,
+        so behaviour is unchanged. To retain the behaviour after removal, pass
+        ``backend="loky"`` and ``backend_params={"pre_dispatch": ...}`` instead.
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
@@ -128,13 +115,11 @@ class TSRGridSearchCV(_DelegatedRegressor):
         step, which will always raise the error.
 
     return_train_score : bool, default=False
-        If ``False``, the ``cv_results_`` attribute will not include training
-        scores.
-        Computing training scores is used to get insights on how different
-        parameter settings impact the overfitting/underfitting trade-off.
-        However computing the scores on the training set can be computationally
-        expensive and is not strictly required to select the parameters that
-        yield the best generalization performance.
+        Whether to include training scores in ``cv_results_``.
+
+        Deprecated, and will be removed in sktime 1.3.0. Train scores are not
+        computed by the native grid search, so the value passed is ignored and
+        ``cv_results_`` contains test scores only. Passing True raises a warning.
 
     tune_by_variable : bool, optional (default=False)
         Whether to tune parameter by each time series variable separately,
@@ -145,96 +130,111 @@ class TSRGridSearchCV(_DelegatedRegressor):
         Has the same effect as applying ColumnEnsembleRegressor wrapper to self.
         If False, the same best parameter is selected for all variables.
 
+    greater_is_better : "auto", bool, optional, default="auto"
+        Whether higher values of the reported metric are better, used to rank
+        the parameter candidates.
+
+        - "auto" determines the direction from the metric. Scikit-learn scorers
+          are higher-is-better by their sign convention. For metric callables,
+          the direction is inferred from the metric, e.g., ``r2_score`` is
+          higher-is-better, and ``mean_squared_error`` is lower-is-better
+        - True or False set the direction explicitly, for all metrics
+
+    backend : str, optional, default=None
+        Parallelization backend for the search over parameter candidates.
+
+        - None: executes loop sequentially, simple list comprehension
+        - "loky", "multiprocessing" and "threading": uses ``joblib.Parallel`` loops
+        - "joblib": custom and 3rd party ``joblib`` backends, e.g., ``spark``
+        - "dask": uses ``dask``, requires ``dask`` package in environment
+        - "ray": uses ``ray``, requires ``ray`` package in environment
+
+        Recommendation: use "dask" or "loky" for parallel grid search.
+        "threading" is unlikely to see speed ups due to the GIL.
+
+    backend_params : dict, optional
+        Additional parameters passed to the backend as config, directly passed
+        to ``utils.parallel.parallelize``. Valid keys depend on ``backend``,
+        see there for details.
+
     Attributes
     ----------
-    cv_results_ : dict of numpy (masked) ndarrays
+    cv_results_ : dict of str to numpy (masked) ndarray
         A dict with keys as column headers and values as columns, that can be
-        imported into a pandas ``DataFrame``.
+        imported into a pandas ``DataFrame``. Contains ``params``, one
+        ``param_<name>`` column per searched parameter, fit and score timings,
+        and per metric the per-fold scores ``split<i>_test_<name>``, their mean
+        ``mean_test_<name>``, standard deviation ``std_test_<name>``, and rank
+        ``rank_test_<name>``, 1 being the best.
 
-        For multi-metric evaluation, the scores for all the scorers are
-        available in the ``cv_results_`` dict at the keys ending with that
-        scorer's name (``'_<scorer_name>'``) instead of ``'_score'`` shown
-        above. ('split0_test_precision', 'mean_train_precision' etc.)
+        For a single metric, ``<name>`` is ``score``, e.g., ``mean_test_score``.
+        For multiple metrics, ``<name>`` is the name of the respective metric.
 
     best_estimator_ : estimator
-        Estimator that was chosen by the search, i.e. estimator
-        which gave highest score (or smallest loss if specified)
-        on the left out data. Not available if ``refit=False``.
-
-        See ``refit`` parameter for more information on allowed values.
+        Clone of ``estimator`` with the best found parameters set, i.e., the
+        parameters which gave the best mean test score on the held out data.
+        Fitted to the entire data if ``refit`` is not False, otherwise unfitted.
+        See the ``refit`` parameter for more information on allowed values.
 
     best_score_ : float
-        Mean cross-validated score of the best_estimator
-
-        For multi-metric evaluation, this is present only if ``refit`` is
-        specified.
-
-        This attribute is not available if ``refit`` is a function.
+        Mean cross-validated score of ``best_estimator_``.
+        Not available if ``refit`` is a callable.
 
     best_params_ : dict
         Parameter setting that gave the best results on the hold out data.
 
-        For multi-metric evaluation, this is present only if ``refit`` is
-        specified.
-
     best_index_ : int
-        The index (of the ``cv_results_`` arrays) which corresponds to the best
+        The index in the ``cv_results_`` arrays which corresponds to the best
         candidate parameter setting.
 
-        The dict at ``search.cv_results_['params'][search.best_index_]`` gives
-        the parameter setting for the best model, that gives the highest
-        mean score (``search.best_score_``).
+        The dict at ``cv_results_["params"][best_index_]`` gives the parameter
+        setting for the best model, i.e., is identical with ``best_params_``.
 
-        For multi-metric evaluation, this is present only if ``refit`` is
-        specified.
-
-    scorer_ : function or a dict
-        Scorer function used on the held out data to choose the best
-        parameters for the model.
-
-        For multi-metric evaluation, this attribute holds the validated
-        ``scoring`` dict which maps the scorer key to the scorer callable.
+    scorer_ : callable or dict of callable
+        Metric used on the held out data to choose the best parameters.
+        For multi-metric evaluation, a dict of metric name to metric.
 
     n_splits_ : int
         The number of cross-validation splits (folds/iterations).
 
     refit_time_ : float
         Seconds used for refitting the best model on the whole dataset.
-
         This is present only if ``refit`` is not False.
 
     multimetric_ : bool
-        Whether or not the scorers compute several metrics.
-
-    n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if
-        `best_estimator_` is defined (see the documentation for the `refit`
-        parameter for more details) and that `best_estimator_` exposes
-        `n_features_in_` when fit.
-
-    feature_names_in_ : ndarray of shape (`n_features_in_`,)
-        Names of features seen during :term:`fit`. Only defined if
-        `best_estimator_` is defined (see the documentation for the `refit`
-        parameter for more details) and that `best_estimator_` exposes
-        `feature_names_in_` when fit.
+        Whether multiple metrics were passed in ``scoring``.
 
     See Also
     --------
     ParameterGrid : Generates all the combinations of a hyperparameter grid.
-    train_test_split : Utility function to split the data into a development
-        set usable for fitting a GridSearchCV instance and an evaluation set
-        for its final evaluation.
+    sktime.regression.model_evaluation.evaluate : Backtesting used internally.
     sklearn.metrics.make_scorer : Make a scorer from a performance metric or
         loss function.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.regression.dummy import DummyRegressor
+    >>> from sktime.regression.model_selection import TSRGridSearchCV
+    >>>
+    >>> X, y = load_unit_test(split="train")
+    >>> tuned = TSRGridSearchCV(
+    ...     DummyRegressor(),
+    ...     param_grid={"strategy": ["mean", "median"]},
+    ...     cv=2,
+    ... )
+    >>> tuned = tuned.fit(X, y.astype("float"))
+    >>> y_pred = tuned.predict(X)
+    >>> best_params = tuned.best_params_
     """
 
     _tags = {
         # packaging info
         # --------------
-        "authors": ["ksharma6"],
+        "authors": ["ksharma6", "yash-sangwan"],
         # estimator type
         # --------------
-        "X_inner_mtype": ["nested_univ", "numpy3D"],
+        "X_inner_mtype": "pd-multiindex",
         "y_inner_mtype": ["numpy2D"],
         "capability:multivariate": True,
         "capability:multioutput": True,
@@ -244,19 +244,27 @@ class TSRGridSearchCV(_DelegatedRegressor):
         "capability:categorical_in_X": True,
     }
 
+    # attribute for _DelegatedRegressor, which then delegates
+    #     all non-overridden methods are same as of getattr(self, _delegate_name)
+    #     see further details in _DelegatedRegressor docstring
+    _delegate_name = "best_estimator_"
+
     def __init__(
         self,
         estimator,
         param_grid,
         scoring=None,
-        n_jobs=None,
+        n_jobs="deprecated",
         refit=True,
         cv=None,
         verbose=0,
-        pre_dispatch="2*n_jobs",
+        pre_dispatch="deprecated",
         error_score=np.nan,
         return_train_score=False,
         tune_by_variable=False,
+        greater_is_better="auto",
+        backend=None,
+        backend_params=None,
     ):
         self.estimator = estimator
         self.param_grid = param_grid
@@ -269,25 +277,11 @@ class TSRGridSearchCV(_DelegatedRegressor):
         self.error_score = error_score
         self.return_train_score = return_train_score
         self.tune_by_variable = tune_by_variable
+        self.greater_is_better = greater_is_better
+        self.backend = backend
+        self.backend_params = backend_params
 
         super().__init__()
-
-        DELEGATED_PARAMS = [
-            "estimator",
-            "param_grid",
-            "scoring",
-            "n_jobs",
-            "refit",
-            "cv",
-            "verbose",
-            "pre_dispatch",
-            "error_score",
-            "return_train_score",
-        ]
-
-        gscvargs = {k: getattr(self, k) for k in DELEGATED_PARAMS}
-
-        self.estimator_ = GridSearchCV(**gscvargs)
 
         if self.tune_by_variable:
             self.set_tags(**{"capability:multioutput": False})
@@ -303,52 +297,20 @@ class TSRGridSearchCV(_DelegatedRegressor):
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-            3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "pd-multiindex:":
             pd.DataFrame with columns = variables,
             index = pd.MultiIndex with first level = instance indices,
             second level = time indices
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
-            1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
-            class labels for fitting
-            if self.get_tag("capaility:multioutput") = False, guaranteed to be 1D
-            if self.get_tag("capaility:multioutput") = True, guaranteed to be 2D
+            2D np.ndarray of shape [n_instances, n_outputs], target values
 
         Returns
         -------
         self : Reference to self.
         """
-        if y.shape[1] == 1:
-            y = y.flatten()
-
-        estimator = self._get_delegate()
-        estimator.fit(X=X, y=y)
-
-        fitted_param_names = [
-            "cv_results_",
-            "best_estimator_",
-            "best_score_",
-            "best_params_",
-            "best_index_",
-            "scorer_",
-            "n_splits_",
-            "refit_time_",
-            "multimetric_",
-        ]
-
-        for p in fitted_param_names:
-            if hasattr(estimator, p):
-                val = getattr(estimator, p)
-                setattr(self, p, val)
-
-        return self
+        return _fit_tuner(self, X, y, estimator_type="regressor")
 
     def _predict(self, X):
-        """Predict labels for sequences in X.
+        """Predict target values for sequences in X.
 
         private _predict containing the core logic, called from predict
 
@@ -361,27 +323,14 @@ class TSRGridSearchCV(_DelegatedRegressor):
         Parameters
         ----------
         X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
-            if self.get_tag("X_inner_mtype") = "numpy3D":
-                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
-            if self.get_tag("X_inner_mtype") = "nested_univ":
-                pd.DataFrame with each column a dimension, each cell a pd.Series
-            for list of other mtypes, see datatypes.SCITYPE_REGISTER
-            for specifications, see examples/AA_datatypes_and_datasets.ipynb
 
         Returns
         -------
-        y : 1D np.array of int, of shape [n_instances] - predicted class labels
-            indices correspond to instance indices in X
+        y : 2D np.ndarray of shape [n_instances, n_outputs], predicted values
         """
-        estimator = self._get_delegate()
-        y_pred = estimator.predict(X=X)
-        if y_pred.ndim == 1:
-            y_pred = y_pred.reshape(-1, 1)
-        return y_pred
+        _check_refit_for_predict(self)
+        return _coerce_prediction(self._get_delegate().predict(X=X))
 
-    # the delegate is an sklearn estimator and it does not have get_fitted_params
-    # therefore we have to override _get_fitted_params from the delegator,
-    # which would otherwise call it
     def _get_fitted_params(self):
         """Get fitted parameters.
 
@@ -393,9 +342,18 @@ class TSRGridSearchCV(_DelegatedRegressor):
         Returns
         -------
         fitted_params : dict with str keys
-            fitted parameters, keyed by names of fitted parameter
+            The best hyper-parameters, and the fitted parameters of
+            ``best_estimator_`` if available, the former taking precedence.
         """
-        return {}
+        fitted_params = {}
+        # best_estimator_ is fitted only if refit is not False
+        if self.refit:
+            fitted_params = self.best_estimator_.get_fitted_params()
+
+        fitted_params = {**fitted_params, **self.best_params_}
+        fitted_params.update(self._get_fitted_params_default())
+
+        return fitted_params
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
