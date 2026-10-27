@@ -387,9 +387,7 @@ class TimestralForecaster(BaseForecaster):
 
         self._cur_y = update_data(self._cur_y, y)
         if X is not None:
-            self._cur_X = (
-                update_data(self._cur_X, X) if self._cur_X is not None else X
-            )
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         return self
 
     def _run_forecast(self, fh, X=None):

@@ -294,6 +294,7 @@ exclude = [
   "sktime/_contrib/*",
   "examples/blog_posts/*",
   "sktime/libs/tbats/*",
+  "sktime/libs/timestral/*",
 ]
 target-version = "py310"
 extend-include = ["*.ipynb"]

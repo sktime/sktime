@@ -179,4 +179,3 @@ def test_timestral_remember_data_false():
     y_pred = forecaster.predict(fh=fh)
     assert len(y_pred) == len(fh)
     assert not y_pred.isna().any()
-
