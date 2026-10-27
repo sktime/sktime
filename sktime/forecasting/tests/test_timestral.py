@@ -156,3 +156,27 @@ def test_timestral_predict_proba_matches_quantiles():
     np.testing.assert_allclose(
         q_direct.to_numpy(), q_proba.to_numpy(), rtol=1e-5, atol=1e-4
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimestralForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_timestral_remember_data_false():
+    """Verify Timestral works when remember_data=False."""
+    y_train = load_airline().iloc[:-12]
+    fh = [1, 2]
+
+    forecaster = TimestralForecaster(
+        model_path="mistralai/Timestral-5M",
+        device="cpu",
+        license_accepted=True,
+    )
+    forecaster.set_config(remember_data=False)
+    forecaster.fit(y_train)
+
+    assert forecaster._y is None
+    y_pred = forecaster.predict(fh=fh)
+    assert len(y_pred) == len(fh)
+    assert not y_pred.isna().any()
+

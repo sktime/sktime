@@ -251,7 +251,7 @@ class TimestralForecaster(BaseForecaster):
         the horizon). Columns present only in fit-time ``X`` are past-only covariates.
         Each group is divided into numeric and categorical subsets.
         """
-        if self._X is None:
+        if self._cur_X is None:
             if X is not None:
                 raise ValueError(
                     "Exogenous `X` was provided in predict but none was provided "
@@ -259,7 +259,7 @@ class TimestralForecaster(BaseForecaster):
                 )
             return [], [], [], []
 
-        fit_cols = list(self._X.columns)
+        fit_cols = list(self._cur_X.columns)
         predict_cols = [] if X is None else list(X.columns)
         unknown = set(predict_cols) - set(fit_cols)
         if unknown:
@@ -272,7 +272,7 @@ class TimestralForecaster(BaseForecaster):
         past_cols = [col for col in fit_cols if col not in predict_cols]
 
         def is_cat(col):
-            s = self._X[col]
+            s = self._cur_X[col]
             return s.dtype.name in ["category", "object", "string"]
 
         cat_past = [col for col in past_cols if is_cat(col)]
@@ -330,13 +330,15 @@ class TimestralForecaster(BaseForecaster):
         # Numeric past covariates: (1, C_num_past, T)
         num_past = None
         if num_past_cols:
-            vals = self._X.loc[y_ctx.index, num_past_cols].values.T.astype(np.float32)
+            vals = self._cur_X.loc[y_ctx.index, num_past_cols].values.T.astype(
+                np.float32
+            )
             num_past = vals[np.newaxis, ...]
 
         # Numeric known covariates: (1, C_num_known, T + horizon)
         num_known = None
         if num_known_cols:
-            past_vals = self._X.loc[y_ctx.index, num_known_cols].values.T.astype(
+            past_vals = self._cur_X.loc[y_ctx.index, num_known_cols].values.T.astype(
                 np.float32
             )
             future_vals = X_future[num_known_cols].values.T.astype(np.float32)
@@ -348,7 +350,7 @@ class TimestralForecaster(BaseForecaster):
         if cat_past_cols:
             past_list = []
             for col in cat_past_cols:
-                s_fit = self._X.loc[y_ctx.index, col]
+                s_fit = self._cur_X.loc[y_ctx.index, col]
                 past_list.append(self._encode_categorical(s_fit))
             cat_past = np.stack(past_list, axis=0)[np.newaxis, ...]
 
@@ -357,7 +359,7 @@ class TimestralForecaster(BaseForecaster):
         if cat_known_cols:
             known_list = []
             for col in cat_known_cols:
-                s_fit = self._X.loc[y_ctx.index, col]
+                s_fit = self._cur_X.loc[y_ctx.index, col]
                 s_fut = X_future[col]
                 codes_all = self._encode_categorical(s_fit, s_fut)
                 concat_codes = (
@@ -374,7 +376,20 @@ class TimestralForecaster(BaseForecaster):
         """Fit forecaster to training data."""
         self._check_license()
         self._load_model()
+        self._cur_y = y
+        self._cur_X = X
         self._y_index_names = y.index.names
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update forecaster with new training data."""
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = (
+                update_data(self._cur_X, X) if self._cur_X is not None else X
+            )
         return self
 
     def _run_forecast(self, fh, X=None):
@@ -400,7 +415,7 @@ class TimestralForecaster(BaseForecaster):
         else:
             limit = trained_len
 
-        y_ctx = self._y.iloc[-limit:] if len(self._y) > limit else self._y
+        y_ctx = self._cur_y.iloc[-limit:] if len(self._cur_y) > limit else self._cur_y
 
         # Partition exogenous variables
         (
@@ -441,7 +456,7 @@ class TimestralForecaster(BaseForecaster):
         index = (
             ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
         )
-        pred_out = fh.get_expected_pred_idx(self._y, cutoff=self.cutoff)
+        pred_out = fh.get_expected_pred_idx(self._cur_y, cutoff=self.cutoff)
         return forecast, index, pred_out, horizon
 
     def _predict(self, fh, X=None):
