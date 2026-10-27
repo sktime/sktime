@@ -655,3 +655,86 @@ def test_msle_no_stdout_on_index_mismatch():
     with contextlib.redirect_stdout(buf):
         mean_squared_log_error(y_true, y_pred)
     assert buf.getvalue() == ""
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_maep_class():
+    """Test MeanAbsoluteErrorPercentage (MAE%).
+
+    Hand-computed expected values; MAE% is mean absolute error divided by the
+    absolute mean of the true values, a fraction of averages, unlike MAPE.
+    """
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsoluteErrorPercentage,
+        MeanAbsolutePercentageError,
+    )
+
+    metric = MeanAbsoluteErrorPercentage()
+
+    # --- basic case: MAE = 0.55, mean(y_true) = 2.7 ---
+    y_true = np.array([3, -0.5, 2, 7, 2])
+    y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+    assert np.allclose(metric(y_true, y_pred), 0.55 / 2.7)
+
+    # --- fraction of averages, not the average of fractions (MAPE) ---
+    mape = MeanAbsolutePercentageError()
+    assert not np.allclose(metric(y_true, y_pred), mape(y_true, y_pred))
+
+    # --- perfect forecast ---
+    assert np.allclose(metric(y_true, y_true), 0.0)
+
+    # --- negative mean: denominator is the absolute mean, so result is positive ---
+    y_true_neg = np.array([-2.0, -4.0, -6.0])
+    y_pred_neg = np.array([-3.0, -4.0, -5.0])
+    assert np.allclose(metric(y_true_neg, y_pred_neg), (2 / 3) / 4)
+
+    # --- a zero true value is fine, only a zero mean is not ---
+    y_true_zero = np.array([0.0, 2.0, 4.0])
+    y_pred_zero = np.array([1.0, 2.0, 4.0])
+    assert np.allclose(metric(y_true_zero, y_pred_zero), (1 / 3) / 2)
+
+    # --- multivariate with raw_values and uniform_average ---
+    y_true_mv = pd.DataFrame({"A": [3, -0.5, 2, 7, 2], "B": [1, 2, 3, 4, 5]})
+    y_pred_mv = pd.DataFrame(
+        {"A": [2.5, 0.0, 2, 8, 1.25], "B": [1.5, 2.5, 2.5, 3.5, 5.5]}
+    )
+    expected_mv = np.array([0.55 / 2.7, 0.5 / 3])
+    metric_raw = MeanAbsoluteErrorPercentage(multioutput="raw_values")
+    assert np.allclose(metric_raw(y_true_mv, y_pred_mv), expected_mv)
+    assert np.allclose(metric(y_true_mv, y_pred_mv), expected_mv.mean())
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "y_true, y_pred",
+    [
+        ([3, -0.5, 2, 7, 2], [2.5, 0.0, 2, 8, 1.25]),
+        ([-2.0, -4.0, -6.0, -1.0], [-3.0, -4.0, -5.0, -1.5]),
+    ],
+)
+def test_maep_evaluate_by_index_is_jackknife(y_true, y_pred):
+    """MAE% evaluate_by_index returns jackknife pseudo-values.
+
+    Each pseudo-value is n * MAE% - (n - 1) * MAE%_{-i}, where MAE%_{-i} is
+    computed independently, by evaluating the metric with the i-th point removed.
+    """
+    from sktime.performance_metrics.forecasting import MeanAbsoluteErrorPercentage
+
+    metric = MeanAbsoluteErrorPercentage()
+    y_true = pd.Series(y_true, dtype=float)
+    y_pred = pd.Series(y_pred, dtype=float)
+    n = len(y_true)
+
+    full = metric(y_true, y_pred)
+    expected = [
+        n * full - (n - 1) * metric(y_true.drop(i), y_pred.drop(i)) for i in range(n)
+    ]
+
+    by_index = metric.evaluate_by_index(y_true, y_pred)
+    assert np.allclose(by_index.to_numpy(), expected)

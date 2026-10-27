@@ -29,13 +29,14 @@ import pandas as pd
 from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
+from sktime.base._pretrain import _PretrainMixin
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
 from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.series import check_series
 
 
-class BaseDetector(BaseEstimator):
+class BaseDetector(_PretrainMixin, BaseEstimator):
     """Base class for time series detectors.
 
     Developers should set the task and learning_type tags in the derived class.
@@ -113,29 +114,6 @@ class BaseDetector(BaseEstimator):
         """
         pass
 
-    @classmethod
-    def _get_clone_plugins(cls):
-        """Get clone plugins for BaseDetector.
-
-        Overrides the default skbase clone behavior to preserve
-        pretrained attributes when cloning detectors.
-
-        The ``_PretrainedCloner`` plugin ensures that when a detector
-        with pretrained state is cloned, the pretrained attributes are
-        copied to the clone. Detectors without the ``capability:pretrain``
-        tag are cloned as usual.
-
-        Returns
-        -------
-        list
-            List containing ``_PretrainedCloner`` plugin class.
-        """
-        # imported here and not at module level, as detection must not
-        # import forecasting at module level, see the cross module import test
-        from sktime.forecasting.base._clone_plugin import _PretrainedCloner
-
-        return [_PretrainedCloner]
-
     def __rmul__(self, other):
         """Magic * method, return (left) concatenated DetectorPipeline.
 
@@ -167,51 +145,6 @@ class BaseDetector(BaseEstimator):
             return TabularToSeriesAdaptor(other) * self
         else:
             return NotImplemented
-
-    @property
-    def _is_fitted(self):
-        """Internal fitted state for backward compatibility with skbase.
-
-        Returns True only after ``fit``, not after ``pretrain``.
-        For pretrain state checks, use ``self.state`` directly.
-
-        Returns
-        -------
-        bool
-            True if the detector has been fitted, False otherwise.
-        """
-        return self._state == "fitted"
-
-    @_is_fitted.setter
-    def _is_fitted(self, value):
-        """Setter for backward compatibility.
-
-        Parameters
-        ----------
-        value : bool
-            If True, sets state to "fitted". If False, sets state to "new".
-        """
-        if value:
-            self._state = "fitted"
-        else:
-            self._state = "new"
-
-    @property
-    def state(self):
-        """State of the detector.
-
-        Possible states for detectors are:
-
-        * "new": post-init state
-        * "pretrained": after ``pretrain`` has been called, until ``fit`` is called
-        * "fitted": after ``fit`` has been called
-
-        Returns
-        -------
-        str, one of {"new", "pretrained", "fitted"}
-            State of the detector.
-        """
-        return self._state
 
     def pretrain(self, X, y=None):
         """Pretrain detector on a collection of time series.
@@ -302,86 +235,7 @@ class BaseDetector(BaseEstimator):
         # instance levels of y are flattened the same way as those of X
         y = self._flatten_y_pretrain(y)
 
-        prior_attrs = {
-            a for a in dir(self) if a.endswith("_") and not a.startswith("_")
-        }
-
-        if self._state == "new":
-            self._pretrain(X=X_inner, y=y)
-        else:
-            self._pretrain_update(X=X_inner, y=y)
-
-        if not hasattr(self, "_pretrained_attrs"):
-            self._pretrained_attrs = []
-
-        # track attributes set by this pretrain call
-        new_attrs = [
-            a
-            for a in dir(self)
-            if a.endswith("_")
-            and not a.startswith("_")
-            and a not in self._pretrained_attrs
-            and a not in prior_attrs
-        ]
-        self._pretrained_attrs.extend(new_attrs)
-
-        self._state = "pretrained"
-        return self
-
-    def get_pretrained_params(self, deep=True):
-        """Get pretrained parameters of this detector.
-
-        Returns a dictionary of attributes that were set during ``pretrain``.
-        These are attributes ending in ``"_"`` that appeared on the detector
-        after ``pretrain`` was called, and are tracked separately from the
-        fitted parameters set by ``fit``.
-
-        Returns an empty dict if the detector has not been pretrained,
-        or does not have the ``capability:pretrain`` tag.
-
-        Parameters
-        ----------
-        deep : bool, default=True
-            Whether to return pretrained parameters of nested estimators.
-
-            * If True, will return a dict of parameter name : value for this
-              object, including pretrained parameters of nested estimators.
-            * If False, will return a dict of parameter name : value for this
-              object, but not include pretrained parameters of nested
-              estimators.
-
-        Returns
-        -------
-        params : dict
-            Dictionary of pretrained parameter names mapped to their values.
-            Keys are attribute names ending in ``"_"`` that were set during
-            pretraining.
-
-            If ``deep=True``, also contains keys/value pairs of nested
-            estimators' pretrained parameters, indexed as
-            ``[attrname]__[paramname]``.
-
-        See Also
-        --------
-        pretrain : Pretrain detector on a collection of time series.
-        get_fitted_params : Get parameters set during ``fit``.
-        """
-        if not hasattr(self, "_pretrained_attrs"):
-            return {}
-
-        params = {}
-        for attr in self._pretrained_attrs:
-            if hasattr(self, attr):
-                value = getattr(self, attr)
-                params[attr] = value
-
-                # Handle nesting: if value is an estimator with pretrained params
-                if deep and hasattr(value, "get_pretrained_params"):
-                    nested = value.get_pretrained_params(deep=True)
-                    for nested_key, nested_val in nested.items():
-                        params[f"{attr}__{nested_key}"] = nested_val
-
-        return params
+        return self._pretrain_and_track(X=X_inner, y=y)
 
     def fit(self, X, y=None):
         """Fit to training data.
