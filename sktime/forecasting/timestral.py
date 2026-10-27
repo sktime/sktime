@@ -2,7 +2,7 @@
 
 """Timestral forecaster for ``sktime``.
 
-Wraps Mistral AI Timestral foundation model via the upstream ``timestral`` package.
+Wraps Mistral AI Timestral foundation model.
 """
 
 __all__ = ["TimestralForecaster"]
@@ -117,8 +117,9 @@ class TimestralForecaster(BaseForecaster):
         "authors": ["Artjom Joosen"],
         "maintainers": ["hasanfaesal"],
         "python_dependencies": [
-            "timestral @ git+https://github.com/mistralai/timestral.git@a534bdbd244d64f3d9d743f46c7bf6fc330ed4ff",
             "torch>=2.4.0",
+            "huggingface_hub>=0.23",
+            "safetensors>=0.4",
         ],
         "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
@@ -133,6 +134,7 @@ class TimestralForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:non_contiguous_X": False,
         "tests:vm": True,
+        "tests:libs": ["sktime.libs.timestral"],
         "tests:specific": ["sktime.forecasting.tests.test_timestral"],
     }
 
@@ -607,7 +609,7 @@ class _CachedTimestral:
         if self.forecaster is not None:
             return self.forecaster
 
-        from timestral import TimestralForecaster as _UpstreamForecaster
+        from sktime.libs.timestral import TimestralForecaster as _UpstreamForecaster
 
         self.forecaster = _UpstreamForecaster.from_pretrained(**self.load_kwargs)
         return self.forecaster
