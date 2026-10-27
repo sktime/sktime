@@ -86,8 +86,9 @@ class _PretrainMixin(_StateAtMixin):
     def _pretrain_and_track(self, **kwargs):
         """Run ``_pretrain`` or ``_pretrain_update``, track new attributes.
 
-        Calls ``_pretrain`` if the estimator is in state ``"new"``, otherwise
-        ``_pretrain_update``. Public attributes ending in ``"_"`` that are
+        Clears fitted state while preserving pretrained attributes, then calls
+        ``_pretrain`` if the state is ``"new"``, otherwise ``_pretrain_update``.
+        Public attributes ending in ``"_"`` that are
         created by the call are appended to ``self._pretrained_attrs``, and the
         state is set to ``"pretrained"``.
 
@@ -101,23 +102,14 @@ class _PretrainMixin(_StateAtMixin):
         -------
         self : reference to self
         """
+        if self._state == "fitted":
+            self._reset_at("pretrained")
+        prior_attrs = {
+            a for a in dir(self) if a.endswith("_") and not a.startswith("_")
+        }
         if self._state == "new":
-            prior_attrs = {
-                a for a in dir(self) if a.endswith("_") and not a.startswith("_")
-            }
             self._pretrain(**kwargs)
         else:
-            # Reset fit-level state while preserving pretrained attributes, so that
-            # stale fitted attributes (e.g. cutoff, last_value_) do not persist after
-            # a pretrain-on-top-of-fit call. The object is consistently "pretrained"
-            # afterwards, and the next fit() will not see a stale "fitted" state.
-            # See: https://github.com/sktime/sktime/issues/11501
-            self._reset_at("pretrained")
-            # Re-snapshot prior_attrs after reset so that only attributes added by
-            # _pretrain_update are recorded as new pretrained attributes.
-            prior_attrs = {
-                a for a in dir(self) if a.endswith("_") and not a.startswith("_")
-            }
             self._pretrain_update(**kwargs)
 
         if not hasattr(self, "_pretrained_attrs"):

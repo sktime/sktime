@@ -50,12 +50,6 @@ def test_flowstate_predict_proba_histogram_consistency(alpha):
 # tsfm_public.FlowStateForPrediction, against checkpoint
 # ibm-research/flowstate at revision r1.1, which resolves to the immutable
 # Hugging Face commit 940580f969036cfca514cdff725f7b02c03e1bcf.
-#
-# ``device="cpu"`` is pinned explicitly in the test (same pattern as
-# test_ttm.py, test_toto2.py, test_mantis.py) so that MPS on Apple Silicon
-# does not produce numerically different results from Linux CPU/BLAS; the
-# ``_test_vm.py`` MPS-disabling patch only applies to ``check_estimator``,
-# not to the ``tests:specific`` golden-output tests that run directly.
 _FLOWSTATE_GRANITE_REFERENCE_CASES = [
     pytest.param(
         1.0,
@@ -89,16 +83,11 @@ _FLOWSTATE_GRANITE_REFERENCE_CASES = [
 def test_flowstate_airline_predictions_match_granite_reference(
     scale_factor, expected_head
 ):
-    """FlowState predictions match the upstream granite-tsfm model outputs.
-
-    References are pinned to CPU so that Apple-Silicon MPS and Linux
-    CPU/OpenBLAS produce the same bits. See the comment above
-    ``_FLOWSTATE_GRANITE_REFERENCE_CASES`` for full provenance.
-    """
+    """FlowState predictions match the upstream granite-tsfm model outputs."""
     y = load_airline()
     y_train = y.iloc[:-12]
     fh = np.arange(1, 13)
-    forecaster = FlowStateForecaster(scale_factor=scale_factor, device="cpu")
+    forecaster = FlowStateForecaster(scale_factor=scale_factor)
 
     y_pred = forecaster.fit(y_train, fh=fh).predict(fh=fh)
 

@@ -208,21 +208,12 @@ def test_predict_quantiles_from_interval_multivariate():
 
 
 @pytest.mark.skipif(
-    not run_test_module_changed("sktime.forecasting.base"),
-    reason="run only if base module has changed",
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.base._pretrain"]),
+    reason="run only if forecasting base or pretrain module has changed",
 )
 def test_pretrain_after_fit_no_stale_state():
-    """Regression test for #11501: pretrain after fit leaves stale fitted attrs.
-
-    After pretrain -> fit -> pretrain:
-    - state must be "pretrained" (not "fitted")
-    - is_fitted must be False
-    - cutoff must be None (stale fit cutoff removed)
-    - predict() must raise NotFittedError
-    - a subsequent fit() must succeed and make the forecaster fully fitted
-    """
-    import pytest
-
+    """Pretraining clears fitted state and allows a subsequent fit and predict."""
+    from sktime.exceptions import NotFittedError
     from sktime.forecasting.dummy_global import DummyGlobalForecaster
     from sktime.utils._testing.series import _make_series
 
@@ -233,27 +224,23 @@ def test_pretrain_after_fit_no_stale_state():
 
     f = DummyGlobalForecaster()
 
-    # pretrain -> fit -> pretrain
     f.pretrain(y_panel)
     f.fit(y_single, fh=[1, 2])
-    assert f.is_fitted, "sanity check: must be fitted before second pretrain"
+    assert f.is_fitted
 
     f.pretrain(y_panel)
 
-    # state must be "pretrained", not "fitted"
-    assert f.state == "pretrained", f"expected 'pretrained', got {f.state!r}"
-    assert not f.is_fitted, "is_fitted must be False after pretrain"
+    assert f.state == "pretrained"
+    assert not f.is_fitted
+    assert f.cutoff is None
+    assert not hasattr(f, "last_value_")
+    assert "last_value_" not in f.get_pretrained_params()
 
-    # stale cutoff from fit must be gone
-    assert f.cutoff is None, f"cutoff must be None after pretrain, got {f.cutoff}"
-
-    # predict must raise because not fitted
-    with pytest.raises(Exception):
+    with pytest.raises(NotFittedError):
         f.predict()
 
-    # a subsequent fit must work and fully restore fitted state
     f.fit(y_single, fh=[1, 2])
-    assert f.is_fitted, "must be fitted after fit() following pretrain"
+    assert f.is_fitted
     assert f.state == "fitted"
     preds = f.predict()
-    assert preds is not None
+    assert len(preds) == 2
