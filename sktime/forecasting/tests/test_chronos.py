@@ -105,3 +105,77 @@ def test_chronos_bolt_long_prediction_length():
     y_pred = forecaster.fit(y, fh=fh).predict()
 
     assert len(y_pred) == len(fh)
+
+
+def _save_tiny_chronos_model(path, tokenizer_class):
+    """Save a tiny randomly initialized Chronos model with the given tokenizer_class."""
+    from transformers import T5Config, T5ForConditionalGeneration
+
+    config = T5Config(
+        vocab_size=32,
+        d_model=8,
+        d_ff=16,
+        d_kv=4,
+        num_layers=1,
+        num_decoder_layers=1,
+        num_heads=2,
+        decoder_start_token_id=0,
+        pad_token_id=0,
+        eos_token_id=1,
+    )
+    config.chronos_config = {
+        "tokenizer_class": tokenizer_class,
+        "tokenizer_kwargs": {"low_limit": -15.0, "high_limit": 15.0},
+        "context_length": 16,
+        "prediction_length": 4,
+        "n_tokens": 32,
+        "n_special_tokens": 2,
+        "pad_token_id": 0,
+        "eos_token_id": 1,
+        "use_eos_token": True,
+        "model_type": "seq2seq",
+        "num_samples": 2,
+        "temperature": 1.0,
+        "top_k": 5,
+        "top_p": 1.0,
+    }
+    T5ForConditionalGeneration(config).save_pretrained(path)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ChronosForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_chronos_tokenizer_class_from_model_config(tmp_path):
+    """The tokenizer_class in the model config selects a ChronosTokenizer by name."""
+    from sktime.libs.chronos.chronos import MeanScaleUniformBins
+
+    _save_tiny_chronos_model(tmp_path, "MeanScaleUniformBins")
+    forecaster = ChronosForecaster(model_path=str(tmp_path))
+
+    y_pred = forecaster.fit(load_airline()).predict(fh=[1, 2, 3])
+
+    assert isinstance(forecaster.model_pipeline.tokenizer, MeanScaleUniformBins)
+    assert len(y_pred) == 3
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ChronosForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "tokenizer_class",
+    ["dict", "1 + 1", "(lambda **kwargs: None)"],
+)
+def test_chronos_tokenizer_class_is_not_evaluated(tmp_path, tokenizer_class):
+    """A tokenizer_class that is not a ChronosTokenizer name is looked up, not run.
+
+    The tokenizer_class string is read from the model config.json. It must be
+    resolved as a name in the chronos module, not evaluated as a python
+    expression, so that loading a model cannot execute arbitrary code.
+    """
+    _save_tiny_chronos_model(tmp_path, tokenizer_class)
+    forecaster = ChronosForecaster(model_path=str(tmp_path))
+
+    with pytest.raises(AttributeError):
+        forecaster.fit(load_airline())
