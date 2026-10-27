@@ -4304,6 +4304,17 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "Me-Priyank",
+      "name": "Priyank Verma",
+      "avatar_url": "https://avatars.githubusercontent.com/u/143987856?v=4",
+      "profile": "https://github.com/Me-Priyank",
+      "contributions": [
+        "bug",
+        "code",
+        "doc"
+      ]
     }
   ]
 }

@@ -109,6 +109,24 @@ def test_timesfm_ignore_deps_clears_env_tags():
     not run_test_module_changed("sktime.forecasting"),
     reason="run test only incrementally (if requested)",
 )
+def test_timesfm_use_source_package_env_tags():
+    """TimesFM python_version and env_marker restrict only the source package."""
+    est = TimesFMForecaster()
+
+    assert est.get_tag("python_version", raise_error=False) is None
+    assert est.get_tag("env_marker", raise_error=False) is None
+
+    est = TimesFMForecaster(use_source_package=True)
+
+    assert est.get_tag("python_dependencies") == ["timesfm<1.2.0"]
+    assert est.get_tag("python_version") == ">=3.10,<3.11"
+    assert est.get_tag("env_marker") == "sys_platform=='linux'"
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting"),
+    reason="run test only incrementally (if requested)",
+)
 def test_timesfm_broadcasting_tags():
     """TimesFM broadcasting=True should apply the broadcasting tag set, see #10520."""
     est = TimesFMForecaster(broadcasting=True, ignore_deps=True)
