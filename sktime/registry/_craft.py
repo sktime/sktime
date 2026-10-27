@@ -27,7 +27,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.registry._lookup import all_estimators
-from sktime.registry._namespace import _namespace
+from sktime.registry._namespace import _namespace, _namespace_shorthands
 
 DEFAULT_NAMESPACE = {
     "array": np.array,
@@ -114,7 +114,7 @@ def _extract_class_names(spec):
     return cls_name_list
 
 
-def craft(spec, safe=False):
+def craft(spec, safe=False, namespace_plugin=None):
     """Instantiate an object from the specification string.
 
     The ``craft`` utility can be used to deserialize an estimator specification string,
@@ -201,6 +201,12 @@ def craft(spec, safe=False):
           rules, see above for the exact rules.
         * if False, allow all expressions (default behavior).
 
+    namespace_plugin : dict or iterable of (str, object) tuples, optional
+        additional namespace for resolving names in the specification.
+        If a dict is provided, it should map names to objects.
+        If an iterable of tuples is provided, each
+        tuple should be of the form (name, object).
+
     Returns
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
@@ -241,8 +247,17 @@ def craft(spec, safe=False):
     ... '''
     >>> est = craft(spec)
     """
+    # normalize namespace_plugin to dict
+    if namespace_plugin is None:
+        namespace_plugin = {}
+    elif isinstance(namespace_plugin, dict):
+        pass
+    else:
+        namespace_plugin = dict(namespace_plugin)
+
     # retrieve all estimators from sktime and sklearn for namespace resolution
     register = {**DEFAULT_NAMESPACE, **_namespace(include_deps=True)}
+    register.update(namespace_plugin)
     namespace = {
         **register,
         **{alias: mod for alias, (mod, _) in DEFAULT_ATTRIBUTE_NAMESPACE.items()},
@@ -251,6 +266,11 @@ def craft(spec, safe=False):
     # Parse the specification once.
     # Both safe and unsafe modes operate on the resulting AST.
     try:
+        # shorthands replacement only for expressions in eval mode, not code blocks
+        # (for code blocks, it is clear how variable names would be resolved)
+        if "return" not in spec:
+            spec = _replace_shorthands(spec, _namespace_shorthands())
+
         tree = ast.parse(spec, mode="exec")
     except SyntaxError as e:
         if safe:
@@ -469,6 +489,39 @@ def _validate_ast(tree, register):
     return False
 
 
+def _replace_shorthands(code: str, shorthands: dict[str, str]) -> str:
+    """Replace variables in code with their corresponding replacements.
+
+    Used to replace shorthands in the code with their corresponding full expressions.
+    Safe to use in isolation as code is not executed.
+    As part of ``craft``, is safe in conjunction with the ``safe=True`` setting,
+    as the safe code validation is carried out on the replacement.
+
+    Parameters
+    ----------
+    code : str
+        The Python code in which to replace variables.
+    shorthands : dict[str, str]
+        A dictionary mapping shorthand names to their full expressions.
+
+    Returns
+    -------
+    str
+        The modified code with variables replaced.
+    """
+
+    class Transformer(ast.NodeTransformer):
+        def visit_Name(self, node: ast.Name):
+            if isinstance(node.ctx, ast.Load) and node.id in shorthands:
+                return ast.copy_location(
+                    ast.parse(shorthands[node.id], mode="eval").body,
+                    node,
+                )
+            return node
+
+    return ast.unparse(Transformer().visit(ast.parse(code)))
+
+
 def deps(spec, include_test_deps=False):
     """Get PEP 440 dependency requirements for a craft spec.
 
@@ -500,6 +553,11 @@ def deps(spec, include_test_deps=False):
         each str is PEP 440 compatible requirement string for craft(spec)
         if spec has no requirements, return is [], the length 0 list
     """
+    if "return" not in spec:
+        # shorthands replacement only for expressions in eval mode, not code blocks
+        # (for code blocks, it is clear how variable names would be resolved)
+        spec = _replace_shorthands(spec, _namespace_shorthands())
+
     register = _namespace(include_deps=True)
 
     dep_strs = []
