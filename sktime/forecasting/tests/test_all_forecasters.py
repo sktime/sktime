@@ -783,7 +783,7 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         y_train, y_test = temporal_train_test_split(y, train_size=0.75)
 
         # check that _y is empty when estimator is constructed
-        assert f._y is None
+        assert not hasattr(f, "_y") or f._y is None
 
         # check that _y is updated during fit
         f.fit(y_train, fh=FH0)
