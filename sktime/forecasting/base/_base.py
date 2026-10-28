@@ -2698,7 +2698,14 @@ def _format_moving_cutoff_predictions(y_preds, cutoffs):
         y_pred = pd.concat(y_preds)
     else:
         cutoffs = [cutoff[0] for cutoff in cutoffs]
-        y_pred = pd.concat(y_preds, axis=1, keys=cutoffs)
+        y_pred = pd.concat(y_preds, axis=1, keys=cutoffs, sort=True)
+        # concat with sort=True does not infer freq of the union index, restore it
+        if isinstance(y_pred.index, pd.DatetimeIndex) and y_pred.index.freq is None:
+            try:
+                y_pred.index.freq = pd.infer_freq(y_pred.index)
+            except ValueError:
+                # fewer than three values in the index, see pd.infer_freq
+                pass
 
     if not y_pred.index.is_monotonic_increasing:
         y_pred = y_pred.sort_index()
