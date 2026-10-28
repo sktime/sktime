@@ -247,9 +247,11 @@ class TinyTimeMixerForecaster(BaseForecaster):
             num_patches at level i will be multipled by (2^i) and
             num_features at level i will be divided by (2^i). For Ex. if
             adaptive_patching_levels is 3 - then we will have 3 levels:
-                level 2: num_features//(2^2), num_patches*(2^2)
-                level 1: num_features//(2^1), num_patches*(2^1)
-                level 0: num_features//(2^0), num_patches*(2^0)
+
+            * level 2: ``num_features//(2^2), num_patches*(2^2)``
+            * level 1: ``num_features//(2^1), num_patches*(2^1)``
+            * level 0: ``num_features//(2^0), num_patches*(2^0)``
+
             adaptive_patching_levels = 1 is same as one level PatchTSMixer.
             This module gets disabled when adaptive_patching_levels is 0 or
             neg value. Defaults to 0 (off mode).
@@ -523,6 +525,7 @@ class TinyTimeMixerForecaster(BaseForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate>=0.26.0"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -543,6 +546,361 @@ class TinyTimeMixerForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_ttm"],
         "tests:libs": ["sktime.libs.granite_ttm"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            # TTM.
+            "ttm": 'TinyTimeMixerForecaster(fit_strategy="zero-shot")',
+            # TTM r1.
+            "ttm_r1": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r1", '
+                'fit_strategy="zero-shot")'
+            ),
+            "ttm_r1_512_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r1", '
+                'revision="main", fit_strategy="zero-shot")'
+            ),
+            "ttm_r1_1024_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r1", '
+                'revision="1024_96_v1", fit_strategy="zero-shot")'
+            ),
+            # TTM r2.
+            "ttm_r2": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_512_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="main", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_512_192": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="512-192-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_512_336": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="512-336-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_512_720": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="512-720-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1024_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="1024-96-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1024_192": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="1024-192-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1024_336": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="1024-336-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1024_720": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="1024-720-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1536_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="1536-96-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1536_192": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="1536-192-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1536_336": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="1536-336-r2", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1536_720": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="1536-720-r2", fit_strategy="zero-shot")'
+            ),
+            # TTM r2.1. Same Hub repo as r2, selected by revision.
+            "ttm_r2_1_52_16": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="52-16-ft-r2.1", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1_52_16_l1": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="52-16-ft-l1-r2.1", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1_90_30": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="90-30-ft-r2.1", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1_90_30_l1": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="90-30-ft-l1-r2.1", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1_512_48": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="512-48-ft-r2.1", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1_512_48_l1": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="512-48-ft-l1-r2.1", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1_512_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="512-96-ft-r2.1", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1_512_96_l1": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="512-96-ft-l1-r2.1", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1_180_60_l1": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="180-60-ft-l1-r2.1", fit_strategy="zero-shot")'
+            ),
+            "ttm_r2_1_360_60_l1": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r2", '
+                'revision="360-60-ft-l1-r2.1", fit_strategy="zero-shot")'
+            ),
+            # TTM r3.
+            "ttm_r3": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_52_16": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="52-16-dec-52-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_52_16_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="52-16-dec-52-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_90_30": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="90-30-dec-90-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_90_30_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="90-30-dec-90-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_156_16": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="156-16-dec-52-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_156_16_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="156-16-dec-52-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_180_60": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="180-60-dec-180-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_180_60_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="180-60-dec-180-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_360_60": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="360-60-dec-360-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_360_60_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="360-60-dec-360-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_512_30": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="512-30-dec-90-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_512_30_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="512-30-dec-90-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_512_48": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="512-48-dec-512-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_512_48_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="512-48-dec-512-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_512_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="512-96-dec-512-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_512_96_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="512-96-dec-512-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_512_336": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="512-336-dec-512-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_512_336_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="512-336-dec-512-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_768_48": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="768-48-dec-512-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_768_48_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="768-48-dec-512-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1024_48": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1024-48-dec-512-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1024_48_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1024-48-dec-512-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1024_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1024-96-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1024_96_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1024-96-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1024_720": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1024-720-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1024_720_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1024-720-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1536_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1536-96-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1536_96_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1536-96-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1536_720": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1536-720-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_1536_720_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="1536-720-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_2048_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="2048-96-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_2048_96_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="2048-96-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_2048_720": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="2048-720-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_2048_720_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="2048-720-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_2560_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="2560-96-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_2560_96_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="2560-96-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_2560_720": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="2560-720-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_2560_720_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="2560-720-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_3072_96": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="3072-96-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_3072_96_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="3072-96-lite-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_3072_720": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="3072-720-r3", fit_strategy="zero-shot")'
+            ),
+            "ttm_r3_3072_720_lite": (
+                "TinyTimeMixerForecaster("
+                'model_path="ibm-granite/granite-timeseries-ttm-r3", '
+                'revision="3072-720-lite-r3", fit_strategy="zero-shot")'
+            ),
+        },
     }
 
     def __init__(
