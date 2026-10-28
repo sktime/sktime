@@ -337,10 +337,18 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
         y_pred_inner.sort_index(axis=1, level=[0, 1], inplace=True)
 
         y_true, y_pred, multioutput = self._check_consistent_input(
-            y_true, y_pred, multioutput
+            y_true, y_pred_inner, multioutput
         )
 
-        return y_true, y_pred_inner, multioutput
+        # Fix for Issue #11324: multivariate alignment bug
+        # When y_true is univariate (1 column) but y_pred has multiple variables
+        # in its MultiIndex columns, broadcast y_true to match the number of variables
+        if y_true.shape[1] == 1 and isinstance(y_pred.columns, pd.MultiIndex):
+            n_vars = len(y_pred.columns.get_level_values(0).unique())
+            if n_vars > 1:
+                y_true = np.repeat(y_true, n_vars, axis=1)
+
+        return y_true, y_pred, multioutput
 
     def _get_alpha_from(self, y_pred):
         """Fetch the alphas present in y_pred."""
