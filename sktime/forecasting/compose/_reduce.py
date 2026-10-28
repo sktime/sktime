@@ -63,6 +63,38 @@ def _check_fh(fh):
     return fh.to_indexer().to_numpy()
 
 
+def _get_window_feature_names(y_name, x_names, window_length):
+    """Get names of the features produced by the local sliding window transform.
+
+    Parameters
+    ----------
+    y_name : str, or None
+        Name of the endogenous series, ``"y"`` is used if ``None``.
+    x_names : iterable of column names, or None
+        Column names of the exogenous series, if any.
+    window_length : int
+        Window length used in the sliding window transform.
+
+    Returns
+    -------
+    list of str
+        Feature names, of length ``(1 + number of X columns) * window_length``.
+
+    """
+    var_names = ["y" if y_name is None else str(y_name)]
+    if x_names is not None:
+        var_names += [str(name) for name in x_names]
+
+    unique_names = []
+    for i, name in enumerate(var_names):
+        while name in unique_names:
+            name = f"{name}_{i}"
+        unique_names.append(name)
+
+    lags = range(window_length, 0, -1)
+    return [f"{name}_lag_{lag}" for name in unique_names for lag in lags]
+
+
 def _sliding_window_transform(
     y,
     window_length,
@@ -380,6 +412,9 @@ class _Reducer(_BaseWindowForecaster):
             }
             params = params + [params_proba_local, params_proba_global]
 
+        # return params
+        params6 = {"estimator": est, "pass_feature_names": True}
+        params = params + [params6]
         return params
 
     def _get_shifted_window(self, shift=0, y_update=None, X_update=None):
@@ -501,6 +536,7 @@ class _Reducer(_BaseWindowForecaster):
 
 class _DirectReducer(_Reducer):
     strategy = "direct"
+    pass_feature_names = False
     _tags = {
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         # CI and test flags
@@ -625,6 +661,17 @@ class _DirectReducer(_Reducer):
                 )
 
         yt, Xt = self._transform(y, X)
+        if (
+            self.pass_feature_names
+            and self._estimator_scitype == "tabular-regressor"
+            and self.transformers_ is None
+        ):
+            self._feature_names_ = _get_window_feature_names(
+                y_name=getattr(y, "name", None),
+                x_names=X.columns if X is not None else None,
+                window_length=self.window_length_,
+            )
+            Xt = pd.DataFrame(Xt, columns=self._feature_names_)
         if hasattr(Xt, "columns"):
             Xt.columns = Xt.columns.astype(str)
 
@@ -761,6 +808,11 @@ class _DirectReducer(_Reducer):
             # We need to make sure that X has the same order as used in fit.
             if self._estimator_scitype == "tabular-regressor":
                 X_pred = X_pred.reshape(1, -1)
+            if (
+                self.pass_feature_names
+                and self._estimator_scitype == "tabular-regressor"
+            ):
+                X_pred = pd.DataFrame(X_pred, columns=self._feature_names_)
 
             # Allocate array for predictions.
             if est_type == "regressor":
@@ -1284,12 +1336,16 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         transformers=None,
         pooling="local",
         windows_identical=True,
+        pass_feature_names=False,
     ):
         super(_DirectReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
         )
         self.pooling = pooling
         self.windows_identical = windows_identical
+        self.pass_feature_names = pass_feature_names
 
         if pooling == "local":
             mtypes_y = "pd.Series"
@@ -1580,6 +1636,7 @@ def make_reduction(
     transformers=None,
     pooling="local",
     windows_identical=True,
+    pass_feature_names=False,
 ):
     r"""Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1740,6 +1797,7 @@ def make_reduction(
         "transformers": transformers,
         "pooling": pooling,
         "windows_identical": windows_identical,
+        "pass_feature_names": pass_feature_names,
     }
 
     return construct_dispatch(Forecaster, dispatch_params)
