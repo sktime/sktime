@@ -90,7 +90,9 @@ def test_reconciler_fit_predict(method, flatten, no_levels):
     reason="skip test if required soft dependency not available",
 )
 @pytest.mark.parametrize("n_columns", [1, 2])
-def test_reconcilerforecaster_exog(n_columns):
+@pytest.mark.parametrize("method", ["mint_cov", "mint_shrink", "wls_var"])
+@pytest.mark.parametrize("update_params", [True, False])
+def test_reconcilerforecaster_exog(n_columns, method, update_params):
     """Test that ReconcilerForecaster works without aggregated input, see #3980."""
     from sktime.datatypes._utilities import get_window
     from sktime.forecasting.reconcile import ReconcilerForecaster
@@ -118,11 +120,27 @@ def test_reconcilerforecaster_exog(n_columns):
     X_test = get_window(X, window_length=2)
 
     forecaster = SARIMAX()
-    estimator_instance = ReconcilerForecaster(forecaster, method="mint_shrink")
+    estimator_instance = ReconcilerForecaster(forecaster, method=method)
     fh = [1, 2]
     estimator_instance.fit(y=y_train, X=X_train, fh=fh)
     estimator_instance.predict(X=X_test)
-    estimator_instance.update(y=y_test, X=X_test)
+
+    if n_columns == 1:
+        # Residuals must use the base forecasts made before observing the update.
+        agg = Aggregator()
+        y_test_agg = agg.fit_transform(y_test)
+        X_test_agg = agg.fit_transform(X_test)
+        expected_residuals = y_test_agg - estimator_instance.forecaster_.predict(
+            fh=fh, X=X_test_agg
+        )
+
+    estimator_instance.update(y=y_test, X=X_test, update_params=update_params)
+
+    if n_columns == 1:
+        assert_frame_equal(
+            estimator_instance.residuals_.loc[y_test_agg.index], expected_residuals
+        )
+        assert estimator_instance.forecaster_.cutoff.equals(estimator_instance.cutoff)
 
 
 @pytest.mark.skipif(
