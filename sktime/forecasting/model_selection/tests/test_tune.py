@@ -599,3 +599,49 @@ def test_tuner_preserves_pretrained_state(Tuner, search_kwargs):
     for _, tuned in tuner.n_best_forecasters_:
         assert tuned.state == "pretrained"
         np.testing.assert_almost_equal(tuned.global_mean_, pretrain_mean)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [
+            ForecastingGridSearchCV,
+            TransformedTargetForecaster,
+            NaiveForecaster,
+            PolynomialTrendForecaster,
+        ]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_gscv_evaluates_named_step_estimator_candidates():
+    """Grid search over a pipeline step name must evaluate each estimator.
+
+    ``_set_params_at`` used to ignore heterogeneous step names, so
+    ``param_grid={"f": [NaiveForecaster(), PolynomialTrendForecaster()]}``
+    scored ``NaiveForecaster`` twice. Both candidates must actually be
+    swapped into the pipeline.
+    """
+    y = load_airline()[:36]
+    pipe = TransformedTargetForecaster(
+        [
+            ("t", Detrender(PolynomialTrendForecaster())),
+            ("f", NaiveForecaster()),
+        ]
+    )
+    gscv = ForecastingGridSearchCV(
+        pipe,
+        cv=SingleWindowSplitter(fh=1),
+        param_grid={"f": [NaiveForecaster(), PolynomialTrendForecaster()]},
+        return_n_best_forecasters=2,
+        refit=False,
+    )
+    gscv.fit(y)
+
+    candidate_types = {type(dict(fc.steps)["f"]) for _, fc in gscv.n_best_forecasters_}
+    assert candidate_types == {NaiveForecaster, PolynomialTrendForecaster}
+
+    best_f = dict(gscv.best_forecaster_.steps)["f"]
+    assert type(best_f) in (NaiveForecaster, PolynomialTrendForecaster)
+
+    scores = list(gscv.cv_results_[f"mean_test_{gscv.scoring.name}"])
+    assert len(scores) == 2
+    assert scores[0] != scores[1]
