@@ -627,10 +627,12 @@ def test_gscv_evaluates_named_step_estimator_candidates():
             ("f", NaiveForecaster()),
         ]
     )
+    scoring = MeanAbsolutePercentageError(symmetric=True)
     gscv = ForecastingGridSearchCV(
         pipe,
         cv=SingleWindowSplitter(fh=1),
         param_grid={"f": [NaiveForecaster(), PolynomialTrendForecaster()]},
+        scoring=scoring,
         return_n_best_forecasters=2,
         refit=False,
     )
@@ -642,6 +644,6 @@ def test_gscv_evaluates_named_step_estimator_candidates():
     best_f = dict(gscv.best_forecaster_.steps)["f"]
     assert type(best_f) in (NaiveForecaster, PolynomialTrendForecaster)
 
-    scores = list(gscv.cv_results_[f"mean_test_{gscv.scoring.name}"])
+    scores = list(gscv.cv_results_[f"mean_test_{scoring.name}"])
     assert len(scores) == 2
     assert scores[0] != scores[1]
