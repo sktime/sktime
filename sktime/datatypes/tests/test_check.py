@@ -2,6 +2,8 @@
 
 __author__ = ["fkiraly"]
 
+from copy import deepcopy
+
 import numpy as np
 import pandas
 import pytest
@@ -18,6 +20,7 @@ from sktime.datatypes._check import scitype as infer_scitype
 from sktime.datatypes._examples import get_examples
 from sktime.datatypes._registry import generate_scitype_list, scitype_to_mtype
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils.deep_equals import deep_equals
 
 # scitypes where mtype inference is not unique
 # alignment is excluded since mtypes can be ambiguous
@@ -534,3 +537,38 @@ def test_nested_univ_has_nans_and_equal_length_metadata():
     _, _, metadata = check_is_mtype(X, "nested_univ", return_metadata=True)
     assert metadata["has_nans"]
     assert not metadata["is_equal_length"]
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+def test_check_does_not_mutate_input(scitype, mtype, fixture_index):
+    """Test that check_is_mtype does not mutate the input object.
+
+    Parameters
+    ----------
+    scitype : str - scitype of fixture
+    mtype : str - mtype of fixture
+    fixture_index : int - index of fixture tuple with that scitype and mtype
+
+    Raises
+    ------
+    AssertionError if check_is_mtype mutates the input object
+    """
+    fixture = get_examples(mtype=mtype, as_scitype=scitype).get(fixture_index)
+
+    check_dict = generate_check_dict()
+    check_is_defined = (mtype, scitype) in check_dict.keys()
+
+    if fixture is not None and check_is_defined:
+        fixture_before = deepcopy(fixture)
+
+        check_is_mtype(
+            fixture, mtype, scitype, return_metadata=True, msg_return_dict="list"
+        )
+
+        assert deep_equals(fixture, fixture_before), (
+            f"check_is_mtype mutated input for scitype {scitype}, mtype {mtype}, "
+            f"fixture {fixture_index}"
+        )
