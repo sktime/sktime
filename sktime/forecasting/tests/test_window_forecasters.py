@@ -65,6 +65,6 @@ def test_insample_and_outofsample_forecasting():
     model = NaiveForecaster(strategy="mean", window_length=7)
     model.fit(df)
 
-    assert (model.predict(fh=[1, 2, 3]).values.flatten() == [16, 16, 16]).all()
+    assert (model.predict(fh=3).values.flatten() == [16, 16, 16]).all()
     assert (model.predict(fh=[0]).values.flatten() == [15]).all()
     assert (model.predict(fh=[0, 1, 2, 3]).values.flatten() == [15, 16, 16, 16]).all()

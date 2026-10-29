@@ -70,7 +70,7 @@ class CurveFitForecaster(BaseForecaster):
     ...                                 curve_fit_params={"p0":[-1, 1]})
     >>> forecaster.fit(y)
     CurveFitForecaster(...)
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    >>> y_pred = forecaster.predict(fh=3)
     """
 
     _tags = {

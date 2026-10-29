@@ -75,7 +75,7 @@ def test_croston_golden_output():
     """
     y = _golden_y()
     forecaster = Croston(GOLDEN_SMOOTHING).fit(y)
-    y_pred = forecaster.predict(fh=[1, 2, 3]).to_numpy().ravel()
+    y_pred = forecaster.predict(fh=3).to_numpy().ravel()
 
     np.testing.assert_allclose(y_pred, np.full(3, GOLDEN_FORECAST), rtol=1e-12)
 
@@ -94,7 +94,7 @@ def test_croston_golden_output_after_update(split):
     y = _golden_y()
     forecaster = Croston(GOLDEN_SMOOTHING).fit(y.iloc[:split])
     forecaster.update(y.iloc[split:])
-    y_pred = forecaster.predict(fh=[1]).to_numpy().ravel()
+    y_pred = forecaster.predict(fh=1).to_numpy().ravel()
 
     np.testing.assert_allclose(y_pred, np.full(1, GOLDEN_FORECAST), rtol=1e-12)
 
@@ -116,9 +116,9 @@ def test_croston_forecast_unchanged_when_update_is_all_zeros():
     zeros = pd.Series(np.zeros(5), index=zeros_idx)
 
     forecaster = Croston(GOLDEN_SMOOTHING).fit(y)
-    before = forecaster.predict(fh=[1]).to_numpy().ravel()
+    before = forecaster.predict(fh=1).to_numpy().ravel()
     forecaster.update(zeros)
-    after = forecaster.predict(fh=[1]).to_numpy().ravel()
+    after = forecaster.predict(fh=1).to_numpy().ravel()
 
     np.testing.assert_allclose(before, after, rtol=1e-12)
     np.testing.assert_allclose(after, np.full(1, GOLDEN_FORECAST), rtol=1e-12)
@@ -130,7 +130,7 @@ def test_croston_forecast_unchanged_when_update_is_all_zeros():
     expected_a = 0.1 * 6 + 0.9 * GOLDEN_A
     expected_q = 0.1 * 4 + 0.9 * GOLDEN_Q
     np.testing.assert_allclose(
-        forecaster.predict(fh=[1]).to_numpy().ravel(),
+        forecaster.predict(fh=1).to_numpy().ravel(),
         np.full(1, expected_q / expected_a),
         rtol=1e-12,
     )
@@ -150,7 +150,7 @@ def test_croston_update_equals_full_fit(smoothing, n_update):
     """
     y = load_PBS_dataset()
     split = len(y) - n_update
-    fh = [1, 2, 3]
+    fh = 3
 
     incremental = Croston(smoothing).fit(y.iloc[:split])
     incremental.update(y.iloc[split:])
@@ -175,7 +175,7 @@ def test_croston_update_no_demand_in_fit():
     """
     idx = pd.date_range("2020-01-01", periods=20, freq="D")
     y = pd.Series([0.0] * 12 + [4.0, 0.0, 0.0, 7.0, 0.0, 3.0, 0.0, 5.0], index=idx)
-    fh = [1, 2]
+    fh = 2
 
     incremental = Croston(0.1).fit(y.iloc[:12])
     incremental.update(y.iloc[12:])
@@ -194,7 +194,7 @@ def test_croston_update_no_demand_in_fit():
 def test_croston_update_params_false_does_not_change_forecast():
     """Test that update(update_params=False) leaves fitted parameters alone."""
     y = load_PBS_dataset()
-    fh = [1, 2, 3]
+    fh = 3
 
     forecaster = Croston(0.1).fit(y.iloc[:-10])
     before = forecaster.predict(fh=fh).to_numpy()
