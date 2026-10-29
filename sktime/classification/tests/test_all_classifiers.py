@@ -298,7 +298,16 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
 
     @pytest.mark.parametrize("pass_y", [False, True], ids=["y_none", "y_labels"])
     def test_pretrain_is_noop(self, object_instance, pass_y):
-        """Test pretrain is callable, and stores nothing without the capability."""
+        """Test pretrain is callable, and stores nothing without the capability.
+
+        Estimators with the capability are tested in the workflow test, as they
+        may require y in pretrain, e.g., if not capable of self-supervision.
+        """
+        if object_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
         X, y = make_classification_problem()
         estimator = object_instance
         attrs_before = dict(vars(estimator))
@@ -308,12 +317,11 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         assert result is estimator
         assert estimator.state == "pretrained"
         assert not estimator.is_fitted
-        if not estimator.get_tag("capability:pretrain"):
-            assert estimator.get_pretrained_params() == {}
-            # nothing is stored, only the state changes
-            assert vars(estimator).keys() == attrs_before.keys()
-            unchanged = {k: v for k, v in attrs_before.items() if k != "_state"}
-            assert all(vars(estimator)[k] is v for k, v in unchanged.items())
+        assert estimator.get_pretrained_params() == {}
+        # nothing is stored, only the state changes
+        assert vars(estimator).keys() == attrs_before.keys()
+        unchanged = {k: v for k, v in attrs_before.items() if k != "_state"}
+        assert all(vars(estimator)[k] is v for k, v in unchanged.items())
 
     def test_pretrain_fit_predict_workflow(self, object_instance):
         """Test pretrain, fit, refit, and pretrain after fit.
