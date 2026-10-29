@@ -90,6 +90,30 @@ class RBFTransformer(BaseTransformer):
 
     torch_available_ : bool
         Indicates if PyTorch is available. This is checked during fit.
+
+    Examples
+    --------
+    Transform sales values into features measuring proximity to three centers.
+    With the Gaussian kernel, a value equal to a center produces a feature
+    value of 1.0; values farther from that center produce smaller values.
+
+    >>> import pandas as pd
+    >>> from sktime.transformations.basisfunction import RBFTransformer
+    >>> sales = pd.Series([100.0, 120.0, 140.0])
+    >>> transformer = RBFTransformer(
+    ...     centers=[100.0, 120.0, 140.0],
+    ...     gamma=0.01,
+    ...     apply_to="values",
+    ...     use_torch=False,
+    ... )
+    >>> features = transformer.fit_transform(sales)
+    >>> features.shape
+    (3, 3)
+
+    The middle observation, 120.0, matches the second center exactly.
+
+    >>> features.iloc[1].round(3).tolist()
+    [0.018, 1.0, 0.018]
     """
 
     _tags = {
