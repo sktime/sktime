@@ -13,7 +13,10 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
+from sktime.forecasting.trend._util import (
+    _get_X_numpy_int_from_pandas,
+    _trend_time_origin,
+)
 
 
 class PolynomialTrendForecaster(BaseForecaster):
@@ -41,16 +44,17 @@ class PolynomialTrendForecaster(BaseForecaster):
     Default for ``regressor`` is linear regression = ``sklearn`` ``LinearRegression``,
     with default parameters. Default for ``degree`` is 1.
 
-    If time stamps are ``pd.DatetimeIndex``, fitted coefficients are in units
-    of days since start of 1970. If time stamps are ``pd.PeriodIndex``,
-    coefficients are in units of (full) periods since start of 1970.
+    Time is measured from the first training time point. If time stamps are
+    ``pd.DatetimeIndex``, fitted coefficients are in units of days since the
+    first training time point. If time stamps are ``pd.PeriodIndex``,
+    coefficients are in units of (full) periods since the first training time point.
 
     For the default regressor (``LinearRegression``), the least squares problem is
     solved on an affinely rescaled time axis, so that the polynomial features are
-    well-conditioned even when time stamps are large numbers (e.g., days since
-    1970) and ``degree`` is larger than 1. The fitted coefficients are then
-    converted back exactly, so ``regressor_`` and its coefficients are always
-    expressed in the original time units described above.
+    well-conditioned even for long series (e.g., many years of daily data) and
+    ``degree`` larger than 1. The fitted coefficients are then converted back
+    exactly, so ``regressor_`` and its coefficients are always expressed in the
+    time units described above.
 
     Parameters
     ----------
@@ -97,6 +101,7 @@ class PolynomialTrendForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["statistical"],
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
         "capability:exogenous": False,
@@ -121,6 +126,10 @@ class PolynomialTrendForecaster(BaseForecaster):
         super().__init__()
 
         self.set_tags(**{"capability:pred_int": prediction_intervals})
+
+    def _trend_origin(self):
+        """Origin stored at fit. Unfitted or pre-fix pickles stay on absolute time."""
+        return getattr(self, "_trend_origin_", 0.0)
 
     def _fit(self, y, X, fh):
         """Fit to training data.
@@ -154,7 +163,10 @@ class PolynomialTrendForecaster(BaseForecaster):
         # we regress index on series values
         # the sklearn X is obtained from the index of y
         # the sklearn y can be taken as the y seen here
-        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
+        # Time is shifted to the first training stamp. See _trend_time_origin.
+        X_absolute = _get_X_numpy_int_from_pandas(y.index)
+        self._trend_origin_ = _trend_time_origin(X_absolute)
+        X_sklearn = X_absolute - self._trend_origin_
 
         # time stamps can be large numbers, e.g., days since 1970, which makes
         # polynomial features of higher degree severely ill-conditioned.
@@ -282,7 +294,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         """
         # use relative fh as time index to predict
         fh = self.fh.to_absolute_index(self.cutoff)
-        X_sklearn = _get_X_numpy_int_from_pandas(fh)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh) - self._trend_origin()
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
         cols = self._get_varnames()
         y_pred = pd.DataFrame(y_pred_sklearn, index=fh, columns=cols)
@@ -299,8 +311,9 @@ class PolynomialTrendForecaster(BaseForecaster):
         # 1. get X (design matrix) and M = (X^t X)^-1
         # the term x_0^t M x_0 below is invariant under affine reparametrization
         # of time, so we compute it in rescaled time for numerical stability
-        t_train = _get_X_numpy_int_from_pandas(self.train_index_)
-        t_train = self._rescale_time(t_train).flatten()
+        t_train = _get_X_numpy_int_from_pandas(self.train_index_).flatten()
+        t_train = t_train - self._trend_origin()
+        t_train = self._rescale_time(t_train)
         X = np.polynomial.polynomial.polyvander(t_train, self.degree)
         if not self.with_intercept:
             X = X[:, 1:]  # remove the column of 1's that handles the intercept
@@ -312,7 +325,7 @@ class PolynomialTrendForecaster(BaseForecaster):
             fh = fh.to_absolute(cutoff=self.train_index_[-1])
 
         t_fh = fh.to_pandas()
-        fh_periods = _get_X_numpy_int_from_pandas(t_fh)
+        fh_periods = _get_X_numpy_int_from_pandas(t_fh) - self._trend_origin()
         t = self._rescale_time(np.array(fh_periods))
 
         # 3. calculate (half-) range of PI (1 + sqrt(x_0^t M x_0)) (up to scaling)
