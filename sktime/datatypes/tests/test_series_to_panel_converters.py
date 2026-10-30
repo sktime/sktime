@@ -191,3 +191,34 @@ def test_unsupported_type_raises_type_error(fun):
     """Test unsupported input types raise TypeError when the mtype is requested."""
     with pytest.raises(TypeError, match="obj must be of mtype"):
         fun(object(), return_to_mtype=True)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes")
+    or not _check_soft_dependencies("polars", severity="none"),
+    reason="Test only if sktime.datatypes changed, and if polars is present",
+)
+@pytest.mark.parametrize(
+    "scitype_from, scitype_to",
+    [
+        ("Series", "Panel"),
+        ("Panel", "Series"),
+        ("Series", "Hierarchical"),
+        ("Hierarchical", "Series"),
+        ("Panel", "Hierarchical"),
+        ("Hierarchical", "Panel"),
+    ],
+)
+def test_convert_to_scitype_polars_no_pandas(scitype_from, scitype_to, monkeypatch):
+    """Test polars conversions manipulate the index columns, without pandas."""
+    import polars as pl
+
+    X = _polars_fixture(scitype_from)
+
+    def _raise(*args, **kwargs):
+        raise AssertionError("polars frame was converted to pandas")
+
+    monkeypatch.setattr(pl.DataFrame, "to_pandas", _raise)
+
+    Xt = convert_to_scitype(X, to_scitype=scitype_to, from_scitype=scitype_from)
+    assert isinstance(Xt, pl.DataFrame)

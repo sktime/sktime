@@ -45,7 +45,10 @@ from itertools import product
 
 import numpy as np
 import pandas as pd
-from skbase.utils.dependencies import _check_estimator_deps
+from skbase.utils.dependencies import (
+    _check_estimator_deps,
+    _check_soft_dependencies,
+)
 
 from sktime.base import BaseEstimator
 from sktime.datatypes import (
@@ -201,6 +204,12 @@ class BaseTransformer(BaseEstimator):
         # "pd-long",
         "df-list",
         "pd_multiindex_hier",
+    ]
+    # polars mtypes, allowed only if polars is present
+    ALLOWED_INPUT_MTYPES_POLARS = [
+        "pl.DataFrame",
+        "polars_panel",
+        "polars_hierarchical",
     ]
 
     def __init__(self):
@@ -1113,7 +1122,9 @@ class BaseTransformer(BaseEstimator):
         X_inner_scitype = mtype_to_scitype(X_inner_mtype, return_unique=True)
         y_inner_scitype = mtype_to_scitype(y_inner_mtype, return_unique=True)
 
-        ALLOWED_MTYPES = self.ALLOWED_INPUT_MTYPES
+        ALLOWED_MTYPES = list(self.ALLOWED_INPUT_MTYPES)
+        if _check_soft_dependencies("polars", severity="none"):
+            ALLOWED_MTYPES += self.ALLOWED_INPUT_MTYPES_POLARS
 
         # checking X
         X_metadata_required = ["is_univariate", "feature_kind"]
@@ -1481,12 +1492,16 @@ class BaseTransformer(BaseEstimator):
                 # we have an index with only zeroes, and should be reset to RangeIndex
                 else:
                     Xt = Xt.reset_index(drop=True)
-            return convert_to(
+            Xt = convert_to(
                 Xt,
                 to_type="pd_DataFrame_Table",
                 as_scitype="Table",
                 # no converter store since this is not a "1:1 back-conversion"
             )
+            # polars input results in polars output
+            if X_input_mtype in self.ALLOWED_INPUT_MTYPES_POLARS:
+                Xt = _table_to_polars(Xt)
+            return Xt
         # else output_scitype is "Panel" and no need for conversion
 
         return Xt
@@ -1686,3 +1701,17 @@ class BaseTransformer(BaseEstimator):
 
 # initialize dynamic docstrings
 BaseTransformer._init_dynamic_doc()
+
+
+def _table_to_polars(Xt):
+    """Convert pd_DataFrame_Table to polars_eager_table, keeping a non-default index.
+
+    The index is kept as ``__index__`` columns, unless it is the default 0, 1, ..., n-1.
+    """
+    from sktime.datatypes._adapter.polars import convert_pandas_to_polars
+
+    if Xt.index.equals(pd.RangeIndex(len(Xt))) and Xt.index.name is None:
+        import polars as pl
+
+        return pl.DataFrame(Xt)
+    return convert_pandas_to_polars(Xt)

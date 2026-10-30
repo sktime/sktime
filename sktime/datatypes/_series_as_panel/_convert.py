@@ -15,55 +15,11 @@ convert_Hierarchical_to_Panel(obj, store=None)
 
 __author__ = ["fkiraly"]
 
-import sys
-
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes import convert, convert_to, scitype
-
-# polars mtypes and their pandas counterparts, per scitype
-_POLARS_MTYPES = {
-    "Series": "pl.DataFrame",
-    "Panel": "polars_panel",
-    "Hierarchical": "polars_hierarchical",
-}
-_PANDAS_MTYPES = {
-    "Series": "pd.DataFrame",
-    "Panel": "pd-multiindex",
-    "Hierarchical": "pd_multiindex_hier",
-}
-
-
-def _is_polars_frame(obj):
-    """Check whether obj is a polars DataFrame, without importing polars."""
-    pl = sys.modules.get("polars")
-    return pl is not None and isinstance(obj, pl.DataFrame)
-
-
-def _convert_polars_via_pandas(obj, scitype_from, scitype_to, return_to_mtype=False):
-    """Convert polars obj between scitypes, via the pandas based conversion.
-
-    Converts obj to the pandas mtype of scitype_from, applies the pandas
-    conversion from scitype_from to scitype_to, and converts the result to the
-    polars mtype of scitype_to, so the polars container is preserved.
-    """
-    obj_pd = convert(
-        obj,
-        from_type=_POLARS_MTYPES[scitype_from],
-        to_type=_PANDAS_MTYPES[scitype_from],
-        as_scitype=scitype_from,
-    )
-    convert_fun = _CONVERTERS[(scitype_from, scitype_to)]
-    obj_conv, obj_conv_mtype = convert_fun(obj_pd, return_to_mtype=True)
-
-    to_mtype = _POLARS_MTYPES[scitype_to]
-    obj_pl = convert(
-        obj_conv, from_type=obj_conv_mtype, to_type=to_mtype, as_scitype=scitype_to
-    )
-    if return_to_mtype:
-        return obj_pl, to_mtype
-    return obj_pl
+from sktime.datatypes import convert_to, scitype
+from sktime.datatypes._series_as_panel._polars import convert_polars, is_polars_frame
 
 
 def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
@@ -91,10 +47,8 @@ def convert_Series_to_Panel(obj, store=None, return_to_mtype=False):
         this is done by possibly converting to pd.DataFrame, and adding a list nesting
     if obj was np.ndarray, returns a panel of mtype numpy3D, by adding one axis at end
     """
-    if _is_polars_frame(obj):
-        return _convert_polars_via_pandas(
-            obj, "Series", "Panel", return_to_mtype=return_to_mtype
-        )
+    if is_polars_frame(obj):
+        return convert_polars(obj, "Series", "Panel", return_to_mtype=return_to_mtype)
 
     obj_mtype = None
 
@@ -159,10 +113,8 @@ def convert_Panel_to_Series(obj, store=None, return_to_mtype=False):
     if obj df-list or pd-multiindex, returns a series of type pd.DataFrame
     if obj was numpy3D, returns a panel mtype np.ndarray
     """
-    if _is_polars_frame(obj):
-        return _convert_polars_via_pandas(
-            obj, "Panel", "Series", return_to_mtype=return_to_mtype
-        )
+    if is_polars_frame(obj):
+        return convert_polars(obj, "Panel", "Series", return_to_mtype=return_to_mtype)
 
     obj_mtype = None
 
@@ -222,8 +174,8 @@ def convert_Series_to_Hierarchical(obj, store=None, return_to_mtype=False):
     -------
     returns a data container of mtype pd_multiindex_hier
     """
-    if _is_polars_frame(obj):
-        return _convert_polars_via_pandas(
+    if is_polars_frame(obj):
+        return convert_polars(
             obj, "Series", "Hierarchical", return_to_mtype=return_to_mtype
         )
 
@@ -261,8 +213,8 @@ def convert_Hierarchical_to_Series(obj, store=None, return_to_mtype=False):
     -------
     returns a data container of mtype pd.DataFrame, of scitype Series
     """
-    if _is_polars_frame(obj):
-        return _convert_polars_via_pandas(
+    if is_polars_frame(obj):
+        return convert_polars(
             obj, "Hierarchical", "Series", return_to_mtype=return_to_mtype
         )
 
@@ -297,8 +249,8 @@ def convert_Panel_to_Hierarchical(obj, store=None, return_to_mtype=False):
     -------
     returns a data container of mtype pd_multiindex_hier
     """
-    if _is_polars_frame(obj):
-        return _convert_polars_via_pandas(
+    if is_polars_frame(obj):
+        return convert_polars(
             obj, "Panel", "Hierarchical", return_to_mtype=return_to_mtype
         )
 
@@ -335,8 +287,8 @@ def convert_Hierarchical_to_Panel(obj, store=None, return_to_mtype=False):
     -------
     returns a data container of mtype pd-multiindex, of scitype Panel
     """
-    if _is_polars_frame(obj):
-        return _convert_polars_via_pandas(
+    if is_polars_frame(obj):
+        return convert_polars(
             obj, "Hierarchical", "Panel", return_to_mtype=return_to_mtype
         )
 
@@ -350,16 +302,6 @@ def convert_Hierarchical_to_Panel(obj, store=None, return_to_mtype=False):
         return obj_df, "pd-multiindex"
     else:
         return obj_df
-
-
-_CONVERTERS = {
-    ("Series", "Panel"): convert_Series_to_Panel,
-    ("Panel", "Series"): convert_Panel_to_Series,
-    ("Series", "Hierarchical"): convert_Series_to_Hierarchical,
-    ("Hierarchical", "Series"): convert_Hierarchical_to_Series,
-    ("Panel", "Hierarchical"): convert_Panel_to_Hierarchical,
-    ("Hierarchical", "Panel"): convert_Hierarchical_to_Panel,
-}
 
 
 def convert_to_scitype(
