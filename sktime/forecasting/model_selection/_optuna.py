@@ -8,7 +8,11 @@ import pandas as pd
 from sklearn.model_selection import check_cv
 
 from sktime.exceptions import NotFittedError
-from sktime.forecasting.model_selection._base import BaseGridSearch, _fit_and_score
+from sktime.forecasting.model_selection._base import (
+    BaseGridSearch,
+    _clone_with_params,
+    _fit_and_score,
+)
 from sktime.utils.validation.forecasting import check_scoring
 from sktime.utils.warnings import warn
 
@@ -287,7 +291,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
-        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
+        self.best_forecaster_ = _clone_with_params(self.forecaster, self.best_params_)
 
         if self.refit:
             self.best_forecaster_.fit(y, X, fh)
@@ -301,7 +305,7 @@ class ForecastingOptunaSearchCV(BaseGridSearch):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
-            forecaster = self.forecaster.clone().set_params(**params)
+            forecaster = _clone_with_params(self.forecaster, params)
             if self.refit:
                 forecaster.fit(y, X, fh)
             self.n_best_forecasters_.append((rank, forecaster))
