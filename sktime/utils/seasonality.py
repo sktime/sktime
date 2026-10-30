@@ -116,7 +116,7 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     df, was_datetime = _make_period_index_df(df, freq)
 
     if isinstance(anchor.index, pd.DatetimeIndex):
-        aix = anchor.index.to_period(freq=freq)
+        aix = anchor.index.to_period(freq=_period_offset(freq))
     else:
         aix = anchor.index
     aix_int = aix.astype("int64")
@@ -159,8 +159,8 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
     df_pivot.index = pivot_ix
 
     if was_datetime:
-        df_pivot.index = df_pivot.index.to_timestamp(
-            freq=anchor.index.freq
+        df_pivot.index = _to_timestamp_like(
+            df_pivot.index, anchor.index.freq
         ).tz_localize(anchor.index.tz)
 
     df_pivot.columns = df_pivot.columns.droplevel(0)
@@ -171,7 +171,7 @@ def _pivot_sp(df, sp, anchor=None, freq=None, anchor_side="start"):
 def _make_period_index_df(df, freq):
     if isinstance(df.index, pd.DatetimeIndex):
         df = df.copy()
-        df.index = df.index.to_period(freq=freq)
+        df.index = df.index.to_period(freq=_period_offset(freq))
         was_datetime = True
     else:
         was_datetime = False
@@ -222,7 +222,7 @@ def _unpivot_sp(df, template=None):
 
     offset = df_melt[df_melt.columns[0]]
     if isinstance(df_melt.index, pd.DatetimeIndex):
-        a = df_melt.index.to_period(freq=freq)
+        a = df_melt.index.to_period(freq=_period_offset(freq))
         res = a + offset // period_len_int
         df_melt.index = res
         was_datetime = True
@@ -234,7 +234,9 @@ def _unpivot_sp(df, template=None):
     df_melt = df_melt.dropna()
 
     if was_datetime:
-        df_melt.index = df_melt.index.to_timestamp(template.index.freq).tz_localize(tz)
+        df_melt.index = _to_timestamp_like(
+            df_melt.index, template.index.freq
+        ).tz_localize(tz)
 
     if template is not None:
         if hasattr(template, "columns"):
@@ -243,3 +245,51 @@ def _unpivot_sp(df, template=None):
             df_melt.columns = [template.name]
 
     return df_melt
+
+
+def _period_offset(freq):
+    """Coerce start-of-period offset to the period compatible end-of-period offset.
+
+    Periods have no start-of-period variant, and ``pandas 3`` no longer accepts
+    start-of-period offsets such as ``MonthBegin`` in ``to_period``.
+    The offset returned describes the same periods, anchored at the period end,
+    e.g., ``YearBegin(month=7)`` is mapped to ``YearEnd(month=6)``.
+
+    Parameters
+    ----------
+    freq : pandas offset, str, or None
+        frequency to coerce
+
+    Returns
+    -------
+    pandas offset, if ``freq`` is a start-of-period offset, otherwise ``freq``
+    """
+    if isinstance(freq, pd.offsets.MonthBegin):
+        return pd.offsets.MonthEnd(freq.n)
+    if isinstance(freq, pd.offsets.QuarterBegin):
+        end_month = (freq.startingMonth - 2) % 12 + 1
+        return pd.offsets.QuarterEnd(freq.n, startingMonth=end_month)
+    if isinstance(freq, pd.offsets.YearBegin):
+        end_month = (freq.month - 2) % 12 + 1
+        return pd.offsets.YearEnd(freq.n, month=end_month)
+    return freq
+
+
+def _to_timestamp_like(period_index, freq):
+    """Convert ``PeriodIndex`` to timestamps, anchored as the offset ``freq``.
+
+    Parameters
+    ----------
+    period_index : pd.PeriodIndex
+        index to convert to ``pd.DatetimeIndex``
+    freq : pandas offset, str, or None
+        frequency of the ``pd.DatetimeIndex`` the periods were obtained from
+
+    Returns
+    -------
+    pd.DatetimeIndex, ``period_index`` converted to timestamps
+    """
+    starts = (pd.offsets.MonthBegin, pd.offsets.QuarterBegin, pd.offsets.YearBegin)
+    if isinstance(freq, starts):
+        return period_index.to_timestamp()
+    return period_index.to_timestamp(freq)
