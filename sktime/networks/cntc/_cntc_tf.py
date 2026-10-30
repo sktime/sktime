@@ -76,7 +76,6 @@ class CNTCNetwork(BaseDeepNetwork):
         ],
         "maintainers": ["James-Large", "Withington", "AurumnPegasus"],
         "python_dependencies": ["tensorflow"],
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -227,3 +226,37 @@ class CNTCNetwork(BaseDeepNetwork):
         mlp2 = keras.layers.Dropout(dropout_values[6])(mlp2)
         flat = keras.layers.Flatten()(mlp2)
         return input_layers, flat
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            Reserved values for classifiers:
+                "results_comparison" - used for identity testing in some classifiers
+                    should contain parameter settings comparable to "TSC bakeoff"
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        params1 = {}
+        params2 = {
+            "filter_sizes": (8, 4),
+            "kernel_sizes": (3, 2),
+            "lstm_size": 4,
+            "dense_size": 16,
+            "activation": "tanh",
+            "activation_attention": "softmax",
+            "dropout": 0.1,
+        }
+        return [params1, params2]
