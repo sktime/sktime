@@ -111,6 +111,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
@@ -327,6 +328,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
@@ -413,14 +415,15 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         names = [f[0] for f in self._forecasters]
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
-        y_pred = (
-            y_pred.T.groupby(level=1)
-            .agg(
-                lambda y, aggfunc, weights: _aggregate(y.T, aggfunc, weights),
-                self.aggfunc,
-                self.weights,
-            )
-            .T
+        # aggregate over forecasters, separately per variable (column level 1);
+        # loop instead of groupby.agg, which passes Series not DataFrames in pandas>=3.1
+        y_pred = pd.concat(
+            {
+                var: _aggregate(y_var.T, self.aggfunc, self.weights)
+                for var, y_var in y_pred.T.groupby(level=1)
+            },
+            axis=1,
+            names=[y_pred.columns.names[1]],
         )
         return y_pred
 
