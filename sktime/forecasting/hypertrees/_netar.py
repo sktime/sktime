@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.datetime import _to_offset_compat
 
 
 class HyperTreeNetARForecaster(BaseForecaster):
@@ -159,6 +160,10 @@ class HyperTreeNetARForecaster(BaseForecaster):
                 freq = pd.infer_freq(y.index)
             except ValueError:
                 freq = None
+        # ``PeriodIndex.freqstr`` reports period aliases such as "M" or "Y-DEC",
+        # which pandas 3 no longer accepts as offset aliases
+        if isinstance(freq, str):
+            freq = _to_offset_compat(freq).freqstr
         self._freq = freq or "MS"
         fcst_h = int(np.max(fh.to_relative(self.cutoff)._values))
         self._dates = pd.date_range(
