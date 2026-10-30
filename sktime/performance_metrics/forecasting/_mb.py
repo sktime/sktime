@@ -84,37 +84,36 @@ class MeanBias(BaseForecastingErrorMetric):
         "tests:skip_by_name": ["test_doctest_examples"],
     }
 
+  def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+      """Return the metric evaluated at each time point.
 
-def _evaluate_by_index(self, y_true, y_pred, **kwargs):
-    """Return the metric evaluated at each time point.
+      private _evaluate_by_index containing core logic, called from evaluate_by_index
 
-    private _evaluate_by_index containing core logic, called from evaluate_by_index
+      Parameters
+      ----------
+      y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+          Ground truth (correct) target values.
+          Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
-    Parameters
-    ----------
-    y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
-        Ground truth (correct) target values.
-        Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+      y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+          Predicted values to evaluate.
+          Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
-    y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
-        Predicted values to evaluate.
-        Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+      Returns
+      -------
+      loss : pd.Series or pd.DataFrame
+          Calculated metric, by time point (default=jackknife pseudo-values).
 
-    Returns
-    -------
-    loss : pd.Series or pd.DataFrame
-        Calculated metric, by time point (default=jackknife pseudo-values).
+          * pd.Series if self.multioutput="uniform_average" or array-like;
+            index is equal to index of y_true;
+            entry at index i is metric at time i, averaged over variables.
+          * pd.DataFrame if self.multioutput="raw_values";
+            index and columns equal to those of y_true;
+            i,j-th entry is metric at time i, at variable j.
+      """
+      multioutput = self.multioutput
 
-        * pd.Series if self.multioutput="uniform_average" or array-like;
-          index is equal to index of y_true;
-          entry at index i is metric at time i, averaged over variables.
-        * pd.DataFrame if self.multioutput="raw_values";
-          index and columns equal to those of y_true;
-          i,j-th entry is metric at time i, at variable j.
-    """
-    multioutput = self.multioutput
+      raw_values = y_pred - y_true
+      raw_values = self._get_weighted_df(raw_values, **kwargs)
 
-    raw_values = y_pred - y_true
-    raw_values = self._get_weighted_df(raw_values, **kwargs)
-
-    return self._handle_multioutput(raw_values, multioutput)
+      return self._handle_multioutput(raw_values, multioutput)
