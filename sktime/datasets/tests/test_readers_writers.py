@@ -21,9 +21,11 @@ from pandas._testing import assert_frame_equal
 import sktime
 from sktime.datasets import (
     generate_example_long_table,
+    load_from_arff_to_dataframe,
     load_from_long_to_dataframe,
     load_from_tsfile,
     load_from_tsfile_to_dataframe,
+    load_from_ucr_tsv_to_dataframe,
     load_tsf_to_dataframe,
     write_dataframe_to_tsfile,
     write_panel_to_tsfile,
@@ -978,6 +980,167 @@ def test_load_from_long_incorrect_format(tmpdir):
         dataframe_path = str(tmpdir.join("data.csv"))
         dataframe.to_csv(dataframe_path, index=False)
         load_from_long_to_dataframe(dataframe_path)
+
+
+_UNIVARIATE_ARFF = """% univariate test file
+@relation UnivariateTest
+@attribute t0 numeric
+@attribute t1 numeric
+@attribute t2 numeric
+@attribute target {a,b}
+
+@data
+1.0,2.0,3.0,a
+4.0,?,6.0,b
+7.0,8.0,9.0,a
+"""
+
+# in multivariate arff files, each case is one quoted string, with dimensions
+# separated by a literal backslash-n
+_MULTIVARIATE_ARFF = """@relation MultivariateTest
+@attribute series relational
+@attribute t0 numeric
+@attribute t1 numeric
+@end series
+@attribute target {a,b}
+
+@data
+'1.0,2.0\\n3.0,4.0',a
+'5.0,6.0\\n7.0,8.0',b
+"""
+
+
+def test_load_from_arff_to_dataframe_univariate(tmpdir):
+    """Test load_from_arff_to_dataframe on a univariate arff file."""
+    path = str(tmpdir.join("univariate.arff"))
+    with open(path, "w") as f:
+        f.write(_UNIVARIATE_ARFF)
+
+    X, y = load_from_arff_to_dataframe(path)
+
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.shape == (3, 1)
+    assert list(X.columns) == ["dim_0"]
+    assert all(isinstance(X.iloc[i, 0], pd.Series) for i in range(3))
+    assert X.iloc[0, 0].tolist() == [1.0, 2.0, 3.0]
+    assert X.iloc[2, 0].tolist() == [7.0, 8.0, 9.0]
+    np.testing.assert_array_equal(y, ["a", "b", "a"])
+    assert check_is_mtype(X, "nested_univ", return_metadata=False)
+
+    # missing values ("?") are replaced by NaN by default
+    assert X.iloc[1, 0].iloc[0] == 4.0
+    assert np.isnan(X.iloc[1, 0].iloc[1])
+
+
+def test_load_from_arff_to_dataframe_without_separate_y(tmpdir):
+    """Test load_from_arff_to_dataframe with return_separate_X_and_y=False."""
+    path = str(tmpdir.join("univariate.arff"))
+    with open(path, "w") as f:
+        f.write(_UNIVARIATE_ARFF)
+
+    X = load_from_arff_to_dataframe(path, return_separate_X_and_y=False)
+
+    assert isinstance(X, pd.DataFrame)
+    assert list(X.columns) == ["dim_0", "class_vals"]
+    assert X["class_vals"].tolist() == ["a", "b", "a"]
+
+
+def test_load_from_arff_to_dataframe_no_class_labels(tmpdir):
+    """Test load_from_arff_to_dataframe with has_class_labels=False."""
+    path = str(tmpdir.join("no_labels.arff"))
+    with open(path, "w") as f:
+        f.write(
+            "@relation NoLabels\n"
+            "@attribute t0 numeric\n"
+            "@attribute t1 numeric\n"
+            "@data\n"
+            "1.0,2.0\n"
+            "3.0,4.0\n"
+        )
+
+    # only X is returned, even though return_separate_X_and_y defaults to True
+    X = load_from_arff_to_dataframe(path, has_class_labels=False)
+
+    assert isinstance(X, pd.DataFrame)
+    assert X.shape == (2, 1)
+    assert X.iloc[0, 0].tolist() == [1.0, 2.0]
+    assert X.iloc[1, 0].tolist() == [3.0, 4.0]
+
+
+def test_load_from_arff_to_dataframe_multivariate(tmpdir):
+    """Test load_from_arff_to_dataframe on a multivariate arff file."""
+    path = str(tmpdir.join("multivariate.arff"))
+    with open(path, "w") as f:
+        f.write(_MULTIVARIATE_ARFF)
+
+    X, y = load_from_arff_to_dataframe(path)
+
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.shape == (2, 2)
+    assert list(X.columns) == ["dim_0", "dim_1"]
+    assert X.iloc[0, 0].tolist() == [1.0, 2.0]
+    assert X.iloc[0, 1].tolist() == [3.0, 4.0]
+    assert X.iloc[1, 0].tolist() == [5.0, 6.0]
+    assert X.iloc[1, 1].tolist() == [7.0, 8.0]
+    np.testing.assert_array_equal(y, ["a", "b"])
+    assert check_is_mtype(X, "nested_univ", return_metadata=False)
+
+
+def test_load_from_arff_to_dataframe_custom_missing_value(tmpdir):
+    """Test load_from_arff_to_dataframe with replace_missing_vals_with."""
+    path = str(tmpdir.join("univariate.arff"))
+    with open(path, "w") as f:
+        f.write(_UNIVARIATE_ARFF)
+
+    X, _ = load_from_arff_to_dataframe(path, replace_missing_vals_with="0.0")
+
+    assert X.iloc[1, 0].tolist() == [4.0, 0.0, 6.0]
+
+
+def test_load_from_ucr_tsv_to_dataframe(tmpdir):
+    """Test load_from_ucr_tsv_to_dataframe on a small tsv file."""
+    path = str(tmpdir.join("data.tsv"))
+    with open(path, "w") as f:
+        # UCR format: first column is the class label, the rest are values
+        f.write("1\t0.5\t0.6\t0.7\n2\t1.5\t1.6\t1.7\n1\t2.5\t2.6\t2.7\n")
+
+    X, y = load_from_ucr_tsv_to_dataframe(path)
+
+    assert isinstance(X, pd.DataFrame) and isinstance(y, np.ndarray)
+    assert X.shape == (3, 1)
+    assert list(X.columns) == ["dim_0"]
+    assert X.iloc[1, 0].tolist() == [1.5, 1.6, 1.7]
+    # the series index starts at 0 after the label column is removed
+    assert X.iloc[1, 0].index.tolist() == [0, 1, 2]
+    np.testing.assert_array_equal(y, [1, 2, 1])
+    assert check_is_mtype(X, "nested_univ", return_metadata=False)
+
+    # without separate y, labels are added as a "class_val" column
+    X = load_from_ucr_tsv_to_dataframe(path, return_separate_X_and_y=False)
+    assert list(X.columns) == ["dim_0", "class_val"]
+    assert X["class_val"].tolist() == [1, 2, 1]
+
+    # the ".tsv" extension is optional
+    X, _ = load_from_ucr_tsv_to_dataframe(path[: -len(".tsv")])
+    assert X.shape == (3, 1)
+
+
+def test_load_from_ucr_tsv_to_dataframe_matches_tsfile():
+    """Test that the ArrowHead tsv file loads the same data as the ts file."""
+    X_tsv, y_tsv = load_from_ucr_tsv_to_dataframe(
+        MODULE + "/data/ArrowHead/ArrowHead_TRAIN.tsv"
+    )
+    X_ts, y_ts = load_from_tsfile_to_dataframe(
+        MODULE + "/data/ArrowHead/ArrowHead_TRAIN.ts"
+    )
+
+    assert X_tsv.shape == X_ts.shape == (36, 1)
+    for i in range(len(X_ts)):
+        np.testing.assert_array_almost_equal(
+            X_tsv.iloc[i, 0].values, X_ts.iloc[i, 0].values
+        )
+    # tsv labels are parsed as integers, ts labels as strings
+    np.testing.assert_array_equal(y_tsv.astype(str), y_ts)
 
 
 @pytest.mark.parametrize(
