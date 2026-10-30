@@ -26,5 +26,6 @@ def test_contracted_drcif():
     )
     drcif.fit(X_train, y_train)
 
-    # fails stochastically, probably not a correct expectation, commented out, see #3206
-    # assert len(drcif.estimators_) > 1
+    # the contract may expire after the first estimator is built, so only check
+    # that at least one was fitted, see #3206
+    assert len(drcif.estimators_) > 0
