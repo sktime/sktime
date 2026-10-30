@@ -131,6 +131,52 @@ class _HeterogenousMetaEstimator:
         return out
 
     def _set_params(self, attr, **params):
+        params = self._set_steps_and_replacements(attr, params)
+        # 3. Step parameters and other initialisation arguments
+        super().set_params(**params)
+        return self
+
+    def _set_params_at(self, state, params):
+        """Set parameters, retaining state up to ``state``, for composites.
+
+        State-aware variant of ``set_params``, see ``_PretrainMixin._set_params_at``.
+        Handles steps and step replacement as ``set_params`` does, then passes the
+        remaining parameters to the state-aware ``_set_params_at`` of the parent
+        class. If the parent class has no such method, behaves like ``set_params``.
+
+        Parameters
+        ----------
+        state : str, "pretrained" or "new"
+            Upper bound on the retained state tier.
+        params : dict
+            Parameters as in ``set_params``, passed as an explicit dict.
+
+        Returns
+        -------
+        self : reference to self, with parameters set.
+        """
+        from sktime.base._pretrain._state_at import _check_target_state
+
+        _check_target_state(state)
+        parent = super()
+        if not hasattr(parent, "_set_params_at"):
+            return self.set_params(**params)
+        params = self._set_steps_and_replacements(self._steps_attr, params)
+        return parent._set_params_at(state, params)
+
+    def _set_steps_and_replacements(self, attr, params):
+        """Set all steps and replace single steps by name, as in ``set_params``.
+
+        Parameters
+        ----------
+        attr : str, name of the attribute holding the steps
+        params : dict, parameters as passed to ``set_params``
+
+        Returns
+        -------
+        remaining : dict, ``params`` without the entries applied here
+        """
+        params = dict(params)
         # Ensure strict ordering of parameter setting:
         # 1. All steps
         if attr in params:
@@ -143,9 +189,7 @@ class _HeterogenousMetaEstimator:
         for name in list(params.keys()):
             if "__" not in name and name in names:
                 self._replace_estimator(attr, name, params.pop(name))
-        # 3. Step parameters and other initialisation arguments
-        super().set_params(**params)
-        return self
+        return params
 
     def _replace_estimator(self, attr, name, new_val):
         # assumes `name` is a valid estimator name

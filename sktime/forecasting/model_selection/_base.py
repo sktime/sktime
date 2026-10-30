@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import check_cv
 
+from sktime.base._pretrain import _clone_at, _set_params_at
 from sktime.datatypes import mtype_to_scitype
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -247,7 +248,7 @@ class BaseGridSearch(_DelegatedForecaster):
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
-        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
+        self.best_forecaster_ = _clone_with_params(self.forecaster, self.best_params_)
 
         # Refit model with best parameters.
         if self.refit:
@@ -268,7 +269,7 @@ class BaseGridSearch(_DelegatedForecaster):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
-            forecaster = self.forecaster.clone().set_params(**params)
+            forecaster = _clone_with_params(self.forecaster, params)
             # Refit model with best parameters.
             if self.refit:
                 forecaster.fit(y=y, X=X, fh=fh)
@@ -352,6 +353,26 @@ class BaseGridSearch(_DelegatedForecaster):
         return self
 
 
+def _clone_with_params(forecaster, params):
+    """Clone forecaster and set params, retaining pretrained state.
+
+    State-aware variant of ``forecaster.clone().set_params(**params)``, which
+    would discard pretrained state, since ``set_params`` resets the object.
+    For forecasters without pretrained state, the behaviour is identical.
+
+    Parameters
+    ----------
+    forecaster : sktime forecaster, or object with ``clone`` and ``set_params``
+    params : dict, parameters to set, as in ``set_params``
+
+    Returns
+    -------
+    candidate : clone of ``forecaster`` with ``params`` set
+    """
+    candidate = _clone_at(forecaster, "pretrained")
+    return _set_params_at(candidate, "pretrained", params)
+
+
 def _fit_and_score(params, meta):
     """Fit and score forecaster with given parameters.
 
@@ -362,8 +383,7 @@ def _fit_and_score(params, meta):
     scoring_name = meta.pop("scoring_name")
 
     # Set parameters.
-    forecaster = meta.pop("forecaster").clone()
-    forecaster.set_params(**params)
+    forecaster = _clone_with_params(meta.pop("forecaster"), params)
 
     # Evaluate.
     out = evaluate(forecaster, **meta)
