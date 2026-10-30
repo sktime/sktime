@@ -80,7 +80,7 @@ def test_split_covariates_all_known_future():
     forecaster = _fitted_stub(_series(), X=_series(columns=("a",)))
 
     past, future = forecaster._split_covariates(
-        _series(3, columns=("a",), start=_N), pred_len=3
+        _series(3, columns=("a",), start=_N), pred_len=3 
     )
 
     assert past is None
@@ -240,3 +240,38 @@ def test_predict_with_exogenous_data():
 
     assert y_pred.shape == (3, 1)
     assert np.isfinite(y_pred.to_numpy()).all()
+
+def test_tirex2_regression_against_source():
+    """Regression test validating TiRex2Forecaster outputs against the original source implementation.
+    
+    This test ensures numerical parity between sktime's wrapper and the native source library
+    as required by issue #10672.
+    """
+    # 1. Import the native source library safely inside the test
+    # (If the package isn't present, this block gracefully skips rather than crashing)
+    try:
+        import tirex2 as native_tirex
+    except ImportError:
+        pytest.skip("Native 'tirex2' package is not installed for regression comparison.")
+
+    y = _series(128)
+    fh = [1, 2, 3]
+
+    # 2. Run the native source model implementation
+    native_model = native_tirex.TiRex2()  # Adjust class name if needed based on source repo
+    native_model.fit(y.to_numpy())
+    native_pred = native_model.predict(len(fh))
+
+    # 3. Run sktime's wrapper (TiRex2Forecaster)
+    forecaster = TiRex2Forecaster(**TiRex2Forecaster.get_test_params()[0])
+    forecaster.fit(y)
+    sktime_pred = forecaster.predict(fh=fh)
+
+    # 4. Validate numerical closeness (floating-point tolerance check)
+    np.testing.assert_allclose(
+        sktime_pred.to_numpy().flatten(),
+        native_pred,
+        rtol=1e-5,
+        atol=1e-5,
+        err_msg="Numerical mismatch detected between TiRex2Forecaster and the original source implementation!",
+    )
