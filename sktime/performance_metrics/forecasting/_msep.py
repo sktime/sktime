@@ -180,8 +180,9 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         num_jk = num_mean * (1 + 1 / (n - 1)) - raw_values_mse / (n - 1)
         denom_jk = denom_mean * (1 + 1 / (n - 1)) - raw_values_p / (n - 1)
 
-        msep_jk = num_jk / denom_jk
-        msep = num_mean / denom_mean
+        # absolute value of the mean, consistent with _evaluate
+        msep_jk = num_jk / denom_jk.abs()
+        msep = num_mean / denom_mean.abs()
 
         if self.square_root:
             msep_jk = msep_jk.pow(0.5)
