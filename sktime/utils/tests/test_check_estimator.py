@@ -154,3 +154,16 @@ def test_parametrize_with_checks_objects(obj, test_name):
 def test_parametrize_with_checks_instances(foo, bar):
     """Test that parametrize_with_checks works as intended - instances, var names."""
     check_estimator(foo, verbose=False, raise_exceptions=True, tests_to_run=bar)
+
+
+def test_check_estimator_invalid_tests_to_run():
+    """Test that invalid tests_to_run names issue a warning."""
+    with pytest.warns(
+        UserWarning,
+        match="The following tests in tests_to_run were not found",
+    ):
+        check_estimator(
+            ExponentTransformer,
+            verbose=False,
+            tests_to_run="foo_bar",
+        )
