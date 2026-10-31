@@ -102,7 +102,6 @@ class BaggingForecaster(BaseForecaster):
         "capability:update": True,  # can estimator update its parameters with new data?
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -431,6 +430,19 @@ class BaggingForecaster(BaseForecaster):
         mbb = MovingBlockBootstrapTransformer(block_length=6, n_series=3)
         fcst = YfromX.create_test_instance()
         params = [{"bootstrap_transformer": mbb, "forecaster": fcst}]
+
+        # soft dependency free second parameter set
+        from sktime.forecasting.naive import NaiveForecaster
+
+        mbb2 = MovingBlockBootstrapTransformer(block_length=4, n_series=2)
+        params += [
+            {
+                "bootstrap_transformer": mbb2,
+                "forecaster": NaiveForecaster(strategy="mean"),
+                "sp": 4,
+                "random_state": 42,
+            }
+        ]
 
         # the default param set causes a statsmodels based estimator
         # to be created as bootstrap_transformer
