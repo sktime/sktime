@@ -94,7 +94,7 @@ def test_default_1D():
     X = scaler.fit_transform(X.reshape(-1, 1))
     model = STRAY()
     y_actual = model.fit_transform(X)
-    assert np.allclose(y_actual, y_expected)
+    assert np.allclose(y_actual.to_numpy().flatten(), y_expected)
 
 
 @pytest.mark.skipif(
@@ -145,7 +145,7 @@ def test_default_2D():
     X = scaler.fit_transform(X)
     model = STRAY()
     y_actual = model.fit_transform(X)
-    assert np.allclose(y_actual, y_expected)
+    assert np.allclose(y_actual.to_numpy().flatten(), y_expected)
 
 
 @pytest.mark.skipif(
