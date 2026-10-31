@@ -628,6 +628,16 @@ class _DirectReducer(_Reducer):
         if hasattr(Xt, "columns"):
             Xt.columns = Xt.columns.astype(str)
 
+        if self.transformers_ is not None:
+            # 构造滞后特征已去掉开头的窗口, 后续切片必须使用剩余行数。
+            n_timepoints = len(get_time_index(yt))
+            fh_rel = fh.to_relative(self.cutoff)
+            if n_timepoints < max(fh_rel):
+                raise ValueError(
+                    "The `window_length` and `fh` are incompatible "
+                    "with the length of `y`"
+                )
+
         # Iterate over forecasting horizon, fitting a separate estimator for each step.
         self.estimators_ = []
         for i in range(len(self.fh)):
@@ -635,9 +645,13 @@ class _DirectReducer(_Reducer):
             estimator = clone(self.estimator)
 
             if self.transformers_ is not None:
-                fh_rel = fh.to_relative(self.cutoff)
-                Xt_cut = _cut_df(Xt, n_timepoints - fh_rel[i] + 1, type="head")
+                n_samples = n_timepoints - fh_rel[i] + 1
+                if self.windows_identical:
+                    n_samples = n_timepoints - max(fh_rel) + 1
+                Xt_cut = _cut_df(Xt, n_samples, type="head")
                 yt_cut = _cut_df(yt, n_timepoints - fh_rel[i] + 1)
+                # 先按预测步数移动目标, 再统一窗口, 避免特征与目标跨步错配。
+                yt_cut = _cut_df(yt_cut, n_samples, type="head")
             elif self.windows_identical is True or (fh_rel[i] - 1) == 0:
                 Xt_cut = Xt
                 yt_cut = yt[:, i]
