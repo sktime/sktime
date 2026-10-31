@@ -715,3 +715,54 @@ def test_maep_evaluate_by_index_is_jackknife(y_true, y_pred):
 
     by_index = metric.evaluate_by_index(y_true, y_pred)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "metric_name",
+    [
+        "mean_absolute_scaled_error",
+        "median_absolute_scaled_error",
+        "mean_squared_scaled_error",
+        "median_squared_scaled_error",
+        "MeanAbsoluteScaledError",
+        "MedianAbsoluteScaledError",
+        "MeanSquaredScaledError",
+        "MedianSquaredScaledError",
+    ],
+)
+def test_scaled_metrics_multioutput_averages_per_column_scores(metric_name):
+    """Multioutput averaging of scaled metrics averages the per-column scores."""
+    from sktime.performance_metrics import forecasting
+
+    metric = getattr(forecasting, metric_name)
+    if isinstance(metric, type):
+        metric_cls = metric
+
+        def metric(y_true, y_pred, multioutput="uniform_average", **kwargs):
+            return metric_cls(multioutput=multioutput)(y_true, y_pred, **kwargs)
+
+    # columns on very different scales, so pooling them changes the result
+    y_train = pd.DataFrame(
+        {"a": [5.0, 0.5, 4, 6, 3, 5, 2], "b": [100.0, 300, 200, 400, 100, 300, 200]}
+    )
+    y_true = pd.DataFrame({"a": [3.0, -0.5, 2, 7, 2], "b": [200.0, 300, 100, 400, 300]})
+    y_pred = pd.DataFrame(
+        {"a": [2.5, 0.0, 2, 8, 1.25], "b": [210.0, 290, 130, 380, 300]}
+    )
+
+    per_column = np.array(
+        [metric(y_true[c], y_pred[c], y_train=y_train[c]) for c in y_true.columns]
+    )
+
+    raw = metric(y_true, y_pred, y_train=y_train, multioutput="raw_values")
+    assert np.allclose(raw, per_column)
+
+    uniform = metric(y_true, y_pred, y_train=y_train)
+    assert np.isclose(uniform, per_column.mean())
+
+    weighted = metric(y_true, y_pred, y_train=y_train, multioutput=[0.3, 0.7])
+    assert np.isclose(weighted, per_column @ [0.3, 0.7])
