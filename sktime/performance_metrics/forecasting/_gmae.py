@@ -7,10 +7,12 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
 import pandas as pd
 from scipy.stats import gmean
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
+from sktime.performance_metrics.forecasting._functions import EPS
 
 
 class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
@@ -154,8 +156,14 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
               if `multioutput="raw_values"``
               i-th entry is the, metric calculated for i-th variable
         """
-        abs_err_np = (y_true - y_pred).abs().values.flatten()
-        gmae = gmean(abs_err_np, axis=0, weights=sample_weight)
+        errors = y_true - y_pred
+        errors = errors.where(errors != 0.0, EPS)
+        raw_values = errors.abs()
+
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight).reshape(-1, 1)
+
+        gmae = gmean(raw_values, axis=0, weights=sample_weight)
         gmae = pd.Series(gmae, index=y_true.columns)
 
         return self._handle_multioutput(gmae, self.multioutput)
@@ -189,7 +197,9 @@ class GeometricMeanAbsoluteError(BaseForecastingErrorMetricFunc):
         """
         multioutput = self.multioutput
 
-        raw_values = (y_true - y_pred).abs()
+        errors = y_true - y_pred
+        errors = errors.where(errors != 0.0, EPS)
+        raw_values = errors.abs()
 
         n = raw_values.shape[0]
         gmae = gmean(raw_values, axis=0)
