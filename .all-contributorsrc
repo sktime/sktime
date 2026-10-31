@@ -4304,6 +4304,17 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "Viranshul-P",
+      "name": "Viranshul Panchal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/203832072?v=4",
+      "profile": "https://github.com/Viranshul-P",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
     }
   ]
 }
