@@ -1,3 +1,5 @@
+import math
+
 import pandas as pd
 import pytest
 
@@ -6,6 +8,7 @@ from sktime.benchmarking._storage_handlers import (
     CSVStorageHandler,
     JSONStorageHandler,
     # ParquetStorageHandler,
+    _literal_eval,
 )
 from sktime.benchmarking.benchmarks import BenchmarkingResults
 
@@ -162,3 +165,40 @@ def test_benchmarking_results_unsupported_extension(tmp_path):
     path.touch()
     with pytest.raises(ValueError, match="No storage handler found"):
         BenchmarkingResults(path=str(path))
+
+
+def test_literal_eval_pandas_scalars():
+    """Test that _literal_eval parses pandas scalars, nan, and plain literals."""
+    periods = _literal_eval("[Period('1951-01', 'M'), Period('1951-02', 'M')]")
+    assert periods == [pd.Period("1951-01", "M"), pd.Period("1951-02", "M")]
+
+    timestamps = _literal_eval(
+        "[Timestamp('2000-01-01 00:00:00'), "
+        "Timestamp('2000-01-02 00:00:00+0000', tz='UTC')]"
+    )
+    assert timestamps == [
+        pd.Timestamp("2000-01-01"),
+        pd.Timestamp("2000-01-02", tz="UTC"),
+    ]
+
+    data = _literal_eval("[[nan], [1.0], [-2]]")
+    assert math.isnan(data[0][0])
+    assert data[1:] == [[1.0], [-2]]
+
+    assert _literal_eval("['a', None, (1, 2.5)]") == ["a", None, (1, 2.5)]
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "__import__('os')",
+        "[__import__('os').getcwd()]",
+        "[Period(__import__('os'), 'M')]",
+        "[open('file')]",
+        "[inf]",
+    ],
+)
+def test_literal_eval_rejects_non_literals(value):
+    """Test that _literal_eval rejects calls and names that are not allowed."""
+    with pytest.raises(ValueError, match="malformed node or string"):
+        _literal_eval(value)
