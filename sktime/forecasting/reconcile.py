@@ -338,9 +338,8 @@ class ReconcilerForecaster(BaseForecaster):
             if _check_index_no_total(X):
                 X = self._add_totals(X)
 
-        self.forecaster_.update(y, X, update_params=update_params)
-
         if y.index.nlevels < 2 or not self._requires_residuals:
+            self.forecaster_.update(y, X, update_params=update_params)
             return self
 
         # update self.residuals_
@@ -349,6 +348,7 @@ class ReconcilerForecaster(BaseForecaster):
             y.index.get_level_values(-1).unique(), is_relative=False
         )
         update_residuals = y - self.forecaster_.predict(fh=fh_resid, X=X)
+        self.forecaster_.update(y, X, update_params=update_params)
         self.residuals_ = pd.concat([self.residuals_, update_residuals], axis=0)
         self.residuals_ = self.residuals_.sort_index()
 
