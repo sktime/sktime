@@ -100,13 +100,13 @@ class MedianSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> rmdsse(y_true, y_pred, y_train=y_train)
-    np.float64(0.1472819539849714)
+    np.float64(0.144452478731528)
     >>> rmdsse = MedianSquaredScaledError(multioutput='raw_values', square_root=True)
     >>> rmdsse(y_true, y_pred, y_train=y_train)
     array([0.08687445, 0.20203051])
     >>> rmdsse = MedianSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmdsse(y_true, y_pred, y_train=y_train)
-    np.float64(0.16914781383660782)
+    np.float64(0.16748369080309364)
     """
 
     _tags = {

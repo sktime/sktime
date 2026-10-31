@@ -4304,6 +4304,16 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "LukeTheoJohnson",
+      "name": "Luke Johnson",
+      "avatar_url": "https://avatars.githubusercontent.com/u/142949311?v=4",
+      "profile": "https://github.com/LukeTheoJohnson",
+      "contributions": [
+        "bug",
+        "code"
+      ]
     }
   ]
 }

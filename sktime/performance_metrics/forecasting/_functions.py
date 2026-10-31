@@ -71,6 +71,15 @@ def _get_kwarg(kwarg, metric_name="Metric", **kwargs):
     return kwarg_
 
 
+def _average_outputs(output_errors, multioutput):
+    """Average per-output errors according to ``multioutput``."""
+    if isinstance(multioutput, str):
+        if multioutput == "raw_values":
+            return output_errors
+        multioutput = None
+    return np.average(output_errors, weights=multioutput)
+
+
 def _handle_output(obj, multioutput):
     """Handle output of metric function."""
     if isinstance(multioutput, str) and multioutput == "raw_values":
@@ -426,13 +435,13 @@ def mean_absolute_scaled_error(
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train)  # doctest: +SKIP
-    np.float64(0.18181818181818182)
+    np.float64(0.19548872180451127)
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput='raw_values')  # doctest: +SKIP
     array([0.10526316, 0.28571429])
     >>> mean_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7])  # doctest: +SKIP
-    np.float64(0.21935483870967742)
+    np.float64(0.23157894736842102)
     """
     y_train = _get_kwarg("y_train", metric_name="mean_absolute_scaled_error", **kwargs)
 
@@ -457,13 +466,15 @@ def mean_absolute_scaled_error(
     y_pred_naive = y_train[:-sp]
 
     # mean absolute error of naive seasonal prediction
-    mae_naive = mean_absolute_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
+    mae_naive = mean_absolute_error(
+        y_train[sp:], y_pred_naive, multioutput="raw_values"
+    )
 
     mae_pred = mean_absolute_error(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput="raw_values"
     )
     loss = mae_pred / np.maximum(mae_naive, EPS)
-    return _handle_output(loss, multioutput)
+    return _handle_output(_average_outputs(loss, multioutput), multioutput)
 
 
 def median_absolute_scaled_error(
@@ -555,13 +566,13 @@ def median_absolute_scaled_error(
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train)  # doctest: +SKIP
-    np.float64(0.18181818181818182)
+    np.float64(0.19548872180451127)
     >>> median_absolute_scaled_error(y_true, y_pred, y_train=y_train, \
     multioutput='raw_values')  # doctest: +SKIP
     array([0.10526316, 0.28571429])
     >>> median_absolute_scaled_error( y_true, y_pred, y_train=y_train, \
     multioutput=[0.3, 0.7])  # doctest: +SKIP
-    np.float64(0.21935483870967742)
+    np.float64(0.23157894736842102)
     """
     y_train = _get_kwarg(
         "y_train", metric_name="median_absolute_scaled_error", **kwargs
@@ -588,14 +599,14 @@ def median_absolute_scaled_error(
 
     # mean absolute error of naive seasonal prediction
     mdae_naive = median_absolute_error(
-        y_train[sp:], y_pred_naive, multioutput=multioutput
+        y_train[sp:], y_pred_naive, multioutput="raw_values"
     )
 
     mdae_pred = median_absolute_error(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput="raw_values"
     )
     loss = mdae_pred / np.maximum(mdae_naive, EPS)
-    return _handle_output(loss, multioutput)
+    return _handle_output(_average_outputs(loss, multioutput), multioutput)
 
 
 def mean_squared_scaled_error(
@@ -694,7 +705,7 @@ def mean_squared_scaled_error(
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> mean_squared_scaled_error(y_true, y_pred, y_train=y_train,  square_root=True)  # doctest: +SKIP
-    np.float64(0.15679361328058636)
+    np.float64(0.1570924698644255)
     >>> mean_squared_scaled_error(
     ...     y_true, y_pred, y_train=y_train, multioutput='raw_values', square_root=True
     ... )  # doctest: +SKIP
@@ -702,7 +713,7 @@ def mean_squared_scaled_error(
     >>> mean_squared_scaled_error(
     ...     y_true, y_pred, y_train=y_train, multioutput=[0.3, 0.7], square_root=True
     ... )  # doctest: +SKIP
-    np.float64(0.17451891814894502)
+    np.float64(0.17506768548283214)
     """  # noqa: E501
     y_train = _get_kwarg("y_train", metric_name="mean_squared_scaled_error", **kwargs)
 
@@ -726,10 +737,10 @@ def mean_squared_scaled_error(
     y_pred_naive = y_train[:-sp]
 
     # mean squared error of naive seasonal prediction
-    mse_naive = mean_squared_error(y_train[sp:], y_pred_naive, multioutput=multioutput)
+    mse_naive = mean_squared_error(y_train[sp:], y_pred_naive, multioutput="raw_values")
 
     mse = mean_squared_error(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput="raw_values"
     )
 
     if square_root:
@@ -737,7 +748,7 @@ def mean_squared_scaled_error(
     else:
         loss = mse / np.maximum(mse_naive, EPS)
 
-    return _handle_output(loss, multioutput)
+    return _handle_output(_average_outputs(loss, multioutput), multioutput)
 
 
 def median_squared_scaled_error(
@@ -826,7 +837,7 @@ def median_squared_scaled_error(
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> median_squared_scaled_error(y_true, y_pred, y_train=y_train, square_root=True)  # doctest: +SKIP
-    np.float64(0.1472819539849714)
+    np.float64(0.144452478731528)
     >>> median_squared_scaled_error(
     ...     y_true, y_pred, y_train=y_train, multioutput='raw_values', square_root=True
     ... )  # doctest: +SKIP
@@ -834,7 +845,7 @@ def median_squared_scaled_error(
     >>> median_squared_scaled_error(
     ...     y_true, y_pred, y_train=y_train, multioutput=[0.3, 0.7], square_root=True
     ... )  # doctest: +SKIP
-    np.float64(0.16914781383660782)
+    np.float64(0.16748369080309364)
     """  # noqa: E501
     y_train = _get_kwarg("y_train", metric_name="median_squared_scaled_error", **kwargs)
 
@@ -859,11 +870,11 @@ def median_squared_scaled_error(
 
     # median squared error of naive seasonal prediction
     mdse_naive = median_squared_error(
-        y_train[sp:], y_pred_naive, multioutput=multioutput
+        y_train[sp:], y_pred_naive, multioutput="raw_values"
     )
 
     mdse = median_squared_error(
-        y_true, y_pred, horizon_weight=horizon_weight, multioutput=multioutput
+        y_true, y_pred, horizon_weight=horizon_weight, multioutput="raw_values"
     )
 
     if square_root:
@@ -871,7 +882,7 @@ def median_squared_scaled_error(
     else:
         loss = mdse / np.maximum(mdse_naive, EPS)
 
-    return _handle_output(loss, multioutput)
+    return _handle_output(_average_outputs(loss, multioutput), multioutput)
 
 
 def mean_absolute_error(
