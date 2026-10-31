@@ -183,6 +183,36 @@ def test_holiday_not_in_window():
     not run_test_for_class(HolidayFeatures),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+def test_transform_keeps_columns_from_fit():
+    """Holidays absent from a later index stay as zero columns from fit."""
+    calendar = {date(2024, 4, 1): "Easter Monday", date(2024, 12, 25): "Christmas"}
+    train = pd.DataFrame(
+        {"const": 1.0}, index=pd.date_range("2024-01-02", "2024-04-02", freq="D")
+    )
+    horizon = pd.DataFrame(
+        {"const": 1.0}, index=pd.date_range("2024-12-21", "2024-12-27", freq="D")
+    )
+    transformer = HolidayFeatures(calendar)
+    transformer.fit(train)
+    transformed = transformer.transform(horizon)
+
+    assert list(transformed.columns) == ["Easter Monday"]
+    assert int(transformed["Easter Monday"].sum()) == 0
+
+    categorical = HolidayFeatures(
+        calendar, return_dummies=True, return_categorical=True
+    )
+    categorical.fit(horizon)
+    seen_later = categorical.transform(train)
+    assert list(seen_later["holiday"].cat.categories) == ["Christmas", "no_holiday"]
+    assert seen_later.loc["2024-04-01", "holiday"] == "no_holiday"
+    assert "Easter Monday" not in seen_later.columns
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_period_index(calendar):
     X_period = pd.DataFrame(
         {"values": np.arange(1, 6)},
