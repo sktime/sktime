@@ -144,6 +144,7 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
         by_index=False,
         relative_to="y_true",
         eps=None,
+        sample_weight=None,
     ):
         self.symmetric = symmetric
         self.square_root = square_root
@@ -153,6 +154,7 @@ class MedianSquaredPercentageError(BaseForecastingErrorMetricFunc):
             multioutput=multioutput,
             multilevel=multilevel,
             by_index=by_index,
+            sample_weight=sample_weight,
         )
 
     @classmethod
