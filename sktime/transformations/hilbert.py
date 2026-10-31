@@ -114,6 +114,15 @@ class HilbertTransformer(BaseTransformer):
                 f"`N` ({self.N}) must be greater than or equal to signal length ({n})."
             )
 
+        # SciPy preserves the precision of each single-channel FFT. Combining
+        # mixed-precision columns into one ndarray would upcast some channels,
+        # changing the original output dtypes and numerical results.
+        if df.dtypes.nunique() > 1:
+            return pd.concat(
+                [self._transform(df.iloc[:, [i]]) for i in range(df.shape[1])],
+                axis=1,
+            )
+
         # Apply the FFT along the time axis across all channels in one call.
         # This avoids an independent SciPy transform for every input column.
         analytic = hilbert(df.to_numpy(), N=self.N, axis=0)[:n]
