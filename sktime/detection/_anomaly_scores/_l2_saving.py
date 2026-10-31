@@ -45,6 +45,16 @@ class L2Saving(BaseIntervalScorer):
     ----------
     .. [1] Fisch, A. T., Eckley, I. A., & Fearnhead, P. (2022). A linear
        time method for the detection of collective and point anomalies.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.detection._anomaly_scores._l2_saving import L2Saving
+    >>> X = pd.DataFrame({"v": [0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0]})
+    >>> cuts = np.array([[0, 8]])
+    >>> L2Saving().evaluate(X, cuts)
+    array([[28.125]])
     """
 
     _tags = {
