@@ -96,7 +96,7 @@ class SundialForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster = SundialForecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Running with explicit device, dtype, and sampling settings:
 
@@ -110,7 +110,7 @@ class SundialForecaster(BaseForecaster):
     ...     forward_kwargs={"num_samples": 20},
     ...     random_state=42,
     ... )
-    >>> y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.fit(y).predict(fh=3)  # doctest: +SKIP
 
     Passing Sundial and Transformers generation options through
     ``forward_kwargs``:
@@ -121,7 +121,7 @@ class SundialForecaster(BaseForecaster):
     >>> forecaster = SundialForecaster(  # doctest: +SKIP
     ...     forward_kwargs={"num_samples": 20, "revin": False},
     ... )
-    >>> y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.fit(y).predict(fh=3)  # doctest: +SKIP
 
     Quantile prediction from generated samples:
 
@@ -133,7 +133,7 @@ class SundialForecaster(BaseForecaster):
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict_quantiles(  # doctest: +SKIP
-    ...     fh=[1, 2, 3],
+    ...     fh=3,
     ...     alpha=[0.1, 0.5, 0.9],
     ... )
 
@@ -171,7 +171,7 @@ class SundialForecaster(BaseForecaster):
     ... )
     >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {

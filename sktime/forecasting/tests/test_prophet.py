@@ -32,7 +32,7 @@ def test_prophet_nonnative_index(indextype):
     X_train = X.iloc[:4]
     X_test = X.iloc[4:]
 
-    fh = [1, 2]
+    fh = 2
 
     f = Prophet()
     f.fit(y, X=X_train)
