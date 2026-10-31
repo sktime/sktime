@@ -160,13 +160,10 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
         new_centers = np.zeros((self.n_clusters, X.shape[1], X.shape[2]))
         for i in range(self.n_clusters):
             curr_indexes = np.where(assignment_indexes == i)[0]
-            distance_matrix = np.zeros((len(curr_indexes), len(curr_indexes)))
-            for j in range(len(curr_indexes)):
-                curr_j = curr_indexes[j]
-                for k in range(len(curr_indexes)):
-                    distance_matrix[j, k] = self._precomputed_pairwise[
-                        curr_j, curr_indexes[k]
-                    ]
+            # pairwise distances between the members of the cluster
+            distance_matrix = self._precomputed_pairwise[
+                np.ix_(curr_indexes, curr_indexes)
+            ]
             result = medoids(
                 X[curr_indexes], precomputed_pairwise_distance=distance_matrix
             )
