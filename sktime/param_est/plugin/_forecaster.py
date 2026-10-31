@@ -113,7 +113,6 @@ class PluginParamsForecaster(_DelegatedForecaster):
         "capability:multivariate": True,
         "y_inner_mtype": ["pd.DataFrame", "pd.Series"],
         "fit_is_empty": False,
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -299,7 +298,13 @@ class PluginParamsForecaster(_DelegatedForecaster):
             "param_est": FixedParams({"foo": 12}),
             "params": {"sp": "foo"},
         }
-        params = [params1]
+        # soft dependency free, explicit reference to "sp", present in both
+        params_fixed = {
+            "forecaster": NaiveForecaster(),
+            "param_est": FixedParams({"sp": 4}),
+            "params": "sp",
+        }
+        params = [params1, params_fixed]
 
         # uses a "real" param est that depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
