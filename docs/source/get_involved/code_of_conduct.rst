@@ -278,7 +278,6 @@ physical space.
 In situations where an individual community member acts unilaterally,
 they must inform Dr Franz Király as soon as possible, and report their
 actions for review within 24 hours.
-and report their actions for review within 24 hours.
 
 4.3 Code of Conduct Investigation Process
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
