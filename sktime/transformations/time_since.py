@@ -267,28 +267,12 @@ class TimeSince(BaseTransformer):
                     )
 
                 elif isinstance(time_index, pd.PeriodIndex):
-                    if pd.__version__ < "1.5.0":
-                        # Earlier versions of pandas returned incorrect result
-                        # when taking a difference between Periods when the frequency
-                        # is a multiple of a unit (e.g. "15T"). Solution is to
-                        # cast to lowest frequency when taking difference (e.g., "T").
-                        freq_ = _remove_digits_from_str(self.freq_)
-
-                        # Change freq of `start` and `time_index`.
-                        # Casting `start_` to PeriodIndex using pd.period_range
-                        # here so we can later cast it to an int using
-                        # `astype(int)` in _get_period_diff_as_int().
-                        start_period = pd.period_range(
-                            start=start_.to_timestamp(), periods=1, freq=freq_
-                        )
-                        time_index = time_index.to_timestamp().to_period(freq_)
-                    else:
-                        # Casting `start_` to PeriodIndex using pd.period_range
-                        # here so we can later cast it to an int using
-                        # `astype(int)` in _get_period_diff_as_int().
-                        start_period = pd.period_range(
-                            start=start_, periods=1, freq=self.freq_
-                        )
+                    # Casting `start_` to PeriodIndex using pd.period_range
+                    # here so we can later cast it to an int using
+                    # `astype(int)` in _get_period_diff_as_int().
+                    start_period = pd.period_range(
+                        start=start_, periods=1, freq=self.freq_
+                    )
 
                     # Compute time differences.
                     time_deltas = _get_period_diff_as_int(time_index, start_period)
