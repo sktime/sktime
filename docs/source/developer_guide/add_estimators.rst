@@ -285,8 +285,8 @@ For ``sktime`` native estimators with cython dependencies, the following steps s
     The tag ``tests:vm`` should be set to ``True`` to ensure testing
     in a virtual machine with all dependencies installed.
 
-For a full set of up-to-date instructions, see the readme of the ``sktime-cython`` package,
-link here: `sktime-cython <https://github.com/sktime/sktime-cython>`_.
+For instructions on adding an estimator to ``sktime-cython``, see the
+`sktime-cython extension guide <https://github.com/sktime/sktime-cython#adding-an-estimator>`_.
 
 Third party estimators with cython dependencies
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
