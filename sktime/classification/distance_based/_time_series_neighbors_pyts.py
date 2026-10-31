@@ -98,7 +98,7 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": ["pyts", "scikit-learn<1.8"],
+        "python_dependencies": ["pyts<0.14", "scikit-learn<1.8"],
         # todo 1.3.0: check whether the sklearn bound can be removed, see #11209
         # estimator type
         # --------------
