@@ -84,7 +84,7 @@ class TotoForecaster(BaseForecaster):
 
     With known-future exogenous variables:
 
-    >>> from sktime.forecasting.model_selection import temporal_train_test_split
+    >>> from sktime.split import temporal_train_test_split
     >>> X, y = load_longley()
     >>> y_train, _, X_train, X_test = temporal_train_test_split(y, X, test_size=3)
     >>> model = TotoForecaster()
