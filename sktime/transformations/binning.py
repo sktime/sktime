@@ -56,7 +56,7 @@ class TimeBinAggregate(BaseTransformer):
     ... )
     >>> t = TimeBinAggregate(bins=[-1, 2, 5, 10])
     >>> t.fit_transform(X)
-          0
+          a
     -1  2.0
      2  5.0
      5  8.5
@@ -66,7 +66,7 @@ class TimeBinAggregate(BaseTransformer):
 
     >>> t2 = TimeBinAggregate(bins=[-1, 2, 5, 10], return_index="range")
     >>> t2.fit_transform(X)
-         0
+         a
     0  2.0
     1  5.0
     2  8.5
@@ -75,7 +75,7 @@ class TimeBinAggregate(BaseTransformer):
 
     >>> t3 = TimeBinAggregate(bins=[-1, 2, 5, 10], return_index="bin_end")
     >>> t3.fit_transform(X)
-          0
+          a
     2   2.0
     5   5.0
     10  8.5
@@ -101,6 +101,7 @@ class TimeBinAggregate(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:specific": ["sktime.transformations.tests.test_binning"],
         "tests:skip_by_name": ["test_categorical_X_passes"],
         # fails for standard aggfuncs that are tested,
         # but works if categorical aggfunc would be used,
@@ -151,7 +152,7 @@ class TimeBinAggregate(BaseTransformer):
         """
         bins = self.bins
         idx_cut = pd.cut(X.index, bins=self._bins, include_lowest=True)
-        Xt = X.groupby(idx_cut, observed=False).apply(self._aggfunc)
+        Xt = X.groupby(idx_cut, observed=False).agg(self._aggfunc)
 
         if self.return_index == "range":
             Xt = Xt.reset_index(drop=True)
