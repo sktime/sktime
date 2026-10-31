@@ -852,3 +852,30 @@ def test_transformed_target_forecaster_predict_proba_dunder():
     quantiles = dist.quantile([0.1, 0.5, 0.9])
     assert not quantiles.isnull().any().any()
     assert quantiles.shape[0] == len(fh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [TransformedTargetForecaster, NaiveForecaster, PolynomialTrendForecaster]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_set_params_at_replaces_named_step():
+    """``_set_params_at`` must swap heterogeneous steps by name, like ``set_params``.
+
+    The base ``_set_params_at`` only ``setattr``s then ``_reset_at`` / ``reset``,
+    which rebuilds from constructor params and drops the step-name attribute.
+    Regression for the tuner path that uses ``_set_params_at`` on pipelines.
+    """
+    pipe = TransformedTargetForecaster(
+        [("t", ExponentTransformer()), ("f", NaiveForecaster())]
+    )
+
+    pipe._set_params_at("pretrained", {"f": PolynomialTrendForecaster()})
+
+    assert isinstance(dict(pipe.steps)["f"], PolynomialTrendForecaster)
+    assert isinstance(dict(pipe.steps)["t"], ExponentTransformer)
+
+    # nested step__param keys still route to the replacement estimator
+    pipe._set_params_at("pretrained", {"f__degree": 2})
+    assert dict(pipe.steps)["f"].degree == 2
