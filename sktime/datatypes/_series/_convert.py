@@ -34,6 +34,8 @@ import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
+from sktime.datatypes._base import BaseConverter
+
 ##############################################################
 # methods to convert one machine type to another machine type
 ##############################################################
@@ -52,6 +54,328 @@ MTYPE_LIST_SERIES = [
     "gluonts_PandasDataset_series",
 ]
 
+
+##############################################################
+# converter classes, one class per conversion
+##############################################################
+
+
+class SeriesIdentity(BaseConverter):
+    """All Series scitype conversions of an mtype to itself."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": None,
+        "mtype_to": None,
+        "multiple_conversions": True,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    @classmethod
+    def get_conversions(cls):
+        """Get all conversions.
+
+        Returns
+        -------
+        list of tuples (str, str)
+            List of all conversions in this class.
+        """
+        excluded = ["pl.LazyFrame"]
+        return [(tp, tp) for tp in MTYPE_LIST_SERIES if tp not in excluded]
+
+    def _convert(self, obj, store=None):
+        return convert_identity(obj, store=store)
+
+
+class SeriesPdSeriesToPdDataFrame(BaseConverter):
+    """Conversion: pd.Series -> pd.DataFrame, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.Series",
+        "mtype_to": "pd.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_UvS_to_MvS_as_Series(obj, store=store)
+
+
+class SeriesPdDataFrameToPdSeries(BaseConverter):
+    """Conversion: pd.DataFrame -> pd.Series, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.DataFrame",
+        "mtype_to": "pd.Series",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_MvS_to_UvS_as_Series(obj, store=store)
+
+
+class SeriesPdDataFrameToNumpy(BaseConverter):
+    """Conversion: pd.DataFrame -> np.ndarray, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.DataFrame",
+        "mtype_to": "np.ndarray",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_MvS_to_np_as_Series(obj, store=store)
+
+
+class SeriesPdSeriesToNumpy(BaseConverter):
+    """Conversion: pd.Series -> np.ndarray, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.Series",
+        "mtype_to": "np.ndarray",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_UvS_to_np_as_Series(obj, store=store)
+
+
+class SeriesNumpyToPdDataFrame(BaseConverter):
+    """Conversion: np.ndarray -> pd.DataFrame, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "np.ndarray",
+        "mtype_to": "pd.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_np_to_MvS_as_Series(obj, store=store)
+
+
+class SeriesNumpyToPdSeries(BaseConverter):
+    """Conversion: np.ndarray -> pd.Series, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "np.ndarray",
+        "mtype_to": "pd.Series",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": None,
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_np_to_UvS_as_Series(obj, store=store)
+
+
+class SeriesXrDataArrayToPdDataFrame(BaseConverter):
+    """Conversion: xr.DataArray -> pd.DataFrame, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "xr.DataArray",
+        "mtype_to": "pd.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "xarray",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_xrdataarray_to_Mvs_as_Series(obj, store=store)
+
+
+class SeriesPdDataFrameToXrDataArray(BaseConverter):
+    """Conversion: pd.DataFrame -> xr.DataArray, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.DataFrame",
+        "mtype_to": "xr.DataArray",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "xarray",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_Mvs_to_xrdatarray_as_Series(obj, store=store)
+
+
+class SeriesDaskToPdDataFrame(BaseConverter):
+    """Conversion: dask_series -> pd.DataFrame, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "dask_series",
+        "mtype_to": "pd.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "dask",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_dask_to_mvs_as_series(obj, store=store)
+
+
+class SeriesPdDataFrameToDask(BaseConverter):
+    """Conversion: pd.DataFrame -> dask_series, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.DataFrame",
+        "mtype_to": "dask_series",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "dask",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_mvs_to_dask_as_series(obj, store=store)
+
+
+class SeriesPolarsToPdSeries(BaseConverter):
+    """Conversion: pl.DataFrame -> pd.Series, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pl.DataFrame",
+        "mtype_to": "pd.Series",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "polars",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_polars_to_uvs_as_series(obj, store=store)
+
+
+class SeriesPolarsToPdDataFrame(BaseConverter):
+    """Conversion: pl.DataFrame -> pd.DataFrame, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pl.DataFrame",
+        "mtype_to": "pd.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "polars",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_polars_to_mvs_as_series(obj, store=store)
+
+
+class SeriesPdDataFrameToPolars(BaseConverter):
+    """Conversion: pd.DataFrame -> pl.DataFrame, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.DataFrame",
+        "mtype_to": "pl.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "polars",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_mvs_to_polars_as_series(obj, store=store)
+
+
+class SeriesPdSeriesToPolars(BaseConverter):
+    """Conversion: pd.Series -> pl.DataFrame, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.Series",
+        "mtype_to": "pl.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "polars",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_uvs_to_polars_as_series(obj, store=store)
+
+
+class SeriesPdDataFrameToGluontsListDataset(BaseConverter):
+    """Conversion: pd.DataFrame -> gluonts_ListDataset_series, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.DataFrame",
+        "mtype_to": "gluonts_ListDataset_series",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "gluonts",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_pandas_to_gluonts_listDataset(obj, store=store)
+
+
+class SeriesGluontsListDatasetToPdDataFrame(BaseConverter):
+    """Conversion: gluonts_ListDataset_series -> pd.DataFrame, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "gluonts_ListDataset_series",
+        "mtype_to": "pd.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "gluonts",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_gluonts_listDataset_to_pandas(obj, store=store)
+
+
+class SeriesPdDataFrameToGluontsPandasDataset(BaseConverter):
+    """Conversion: pd.DataFrame -> gluonts_PandasDataset_series, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "pd.DataFrame",
+        "mtype_to": "gluonts_PandasDataset_series",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "gluonts",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_pandas_to_gluonts_PandasDataset(obj, store=store)
+
+
+class SeriesGluontsPandasDatasetToPdDataFrame(BaseConverter):
+    """Conversion: gluonts_PandasDataset_series -> pd.DataFrame, of Series scitype."""
+
+    _tags = {
+        "object_type": "converter",
+        "mtype_from": "gluonts_PandasDataset_series",
+        "mtype_to": "pd.DataFrame",
+        "multiple_conversions": False,
+        "python_version": None,
+        "python_dependencies": "gluonts",
+    }
+
+    def _convert(self, obj, store=None):
+        return convert_gluonts_PandasDataset_to_pandas(obj, store=store)
+
+
 convert_dict = dict()
 
 
@@ -61,9 +385,12 @@ def convert_identity(obj, store=None):
     return obj
 
 
-# assign identity function to type conversion to self
+# assign identity converter to type conversion to self
 for tp in MTYPE_LIST_SERIES:
-    convert_dict[(tp, tp, "Series")] = convert_identity
+    if (tp, tp) in SeriesIdentity.get_conversions():
+        convert_dict[(tp, tp, "Series")] = SeriesIdentity(tp, tp)
+    else:
+        convert_dict[(tp, tp, "Series")] = convert_identity
 
 
 def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
@@ -87,7 +414,7 @@ def convert_UvS_to_MvS_as_Series(obj: pd.Series, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("pd.Series", "pd.DataFrame", "Series")] = convert_UvS_to_MvS_as_Series
+convert_dict[("pd.Series", "pd.DataFrame", "Series")] = SeriesPdSeriesToPdDataFrame()
 
 
 def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
@@ -113,7 +440,7 @@ def convert_MvS_to_UvS_as_Series(obj: pd.DataFrame, store=None) -> pd.Series:
     return y
 
 
-convert_dict[("pd.DataFrame", "pd.Series", "Series")] = convert_MvS_to_UvS_as_Series
+convert_dict[("pd.DataFrame", "pd.Series", "Series")] = SeriesPdDataFrameToPdSeries()
 
 
 def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
@@ -129,7 +456,7 @@ def convert_MvS_to_np_as_Series(obj: pd.DataFrame, store=None) -> np.ndarray:
     return obj.to_numpy(dtype="float")
 
 
-convert_dict[("pd.DataFrame", "np.ndarray", "Series")] = convert_MvS_to_np_as_Series
+convert_dict[("pd.DataFrame", "np.ndarray", "Series")] = SeriesPdDataFrameToNumpy()
 
 
 def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
@@ -145,7 +472,7 @@ def convert_UvS_to_np_as_Series(obj: pd.Series, store=None) -> np.ndarray:
     return pd.DataFrame(obj).to_numpy(dtype="float")
 
 
-convert_dict[("pd.Series", "np.ndarray", "Series")] = convert_UvS_to_np_as_Series
+convert_dict[("pd.Series", "np.ndarray", "Series")] = SeriesPdSeriesToNumpy()
 
 
 def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
@@ -174,7 +501,7 @@ def convert_np_to_MvS_as_Series(obj: np.ndarray, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = convert_np_to_MvS_as_Series
+convert_dict[("np.ndarray", "pd.DataFrame", "Series")] = SeriesNumpyToPdDataFrame()
 
 
 def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
@@ -200,7 +527,7 @@ def convert_np_to_UvS_as_Series(obj: np.ndarray, store=None) -> pd.Series:
     return res
 
 
-convert_dict[("np.ndarray", "pd.Series", "Series")] = convert_np_to_UvS_as_Series
+convert_dict[("np.ndarray", "pd.Series", "Series")] = SeriesNumpyToPdSeries()
 
 
 if _check_soft_dependencies("xarray", severity="none"):
@@ -227,7 +554,7 @@ if _check_soft_dependencies("xarray", severity="none"):
         return df
 
     convert_dict[("xr.DataArray", "pd.DataFrame", "Series")] = (
-        convert_xrdataarray_to_Mvs_as_Series
+        SeriesXrDataArrayToPdDataFrame()
     )
 
     def convert_Mvs_to_xrdatarray_as_Series(
@@ -246,7 +573,7 @@ if _check_soft_dependencies("xarray", severity="none"):
         return result
 
     convert_dict[("pd.DataFrame", "xr.DataArray", "Series")] = (
-        convert_Mvs_to_xrdatarray_as_Series
+        SeriesPdDataFrameToXrDataArray()
     )
 
     _extend_conversions(
@@ -263,16 +590,12 @@ if _check_soft_dependencies("dask", severity="none"):
     def convert_dask_to_mvs_as_series(obj, store=None):
         return convert_dask_to_pandas(obj)
 
-    convert_dict[("dask_series", "pd.DataFrame", "Series")] = (
-        convert_dask_to_mvs_as_series
-    )
+    convert_dict[("dask_series", "pd.DataFrame", "Series")] = SeriesDaskToPdDataFrame()
 
     def convert_mvs_to_dask_as_series(obj, store=None):
         return convert_pandas_to_dask(obj)
 
-    convert_dict[("pd.DataFrame", "dask_series", "Series")] = (
-        convert_mvs_to_dask_as_series
-    )
+    convert_dict[("pd.DataFrame", "dask_series", "Series")] = SeriesPdDataFrameToDask()
 
     _extend_conversions(
         "dask_series", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
@@ -289,30 +612,26 @@ if _check_soft_dependencies("polars", severity="none"):
         pd_df = convert_polars_to_pandas(obj)
         return convert_MvS_to_UvS_as_Series(pd_df, store=store)
 
-    convert_dict[("pl.DataFrame", "pd.Series", "Series")] = (
-        convert_polars_to_uvs_as_series
-    )
+    convert_dict[("pl.DataFrame", "pd.Series", "Series")] = SeriesPolarsToPdSeries()
 
     def convert_polars_to_mvs_as_series(obj, store=None):
         return convert_polars_to_pandas(obj)
 
     convert_dict[("pl.DataFrame", "pd.DataFrame", "Series")] = (
-        convert_polars_to_mvs_as_series
+        SeriesPolarsToPdDataFrame()
     )
 
     def convert_mvs_to_polars_as_series(obj, store=None):
         return convert_pandas_to_polars(obj)
 
     convert_dict[("pd.DataFrame", "pl.DataFrame", "Series")] = (
-        convert_mvs_to_polars_as_series
+        SeriesPdDataFrameToPolars()
     )
 
     def convert_uvs_to_polars_as_series(obj, store=None):
         return convert_pandas_to_polars(obj)
 
-    convert_dict[("pd.Series", "pl.DataFrame", "Series")] = (
-        convert_uvs_to_polars_as_series
-    )
+    convert_dict[("pd.Series", "pl.DataFrame", "Series")] = SeriesPdSeriesToPolars()
 
     def convert_polars_lazy_to_mvs_as_series(obj, store=None):
         return convert_polars_to_pandas(obj)
@@ -352,19 +671,19 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     # Storing functions in convert_dict
     convert_dict[("pd.DataFrame", "gluonts_ListDataset_series", "Series")] = (
-        convert_pandas_to_gluonts_listDataset
+        SeriesPdDataFrameToGluontsListDataset()
     )
 
     convert_dict[("gluonts_ListDataset_series", "pd.DataFrame", "Series")] = (
-        convert_gluonts_listDataset_to_pandas
+        SeriesGluontsListDatasetToPdDataFrame()
     )
 
     convert_dict[("pd.DataFrame", "gluonts_PandasDataset_series", "Series")] = (
-        convert_pandas_to_gluonts_PandasDataset
+        SeriesPdDataFrameToGluontsPandasDataset()
     )
 
     convert_dict[("gluonts_PandasDataset_series", "pd.DataFrame", "Series")] = (
-        convert_gluonts_PandasDataset_to_pandas
+        SeriesGluontsPandasDatasetToPdDataFrame()
     )
 
     # Extending conversions
