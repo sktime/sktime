@@ -88,6 +88,14 @@ class BaseDeepRegressorTorch(_PytorchDeepAdapter, BaseRegressor):
         Whether to output extra information.
     random_state : int or None, default = None
         Seed to ensure reproducibility.
+
+    Notes
+    -----
+    Pretraining: ``pretrain(X, y)`` trains a network on the data ``X``
+    with target values ``y``, further calls of ``pretrain`` continue training it,
+    i.e., fine-tune it. ``fit`` after ``pretrain`` does not train the network,
+    ``predict`` then uses the pretrained network. ``fit`` without ``pretrain``
+    trains a new network.
     """
 
     _tags = {
@@ -159,26 +167,27 @@ class BaseDeepRegressorTorch(_PytorchDeepAdapter, BaseRegressor):
 
         super().__init__()
 
-    def _fit(self, X, y):
-        self.network = self._build_network(X)
-
-        # instantiate loss function and optimizer
-        self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instantiate_optimizer()
-        # instantiate callbacks (learning rate schedulers)
-        self._schedulers = self._instantiate_schedulers()
-        # instantiate metrics
-        self._metrics_objects = self._instantiate_metrics(self.metrics)
-        # build dataloader
-        dataloader = self._build_dataloader(X, y)
-
-        self.network.train()
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
-
     @abc.abstractmethod
     def _build_network(self, X):
         pass
+
+    def _new_network(self, X, y):
+        """Build a new network, with a single output."""
+        return self._build_network(X)
+
+    def _encode_fit_y(self, y):
+        """Encode the targets passed to fit, they are used as they are."""
+        return y
+
+    def _encode_pretrain_y(self, y):
+        """Encode the targets passed to pretrain, they are used as they are."""
+        return y
+
+    def _bind_pretrained_network(self):
+        """Bind the pretrained network to the task, nothing to bind for regressors.
+
+        The pretrained network has a single output, which is the prediction.
+        """
 
     def _predict(self, X):
         """Predict target for sequences in X.
