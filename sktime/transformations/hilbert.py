@@ -123,30 +123,55 @@ class HilbertTransformer(BaseTransformer):
                 axis=1,
             )
 
-        # Apply the FFT along the time axis across all channels in one call.
-        # This avoids an independent SciPy transform for every input column.
-        analytic = hilbert(df.to_numpy(), N=self.N, axis=0)[:n]
+        # Bound temporary FFT and phase arrays for wide multivariate input.
+        # Small inputs still use one batched transform; wider ones are
+        # processed in chunks and written directly into the final output.
         output_type = self.output_type
+        channel_count = df.shape[1]
+        if channel_count == 0:
+            return pd.DataFrame(index=df.index)
 
-        if output_type == "quadrature":
-            values = analytic.imag
-        elif output_type == "envelope":
-            values = np.abs(analytic)
-        else:
-            phase = np.angle(analytic)
-            if self.unwrap_phase:
-                phase = np.unwrap(phase, axis=0)
+        fft_length = self.N if self.N is not None else n
+        batch_size = max(1, min(channel_count, 32_768 // max(fft_length, 1)))
+        feature_count = 3 if output_type == "all" else 1
+        values = None
 
-            if output_type == "phase":
-                values = phase
+        for start in range(0, channel_count, batch_size):
+            stop = min(start + batch_size, channel_count)
+            if start == 0 and stop == channel_count:
+                chunk = df.to_numpy()
             else:
-                frequency = np.gradient(phase, axis=0) * self.fs / (2 * np.pi)
-                if output_type == "frequency":
-                    values = frequency
+                chunk = df.iloc[:, start:stop].to_numpy()
+            analytic = hilbert(chunk, N=self.N, axis=0)[:n]
+
+            if output_type == "quadrature":
+                block = analytic.imag
+            elif output_type == "envelope":
+                block = np.abs(analytic)
+            else:
+                phase = np.angle(analytic)
+                if self.unwrap_phase:
+                    phase = np.unwrap(phase, axis=0)
+
+                if output_type == "phase":
+                    block = phase
                 else:
-                    envelope = np.abs(analytic)
-                    stacked = np.stack((envelope, phase, frequency), axis=2)
-                    values = stacked.reshape(n, -1)
+                    frequency = np.gradient(phase, axis=0) * self.fs / (2 * np.pi)
+                    if output_type == "frequency":
+                        block = frequency
+                    else:
+                        envelope = np.abs(analytic)
+                        stacked = np.stack((envelope, phase, frequency), axis=2)
+                        block = stacked.reshape(n, -1)
+
+            if start == 0 and stop == channel_count:
+                values = block
+            else:
+                if values is None:
+                    values = np.empty(
+                        (n, channel_count * feature_count), dtype=block.dtype
+                    )
+                values[:, start * feature_count : stop * feature_count] = block
 
         if output_type == "all":
             columns = [
