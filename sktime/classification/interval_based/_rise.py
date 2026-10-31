@@ -188,7 +188,6 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         # test skip flags
         # ---------------
         "tests:skip_all": True,  # mac failures, see #3103
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -404,12 +403,21 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         """
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}
-        else:
-            return {
-                "n_estimators": 2,
-                "acf_lag": 10,
-                "min_interval": 5,
-            }
+
+        params1 = {
+            "n_estimators": 2,
+            "acf_lag": 10,
+            "min_interval": 5,
+        }
+        params2 = {
+            "n_estimators": 3,
+            "acf_lag": 5,
+            "min_interval": 4,
+            "max_interval": 12,
+            "acf_min_values": 3,
+            "random_state": 1,
+        }
+        return [params1, params2]
 
 
 def ps(x, sign=1, n=None, pad="mean"):
