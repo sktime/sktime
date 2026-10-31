@@ -51,6 +51,9 @@ class AlignerLuckyDtw(BaseAligner):
         "capability:distance-matrix": True,  # does compute/return distance matrix?
         "capability:unequal_length": True,  # can align sequences of unequal length?
         "alignment_type": "full",  # does the aligner produce full or partial alignment
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, window=None):

@@ -8,30 +8,44 @@ Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
 the lower the better.
 """
 
-__author__ = ["mloning", "tch", "aiwalter", "RNKuhns"]
+__author__ = ["mloning", "tch", "RNKuhns", "fkiraly", "aiwalter", "markussagen"]
+
 __all__ = [
     "make_forecasting_scorer",
-    "MeanAbsoluteScaledError",
-    "MedianAbsoluteScaledError",
-    "MeanSquaredScaledError",
-    "MedianSquaredScaledError",
-    "MeanAbsoluteError",
-    "MeanSquaredError",
-    "MedianAbsoluteError",
-    "MedianSquaredError",
     "GeometricMeanAbsoluteError",
     "GeometricMeanSquaredError",
-    "MeanAbsolutePercentageError",
-    "MedianAbsolutePercentageError",
-    "MeanSquaredPercentageError",
-    "MedianSquaredPercentageError",
-    "MeanRelativeAbsoluteError",
-    "MedianRelativeAbsoluteError",
     "GeometricMeanRelativeAbsoluteError",
     "GeometricMeanRelativeSquaredError",
+    "RMSEnormalizedByIQR",
+    "KLDivergenceDoubleExponential",
+    "KLDivergenceNormal",
+    "KLDivergenceSingleExponential",
+    "MeanAbsoluteError",
+    "MeanAbsoluteErrorPercentage",
+    "MeanAbsolutePercentageError",
+    "MeanAbsolutePercentageErrorStabilized",
+    "MeanAbsoluteScaledError",
     "MeanAsymmetricError",
+    "MeanBias",
     "MeanLinexError",
+    "MeanRelativeAbsoluteError",
+    "MeanSquaredError",
+    "MeanSquaredErrorPercentage",
+    "MeanSquaredPercentageError",
+    "MeanSquaredScaledError",
+    "MedianAbsoluteError",
+    "MedianAbsolutePercentageError",
+    "MeanArctangentAbsolutePercentageError",
+    "mean_arctangent_absolute_percentage_error",
+    "MedianAbsoluteScaledError",
+    "MedianRelativeAbsoluteError",
+    "MedianSquaredError",
+    "MedianSquaredPercentageError",
+    "MedianSquaredScaledError",
+    "MSEnormalizedBySD",
+    "OverallWeightedAverage",
     "RelativeLoss",
+    "TheilU2",
     "mean_absolute_scaled_error",
     "median_absolute_scaled_error",
     "mean_squared_scaled_error",
@@ -53,32 +67,11 @@ __all__ = [
     "mean_asymmetric_error",
     "mean_linex_error",
     "relative_loss",
+    "MeanSquaredLogError",
+    "mean_squared_log_error",
 ]
 
-from sktime.performance_metrics.forecasting._classes import (
-    GeometricMeanAbsoluteError,
-    GeometricMeanRelativeAbsoluteError,
-    GeometricMeanRelativeSquaredError,
-    GeometricMeanSquaredError,
-    MeanAbsoluteError,
-    MeanAbsolutePercentageError,
-    MeanAbsoluteScaledError,
-    MeanAsymmetricError,
-    MeanLinexError,
-    MeanRelativeAbsoluteError,
-    MeanSquaredError,
-    MeanSquaredPercentageError,
-    MeanSquaredScaledError,
-    MedianAbsoluteError,
-    MedianAbsolutePercentageError,
-    MedianAbsoluteScaledError,
-    MedianRelativeAbsoluteError,
-    MedianSquaredError,
-    MedianSquaredPercentageError,
-    MedianSquaredScaledError,
-    RelativeLoss,
-    make_forecasting_scorer,
-)
+from sktime.performance_metrics.forecasting._base import make_forecasting_scorer
 from sktime.performance_metrics.forecasting._functions import (
     geometric_mean_absolute_error,
     geometric_mean_relative_absolute_error,
@@ -91,6 +84,7 @@ from sktime.performance_metrics.forecasting._functions import (
     mean_linex_error,
     mean_relative_absolute_error,
     mean_squared_error,
+    mean_squared_log_error,
     mean_squared_percentage_error,
     mean_squared_scaled_error,
     median_absolute_error,
@@ -102,3 +96,50 @@ from sktime.performance_metrics.forecasting._functions import (
     median_squared_scaled_error,
     relative_loss,
 )
+from sktime.performance_metrics.forecasting._gmae import GeometricMeanAbsoluteError
+from sktime.performance_metrics.forecasting._gmrelae import (
+    GeometricMeanRelativeAbsoluteError,
+)
+from sktime.performance_metrics.forecasting._gmrelse import (
+    GeometricMeanRelativeSquaredError,
+)
+from sktime.performance_metrics.forecasting._gmse import GeometricMeanSquaredError
+from sktime.performance_metrics.forecasting._iqre import RMSEnormalizedByIQR
+from sktime.performance_metrics.forecasting._klde1 import (
+    KLDivergenceSingleExponential,
+)
+from sktime.performance_metrics.forecasting._klde2 import (
+    KLDivergenceDoubleExponential,
+)
+from sktime.performance_metrics.forecasting._kln import KLDivergenceNormal
+from sktime.performance_metrics.forecasting._maape import (
+    MeanArctangentAbsolutePercentageError,
+    mean_arctangent_absolute_percentage_error,
+)
+from sktime.performance_metrics.forecasting._mae import MeanAbsoluteError
+from sktime.performance_metrics.forecasting._maep import MeanAbsoluteErrorPercentage
+from sktime.performance_metrics.forecasting._mape import MeanAbsolutePercentageError
+from sktime.performance_metrics.forecasting._mapes import (
+    MeanAbsolutePercentageErrorStabilized,
+)
+from sktime.performance_metrics.forecasting._mase import MeanAbsoluteScaledError
+from sktime.performance_metrics.forecasting._masyme import MeanAsymmetricError
+from sktime.performance_metrics.forecasting._mb import MeanBias
+from sktime.performance_metrics.forecasting._medae import MedianAbsoluteError
+from sktime.performance_metrics.forecasting._medape import MedianAbsolutePercentageError
+from sktime.performance_metrics.forecasting._medase import MedianAbsoluteScaledError
+from sktime.performance_metrics.forecasting._medrelae import MedianRelativeAbsoluteError
+from sktime.performance_metrics.forecasting._medse import MedianSquaredError
+from sktime.performance_metrics.forecasting._medspe import MedianSquaredPercentageError
+from sktime.performance_metrics.forecasting._medsse import MedianSquaredScaledError
+from sktime.performance_metrics.forecasting._mlinex import MeanLinexError
+from sktime.performance_metrics.forecasting._mrelae import MeanRelativeAbsoluteError
+from sktime.performance_metrics.forecasting._mse import MeanSquaredError
+from sktime.performance_metrics.forecasting._msep import MeanSquaredErrorPercentage
+from sktime.performance_metrics.forecasting._msle import MeanSquaredLogError
+from sktime.performance_metrics.forecasting._mspe import MeanSquaredPercentageError
+from sktime.performance_metrics.forecasting._msse import MeanSquaredScaledError
+from sktime.performance_metrics.forecasting._nmse import MSEnormalizedBySD
+from sktime.performance_metrics.forecasting._owa import OverallWeightedAverage
+from sktime.performance_metrics.forecasting._rell import RelativeLoss
+from sktime.performance_metrics.forecasting._theilu2 import TheilU2

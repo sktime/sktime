@@ -8,7 +8,7 @@ from pandas.api.types import is_numeric_dtype
 from sklearn.utils import check_array, check_consistent_length
 
 from sktime.datatypes import check_is_scitype, convert, convert_to
-from sktime.performance_metrics.forecasting._classes import BaseForecastingErrorMetric
+from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._coerce import _coerce_to_scalar
 
 # TODO: Rework tests now
@@ -23,16 +23,21 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines how to aggregate metric for multivariate (multioutput) data.
-        If array-like, values used as weights to average the errors.
-        If 'raw_values', returns a full set of errors in case of multioutput input.
-        If 'uniform_average', errors of all outputs are averaged with uniform weight.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
+
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
+
     score_average : bool, optional, default=True
         for interval and quantile losses only
-            if True, metric/loss is averaged by upper/lower and/or quantile
-            if False, metric/loss is not averaged by upper/lower and/or quantile
+
+        * if ``True``, metric/loss is averaged by upper/lower and/or quantile
+        * if ``False``, metric/loss is not averaged by upper/lower and/or quantile
     """
 
     _tags = {
@@ -165,8 +170,10 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
             out_df = pd.DataFrame(index_df.mean(axis=0)).T
             out_df.columns = index_df.columns
             return out_df
-        except RecursionError:
-            RecursionError("Must implement one of _evaluate or _evaluate_by_index")
+        except RecursionError as e:
+            raise RecursionError(
+                "Must implement one of _evaluate or _evaluate_by_index"
+            ) from e
 
     def evaluate_by_index(self, y_true, y_pred, multioutput=None, **kwargs):
         """Return the metric evaluated at each time point.
@@ -261,10 +268,10 @@ class _BaseProbaForecastingErrorMetric(BaseForecastingErrorMetric):
                     **kwargs,
                 )
             return out_series
-        except RecursionError:
+        except RecursionError as e:
             raise RecursionError(
                 "Must implement one of _evaluate or _evaluate_by_index"
-            )
+            ) from e
 
     def _check_consistent_input(self, y_true, y_pred, multioutput):
         check_consistent_length(y_true, y_pred)
@@ -455,15 +462,15 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     score_average : bool, optional, default = True
         specifies whether scores for each quantile should be averaged.
@@ -517,6 +524,7 @@ class PinballLoss(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_quantiles",
         "lower_is_better": True,
+        "tests:skip_by_name": ["test_doctest_examples"],
     }
 
     def __init__(self, multioutput="uniform_average", score_average=True, alpha=None):
@@ -611,15 +619,15 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     score_average : bool, optional, default = True
         specifies whether scores for each coverage value should be averaged.
@@ -637,6 +645,9 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": False,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -679,7 +690,9 @@ class EmpiricalCoverage(_BaseProbaForecastingErrorMetric):
 
         y_true_np = np.tile(y_true_np, no_scores)
 
-        truth_array = (y_true_np > lower).astype(int) * (y_true_np < upper).astype(int)
+        truth_array = (y_true_np >= lower).astype(int) * (y_true_np <= upper).astype(
+            int
+        )
 
         out_df = pd.DataFrame(
             truth_array, columns=pd.MultiIndex.from_product([vars, scores])
@@ -714,15 +727,15 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     score_average : bool, optional, default = True
         specifies whether scores for each coverage value should be averaged.
@@ -740,6 +753,9 @@ class IntervalWidth(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -824,15 +840,15 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     score_average : bool, optional, default = True
         specifies whether scores for each coverage value should be averaged.
@@ -850,6 +866,9 @@ class ConstraintViolation(_BaseProbaForecastingErrorMetric):
     _tags = {
         "scitype:y_pred": "pred_interval",
         "lower_is_better": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
@@ -1029,15 +1048,15 @@ class LogLoss(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multivariate : bool, optional, default=False
 
@@ -1046,6 +1065,12 @@ class LogLoss(_BaseDistrForecastingMetric):
         * if False, is univariate log-loss:
           the log-loss is computed per variable marginal, results in many scores per row
     """
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
@@ -1089,15 +1114,15 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multivariate : bool, optional, default=False
 
@@ -1106,6 +1131,12 @@ class SquaredDistrLoss(_BaseDistrForecastingMetric):
         * if False, is univariate squared loss:
           the score is computed per variable marginal, results in many scores per row
     """
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
@@ -1147,15 +1178,15 @@ class CRPS(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multivariate : bool, optional, default=False
 
@@ -1164,6 +1195,12 @@ class CRPS(_BaseDistrForecastingMetric):
         * if False, is univariate CRPS:
           the score is computed per variable marginal, results in many scores per row
     """  # noqa: E501
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate
@@ -1215,15 +1252,15 @@ class AUCalibration(_BaseDistrForecastingMetric):
 
     Parameters
     ----------
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
-        Defines whether and how to aggregate metric for across variables.
+    multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
+        Whether and how to aggregate metric for multivariate (multioutput) data.
 
-        * If 'uniform_average' (default), errors are mean-averaged across variables.
-        * If array-like, errors are weighted averaged across variables,
-          values as weights.
-        * If 'raw_values', does not average errors across variables,
-          columns are retained.
+        * If ``'uniform_average'`` (default),
+          errors of all outputs are averaged with uniform weight.
+        * If 1D array-like, errors are averaged across variables,
+          with values used as averaging weights (same order).
+        * If ``'raw_values'``,
+          does not average across variables (outputs), per-variable errors are returned.
 
     multivariate : bool, optional, default=False
 
@@ -1232,6 +1269,12 @@ class AUCalibration(_BaseDistrForecastingMetric):
         * if False, is univariate metric, per variable:
           the metric is computed per variable marginal, results in many scores per row
     """  # noqa: E501
+
+    _tags = {
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
+    }
 
     def __init__(self, multioutput="uniform_average", multivariate=False):
         self.multivariate = multivariate

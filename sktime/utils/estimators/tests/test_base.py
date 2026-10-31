@@ -12,7 +12,7 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.transformations.base import BaseTransformer
-from sktime.transformations.series.boxcox import BoxCoxTransformer
+from sktime.transformations.boxcox import BoxCoxTransformer
 from sktime.utils.estimators import make_mock_estimator
 from sktime.utils.estimators._base import _method_logger, _MockEstimatorMixin
 

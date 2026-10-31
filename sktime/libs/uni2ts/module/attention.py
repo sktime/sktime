@@ -15,7 +15,6 @@
 
 import math
 from collections.abc import Callable
-from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -48,7 +47,7 @@ def native_scaled_dot_product_attention(
     value,
     attn_mask=None,
     dropout_p: float = 0.0,
-    scale: Optional[float] = None,
+    scale: float | None = None,
 ):
     scale_factor = 1 / math.sqrt(query.size(-1)) if scale is None else scale
     attn_weight = query @ key.transpose(-2, -1) * scale_factor
@@ -74,10 +73,10 @@ class GroupedQueryAttention(nn.Module):
         norm_layer=nn.LayerNorm,
         softmax_scale=None,
         attn_dropout_p: float = 0.0,
-        var_attn_bias: Optional[Callable[[], AttentionBias]] = None,
-        time_attn_bias: Optional[Callable[[], AttentionBias]] = None,
-        var_qk_proj: Optional[Callable[[], QueryKeyProjection]] = None,
-        time_qk_proj: Optional[Callable[[], QueryKeyProjection]] = None,
+        var_attn_bias: Callable[[], AttentionBias] | None = None,
+        time_attn_bias: Callable[[], AttentionBias] | None = None,
+        var_qk_proj: Callable[[], QueryKeyProjection] | None = None,
+        time_qk_proj: Callable[[], QueryKeyProjection] | None = None,
     ):
         super().__init__()
         assert num_heads > 0 and dim % num_heads == 0

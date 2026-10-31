@@ -106,11 +106,18 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
-        "ignores-exogeneous-X": False,
+        # estimator type
+        # --------------
+        "category": ["composition"],
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     def __init__(
@@ -140,7 +147,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional, default=None
             Exogenous variables are ignored.
 
@@ -148,6 +155,8 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         forecasters = [x[1] for x in self.forecasters_]
 
         # get training data for meta-model
@@ -218,7 +227,7 @@ class AutoEnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred_df = pd.concat(self._predict_forecasters(fh, X), axis=1)
         # apply weights
         y_pred = y_pred_df.apply(lambda x: np.average(x, weights=self.weights_), axis=1)
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     @classmethod
@@ -319,13 +328,18 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": ["mloning", "GuzalBulatova", "aiwalter", "RNKuhns", "AnH0ang"],
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
-        "scitype:y": "both",
+        "capability:multivariate": True,
+        "capability:unequal_length": False,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, forecasters, n_jobs=None, aggfunc="mean", weights=None):
@@ -371,7 +385,7 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y : pd.DataFrame - Series, Panel, or Hierarchical mtype format.
             Target time series to which to fit the forecaster.
         fh : ForecastingHorizon, optional, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional, default=None, must be of same mtype as y
             Exogenous data to which to fit the forecaster.
 
@@ -379,6 +393,8 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         self._fit_forecasters(None, y, X, fh)
         return self
 
@@ -399,14 +415,15 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         names = [f[0] for f in self._forecasters]
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
-        y_pred = (
-            y_pred.T.groupby(level=1)
-            .agg(
-                lambda y, aggfunc, weights: _aggregate(y.T, aggfunc, weights),
-                self.aggfunc,
-                self.weights,
-            )
-            .T
+        # aggregate over forecasters, separately per variable (column level 1);
+        # loop instead of groupby.agg, which passes Series not DataFrames in pandas>=3.1
+        y_pred = pd.concat(
+            {
+                var: _aggregate(y_var.T, self.aggfunc, self.weights)
+                for var, y_var in y_pred.T.groupby(level=1)
+            },
+            axis=1,
+            names=[y_pred.columns.names[1]],
         )
         return y_pred
 

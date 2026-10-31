@@ -642,7 +642,7 @@ We have the following guidelines:
 Note that an algorithm need not be in sktime to be fully compatible with
 sktime interfaces. You can implement your favorite algorithm in a sktime
 compatible way in a third party codebase - open or closed - following
-the guide for implementing compatible estimators (see :ref:`developer_guide_add_estimators:`).
+the guide for implementing compatible estimators (see :ref:`developer_guide_add_estimators`).
 
 We are happy to list any compatible open source project under `related
 software <https://github.com/sktime/sktime/wiki/related-software>`__.
@@ -662,7 +662,7 @@ sktime is collaboratively developed by its diverse community of
 developers, users, educators, and other stakeholders. We value all kinds
 of contributions and are committed to recognising each of them fairly.
 
-We follow the `all-contributors <https://allcontributors.org>`__
+We follow the `all-contributors <https://github.com/all-contributors/all-contributors>`__
 specification to recognise all contributors, including those that don't
 contribute code. Please see `our list of all
 contributors <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`__.

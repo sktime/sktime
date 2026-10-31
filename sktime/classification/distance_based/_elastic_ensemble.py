@@ -25,7 +25,7 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datatypes._panel._convert import from_nested_to_3d_numpy
-from sktime.transformations.panel.summarize import DerivativeSlopeTransformer
+from sktime.transformations.summarize import DerivativeSlopeTransformer
 
 
 class ElasticEnsemble(BaseClassifier):
@@ -92,11 +92,17 @@ class ElasticEnsemble(BaseClassifier):
         # packaging info
         # --------------
         "authors": ["jasonlines", "TonyBagnall"],
+        "python_dependencies": ["scikit-learn<1.8"],
         # estimator type
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "distance",
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
     }
 
     def __init__(
@@ -135,6 +141,10 @@ class ElasticEnsemble(BaseClassifier):
         self.constituent_build_times = None
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Build an ensemble of 1-NN classifiers from the training set (X, y).
@@ -511,9 +521,21 @@ class ElasticEnsemble(BaseClassifier):
                 "distance_measures": ["dtw", "ddtw", "wdtw"],
             }
         else:
-            return {
+            params1 = {
                 "proportion_of_param_options": 0.01,
                 "proportion_train_for_test": 0.1,
                 "majority_vote": True,
                 "distance_measures": ["dtw"],
             }
+            # second set: a different elastic distance, probability-weighted
+            # voting rather than majority voting (the default aggregation),
+            # and a subsampled train set in the parameter search.
+            # proportions are kept small so both sets stay fast to fit.
+            params2 = {
+                "proportion_of_param_options": 0.01,
+                "proportion_train_in_param_finding": 0.5,
+                "proportion_train_for_test": 0.1,
+                "majority_vote": False,
+                "distance_measures": ["msm"],
+            }
+            return [params1, params2]

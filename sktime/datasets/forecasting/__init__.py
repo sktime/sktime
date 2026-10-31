@@ -1,21 +1,27 @@
 """Forecasting datasets."""
 
-from .airline import Airline
-from .hierarchical_sales_toydata import HierarchicalSalesToydata
-from .longley import Longley
-from .lynx import Lynx
-from .m5_competition import M5Dataset
-from .macroeconomic import Macroeconomic
-from .shampoo_sales import ShampooSales
-from .solar import Solar
-from .uschange import USChange
+from sktime.datasets.forecasting.airline import Airline
+from sktime.datasets.forecasting.hierarchical_sales_toydata import (
+    HierarchicalSalesToydata,
+)
+from sktime.datasets.forecasting.longley import Longley
+from sktime.datasets.forecasting.lynx import Lynx
+from sktime.datasets.forecasting.m5_competition import M5Dataset
+from sktime.datasets.forecasting.macroeconomic import Macroeconomic
+from sktime.datasets.forecasting.monash._forecasting_data import ForecastingData
+from sktime.datasets.forecasting.pbs import PBS
+from sktime.datasets.forecasting.shampoo_sales import ShampooSales
+from sktime.datasets.forecasting.solar import Solar
+from sktime.datasets.forecasting.uschange import USChange
 
 __all__ = [
     "Airline",
+    "ForecastingData",
     "HierarchicalSalesToydata",
     "Longley",
     "Lynx",
     "Macroeconomic",
+    "PBS",
     "ShampooSales",
     "Solar",
     "USChange",

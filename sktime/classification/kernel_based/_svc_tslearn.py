@@ -131,6 +131,8 @@ class TimeSeriesSVCTslearn(_TslearnAdapter, BaseClassifier):
         # --------------
         "capability:multivariate": True,
         "capability:unequal_length": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     # defines the name of the attribute containing the tslearn estimator

@@ -12,47 +12,40 @@ import copy
 import logging
 import warnings
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Any
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies, _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch
-    import torch.nn as nn
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+
+AutoConfig = _safe_import("transformers.AutoConfig")
+ACT2FN = _safe_import("transformers.models.t5.modeling_t5.ACT2FN")
+T5LayerNorm = _safe_import("transformers.models.t5.modeling_t5.T5LayerNorm")
+T5PreTrainedModel = _safe_import("transformers.models.t5.modeling_t5.T5PreTrainedModel")
+T5Stack = _safe_import("transformers.models.t5.modeling_t5.T5Stack")
+ModelOutput = _safe_import("transformers.utils.ModelOutput")
+
+logger = logging.getLogger(__file__)
+
+_TRANSFORMERS_V5 = _check_soft_dependencies("transformers>=5.0", severity="none")
+
+# in transformers v5, weights can be materialized lazily from a meta device
+# after the checkpoint has already been copied in, so `_init_weights` must use
+# the guarded init functions (which no-op on already-initialized parameters)
+# instead of unconditionally overwriting parameters with fresh random values
+if _TRANSFORMERS_V5:
+    init = _safe_import("transformers.initialization")
 else:
-
-    class torch:
-        """Dummy class if torch is unavailable."""
-
-        class Tensor:
-            """Dummy class if torch is unavailable."""
-
-    class nn:
-        """Dummy class if torch is unavailable."""
-
-        class Module:
-            """Dummy class if torch is unavailable."""
+    init = _safe_import("torch.nn.init")
 
 
-if _check_soft_dependencies("transformers", severity="none"):
-    from transformers import AutoConfig
-    from transformers.models.t5.modeling_t5 import (
-        ACT2FN,
-        T5LayerNorm,
-        T5PreTrainedModel,
-        T5Stack,
-    )
-    from transformers.utils import ModelOutput
-else:
-
-    class T5PreTrainedModel:
-        """Dummy class if transformers is unavailable."""
+# workaround condition for the case where ModelOutput cannot be imported
+# using the mock class does not work here
+if ModelOutput.__class__.__name__ == "CommonMagicMeta":
 
     class ModelOutput:
         """Dummy model output if transformers is unavailable."""
-
-
-logger = logging.getLogger(__file__)
 
 
 @dataclass
@@ -71,10 +64,10 @@ class ChronosBoltConfig:
 class ChronosBoltOutput(ModelOutput):
     """Description of the output of the model."""
 
-    loss: Optional[torch.Tensor] = None
-    quantile_preds: Optional[torch.Tensor] = None
-    attentions: Optional[torch.Tensor] = None
-    cross_attentions: Optional[torch.Tensor] = None
+    loss: Any | None = None
+    quantile_preds: Any | None = None
+    attentions: Any | None = None
+    cross_attentions: Any | None = None
 
 
 class Patch(nn.Module):
@@ -92,7 +85,7 @@ class Patch(nn.Module):
         self.patch_size = patch_size
         self.patch_stride = patch_stride
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x):
         """
         Convert input time series `x` into patches for further processing.
 
@@ -123,19 +116,19 @@ class Patch(nn.Module):
 
 
 class InstanceNorm(nn.Module):
-    """See, also, RevIN. Apply standardization along the last dimension."""
+    """See, also, RevIN.
 
-    def __init__(self, eps: float = 1e-5) -> None:
+    Apply standardization along the last dimension, optionally followed by an
+    ``arcsinh`` transform.
+    """
+
+    def __init__(self, eps: float = 1e-5, use_arcsinh: bool = False) -> None:
         super().__init__()
         self.eps = eps
+        self.use_arcsinh = use_arcsinh
 
-    def forward(
-        self,
-        x: torch.Tensor,
-        loc_scale: Optional[tuple[torch.Tensor, torch.Tensor]] = None,
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        """
-        Apply instance normalization to the input tensor.
+    def forward(self, x, loc_scale=None):
+        """Apply instance normalization to the input tensor.
 
         This method normalizes the input tensor by subtracting the mean and dividing by
         the standard deviation, computed separately for each instance of the batch.
@@ -150,22 +143,30 @@ class InstanceNorm(nn.Module):
             normalization. If not provided explicitly, the function calculates this
             from the data in ``x``.
         """
+        # normalization is always carried out in float32, and the result is cast
+        # back to the input's original dtype, to match the precision behaviour of
+        # the model when run in reduced-precision dtypes (e.g. bfloat16)
+        orig_dtype = x.dtype
+        x = x.to(torch.float32)
+
         if loc_scale is None:
             loc = torch.nan_to_num(torch.nanmean(x, dim=-1, keepdim=True), nan=0.0)
             scale = torch.nan_to_num(
-                torch.nanmean((x - loc).square(), dim=-1, keepdim=True).sqrt(), nan=1.0
+                (x - loc).square().nanmean(dim=-1, keepdim=True).sqrt(), nan=1.0
             )
-            scale = torch.where(scale == 0, torch.abs(loc) + self.eps, scale)
+            scale = torch.where(scale == 0, self.eps, scale)
         else:
             loc, scale = loc_scale
 
-        return (x - loc) / scale, (loc, scale)
+        scaled_x = (x - loc) / scale
 
-    def inverse(
-        self, x: torch.Tensor, loc_scale: tuple[torch.Tensor, torch.Tensor]
-    ) -> torch.Tensor:
-        """
-        Reverses the normalization process of the InstanceNorm during ``forward()``.
+        if self.use_arcsinh:
+            scaled_x = torch.arcsinh(scaled_x)
+
+        return scaled_x.to(orig_dtype), (loc, scale)
+
+    def inverse(self, x, loc_scale):
+        """Reverses the normalization process of the InstanceNorm during ``forward()``.
 
         Parameter
         ---------
@@ -179,15 +180,23 @@ class InstanceNorm(nn.Module):
         x: torch.tensor
             The original unnormalized tensor.
         """
+        orig_dtype = x.dtype
+        x = x.to(torch.float32)
         loc, scale = loc_scale
-        return x * scale + loc
+
+        if self.use_arcsinh:
+            x = torch.sinh(x)
+
+        x = x * scale + loc
+
+        return x.to(orig_dtype)
 
 
 class ResidualBlock(nn.Module):
     """
     A Residual Block for optional LayerNorm and Dropout.
 
-    This block implementes a standard residual connection that allows gradients to flow
+    This block implements a standard residual connection that allows gradients to flow
     through the layers more effectively. It consists of two layers with an activation
     function in between with an option dropout and layer normalization operation.
 
@@ -228,7 +237,7 @@ class ResidualBlock(nn.Module):
         if use_layer_norm:
             self.layer_norm = T5LayerNorm(out_dim)
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x):
         """
         Forward pass through the Residual Block.
 
@@ -270,13 +279,24 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         r"output_patch_embedding\.",
     ]
     _keys_to_ignore_on_load_unexpected = [r"lm_head.weight"]
-    _tied_weights_keys = ["encoder.embed_tokens.weight", "decoder.embed_tokens.weight"]
 
     def __init__(self, config: ChronosBoltConfig):
         assert hasattr(config, "chronos_config"), "Not a Chronos config file"
 
+        if _check_soft_dependencies("transformers>=5.0", severity="none"):
+            self._tied_weights_keys = {
+                "encoder.embed_tokens.weight": "shared.weight",
+                "decoder.embed_tokens.weight": "shared.weight",
+            }
+        else:
+            self._tied_weights_keys = [
+                "encoder.embed_tokens.weight",
+                "decoder.embed_tokens.weight",
+            ]
+
         super().__init__(config)
         self.model_dim = config.d_model
+        self.config.use_cache = False
 
         self.chronos_config = ChronosBoltConfig(**config.chronos_config)
 
@@ -310,7 +330,12 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         encoder_config.is_decoder = False
         encoder_config.use_cache = False
         encoder_config.is_encoder_decoder = False
-        self.encoder = T5Stack(encoder_config, self.shared)
+
+        if _check_soft_dependencies("transformers>=5.0", severity="none"):
+            self.encoder = T5Stack(encoder_config)
+            self.encoder.set_input_embeddings(self.shared)
+        else:
+            self.encoder = T5Stack(encoder_config, self.shared)
 
         self._init_decoder(config)
 
@@ -338,9 +363,20 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         """Initialize the weights"""
         factor = self.config.initializer_factor
         if isinstance(module, (self.__class__)):
-            module.shared.weight.data.normal_(mean=0.0, std=factor * 1.0)
+            init.normal_(module.shared.weight, mean=0.0, std=factor * 1.0)
+            # reinitialize quantiles buffer for transformers v5 meta device
+            # compatibility, since it is a non-persistent buffer and is not
+            # restored from the checkpoint state dict
+            if _TRANSFORMERS_V5:
+                quantiles = torch.tensor(
+                    module.chronos_config.quantiles,
+                    dtype=module.dtype,
+                    device=module.quantiles.device,
+                )
+                init.copy_(module.quantiles, quantiles)
         elif isinstance(module, ResidualBlock):
-            module.hidden_layer.weight.data.normal_(
+            init.normal_(
+                module.hidden_layer.weight,
                 mean=0.0,
                 std=factor * ((self.chronos_config.input_patch_size * 2) ** -0.5),
             )
@@ -348,9 +384,10 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
                 hasattr(module.hidden_layer, "bias")
                 and module.hidden_layer.bias is not None
             ):
-                module.hidden_layer.bias.data.zero_()
+                init.zeros_(module.hidden_layer.bias)
 
-            module.residual_layer.weight.data.normal_(
+            init.normal_(
+                module.residual_layer.weight,
                 mean=0.0,
                 std=factor * ((self.chronos_config.input_patch_size * 2) ** -0.5),
             )
@@ -358,24 +395,21 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
                 hasattr(module.residual_layer, "bias")
                 and module.residual_layer.bias is not None
             ):
-                module.residual_layer.bias.data.zero_()
+                init.zeros_(module.residual_layer.bias)
 
-            module.output_layer.weight.data.normal_(
-                mean=0.0, std=factor * ((self.config.d_ff) ** -0.5)
+            init.normal_(
+                module.output_layer.weight,
+                mean=0.0,
+                std=factor * ((self.config.d_ff) ** -0.5),
             )
             if (
                 hasattr(module.output_layer, "bias")
                 and module.output_layer.bias is not None
             ):
-                module.output_layer.bias.data.zero_()
+                init.zeros_(module.output_layer.bias)
 
-    def encode(
-        self, context: torch.Tensor, mask: Optional[torch.Tensor] = None
-    ) -> tuple[
-        torch.Tensor, tuple[torch.Tensor, torch.Tensor], torch.Tensor, torch.Tensor
-    ]:
-        """
-        Encode the input context tensor using the model's architecture.
+    def encode(self, context, mask=None):
+        """Encode the input context tensor using the model's architecture.
 
         Parameters
         ----------
@@ -454,15 +488,8 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
 
         return encoder_outputs[0], loc_scale, input_embeds, attention_mask
 
-    def forward(
-        self,
-        context: torch.Tensor,
-        mask: Optional[torch.Tensor] = None,
-        target: Optional[torch.Tensor] = None,
-        target_mask: Optional[torch.Tensor] = None,
-    ) -> ChronosBoltOutput:
-        """
-        Predict the future sample tokens for the given sequences.
+    def forward(self, context, mask=None, target=None, target_mask=None):
+        """Predict the future sample tokens for the given sequences.
 
         Arguments `context`, `mask`, `target` and `target_mask` can be used to customize
         the model inference at runtime.
@@ -561,7 +588,12 @@ class ChronosBoltModelForForecasting(T5PreTrainedModel):
         decoder_config.is_decoder = True
         decoder_config.is_encoder_decoder = False
         decoder_config.num_layers = config.num_decoder_layers
-        self.decoder = T5Stack(decoder_config, self.shared)
+
+        if _check_soft_dependencies("transformers>=5.0", severity="none"):
+            self.decoder = T5Stack(decoder_config)
+            self.decoder.set_input_embeddings(self.shared)
+        else:
+            self.decoder = T5Stack(decoder_config, self.shared)
 
     def decode(
         self,
@@ -643,9 +675,12 @@ class ChronosBoltPipeline:
     model: ChronosBoltModelForForecasting
     default_context_length: int = 2048
 
-    def _prepare_and_validate_context(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ):
+    @property
+    def quantiles(self) -> list[float]:
+        """Return the quantiles used by the Chronos-Bolt model."""
+        return self.model.config.chronos_config["quantiles"]
+
+    def _prepare_and_validate_context(self, context):
         if isinstance(context, list):
             context = left_pad_and_stack_1D(context)
         assert isinstance(context, torch.Tensor)
@@ -655,11 +690,8 @@ class ChronosBoltPipeline:
 
         return context
 
-    def embed(
-        self, context: Union[torch.Tensor, list[torch.Tensor]]
-    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
-        """
-        Get encoder embeddings for the given time series.
+    def embed(self, context):
+        """Get encoder embeddings for the given time series.
 
         Parameters
         ----------
@@ -697,12 +729,11 @@ class ChronosBoltPipeline:
 
     def predict(  # type: ignore[override]
         self,
-        context: Union[torch.Tensor, list[torch.Tensor]],
-        prediction_length: Optional[int] = None,
+        context,
+        prediction_length: int | None = None,
         limit_prediction_length: bool = False,
-    ) -> torch.Tensor:
-        """
-        Get forecasts for the given time series.
+    ):
+        """Get forecasts for the given time series.
 
         Refer to the base method (``BaseChronosPipeline.predict``)
         for details on shared parameters.
@@ -726,7 +757,7 @@ class ChronosBoltPipeline:
         ------
         ValueError
             When limit_prediction_length is True and the prediction_length is
-            greater than model's trainig prediction_length.
+            greater than model's training prediction_length.
         """
         context_tensor = self._prepare_and_validate_context(context=context)
 

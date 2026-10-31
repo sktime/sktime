@@ -6,20 +6,16 @@ Interval based TSF classifier, extracts basic summary features from random inter
 __author__ = ["kkoziara", "luiszugasti", "kanand77"]
 __all__ = ["TimeSeriesForestClassifier"]
 
-from typing import Optional
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble._forest import ForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.classification.base import BaseClassifier
 
 
-class TimeSeriesForestClassifier(
-    BaseTimeSeriesForest, ForestClassifier, BaseClassifier
-):
+class TimeSeriesForestClassifier(BaseTimeSeriesForest, BaseClassifier):
     """Time series forest classifier.
 
     A time series forest is an ensemble of decision trees built on random intervals.
@@ -113,19 +109,23 @@ class TimeSeriesForestClassifier(
         # --------------
         "capability:feature_importance": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and testing tags
+        # -------------------
+        "tests:vm": True,
+        "tests:libs": ["sktime.base._panel.forest._tsf"],
+        "tests:specific": ["sktime.classification.interval_based.tests.test_tsf"],
     }
 
     def __init__(
         self,
         min_interval=3,
         n_estimators=200,
-        inner_series_length: Optional[int] = None,
+        inner_series_length: int | None = None,
         n_jobs=1,
         random_state=None,
     ):
-        self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
-        # because sklearn tag logic looks at this attribute
-
         super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
@@ -134,27 +134,6 @@ class TimeSeriesForestClassifier(
             inner_series_length=inner_series_length,
         )
         BaseClassifier.__init__(self)
-
-    def fit(self, X, y, **kwargs):
-        """Wrap fit to call BaseClassifier.fit.
-
-        This is a fix to get around the problem with multiple inheritance. The problem
-        is that if we just override _fit, this class inherits the fit from the sklearn
-        class BaseTimeSeriesForest. This is the simplest solution, albeit a little
-        hacky.
-        """
-        return BaseClassifier.fit(self, X=X, y=y, **kwargs)
-
-    def predict(self, X, **kwargs) -> np.ndarray:
-        """Wrap predict to call BaseClassifier.predict."""
-        return BaseClassifier.predict(self, X=X, **kwargs)
-
-    def predict_proba(self, X, **kwargs) -> np.ndarray:
-        """Wrap predict_proba to call BaseClassifier.predict_proba."""
-        return BaseClassifier.predict_proba(self, X=X, **kwargs)
-
-    def _fit(self, X, y):
-        BaseTimeSeriesForest._fit(self, X=X, y=y)
 
     def _predict(self, X) -> np.ndarray:
         """Find predictions for all cases in X. Built on top of predict_proba.
@@ -238,7 +217,12 @@ class TimeSeriesForestClassifier(
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}
         else:
-            return {"n_estimators": 2}
+            param1 = {"n_estimators": 2, "min_interval": 5}
+            param2 = {
+                "n_estimators": 5,
+                "min_interval": 4,
+            }
+            return [param1, param2]
 
     def _extract_feature_importance_by_feature_type_per_tree(
         self, tree_feature_importance: np.array, feature_type: str

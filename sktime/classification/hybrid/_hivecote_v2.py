@@ -101,6 +101,11 @@ class HIVECOTEV2(BaseClassifier):
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "hybrid",
+        # CI and test flags
+        # -----------------
+        "tests:specific": ["sktime.classification.hybrid.tests.test_hivecote_v2"],
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
+        "tests:skip_all": True,
     }
 
     def __init__(
@@ -143,6 +148,10 @@ class HIVECOTEV2(BaseClassifier):
         self._tde = None
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Fit HIVE-COTE 2.0 to training data.

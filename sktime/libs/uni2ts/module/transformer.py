@@ -15,7 +15,6 @@
 
 from collections.abc import Callable
 from functools import partial
-from typing import Optional
 
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -37,7 +36,7 @@ else:
 
 
 from .attention import GroupedQueryAttention
-from .ffn import FeedForward, GatedLinearUnitFeedForward
+from .ffn import FeedForward, GatedLinearUnitFeedForward, MoEFeedForward
 
 
 class TransformerEncoderLayer(nn.Module):
@@ -45,8 +44,8 @@ class TransformerEncoderLayer(nn.Module):
         self,
         self_attn: GroupedQueryAttention,
         ffn: FeedForward,
-        norm1: Optional[nn.Module],
-        norm2: Optional[nn.Module],
+        norm1: nn.Module | None,
+        norm2: nn.Module | None,
         post_attn_dropout_p: float = 0.0,
         pre_norm: bool = True,
     ):
@@ -66,17 +65,24 @@ class TransformerEncoderLayer(nn.Module):
         attn_mask=None,
         var_id=None,
         time_id=None,
+        centroid=None,
     ):
         if self.pre_norm:
             x = x + self._sa_block(
                 self.norm1(x), attn_mask, var_id=var_id, time_id=time_id
             )
-            x = x + self.ffn(self.norm2(x))
+            if centroid is not None:
+                x = x + self.ffn(self.norm2(x), centroid=centroid)
+            else:
+                x = x + self.ffn(self.norm2(x))
         else:
             x = self.norm1(
                 x + self._sa_block(x, attn_mask, var_id=var_id, time_id=time_id)
             )
-            x = self.norm2(x + self.ffn(x))
+            if centroid is not None:
+                x = self.norm2(x + self.ffn(x, centroid=centroid))
+            else:
+                x = self.norm2(x + self.ffn(x))
 
         return x
 
@@ -105,13 +111,14 @@ class TransformerEncoder(nn.Module):
         self,
         d_model: int,
         num_layers: int,
-        num_heads: Optional[int] = None,
-        num_groups: Optional[int] = None,
+        num_heads: int | None = None,
+        num_groups: int | None = None,
         pre_norm: bool = True,
         attn_dropout_p: float = 0.0,
         dropout_p: float = 0.0,
         norm_layer=nn.LayerNorm,
         activation=F.silu,
+        use_moe: bool = False,
         use_glu: bool = True,
         use_qk_norm: bool = True,
         var_attn_bias_layer=None,
@@ -122,9 +129,10 @@ class TransformerEncoder(nn.Module):
         shared_time_attn_bias: bool = False,
         shared_var_qk_proj: bool = False,
         shared_time_qk_proj: bool = False,
-        d_ff: Optional[int] = None,
+        d_ff: int | None = None,
     ):
         super().__init__()
+        self.use_moe = use_moe
         num_heads = num_heads or d_model // 64
         num_groups = num_groups or num_heads  # defaults to mha
 
@@ -163,15 +171,28 @@ class TransformerEncoder(nn.Module):
             var_qk_proj=var_qk_proj,
             time_qk_proj=time_qk_proj,
         )
-        get_ffn = partial(
-            GatedLinearUnitFeedForward if use_glu else FeedForward,
-            in_dim=d_model,
-            hidden_dim=d_ff,
-            out_dim=None,
-            activation=activation,
-            bias=False,
-            ffn_dropout_p=dropout_p,
-        )
+        if use_moe:
+            get_ffn = partial(
+                MoEFeedForward,
+                num_experts=32,
+                num_experts_per_token=2,
+                in_dim=d_model,
+                hidden_dim=d_ff,
+                out_dim=None,
+                activation=activation,
+                bias=False,
+                ffn_dropout_p=dropout_p,
+            )
+        else:
+            get_ffn = partial(
+                GatedLinearUnitFeedForward if use_glu else FeedForward,
+                in_dim=d_model,
+                hidden_dim=d_ff,
+                out_dim=None,
+                activation=activation,
+                bias=False,
+                ffn_dropout_p=dropout_p,
+            )
         get_encoder_layer_norm = partial(norm_layer, d_model)
 
         self.layers = nn.ModuleList(
@@ -187,6 +208,14 @@ class TransformerEncoder(nn.Module):
                 for _ in range(num_layers)
             ]
         )
+        if use_moe:
+            if _check_soft_dependencies("torch", severity="none"):
+                import torch as _torch
+
+                self.register_buffer(
+                    "centroid",
+                    _torch.empty(num_layers, 32, d_model, dtype=_torch.float64),
+                )
         self.norm = norm_layer(d_model)
 
     @staticmethod
@@ -211,6 +240,16 @@ class TransformerEncoder(nn.Module):
         var_id=None,
         time_id=None,
     ):
-        for layer in self.layers:
-            x = layer(x, attn_mask, var_id=var_id, time_id=time_id)
+        if self.use_moe:
+            for idx, layer in enumerate(self.layers):
+                x = layer(
+                    x,
+                    attn_mask,
+                    var_id=var_id,
+                    time_id=time_id,
+                    centroid=self.centroid[idx],
+                )
+        else:
+            for layer in self.layers:
+                x = layer(x, attn_mask, var_id=var_id, time_id=time_id)
         return self.norm(x)

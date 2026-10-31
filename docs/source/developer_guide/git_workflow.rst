@@ -189,19 +189,33 @@ We strongly recommend to not use the same branch for multiple tasks,
 as it will make the history of the branch messy and harder to review,
 and substantially increases the risk of bugs and conflicts.
 
-Working on a chain of dependent tasks
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Working on a chain of dependent tasks - pull request stacking
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For more complex tasks, it may be useful to limit complexity by
-chaining tasks after another.
+stacking pull requests. Stacking pull requests is useful for chains of dependent
+tasks, where the next task depends on the previous task being merged in the ``main``
+branch of the sktime repo, but the PR from the previous task is not merged yet.
 
-For instance, working on an estimator that first requires a bugfix to be merged.
+For instance, working on an estimator that first requires a bugfix to be merged;
+or, fixing a bug where test coverage was masked by a bug in the test framework,
+and the fix requires first fixing the test code, and then fixing the bug.
 
-In this case, create a new branch from the branch of the previous task, and continue
+Whenever a complex task can be broken down into a chain of dependent tasks,
+it is recommended to stack pull requests,
+and work on each task in a separate branch, with a separate pull request.
+
+This makes it easier to review and merge the changes quickly;
+stacking also makes it easier to complete the task, because smaller changes
+are easier to manage, test, and complete.
+
+Mechanically, stacking pull requests works as follows:
+
+For setup, create a new branch from the branch of the previous task, and continue
 your development from there. For such cases, please remember to specify in the PR
 description that this PR depends on the previous PR.
 
-Further, whenever making changes to the previous branch, ensure to update
+Whenever making changes to a previous branch, ensure to update
 the dependent branch with the latest changes from the previous branch.
 
 The general workflow for ensuring that all branches in the chain are up-to-date,

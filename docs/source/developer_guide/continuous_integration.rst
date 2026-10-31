@@ -13,7 +13,7 @@ up your developer environment, and installed a
 :doc:`development version </installation>`
 of ``sktime``.
 
-``sktime`` use continuous integration (CI) services on GitHub to automatically check
+``sktime`` uses continuous integration (CI) services on GitHub to automatically check
 if new pull requests do not break anything and meet code quality
 standards such as a common `coding style <#Coding-style>`__.
 
@@ -48,7 +48,7 @@ To install, if not already installed:
 
    .. code:: bash
 
-      pip install -e .[dev]
+      pip install -e ".[dev]"
 
    This installs an editable `development
    version <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`__
@@ -56,8 +56,20 @@ To install, if not already installed:
 
 .. note::
 
-   For trouble shooting on different operating systems, please see our detailed
+   For troubleshooting on different operating systems, please see our detailed
    :doc:`installation instructions </installation>`.
+
+
+Alternative environment: 2023 versions of dependencies
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``sktime`` is also expected to work for older package versions of its core dependencies.
+For local testing against a 2023 state of ``sktime`` core dependencies, instead run:
+
+   .. code:: bash
+
+      pip install -e ".[dev,dependencies_lower]"
+
 
 Code quality checks
 ~~~~~~~~~~~~~~~~~~~
@@ -68,13 +80,13 @@ We use `pre-commit`_ for code quality checks (a process we also refer to as "lin
 
 We recommend that you also set this up locally as it will ensure that you never run into code quality errors when you make your first PR!
 These checks run automatically before you make a new commit.
-To setup, simply navigate to the sktime folder and install our pre-commit configuration:
+To set up, simply navigate to the sktime folder and install our pre-commit configuration:
 
    .. code:: bash
 
       pre-commit install
 
-pre-commit should now automatically run anything you make a commit! Please let us know if you encounter any issues getting this setup.
+pre-commit should now automatically run whenever you make a commit! Please let us know if you encounter any issues getting this setup.
 
 For a detailed guide on code quality and linting for developers, see :ref:`coding_standards`.
 
@@ -105,66 +117,57 @@ or, from a console with ``pytest`` in the path, from the repository root:
 
       pytest ./sktime
 
-Further, developer IDEs such as pycharm or vs code will automatically recognize
+Further, developer IDEs such as PyCharm or VS Code will automatically recognize
 the tests via ``pytest``, refer to the documentation of the IDEs for testing
 via the embedded graphical user interface.
 
-Running docstring examples via ``doctest``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Running docstring examples
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``sktime``'s Python modules are equipped with docstrings that include examples
-demonstrating the usage of specific classes within each module.
+Doctests in ``sktime`` are run automatically as part of the full test suite via ``pytest``,
+through specific ``pytest`` plugins.
+This is to allow control import of soft dependencies in doctests,
+and to only run specific doctests if dependencies are installed.
 
-Docstring examples can be executed in bulk using ``doctest``,
-to ensure that this is indeed the case.
+The following are idiomatic ways to run doctests:
 
-To run doctest on all the files with ``pytest``,
-navigate to the root directory and execute the following command:
+- For testing a single estimator, the ``check_estimator`` utility (see above) can be used.
+  The doctest test is the test with name ``"test_doctest_examples"``.
 
-  .. code:: bash
-
-      pytest --doctest-modules
-
-To run doctest on all the files without ``pytest``,
-navigate to the root directory and execute the following command:
-
-(for ``UNIX`` based OS)
-  .. code:: bash
-
-      find . -name "*.py" -print0 | xargs -0 python -m doctest -v -o=ELLIPSIS
-
-(for windows)
-  .. code:: bash
-
-      for /r %G in (*.py) do python -m doctest -v "%G" -o=ELLIPSIS
-
-To run doctest on a specific module, navigate to the directory where the
-module is located and execute the following command:
+- To run doctests of all estimators, run from root directory:
 
    .. code:: bash
 
-      python -m doctest -v -o=ELLIPSIS {filename}
+      pytest sktime/tests/test_all_estimators.py::TestAllObjects::test_doctest_examples
+
+- Functions are tested through the ``test_doctest`` module.
+  To run all doctests for functions, run from root directory:
+
+   .. code:: bash
+
+      pytest sktime/tests/test_doctest.py
+
+It is also possible to run doctests directly, from a single file:
+
+   .. code:: bash
+
+      python -m doctest <path_to_file>
 
 
-Executing this command will display the test results for all the docstrings
-contained within the module.
-
-Alternative: dockerized testing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Alternative CI setup: dockerized testing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 We also provide an option to execute the test suite via ``docker`` containers.
 This requires a local docker installation.
 To install, follow the instructions `here <https://docs.docker.com/desktop/>`_.
 
-The docker images for the tests are in the folder ``build_tools/docker``,
-with the image of name ``PYTHON_VERSION`` based on the following python versions:
+The Dockerfiles for the tests are in the folder ``build_tools/docker``
+and follow the naming format ``<PYTHON_VERSION>.dockerfile``.
+The mapping between Python versions and ``PYTHON_VERSION`` values is displayed in the table below.
 
 +----------------+----------------+
 | Python version | PYTHON_VERSION |
 +================+================+
-|     3.8     |      py38         |
-+----------------+----------------+
-|     3.9     |      py39         |
 +----------------+----------------+
 |     3.10    |      py310        |
 +----------------+----------------+
@@ -172,12 +175,16 @@ with the image of name ``PYTHON_VERSION`` based on the following python versions
 +----------------+----------------+
 |     3.12    |      py312        |
 +----------------+----------------+
+|     3.13    |      py313        |
++----------------+----------------+
+|     3.14    |      py314        |
++----------------+----------------+
 
 The dockerized tests can be also executed via `make <https://www.gnu.org/software/make/>`_,
 via the command ``make dockertest PYTHON_VERSION=<python version>``.
-The ``PYTHON_VERSION`` argument specifies the python version and is the same string as in the table above.
-For example, to execute the tests in the Python version ``3.8``,
-use ``make dockertest PYTHON_VERSION=py38``.
+The ``PYTHON_VERSION`` argument specifies the Python version and is the same string as in the table above.
+For example, to execute the tests in the Python version ``3.14``,
+use ``make dockertest PYTHON_VERSION=py314``.
 
 
 Continuous integration
@@ -201,10 +208,10 @@ integration services we use.
      - `.github/workflows/ <https://github.com/sktime/sktime/blob/main/.github/workflows/>`__
    * - `Read the Docs <https://readthedocs.org>`__
      - Build/deploy documentation
-     - `.readthedocs.yml <https://github.com/alan-turing-institute/sktime/blob/main/.github/workflows/code-quality.yml>`__
+     - `.readthedocs.yml <https://github.com/sktime/sktime/blob/main/.readthedocs.yml>`__
    * - `Codecov <https://codecov.io>`__
      - Test coverage
-     - `.codecov.yml <https://github.com/sktime/sktime/blob/main/.codecov.yml>`__, `.coveragerc <https://github.com/alan-turing-institute/sktime/blob/main/.coveragerc>`__
+     - `.codecov.yml <https://github.com/sktime/sktime/blob/main/.codecov.yml>`__, `.coveragerc <https://github.com/sktime/sktime/blob/main/.coveragerc>`__
 
 Additional scripts used for building, unit testing and distribution can
 be found in

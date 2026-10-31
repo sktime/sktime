@@ -17,10 +17,11 @@ from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_is_fitted
 
 from sktime.base._base import _clone_estimator
+from sktime.utils.sklearn._version_bridge import _SklVersionBridgeMixin
 from sktime.utils.validation import check_n_jobs
 
 
-class RotationForest(ClassifierMixin, BaseEstimator):
+class RotationForest(_SklVersionBridgeMixin, ClassifierMixin, BaseEstimator):
     """A rotation forest (RotF) vector classifier.
 
     Implementation of the Rotation Forest classifier described in Rodriguez et al
@@ -137,6 +138,11 @@ class RotationForest(ClassifierMixin, BaseEstimator):
 
         super().__init__()
 
+        if self.base_estimator is None:
+            self._base_estimator = DecisionTreeClassifier(criterion="entropy")
+        else:
+            self._base_estimator = self.base_estimator
+
     def fit(self, X, y):
         """Fit a forest of trees on cases (X,y), where y is the target variable.
 
@@ -159,9 +165,9 @@ class RotationForest(ClassifierMixin, BaseEstimator):
         """
         from joblib import Parallel, delayed
 
-        X, y = self._validate_data(
-            X,
-            y,
+        X, y = self._validate_data_version_safe(
+            X=X,
+            y=y,
             dtype=[np.float32, np.float64],
             ensure_2d=True,
             allow_nd=True,
@@ -184,9 +190,6 @@ class RotationForest(ClassifierMixin, BaseEstimator):
         time_limit = self.time_limit_in_minutes * 60
         start_time = time.time()
         train_time = 0
-
-        if self.base_estimator is None:
-            self._base_estimator = DecisionTreeClassifier(criterion="entropy")
 
         # remove useless attributes
         self._useful_atts = ~np.all(X[1:] == X[:-1], axis=0)
@@ -294,8 +297,8 @@ class RotationForest(ClassifierMixin, BaseEstimator):
         if self.n_classes_ == 1:
             return np.repeat([[1]], X.shape[0], axis=0)
 
-        X = self._validate_data(
-            X,
+        X = self._validate_data_version_safe(
+            X=X,
             dtype=[np.float32, np.float64],
             reset=False,
             ensure_2d=True,
@@ -328,15 +331,15 @@ class RotationForest(ClassifierMixin, BaseEstimator):
         from joblib import Parallel, delayed
 
         check_is_fitted(self)
-        X = self._validate_data(
-            X,
+        X = self._validate_data_version_safe(
+            X=X,
             dtype=[np.float32, np.float64],
             reset=False,
             ensure_2d=True,
             allow_nd=True,
             force_all_finite=True,
         )
-        X = self._validate_data(X=X, reset=False)
+        X = self._validate_data_version_safe(X=X, reset=False)
 
         # handle the single-class-label case
         if len(self._class_dictionary) == 1:

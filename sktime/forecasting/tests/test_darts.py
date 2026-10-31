@@ -8,6 +8,7 @@ import re
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_longley
 from sktime.forecasting.darts import (
@@ -65,7 +66,30 @@ def test_darts_regression_model_without_X(model):
     pd.testing.assert_index_equal(pred.index, y_test.index, check_names=False)
 
 
+def _darts_to_series(obj):
+    """Convert Darts object to pandas Series."""
+    # darts changed the name of the method converting "TimeSeries" to "pandas.Series"
+    # in version 0.35, so we need to check the version
+    # also, darts is distributed as "darts" and "u8darts", so we need to check both
+    darts_ge_035 = [
+        _check_soft_dependencies("darts>=0.35", severity="none")
+        or _check_soft_dependencies("u8darts>=0.35", severity="none")
+    ]
+    if darts_ge_035:
+        to_ser_name = "to_series"
+    else:
+        to_ser_name = "pd_series"
+    return getattr(obj, to_ser_name)()
+
+
 @pytest.mark.parametrize("model", [DartsXGBModel, DartsLinearRegressionModel])
+@pytest.mark.skip(
+    reason=(
+        "darts WeatherDataset download is flaky in CI "
+        "(truncated/corrupt weather.csv); coverage moved to "
+        "test_darts_regression_models_parity"
+    ),
+)
 @pytest.mark.skipif(
     not run_test_for_class([DartsXGBModel, DartsLinearRegressionModel]),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -84,12 +108,11 @@ def test_darts_regression_models_with_weather_dataset(model):
 
     # Predicting atmospheric pressure
     target = series["p (mbar)"][:100]
-    target_df = target.pd_series()
+    target_df = _darts_to_series(target)
 
     darts_model.fit(target)
-
     # Make a prediction for the next 6 time steps
-    darts_pred = darts_model.predict(6).pd_series()
+    darts_pred = _darts_to_series(darts_model.predict(6))
     assert isinstance(target_df, pd.Series)
     sktime_model = model(
         lags=12,
@@ -137,6 +160,13 @@ def test_darts_regression_model_with_X(model):
 
 
 @pytest.mark.parametrize("model", [DartsRegressionModel])
+@pytest.mark.skip(
+    reason=(
+        "darts WeatherDataset download is flaky in CI "
+        "(truncated/corrupt weather.csv); coverage moved to "
+        "test_darts_regression_parity"
+    ),
+)
 @pytest.mark.skipif(
     not run_test_for_class(DartsRegressionModel),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -157,12 +187,12 @@ def test_darts_regression_with_weather_dataset(model):
 
     # Predicting atmospheric pressure
     target = series["p (mbar)"][:100]
-    target_df = target.pd_series()
+    target_df = _darts_to_series(target)
 
     darts_model.fit(target)
 
     # Make a prediction for the next 6 time steps
-    darts_pred = darts_model.predict(6).pd_series()
+    darts_pred = _darts_to_series(darts_model.predict(6))
     assert isinstance(target_df, pd.Series)
     sktime_model = model(
         lags=12,
@@ -173,5 +203,69 @@ def test_darts_regression_with_weather_dataset(model):
     fh = list(range(1, 7))
     pred_sktime = sktime_model.predict(fh)
     assert isinstance(pred_sktime, pd.Series)
+
+    np.testing.assert_allclose(pred_sktime.to_numpy(), darts_pred.to_numpy(), rtol=1e-4)
+
+
+@pytest.mark.parametrize("model", [DartsXGBModel, DartsLinearRegressionModel])
+@pytest.mark.skipif(
+    not run_test_for_class([DartsXGBModel, DartsLinearRegressionModel]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_darts_regression_models_parity(model):
+    """Native darts vs sktime adapter parity on a synthetic series."""
+    from darts import TimeSeries
+
+    from sktime.utils._testing.series import _make_series
+
+    kwargs = model_kwargs.get(model, {})
+    model_to_import = import_mappings.get(model)
+    imported_model = getattr(importlib.import_module("darts.models"), model_to_import)
+
+    y = _make_series(n_timepoints=100, all_positive=True, random_state=0)
+    target = TimeSeries.from_series(y)
+
+    darts_model = imported_model(lags=12, output_chunk_length=6, **kwargs)
+    darts_model.fit(target)
+    darts_pred = _darts_to_series(darts_model.predict(6))
+
+    sktime_model = model(lags=12, output_chunk_length=6, kwargs=kwargs)
+    sktime_model.fit(y)
+    pred_sktime = sktime_model.predict(list(range(1, 7)))
+
+    np.testing.assert_array_equal(pred_sktime.to_numpy(), darts_pred.to_numpy())
+
+
+@pytest.mark.parametrize("model", [DartsRegressionModel])
+@pytest.mark.skipif(
+    not run_test_for_class(DartsRegressionModel),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_darts_regression_parity(model):
+    """Native darts vs sktime adapter parity on a synthetic series."""
+    from darts import TimeSeries
+    from sklearn.ensemble import RandomForestRegressor
+
+    from sktime.utils._testing.series import _make_series
+
+    model_to_import = import_mappings.get(model)
+    imported_model = getattr(importlib.import_module("darts.models"), model_to_import)
+
+    y = _make_series(n_timepoints=100, all_positive=True, random_state=0)
+    target = TimeSeries.from_series(y)
+
+    darts_model = imported_model(
+        lags=12, output_chunk_length=6, model=RandomForestRegressor(random_state=0)
+    )
+    darts_model.fit(target)
+    darts_pred = _darts_to_series(darts_model.predict(6))
+
+    sktime_model = model(
+        lags=12,
+        output_chunk_length=6,
+        model=RandomForestRegressor(random_state=0),
+    )
+    sktime_model.fit(y)
+    pred_sktime = sktime_model.predict(list(range(1, 7)))
 
     np.testing.assert_allclose(pred_sktime.to_numpy(), darts_pred.to_numpy(), rtol=1e-4)

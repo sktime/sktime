@@ -9,9 +9,9 @@ or control its behavior.
 
 Tags are key-value pairs, where the key is a string with the name of the tag.
 The value of the tag can have arbitrary type, and describes a property, capability,
-or controls behaviour of the object, depending on the value.
+or controls behaviour of the object, depending on the tag.
 
-For instance, a forecaster may have the tag ``"capability:pred_int": True`` if it can
+For instance, a forecaster has the tag ``"capability:pred_int": True`` if it can
 make probabilistic predictions.
 Users can find all forecasters that can make probabilistic predictions by filtering
 for this tag.
@@ -21,6 +21,9 @@ for their usage.
 
 To search estimators by tags on the ``sktime`` webpage, use the
 :doc:`Estimator Search Page </estimator_overview>`
+
+To search estimators by tags in a python environment, use the
+``sktime.registry.all_estimators`` utility.
 
 
 Inspecting tags, retrieving by tags
@@ -66,12 +69,16 @@ These tags are typically used for typing, packaging and documentation purposes.
     :nosignatures:
 
     object_type
+    category
     maintainers
     authors
+    shorthands
     python_version
     python_dependencies
     env_marker
+    sktime_version
     requires_cython
+    r_dependencies
 
 
 .. _forecaster_tags:
@@ -89,14 +96,19 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     :template: function.rst
     :nosignatures:
 
-    capability__exogeneous
+    capability__exogenous
+    capability__multivariate
     capability__insample
     capability__pred_int
     capability__pred_int__insample
+    capability__pretrain
     capability__missing_values
     capability__categorical_in_X
+    capability__random_state
     requires_fh_in_fit
     fit_is_empty
+    property__randomness
+    X_y_must_have_same_index
 
 
 .. _panel_tags:
@@ -124,6 +136,10 @@ these types of objects.
     capability__feature_importance
     capability__contractable
     capability__train_estimate
+    capability__multithreading
+    capability__random_state
+    property__randomness
+    X_y_must_have_same_index
 
 
 .. _transformer_tags:
@@ -144,15 +160,44 @@ transform a single time series object (``"transformer"`` type).
     scitype__transform_input
     scitype__transform_output
     scitype__transform_labels
+    scitype__instancewise
     requires_x
     requires_y
+    capability__multivariate
     capability__missing_values
+    capability__missing_values__removes
     capability__unequal_length
+    capability__unequal_length__adds
+    capability__unequal_length__removes
+    capability__random_state
     capability__inverse_transform
     capability__inverse_transform__exact
     capability__inverse_transform__range
+    capability__bootstrap_index
     fit_is_empty
     transform_returns_same_time_index
+    skip_inverse_transform
+    property__randomness
+    X_y_must_have_same_index
+
+
+.. _pairwise_transformer_tags:
+
+Tags for pairwise transformers
+------------------------------
+
+This section lists tags applying to pairwise transformers, i.e., objects that
+transform pairs of time series (``"transformer-pairwise"`` and ``"transformer-pairwise-panel"`` types).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    symmetric
+    capability__multivariate
 
 
 .. _detector_tags:
@@ -174,10 +219,95 @@ detectors.
     task
     learning_type
     capability__update
+    capability__pretrain
     capability__multivariate
     capability__missing_values
+    capability__random_state
+    property__randomness
+
+
+.. _metric_tags:
+
+Tags for metrics
+----------------
+
+This section lists tags applying to time series metrics (``"metric"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    lower_is_better
+    capability__sample_weight
+    scitype__y
+    scitype__y_pred
+    requires_y_true
+    requires_y_pred_benchmark
+    requires_y_train
+    inner_implements_multilevel
+
+
+Tags for time series aligners
+-----------------------------
+
+This section lists tags applying to time series aligners (``"aligner"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
 
 .. _dev_common_tags:
+
+    capability__multiple_alignment
+    capability__distance
+    capability__distance_matrix
+    property__alignment_type
+
+
+.. _param_est_tags:
+
+Tags for parameter estimators
+------------------------------
+
+This section lists tags applying to parameter estimators (``"param_est"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    scitype__X
+    scitype__y
+    capability__multivariate
+    capability__pairwise
+
+
+.. _splitter_tags:
+
+Tags for splitters
+------------------
+
+This section lists tags applying to time series splitters (``"splitter"`` type).
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    split_type
+    split_series_uses
+    split_hierarchical
+
 
 Common developer tags
 ---------------------
@@ -200,3 +330,27 @@ The tags below have limited use in retrieval or inspection of objects.
     x_inner_mtype
     y_inner_mtype
     visual_block_kind
+    remember_data
+
+.. _dev_testing_tags:
+
+Testing and CI tags
+-------------------
+
+These tags control behaviour of estimators in the ``sktime`` continuous integration
+tests.
+
+They are primarily useful for developers managing CI behaviour of individual objects.
+
+.. currentmodule:: sktime.registry._tags
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+    :nosignatures:
+
+    tests__core
+    tests__vm
+    tests__skip_all
+    tests__skip_by_name
+    tests__specific

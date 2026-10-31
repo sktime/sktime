@@ -111,3 +111,26 @@ def test_expanding_greedy_splitter_consecutive():
     )
 
     assert has_consecutive_index.all()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ExpandingGreedySplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_expanding_greedy_splitter_forecast_horizon():
+    """Test that ExpandingGreedySplitter's forecast horizon is properly handled."""
+    ts = np.arange(10)
+
+    # Test with integer test_size
+    cv_int_test = ExpandingGreedySplitter(test_size=2, folds=3)
+    assert len(cv_int_test.fh) == 2
+    assert all(cv_int_test.fh == np.array([1, 2]))
+    _ = list(cv_int_test.split(ts))  # Call to split should not affect fh initialization
+    assert len(cv_int_test.fh) == 2
+
+    # Test with float test_size
+    cv_float_test = ExpandingGreedySplitter(test_size=0.2, folds=2)
+    assert cv_float_test.fh is None
+    _ = list(cv_float_test.split(ts))  # Call split to should initialize fh
+    assert len(cv_float_test.fh) == 2
+    assert all(cv_float_test.fh == np.array([1, 2]))

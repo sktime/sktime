@@ -37,7 +37,7 @@ class HierarchicalSalesToydata(_ForecastingDatasetFromLoader):
         "is_empty": False,
         "has_nans": False,
         "has_exogenous": False,
-        "n_instances": 12 * 5 * 4,
+        "n_instances": 4,
         "n_timepoints": 12 * 5 * 4,
         "frequency": "M",
         "n_dimensions": 1,

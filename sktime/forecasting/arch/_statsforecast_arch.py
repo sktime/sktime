@@ -58,7 +58,8 @@ class StatsForecastGARCH(_GeneralisedStatsForecastAdapter):
         "maintainers": ["eyjo"],
         # estimator type
         # --------------
-        "ignores-exogeneous-X": False,
+        "category": ["statistical"],
+        "capability:exogenous": False,  # statsforecast ARCH/GARCH ignore X
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.5.0"],
@@ -139,7 +140,8 @@ class StatsForecastARCH(_GeneralisedStatsForecastAdapter):
         "maintainers": ["eyjo"],
         # estimator type
         # --------------
-        "ignores-exogeneous-X": False,
+        "category": ["statistical"],
+        "capability:exogenous": False,  # statsforecast ARCH/GARCH ignore X
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "python_dependencies": ["statsforecast>=1.5.0"],

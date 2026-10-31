@@ -60,11 +60,19 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "fkiraly", "indinewton"],
-        "ignores-exogeneous-X": False,
+        # estimator type
+        # --------------
+        "category": ["composition"],
+        "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
-        "scitype:y": "univariate",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        "capability:multivariate": False,
+        "capability:update": True,
         "X-y-must-have-same-index": True,
     }
 
@@ -74,7 +82,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
 
         super().__init__(forecasters=forecasters, n_jobs=n_jobs)
 
-        self._anytagis_then_set("ignores-exogeneous-X", False, True, forecasters)
+        self._anytagis_then_set("capability:exogenous", True, False, forecasters)
         self._anytagis_then_set("capability:missing_values", False, True, forecasters)
         self._anytagis_then_set("fit_is_empty", False, True, forecasters)
 
@@ -86,7 +94,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list or np.array, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Exogenous variables are ignored
 
@@ -94,6 +102,8 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         forecasters = [x[1] for x in self.forecasters_]
         self.regressor_ = check_regressor(
             regressor=self.regressor, random_state=self.random_state
@@ -166,7 +176,7 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         y_pred = self.regressor_.predict(y_preds)
         # index = y_preds.index
         index = self.fh.to_absolute_index(self.cutoff)
-        return pd.Series(y_pred, index=index, name=self._y.name)
+        return pd.Series(y_pred, index=index, name=self._cur_y.name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -183,10 +193,20 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         -------
         params : dict or list of dict
         """
+        from sklearn.tree import DecisionTreeRegressor
+
         from sktime.forecasting.naive import NaiveForecaster
 
         f1 = NaiveForecaster()
         f2 = NaiveForecaster(strategy="mean", window_length=3)
-        params = {"forecasters": [("f1", f1), ("f2", f2)]}
+        params1 = {"forecasters": [("f1", f1), ("f2", f2)]}
 
-        return params
+        # second set: a different forecaster combination, and an explicit
+        # meta-regressor rather than the default constructed in check_regressor
+        f3 = NaiveForecaster(strategy="drift")
+        params2 = {
+            "forecasters": [("f1", NaiveForecaster()), ("f3", f3)],
+            "regressor": DecisionTreeRegressor(random_state=0),
+        }
+
+        return [params1, params2]
