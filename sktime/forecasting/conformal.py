@@ -20,6 +20,48 @@ from sktime.forecasting.base import BaseForecaster
 from sktime.utils.warnings import warn
 
 
+def _conformal_quantile(scores, alpha):
+    r"""Finite-sample corrected conformal quantile of non-conformity scores.
+
+    Returns the :math:`\lceil (n+1)(1-\alpha) \rceil`-th smallest of :math:`n` scores,
+    as in Algorithm 1 of Stankeviciute et al [1]_, instead of an interpolated
+    empirical quantile at level :math:`1-\alpha`.
+
+    If :math:`\lceil (n+1)(1-\alpha) \rceil > n`, i.e., there are too few scores for
+    the requested level, no finite threshold with valid coverage exists.
+    In this case, the largest score is returned, and the case is flagged in the
+    second return. A rank below 1 is raised to 1, i.e., the smallest score.
+
+    Parameters
+    ----------
+    scores : 1D array-like of float
+        Non-conformity scores, e.g., absolute residuals. Must be non-empty.
+    alpha : float or 1D array-like of float
+        Miscoverage level(s), in [0, 1].
+
+    Returns
+    -------
+    quantile : np.ndarray, same shape as ``alpha``
+        The corrected quantile of ``scores``, for each element of ``alpha``.
+    too_few : np.ndarray of bool, same shape as ``alpha``
+        True where there are too few scores for the requested level,
+        i.e., where ``quantile`` was clipped to the largest score.
+
+    References
+    ----------
+    .. [1] Kamile Stankeviciute, Ahmed M. Alaa and Mihaela van der Schaar (2021).
+        Conformal Time-Series Forecasting. NeurIPS 2021.
+    """
+    scores = np.sort(np.asarray(scores, dtype=float))
+    n = len(scores)
+    # tolerance guards the ceil against floating point error in (n+1)*(1-alpha)
+    rank = np.ceil((n + 1) * (1 - np.asarray(alpha, dtype=float)) - 1e-9)
+    rank = rank.astype(int)
+    too_few = rank > n
+    rank = np.clip(rank, 1, n)
+    return scores[rank - 1], too_few
+
+
 class ConformalIntervals(BaseForecaster):
     r"""Empirical and conformal prediction intervals.
 
@@ -34,6 +76,17 @@ class ConformalIntervals(BaseForecaster):
         where an arbitrary forecaster is used instead of the RNN.
     method="conformal" is the method in [1]_, but without Bonferroni correction.
         i.e., separate forecasts are made which results in H=1 (at all horizons).
+
+    For both "conformal" and "conformal_bonferroni", the interval half-width at a
+    horizon is the finite-sample corrected quantile of the absolute residuals,
+    as in Algorithm 1 of [1]_: the ceil((m+1)*(1-alpha))-th smallest of the
+    m absolute residuals at the horizon, where alpha is 1 - coverage
+    ("conformal"), or (1 - coverage) / H ("conformal_bonferroni"), with
+    H the number of horizons in ``fh``.
+    If m is too small for the requested coverage, i.e.,
+    ceil((m+1)*(1-alpha)) > m, no finite interval with the nominal coverage
+    guarantee exists. In this case, the largest absolute residual is used,
+    and a warning is raised.
     method="empirical" uses quantiles of relative signed residuals on training set,
         i.e., y_t+h^(i) - y-hat_t+h^(i), ranging over i, in the notation of [1]_,
         at quantiles 0.5-0.5*coverage (lower) and 0.5+0.5*coverage (upper),
@@ -52,8 +105,12 @@ class ConformalIntervals(BaseForecaster):
             of the absolute residuals at horizon, i.e., of epsilon-h
         "conformal_bonferroni": Bonferroni, as in Stankeviciute et al
             Caveat: this does not give frequentist but conformal predictive intervals
+            Uses the finite-sample corrected quantile of absolute residuals,
+            see above.
         "conformal": as in Stankeviciute et al, but with H=1,
             i.e., no Bonferroni correction under number of indices in the horizon
+            Uses the finite-sample corrected quantile of absolute residuals,
+            see above.
     initial_window : float, int or None, optional (default=max(10, 0.1*len(y)))
         Defines the size of the initial training window
         If float, should be between 0.0 and 1.0 and represent the proportion
@@ -306,6 +363,8 @@ class ConformalIntervals(BaseForecaster):
 
         cols = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
         pred_int = pd.DataFrame(index=fh_absolute_idx, columns=cols)
+        # smallest number of residuals at a horizon where the level was not attainable
+        min_n_too_few = None
         for fh_ind, offset in zip(fh_absolute, fh_relative):
             resids = np.diagonal(residuals_matrix, offset=offset)
             resids = resids[~np.isnan(resids)]
@@ -326,15 +385,30 @@ class ConformalIntervals(BaseForecaster):
             if self.method == "empirical_residual":
                 quantiles = 0.5 - 0.5 * coverage2
                 pred_int_row = np.quantile(abs_resids, quantiles)
-            elif self.method == "conformal_bonferroni":
+            elif self.method in ["conformal_bonferroni", "conformal"]:
                 alphas = 1 - coverage2
-                quantiles = 1 - alphas / len(fh)
-                pred_int_row = np.quantile(abs_resids, quantiles)
-            elif self.method == "conformal":
-                quantiles = coverage2
-                pred_int_row = np.quantile(abs_resids, quantiles)
+                if self.method == "conformal_bonferroni":
+                    alphas = alphas / len(fh)
+                pred_int_row, too_few = _conformal_quantile(abs_resids, alphas)
+                if too_few.any():
+                    n_resids = len(abs_resids)
+                    if min_n_too_few is None or n_resids < min_n_too_few:
+                        min_n_too_few = n_resids
 
             pred_int.loc[fh_ind] = pred_int_row
+
+        if min_n_too_few is not None:
+            warn(
+                "In ConformalIntervals, there are too few residuals to compute "
+                f"conformal intervals at the requested coverage (as few as "
+                f"{min_n_too_few} residuals at a forecast horizon). "
+                "The largest absolute residual is used instead, so the intervals "
+                "do not have the nominal coverage guarantee. "
+                "To avoid this, use a lower coverage, a larger initial_window or "
+                "sample_frac, or more training data.",
+                obj=self,
+                stacklevel=2,
+            )
 
         y_pred = convert(y_pred, from_type=self._y_mtype_last_seen, to_type="pd.Series")
         y_pred.index = fh_absolute_idx
