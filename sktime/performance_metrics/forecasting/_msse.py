@@ -98,13 +98,13 @@ class MeanSquaredScaledError(_ScaledMetricTags, BaseForecastingErrorMetricFunc):
     >>> y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
     >>> y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
     >>> rmsse(y_true, y_pred, y_train=y_train)
-    np.float64(0.15679361328058636)
+    np.float64(0.1570924698644255)
     >>> rmsse = MeanSquaredScaledError(multioutput='raw_values', square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
     array([0.11215443, 0.20203051])
     >>> rmsse = MeanSquaredScaledError(multioutput=[0.3, 0.7], square_root=True)
     >>> rmsse(y_true, y_pred, y_train=y_train)
-    np.float64(0.17451891814894502)
+    np.float64(0.17506768548283214)
     """
 
     _tags = {
