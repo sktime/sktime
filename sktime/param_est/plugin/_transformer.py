@@ -102,7 +102,6 @@ class PluginParamsTransformer(_DelegatedTransformer):
         "capability:multivariate": True,  # can the transformer handle multivariate X?
         "fit_is_empty": False,  # is fit empty and can be skipped? Yes = True
         "remember_data": False,  # whether all data seen is remembered as self._X
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # attribute for _DelegatedTransformer, which then delegates
@@ -229,7 +228,13 @@ class PluginParamsTransformer(_DelegatedTransformer):
             "param_est": FixedParams({"foo": 12}),
             "params": {"power": "foo"},
         }
-        params = [params1]
+        # soft dependency free, explicit reference to "power", present in both
+        params_fixed = {
+            "transformer": ExponentTransformer(),
+            "param_est": FixedParams({"power": 0.5}),
+            "params": "power",
+        }
+        params = [params1, params_fixed]
 
         # uses a "real" param est that depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):
