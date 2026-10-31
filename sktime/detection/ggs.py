@@ -33,7 +33,6 @@ References
 """
 
 import logging
-import math
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -193,46 +192,76 @@ class GGS:
         """
         # Initialize parameters
         m, n = data.shape
-        orig_mean = np.mean(data, axis=0)
-        orig_cov = np.cov(data.T, bias=True)
         orig_ll = self.log_likelihood(data)
-        total_sum = m * (orig_cov + np.outer(orig_mean, orig_mean))
-        mu_left = data[0, :] / n
-        mu_right = (m * orig_mean - data[0, :]) / (m - 1)
-        runSum = np.outer(data[0, :], data[0, :])
-        # Loop through all samples
-        # find point where breaking the segment would have the largest LL increase
+        lamb = float(self.lamb)
+
+        # candidate split points i, splitting the segment into
+        # data[:i] (i samples) and data[i:] (m - i samples)
+        candidates = np.arange(2, m - 1)
+        if len(candidates) == 0:
+            return 0, 0.0
+
+        # the covariances of all left and right parts are obtained from
+        # cumulative sums of the samples and of their outer products,
+        # so all candidates can be evaluated in vectorized, batched operations.
+        # Candidates are processed in blocks to bound memory use.
+        total_sum = data.sum(axis=0)
+        total_outer = data.T @ data
+        eye = np.identity(n)
+        block_size = max(1, int(2**21 // (n * n)))
+
         min_ll = orig_ll
         new_index = 0
-        for i in range(2, m - 1):
-            # Update parameters
-            runSum = runSum + np.outer(data[i - 1, :], data[i - 1, :])
-            mu_left = ((i - 1) * mu_left + data[i - 1, :]) / (i)
-            mu_right = ((m - i + 1) * mu_right - data[i - 1, :]) / (m - i)
-            sigLeft = runSum / (i) - np.outer(mu_left, mu_left)
-            sigRight = (total_sum - runSum) / (m - i) - np.outer(mu_right, mu_right)
+        # running sums over data[:n_done]
+        n_done = 0
+        run_sum = np.zeros(n)
+        run_outer = np.zeros((n, n))
+        for start in range(0, len(candidates), block_size):
+            idx = candidates[start : start + block_size]
+            # cumulative sums over data[:i], for i in idx, continuing the running sums
+            rows = data[n_done : idx[-1]]
+            cs_rows = run_sum + np.cumsum(rows, axis=0)
+            cs_outer_rows = run_outer + np.cumsum(
+                rows[:, :, None] * rows[:, None, :], axis=0
+            )
+            run_sum = cs_rows[-1]
+            run_outer = cs_outer_rows[-1]
+            cs = cs_rows[idx - n_done - 1]
+            cs_outer = cs_outer_rows[idx - n_done - 1]
+            n_done = int(idx[-1])
 
-            # Compute Cholesky, LogDet, and Trace
-            Lleft = np.linalg.cholesky(sigLeft + float(self.lamb) * np.identity(n) / i)
-            Lright = np.linalg.cholesky(
-                sigRight + float(self.lamb) * np.identity(n) / (m - i)
+            n_left = idx[:, None]
+            n_right = (m - idx)[:, None]
+            mu_left = cs / n_left
+            mu_right = (total_sum - cs) / n_right
+            sig_left = cs_outer / n_left[:, :, None] - (
+                mu_left[:, :, None] * mu_left[:, None, :]
             )
-            ll_left = 2 * sum(map(math.log, np.diag(Lleft)))
-            ll_right = 2 * sum(map(math.log, np.diag(Lright)))
+            sig_right = (total_outer - cs_outer) / n_right[:, :, None] - (
+                mu_right[:, :, None] * mu_right[:, None, :]
+            )
+
+            # Compute Cholesky, LogDet, and Trace, batched over candidates
+            L_left = np.linalg.cholesky(sig_left + lamb * eye / n_left[:, :, None])
+            L_right = np.linalg.cholesky(sig_right + lamb * eye / n_right[:, :, None])
+            ll_left = 2 * np.log(np.diagonal(L_left, axis1=1, axis2=2)).sum(axis=1)
+            ll_right = 2 * np.log(np.diagonal(L_right, axis1=1, axis2=2)).sum(axis=1)
             (trace_left, trace_right) = (0, 0)
-            if self.lamb > 0:
-                trace_left = math.pow(np.linalg.norm(np.linalg.inv(Lleft)), 2)
-                trace_right = math.pow(np.linalg.norm(np.linalg.inv(Lright)), 2)
+            if lamb > 0:
+                trace_left = (np.linalg.inv(L_left) ** 2).sum(axis=(1, 2))
+                trace_right = (np.linalg.inv(L_right) ** 2).sum(axis=(1, 2))
             LL = (
-                i * ll_left
-                - float(self.lamb) * trace_left
-                + (m - i) * ll_right
-                - float(self.lamb) * trace_right
+                idx * ll_left
+                - lamb * trace_left
+                + (m - idx) * ll_right
+                - lamb * trace_right
             )
-            # Keep track of the best point so far
-            if LL < min_ll:
-                min_ll = LL
-                new_index = i
+            # Keep track of the best point so far,
+            # the first candidate with the lowest LL is chosen in case of ties
+            best = int(np.argmin(LL))
+            if LL[best] < min_ll:
+                min_ll = LL[best]
+                new_index = int(idx[best])
         # Return break, increase in LL
         return new_index, min_ll - orig_ll
 
