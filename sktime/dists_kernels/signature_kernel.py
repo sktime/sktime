@@ -60,6 +60,7 @@ def makeinds(indlist):
 
 def cumsum_shift_mult(array, dims):
     """Apply cumsum and shift to all axes in dims."""
+    dims = _coerce_to_list_or_tuple(dims)
     array = cumsum_mult(array, dims)
     array = roll_mult(array, 1, dims)
 
@@ -187,6 +188,11 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
 
     aka compute "sequentialization of the kernel K", higher-order approximation
 
+    Implements Algorithm 4 of [1]_, the higher order sequential kernel
+    of Definition 7.5 in [1]_, i.e., the inner product of the order ``D``
+    approximations of the signatures, truncated at level ``L``.
+    For ``D=1``, coincides with ``sqize_kernel``, see Remark 7.6 in [1]_.
+
     Parameters
     ----------
     K : 2D np.ndarray
@@ -198,6 +204,7 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
         an integer >= 1, representing the order of approximation
     theta : float, optional, default=1.0
         a positive scaling factor for the levels, i-th level is scaled by theta^i
+        used only if normalize = True, as in ``sqize_kernel``
     normalize : bool, optional, default = False
         whether the output kernel matrix is normalized
         if True, sums and cumsums are divided by prod(K.shape)
@@ -205,28 +212,55 @@ def sqize_kernel_ho(K, L, D=1, theta=1.0, normalize=False):
     Returns
     -------
     a real number, the sequential kernel between path 1 (rows of K) and path 2 (cols)
+
+    References
+    ----------
+    .. [1] F. Kiraly, H. Oberhauser. 2016. "Kernels for sequentially ordered data.",
+        arXiv: 1601.08169.
     """
-    A = np.zeros(np.concatenate(([L, D, D], K.shape)))
-    Id = np.ones(K.shape)
+    # the order of approximation cannot exceed the level of truncation
+    D = min(D, L)
+
+    # scaling of the contributions of the previous level, and of each level,
+    # as in sqize_kernel
+    if normalize:
+        prev_scale = theta / np.prod(K.shape)
+        level_scale = 1 / (1 + theta)
+    else:
+        prev_scale = 1.0
+        level_scale = 1.0
+
+    # A[ell, d, d2, i, j] is the contribution of level ell + 1, of all index
+    # sequences ending in i (rows) and j (columns), where the last index i is
+    # repeated d + 1 times, and the last index j is repeated d2 + 1 times
+    A = np.zeros((L, D, D) + K.shape)
+    A[0, 0, 0] = K
 
     for ell in range(1, L):
-        Dprime = min(D, ell)
-        Acs = cumsum_shift_mult(np.sum(A[ell - 1, :, :, :, :], (0, 1)), (0, 1))
-        A[ell, 0, 0, :, :] = K * (Id + Acs)
-        for d1 in range(1, Dprime):
-            Acs1 = cumsum_shift_mult(np.sum(A[ell - 1, d1 - 1, :, :, :], 0), 1)
-            Acs2 = cumsum_shift_mult(np.sum(A[ell - 1, :, d1 - 1, :, :], 0), 0)
-            A[ell, d1, 0, :, :] = A[ell, d1, 0, :, :] + (1 / d1) * K * Acs1
-            A[ell, :, d1, :, :] = A[ell, 0, d1, :, :] + (1 / d1) * K * Acs2
+        # at level ell + 1, an index can be repeated at most ell + 1 times
+        Dprime = min(D, ell + 1)
+        A_prev = prev_scale * A[ell - 1]
 
+        # new indices i and j, previous indices strictly smaller
+        Acs = cumsum_shift_mult(np.sum(A_prev, (0, 1)), (0, 1))
+        A[ell, 0, 0] = level_scale * K * (1 + Acs)
+
+        for d in range(1, Dprime):
+            # index i repeated, index j new
+            Acs1 = cumsum_shift_mult(np.sum(A_prev[d - 1], 0), (1,))
+            A[ell, d, 0] = level_scale * K * Acs1 / (d + 1)
+
+            # index i new, index j repeated
+            Acs2 = cumsum_shift_mult(np.sum(A_prev[:, d - 1], 0), (0,))
+            A[ell, 0, d] = level_scale * K * Acs2 / (d + 1)
+
+            # both indices repeated
             for d2 in range(1, Dprime):
-                Acs12 = cumsum_shift_mult(
-                    np.sum(A[ell - 1, d1 - 1, d2 - 1, :, :], 0), 0
+                A[ell, d, d2] = (
+                    level_scale * K * A_prev[d - 1, d2 - 1] / ((d + 1) * (d2 + 1))
                 )
-                A[ell, d1, d2, :, :] = (
-                    A[ell, d1, d2, :, :] + (1 / (d1 * d2)) * K * Acs12
-                )
-    return 1 + np.sum(A[L - 1, :, :, :, :])
+
+    return level_scale * (1 + prev_scale * np.sum(A[L - 1]))
 
 
 # low-rank decomposition
@@ -1005,8 +1039,8 @@ class SignatureKernel(BasePairwiseTransformerPanel):
         # test higher level and normalization
         param2 = {"level": 3, "normalize": True}
 
-        # test higher-order function
-        param3 = {"degree": 2}
+        # test higher-order function, at a level where indices can be repeated
+        param3 = {"degree": 2, "level": 3}
 
         # test low-rank approximation
         param4 = {"lowrank": True}
