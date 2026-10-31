@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes import convert_to
+from sktime.datatypes._vectorize import prepare_VectorizedDF
 from sktime.detection.base import BaseDetector
 
 __author__ = ["SpitFire19"]
@@ -11,6 +13,10 @@ __author__ = ["SpitFire19"]
 class HampelDetector(BaseDetector):
     """
     Anomaly detector based on Hampel filter described in [1].
+
+    Panel inputs are processed independently for each time series. Predictions
+    have a MultiIndex of instance and event number, with ``ilocs`` relative to
+    each series. Scores retain the instance and time index.
 
     Parameters
     ----------
@@ -51,8 +57,9 @@ class HampelDetector(BaseDetector):
         "capability:missing_values": False,
         "capability:update": False,
         "capability:variable_identification": False,
-        "X_inner_mtype": "pd.Series",
+        "X_inner_mtype": ["pd.Series", "pd-multiindex"],
         "fit_is_empty": True,
+        "tests:specific": ["sktime.detection.tests.test_hampel"],
     }
 
     def __init__(self, window_length=10, n_sigma=3.0, k=1.4826):
@@ -67,9 +74,17 @@ class HampelDetector(BaseDetector):
 
         Returns
         -------
-        y : pd.Series
+        y : pd.Series or pd.DataFrame
             Sparse series containing the iloc indices of detected anomalies.
         """
+        if isinstance(X.index, pd.MultiIndex):
+            schema, X = prepare_VectorizedDF(X)
+            predictions = [
+                self._predict(convert_to(series, "pd.Series"))
+                for series in schema.as_list(X)
+            ]
+            return schema.reconstruct(predictions, overwrite_index=False)
+
         x_values = X.values
         n = len(x_values)
         outlier_indices = []
@@ -102,6 +117,14 @@ class HampelDetector(BaseDetector):
 
         Anomaly score is the absolute deviation normalized by (k * MAD).
         """
+        if isinstance(X.index, pd.MultiIndex):
+            schema, X = prepare_VectorizedDF(X)
+            scores = [
+                self._transform_scores(convert_to(series, "pd.Series"))
+                for series in schema.as_list(X)
+            ]
+            return schema.reconstruct(scores, overwrite_index=False)
+
         x_values = X.values
         n = len(x_values)
         scores = np.zeros(n)
