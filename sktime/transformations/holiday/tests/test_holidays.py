@@ -4,6 +4,7 @@
 
 __author__ = ["VyomkeshVyas", "fnhirwa"]
 
+import warnings
 from datetime import date
 
 import numpy as np
@@ -200,3 +201,208 @@ def test_period_index(calendar):
     assert isinstance(result_period.index, pd.PeriodIndex)
     result_datetime.index = pd.PeriodIndex(result_datetime.index, freq="D")
     assert_frame_equal(result_period, result_datetime)
+
+
+def _holiday_labels(transformer, start, end):
+    """Return categorical holiday labels as a dict of date strings to labels."""
+    X = pd.DataFrame(
+        {"values": 0.0}, index=pd.date_range(start=start, end=end, freq="D")
+    )
+    X_trafo = transformer.fit_transform(X)
+    labels = X_trafo["holiday"].astype(str)
+    return dict(zip(labels.index.strftime("%Y-%m-%d"), labels))
+
+
+CHRISTMAS_NEW_YEAR = {
+    date(2025, 12, 25): "Christmas",
+    date(2026, 1, 1): "New Year",
+}
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_overlapping_windows_combine_labels():
+    """Tests that overlapping holiday windows keep both holiday names."""
+    transformer = HolidayFeatures(
+        calendar=CHRISTMAS_NEW_YEAR,
+        holiday_windows={"Christmas": (0, 4), "New Year": (4, 0)},
+        return_categorical=True,
+    )
+    labels = _holiday_labels(transformer, "2025-12-26", "2025-12-31")
+    assert labels == {
+        "2025-12-26": "Christmas",
+        "2025-12-27": "Christmas",
+        "2025-12-28": "Christmas, New Year",
+        "2025-12-29": "Christmas, New Year",
+        "2025-12-30": "New Year",
+        "2025-12-31": "New Year",
+    }
+
+    X = pd.DataFrame(
+        {"values": 0.0}, index=pd.date_range("2025-12-26", "2025-12-31", freq="D")
+    )
+    dummies = HolidayFeatures(
+        calendar=CHRISTMAS_NEW_YEAR,
+        holiday_windows={"Christmas": (0, 4), "New Year": (4, 0)},
+    ).fit_transform(X)
+    assert list(dummies.columns) == ["Christmas", "Christmas, New Year", "New Year"]
+    assert dummies.sum().tolist() == [2, 2, 2]
+
+
+@pytest.mark.parametrize(
+    "holiday_windows",
+    [
+        {"Christmas": (2, 0), "Unknown Holiday": (1, 0)},
+        {"Unknown Holiday": (1, 0), "Christmas": (2, 0)},
+    ],
+)
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_unknown_holiday_in_windows_is_skipped(holiday_windows):
+    """Tests that a window for a holiday not in the calendar has no effect."""
+    transformer = HolidayFeatures(
+        calendar=CHRISTMAS_NEW_YEAR,
+        holiday_windows=holiday_windows,
+        return_categorical=True,
+    )
+    with pytest.warns(UserWarning, match="Unknown Holiday"):
+        labels = _holiday_labels(transformer, "2025-12-20", "2025-12-26")
+    assert labels == {
+        "2025-12-20": "no_holiday",
+        "2025-12-21": "no_holiday",
+        "2025-12-22": "no_holiday",
+        "2025-12-23": "Christmas",
+        "2025-12-24": "Christmas",
+        "2025-12-25": "Christmas",
+        "2025-12-26": "no_holiday",
+    }
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_windows_raise_no_conflict_warning():
+    """Tests that windows without conflicts do not raise warnings.
+
+    This includes the holiday itself, and a holiday spanning consecutive days.
+    """
+    calendar = {
+        date(2025, 12, 25): "Christmas",
+        date(2026, 2, 16): "Carnival",
+        date(2026, 2, 17): "Carnival",
+    }
+    transformer = HolidayFeatures(
+        calendar=calendar,
+        holiday_windows={"Christmas": (1, 1), "Carnival": (1, 1)},
+        return_categorical=True,
+    )
+    X = pd.DataFrame(
+        {"values": 0.0}, index=pd.date_range("2025-12-01", "2026-02-28", freq="D")
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        X_trafo = transformer.fit_transform(X)
+    counts = X_trafo["holiday"].value_counts()
+    assert counts["Christmas"] == 3
+    assert counts["Carnival"] == 4
+
+
+@pytest.mark.parametrize(
+    "start, end, expected",
+    [
+        # holiday after the end of the index
+        (
+            "2025-12-20",
+            "2025-12-24",
+            ["no_holiday", "no_holiday", "Christmas", "Christmas", "Christmas"],
+        ),
+        # holiday before the start of the index
+        (
+            "2025-12-26",
+            "2025-12-30",
+            ["Christmas", "Christmas", "Christmas", "no_holiday", "no_holiday"],
+        ),
+    ],
+)
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_window_of_holiday_outside_index(start, end, expected):
+    """Tests that windows of holidays just outside the time index are applied."""
+    transformer = HolidayFeatures(
+        calendar={date(2025, 12, 25): "Christmas"},
+        holiday_windows={"Christmas": (3, 3)},
+        return_categorical=True,
+    )
+    labels = _holiday_labels(transformer, start, end)
+    assert list(labels.values()) == expected
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_window_of_holiday_outside_index_with_holidays_calendar():
+    """Tests windows of holidays outside the index for a lazy HolidayBase calendar.
+
+    HolidayBase objects only populate years on lookup, so the year of the
+    holiday outside the index is not populated when the transformer is called.
+    """
+    from holidays import country_holidays
+
+    transformer = HolidayFeatures(
+        calendar=country_holidays(country="GB"),
+        holiday_windows={"New Year's Day": (2, 0)},
+        return_categorical=True,
+    )
+    labels = _holiday_labels(transformer, "2022-12-27", "2022-12-31")
+    assert labels["2022-12-29"] == "no_holiday"
+    assert labels["2022-12-30"] == "New Year's Day"
+    assert labels["2022-12-31"] == "New Year's Day"
+
+
+@pytest.mark.parametrize(
+    "calendar, start, end, bridge_day",
+    [
+        # holiday on Tuesday after the end of the index, bridge day on Monday
+        ({date(2026, 5, 5): "Holiday"}, "2026-04-30", "2026-05-04", "2026-05-04"),
+        # holiday on Thursday before the start of the index, bridge day on Friday
+        ({date(2026, 5, 14): "Holiday"}, "2026-05-15", "2026-05-19", "2026-05-15"),
+    ],
+)
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_bridge_day_of_holiday_outside_index(calendar, start, end, bridge_day):
+    """Tests that bridge days of holidays just outside the time index are applied."""
+    transformer = HolidayFeatures(
+        calendar=calendar,
+        include_bridge_days=True,
+        return_categorical=True,
+    )
+    labels = _holiday_labels(transformer, start, end)
+    assert labels == {**dict.fromkeys(labels, "no_holiday"), bridge_day: "Holiday"}
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HolidayFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_negative_window_raises():
+    """Tests that negative days in holiday windows raise an error."""
+    transformer = HolidayFeatures(
+        calendar=CHRISTMAS_NEW_YEAR,
+        holiday_windows={"Christmas": (-1, 3)},
+    )
+    X = pd.DataFrame(
+        {"values": 0.0}, index=pd.date_range("2025-12-20", "2025-12-31", freq="D")
+    )
+    with pytest.raises(ValueError, match="non-negative"):
+        transformer.fit_transform(X)
