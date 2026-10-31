@@ -129,3 +129,42 @@ def test_multivariate_hilbert_matches_per_channel_reference(
     # Keep strict float64 checks and allow only single-precision-scale error.
     tolerance = 1e-5 if dtype_case == "float32" else 1e-12
     pd.testing.assert_frame_equal(actual, expected, rtol=tolerance, atol=tolerance)
+
+@pytest.mark.parametrize(
+    "output_type", ["envelope", "phase", "frequency", "quadrature", "all"]
+)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_large_multivariate_hilbert_matches_per_channel_reference(output_type, dtype):
+    """Several FFT batches must match per-column SciPy results."""
+    from scipy.signal import hilbert
+
+    rng = np.random.default_rng(2026)
+    X = pd.DataFrame(
+        rng.standard_normal((128, 320)).astype(dtype),
+        columns=[f"channel_{i}" for i in range(320)],
+    )
+    reference = {}
+    for column in X.columns:
+        analytic = hilbert(X[column].to_numpy(), N=192)[: len(X)]
+        envelope = np.abs(analytic)
+        phase = np.unwrap(np.angle(analytic))
+
+        if output_type == "envelope":
+            reference[column] = envelope
+        elif output_type == "quadrature":
+            reference[column] = analytic.imag
+        elif output_type == "phase":
+            reference[column] = phase
+        elif output_type == "frequency":
+            reference[column] = np.gradient(phase) * 4.0 / (2 * np.pi)
+        else:
+            reference[f"{column}_envelope"] = envelope
+            reference[f"{column}_phase"] = phase
+            reference[f"{column}_frequency"] = np.gradient(phase) * 4.0 / (2 * np.pi)
+
+    actual = HilbertTransformer(
+        output_type=output_type, N=192, fs=4.0
+    ).fit_transform(X)
+    expected = pd.DataFrame(reference, index=X.index)
+    tolerance = 1e-5 if dtype == np.float32 else 1e-12
+    pd.testing.assert_frame_equal(actual, expected, rtol=tolerance, atol=tolerance)
