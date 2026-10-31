@@ -30,7 +30,7 @@ maintainers = [
 authors = [
     { name = "sktime developers", email = "sktime.toolbox@gmail.com" },
 ]
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.10,<3.16"
 classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
@@ -46,6 +46,7 @@ classifiers = [
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Topic :: Scientific/Engineering",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
   "Topic :: Software Development",
@@ -206,14 +207,14 @@ dl = [
   'neuralforecast>=1.6.4; python_version < "3.12"',
   'peft>=0.10.0,<0.14.0; python_version < "3.12"',
   'tensorflow<2.20,>=2.15; python_version < "3.13"',
-  "torch; (sys_platform != 'darwin' or python_version < '3.13')",
+  "torch; ((sys_platform != 'darwin' or python_version < '3.13') and python_version < '3.15')",
   'transformers[torch]<4.41.0; python_version < "3.13"',
   "pytorch-forecasting>=1.8.0; (sys_platform != 'darwin' or python_version != '3.13') and python_version < '3.14'",
-  "lightning>=2.0,<2.7; (sys_platform != 'darwin' or python_version < '3.13')",
+  "lightning>=2.0,<2.7; (sys_platform != 'darwin' or python_version < '3.13') and python_version < '3.15'",
   'gluonts>=0.14.3; python_version < "3.12"',
   'einops>0.7.0; python_version < "3.12"',
   'huggingface-hub>=0.23.0; python_version < "3.12"',
-  'accelerate',
+  'accelerate; python_version < "3.15"',
   'tqdm',
   'hydra-core; python_version < "3.13"',
   'torchmetrics; python_version < "3.13"',
