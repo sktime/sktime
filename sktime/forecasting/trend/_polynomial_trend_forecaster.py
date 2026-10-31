@@ -44,17 +44,10 @@ class PolynomialTrendForecaster(BaseForecaster):
     Default for ``regressor`` is linear regression = ``sklearn`` ``LinearRegression``,
     with default parameters. Default for ``degree`` is 1.
 
-    Time is measured from the first training time point. If time stamps are
-    ``pd.DatetimeIndex``, fitted coefficients are in units of days since the
-    first training time point. If time stamps are ``pd.PeriodIndex``,
-    coefficients are in units of (full) periods since the first training time point.
-
-    For the default regressor (``LinearRegression``), the least squares problem is
-    solved on an affinely rescaled time axis, so that the polynomial features are
-    well-conditioned even for long series (e.g., many years of daily data) and
-    ``degree`` larger than 1. The fitted coefficients are then converted back
-    exactly, so ``regressor_`` and its coefficients are always expressed in the
-    time units described above.
+    If time stamps are ``pd.DatetimeIndex``, fitted coefficients are in units
+    of per days (to the power of the respective degree).
+    If time stamps are ``pd.PeriodIndex``,
+    coefficients are in units of (full) periods (to the power of the respective degree).
 
     Parameters
     ----------
