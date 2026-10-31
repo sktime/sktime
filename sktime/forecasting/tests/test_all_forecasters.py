@@ -804,15 +804,17 @@ class TestAllForecasters(ForecasterFixtureGenerator, QuickTester):
         """Test update method with exogenous variables"""
         index = pd.date_range("2020-01-01", periods=25, freq="D")
 
-        # Create y data
+        # Create y data, random and strictly positive:
+        # some estimators use count losses, e.g. Poisson, or multiplicative
+        # components, e.g. ExponentialSmoothing, or power transforms, e.g.
+        # BoxCoxBiasAdjustedForecaster, which require positive data;
+        # deterministic data such as range(25) is singular for VAR type models
+        np.random.seed(42)
         if n_columns == 1:
-            y = pd.Series(range(25), index=index, name="y")
+            y = pd.Series(np.random.randn(25) + 10, index=index, name="y")
         else:
             y_data = {}
-            np.random.seed(42)
             for i in range(n_columns):
-                # offset to be all-positive, as in the univariate case above,
-                # since some estimators use count losses, e.g. Poisson
                 y_data[f"y_{i}"] = np.random.randn(25) + 10
             y = pd.DataFrame(y_data, index=index)
 
