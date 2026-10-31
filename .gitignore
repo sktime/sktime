@@ -107,7 +107,6 @@ celerybeat-schedule
 *.sage.py
 
 # Environments
-.env
 .venv
 .venv39
 env/
@@ -136,7 +135,6 @@ dmypy.json
 *.prefs
 .pydevproject
 .idea
-.vscode
 .spyderproject
 .spyproject
 .ropeproject
@@ -177,3 +175,5 @@ examples/local/
 profile.svg
 test_output/*
 mlruns/*
+config.bat
+node_modules
