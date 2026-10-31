@@ -35,6 +35,10 @@ class _ConverterConcat(BaseConverter):
     converter_second : BaseConverter, conversion from the anchor mtype to mtype_to
     """
 
+    _tags = {
+        "multiple_conversions": True,
+    }
+
     def __init__(self, converter_first, converter_second):
         self.converter_first = converter_first
         self.converter_second = converter_second

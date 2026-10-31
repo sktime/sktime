@@ -160,6 +160,7 @@ def _extend_conversions(convert_dict, extension_sequence):
     in order, conversions from and to ``mtype`` and all other mtypes of ``scitype``
     not in ``convert_dict`` are added, as concatenation of the conversion to
     ``anchor_mtype`` and the conversion from ``anchor_mtype``.
+    The mtypes of ``scitype`` are looked up in the mtype register.
 
     Triples are skipped if ``mtype`` and ``anchor_mtype`` are not inter-convertible,
     e.g., if soft dependencies are not present.
@@ -174,6 +175,7 @@ def _extend_conversions(convert_dict, extension_sequence):
     reference to convert_dict, with conversions added
     """
     from sktime.datatypes._convert_utils._convert import _ConverterConcat
+    from sktime.datatypes._registry import generate_mtype_list
 
     for mtype, anchor, scitype in extension_sequence:
         to_anchor = convert_dict.get((mtype, anchor, scitype))
@@ -181,8 +183,8 @@ def _extend_conversions(convert_dict, extension_sequence):
         if to_anchor is None or from_anchor is None:
             continue
 
-        mtypes = {x[i] for x in convert_dict if x[2] == scitype for i in (0, 1)}
-        for tp in sorted(mtypes.difference([mtype, anchor])):
+        mtypes = generate_mtype_list(scitype=scitype, soft_deps="all")
+        for tp in [x for x in mtypes if x not in (mtype, anchor)]:
             anchor_to_tp = convert_dict.get((anchor, tp, scitype))
             if anchor_to_tp is not None and (mtype, tp, scitype) not in convert_dict:
                 convert_dict[(mtype, tp, scitype)] = _ConverterConcat(
