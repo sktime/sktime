@@ -162,9 +162,7 @@ def test_large_multivariate_hilbert_matches_per_channel_reference(output_type, d
             reference[f"{column}_phase"] = phase
             reference[f"{column}_frequency"] = np.gradient(phase) * 4.0 / (2 * np.pi)
 
-    actual = HilbertTransformer(
-        output_type=output_type, N=192, fs=4.0
-    ).fit_transform(X)
+    actual = HilbertTransformer(output_type=output_type, N=192, fs=4.0).fit_transform(X)
     expected = pd.DataFrame(reference, index=X.index)
     tolerance = 1e-5 if dtype == np.float32 else 1e-12
     pd.testing.assert_frame_equal(actual, expected, rtol=tolerance, atol=tolerance)
