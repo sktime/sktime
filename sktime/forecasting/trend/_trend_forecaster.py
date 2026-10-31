@@ -36,8 +36,9 @@ class TrendForecaster(BaseForecaster):
     with default parameters.
 
     If time stamps are ``pd.DatetimeIndex``, fitted coefficients are in units
-    of days since start of 1970. If time stamps are ``pd.PeriodIndex``,
-    coefficients are in units of (full) periods since start of 1970.
+    of per days (to the power of the respective degree).
+    If time stamps are ``pd.PeriodIndex``,
+    coefficients are in units of (full) periods (to the power of the respective degree).
 
     Parameters
     ----------
