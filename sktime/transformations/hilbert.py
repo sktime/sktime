@@ -136,7 +136,9 @@ class HilbertTransformer(BaseTransformer):
                     values = frequency
                 else:
                     envelope = np.abs(analytic)
-                    values = np.stack((envelope, phase, frequency), axis=2).reshape(n, -1)
+                    values = np.stack(
+                        (envelope, phase, frequency), axis=2
+                    ).reshape(n, -1)
 
         if output_type == "all":
             columns = [
