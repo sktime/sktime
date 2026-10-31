@@ -4304,6 +4304,17 @@
       "contributions": [
         "test"
       ]
+    },
+    {
+      "login": "AryanRG",
+      "name": "Aryan R. Ganjoo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/51299383?v=4",
+      "profile": "https://github.com/AryanRG",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
     }
   ]
 }
