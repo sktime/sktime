@@ -101,3 +101,16 @@ def test_cutoff_fh_splitter_relative_cutoffs(hierarchical, fh, method):
         else:
             pd.testing.assert_frame_equal(train, y.iloc[expected_train])
             pd.testing.assert_frame_equal(test, y.iloc[expected_test])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(CutoffSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_cutoff_window_splitter_integer_index():
+    """Test CutoffSplitter on integer indices with gaps (see #11389)."""
+    y_step = pd.Series(np.arange(10.0), index=pd.RangeIndex(5, 25, 2))
+    cv = CutoffSplitter(cutoffs=np.array([3, 5]), fh=[1, 2], window_length=2)
+    train_windows = [tr for tr, _ in cv.split(y_step)]
+    np.testing.assert_array_equal(train_windows[0], [2, 3])
+    np.testing.assert_array_equal(train_windows[1], [4, 5])
