@@ -72,13 +72,25 @@ class SameLocSplitter(BaseSplitter):
         "tests:specific": ["sktime.split.tests.test_sameloc"],
         # splitters excluded with undiagnosed failures, see #6194
         # these are temporarily skipped to allow merging of the base test framework
-        "tests:skip_all": True,
     }
 
     def __init__(self, cv, y_template=None):
         self.cv = cv
         self.y_template = y_template
         super().__init__()
+        
+    def _get_iloc_indexer(self, y: pd.Index, y_loc: pd.Index):
+        """Get iloc positions of y_loc in y, raising KeyError if any are missing."""
+        iloc = y.get_indexer(y_loc)
+        missing_mask = iloc == -1
+        if missing_mask.any():
+            missing = y_loc[missing_mask]
+            raise KeyError(
+                f"Error in SameLocSplitter: y does not contain the following "
+                f"loc index entries required by the reference split "
+                f"from cv/y_template: {list(missing)}"
+            )
+        return iloc
 
     def _split(self, y: pd.Index):
         cv = self.cv
@@ -88,8 +100,8 @@ class SameLocSplitter(BaseSplitter):
             y_template = self.y_template
 
         for y_train_loc, y_test_loc in cv.split_loc(y_template):
-            y_train_iloc = y.get_indexer(y_train_loc)
-            y_test_iloc = y.get_indexer(y_test_loc)
+            y_train_iloc = self._get_iloc_indexer(y, y_train_loc)
+            y_test_iloc = self._get_iloc_indexer(y, y_test_loc)
             yield y_train_iloc, y_test_iloc
 
     def _split_loc(self, y: pd.Index):
@@ -114,8 +126,10 @@ class SameLocSplitter(BaseSplitter):
             y_template = y
         else:
             y_template = self.y_template
-
-        yield from cv.split_loc(y_template)
+        for y_train_loc, y_test_loc in cv.split_loc(y_template):
+            y_train_iloc = self._get_iloc_indexer(y, y_train_loc)
+            y_test_iloc = self._get_iloc_indexer(y, y_test_loc)
+            yield y[y_train_iloc], y[y_test_iloc]
 
     def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
