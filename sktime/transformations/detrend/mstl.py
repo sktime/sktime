@@ -81,6 +81,8 @@ class MSTL(BaseTransformer):
     stl_kwargs : dict, optional
         Arguments to pass to STL.
     return_components : bool, default=False
+        Whether to return components of the decomposition or only transformed series.
+
         * if False, will return only the MSTL transformed series, same
           as trend plus residual component. The resulting series has the same
           number of columns as the input.
@@ -199,6 +201,10 @@ class MSTL(BaseTransformer):
         "skip-inverse-transform": False,
         "fit_is_empty": False,
         "capability:categorical_in_X": False,
+        # CI and test flags
+        # -----------------
+        "tests:specific": ["sktime.transformations.detrend.tests.test_mstl"],
+        "tests:vm": True,
     }
 
     def __init__(
@@ -295,11 +301,21 @@ class MSTL(BaseTransformer):
 
         seasonal = self.seasonal_
 
+        # ``periods`` is a user parameter and may be a single int, so coerce
+        # before iterating
+        periods = self.periods
+        if not isinstance(periods, Sequence):
+            periods = [periods]
+
         fcsts = []
-        for period in self.periods:
+        for period in periods:
             nf = NaiveForecaster(strategy="last", sp=period)
             fh = ForecastingHorizon(X.index, is_relative=False)
             sp_ix = f"seasonal_{period}"
+            if sp_ix not in seasonal.columns:
+                # for a single period, statsmodels returns one unsuffixed
+                # "seasonal" column rather than "seasonal_<period>"
+                sp_ix = seasonal.columns[0]
             nf_pred = nf.fit(seasonal[sp_ix], fh=fh).predict()
             fcsts.append(nf_pred)
         fcsts = pd.DataFrame(fcsts).T
