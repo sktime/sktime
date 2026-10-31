@@ -7,7 +7,10 @@ from sklearn.model_selection import check_cv
 
 from sktime.exceptions import NotFittedError
 from sktime.forecasting.model_evaluation import evaluate
-from sktime.forecasting.model_selection._base import BaseGridSearch
+from sktime.forecasting.model_selection._base import (
+    BaseGridSearch,
+    _clone_and_set_params,
+)
 from sktime.split.base import BaseSplitter
 from sktime.utils.parallel import parallelize
 from sktime.utils.validation.forecasting import check_scoring
@@ -331,7 +334,9 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             )
         self.best_score_ = results.loc[self.best_index_, f"mean_{scoring_name}"]
         self.best_params_ = results.loc[self.best_index_, "params"]
-        self.best_forecaster_ = self.forecaster.clone().set_params(**self.best_params_)
+        self.best_forecaster_ = _clone_and_set_params(
+            self.forecaster, self.best_params_
+        )
 
         # Refit model with best parameters.
         if self.refit:
@@ -350,7 +355,7 @@ class ForecastingSkoptSearchCV(BaseGridSearch):
             params = results["params"].iloc[i]
             rank = results[f"rank_{scoring_name}"].iloc[i]
             rank = str(int(rank))
-            forecaster = self.forecaster.clone().set_params(**params)
+            forecaster = _clone_and_set_params(self.forecaster, params)
             # Refit model with best parameters.
             if self.refit:
                 forecaster.fit(y, X, fh)
@@ -648,15 +653,12 @@ def _fit_and_score_skopt(params, meta):
 
     @use_named_args(dimensions)  # decorator to convert candidate param list to dict
     def _fit_and_score(**params):
-        # Clone forecaster.
-        forecaster = meta["forecaster"].clone()
-
         # map forecaster back to estimator instance
         if "forecaster" in params:
             params["forecaster"] = mapping[params["forecaster"]]
 
-        # Set parameters.
-        forecaster.set_params(**params)
+        # Clone forecaster and set parameters, retaining pretrained state.
+        forecaster = _clone_and_set_params(meta["forecaster"], params)
 
         # Evaluate.
         out = evaluate(
