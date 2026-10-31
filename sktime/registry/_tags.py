@@ -1298,7 +1298,7 @@ class capability__pred_int__insample(_BaseTag):
 
 
 class capability__pretrain(_BaseTag):
-    """Capability: the forecaster or detector can use pretraining for global learning.
+    """Capability: the estimator can use pretraining for global learning.
 
     - String name: ``"capability:pretrain"``
     - Public capability tag
@@ -1323,6 +1323,11 @@ class capability__pretrain(_BaseTag):
     For detectors, the workflow is ``detector.pretrain(X_panel)``,
     then ``detector.fit(X_series)``, then ``detector.predict(X_series)``.
 
+    For classifiers and regressors, the workflow is
+    ``estimator.pretrain(X_pretrain, y_pretrain)``, where ``y_pretrain`` is
+    optional and need not have the same labels as in ``fit``,
+    then ``estimator.fit(X, y)``, then ``estimator.predict(X_new)``.
+
     If the tag is ``False``, the estimator does not support pretraining.
     Calling ``pretrain`` does not learn from the data,
     it only sets the state to ``"pretrained"``.
@@ -1330,7 +1335,7 @@ class capability__pretrain(_BaseTag):
 
     _tags = {
         "tag_name": "capability:pretrain",
-        "parent_type": ["forecaster", "detector"],
+        "parent_type": ["forecaster", "detector", "classifier", "regressor"],
         "tag_type": "bool",
         "short_descr": "can use pretrain for global learning",
         "user_facing": True,
@@ -1360,7 +1365,7 @@ class pretrain__fitted_params(_BaseTag):
 
     _tags = {
         "tag_name": "pretrain:fitted_params",
-        "parent_type": "forecaster",
+        "parent_type": ["forecaster", "classifier", "regressor"],
         "tag_type": ("list", "str"),
         "short_descr": "attributes carrying pretrained state",
         "user_facing": True,

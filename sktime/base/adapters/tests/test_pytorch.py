@@ -255,3 +255,223 @@ def test_callbacks_str_looked_up_in_lr_scheduler(kind):
     for callbacks in ["not_a_scheduler", "LRScheduler"]:
         with pytest.raises(ValueError, match="Unknown learning rate scheduler"):
             _make(kind, callbacks=callbacks).fit(X, y)
+
+
+def _make_fcn(kind):
+    """Make a small FCN estimator, a network with batch normalization layers."""
+    params = {
+        "filter_sizes": (4, 8, 4),
+        "kernel_sizes": (3, 3, 3),
+        "num_epochs": 2,
+        "batch_size": 4,
+        "callbacks": None,
+        "random_state": 42,
+    }
+    if kind == "classifier":
+        from sktime.classification.deep_learning.fcn import FCNClassifierTorch
+
+        return FCNClassifierTorch(**params)
+    from sktime.regression.deep_learning.fcn import FCNRegressorTorch
+
+    return FCNRegressorTorch(**params)
+
+
+def _pretrain_data(kind, n_columns=1):
+    """Make pretraining data, for classifiers with three string class labels."""
+    if kind == "classifier":
+        from sktime.utils._testing.panel import make_classification_problem
+
+        X, y = make_classification_problem(
+            n_instances=12, n_columns=n_columns, n_timepoints=12, n_classes=3
+        )
+        return X, np.array(["a", "b", "c"])[y]
+    from sktime.utils._testing.panel import make_regression_problem
+
+    return make_regression_problem(n_instances=12, n_columns=n_columns, n_timepoints=12)
+
+
+def _weights(network):
+    """Return a copy of the parameters and buffers of a network."""
+    return {k: v.clone() for k, v in network.state_dict().items()}
+
+
+def _same_weights(weights, network):
+    """Return whether network has exactly the given parameters and buffers."""
+    import torch
+
+    state = network.state_dict()
+    return all(torch.equal(weights[k], state[k]) for k in weights)
+
+
+@run_test
+@pytest.mark.parametrize("kind", KINDS)
+def test_pretrain_trains_pretrained_network(kind):
+    """Test pretrain trains a network, and does not keep the optimizer."""
+    X, y = _pretrain_data(kind)
+
+    est = _make_fcn(kind).pretrain(X, y)
+
+    assert est.state == "pretrained"
+    assert est.n_pretrain_instances_ == 12
+    assert "pretrained_network_" in est.get_pretrained_params()
+    assert not hasattr(est, "network")
+    assert est._optimizer is None
+    if kind == "classifier":
+        np.testing.assert_array_equal(est.pretrain_classes_, ["a", "b", "c"])
+
+
+@run_test
+@pytest.mark.parametrize("kind", KINDS)
+def test_fit_after_pretrain_does_not_train(kind):
+    """Test fit after pretrain uses the pretrained network, without changing it.
+
+    Batch normalization buffers are included, as they change in training mode.
+    """
+    X, y = _pretrain_data(kind)
+    est = _make_fcn(kind).pretrain(X, y)
+    weights = _weights(est.pretrained_network_)
+
+    est.fit(X, y)
+
+    assert est.state == "fitted"
+    assert est.network is est.pretrained_network_
+    assert _same_weights(weights, est.network)
+    assert est._optimizer is None
+
+    # refit discards the reference only, and binds the same network again
+    est.fit(X, y)
+    assert est.network is est.pretrained_network_
+    assert _same_weights(weights, est.network)
+
+
+@run_test
+@pytest.mark.parametrize("kind", KINDS)
+def test_fit_without_pretrain_trains_new_network(kind):
+    """Test fit without pretrain trains a new network, as before pretraining."""
+    X, y = _pretrain_data(kind)
+
+    est = _make_fcn(kind).fit(X, y)
+
+    assert not hasattr(est, "pretrained_network_")
+    bound = [p for g in est._optimizer.param_groups for p in g["params"]]
+    assert all(a is b for a, b in zip(bound, est.network.parameters()))
+
+
+@run_test
+@pytest.mark.parametrize("kind", KINDS)
+def test_pretrain_update_continues_training(kind):
+    """Test further pretrain calls continue training the same network."""
+    X, y = _pretrain_data(kind)
+    est = _make_fcn(kind).pretrain(X, y)
+    network = est.pretrained_network_
+    weights = _weights(network)
+
+    est.pretrain(X, y)
+
+    assert est.pretrained_network_ is network
+    assert not _same_weights(weights, network)
+    assert est.n_pretrain_instances_ == 24
+    assert est._optimizer is None
+
+
+@run_test
+@pytest.mark.parametrize("kind", KINDS)
+def test_pretrain_after_fit_discards_fitted_network(kind):
+    """Test pretrain after fit removes the fitted reference, and fine-tunes."""
+    X, y = _pretrain_data(kind)
+    est = _make_fcn(kind).pretrain(X, y).fit(X, y)
+    network = est.pretrained_network_
+
+    est.pretrain(X, y)
+
+    assert est.state == "pretrained"
+    assert not hasattr(est, "network")
+    assert est.pretrained_network_ is network
+    assert est.n_pretrain_instances_ == 24
+
+
+@run_test
+@pytest.mark.parametrize("kind", KINDS)
+def test_pretrain_without_y_raises(kind):
+    """Test pretrain without y raises, without changing the state."""
+    X, y = _pretrain_data(kind)
+    est = _make_fcn(kind)
+
+    with pytest.raises(NotImplementedError, match="self-supervised"):
+        est.pretrain(X)
+    assert est.state == "new"
+
+    est.fit(X, y)
+    with pytest.raises(NotImplementedError, match="self-supervised"):
+        est.pretrain(X)
+    assert est.state == "fitted"
+
+
+@run_test
+@pytest.mark.parametrize("kind", KINDS)
+def test_incompatible_X_after_pretrain_raises(kind):
+    """Test fit and pretrain raise on X the pretrained network cannot handle."""
+    X, y = _pretrain_data(kind)
+    X_multi, _ = _pretrain_data(kind, n_columns=2)
+    est = _make_fcn(kind).pretrain(X, y)
+
+    with pytest.raises(ValueError, match="cannot be applied"):
+        est.fit(X_multi, y)
+    with pytest.raises(ValueError, match="cannot be applied"):
+        est.pretrain(X_multi, y)
+
+
+@run_test
+@pytest.mark.parametrize("kind", KINDS)
+def test_clone_copies_pretrained_network(kind):
+    """Test clones keep the pretrained network, without shared weights."""
+    X, y = _pretrain_data(kind)
+    est = _make_fcn(kind).pretrain(X, y)
+    weights = _weights(est.pretrained_network_)
+
+    cloned = est.clone()
+    assert cloned.state == "pretrained"
+    assert cloned.pretrained_network_ is not est.pretrained_network_
+    assert _same_weights(weights, cloned.pretrained_network_)
+
+    # fine-tuning the clone does not change the original
+    cloned.pretrain(X, y)
+    assert _same_weights(weights, est.pretrained_network_)
+
+
+@run_test
+def test_classifier_fit_on_subset_of_pretrained_classes():
+    """Test fit on a subset of pretrained classes predicts only those classes.
+
+    The probabilities are those of the pretrained network for the classes in fit,
+    renormalized to sum to one.
+    """
+    X, y = _pretrain_data("classifier")
+    est = _make_fcn("classifier").pretrain(X, y)
+
+    proba_all = est.clone().fit(X, y).predict_proba(X)
+
+    subset = y != "b"
+    est.fit(X[subset], y[subset])
+    proba = est.predict_proba(X)
+
+    np.testing.assert_array_equal(est.classes_, ["a", "c"])
+    expected = proba_all[:, [0, 2]] / proba_all[:, [0, 2]].sum(axis=1, keepdims=True)
+    np.testing.assert_array_almost_equal(proba, expected)
+    assert set(est.predict(X)) <= {"a", "c"}
+
+
+@run_test
+def test_classifier_unseen_classes_after_pretrain_raise():
+    """Test labels not seen in the first pretrain raise in fit and pretrain."""
+    X, y = _pretrain_data("classifier")
+    est = _make_fcn("classifier").pretrain(X[y != "c"], y[y != "c"])
+
+    with pytest.raises(ValueError, match=r"\['c'\], which were not seen in pretrain"):
+        est.fit(X, y)
+
+    est.fit(X[y != "c"], y[y != "c"])
+    with pytest.raises(ValueError, match=r"\['c'\], which were not seen in pretrain"):
+        est.pretrain(X, y)
+    # the error is raised before the fitted state is discarded
+    assert est.state == "fitted"

@@ -20,12 +20,32 @@ TORCH_SCHEDULER = "torch.optim.lr_scheduler.LRScheduler"
 
 
 class _PytorchDeepAdapter:
-    """Mixin adapter class for pytorch deep learning estimators."""
+    """Mixin adapter class for pytorch deep learning estimators.
+
+    State Logic
+    -----------
+    Pretraining: ``pretrain`` trains a network, stored in ``pretrained_network_``.
+    Further calls of ``pretrain`` continue training this network, i.e., fine-tune it.
+
+    ``fit`` after ``pretrain`` does not train: the network is used as pretrained,
+    ``self.network`` refers to ``self.pretrained_network_``, without a copy.
+    ``fit`` without ``pretrain`` trains a new network in ``self.network``.
+
+    Pretraining requires labels or target values ``y``.
+
+    Inheriting base classes must implement ``_new_network``, ``_encode_fit_y``,
+    ``_encode_pretrain_y``, and ``_bind_pretrained_network``.
+    """
 
     _default_criterion = None
     _y_dtype = "float"
 
+    # attributes only used while training, cleared after pretraining
+    _TRAINING_ATTRS = ("_criterion", "_optimizer", "_schedulers", "_metrics_objects")
+
     _tags = {
+        "capability:pretrain": True,
+        "pretrain:fitted_params": ["pretrained_network_", "n_pretrain_instances_"],
         "tests:libs": ["sktime.base.adapters._pytorch"],
     }
 
@@ -49,10 +69,7 @@ class _PytorchDeepAdapter:
         """
         super().__post_init__()
 
-        if self.random_state is not None:
-            from torch import manual_seed
-
-            manual_seed(self.random_state)
+        self._set_seed()
 
         activation_map = {}
         for var in self._instantiate_activation_vars:
@@ -72,13 +89,192 @@ class _PytorchDeepAdapter:
         """Get the kwargs to construct ``metric`` from ``torchmetrics`` with."""
         return {}
 
-    def _run_epoch(self, epoch, dataloader):
-        """Train the network for one epoch, and step the schedulers."""
+    def _set_seed(self):
+        """Seed torch with ``random_state``, if ``random_state`` is set."""
+        if self.random_state is not None:
+            from torch import manual_seed
+
+            manual_seed(self.random_state)
+
+    def _fit(self, X, y):
+        """Fit the estimator to training data.
+
+        If the estimator is pretrained, the network is not trained: the
+        pretrained network is bound to the task, and used as ``self.network``,
+        without a copy. Otherwise, a new network is built in ``self.network``,
+        and trained on ``X`` and ``y``.
+
+        Parameters
+        ----------
+        X : 3D np.ndarray of shape (n_instances, n_dims, series_length)
+            The training time series.
+        y : 1D np.ndarray of shape (n_instances,)
+            The training labels or target values.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        if hasattr(self, "pretrained_network_"):
+            self._check_pretrained_network(X)
+            self._bind_pretrained_network()
+            self.network = self.pretrained_network_
+            return self
+
+        self._set_seed()
+        y = self._encode_fit_y(y)
+        self.network = self._new_network(X, y)
+        self._train_network(self.network, X, y)
+        return self
+
+    def _check_pretrain_input(self, X, y=None):
+        """Check and convert X and y for pretrain.
+
+        Raises an error if ``y`` is None, before the state of the estimator
+        is changed, otherwise as in ``BasePanelMixin._check_pretrain_input``.
+
+        Raises
+        ------
+        NotImplementedError
+            If ``y`` is None, as self-supervised pretraining is not supported yet.
+        """
+        if y is None:
+            raise NotImplementedError(
+                f"{type(self).__name__}.pretrain requires labels or target values "
+                "y, self-supervised pretraining without y is not supported yet."
+            )
+        return super()._check_pretrain_input(X, y)
+
+    def _pretrain(self, X, y=None):
+        """Pretrain the estimator, first pretraining batch.
+
+        Builds a new network, trains it on ``X`` and ``y``,
+        and stores it in ``self.pretrained_network_``.
+
+        Parameters
+        ----------
+        X : 3D np.ndarray of shape (n_instances, n_dims, series_length)
+            The pretraining time series.
+        y : 1D np.ndarray of shape (n_instances,)
+            The pretraining labels or target values.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self._set_seed()
+        y = self._encode_pretrain_y(y)
+        network = self._new_network(X, y)
+        self._train_network(network, X, y)
+        self._clear_training_state()
+
+        self.pretrained_network_ = network
+        self.n_pretrain_instances_ = len(X)
+        return self
+
+    def _pretrain_update(self, X, y=None):
+        """Continue training the pretrained network, i.e., fine-tune it.
+
+        The network is not rebuilt, its training continues on ``X`` and ``y``,
+        with a newly constructed optimizer.
+
+        Parameters
+        ----------
+        X : 3D np.ndarray of shape (n_instances, n_dims, series_length)
+            The pretraining time series.
+        y : 1D np.ndarray of shape (n_instances,)
+            The pretraining labels or target values.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        self._check_pretrained_network(X)
+        y = self._encode_pretrain_y(y)
+        self._train_network(self.pretrained_network_, X, y)
+        self._clear_training_state()
+
+        self.n_pretrain_instances_ += len(X)
+        return self
+
+    def _train_network(self, network, X, y):
+        """Train ``network`` on ``X`` and ``y``, for ``num_epochs`` epochs.
+
+        Writes the loss function, optimizer, schedulers and metrics to self,
+        the optimizer and schedulers are constructed on ``network``.
+
+        Parameters
+        ----------
+        network : torch.nn.Module
+            The network to train, trained in place.
+        X : 3D np.ndarray of shape (n_instances, n_dims, series_length)
+            The training time series.
+        y : 1D np.ndarray of shape (n_instances,)
+            The training targets, encoded as expected by the loss function.
+        """
+        self._criterion = self._instantiate_criterion()
+        self._optimizer = self._instantiate_optimizer(network)
+        # instantiate callbacks (learning rate schedulers)
+        self._schedulers = self._instantiate_schedulers()
+        self._metrics_objects = self._instantiate_metrics(self.metrics)
+        dataloader = self._build_dataloader(X, y)
+
+        network.train()
+        for epoch in range(self.num_epochs):
+            self._run_epoch(epoch, dataloader, network)
+
+    def _clear_training_state(self):
+        """Clear the objects only used while training, e.g., the optimizer.
+
+        Called after pretraining, so that the optimizer state, which can be as
+        large as the network, is not kept along with the pretrained network.
+        """
+        for attr in self._TRAINING_ATTRS:
+            setattr(self, attr, None)
+
+    def _check_pretrained_network(self, X):
+        """Check that the pretrained network can be applied to ``X``.
+
+        Applies the pretrained network to the first instance of ``X``,
+        in evaluation mode and without gradients, so the network is not changed.
+
+        Parameters
+        ----------
+        X : 3D np.ndarray of shape (n_instances, n_dims, series_length)
+            The time series passed to ``fit``, or to further calls of ``pretrain``.
+
+        Raises
+        ------
+        ValueError
+            If the pretrained network cannot be applied to ``X``,
+            e.g., if ``X`` has a different number of variables
+            than the time series the network was pretrained on.
+        """
+        import torch
+
+        network = self.pretrained_network_
+        inputs = next(iter(self._build_dataloader(X[:1])))
+        network.eval()
+        try:
+            with torch.no_grad():
+                network(**inputs)
+        except Exception as e:
+            raise ValueError(
+                f"The pretrained network of {type(self).__name__} cannot be "
+                f"applied to time series of shape {X.shape[1:]}, "
+                "(n_dims, series_length). The time series passed to fit, and to "
+                "further calls of pretrain, must be compatible with those passed "
+                "to the first call of pretrain, e.g., have the same number of "
+                "variables."
+            ) from e
+
+    def _run_epoch(self, epoch, dataloader, network):
+        """Train ``network`` for one epoch, and step the schedulers."""
         losses = []
         metric_values = {name: [] for name in (self._metrics_objects or {})}
 
         for inputs, outputs in dataloader:
-            y_pred = self.network(**inputs)
+            y_pred = network(**inputs)
             y_pred = self._align_pred(y_pred, outputs)
             loss = self._criterion(y_pred, outputs)
             self._optimizer.zero_grad()
@@ -231,13 +427,18 @@ class _PytorchDeepAdapter:
                 )
         return schedulers
 
-    def _instantiate_optimizer(self):
-        """Instantiate the optimizer, on the parameters of the network.
+    def _instantiate_optimizer(self, network):
+        """Instantiate the optimizer, on the parameters of ``network``.
+
+        Parameters
+        ----------
+        network : torch.nn.Module
+            The network to be trained with the optimizer.
 
         Returns
         -------
         torch.optim.Optimizer
-            The optimizer, constructed on ``self.network.parameters()``,
+            The optimizer, constructed on ``network.parameters()``,
             with ``lr`` and ``optimizer_kwargs``.
         """
         from torch.optim import Adam, Optimizer
@@ -289,7 +490,7 @@ class _PytorchDeepAdapter:
         if self.optimizer_kwargs:
             optimizer_params.update(self.optimizer_kwargs)
 
-        return optimizer_class(self.network.parameters(), **optimizer_params)
+        return optimizer_class(network.parameters(), **optimizer_params)
 
     def _instantiate_criterion(self):
         """Instantiate the loss function to train the network with.

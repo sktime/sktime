@@ -110,6 +110,15 @@ class BaseDeepClassifierPytorch(_PytorchDeepAdapter, BaseClassifier):
         Whether to output extra information.
     random_state : int or None, default = None
         Seed to ensure reproducibility.
+
+    Notes
+    -----
+    Pretraining: ``pretrain(X, y)`` trains a network on the labelled data
+    ``X``, ``y``, further calls of ``pretrain`` continue training it, i.e.,
+    fine-tune it. ``fit`` after ``pretrain`` does not train the network,
+    it only records the classes seen in ``fit``, and maps them to the outputs of
+    the pretrained network. ``predict`` then returns only these classes.
+    ``fit`` without ``pretrain`` trains a new network.
     """
 
     _tags = {
@@ -122,6 +131,11 @@ class BaseDeepClassifierPytorch(_PytorchDeepAdapter, BaseClassifier):
         "capability:multioutput": False,
         "capability:random_state": True,
         "property:randomness": "stochastic",
+        "pretrain:fitted_params": [
+            "pretrained_network_",
+            "n_pretrain_instances_",
+            "pretrain_classes_",
+        ],
         # CI and test tags
         # ----------------
         "tests:vm": True,
@@ -130,6 +144,9 @@ class BaseDeepClassifierPytorch(_PytorchDeepAdapter, BaseClassifier):
             "sktime.base.adapters._pytorch",
         ],
     }
+
+    # attributes only used while training, cleared after pretraining
+    _TRAINING_ATTRS = _PytorchDeepAdapter._TRAINING_ATTRS + ("num_classes",)
 
     # _instantiate_activation_vars is an iterable of attribute names of activations
     # to instantiate. In case activation attributes in subclasses are different than
@@ -189,36 +206,81 @@ class BaseDeepClassifierPytorch(_PytorchDeepAdapter, BaseClassifier):
 
         super().__init__()
 
-    def _fit(self, X, y):
-        if self.random_state is not None:
-            import torch
-
-            torch.manual_seed(self.random_state)
-
-        y = self._encode_y(y)
-
-        self.network = self._build_network(X, y)
-
-        # instantiate loss function and optimizer
-        self._criterion = self._instantiate_criterion()
-        self._optimizer = self._instantiate_optimizer()
-        # instantiate callbacks (learning rate schedulers)
-        self._schedulers = self._instantiate_schedulers()
-        # ensure num_classes is set before instantiating metrics
-        # as classification metrics require num_classes as an argument
-        self.num_classes = len(np.unique(y))
-        # instantiate metrics
-        self._metrics_objects = self._instantiate_metrics(self.metrics)
-        # build dataloader
-        dataloader = self._build_dataloader(X, y)
-
-        self.network.train()
-        for epoch in range(self.num_epochs):
-            self._run_epoch(epoch, dataloader)
-
     @abc.abstractmethod
     def _build_network(self, X, y):
         pass
+
+    def _new_network(self, X, y):
+        """Build a new network, with one output per class in ``y``."""
+        return self._build_network(X, y)
+
+    def _encode_fit_y(self, y):
+        """Encode the labels passed to fit, for training a new network."""
+        y = self._encode_y(y)
+        # ensure num_classes is set before instantiating metrics
+        # as classification metrics require num_classes as an argument
+        self.num_classes = len(np.unique(y))
+        return y
+
+    def _encode_pretrain_y(self, y):
+        """Encode the labels passed to pretrain, as indices of pretrain_classes_.
+
+        In the first call of ``pretrain``, sets ``pretrain_classes_`` to the
+        labels in ``y``. Labels in further calls must be among
+        ``pretrain_classes_``, this is checked in ``_check_pretrain_input``.
+        """
+        if not hasattr(self, "pretrain_classes_"):
+            self.pretrain_classes_ = np.unique(y)
+        # the network has one output per pretrained class
+        self.num_classes = len(self.pretrain_classes_)
+        return np.searchsorted(self.pretrain_classes_, y)
+
+    def _check_pretrain_input(self, X, y=None):
+        """Check and convert X and y for pretrain.
+
+        In addition to the checks in ``_PytorchDeepAdapter``, checks that the
+        labels in further calls of ``pretrain`` are among ``pretrain_classes_``,
+        before the state of the estimator is changed.
+        """
+        X_inner, y_inner = super()._check_pretrain_input(X, y)
+        if hasattr(self, "pretrain_classes_"):
+            self._check_classes_pretrained(np.unique(y_inner), "pretrain")
+        return X_inner, y_inner
+
+    def _bind_pretrained_network(self):
+        """Map the classes seen in fit to the outputs of the pretrained network.
+
+        Sets ``_pretrain_class_idx``, the index of the output of the pretrained
+        network, for each class in ``classes_``.
+        """
+        self._check_classes_pretrained(self.classes_, "fit")
+        self._pretrain_class_idx = np.searchsorted(
+            self.pretrain_classes_, self.classes_
+        )
+
+    def _check_classes_pretrained(self, classes, method):
+        """Check that ``classes`` are among ``pretrain_classes_``.
+
+        Parameters
+        ----------
+        classes : 1D np.ndarray
+            Class labels passed to ``method``.
+        method : str
+            Name of the method the labels were passed to, for the error message.
+
+        Raises
+        ------
+        ValueError
+            If any of ``classes`` is not among ``pretrain_classes_``.
+        """
+        unseen = np.setdiff1d(classes, self.pretrain_classes_)
+        if len(unseen) > 0:
+            raise ValueError(
+                f"{type(self).__name__}.{method} was passed class labels "
+                f"{unseen.tolist()}, which were not seen in pretrain. After pretrain, "
+                "the labels passed to fit, and to further calls of pretrain, must "
+                f"be among the pretrained labels {self.pretrain_classes_.tolist()}."
+            )
 
     def _validate_activation_criterion(self):
         """Validate activation function in the output layer w.r.t. criterion specified.
@@ -407,10 +469,9 @@ class BaseDeepClassifierPytorch(_PytorchDeepAdapter, BaseClassifier):
             if self.get_tag("capability:multioutput") = False, should be 1D
             if self.get_tag("capability:multioutput") = True, should be 2D
         """
+        # columns of the predicted probabilities are in the order of classes_
         y_pred_prob = self._predict_proba(X)
-        y_pred = np.argmax(y_pred_prob, axis=-1)
-        y_decoded = self._decode_y(y_pred)
-        return y_decoded
+        return self.classes_[np.argmax(y_pred_prob, axis=-1)]
 
     def _predict_proba(self, X):
         """Predicts labels probabilities for sequences in X.
@@ -463,6 +524,13 @@ class BaseDeepClassifierPytorch(_PytorchDeepAdapter, BaseClassifier):
             y_pred = Fsoftmax(y_pred, dim=-1)
 
         y_pred = y_pred.numpy()
+
+        # if fitted after pretrain, the network has one output per pretrained
+        # class: keep the outputs of the classes seen in fit, and renormalize
+        if hasattr(self, "_pretrain_class_idx"):
+            y_pred = y_pred[:, self._pretrain_class_idx]
+            y_pred = y_pred / y_pred.sum(axis=1, keepdims=True)
+
         return y_pred
 
     def _encode_y(self, y):
@@ -472,9 +540,3 @@ class BaseDeepClassifierPytorch(_PytorchDeepAdapter, BaseClassifier):
 
         self.label_encoder = LabelEncoder()
         return self.label_encoder.fit_transform(y)
-
-    def _decode_y(self, y):
-        if self.label_encoder is None:
-            return y
-
-        return self.label_encoder.inverse_transform(y)
