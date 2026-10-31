@@ -483,8 +483,10 @@ corresponding decision making process is described in more detail below.
      - Lazy consensus
    * - Changes to the API design, hard dependencies, or supported versions
      - Lazy consensus, requires a :ref:`steps`
-   * - Changes to sktime's governance (this document and the CoC)
-     - Lazy consensus, requires a :ref:`steps`
+   * - Changes to sktime's governance rules (this document)
+     - No lazy consensus, requires a :ref:`steps`, requires additional approval by CC member
+   * - Changes to sktime's code of conduct
+     - No lazy consensus, requires a :ref:`steps`, requires additional approval by CoC committee member
    * - Appointment
      - Directly starts with voting (stage 2)
 
@@ -514,11 +516,16 @@ core developers.
    Ten working days excluding week-ends constitute "reasonable time" in the above sense.
    The period resets at every new change made to the PR.
    It starts only when all GitHub checks pass.
--  During this period, the PR can be merged if it has an approval and no rejection, but should be
+-  During the "reasonable time" period, the PR can be merged if it has an approval and no rejection, but should be
    reverted if it receives a rejection in addition.
+   Policies and decisions are considered accepted only after the "reasonable time" period has passed.
 -  If the "reasonable time" period elapses and no approval or rejection has been expressed on a PR,
    the PR is scheduled at the top of agenda for the next developer meetup.
    In that meeting, a core developer is assigned to review the PR and either approve or reject within five days of the meeting excluding weekends.
+-  Proposed changes to ``sktime``'s governance or CoC cannot be accepted by lazy consensus.
+   They require at least one approval by a CC member (governance changes) or a CoC member (CoC changes).
+-  Changes to ``sktime``'s governance or CoC can be made only by a core developer, require a STEP, and must have been listed in one of the regular bi-weekly CC meetings,
+   under an agenda item "proposed changes to ``sktime``'s governance or CoC".
 
 Failure of lazy consensus, in the above sense, can arise only under the following condition:
 at least one approval and at least one rejection in the PR.
