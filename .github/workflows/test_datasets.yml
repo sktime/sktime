@@ -69,6 +69,7 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
+          - "3.15"
         operating-system:
           - macos-latest
           - ubuntu-latest
@@ -91,6 +92,7 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+          allow-prereleases: ${{ matrix.python-version == '3.15' }}
 
       - name: dependencies installation step
         run: python3 -m pip install .[tests,datasets]
