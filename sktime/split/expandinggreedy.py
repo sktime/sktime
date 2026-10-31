@@ -9,11 +9,11 @@ __all__ = [
 ]
 __author__ = ["davidgilbertson"]
 
+
 import numpy as np
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import SPLIT_GENERATOR_TYPE
 
 
 class ExpandingGreedySplitter(BaseSplitter):
@@ -62,22 +62,33 @@ class ExpandingGreedySplitter(BaseSplitter):
 
     _tags = {"split_hierarchical": True}
 
-    def __init__(self, test_size: int, folds: int = 5, step_length: int = None):
-        super().__init__()
+    def __init__(
+        self,
+        test_size: int | float,
+        folds: int = 5,
+        step_length: int | None = None,
+    ):
         self.test_size = test_size
         self.folds = folds
         self.step_length = step_length
-        self.fh = np.arange(test_size) + 1
 
+        super().__init__()
+
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values conditional on parameters.
+
+        This method should be used for setting dynamic tags only.
+        """
         # no algorithm implemented that is faster for float than naive iteration
-        if isinstance(test_size, float):
+        if isinstance(self.test_size, float):
             self.set_tags(**{"split_hierarchical": False})
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index):
         test_size = self.test_size
 
         if isinstance(test_size, float):
-            _test_size = np.ceil(len(y) * test_size)
+            _test_size = int(np.ceil(len(y) * test_size))
+            self.fh = np.arange(_test_size) + 1
         else:
             _test_size = test_size
 
@@ -97,6 +108,35 @@ class ExpandingGreedySplitter(BaseSplitter):
                 (reverse_idx < trn_end) & (reverse_idx >= tst_end)
             )
             yield trn_indices, tst_indices
+
+    def _fh(self):
+        """Forecasting horizon, in integer resp array of integer, relative to cutoff.
+
+        Private method called by property ``fh``,
+        can be overridden by inheriting classes.
+
+        Default is to return a forecasting horizon of ``1``.
+
+        If the attribute ``_fh_`` is set, then it is returned instead.
+
+        Returns
+        -------
+        fh : array-like or int, optional, (default=None)
+            Forecasting horizon with the steps ahead to predict, if splits are used
+            for forecasting or backtesting.
+
+            * if integer, the indices to forecast are ``1, 2, ..., fh``, periods ahead.
+            * if array-like, the indices to forecast are given by the values in ``fh``,
+              values must be coercible to integer.
+            * ``None`` if no forecasting horizon is set. This is returned for splitters
+              that do not have a natural forecasting horizon associated to them.
+        """
+        test_size = self.test_size
+        fh = np.arange(test_size) + 1 if isinstance(test_size, int) else None
+        # if test_size is float, fh is set later in _split, so we check for that here
+        if fh is None and hasattr(self, "_fh_"):
+            fh = self._fh_
+        return fh
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

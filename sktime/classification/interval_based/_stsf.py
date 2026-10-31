@@ -93,6 +93,8 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         # --------------
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "interval",
     }
 
@@ -116,6 +118,10 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         self._stats = [np.mean, np.median, np.std, _slope, stats.iqr, np.min, np.max]
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Build a forest of trees from the training set (X, y).
@@ -446,7 +452,7 @@ class SupervisedTimeSeriesForest(BaseClassifier):
         if parameter_set == "results_comparison":
             return {"n_estimators": 10}
         else:
-            return {"n_estimators": 2}
+            return [{"n_estimators": 2}, {"n_estimators": 5}]
 
 
 def _fisher_score(X, y, classes, class_counts):

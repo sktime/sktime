@@ -17,7 +17,6 @@ class BaseForecastingDataset(BaseDataset):
 
     Tags
     ----
-
     is_univariate: bool, default=True
         Whether the dataset is univariate. In the case of Forecasting dataset,
         this refers to the dimensionality of the `y` dataframe.
@@ -34,18 +33,18 @@ class BaseForecastingDataset(BaseDataset):
         have a train/test split. Should be equal to y_train.shape[0].
     n_instances_test: int, default=None
         Number of instances in the test set. None if the dataset does not
-        have a train/test split. Sould be equal to y_test.shape[0].
+        have a train/test split. Should be equal to y_test.shape[0].
     n_timepoints: int, default=None
         Number of timepoints in the dataset, per series. If the dataset is composed
-        of series of diffferent lengths, this should be equal the max length
+        of series of different lengths, this should be equal the max length
         seen in the dataset.
     n_timepoints_train: int, default=None
         Number of timepoints in the training set, per series. If the dataset is composed
-        of series of diffferent lengths, this should be equal the max length seen
+        of series of different lengths, this should be equal the max length seen
         in the training set.
     n_timepoints_test: int, default=None
         Number of timepoints in the test set, per series. If the dataset is composed
-        of series of diffferent lengths, this should be equal the max length seen
+        of series of different lengths, this should be equal the max length seen
         in the test set.
     frequency: str, default=None
         Frequency of the time series in the dataset. Can be an integer if the
@@ -59,8 +58,6 @@ class BaseForecastingDataset(BaseDataset):
     n_hierarchy_levels: int, default=0
         Number of levels in the hierarchy of the dataset. This is the number of
         index levels in the `y` dataframe, excluding the time index.
-
-
     """
 
     _tags = {

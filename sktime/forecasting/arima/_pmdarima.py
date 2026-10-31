@@ -14,7 +14,7 @@ class AutoARIMA(_PmdArimaAdapter):
     Includes automated fitting of (S)ARIMA(X) hyper-parameters (p, d, q, P, D, Q).
 
     Exposes ``pmdarima.arima.AutoARIMA`` [1]_ under the ``sktime`` interface.
-    Seasonal ARIMA models and exogeneous input is supported, hence this estimator is
+    Seasonal ARIMA models and exogenous input is supported, hence this estimator is
     capable of fitting auto-SARIMA, auto-ARIMAX, and auto-SARIMAX.
 
     The auto-ARIMA algorithm seeks to identify the most optimal parameters
@@ -208,17 +208,16 @@ class AutoARIMA(_PmdArimaAdapter):
         whether to update pdq parameters in update
         True: model is refit on all data seen so far, potentially updating p,d,q
         False: model updates only ARIMA coefficients via likelihood, as in pmdarima
-    Further arguments to pass to the SARIMAX constructor:
-    - time_varying_regression : boolean, optional (default=False)
+    time_varying_regression : boolean, optional (default=False)
         Whether or not coefficients on the exogenous regressors are allowed
         to vary over time.
-    - enforce_stationarity : boolean, optional (default=True)
+    enforce_stationarity : boolean, optional (default=True)
         Whether or not to transform the AR parameters to enforce
         stationarity in the auto-regressive component of the model.
         - enforce_invertibility : boolean, optional (default=True)
         Whether or not to transform the MA parameters to enforce
         invertibility in the moving average component of the model.
-    - simple_differencing : boolean, optional (default=False)
+    simple_differencing : boolean, optional (default=False)
         Whether or not to use partially conditional maximum likelihood
         estimation for seasonal ARIMA models. If True, differencing is
         performed prior to estimation, which discards the first
@@ -226,22 +225,27 @@ class AutoARIMA(_PmdArimaAdapter):
         state-space formulation. If False, the full SARIMAX model is
         put in state-space form so that all datapoints can be used in
         estimation. Default is False.
-    - measurement_error: boolean, optional (default=False)
+    measurement_error: boolean, optional (default=False)
         Whether or not to assume the endogenous observations endog were
         measured with error. Default is False.
-    - mle_regression : boolean, optional (default=True)
+    mle_regression : boolean, optional (default=True)
         Whether or not to use estimate the regression coefficients for the
         exogenous variables as part of maximum likelihood estimation or
         through the Kalman filter (i.e. recursive least squares). If
         time_varying_regression is True, this must be set to False.
         Default is True.
-    - hamilton_representation : boolean, optional (default=False)
-        Whether or not to use the Hamilton representation of an ARMA
-        process (if True) or the Harvey representation (if False).
+
+    hamilton_representation : boolean, optional (default=False)
+        Whether or not to use the Hamilton representation of an ARMA process
+
+        * if True, uses the Hamilton representation.
+        * if False, uses the Harvey representation.
+
         Default is False.
-    - concentrate_scale : boolean, optional (default=False)
-        Whether or not to concentrate the scale (variance of the error
-        term) out of the likelihood. This reduces the number of parameters
+
+    concentrate_scale : boolean, optional (default=False)
+        Whether or not to concentrate the scale out of the likelihood,
+        scale = variance of the error term. This reduces the number of parameters
         estimated by maximum likelihood by one, but standard errors will
         then not be available for the scale parameter.
 
@@ -284,7 +288,14 @@ class AutoARIMA(_PmdArimaAdapter):
         # python_dependencies: "pmdarima" - inherited from _PmdArimaAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:missing_values": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_predict_time_index_with_X"],  # bug report #9081
+        "tests:specific": ["sktime.forecasting.tests.test_pmdarima"],
     }
 
     SARIMAX_KWARGS_KEYS = [
@@ -456,10 +467,15 @@ class AutoARIMA(_PmdArimaAdapter):
         -------
         self : returns an instance of self.
         """
+        from sktime.datatypes import update_data
+
         update_pdq = self.update_pdq
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         if update_params:
             if update_pdq:
-                self._fit(y=self._y, X=self._X, fh=self._fh)
+                self._fit(y=self._cur_y, X=self._cur_X, fh=self._fh)
             else:
                 if X is not None:
                     X = X.loc[y.index]
@@ -502,7 +518,7 @@ class ARIMA(_PmdArimaAdapter):
     """(S)ARIMA(X) forecaster, from pmdarima package.
 
     Exposes ``pmdarima.arima.ARIMA`` [1]_ under the ``sktime`` interface.
-    Seasonal ARIMA models and exogeneous input is supported, hence this estimator is
+    Seasonal ARIMA models and exogenous input is supported, hence this estimator is
     capable of fitting SARIMA, ARIMAX, and SARIMAX.
     To additionally fit (S)ARIMA(X) hyper-parameters, use the ``AutoARIMA`` estimator.
 
@@ -621,17 +637,16 @@ class ARIMA(_PmdArimaAdapter):
         a default.
     with_intercept : bool, optional (default=True)
         Whether to include an intercept term. Default is True.
-    Further arguments to pass to the SARIMAX constructor:
-    - time_varying_regression : boolean, optional (default=False)
+    time_varying_regression : boolean, optional (default=False)
         Whether or not coefficients on the exogenous regressors are allowed
         to vary over time.
-    - enforce_stationarity : boolean, optional (default=True)
+    enforce_stationarity : boolean, optional (default=True)
         Whether or not to transform the AR parameters to enforce
         stationarity in the auto-regressive component of the model.
         - enforce_invertibility : boolean, optional (default=True)
         Whether or not to transform the MA parameters to enforce
         invertibility in the moving average component of the model.
-    - simple_differencing : boolean, optional (default=False)
+    simple_differencing : boolean, optional (default=False)
         Whether or not to use partially conditional maximum likelihood
         estimation for seasonal ARIMA models. If True, differencing is
         performed prior to estimation, which discards the first
@@ -639,22 +654,27 @@ class ARIMA(_PmdArimaAdapter):
         state-space formulation. If False, the full SARIMAX model is
         put in state-space form so that all datapoints can be used in
         estimation. Default is False.
-    - measurement_error: boolean, optional (default=False)
+    measurement_error: boolean, optional (default=False)
         Whether or not to assume the endogenous observations endog were
         measured with error. Default is False.
-    - mle_regression : boolean, optional (default=True)
+    mle_regression : boolean, optional (default=True)
         Whether or not to use estimate the regression coefficients for the
         exogenous variables as part of maximum likelihood estimation or
         through the Kalman filter (i.e. recursive least squares). If
         time_varying_regression is True, this must be set to False.
         Default is True.
-    - hamilton_representation : boolean, optional (default=False)
-        Whether or not to use the Hamilton representation of an ARMA
-        process (if True) or the Harvey representation (if False).
+
+    hamilton_representation : boolean, optional (default=False)
+        Whether or not to use the Hamilton representation of an ARMA process
+
+        * if True, uses the Hamilton representation.
+        * if False, uses the Harvey representation.
+
         Default is False.
-    - concentrate_scale : boolean, optional (default=False)
-        Whether or not to concentrate the scale (variance of the error
-        term) out of the likelihood. This reduces the number of parameters
+
+    concentrate_scale : boolean, optional (default=False)
+        Whether or not to concentrate the scale out of the likelihood,
+        scale = variance of the error term. This reduces the number of parameters
         estimated by maximum likelihood by one, but standard errors will
         then not be available for the scale parameter.
 
@@ -684,6 +704,7 @@ class ARIMA(_PmdArimaAdapter):
     """  # noqa: E501
 
     _tags = {
+        "category": ["statistical"],
         "authors": [
             "tgsmith61591",  # for pmdarima
             "charlesdrotar",  # for pmdarima
@@ -695,6 +716,12 @@ class ARIMA(_PmdArimaAdapter):
         ],
         "maintainers": ["hyang1996"],
         "capability:missing_values": True,
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": [
+            "test_predict_time_index_with_X",  # bug report #9081
+        ],
+        "tests:specific": ["sktime.forecasting.tests.test_pmdarima"],
     }
 
     SARIMAX_KWARGS_KEYS = [

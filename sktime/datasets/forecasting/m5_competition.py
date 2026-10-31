@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from sktime.datasets._data_io import _download_and_extract, _reduce_memory_usage
+from sktime.datasets._data_io import _reduce_memory_usage
+from sktime.datasets._dataset_downloader import DatasetDownloader
 from sktime.datasets.forecasting._base import BaseForecastingDataset
 
 
@@ -67,6 +68,11 @@ class M5Dataset(BaseForecastingDataset):
         "n_panels": 30490,  # 30490 bottom levels
         "n_hierarchy_levels": 5,  # Number of levels  in the hierarchy (equivalent to
         #  number of index levels excluding the time index)
+        #
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # large dataset, skip in tests
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -90,18 +96,20 @@ class M5Dataset(BaseForecastingDataset):
         """Path to the directory where the data is stored."""
         return self._extract_path / Path("m5-forecasting-accuracy")
 
-    def _download_if_needed(self):
-        """Download the data if it is not already downloaded."""
-        if not self.path_to_data_dir.exists():
-            _download_and_extract(
-                "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip",
-                extract_path=self._extract_path,
-            )
+    def _download(self):
+        """Download the data."""
+        url = "https://zenodo.org/records/12636070/files/m5-forecasting-accuracy.zip"
+        downloader = DatasetDownloader(
+            hf_repo_name="tsf-datasets",
+            folder_name="m5-forecasting-accuracy",
+            fallback_urls=[url],
+        )
+        downloader.download(download_path=self._extract_path)
 
     def _load(self, *args):
         """Load the dataset.
 
-        Downlaods the data if it is not already downloaded, and
+        Downloads the data if it is not already downloaded, and
         joins the 3 main files into a single dataframe.
 
         The last 28 days are used as test data, and the rest is used as training data.
@@ -116,7 +124,7 @@ class M5Dataset(BaseForecastingDataset):
         pd.DataFrame
             data container corresponding to string in args (see above)
         """
-        self._download_if_needed()
+        self._download()
 
         target_variable = _reduce_memory_usage(
             pd.read_csv(self.path_to_data_dir / Path("sales_train_evaluation.csv"))

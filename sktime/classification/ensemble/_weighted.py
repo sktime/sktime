@@ -70,6 +70,7 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
 
     Examples
     --------
+    >>> from sktime.classification.ensemble import WeightedEnsembleClassifier
     >>> from sktime.classification.dummy import DummyClassifier
     >>> from sktime.classification.kernel_based import RocketClassifier
     >>> from sktime.datasets import load_unit_test
@@ -99,6 +100,8 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             "nested_univ",
             "numpy3D",
         ],
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     # for default get_params/set_params from _HeterogenousMetaEstimator
@@ -257,14 +260,24 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
+        from skbase.utils.dependencies import _check_estimator_deps
+
         from sktime.classification.distance_based import (
             KNeighborsTimeSeriesClassifier,
         )
         from sktime.classification.dummy import DummyClassifier
         from sktime.classification.kernel_based import RocketClassifier
-        from sktime.utils.dependencies import _check_estimator_deps
 
         params0 = {"classifiers": [DummyClassifier()]}
+
+        # soft dependency free second parameter set, with fixed weights
+        params_dummy = {
+            "classifiers": [
+                ("prior", DummyClassifier()),
+                ("stratified", DummyClassifier(strategy="stratified")),
+            ],
+            "weights": [2, 1],
+        }
 
         ests = [KNeighborsTimeSeriesClassifier, RocketClassifier]
         if _check_estimator_deps(ests, severity="none"):
@@ -284,6 +297,6 @@ class WeightedEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
                 "weights": 2,
                 "cv": 3,
             }
-            return [params0, params1, params2]
+            return [params0, params_dummy, params1, params2]
         else:
-            return params0
+            return [params0, params_dummy]

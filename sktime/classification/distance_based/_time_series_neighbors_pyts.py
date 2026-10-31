@@ -2,7 +2,6 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-__author__ = ["fkiraly"]
 __all__ = ["KNeighborsTimeSeriesClassifierPyts"]
 
 from sktime.base.adapters._pyts import _PytsAdapter
@@ -75,11 +74,12 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
 
     Examples
     --------
-    >>> import sktime.classification.distance_based as clf_db  # doctest: +SKIP
-    >>> from clf_db import KNeighborsTimeSeriesClassifierPyts  # doctest: +SKIP
-    >>> from sktime.datasets import load_unit_test  # doctest: +SKIP
-    >>> X_train, y_train = load_unit_test(split="train")  # doctest: +SKIP
-    >>> X_test, y_test = load_unit_test(split="test")  # doctest: +SKIP
+    >>> from sktime.classification.distance_based import (
+    ...     KNeighborsTimeSeriesClassifierPyts
+    ... )
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train")
+    >>> X_test, y_test = load_unit_test(split="test")
     >>> clf = KNeighborsTimeSeriesClassifierPyts(n_neighbors=1,
     ...     weights="uniform",
     ...     algorithm="auto",
@@ -88,17 +88,18 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
     ...     metric="minkowski",
     ...     metric_params=None,
     ...     n_jobs=1,
-    ... )  # doctest: +SKIP
-    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    ... )
+    >>> clf.fit(X_train, y_train)
     KNeighborsTimeSeriesClassifierPyts(...)
-    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)
     """
 
     _tags = {
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": "pyts",
+        "python_dependencies": ["pyts", "scikit-learn<1.8"],
+        # todo 1.3.0: check whether the sklearn bound can be removed, see #11209
         # estimator type
         # --------------
         "capability:multivariate": False,
@@ -106,6 +107,10 @@ class KNeighborsTimeSeriesClassifierPyts(_PytsAdapter, BaseClassifier):
         "capability:missing_values": True,
         "capability:predict_proba": True,
         "classifier_type": "distance",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:libs": ["sktime.base.adapters._pyts"],
     }
 
     # defines the name of the attribute containing the pyts estimator

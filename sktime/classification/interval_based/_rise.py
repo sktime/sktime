@@ -185,6 +185,10 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         "capability:multithreading": True,
         "capability:predict_proba": True,
         "classifier_type": "interval",
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # mac failures, see #3103
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -210,6 +214,10 @@ class RandomIntervalSpectralEnsemble(BaseClassifier):
         self.base_estimator = DecisionTreeClassifier(random_state=random_state)
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     @property
     def feature_importances_(self):

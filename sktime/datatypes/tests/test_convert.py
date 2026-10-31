@@ -2,15 +2,16 @@
 
 __author__ = ["fkiraly"]
 
+from copy import deepcopy
+
 import pytest
 
-from sktime.datatypes import SCITYPE_REGISTER, scitype_to_mtype
+from sktime.datatypes import scitype_to_mtype
 from sktime.datatypes._convert import _conversions_defined, convert
 from sktime.datatypes._examples import get_examples
+from sktime.datatypes._registry import generate_scitype_list
 from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils.deep_equals import deep_equals
-
-SCITYPES = [sci[0] for sci in SCITYPE_REGISTER]
 
 # scitypes which have no conversions defined
 # should be listed here to avoid false positive test errors
@@ -22,7 +23,7 @@ def _generate_fixture_tuples():
     # collect fixture tuples here
     fixture_tuples = []
 
-    for scitype in SCITYPES:
+    for scitype in generate_scitype_list():
         # if we know there are no conversions defined, skip this scitype
         if scitype in SCITYPES_NO_CONVERSIONS:
             continue
@@ -133,3 +134,50 @@ def test_convert(scitype, from_mtype, to_mtype, fixture_index):
             return_msg=True,
         )
         assert equals, msg + deep_equals_msg
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.datatypes", "sktime.utils.deep_equals"]),
+    reason="Test only if sktime.datatypes or utils.deep_equals has been changed",
+)
+def test_convert_does_not_mutate_input(scitype, from_mtype, to_mtype, fixture_index):
+    """Test that convert does not mutate the input object.
+
+    Parameters
+    ----------
+    scitype : str - scitypes
+    from_mtype : str - mtype of "from" conversion to test, belongs to scitype
+    to_mtype : str - mtype of conversion target ("to") to test, belongs to scitype
+    fixture_index : int - index of fixture tuple use for conversion
+
+    Raises
+    ------
+    AssertionError if convert mutates the input object
+    """
+    from_fixture = get_examples(
+        mtype=from_mtype, as_scitype=scitype, return_lossy=True
+    ).get(fixture_index)
+    to_fixture = get_examples(
+        mtype=to_mtype, as_scitype=scitype, return_lossy=True
+    ).get(fixture_index)
+
+    if to_fixture is None or to_fixture[0] is None:
+        return None
+    if from_fixture is None or from_fixture[0] is None:
+        return None
+    if from_fixture[1] is None or from_fixture[1]:
+        return None
+
+    fixture_before = deepcopy(from_fixture[0])
+
+    convert(
+        obj=from_fixture[0],
+        from_type=from_mtype,
+        to_type=to_mtype,
+        as_scitype=scitype,
+    )
+
+    assert deep_equals(from_fixture[0], fixture_before), (
+        f"convert mutated input during conversion from {from_mtype} to {to_mtype} "
+        f"for fixture {fixture_index}"
+    )

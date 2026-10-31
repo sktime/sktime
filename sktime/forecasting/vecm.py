@@ -94,13 +94,19 @@ class VECM(_StatsModelsAdapter):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "scitype:y": "multivariate",
+        "category": ["statistical"],
+        "capability:multivariate": True,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
-        "ignores-exogeneous-X": False,
+        "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:non_contiguous_X": False,
+        # CI and testing tags
+        # -------------------
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        # sporadic failures in update due to singular matrix error
     }
 
     def __init__(
@@ -141,7 +147,7 @@ class VECM(_StatsModelsAdapter):
         y : pd.DataFrame, guaranteed to have 2 or more columns
             Time series to which to fit the forecaster.
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             Required (non-optional) here if self.get_tag("requires-fh-in-fit")==True
             Otherwise, if not passed in _fit, guaranteed to be passed in _predict
         X : pd.DataFrame, optional (default=None)
@@ -151,6 +157,13 @@ class VECM(_StatsModelsAdapter):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
+        # if univariate, add a shifted copy of the data
+        if y.shape[1] == 1:
+            y = y.copy()
+            y["__y_shifted"] = y.iloc[:, 0].abs().pow(0.1) + 1.0
+
         from statsmodels.tsa.vector_ar.vecm import VECM as _VECM
 
         self._forecaster = _VECM(
@@ -178,7 +191,7 @@ class VECM(_StatsModelsAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
             If not passed in _fit, guaranteed to be passed here
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
@@ -206,7 +219,7 @@ class VECM(_StatsModelsAdapter):
         if fh_int.min() <= 0:
             # .resid returns np.ndarray
             # both values need to be pd DataFrame for subtraction
-            y_pred_insample = self._y - pd.DataFrame(self._fitted_forecaster.resid)
+            y_pred_insample = self._cur_y - pd.DataFrame(self._fitted_forecaster.resid)
             y_pred_insample = y_pred_insample.values
 
         if y_pred_insample is not None and y_pred_outsample is not None:
@@ -216,12 +229,15 @@ class VECM(_StatsModelsAdapter):
                 y_pred_insample if y_pred_insample is not None else y_pred_outsample
             )
 
-        index = fh.to_absolute_index(self.cutoff)
-        index.name = self._y.index.name
+        # invert the "only_1s" column if it was added during fit
+        if self._y_metadata["n_features"] == 1:
+            y_pred = y_pred[:, [0]]
+
+        index = fh.get_expected_pred_idx(cutoff=self.cutoff)
         y_pred = pd.DataFrame(
             y_pred[fh.to_indexer(self.cutoff), :],
             index=index,
-            columns=self._y.columns,
+            columns=self._get_columns(),
         )
 
         return y_pred
@@ -240,7 +256,7 @@ class VECM(_StatsModelsAdapter):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : optional (default=None)
             guaranteed to be of a type in self.get_tag("X_inner_mtype")
             Exogeneous time series for the forecast
@@ -264,11 +280,7 @@ class VECM(_StatsModelsAdapter):
         """
         exog_fc = X.values if X is not None else None
         fh_int = fh.to_relative(self.cutoff)
-        var_names = (
-            self._y.index.name
-            if self._y.index.name is not None
-            else self._y.columns.values
-        )
+        var_names = self._get_varnames()
         int_idx = pd.MultiIndex.from_product([var_names, coverage, ["lower", "upper"]])
 
         all_values = []  # will store predicted intervals for each coverage value

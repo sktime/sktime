@@ -13,6 +13,12 @@ for time series detection tasks, including:
 The tasks include unsupervised and semi-supervised variants, and can batch or
 stream/online detection.
 
+All detectors in ``sktime`` can be listed using the ``sktime.registry.all_estimators`` utility,
+using ``estimator_types="detector"``, optionally filtered by tags.
+
+Valid tags are listed in :ref:`the detector tags API reference <detector_tags>`,
+and can be listed using ``sktime.registry.all_tags``.
+
 Composition
 -----------
 
@@ -29,16 +35,16 @@ Composition
 Change Point Detection
 ----------------------
 
-.. currentmodule:: sktime.detection.skchange_cp
+.. currentmodule:: sktime.detection
 
 .. autosummary::
-    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-        moving_window.MovingWindow
-        pelt.PELT
-        seeded_binseg.SeededBinarySegmentation
+    crops.CROPS
+    moving_window.MovingWindow
+    pelt.PELT
+    seeded_binseg.SeededBinarySegmentation
 
 Naive Baselines
 ^^^^^^^^^^^^^^^
@@ -69,6 +75,35 @@ Window-based Anomaly Detection
 
     SubLOF
 
+.. currentmodule:: sktime.detection.hampel
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    HampelDetector
+
+Foundation Models for Anomaly Detection
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Anomaly detection using foundational models.
+
+.. currentmodule:: sktime.detection.momentfm
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    MomentFMAnomalyDetector
+
+.. currentmodule:: sktime.detection.tspulse
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TSPulseAnomalyDetector
+
 Reduction to Tabular Anomaly Detection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -90,6 +125,7 @@ Naive Baselines
     :template: class.rst
 
     DummyRegularAnomalies
+    DummyPretrainedAnomalies
     ZeroAnomalies
 
 .. currentmodule:: sktime.detection.naive
@@ -105,17 +141,15 @@ Time Series Segment Anomaly Detection
 
 Segment anomaly detectors identify anomalous segment.
 
-.. currentmodule:: sktime.detection.skchange_aseg
+.. currentmodule:: sktime.detection
 
 .. autosummary::
-    :recursive:
     :toctree: auto_generated/
     :template: class.rst
 
-    statthreshold.StatThresholdAnomaliser
-    circular_binseg.CircularBinarySegmentation
     capa.CAPA
-    mvcapa.MVCAPA
+    circular_binseg.CircularBinarySegmentation
+    stat_threshold.StatThresholdAnomaliser
 
 Naive Baselines
 ^^^^^^^^^^^^^^^

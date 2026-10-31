@@ -15,14 +15,14 @@ from sktime.classification.distance_based._time_series_neighbors import (
     KNeighborsTimeSeriesClassifier,
 )
 from sktime.datatypes import convert
-from sktime.transformations.panel.dictionary_based._paa import PAAlegacy as PAA
-from sktime.transformations.panel.dwt import DWTTransformer
-from sktime.transformations.panel.hog1d import HOG1DTransformer
+from sktime.transformations.dictionary_based._paa import PAAlegacy as PAA
+from sktime.transformations.dwt import DWTTransformer
+from sktime.transformations.hog1d import HOG1DTransformer
 
 # Transforms
-from sktime.transformations.panel.segment import SlidingWindowSegmenter
-from sktime.transformations.panel.slope import SlopeTransformer
-from sktime.transformations.panel.summarize._extract import DerivativeSlopeTransformer
+from sktime.transformations.segment import SlidingWindowSegmenter
+from sktime.transformations.slope import SlopeTransformer
+from sktime.transformations.summarize._extract import DerivativeSlopeTransformer
 
 __author__ = ["vincent-nich12"]
 
@@ -103,6 +103,13 @@ class ShapeDTW(BaseClassifier):
     metric_params               : dictionary for metric parameters
                                   (default = None).
 
+
+    n_splits                : int, number of splits for cross-validation
+                              (default = 10). Used for finding  the
+                              weighting_factor if 'shape_descriptor_function'
+                              is set to 'compound' and weighting_factor is
+                              not given in 'metric_params'.
+
     Notes
     -----
     .. [1] Jiaping Zhao and Laurent Itti, "shapeDTW: Shape Dynamic Time Warping",
@@ -144,8 +151,10 @@ class ShapeDTW(BaseClassifier):
         shape_descriptor_function="raw",
         shape_descriptor_functions=None,
         metric_params=None,
+        n_splits=10,
     ):
         self.n_neighbors = n_neighbors
+        self.n_splits = n_splits
         self.subsequence_length = subsequence_length
         self.shape_descriptor_function = shape_descriptor_function
         self.shape_descriptor_functions = shape_descriptor_functions
@@ -222,25 +231,32 @@ class ShapeDTW(BaseClassifier):
         self.metric_params = {k.lower(): v for k, v in self.metric_params.items()}
 
         # Get the weighting_factor if one is provided
-        if self.metric_params.get("weighting_factor") is not None:
+        if isinstance(self.metric_params.get("weighting_factor"), float) or isinstance(
+            self.metric_params.get("weighting_factor"), int
+        ):
             self.weighting_factor = self.metric_params.get("weighting_factor")
         else:
-            # Tune it otherwise
-            self._param_matrix = {
-                "metric_params": [
-                    {"weighting_factor": 0.1},
-                    {"weighting_factor": 0.125},
-                    {"weighting_factor": (1 / 6)},
-                    {"weighting_factor": 0.25},
-                    {"weighting_factor": 0.5},
-                    {"weighting_factor": 1},
-                    {"weighting_factor": 2},
-                    {"weighting_factor": 4},
-                    {"weighting_factor": 6},
-                    {"weighting_factor": 8},
-                    {"weighting_factor": 10},
-                ]
-            }
+            if isinstance(self.metric_params.get("weighting_factor"), list):
+                self._param_matrix = {
+                    "metric_params": self.metric_params.get("weighting_factor")
+                }
+            else:
+                # Tune it otherwise
+                self._param_matrix = {
+                    "metric_params": [
+                        {"weighting_factor": 0.1},
+                        {"weighting_factor": 0.125},
+                        {"weighting_factor": (1 / 6)},
+                        {"weighting_factor": 0.25},
+                        {"weighting_factor": 0.5},
+                        {"weighting_factor": 1},
+                        {"weighting_factor": 2},
+                        {"weighting_factor": 4},
+                        {"weighting_factor": 6},
+                        {"weighting_factor": 8},
+                        {"weighting_factor": 10},
+                    ]
+                }
 
             n = self.n_neighbors
             sl = self.subsequence_length
@@ -263,7 +279,7 @@ class ShapeDTW(BaseClassifier):
                     metric_params=mp,
                 ),
                 param_grid=self._param_matrix,
-                cv=KFold(n_splits=10, shuffle=True),
+                cv=KFold(n_splits=self.n_splits, shuffle=True),
                 scoring="accuracy",
             )
             grid.fit(X, y)
@@ -546,5 +562,6 @@ class ShapeDTW(BaseClassifier):
             "n_neighbors": 3,
             "shape_descriptor_function": "compound",
             "shape_descriptor_functions": ["paa", "dwt"],
+            "n_splits": 2,
         }
         return [params1, params2]

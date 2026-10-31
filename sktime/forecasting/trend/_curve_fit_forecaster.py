@@ -74,12 +74,13 @@ class CurveFitForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["statistical"],
         "authors": ["benheid"],
         "maintainers": ["benheid"],
-        "scitype:y": "univariate",
+        "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
     }
 
@@ -123,8 +124,10 @@ class CurveFitForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         x = _get_X_numpy_int_from_pandas(y.index)[:, 0]
-        start = _get_X_numpy_int_from_pandas(self._y.index[:1])[:, 0]
+        start = _get_X_numpy_int_from_pandas(self._cur_y.index[:1])[:, 0]
 
         if self.origin == "first_index":
             x = x - start
@@ -150,7 +153,7 @@ class CurveFitForecaster(BaseForecaster):
         Parameters
         ----------
         fh : guaranteed to be ForecastingHorizon,
-            The forecasting horizon with the steps ahead to to predict.
+            The forecasting horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
             Ignored in predict
 
@@ -161,7 +164,7 @@ class CurveFitForecaster(BaseForecaster):
         """
         fh = self.fh.to_absolute_index(self.cutoff)
         x = _get_X_numpy_int_from_pandas(fh)[:, 0]
-        start = _get_X_numpy_int_from_pandas(self._y.index[:1])[:, 0]
+        start = _get_X_numpy_int_from_pandas(self._cur_y.index[:1])[:, 0]
 
         if self.origin == "first_index":
             x = x - start
@@ -171,7 +174,7 @@ class CurveFitForecaster(BaseForecaster):
         return pd.Series(
             self.function(x, *self.params_[0]),
             index=fh,
-            name=self._y.name,
+            name=self._cur_y.name,
         )
 
     @classmethod

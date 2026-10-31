@@ -48,7 +48,7 @@ def test_get_X_numpy():
     # diffs should be 1/24, since this is converted to float, days since 1970
     df_hourly = pd.DataFrame(
         data=[10, 5, 4, 2, 10],
-        index=pd.date_range(start="2000-01-01", periods=5, freq="H"),
+        index=pd.date_range(start="2000-01-01", periods=5, freq="h"),
     )
     X_idx_hourly = _get_X_numpy_int_from_pandas(df_hourly.index)
     assert isinstance(X_idx_hourly, np.ndarray)
@@ -67,9 +67,25 @@ def test_get_X_numpy():
     assert (X_idx_int.reshape(-1) == int_ix.to_numpy()).all()
 
 
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("unit", ["s", "ms", "us", "ns"])
+def test_get_X_numpy_datetime_resolution(unit):
+    """Test _get_X_numpy_int_from_pandas does not depend on datetime resolution."""
+    timestamps = np.array(
+        ["2000-01-01", "2000-01-02", "2000-01-04"], dtype=f"datetime64[{unit}]"
+    )
+    X = _get_X_numpy_int_from_pandas(pd.DatetimeIndex(timestamps))
+    np.testing.assert_array_equal(X.reshape(-1), [10957.0, 10958.0, 10960.0])
+
+
 def get_expected_polynomial_coefs(y, degree, with_intercept=True):
     """Compute expected coefficients from polynomial regression."""
     t_ix = _get_X_numpy_int_from_pandas(y.index).reshape(-1)
+    # The forecaster shifts time by the first stamp. Match that here.
+    t_ix = t_ix - t_ix[0]
     poly_matrix = np.vander(t_ix, degree + 1)
     if not with_intercept:
         poly_matrix = poly_matrix[:, :-1]
@@ -102,6 +118,27 @@ def _test_trend(degree, with_intercept):
 def test_trend(degree, with_intercept):
     """Test PolynomialTrendForecaster coefficients."""
     _test_trend(degree, with_intercept)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_polynomial_trend_predict_uses_fit_origin():
+    """A horizon after the training series stays on the origin stored at fit."""
+    y = make_forecasting_problem()
+    forecaster = PolynomialTrendForecaster(degree=1, with_intercept=True)
+    forecaster.fit(y, fh=[1, 2, 3])
+    y_pred = forecaster.predict().to_numpy().reshape(-1)
+
+    coef = forecaster.regressor_.steps[-1][1].coef_
+    t = _get_X_numpy_int_from_pandas(forecaster.fh.to_absolute_index(forecaster.cutoff))
+    t = t.reshape(-1)
+    on_fit_origin = coef[0] + coef[1] * (t - forecaster._trend_origin_)
+    np.testing.assert_allclose(y_pred, on_fit_origin, rtol=1e-5)
+
+    on_horizon_start = coef[0] + coef[1] * (t - t[0])
+    assert not np.allclose(y_pred, on_horizon_start, rtol=1e-5)
 
 
 # zero trend does not work without intercept
@@ -147,6 +184,12 @@ def test_trendforecaster_with_datetimeindex():
     f.fit(df)
 
 
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [PolynomialTrendForecaster, TrendForecaster, _get_X_numpy_int_from_pandas]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 def test_predict_var():
     """Unit test for predict_interval method in PolynomialTrendForecaster.
     We only need to test _predict_var() since the residuals are assumed normal.

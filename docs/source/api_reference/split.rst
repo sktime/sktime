@@ -57,6 +57,7 @@ They have tag ``"split_type"="temporal"``.
     expandingcutoff.ExpandingCutoffSplitter
     expandinggreedy.ExpandingGreedySplitter
     expandingslidingwindow.ExpandingSlidingWindowSplitter
+    fh.ForecastingHorizonSplitter
     temporal_train_test_split.TemporalTrainTestSplitter
 
 Time index splitter composition
@@ -71,6 +72,7 @@ more complex time index based splitting strategies.
     :toctree: auto_generated/
     :template: class.rst
 
+    SyncToLongest
     Repeat
 
 .. currentmodule:: sktime.split

@@ -69,7 +69,7 @@ Recommended steps for first time contributors, or to get started with regular co
 
         +++
 
-        .. button-ref:: installation
+        .. button-ref:: developer-installation
             :color: primary
             :click-parent:
             :expand:
@@ -134,7 +134,7 @@ Acknowledging contributions
 ---------------------------
 
 We follow the `all-contributors
-specification <https://allcontributors.org>`_ and recognize various
+specification <https://github.com/all-contributors/all-contributors>`_ and recognize various
 types of contributions.
 Take a look at our past and current
 `contributors <https://github.com/sktime/sktime/blob/main/CONTRIBUTORS.md>`_!

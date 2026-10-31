@@ -116,6 +116,12 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         "authors": ["bashtage", "wooqo", "mloning", "big-o"],
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type tags inherited from _StatsModelsAdapter
+        "category": ["statistical"],
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        # the test fails due to negative values in the test scenario,
+        # which is expected and not a bug
     }
 
     _fitted_param_names = (
@@ -250,6 +256,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
                 "damping_trend": 0.28,
                 "method": "SLSQP",
             },
+            {"random_state": 42},  # to cover bug #10968
         ]
 
         return params

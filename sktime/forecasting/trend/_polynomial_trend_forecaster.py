@@ -13,7 +13,10 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.forecasting.trend._util import _get_X_numpy_int_from_pandas
+from sktime.forecasting.trend._util import (
+    _get_X_numpy_int_from_pandas,
+    _trend_time_origin,
+)
 
 
 class PolynomialTrendForecaster(BaseForecaster):
@@ -90,12 +93,14 @@ class PolynomialTrendForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["statistical"],
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
-        "ignores-exogeneous-X": True,
+        "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:pred_int": True,
+        "y_inner_mtype": "pd.DataFrame",
     }
 
     def __init__(
@@ -114,6 +119,10 @@ class PolynomialTrendForecaster(BaseForecaster):
 
         self.set_tags(**{"capability:pred_int": prediction_intervals})
 
+    def _trend_origin(self):
+        """Origin stored at fit. Unfitted or pre-fix pickles stay on absolute time."""
+        return getattr(self, "_trend_origin_", 0.0)
+
     def _fit(self, y, X, fh):
         """Fit to training data.
 
@@ -124,7 +133,7 @@ class PolynomialTrendForecaster(BaseForecaster):
         X : pd.DataFrame, default=None
             Exogenous variables are ignored
         fh : int, list or np.array, default=None
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
 
         Returns
         -------
@@ -146,15 +155,18 @@ class PolynomialTrendForecaster(BaseForecaster):
         # we regress index on series values
         # the sklearn X is obtained from the index of y
         # the sklearn y can be taken as the y seen here
-        X_sklearn = _get_X_numpy_int_from_pandas(y.index)
+        # Time is shifted to the first training stamp. See _trend_time_origin.
+        X_absolute = _get_X_numpy_int_from_pandas(y.index)
+        self._trend_origin_ = _trend_time_origin(X_absolute)
+        X_sklearn = X_absolute - self._trend_origin_
 
         # fit regressor
-        self.regressor_.fit(X_sklearn, y)
+        self.regressor_.fit(X_sklearn, y.iloc[:, 0])
 
         if self.prediction_intervals:
             # calculate and save values needed for the prediction interval method
             fitted_values = self.regressor_.predict(X_sklearn)
-            residuals = y - fitted_values
+            residuals = y.iloc[:, 0] - fitted_values
             p = self.degree + int(self.with_intercept)
             self.s_squared_ = np.sum(residuals**2) / (len(y) - p)
             self.train_index_ = y.index
@@ -178,10 +190,10 @@ class PolynomialTrendForecaster(BaseForecaster):
         """
         # use relative fh as time index to predict
         fh = self.fh.to_absolute_index(self.cutoff)
-        X_sklearn = _get_X_numpy_int_from_pandas(fh)
+        X_sklearn = _get_X_numpy_int_from_pandas(fh) - self._trend_origin()
         y_pred_sklearn = self.regressor_.predict(X_sklearn)
-        y_pred = pd.Series(y_pred_sklearn, index=fh)
-        y_pred.name = self._y.name
+        cols = self._get_varnames()
+        y_pred = pd.DataFrame(y_pred_sklearn, index=fh, columns=cols)
         return y_pred
 
     def _predict_var(self, fh=None, X=None, cov=False):
@@ -194,6 +206,7 @@ class PolynomialTrendForecaster(BaseForecaster):
 
         # 1. get X (design matrix) and M = (X^t X)^-1
         t_train = _get_X_numpy_int_from_pandas(self.train_index_).flatten()
+        t_train = t_train - self._trend_origin()
         X = np.polynomial.polynomial.polyvander(t_train, self.degree)
         if not self.with_intercept:
             X = X[:, 1:]  # remove the column of 1's that handles the intercept
@@ -205,7 +218,7 @@ class PolynomialTrendForecaster(BaseForecaster):
             fh = fh.to_absolute(cutoff=self.train_index_[-1])
 
         t_fh = fh.to_pandas()
-        fh_periods = _get_X_numpy_int_from_pandas(t_fh)
+        fh_periods = _get_X_numpy_int_from_pandas(t_fh) - self._trend_origin()
         t = np.array(fh_periods)
 
         # 3. calculate (half-) range of PI (1 + sqrt(x_0^t M x_0)) (up to scaling)
@@ -219,7 +232,9 @@ class PolynomialTrendForecaster(BaseForecaster):
         v = (1 + np.array(v)).flatten()  # see Hyndman FPP3 Section 7.9
 
         l_var = v * self.s_squared_  # see Hyndman FPP3 Section 7.9
-        pred_var = pd.DataFrame(l_var, columns=[self._y.name])
+        cols = self._get_varnames()
+        fh = self.fh.to_absolute_index(self.cutoff)
+        pred_var = pd.DataFrame(l_var, index=fh, columns=cols)
         return pred_var
 
     @classmethod

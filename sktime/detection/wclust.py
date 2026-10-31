@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 from sklearn.base import clone
 
-from sktime.clustering.dbscan import TimeSeriesDBSCAN
 from sktime.detection.base import BaseDetector
 from sktime.dists_kernels import DtwDist
 from sktime.utils.sklearn import is_sklearn_clusterer
@@ -165,11 +164,30 @@ class WindowSegmenter(BaseDetector):
     return_segments : Boolean, default=True
         If True, returns the segments with the labels.
         If False, returns the labels for each time point.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.cluster import KMeans
+    >>> from sktime.detection.wclust import WindowSegmenter
+    >>> X = pd.DataFrame({"a": [1, 1, 1, 1, 10, 10, 10, 10]})
+    >>> segmenter = WindowSegmenter(
+    ...     clusterer=KMeans(n_clusters=2, random_state=0, n_init=10), window_size=2
+    ... )
+    >>> _ = segmenter.fit(X)
+    >>> result = segmenter.predict(X)
+    >>> result
+        ilocs  cluster
+    0  [0, 4)        1
+    1  [4, 7)        0
     """
 
     _tags = {
         "task": "segmentation",
         "learning_type": "unsupervised",
+        # CI and test flags
+        # -----------------
+        "tests:skip_by_name": ["test_non_state_changing_method_contract"],
     }
 
     def __init__(
@@ -188,6 +206,8 @@ class WindowSegmenter(BaseDetector):
         self.step_size = step_size
         self.return_segments = return_segments
         if self.clusterer is None:
+            from sktime.clustering.dbscan import TimeSeriesDBSCAN
+
             self._clusterer = TimeSeriesDBSCAN(distance=DtwDist())
         else:
             self._clusterer = self.clusterer
@@ -203,7 +223,7 @@ class WindowSegmenter(BaseDetector):
         X : pd.DataFrame
             training data to fit model to, time series
         y : pd.Series, optional
-            ground truth detections for training if annotator is supervised
+            ground truth detections for training if detector is supervised
 
         Returns
         -------
@@ -281,12 +301,14 @@ class WindowSegmenter(BaseDetector):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return `"default"` set.
-            There are currently no reserved values for annotators.
+            There are currently no reserved values for detectors.
 
         Returns
         -------
         params : dict or list of dict, default = {}
         """
+        from sktime.clustering.dbscan import TimeSeriesDBSCAN
+
         params1 = {"clusterer": TimeSeriesDBSCAN(distance=DtwDist()), "window_size": 2}
         params2 = {}
         return [params1, params2]

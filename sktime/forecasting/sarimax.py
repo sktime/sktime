@@ -21,7 +21,7 @@ class SARIMAX(_StatsModelsAdapter):
 
     These are implementations of the same underlying model, (S)ARIMA(X),
     but with different
-    fitting strategies, fitted parameters, and slightly differring behaviour.
+    fitting strategies, fitted parameters, and slightly differing behaviour.
     Users should refer to the statsmodels documentation for further details:
     https://www.statsmodels.org/dev/examples/notebooks/generated/statespace_sarimax_faq.html
 
@@ -237,9 +237,12 @@ class SARIMAX(_StatsModelsAdapter):
         # "python_dependencnies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
-        "ignores-exogeneous-X": False,
+        "category": ["statistical"],
+        "capability:exogenous": True,
+        "capability:random_state": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
+        "capability:non_contiguous_X": False,
     }
 
     def __init__(

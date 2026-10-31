@@ -6,9 +6,9 @@ __author__ = ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly"]
 __all__ = ["STLForecaster"]
 
 import pandas as pd
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class STLForecaster(BaseForecaster):
@@ -139,15 +139,21 @@ class STLForecaster(BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["tensorflow-as-tf", "mloning", "aiwalter", "fkiraly", "ericjb"],
         "maintainers": ["tensorflow-as-tf"],
-        "scitype:y": "univariate",  # which y are fine? univariate/multivariate/both
-        "ignores-exogeneous-X": False,  # does estimator ignore the exogeneous X?
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
+        "category": ["statistical"],
+        "capability:multivariate": False,  # which y are fine? False/True
+        "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": False,  # can estimator handle missing data?
+        "capability:update": True,  # can estimator handle incremental updates?
         "y_inner_mtype": "pd.Series",  # which types do _fit, _predict, assume for y?
         "X_inner_mtype": "pd.DataFrame",  # which types do _fit, _predict, assume for X?
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
-        "python_dependencies": "statsmodels",
     }
 
     def __init__(
@@ -192,15 +198,13 @@ class STLForecaster(BaseForecaster):
             self.forecaster_seasonal,
             self.forecaster_resid,
         ):
-            if forecaster is not None and not forecaster.get_tag(
-                "ignores-exogeneous-X"
-            ):
-                ignore_exogenous = False
+            if forecaster is not None and forecaster.get_tag("capability:exogenous"):
+                capa_exo = True
                 break
         else:  # none of the forecasters (if provided) use exogenous feature variables
-            ignore_exogenous = True  # corresponding to NaiveForecaster in missing case
+            capa_exo = False  # corresponding to NaiveForecaster in missing case
 
-        self.set_tags(**{"ignores-exogeneous-X": ignore_exogenous})
+        self.set_tags(**{"capability:exogenous": capa_exo})
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.
@@ -210,13 +214,15 @@ class STLForecaster(BaseForecaster):
         y : pd.Series
             Target time series to which to fit the forecaster.
         fh : int, list, np.array or ForecastingHorizon, optional (default=None)
-            The forecasters horizon with the steps ahead to to predict.
+            The forecasters horizon with the steps ahead to predict.
         X : pd.DataFrame, optional (default=None)
 
         Returns
         -------
         self : returns an instance of self.
         """
+        self._cur_y = y
+        self._cur_X = X
         from statsmodels.tsa.seasonal import STL as _STL
 
         from sktime.forecasting.naive import NaiveForecaster
@@ -281,7 +287,7 @@ class STLForecaster(BaseForecaster):
         y_pred_trend = self.forecaster_trend_.predict(fh=fh, X=X)
         y_pred_resid = self.forecaster_resid_.predict(fh=fh, X=X)
         y_pred = y_pred_seasonal + y_pred_trend + y_pred_resid
-        y_pred.name = self._y.name
+        y_pred.name = self._cur_y.name
         return y_pred
 
     def _update(self, y, X=None, update_params=True):
@@ -344,7 +350,7 @@ class STLForecaster(BaseForecaster):
 
         fig, ax = plt.subplots(4, 1, sharex=True)
 
-        plot_series(self._y, ax=ax[0], markers=[""])
+        plot_series(self._cur_y, ax=ax[0], markers=[""])
         plot_series(self.trend_, ax=ax[1], markers=[""])
         plot_series(self.seasonal_, ax=ax[2], markers=[""])
         plot_series(self.resid_, ax=ax[3])

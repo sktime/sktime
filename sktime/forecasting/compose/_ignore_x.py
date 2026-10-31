@@ -17,15 +17,28 @@ class IgnoreX(_DelegatedForecaster):
     ----------
     forecaster : sktime forecaster, BaseForecaster descendant instance
         The forecaster to wrap.
+
     ignore_x : bool, optional (default=True)
         Whether to ignore exogenous data or not, this parameter is useful for tuning.
-        True: ignore exogenous data, X is not passed on to ``forecaster``
-        False: use exogenous data, X is passed on to ``forecaster``
+
+        * True: ignore exogenous data, X is not passed on to ``forecaster``
+        * False: use exogenous data, X is passed on to ``forecaster``
 
     Attributes
     ----------
     forecaster_ : clone of forecaster
         The fitted forecaster.
+
+    Examples
+    --------
+    >>> from sktime.forecasting.compose import IgnoreX
+    >>> from sktime.forecasting.sarimax import SARIMAX
+    >>> from sktime.datasets import load_longley
+    >>> y, X = load_longley()
+    >>> forecaster = IgnoreX(SARIMAX())
+    >>> forecaster.fit(y, X=X, fh=[1, 2, 3])
+    IgnoreX(forecaster=SARIMAX())
+    >>> y_pred = forecaster.predict(X=X)
     """
 
     # attribute for _DelegatedForecaster, which then delegates
@@ -34,7 +47,13 @@ class IgnoreX(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
-        "ignores-exogeneous-X": True,
+        # estimator type
+        # --------------
+        "category": ["composition"],
+        "capability:exogenous": True,
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, forecaster, ignore_x=True):
@@ -43,13 +62,27 @@ class IgnoreX(_DelegatedForecaster):
 
         super().__init__()
 
-        self.forecaster_ = forecaster.clone()
+    def __dynamic_tags__(self):
+        """Dynamic tag setter logic for setting tag values condition on parameters.
 
-        self._set_delegated_tags(self.forecaster_)
-        self.set_tags(**{"ignores-exogeneous-X": True})
+        This method should be used for setting dynamic tags only.
+        """
+        self._set_delegated_tags(self.forecaster)
+        self.set_tags(**{"capability:exogenous": not self.ignore_x})
 
-        if not ignore_x:
-            self.set_tags(**{"ignores-exogeneous-X": ignore_x})
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        self.forecaster_ = self.forecaster.clone()
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -60,7 +93,6 @@ class IgnoreX(_DelegatedForecaster):
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
             special parameters are defined for a value, will return ``"default"`` set.
-
 
         Returns
         -------

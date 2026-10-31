@@ -5,7 +5,7 @@ from copy import copy, deepcopy
 
 from sktime.base import BaseEstimator
 from sktime.pipeline.step import Step
-from sktime.transformations.series.subset import ColumnSelect
+from sktime.transformations.subset import ColumnSelect
 
 __author__ = ["benHeid"]
 __all__ = ["Pipeline"]
@@ -95,8 +95,8 @@ class Pipeline(BaseEstimator):
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> from sktime.pipeline import Pipeline
     >>> from sktime.transformations.compose import Id
-    >>> from sktime.transformations.series.boxcox import BoxCoxTransformer
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.boxcox import BoxCoxTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
 
         Example 1: Simple sequential pipeline of transformers using the generalized
         non-sequential pipeline implementation
@@ -157,6 +157,13 @@ class Pipeline(BaseEstimator):
     }
     """
 
+    _tags = {
+        # test skip flags
+        # ---------------
+        "tests:skip_by_name": ["test_inheritance"],
+        # does not inherit from intermediate base classes
+    }
+
     def __init__(self, steps=None):
         warnings.warn(
             "This generalised graphical pipeline is experimental, "
@@ -165,7 +172,7 @@ class Pipeline(BaseEstimator):
             "such as TransformedTargetForecaster, ForecastingPipeline, "
             "ClassificationPipeline, etc., see for instance "
             "notebooks 01_forecasting.ipynb and "
-            "02_classification.ipynb at"
+            "02_classification.ipynb at "
             "https://github.com/sktime/sktime/blob/main/examples/.",
             stacklevel=1,
         )
@@ -662,8 +669,8 @@ class Pipeline(BaseEstimator):
         """
         from sktime.classification.distance_based import KNeighborsTimeSeriesClassifier
         from sktime.forecasting.naive import NaiveForecaster
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         return [
             {

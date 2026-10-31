@@ -23,10 +23,41 @@ A full table with tag based search is also available on the
 Forecasting
 -----------
 
-Point forecasts - classes
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Point forecasts
+~~~~~~~~~~~~~~~
+
+Average losses
+^^^^^^^^^^^^^^
 
 .. currentmodule:: sktime.performance_metrics.forecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    MeanAbsoluteError
+    MeanSquaredError
+    MedianAbsoluteError
+    MedianSquaredError
+
+Percentage errors
+^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    MeanAbsolutePercentageError
+    MeanAbsolutePercentageErrorStabilized
+    MedianAbsolutePercentageError
+    MeanSquaredPercentageError
+    MedianSquaredPercentageError
+    MeanAbsoluteErrorPercentage
+    MeanSquaredErrorPercentage
+    MeanArctangentAbsolutePercentageError
+
+Scaled errors
+^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: auto_generated/
@@ -36,55 +67,80 @@ Point forecasts - classes
     MedianAbsoluteScaledError
     MeanSquaredScaledError
     MedianSquaredScaledError
-    MeanAbsoluteError
-    MeanSquaredError
-    MedianAbsoluteError
-    MedianSquaredError
-    GeometricMeanAbsoluteError
-    GeometricMeanSquaredError
-    MeanAbsolutePercentageError
-    MedianAbsolutePercentageError
-    MeanSquaredPercentageError
-    MedianSquaredPercentageError
-    MeanRelativeAbsoluteError
-    MedianRelativeAbsoluteError
-    GeometricMeanRelativeAbsoluteError
-    GeometricMeanRelativeSquaredError
-    MeanAsymmetricError
-    MeanLinexError
-    RelativeLoss
 
-Point forecasts - functions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. currentmodule:: sktime.performance_metrics.forecasting
+Relative errors
+^^^^^^^^^^^^^^^
 
 .. autosummary::
     :toctree: auto_generated/
-    :template: function.rst
+    :template: class_with_call.rst
 
-    make_forecasting_scorer
-    mean_absolute_scaled_error
-    median_absolute_scaled_error
-    mean_squared_scaled_error
-    median_squared_scaled_error
-    mean_absolute_error
-    mean_squared_error
-    median_absolute_error
-    median_squared_error
-    geometric_mean_absolute_error
-    geometric_mean_squared_error
-    mean_absolute_percentage_error
-    median_absolute_percentage_error
-    mean_squared_percentage_error
-    median_squared_percentage_error
-    mean_relative_absolute_error
-    median_relative_absolute_error
-    geometric_mean_relative_absolute_error
-    geometric_mean_relative_squared_error
-    mean_asymmetric_error
-    mean_linex_error
-    relative_loss
+    MeanRelativeAbsoluteError
+    MedianRelativeAbsoluteError
+    RelativeLoss
+    TheilU2
+
+Geometric errors
+^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    GeometricMeanAbsoluteError
+    GeometricMeanSquaredError
+    GeometricMeanRelativeAbsoluteError
+    GeometricMeanRelativeSquaredError
+
+Normalized errors
+^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    MSEnormalizedBySD
+    RMSEnormalizedByIQR
+
+Divergence based point prediction errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    KLDivergenceNormal
+    KLDivergenceDoubleExponential
+    KLDivergenceSingleExponential
+
+Benchmark errors
+^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    OverallWeightedAverage
+
+Under- and over-prediction errors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    MeanAsymmetricError
+    MeanLinexError
+
+Measures of bias
+^^^^^^^^^^^^^^^^
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class_with_call.rst
+
+    MeanBias
+
 
 Quantile and interval forecasts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,6 +171,20 @@ Distribution forecasts
     SquaredDistrLoss
 
 
+User-defined metric factory
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use ``make_forecasting_scorer`` to create user-defined metrics for forecasting tasks.
+
+.. currentmodule:: sktime.performance_metrics.forecasting
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: function.rst
+
+    make_forecasting_scorer
+
+
 Detection tasks
 ---------------
 
@@ -133,7 +203,7 @@ The metrics in ``sktime`` can be used for both types of detection tasks:
 
 
 Event detection - anomalies, outliers
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.performance_metrics.detection
 
@@ -147,9 +217,12 @@ Event detection - anomalies, outliers
     DetectionCount
     WindowedF1Score
     TimeSeriesAUPRC
+    EventTPR
+    MeanDetectionOffset
+    FalseAlarmRate
 
 Segment detection
------------------
+~~~~~~~~~~~~~~~~~
 
 .. currentmodule:: sktime.performance_metrics.detection
 
@@ -158,19 +231,3 @@ Segment detection
     :template: function.rst
 
     RandIndex
-
-
-Legacy detection metrics
-------------------------
-
-These metrics do not follow the standard API and will be deprecated in the future.
-
-.. currentmodule:: sktime.performance_metrics.annotation
-
-.. autosummary::
-    :toctree: auto_generated/
-    :template: function.rst
-
-    count_error
-    hausdorff_error
-    prediction_ratio

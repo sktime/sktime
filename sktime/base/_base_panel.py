@@ -49,6 +49,7 @@ class BasePanelMixin(BaseEstimator):
         Stores one estimator per loop index.
         """
         # retrieve data arguments
+        # y is ``(y_inner, y_schema)``: frame and VectorizedDF
         X = kwargs.pop("X", None)
         y = kwargs.pop("y", None)
 
@@ -59,10 +60,11 @@ class BasePanelMixin(BaseEstimator):
         kwargs["backend_params"] = self.get_config()["backend:parallel:params"]
 
         if methodname == "fit":
-            self._yvec = y
+            _, y_schema = y
+            self._y_schema = y_schema
 
-            ests_ = self._yvec.vectorize_est(self, method="clone", **kwargs)
-            ests_fit = self._yvec.vectorize_est(
+            ests_ = self._y_schema.vectorize_est(self, method="clone", **kwargs)
+            ests_fit = self._y_schema.vectorize_est(
                 ests_,
                 method=methodname,
                 args={"y": y},
@@ -73,7 +75,7 @@ class BasePanelMixin(BaseEstimator):
             return self
         else:  # methodname == "predict" or methodname == "predict_proba":
             ests_ = getattr(self, self.VECTORIZATION_ATTR)
-            y_preds = self._yvec.vectorize_est(
+            y_preds = self._y_schema.vectorize_est(
                 ests_,
                 method=methodname,
                 X=X,
@@ -157,7 +159,7 @@ class BasePanelMixin(BaseEstimator):
         y_preds = []
         tt_ixx = []
 
-        if isinstance(X.index, pd.MultiIndex):
+        if isinstance(X, pd.DataFrame) and isinstance(X.index, pd.MultiIndex):
             X_ix = X.index.get_level_values(0).unique()
         else:
             X_ix = np.arange(len(X))
@@ -218,12 +220,12 @@ class BasePanelMixin(BaseEstimator):
             for i in range(1, len(y_preds)):
                 y_pred = y_pred.combine_first(y_preds[i])
             y_pred = y_pred.reindex(y.index).fillna(-1)
-        else:
+        else:  # if isinstance(y_pred, np.ndarray)
             if y_pred.ndim == 1:
                 sh = y.shape
             else:
                 sh = (y.shape[0], y_pred.shape[1])
-            y_pred = -np.ones(sh, dtype=y.dtype)
+            y_pred = -np.ones(sh, dtype=y_pred.dtype)
             for i, ix in enumerate(tt_ixx):
                 y_preds_i = y_preds[i]
                 if y_pred.ndim == 1:
@@ -341,29 +343,32 @@ class BasePanelMixin(BaseEstimator):
         ----------
         y : pd.DataFrame, pd.Series or np.ndarray
         return_to_mtype : bool
-            whether to return the mtype of y output
+            whether to return the mtype of y output and the converted data
 
         Returns
         -------
         y_inner : object of sktime compatible time series type
             can be Series, Panel, Hierarchical
+            converted y, or the pandas frame when vectorized
         y_metadata : dict
             metadata of y, returned by check_is_scitype
         y_mtype : str, only returned if return_to_mtype=True
             mtype of y_inner, after convert
+        y_schema : VectorizedDF or None, only returned if return_to_mtype=True
+            VectorizedDF of y when vectorized. None otherwise.
         """
         from sktime.datatypes import (
             MTYPE_LIST_TABLE,
-            VectorizedDF,
             check_is_error_msg,
             check_is_scitype,
             convert,
+            prepare_VectorizedDF,
         )
         from sktime.datatypes._dtypekind import DtypeKind
 
         if y is None:
             if return_to_mtype:
-                return None, None, None
+                return None, None, None, None
             else:
                 return None, None
 
@@ -408,11 +413,17 @@ class BasePanelMixin(BaseEstimator):
                 as_scitype="Table",
                 store=self._converter_store_y,
             )
-            y_vec = VectorizedDF([y_df], iterate_cols=True)
+            y_schema, y_inner = prepare_VectorizedDF(
+                [y_df],
+                iterate_as="Series",
+                is_scitype="Panel",
+                iterate_cols=True,
+                store=self._converter_store_y,
+            )
             if return_to_mtype:
-                return y_vec, y_metadata, "pd_DataFrame_Table"
+                return y_inner, y_metadata, "pd_DataFrame_Table", y_schema
             else:
-                return y_vec, y_metadata
+                return y_inner, y_metadata
 
         y_inner, y_inner_mtype = convert(
             y,
@@ -424,7 +435,7 @@ class BasePanelMixin(BaseEstimator):
         )
 
         if return_to_mtype:
-            return y_inner, y_metadata, y_inner_mtype
+            return y_inner, y_metadata, y_inner_mtype, None
         else:
             return y_inner, y_metadata
 
@@ -536,9 +547,11 @@ class BasePanelMixin(BaseEstimator):
             )
 
         est_type = self.get_tag("object_type")  # classifier or regressor
-        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"]:
+        if DtypeKind.CATEGORICAL in X_metadata["feature_kind"] and not self.get_tag(
+            "capability:categorical_in_X"
+        ):
             raise TypeError(
-                f"{est_type}s do not support categorical features in exogeneous X."
+                f"{est_type}s do not support categorical features in exogenous X."
             )
 
         n_cases = X_metadata["n_instances"]

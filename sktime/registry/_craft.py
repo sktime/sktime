@@ -19,9 +19,11 @@ will have the same effect as new_est = spec.clone()
 
 __author__ = ["fkiraly"]
 
+import ast
 import re
 
 from sktime.registry._lookup import all_estimators
+from sktime.registry._namespace import _namespace, _namespace_shorthands
 
 
 def _extract_class_names(spec):
@@ -44,35 +46,203 @@ def _extract_class_names(spec):
 
     # we need to exclude expressions that look like classes per the regex
     # but aren't
-    EXCLUDE_LIST = ["True", "False"]
+    EXCLUDE_LIST = ["True", "False", "None"]
     cls_name_list = [x for x in cls_name_list if x not in EXCLUDE_LIST]
 
     return cls_name_list
 
 
-def craft(spec):
+def craft(spec, safe=False, namespace_plugin=None):
     """Instantiate an object from the specification string.
+
+    The ``craft`` utility can be used to deserialize an estimator specification string,
+    including composites such as pipelines.
+
+    It takes a specification string and returns an ``sktime`` estimator, class,
+    or object, corresponding to that string.
+
+    Specification strings can be:
+
+    * simple expressions such as ``"NaiveForecaster"`` or ``"NaiveForecaster(sp=2)"``
+    * compositions such as ``"Deseasonalizer() * NaiveForecaster()"``
+    * a longer block of code, closing with a return statement, e.g., the string block
+
+    .. code-block:: python
+
+        deseason = Deseasonalizer()
+        naive = NaiveForecaster()
+        return deseason * naive
+
+    The ``craft`` utility is useful as a serialization / deserialization pair,
+    together with ``str`` coercion (or commandline printing) of an
+    unfitted estimator.
+
+    ``craft`` recognizes estimators present in ``sktime`` and ``scikit-learn``,
+    and base python (built-in types and functions).
+
+    If ``safe=True`` mode is enabled, only simple propositional expressions are allowed.
+
+    The accepted "safe" grammar is intentionally small:
+
+    .. code-block:: text
+
+        expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
+                        | UNARYOP expression
+
+        arguments  ::= positional_argument | keyword_argument | arguments "," arguments
+
+        positional_argument ::= expression | CONSTANT
+        keyword_argument    ::= NAME "=" (expression | CONSTANT)
+
+    Where
+
+    .. code-block:: text
+
+        NAME       ::= valid Python identifier, object name in ``sktime`` or ``sklearn``
+        CONSTANT   ::= literal value (e.g., number, string, boolean)
+        BINOP      ::= valid Python binary operator (e.g., +, -, *, /)
+        UNARYOP    ::= valid Python unary operator (e.g., +, -, ~)
+
+    This permits simple constructor calls such as ``A(a=42)``,
+    or nested constructor calls such as ``A(a=42, b=B("test"))``, and only such calls.
+
+    In particular, does not permit attribute access, lambdas, comprehensions,
+    imports, assignments, function calls through arbitrary expressions, etc,
+    which are "unsafe" in the sense of allowing arbitrary code injection.
 
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
         i.e., a string that executes to construct an object if all imports were present
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present.
+          Option 2 is not available in ``safe=True`` mode.
+
+    safe : bool, optional (default=False)
+        whether to enforce safe expressions according to the safe specification rules.
+
+        * if True, only allow safe expressions according to the safe specification
+          rules, see above for the exact rules.
+        * if False, allow all expressions (default behavior).
+
+    namespace_plugin : dict or iterable of (str, object) tuples, optional
+        additional namespace for resolving names in the specification.
+        If a dict is provided, it should map names to objects.
+        If an iterable of tuples is provided, each
+        tuple should be of the form (name, object).
 
     Returns
     -------
     obj : skbase BaseObject descendant, constructed from ``spec``
         this will have the property that ``spec == str(obj)`` (up to formatting)
-    """
-    register = dict(all_estimators())  # noqa: F841
 
+    Examples
+    --------
+    >>> from sktime.registry import craft
+
+    Example 1: simple estimator
+
+    * serialized as the string ``"NaiveForecaster(sp=2)"``
+    * deserialized as the estimator ``NaiveForecaster(sp=2)``
+
+    >>> spec = "NaiveForecaster(sp=2)"
+    >>> est = craft(spec)
+    >>> print(est)
+    NaiveForecaster(sp=2)
+
+    Example 2: composite estimator
+
+    * serialized as the string ``"Deseasonalizer() * NaiveForecaster()"``
+    * deserialized as the estimator ``Deseasonalizer() * NaiveForecaster()``,
+      same as ``ForecastingPipeline([Deseasonalizer(), NaiveForecaster()])``
+
+    >>> spec = "Deseasonalizer() * NaiveForecaster()"
+    >>> est = craft(spec)
+
+    Example 3: longer code block
+
+    * serialized as a code block with assignments and return statement
+    * deserialized as the estimator defined in the return statement
+
+    >>> spec = '''
+    ... deseason = Deseasonalizer()
+    ... naive = NaiveForecaster()
+    ... return deseason * naive
+    ... '''
+    >>> est = craft(spec)
+    """
+    # normalize namespace_plugin to dict
+    if namespace_plugin is None:
+        namespace_plugin = {}
+    elif isinstance(namespace_plugin, dict):
+        pass
+    else:
+        namespace_plugin = dict(namespace_plugin)
+
+    # retrieve all estimators from sktime and sklearn for namespace resolution
+    register = _namespace(include_deps=True)
+    register.update(namespace_plugin)
+
+    # Parse the specification once.
+    # Both safe and unsafe modes operate on the resulting AST.
     try:
-        obj = eval(spec, globals(), register)
-    except Exception:
+        # shorthands replacement only for expressions in eval mode, not code blocks
+        # (for code blocks, it is clear how variable names would be resolved)
+        if "return" not in spec:
+            spec = _replace_shorthands(spec, _namespace_shorthands())
+
+        tree = ast.parse(spec, mode="exec")
+    except SyntaxError as e:
+        if safe:
+            raise ValueError(
+                f"Error in craft utility: failed to parse specification: {spec}"
+            ) from e
+        exec_parsed = False
+    else:
+        exec_parsed = True
+
+    # single expression
+    if exec_parsed and len(tree.body) == 1 and isinstance(tree.body[0], ast.Expr):
+        # safe mode: validate the AST against the allowed constructors and operators
+        if safe and not _validate_ast(tree, register):
+            raise ValueError(
+                "Error in craft utility: unsafe or invalid specification supplied: "
+                f"{spec}"
+            )
+
+        expr = tree.body[0].value
+        expr_tree = ast.Expression(body=expr)
+        ast.fix_missing_locations(expr_tree)
+
+        try:
+            obj = eval(
+                compile(expr_tree, "<craft>", "eval"),
+                {"__builtins__": {}} if safe else globals(),
+                register,
+            )
+        except Exception as e:
+            if safe:
+                raise ValueError(
+                    f"Error in craft utility: failed to evaluate specification: {spec}"
+                ) from e
+            else:
+                raise e
+        else:
+            return obj
+
+    # safe mode only allows single expressions
+    if safe:
+        raise ValueError(
+            "Error in craft utility: safe mode requires a single expression, "
+            f"but got a block of code: {spec}"
+        )
+
+    else:
+        # unsafe mode: attempt to execute the specification directly
         from textwrap import indent
 
         spec_fun = indent(spec, "    ")
@@ -89,18 +259,202 @@ def build_obj():
     return obj
 
 
-def deps(spec):
+def _validate_ast(tree, register):
+    """Validate that ``spec`` contains only safe constructor expressions.
+
+    The accepted grammar is intentionally small:
+
+    .. code-block:: text
+
+        expression ::= NAME | NAME "(" arguments ")" | expression BINOP expression
+                        | UNARYOP expression
+
+        arguments  ::= positional_argument | keyword_argument | arguments "," arguments
+
+        positional_argument ::= expression | CONSTANT
+        keyword_argument    ::= NAME "=" (expression | CONSTANT)
+
+    Where
+
+    .. code-block:: text
+
+        NAME       ::= valid Python identifier, object name in ``sktime`` or ``sklearn``
+        CONSTANT   ::= literal value (e.g., number, string, boolean)
+        BINOP      ::= valid Python binary operator (e.g., +, -, *, /)
+        UNARYOP    ::= valid Python unary operator (e.g., +, -, ~)
+
+    This permits nested constructor calls such as:
+
+        A(a=42, b=B("test"))
+
+    and only such calls.
+    In particular, does not permit attribute access, lambdas, comprehensions,
+    imports, assignments, function calls through arbitrary expressions, etc.
+
+    Parameters
+    ----------
+    tree : ast.Expression or ast.AST
+        The abstract syntax tree of the specification to validate.
+    register : dict
+        The registry of allowed names (estimators, methods, variables) for validation.
+
+    Returns
+    -------
+    bool
+        True if the AST is valid according to the safe spec rules, False otherwise.
+    """
+    reg = register  # for shorter expressions below
+
+    if isinstance(tree, ast.Module):
+        return (
+            len(tree.body) == 1
+            and isinstance(tree.body[0], ast.Expr)
+            and _validate_ast(tree.body[0].value, reg)
+        )
+
+    # Only names explicitly supplied in the estimator registry are
+    # available for variables. In particular, don't permit dunder names.
+    if isinstance(tree, ast.Name):
+        return tree.id in reg and not tree.id.startswith("__")
+
+    # Constants are safe as values.
+    # In particular, this allows strings, numbers, booleans, None, etc.
+    if isinstance(tree, ast.Constant):
+        return True
+
+    # Literal containers are also safe provided all nested elements are safe.
+    if isinstance(tree, (ast.List, ast.Tuple, ast.Set)):
+        return all(_validate_ast(elt, reg) for elt in tree.elts)
+
+    if isinstance(tree, ast.Dict):
+        return all(
+            _validate_ast(key, reg) and _validate_ast(value, reg)
+            for key, value in zip(tree.keys, tree.values)
+        )
+
+    # binary and unary operators (dunder operations)
+    # are allowed, since this is how we can build pipelines
+    allowed_binops = (
+        ast.Add,
+        ast.Sub,
+        ast.Mult,
+        ast.Div,
+        ast.FloorDiv,
+        ast.Mod,
+        ast.Pow,
+        ast.MatMult,
+        ast.BitOr,
+        ast.BitAnd,
+        ast.BitXor,
+        ast.LShift,
+        ast.RShift,
+    )
+
+    allowed_unaryops = (
+        ast.UAdd,
+        ast.USub,
+        ast.Not,
+        ast.Invert,
+    )
+
+    if isinstance(tree, ast.BinOp):
+        if not isinstance(tree.op, allowed_binops):
+            return False
+        return _validate_ast(tree.left, reg) and _validate_ast(tree.right, reg)
+
+    if isinstance(tree, ast.UnaryOp):
+        if not isinstance(tree.op, allowed_unaryops):
+            return False
+        return _validate_ast(tree.operand, reg)
+
+    if isinstance(tree, ast.Call):
+        # Only direct calls such as A(...) are allowed.
+        #
+        # This deliberately rejects:
+        #   obj.A(...)
+        #   getattr(...)(...)
+        #   (lambda: ...)(...)
+        if not isinstance(tree.func, ast.Name):
+            return False
+
+        if not _validate_ast(tree.func, reg):
+            return False
+
+        for arg in tree.args:
+            if not _validate_ast(arg, reg):
+                return False
+
+        for kw in tree.keywords:
+            # **kwargs is represented by keyword.arg == None.
+            if kw.arg is None:
+                return False
+            if not _validate_ast(kw.value, reg):
+                return False
+
+        return True
+
+    # the above is an exhaustive list of what is allowed
+    # hence, if we reach this point, the AST contains an unsupported node type
+    return False
+
+
+def _replace_shorthands(code: str, shorthands: dict[str, str]) -> str:
+    """Replace variables in code with their corresponding replacements.
+
+    Used to replace shorthands in the code with their corresponding full expressions.
+    Safe to use in isolation as code is not executed.
+    As part of ``craft``, is safe in conjunction with the ``safe=True`` setting,
+    as the safe code validation is carried out on the replacement.
+
+    Parameters
+    ----------
+    code : str
+        The Python code in which to replace variables.
+    shorthands : dict[str, str]
+        A dictionary mapping shorthand names to their full expressions.
+
+    Returns
+    -------
+    str
+        The modified code with variables replaced.
+    """
+
+    class Transformer(ast.NodeTransformer):
+        def visit_Name(self, node: ast.Name):
+            if isinstance(node.ctx, ast.Load) and node.id in shorthands:
+                return ast.copy_location(
+                    ast.parse(shorthands[node.id], mode="eval").body,
+                    node,
+                )
+            return node
+
+    return ast.unparse(Transformer().visit(ast.parse(code)))
+
+
+def deps(spec, include_test_deps=False):
     """Get PEP 440 dependency requirements for a craft spec.
+
+    The ``deps`` utility returns a PEP 440 compatible requirement string
+    required to construct the deserialization via ``craft``.
+
+    In case the spec includes estimators with disjunctions in their requirement
+    specifications, the first disjunctive requirement is returned, i.e.,
+    any disjunctions are resolved by picking the first dependency in the disjunction.
 
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
-        i.e., a string that executes to construct an object if all imports were present
+        i.e., a string that executes to construct an object if all imports were present.
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
+
+    include_test_deps : bool, default=False
+        whether to include dependencies tagged as
+        "tests:python_dependencies" in addition to "python_dependencies"
 
     Returns
     -------
@@ -108,7 +462,12 @@ def deps(spec):
         each str is PEP 440 compatible requirement string for craft(spec)
         if spec has no requirements, return is [], the length 0 list
     """
-    register = dict(all_estimators())
+    if "return" not in spec:
+        # shorthands replacement only for expressions in eval mode, not code blocks
+        # (for code blocks, it is clear how variable names would be resolved)
+        spec = _replace_shorthands(spec, _namespace_shorthands())
+
+    register = _namespace(include_deps=True)
 
     dep_strs = []
 
@@ -120,14 +479,36 @@ def deps(spec):
             )
         cls = register[x]
 
+        def _resolve_disjunctions(dep):
+            """Resolve disjunctions in dependencies by picking first."""
+            if isinstance(dep, list):
+                return dep[0]  # pick first dependency in disjunction
+            return dep
+
+        def _coerce_dep_strs(dep):
+            """Coerce dependency tag value to list of strings."""
+            if dep is None:
+                return []
+            elif isinstance(dep, str) and len(dep) > 0:
+                return [dep]
+            elif isinstance(dep, str) and len(dep) == 0:
+                return []
+            elif isinstance(dep, list):
+                return [_resolve_disjunctions(d) for d in dep]
+            else:
+                return dep
+
+        if not hasattr(cls, "get_class_tag"):
+            continue
+
         new_deps = cls.get_class_tag("python_dependencies")
+        dep_strs += _coerce_dep_strs(new_deps)
 
-        if isinstance(new_deps, list):
-            dep_strs += new_deps
-        elif isinstance(new_deps, str) and len(new_deps) > 0:
-            dep_strs += [new_deps]
+        if include_test_deps:
+            test_deps = cls.get_class_tag("tests:python_dependencies")
+            dep_strs += _coerce_dep_strs(test_deps)
 
-        reqs = list(set(dep_strs))
+    reqs = list(set(dep_strs))
 
     return reqs
 
@@ -135,15 +516,22 @@ def deps(spec):
 def imports(spec):
     """Get import code block for a craft spec.
 
+    The ``imports`` utility returns a full python import block,
+    as a string block, required for importing all estimators and objects occurring
+    in the ``spec`` block.
+
+    The ``imports`` utility recognizes ``sktime`` and ``scikit-learn`` objects.
+
     Parameters
     ----------
     spec : str, sktime/skbase compatible object specification
         i.e., a string that executes to construct an object if all imports were present
         imports inferred are of any classes in the scope of ``all_estimators``
-        option 1: a string that evaluates to an estimator
-        option 2: a sequence of assignments in valid python code,
-            with the object to be defined preceded by a "return"
-            assignments can use names of classes as if all imports were present
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
 
     Returns
     -------
@@ -151,7 +539,7 @@ def imports(spec):
         python code consisting of all import statements required for spec
         imports cover object/estimator classes found as sub-strings of spec
     """
-    register = dict(all_estimators())
+    register = _namespace(include_deps=True)
 
     import_strs = []
 
@@ -185,3 +573,80 @@ def _get_public_import(module_path: str) -> str:
         if part.startswith("_"):
             return ".".join(parts[:i])  # Keep only part before first private submodule
     return module_path  # Return the original path if no private submodules are found
+
+
+def _r_deps(spec, include_test_deps=False):
+    """Get R dependency requirements for a craft spec.
+
+    The ``_r_deps`` utility returns a list of R requirement strings
+    required to construct the deserialization via ``craft``.
+
+    In case the spec includes estimators with disjunctions in their requirement
+    specifications, the first disjunctive requirement is returned, i.e.,
+    any disjunctions are resolved by picking the first dependency in the disjunction.
+
+    Parameters
+    ----------
+    spec : str, sktime/skbase compatible object specification
+        i.e., a string that executes to construct an object if all R
+        dependencies were present.
+        dependencies inferred are of any classes in the scope of ``all_estimators``
+
+        * option 1: a string that evaluates to an estimator
+        * option 2: a sequence of assignments in valid python code,
+          with the object to be defined preceded by a "return".
+          assignments can use names of classes as if all imports were present
+
+    include_test_deps : bool, default=False
+        whether to include dependencies tagged as
+        "tests:r_dependencies" in addition to "r_dependencies"
+
+    Returns
+    -------
+    reqs : list of str
+        each str is R compatible requirement string for craft(spec)
+        if spec has no requirements, return is [], the length 0 list
+    """
+    register = dict(all_estimators())
+
+    dep_strs = []
+
+    for x in _extract_class_names(spec):
+        if x not in register.keys():
+            raise RuntimeError(
+                f"class {x} is required to build spec, but was not found "
+                "in all_estimators scope"
+            )
+        cls = register[x]
+
+        new_deps = cls.get_class_tag("r_dependencies")
+
+        def _resolve_disjunctions(dep):
+            """Resolve disjunctions in dependencies by picking first."""
+            if isinstance(dep, list):
+                return dep[0]  # pick first dependency in disjunction
+            return dep
+
+        def _coerce_dep_strs(dep):
+            """Coerce dependency tag value to list of strings."""
+            if dep is None:
+                return []
+            elif isinstance(dep, str) and len(dep) > 0:
+                return [dep]
+            elif isinstance(dep, str) and len(dep) == 0:
+                return []
+            elif isinstance(dep, list):
+                return [_resolve_disjunctions(d) for d in dep]
+            else:
+                return dep
+
+        new_deps = cls.get_class_tag("r_dependencies")
+        dep_strs += _coerce_dep_strs(new_deps)
+
+        if include_test_deps:
+            test_deps = cls.get_class_tag("tests:r_dependencies")
+            dep_strs += _coerce_dep_strs(test_deps)
+
+        reqs = list(set(dep_strs))
+
+    return reqs

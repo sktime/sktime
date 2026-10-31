@@ -11,14 +11,13 @@ __author__ = [
 __all__ = ["TimeSeriesForestRegressor"]
 
 import numpy as np
-from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
 from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.regression.base import BaseRegressor
 
 
-class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):
+class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """Time series forest regressor.
 
     A time series forest is an ensemble of decision trees built on random intervals.
@@ -96,6 +95,8 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         # --------------
         "capability:multivariate": False,
         "X_inner_mtype": "numpy3D",
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
     }
 
     _base_estimator = DecisionTreeRegressor()
@@ -107,9 +108,6 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         n_jobs=1,
         random_state=None,
     ):
-        self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
-        # because sklearn tag logic looks at this attribute
-
         super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
@@ -117,21 +115,6 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
             random_state=random_state,
         )
         BaseRegressor.__init__(self)
-
-    def fit(self, X, y):
-        """Override sklearn forest fit with BaseRegressor fit."""
-        return BaseRegressor.fit(self, X, y)
-
-    def _fit(self, X, y):
-        """Wrap BaseForest._fit.
-
-        This is a temporary measure prior to the BaseRegressor refactor.
-        """
-        return BaseTimeSeriesForest._fit(self, X, y)
-
-    def predict(self, X):
-        """Override sklearn forest predict with BaseRegressor predict."""
-        return BaseRegressor.predict(self, X)
 
     def _predict(self, X):
         """Predict.
@@ -161,6 +144,36 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
             for i in range(self.n_estimators)
         )
         return np.mean(y_pred, axis=0)
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            For classifiers, a "default" set of parameters should be provided for
+            general testing, and a "results_comparison" set for comparing against
+            previously recorded results if the general set does not produce suitable
+            probabilities to compare against.
+
+        Returns
+        -------
+        params : dict or list of dict, default={}
+            Parameters to create testing instances of the class.
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``.
+        """
+        param1 = {"n_estimators": 10, "min_interval": 3}
+        param2 = {
+            "n_estimators": 2,
+            "min_interval": 5,
+        }
+        return [param1, param2]
 
 
 def _predict(X, estimator, intervals):

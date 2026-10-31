@@ -1,15 +1,8 @@
 """Deep Learning Forecaster using LTSF-Transformer Model."""
 
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch.nn as nn
-
-    nn_module = nn.Module
-else:
-
-    class nn_module:
-        """Dummy class if torch is unavailable."""
+nn = _safe_import("torch.nn")
 
 
 class LTSFTransformerNetwork:
@@ -25,12 +18,12 @@ class LTSFTransformerNetwork:
     ----------
     seq_len : int
         Length of the input sequence.
-        Preffered to be twice the pred_len.
+        Preferred to be twice the pred_len.
     pred_len : int
         Length of the prediction sequence.
     context_len : int, optional (default=2)
         Length of the label sequence.
-        Preffered to be same as the pred_len.
+        Preferred to be same as the pred_len.
     position_encoding : bool, optional (default=True)
         Whether to use positional encoding.
         Positional encoding helps the model understand the order of elements
@@ -71,7 +64,7 @@ class LTSFTransformerNetwork:
     .. [2] https://github.com/cure-lab/LTSF-Linear
     """
 
-    class _LTSFTransformerNetwork(nn_module):
+    class _LTSFTransformerNetwork(nn.Module):
         def __init__(
             self,
             seq_len,

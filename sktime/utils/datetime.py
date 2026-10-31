@@ -6,7 +6,6 @@ __all__ = []
 
 import warnings
 from functools import singledispatch
-from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -18,9 +17,9 @@ from sktime.utils.warnings import _suppress_pd22_warning
 
 
 def _coerce_duration_to_int(
-    duration: Union[int, pd.Timedelta, pd.tseries.offsets.BaseOffset, pd.Index],
+    duration: int | pd.Timedelta | pd.tseries.offsets.BaseOffset | pd.Index,
     freq: str = None,
-) -> Union[int, pd.Index]:
+) -> int | pd.Index:
     """Coerce durations into integer representations for a given unit of duration.
 
     Parameters
@@ -61,6 +60,25 @@ def _coerce_duration_to_int(
         raise TypeError("`duration` type not understood.")
 
 
+def _to_offset_compat(freq):
+    """Coerce a frequency string to a pandas offset.
+
+    Like ``to_offset``, but also accepts period-only aliases such as ``"M"``,
+    which pandas 3 no longer accepts in ``to_offset``.
+    """
+    with _suppress_pd22_warning():
+        try:
+            return pd.tseries.frequencies.to_offset(freq)
+        except ValueError:
+            # pandas 3 rejects period-only aliases such as "M", which is what a
+            # monthly PeriodIndex reports as freqstr; PeriodDtype resolves these
+            try:
+                return pd.PeriodDtype(freq).freq
+            except Exception:  # noqa: S110
+                pass
+            raise
+
+
 def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
     """Extract interval count and unit from frequency string.
 
@@ -71,8 +89,7 @@ def _get_intervals_count_and_unit(freq: str) -> tuple[int, str]:
     if freq is None:
         raise ValueError("frequency is missing")
     else:
-        with _suppress_pd22_warning():
-            offset = pd.tseries.frequencies.to_offset(freq)
+        offset = _to_offset_compat(freq)
         count, unit = offset.n, offset.base.freqstr
         return count, unit
 
@@ -129,7 +146,7 @@ def set_hier_freq(x):
 
 
 @singledispatch
-def infer_freq(y=None) -> Optional[str]:
+def infer_freq(y=None) -> str | None:
     """Infer frequency string from the time series object.
 
     Parameters
@@ -148,16 +165,16 @@ def infer_freq(y=None) -> Optional[str]:
 @infer_freq.register(pd.DataFrame)
 @infer_freq.register(pd.Series)
 @infer_freq.register(np.ndarray)
-def _(y) -> Optional[str]:
+def _(y) -> str | None:
     return _infer_freq_from_index(get_time_index(y))
 
 
 @infer_freq.register(VectorizedDF)
-def _(y) -> Optional[str]:
-    return _infer_freq_from_index(get_time_index(y.as_list()[0]))
+def _(y) -> str | None:
+    return getattr(y, "freq", None)
 
 
-def _infer_freq_from_index(index: pd.Index) -> Optional[str]:
+def _infer_freq_from_index(index: pd.Index) -> str | None:
     """Infer frequency string from the pandas index.
 
     Parameters
@@ -251,7 +268,7 @@ def _get_duration(x, y=None, coerce_to_int=False, unit=None):
         assert isinstance(x, (int, np.integer, pd.Period, pd.Timestamp))
         # check types allowing (np.integer, int) combinations to pass
         assert type(x) is type(y) or (
-            isinstance(x, (np.integer, int)) and isinstance(x, (np.integer, int))
+            isinstance(x, (np.integer, int)) and isinstance(y, (np.integer, int))
         )
         duration = x - y
 

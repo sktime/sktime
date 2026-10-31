@@ -50,7 +50,7 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
     --------
     >>> from sktime.dists_kernels.compose import PwTrafoPanelPipeline
     >>> from sktime.dists_kernels.dtw import DtwDist
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> from sktime.datasets import load_unit_test
     >>>
     >>> X, _ = load_unit_test()
@@ -65,6 +65,9 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
         "capability:missing_values": True,  # can estimator handle missing data?
         "capability:multivariate": True,  # can estimator handle multivariate data?
         "capability:unequal_length": True,  # can dist handle unequal length panels?
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(self, pw_trafo, transformers):
@@ -77,8 +80,8 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
 
         # can handle multivariate iff: both classifier and all transformers can
         multivariate = pw_trafo.get_tag("capability:multivariate", False)
-        multivariate = multivariate and not self.transformers_.get_tag(
-            "univariate-only", True
+        multivariate = multivariate and self.transformers_.get_tag(
+            "capability:multivariate", False
         )
         # can handle missing values iff: both classifier and all transformers can,
         #   *or* transformer chain removes missing data
@@ -244,8 +247,8 @@ class PwTrafoPanelPipeline(_HeterogenousMetaEstimator, BasePairwiseTransformerPa
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
         from sktime.dists_kernels.compose_tab_to_panel import AggrDist, FlatDist
-        from sktime.transformations.series.boxcox import BoxCoxTransformer
-        from sktime.transformations.series.exponent import ExponentTransformer
+        from sktime.transformations.boxcox import BoxCoxTransformer
+        from sktime.transformations.exponent import ExponentTransformer
 
         # transformer has no fit, two transformers, list without names
         params1 = {

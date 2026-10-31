@@ -8,12 +8,10 @@ __all__ = [
     "InstanceSplitter",
 ]
 
-from typing import Optional
 
 import pandas as pd
 
 from sktime.split.base import BaseSplitter
-from sktime.split.base._common import ACCEPTED_Y_TYPES, SPLIT_GENERATOR_TYPE
 from sktime.utils.multiindex import apply_split
 
 
@@ -55,7 +53,7 @@ class InstanceSplitter(BaseSplitter):
         self.cv = cv
         super().__init__()
 
-    def _split(self, y: pd.Index) -> SPLIT_GENERATOR_TYPE:
+    def _split(self, y: pd.Index):
         """Generate indices to split data."""
         if not isinstance(y, pd.MultiIndex):
             zeros = [0] * len(y)
@@ -68,7 +66,7 @@ class InstanceSplitter(BaseSplitter):
             y_test_iloc = apply_split(y, y_test_inst_iloc)
             yield y_train_iloc, y_test_iloc
 
-    def get_n_splits(self, y: Optional[ACCEPTED_Y_TYPES] = None) -> int:
+    def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
 
         This will always be equal to the number of splits

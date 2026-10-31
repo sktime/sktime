@@ -2,14 +2,13 @@
 
 __author__ = ["chrisholder", "TonyBagnall"]
 from collections.abc import Callable
-from typing import Union
 
 import numpy as np
 from numpy.random import RandomState
 
 from sktime.clustering.metrics.medoids import medoids
 from sktime.clustering.partitioning import BaseTimeSeriesLloyds
-from sktime.distances import pairwise_distance
+from sktime.dists_kernels._numba_distances import pairwise_distance
 
 
 class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
@@ -87,18 +86,23 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
         "capability:out_of_sample": True,
         "capability:predict": True,
         "capability:predict_proba": False,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
     def __init__(
         self,
         n_clusters: int = 8,
-        init_algorithm: Union[str, Callable] = "random",
-        metric: Union[str, Callable] = "dtw",
+        init_algorithm: str | Callable = "random",
+        metric: str | Callable = "dtw",
         n_init: int = 10,
         max_iter: int = 300,
         tol: float = 1e-6,
         verbose: bool = False,
-        random_state: Union[int, RandomState] = None,
+        random_state: int | RandomState = None,
         distance_params: dict = None,
     ):
         self._precomputed_pairwise = None
@@ -190,7 +194,7 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``
         """
-        return {
+        params1 = {
             "n_clusters": 2,
             "init_algorithm": "random",
             "metric": "euclidean",
@@ -200,3 +204,15 @@ class TimeSeriesKMedoids(BaseTimeSeriesLloyds):
             "verbose": False,
             "random_state": 1,
         }
+        params2 = {
+            "n_clusters": 3,
+            "init_algorithm": "kmeans++",
+            "metric": "dtw",
+            "n_init": 1,
+            "max_iter": 2,
+            "tol": 1e-6,
+            "verbose": False,
+            "random_state": 2,
+            "distance_params": {"window": 0.2},
+        }
+        return [params1, params2]

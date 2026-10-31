@@ -24,12 +24,15 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
         "capability:multivariate": True,
         "capability:predict_proba": True,
         "X_inner_mtype": ["nested_univ", "pd-multiindex"],
+        # CI and test flags
+        # -----------------
+        "tests:core": True,  # should tests be triggered by framework changes?
     }
 
-    def __init__(self, estimators, verbose=False):
+    def __init__(self, estimators, remainder="drop", verbose=False):
         self.verbose = verbose
         self.estimators = estimators
-        self.remainder = "drop"
+        self.remainder = remainder
         super().__init__()
         self._anytagis_then_set(
             "capability:unequal_length", False, True, self._estimators
@@ -114,7 +117,9 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             ]
 
         # add transformer tuple for remainder
-        if self._remainder[2] is not None:
+        if self._remainder[2] is not None and (
+            self._remainder != "drop" or not self._remainder[1].is_fitted
+        ):
             estimators = chain(estimators, [self._remainder])
 
         for name, estimator, column in estimators:
@@ -164,6 +169,14 @@ class BaseColumnEnsembleClassifier(_HeterogenousMetaEstimator, BaseClassifier):
             estimators_.append((name, estimator, column))
 
         self.estimators_ = estimators_
+
+        is_estimator_remainder = hasattr(estimators_[-1], "fit") or hasattr(
+            self.remainder, "predict_proba"
+        )
+
+        if is_estimator_remainder:
+            self._remainder = self.estimators_[-1]
+
         return self
 
     def _collect_probas(self, X):
@@ -252,7 +265,7 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
 
     def __init__(self, estimators, remainder="drop", verbose=False):
         self.remainder = remainder
-        super().__init__(estimators, verbose=verbose)
+        super().__init__(estimators, remainder=remainder, verbose=verbose)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -278,10 +291,8 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
         from sktime.classification.dictionary_based import ContractableBOSS
+        from sktime.classification.dummy import DummyClassifier
         from sktime.classification.interval_based import CanonicalIntervalForest
-        from sktime.classification.interval_based import (
-            TimeSeriesForestClassifier as TSFC,
-        )
 
         if parameter_set == "results_comparison":
             cboss = ContractableBOSS(
@@ -291,13 +302,16 @@ class ColumnEnsembleClassifier(BaseColumnEnsembleClassifier):
                 n_estimators=2, n_intervals=4, att_subsample_size=4, random_state=0
             )
             return {"estimators": [("cBOSS", cboss, 5), ("CIF", cif, [3, 4])]}
-        else:
-            return {
-                "estimators": [
-                    ("tsf1", TSFC(n_estimators=2), 0),
-                    ("tsf2", TSFC(n_estimators=2), 0),
-                ]
-            }
+
+        param0 = {
+            "estimators": [
+                ("d1", DummyClassifier(strategy="most_frequent"), 0),
+                ("d2", DummyClassifier(strategy="prior"), 0),
+            ]
+        }
+        param1 = {**param0, "remainder": DummyClassifier(strategy="most_frequent")}
+
+        return [param0, param1]
 
 
 def _get_column(X, key):

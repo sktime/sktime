@@ -7,10 +7,6 @@ adds the following options to pytest
     "on" condition is partition/block design to ensure each estimator full tests are run
     on each operating system at least once, and on each python version at least once,
     but not necessarily on each operating system / python version combination
---only_cython_estimators : bool, default False
-    "on" = runs tests only for estimators that require cython to run
-    i.e., estimators with tag requires_cython=True
-    "off" = runs tests for all estimators that do not require cython to run
 --only_changed_modules : bool, default False
     turns on/off differential testing (for shorter runtime)
     "on" condition ensures that only estimators are tested that have changed,
@@ -36,24 +32,24 @@ def pytest_addoption(parser):
         help="sub-sample estimators in tests by os/version matrix partition design",
     )
     parser.addoption(
-        "--only_cython_estimators",
-        default=False,
-        help="test only cython estimators, with tag requires_cython=True",
-    )
-    parser.addoption(
         "--only_changed_modules",
         default=False,
         help="test only estimators from modules that have changed compared to main",
+    )
+    parser.addoption(
+        "--only_vm_estimators",
+        default=False,
+        help="flag for test runs on VM - tests only estimators that require a VM run",
     )
 
 
 def pytest_configure(config):
     """Pytest configuration preamble."""
-    from sktime.tests import test_all_estimators
+    from sktime.tests import _config
 
     if config.getoption("--matrixdesign") in [True, "True"]:
-        test_all_estimators.MATRIXDESIGN = True
-    if config.getoption("--only_cython_estimators") in [True, "True"]:
-        test_all_estimators.CYTHON_ESTIMATORS = True
+        _config.MATRIXDESIGN = True
     if config.getoption("--only_changed_modules") in [True, "True"]:
-        test_all_estimators.ONLY_CHANGED_MODULES = True
+        _config.ONLY_CHANGED_MODULES = True
+    if config.getoption("--only_vm_estimators") in [True, "True"]:
+        _config.ONLY_VM_ESTIMATORS = True

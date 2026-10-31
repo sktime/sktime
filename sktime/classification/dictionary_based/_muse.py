@@ -16,7 +16,6 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.panel.dictionary_based import SFAFast
 from sktime.utils.warnings import warn
 
 
@@ -26,18 +25,17 @@ class MUSE(BaseClassifier):
     Also known as WEASLE-MUSE: implementation of multivariate version of WEASEL,
     referred to as just MUSE from [1].
 
-    Overview: Input n series length m
-     WEASEL+MUSE is a multivariate  dictionary classifier that builds a
-     bag-of-patterns using SFA for different window lengths and learns a
-     logistic regression classifier on this bag.
+    WEASEL+MUSE is a multivariate  dictionary classifier that builds a
+    bag-of-patterns using SFA for different window lengths and learns a
+    logistic regression classifier on this bag.
 
-     There are these primary parameters:
-             alphabet_size: alphabet size
-             chi2-threshold: used for feature selection to select best words
-             anova: select best l/2 fourier coefficients other than first ones
-             bigrams: using bigrams of SFA words
-             binning_strategy: the binning strategy used to disctrtize into
-                               SFA words.
+    There are these primary parameters:
+
+    * ``alphabet_size``: alphabet size
+    * ``chi2-threshold``: used for feature selection to select best words
+    * ``anova``: select best l/2 fourier coefficients other than first ones
+    * ``bigrams``: using bigrams of SFA words
+    * ``binning_strategy``: the binning strategy used to discretize into SFA words.
 
     Parameters
     ----------
@@ -45,10 +43,14 @@ class MUSE(BaseClassifier):
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
-    variance: boolean, default = False
-            If True, the Fourier coefficient selection is done via the largest
-            variance. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    ``variance``: boolean, default = False
+        Whether to use the variance-based selection for Fourier coefficients.
+
+        * If True, the Fourier coefficient selection is done via the largest
+        variance.
+        * If False, the first Fourier coefficients are selected.
+
+        Only applicable if labels are given
     bigrams: boolean, default=True
         whether to create bigrams of SFA words
     window_inc: int, default=2
@@ -129,6 +131,8 @@ class MUSE(BaseClassifier):
         "capability:multivariate": True,
         "capability:multithreading": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "X_inner_mtype": "numpy3D",  # which mtypes do _fit/_predict support for X?
         "classifier_type": "dictionary",
     }
@@ -178,6 +182,10 @@ class MUSE(BaseClassifier):
         self.feature_selection = feature_selection
 
         super().__init__()
+
+        from sktime.utils.validation import check_n_jobs
+
+        self._threads_to_use = check_n_jobs(n_jobs)
 
     def _fit(self, X, y):
         """Build a WEASEL+MUSE classifiers from the training set (X, y).
@@ -363,7 +371,7 @@ class MUSE(BaseClassifier):
             instance.
             ``create_test_instance`` uses the first (or only) dictionary in ``params``.
         """
-        return {
+        params1 = {
             "window_inc": 4,
             "alphabet_size": 2,
             "use_first_order_differences": False,
@@ -371,6 +379,23 @@ class MUSE(BaseClassifier):
             "feature_selection": "none",
             "bigrams": False,
         }
+        # second set: first order differences switched on (doubling the
+        # dimensions considered), bigrams on, anova off, and a fixed
+        # random_state. window_inc and alphabet_size stay as in the first
+        # set, and feature selection stays "none", so fit cost is comparable
+        # (chi2 combined with first order differences is an order of
+        # magnitude slower on the test scenarios).
+        params2 = {
+            "window_inc": 4,
+            "alphabet_size": 2,
+            "use_first_order_differences": True,
+            "support_probabilities": True,
+            "feature_selection": "none",
+            "bigrams": True,
+            "anova": False,
+            "random_state": 0,
+        }
+        return [params1, params2]
 
 
 def _compute_window_inc(series_length, window_inc):
@@ -442,6 +467,8 @@ def _parallel_fit(
     relevant_features_count = 0
 
     for window_size in window_sizes:
+        from sktime.transformations.dictionary_based import SFAFast
+
         transformer = SFAFast(
             word_length=rng.choice(word_lengths),
             alphabet_size=alphabet_size,

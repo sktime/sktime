@@ -1,6 +1,6 @@
 """Tests the SkforecastAutoreg model."""
 
-__author__ = ["Abhay-Lejith"]
+__author__ = ["Abhay-Lejith", "yarnabrina"]
 
 import pandas as pd
 import pytest
@@ -189,7 +189,10 @@ def test_SkforecastRecursive_predict_with_exog_against_ForecasterRecursive():
     not run_test_for_class(SkforecastRecursive),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_SkforecastRecursive_predict_interval_against_ForecasterRecursive():
+@pytest.mark.parametrize("store_in_sample_residuals", [True, False])
+def test_SkforecastRecursive_predict_interval_against_ForecasterRecursive(
+    store_in_sample_residuals: bool,
+):
     """Compares the predictions of the ``sktime`` adapter against ``skforecast``'s ``ForecasterRecursive``.
 
     Notes
@@ -204,12 +207,25 @@ def test_SkforecastRecursive_predict_interval_against_ForecasterRecursive():
     df = make_forecasting_problem(n_timepoints=10)
     fh = [1, 2, 3]
 
-    sktime_model = SkforecastRecursive(LinearRegression(), 2)
+    sktime_model = SkforecastRecursive(
+        LinearRegression(),
+        2,
+        binner_kwargs={"n_bins": 3},
+        store_in_sample_residuals=store_in_sample_residuals,
+    )
     sktime_model.fit(df)
-    sktime_pred_int = sktime_model.predict_interval(fh, coverage=0.8)
 
-    skforecast_model = ForecasterRecursive(LinearRegression(), 2)
-    skforecast_model.fit(df)
+    try:
+        sktime_pred_int = sktime_model.predict_interval(fh, coverage=0.8)
+    except NotImplementedError:
+        assert not store_in_sample_residuals
+
+        return
+
+    skforecast_model = ForecasterRecursive(
+        LinearRegression(), 2, binner_kwargs={"n_bins": 3}
+    )
+    skforecast_model.fit(df, store_in_sample_residuals=store_in_sample_residuals)
     skforecast_pred_int = skforecast_model.predict_interval(3, interval=[10, 90])
     skforecast_pred_int = skforecast_pred_int.drop(columns="pred")
     multiindex = [[0, 0], [0.8, 0.8], ["lower", "upper"]]
@@ -222,7 +238,10 @@ def test_SkforecastRecursive_predict_interval_against_ForecasterRecursive():
     not run_test_for_class(SkforecastRecursive),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_SkforecastRecursive_predict_quantile_against_ForecasterRecursive():
+@pytest.mark.parametrize("store_in_sample_residuals", [True, False])
+def test_SkforecastRecursive_predict_quantile_against_ForecasterRecursive(
+    store_in_sample_residuals: bool,
+):
     """Compares the predictions of the ``sktime`` adapter against ``skforecast``'s ``ForecasterRecursive``.
 
     Notes
@@ -236,14 +255,50 @@ def test_SkforecastRecursive_predict_quantile_against_ForecasterRecursive():
     df = make_forecasting_problem(n_timepoints=10)
     fh = [1, 2, 3]
 
-    sktime_model = SkforecastRecursive(LinearRegression(), 2)
+    sktime_model = SkforecastRecursive(
+        LinearRegression(),
+        2,
+        binner_kwargs={"n_bins": 3},
+        store_in_sample_residuals=store_in_sample_residuals,
+    )
     sktime_model.fit(df)
-    sktime_pred_qtl = sktime_model.predict_quantiles(fh, alpha=[0.7, 0.8])
 
-    skforecast_model = ForecasterRecursive(LinearRegression(), 2)
-    skforecast_model.fit(df)
+    try:
+        sktime_pred_qtl = sktime_model.predict_quantiles(fh, alpha=[0.7, 0.8])
+    except NotImplementedError:
+        assert not store_in_sample_residuals
+
+        return
+
+    skforecast_model = ForecasterRecursive(
+        LinearRegression(), 2, binner_kwargs={"n_bins": 3}
+    )
+    skforecast_model.fit(df, store_in_sample_residuals=store_in_sample_residuals)
     skforecast_pred_qtl = skforecast_model.predict_quantiles(3, quantiles=[0.7, 0.8])
     multiindex = [[0, 0], [0.7, 0.8]]
     skforecast_pred_qtl.columns = pd.MultiIndex.from_arrays(multiindex)
 
     assert_frame_equal(sktime_pred_qtl, skforecast_pred_qtl)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SkforecastRecursive),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_SkforecastRecursive_capability_tags():
+    """
+    Tests that capability tags are set correctly based on store_in_sample_residuals.
+    """
+    from sklearn.linear_model import LinearRegression
+
+    # Default case (store_in_sample_residuals=False)
+    forecaster = SkforecastRecursive(LinearRegression(), 2)
+    assert not forecaster.get_tag("capability:pred_int:insample")
+    assert not forecaster.get_tag("capability:pred_int")
+
+    # When store_in_sample_residuals=True
+    forecaster = SkforecastRecursive(
+        LinearRegression(), 2, store_in_sample_residuals=True
+    )
+    assert not forecaster.get_tag("capability:pred_int:insample")
+    assert forecaster.get_tag("capability:pred_int")

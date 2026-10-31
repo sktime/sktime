@@ -1,7 +1,6 @@
 """Fractional differentiation core implementation."""
 
 from functools import partial
-from typing import Optional
 
 import numpy as np
 
@@ -41,8 +40,8 @@ def fdiff(
     a: np.ndarray,
     n: float = 1.0,
     axis: int = -1,
-    prepend: Optional[np.ndarray] = None,
-    append: Optional[np.ndarray] = None,
+    prepend: np.ndarray | None = None,
+    append: np.ndarray | None = None,
     window: int = 10,
     mode: str = "same",
 ) -> np.ndarray:
@@ -149,8 +148,7 @@ def fdiff(
     a = _combine_pre_append(a, prepend, append, axis)
 
     if mode == "full":
-        mode = "same"
-        raise DeprecationWarning("mode 'full' was renamed to 'same'.")
+        raise ValueError("mode 'full' was renamed to 'same'.")
 
     if a.ndim == 0:
         raise ValueError("diff requires input that is at least one dimensional")
