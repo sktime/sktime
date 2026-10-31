@@ -12,6 +12,7 @@ from sktime.benchmarking._benchmarking_dataclasses import (
     TaskObject,
 )
 from sktime.benchmarking._results_persistence import BenchmarkResultsPersistence
+from sktime.benchmarking._run_metadata import write_run_metadata
 from sktime.benchmarking._utils import _check_id_format
 from sktime.catalogues.base import BaseCatalogue
 from sktime.registry import scitype
@@ -654,6 +655,8 @@ class BaseBenchmark:
             Path to the benchmark results file where final output is
             written (e.g. ``"results.csv"``). Must refer to a file,
             not a directory; the file extension selects the storage format.
+            A run metadata sidecar is written alongside it, at
+            ``{results_path}.meta.json``.
             When ``None``, results are not persisted to disk.
         force_rerun : str or list of str, optional (default="none")
             Controls re-execution of experiments that already have saved
@@ -724,6 +727,11 @@ class BaseBenchmark:
 
         if results_path is not None:
             results._save()
+            write_run_metadata(
+                results_path,
+                n_tasks=len(self.tasks.entities),
+                n_estimators=len(self.estimators.entities),
+            )
         return results.to_df()
 
     def _report_failed_experiments(self):
@@ -771,12 +779,19 @@ class BaseBenchmark:
         extension (``.json``, ``.csv``, or ``.parquet``) selects the final
         storage format; see `get_storage_backend`.
 
+        A metadata sidecar describing the run is written next to the results
+        file, at ``{output_file}.meta.json``. It records the sktime version,
+        dependency versions, system information, a UTC timestamp, the number
+        of tasks and estimators, and the results path. See
+        `sktime.benchmarking._run_metadata`.
+
         Parameters
         ----------
         output_file : str or None, optional (default=None)
             Path to the benchmark results file (e.g. ``"results.csv"``).
             Must refer to a file, not a directory. When ``None``, results are
-            returned as a DataFrame only and are not saved to disk.
+            returned as a DataFrame only and are not saved to disk, and no
+            metadata sidecar is written.
         force_rerun : str or list of str, optional (default="none")
             Controls re-execution of experiments that already have saved
             results:
