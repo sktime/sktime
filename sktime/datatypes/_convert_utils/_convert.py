@@ -2,6 +2,8 @@
 
 __author__ = ["fkiraly"]
 
+from sktime.datatypes._base import BaseConverter
+
 
 def _concat(fun1, fun2):
     """Concatenation of two converter functions, using the same store.
@@ -22,6 +24,30 @@ def _concat(fun1, fun2):
         return obj2
 
     return concat_fun
+
+
+class _ConverterConcat(BaseConverter):
+    """Conversion as concatenation of two converters, using the same store.
+
+    Parameters
+    ----------
+    converter_first : BaseConverter, conversion from mtype_from to an anchor mtype
+    converter_second : BaseConverter, conversion from the anchor mtype to mtype_to
+    """
+
+    def __init__(self, converter_first, converter_second):
+        self.converter_first = converter_first
+        self.converter_second = converter_second
+        super(BaseConverter, self).__init__()
+
+        self.set_tags(
+            mtype_from=converter_first.get_tag("mtype_from"),
+            mtype_to=converter_second.get_tag("mtype_to"),
+        )
+
+    def _convert(self, obj, store=None):
+        obj = self.converter_first(obj, store=store)
+        return self.converter_second(obj, store=store)
 
 
 def _extend_conversions(mtype, anchor_mtype, convert_dict, mtype_universe=None):

@@ -7,6 +7,7 @@ import pytest
 from sktime.datatypes._base import BaseConverter
 from sktime.datatypes._convert import get_convert_dict
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils.dependencies import _check_soft_dependencies
 
 # scitypes whose conversions are fully migrated to BaseConverter classes
 MIGRATED_SCITYPES = ["Hierarchical", "Proba"]
@@ -73,3 +74,52 @@ def test_soft_dep_conversions_included_with_all():
     ]
     for key in expected:
         assert key in convert_dict
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes")
+    or not _check_soft_dependencies(["dask", "polars"], severity="none"),
+    reason="Test only if sktime.datatypes changed, and if dask and polars present",
+)
+def test_extend_conversions():
+    """Test _extend_conversions adds conversions via the anchor, in one place.
+
+    Conversions already defined are not overwritten, and triples whose mtype is not
+    inter-convertible with the anchor are skipped.
+    """
+    from sktime.datatypes._convert import _extend_conversions
+    from sktime.datatypes._convert_utils._convert import _ConverterConcat
+    from sktime.datatypes._hierarchical._convert import (
+        HierarchicalDaskToPdMultiIndex,
+        HierarchicalPdMultiIndexToDask,
+        HierarchicalPdMultiIndexToPolars,
+        HierarchicalPolarsToPdMultiIndex,
+    )
+
+    sc = "Hierarchical"
+    converters = [
+        HierarchicalDaskToPdMultiIndex(),
+        HierarchicalPdMultiIndexToDask(),
+        HierarchicalPolarsToPdMultiIndex(),
+        HierarchicalPdMultiIndexToPolars(),
+    ]
+    convert_dict = {c._get_key(): c for c in converters}
+    n_before = len(convert_dict)
+
+    sequence = [
+        ("dask_hierarchical", "pd_multiindex_hier", sc),
+        ("polars_hierarchical", "pd_multiindex_hier", sc),
+        ("not_an_mtype", "pd_multiindex_hier", sc),
+    ]
+    convert_dict = _extend_conversions(convert_dict, sequence)
+
+    assert len(convert_dict) == n_before + 2
+    for key in [
+        ("dask_hierarchical", "polars_hierarchical", sc),
+        ("polars_hierarchical", "dask_hierarchical", sc),
+    ]:
+        converter = convert_dict[key]
+        assert isinstance(converter, _ConverterConcat)
+        assert converter._get_key() == key
+    for converter in converters:
+        assert convert_dict[converter._get_key()] is converter
