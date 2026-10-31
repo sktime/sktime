@@ -2,10 +2,11 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Extract holiday features from datetime index."""
 
-__author__ = ["mloning", "VyomkeshVyas"]
+__author__ = ["mloning", "VyomkeshVyas", "RobKuebler"]
 __all__ = ["HolidayFeatures"]
 
 import datetime
+import re
 from collections import defaultdict
 from datetime import date
 
@@ -31,6 +32,8 @@ class HolidayFeatures(BaseTransformer):
     holiday_windows : Dict[str, tuple], default=None
         Dictionary for specifying a window of days around holidays, with keys
         being holiday names and values being (n_days_before, n_days_after) tuples.
+        Days in overlapping windows of different holidays are labeled with
+        both names, e.g., "Christmas, New Year".
     include_bridge_days: bool, default=False
         If True, include bridge days. Bridge days include Monday if a holiday
         is on Tuesday and Friday if a holiday is on Thursday.
@@ -46,6 +49,24 @@ class HolidayFeatures(BaseTransformer):
         point is a holiday or not.
     keep_original_columns : bool, default=False
         Keep original columns in X passed to ``.transform()``.
+    return_offsets : bool, default=False
+        If True, label holidays and their window days with the holiday name and
+        the signed offset in days, e.g., "Christmas-2", "Christmas+0", "Easter+1".
+        Every date gets a single label: in overlapping windows, the nearest holiday
+        wins, and on a tie the upcoming one. This differs from the default mode,
+        where overlapping windows get combined labels. Names joined by "; " in
+        the calendar are treated as separate holidays. Names are used as given,
+        e.g., including "(observed)". To avoid this, pass ``observed=False`` to
+        a ``holidays`` calendar or use a dict. Dummy columns are ordered by
+        holiday, then by offset.
+    return_distances : bool, default=False
+        If True, add a float column "<name>_distance" for each holiday in
+        ``holiday_windows``, with the signed distance in days to the nearest
+        occurrence of that holiday, e.g., -2 two days before, 0 on the holiday.
+        Outside the window, the value is NaN; impute it for models that cannot
+        handle missing values. Overlapping windows of different holidays do not
+        interact, bridge days are ignored. Names joined by "; " are only split
+        with ``return_offsets=True``.
 
 
     Examples
@@ -130,6 +151,8 @@ class HolidayFeatures(BaseTransformer):
         return_categorical: bool = False,
         return_indicator: bool = False,
         keep_original_columns: bool = False,
+        return_offsets: bool = False,
+        return_distances: bool = False,
     ) -> None:
         self.calendar = calendar
         self.holiday_windows = holiday_windows
@@ -139,6 +162,8 @@ class HolidayFeatures(BaseTransformer):
         self.return_dummies = return_dummies
         self.return_indicator = return_indicator
         self.keep_original_columns = keep_original_columns
+        self.return_offsets = return_offsets
+        self.return_distances = return_distances
         super().__init__()
 
     def _transform(self, X, y=None):
@@ -176,6 +201,8 @@ class HolidayFeatures(BaseTransformer):
             return_dummies=self.return_dummies,
             return_indicator=self.return_indicator,
             keep_original_columns=self.keep_original_columns,
+            return_offsets=self.return_offsets,
+            return_distances=self.return_distances,
         )
 
         holidays = _generate_holidays(
@@ -187,6 +214,8 @@ class HolidayFeatures(BaseTransformer):
             return_categorical=self.return_categorical,
             return_dummies=self.return_dummies,
             return_indicator=self.return_indicator,
+            return_offsets=self.return_offsets,
+            return_distances=self.return_distances,
             warning_instance=self,
         )
 
@@ -242,6 +271,14 @@ class HolidayFeatures(BaseTransformer):
                 "return_categorical": True,
                 "keep_original_columns": True,
             },
+            {
+                "calendar": {date(2022, 5, 17): "Regional Holiday"},
+                "holiday_windows": {"Regional Holiday": (2, 1)},
+                "include_bridge_days": True,
+                "return_indicator": True,
+                "return_offsets": True,
+                "return_distances": True,
+            },
         ]
         return params
 
@@ -255,6 +292,8 @@ def _generate_holidays(
     return_dummies: bool = True,
     return_categorical: bool = False,
     return_indicator: bool = False,
+    return_offsets: bool = False,
+    return_distances: bool = False,
     warning_instance: HolidayFeatures = None,
 ) -> pd.DataFrame:
     """Generate holidays.
@@ -281,6 +320,12 @@ def _generate_holidays(
     return_indicator : bool, default=False
         Whether or not to return an indicator variable equal to 1 if a time
         point is a holiday or not.
+    return_offsets : bool, default=False
+        Whether or not to label holidays and window days with the holiday name
+        and the signed offset in days, e.g., "Christmas-2".
+    return_distances : bool, default=False
+        Whether or not to add the signed distance in days to each holiday in
+        ``holiday_windows``, NaN outside the window.
     warning_instance : HolidayFeatures, default=None
         Instance of HolidayFeatures to raise warnings.
 
@@ -308,94 +353,93 @@ def _generate_holidays(
     dates = np.unique(index.date)
     holidays_by_name = defaultdict(list)
 
-    filtered_dates = [dte for dte in dates if dte in calendar]
-    weekends = []
+    # Holidays just outside the time index can still affect it through
+    # their windows or bridge days, so we look them up in an extended range.
+    windows = holiday_windows.values() if holiday_windows is not None else []
+    pad = max([max(window) for window in windows], default=0)
+    if include_bridge_days:
+        pad = max(pad, 1)
+    pad = datetime.timedelta(days=pad)
+    lookup_dates = []
+    if len(dates) > 0:
+        lookup_dates = pd.date_range(dates[0] - pad, dates[-1] + pad, freq="D").date
+
+    # We check each date for membership instead of iterating over the calendar,
+    # since HolidayBase objects only populate years on lookup.
+    filtered_dates = [dte for dte in lookup_dates if dte in calendar]
     if include_weekend:
         for dte in dates:
             if dte.weekday() in [5, 6]:
                 holidays_by_name["Weekend"].append(dte)
-        weekends = holidays_by_name["Weekend"]
 
     for dte in filtered_dates:
-        name = calendar[dte]
-        if dte not in weekends:
-            holidays_by_name[name].append(dte)
+        # In offset mode, several holidays on one date are separate holidays.
+        names = calendar[dte].split("; ") if return_offsets else [calendar[dte]]
+        if not (include_weekend and dte.weekday() in [5, 6]):
+            for name in names:
+                holidays_by_name[name].append(dte)
 
-    # Invert dictionary so that we can later map holidays to
-    # dates in the time index.
-    holidays_by_date = {}
-    for name, dates in holidays_by_name.items():
-        for dte in dates:
-            holidays_by_date[dte] = name
+    for name in holiday_windows or {}:
+        if name not in holidays_by_name:
+            warn(
+                f"Holiday '{name}' not found in calendar. Skipping.",
+                obj=warning_instance,
+                stacklevel=2,
+            )
 
-    # Add window around holidays.
-    if holiday_windows is not None:
-        # Iterate over holidays.
-        for name, window in holiday_windows.items():
-            # First, we look up the dates of the holiday.
-            if name in holidays_by_name:
-                dates = holidays_by_name[name]
-            else:
-                warn(
-                    f"Holiday '{name}' not found in calendar. Skipping.",
-                    obj=warning_instance,
-                    stacklevel=2,
+    # For each holiday, map every date in its windows to the offset of the
+    # nearest occurrence, on a tie the upcoming one (negative offset).
+    def rank(days):
+        return abs(days), days > 0
+
+    nearest = defaultdict(dict)
+    for name, holiday_dates in holidays_by_name.items():
+        before, after = (holiday_windows or {}).get(name, (0, 0))
+        offsets = nearest[name]
+        for dte in holiday_dates:
+            for days in range(-before, after + 1):
+                date_window = dte + datetime.timedelta(days=days)
+                offsets[date_window] = min(
+                    offsets.get(date_window, days), days, key=rank
                 )
 
-            # We then get the number of days before and after
-            # the holiday.
-            before, after = window
-            neg_before = -before
-            # For each holiday, we iterate over dates.
-            for dte in dates:
-                # Finally, we add all days within the window to the
-                # holiday, making sure that we do not overwrite
-                # already existing holidays.
-                for days in range(neg_before, after + 1):
-                    date_window = dte + datetime.timedelta(days=days)
-                    if date_window not in holidays_by_date:
-                        holidays_by_date[date_window] = name
-                    elif holidays_by_date[date_window] != name:
-                        holidays_by_date[date_window] = f", {name}"
-                    else:
-                        warn(
-                            f"Conflict with holiday '{name}' on {date_window}",
-                            obj=warning_instance,
-                            stacklevel=2,
-                        )
+    # Invert dictionary so that we can later map holidays to dates in the time
+    # index. By default, dates in overlapping windows get all holiday names.
+    # With offsets, the nearest holiday wins, as ranked above, then the first found.
+    holidays_by_date = {}
+    for name, offsets in nearest.items():
+        for dte, days in offsets.items():
+            if not return_offsets:
+                holidays_by_date.setdefault(dte, []).append(name)
+            elif dte not in holidays_by_date or rank(days) < holidays_by_date[dte][0]:
+                label = name if name == "Weekend" else f"{name}{days:+d}"
+                holidays_by_date[dte] = (rank(days), label)
+    if return_offsets:
+        holidays_by_date = {
+            dte: [label] for dte, (_, label) in holidays_by_date.items()
+        }
 
     if include_bridge_days:
         # Iterate over holidays.
-        for name, dates in holidays_by_name.items():
+        for name, holiday_dates in holidays_by_name.items():
             # For each holiday, iterate over all dates.
-            for dte in dates:
-                # Get the weekday of the holiday.
-                weekday = dte.weekday()
-
-                # If the holiday is on Tuesday, we add Monday as a bridge day.
-                if weekday == 1:
-                    bridge_day = dte - datetime.timedelta(days=1)
-
-                    # We only add bridge days if they are not holidays already.
-                    if bridge_day not in holidays_by_date:
-                        holidays_by_date[bridge_day] = name
-
-                # If the holiday is on Thursday, we add Friday as a bridge day.
-                if weekday == 3:
-                    bridge_day = dte + datetime.timedelta(days=1)
-
-                    # We only add bridge days if they are not holidays already.
-                    if bridge_day not in holidays_by_date:
-                        holidays_by_date[bridge_day] = name
+            for dte in holiday_dates:
+                # Monday is a bridge day for a Tuesday holiday, Friday for a
+                # Thursday holiday. Existing holidays are not overwritten.
+                offset = {1: -1, 3: 1}.get(dte.weekday())
+                if offset is not None:
+                    bridge_day = dte + datetime.timedelta(days=offset)
+                    label = f"{name}{offset:+d}" if return_offsets else name
+                    holidays_by_date.setdefault(bridge_day, [label])
 
     # Generate categorical variable.
-    holidays = (
-        index.to_series()
-        .dt.date.map(holidays_by_date)
-        .fillna(no_holiday_value)
-        .astype("category")
-        .to_frame(name=categorical_column)
-        .set_index(index)
+    labels_by_date = {dte: ", ".join(names) for dte, names in holidays_by_date.items()}
+    index_dates = pd.Series(index.date, index=index)
+    labels = index_dates.map(labels_by_date).fillna(no_holiday_value)
+    # Order offset labels by holiday, then by offset, e.g., "Christmas-2" first.
+    categories = sorted(labels.unique(), key=_offset_key if return_offsets else None)
+    holidays = labels.astype(pd.CategoricalDtype(categories)).to_frame(
+        name=categorical_column
     )
 
     # Generate dummies.
@@ -417,11 +461,23 @@ def _generate_holidays(
             holidays[categorical_column] != no_holiday_value
         ).astype(int)
 
+    # Generate signed distances to each holiday in holiday_windows.
+    if return_distances:
+        for name in holiday_windows:
+            distances = index_dates.map(nearest.get(name, {})).astype(float)
+            holidays[f"{name}_distance"] = distances
+
     # Remove categorical variable if not requested.
     if not return_categorical:
         holidays = holidays.drop(columns=categorical_column)
 
     return holidays
+
+
+def _offset_key(label: str):
+    """Sort key splitting an offset label like "Christmas-2" into its parts."""
+    match = re.fullmatch(r"(.*)([+-]\d+)", label)
+    return (match[1], int(match[2])) if match else (label, 0)
 
 
 def _check_params(
@@ -434,6 +490,8 @@ def _check_params(
     return_categorical: bool,
     return_indicator: bool,
     keep_original_columns: bool,
+    return_offsets: bool = False,
+    return_distances: bool = False,
 ):
     """Check input params.
 
@@ -448,6 +506,8 @@ def _check_params(
     return_categorical : bool
     return_indicator : bool
     keep_original_columns : bool
+    return_offsets : bool
+    return_distances : bool
     """
     from holidays import HolidayBase
 
@@ -486,10 +546,22 @@ def _check_params(
             f"`keep_original_columns` must be boolean,"
             f"but found; {keep_original_columns}"
         )
-    if not (return_dummies or return_categorical or return_indicator):
+    if not isinstance(return_offsets, bool):
         raise ValueError(
-            "One of `return_dummies`, `return_categorical` and `return_indicator` "
-            "must be set to True."
+            f"`return_offsets` must be a boolean, but found: {return_offsets}"
+        )
+    if not isinstance(return_distances, bool):
+        raise ValueError(
+            f"`return_distances` must be a boolean, but found: {return_distances}"
+        )
+    if return_distances and not holiday_windows:
+        raise ValueError("`return_distances=True` requires `holiday_windows`.")
+    if not (
+        return_dummies or return_categorical or return_indicator or return_distances
+    ):
+        raise ValueError(
+            "One of `return_dummies`, `return_categorical`, `return_indicator` "
+            "and `return_distances` must be set to True."
         )
     if not isinstance(calendar, HolidayBase) and isinstance(calendar, dict):
         _check_calendar(calendar)
@@ -522,7 +594,7 @@ def _check_holiday_windows(holiday_windows: dict[str, tuple]):
                 "and values tuples of length 2"
             )
         for days in window:
-            if not isinstance(days, int) and days >= 0:
+            if not (isinstance(days, int) and days >= 0):
                 raise ValueError(
                     "days in `holiday_windows` must all be non-negative, "
                     f"but found: {holiday}: {window}"
