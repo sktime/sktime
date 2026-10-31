@@ -35,14 +35,27 @@ class Repeat(BaseSplitter):
         If True, repetitions are random, ``splitter`` is cloned for each repetition.
         Note: if a random seed is set in ``splitter``, the effect is the same
         as setting ``random_repeat`` to False, even if ``random_repeat`` is True.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.split import ExpandingWindowSplitter
+    >>> from sktime.split.compose import Repeat
+    >>> y = np.arange(10)
+    >>> splitter = ExpandingWindowSplitter(initial_window=6, fh=[1], step_length=2)
+    >>> [test for _, test in splitter.split(y)]
+    [array([6]), array([8])]
+    >>> repeat = Repeat(splitter, times=2, mode="entry")
+    >>> [test for _, test in repeat.split(y)]
+    [array([6]), array([6]), array([8]), array([8])]
+    >>> repeat = Repeat(splitter, times=2, mode="sequence")
+    >>> [test for _, test in repeat.split(y)]
+    [array([6]), array([8]), array([6]), array([8])]
     """
 
     _tags = {
         "split_hierarchical": True,
         "split_series_uses": "iloc",
-        # test skip flags
-        # ---------------
-        "tests:skip_all": True,  # undiagnosed failures, see #6194
     }
 
     def __init__(self, splitter, times=1, mode="entry", random_repeat=False):
