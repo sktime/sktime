@@ -173,3 +173,31 @@ def test_dropna_invalid_arguments_thresh_value(axis, thresh, remember):
     """Test that arguments outside sensible range for thresh are not accepted."""
     with pytest.raises(ValueError):
         DropNA(axis=axis, how=None, thresh=thresh)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DropNA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("axis", DropNA.VALID_AXIS_VALUES)
+def test_dropna_remember_labels_absent_in_transform(axis, X_few_na):
+    """Test remember=True when transform data lacks some labels dropped in fit.
+
+    Rows or columns dropped in fit that are not present in the data passed to
+    transform should be ignored, and the remaining ones should still be dropped.
+    """
+    transformer = DropNA(axis=axis, remember=True)
+    transformer.fit(X_few_na)
+
+    if axis in [0, "index"]:
+        # "1947" is dropped in fit, "1950" is not part of X_new
+        X_new = X_few_na.iloc[:3]
+        X_expected = X_few_na.iloc[1:3]
+    else:
+        # "GNPDEFL" is dropped in fit, "GNP" is not part of X_new
+        X_new = X_few_na.drop(columns="GNP")
+        X_expected = X_few_na.drop(columns=["GNP", "GNPDEFL"])
+
+    X_transformed = transformer.transform(X_new)
+
+    _assert_array_almost_equal(X_transformed, X_expected)
