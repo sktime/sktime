@@ -147,31 +147,33 @@ class WaveletPacketTransformer(BaseTransformer):
         return out
 
     def _decompose(self, arr, level):
-        """Recursively split signal into approximation and detail sub-bands.
+        """Split signal into approximation and detail sub-bands, level by level.
 
         Uses the Haar wavelet: lowpass = (a + b) / sqrt(2),
-        highpass = (a - b) / sqrt(2), applied pairwise.
+        highpass = (a - b) / sqrt(2), applied pairwise. All nodes of a level
+        have equal length and are processed together as rows of a 2D array.
 
         Returns a list of numpy arrays, one per terminal node.
         """
         if level == 0 or len(arr) < 2:
             return [arr]
 
-        if len(arr) % 2 != 0:
-            arr = np.pad(arr, (0, 1), mode="edge")
-
-        half = len(arr) // 2
-        if half == 0:
-            return [arr]
-
         s = math.sqrt(2.0)
-        approx = np.empty(half)
-        detail = np.empty(half)
-        for i in range(half):
-            approx[i] = (arr[2 * i] + arr[2 * i + 1]) / s
-            detail[i] = (arr[2 * i] - arr[2 * i + 1]) / s
+        nodes = np.asarray(arr)[np.newaxis, :]
 
-        return self._decompose(approx, level - 1) + self._decompose(detail, level - 1)
+        for _ in range(level):
+            if nodes.shape[1] < 2:
+                break
+            if nodes.shape[1] % 2 != 0:
+                nodes = np.concatenate([nodes, nodes[:, -1:]], axis=1)
+            even = nodes[:, 0::2]
+            odd = nodes[:, 1::2]
+            approx = ((even + odd) / s).astype(np.float64, copy=False)
+            detail = ((even - odd) / s).astype(np.float64, copy=False)
+
+            nodes = np.stack([approx, detail], axis=1).reshape(-1, approx.shape[1])
+
+        return list(nodes)
 
     def _check_params(self):
         """Validate user-supplied parameters."""
