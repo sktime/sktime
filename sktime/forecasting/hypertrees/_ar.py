@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.hypertrees._utils import _get_frequency
 
 
 class HyperTreeARForecaster(BaseForecaster):
@@ -119,13 +120,7 @@ class HyperTreeARForecaster(BaseForecaster):
 
         self._series_id = 0
         self._train_len = len(y)
-        freq = getattr(y.index, "freqstr", None)
-        if freq is None and isinstance(y.index, pd.DatetimeIndex):
-            try:
-                freq = pd.infer_freq(y.index)
-            except ValueError:
-                freq = None
-        self._freq = freq or "MS"
+        self._freq = _get_frequency(y.index)
         fcst_h = int(np.max(fh.to_relative(self.cutoff)._values))
         self._dates = pd.date_range(
             "2000-01-01", periods=self._train_len + fcst_h, freq=self._freq
