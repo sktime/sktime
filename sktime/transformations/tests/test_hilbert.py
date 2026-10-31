@@ -128,6 +128,4 @@ def test_multivariate_hilbert_matches_per_channel_reference(
     # Batched and single-channel FFTs may differ by float32 rounding.
     # Keep strict float64 checks and allow only single-precision-scale error.
     tolerance = 1e-5 if dtype_case == "float32" else 1e-12
-    pd.testing.assert_frame_equal(
-        actual, expected, rtol=tolerance, atol=tolerance
-    )
+    pd.testing.assert_frame_equal(actual, expected, rtol=tolerance, atol=tolerance)
