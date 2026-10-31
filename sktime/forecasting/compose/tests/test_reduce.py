@@ -4,6 +4,8 @@
 
 __author__ = ["Lovkush-A", "mloning", "LuisZugasti", "AyushmaanSeth"]
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -27,7 +29,10 @@ from sktime.forecasting.compose import (
     RecursiveTimeSeriesRegressionForecaster,
     make_reduction,
 )
-from sktime.forecasting.compose._reduce import _sliding_window_transform
+from sktime.forecasting.compose._reduce import (
+    _get_window_feature_names,
+    _sliding_window_transform,
+)
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.pipeline import make_pipeline
@@ -887,3 +892,151 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+def _make_feature_names_data():
+    """Create sample data for testing feature names."""
+    index = pd.period_range("2000-01", periods=30, freq="M")
+    y = pd.Series(range(30), index=index, name="y")
+    X = pd.DataFrame(
+        {
+            "x1": range(30),
+            "x2": range(30, 60),
+        },
+        index=index,
+    )
+    return y, X
+
+
+class _RecordFitData(RegressorMixin, BaseEstimator):
+    """Regressor that records the data seen in fit, and predicts the mean."""
+
+    def fit(self, X, y):
+        self.X_fit_ = X
+        self.y_mean_ = np.mean(y)
+        return self
+
+    def predict(self, X):
+        return np.full(len(X), self.y_mean_)
+
+
+def test_get_window_feature_names():
+    """Test feature names: order, lag convention, defaults and name clashes."""
+    names = _get_window_feature_names("y", ["x1"], window_length=3)
+    assert names == [
+        "y_lag_3",
+        "y_lag_2",
+        "y_lag_1",
+        "x1_lag_3",
+        "x1_lag_2",
+        "x1_lag_1",
+    ]
+
+    # unnamed y falls back to "y", no X
+    assert _get_window_feature_names(None, None, 2) == ["y_lag_2", "y_lag_1"]
+
+    # non-string column names are coerced to string
+    assert _get_window_feature_names("y", [0, 1], 1) == [
+        "y_lag_1",
+        "0_lag_1",
+        "1_lag_1",
+    ]
+
+    # clashing variable names must give unique feature names
+    clash = _get_window_feature_names("a", ["a", "a"], 2)
+    assert len(clash) == len(set(clash)) == 6
+    assert clash[:2] == ["a_lag_2", "a_lag_1"]
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.compose"),
+    reason="run test only if forecasting.compose module has changed",
+)
+@pytest.mark.parametrize("windows_identical", [True, False])
+@pytest.mark.parametrize("use_X", [True, False])
+def test_direct_tabular_feature_names_match_data(windows_identical, use_X):
+    """Test that feature names are passed on, and match the data in the column."""
+    y, X = _make_feature_names_data()
+    X = X if use_X else None
+    window_length = 4
+    fh = [1, 2, 3]
+
+    forecaster = DirectTabularRegressionForecaster(
+        LinearRegression(),
+        window_length=window_length,
+        windows_identical=windows_identical,
+        pass_feature_names=True,
+    )
+    forecaster.fit(y, X=X, fh=fh)
+
+    expected = _get_window_feature_names(
+        "y", None if X is None else X.columns, window_length
+    )
+    for estimator in forecaster.estimators_:
+        assert list(estimator.feature_names_in_) == expected
+
+    # each name must describe its column: lag k in row r is series[r + w - k]
+    spy = DirectTabularRegressionForecaster(
+        _RecordFitData(),
+        window_length=window_length,
+        windows_identical=windows_identical,
+        pass_feature_names=True,
+    )
+    spy.fit(y, X=X, fh=fh)
+    series = {"y": y} if X is None else {"y": y, "x1": X["x1"], "x2": X["x2"]}
+    for estimator in spy.estimators_:
+        X_fit = estimator.X_fit_
+        assert list(X_fit.columns) == expected
+        for var, values in series.items():
+            for lag in range(1, window_length + 1):
+                col = X_fit[f"{var}_lag_{lag}"].to_numpy()
+                rows = np.arange(len(col))
+                np.testing.assert_array_equal(
+                    col, values.to_numpy()[rows + window_length - lag]
+                )
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.compose"),
+    reason="run test only if forecasting.compose module has changed",
+)
+@pytest.mark.parametrize("windows_identical", [True, False])
+@pytest.mark.parametrize("use_X", [True, False])
+def test_direct_tabular_feature_names_do_not_change_forecasts(windows_identical, use_X):
+    """Test that passing feature names does not change forecasts, or warn."""
+    y, X = _make_feature_names_data()
+    y_train, X_train = y.iloc[:-3], (X.iloc[:-3] if use_X else None)
+    X_test = X.iloc[-3:] if use_X else None
+    fh = [1, 2, 3]
+
+    params = {"window_length": 4, "windows_identical": windows_identical}
+    f_default = DirectTabularRegressionForecaster(LinearRegression(), **params)
+    f_names = DirectTabularRegressionForecaster(
+        LinearRegression(), pass_feature_names=True, **params
+    )
+    f_default.fit(y_train, X=X_train, fh=fh)
+    f_names.fit(y_train, X=X_train, fh=fh)
+
+    # feature names seen in fit must also be passed in predict
+    with warnings.catch_warnings():
+        warnings.filterwarnings("error", message=".*feature names.*")
+        y_pred_names = f_names.predict(X=X_test)
+    y_pred_default = f_default.predict(X=X_test)
+
+    pd.testing.assert_frame_equal(y_pred_names.to_frame(), y_pred_default.to_frame())
+    for est_names, est_default in zip(f_names.estimators_, f_default.estimators_):
+        np.testing.assert_allclose(est_names.coef_, est_default.coef_)
+        np.testing.assert_allclose(est_names.intercept_, est_default.intercept_)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.forecasting.compose"),
+    reason="run test only if forecasting.compose module has changed",
+)
+def test_direct_tabular_feature_names_default_off():
+    """Test that without opting in, the estimator receives a numpy array."""
+    y, X = _make_feature_names_data()
+    forecaster = DirectTabularRegressionForecaster(LinearRegression(), window_length=3)
+    forecaster.fit(y, X=X, fh=[1, 2])
+    assert not hasattr(forecaster.estimators_[0], "feature_names_in_")
+    assert forecaster.get_params()["pass_feature_names"] is False
