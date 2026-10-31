@@ -2696,7 +2696,9 @@
         "bug",
         "code",
         "doc",
-        "test"
+        "test",
+        "example",
+        "tutorial"
       ]
     },
     {
