@@ -54,7 +54,9 @@ class FourierFeatures(BaseTransformer):
         List of seasonal periods. Can be defined with the following options:
 
         * | float : Periodicity defined as number of timesteps since the beginning of
-            the data seen in ``fit``.
+            the data seen in ``fit``. A timestep is one step of the frequency
+            of the index, e.g., for a ``pd.DatetimeIndex`` with ``freq="30min"``,
+            ``sp=48`` corresponds to a daily seasonality.
 
         * | string : Periodicity defined as a column name in X that contains the
             :math:`t/sp` values.
@@ -232,6 +234,39 @@ class FourierFeatures(BaseTransformer):
 
         return self
 
+    def _get_int_index(self, X):
+        """Get the integer time index of X, in time steps since the start of fit data.
+
+        Parameters
+        ----------
+        X : pd.DataFrame or pd.Series, with pd.DatetimeIndex, pd.PeriodIndex,
+            or integer index
+
+        Returns
+        -------
+        np.ndarray of int64, same length as X
+            number of time steps of each element of ``X.index``
+            since the first time point seen in ``fit``, where one time step is one
+            step of the frequency of the index, e.g., one step of ``2h`` for a
+            ``pd.DatetimeIndex`` with ``freq="2h"``
+        """
+        if isinstance(X.index, pd.DatetimeIndex):
+            time_index = X.index.to_period(_get_period_freq(self.freq_))
+        else:
+            time_index = X.index
+
+        # get the integer form of the PeriodIndex
+        int_index = time_index.astype("int64") - self.min_t_
+
+        # for a PeriodIndex with a multiplied frequency, e.g., "30min" or "2h",
+        # the integer ordinals advance by the multiplier per period,
+        # so we rescale them to count time steps of the index
+        step = _get_freq_multiplier(time_index)
+        if step != 1:
+            int_index = int_index // step
+
+        return np.asarray(int_index)
+
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
 
@@ -252,13 +287,8 @@ class FourierFeatures(BaseTransformer):
         X_transformed = pd.DataFrame(index=X.index)
         X_df = pd.DataFrame(X)
 
-        if isinstance(X.index, pd.DatetimeIndex):
-            time_index = X.index.to_period(_get_period_freq(self.freq_))
-        else:
-            time_index = X.index
-
-        # get the integer form of the PeriodIndex
-        int_index = time_index.astype("int64") - self.min_t_
+        # integer time index, in time steps since the start of the data seen in fit
+        int_index = self._get_int_index(X)
 
         for sp_k in self.sp_k_pairs_list_:
             sp = sp_k[0]
@@ -361,6 +391,27 @@ class FourierFeatures(BaseTransformer):
             {"sp_list": ["Y", "Q"], "fourier_terms_list": [3, 4]},
         ]
         return params
+
+
+def _get_freq_multiplier(index):
+    """Get the integer multiplier of the frequency of a pandas index.
+
+    For a ``pd.PeriodIndex`` with frequency ``"30min"``, this is 30,
+    for frequency ``"2h"`` it is 2, and for ``"D"`` it is 1.
+    For indices without a frequency, e.g., integer indices, this is 1.
+
+    Parameters
+    ----------
+    index : pd.Index
+
+    Returns
+    -------
+    int, the multiplier ``n`` of the frequency offset of ``index``, or 1
+    """
+    freq = getattr(index, "freq", None)
+    if freq is None:
+        return 1
+    return getattr(freq, "n", 1)
 
 
 def _get_period_freq(freq):
