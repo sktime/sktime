@@ -3,6 +3,7 @@
 """Unit tests of Imputer functionality."""
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datatypes import get_examples
@@ -129,3 +130,45 @@ def test_imputer_forecaster_y():
 
     transformer.fit(X=X, y=y)
     transformer.transform(X=X, y=y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("method", ["mean", "median", "nearest", "linear"])
+def test_imputer_with_non_numeric_columns(method):
+    """Imputer methods for numeric data pass through non-numeric columns."""
+    X = pd.DataFrame(
+        {"a": [1.0, np.nan, 3.0, np.nan], "b": ["x", "y", None, "z"]},
+        index=pd.date_range("2000-01-01", periods=4, freq="D"),
+    )
+    Xt = Imputer(method=method).fit_transform(X)
+
+    assert not Xt.isna().any().any()
+    # numeric column is imputed as for a purely numeric frame
+    expected = Imputer(method=method).fit_transform(X[["a"]])
+    pd.testing.assert_frame_equal(Xt[["a"]], expected)
+    # non-numeric column is filled by forward/backward fill
+    assert Xt["b"].tolist() == ["x", "y", "y", "z"]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("method", ["mean", "median"])
+def test_imputer_multiindex_with_non_numeric_columns(method):
+    """Mean and median imputation by instance pass through non-numeric columns."""
+    X = pd.DataFrame(
+        {
+            "a": [1.0, np.nan, 3.0, np.nan, 5.0, 7.0],
+            "b": ["x", None, "y", "z", "z", None],
+        },
+        index=pd.MultiIndex.from_product([[0, 1], [0, 1, 2]]),
+    )
+    Xt = Imputer(method=method).fit_transform(X)
+
+    assert not Xt.isna().any().any()
+    assert Xt["a"].tolist() == [1.0, 2.0, 3.0, 6.0, 5.0, 7.0]
+    assert Xt["b"].tolist() == ["x", "x", "y", "z", "z", "z"]

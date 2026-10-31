@@ -34,10 +34,10 @@ class Imputer(BaseTransformer):
             data given to transform().
         * "nearest" : use nearest value, uses pd.Series.interpolate()
         * "constant" : same constant value (given in arg value) for all NaN
-        * "mean" : pd.Series.mean() of data seen in ``fit``
+        * "mean" : pd.Series.mean() of data seen in ``fit``, numeric columns only;
           to use data in transform, wrap this estimator in ``FitInTransform``
-        * "median" : pd.Series.median() of data seen in ``fit``
-          to use data in transform, wrap this estimator in ``FitInTransform``
+        * "median" : pd.Series.median() of data seen in ``fit``, numeric columns
+          only; to use data in transform, wrap this estimator in ``FitInTransform``
         * "backfill" to "bfill" : applies ``pd.Series.bfill`` to all data
         * "pad" or "ffill" : applies ``pd.Series.ffill`` to all data
         * "random" : random values between pd.Series.min() and .max() of *fit* data
@@ -115,7 +115,6 @@ class Imputer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_categorical_X_passes"],
     }
 
     def __init__(
@@ -187,9 +186,9 @@ class Imputer(BaseTransformer):
         if isinstance(index, pd.MultiIndex):
             X_grouped = X.groupby(level=list(range(index.nlevels - 1)))
             if self.method == "mean":
-                self._mean = X_grouped.mean()
+                self._mean = X_grouped.mean(numeric_only=True)
             elif self.method == "median":
-                self._median = X_grouped.median()
+                self._median = X_grouped.median(numeric_only=True)
         else:
             if self.method in ["drift", "forecaster"]:
                 self._y = y.copy() if y is not None else None
@@ -200,9 +199,9 @@ class Imputer(BaseTransformer):
                 elif self.method == "forecaster":
                     self._forecaster = self.forecaster.clone()
             elif self.method == "mean":
-                self._mean = X.mean()
+                self._mean = X.mean(numeric_only=True)
             elif self.method == "median":
-                self._median = X.median()
+                self._median = X.median(numeric_only=True)
 
     def _transform(self, X, y=None):
         """Transform X and return a transformed version.
@@ -270,11 +269,14 @@ class Imputer(BaseTransformer):
             elif self.method == "forecaster":
                 X = self._impute_with_forecaster(X, y)
             elif self.method == "mean":
-                return X.fillna(value=self._mean)
+                X = X.fillna(value=self._mean)
             elif self.method == "median":
-                return X.fillna(value=self._median)
+                X = X.fillna(value=self._median)
             elif self.method in ["nearest", "linear"]:
-                X = X.interpolate(method=self.method)
+                # interpolation is only defined for numeric columns,
+                # non-numeric columns are filled by ffill/bfill below
+                num_cols = X.select_dtypes(include="number").columns
+                X[num_cols] = X[num_cols].interpolate(method=self.method)
             else:
                 raise ValueError(f"`method`: {self.method} not available.")
 
