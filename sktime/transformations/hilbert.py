@@ -114,35 +114,42 @@ class HilbertTransformer(BaseTransformer):
                 f"`N` ({self.N}) must be greater than or equal to signal length ({n})."
             )
 
-        result = {}
+        # Apply the FFT along the time axis across all channels in one call.
+        # This avoids an independent SciPy transform for every input column.
+        analytic = hilbert(df.to_numpy(), N=self.N, axis=0)[:n]
+        output_type = self.output_type
 
-        for col in df.columns:
-            arr = df[col].to_numpy()
-
-            # compute the analytic signal; trim back to original length
-            # in case N was specified larger than n
-            z = hilbert(arr, N=self.N, axis=0)[:n]
-
-            envelope = np.abs(z)
-            phase = np.angle(z)
+        if output_type == "quadrature":
+            values = analytic.imag
+        elif output_type == "envelope":
+            values = np.abs(analytic)
+        else:
+            phase = np.angle(analytic)
             if self.unwrap_phase:
-                phase = np.unwrap(phase)
+                phase = np.unwrap(phase, axis=0)
 
-            if self.output_type == "envelope":
-                result[col] = envelope
-            elif self.output_type == "quadrature":
-                result[col] = np.imag(z)
-            elif self.output_type == "phase":
-                result[col] = phase
-            elif self.output_type == "frequency":
-                result[col] = np.gradient(phase) * self.fs / (2 * np.pi)
-            elif self.output_type == "all":
-                freq = np.gradient(phase) * self.fs / (2 * np.pi)
-                result[f"{col}_envelope"] = envelope
-                result[f"{col}_phase"] = phase
-                result[f"{col}_frequency"] = freq
+            if output_type == "phase":
+                values = phase
+            else:
+                frequency = np.gradient(phase, axis=0) * self.fs / (2 * np.pi)
+                if output_type == "frequency":
+                    values = frequency
+                else:
+                    envelope = np.abs(analytic)
+                    values = np.stack(
+                        (envelope, phase, frequency), axis=2
+                    ).reshape(n, -1)
 
-        out = pd.DataFrame(result, index=df.index)
+        if output_type == "all":
+            columns = [
+                f"{col}_{feature}"
+                for col in df.columns
+                for feature in ("envelope", "phase", "frequency")
+            ]
+        else:
+            columns = df.columns
+
+        out = pd.DataFrame(values, index=df.index, columns=columns)
 
         # if the input was a Series and we didn't fan out into multiple
         # columns, return a Series to keep things consistent
