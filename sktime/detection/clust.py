@@ -1,6 +1,6 @@
 """Cluster Segmentation.
 
-Implementing segmentation using clustering, Read more at
+Implementing segmentation using clustering. Read more at
 <https://en.wikipedia.org/wiki/Cluster_analysis>_.
 """
 
@@ -25,22 +25,32 @@ class ClusterSegmenter(BaseDetector):
     ----------
     clusterer : sklearn.cluster
         The instance of clustering algorithm used for segmentation.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sklearn.cluster import KMeans
+    >>> from sktime.detection.clust import ClusterSegmenter
+    >>> X = pd.Series([0.0, 0.1, 0.2, 5.0, 5.1, 5.2])
+    >>> segmenter = ClusterSegmenter(KMeans(n_clusters=2, n_init=10, random_state=0))
+    >>> labels = segmenter.fit_predict(X)
+    >>> len(labels), labels.nunique()
+    (6, 2)
     """
 
     _tags = {
         # packaging info
-        # --------------
+        # ---------------
         "authors": "Ankit-1204",
         "maintainers": "Ankit-1204",
         # estimator type
-        # --------------
+        # ---------------
         "task": "segmentation",
         "learning_type": "unsupervised",
         # CI and test flags
         # -----------------
         "tests:skip_by_name": [
             "test_non_state_changing_method_contract",
-            "test_doctest_examples",
             "test_predict_points",
             "test_predict_segments",
             "test_transform_output_type",
@@ -50,7 +60,7 @@ class ClusterSegmenter(BaseDetector):
 
     def __init__(self, clusterer=None):
         # estimators should precede parameters
-        #  if estimators have default values, set None and initialize below
+        # if estimators have default values, set None and initialize below
         self.clusterer = clusterer
         if self.clusterer is None:
             self._clusterer = KMeans()
@@ -121,12 +131,12 @@ class ClusterSegmenter(BaseDetector):
         ----------
         parameter_set : str, default="default"
             Name of the set of test parameters to return, for use in tests. If no
-            special parameters are defined for a value, will return `"default"` set.
+            special parameters are defined for a value, will return "default" set.
             There are currently no reserved values for detectors.
 
         Returns
         -------
-        params : dict or list of dict, default = {}
+        params : dict or list of dict, default={}
 
         """
         params1 = {"clusterer": KMeans(n_clusters=2)}
