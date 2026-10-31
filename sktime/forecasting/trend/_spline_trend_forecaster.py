@@ -32,10 +32,8 @@ class SplineTrendForecaster(_DelegatedForecaster):
 
     degree : int, default=1
         Degree of the splines (1 for linear, 2 for quadratic, etc.).
-    n_knots : int, default=4
-        Number of knots for the spline transformation.
 
-    knots : {'uniform', 'quantile'}or array-like of shape (n_knots, n_features),
+    knots : {'uniform', 'quantile'} or array-like of shape (n_knots, n_features),
         default='uniform'
         Determines knot positions such that first knot <= features <= last knot.
 
