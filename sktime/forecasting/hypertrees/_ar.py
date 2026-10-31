@@ -51,7 +51,7 @@ class HyperTreeARForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> y = load_airline()
     >>> forecaster = HyperTreeARForecaster(p=2)  # doctest: +SKIP
-    >>> forecaster.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> forecaster.fit(y, fh=3)  # doctest: +SKIP
     HyperTreeARForecaster(...)
     >>> y_pred = forecaster.predict()  # doctest: +SKIP
     """
