@@ -161,6 +161,8 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         "capability:unequal_length": False,
         "capability:missing_values": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "shapelet",
         # CI and test flags
         # -----------------
