@@ -9,6 +9,17 @@ class M4CompetitionCatalogueMonthly(_BaseM4CompetitionCatalogue):
 
     This catalogue binds the M4 monthly dataset with the standard set of
     classical forecasters and evaluates them using OWA with sp=12.
+
+    Examples
+    --------
+    >>> from sktime.catalogues.forecasting.M4 import M4CompetitionCatalogueMonthly
+    >>> cat = M4CompetitionCatalogueMonthly()
+    >>> len(cat)
+    13
+    >>> cat.get("dataset")
+    ["ForecastingData('m4_monthly_dataset')"]
+    >>> "Naive_1" in cat
+    True
     """
 
     _tags = {
