@@ -153,7 +153,7 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": "pyts",
+        "python_dependencies": "pyts<0.14.0",
         # estimator type
         # --------------
         "capability:multioutput": False,
