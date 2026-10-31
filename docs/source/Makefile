@@ -23,7 +23,7 @@ clean:
 # i.e to log stderr into a separate file:
 # make build O="--no-color 2> build_warnings.log"
 html:
-#	./symlink_examples.sh
+	./symlink_examples.sh
 	$(SPHINXBUILD) -M html "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 # $(O) is meant as a shortcut for custom options.

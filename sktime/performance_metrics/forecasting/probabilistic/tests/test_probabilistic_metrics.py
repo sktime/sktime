@@ -186,6 +186,21 @@ def test_output_quantiles(metric, score_average, multioutput, sample_data):
     helper_check_output(metric, score_average, multioutput, sample_data)
 
 
+def test_pinballloss_missing_alpha_message():
+    y_true = pd.Series([1.0, 2.0, 3.0])
+    y_pred = pd.DataFrame({
+        ("Quantiles", 0.05): [0.5, 1.0, 1.5],
+        ("Quantiles", 0.95): [1.5, 2.5, 3.5],
+    })
+
+    metric = PinballLoss(alpha=[0.05, 0.5, 0.95])
+
+    with pytest.raises(ValueError, match="missing") as excinfo:
+        metric(y_true, y_pred)
+
+    assert "0.5" in str(excinfo.value)
+
+
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
