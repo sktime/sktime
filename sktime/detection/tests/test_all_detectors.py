@@ -220,7 +220,7 @@ class TestAllDetectors(DetectorFixtureGenerator, QuickTester):
 
     def test_clone_after_pretrain(self, object_instance):
         """Test clone after pretrain uses the pretrain clone plugin."""
-        from sktime.forecasting.base._clone_plugin import _PretrainedCloner
+        from sktime.base._pretrain import _PretrainedCloner
 
         estimator = object_instance
         assert _PretrainedCloner in estimator._get_clone_plugins()

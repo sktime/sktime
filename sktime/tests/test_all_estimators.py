@@ -10,7 +10,6 @@ import numbers
 import os
 import sys
 import types
-import warnings
 from copy import deepcopy
 from inspect import getfullargspec, signature
 from tempfile import TemporaryDirectory
@@ -184,15 +183,9 @@ class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
     # which estimator types are generated; None=all, or scitype string like "forecaster"
     object_type_filter = None
 
-    # which sequence the conditional fixtures are generated in
-    # todo 1.3.0: remove the deprecated "estimator_class", "estimator_instance" aliases
-    #   each alias is placed directly after the name it aliases, so that fixture id
-    #   ordering is identical for tests using the old and the new names
     fixture_sequence = [
         "object_class",
-        "estimator_class",  # todo 1.3.0: remove alias
         "object_instance",
-        "estimator_instance",  # todo 1.3.0: remove alias
         "scenario",
         "method_nsc",
         "method_nsc_arraylike",
@@ -201,28 +194,7 @@ class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
     # which fixtures are indirect, e.g., have an additional pytest.fixture block
     #   to generate an indirect fixture at runtime. Example: object_instance
     #   warning: direct fixtures retain state changes within the same test
-    # todo 1.3.0: remove "estimator_instance"
-    indirect_fixtures = ["object_instance", "estimator_instance"]
-
-    # todo 1.3.0: remove __init_subclass__
-    def __init_subclass__(cls, **kwargs):
-        """Raise a directive error if a descendant sets the renamed class attribute.
-
-        ``estimator_type_filter`` was renamed to ``object_type_filter`` in 1.2.0,
-        to align with ``skbase``. An alias is not possible, as the attribute is
-        read via ``getattr``, so a silently ignored ``estimator_type_filter``
-        would cause the descendant to test all object types instead of one.
-        """
-        super().__init_subclass__(**kwargs)
-        if "estimator_type_filter" in cls.__dict__:
-            raise TypeError(
-                f"Error in {cls.__name__}: the class attribute "
-                "estimator_type_filter of BaseFixtureGenerator descendants "
-                "was renamed to object_type_filter in sktime 1.2.0. "
-                f"Please rename the attribute in {cls.__name__} to "
-                "object_type_filter. Setting estimator_type_filter no longer "
-                "has any effect."
-            )
+    indirect_fixtures = ["object_instance"]
 
     def _all_objects(self):
         """Retrieve list of all object classes of type self.object_type_filter."""
@@ -271,42 +243,6 @@ class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
     #   where fixture_var is a fixture variable used in tests
     # the list is conditional on values of other fixtures which can be passed in kwargs
 
-    # todo 1.3.0: remove the four members below, they are deprecation aliases
-    #   for the fixtures renamed in 1.2.0, estimator_class -> object_class
-    #   and estimator_instance -> object_instance.
-    #   Removing them also requires removing the aliases in fixture_sequence
-    #   and indirect_fixtures, above.
-    @staticmethod
-    def _warn_fixture_deprecated(old, new):
-        """Warn that fixture variable named old is deprecated in favour of new."""
-        warnings.warn(
-            f"The test fixture {old} of sktime BaseFixtureGenerator descendants "
-            f"has been renamed to {new} in sktime 1.2.0, to align with the "
-            f"scikit-base test framework. The alias {old} is deprecated and will "
-            "be removed in sktime 1.3.0. To avoid this warning, rename the "
-            f"argument {old} to {new} in your test functions.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-    def _generate_estimator_class(self, test_name, **kwargs):
-        """Return object_class fixtures, deprecated alias of _generate_object_class."""
-        self._warn_fixture_deprecated("estimator_class", "object_class")
-        return self._generate_object_class(test_name, **kwargs)
-
-    def _generate_estimator_instance(self, test_name, **kwargs):
-        """Return object_instance fixtures, deprecated alias.
-
-        Deprecated alias of _generate_object_instance.
-        """
-        self._warn_fixture_deprecated("estimator_instance", "object_instance")
-        return self._generate_object_instance(test_name, **kwargs)
-
-    @pytest.fixture(scope="function")
-    def estimator_instance(self, request):
-        """estimator_instance fixture, deprecated alias of object_instance."""
-        return request.param.clone()
-
     @staticmethod
     def _obj_key_from_fixture_kwargs(kwargs):
         """Retrieve name of the object fixture in kwargs of a _generate_ method.
@@ -321,13 +257,10 @@ class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
         first key of kwargs among object_class, object_instance,
         preferring object_class; None if neither is present
         """
-        # todo 1.3.0: remove the estimator_class, estimator_instance alias keys,
-        #   each is checked directly after the name it aliases
+
         for key in [
             "object_class",
-            "estimator_class",
             "object_instance",
-            "estimator_instance",
         ]:
             if key in kwargs.keys():
                 return key
@@ -425,7 +358,6 @@ class BaseFixtureGenerator(PackageConfig, _BaseFixtureGenerator):
 class QuickTester(_QuickTester):
     """Mixin class which adds the run_tests method to run tests on one estimator."""
 
-    # todo 1.3.0: remove the estimator arg, and the deprecation branch below
     def run_tests(
         self,
         obj=None,
@@ -435,7 +367,6 @@ class QuickTester(_QuickTester):
         tests_to_exclude=None,
         fixtures_to_exclude=None,
         verbose=False,
-        estimator=None,
     ):
         """Run all tests on one single estimator.
 
@@ -481,9 +412,6 @@ class QuickTester(_QuickTester):
             removes test-fixture combinations that should not be run.
             This is done after subsetting via fixtures_to_run.
 
-        estimator : object class or object instance, optional
-            deprecated alias of ``obj``, will be removed in 1.3.0
-
         verbose : int or bool, optional, default=1.
             verbosity level for printouts from tests run.
 
@@ -523,17 +451,6 @@ class QuickTester(_QuickTester):
         ... )
         {'test_repr[NaiveForecaster-2]': 'PASSED'}
         """
-        # todo 1.3.0: remove this block
-        if estimator is not None:
-            warnings.warn(
-                "The estimator argument of QuickTester.run_tests is deprecated "
-                "and will be removed in sktime 1.3.0. Use obj instead.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            if obj is not None:
-                raise TypeError("pass either obj or estimator, not both")
-            obj = estimator
 
         return super().run_tests(
             obj=obj,
@@ -547,21 +464,8 @@ class QuickTester(_QuickTester):
 
     @staticmethod
     def _subset_generator_dict(obj, generator_dict):
-        """Subset generator dict to obj, retaining deprecated fixture aliases.
-
-        Extends the ``skbase`` implementation by the deprecated fixture name
-        aliases. Without these, a test using a deprecated fixture name would
-        range over all objects in the package, instead of only over ``obj``.
-        """
+        """Subset generator dict to obj"""
         generator_dict = _QuickTester._subset_generator_dict(obj, generator_dict)
-
-        # todo 1.3.0: remove the overrides of the deprecated alias keys
-        for _old, _new in [
-            ("estimator_class", "object_class"),
-            ("estimator_instance", "object_instance"),
-        ]:
-            if _old in generator_dict:
-                generator_dict[_old] = generator_dict[_new]
 
         return generator_dict
 
@@ -1015,6 +919,26 @@ class TestAllObjects(BaseFixtureGenerator, QuickTester, _TestAllObjects):
 
         assert deep_equals(cls1.get_param_names(), cls2.get_param_names())
         assert deep_equals(cls1.get_param_defaults(), cls2.get_param_defaults())
+
+    def test_shorthands(self, object_class):
+        """Check that all shorthands in the object are safe-parseable by craft."""
+        from sktime.registry import craft
+
+        shs = object_class.get_class_tag("shorthands")
+
+        if shs is not None:
+            for sh, spec in shs.items():
+                if not isinstance(spec, str):
+                    raise ValueError(
+                        f"Shorthand spec for {sh} is not a string. "
+                        f"Found type: {type(spec)}. Found value: {spec}"
+                    )
+                # this would raise exception if there is unsafe code in the shorthand
+                # if fails, replace by a safe shorthand, e.g.,
+                # * a class spec str such as "NaiveForecaster"
+                # * a constructor spec str such as "NaiveForecaster(strategy='mean')"
+                craft(spec, safe=True)
+                craft(sh, safe=True)
 
 
 class TestAllEstimators(BaseFixtureGenerator, QuickTester):

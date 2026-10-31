@@ -109,16 +109,6 @@ class SquaringResiduals(BaseForecaster):
         "capability:pred_int": True,  # does forecaster implement proba forecasts?
         "capability:pred_int:insample": False,
         "capability:update": True,  # can estimator update its parameters with new data?
-        # testing and CI flags
-        # --------------------
-        # issue when prediction intervals, see #3479 and #4504
-        # known issue with prediction intervals that needs fixing, tracked in #4181
-        "tests:skip_by_name": [
-            "test_predict_time_index",
-            "test_predict_residuals",
-            "test_predict_interval",
-            "test_predict_time_index_with_X",  # separate - refer to #4765
-        ],
     }
 
     def __init__(

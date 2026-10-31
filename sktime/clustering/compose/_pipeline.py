@@ -106,7 +106,6 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     # no default tag values - these are set dynamically below
@@ -351,14 +350,22 @@ class ClustererPipeline(_HeterogenousMetaEstimator, BaseClusterer):
         params1 = {"transformers": [t1], "clusterer": c}
         params = params + [params1]
 
+        # soft dependency free second parameter set, with named steps
+        t1 = ExponentTransformer(power=2)
+        t2 = ExponentTransformer(power=0.5)
+        c = TimeSeriesDBSCAN.create_test_instance()
+
+        params2 = {"transformers": [("square", t1), ("sqrt", t2)], "clusterer": c}
+        params = params + [params2]
+
         if _check_estimator_deps(TimeSeriesKMeans, severity="none"):
             t1 = ExponentTransformer(power=2)
             t2 = ExponentTransformer(power=0.5)
             c = TimeSeriesKMeans(random_state=42)
 
-            params2 = {"transformers": [t1, t2], "clusterer": c}
+            params3 = {"transformers": [t1, t2], "clusterer": c}
 
-            params = params + [params2]
+            params = params + [params3]
 
         return params
 
