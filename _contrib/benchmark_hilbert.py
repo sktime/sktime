@@ -78,7 +78,7 @@ def median_runtime_ms(a, b, X, mode, repeats):
         for _ in range(2):
             transform(cls, X, mode)
     for rep in range(repeats):
-        for label, cls in (pair if rep % 2 == 0 else reversed(pair)):
+        for label, cls in pair if rep % 2 == 0 else reversed(pair):
             gc.collect()
             start = time.perf_counter()
             transform(cls, X, mode)
@@ -145,26 +145,24 @@ def main():
             old_ms, new_ms = median_runtime_ms(
                 PerChannelHilbert, HilbertTransformer, X, mode, args.repeats
             )
-            old_mib = peak_traced_mib(
-                PerChannelHilbert, X, mode, args.memory_repeats
+            old_mib = peak_traced_mib(PerChannelHilbert, X, mode, args.memory_repeats)
+            new_mib = peak_traced_mib(HilbertTransformer, X, mode, args.memory_repeats)
+            rows.append(
+                {
+                    "mode": mode,
+                    "timepoints": args.length,
+                    "channels": channels,
+                    "baseline_ms": round(old_ms, 5),
+                    "optimized_ms": round(new_ms, 5),
+                    "speedup": round(old_ms / new_ms, 4),
+                    "baseline_traced_mib": round(old_mib, 5),
+                    "optimized_traced_mib": round(new_mib, 5),
+                    "python": platform.python_version(),
+                    "numpy": np.__version__,
+                    "pandas": pd.__version__,
+                    "scipy": scipy.__version__,
+                }
             )
-            new_mib = peak_traced_mib(
-                HilbertTransformer, X, mode, args.memory_repeats
-            )
-            rows.append({
-                "mode": mode,
-                "timepoints": args.length,
-                "channels": channels,
-                "baseline_ms": round(old_ms, 5),
-                "optimized_ms": round(new_ms, 5),
-                "speedup": round(old_ms / new_ms, 4),
-                "baseline_traced_mib": round(old_mib, 5),
-                "optimized_traced_mib": round(new_mib, 5),
-                "python": platform.python_version(),
-                "numpy": np.__version__,
-                "pandas": pd.__version__,
-                "scipy": scipy.__version__,
-            })
             print(
                 f"{mode:<12}{channels:>9}{old_ms:>12.3f}{new_ms:>12.3f}"
                 f"{old_ms / new_ms:>9.2f}x{old_mib:>11.3f}{new_mib:>11.3f}"
