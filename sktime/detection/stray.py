@@ -159,7 +159,8 @@ class STRAY(BaseTransformer):
         dict of index of outliers and the outlier scores
         """
         if len(X.shape) == 1:
-            nbrs = NearestNeighbors(n_neighbors=self.k + 1).fit(X.reshape(-1, 1))
+            k_safe = n if self.k >= n else self.k + 1
+            nbrs = NearestNeighbors(n_neighbors=k_safe).fit(X.reshape(-1, 1))
             distances, _ = nbrs.kneighbors(X.reshape(-1, 1))
         else:
             nbrs = NearestNeighbors(
