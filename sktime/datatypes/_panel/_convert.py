@@ -37,7 +37,6 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes._base import BaseConverter
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
-from sktime.datatypes._convert_utils._convert import _extend_conversions
 from sktime.utils.pandas import df_map
 
 # this needs to be refactored with the convert module
@@ -1534,14 +1533,6 @@ def from_numpyflat_to_numpy3d(obj, store=None):
 
 convert_dict[("numpyflat", "numpy3D", "Panel")] = PanelNumpyFlatToNumpy3D()
 
-_extend_conversions(
-    "numpyflat", "numpy3D", convert_dict, mtype_universe=MTYPE_LIST_PANEL
-)
-
-_extend_conversions(
-    "pd-long", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
-)
-
 
 if _check_soft_dependencies("dask", severity="none"):
     from sktime.datatypes._adapter.dask_to_pd import (
@@ -1558,10 +1549,6 @@ if _check_soft_dependencies("dask", severity="none"):
         return convert_pandas_to_dask(obj)
 
     convert_dict[("pd-multiindex", "dask_panel", "Panel")] = PanelPdMultiIndexToDask()
-
-    _extend_conversions(
-        "dask_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
-    )
 
 if _check_soft_dependencies("polars", severity="none"):
     from sktime.datatypes._adapter.polars import (
@@ -1581,10 +1568,6 @@ if _check_soft_dependencies("polars", severity="none"):
 
     convert_dict[("pd-multiindex", "polars_panel", "Panel")] = (
         PanelPdMultiIndexToPolars()
-    )
-
-    _extend_conversions(
-        "polars_panel", "pd-multiindex", convert_dict, mtype_universe=MTYPE_LIST_PANEL
     )
 
 if _check_soft_dependencies("gluonts", severity="none"):
@@ -1623,19 +1606,4 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     convert_dict[("gluonts_PandasDataset_panel", "pd-multiindex", "Panel")] = (
         PanelGluontsPandasDatasetToPdMultiIndex()
-    )
-
-    # Extending conversions
-    _extend_conversions(
-        "gluonts_ListDataset_panel",
-        "pd-multiindex",
-        convert_dict,
-        mtype_universe=MTYPE_LIST_PANEL,
-    )
-
-    _extend_conversions(
-        "gluonts_PandasDataset_panel",
-        "pd-multiindex",
-        convert_dict,
-        mtype_universe=MTYPE_LIST_PANEL,
     )

@@ -40,7 +40,6 @@ from sktime.datatypes._base import BaseConverter
 # methods to convert one machine type to another machine type
 ##############################################################
 from sktime.datatypes._convert_utils._coerce import _coerce_df_dtypes
-from sktime.datatypes._convert_utils._convert import _extend_conversions
 
 # this needs to be refactored with the convert module
 MTYPE_LIST_SERIES = [
@@ -545,6 +544,11 @@ if _check_soft_dependencies("xarray", severity="none"):
         index = obj.indexes[obj.dims[0]]
         columns = obj.indexes[obj.dims[1]] if len(obj.dims) == 2 else None
         df = pd.DataFrame(obj.values, index=index, columns=columns)
+        # dim_0, dim_1 are names xarray assigns to unnamed dimensions
+        if df.index.name == "dim_0":
+            df.index.name = None
+        if df.columns.name == "dim_1":
+            df.columns.name = None
         # int64 coercions are needed due to inconsistencies specifically on windows
         df = df.astype(
             dict.fromkeys(df.select_dtypes(include="int32").columns, "int64")
@@ -576,11 +580,6 @@ if _check_soft_dependencies("xarray", severity="none"):
         SeriesPdDataFrameToXrDataArray()
     )
 
-    _extend_conversions(
-        "xr.DataArray", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
-    )
-
-
 if _check_soft_dependencies("dask", severity="none"):
     from sktime.datatypes._adapter.dask_to_pd import (
         convert_dask_to_pandas,
@@ -596,11 +595,6 @@ if _check_soft_dependencies("dask", severity="none"):
         return convert_pandas_to_dask(obj)
 
     convert_dict[("pd.DataFrame", "dask_series", "Series")] = SeriesPdDataFrameToDask()
-
-    _extend_conversions(
-        "dask_series", "pd.DataFrame", convert_dict, mtype_universe=MTYPE_LIST_SERIES
-    )
-
 
 if _check_soft_dependencies("polars", severity="none"):
     from sktime.datatypes._adapter.polars import (
@@ -684,19 +678,4 @@ if _check_soft_dependencies("gluonts", severity="none"):
 
     convert_dict[("gluonts_PandasDataset_series", "pd.DataFrame", "Series")] = (
         SeriesGluontsPandasDatasetToPdDataFrame()
-    )
-
-    # Extending conversions
-    _extend_conversions(
-        "gluonts_ListDataset_series",
-        "pd.DataFrame",
-        convert_dict,
-        mtype_universe=MTYPE_LIST_SERIES,
-    )
-
-    _extend_conversions(
-        "gluonts_PandasDataset_series",
-        "pd.DataFrame",
-        convert_dict,
-        mtype_universe=MTYPE_LIST_SERIES,
     )

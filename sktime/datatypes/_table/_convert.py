@@ -35,7 +35,6 @@ import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datatypes._base import BaseConverter
-from sktime.datatypes._convert_utils._convert import _extend_conversions
 
 # this needs to be refactored with the convert module
 MTYPE_LIST_TABLE = [
@@ -533,14 +532,6 @@ convert_dict[("pd_DataFrame_Table", "list_of_dict", "Table")] = (
 )
 
 
-_extend_conversions(
-    "pd_Series_Table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
-)
-_extend_conversions(
-    "list_of_dict", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
-)
-
-
 if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
     import polars as pl
 
@@ -596,11 +587,4 @@ if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
     )
     convert_dict[("polars_eager_table", "polars_lazy_table", "Table")] = (
         TablePolarsEagerToPolarsLazy()
-    )
-
-    _extend_conversions(
-        "polars_eager_table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
-    )
-    _extend_conversions(
-        "polars_lazy_table", "pd_DataFrame_Table", convert_dict, MTYPE_LIST_TABLE
     )
