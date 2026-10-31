@@ -21,6 +21,12 @@ class HampelDetector(BaseDetector):
     k : float, optional (default=1.4826)
         The consistency constant which depends on the underlying distribution.
         By default, we choose k=1.4826 - the value for Gaussian distribution.
+    causal : bool, default=False
+        If False, use centered windows (offline mode).
+        If True, use trailing windows that depend only on
+        the past (causally correct online mode).
+        The detector is update-capable if and only if causal=True.
+
 
     References
     ----------
@@ -37,7 +43,6 @@ class HampelDetector(BaseDetector):
     >>> detector.fit(y)
     HampelDetector()
     >>> y_anomalies = detector.predict(y)
-    >>> anomaly_scores = detector.transform_scores(y)
     """
 
     _tags = {
@@ -49,17 +54,53 @@ class HampelDetector(BaseDetector):
         "task": "anomaly_detection",
         "capability:multivariate": False,
         "capability:missing_values": False,
-        "capability:update": False,
+        "capability:update": True,
         "capability:variable_identification": False,
         "X_inner_mtype": "pd.Series",
-        "fit_is_empty": True,
+        "fit_is_empty": False,
     }
 
-    def __init__(self, window_length=10, n_sigma=3.0, k=1.4826):
+    def __init__(self, window_length=10, n_sigma=3.0, k=1.4826, causal=False):
         self.window_length = window_length
         self.n_sigma = n_sigma
         self.k = k
+        self._buffer = pd.Series(dtype=float)
+        self.causal = causal
         super().__init__()
+
+    def _fit(self, X, y=None):
+        """
+        Initialize rolling buffer.
+
+        Store only the last self.window_length points.
+        """
+        self._buffer = X.iloc[-self.window_length :].copy()
+        return self
+
+    def _update(self, X, y=None):
+        """
+        Update rolling buffer with new observations.
+
+        Cut the historical data to store only one window of past data.
+        """
+        self._buffer = pd.concat([self._buffer, X]).iloc[-self.window_length :]
+        return self
+
+    def _get_window(self, x_values, i, history=None):
+        """Extract centered or trailing window in function of self.causal."""
+        # online mode
+        if self.causal:
+            combined = np.concatenate([history, [x_values[i]]])
+            window_data = combined[-self.window_length :]
+            new_history = window_data
+            return window_data, new_history
+
+        # offline mode
+        hw = self.window_length // 2
+        start = max(0, i - hw)
+        end = min(len(x_values), i + hw + 1)
+        window_data = x_values[start:end]
+        return window_data, history
 
     def _predict(self, X):
         """
@@ -71,54 +112,50 @@ class HampelDetector(BaseDetector):
             Sparse series containing the iloc indices of detected anomalies.
         """
         x_values = X.values
-        n = len(x_values)
         outlier_indices = []
+        history = self._buffer.values if self.causal else np.array([])
 
-        # Half-window for a centered approach
-        hw = self.window_length // 2
-
-        for i in range(n):
-            start = max(0, i - hw)
-            end = min(n, i + hw + 1)
-
-            window_data = x_values[start:end]
-
-            # Calculate outlier statistics
+        for i, x in enumerate(x_values):
+            window_data, history = self._get_window(
+                x_values,
+                i,
+                history,
+            )
             median = np.nanmedian(window_data)
             mad = np.nanmedian(np.abs(window_data - median))
-
-            sigma_est = self.k * mad
-
-            # Compare absolute deviation to the threshold
-            if np.abs(x_values[i] - median) > self.n_sigma * sigma_est:
+            sigma_est = max(self.k * mad, 1e-10)
+            if np.abs(x - median) > self.n_sigma * sigma_est:
                 outlier_indices.append(i)
 
-        # Return a series that BaseDetector will coerce to the 'ilocs' format
+        # Return a sparse pd.Series of outlier indices
         return pd.Series(outlier_indices, name="ilocs", dtype="int64")
 
     def _transform_scores(self, X):
         """
-        Calculate the anomaly scores (deviation in terms of n * sigma_est).
+        Calculate the anomaly scores.
+
+        Use a trailing or centered window depending on self.causal.
 
         Anomaly score is the absolute deviation normalized by (k * MAD).
         """
         x_values = X.values
         n = len(x_values)
         scores = np.zeros(n)
-        hw = self.window_length // 2
+        history = self._buffer.values if self.causal else np.array([])
 
-        for i in range(n):
-            # Ensure valid start and end indices for the window
-            start = max(0, i - hw)
-            end = min(n, i + hw + 1)
-            window_data = x_values[start:end]
-
+        for i, x in enumerate(x_values):
+            # keep a trailing window of data
+            window_data, history = self._get_window(
+                x_values,
+                i,
+                history,
+            )
             median = np.nanmedian(window_data)
             mad = np.nanmedian(np.abs(window_data - median))
-            # Ensure the denominator is non-zero
-            denom = np.maximum(self.k * mad, 1e-9)
-            scores[i] = np.abs(x_values[i] - median) / denom
+            denom = max(self.k * mad, 1e-10)
+            scores[i] = np.abs(x - median) / denom
 
+        # Return a pd.Series of anomaly scores for the points of X
         return pd.DataFrame(scores, index=X.index, columns=["scores"])
 
     @classmethod
@@ -145,4 +182,10 @@ class HampelDetector(BaseDetector):
         param2 = {}
         param3 = {"window_length": 5, "n_sigma": 3.1, "k": 1.5}
         param4 = {"n_sigma": 4}
-        return [param1, param2, param3, param4]
+        param5 = {
+            "window_length": 5,
+            "n_sigma": 3.1,
+            "k": 1.5,
+            "causal": True,
+        }
+        return [param1, param2, param3, param4, param5]
