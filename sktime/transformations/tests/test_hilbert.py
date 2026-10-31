@@ -67,3 +67,57 @@ def test_hilbert_numerical_sine_quadrature():
     expected = -np.cos(t)
     mae = np.mean(np.abs(quad.to_numpy()[20:-20] - expected[20:-20]))
     assert mae < 0.05
+
+
+@pytest.mark.parametrize(
+    "output_type", ["envelope", "phase", "frequency", "quadrature", "all"]
+)
+@pytest.mark.parametrize("fft_length", [None, 192])
+@pytest.mark.parametrize("unwrap_phase", [False, True])
+def test_multivariate_hilbert_matches_per_channel_reference(
+    output_type, fft_length, unwrap_phase
+):
+    """Batched Hilbert features must equal independent one-channel transforms."""
+    from scipy.signal import hilbert
+
+    rng = np.random.default_rng(1024)
+    index = pd.date_range("2026-01-01", periods=128, freq="h")
+    X = pd.DataFrame(
+        rng.standard_normal((128, 4)),
+        columns=["x", "y", "z", "velocity"],
+        index=index,
+    )
+
+    reference = {}
+    for column in X.columns:
+        analytic = hilbert(X[column].to_numpy(), N=fft_length)[: len(X)]
+        envelope = np.abs(analytic)
+        phase = np.angle(analytic)
+        if unwrap_phase:
+            phase = np.unwrap(phase)
+
+        if output_type == "envelope":
+            reference[column] = envelope
+        elif output_type == "quadrature":
+            reference[column] = analytic.imag
+        elif output_type == "phase":
+            reference[column] = phase
+        elif output_type == "frequency":
+            reference[column] = np.gradient(phase) * 4.0 / (2 * np.pi)
+        elif output_type == "all":
+            reference[f"{column}_envelope"] = envelope
+            reference[f"{column}_phase"] = phase
+            reference[f"{column}_frequency"] = (
+                np.gradient(phase) * 4.0 / (2 * np.pi)
+            )
+
+    transformer = HilbertTransformer(
+        output_type=output_type,
+        N=fft_length,
+        unwrap_phase=unwrap_phase,
+        fs=4.0,
+    )
+    actual = transformer.fit_transform(X)
+    expected = pd.DataFrame(reference, index=index)
+
+    pd.testing.assert_frame_equal(actual, expected, rtol=1e-12, atol=1e-12)
