@@ -4,6 +4,7 @@
 
 __author__ = ["fkiraly", "ciaran-g"]
 
+from copy import deepcopy
 from functools import reduce
 from operator import mul
 
@@ -24,6 +25,7 @@ from sktime.tests.test_switch import run_test_module_changed
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
+from sktime.utils.deep_equals import deep_equals
 from sktime.utils.parallel import _get_parallel_test_fixtures
 
 PANEL_MTYPES = ["pd-multiindex", "nested_univ", "numpy3D"]
@@ -31,6 +33,32 @@ HIER_MTYPES = ["pd_multiindex_hier"]
 
 # list of parallelization backends to test
 BACKENDS = _get_parallel_test_fixtures("config")
+
+
+@pytest.mark.parametrize("initial_state", ["new", "fitted"])
+def test_pretrain_without_capability_is_noop(initial_state):
+    """Test pretrain warns and preserves state when capability is absent."""
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(2,),
+        min_timepoints=5,
+        max_timepoints=5,
+    )
+    forecaster = NaiveForecaster()
+
+    if initial_state == "fitted":
+        forecaster.fit(_make_series(n_timepoints=10))
+
+    state_before = deepcopy(forecaster.__dict__)
+
+    with pytest.warns(UserWarning, match="does not support pretraining"):
+        result = forecaster.pretrain(y_panel)
+
+    is_equal, msg = deep_equals(
+        forecaster.__dict__, state_before, return_msg=True
+    )
+
+    assert result is forecaster
+    assert is_equal, msg
 
 
 @pytest.mark.skipif(
