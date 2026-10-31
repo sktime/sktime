@@ -1,6 +1,5 @@
 """HOG1D transform."""
 
-import math
 import numbers
 
 import numpy as np
@@ -165,33 +164,29 @@ class HOG1DTransformer(BaseTransformer):
         -------
         histogram : a numpy array of shape = [num_bins].
         """
-        # First step is to pad the portion on both ends once.
-        gradients = [0.0] * (len(X))
-        X = np.pad(X, 1, mode="edge")
-        histogram = [0.0] * self.num_bins
+        # First step is to pad the portion on both ends once, with its edge values
+        X = np.asarray(X, dtype=float)
+        X = np.concatenate((X[:1], X, X[-1:]))
 
-        # Calculate the gradients of each element
-        for i in range(1, len(X) - 1):
-            gradients[(i - 1)] = self.scaling_factor * 0.5 * (X[(i + 1)] - X[(i - 1)])
+        # Calculate the gradients of each element, by central differences
+        gradients = self.scaling_factor * 0.5 * (X[2:] - X[:-2])
 
-        # Calculate the orientations
-        orients = [math.degrees(math.atan(x)) for x in gradients]
+        # Calculate the orientations, in degrees
+        orients = np.arctan(gradients) / (np.pi / 180.0)
 
         # Calculate the boundaries of the histogram
-        hisBoundaries = [
-            -90 + (180 / self.num_bins) + ((180 / self.num_bins) * x)
-            for x in range(self.num_bins)
-        ]
+        hisBoundaries = (
+            -90
+            + (180 / self.num_bins)
+            + (180 / self.num_bins) * np.arange(self.num_bins)
+        )
 
-        # Construct the histogram
-        for x in range(len(orients)):
-            orientToAdd = orients[x]
-            for y in range(len(hisBoundaries)):
-                if orientToAdd <= hisBoundaries[y]:
-                    histogram[y] += 1.0
-                    break
+        # Construct the histogram: each orientation is counted in the first bin
+        # whose upper boundary it does not exceed
+        bins = np.searchsorted(hisBoundaries, orients, side="left")
+        histogram = np.bincount(bins, minlength=self.num_bins + 1)[: self.num_bins]
 
-        return histogram
+        return histogram.astype(float).tolist()
 
     def _split_time_series(self, X):
         """Split a time series into approximately equal intervals.
