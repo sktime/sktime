@@ -106,6 +106,18 @@ def test_linex_class():
     assert np.allclose(linex_error(y_true, y_pred), 0.49660966225813563)
     linex_error = MeanLinexError(multioutput="raw_values")
     assert np.allclose(linex_error(y_true, y_pred), np.array([0.17220024, 0.36787944]))
+    y_true_df = pd.DataFrame(y_true, columns=["a", "b"])
+    y_pred_df = pd.DataFrame(y_pred, columns=["a", "b"])
+    assert np.allclose(
+        linex_error.evaluate_by_index(y_true_df, y_pred_df),
+        np.array(
+            [
+                [0.14872127, 0.36787944],
+                [0.0, 0.36787944],
+                [0.36787944, 0.36787944],
+            ]
+        ),
+    )
     linex_error = MeanLinexError(multioutput=[0.3, 0.7])
     assert np.allclose(linex_error(y_true, y_pred), 0.30917568000716666)
 

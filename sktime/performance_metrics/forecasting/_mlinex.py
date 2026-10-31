@@ -8,7 +8,10 @@ the lower the better.
 """
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
-from sktime.performance_metrics.forecasting._functions import mean_linex_error
+from sktime.performance_metrics.forecasting._functions import (
+    _linex_error,
+    mean_linex_error,
+)
 
 
 class MeanLinexError(BaseForecastingErrorMetricFunc):
@@ -155,6 +158,40 @@ class MeanLinexError(BaseForecastingErrorMetricFunc):
             multilevel=multilevel,
             by_index=by_index,
         )
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        multioutput = self.multioutput
+
+        raw_values = _linex_error(y_true, y_pred, a=self.a, b=self.b)
+        raw_values = self._get_weighted_df(raw_values, **kwargs)
+
+        return self._handle_multioutput(raw_values, multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
