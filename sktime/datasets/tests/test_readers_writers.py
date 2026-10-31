@@ -963,7 +963,7 @@ def test_load_from_long_to_dataframe(tmpdir):
     """Test for loading from long to dataframe."""
     # create and save a example long-format file to csv
     test_dataframe = generate_example_long_table()
-    dataframe_path = tmpdir.join("data.csv")
+    dataframe_path = str(tmpdir.join("data.csv"))
     test_dataframe.to_csv(dataframe_path, index=False)
     # load and convert the csv to sktime-formatted data
     nested_dataframe = load_from_long_to_dataframe(dataframe_path)
@@ -975,7 +975,7 @@ def test_load_from_long_incorrect_format(tmpdir):
     with pytest.raises(ValueError):
         dataframe = generate_example_long_table()
         dataframe.drop(dataframe.columns[[3]], axis=1, inplace=True)
-        dataframe_path = tmpdir.join("data.csv")
+        dataframe_path = str(tmpdir.join("data.csv"))
         dataframe.to_csv(dataframe_path, index=False)
         load_from_long_to_dataframe(dataframe_path)
 
