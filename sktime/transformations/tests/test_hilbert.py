@@ -74,9 +74,9 @@ def test_hilbert_numerical_sine_quadrature():
 )
 @pytest.mark.parametrize("fft_length", [None, 192])
 @pytest.mark.parametrize("unwrap_phase", [False, True])
-@pytest.mark.parametrize("mixed_dtypes", [False, True])
+@pytest.mark.parametrize("dtype_case", ["float64", "float32", "mixed"])
 def test_multivariate_hilbert_matches_per_channel_reference(
-    output_type, fft_length, unwrap_phase, mixed_dtypes
+    output_type, fft_length, unwrap_phase, dtype_case
 ):
     """Batched Hilbert features must equal independent one-channel transforms."""
     from scipy.signal import hilbert
@@ -88,7 +88,9 @@ def test_multivariate_hilbert_matches_per_channel_reference(
         columns=["x", "y", "z", "velocity"],
         index=index,
     )
-    if mixed_dtypes:
+    if dtype_case == "float32":
+        X = X.astype(np.float32)
+    elif dtype_case == "mixed":
         # A single 2D FFT would promote float32 columns to float64.
         X["x"] = X["x"].astype(np.float32)
         X["z"] = X["z"].astype(np.float32)
