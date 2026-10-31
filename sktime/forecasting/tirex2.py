@@ -153,6 +153,23 @@ class TiRex2Forecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_tirex2"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            # TiRex-2. The three decontaminated checkpoints are gated on Hugging Face.
+            "tirex_2": 'TiRex2Forecaster(model_path="NX-AI/TiRex-2", device="auto")',
+            "tirex_2_gifteval_zs": (
+                'TiRex2Forecaster(model_path="NX-AI/TiRex-2-gifteval-zs", '
+                'device="auto")'
+            ),
+            "tirex_2_gifteval_pretrain": (
+                'TiRex2Forecaster(model_path="NX-AI/TiRex-2-gifteval-pretrain", '
+                'device="auto")'
+            ),
+            "tirex_2_fevbench": (
+                'TiRex2Forecaster(model_path="NX-AI/TiRex-2-fevbench", device="auto")'
+            ),
+        },
     }
 
     def __init__(

@@ -705,6 +705,39 @@ class tests__python_dependencies(_BaseTag):
     }
 
 
+class shorthands(_BaseTag):
+    """Alphanumeric shorthands involving the object.
+
+    - String name: ``"shorthands"``
+    - Private tag, developer and framework facing
+    - Values: dict with str key and str value, or None.
+      str keys must be valid python variable names; values must be valid sktime
+      craft strings, not involving shorthands.
+    - Example: {"foobar": "NaiveForecaster(strategy='mean')"}
+    - Default: None
+
+    - Example: ``{"foobar": "NaiveForecaster(strategy='mean')"}``
+    - Default: None
+
+    ``shorthands`` records alphanumeric shorthand aliases for the object.
+
+    The value is a dict, so an estimator can carry multiple shorthand entries.
+
+    Valid key and value pairs of the dict of shorthands are:
+
+    * str key: valid python variable name.
+    * str value: valid sktime craft string, not involving shorthands.
+    """
+
+    _tags = {
+        "tag_name": "shorthands",
+        "parent_type": "object",
+        "tag_type": "dict",
+        "short_descr": "alphanumeric shorthand aliases for the object",
+        "user_facing": True,
+    }
+
+
 # Estimator tags
 # --------------
 
