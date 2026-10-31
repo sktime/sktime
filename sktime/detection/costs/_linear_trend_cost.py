@@ -10,11 +10,19 @@ from sktime.detection.costs._base import BaseCost
 
 
 def _fit_linear_trend(time_steps, values):
-    """OLS fit of a linear trend: returns (slope, intercept)."""
+    """OLS fit of a linear trend: returns (slope, intercept).
+
+    When all time_steps are identical (zero variance), the denominator is zero
+    and no slope can be estimated. In that case we return slope=0 and
+    intercept=mean(values) so the cost equals the residual variance.
+    """
     mean_t = np.mean(time_steps)
     centered_t = time_steps - mean_t
     mean_v = np.mean(values)
     denominator = np.sum(np.square(centered_t))
+    if denominator == 0.0:
+        # All time steps are identical — cannot estimate a slope.
+        return 0.0, mean_v
     numerator = np.sum(centered_t * (values - mean_v))
     slope = numerator / denominator
     intercept = mean_v - slope * mean_t
