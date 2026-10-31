@@ -46,43 +46,54 @@ def all_estimators(
     This function crawls the module and gets all classes that inherit
     from sktime's and sklearn's base classes.
 
+    The retrieved objects can be filtered by type, tags, and excluded by name.
+
     Not included are: the base classes themselves, classes defined in test
     modules.
 
     Parameters
     ----------
     estimator_types: str, list of str, optional (default=None)
-        Which kind of estimators should be returned.
-        if None, no filter is applied and all estimators are returned.
-        if str or list of str, strings define scitypes specified in search
-        only estimators that are of (at least) one of the scitypes are returned
-        possible str values are entries of registry.BASE_CLASS_REGISTER (first col)
-        for instance 'classifier', 'regressor', 'transformer', 'forecaster'
+        Which kind of objects should be returned.
+
+        - if None, no filter is applied and all estimators are returned.
+        - if str or list of str, strings define scitypes specified in search
+          only estimators that are of (at least) one of the scitypes are returned
+          possible str values are the object type tags in the ``object_type`` tag,
+          all possible values are inspectable in registry.BASE_CLASS_REGISTER
+          (first col)
+          for instance ``'classifier'``, ``'regressor'``, ``'transformer'``,
+          ``'forecaster'``
 
     return_names: bool, optional (default=True)
+        Whether to include the class name strings in the returned objects.
 
-        if True, estimator class name is included in the ``all_estimators``
-        return in the order: name, estimator class, optional tags, either as
-        a tuple or as pandas.DataFrame columns
+        - If True, estimator class name is included in the ``all_estimators``
+          return in the order: name, estimator class, optional tags, either as
+          a tuple or as ``pandas.DataFrame`` columns in the ``all_estimators`` return.
+        - If False, estimator class name is removed from the ``all_estimators`` return.
 
-        if False, estimator class name is removed from the ``all_estimators`` return.
+    filter_tags: dict of str, re.Pattern, str, or list thereof,optional (default=None)
+        Filter condition to filter returned objects based on their tags.
+        The filter condition is used to determine which objects are returned.
 
-    filter_tags: dict of (str or list of str or re.Pattern), str, or list of str, optional (default=None)
-        For a list of valid tag strings, use the registry.all_tags utility.
+        For a list of valid tag strings, use the registry.all_tags utility,
+        or consult the tags API reference.
 
+        If str, equivalent to ``{filter_tags: True}``, i.e.,
+        returns estimators where the specified tag is True.
+
+        If list of str, equivalent to ``{x: True for x in filter_tags}``,
+        i.e., returns estimators where all specified tags are True.
+        
         If dict, ``filter_tags`` subsets the returned estimators as follows:
 
-        * each key/value pair is statement in "and"/conjunction
+        * each key/value pair is statement in "and" / conjunction
         * key is tag name to sub-set on
         * value str or list of string are tag values
         * condition is "key must be equal to value, or in set(value)"
 
-        If str, equivalent to {filter_tags: True}, i.e., returns estimators where the specified tag is True.
-
-        If list of str, equivalent to {x: True for x in filter_tags}, i.e., returns estimators where all
-        specified tags are True.
-
-        In detail, he return will be filtered to keep exactly the classes
+        In detail, the return will be filtered to keep exactly the classes
         where tags satisfy all the filter conditions specified by ``filter_tags``.
         Filter conditions are as follows, for ``tag_name: search_value`` pairs in
         the ``filter_tags`` dict, applied to a class ``klass``:
@@ -109,6 +120,7 @@ def all_estimators(
         Names of estimators to exclude.
 
     as_dataframe: bool, optional (default=False)
+        Whether to return the results as a pandas DataFrame or as a list.
 
         True: ``all_estimators`` will return a ``pandas.DataFrame`` with named
         columns for all of the attributes being returned.
@@ -137,24 +149,32 @@ def all_estimators(
 
         3. ``pandas.DataFrame`` if ``as_dataframe = True``
 
-        if list of estimators:
-            entries are estimators matching the query,
-            in alphabetical order of estimator name
-        if list of tuples:
-            list of (optional estimator name, estimator, optional estimator
-            tags) matching the query, in alphabetical order of estimator name,
-            where
-            ``name`` is the estimator name as string, and is an
+        For all cases, the results are filtered according to the specified
+        estimator types, filter tags, and exclude estimators.
+
+        Return structure depends on the input parameters:
+
+        * if list of estimators:
+          entries are estimators matching the query,
+          in alphabetical order of estimator name
+
+        * if list of tuples:
+          list of (optional estimator name, estimator, optional estimator
+          tags) matching the query, in alphabetical order of estimator name,
+          where:
+
+          - ``name`` is the estimator name as string, and is an
             optional return
-            ``estimator`` is the actual estimator
-            ``tags`` are the estimator's values for each tag in return_tags
+          - ``estimator`` is the actual estimator
+          - ``tags`` are the estimator's values for each tag in return_tags
             and is an optional return.
-        if ``DataFrame``:
-            column names represent the attributes contained in each column.
-            "estimators" will be the name of the column of estimators, "names"
-            will be the name of the column of estimator class names and the string(s)
-            passed in return_tags will serve as column names for all columns of
-            tags that were optionally requested.
+
+        * if ``DataFrame``:
+          column names represent the attributes contained in each column.
+          "estimators" will be the name of the column of estimators, "names"
+          will be the name of the column of estimator class names and the string(s)
+          passed in return_tags will serve as column names for all columns of
+          tags that were optionally requested.
 
     Examples
     --------
