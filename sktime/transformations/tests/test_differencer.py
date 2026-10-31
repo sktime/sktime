@@ -314,3 +314,116 @@ def test_dropna_pipeline():
     # Predict
     y_pred = pipe_yX.predict(fh=[1], X=X.iloc[-1:, :])
     assert len(y_pred) == 1
+
+
+def _inverse_diff_reference(y_train, start, diffs, lags):
+    """Invert differences recursively, one time point and one lag at a time.
+
+    Reference for ``Differencer.inverse_transform``, uses integer positions:
+    ``y_train`` has positions ``0, ..., len(y_train) - 1``, ``diffs`` has positions
+    ``start, start + 1, ...``. For each lag, from last to first,
+    ``z[t] = d[t] + z[t - lag]``, where ``z[t - lag]`` is taken from the values
+    already inverted if ``t - lag`` is a position of ``diffs``,
+    and from ``y_train`` differenced at the preceding lags otherwise.
+    """
+    lags = [int(lag) for lag in np.atleast_1d(lags)]
+    y_train = pd.Series(np.asarray(y_train, dtype=float))
+
+    # train series differenced at lags[:i], for i = 0, ..., len(lags) - 1
+    train_diffs = [y_train]
+    for lag in lags[:-1]:
+        train_diffs.append(train_diffs[-1].diff(lag))
+
+    inverted = {start + i: d for i, d in enumerate(diffs)}
+    for lag, train_diff in zip(reversed(lags), reversed(train_diffs)):
+        previous = {}
+        for t in sorted(inverted):
+            if t - lag in previous:
+                previous[t] = inverted[t] + previous[t - lag]
+            else:
+                previous[t] = inverted[t] + train_diff[t - lag]
+        inverted = previous
+
+    return np.array([inverted[start + i] for i in range(len(diffs))])
+
+
+lags_horizon_short = [
+    pytest.param(lags, horizon, id=f"lags={lags}-horizon={horizon}")
+    for lags in [2, 3, 12, [1, 12]]
+    for horizon in range(1, int(np.sum(lags)) + 2)
+]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("lags, horizon", lags_horizon_short)
+@pytest.mark.parametrize("index_type", ["period", "datetime", "int"])
+def test_differencer_inverse_horizon_shorter_than_lags(lags, horizon, index_type):
+    """Test inverse_transform of fewer time points than the lag, see #5515.
+
+    Failure mode: if fewer than ``lags`` time points were inverse transformed,
+    the values remembered from ``fit`` were not aligned with the passed
+    differences, and ``inverse_transform`` returned the differences unchanged.
+
+    Compares against a recursive reference, for data starting right after the
+    data seen in ``fit``, and for data overlapping the data seen in ``fit``.
+    """
+    y = y_airline
+    if index_type == "datetime":
+        y = y.to_timestamp(freq="M")
+    elif index_type == "int":
+        y = y.reset_index(drop=True)
+
+    n_train = 60
+    y_train = y.iloc[:n_train]
+    diffs = np.random.default_rng(42).normal(scale=10, size=horizon)
+
+    # (memory, offset of first time point to invert relative to end of y_train)
+    # memory="latest" does not guarantee correct inverse on past time stamps
+    settings = [("all", 0), ("latest", 0), ("all", -2)]
+
+    for na_handling in Differencer.VALID_NA_HANDLING_STR:
+        for memory, offset in settings:
+            start = n_train + offset
+            X = pd.Series(diffs, index=y.index[start : start + horizon])
+
+            transformer = Differencer(lags=lags, na_handling=na_handling, memory=memory)
+            transformer.fit(y_train)
+            y_inv = transformer.inverse_transform(X)
+
+            expected = _inverse_diff_reference(y_train, start, diffs, lags)
+
+            assert y_inv.index.equals(X.index)
+            np.testing.assert_allclose(
+                y_inv.to_numpy(),
+                expected,
+                err_msg=f"na_handling={na_handling}, memory={memory}, start={start}",
+            )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Differencer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("lags", [12, [1, 12]])
+def test_differencer_pipeline_horizon_shorter_than_lags(lags):
+    """Test forecasts in a pipeline do not depend on the length of fh, see #5515.
+
+    Failure mode: TransformedTargetForecaster with Differencer(lags=12) and
+    fh=[1, 2, 3] returned the forecast differences, not the forecast values.
+    """
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.forecasting.naive import NaiveForecaster
+
+    y_train = y_airline.iloc[:60]
+    pipe = TransformedTargetForecaster(
+        [("diff", Differencer(lags=lags)), ("naive", NaiveForecaster())]
+    )
+    pipe.fit(y_train)
+
+    y_pred_short = pipe.predict(fh=[1, 2, 3])
+    y_pred_long = pipe.predict(fh=list(range(1, 13)))
+
+    _assert_array_almost_equal(y_pred_short, y_pred_long.iloc[:3])
