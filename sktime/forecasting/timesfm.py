@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implementation of TimesFM (Time Series Foundation Model)."""
 
-__author__ = ["rajatsen91", "geetu040"]
+__author__ = ["rajatsen91", "geetu040", "Me-Priyank"]
 # rajatsen91 for google-research/timesfm
 
 
@@ -11,15 +11,26 @@ import pandas as pd
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
+_PYTORCH_REPO_IDS = {"google/timesfm-1.0-200m": "google/timesfm-1.0-200m-pytorch"}
 
-def _resolve_backend(backend):
-    """Resolve automatic JAX backend selection."""
+
+def _resolve_backend(backend, use_source_package):
+    """Resolve automatic backend selection, via JAX or PyTorch."""
     if backend != "auto":
         return backend
 
-    import jax
+    if use_source_package:
+        import jax
 
-    return "gpu" if jax.default_backend() == "gpu" else "cpu"
+        return "gpu" if jax.default_backend() == "gpu" else "cpu"
+
+    import torch
+
+    if torch.cuda.is_available():
+        return "gpu"
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        return "mps"
+    return "cpu"
 
 
 class TimesFMForecaster(BaseForecaster):
@@ -29,14 +40,15 @@ class TimesFMForecaster(BaseForecaster):
     developed by Google Research for time-series forecasting. This method has been
     proposed in [2]_ and official code is given at [1]_.
 
-    TimesFM can be used either as a locally maintained package in sktime or directly
-    from the source package, allowing users to leverage either their own
-    environment or the latest updates from the source package `timesfm`.
+    By default, TimesFM runs on the ``transformers`` implementation of TimesFM,
+    ``TimesFmModelForPrediction``, with the weights of the PyTorch checkpoint
+    published by Google Research, converted on load. Alternatively, TimesFM can be
+    used directly from the source package ``timesfm``, in its JAX version.
 
     The class offers two flags for handling dependencies and source package behavior:
 
     - ``use_source_package``: Determines the source of the package code:
-      False for the vendor fork in ``sktime`` with its default dependencies.
+      False for the ``transformers`` implementation, with its default dependencies.
       True for the source package ``timesfm``.
     - ``ignore_deps``: If set, bypasses dependency checks entirely.
       This is for users who want to manage their environment manually.
@@ -76,20 +88,24 @@ class TimesFMForecaster(BaseForecaster):
         although it is recommended to follow these guidelines for optimal results.
 
     repo_id : str or None, optional (default="google/timesfm-1.0-200m")
-        The identifier for the model repository.
+        The identifier for the model repository on Hugging Face.
         The default model is the 200M parameter version.
+        Unless ``use_source_package=True``, the repository must contain a PyTorch
+        checkpoint ``torch_model.ckpt``, as ``"google/timesfm-1.0-200m-pytorch"`` does,
+        and the default ``"google/timesfm-1.0-200m"`` is loaded from its PyTorch
+        version, ``"google/timesfm-1.0-200m-pytorch"``.
         If None, the model is initialized from random weights and no checkpoint is
-        downloaded or restored. Random initialization is supported for the vendored
-        sktime TimesFM implementation, i.e. when ``use_source_package=False``.
+        downloaded or restored. Random initialization is supported for the
+        ``transformers`` implementation, i.e. when ``use_source_package=False``.
     input_patch_len : int, optional (default=32)
         The fixed length of input patches that the model processes.
-        This parameter is fixed to 1280 for the 200M model and should not be changed.
+        This parameter is fixed to 32 for the 200M model and should not be changed.
     output_patch_len : int, optional (default=128)
         The fixed length of output patches that the model generates.
-        This parameter is fixed to 1280 for the 200M model and should not be changed.
+        This parameter is fixed to 128 for the 200M model and should not be changed.
     num_layers : int, optional (default=20)
         The number of layers in the model architecture.
-        This parameter is fixed to 1280 for the 200M model and should not be changed.
+        This parameter is fixed to 20 for the 200M model and should not be changed.
     model_dims : int, optional (default=1280)
         The dimensionality of the model.
         This parameter is fixed to 1280 for the 200M model and should not be changed.
@@ -98,7 +114,9 @@ class TimesFMForecaster(BaseForecaster):
     backend : str, optional (default="cpu")
         The computational backend to be used,
         which can be one of "auto", "cpu", "gpu", or "tpu". ``"auto"`` selects
-        GPU when JAX has a GPU backend and CPU otherwise.
+        CUDA, then MPS, then CPU, as available to PyTorch, or, if
+        ``use_source_package=True``, GPU when JAX has a GPU backend and CPU otherwise.
+        ``"tpu"`` is supported only if ``use_source_package=True``.
         This setting is case-sensitive.
     verbose : bool, optional (default=False)
         Whether to print detailed logs during execution.
@@ -109,15 +127,15 @@ class TimesFMForecaster(BaseForecaster):
         from the outerside api perspective, the input and output are the same,
         only one multiindex output from ``predict``.
     use_source_package : bool, default=False
-        If True, the model will be loaded directly from the source package ``timesfm``.
-        This also enforces a version bound for ``timesfm`` to be <1.2.0.
-        This setting is useful if the latest updates from the source package are needed,
-        bypassing the local version of the package.
+        If True, the model will be loaded directly from the source package ``timesfm``,
+        in its JAX version, instead of the ``transformers`` implementation.
+        This also enforces a version bound for ``timesfm`` to be <1.2.0,
+        which requires python 3.10 and linux.
     ignore_deps : bool, default=False
         If True, dependency checks will be ignored, and the user is expected to handle
         the installation of required packages manually. If False, the class will enforce
-        the default dependencies required for the vendor library or the pypi
-        package, as described above, via ``use_source_package``.
+        the default dependencies required for the ``transformers`` implementation or
+        the pypi package, as described above, via ``use_source_package``.
 
     References
     ----------
@@ -161,24 +179,10 @@ class TimesFMForecaster(BaseForecaster):
     _tags = {
         # packaging info
         # --------------
-        "authors": ["rajatsen91", "geetu040"],
+        "authors": ["rajatsen91", "geetu040", "Me-Priyank"],
         # rajatsen91 for google-research/timesfm
         "maintainers": ["geetu040"],
-        "python_version": ">=3.10,<3.11",
-        "python_dependencies": [
-            "einshape>=1.0.0",
-            "numpy>=1.26.4",
-            "pandas>=2.1.4",
-            "paxml>=1.4.0",
-            "utilsforecast>=0.1.10",
-            "jax[cuda12]>=0.4.26",
-            "jaxlib>=0.4.26",
-            "huggingface-hub[cli]>=0.23.0",
-            "scikit-learn>=1.2.2",
-            "typer>=0.12.3",
-            "wandb>=0.17.5",
-        ],
-        "env_marker": "sys_platform=='linux'",
+        "python_dependencies": ["transformers[torch]>=4.52.0"],
         # estimator type
         # --------------
         "category": ["deep_learning", "foundation_model"],
@@ -196,7 +200,6 @@ class TimesFMForecaster(BaseForecaster):
         # testing configuration
         # ---------------------
         "tests:vm": True,
-        "tests:libs": ["sktime.libs.timesfm"],
         "tests:specific": ["sktime.forecasting.tests.test_timesfm"],
     }
 
@@ -239,7 +242,7 @@ class TimesFMForecaster(BaseForecaster):
 
     def __post_init__(self):
         """Post-initialization setup."""
-        self._backend = _resolve_backend(self.backend)
+        self._backend = _resolve_backend(self.backend, self.use_source_package)
 
     def __dynamic_tags__(self):
         """Dynamic tag setter logic for setting tag values conditional on parameters.
@@ -251,7 +254,11 @@ class TimesFMForecaster(BaseForecaster):
                 # Use timesfm with a version bound if use_source_package is True
                 # todo 1.3.0: Regularly check whether timesfm version can be updated
                 # if changed, also needs to be changed in docstring
-                self.set_tags(python_dependencies=["timesfm<1.2.0"])
+                self.set_tags(
+                    python_dependencies=["timesfm<1.2.0"],
+                    python_version=">=3.10,<3.11",
+                    env_marker="sys_platform=='linux'",
+                )
         else:
             # Ignore dependencies, leave the dependency set empty
             clear_deps = {
@@ -454,18 +461,233 @@ class _CachedTimesFM:
         if self.tfm is None:
             if self.use_source_package:
                 from timesfm import TimesFm
-            else:
-                from sktime.libs.timesfm import TimesFm
 
-            self.tfm = TimesFm(**self.timesfm_kwargs)
+                self.tfm = TimesFm(**self.timesfm_kwargs)
+            else:
+                self.tfm = _TimesFMTorch(**self.timesfm_kwargs)
+
             if self.repo_id is not None:
                 self.tfm.load_from_checkpoint(repo_id=self.repo_id)
             else:
                 if not hasattr(self.tfm, "init_from_random_weights"):
                     raise NotImplementedError(
-                        "repo_id=None requires the vendored TimesFM "
+                        "repo_id=None requires the transformers TimesFM "
                         "implementation. Set use_source_package=False."
                     )
                 self.tfm.init_from_random_weights()
 
         return self.tfm
+
+
+class _TimesFMTorch:
+    """TimesFM 1.0 inference with ``transformers.TimesFmModelForPrediction``.
+
+    Replaces ``TimesFm`` of the JAX implementation in ``sktime.libs.timesfm``, with
+    its methods used by ``TimesFMForecaster``, ``load_from_checkpoint``,
+    ``init_from_random_weights`` and ``forecast``, and its forecasting logic:
+    autoregressive decoding of ``output_patch_len`` steps at a time, on the last
+    ``context_len`` values, with point forecasts from the mean head, truncated at
+    zero if all inputs are non-negative.
+
+    Parameters
+    ----------
+    context_len : int
+        Length of the context the model forecasts from.
+    horizon_len : int
+        Number of steps to forecast.
+    input_patch_len : int
+        Length of the input patches.
+    output_patch_len : int
+        Number of steps forecast per decoding step.
+    num_layers : int
+        Number of transformer layers.
+    model_dims : int
+        Dimension of the model.
+    per_core_batch_size : int
+        Number of series forecast per forward pass.
+    backend : str
+        ``"gpu"`` for CUDA, or the name of a PyTorch device.
+    verbose : bool
+        Whether to print the repository a checkpoint is loaded from.
+    """
+
+    def __init__(
+        self,
+        context_len,
+        horizon_len,
+        input_patch_len,
+        output_patch_len,
+        num_layers,
+        model_dims,
+        per_core_batch_size,
+        backend,
+        verbose,
+    ):
+        self.context_len = context_len
+        self.horizon_len = horizon_len
+        self.input_patch_len = input_patch_len
+        self.output_patch_len = output_patch_len
+        self.num_layers = num_layers
+        self.model_dims = model_dims
+        self.per_core_batch_size = per_core_batch_size
+        self.device = "cuda" if backend == "gpu" else backend
+        self.verbose = verbose
+        self.model = None
+
+    def _build_model(self):
+        from transformers import TimesFmConfig, TimesFmModelForPrediction
+
+        config = TimesFmConfig(
+            patch_length=self.input_patch_len,
+            context_length=self.context_len,
+            horizon_length=self.output_patch_len,
+            num_hidden_layers=self.num_layers,
+            hidden_size=self.model_dims,
+            intermediate_size=self.model_dims,
+            head_dim=self.model_dims // 16,
+            num_attention_heads=16,
+            use_positional_embedding=True,
+        )
+        return TimesFmModelForPrediction(config)
+
+    def load_from_checkpoint(self, repo_id):
+        """Load the weights of a TimesFM 1.0 PyTorch checkpoint from Hugging Face.
+
+        Parameters
+        ----------
+        repo_id : str
+            Hugging Face repository with the checkpoint ``torch_model.ckpt``.
+            Repositories in ``_PYTORCH_REPO_IDS`` are loaded from their PyTorch
+            version.
+        """
+        import torch
+        from huggingface_hub import hf_hub_download
+
+        repo_id = _PYTORCH_REPO_IDS.get(repo_id, repo_id)
+        if self.verbose:
+            print(f"Restoring checkpoint from {repo_id}.")
+        path = hf_hub_download(repo_id=repo_id, filename="torch_model.ckpt")
+        state_dict = torch.load(path, map_location="cpu", weights_only=True)
+        self.load_state_dict(state_dict)
+
+    def load_state_dict(self, state_dict):
+        """Load weights in the format of TimesFM 1.0 PyTorch checkpoints.
+
+        Parameters
+        ----------
+        state_dict : dict of str to torch.Tensor
+            Weights, named as in ``torch_model.ckpt`` of
+            ``google/timesfm-1.0-200m-pytorch``.
+
+        Raises
+        ------
+        ValueError
+            If weights of the model architecture, as given by ``input_patch_len``,
+            ``output_patch_len``, ``num_layers`` and ``model_dims``, are missing,
+            or weights not in the model architecture are given.
+        RuntimeError
+            If the shapes of the weights do not match the model architecture.
+        """
+        model = self._build_model()
+        result = model.load_state_dict(
+            _convert_timesfm_state_dict(state_dict), strict=False
+        )
+        buffers = {name for name, _ in model.named_buffers()}
+        if result.unexpected_keys or not buffers.issuperset(result.missing_keys):
+            raise ValueError(
+                "The TimesFM checkpoint does not match the model architecture given "
+                "by input_patch_len, output_patch_len, num_layers and model_dims. "
+                f"Missing weights: {result.missing_keys}, "
+                f"unexpected weights: {result.unexpected_keys}."
+            )
+        self.model = model.to(self.device).eval()
+
+    def init_from_random_weights(self):
+        """Initialize the model with random weights, from a fixed seed."""
+        import torch
+
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(42)
+            model = self._build_model()
+        self.model = model.to(self.device).eval()
+
+    def forecast(self, inputs):
+        """Forecast ``horizon_len`` steps ahead of each series.
+
+        Parameters
+        ----------
+        inputs : sequence of 1D array-like
+            The series to forecast, of possibly different lengths.
+
+        Returns
+        -------
+        mean_outputs : np.ndarray of shape (len(inputs), horizon_len)
+            Point forecasts.
+        full_outputs : np.ndarray of shape (len(inputs), horizon_len, 10)
+            Point forecasts, followed by the forecasts of the quantiles
+            0.1, 0.2, ..., 0.9.
+        """
+        import torch
+
+        inputs = [np.asarray(ts)[-self.context_len :] for ts in inputs]
+        n_steps = -(-self.horizon_len // self.output_patch_len)
+
+        mean_outputs = []
+        full_outputs = []
+        for start in range(0, len(inputs), self.per_core_batch_size):
+            past_values = [
+                torch.tensor(ts, dtype=torch.float32, device=self.device)
+                for ts in inputs[start : start + self.per_core_batch_size]
+            ]
+            means = []
+            fulls = []
+            with torch.no_grad():
+                for _ in range(n_steps):
+                    output = self.model(
+                        past_values=past_values, forecast_context_len=self.context_len
+                    )
+                    means.append(output.mean_predictions)
+                    fulls.append(output.full_predictions)
+                    past_values = [
+                        torch.cat([ts, mean])
+                        for ts, mean in zip(past_values, output.mean_predictions)
+                    ]
+            mean_outputs.append(torch.cat(means, dim=1)[:, : self.horizon_len].cpu())
+            full_outputs.append(torch.cat(fulls, dim=1)[:, : self.horizon_len].cpu())
+
+        mean_outputs = torch.cat(mean_outputs).numpy()
+        full_outputs = torch.cat(full_outputs).numpy()
+        if min(np.min(ts) for ts in inputs) >= 0:
+            mean_outputs = np.maximum(mean_outputs, 0.0)
+            full_outputs = np.maximum(full_outputs, 0.0)
+        return mean_outputs, full_outputs
+
+
+def _convert_timesfm_state_dict(state_dict):
+    """Convert weights of TimesFM 1.0 PyTorch checkpoints to ``transformers`` names.
+
+    Parameters
+    ----------
+    state_dict : dict of str to torch.Tensor
+        Weights, named as in ``torch_model.ckpt`` of
+        ``google/timesfm-1.0-200m-pytorch``.
+
+    Returns
+    -------
+    converted : dict of str to torch.Tensor
+        The same weights, named as in ``transformers.TimesFmModelForPrediction``,
+        with each fused ``qkv_proj`` projection split into ``q_proj``, ``k_proj``
+        and ``v_proj``.
+    """
+    converted = {}
+    for key, value in state_dict.items():
+        name = key.replace(".hidden_layer.0.", ".input_layer.")
+        name = name.replace("stacked_transformer.layers.", "decoder.layers.")
+        if name.startswith(("input_ff_layer.", "freq_emb.")):
+            name = f"decoder.{name}"
+        if ".qkv_proj." in name:
+            for proj, part in zip(["q_proj", "k_proj", "v_proj"], value.chunk(3)):
+                converted[name.replace("qkv_proj", proj)] = part
+        else:
+            converted[name] = value
+    return converted
