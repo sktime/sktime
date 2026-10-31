@@ -85,6 +85,16 @@ class MyDetector(BaseDetector):
         # valid values: boolean True (yes), False (no)
         # if False, raises exception if y or X passed contain missing data (nans)
         #
+        # capability:update = does detector support streaming update?
+        "capability:update": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, implement _update for on-line / stream updates
+        #
+        # capability:variable_identification = name variables causing events?
+        "capability:variable_identification": False,
+        # valid values: boolean True (yes), False (no)
+        # if True, predict/transform include variable attribution for detections
+        #
         # X_inner_mtype control which format X appears in in the inner functions _fit,
         # _predict, etc
         "X_inner_mtype": "pd.DataFrame",
