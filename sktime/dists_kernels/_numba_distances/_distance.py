@@ -1837,12 +1837,13 @@ def twe_alignment_path(
     list[tuple]
         List of tuples containing the twe alignment path.
     float
-        Twe distance between x and y. The value returned will be between 0.0 and 1.0,
-        where 0.0 means the two time series are exactly the same and 1.0 means they
-        are complete opposites.
-    np.ndarray (of shape (len(x), len(y)).
+        Unnormalized TWE distance between x and y. Zero denotes identical series;
+        the distance is infinite if no complete path satisfies the constraint.
+    np.ndarray of shape (n_timepoints_x + 1, n_timepoints_y + 1)
         Optional return only given if return_cost_matrix = True.
-        Cost matrix used to compute the distance.
+        Accumulated costs including the leading zero-padded origin. The origin is
+        zero; all other cells on the first row and column are infinite. Cells
+        outside the constraint or unreachable from the origin are infinite.
 
     Raises
     ------

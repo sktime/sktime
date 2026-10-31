@@ -56,11 +56,10 @@ class _TweDistance(NumbaDistance):
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
-            Custom bounding matrix to use. If defined then other lower_bounding params
-            are ignored. The matrix should be structure so that indexes considered in
-            bound should be the value 0. and indexes outside the bounding matrix should
-            be infinity.
+        bounding_matrix: np.ndarray of shape (m1 + 1, m2 + 1), defaults = None
+            Custom bounding matrix including the padded origin. If provided,
+            other lower_bounding parameters are ignored. Cells inside the constraint
+            are zero and cells outside the constraint are infinite.
         lmbda: float, defaults = 1.0
             A constant penalty that punishes the editing efforts. Must be >= 1.0.
         nu: float, defaults = 0.001
@@ -87,14 +86,18 @@ class _TweDistance(NumbaDistance):
         from sktime.dists_kernels._numba_distances._distance_alignment_paths import (
             compute_twe_return_path,
         )
-        from sktime.dists_kernels._numba_distances._twe_numba import _twe_cost_matrix
+        from sktime.dists_kernels._numba_distances._twe_numba import (
+            _twe_cost_matrix,
+            pad_ts,
+        )
         from sktime.dists_kernels._numba_distances.lower_bounding import (
             resolve_bounding_matrix,
         )
         from sktime.utils.numba.njit import njit
 
-        if bounding_matrix is None:
-            bounding_matrix = np.zeros((x.shape[1] + 1, y.shape[1] + 1))
+        # 与距离接口使用相同的补零坐标, 保留 window / Itakura 的路径约束。
+        x = pad_ts(x)
+        y = pad_ts(y)
         _bounding_matrix = resolve_bounding_matrix(
             x, y, window, itakura_max_slope, bounding_matrix
         )
@@ -151,11 +154,10 @@ class _TweDistance(NumbaDistance):
         itakura_max_slope: float, defaults = None
             Gradient of the slope for itakura parallelogram (if using Itakura
             Parallelogram lower bounding). Must be between 0 and 1.
-        bounding_matrix: np.ndarray (2d array of shape (m1,m2)), defaults = None
-            Custom bounding matrix to use. If defined then other lower_bounding params
-            are ignored. The matrix should be structure so that indexes considered in
-            bound should be the value 0. and indexes outside the bounding matrix should
-            be infinity.
+        bounding_matrix: np.ndarray of shape (m1 + 1, m2 + 1), defaults = None
+            Custom bounding matrix including the padded origin. If provided,
+            other lower_bounding parameters are ignored. Cells inside the constraint
+            are zero and cells outside the constraint are infinite.
         lmbda: float, defaults = 1.0
             A constant penalty that punishes the editing efforts. Must be >= 1.0.
         nu: float, defaults = 0.001
