@@ -77,6 +77,9 @@ class _MockEstimator:
         ("==3.11", ">=3.10", "3.11"),
         (">3.10", ">=3.10", "3.11"),
         (None, ">=3.10", "3.10"),
+        # no overlap between estimator and sktime bound -> None, no exception
+        ("<3.10", ">=3.10", None),
+        (">=3.15", ">=3.10,<3.15", None),
     ],
 )
 def test_get_lowest_compatible_python_version(
