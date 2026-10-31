@@ -95,23 +95,24 @@ def all_estimators(
 
         In detail, the return will be filtered to keep exactly the classes
         where tags satisfy all the filter conditions specified by ``filter_tags``.
+        Filter conditions are as follows, for ``tag_name: search_value`` pairs in
         the ``filter_tags`` dict, applied to a class ``klass``:
 
         - If ``klass`` does not have a tag with name ``tag_name``, it is excluded.
-        Otherwise, let ``tag_value`` be the value of the tag with name ``tag_name``.
+          Otherwise, let ``tag_value`` be the value of the tag with name ``tag_name``.
         - If ``search_value`` is a string, and ``tag_value`` is a string,
-        the filter condition is that ``search_value`` must match the tag value.
+          the filter condition is that ``search_value`` must match the tag value.
         - If ``search_value`` is a string, and ``tag_value`` is a list,
-        the filter condition is that ``search_value`` is contained in ``tag_value``.
+          the filter condition is that ``search_value`` is contained in ``tag_value``.
         - If ``search_value`` is a ``re.Pattern``, and ``tag_value`` is a string,
-        the filter condition is that ``search_value.fullmatch(tag_value)``
-        is true, i.e., the regex matches the tag value.
+          the filter condition is that ``search_value.fullmatch(tag_value)``
+          is true, i.e., the regex matches the tag value.
         - If ``search_value`` is a ``re.Pattern``, and ``tag_value`` is a list,
-        the filter condition is that at least one element of ``tag_value``
-        matches the regex.
+          the filter condition is that at least one element of ``tag_value``
+          matches the regex.
         - If ``search_value`` is iterable, then the filter condition is that
-        at least one element of ``search_value`` satisfies the above conditions,
-        applied to ``tag_value``.
+          at least one element of ``search_value`` satisfies the above conditions,
+          applied to ``tag_value``.
 
     exclude_estimators: str, list of str, optional (default=None)
         Names of estimators to exclude.
@@ -136,7 +137,10 @@ def all_estimators(
         whether to suppress stdout printout upon import.
 
     Returns
-    all_estimators will return one of the following:
+    -------
+    ``all_estimators`` will return one of the following:
+
+        1. list of estimators, if ``return_names=False``, and ``return_tags`` is None
 
         2. list of tuples (optional estimator name, class, ~ptional estimator
         tags), if ``return_names=True`` or ``return_tags`` is not ``None``.
