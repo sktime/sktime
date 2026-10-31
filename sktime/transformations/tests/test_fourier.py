@@ -24,10 +24,11 @@ def test_fourier_list_length_mismatch():
     """Tests exception raised when sp_list & fourier_terms_list lengths don't match."""
     with pytest.raises(ValueError) as ex:
         FourierFeatures(sp_list=[365, 52], fourier_terms_list=[1])
-        assert ex.value == (
-            "In FourierFeatures the length of the sp_list needs to be equal "
-            "to the length of fourier_terms_list."
-        )
+
+    assert str(ex.value) == (
+        "In FourierFeatures the length of the sp_list needs to be equal "
+        "to the length of fourier_terms_list."
+    )
 
 
 @pytest.mark.skipif(
@@ -38,10 +39,11 @@ def test_fourier_k_larger_than_sp():
     """Tests exception raised when fourier_terms_list elements larger than sp_list."""
     with pytest.raises(ValueError) as ex:
         FourierFeatures(sp_list=[2], fourier_terms_list=[3])
-        assert ex.value == (
-            "In FourierFeatures the number of each element of fourier_terms_list"
-            "needs to be lower from the corresponding element of the sp_list"
-        )
+
+    assert str(ex.value) == (
+        "In FourierFeatures the number of each element of fourier_terms_list "
+        "needs to be lower from the corresponding element of the sp_list"
+    )
 
 
 @pytest.mark.skipif(
