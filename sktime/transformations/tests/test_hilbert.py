@@ -107,9 +107,7 @@ def test_multivariate_hilbert_matches_per_channel_reference(
         elif output_type == "all":
             reference[f"{column}_envelope"] = envelope
             reference[f"{column}_phase"] = phase
-            reference[f"{column}_frequency"] = (
-                np.gradient(phase) * 4.0 / (2 * np.pi)
-            )
+            reference[f"{column}_frequency"] = np.gradient(phase) * 4.0 / (2 * np.pi)
 
     transformer = HilbertTransformer(
         output_type=output_type,
