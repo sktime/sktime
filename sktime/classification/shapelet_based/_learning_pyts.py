@@ -153,7 +153,7 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": "pyts",
+        "python_dependencies": "pyts<0.14.0",
         # estimator type
         # --------------
         "capability:multioutput": False,
@@ -161,6 +161,8 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         "capability:unequal_length": False,
         "capability:missing_values": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "shapelet",
         # CI and test flags
         # -----------------
