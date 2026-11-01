@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.hypertrees._ar import _normalize_freq
 
 
 class HyperTreeNetARForecaster(BaseForecaster):
@@ -159,7 +160,7 @@ class HyperTreeNetARForecaster(BaseForecaster):
                 freq = pd.infer_freq(y.index)
             except ValueError:
                 freq = None
-        self._freq = freq or "MS"
+        self._freq = _normalize_freq(freq) or "MS"
         fcst_h = int(np.max(fh.to_relative(self.cutoff)._values))
         self._dates = pd.date_range(
             "2000-01-01", periods=self._train_len + fcst_h, freq=self._freq
