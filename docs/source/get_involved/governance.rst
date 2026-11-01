@@ -460,12 +460,16 @@ sktime's decision-making process is designed to take into account
 feedback from all community members and strives to find consensus, while
 avoiding deadlocks when no consensus can be found.
 
-All discussion and votes takes place on the project's `issue
-tracker <https://github.com/sktime/sktime/issues>`__,
-`pull requests <https://github.com/sktime/sktime/pulls>`__ or an :ref:`steps`. Some
-sensitive discussions and appointment votes occur on private chats.
+* Decisions on technical matters takes place on the project's `issue
+  tracker <https://github.com/sktime/sktime/issues>`__ or in
+  `pull requests <https://github.com/sktime/sktime/pulls>`__.
+* Decisions on governance, such as project operations, finances, appointments,
+  changes to this document, take place primarily in the council meetings and
+  associated decisions procedures. Minutes are published weekly in the
+  `community-org repository <https://github.com/sktime/community-org/tree/main/community_council/previous_meetings>`__.
 
-The CC reserves the right to overrule decisions.
+Some sensitive discussions may occur on private chats, but outcomes and the fact that
+a decision took place must be reported publicly unless under exceptional circumstance.
 
 We distinguish between the following types of proposed changes. The
 corresponding decision making process is described in more detail below.
@@ -483,10 +487,14 @@ corresponding decision making process is described in more detail below.
      - Lazy consensus
    * - Changes to the API design, hard dependencies, or supported versions
      - Lazy consensus, requires a :ref:`steps`
-   * - Changes to sktime's governance (this document and the CoC)
-     - Lazy consensus, requires a :ref:`steps`
+   * - Changes to sktime's governance (including this document and the CoC)
+     - Proposal, reading, vote, via council meeting (or equivalent async process);
+       Directly starts with CC decision making (stage 3)
+   * - Operational, non-technical decision making, e.g., budgets & expenditures
+     - Proposal, reading, vote, via council meeting (or equivalent async process);
+       Directly starts with CC decision making (stage 3)
    * - Appointment
-     - Directly starts with voting (stage 2)
+     - Directly starts with core developer voting (stage 2)
 
 .. _stage-1:
 
@@ -527,10 +535,10 @@ When no consensus can be found, the decision is escaled to :ref:`stage-2`.
 
 .. _stage-2:
 
-Stage 2: voting
-~~~~~~~~~~~~~~~
+Stage 2: core developer decisions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Voting takes place:
+Core developer voting takes place:
 
 * when no lazy consensus can be found in stage 1 above
 * for appointments
@@ -557,19 +565,48 @@ rejected.
 
 .. _stage-3:
 
-Stage 3: conflict resolution
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Stage 3: commmunity council decisions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If the proposed change cannot gather a 2/3 majority of the votes cast,
-the CC tries to resolve the deadlock.
+CC decisions take place:
 
--  The CC will use consensus seeking.
--  If no consensus can be found within twenty working days excluding weekends
-   since the beginning of the stage-1 "reasonable time for consideration" period,
-   the decision is made through a simple majority vote (with tie breaking) among the CC
-   members.
--  Any proposal reaching stage 3 must be supported by an :ref:`steps`,
-   which has been made public at least 5 days, excluding weekends, before the vote.
+* if a core developer decision change cannot gather a 2/3 majority of the votes cast,
+  for or against, the CC tries to resolve the deadlock.
+* for matters related to non-technical, operational governance of the project
+* for proposed changes to the governance document
+
+CC decisions go through a decision making process that ensures asynchronous
+particiation and transparent announcement of the decision.
+
+The process is as follows:
+
+1. a member of CC must second the proposed decision, and commit to summarize
+   the proposed decision for publication on channels as below, as a single-choice
+   vote with multiple options.
+2. the proposed decision is published for reading in the next council meeting,
+   as part of the minutes, and in the council decision-making channel on discord.
+   A council meeting should be held at most 2 calendar weeks after the proposal
+   has been published in the decision-making channel.
+3. the reading period can be used for discussion and consensus seeking, e.g.,
+   members of the CC or the wider community suggesting changes to the proposal.
+4. if changes to the proposal are made during the reading period, the changed proposal
+   moves to step 2, a second reading. No further changes should be made after this
+   point. The proposer can also decide to withdraw the proposal.
+5. From reading, the proposal moves to decision making.
+   A decision is then made by through majority vote by all CC members,
+   including the proposer.
+   The vote is anonymous and open for 5 working days, excluding holidays.
+6. The outcome of the decision is announced in the decision-making channel,
+   and in the minutes of the next council meeting. The council meeting should be held
+   at most 2 calendar weeks after the decision.
+
+For reading and vote, start and end of time periods should be announced together with
+the publications of proposed decisions, and the beginning of the vote.
+These announcements accompanying the process should be carried out by a member
+of CC or a dedicated committee, chosen by consensus, in a way that minimizes
+conflict of interest with the decision (in a case where no consensus can be reached,
+the code of conduct committee administers the vote).
+
 
 .. _steps:
 
