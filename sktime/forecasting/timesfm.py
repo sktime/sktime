@@ -181,6 +181,7 @@ class TimesFMForecaster(BaseForecaster):
         "env_marker": "sys_platform=='linux'",
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": "pd.Series",
         "capability:multivariate": False,
         "capability:exogenous": False,

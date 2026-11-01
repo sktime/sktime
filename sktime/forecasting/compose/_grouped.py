@@ -64,6 +64,7 @@ class ForecastByLevel(_DelegatedForecaster):
         "authors": ["fkiraly"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:multivariate": True,
@@ -243,6 +244,7 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "python_version": None,
         # estimator type
         # --------------
+        "category": ["composition"],
         "visual_block_kind": "parallel",
         "y_inner_mtype": [
             "pd.DataFrame",

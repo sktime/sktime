@@ -76,6 +76,7 @@ class Croston(BaseForecaster):
         "maintainers": "Riyabelle25",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
         "capability:exogenous": False,
         "capability:update": True,  # can estimator update its parameters with new data?
@@ -110,7 +111,8 @@ class Croston(BaseForecaster):
         n_timepoints = len(y)  # Historical period: i.e the input array's length
         smoothing = self.smoothing
 
-        y = y.to_numpy().flatten()  # Transform the input into a numpy array
+        if not isinstance(y, np.ndarray):
+            y = y.to_numpy().flatten()  # Transform the input into a numpy array
         # Fit the parameters: level(q), periodicity(a) and forecast(f)
         q, a, f = np.full((3, n_timepoints + 1), np.nan)
         p = 1  # periods since last demand observation
@@ -143,6 +145,9 @@ class Croston(BaseForecaster):
         self._a_last = a[-1]
         self._p = p
         self._seen_demand = bool(np.any(y > 0))
+        # if no demand seen, save the number of zeroes
+        if not self._seen_demand:
+            self._n_zeros = n_timepoints
 
         return self
 
@@ -179,7 +184,8 @@ class Croston(BaseForecaster):
         # does not correspond to what a fit on the concatenated series would
         # produce. Refitting on the accumulated history restores exactness.
         if not self._seen_demand and np.any(y > 0):
-            return self._fit(y=self._y, X=X, fh=None)
+            y_with_zeros = np.concatenate([np.zeros(self._n_zeros), y])
+            return self._fit(y=y_with_zeros, X=X, fh=None)
 
         smoothing = self.smoothing
 
@@ -204,6 +210,8 @@ class Croston(BaseForecaster):
         self._a_last = a[-1]
         self._p = p
         self._seen_demand = self._seen_demand or bool(np.any(y > 0))
+        if not self._seen_demand:
+            self._n_zeros += n_new
 
         return self
 

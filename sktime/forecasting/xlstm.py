@@ -63,6 +63,7 @@ class XLSTMForecaster(BaseForecaster):
         "python_dependencies": "torch>=2.0.0",
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "capability:pred_int": False,
         "requires-fh-in-fit": False,
         "X_inner_mtype": "pd.DataFrame",

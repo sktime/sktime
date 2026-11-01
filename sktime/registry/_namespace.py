@@ -3,6 +3,8 @@
 
 __all__ = ["_namespace"]
 
+from functools import cache
+
 
 def _namespace(include_deps=False):
     """Return the unique namespace registry.
@@ -40,3 +42,52 @@ def _namespace(include_deps=False):
         namespace_dict = namespace_dict_sktime
 
     return namespace_dict
+
+
+@cache
+def _namespace_shorthands(raise_if_not_unique=False):
+    """Return the namespace for shorthand aliases.
+
+    Retrieves shorthands from all estimators in sktime, from the tag
+    ``shorthands`` if present.
+
+    Parameters
+    ----------
+    raise_if_not_unique : bool, optional (default=False)
+        Whether to raise an error if there is a non-unique alias in sktime.
+        The True setting is used for testing purposes.
+
+    Returns
+    -------
+    namespace_aliases : dict with str keys and str values
+        Dictionary of namespace aliases.
+
+        * The keys are alias names, valid python variable names.
+        * The values are the corresponding full namespace names,
+          they are expected to be safe-craftable sktime craft specs.
+    """
+    from sktime.registry._lookup import all_estimators
+
+    all_sktime_estimators = all_estimators(return_names=False)
+
+    namespace_shorthands = {}
+
+    for est in all_sktime_estimators:
+        if hasattr(est, "get_class_tag"):
+            shorthands = est.get_class_tag("shorthands", None)
+            if shorthands is not None:
+                if raise_if_not_unique:
+                    est_shs = set(shorthands.keys())
+                    ns_shs = set(namespace_shorthands.keys())
+                    intersections = est_shs.intersection(ns_shs)
+                    if intersections:
+                        raise ValueError(
+                            f"Error in namespace shorthands: "
+                            f"Non-unique aliases found: {intersections}, "
+                            f"collision with, or in, class {est.__name__}, "
+                            f"please check the shorthands tag for uniqueness. "
+                        )
+
+                namespace_shorthands.update(shorthands)
+
+    return namespace_shorthands

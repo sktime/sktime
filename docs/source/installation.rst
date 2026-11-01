@@ -131,6 +131,8 @@ For steps on how to obtain a local clone of the repository, please follow the st
 Alternatively, the ``.`` may be replaced with a full or relative path to the root directory.
 
 
+.. _developer-installation:
+
 Full developer setup for contributors and extension developers
 --------------------------------------------------------------
 

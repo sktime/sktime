@@ -64,6 +64,7 @@ class HyperTreeARForecaster(BaseForecaster):
         "python_dependencies": ["hypertrees-forecasting>=0.2"],
         # estimator type
         # --------------
+        "category": ["statistical", "machine_learning"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
