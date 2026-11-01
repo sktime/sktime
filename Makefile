@@ -23,12 +23,12 @@ release: ## Make a release
 install: ## Install editable into the active Python environment of the user
 	python3 -m pip install -e . --user
 
-test: ## Run unit tests
+test: ## Run unit tests without datadownload tests
 	-rm -rf ${TEST_DIR}
 	mkdir -p ${TEST_DIR}
 	cp .coveragerc ${TEST_DIR}
 	cp setup.cfg ${TEST_DIR}
-	python -m pytest
+	python -m pytest -m "not datadownload"
 
 full_test: ## Run all tests
 	-rm -rf ${TEST_DIR}

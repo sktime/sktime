@@ -99,13 +99,15 @@ utility can be used.
 For this, follow the instructions in the
 :doc:`estimator development guide </developer_guide/add_estimators>`
 
-Full test suite runs via ``pytest``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Test suite runs via ``pytest``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The full test suite can be run locally via `pytest <https://docs.pytest.org/en/latest/>`__,
-which ``sktime`` uses for its testing framework.
+The test suite can be run locally via `pytest <https://docs.pytest.org/en/latest/>`__,
+which ``sktime`` uses for its testing framework. The standard local commands
+below exclude tests marked with ``datadownload``.
 
-To run all tests via the console via `make <https://www.gnu.org/software/make/>`_ (only unix based OS):
+To run the standard test suite via the console using
+`make <https://www.gnu.org/software/make/>`_ (only unix based OS):
 
    .. code:: bash
 
@@ -115,7 +117,13 @@ or, from a console with ``pytest`` in the path, from the repository root:
 
    .. code:: bash
 
-      pytest ./sktime
+      pytest -m "not datadownload" ./sktime
+
+To run all tests, including data download tests:
+
+   .. code:: bash
+
+      make full_test
 
 Further, developer IDEs such as PyCharm or VS Code will automatically recognize
 the tests via ``pytest``, refer to the documentation of the IDEs for testing
