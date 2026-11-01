@@ -264,7 +264,11 @@ class GGS:
             By convention, change points
             include the identity segmentation, i.e. first and last index + 1 values.
         """
-        rng = check_random_state(self.random_state)
+        rng = (
+            np.random.RandomState()
+            if self.random_state is None
+            else check_random_state(self.random_state)
+        )
         bp = change_points[:]
 
         # Just one breakpoint, no need to adjust anything
