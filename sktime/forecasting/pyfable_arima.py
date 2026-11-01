@@ -115,6 +115,7 @@ class PyFableARIMA(BaseForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,

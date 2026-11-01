@@ -68,6 +68,7 @@ class MantisForecaster(BaseForecaster):
         "python_dependencies": ["mantis-tsfm>=1.0.0", "torch"],
         # estimator type
         # --------------
+        "category": ["machine_learning", "deep_learning", "foundation_model"],
         "capability:multivariate": True,
         "capability:exogenous": False,
         "capability:insample": False,
@@ -81,6 +82,22 @@ class MantisForecaster(BaseForecaster):
         # -------------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_mantis"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "mantis": (
+                'MantisForecaster(checkpoint="paris-noah/MantisV2", '
+                'model_version="v2", device="auto", context_length=127)'
+            ),
+            "mantis_8m": (
+                'MantisForecaster(checkpoint="paris-noah/Mantis-8M", '
+                'model_version="v1", device="auto", context_length=127)'
+            ),
+            "mantis_plus": (
+                'MantisForecaster(checkpoint="paris-noah/MantisPlus", '
+                'model_version="v1", device="auto", context_length=127)'
+            ),
+        },
     }
 
     def __init__(

@@ -116,6 +116,7 @@ class ExponentialSmoothing(_StatsModelsAdapter):
         "authors": ["bashtage", "wooqo", "mloning", "big-o"],
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type tags inherited from _StatsModelsAdapter
+        "category": ["statistical"],
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "tests:skip_by_name": ["test_update_with_exogenous_variables"],

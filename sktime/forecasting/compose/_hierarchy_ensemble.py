@@ -145,6 +145,7 @@ class HierarchyEnsembleForecaster(_HeterogenousEnsembleForecaster):
         "maintainers": ["VyomkeshVyas"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": True,
         "capability:exogenous": True,
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],

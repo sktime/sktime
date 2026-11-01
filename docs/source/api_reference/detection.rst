@@ -125,6 +125,7 @@ Naive Baselines
     :template: class.rst
 
     DummyRegularAnomalies
+    DummyPretrainedAnomalies
     ZeroAnomalies
 
 .. currentmodule:: sktime.detection.naive
