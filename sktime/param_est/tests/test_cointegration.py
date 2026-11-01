@@ -9,7 +9,11 @@ import pytest
 from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.datasets import load_airline
-from sktime.param_est.cointegration import JohansenCointegration
+from sktime.param_est.cointegration import (
+    EngleGrangerCointegration,
+    JohansenCointegration,
+    PhillipsOuliarisCointegration,
+)
 
 
 @pytest.mark.skipif(
@@ -48,3 +52,39 @@ def test_against_statsmodels():
     statsmodels_coint = coint_johansen(endog=df, det_order=0, k_ar_diff=0).cvm
 
     np.testing.assert_array_equal(sktime_coint, statsmodels_coint)
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(EngleGrangerCointegration, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+def test_engle_granger_cointegration():
+    """Test Engle-Granger Cointegration on airline data."""
+    X = load_airline()
+    y = X.shift(1).bfill()
+
+    coint_est = EngleGrangerCointegration()
+    coint_est.fit(X=X, y=y)
+
+    params = coint_est.get_fitted_params()
+    assert "cointegrated" in params
+    assert "test_statistic" in params
+    assert "pvalue" in params
+
+
+@pytest.mark.skipif(
+    not _check_estimator_deps(PhillipsOuliarisCointegration, severity="none"),
+    reason="skip test if required soft dependencies not available",
+)
+def test_phillips_ouliaris_cointegration():
+    """Test Phillips-Ouliaris Cointegration on airline data."""
+    X = load_airline()
+    y = X.shift(1).bfill()
+
+    coint_est = PhillipsOuliarisCointegration()
+    coint_est.fit(X=X, y=y)
+
+    params = coint_est.get_fitted_params()
+    assert "cointegrated" in params
+    assert "test_statistic" in params
+    assert "pvalue" in params
