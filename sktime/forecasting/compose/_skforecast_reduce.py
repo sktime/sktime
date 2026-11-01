@@ -122,6 +122,7 @@ class SkforecastAutoreg(BaseForecaster):
         "maintainers": ["Abhay-Lejith", "yarnabrina"],
         # estimator type
         # --------------
+        "category": ["reduction"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
@@ -600,6 +601,7 @@ class SkforecastRecursive(BaseForecaster):
         "maintainers": ["yarnabrina"],
         # estimator type
         # --------------
+        "category": ["reduction"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "requires-fh-in-fit": False,
