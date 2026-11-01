@@ -35,11 +35,12 @@ def test_bagging_forecaster_transformer_type_error(transformer):
             bootstrap_transformer=transformer, forecaster=NaiveForecaster(sp=12)
         )
         f.fit(y)
-        msg = (
-            "bootstrap_transformer in BaggingForecaster should be a Transformer "
-            "that take as input a Series and output a Panel."
-        )
-        assert msg == ex.value
+
+    msg = (
+        "bootstrap_transformer in BaggingForecaster should be an sktime "
+        "transformer that takes as input a Series and output a Panel."
+    )
+    assert msg in str(ex.value)
 
 
 @pytest.mark.skipif(
@@ -64,8 +65,9 @@ def test_bagging_forecaster_forecaster_type_error(forecaster):
             forecaster=forecaster,
         )
         f.fit(y)
-        msg = "forecaster in BaggingForecaster should be an sktime Forecaster"
-        assert msg == ex.value
+
+    msg = "forecaster in BaggingForecaster should be an sktime forecaster"
+    assert msg in str(ex.value)
 
 
 @pytest.mark.skipif(
