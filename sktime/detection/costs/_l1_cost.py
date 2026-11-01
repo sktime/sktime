@@ -6,37 +6,50 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection._utils import check_mean
+from sktime.detection._utils import (
+    check_mean,
+    col_cumsum,
+    group_intervals_by_length,
+    iter_interval_windows,
+    use_grouped_evaluation,
+)
 from sktime.detection.costs._base import BaseCost
 
 
 def _l1_cost_mle_location(starts, ends, X):
     """Evaluate L1 cost for optimal location (median) per segment."""
+    starts = np.asarray(starts)
+    ends = np.asarray(ends)
     n_intervals = len(starts)
     n_columns = X.shape[1]
     costs = np.zeros((n_intervals, n_columns))
 
-    for i in range(n_intervals):
-        start, end = starts[i], ends[i]
-        segment = X[start:end]
-        median = np.median(segment, axis=0)
-        costs[i, :] = np.sum(np.abs(segment - median[None, :]), axis=0)
+    groups = group_intervals_by_length(starts, ends)
+    if not use_grouped_evaluation(groups, n_intervals):
+        for i in range(n_intervals):
+            start, end = starts[i], ends[i]
+            segment = X[start:end]
+            median = np.median(segment, axis=0)
+            costs[i, :] = np.sum(np.abs(segment - median[None, :]), axis=0)
+        return costs
+
+    # intervals of equal length are evaluated at once, as stacked windows
+    for idx, windows in iter_interval_windows(groups, starts, ends, X):
+        # windows: (n_group, length, n_columns)
+        medians = np.median(windows, axis=1, keepdims=True)
+        costs[idx] = np.sum(np.abs(windows - medians), axis=1)
 
     return costs
 
 
 def _l1_cost_fixed_location(starts, ends, X, locations):
     """Evaluate L1 cost for a fixed location per segment."""
-    n_intervals = len(starts)
-    n_columns = X.shape[1]
-    costs = np.zeros((n_intervals, n_columns))
-
-    for i in range(n_intervals):
-        start, end = starts[i], ends[i]
-        centered_X = np.abs(X[start:end, :] - locations[None, :])
-        costs[i, :] = np.sum(centered_X, axis=0)
-
-    return costs
+    starts = np.asarray(starts)
+    ends = np.asarray(ends)
+    # cumulative sums of the absolute deviations, so that the cost of an
+    # interval is a difference of two rows
+    abs_dev_sums = col_cumsum(np.abs(X - locations[None, :]), init_zero=True)
+    return abs_dev_sums[ends] - abs_dev_sums[starts]
 
 
 class L1Cost(BaseCost):

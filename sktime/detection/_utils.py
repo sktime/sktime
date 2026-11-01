@@ -680,3 +680,83 @@ def compute_finite_difference_derivatives(ts, ys):
     for i in range(1, n - 1):
         derivs[i] = (ys[i + 1] - ys[i - 1]) / (ts[i + 1] - ts[i - 1])
     return derivs
+
+
+# maximal number of elements of the window arrays processed at once by
+# iter_interval_windows, to bound the memory used when many long intervals
+# have the same length
+_MAX_WINDOW_BLOCK_ELEMENTS = 2**22
+
+
+def group_intervals_by_length(starts, ends):
+    """Group intervals of equal length.
+
+    Parameters
+    ----------
+    starts, ends : np.ndarray of int, shape (n_intervals,)
+
+    Returns
+    -------
+    groups : list of np.ndarray of int
+        indices of the intervals, one array per distinct interval length;
+        all intervals in a group have the same length ``ends - starts``
+    """
+    starts = np.asarray(starts)
+    ends = np.asarray(ends)
+    lengths = ends - starts
+    order = np.argsort(lengths, kind="stable")
+    boundaries = np.flatnonzero(np.diff(lengths[order])) + 1
+    return np.split(order, boundaries)
+
+
+def use_grouped_evaluation(groups, n_intervals, min_group_size=4):
+    """Whether evaluating intervals grouped by length pays off.
+
+    Stacking the intervals of equal length into one array has a per-group
+    overhead, so it is only worth it if the intervals share lengths, i.e., if
+    there are at least ``min_group_size`` intervals per distinct length on
+    average.
+
+    Parameters
+    ----------
+    groups : list of np.ndarray of int
+        as returned by ``group_intervals_by_length``
+    n_intervals : int
+        total number of intervals
+    min_group_size : int, default=4
+        minimal average number of intervals per group
+
+    Returns
+    -------
+    bool
+    """
+    return min_group_size * len(groups) <= n_intervals
+
+
+def iter_interval_windows(groups, starts, ends, X):
+    """Iterate over groups of intervals of equal length, as window arrays.
+
+    Parameters
+    ----------
+    groups : list of np.ndarray of int
+        as returned by ``group_intervals_by_length``
+    starts, ends : np.ndarray of int, shape (n_intervals,)
+    X : np.ndarray of shape (n_samples, n_columns)
+
+    Yields
+    ------
+    idx : np.ndarray of int
+        indices of the intervals in the block
+    windows : np.ndarray of shape (len(idx), length, n_columns)
+        ``windows[j]`` is ``X[starts[idx[j]]:ends[idx[j]]]``
+    """
+    starts = np.asarray(starts)
+    ends = np.asarray(ends)
+    n_columns = X.shape[1]
+    for group in groups:
+        length = ends[group[0]] - starts[group[0]]
+        offsets = np.arange(length)
+        block_size = max(1, _MAX_WINDOW_BLOCK_ELEMENTS // (n_columns * length))
+        for block_start in range(0, len(group), block_size):
+            idx = group[block_start : block_start + block_size]
+            yield idx, X[starts[idx, None] + offsets]
