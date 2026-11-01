@@ -205,3 +205,42 @@ def test_predict_quantiles_from_interval_multivariate():
             # lower end for alpha < 0.5, upper end for alpha >= 0.5
             expected = y[var].mean() + 10 * (j + 1) * (2 * a - 1)
             np.testing.assert_allclose(pred_q[(var, a)].values, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.base._pretrain"]),
+    reason="run only if forecasting base or pretrain module has changed",
+)
+def test_pretrain_after_fit_no_stale_state():
+    """Pretraining clears fitted state and allows a subsequent fit and predict."""
+    from sktime.exceptions import NotFittedError
+    from sktime.forecasting.dummy_global import DummyGlobalForecaster
+    from sktime.utils._testing.series import _make_series
+
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(3,), min_timepoints=12, max_timepoints=12
+    )
+    y_single = _make_series(n_timepoints=20)
+
+    f = DummyGlobalForecaster()
+
+    f.pretrain(y_panel)
+    f.fit(y_single, fh=[1, 2])
+    assert f.is_fitted
+
+    f.pretrain(y_panel)
+
+    assert f.state == "pretrained"
+    assert not f.is_fitted
+    assert f.cutoff is None
+    assert not hasattr(f, "last_value_")
+    assert "last_value_" not in f.get_pretrained_params()
+
+    with pytest.raises(NotFittedError):
+        f.predict()
+
+    f.fit(y_single, fh=[1, 2])
+    assert f.is_fitted
+    assert f.state == "fitted"
+    preds = f.predict()
+    assert len(preds) == 2
