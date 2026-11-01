@@ -143,6 +143,13 @@ class NaiveForecaster(_BaseWindowForecaster):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # Shorthands for quick use
+        # ------------------------
+        "shorthands": {
+            "f_naive_last": 'NaiveForecaster(strategy="last")',
+            "f_naive_mean": 'NaiveForecaster(strategy="mean")',
+            "f_naive_drift": 'NaiveForecaster(strategy="drift")',
+        },
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):

@@ -110,6 +110,15 @@ class Toto2Forecaster(BaseForecaster):
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_toto2"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "toto_2_0_4m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-4m")',
+            "toto_2_0_22m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-22m")',
+            "toto_2_0_313m": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-313m")',
+            "toto_2_0_1b": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-1B")',
+            "toto_2_0_2_5b": 'Toto2Forecaster(model_path="Datadog/Toto-2.0-2.5B")',
+        },
     }
 
     def __init__(
