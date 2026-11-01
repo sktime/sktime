@@ -85,7 +85,7 @@ def all_estimators(
 
         If list of str, equivalent to ``{x: True for x in filter_tags}``,
         i.e., returns estimators where all specified tags are True.
-        
+
         If dict, ``filter_tags`` subsets the returned estimators as follows:
 
         * each key/value pair is statement in "and" / conjunction
