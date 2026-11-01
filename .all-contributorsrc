@@ -14,6 +14,16 @@
   "skipCi": true,
   "contributors": [
     {
+      "login": "AHMETHAKANBEZIR1",
+      "name": "AhmetHakanBezir",
+      "avatar_url": "https://avatars.githubusercontent.com/u/151970075?v=4",
+      "profile": "https://github.com/AHMETHAKANBEZIR1",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
       "login": "fkiraly",
       "name": "Franz Kiraly",
       "avatar_url": "https://avatars1.githubusercontent.com/u/7985502?v=4",
