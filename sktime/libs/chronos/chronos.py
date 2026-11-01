@@ -7,6 +7,7 @@ Original Source: https://github.com/amazon-science/chronos-forecasting
 Authors: Lorenzo Stella <stellalo@amazon.com>, Abdul Fatir Ansari <ansarnd@amazon.com>
 """
 
+import sys
 import warnings
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -60,7 +61,7 @@ class ChronosConfig:
 
     def create_tokenizer(self) -> "ChronosTokenizer":
         """Create a tokenizer object."""
-        class_ = eval(self.tokenizer_class)
+        class_ = getattr(sys.modules[__name__], self.tokenizer_class)
         return class_(**self.tokenizer_kwargs, config=self)
 
 
