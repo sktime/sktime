@@ -42,12 +42,13 @@ class _ConverterConcat(BaseConverter):
     def __init__(self, converter_first, converter_second):
         self.converter_first = converter_first
         self.converter_second = converter_second
-        super(BaseConverter, self).__init__()
-
-        self.set_tags(
+        super().__init__(
             mtype_from=converter_first.get_tag("mtype_from"),
             mtype_to=converter_second.get_tag("mtype_to"),
         )
+
+    def _check_conversion(self, mtype_from, mtype_to):
+        """Skip the check, conversions of this class are given by its components."""
 
     def _convert(self, obj, store=None):
         obj = self.converter_first(obj, store=store)
