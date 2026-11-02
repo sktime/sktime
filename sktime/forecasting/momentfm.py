@@ -131,6 +131,7 @@ class MomentFMForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "capability:multivariate": True,
         "authors": ["julian-fong"],
         "maintainers": ["julian-fong"],
@@ -147,7 +148,6 @@ class MomentFMForecaster(BaseForecaster):
             "accelerate",
             "transformers",
         ],
-        "capability:global_forecasting": True,
         "python_version": ">= 3.10",
         "capability:insample": False,
         "capability:pred_int:insample": False,

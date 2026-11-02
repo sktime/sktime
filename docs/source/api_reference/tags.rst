@@ -69,8 +69,10 @@ These tags are typically used for typing, packaging and documentation purposes.
     :nosignatures:
 
     object_type
+    category
     maintainers
     authors
+    shorthands
     python_version
     python_dependencies
     env_marker
@@ -95,6 +97,7 @@ These tags are used to describe capabilities, properties, and behavior of foreca
     :nosignatures:
 
     capability__exogenous
+    capability__multivariate
     capability__insample
     capability__pred_int
     capability__pred_int__insample
@@ -160,6 +163,7 @@ transform a single time series object (``"transformer"`` type).
     scitype__instancewise
     requires_x
     requires_y
+    capability__multivariate
     capability__missing_values
     capability__missing_values__removes
     capability__unequal_length
@@ -193,6 +197,7 @@ transform pairs of time series (``"transformer-pairwise"`` and ``"transformer-pa
     :nosignatures:
 
     symmetric
+    capability__multivariate
 
 
 .. _detector_tags:
@@ -214,6 +219,7 @@ detectors.
     task
     learning_type
     capability__update
+    capability__pretrain
     capability__multivariate
     capability__missing_values
     capability__random_state

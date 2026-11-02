@@ -34,6 +34,7 @@ class _StatsModelsAdapter(BaseForecaster):
         "capability:categorical_in_X": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,

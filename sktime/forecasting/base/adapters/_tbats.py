@@ -17,14 +17,19 @@ class _TbatsAdapter(BaseForecaster):
     """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["cotterpl", "mloning", "aiwalter", "k1m190r", "fkiraly"],
         # cotterpl for tbats package
+        "python_dependencies": ["pmdarima"],
+        # estimator type
+        # --------------
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "python_dependencies": ["pmdarima"],
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,

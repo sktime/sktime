@@ -15,3 +15,13 @@ def _get_X_numpy_int_from_pandas(x):
     else:
         x = x.astype("int64")
     return x.to_numpy().reshape(-1, 1)
+
+
+def _trend_time_origin(x_sklearn):
+    """Time coordinate of the first training row.
+
+    Absolute dates make ``PolynomialFeatures`` ill-conditioned (days since
+    the Unix epoch are ~1e4, and higher powers overflow the solver). Callers
+    subtract this origin at fit and at predict.
+    """
+    return x_sklearn.reshape(-1)[0]

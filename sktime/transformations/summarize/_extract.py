@@ -244,7 +244,6 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:skip_all": True,  # mac failures, see #3103
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -369,6 +368,37 @@ class RandomIntervalFeatureExtractor(BaseTransformer):
 
         return Xt
 
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        import numpy as np
+
+        return [
+            {},
+            {
+                "n_intervals": 2,
+                "min_length": 3,
+                "features": [np.mean, np.std],
+                "random_state": 0,
+            },
+        ]
+
 
 class FittedParamExtractor(BaseTransformer):
     """Fitted parameter extractor.
@@ -434,7 +464,14 @@ class FittedParamExtractor(BaseTransformer):
         "scitype:instancewise": True,  # is this an instance-wise transform?
         "X_inner_mtype": "nested_univ",  # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # which mtypes do _fit/_predict support for y?
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
+        # CI and test flags
+        # -----------------
+        "tests:vm": True,
+        "tests:skip_all": True,  # PlateauFinder seems to be broken, see #2259
+        "tests:python_dependencies": ["statsmodels"],
+        "tests:specific": [
+            "sktime.transformations.summarize.tests.test_fittedparamextractor",
+        ],
     }
 
     def __init__(self, forecaster, param_names, n_jobs=None):
@@ -532,7 +569,12 @@ class FittedParamExtractor(BaseTransformer):
             {
                 "forecaster": TrendForecaster(),
                 "param_names": ["regressor__intercept"],
-            }
+            },
+            # soft dependency free second parameter set, several parameters
+            {
+                "forecaster": TrendForecaster(),
+                "param_names": ["regressor__intercept", "regressor__n_features_in"],
+            },
         ]
 
         # ExponentialSmoothing requires statsmodels

@@ -164,7 +164,7 @@ class SeasonalDummiesOneHot(BaseTransformer):
         """
 
         def number_to_freq(number):
-            number_map = {1: "A", 4: "Q", 12: "M", 52: "W", 365: "D", 8760: "H"}
+            number_map = {1: "A", 4: "Q", 12: "M", 52: "W", 365: "D", 8760: "h"}
             freq = number_map.get(number, None)
             if freq is None:
                 raise ValueError(f"Unsupported seasonal periodicity: {number}")
@@ -189,36 +189,46 @@ class SeasonalDummiesOneHot(BaseTransformer):
                     if freq is None:
                         raise ValueError("Frequency can't be determined from the index")
 
-            # pandas 3 no longer accepts a MonthBegin offset in to_period
+            # pandas 3 no longer accepts begin offsets or "H" in to_period,
+            # map to the calendar month or quarter, as pandas 2 did
             if isinstance(freq, pd.offsets.MonthBegin):
                 freq = f"{freq.n}M"
+            elif isinstance(freq, pd.offsets.QuarterBegin):
+                freq = f"{freq.n}Q"
+            elif isinstance(freq, str) and freq == "H":
+                freq = "h"
             period_index = index.to_period(freq)
 
+        # `freqstr` is not the bare frequency code - anchored frequencies carry a
+        # suffix ("W-SUN", "Q-DEC"), and since pandas 2.2 sub-daily frequencies are
+        # lower case ("h"). Normalize to the bare, upper case code before matching.
+        freq_code = period_index.freqstr.split("-")[0].upper()
+
         # Extract the appropriate attribute based on the frequency of the period index
-        if period_index.freqstr == "M":
+        if freq_code == "M":
             time_index = period_index.month
-        elif period_index.freqstr == "Q":
+        elif freq_code == "Q":
             time_index = period_index.quarter
-        elif period_index.freqstr == "W":
+        elif freq_code == "W":
             time_index = period_index.week
-        elif period_index.freqstr == "D":
+        elif freq_code == "D":
             time_index = period_index.day
-        elif period_index.freqstr == "H":
+        elif freq_code == "H":
             time_index = period_index.hour
         else:
             raise ValueError(f"Unsupported frequency: {period_index.freqstr}")
 
         # Create dummy variables for the time periods
         dummies = pd.get_dummies(time_index, prefix="", prefix_sep="")
-        if period_index.freqstr == "M":
+        if freq_code == "M":
             dummies.columns = dummies.columns.map(lambda x: calendar.month_abbr[int(x)])
-        elif period_index.freqstr == "Q":
+        elif freq_code == "Q":
             dummies.columns = dummies.columns.map(lambda x: f"Q{int(x)}")
-        elif period_index.freqstr == "W":
+        elif freq_code == "W":
             dummies.columns = dummies.columns.map(lambda x: f"W{int(x)}")
-        elif period_index.freqstr == "D":
+        elif freq_code == "D":
             dummies.columns = dummies.columns.map(lambda x: f"D{int(x)}")
-        elif period_index.freqstr == "H":
+        elif freq_code == "H":
             dummies.columns = dummies.columns.map(lambda x: f"H{int(x)}")
         dummies = dummies.astype(int)  # Convert boolean values to integers
 

@@ -88,6 +88,7 @@ class Moirai2Forecaster(BaseForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
@@ -103,13 +104,20 @@ class Moirai2Forecaster(BaseForecaster):
         ],
         "capability:insample": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:vm": True,
         "tests:libs": ["sktime.libs.uni2ts"],
         "tests:specific": ["sktime.forecasting.tests.test_moirai2"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "moirai_2": (
+                'Moirai2Forecaster(checkpoint_path="Salesforce/moirai-2.0-R-small")'
+            ),
+        },
     }
 
     def __init__(
@@ -145,7 +153,6 @@ class Moirai2Forecaster(BaseForecaster):
                 **{
                     "y_inner_mtype": "pd.DataFrame",
                     "X_inner_mtype": "pd.DataFrame",
-                    "capability:global_forecasting": False,
                 }
             )
 

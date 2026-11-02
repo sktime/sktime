@@ -215,9 +215,14 @@ class TSGenerationMixin(GenerationMixin):
         true_seq_len = (
             cur_len + self.config.input_token_len - 1
         ) // self.config.input_token_len
-        model_kwargs["attention_mask"] = model_kwargs["attention_mask"][
-            :, -true_seq_len:
-        ]
+        # Transformers 5 may leave attention_mask unset for custom time-series
+        # models. Without padding, all input patches are valid.
+        attention_mask = model_kwargs.get("attention_mask")
+        if attention_mask is None:
+            attention_mask = torch.ones(
+                (batch_size, true_seq_len), dtype=torch.long, device=input_ids.device
+            )
+        model_kwargs["attention_mask"] = attention_mask[:, -true_seq_len:]
         max_length = stopping_criteria.max_length
 
         generate_results = None

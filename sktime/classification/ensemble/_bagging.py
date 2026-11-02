@@ -7,6 +7,7 @@ from math import ceil
 
 import numpy as np
 import pandas as pd
+from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
 
@@ -53,8 +54,8 @@ class BaggingClassifier(BaseClassifier):
     random_state : int, RandomState instance or None, optional (default=None)
         If int, ``random_state`` is the seed used by the random number generator;
         If ``RandomState`` instance, ``random_state`` is the random number generator;
-        If None, the random number generator is the ``RandomState`` instance used
-        by ``np.random``.
+        If None, a fresh ``RandomState`` is used, and the process-global numpy RNG
+        state is left untouched.
 
     Attributes
     ----------
@@ -144,7 +145,12 @@ class BaggingClassifier(BaseClassifier):
         bootstrap = self.bootstrap
         bootstrap_ft = self.bootstrap_features
         random_state = self.random_state
-        np.random.seed(random_state)
+        # local generator for the bagging draws; must not reseed the
+        # process-global numpy RNG, see sktime issue #11306
+        if random_state is None:
+            rng = np.random.RandomState()
+        else:
+            rng = check_random_state(random_state)
 
         if isinstance(X.index, pd.MultiIndex):
             inst_ix = X.index.droplevel(-1).unique()
@@ -169,9 +175,13 @@ class BaggingClassifier(BaseClassifier):
         for _i in range(n_estimators):
             esti = estimator.clone()
             row_iloc = pd.RangeIndex(n)
-            row_ss = _random_ss_ix(row_iloc, size=n_samples_, replace=bootstrap)
+            row_ss = _random_ss_ix(
+                row_iloc, size=n_samples_, replace=bootstrap, rng=rng
+            )
             inst_ix_i = inst_ix[row_ss]
-            col_ix_i = _random_ss_ix(col_ix, size=n_features_, replace=bootstrap_ft)
+            col_ix_i = _random_ss_ix(
+                col_ix, size=n_features_, replace=bootstrap_ft, rng=rng
+            )
             # if we bootstrap, we need to take care to ensure the
             # indices end up unique
             if not isinstance(X.index, pd.MultiIndex):
@@ -277,7 +287,9 @@ class BaggingClassifier(BaseClassifier):
         return [params1, params2, params3, params4]
 
 
-def _random_ss_ix(ix, size, replace=True):
+def _random_ss_ix(ix, size, replace=True, rng=None):
     a = range(len(ix))
-    ixs = ix[np.random.choice(a, size=size, replace=replace)]
+    if rng is None:
+        rng = np.random
+    ixs = ix[rng.choice(a, size=size, replace=replace)]
     return ixs

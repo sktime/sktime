@@ -235,6 +235,7 @@ class _Reducer(_BaseWindowForecaster):
         "capability:insample": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:update": True,
     }
 
     def __init__(
@@ -1276,6 +1277,10 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         a tabular matrix.
     """
 
+    _tags = {
+        "category": ["reduction"],
+    }
+
     def __init__(
         self,
         estimator,
@@ -1326,6 +1331,10 @@ class MultioutputTabularRegressionForecaster(_MultioutputReducer):
         a tabular matrix.
     """
 
+    _tags = {
+        "category": ["reduction"],
+    }
+
     _estimator_scitype = "tabular-regressor"
 
 
@@ -1355,6 +1364,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     """
 
     _tags = {
+        "category": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         # CI and test flags
         # -----------------
@@ -1412,6 +1422,10 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
         a tabular matrix
     """
 
+    _tags = {
+        "category": ["reduction"],
+    }
+
     _estimator_scitype = "tabular-regressor"
 
 
@@ -1429,6 +1443,10 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix.
     """
+
+    _tags = {
+        "category": ["reduction"],
+    }
 
     _estimator_scitype = "time-series-regressor"
 
@@ -1485,6 +1503,10 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
         a tabular matrix.
     """
 
+    _tags = {
+        "category": ["reduction"],
+    }
+
     _estimator_scitype = "time-series-regressor"
 
 
@@ -1504,6 +1526,7 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     """
 
     _tags = {
+        "category": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         # CI and test flags
         # -----------------
@@ -1567,6 +1590,10 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix
     """
+
+    _tags = {
+        "category": ["reduction"],
+    }
 
     _estimator_scitype = "time-series-regressor"
 
@@ -1954,12 +1981,15 @@ class _ReducerMixin:
         self._append_fit_data(y, X)
         return self
 
-    def _get_expected_pred_idx(self, fh):
+    def _get_expected_pred_idx(self, fh, y_fit_index=None):
         """Construct DataFrame Index expected in y_pred, return of _predict.
 
         Parameters
         ----------
         fh : ForecastingHorizon, fh of self; or, iterable coercible to pd.Index
+            forecasting horizon for which to construct the expected prediction index.
+        y_fit_index : pd.Index, optional, default=None
+            index of the fitted endogenous series. If None, uses self._cur_y.index.
 
         Returns
         -------
@@ -1970,7 +2000,7 @@ class _ReducerMixin:
             fh_idx = pd.Index(fh.to_absolute_index(self.cutoff))
         else:
             fh_idx = pd.Index(fh)
-        y_index = self._cur_y.index
+        y_index = y_fit_index if y_fit_index is not None else self._cur_y.index
 
         if isinstance(y_index, pd.MultiIndex):
             y_inst_idx = y_index.droplevel(-1).unique()
@@ -2088,11 +2118,17 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
         "maintainers": "hliebert",
+        # estimator type
+        # --------------
+        "category": ["reduction"],
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
@@ -2225,7 +2261,8 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
     def _predict_multioutput(self, fh=None, X=None):
         """Predict core logic."""
         y_cols = self._cur_y.columns
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
 
         if self.empty_lags_:
             ret = pd.DataFrame(index=fh_idx, columns=y_cols)
@@ -2339,7 +2376,8 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         else:
             X_pool = X
 
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         y_cols = self._cur_y.columns
 
         lagger_y_to_X = self.lagger_y_to_X_
@@ -2506,10 +2544,16 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
+        # estimator type
+        # --------------
+        "category": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         "X_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         # CI and test flags
@@ -2702,7 +2746,7 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
         # very similar to _predict_concurrent of DirectReductionForecaster - refactor?
         from sktime.transformations.lag import Lag
 
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=self._cur_y.index)
         y_cols = self._cur_y.columns
 
         lagger_y_to_X = self.lagger_y_to_X_
@@ -2757,7 +2801,10 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
             else:
                 y_pred_i = estimator.predict(Xtt_predrow)
 
-            y_pred_new_idx = self._get_expected_pred_idx(fh=[predict_idx])
+            y_fit_index = self._cur_y.index
+            y_pred_new_idx = self._get_expected_pred_idx(
+                fh=[predict_idx], y_fit_index=y_fit_index
+            )
             y_pred_new = pd.DataFrame(y_pred_i, columns=y_cols, index=y_pred_new_idx)
 
             y_pred_list.append(y_pred_new)
@@ -2772,7 +2819,7 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
         """Recursive reducer: predict out of sample (in past of of cutoff)."""
         from sktime.transformations.lag import Lag
 
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=self._cur_y.index)
         y_cols = self._cur_y.columns
 
         lagger_y_to_X = self.lagger_y_to_X_
@@ -2949,6 +2996,7 @@ class YfromX(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
+        "category": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:missing_values": True,
@@ -3092,7 +3140,8 @@ class YfromX(_ReducerMixin, BaseForecaster):
         """
         _est_type = self._est_type
 
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
 
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict(X_idx)
@@ -3136,7 +3185,8 @@ class YfromX(_ReducerMixin, BaseForecaster):
             Entries are quantile forecasts, for var in col index,
                 at quantile probability in second col index, for the row index.
         """
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_quantiles(X_idx, alpha=alpha)
         return y_pred
@@ -3179,7 +3229,8 @@ class YfromX(_ReducerMixin, BaseForecaster):
                 Upper/lower interval end forecasts are equivalent to
                 quantile forecasts at alpha = 0.5 - c/2, 0.5 + c/2 for c in coverage.
         """
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_interval(X_idx, coverage=coverage)
         return y_pred
@@ -3221,7 +3272,8 @@ class YfromX(_ReducerMixin, BaseForecaster):
                     covariance between time index in row and col.
                 Note: no covariance forecasts are returned between different variables.
         """
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_var(X_idx)
         return y_pred
@@ -3251,7 +3303,8 @@ class YfromX(_ReducerMixin, BaseForecaster):
             if marginal=True, will be marginal distribution by time point
             if marginal=False and implemented by method, will be joint
         """
-        fh_idx = self._get_expected_pred_idx(fh=fh)
+        y_fit_index = self._cur_y.index
+        fh_idx = self._get_expected_pred_idx(fh=fh, y_fit_index=y_fit_index)
         X_idx = self._get_pred_X(X=X, fh_idx=fh_idx)
         y_pred = self.estimator_.predict_proba(X_idx)
         return y_pred

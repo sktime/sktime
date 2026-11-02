@@ -112,11 +112,17 @@ class UpdateRefitsEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
+        # estimator type
+        # --------------
+        "category": ["composition"],
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -346,11 +352,17 @@ class UpdateEvery(_StreamDataPoolMixin, _DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
+        # estimator type
+        # --------------
+        "category": ["composition"],
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "capability:update": True,
     }
 
     def __init__(self, forecaster, update_interval=None):
@@ -532,11 +544,17 @@ class DontUpdate(_DelegatedForecaster):
     _delegate_name = "forecaster_"
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": "fkiraly",
+        # estimator type
+        # --------------
+        "category": ["composition"],
         "fit_is_empty": False,
         "requires-fh-in-fit": False,
         "y_inner_mtype": ALL_TIME_SERIES_MTYPES,
         "X_inner_mtype": ALL_TIME_SERIES_MTYPES,
+        "capability:update": True,
     }
 
     def __init__(self, forecaster):

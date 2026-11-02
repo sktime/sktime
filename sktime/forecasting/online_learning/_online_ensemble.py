@@ -37,11 +37,13 @@ class OnlineEnsembleForecaster(EnsembleForecaster):
         "maintainers": ["magittan"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "y_inner_mtype": ["pd.Series"],
         "capability:multivariate": False,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:skip_by_name": [

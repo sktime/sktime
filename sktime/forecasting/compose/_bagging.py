@@ -85,6 +85,7 @@ class BaggingForecaster(BaseForecaster):
         "authors": ["fkiraly", "ltsaprounis"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": True,  # which y are fine? True/False
         "capability:exogenous": True,  # does estimator ignore the exogenous X?
         "capability:missing_values": True,  # can estimator handle missing data?
@@ -98,9 +99,9 @@ class BaggingForecaster(BaseForecaster):
         "capability:insample": True,  # can the estimator make in-sample predictions?
         "capability:pred_int": True,  # can the estimator produce prediction intervals?
         "capability:pred_int:insample": True,  # ... for in-sample horizons?
+        "capability:update": True,  # can estimator update its parameters with new data?
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -133,6 +134,7 @@ class BaggingForecaster(BaseForecaster):
         tags_to_clone = [
             "requires-fh-in-fit",  # is forecasting horizon already required in fit?
             "enforce_index_type",
+            "capability:update",  # can estimator update its parameters with new data?
         ]
         if self.forecaster is not None:
             self.clone_tags(self.forecaster, tags_to_clone)
@@ -428,6 +430,19 @@ class BaggingForecaster(BaseForecaster):
         mbb = MovingBlockBootstrapTransformer(block_length=6, n_series=3)
         fcst = YfromX.create_test_instance()
         params = [{"bootstrap_transformer": mbb, "forecaster": fcst}]
+
+        # soft dependency free second parameter set
+        from sktime.forecasting.naive import NaiveForecaster
+
+        mbb2 = MovingBlockBootstrapTransformer(block_length=4, n_series=2)
+        params += [
+            {
+                "bootstrap_transformer": mbb2,
+                "forecaster": NaiveForecaster(strategy="mean"),
+                "sp": 4,
+                "random_state": 42,
+            }
+        ]
 
         # the default param set causes a statsmodels based estimator
         # to be created as bootstrap_transformer
