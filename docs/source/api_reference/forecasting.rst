@@ -307,6 +307,7 @@ Exponential smoothing based forecasters
     :template: class.rst
 
     ThetaForecaster
+    StatsModelsTheta
     ThetaModularForecaster
 
 .. currentmodule:: sktime.forecasting.statsforecast
