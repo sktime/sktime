@@ -240,8 +240,8 @@ class TimestralForecaster(BaseForecaster):
     def _ensure_model_loaded(self):
         """Reload upstream forecaster if needed after unpickling."""
         if not hasattr(self, "forecaster") or self.forecaster is None:
-            if hasattr(self, "_is_fitted") and self._is_fitted:
-                self.forecaster = self._load_model()
+            self.forecaster = self._load_model()
+        return self.forecaster
 
     def _partition_exog_columns(self, X):
         """Split fit-time ``X`` columns into numeric/categorical and past/known groups.
@@ -397,8 +397,7 @@ class TimestralForecaster(BaseForecaster):
         and horizon integer.
         """
         self._check_license()
-        self._ensure_model_loaded()
-        forecaster = self._load_model()
+        forecaster = self._ensure_model_loaded()
 
         horizon = int(max(fh.to_relative(self.cutoff)))
         if horizon <= 0:
