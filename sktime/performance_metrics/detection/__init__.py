@@ -10,6 +10,7 @@ from sktime.performance_metrics.detection._mean_detection_offset import (
     MeanDetectionOffset,
 )
 from sktime.performance_metrics.detection._randindex import RandIndex
+from sktime.performance_metrics.detection._softed import SoftEDF1Score
 from sktime.performance_metrics.detection._ts_auprc import TimeSeriesAUPRC
 
 __all__ = [
@@ -18,6 +19,7 @@ __all__ = [
     "DetectionCount",
     "WindowedF1Score",
     "RandIndex",
+    "SoftEDF1Score",
     "TimeSeriesAUPRC",
     "EventTPR",
     "MeanDetectionOffset",
