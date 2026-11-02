@@ -93,3 +93,7 @@ in folders starting with underscore. These should not be accessed by users of `s
 
 * `_torch_self_attention` - PyTorch implementation of a sequential
   self-attention layer used by the TapNet model.
+
+* `_torch_positional_encoding` - PyTorch implementations of sinusoidal and
+  learnable positional encodings, shared by the ConvTran and multivariate time
+  series transformer networks.

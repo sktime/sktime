@@ -214,3 +214,124 @@ def test_predict_var():
     fh = ForecastingHorizon([1, 2, 3, 4, 5, 6], is_relative=True)
     a = forecaster.predict_var(fh=fh)
     np.testing.assert_allclose(a.iloc[0, 0], 1.0, rtol=0.05)
+
+
+def _stable_polynomial_coefs(y, degree, origin):
+    """Least squares polynomial coefficients in time since ``origin``.
+
+    Computed on the domain [-1, 1] and converted back, so that the reference
+    is numerically stable also for long series and higher degrees.
+    Coefficients are in increasing order of powers.
+    """
+    t = _get_X_numpy_int_from_pandas(y.index).reshape(-1).astype("float64") - origin
+    poly = np.polynomial.Polynomial.fit(t, y.to_numpy(), degree)
+    return poly.convert().coef
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("freq", ["D", "h"])
+def test_polynomial_trend_long_series_higher_degree(freq):
+    """Test numerical stability for long series and higher degree, see #8686.
+
+    Even when time is measured from the first training time point, the
+    polynomial features of degree 2 or higher are severely ill-conditioned for
+    long series, e.g., several years of daily or hourly data. Degrees 2, 3 and 4
+    then used to yield nearly the same, wrong, fit.
+    """
+    index = pd.date_range("2019-01-01", "2024-12-31", freq=freq)
+    n = len(index)
+    t = np.linspace(-1, 1, n)
+    trend = 1000 + 500 * t + 200 * t**2 - 300 * t**3
+    rng = np.random.default_rng(42)
+    y = pd.Series(trend + rng.normal(0, 20, n), index=index)
+    fh = ForecastingHorizon(index, is_relative=False)
+
+    y_pred = {}
+    for degree in [2, 3, 4]:
+        forecaster = PolynomialTrendForecaster(degree=degree)
+        forecaster.fit(y)
+        y_pred[degree] = forecaster.predict(fh).to_numpy().reshape(-1)
+
+        # coefficients are in units of time since the first training time point,
+        # see docstring, and must agree with a numerically stable reference fit
+        actual = forecaster.regressor_.steps[-1][1].coef_
+        expected = _stable_polynomial_coefs(y, degree, forecaster._trend_origin_)
+        np.testing.assert_allclose(actual, expected, rtol=1e-5, atol=1e-12)
+
+        # the fitted pipeline, applied to time since the origin, agrees with predict
+        X_since_origin = _get_X_numpy_int_from_pandas(index) - forecaster._trend_origin_
+        np.testing.assert_allclose(
+            forecaster.regressor_.predict(X_since_origin), y_pred[degree], rtol=1e-8
+        )
+
+    # the fitted cubic trend recovers the true cubic trend up to noise
+    rmse = np.sqrt(np.mean((y_pred[3] - trend) ** 2))
+    assert rmse < 5
+
+    # different degrees yield different fits
+    assert not np.allclose(y_pred[2], y_pred[3])
+    assert not np.allclose(y_pred[3], y_pred[4], rtol=1e-6)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_polynomial_trend_long_series_no_intercept():
+    """Test fitting a long series with ``with_intercept=False``, see #8686.
+
+    Without intercept, the polynomial must vanish at the first training time
+    point, so time is scaled but not shifted further internally. The coefficients
+    must still be in the documented units, and the fitted pipeline must agree
+    with ``predict``.
+    """
+    index = pd.date_range("2019-01-01", "2024-12-31", freq="D")
+    n = len(index)
+    t = np.linspace(0, 1, n)
+    rng = np.random.default_rng(42)
+    y = pd.Series(500 * t + 200 * t**2 + rng.normal(0, 20, n), index=index)
+    fh = ForecastingHorizon(index, is_relative=False)
+
+    for degree in [1, 2]:
+        forecaster = PolynomialTrendForecaster(degree=degree, with_intercept=False)
+        forecaster.fit(y)
+        y_pred = forecaster.predict(fh).to_numpy().reshape(-1)
+
+        linreg = forecaster.regressor_.steps[-1][1]
+        assert linreg.intercept_ == 0
+        assert linreg.coef_.shape == (degree,)
+        X_since_origin = _get_X_numpy_int_from_pandas(index) - forecaster._trend_origin_
+        np.testing.assert_allclose(
+            forecaster.regressor_.predict(X_since_origin), y_pred, rtol=1e-8
+        )
+
+    # the quadratic fit without intercept is close to the true trend
+    assert np.sqrt(np.mean((y_pred - (500 * t + 200 * t**2)) ** 2)) < 5
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([PolynomialTrendForecaster, _get_X_numpy_int_from_pandas]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_polynomial_trend_predict_interval_long_series():
+    """Test prediction intervals are stable for long series, see #8686."""
+    index = pd.date_range("2019-01-01", "2024-12-31", freq="D")
+    n = len(index)
+    rng = np.random.default_rng(0)
+    y = pd.Series(rng.normal(0, 1, n), index=index)
+
+    forecaster = PolynomialTrendForecaster(degree=3, prediction_intervals=True)
+    forecaster.fit(y)
+    fh = ForecastingHorizon([1, 2, 3], is_relative=True)
+    pred_var = forecaster.predict_var(fh=fh)
+
+    # residual variance is ~1, and the variance of a 3 step ahead forecast
+    # of a long series is only slightly larger than the residual variance
+    assert np.all(pred_var.to_numpy() > 0.9)
+    assert np.all(pred_var.to_numpy() < 1.2)
+
+    pred_int = forecaster.predict_interval(fh=fh, coverage=0.9)
+    assert np.all(np.isfinite(pred_int.to_numpy()))
