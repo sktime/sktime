@@ -14,14 +14,60 @@ from sktime.performance_metrics.forecasting._functions import (
 
 
 class MedianRelativeAbsoluteError(BaseForecastingErrorMetricFunc):
-    """Median relative absolute error (MdRAE).
+    r"""Median relative absolute error (MdRAE).
 
     In relative error metrics, relative errors are first calculated by
     scaling (dividing) the individual forecast errors by the error calculated
-    using a benchmark method at the same index position. If the error of the
-    benchmark method is zero then a large value is returned.
+    using a benchmark method at the same index position.
 
-    MdRAE applies medan absolute error (MdAE) to the resulting relative errors.
+    MdRAE applies median absolute error (MdAE) to the resulting relative errors.
+
+    For a univariate, non-hierarchical sample of true values
+    :math:`y_1, \dots, y_n`, predicted values
+    :math:`\widehat{y}_1, \dots, \widehat{y}_n`, and benchmark predictions
+    :math:`\widehat{y}_{b,1}, \dots, \widehat{y}_{b,n}` supplied as
+    ``y_pred_benchmark``, define the absolute relative errors as
+
+    .. math::
+
+        r_i = \frac{|y_i - \widehat{y}_i|}
+                   {\max(|y_i - \widehat{y}_{b,i}|, \epsilon)}.
+
+    Here, :math:`\epsilon` is ``np.finfo(np.float64).eps``, used to avoid
+    division by zero. A zero benchmark error can produce a large relative
+    error when the forecast error is nonzero; if both errors are zero,
+    :math:`r_i = 0`.
+
+    With no time weights supplied, ``evaluate`` (or calling the metric
+    with ``by_index=False``) returns
+
+    .. math::
+
+        \operatorname{MdRAE} = \operatorname{median}_{i=1,\dots,n} r_i.
+
+    For an even number of time points, the median is the mean of the two
+    central sorted values. If ``sample_weight`` (or ``horizon_weight``) is
+    supplied to ``evaluate``, the lower weighted median is used instead.
+    Lower values are better, and the minimum is zero.
+
+    For multivariate data, the median is computed over time separately for
+    each variable, then ``multioutput`` controls averaging across variables.
+    ``multilevel`` controls aggregation across hierarchical series, see below.
+
+    With no time weights supplied and :math:`n \geq 2`,
+    ``evaluate_by_index`` uses the inherited jackknife calculation, returning
+    at time index :math:`t_i` the pseudo-value
+
+    .. math::
+
+        p_i = n \operatorname{MdRAE}
+              - (n - 1) \operatorname{MdRAE}_{-i},
+
+    where :math:`\operatorname{MdRAE}_{-i}` is the metric evaluated after
+    removing observation :math:`i` from the true values, predictions, and
+    benchmark predictions. These pseudo-values are not the individual
+    absolute relative errors :math:`r_i` and can be negative. The jackknife
+    interpretation is not appropriate for median-based statistics.
 
     Parameters
     ----------
