@@ -603,6 +603,84 @@ def test_tuner_preserves_pretrained_state(Tuner, search_kwargs):
 
 @pytest.mark.skipif(
     not run_test_for_class(
+        [ForecastingGridSearchCV, ForecastingRandomizedSearchCV, DummyGlobalForecaster]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "Tuner, search_kwargs",
+    [
+        (ForecastingGridSearchCV, {"param_grid": {"strategy": ["mean", "last"]}}),
+        (
+            ForecastingRandomizedSearchCV,
+            {
+                "param_distributions": {"strategy": ["mean", "last"]},
+                "n_iter": 2,
+                "random_state": 0,
+            },
+        ),
+    ],
+)
+def test_tuner_fit_does_not_mutate_forecaster(Tuner, search_kwargs):
+    """The blueprint forecaster passed to a tuner must be unchanged after fit.
+
+    Tuners clone candidates via ``_clone_and_set_params``; ``fit`` must not
+    mutate the original estimator's params or its fitted/pretrained state.
+    """
+    y_panel = _make_hierarchical(
+        hierarchy_levels=(3,),
+        min_timepoints=15,
+        max_timepoints=15,
+        n_columns=1,
+    )
+    y = load_airline()[:36]
+
+    forecaster = DummyGlobalForecaster(strategy="mean")
+    forecaster.pretrain(y_panel)
+
+    params_before = dict(forecaster.get_params(deep=True))
+    state_before = forecaster.state
+    is_fitted_before = forecaster.is_fitted
+    pretrained_attrs_before = list(forecaster._pretrained_attrs)
+    pretrained_before = {
+        "global_mean_": forecaster.global_mean_,
+        "global_std_": forecaster.global_std_,
+        "n_pretrain_instances_": forecaster.n_pretrain_instances_,
+        "n_pretrain_timepoints_": forecaster.n_pretrain_timepoints_,
+    }
+
+    tuner = Tuner(
+        forecaster,
+        cv=SingleWindowSplitter(fh=1),
+        error_score="raise",
+        refit=False,
+        return_n_best_forecasters=2,
+        **search_kwargs,
+    )
+    tuner.fit(y)
+
+    assert tuner.forecaster is forecaster
+    assert dict(forecaster.get_params(deep=True)) == params_before
+    assert forecaster.state == state_before
+    assert forecaster.is_fitted == is_fitted_before
+    assert list(forecaster._pretrained_attrs) == pretrained_attrs_before
+    assert not hasattr(forecaster, "last_value_")
+    np.testing.assert_almost_equal(
+        forecaster.global_mean_, pretrained_before["global_mean_"]
+    )
+    np.testing.assert_almost_equal(
+        forecaster.global_std_, pretrained_before["global_std_"]
+    )
+    assert (
+        forecaster.n_pretrain_instances_ == pretrained_before["n_pretrain_instances_"]
+    )
+    assert (
+        forecaster.n_pretrain_timepoints_ == pretrained_before["n_pretrain_timepoints_"]
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
         [
             ForecastingGridSearchCV,
             TransformedTargetForecaster,
