@@ -181,6 +181,19 @@ class WindFMForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:libs": ["sktime.libs.windfm"],
         "tests:specific": ["sktime.forecasting.tests.test_windfm"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "windfm": (
+                'WindFMForecaster(model_path="NeoQuasar/WindFM", '
+                'tokenizer_path="NeoQuasar/WindFM-Tokenizer", deterministic=True)'
+            ),
+            "windfm_robust": (
+                'WindFMForecaster(model_path="NeoQuasar/WindFM-robust", '
+                'tokenizer_path="NeoQuasar/WindFM-Tokenizer-robust", '
+                "deterministic=True)"
+            ),
+        },
     }
 
     _target_col = "power"
