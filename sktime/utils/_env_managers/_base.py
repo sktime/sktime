@@ -308,7 +308,7 @@ class BaseEnvironmentManager(BaseObject):
         ...     input=b"payload",
         ... )
         >>> manager.run(  # doctest: +SKIP
-        ...     "sktime.benchmarking._worker",
+        ...     "my_package.worker",
         ...     args=["--verbose"],
         ... )
         >>> manager.run(  # doctest: +SKIP
