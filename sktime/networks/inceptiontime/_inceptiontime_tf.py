@@ -55,7 +55,6 @@ class InceptionTimeNetwork(BaseDeepNetwork):
     _tags = {
         "authors": ["hfawaz", "JamesLarge", "Withington", "noxthot"],
         "python_dependencies": "tensorflow",
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -177,3 +176,29 @@ class InceptionTimeNetwork(BaseDeepNetwork):
         gap_layer = keras.layers.GlobalAveragePooling1D()(x)
 
         return input_layer, gap_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests.
+
+        Returns
+        -------
+        params : list of dict
+            Parameters to create testing instances of the class.
+        """
+        params1 = {}
+        # Cover the paths without residual connections or bottleneck convolutions.
+        params2 = {
+            "n_filters": 4,
+            "depth": 3,
+            "kernel_size": 8,
+            "use_residual": False,
+            "use_bottleneck": False,
+            "activation": "tanh",
+        }
+        return [params1, params2]
