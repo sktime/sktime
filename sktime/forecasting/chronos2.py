@@ -95,6 +95,22 @@ class Chronos2Forecaster(BaseForecaster):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
+        # Shorthands for quick use
+        # ------------------------
+        "shorthands": {
+            "chronos_2": (
+                'Chronos2Forecaster(model_path="amazon/chronos-2", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_2_small": (
+                'Chronos2Forecaster(model_path="autogluon/chronos-2-small", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_2_synth": (
+                'Chronos2Forecaster(model_path="autogluon/chronos-2-synth", '
+                'config={"device_map": "auto"})'
+            ),
+        },
     }
 
     _default_config = {
