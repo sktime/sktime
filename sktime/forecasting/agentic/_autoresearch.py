@@ -213,11 +213,17 @@ def _evaluate_blueprint(blueprint, cv, y, X=None):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             results = evaluate(forecaster=forecaster, y=y, X=X, cv=cv)
-        score = results["test_MeanAbsolutePercentageError"].mean()
+        score = float(results["test_MeanAbsolutePercentageError"].mean())
+        error = None
+        if not math.isfinite(score):
+            # evaluate can succeed and still score nan, e.g. when a transformer
+            # leaves NaNs in the target. Report it as a failure so it is ranked
+            # as FAILED and eligible for a fix attempt, not shown as a score.
+            error = f"ValueError: evaluation returned a non-finite score ({score})"
         return {
             "name": blueprint_name,
-            "score": float(score),
-            "error": None,
+            "score": score,
+            "error": error,
             "forecaster": forecaster,
             "blueprint": blueprint,
         }
@@ -614,7 +620,7 @@ class AutoResearchForecaster(BaseForecaster):
         )
         failed = [r for r in self.blueprint_history_ if r["error"] is not None]
         lines = [
-            f"  #{i + 1} Score={r['score']:.6f}"
+            f"  #{i + 1} Score={r['score']:.6f}  "
             + f"{r['name']}  spec={r['blueprint'].get('spec', '')}"
             for i, r in enumerate(valid)
         ] + [
