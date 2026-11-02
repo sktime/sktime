@@ -1,6 +1,6 @@
 """Theta forecasters."""
 
-__all__ = ["ThetaForecaster", "ThetaModularForecaster"]
+__all__ = ["ThetaForecaster", "ThetaModularForecaster", "StatsModelsTheta"]
 __author__ = ["big-o", "mloning", "kejsitake", "fkiraly", "GuzalBulatova"]
 
 import numpy as np
@@ -615,3 +615,133 @@ class ThetaModularForecaster(BaseForecaster):
             params = [params0, params_naive]
 
         return params
+
+
+class StatsModelsTheta(BaseForecaster):
+    """Theta forecaster, interfacing statsmodels' ThetaModel.
+
+    Direct interface to ``statsmodels.tsa.forecasting.theta.ThetaModel``,
+    including prediction intervals from ``ThetaModelResults.prediction_intervals``.
+
+    Parameters
+    ----------
+    sp : int, default=1
+        Seasonal period, passed to ``ThetaModel`` as ``period``.
+        ``sp=1`` means no seasonality.
+    deseasonalize : bool, default=True
+        Whether to deseasonalize the data.
+    use_test : bool, default=True
+        Whether to test for seasonality before deseasonalizing.
+    method : {"auto", "additive", "multiplicative"}, default="auto"
+        Model used for the seasonal decomposition.
+    difference : bool, default=False
+        Whether to difference the data before testing for seasonality.
+    use_mle : bool, default=False
+        Whether to estimate parameters by MLE, passed to ``ThetaModel.fit``.
+    theta : float, default=2
+        The theta parameter, used in ``forecast`` and ``prediction_intervals``.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_airline
+    >>> from sktime.forecasting.theta import StatsModelsTheta
+    >>> y = load_airline()
+    >>> forecaster = StatsModelsTheta(sp=12)
+    >>> forecaster.fit(y)
+    StatsModelsTheta(...)
+    >>> y_pred = forecaster.predict(fh=[1, 2, 3])
+    """
+
+    _tags = {
+        # packaging info
+        # --------------
+        "authors": ["7524yash7524"],
+        "python_dependencies": "statsmodels",
+        # estimator type
+        # --------------
+        "category": ["statistical"],
+        "y_inner_mtype": "pd.Series",
+        "capability:multivariate": False,
+        "capability:exogenous": False,
+        "capability:insample": False,
+        "capability:pred_int": True,
+        "capability:pred_int:insample": False,
+        "capability:missing_values": False,
+        "requires-fh-in-fit": False,
+        "property:randomness": "deterministic",
+    }
+
+    def __init__(
+        self,
+        sp=1,
+        deseasonalize=True,
+        use_test=True,
+        method="auto",
+        difference=False,
+        use_mle=False,
+        theta=2,
+    ):
+        self.sp = sp
+        self.deseasonalize = deseasonalize
+        self.use_test = use_test
+        self.method = method
+        self.difference = difference
+        self.use_mle = use_mle
+        self.theta = theta
+        super().__init__()
+
+    def _fit(self, y, X, fh):
+        from statsmodels.tsa.forecasting.theta import ThetaModel
+
+        model = ThetaModel(
+            y,
+            period=self.sp,
+            deseasonalize=self.deseasonalize,
+            use_test=self.use_test,
+            method=self.method,
+            difference=self.difference,
+        )
+        self._fitted = model.fit(use_mle=self.use_mle)
+        self._y_name = y.name
+        return self
+
+    def _predict(self, fh, X):
+        fh_rel = fh.to_relative(self.cutoff).to_numpy()
+        steps = fh_rel.max()
+
+        fc = self._fitted.forecast(steps=steps, theta=self.theta)
+
+        y_pred = pd.Series(
+            fc.to_numpy()[fh_rel - 1],
+            index=fh.to_absolute_index(self.cutoff),
+            name=self._y_name,
+        )
+        return y_pred
+
+    def _predict_interval(self, fh, X, coverage):
+        fh_rel = fh.to_relative(self.cutoff).to_numpy()
+        steps = fh_rel.max()
+        index = fh.to_absolute_index(self.cutoff)
+
+        # sktime convention: an unnamed series is labelled 0
+        var_name = self._y_name if self._y_name is not None else 0
+
+        columns = pd.MultiIndex.from_product([[var_name], coverage, ["lower", "upper"]])
+        pred_int = pd.DataFrame(index=index, columns=columns, dtype=float)
+
+        for c in coverage:
+            pi = self._fitted.prediction_intervals(
+                steps=steps, theta=self.theta, alpha=1 - c
+            )
+            pi = pi.iloc[fh_rel - 1]
+            pred_int[(var_name, c, "lower")] = pi["lower"].to_numpy()
+            pred_int[(var_name, c, "upper")] = pi["upper"].to_numpy()
+
+        return pred_int
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator."""
+        params1 = {}
+        params2 = {"deseasonalize": False, "use_mle": True, "theta": 3}
+        return [params1, params2]
