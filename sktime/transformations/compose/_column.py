@@ -163,7 +163,6 @@ class ColumnEnsembleTransformer(
         # set requires-fh-in-fit depending on transformers
         if isinstance(transformers, BaseTransformer):
             tags_to_clone = [
-                "fit_is_empty",
                 "requires_X",
                 "requires_y",
                 "X-y-must-have-same-index",
@@ -236,12 +235,30 @@ class ColumnEnsembleTransformer(
                 )
             ]
 
+    def get_params(self, deep=True):
+        """Get parameters, including those of a single transformer blueprint.
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            If True, include parameters of contained estimators.
+
+        Returns
+        -------
+        params : dict
+            Parameter names mapped to their values.
+        """
+        if isinstance(self.transformers, BaseTransformer):
+            return BaseTransformer.get_params(self, deep=deep)
+        return super().get_params(deep=deep)
+
     def _check_transformers(self, X):
         transformers = self.transformers
 
         if isinstance(transformers, BaseTransformer):
-            for col in X.columns:
-                transformers = [(str(col), transformers, pd.Index([col]))]
+            transformers = [
+                (str(col), transformers, pd.Index([col])) for col in X.columns
+            ]
 
         coerced_trafo = []
         indices = []
