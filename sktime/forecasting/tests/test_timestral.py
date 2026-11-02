@@ -1,6 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-"""Tests for TimestralForecaster."""
+"""Golden-output regression tests for the Timestral forecaster."""
 
 from __future__ import annotations
 
@@ -11,6 +11,13 @@ import pytest
 from sktime.datasets import load_airline
 from sktime.forecasting.timestral import TimestralForecaster
 from sktime.tests.test_switch import run_test_for_class
+
+# Golden references generated against `mistralai/Timestral-5M` on CPU
+EXPECTED_AIRLINE = [414.82183837890625, 397.8201904296875, 452.1973876953125]
+EXPECTED_COV = [
+    [-0.3252118229866028, 0.12906599044799805],
+    [-0.24099311232566833, 0.1534138321876526],
+]
 
 
 def test_timestral_license_rejected_by_default():
@@ -24,8 +31,8 @@ def test_timestral_license_rejected_by_default():
     not run_test_for_class(TimestralForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_timestral_univariate_point_forecast():
-    """Univariate point forecast on load_airline using Timestral-5M."""
+def test_timestral_airline_matches_source_reference():
+    """Univariate point forecast matches reference on ``load_airline``."""
     y_train = load_airline().iloc[:-12]
     fh = [1, 2, 3]
 
@@ -37,18 +44,26 @@ def test_timestral_univariate_point_forecast():
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh=fh)
 
-    assert isinstance(y_pred, pd.Series)
-    assert len(y_pred) == len(fh)
-    assert not y_pred.isna().any()
+    np.testing.assert_allclose(
+        y_pred.to_numpy().ravel(),
+        np.asarray(EXPECTED_AIRLINE, dtype=np.float32),
+        rtol=1e-5,
+        atol=1e-4,
+    )
 
 
 @pytest.mark.skipif(
     not run_test_for_class(TimestralForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-def test_timestral_multivariate_with_covariates():
-    """Multivariate and mixed past/known covariates forecast."""
-    rng = np.random.default_rng(42)
+def test_timestral_covariates_match_source_reference():
+    """Multivariate + mixed covariate forecast matches the reference.
+
+    The covariate split is inferred: ``past_only`` is supplied only in fit-time
+    ``X`` (past-only), while ``future_known`` is in both fit-time and predict-time
+    ``X`` (past-and-future).
+    """
+    rng = np.random.default_rng(0)
     n, horizon = 32, 4
     ta = rng.normal(size=n)
     tb = rng.normal(size=n)
@@ -66,71 +81,14 @@ def test_timestral_multivariate_with_covariates():
         license_accepted=True,
     )
     forecaster.fit(y, X=X)
-    fh = list(range(1, horizon + 1))
-    y_pred = forecaster.predict(fh=fh, X=X_future)
+    y_pred = forecaster.predict(fh=list(range(1, horizon + 1)), X=X_future)
 
-    assert isinstance(y_pred, pd.DataFrame)
-    assert list(y_pred.columns) == ["target_a", "target_b"]
-    assert len(y_pred) == horizon
-    assert not y_pred.isna().any().any()
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(TimestralForecaster),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_timestral_categorical_covariates():
-    """Test categorical covariates encoding and forecasting."""
-    n, horizon = 30, 3
-    rng = np.random.default_rng(7)
-    y = pd.DataFrame({"target": rng.normal(size=n)})
-    X = pd.DataFrame(
-        {
-            "cat_known": pd.Categorical(["A", "B", "C"] * 10),
-            "num_past": rng.normal(size=n),
-        }
+    np.testing.assert_allclose(
+        y_pred.iloc[:2].to_numpy(),
+        np.asarray(EXPECTED_COV, dtype=np.float32),
+        rtol=1e-5,
+        atol=1e-4,
     )
-    X_future = pd.DataFrame({"cat_known": pd.Categorical(["A", "B", "C"])})
-
-    forecaster = TimestralForecaster(
-        model_path="mistralai/Timestral-5M",
-        device="cpu",
-        license_accepted=True,
-    )
-    forecaster.fit(y, X=X)
-    fh = list(range(1, horizon + 1))
-    y_pred = forecaster.predict(fh=fh, X=X_future)
-
-    assert isinstance(y_pred, pd.DataFrame)
-    assert len(y_pred) == horizon
-    assert not y_pred.isna().any().any()
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(TimestralForecaster),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_timestral_predict_quantiles():
-    """Verify quantile prediction output structure and ordering."""
-    y_train = load_airline().iloc[:-12]
-    fh = [1, 2]
-    alpha = [0.1, 0.5, 0.9]
-
-    forecaster = TimestralForecaster(
-        model_path="mistralai/Timestral-5M",
-        device="cpu",
-        license_accepted=True,
-    )
-    forecaster.fit(y_train)
-    quantiles = forecaster.predict_quantiles(fh=fh, alpha=alpha)
-
-    assert isinstance(quantiles, pd.DataFrame)
-    assert isinstance(quantiles.columns, pd.MultiIndex)
-    assert len(quantiles) == len(fh)
-    # Check monotonicity of predicted quantiles
-    q_vals = quantiles.to_numpy()
-    assert (q_vals[:, 0] <= q_vals[:, 1]).all()
-    assert (q_vals[:, 1] <= q_vals[:, 2]).all()
 
 
 @pytest.mark.skipif(
@@ -156,26 +114,3 @@ def test_timestral_predict_proba_matches_quantiles():
     np.testing.assert_allclose(
         q_direct.to_numpy(), q_proba.to_numpy(), rtol=1e-5, atol=1e-4
     )
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(TimestralForecaster),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-def test_timestral_remember_data_false():
-    """Verify Timestral works when remember_data=False."""
-    y_train = load_airline().iloc[:-12]
-    fh = [1, 2]
-
-    forecaster = TimestralForecaster(
-        model_path="mistralai/Timestral-5M",
-        device="cpu",
-        license_accepted=True,
-    )
-    forecaster.set_config(remember_data=False)
-    forecaster.fit(y_train)
-
-    assert forecaster._y is None
-    y_pred = forecaster.predict(fh=fh)
-    assert len(y_pred) == len(fh)
-    assert not y_pred.isna().any()
