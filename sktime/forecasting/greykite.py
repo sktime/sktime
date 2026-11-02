@@ -315,7 +315,6 @@ class GreykiteForecaster(BaseForecaster):
         """
         self._forecaster = None
         self._forecast = None
-        self._X = None
 
     @staticmethod
     def _ensure_datetime_index(y):
@@ -466,6 +465,7 @@ class GreykiteForecaster(BaseForecaster):
 
         result = Forecaster().run_forecast_config(df, fc)
         self._forecaster = result
+        self._y_name = y.name
         return self
 
     def _predict(self, fh=None, X=None):
@@ -482,7 +482,7 @@ class GreykiteForecaster(BaseForecaster):
         return pd.Series(
             selected_preds,
             index=fh.to_absolute_index(self.cutoff),
-            name=self._y.name,
+            name=self._y_name,
         )
 
     @classmethod

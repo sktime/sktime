@@ -415,14 +415,15 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         """
         names = [f[0] for f in self._forecasters]
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
-        y_pred = (
-            y_pred.T.groupby(level=1)
-            .agg(
-                lambda y, aggfunc, weights: _aggregate(y.T, aggfunc, weights),
-                self.aggfunc,
-                self.weights,
-            )
-            .T
+        # aggregate over forecasters, separately per variable (column level 1);
+        # loop instead of groupby.agg, which passes Series not DataFrames in pandas>=3.1
+        y_pred = pd.concat(
+            {
+                var: _aggregate(y_var.T, self.aggfunc, self.weights)
+                for var, y_var in y_pred.T.groupby(level=1)
+            },
+            axis=1,
+            names=[y_pred.columns.names[1]],
         )
         return y_pred
 
