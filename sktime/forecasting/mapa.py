@@ -138,6 +138,7 @@ class MAPAForecaster(BaseForecaster):
         "python_dependencies": ["statsmodels"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",

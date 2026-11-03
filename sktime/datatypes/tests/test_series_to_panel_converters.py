@@ -4,11 +4,14 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.datatypes import check_is_mtype
 from sktime.datatypes._series_as_panel import (
     convert_Panel_to_Series,
     convert_Series_to_Panel,
+    convert_to_scitype,
 )
 from sktime.tests.test_switch import run_test_module_changed
+from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.panel import _make_panel
 from sktime.utils._testing.series import _make_series
 
@@ -73,3 +76,25 @@ def test_convert_df_panel_to_series():
     assert isinstance(X_series, pd.DataFrame)
     assert len(X_series) == len(X_panel)
     assert (X_series.values == X_panel.values).all()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes or utils.parallel has been changed",
+)
+@pytest.mark.parametrize("hierarchy_levels", [(1, 3), (1, 1, 3)])
+def test_convert_hierarchical_to_panel(hierarchy_levels):
+    """Test hierarchical-to-panel keeps the instance and time index levels."""
+    X_hier = _make_hierarchical(hierarchy_levels=hierarchy_levels, n_columns=1)
+
+    X_panel, mtype = convert_to_scitype(
+        X_hier, to_scitype="Panel", from_scitype="Hierarchical", return_to_mtype=True
+    )
+
+    assert mtype == "pd-multiindex"
+    assert check_is_mtype(X_panel, "pd-multiindex", return_metadata=False)
+    assert X_panel.index.nlevels == 2
+    assert X_panel.index.equals(
+        X_hier.index.droplevel(list(range(X_hier.index.nlevels - 2)))
+    )
+    assert (X_panel.values == X_hier.values).all()

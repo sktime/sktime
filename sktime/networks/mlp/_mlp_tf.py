@@ -56,7 +56,6 @@ class MLPNetwork(BaseDeepNetwork):
     _tags = {
         "authors": ["hfawaz", "James-Large", "Withington", "AurumnPegasus", "noxthot"],
         "python_dependencies": "tensorflow",
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(
@@ -150,3 +149,24 @@ class MLPNetwork(BaseDeepNetwork):
 
         output_layer = keras.layers.Dropout(_dropout[self.n_layers])(x)
         return input_layer, output_layer
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return lightweight test parameter sets for MLPNetwork."""
+        params1 = {
+            "n_layers": 1,
+            "hidden_dim": 8,
+            "dropout": 0.1,
+            "activation": "relu",
+            "random_state": 0,
+        }
+
+        params2 = {
+            "n_layers": 2,
+            "hidden_dim": (8, 4),
+            "dropout": (0.1, 0.2, 0.0),
+            "activation": "tanh",
+            "random_state": 0,
+        }
+
+        return [params1, params2]
