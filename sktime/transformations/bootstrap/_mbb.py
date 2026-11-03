@@ -197,7 +197,6 @@ class STLBootstrapTransformer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        "tests:skip_by_name": ["test_scenario_does_not_modify_global_numpy_rng"],
     }
 
     def __init__(
@@ -525,6 +524,7 @@ class MovingBlockBootstrapTransformer(BaseTransformer):
         "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_scenario_does_not_modify_global_numpy_rng"],
     }
 
     def __init__(
