@@ -28,7 +28,7 @@ import numpy as np
 from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BasePanelMixin
-from sktime.datatypes import VectorizedDF, check_is_scitype
+from sktime.datatypes import check_is_scitype
 from sktime.utils.sklearn import is_sklearn_transformer
 
 
@@ -234,13 +234,15 @@ class BaseClassifier(BasePanelMixin):
         start = int(round(time.time() * 1000))
 
         # check and convert y for multioutput vectorization
-        y, y_metadata, y_inner_mtype = self._check_y(y, return_to_mtype=True)
+        y_inner, y_metadata, y_inner_mtype, y_schema = self._check_y(
+            y, return_to_mtype=True
+        )
         self._y_metadata = y_metadata
         self._y_inner_mtype = y_inner_mtype
-        self._is_vectorized = isinstance(y, VectorizedDF)
+        self._is_vectorized = y_schema is not None
 
         if self._is_vectorized:
-            self._vectorize("fit", X=X, y=y)
+            self._vectorize("fit", X=X, y=(y_inner, y_schema))
             # fit timer end
             self.fit_time_ = int(round(time.time() * 1000)) - start
             # this should happen last: fitted state is set to True
@@ -251,7 +253,7 @@ class BaseClassifier(BasePanelMixin):
 
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
-        X, y = self._internal_convert(X, y)
+        X, y = self._internal_convert(X, y_inner)
         X_metadata = self._check_input(
             X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
         )

@@ -54,6 +54,7 @@ class TafsutForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": ["tareq-si-salem", "aryamanDutta"],
         "maintainers": ["sktime developers"],
         "python_version": ">=3.10",
@@ -72,6 +73,11 @@ class TafsutForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_tafsut"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "tafsut": 'TafsutForecaster(model_path="Tafsut-FM/tafsut-univariate-base")',
+        },
     }
 
     def __init__(

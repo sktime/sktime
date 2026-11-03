@@ -171,7 +171,7 @@ def _(y) -> str | None:
 
 @infer_freq.register(VectorizedDF)
 def _(y) -> str | None:
-    return _infer_freq_from_index(get_time_index(y.as_list()[0]))
+    return getattr(y, "freq", None)
 
 
 def _infer_freq_from_index(index: pd.Index) -> str | None:
