@@ -218,9 +218,7 @@ class WindowSummarizer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
-        # reason for skip: known side effects on multivariate arguments; see #2072
         "tests:skip_by_name": [
-            "test_methods_have_no_side_effects",
             "test_categorical_X_passes",  # some cases support categorical data,
             # so we conservatively set the capability tag to True,
             # even if it fails in standard cases like np.mean
@@ -473,9 +471,11 @@ def _window_feature(Z, summarizer=None, window=None, bfill=False):
         feat = Z.transform(lambda x: x.shift(lag))
     elif callable(summarizer):
         feat = Z.transform(
-            lambda x: x.rolling(window=window_length, min_periods=window_length)
-            .apply(summarizer, raw=True)
-            .shift(lag)
+            lambda x: (
+                x.rolling(window=window_length, min_periods=window_length)
+                .apply(summarizer, raw=True)
+                .shift(lag)
+            )
         )
     else:
         raise ValueError("The provided summarizer is not callable.")

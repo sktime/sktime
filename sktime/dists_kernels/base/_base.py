@@ -489,14 +489,14 @@ class BasePairwiseTransformerPanel(BaseEstimator):
 
         import numpy as np
 
-        from sktime.datatypes._vectorize import VectorizedDF
+        from sktime.datatypes._vectorize import prepare_VectorizedDF
 
         X = self._pairwise_panel_x_check(X)
-        X_spl = VectorizedDF(X, iterate_as="Series")
+        X_spl, X_mi = prepare_VectorizedDF(X, iterate_as="Series")
 
         diag = np.zeros(len(X_spl))
 
-        for i, X_instance in enumerate(X_spl):
+        for i, (_, _, X_instance) in enumerate(X_spl.items(X=X_mi)):
             diag[i] = self.transform(X=X_instance)[0, 0]
 
         return diag

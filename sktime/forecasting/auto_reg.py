@@ -95,6 +95,7 @@ class AutoREG(_StatsModelsAdapter):
         "python_dependencies": "statsmodels>=0.13.0",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
