@@ -86,6 +86,42 @@ def test_gmse_function():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_gmse_evaluate_by_index():
+    """GMSE evaluate_by_index equals jackknife pseudo-values from evaluate.
+
+    Regression test for the closed-form ``_evaluate_by_index``: on a small
+    sample containing a zero error (index 2), the by-index values must equal
+    the jackknife definition, ``n * evaluate(all) - (n - 1) * evaluate``
+    on the sample with the i-th point dropped, for both ``square_root``
+    settings. The zero error exercises the EPS substitution, which must be
+    identical in ``evaluate`` and ``evaluate_by_index``.
+    """
+    from sktime.performance_metrics.forecasting import GeometricMeanSquaredError
+
+    y_true = pd.Series([3.0, -0.5, 2.0, 7.0, 2.0, 5.0, 1.0])
+    y_pred = pd.Series([2.5, 0.0, 2.0, 8.0, 1.25, 4.0, 1.5])
+    n = len(y_true)
+
+    for square_root in (False, True):
+        metric = GeometricMeanSquaredError(square_root=square_root)
+        by_index = metric.evaluate_by_index(y_true, y_pred)
+        theta = metric.evaluate(y_true, y_pred)
+        expected = pd.Series(
+            [
+                n * theta
+                - (n - 1)
+                * metric.evaluate(y_true.drop(i), y_pred.drop(i))
+                for i in range(n)
+            ],
+            index=y_true.index,
+        )
+        assert np.allclose(by_index, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_linex_class():
     """Doctest from MeanLinexError."""
     from sktime.performance_metrics.forecasting import MeanLinexError
