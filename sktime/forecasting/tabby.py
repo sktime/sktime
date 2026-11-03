@@ -47,6 +47,17 @@ class TabbyForecaster(BaseForecaster):
     revision : str or None, default=None
         Hugging Face repository revision to load.
 
+    Notes
+    -----
+    - The forecast horizon is capped at 8,176 steps (the model's 8,192
+      context minus its patch size of 16). Larger horizons raise an error.
+    - The model masks at least 128 future positions, so at most
+      ``8192 - max(H, 128)`` of the most recent history points are used,
+      where ``H`` is the largest requested horizon step. Older history is
+      truncated.
+    - NaNs in the history are passed to the model as is; no imputation or
+      scaling is applied.
+
     See Also
     --------
     BaseForecaster : Base class for ``sktime`` forecasters.
