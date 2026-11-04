@@ -74,6 +74,11 @@ class TafsutForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_tafsut"],
         "serialization:skip": ("model",),
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "tafsut": 'TafsutForecaster(model_path="Tafsut-FM/tafsut-univariate-base")',
+        },
     }
 
     def __init__(

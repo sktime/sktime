@@ -92,6 +92,22 @@ class Chronos2Forecaster(BaseForecaster):
         "serialization:skip": ("model_pipeline",),
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_chronos2"],
+        # Shorthands for quick use
+        # ------------------------
+        "shorthands": {
+            "chronos_2": (
+                'Chronos2Forecaster(model_path="amazon/chronos-2", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_2_small": (
+                'Chronos2Forecaster(model_path="autogluon/chronos-2-small", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_2_synth": (
+                'Chronos2Forecaster(model_path="autogluon/chronos-2-synth", '
+                'config={"device_map": "auto"})'
+            ),
+        },
     }
 
     _default_config = {

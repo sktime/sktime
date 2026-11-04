@@ -74,9 +74,6 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
         "capability:multivariate": False,
         "capability:update": True,
         "X-y-must-have-same-index": True,
-        # CI and test flags
-        # -----------------
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):
