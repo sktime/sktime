@@ -658,6 +658,10 @@ class BaseForecastingErrorMetric(BaseMetric):
                 kwargs_i = kwargs.copy()
                 if "y_pred_benchmark" in kwargs.keys():
                     kwargs_i["y_pred_benchmark"] = kwargs["y_pred_benchmark"].drop(idx)
+                # weights are per time point, so drop the i-th weight as well
+                for key in ("sample_weight", "horizon_weight"):
+                    if kwargs.get(key) is not None:
+                        kwargs_i[key] = np.delete(np.asarray(kwargs[key]), i)
                 pseudovalue = n * x_bar - (n - 1) * self.evaluate(
                     y_true.drop(idx),
                     y_pred.drop(idx),
