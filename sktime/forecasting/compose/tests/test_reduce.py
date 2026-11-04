@@ -887,3 +887,37 @@ def test_recursive_reduction_with_period_index():
     manual_pred = manual_lr.predict(manual_input)
 
     assert np.allclose(y_pred, manual_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
+    reason="run test only if forecasting or split module has changed",
+)
+@pytest.mark.parametrize(
+    "index",
+    [
+        pd.period_range("2020-01", periods=40, freq="M"),
+        pd.date_range("2020-01-31", periods=40, freq="ME"),
+        pd.date_range("2020-01-01", periods=40, freq="D"),
+        pd.RangeIndex(40),
+    ],
+    ids=["PeriodIndex-M", "DatetimeIndex-ME", "DatetimeIndex-D", "RangeIndex"],
+)
+def test_recursive_reduction_predict_index_types(index):
+    """Test out-of-sample predict for the supported index types.
+
+    ``ForecastingHorizon.freq`` reports the ``DatetimeIndex`` offset alias, e.g.
+    ``"ME"`` for monthly. Passing that to ``PeriodIndex.asfreq``, which only
+    accepts period aliases such as ``"M"``, raised
+    ``ValueError: Invalid frequency: ME``.
+    """
+    y = pd.Series(np.arange(40, dtype=float), index=index)
+
+    forecaster = RecursiveReductionForecaster(
+        estimator=LinearRegression(), window_length=6
+    )
+    forecaster.fit(y)
+    y_pred = forecaster.predict(fh=[1, 2, 3])
+
+    assert len(y_pred) == 3
+    assert not np.asarray(y_pred).ravel().tolist() == [np.nan] * 3
