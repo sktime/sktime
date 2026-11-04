@@ -92,7 +92,8 @@ class TimerForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:insample": False,
-        # CI and test tags
+        "capability:update": True,
+        # CI and test flags
         # ----------------
         "tests:vm": True,
     }
@@ -168,6 +169,48 @@ class TimerForecaster(BaseForecaster):
         # Timer requires at least input_token_len observations.
         # If the input is too short, we pad it with zeros at the beginning
         # to satisfy the model's structural requirements (e.g., for testing).
+        min_len = self.model_.config.input_token_len
+        if len(self._y_train) < min_len:
+            pad_len = min_len - len(self._y_train)
+            pad_arr = np.zeros(pad_len, dtype=np.float32)
+            self._y_train = np.concatenate([pad_arr, self._y_train])
+
+        return self
+
+    def _update(self, y, X=None, update_params=True):
+        """Update forecaster with new data.
+
+        Timer is a zero-shot foundation model: prediction only needs the trailing
+        ``context_length`` observations (see ``_predict``). Retaining all
+        historical data in ``self._cur_y`` is unnecessary, so we trim
+        ``self._cur_y`` to the latest ``context_length`` observations after
+        appending new data, and refresh ``self._y_train``.
+
+        Parameters
+        ----------
+        y : pd.Series
+            New endogenous time series observations.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables. Ignored.
+        update_params : bool, optional (default=True)
+            Whether model parameters should be updated. Ignored.
+
+        Returns
+        -------
+        self : reference to self
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+
+        if self.context_length is not None and len(self._cur_y) > self.context_length:
+            self._cur_y = self._cur_y.tail(self.context_length)
+
+        self._y_train = self._cur_y.values.astype(np.float32)
+
+        if self.model_ is None:
+            self.model_ = self._load_model()
+
         min_len = self.model_.config.input_token_len
         if len(self._y_train) < min_len:
             pad_len = min_len - len(self._y_train)
