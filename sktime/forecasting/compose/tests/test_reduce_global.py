@@ -426,3 +426,41 @@ def test_timezoneaware_index():
 
     # These should give us identical predictions
     np.testing.assert_almost_equal(pred_tzaware.values, pred_tznaive.values)
+
+
+@pytest.mark.parametrize("invalid_val", [np.nan, np.inf, -np.inf])
+@pytest.mark.parametrize(
+    "forecaster_cls",
+    [
+        "DirectTabularRegressionForecaster",
+        "RecursiveTabularRegressionForecaster",
+    ],
+)
+def test_global_reduction_nan_inf_returns_nan(invalid_val, forecaster_cls):
+    """Test that global pooling reducer returns NaN when window contains NaN or Inf.
+
+    Fixes #11521.
+    """
+    from sklearn.linear_model import LinearRegression
+
+    import sktime.forecasting.compose as compose
+
+    forecaster_type = getattr(compose, forecaster_cls)
+    y = pd.DataFrame({"y": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]})
+    fh = [1, 2, 3]
+
+    reducer = forecaster_type(
+        estimator=LinearRegression(),
+        window_length=3,
+        pooling="global",
+    )
+    reducer.fit(y, fh=fh)
+
+    # Clean data returns valid forecasts
+    res_clean = reducer.predict(fh=fh)
+    assert not res_clean.isna().any().any()
+
+    # Invalid value in last window triggers NaN predictions
+    reducer._cur_y.iloc[-1, 0] = invalid_val
+    res_invalid = reducer.predict(fh=fh)
+    assert res_invalid.isna().all().all()
