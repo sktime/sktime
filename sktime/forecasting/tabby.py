@@ -84,7 +84,7 @@ class TabbyForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "requires-fh-in-fit": False,
-        "python_dependencies": ["torch", "transformers", "einops"],
+        "python_dependencies": ["torch", "transformers"],
         "authors": ["saptadeep12"],
         "maintainers": ["saptadeep12"],
         "tests:vm": True,

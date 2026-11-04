@@ -10,7 +10,6 @@ from typing import Any, List, Optional, Tuple
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from einops import rearrange
 from transformers.modeling_utils import PreTrainedModel
 from transformers.utils import ModelOutput, logging
 
@@ -150,10 +149,11 @@ class PatchTSTFMModel(PatchTSTFMPreTrainedModel):
         pred_mask = pred_mask.bool()  # to(self.device).bool()
         miss_mask = miss_mask.bool()  # to(self.device).bool()
         if x.ndim > 2:
-            x = rearrange(x, "B N T -> (B N) T")
-            pad_mask = rearrange(pad_mask, "B N T -> (B N) T")
-            pred_mask = rearrange(pred_mask, "B N T -> (B N) T")
-            miss_mask = rearrange(miss_mask, "B N T -> (B N) T")
+            batch_size, num_channels, time_points = x.shape
+            x = x.reshape(batch_size * num_channels, time_points)
+            pad_mask = pad_mask.reshape(batch_size * num_channels, time_points)
+            pred_mask = pred_mask.reshape(batch_size * num_channels, time_points)
+            miss_mask = miss_mask.reshape(batch_size * num_channels, time_points)
 
         B, T = x.shape
         ts_mask = pred_mask | pad_mask | miss_mask
@@ -483,10 +483,18 @@ class PatchTSTFMForPrediction(PatchTSTFMPreTrainedModel):
             )
 
         # we are B T N, but backbone wants (B N) T
-        inputs = rearrange(inputs, "B T N -> (B N) T")
-        pred_mask = rearrange(pred_mask, "B T N -> (B N) T")
-        miss_mask = rearrange(miss_mask, "B T N -> (B N) T")
-        pad_mask = rearrange(pad_mask, "B T N -> (B N) T")
+        inputs = inputs.permute(0, 2, 1).reshape(
+            batch_size * inputs.shape[2], inputs.shape[1]
+        )
+        pred_mask = pred_mask.permute(0, 2, 1).reshape(
+            batch_size * pred_mask.shape[2], pred_mask.shape[1]
+        )
+        miss_mask = miss_mask.permute(0, 2, 1).reshape(
+            batch_size * miss_mask.shape[2], miss_mask.shape[1]
+        )
+        pad_mask = pad_mask.permute(0, 2, 1).reshape(
+            batch_size * pad_mask.shape[2], pad_mask.shape[1]
+        )
 
         with torch.autocast(
             device_type=self._device, dtype=self._precision, enabled=True
@@ -503,7 +511,8 @@ class PatchTSTFMForPrediction(PatchTSTFMPreTrainedModel):
 
         outputs = outputs.permute(0, 2, 1)
         outputs = self.backbone.norm_fn.inverse_transform(outputs)
-        outputs = rearrange(outputs, "(B N) Q T -> B Q T N", B=batch_size)
+        outputs = outputs.reshape(batch_size, -1, outputs.shape[1], outputs.shape[2])
+        outputs = outputs.permute(0, 2, 3, 1)
 
         # sample_length <= self.config.context_length
         # ts_ends should always be self.config.context_length
@@ -670,10 +679,18 @@ class PatchTSTFMForPrediction(PatchTSTFMPreTrainedModel):
         ts_ends = torch.stack(ts_ends, dim=0)
 
         # we are B T N, but backbone wants (B N) T
-        inputs = rearrange(inputs, "B T N -> (B N) T")
-        pred_mask = rearrange(pred_mask, "B T N -> (B N) T")
-        miss_mask = rearrange(miss_mask, "B T N -> (B N) T")
-        pad_mask = rearrange(pad_mask, "B T N -> (B N) T")
+        inputs = inputs.permute(0, 2, 1).reshape(
+            batch_size * inputs.shape[2], inputs.shape[1]
+        )
+        pred_mask = pred_mask.permute(0, 2, 1).reshape(
+            batch_size * pred_mask.shape[2], pred_mask.shape[1]
+        )
+        miss_mask = miss_mask.permute(0, 2, 1).reshape(
+            batch_size * miss_mask.shape[2], miss_mask.shape[1]
+        )
+        pad_mask = pad_mask.permute(0, 2, 1).reshape(
+            batch_size * pad_mask.shape[2], pad_mask.shape[1]
+        )
 
         with torch.autocast(
             device_type=self._device, dtype=self._precision, enabled=True
@@ -690,7 +707,8 @@ class PatchTSTFMForPrediction(PatchTSTFMPreTrainedModel):
 
         outputs = outputs.permute(0, 2, 1)
         outputs = self.backbone.norm_fn.inverse_transform(outputs)
-        outputs = rearrange(outputs, "(B N) Q T -> B Q T N", B=batch_size)
+        outputs = outputs.reshape(batch_size, -1, outputs.shape[1], outputs.shape[2])
+        outputs = outputs.permute(0, 2, 3, 1)
 
         x_preds = []
         for i in range(outputs.shape[0]):
