@@ -4,6 +4,7 @@
 __author__ = ["SimonBlanke", "srupat"]
 
 from collections import defaultdict
+from copy import deepcopy
 
 from skbase.base import BaseObject
 from skbase.base._clone_base import _check_clone, _clone
@@ -106,6 +107,19 @@ class _PretrainMixin:
         """
         return self._state
 
+    def _detach_pretrained_state(self):
+        """Detach shared pretrained attributes by creating private deepcopies.
+
+        Ensures copy-on-write semantics: when pretrained attributes are shared
+        across cloned instances (reducing memory footprint in grid search/CV),
+        modifying operations detach the instance before mutating shared state.
+        """
+        if getattr(self, "_has_shared_pretrained_attrs", False):
+            for attr in getattr(self, "_pretrained_attrs", []):
+                if hasattr(self, attr):
+                    setattr(self, attr, deepcopy(getattr(self, attr)))
+            self._has_shared_pretrained_attrs = False
+
     def _pretrain_and_track(self, **kwargs):
         """Run ``_pretrain`` or ``_pretrain_update``, track new attributes.
 
@@ -124,6 +138,8 @@ class _PretrainMixin:
         -------
         self : reference to self
         """
+        self._detach_pretrained_state()
+
         prior_attrs = {
             a for a in dir(self) if a.endswith("_") and not a.startswith("_")
         }
@@ -247,12 +263,17 @@ class _PretrainMixin:
         """Save protected pretrained attributes before an in-place reset."""
         if not getattr(self, "_pretrained_attrs", None):
             return {}
+        self._detach_pretrained_state()
         attr_names = self._get_protected_pretrained_attrs()
-        saved = {a: getattr(self, a) for a in attr_names if hasattr(self, a)}
+        saved = {a: deepcopy(getattr(self, a)) for a in attr_names if hasattr(self, a)}
         if saved:
             # restore a runtime list consistent with the surviving attrs,
             # so get_pretrained_params and the clone plugin keep working
             saved["_pretrained_attrs"] = [a for a in attr_names if a in saved]
+            if hasattr(self, "_has_shared_pretrained_attrs"):
+                saved["_has_shared_pretrained_attrs"] = (
+                    self._has_shared_pretrained_attrs
+                )
         return saved
 
     def _restore_pretrained_state(self, saved):
