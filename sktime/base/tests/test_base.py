@@ -566,3 +566,25 @@ def test_eq_dunder_checks_class():
 
     # comparison against a non-BaseObject must not raise, and must be unequal
     assert unrelated_1 != 42
+
+
+def test_save_load_version_warning():
+    """Test that a UserWarning is issued when loading an object saved under a different version."""
+    import pytest
+
+    from sktime.base import load
+
+    dummy = CompositionDummy(foo=42)
+    pkl = dummy.save()
+
+    # Loading under the same version should emit no warning
+    loaded = load(pkl)
+    assert loaded.foo == 42
+
+    # Simulate object saved under a different version
+    dummy._sktime_version = "0.0.1"
+    pkl_old = (type(dummy), dummy.save()[1])
+
+    with pytest.warns(UserWarning, match="differs from the current sktime version"):
+        loaded_old = load(pkl_old)
+        assert loaded_old.foo == 42
