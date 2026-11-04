@@ -678,15 +678,6 @@ class PatchTSTForecaster(BaseForecaster):
         """
         import platform
 
-        os = platform.system()
-        if os == "Darwin":
-            if _check_soft_dependencies("torch", severity="none"):
-                import torch
-
-                torch.backends.mps.is_available = lambda: False
-            else:
-                pass
-
         params_set = []
         params1 = {
             "config": {
@@ -730,6 +721,10 @@ class PatchTSTForecaster(BaseForecaster):
             "validation_split": 0.0,
         }
         params_set.append(params2)
+        # Keep the macOS test models on CPU without changing PyTorch globally.
+        if platform.system() == "Darwin":
+            for params in params_set:
+                params["training_args"]["use_cpu"] = True
 
         return params_set
 

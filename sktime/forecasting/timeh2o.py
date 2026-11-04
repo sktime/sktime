@@ -97,9 +97,8 @@ class TimeH2OForecaster(BaseForecaster):
         "capability:non_contiguous_X": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
-        "tests:vm": True,
-        # Generic tests cannot accept the gated weight license or authenticate.
-        # Offline interface tests and an opt-in integration test live below.
+        # The default checkpoint requires gated access. The dedicated test
+        # module checks conformance offline and provides an opt-in weight test.
         "tests:skip_all": True,
         "tests:specific": ["sktime.forecasting.tests.test_timeh2o"],
     }
@@ -220,9 +219,11 @@ class TimeH2OForecaster(BaseForecaster):
             columns=self._cur_y.columns,
         )
 
-    def _predict_quantiles(self, fh, X, alpha):
+    def _predict_quantiles(self, alpha, **kwargs):
         """Return upstream quantiles in sktime variable-major order."""
-        output, positions, index = self._run_forecast(fh, X, alpha)
+        output, positions, index = self._run_forecast(
+            fh=kwargs["fh"], X=kwargs.get("X"), alpha=alpha
+        )
         values = np.asarray(output.quantiles).transpose(1, 0, 2)[positions]
         columns = pd.MultiIndex.from_product([self._get_varnames(), alpha])
         return pd.DataFrame(

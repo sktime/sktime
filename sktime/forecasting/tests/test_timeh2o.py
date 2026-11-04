@@ -8,6 +8,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from sktime.forecasting.timeh2o import TimeH2OForecaster
+
+
+class _OfflineTimeH2OForecaster(TimeH2OForecaster):
+    __doc__ = TimeH2OForecaster.__doc__
+
+    # A separate class keeps cached production tags intact during test discovery.
+    _tags = {"python_dependencies": [], "python_version": None}
+
 
 class _Model:
     """Deterministic substitute for the gated, optional inference boundary."""
@@ -32,12 +41,8 @@ class _Model:
 @pytest.fixture
 def forecaster_class(monkeypatch):
     """Replace only the optional upstream model and its network loading."""
-    from sktime.forecasting.timeh2o import TimeH2OForecaster
-
     monkeypatch.setitem(sys.modules, "h2ofm", types.SimpleNamespace(TimeH2O=_Model))
-    monkeypatch.setitem(TimeH2OForecaster._tags, "python_dependencies", [])
-    monkeypatch.setitem(TimeH2OForecaster._tags, "python_version", None)
-    return TimeH2OForecaster
+    return _OfflineTimeH2OForecaster
 
 
 @pytest.mark.parametrize(
@@ -247,7 +252,6 @@ def test_options_forwarding_and_ownership(forecaster_class, monkeypatch):
 def test_timeh2o_real_checkpoint():
     """Exercise the actual gated checkpoint only when explicitly requested."""
     pytest.importorskip("h2ofm")
-    from sktime.forecasting.timeh2o import TimeH2OForecaster
 
     y = pd.Series(np.sin(np.arange(64) / 10), name="target")
     f = TimeH2OForecaster(device="cpu").fit(y)
