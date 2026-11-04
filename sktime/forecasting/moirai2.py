@@ -280,8 +280,8 @@ class Moirai2Forecaster(BaseForecaster):
 
         if not hasattr(self, "model") or self.model is None:
             model_kwargs = self._get_model_kwargs(
-                y=self._y,
-                X=self._X,
+                y=self._cur_y,
+                X=self._cur_X,
                 prediction_length=max(fh._values),
             )
             self.model = self._load_model(model_kwargs)

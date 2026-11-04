@@ -313,6 +313,7 @@ class T0Forecaster(BaseForecaster):
         # T0 expects context as (n_series, n_timesteps); each y column is a series
         self.context_ = context.values.T
         self._y_index_names = y.index.names
+        self._cur_X = X
         return self
 
     def _predict(self, fh, X):
@@ -478,7 +479,7 @@ class T0Forecaster(BaseForecaster):
         y : sktime time series in ``y_inner_mtype`` format
             New observations to append to the context.
         X : sktime time series in ``X_inner_mtype`` format, optional
-            New exogenous observations (ignored here, handled by base class).
+            New exogenous observations, appended to the stored exogenous data.
         update_params : bool, optional (default=True)
             Ignored; included for interface compatibility.
 
@@ -486,6 +487,8 @@ class T0Forecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        from sktime.datatypes import update_data
+
         new_vals = y.values.T  # shape (n_series, n_new_timesteps)
         self.context_ = np.concatenate([self.context_, new_vals], axis=1)
 
@@ -495,6 +498,8 @@ class T0Forecaster(BaseForecaster):
         ):
             self.context_ = self.context_[:, -self.context_length :]
 
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
         return self
 
     def _build_future_covariates(self, X, n_series, context_len, horizon):
@@ -502,7 +507,7 @@ class T0Forecaster(BaseForecaster):
 
         T0 requires covariates spanning the context window and the horizon, i.e.
         shape ``(n_series, n_covariates, context_len + horizon)``. The context part
-        is taken from the exogenous data seen in ``fit`` (``self._X``), the horizon
+        is taken from the exogenous data seen in ``fit`` (``self._cur_X``), the horizon
         part from the exogenous data ``X`` passed to ``predict``.
 
         Returns ``None`` if no exogenous data is available.
@@ -512,14 +517,14 @@ class T0Forecaster(BaseForecaster):
 
         import torch
 
-        if self._X is None:
+        if self._cur_X is None:
             raise ValueError(
                 "X was not provided in fit but is provided in predict. "
                 "To use future covariates, provide past covariate values "
                 "in fit as well."
             )
 
-        past = self._X.values[-context_len:]  # (context_len, n_covariates)
+        past = self._cur_X.values[-context_len:]  # (context_len, n_covariates)
         future = X.values[:horizon]  # (horizon, n_covariates)
         covariates = np.concatenate([past, future], axis=0)  # (ctx+horizon, n_cov)
 
