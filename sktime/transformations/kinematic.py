@@ -118,9 +118,8 @@ class KinematicFeatures(BaseTransformer):
         def absq_rows(df, col="absq"):
             """Compute DataFrame with one col, absolute value square of rows of df."""
             abs_frame = df**2
-            abs_frame = abs_frame.agg(["sum"], axis=1)
-            abs_frame.columns = [col]
-            return abs_frame
+            # Keep the transposed reduction order used by agg(["sum"], axis=1).
+            return abs_frame.T.sum(axis=0).to_frame(name=col)
 
         def abs_rows(df, col="abs"):
             """Compute DataFrame with single column, absolute value of rows of df."""
