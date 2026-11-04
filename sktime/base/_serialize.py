@@ -32,6 +32,15 @@ def load(serial):
     -------
     Deserialized self resulting in output `serial`, of `cls.save`
 
+    Notes
+    -----
+    Serialized estimator objects are **not** guaranteed to be compatible
+    across different versions of ``sktime``. Loading an estimator that was
+    saved with a different version may succeed silently but produce an
+    object that is broken due to structural changes (e.g., parameters added
+    or removed from the constructor). Always save and load estimators using
+    the same version of ``sktime``.
+
     Examples
     --------
     Example 1: saving an estimator in-memory and loading it back
