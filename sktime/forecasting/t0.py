@@ -90,11 +90,6 @@ class T0Forecaster(BaseForecaster):
     ignore_deps : bool, optional, default=False
         If True, dependency checks are skipped.
 
-    Attributes
-    ----------
-    model_ : t0.T0Forecaster
-        The underlying T0 model used for forecasting.
-
     References
     ----------
     .. [1] https://github.com/theforecastingcompany/tfc-t0
@@ -173,7 +168,6 @@ class T0Forecaster(BaseForecaster):
         # -------------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_t0"],
-        "serialization:skip": ("model_",),
         # Shorthands
         # -----------
         "shorthands": {
@@ -199,8 +193,6 @@ class T0Forecaster(BaseForecaster):
         self.random_state = random_state
         self.license_accepted = license_accepted
         self.ignore_deps = ignore_deps
-
-        self.model_ = None
 
         super().__init__()
 
@@ -252,11 +244,6 @@ class T0Forecaster(BaseForecaster):
             key=self._get_unique_key(),
             t0_kwargs=self._get_model_kwargs(),
         ).load_from_checkpoint()
-
-    def _ensure_model_loaded(self):
-        """Reload the model if needed, e.g. after unpickling."""
-        if not hasattr(self, "model_") or self.model_ is None:
-            self.model_ = self._load_model()
 
     @classmethod
     def print_license(cls):
@@ -317,7 +304,7 @@ class T0Forecaster(BaseForecaster):
         self : reference to self
         """
         self._check_license()
-        self.model_ = self._load_model()
+        self._load_model()
 
         context = y
         if self.context_length is not None and context.shape[0] > self.context_length:
@@ -439,7 +426,7 @@ class T0Forecaster(BaseForecaster):
         """
         import torch
 
-        self._ensure_model_loaded()
+        model = self._load_model()
 
         horizon = int(max(fh.to_relative(self.cutoff)))
 
@@ -458,7 +445,7 @@ class T0Forecaster(BaseForecaster):
         else:
             rng_context = torch.random.fork_rng(devices=[])
 
-        sig = inspect.signature(self.model_.predict)
+        sig = inspect.signature(model.predict)
         if "quantile_levels" in sig.parameters:
             predict_kwargs["quantile_levels"] = quantiles
         else:
@@ -467,7 +454,7 @@ class T0Forecaster(BaseForecaster):
         with rng_context:
             if self._random_state is not None:
                 torch.manual_seed(self._random_state)
-            out = self.model_.predict(context, horizon=horizon, **predict_kwargs)
+            out = model.predict(context, horizon=horizon, **predict_kwargs)
 
         index = (
             ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
