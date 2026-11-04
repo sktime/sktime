@@ -273,3 +273,111 @@ class TestAllClassifiers(ClassifierFixtureGenerator, QuickTester):
         object_instance.fit(X_train, y_train)
         y_pred = object_instance.predict(X_train)
         assert set(np.unique(y_pred)).issubset(set(unique))
+
+    def test_pretrain_capability_tag(self, object_instance):
+        """Test that classifiers with capability:pretrain implement _pretrain.
+
+        The converse is not checked, since composites may override ``_pretrain``,
+        and set the tag depending on their components.
+        """
+        from sktime.classification.base import BaseClassifier
+
+        can_pretrain = object_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+        if not can_pretrain:
+            return None
+
+        has_custom_pretrain = (
+            type(object_instance)._pretrain is not BaseClassifier._pretrain
+        )
+        assert has_custom_pretrain, (
+            f"{type(object_instance).__name__} has the tag "
+            "capability:pretrain=True but does not override _pretrain"
+        )
+
+    @pytest.mark.parametrize("pass_y", [False, True], ids=["y_none", "y_labels"])
+    def test_pretrain_is_noop(self, object_instance, pass_y):
+        """Test pretrain is callable, and stores nothing without the capability.
+
+        Estimators with the capability are tested in the workflow test, as they
+        may require y in pretrain, e.g., if not capable of self-supervision.
+        """
+        if object_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        X, y = make_classification_problem()
+        estimator = object_instance
+        attrs_before = dict(vars(estimator))
+
+        result = estimator.pretrain(X, y=y if pass_y else None)
+
+        assert result is estimator
+        assert estimator.state == "pretrained"
+        assert not estimator.is_fitted
+        assert estimator.get_pretrained_params() == {}
+        # nothing is stored, only the state changes
+        assert vars(estimator).keys() == attrs_before.keys()
+        unchanged = {k: v for k, v in attrs_before.items() if k != "_state"}
+        assert all(vars(estimator)[k] is v for k, v in unchanged.items())
+
+    def test_pretrain_fit_predict_workflow(self, object_instance):
+        """Test pretrain, fit, refit, and pretrain after fit.
+
+        For classifiers with capability:pretrain, checks the state transitions,
+        and that pretrained parameters are retained by fit, refit, clone,
+        and pretrain after fit, while pretrain after fit discards fitted state.
+        """
+        from sktime.exceptions import NotFittedError
+
+        if not object_instance.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        ):
+            return None
+
+        estimator = object_instance
+        X_pretrain, y_pretrain = make_classification_problem(
+            n_classes=3, random_state=0
+        )
+        X, y = make_classification_problem(random_state=1)
+
+        estimator.pretrain(X_pretrain, y_pretrain)
+        assert estimator.state == "pretrained"
+        assert not estimator.is_fitted
+        pretrained = set(estimator.get_pretrained_params(deep=False))
+
+        # pretrain on a pretrained classifier calls _pretrain_update
+        estimator.pretrain(X_pretrain, y_pretrain)
+        assert estimator.state == "pretrained"
+        assert pretrained <= set(estimator.get_pretrained_params(deep=False))
+
+        estimator.fit(X, y)
+        assert estimator.state == "fitted"
+        assert pretrained <= set(estimator.get_pretrained_params(deep=False))
+        # keys of get_fitted_params are attribute names without the trailing "_"
+        fitted = set(estimator.get_fitted_params(deep=False))
+        assert {attr[:-1] for attr in pretrained}.isdisjoint(fitted)
+        y_pred = estimator.predict(X)
+        assert len(y_pred) == len(y)
+
+        # refit retains the pretrained state
+        estimator.fit(X, y)
+        assert estimator.state == "fitted"
+        assert pretrained <= set(estimator.get_pretrained_params(deep=False))
+
+        # clone retains the pretrained state, but not the fitted state
+        cloned = estimator.clone()
+        assert cloned.state == "pretrained"
+        assert pretrained <= set(cloned.get_pretrained_params(deep=False))
+
+        # pretrain after fit discards the fitted state,
+        # and retains the pretrained state
+        estimator.pretrain(X_pretrain, y_pretrain)
+        assert estimator.state == "pretrained"
+        assert not estimator.is_fitted
+        assert pretrained <= set(estimator.get_pretrained_params(deep=False))
+        assert len(estimator.classes_) == 0
+        with pytest.raises(NotFittedError):
+            estimator.predict(X)
