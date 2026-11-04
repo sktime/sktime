@@ -715,3 +715,65 @@ def test_maep_evaluate_by_index_is_jackknife(y_true, y_pred):
 
     by_index = metric.evaluate_by_index(y_true, y_pred)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("square_root", [False, True])
+@pytest.mark.parametrize("sign", [1.0, -1.0])
+def test_msep_evaluate_by_index_negative_mean(square_root, sign):
+    """MSE% evaluate_by_index is consistent with evaluate for negative-mean series.
+
+    Each by-index value is the jackknife pseudo-value n * MSE% - (n - 1) * MSE%_{-i},
+    with MSE%_{-i} computed independently by evaluating the metric with the i-th
+    point removed. Results must not depend on the sign of the series. Failure case
+    of #11638: sign-flipped values, or all NaN with ``square_root=True``.
+    """
+    from sktime.performance_metrics.forecasting import MeanSquaredErrorPercentage
+
+    metric = MeanSquaredErrorPercentage(square_root=square_root)
+    y_true = sign * pd.Series([2.0, 4.0, 6.0, 1.0])
+    y_pred = sign * pd.Series([3.0, 4.0, 5.0, 1.5])
+    n = len(y_true)
+
+    full = metric(y_true, y_pred)
+    expected = [
+        n * full - (n - 1) * metric(y_true.drop(i), y_pred.drop(i)) for i in range(n)
+    ]
+
+    by_index = metric.evaluate_by_index(y_true, y_pred)
+    mirrored = metric.evaluate_by_index(-y_true, -y_pred)
+
+    assert not by_index.isna().any()
+    assert np.allclose(by_index.to_numpy(), expected)
+    assert np.allclose(by_index.to_numpy(), mirrored.to_numpy())
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_msep_rmse_percentage_is_unit_free():
+    """RMSE% is sqrt(MSE) / |mean(y_true)|, hence unit-free.
+
+    Failure case: RMSE% computed as sqrt(MSE / |mean(y_true)|), which changes
+    when the data is rescaled.
+    """
+    from sktime.performance_metrics.forecasting import MeanSquaredErrorPercentage
+
+    metric = MeanSquaredErrorPercentage(square_root=True)
+    y_true = np.array([1.0, 2.0, 3.0])
+    y_pred = np.array([1.0, 2.0, 4.0])
+
+    expected = np.sqrt(np.mean((y_true - y_pred) ** 2)) / abs(y_true.mean())
+    assert np.allclose(metric(y_true, y_pred), expected)
+    assert np.allclose(metric(100 * y_true, 100 * y_pred), expected)
+    assert np.allclose(metric(-y_true, -y_pred), expected)
+
+    # leave-one-out MSE is exactly zero at the only erroneous point
+    y_true_one = pd.Series([1.0, 2.0, 3.0, 4.0])
+    y_pred_one = pd.Series([1.0, 2.0, 3.0, 5.0])
+    by_index = metric.evaluate_by_index(y_true_one, y_pred_one)
+    assert not by_index.isna().any()

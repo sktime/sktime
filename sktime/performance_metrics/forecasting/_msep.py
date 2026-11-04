@@ -20,24 +20,27 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
     The Mean Squared Error Percentage (MSE%) is calculated as:
 
     .. math::
-        \\text{MSE%} = \\frac{ \\frac{1}{n} \\sum_{i=1}^{n} (y_i - \\hat{y}_i)^2 }
-                            { \left| \\sum_{i=1}^{n} \\frac{y_i}{n} \right| }
+        \text{MSE\%} = \frac{\frac{1}{n}\sum_{i=1}^n (y_i - \widehat{y}_i)^2}
+                            {\left|\frac{1}{n}\sum_{i=1}^n y_i\right|}
 
-    where:
-    - \\( y_i \\) are the true values,
-    - \\( \\hat{y}_i \\) are the predicted values,
-    - \\( n \\) is the number of observations.
+    where :math:`y_i` are the true values, :math:`\widehat{y}_i` are the
+    predicted values, and :math:`n` is the number of observations.
 
     If ``square_root`` is set to True,
-    the Root Mean Squared Error Percentage (RMSE%) is computed:
+    the Root Mean Squared Error Percentage (RMSE%) is computed,
+    the root mean squared error as a fraction of the absolute mean of the true values:
 
     .. math::
-        \\text{RMSE%} = \\sqrt{ \\text{MSE%} }
+        \text{RMSE\%} = \frac{\sqrt{\frac{1}{n}\sum_{i=1}^n (y_i - \widehat{y}_i)^2}}
+                             {\left|\frac{1}{n}\sum_{i=1}^n y_i\right|}
+
+    RMSE% is unit-free, i.e., rescaling the data does not change its value.
 
     Parameters
     ----------
     square_root : bool, default = False
-        Whether to take the square root of the metric
+        Whether to compute RMSE% instead of MSE%, i.e., take the square root of the
+        mean squared error before dividing by the absolute mean of the true values
 
     multioutput : 'uniform_average' (default), 1D array-like, or 'raw_values'
         Whether and how to aggregate metric for multivariate (multioutput) data.
@@ -79,6 +82,14 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
     >>> msep = MeanSquaredErrorPercentage()
     >>> round(float(msep(y_true, y_pred)), 3)
     0.167
+
+    RMSE% is unit-free, so the same forecast in different units gives the same value:
+
+    >>> rmsep = MeanSquaredErrorPercentage(square_root=True)
+    >>> round(float(rmsep(y_true, y_pred)), 3)
+    0.289
+    >>> round(float(rmsep(100 * y_true, 100 * y_pred)), 3)
+    0.289
     """
 
     def __init__(
@@ -129,10 +140,11 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         num = raw_values.mean()
         denom = y_true.mean().abs()
 
-        msqe = num / denom
-
+        # RMSE%: the square root applies to the MSE only, keeping the metric unit-free
         if self.square_root:
-            msqe = msqe.pow(0.5)
+            num = num.pow(0.5)
+
+        msqe = num / denom
 
         return self._handle_multioutput(msqe, multioutput)
 
@@ -180,12 +192,15 @@ class MeanSquaredErrorPercentage(BaseForecastingErrorMetricFunc):
         num_jk = num_mean * (1 + 1 / (n - 1)) - raw_values_mse / (n - 1)
         denom_jk = denom_mean * (1 + 1 / (n - 1)) - raw_values_p / (n - 1)
 
-        msep_jk = num_jk / denom_jk
-        msep = num_mean / denom_mean
-
+        # RMSE%: the square root applies to the MSE only, consistent with _evaluate;
+        # leave-one-out MSEs can be slightly negative due to floating point rounding
         if self.square_root:
-            msep_jk = msep_jk.pow(0.5)
-            msep = msep.pow(0.5)
+            num_mean = num_mean.pow(0.5)
+            num_jk = num_jk.clip(lower=0).pow(0.5)
+
+        # absolute value of the mean, consistent with _evaluate
+        msep_jk = num_jk / denom_jk.abs()
+        msep = num_mean / denom_mean.abs()
 
         pseudo_values = n * msep - (n - 1) * msep_jk
         pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
