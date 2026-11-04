@@ -111,6 +111,13 @@ class Moirai2Forecaster(BaseForecaster):
         "tests:vm": True,
         "tests:libs": ["sktime.libs.uni2ts"],
         "tests:specific": ["sktime.forecasting.tests.test_moirai2"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "moirai_2": (
+                'Moirai2Forecaster(checkpoint_path="Salesforce/moirai-2.0-R-small")'
+            ),
+        },
     }
 
     def __init__(

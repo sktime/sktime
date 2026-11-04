@@ -69,7 +69,7 @@ Recommended steps for first time contributors, or to get started with regular co
 
         +++
 
-        .. button-ref:: installation
+        .. button-ref:: developer-installation
             :color: primary
             :click-parent:
             :expand:

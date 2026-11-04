@@ -163,6 +163,23 @@ def test_get_clone_plugins_no_duplicate_pretrained_cloner():
     assert _Child._get_clone_plugins() == [_PretrainedCloner, _KeepFoo]
 
 
+def test_pretrained_cloner_subclass_handled_like_pretrained_cloner():
+    """Subclasses of _PretrainedCloner are not duplicated, and skipped for "new"."""
+
+    class _CustomCloner(_PretrainedCloner):
+        pass
+
+    class _ParentWithSubclass(BaseObject):
+        @classmethod
+        def _get_clone_plugins(cls):
+            return [_CustomCloner, _KeepFoo]
+
+    class _Child(_PretrainMixin, _ParentWithSubclass):
+        pass
+
+    assert _Child._get_clone_plugins() == [_PretrainedCloner, _KeepFoo]
+
+
 def test_clone_at_new_keeps_other_clone_plugins():
     """_clone_at("new") only skips _PretrainedCloner, other plugins still apply."""
     forecaster = _PluginHolder(inner=_make_pretrained_dummy())
