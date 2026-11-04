@@ -51,7 +51,7 @@ class HampelDetector(BaseDetector):
         "capability:missing_values": False,
         "capability:update": False,
         "capability:variable_identification": False,
-        "X_inner_mtype": "pd.Series",
+        "X_inner_mtype": ["pd.Series", "pd-multiindex"],
         "fit_is_empty": True,
     }
 
@@ -61,20 +61,9 @@ class HampelDetector(BaseDetector):
         self.k = k
         super().__init__()
 
-    def _predict(self, X):
-        """
-        Core logic for detecting outliers using a sliding window.
-
-        Returns
-        -------
-        y : pd.Series
-            Sparse series containing the iloc indices of detected anomalies.
-        """
-        x_values = X.values
+    def _detect_series(self, x_values):
         n = len(x_values)
         outlier_indices = []
-
-        # Half-window for a centered approach
         hw = self.window_length // 2
 
         for i in range(n):
@@ -93,16 +82,32 @@ class HampelDetector(BaseDetector):
             if np.abs(x_values[i] - median) > self.n_sigma * sigma_est:
                 outlier_indices.append(i)
 
-        # Return a series that BaseDetector will coerce to the 'ilocs' format
+        return outlier_indices
+
+    def _predict(self, X):
+        """
+        Core logic for detecting outliers using a sliding window.
+
+        Returns
+        -------
+        y : pd.Series
+            Sparse series containing the iloc indices of detected anomalies.
+        """
+        if isinstance(X.index, pd.MultiIndex):
+            all_outliers = []
+            offset = 0
+            for _, group_df in X.groupby(level=list(range(X.index.nlevels - 1))):
+                vals = group_df.iloc[:, 0].to_numpy()
+                outs = self._detect_series(vals)
+                all_outliers.extend([idx + offset for idx in outs])
+                offset += len(vals)
+            return pd.Series(all_outliers, name="ilocs", dtype="int64")
+
+        x_values = X.values
+        outlier_indices = self._detect_series(x_values)
         return pd.Series(outlier_indices, name="ilocs", dtype="int64")
 
-    def _transform_scores(self, X):
-        """
-        Calculate the anomaly scores (deviation in terms of n * sigma_est).
-
-        Anomaly score is the absolute deviation normalized by (k * MAD).
-        """
-        x_values = X.values
+    def _score_series(self, x_values):
         n = len(x_values)
         scores = np.zeros(n)
         hw = self.window_length // 2
@@ -119,6 +124,26 @@ class HampelDetector(BaseDetector):
             denom = np.maximum(self.k * mad, 1e-9)
             scores[i] = np.abs(x_values[i] - median) / denom
 
+        return scores
+
+    def _transform_scores(self, X):
+        """
+        Calculate the anomaly scores (deviation in terms of n * sigma_est).
+
+        Anomaly score is the absolute deviation normalized by (k * MAD).
+        """
+        if isinstance(X.index, pd.MultiIndex):
+            all_scores = np.zeros(len(X))
+            offset = 0
+            for _, group_df in X.groupby(level=list(range(X.index.nlevels - 1))):
+                vals = group_df.iloc[:, 0].to_numpy()
+                scs = self._score_series(vals)
+                all_scores[offset : offset + len(vals)] = scs
+                offset += len(vals)
+            return pd.DataFrame(all_scores, index=X.index, columns=["scores"])
+
+        x_values = X.values
+        scores = self._score_series(x_values)
         return pd.DataFrame(scores, index=X.index, columns=["scores"])
 
     @classmethod
