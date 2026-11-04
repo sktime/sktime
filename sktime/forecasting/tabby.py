@@ -19,25 +19,17 @@ class TabbyForecaster(BaseForecaster):
     wrap its 99 quantile forecasts in the ``sktime`` forecasting interface;
     multivariate series are handled by ``sktime``'s vectorization.
 
-    The Hugging Face model requires ``trust_remote_code=True`` to load. This
-    option is disabled by default because it executes code supplied by the
-    model repository; enable it only if you trust that code. The model is
-    licensed under CC BY-NC 4.0, which restricts commercial use.
-
     .. note::
 
         The Tabby weights are licensed under CC BY-NC 4.0 (non-commercial use)
-        and are not bundled with ``sktime``. Loading the checkpoint with
-        ``trust_remote_code=True`` executes code from the Hugging Face
-        repository. Users should pin ``revision`` when loading remote code.
+        and are not bundled with ``sktime``. The model implementation is
+        vendored under ``sktime.libs.tabby`` under its upstream Apache-2.0
+        license.
 
     Parameters
     ----------
     model_path : str, default="paris-noah/Tabby"
         Hugging Face repository identifier or local path to a Tabby checkpoint.
-    trust_remote_code : bool, default=False
-        Whether to allow Transformers to execute code from the model repository.
-        Tabby cannot be loaded unless this is set to ``True``.
     device : str, default="auto"
         Device on which to place the model, for example ``"cpu"``, ``"cuda"``,
         or ``"auto"``.
@@ -51,10 +43,8 @@ class TabbyForecaster(BaseForecaster):
     -----
     - The forecast horizon is capped at 8,176 steps (the model's 8,192
       context minus its patch size of 16). Larger horizons raise an error.
-    - The model masks at least 128 future positions, so at most
-      ``8192 - max(H, 128)`` of the most recent history points are used,
-      where ``H`` is the largest requested horizon step. Older history is
-      truncated.
+    - The vendored model truncates history to its 8,192-position context and
+      masks the requested future positions.
     - NaNs in the history are passed to the model as is; no imputation or
       scaling is applied.
 
@@ -80,12 +70,13 @@ class TabbyForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.tabby import TabbyForecaster  # doctest: +SKIP
     >>> y = load_airline()
-    >>> forecaster = TabbyForecaster(trust_remote_code=True)  # doctest: +SKIP
+    >>> forecaster = TabbyForecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "capability:multivariate": False,
         "capability:exogenous": False,
         "capability:missing_values": True,
@@ -93,7 +84,7 @@ class TabbyForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int:insample": False,
         "requires-fh-in-fit": False,
-        "python_dependencies": ["torch", "transformers","einops"],
+        "python_dependencies": ["torch", "transformers", "einops"],
         "authors": ["saptadeep12"],
         "maintainers": ["saptadeep12"],
         "tests:vm": True,
@@ -102,13 +93,11 @@ class TabbyForecaster(BaseForecaster):
     def __init__(
         self,
         model_path: str = "paris-noah/Tabby",
-        trust_remote_code: bool = False,
         device: str = "auto",
         dtype=None,
         revision: str | None = None,
     ):
         self.model_path = model_path
-        self.trust_remote_code = trust_remote_code
         self.device = device
         self.dtype = dtype
         self.revision = revision
@@ -123,10 +112,15 @@ class TabbyForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         """Return point forecasts from Tabby's median quantile."""
-        predictions, relative_steps, index = self._predict_quantile_values(fh)
+        predictions, relative_steps, index = self._run_forecast(fh)
+        # Tabby's native grid is 1%-99%; index relative steps from one.
         values = predictions[0, 49, relative_steps - 1].astype("float64")
 
-        return self._make_prediction(values, index)
+        if isinstance(self.context_, pd.Series):
+            return pd.Series(values, index=index, name=self.context_.name)
+        return pd.DataFrame(
+            values, index=index, columns=self.context_.columns, dtype="float64"
+        )
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Return requested Tabby quantiles, interpolating its native grid."""
@@ -138,8 +132,9 @@ class TabbyForecaster(BaseForecaster):
                 "Tabby quantiles are available only for alpha in [0.01, 0.99]."
             )
 
-        predictions, relative_steps, index = self._predict_quantile_values(fh)
+        predictions, relative_steps, index = self._run_forecast(fh)
         grid = np.arange(1, 100, dtype=np.float64) / 100
+        # Map absolute requested steps back to the generated horizon.
         values = np.asarray(
             [
                 [
@@ -157,6 +152,24 @@ class TabbyForecaster(BaseForecaster):
 
         return pd.DataFrame(values, index=index, columns=columns)
 
+    def _predict_proba(self, fh, X=None, marginal=True):
+        """Return a histogram distribution interpolated from Tabby's quantiles."""
+        from skpro.distributions import HistogramQPD
+
+        predictions, relative_steps, index = self._run_forecast(fh)
+        grid = np.arange(1, 100, dtype=np.float64) / 100
+        values = predictions[0, :, relative_steps - 1]
+        var_name = self.context_.name
+        if var_name is None:
+            var_name = 0
+        # HistogramQPD preserves the native 99-quantile grid and its ppf uses
+        # the same linear interpolation as _predict_quantiles.
+        row_index = pd.MultiIndex.from_product([grid, index])
+        quantiles = pd.DataFrame(
+            values.T.reshape(-1, 1), index=row_index, columns=[var_name]
+        )
+        return HistogramQPD(quantiles, tails="mass", index=index, columns=[var_name])
+
     @staticmethod
     def _interpolate_quantile(alpha, grid, values):
         """Return the closest native quantile or interpolate between levels."""
@@ -165,7 +178,7 @@ class TabbyForecaster(BaseForecaster):
             return values[closest_idx]
         return np.interp(alpha, grid, values)
 
-    def _predict_quantile_values(self, fh):
+    def _run_forecast(self, fh):
         """Run Tabby once and return quantiles at all requested steps.
 
         Parameters
@@ -186,8 +199,6 @@ class TabbyForecaster(BaseForecaster):
 
         relative_fh = fh.to_relative(self.cutoff)
         relative_steps = np.asarray(relative_fh.to_numpy(), dtype=np.int64)
-        if np.any(relative_steps <= 0):
-            raise ValueError("Tabby supports only strictly positive forecasting steps.")
         horizon = int(relative_steps.max())
 
         model = self._load_model()
@@ -195,6 +206,8 @@ class TabbyForecaster(BaseForecaster):
         context_length = getattr(config, "context_length", 8192)
         patch_size = getattr(config, "patch_size", 16)
         max_horizon = context_length - patch_size
+        # The model masks at least 128 future positions, but does not reject a
+        # horizon that cannot fit after its 16-point patch.
         if max(horizon, 128) > max_horizon:
             raise ValueError(
                 "Requested forecasting horizon exceeds Tabby's model capacity: "
@@ -202,8 +215,9 @@ class TabbyForecaster(BaseForecaster):
                 f"{max_horizon}."
             )
 
-        max_history = 8192 - max(horizon, 128)
-        history = np.asarray(self.context_, dtype=np.float32).reshape(-1)[-max_history:]
+        # The vendored model applies the 8,192-position context truncation.
+        # NaNs are deliberately retained so its observed-input mask sees them.
+        history = np.asarray(self.context_, dtype=np.float32).reshape(-1)
         history_tensor = torch.as_tensor(history, dtype=torch.float32).reshape(1, -1)
         with torch.no_grad():
             output = model.predict(history_tensor, prediction_length=horizon)
@@ -217,26 +231,12 @@ class TabbyForecaster(BaseForecaster):
 
         return predictions, relative_steps, fh.to_absolute_index(self.cutoff)
 
-    def _make_prediction(self, values, index):
-        """Build a point forecast preserving the fitted series type and name."""
-        if isinstance(self.context_, pd.Series):
-            return pd.Series(values, index=index, name=self.context_.name)
-        return pd.DataFrame(
-            values, index=index, columns=self.context_.columns, dtype="float64"
-        )
-
     def _load_model(self):
         """Load the checkpoint or retrieve it from the shared model cache."""
-        if not self.trust_remote_code:
-            raise ValueError(
-                "Tabby requires trust_remote_code=True to load its model. "
-                "Enable it only if you trust the code in the model repository."
-            )
         self.model_ = _CachedTabby(
             key=self._get_unique_key(),
             model_path=self.model_path,
             revision=self.revision,
-            trust_remote_code=self.trust_remote_code,
             device=self.device,
             dtype=self.dtype,
         ).load()
@@ -247,7 +247,6 @@ class TabbyForecaster(BaseForecaster):
         return (
             self.model_path,
             self.revision,
-            self.trust_remote_code,
             self.device,
             self.dtype,
         )
@@ -267,8 +266,8 @@ class TabbyForecaster(BaseForecaster):
             Parameters to create testing instances of the class.
         """
         return [
-            {"trust_remote_code": True},
-            {"trust_remote_code": True, "device": "cpu"},
+            {},
+            {"device": "cpu"},
         ]
 
 
@@ -281,14 +280,12 @@ class _CachedTabby:
         key,
         model_path,
         revision,
-        trust_remote_code,
         device,
         dtype,
     ):
         self.key = key
         self.model_path = model_path
         self.revision = revision
-        self.trust_remote_code = trust_remote_code
         self.device = device
         self.dtype = dtype
         self.model_ = None
@@ -299,19 +296,40 @@ class _CachedTabby:
             return self.model_
 
         import torch
-        from transformers import AutoModel
+
+        from sktime.libs.tabby import TabbyConfig, TabbyForForecasting
 
         device = self.device
         if device == "auto":
             device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        load_kwargs = {"trust_remote_code": self.trust_remote_code}
-        if self.revision is not None:
-            load_kwargs["revision"] = self.revision
+        config = TabbyConfig.from_pretrained(self.model_path, revision=self.revision)
+        if config.model_type != "tabby":
+            raise ValueError(
+                "Tabby checkpoint has incompatible config model_type: "
+                f"{config.model_type!r}; expected 'tabby'."
+            )
+
+        load_kwargs = {
+            "revision": self.revision,
+            "config": config,
+            "output_loading_info": True,
+        }
         if self.dtype is not None:
             load_kwargs["dtype"] = self.dtype
 
-        self.model_ = AutoModel.from_pretrained(self.model_path, **load_kwargs)
+        self.model_, loading_info = TabbyForForecasting.from_pretrained(
+            self.model_path, **load_kwargs
+        )
+        missing_keys = loading_info.get("missing_keys", [])
+        unexpected_keys = loading_info.get("unexpected_keys", [])
+        if missing_keys or unexpected_keys:
+            raise RuntimeError(
+                "Tabby checkpoint did not load exactly. "
+                f"Missing keys: {missing_keys}; "
+                f"unexpected keys: {unexpected_keys}."
+            )
+        self.model_.loading_info_ = loading_info
         self.model_ = self.model_.to(device)
         self.model_.eval()
         return self.model_

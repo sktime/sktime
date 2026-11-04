@@ -3,9 +3,9 @@
 import numpy as np
 import pandas as pd
 import pytest
-from skbase.utils.dependencies import _check_soft_dependencies
 
-from sktime.forecasting.tabby import TabbyForecaster
+from sktime.datasets import load_airline
+from sktime.forecasting.tabby import TabbyForecaster, _CachedTabby
 from sktime.tests.test_switch import run_test_for_class
 
 pytestmark = pytest.mark.skipif(
@@ -13,163 +13,91 @@ pytestmark = pytest.mark.skipif(
     reason="run test only if torch and transformers are installed",
 )
 
-
-class _FakeTabbyModel:
-    """Small deterministic stand-in for the pretrained model."""
-
-    config = type("Config", (), {"context_length": 8192, "patch_size": 16})()
-
-    def __init__(self):
-        self.contexts = []
-        self.horizons = []
-
-    def predict(self, context, prediction_length):
-        import torch
-
-        self.contexts.append(context.detach().cpu().numpy().copy())
-        self.horizons.append(prediction_length)
-        quantiles = torch.arange(99, dtype=torch.float32).reshape(1, 99, 1) * 100
-        steps = torch.arange(prediction_length, dtype=torch.float32).reshape(1, 1, -1)
-        return quantiles + steps
+_TABBY_REVISION = "1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01"
+_GOLDEN_POINT = np.array([448.55990601, 442.19024658, 494.63415527])
+_GOLDEN_QUANTILES = np.array(
+    [
+        [429.79977417, 448.55990601, 468.48461914],
+        [417.43212891, 442.19024658, 465.74475098],
+        [463.70422363, 494.63415527, 524.9329834],
+    ]
+)
+_FH = [1, 2, 3]
+_ALPHA = [0.1, 0.5, 0.9]
 
 
-def _fit_fake(monkeypatch, y):
-    """Fit a forecaster backed by the deterministic fake model."""
-    model = _FakeTabbyModel()
-    monkeypatch.setattr(TabbyForecaster, "_load_model", lambda self: model)
-    forecaster = TabbyForecaster(trust_remote_code=True).fit(y)
-    return forecaster, model
+def _golden_forecaster():
+    """Fit the real Tabby checkpoint used for golden outputs."""
+    return TabbyForecaster(revision=_TABBY_REVISION).fit(load_airline())
 
 
-def test_tabby_predict_horizon_and_non_contiguous_fh(monkeypatch):
-    """Prediction uses the requested positions of the generated horizon."""
-    y = pd.Series(np.arange(20, dtype=float), index=pd.RangeIndex(10, 30))
-    forecaster, model = _fit_fake(monkeypatch, y)
+def test_tabby_golden_outputs():
+    """Real Tabby outputs remain stable for a fixed input and horizon."""
+    forecaster = _golden_forecaster()
 
-    prediction = forecaster.predict(fh=[2, 5])
+    point = forecaster.predict(fh=_FH)
+    quantiles = forecaster.predict_quantiles(fh=_FH, alpha=_ALPHA)
 
-    assert prediction.index.equals(pd.Index([31, 34]))
-    np.testing.assert_array_equal(prediction.to_numpy(), [4901, 4904])
-    assert model.horizons == [5]
-
-
-def test_tabby_quantile_mapping_and_interpolation(monkeypatch):
-    """Native quantiles are selected and intermediate levels interpolated."""
-    forecaster, _ = _fit_fake(monkeypatch, pd.Series(np.arange(12, dtype=float)))
-
-    prediction = forecaster.predict_quantiles(
-        fh=[3], alpha=[0.1, 0.100000005, 0.105, 0.99]
+    np.testing.assert_allclose(point.to_numpy(), _GOLDEN_POINT, rtol=1e-5, atol=1e-6)
+    np.testing.assert_allclose(
+        quantiles.to_numpy(), _GOLDEN_QUANTILES, rtol=1e-5, atol=1e-6
     )
 
-    assert prediction.columns.equals(
-        pd.MultiIndex.from_product([[0], [0.1, 0.100000005, 0.105, 0.99]])
-    )
-    np.testing.assert_allclose(prediction.to_numpy(), [[902, 902, 952, 9802]])
+
+def test_tabby_predict_proba_matches_quantiles():
+    """Tabby's HistogramQPD preserves index, columns, and quantile interpolation."""
+    forecaster = _golden_forecaster()
+    distribution = forecaster.predict_proba(fh=_FH)
+
+    quantiles = forecaster.predict_quantiles(fh=_FH, alpha=_ALPHA)
+    assert distribution.index.equals(quantiles.index)
+    var_name = load_airline().name
+    assert list(distribution.columns) == [var_name]
+    for alpha in _ALPHA:
+        probabilities = pd.DataFrame(
+            alpha, index=distribution.index, columns=[var_name]
+        )
+        ppf = distribution.ppf(probabilities)
+        expected = quantiles[(var_name, alpha)].to_numpy().reshape(-1, 1)
+        np.testing.assert_allclose(ppf.to_numpy(), expected, rtol=1e-5, atol=1e-6)
 
 
-def test_tabby_quantiles_reject_out_of_range_alpha(monkeypatch):
-    """Quantiles outside Tabby's native support are rejected."""
-    forecaster, _ = _fit_fake(monkeypatch, pd.Series(np.arange(12, dtype=float)))
+@pytest.mark.parametrize(
+    "loading_info",
+    [
+        {"missing_keys": ["backbone.blocks.0.weight"], "unexpected_keys": []},
+        {"missing_keys": [], "unexpected_keys": ["ctx_generator.mlp.0.weight"]},
+    ],
+)
+def test_tabby_rejects_incomplete_checkpoint(monkeypatch, loading_info):
+    """A checkpoint with missing or unexpected weights must not be used."""
+    import sktime.libs.tabby as tabby_lib
 
-    with pytest.raises(ValueError, match=r"\[0.01, 0.99\]"):
-        forecaster.predict_quantiles(fh=[1], alpha=[0.009])
-
-
-def test_tabby_predict_interval_uses_quantiles(monkeypatch):
-    """The base interval conversion uses Tabby's quantile implementation."""
-    forecaster, _ = _fit_fake(monkeypatch, pd.Series(np.arange(12, dtype=float)))
-
-    prediction = forecaster.predict_interval(fh=[1], coverage=0.9)
-
-    assert prediction.shape == (1, 2)
-    np.testing.assert_allclose(prediction.to_numpy(), [[400, 9400]])
-
-
-def test_tabby_truncates_context_and_preserves_nan(monkeypatch):
-    """The model receives the recent context only, including missing values."""
-    values = np.arange(10_000, dtype=float)
-    values[-10] = np.nan
-    forecaster, model = _fit_fake(monkeypatch, pd.Series(values))
-
-    forecaster.predict(fh=[1])
-
-    context = model.contexts[0][0]
-    assert len(context) == 8192 - 128
-    np.testing.assert_array_equal(context, values[-8064:])
-
-
-def test_tabby_vectorizes_multivariate_series(monkeypatch):
-    """Multivariate targets are forecast one variable at a time."""
-    y = pd.DataFrame(
-        {"left": np.arange(12, dtype=float), "right": np.arange(12, dtype=float)}
-    )
-    forecaster, model = _fit_fake(monkeypatch, y)
-
-    prediction = forecaster.predict(fh=[1, 2])
-
-    assert list(prediction.columns) == ["left", "right"]
-    assert len(model.horizons) == 2
-    np.testing.assert_array_equal(prediction.to_numpy(), [[4900, 4900], [4901, 4901]])
-
-
-def test_tabby_model_capacity_is_enforced(monkeypatch):
-    """The forecast horizon cannot exceed the checkpoint's patch capacity."""
-    forecaster, model = _fit_fake(monkeypatch, pd.Series(np.arange(12, dtype=float)))
-
-    with pytest.raises(ValueError, match="maximum supported step=8176"):
-        forecaster.predict(fh=[8177])
-    assert model.horizons == []
-
-
-def test_tabby_requires_remote_code_opt_in():
-    """Loading the checkpoint requires explicit trust in its remote code."""
-    forecaster = TabbyForecaster()
-
-    with pytest.raises(ValueError, match="trust_remote_code=True"):
-        forecaster._load_model()
-
-
-def test_tabby_model_cache(monkeypatch):
-    """Identical model settings reuse the cached loaded model."""
-    if not _check_soft_dependencies("transformers", severity="none"):
-        pytest.skip("transformers is not installed")
-    import torch
-    from transformers import AutoModel
-
-    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
-
-    class FakeLoadedModel:
-        def __init__(self):
-            self.device = None
-            self.evaluated = False
-
+    class FakeModel:
         def to(self, device):
-            self.device = device
             return self
 
         def eval(self):
-            self.evaluated = True
             return self
 
-    loaded_model = FakeLoadedModel()
-    calls = []
+    def fake_from_pretrained(*args, **kwargs):
+        return FakeModel(), loading_info
 
-    def fake_from_pretrained(model_path, **kwargs):
-        calls.append((model_path, kwargs))
-        return loaded_model
-
-    monkeypatch.setattr(AutoModel, "from_pretrained", fake_from_pretrained)
-    model_path = "sktime-test/tabby-cache"
-    first = TabbyForecaster(
-        model_path=model_path, revision="test-revision", trust_remote_code=True
+    monkeypatch.setattr(
+        tabby_lib.TabbyForForecasting, "from_pretrained", fake_from_pretrained
     )
-    second = TabbyForecaster(
-        model_path=model_path, revision="test-revision", trust_remote_code=True
+    monkeypatch.setattr(
+        tabby_lib.TabbyConfig,
+        "from_pretrained",
+        classmethod(lambda cls, *args, **kwargs: cls()),
     )
 
-    assert first._load_model() is second._load_model()
-    assert len(calls) == 1
-    assert calls[0][1]["trust_remote_code"] is True
-    assert calls[0][1]["revision"] == "test-revision"
-    assert loaded_model.device == "cpu"
-    assert loaded_model.evaluated
+    loader = _CachedTabby(
+        key=("incomplete-checkpoint", repr(loading_info)),
+        model_path="test",
+        revision=None,
+        device="cpu",
+        dtype=None,
+    )
+    with pytest.raises(RuntimeError, match="did not load exactly"):
+        loader.load()
