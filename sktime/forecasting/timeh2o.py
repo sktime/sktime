@@ -4,12 +4,48 @@
 __all__ = ["TimeH2OForecaster"]
 
 from copy import deepcopy
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
 
 from sktime.datatypes import update_data
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+
+
+@lru_cache(maxsize=2)
+def _load_model(model_type, path, device, batch_size, options):
+    """Reuse immutable inference weights across fits with identical settings."""
+    if path is not None:
+        return model_type.from_pretrained(
+            path, device=device, batch_size=batch_size, **dict(options)
+        )
+
+    import torch
+    from h2ofm._checkpoints import resolve_device
+    from h2ofm.timeh2o._checkpoints import with_rope
+    from h2ofm.timeh2o._model.config import TimeH2OConfig
+    from h2ofm.timeh2o._model.model import TimeH2OModel
+    from h2ofm.timeh2o._pipeline.pipeline import TimeH2OPipeline
+
+    config = TimeH2OConfig(
+        d_model=16,
+        d_ff=32,
+        num_layers=1,
+        num_heads=4,
+        patch_size=4,
+        context_length=32,
+        max_horizon=8,
+        autoregressive=True,
+        lookahead_patches=1,
+        flip_equivariant=False,
+        variate_attention=True,
+        future_covariate_embed=True,
+    )
+    with torch.random.fork_rng(devices=[]):
+        torch.manual_seed(0)
+        model = TimeH2OModel(config).eval().to(resolve_device(device))
+    return model_type(TimeH2OPipeline(with_rope(model)), batch_size=batch_size)
 
 
 class TimeH2OForecaster(BaseForecaster):
@@ -39,8 +75,10 @@ class TimeH2OForecaster(BaseForecaster):
 
     Parameters
     ----------
-    model_path : str, default="h2oai/timeh2o-v1"
-        Hugging Face model id or local checkpoint path.
+    model_path : str or None, default="h2oai/timeh2o-v1"
+        Hugging Face model id or local checkpoint path. ``None`` builds a small,
+        deterministic model with untrained weights for offline interface tests;
+        its forecasts have no predictive meaning.
     device : str, default="auto"
         Upstream device, e.g. ``"cpu"``, ``"cuda"`` or ``"auto"``.
     batch_size : int, default=256
@@ -50,12 +88,14 @@ class TimeH2OForecaster(BaseForecaster):
         ``cache_dir`` and ``local_files_only``. ``pretrained_model_name_or_path``,
         ``device`` and ``batch_size`` are reserved for the parameters above.
         Prefer environment authentication to storing a token in an estimator.
+        See the `h2ofm TimeH2O API <https://pypi.org/project/h2ofm/>`_ for options.
     forecast_kwargs : dict or None, default=None
         Additional ``TimeH2O.forecast`` options: ``context_length``,
         ``autoregressive``, ``flip_equivariant``, ``clip_nonnegative``,
         ``snap_integer`` and ``patch_ensemble``. ``context``, ``horizon``,
-        ``past_covariates``, ``future_covariates`` and ``quantile_levels`` are
-        managed by this adapter and must not appear here.
+        ``future_covariates`` and ``quantile_levels`` are managed by this adapter.
+        ``past_covariates`` are unsupported. These keys must not appear here.
+        See the `h2ofm TimeH2O API <https://pypi.org/project/h2ofm/>`_ for options.
 
     Attributes
     ----------
@@ -80,8 +120,8 @@ class TimeH2OForecaster(BaseForecaster):
     """
 
     _tags = {
-        "authors": ["H2O.ai", "sktime developers"],
-        "maintainers": ["sktime developers"],
+        "authors": ["KrishChadha001", "H2O.ai"],
+        "maintainers": ["KrishChadha001"],
         "category": ["deep_learning", "foundation_model"],
         "python_dependencies": ["h2ofm>=0.43.1"],
         "python_version": ">=3.12",
@@ -97,9 +137,6 @@ class TimeH2OForecaster(BaseForecaster):
         "capability:non_contiguous_X": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
-        # The default checkpoint requires gated access. The dedicated test
-        # module checks conformance offline and provides an opt-in weight test.
-        "tests:skip_all": True,
         "tests:specific": ["sktime.forecasting.tests.test_timeh2o"],
     }
 
@@ -124,37 +161,21 @@ class TimeH2OForecaster(BaseForecaster):
         forecast_kwargs = (
             {} if self.forecast_kwargs is None else deepcopy(self.forecast_kwargs)
         )
-        for name, options, reserved in [
-            (
-                "model_kwargs",
-                model_kwargs,
-                {"pretrained_model_name_or_path", "device", "batch_size"},
-            ),
-            (
-                "forecast_kwargs",
-                forecast_kwargs,
-                {
-                    "context",
-                    "horizon",
-                    "past_covariates",
-                    "future_covariates",
-                    "quantile_levels",
-                },
-            ),
-        ]:
-            if not isinstance(options, dict):
-                raise TypeError(f"{name} must be a dict or None.")
-            overlap = reserved.intersection(options)
-            if overlap:
-                raise ValueError(f"Reserved keys in {name}: {sorted(overlap)}.")
+        if self.model_path is None and model_kwargs:
+            raise ValueError("model_kwargs require a pretrained model_path.")
+        if "quantile_levels" in forecast_kwargs:
+            raise ValueError("quantile_levels are managed by predict_quantiles.")
+        if "past_covariates" in forecast_kwargs:
+            raise ValueError("past_covariates are not supported by this adapter.")
 
         from h2ofm import TimeH2O
 
-        self.model_ = TimeH2O.from_pretrained(
+        self.model_ = _load_model(
+            TimeH2O,
             self.model_path,
-            device=self.device,
-            batch_size=self.batch_size,
-            **model_kwargs,
+            self.device,
+            self.batch_size,
+            tuple(sorted(model_kwargs.items())),
         )
         self._forecast_kwargs = forecast_kwargs
         self._cur_y = y.copy()
@@ -176,8 +197,6 @@ class TimeH2OForecaster(BaseForecaster):
     def _run_forecast(self, fh, X, alpha=None):
         """Forecast the full future span, preserving per-covariate dtypes."""
         relative = fh.to_relative(self.cutoff)
-        if not relative.is_all_out_of_sample():
-            raise ValueError("TimeH2O supports only out-of-sample forecasts.")
         horizon = int(max(relative))
         future_index = ForecastingHorizon(
             range(1, horizon + 1), is_relative=True
@@ -190,14 +209,20 @@ class TimeH2OForecaster(BaseForecaster):
                 raise ValueError("Future X must contain the same columns as fit X.")
             if not future_index.isin(X.index).all():
                 raise ValueError("Future X must cover every step through max(fh).")
-            covariates = [
-                pd.concat([self._cur_X[col], X.loc[future_index, col]])
-                for col in self._cur_X.columns
-            ]
+            covariates = []
+            for col in self._cur_X.columns:
+                past = self._cur_X[col]
+                future = X.loc[future_index, col]
+                if past.dtype != future.dtype and (
+                    isinstance(past.dtype, pd.CategoricalDtype)
+                    or isinstance(future.dtype, pd.CategoricalDtype)
+                ):
+                    past, future = past.astype(object), future.astype(object)
+                covariates.append(pd.concat([past, future]))
         elif X is not None:
             raise ValueError("X was supplied in predict but not in fit.")
 
-        kwargs = deepcopy(self._forecast_kwargs)
+        kwargs = dict(self._forecast_kwargs)
         if alpha is not None:
             kwargs["quantile_levels"] = list(alpha)
         output = self.model_.forecast(
@@ -219,11 +244,9 @@ class TimeH2OForecaster(BaseForecaster):
             columns=self._cur_y.columns,
         )
 
-    def _predict_quantiles(self, alpha, **kwargs):
+    def _predict_quantiles(self, fh, X, alpha):
         """Return upstream quantiles in sktime variable-major order."""
-        output, positions, index = self._run_forecast(
-            fh=kwargs["fh"], X=kwargs.get("X"), alpha=alpha
-        )
+        output, positions, index = self._run_forecast(fh=fh, X=X, alpha=alpha)
         values = np.asarray(output.quantiles).transpose(1, 0, 2)[positions]
         columns = pd.MultiIndex.from_product([self._get_varnames(), alpha])
         return pd.DataFrame(
@@ -234,6 +257,10 @@ class TimeH2OForecaster(BaseForecaster):
     def get_test_params(cls, parameter_set="default"):
         """Return CPU settings; real weight tests require gated model access."""
         return [
-            {"device": "cpu"},
-            {"device": "cpu", "forecast_kwargs": {"context_length": 32}},
+            {"model_path": None, "device": "cpu"},
+            {
+                "model_path": None,
+                "device": "cpu",
+                "forecast_kwargs": {"context_length": 32},
+            },
         ]

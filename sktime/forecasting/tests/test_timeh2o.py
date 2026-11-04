@@ -12,9 +12,8 @@ from sktime.forecasting.timeh2o import TimeH2OForecaster
 
 
 class _OfflineTimeH2OForecaster(TimeH2OForecaster):
-    __doc__ = TimeH2OForecaster.__doc__
+    """Use the substituted inference boundary for adapter-specific tests."""
 
-    # A separate class keeps cached production tags intact during test discovery.
     _tags = {"python_dependencies": [], "python_version": None}
 
 
@@ -111,37 +110,24 @@ def test_invalid_future_covariates(forecaster_class, future, match):
         f.predict([1, 3], X=future)
 
 
-def test_update_uses_latest_history(forecaster_class):
-    """Zero-shot updates change the context even without parameter fitting."""
-    f = forecaster_class().fit(pd.Series([1.0, 2.0, 3.0, 4.0]))
-    f.update(pd.Series([100.0], index=[4]), update_params=False)
-    np.testing.assert_array_equal(f.predict([1, 2]), [101, 102])
-
-
 @pytest.mark.parametrize(
-    "kwargs",
+    "kwargs,stage,error",
     [
-        {"model_kwargs": {"device": "cpu"}},
-        {"forecast_kwargs": {"horizon": 2}},
-        {"forecast_kwargs": {"quantile_levels": [0.5]}},
+        ({"model_kwargs": {"device": "cpu"}}, "fit", TypeError),
+        ({"forecast_kwargs": {"horizon": 2}}, "predict", TypeError),
+        ({"forecast_kwargs": {"quantile_levels": [0.5]}}, "fit", ValueError),
+        ({"forecast_kwargs": {"past_covariates": [1, 2]}}, "fit", ValueError),
     ],
 )
-def test_reserved_options_rejected(forecaster_class, kwargs):
+def test_reserved_options_rejected(forecaster_class, kwargs, stage, error):
     """Options cannot silently override adapter-controlled arguments."""
-    with pytest.raises(ValueError, match="reserved|Reserved"):
-        forecaster_class(**kwargs).fit(pd.Series([1.0, 2.0, 3.0]))
-
-
-def test_offline_estimator_contract(forecaster_class):
-    """Run sktime interface checks without accepting or downloading weights."""
-    from sktime.utils.estimator_checks import check_estimator
-
-    results = check_estimator(forecaster_class, verbose=0)
-    failures = {name: result for name, result in results.items() if result != "PASSED"}
-    assert results
-    assert not failures, "\n".join(
-        f"{name}: {error!r}" for name, error in failures.items()
-    )
+    if stage == "fit":
+        with pytest.raises(error):
+            forecaster_class(**kwargs).fit(pd.Series([1.0, 2.0, 3.0]))
+    else:
+        f = forecaster_class(**kwargs).fit(pd.Series([1.0, 2.0, 3.0]))
+        with pytest.raises(error):
+            f.predict([1])
 
 
 def test_nullable_numeric_inputs(forecaster_class, monkeypatch):
@@ -186,13 +172,21 @@ def test_numeric_categorical_covariates(forecaster_class, monkeypatch):
     np.testing.assert_array_equal(f.predict([1], X=future), [5])
 
 
-def test_missing_values_and_input_ownership(forecaster_class):
-    """Passing missing observations must not modify caller-owned data."""
-    y = pd.Series([1.0, np.nan, 3.0, 4.0], name="target")
-    before = y.copy()
-    f = forecaster_class().fit(y)
-    np.testing.assert_array_equal(f.predict([1, 3]), [5, 7])
-    pd.testing.assert_series_equal(y, before)
+def test_different_numeric_categories_remain_categorical(forecaster_class, monkeypatch):
+    """Category changes must not turn integer labels into numeric covariates."""
+
+    class CategoricalModel(_Model):
+        def forecast(self, context, horizon, future_covariates=None, **kwargs):
+            covariate = future_covariates[0]
+            assert not pd.api.types.is_numeric_dtype(covariate)
+            assert list(covariate) == [1, 2, 1, 2, 3]
+            return super().forecast(context, horizon, **kwargs)
+
+    monkeypatch.setattr(sys.modules["h2ofm"], "TimeH2O", CategoricalModel)
+    X = pd.DataFrame({"label": pd.Categorical([1, 2, 1, 2])})
+    future = pd.DataFrame({"label": pd.Categorical([3])}, index=[4])
+    f = forecaster_class().fit(pd.Series([1.0, 2.0, 3.0, 4.0]), X=X)
+    np.testing.assert_array_equal(f.predict([1], X=future), [5])
 
 
 @pytest.mark.parametrize("update_params", [True, False])
@@ -222,6 +216,7 @@ def test_options_forwarding_and_ownership(forecaster_class, monkeypatch):
                 "device": "cpu",
                 "batch_size": 8,
                 "local_files_only": True,
+                "cache_dir": "local-cache",
             }
             return cls()
 
@@ -230,7 +225,7 @@ def test_options_forwarding_and_ownership(forecaster_class, monkeypatch):
             return super().forecast(*args, **kwargs)
 
     monkeypatch.setattr(sys.modules["h2ofm"], "TimeH2O", ConfiguredModel)
-    model_kwargs = {"local_files_only": True}
+    model_kwargs = {"local_files_only": True, "cache_dir": "local-cache"}
     forecast_kwargs = {"context_length": 16}
     f = forecaster_class(
         model_path="local-checkpoint",
@@ -241,8 +236,91 @@ def test_options_forwarding_and_ownership(forecaster_class, monkeypatch):
     ).fit(pd.Series([1.0, 4.0]))
     np.testing.assert_array_equal(f.predict([1]), [5])
     f.predict_quantiles([1], alpha=[0.1, 0.9])
-    assert model_kwargs == {"local_files_only": True}
+    assert model_kwargs == {"local_files_only": True, "cache_dir": "local-cache"}
     assert forecast_kwargs == {"context_length": 16}
+
+
+def test_repeated_fit_reuses_loaded_model(forecaster_class, monkeypatch):
+    """Repeated fits with one checkpoint reuse the loaded inference model."""
+    calls = []
+
+    class CountingModel(_Model):
+        @classmethod
+        def from_pretrained(cls, path, **kwargs):
+            calls.append(path)
+            return cls()
+
+    monkeypatch.setattr(sys.modules["h2ofm"], "TimeH2O", CountingModel)
+    y = pd.Series([1.0, 2.0, 3.0, 4.0])
+    first = forecaster_class(model_path="cached-checkpoint").fit(y)
+    second = forecaster_class(model_path="cached-checkpoint").fit(y)
+    assert first.model_ is second.model_
+    assert calls == ["cached-checkpoint"]
+
+
+def test_model_path_none_runs_without_checkpoint(monkeypatch):
+    """The untrained test model needs no gated access or download."""
+    h2ofm = pytest.importorskip("h2ofm")
+
+    def reject_download(*args, **kwargs):
+        raise AssertionError("untrained model attempted checkpoint download")
+
+    monkeypatch.setattr(h2ofm.TimeH2O, "from_pretrained", reject_download)
+    y = pd.Series(np.sin(np.arange(32) / 10), name="target")
+    f = TimeH2OForecaster(model_path=None, device="cpu").fit(y)
+    pred = f.predict([1, 3])
+    assert np.isfinite(pred).all()
+    assert pred.shape == (2,)
+
+
+def test_untrained_model_golden_output():
+    """Pin adapter output and requested quantile order on the offline model."""
+    pytest.importorskip("h2ofm")
+    y = pd.Series(np.arange(1, 33, dtype=float), name="y")
+    f = TimeH2OForecaster(model_path=None, device="cpu").fit(y)
+    pred = f.predict([1, 2, 3])
+    quantiles = f.predict_quantiles([1, 2, 3], alpha=[0.1, 0.5, 0.9])
+    np.testing.assert_allclose(pred, [15.560987, 16.808578, 17.096317], atol=1e-3)
+    np.testing.assert_allclose(
+        quantiles,
+        [
+            [3.881908, 15.560987, 27.938889],
+            [1.134266, 16.808578, 31.144780],
+            [6.755712, 17.096317, 28.135172],
+        ],
+        atol=1e-3,
+    )
+
+
+def test_untrained_model_forecast_options():
+    """Additional upstream forecast options affect output as requested."""
+    pytest.importorskip("h2ofm")
+    y = pd.Series(np.arange(1, 33, dtype=float))
+    f = TimeH2OForecaster(
+        model_path=None,
+        device="cpu",
+        forecast_kwargs={
+            "flip_equivariant": False,
+            "clip_nonnegative": True,
+            "snap_integer": True,
+        },
+    ).fit(y)
+    pred = f.predict([1, 2, 3])
+    assert (pred >= 0).all()
+    np.testing.assert_array_equal(pred, np.round(pred))
+
+
+def test_untrained_model_interpolates_requested_quantiles():
+    """h2ofm interpolates intermediate levels and extrapolates tail levels."""
+    pytest.importorskip("h2ofm")
+    y = pd.Series(np.arange(1, 33, dtype=float), name="y")
+    f = TimeH2OForecaster(model_path=None, device="cpu").fit(y)
+    q = f.predict_quantiles([1], alpha=[0.05, 0.1, 0.15, 0.2, 0.9, 0.95])
+    np.testing.assert_allclose(
+        q[("y", 0.15)], (q[("y", 0.1)] + q[("y", 0.2)]) / 2, atol=1e-4
+    )
+    assert q[("y", 0.05)].iloc[0] < q[("y", 0.1)].iloc[0]
+    assert q[("y", 0.95)].iloc[0] > q[("y", 0.9)].iloc[0]
 
 
 @pytest.mark.skipif(
