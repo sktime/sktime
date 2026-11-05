@@ -132,7 +132,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     >>>
     >>> # creating model instance configuring the hyperparameters
     >>> model = NeuralForecastRNN(  # doctest: +SKIP
-    ...     "A-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
+    ...     "YE-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
     ... )
     >>>
     >>> # fitting the model
@@ -140,7 +140,7 @@ class NeuralForecastRNN(_NeuralForecastAdapter):
     Seed set to 1
     Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589,
     train_loss_epoc
-    NeuralForecastRNN(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
+    NeuralForecastRNN(freq='YE-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
     >>>
     >>> # getting point predictions
     >>> model.predict(X=X_test)  # doctest: +SKIP
@@ -544,14 +544,14 @@ class NeuralForecastLSTM(_NeuralForecastAdapter):
     >>>
     >>> # creating model instance configuring the hyperparameters
     >>> model = NeuralForecastLSTM(  # doctest: +SKIP
-    ...     "A-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
+    ...     "YE-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
     ... )
     >>>
     >>> # fitting the model
     >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
     Seed set to 1
     Epoch 4: 100%|█| 1/1 [00:00<00:00, 42.85it/s, v_num=870, train_loss_step=0.589, train_loss_epoc
-    NeuralForecastLSTM(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
+    NeuralForecastLSTM(freq='YE-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
     >>>
     >>> # getting point predictions
     >>> model.predict(X=X_test)  # doctest: +SKIP
@@ -934,14 +934,14 @@ class NeuralForecastGRU(_NeuralForecastAdapter):
     >>>
     >>> # creating model instance configuring the hyperparameters
     >>> model = NeuralForecastGRU(  # doctest: +SKIP
-    ...     "A-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
+    ...     "YE-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
     ... )
     >>>
     >>> # fitting the model
     >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
     Seed set to 1
     Epoch 4: 100%|████████████████████████████| 1/1 [00:00<00:00, 20.71it/s, v_num=0, train_loss_step=0.745, train_loss_epoch=0.745]
-    NeuralForecastGRU(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
+    NeuralForecastGRU(freq='YE-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
     >>>
     >>> # getting point predictions
     >>> model.predict(X=X_test)  # doctest: +SKIP
@@ -1339,14 +1339,14 @@ class NeuralForecastDilatedRNN(_NeuralForecastAdapter):
     >>>
     >>> # creating model instance configuring the hyperparameters
     >>> model = NeuralForecastDilatedRNN(  # doctest: +SKIP
-    ...     "A-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
+    ...     "YE-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
     ... )
     >>>
     >>> # fitting the model
     >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
     Seed set to 1
     Epoch 4: 100%|████████████████████████████| 1/1 [00:00<00:00, 48.76it/s, v_num=2, train_loss_step=0.798, train_loss_epoch=0.798]
-    NeuralForecastDilatedRNN(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
+    NeuralForecastDilatedRNN(freq='YE-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
     >>>
     >>> # getting point predictions
     >>> model.predict(X=X_test)  # doctest: +SKIP
@@ -1741,14 +1741,14 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
     >>>
     >>> # creating model instance configuring the hyperparameters
     >>> model = NeuralForecastTCN(  # doctest: +SKIP
-    ...     "A-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
+    ...     "YE-DEC", futr_exog_list=["ARMED", "POP"], max_steps=5
     ... )
     >>>
     >>> # fitting the model
     >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
     Seed set to 1
     Epoch 4: 100%|████████████████████████████| 1/1 [00:00<00:00, 48.19it/s, v_num=5, train_loss_step=0.833, train_loss_epoch=0.833]
-    NeuralForecastTCN(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
+    NeuralForecastTCN(freq='YE-DEC', futr_exog_list=['ARMED', 'POP'], max_steps=5)
     >>>
     >>> # getting point predictions
     >>> model.predict(X=X_test)  # doctest: +SKIP
