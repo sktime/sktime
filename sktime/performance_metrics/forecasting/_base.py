@@ -821,8 +821,12 @@ class BaseForecastingErrorMetric(BaseMetric):
         """Get weighted DataFrame.
 
         For n x m df, and kwargs containing sample_weight of length n,
-        returns df * sample_weight.reshape(-1, 1), i.e., weights
-        multiplied to each row of the DataFrame.
+        returns df * w.reshape(-1, 1), with w = sample_weight / mean(sample_weight),
+        i.e., normalized weights multiplied to each row of the DataFrame.
+
+        The weights are normalized to mean 1, so that a plain mean over rows of the
+        returned DataFrame is the weighted average with weights ``sample_weight``,
+        and the result does not change if all weights are multiplied by a constant.
 
         Parameters
         ----------
@@ -836,7 +840,7 @@ class BaseForecastingErrorMetric(BaseMetric):
         """
         sample_weight = self._set_sample_weight_on_kwargs(**kwargs)
         if sample_weight is not None:
-            df = df.mul(sample_weight, axis=0)
+            df = df.mul(sample_weight / np.mean(sample_weight), axis=0)
         return df
 
     def _handle_multioutput(self, df, multioutput):

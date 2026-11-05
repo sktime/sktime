@@ -198,6 +198,33 @@ def test_metric_coercion_bug():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+@pytest.mark.parametrize("weights", [np.full(5, 2.0), np.array([1.0, 1, 1, 1, 4])])
+def test_sample_weight_is_averaging_weight(weights):
+    """Metric classes use sample_weight as averaging weights, see #11711."""
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsoluteError,
+        MeanSquaredError,
+        mean_absolute_error,
+        mean_squared_error,
+    )
+
+    y_true = np.array([3, -0.5, 2, 7, 2])
+    y_pred = np.array([2.5, 0.0, 2, 8, 1.25])
+
+    for cls, func in [
+        (MeanAbsoluteError, mean_absolute_error),
+        (MeanSquaredError, mean_squared_error),
+    ]:
+        metric = cls()
+        res = metric(y_true, y_pred, sample_weight=weights)
+        assert np.isclose(res, func(y_true, y_pred, horizon_weight=weights))
+        assert np.isclose(res, metric(y_true, y_pred, sample_weight=3 * weights))
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 @pytest.mark.parametrize(
     "metric_name",
     [
