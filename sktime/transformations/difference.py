@@ -221,6 +221,8 @@ class Differencer(BaseTransformer):
         "latest" : estimator only remembers latest X necessary for future reconstruction
             inverses at any time stamps after fit are correct, but not past time stamps
         "none" : estimator does not remember any X, inverse is direct cumsum
+        The memory is extended by data passed to ``update``,
+        also if ``update_params=False``, since it is data and not a parameter.
 
     Examples
     --------
@@ -250,6 +252,7 @@ class Differencer(BaseTransformer):
         "capability:multivariate": True,
         "capability:inverse_transform": True,
         "capability:categorical_in_X": False,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
@@ -313,6 +316,59 @@ class Differencer(BaseTransformer):
             self._X = X.iloc[-n_memory:]
 
         self._freq = get_cutoff(X, return_index=True)
+        return self
+
+    def update(self, X, y=None, update_params=True):
+        """Update transformer with X, optionally y.
+
+        The memory of past ``X`` used by ``transform`` and ``inverse_transform``
+        is data, not a fitted parameter. As in forecasters, where remembered data
+        is updated also if ``update_params=False``, the memory is always updated.
+        ``Differencer`` has no other parameters that ``update`` could change.
+
+        Parameters
+        ----------
+        X : time series in ``sktime`` compatible data container format
+            Data to update the memory with, should follow the data seen so far
+        y : ignored argument for interface compatibility
+        update_params : bool, default=True
+            ignored, the memory of ``X`` is updated in any case
+
+        Returns
+        -------
+        self : a fitted instance of the estimator
+        """
+        return super().update(X=X, y=y, update_params=True)
+
+    def _update(self, X, y=None):
+        """Update transformer with X and y.
+
+        private _update containing the core logic, called from update
+
+        Parameters
+        ----------
+        X : pd.Series or pd.DataFrame
+            Data to update the memory with
+        y : ignored argument for interface compatibility
+
+        Returns
+        -------
+        self: reference to self
+        """
+        memory = self.memory
+
+        # nothing to remember, update_data would return None for empty X
+        if len(X) == 0:
+            return self
+
+        # update the remembered X or part of X, consistent with _fit
+        if memory == "all":
+            self._X = update_data(self._X, X_new=X)
+        elif memory == "latest":
+            X_all = update_data(self._X, X_new=X)
+            n_memory = min(len(X_all), self._lagsum)
+            self._X = X_all.iloc[-n_memory:]
+
         return self
 
     def _check_freq(self, X):
