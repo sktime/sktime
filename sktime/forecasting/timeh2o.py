@@ -137,7 +137,10 @@ class TimeH2OForecaster(BaseForecaster):
         "capability:non_contiguous_X": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
+        # CI and test tags
+        # ----------------
         "tests:specific": ["sktime.forecasting.tests.test_timeh2o"],
+        "tests:vm": True,
     }
 
     def __init__(
