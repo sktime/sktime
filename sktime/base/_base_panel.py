@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Intermediate base class mixin with common functionality for panel tasks.
 
-Inherits from BaseEstimator, descendents are:
+Inherits from _PretrainMixin and BaseEstimator, descendents are:
 
 BaseClassifier
 BaseRegressor
@@ -13,17 +13,23 @@ __all__ = ["BasePanelMixin"]
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
+from sktime.base._pretrain import _PretrainMixin
 from sktime.utils.warnings import warn
 
 
-class BasePanelMixin(BaseEstimator):
+class BasePanelMixin(_PretrainMixin, BaseEstimator):
     """Abstract base class for time series panel tasks, e.g., classifiers, regressors.
 
     The class contains boilerplate for checks and data conversions,
     which are common to multiple descendants, most importantly,
     BaseClassifier and BaseRegressor.
+
+    Also contains the ``pretrain`` logic shared by descendants, and the
+    pretrain state logic inherited from ``_PretrainMixin``.
+    Inheriting classes must set ``self._state = "new"`` in ``__init__``.
     """
 
     # convenience constant to control which metadata of input data
@@ -42,6 +48,217 @@ class BasePanelMixin(BaseEstimator):
     TASK = "panel data tasks"  # e.g., classification, regression
     EST_TYPE = "estimator"  # e.g., classifier, regressor
     EST_TYPE_PLURAL = "estimators"  # e.g., classifiers, regressors
+
+    def pretrain(self, X, y=None):
+        """Pretrain estimator on a collection of time series.
+
+        Pretrains the estimator on Panel data, before it is fitted to the data of
+        a specific task via ``fit``. ``fit`` after ``pretrain`` retains the
+        pretrained state, and only adds the state specific to the task.
+
+        Only estimators with the ``capability:pretrain`` tag set to ``True``
+        learn from the data. For all other estimators, ``pretrain`` is a no-op:
+        the data is checked, nothing is stored, and only the state changes.
+
+        For estimators with the ``capability:pretrain`` tag, if ``pretrain`` is
+        called when the estimator is already pretrained, the internal
+        ``_pretrain_update`` method is called instead of ``_pretrain``.
+        By default, this pretrains again on the new data only, replacing the
+        previous pretrained state.
+
+        If called when the estimator is in the ``"fitted"`` state, the fitted state
+        is discarded first, while the pretrained state is retained, as in a refit.
+        The estimator then needs to be fitted again before ``predict`` is called.
+
+        State change:
+            Changes state to ``"pretrained"``.
+
+        Writes to self:
+
+            * Sets ``self.state`` to ``"pretrained"``.
+            * If the ``capability:pretrain`` tag is ``True``, sets pretrained
+              model attributes ending in ``"_"``, inspectable via
+              ``get_pretrained_params``.
+            * If the estimator was fitted, removes fitted model attributes.
+
+        Parameters
+        ----------
+        X : sktime compatible time series panel data container of Panel scitype
+            time series to pretrain the estimator on.
+
+            Can be in any :term:`mtype` of ``Panel`` :term:`scitype`, for instance:
+
+            * pd-multiindex: pd.DataFrame with columns = variables,
+              index = pd.MultiIndex with first level = instance indices,
+              second level = time indices
+            * numpy3D: 3D np.array (any number of dimensions, equal length series)
+              of shape [n_instances, n_dimensions, series_length]
+            * or of any other supported ``Panel`` :term:`mtype`
+
+            for list of mtypes, see ``datatypes.SCITYPE_REGISTER``
+
+            for specifications, see ``examples/AA_datatypes_and_datasets.ipynb``
+
+            Not all estimators support panels with multivariate or unequal length
+            series, see the :ref:`tag reference <panel_tags>` for details.
+
+        y : sktime compatible tabular data container, Table scitype, optional
+            (default=None)
+            labels or target values of a pretraining task,
+            0-th indices correspond to instance indices in X.
+            supported sktime types: np.ndarray (1D, 2D), pd.Series, pd.DataFrame
+
+            Need not be the labels or targets of the task passed to ``fit``,
+            for instance, a classifier can be pretrained on different classes.
+            If None, the estimator is pretrained on ``X`` only,
+            e.g., self-supervised, if the estimator supports this.
+
+        Returns
+        -------
+        self : reference to self
+
+        Raises
+        ------
+        TypeError
+            If ``y`` has more than one column, and the estimator does not
+            support multioutput, as ``pretrain`` does not vectorize over
+            columns of ``y``.
+
+        See Also
+        --------
+        fit : Fit estimator to the data of a specific task.
+        get_pretrained_params : Retrieve parameters set during pretraining.
+        state : Current state of the estimator.
+        """
+        _check_estimator_deps(self)
+
+        X_inner, y_inner = self._check_pretrain_input(X, y)
+
+        # pretrain after fit: discard fitted state, retain pretrained state,
+        # so no stale fitted attributes remain in the "pretrained" state
+        if self._state == "fitted":
+            self._reset_at("pretrained")
+
+        # estimators without pretrain capability: no-op, only the state changes
+        can_pretrain = self.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+        if not can_pretrain:
+            self._state = "pretrained"
+            return self
+
+        return self._pretrain_and_track(X=X_inner, y=y_inner)
+
+    def get_fitted_params(self, deep=True):
+        """Get fitted parameters.
+
+        State required:
+            Requires state to be "fitted".
+
+        Parameters
+        ----------
+        deep : bool, default=True
+            Whether to return fitted parameters of components.
+
+            * If True, will return a dict of parameter name : value for this object,
+              including fitted parameters of fittable components
+              (= BaseEstimator-valued parameters).
+            * If False, will return a dict of parameter name : value for this object,
+              but not include fitted parameters of components.
+
+        Returns
+        -------
+        fitted_params : dict with str-valued keys
+            Dictionary of fitted parameters, paramname : paramvalue
+            keys-value pairs include:
+
+            * always: all fitted parameters of this object, as via ``get_param_names``
+              values are fitted parameter value for that key, of this object
+            * if ``deep=True``, also contains keys/value pairs of component parameters
+              parameters of components are indexed as ``[componentname]__[paramname]``
+              all parameters of ``componentname`` appear as ``paramname`` with its value
+            * if ``deep=True``, also contains arbitrary levels of component recursion,
+              e.g., ``[componentname]__[componentcomponentname]__[paramname]``, etc
+
+        Notes
+        -----
+        Pretrained parameters (set via ``pretrain``) are excluded from the result.
+        Use ``get_pretrained_params`` to retrieve those.
+        """
+        fitted_params = super().get_fitted_params(deep=deep)
+
+        # Remove pretrained attributes from fitted params, and their components.
+        # Keys of fitted params are attribute names without the trailing "_".
+        pretrained = {attr[:-1] for attr in getattr(self, "_pretrained_attrs", [])}
+        return {
+            key: value
+            for key, value in fitted_params.items()
+            if key.partition("__")[0] not in pretrained
+        }
+
+    def _check_pretrain_input(self, X, y=None):
+        """Check and convert X and y for pretrain.
+
+        Applies the same checks and conversions as ``fit``, except that
+        ``y`` is optional, and ``y`` with more than one column is not vectorized.
+        Does not write task-specific state to ``self``.
+
+        Parameters
+        ----------
+        X : any object, to check and convert
+            should be of a supported Panel mtype or 2D numpy.ndarray
+        y : any object, or None, optional (default=None)
+            if not None, should be of a supported Table mtype
+
+        Returns
+        -------
+        X_inner : X converted to the mtype in the ``X_inner_mtype`` tag
+        y_inner : y converted to the mtype in the ``y_inner_mtype`` tag,
+            or None if y was None
+
+        Raises
+        ------
+        TypeError
+            If ``y`` would require vectorization, i.e., has more than one column,
+            and the estimator does not support multioutput.
+        ValueError
+            If ``X`` or ``y`` are of invalid type, or the estimator's capabilities
+            do not handle the data.
+        """
+        # pretrain must not write task-specific state to self,
+        # so y is checked against a scratch converter store
+        converter_store_y = self._converter_store_y
+        self._converter_store_y = {}
+        try:
+            y_inner, _, _, y_schema = self._check_y(y, return_to_mtype=True)
+        finally:
+            self._converter_store_y = converter_store_y
+
+        # pretrain does not support vectorization - pretraining is on
+        # all columns of y jointly, so the estimator must support them natively
+        if y_schema is not None:
+            raise TypeError(
+                f"{type(self).__name__}.pretrain does not support automatic "
+                "vectorization over columns of y. Pass y with a single column, "
+                f"or use a {self.EST_TYPE} that supports multioutput."
+            )
+
+        # convenience conversions to allow user flexibility:
+        # if X is 2D array, convert to 3D, if y is Series, convert to numpy
+        if y_inner is None:
+            X = self._internal_convert(X)
+        else:
+            X, y_inner = self._internal_convert(X, y_inner)
+
+        X_metadata = self._check_input(
+            X, y_inner, return_metadata=self.METADATA_REQ_IN_CHECKS
+        )
+        # Check this estimator can handle characteristics
+        self._check_capabilities(X_metadata)
+        # Convert data as dictated by the estimator tags
+        X_inner = self._convert_X(X, X_metadata["mtype"])
+
+        return X_inner, y_inner
 
     def _vectorize(self, methodname, **kwargs):
         """Vectorized/iterated loop over methods of BaseClassifier, BaseRegressor.
@@ -115,7 +332,8 @@ class BasePanelMixin(BaseEstimator):
             cv = KFold(cv, random_state=random_state, shuffle=True)
 
         if change_state:
-            self.reset()
+            # discard task-specific fitted state while retaining pretrained state
+            self._reset_at("pretrained")
             est = self
         else:
             est = self.clone()
@@ -618,3 +836,55 @@ class BasePanelMixin(BaseEstimator):
         if y is None:
             return X
         return X, y
+
+    def _pretrain(self, X, y=None):
+        """Pretrain estimator on a collection of time series, first pretraining batch.
+
+        private _pretrain containing the core logic, called from pretrain
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            if self.get_tag("X_inner_mtype") = "numpy3D":
+                3D np.ndarray of shape = [n_instances, n_dimensions, series_length]
+            if self.get_tag("X_inner_mtype") = "pd-multiindex":
+                pd.DataFrame with columns = variables,
+                index = pd.MultiIndex with first level = instance indices,
+                second level = time indices
+            for list of other mtypes, see datatypes.SCITYPE_REGISTER
+            for specifications, see examples/AA_datatypes_and_datasets.ipynb
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype"), or None
+            labels or target values of the pretraining task,
+            None if pretrain was called without y
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default simply discards the data, i.e., no pretraining happens
+        return self
+
+    def _pretrain_update(self, X, y=None):
+        """Pretrain estimator on a collection of time series, if already pretrained.
+
+        private _pretrain_update containing the core logic, called from pretrain
+
+        Writes to self:
+            Updates pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : guaranteed to be of a type in self.get_tag("X_inner_mtype")
+            see ``_pretrain``
+        y : guaranteed to be of a type in self.get_tag("y_inner_mtype"), or None
+            see ``_pretrain``
+
+        Returns
+        -------
+        self : reference to self
+        """
+        # the default calls _pretrain
+        return self._pretrain(X=X, y=y)
