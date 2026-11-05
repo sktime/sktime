@@ -4,7 +4,7 @@
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.singleton import _multiton, _singleton
+from sktime.utils.singleton import _detach_from_multiton, _multiton, _singleton
 
 
 @_singleton
@@ -69,3 +69,22 @@ def test_multiton():
     assert instance2.a == 0
     assert instance1b.b == 43
     assert instance2.b == 44
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(_detach_from_multiton),
+    reason="run test incrementally (if requested)",
+)
+def test_detach_from_multiton():
+    """Test that a detached multiton instance is independent of the multiton."""
+    instance = _TestMultiton("key_detach", 42)
+    instance.set_b([1, 2])
+
+    detached = _detach_from_multiton(instance)
+    detached.set_b([3])
+    detached.a = 0
+
+    assert detached is not instance
+    assert instance.a == 42
+    assert instance.b == [1, 2]
+    assert _TestMultiton("key_detach") is instance

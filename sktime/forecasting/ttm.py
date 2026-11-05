@@ -13,7 +13,7 @@ from skbase.utils.stdout_mute import StdoutMute
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.split import temporal_train_test_split
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
-from sktime.utils.singleton import _multiton
+from sktime.utils.singleton import _detach_from_multiton, _multiton
 from sktime.utils.warnings import warn
 
 torch = _safe_import("torch")
@@ -1067,21 +1067,33 @@ class TinyTimeMixerForecaster(BaseForecaster):
         self._freq, self._freq_token = self._resolve_freq(y=y, fh=fh)
         self._revision = self._resolve_revision(y=y, fh=fh)
 
-        self.model_ = _CachedTinyTimeMixer(
-            key=self._get_unique_key(),
-            model_path=self.model_path,
-            revision=self._revision,
-            device=self.device,
-            user_config=self._config,
-            use_source_package=self.use_source_package,
-            fit_strategy=self.fit_strategy,
-        ).load()
+        # after pretrain, ``model_`` is a private copy holding the pretrained
+        # weights, reloading it from the multiton would discard them
+        model_is_private = (
+            self._state == "pretrained" and getattr(self, "model_", None) is not None
+        )
+
+        if not model_is_private:
+            self.model_ = _CachedTinyTimeMixer(
+                key=self._get_unique_key(),
+                model_path=self.model_path,
+                revision=self._revision,
+                device=self.device,
+                user_config=self._config,
+                use_source_package=self.use_source_package,
+                fit_strategy=self.fit_strategy,
+            ).load()
 
         if not self.model_.config.resolution_prefix_tuning:
             self._freq_token = None
 
         if not any(param.requires_grad for param in self.model_.parameters()):
             return
+
+        if not model_is_private:
+            # training modifies the model in place, so detach from the shared
+            # multiton model to avoid changing other instances with the same key
+            self.model_ = _detach_from_multiton(self.model_)
 
         if self.validation_split is not None:
             y_train, y_eval = temporal_train_test_split(

@@ -10,7 +10,7 @@ from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.forecasting.base import BaseForecaster
 from sktime.split import temporal_train_test_split
-from sktime.utils.singleton import _multiton
+from sktime.utils.singleton import _detach_from_multiton, _multiton
 
 
 class TimeMoEForecaster(BaseForecaster):
@@ -296,7 +296,9 @@ class TimeMoEForecaster(BaseForecaster):
         from sktime.libs.timemoe.time_moe_window_dataset import TimeMoEWindowDataset
         from sktime.libs.timemoe.ts_dataset import SeriesListDataset
 
-        self.model_ = self._load_model()
+        # training modifies the model in place, so detach from the shared
+        # multiton model to avoid changing other instances with the same key
+        self.model_ = _detach_from_multiton(self._load_model())
 
         if self.validation_split is not None:
             y_train, y_eval = temporal_train_test_split(
