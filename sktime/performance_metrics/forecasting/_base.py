@@ -845,7 +845,8 @@ class BaseForecastingErrorMetric(BaseMetric):
         If multioutput is "raw_values", returns df unchanged.
         If multioutput is "uniform_average", returns df.mean(axis=1) for pd.DataFrame,
         or df.mean() for pd.Series.
-        If multioutput is array-like, returns df.dot(multioutput).
+        If multioutput is array-like, returns the weighted average of df columns,
+        i.e., df.dot(multioutput) divided by the sum of multioutput.
 
         Parameters
         ----------
@@ -864,8 +865,9 @@ class BaseForecastingErrorMetric(BaseMetric):
                 else:
                     return df.mean(axis=1)
 
-        # else, we expect multioutput to be array-like
-        return df.dot(multioutput)
+        # else, we expect multioutput to be array-like of averaging weights
+        multioutput = np.asarray(multioutput)
+        return df.dot(multioutput) / multioutput.sum()
 
 
 class BaseForecastingErrorMetricFunc(BaseForecastingErrorMetric):
