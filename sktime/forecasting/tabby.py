@@ -93,6 +93,7 @@ class TabbyForecaster(BaseForecaster):
         "authors": ["saptadeep12", "B1h14", "ShifengXIE"],
         "maintainers": ["saptadeep12"],
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_tabby"],
     }
 
     def __init__(
