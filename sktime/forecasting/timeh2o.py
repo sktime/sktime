@@ -4,24 +4,54 @@
 __all__ = ["TimeH2OForecaster"]
 
 from copy import deepcopy
-from functools import lru_cache
 
 import numpy as np
 import pandas as pd
 
 from sktime.datatypes import update_data
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.utils.singleton import _multiton
 
 
-@lru_cache(maxsize=2)
-def _load_model(model_type, path, device, batch_size, options):
-    """Reuse immutable inference weights across fits with identical settings."""
-    if path is not None:
-        return model_type.from_pretrained(
-            path, device=device, batch_size=batch_size, **dict(options)
-        )
+@_multiton
+class _CachedTimeH2O:
+    """Share one immutable inference model for each checkpoint and loading setup."""
 
+    def __init__(self, key, path, device, batch_size, options):
+        self.path = path
+        self.device = device
+        self.batch_size = batch_size
+        self.options = options
+        self.model = None
+
+    def load_from_checkpoint(self):
+        """Load pretrained weights or the deterministic offline test model."""
+        if self.model is not None:
+            return self.model
+
+        from h2ofm import TimeH2O
+
+        if self.path is not None:
+            self.model = TimeH2O.from_pretrained(
+                self.path,
+                device=self.device,
+                batch_size=self.batch_size,
+                **dict(self.options),
+            )
+        else:
+            self.model = _make_untrained_model(self.device, self.batch_size)
+        return self.model
+
+
+def _make_untrained_model(device, batch_size):
+    """Build a fixed tiny model for interface checks without gated weights.
+
+    This uses h2ofm 0.43.1 private modules because its public API only loads
+    pretrained checkpoints. The offline smoke and golden tests exercise these
+    imports so an upstream change fails visibly before an adapter release.
+    """
     import torch
+    from h2ofm import TimeH2O
     from h2ofm._checkpoints import resolve_device
     from h2ofm.timeh2o._checkpoints import with_rope
     from h2ofm.timeh2o._model.config import TimeH2OConfig
@@ -45,7 +75,7 @@ def _load_model(model_type, path, device, batch_size, options):
     with torch.random.fork_rng(devices=[]):
         torch.manual_seed(0)
         model = TimeH2OModel(config).eval().to(resolve_device(device))
-    return model_type(TimeH2OPipeline(with_rope(model)), batch_size=batch_size)
+    return TimeH2O(TimeH2OPipeline(with_rope(model)), batch_size=batch_size)
 
 
 class TimeH2OForecaster(BaseForecaster):
@@ -57,6 +87,9 @@ class TimeH2OForecaster(BaseForecaster):
     upstream interpolation and Gaussian-tail extrapolation for requested levels
     outside the trained 0.1--0.9 grid. Multiple targets are forecast from their
     own histories, as in the upstream API [2]_. Panels are vectorized by sktime.
+    ``predict_proba`` represents the native quantile grid as a piecewise-linear
+    quantile distribution with point masses beyond the 0.1--0.9 grid; its tails
+    are an approximation, unlike upstream ``predict_quantiles`` extrapolation.
 
     All columns of ``X`` are treated as future-known covariates. Supply their
     historical values in ``fit`` and future values in ``predict`` for **every**
@@ -65,10 +98,13 @@ class TimeH2OForecaster(BaseForecaster):
     future covariates; the tiny checkpoint ignores them with an upstream warning.
     Past-only covariates are not supported by these checkpoints.
 
-    Install the optional dependency with ``pip install h2ofm`` (Python 3.12+).
+    Install the optional dependency with ``pip install h2ofm==0.43.1``
+    (Python 3.12+). The version is pinned because the offline test model uses
+    private h2ofm modules; update the pin after running the smoke tests.
     The default weights are gated: accept the conditions at [1]_ and authenticate
     using ``hf auth login``, ``HF_TOKEN``, or ``model_kwargs={"token": ...}``.
-    Authentication and access errors from Hugging Face propagate to the caller.
+    Set ``license_accepted=True`` before loading pretrained weights. A gated
+    access error explains where to accept terms and how to authenticate.
     The weights use the H2O model non-commercial licence v1.0; consult [1]_ for
     the terms. Installing the Apache-2.0 ``h2ofm`` package does not grant access
     to the gated weights or change their license.
@@ -83,19 +119,22 @@ class TimeH2OForecaster(BaseForecaster):
         Upstream device, e.g. ``"cpu"``, ``"cuda"`` or ``"auto"``.
     batch_size : int, default=256
         Maximum number of target and covariate rows processed per batch.
+    license_accepted : bool, default=False
+        Confirm acceptance of the model licence at [1]_. Required for pretrained
+        checkpoints; the untrained offline test model needs no licence grant.
     model_kwargs : dict or None, default=None
         Additional ``TimeH2O.from_pretrained`` options: ``revision``, ``token``,
         ``cache_dir`` and ``local_files_only``. ``pretrained_model_name_or_path``,
         ``device`` and ``batch_size`` are reserved for the parameters above.
         Prefer environment authentication to storing a token in an estimator.
-        See the `h2ofm TimeH2O API <https://pypi.org/project/h2ofm/>`_ for options.
+        See the upstream API [2]_ for options.
     forecast_kwargs : dict or None, default=None
         Additional ``TimeH2O.forecast`` options: ``context_length``,
         ``autoregressive``, ``flip_equivariant``, ``clip_nonnegative``,
         ``snap_integer`` and ``patch_ensemble``. ``context``, ``horizon``,
         ``future_covariates`` and ``quantile_levels`` are managed by this adapter.
         ``past_covariates`` are unsupported. These keys must not appear here.
-        See the `h2ofm TimeH2O API <https://pypi.org/project/h2ofm/>`_ for options.
+        See the upstream API [2]_ for options.
 
     Attributes
     ----------
@@ -113,7 +152,9 @@ class TimeH2OForecaster(BaseForecaster):
 
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.timeh2o import TimeH2OForecaster
-    >>> forecaster = TimeH2OForecaster(device="cpu")  # doctest: +SKIP
+    >>> forecaster = TimeH2OForecaster(  # doctest: +SKIP
+    ...     device="cpu", license_accepted=True
+    ... )
     >>> forecaster.fit(load_airline())  # doctest: +SKIP
     >>> forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     >>> forecaster.predict_quantiles(fh=[1, 3], alpha=[0.1, 0.5, 0.9])  # doctest: +SKIP
@@ -123,7 +164,7 @@ class TimeH2OForecaster(BaseForecaster):
         "authors": ["KrishChadha001", "H2O.ai"],
         "maintainers": ["KrishChadha001"],
         "category": ["deep_learning", "foundation_model"],
-        "python_dependencies": ["h2ofm>=0.43.1"],
+        "python_dependencies": ["h2ofm==0.43.1"],
         "python_version": ">=3.12",
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
@@ -148,12 +189,14 @@ class TimeH2OForecaster(BaseForecaster):
         model_path="h2oai/timeh2o-v1",
         device="auto",
         batch_size=256,
+        license_accepted=False,
         model_kwargs=None,
         forecast_kwargs=None,
     ):
         self.model_path = model_path
         self.device = device
         self.batch_size = batch_size
+        self.license_accepted = license_accepted
         self.model_kwargs = model_kwargs
         self.forecast_kwargs = forecast_kwargs
         super().__init__()
@@ -170,16 +213,29 @@ class TimeH2OForecaster(BaseForecaster):
             raise ValueError("quantile_levels are managed by predict_quantiles.")
         if "past_covariates" in forecast_kwargs:
             raise ValueError("past_covariates are not supported by this adapter.")
+        if self.model_path is not None and not self.license_accepted:
+            raise ValueError(
+                "TimeH2O pretrained weights use the H2O model non-commercial "
+                "licence v1.0. Read the terms at "
+                "https://huggingface.co/h2oai/timeh2o-v1 and set "
+                "license_accepted=True to confirm acceptance."
+            )
 
         from h2ofm import TimeH2O
+        from huggingface_hub.errors import GatedRepoError
 
-        self.model_ = _load_model(
-            TimeH2O,
-            self.model_path,
-            self.device,
-            self.batch_size,
-            tuple(sorted(model_kwargs.items())),
-        )
+        options = tuple(sorted(model_kwargs.items()))
+        key = (TimeH2O, self.model_path, self.device, self.batch_size, repr(options))
+        try:
+            self.model_ = _CachedTimeH2O(
+                key, self.model_path, self.device, self.batch_size, options
+            ).load_from_checkpoint()
+        except GatedRepoError as exc:
+            raise ValueError(
+                "Access to the TimeH2O checkpoint is gated. Accept its terms at "
+                "https://huggingface.co/h2oai/timeh2o-v1 and authenticate with "
+                "hf auth login, HF_TOKEN, or model_kwargs={'token': ...}."
+            ) from exc
         self._forecast_kwargs = forecast_kwargs
         self._cur_y = y.copy()
         self._cur_X = None if X is None else X.loc[y.index].copy()
@@ -254,6 +310,23 @@ class TimeH2OForecaster(BaseForecaster):
         columns = pd.MultiIndex.from_product([self._get_varnames(), alpha])
         return pd.DataFrame(
             values.reshape(len(index), -1), index=index, columns=columns
+        )
+
+    def _predict_proba(self, fh, X, marginal=True):
+        """Represent native quantiles with point-mass tails outside the grid."""
+        from skpro.distributions import HistogramQPD
+
+        levels = [round(i / 10, 1) for i in range(1, 10)]
+        output, positions, index = self._run_forecast(fh, X, alpha=levels)
+        values = np.asarray(output.quantiles)[:, positions, :]
+        quantile_index = pd.MultiIndex.from_product([levels, index])
+        quantiles = pd.DataFrame(
+            values.transpose(2, 1, 0).reshape(-1, values.shape[0]),
+            index=quantile_index,
+            columns=self._cur_y.columns,
+        )
+        return HistogramQPD(
+            quantiles, tails="mass", index=index, columns=self._cur_y.columns
         )
 
     @classmethod

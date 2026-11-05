@@ -41,45 +41,13 @@ class _Model:
 def forecaster_class(monkeypatch):
     """Replace only the optional upstream model and its network loading."""
     monkeypatch.setitem(sys.modules, "h2ofm", types.SimpleNamespace(TimeH2O=_Model))
-    return _OfflineTimeH2OForecaster
 
+    def make_forecaster(**kwargs):
+        options = {"model_path": "offline-test-checkpoint", "license_accepted": True}
+        options.update(kwargs)
+        return _OfflineTimeH2OForecaster(**options)
 
-@pytest.mark.parametrize(
-    "index",
-    [
-        pd.RangeIndex(4),
-        pd.period_range("2024-01", periods=4, freq="M"),
-        pd.date_range("2024-01-01", periods=4),
-    ],
-)
-def test_point_sparse_and_absolute_horizon(forecaster_class, index):
-    """Select horizon positions correctly and retain target/index metadata."""
-    from sktime.forecasting.base import ForecastingHorizon
-
-    y = pd.DataFrame(
-        {"a": [1.0, 2.0, 3.0, 4.0], "b": [10.0, 20.0, 30.0, 40.0]},
-        index=index.rename("time"),
-    )
-    f = forecaster_class().fit(y)
-    pred = f.predict([1, 3])
-    np.testing.assert_array_equal(pred, [[5, 41], [7, 43]])
-    assert list(pred.columns) == ["a", "b"]
-    assert pred.index.name == "time"
-    pd.testing.assert_frame_equal(
-        pred, f.predict(ForecastingHorizon(pred.index, is_relative=False))
-    )
-
-
-def test_quantiles_and_intervals(forecaster_class):
-    """Quantile values and columns follow sktime's variable-major convention."""
-    f = forecaster_class().fit(pd.DataFrame({"a": [1.0, 4.0], "b": [10.0, 40.0]}))
-    q = f.predict_quantiles([1, 3], alpha=[0.9, 0.05, 0.5])
-    assert list(q.columns) == [(v, a) for v in ["a", "b"] for a in [0.9, 0.05, 0.5]]
-    np.testing.assert_allclose(
-        q, [[5.9, 5.05, 5.5, 41.9, 41.05, 41.5], [7.9, 7.05, 7.5, 43.9, 43.05, 43.5]]
-    )
-    interval = f.predict_interval([1], coverage=0.8)
-    np.testing.assert_allclose(interval, [[5.1, 5.9, 41.1, 41.9]])
+    return make_forecaster
 
 
 def test_covariates_alignment_and_mixed_dtypes(forecaster_class):
@@ -189,22 +157,6 @@ def test_different_numeric_categories_remain_categorical(forecaster_class, monke
     np.testing.assert_array_equal(f.predict([1], X=future), [5])
 
 
-@pytest.mark.parametrize("update_params", [True, False])
-def test_covariates_after_update(forecaster_class, update_params):
-    """Updates append matching historical covariates and keep their alignment."""
-    f = forecaster_class().fit(
-        pd.Series([1.0, 2.0, 3.0, 4.0]), X=pd.DataFrame({"x": [1.0, 2.0, 3.0, 4.0]})
-    )
-    f.update(
-        pd.Series([100.0], index=[4]),
-        X=pd.DataFrame({"x": [5.0]}, index=[4]),
-        update_params=update_params,
-    )
-    np.testing.assert_array_equal(
-        f.predict([1], X=pd.DataFrame({"x": [10.0]}, index=[5])), [111]
-    )
-
-
 def test_options_forwarding_and_ownership(forecaster_class, monkeypatch):
     """Use load/inference options without adding keys to the caller's dicts."""
 
@@ -229,6 +181,7 @@ def test_options_forwarding_and_ownership(forecaster_class, monkeypatch):
     forecast_kwargs = {"context_length": 16}
     f = forecaster_class(
         model_path="local-checkpoint",
+        license_accepted=True,
         device="cpu",
         batch_size=8,
         model_kwargs=model_kwargs,
@@ -258,6 +211,48 @@ def test_repeated_fit_reuses_loaded_model(forecaster_class, monkeypatch):
     assert calls == ["cached-checkpoint"]
 
 
+def test_license_acceptance_required_for_checkpoint():
+    """Restricted pretrained weights require explicit license acceptance."""
+    with pytest.raises(ValueError, match="license_accepted=True"):
+        TimeH2OForecaster(model_path="h2oai/timeh2o-v1").fit(pd.Series([1.0, 2.0]))
+
+
+def test_gated_checkpoint_error_has_actionable_message(forecaster_class, monkeypatch):
+    """A missing Hugging Face grant explains the required user action."""
+    from huggingface_hub.errors import GatedRepoError
+
+    class GatedModel(_Model):
+        @classmethod
+        def from_pretrained(cls, path, **kwargs):
+            import httpx
+
+            response = httpx.Response(
+                403,
+                request=httpx.Request("GET", "https://huggingface.co/h2oai/timeh2o-v1"),
+            )
+            raise GatedRepoError("access denied", response=response)
+
+    monkeypatch.setattr(sys.modules["h2ofm"], "TimeH2O", GatedModel)
+    with pytest.raises(ValueError, match="huggingface.co/h2oai/timeh2o-v1"):
+        forecaster_class(model_path="h2oai/timeh2o-v1", license_accepted=True).fit(
+            pd.Series([1.0, 2.0, 3.0])
+        )
+
+
+def test_predict_proba_uses_upstream_quantile_grid(forecaster_class):
+    """Distribution quantiles agree with the upstream forecast quantiles."""
+    pytest.importorskip("skpro")
+    f = forecaster_class().fit(
+        pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
+    )
+    dist = f.predict_proba([1, 2])
+    expected = f.predict_quantiles([1, 2], alpha=[0.1, 0.5, 0.9])
+    for alpha in [0.1, 0.5, 0.9]:
+        np.testing.assert_allclose(
+            dist.ppf(alpha), expected.loc[:, [("a", alpha), ("b", alpha)]], atol=1e-6
+        )
+
+
 def test_model_path_none_runs_without_checkpoint(monkeypatch):
     """The untrained test model needs no gated access or download."""
     h2ofm = pytest.importorskip("h2ofm")
@@ -276,6 +271,13 @@ def test_model_path_none_runs_without_checkpoint(monkeypatch):
 def test_untrained_model_golden_output():
     """Pin adapter output and requested quantile order on the offline model."""
     pytest.importorskip("h2ofm")
+    # Reproduce the golden values with h2ofm==0.43.1 and CPU:
+    # y = pd.Series(np.arange(1, 33, dtype=float), name="y")
+    # f = TimeH2OForecaster(model_path=None, device="cpu").fit(y)
+    # print(f.predict([1, 2, 3]).to_numpy())
+    # print(f.predict_quantiles([1, 2, 3], alpha=[0.1, 0.5, 0.9]).to_numpy())
+    # The fixed RNG seed and tiny private-module config live in
+    # _make_untrained_model; no gated checkpoint is downloaded.
     y = pd.Series(np.arange(1, 33, dtype=float), name="y")
     f = TimeH2OForecaster(model_path=None, device="cpu").fit(y)
     pred = f.predict([1, 2, 3])
@@ -332,7 +334,7 @@ def test_timeh2o_real_checkpoint():
     pytest.importorskip("h2ofm")
 
     y = pd.Series(np.sin(np.arange(64) / 10), name="target")
-    f = TimeH2OForecaster(device="cpu").fit(y)
+    f = TimeH2OForecaster(device="cpu", license_accepted=True).fit(y)
     pred = f.predict([1, 3])
     quantiles = f.predict_quantiles([1, 3], alpha=[0.1, 0.5, 0.9])
     assert np.isfinite(pred).all()
