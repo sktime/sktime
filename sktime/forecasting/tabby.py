@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tabby forecaster for ``sktime``."""
 
-__author__ = ["saptadeep12"]
+__author__ = ["saptadeep12", "specter2028"]
 
 __all__ = ["TabbyForecaster"]
 
@@ -21,10 +21,11 @@ class TabbyForecaster(BaseForecaster):
 
     .. note::
 
-        The Tabby weights are licensed under CC BY-NC 4.0 (non-commercial use)
-        and are not bundled with ``sktime``. The model implementation is
-        vendored under ``sktime.libs.tabby`` under its upstream Apache-2.0
-        license.
+        The Tabby weights and vendored code are licensed under CC BY-NC 4.0
+        (non-commercial use only), copied from
+        https://huggingface.co/paris-noah/Tabby at revision
+        ``1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01``. The weights are not
+        bundled with ``sktime``.
 
     Parameters
     ----------
@@ -47,6 +48,8 @@ class TabbyForecaster(BaseForecaster):
       masks the requested future positions.
     - NaNs in the history are passed to the model as is; no imputation or
       scaling is applied.
+    - Requested quantiles outside the model's native range are clamped to the
+      outer native quantiles.
 
     See Also
     --------
@@ -83,9 +86,11 @@ class TabbyForecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:insample": False,
         "capability:pred_int:insample": False,
+        "capability:update": True,
         "requires-fh-in-fit": False,
-        "python_dependencies": ["torch", "transformers"],
-        "authors": ["saptadeep12"],
+        "python_dependencies": ["torch", "transformers>=5.22.1"],
+        "tests:libs": ["sktime.libs.tabby"],
+        "authors": ["saptadeep12", "specter2028"],
         "maintainers": ["saptadeep12"],
         "tests:vm": True,
     }
@@ -112,33 +117,26 @@ class TabbyForecaster(BaseForecaster):
 
     def _predict(self, fh, X=None):
         """Return point forecasts from Tabby's median quantile."""
-        predictions, relative_steps, index = self._run_forecast(fh)
-        # Tabby's native grid is 1%-99%; index relative steps from one.
-        values = predictions[0, 49, relative_steps - 1].astype("float64")
-
-        if isinstance(self.context_, pd.Series):
-            return pd.Series(values, index=index, name=self.context_.name)
-        return pd.DataFrame(
-            values, index=index, columns=self.context_.columns, dtype="float64"
-        )
+        predictions, relative_steps, index, levels = self._run_forecast(fh)
+        median_idx = int(np.argmin(np.abs(levels - 0.5)))
+        values = predictions[0, median_idx, relative_steps - 1].astype("float64")
+        return pd.Series(values, index=index, name=self.context_.name)
 
     def _predict_quantiles(self, fh, X=None, alpha=None):
-        """Return requested Tabby quantiles, interpolating its native grid."""
+        """Return requested Tabby quantiles, interpolating its native grid.
+
+        Requested levels outside the native range are clamped to the outer
+        native quantiles.
+        """
         if alpha is None:
             alpha = [0.1, 0.5, 0.9]
         alpha = [float(value) for value in alpha]
-        if any(value < 0.01 or value > 0.99 for value in alpha):
-            raise ValueError(
-                "Tabby quantiles are available only for alpha in [0.01, 0.99]."
-            )
-
-        predictions, relative_steps, index = self._run_forecast(fh)
-        grid = np.arange(1, 100, dtype=np.float64) / 100
+        predictions, relative_steps, index, levels = self._run_forecast(fh)
         # Map absolute requested steps back to the generated horizon.
         values = np.asarray(
             [
                 [
-                    self._interpolate_quantile(value, grid, predictions[0, :, step - 1])
+                    np.interp(value, levels, predictions[0, :, step - 1])
                     for value in alpha
                 ]
                 for step in relative_steps
@@ -156,27 +154,18 @@ class TabbyForecaster(BaseForecaster):
         """Return a histogram distribution interpolated from Tabby's quantiles."""
         from skpro.distributions import HistogramQPD
 
-        predictions, relative_steps, index = self._run_forecast(fh)
-        grid = np.arange(1, 100, dtype=np.float64) / 100
+        predictions, relative_steps, index, levels = self._run_forecast(fh)
         values = predictions[0, :, relative_steps - 1]
         var_name = self.context_.name
         if var_name is None:
             var_name = 0
-        # HistogramQPD preserves the native 99-quantile grid and its ppf uses
+        # HistogramQPD preserves the model's native quantile grid and its ppf uses
         # the same linear interpolation as _predict_quantiles.
-        row_index = pd.MultiIndex.from_product([grid, index])
+        row_index = pd.MultiIndex.from_product([levels, index])
         quantiles = pd.DataFrame(
             values.T.reshape(-1, 1), index=row_index, columns=[var_name]
         )
         return HistogramQPD(quantiles, tails="mass", index=index, columns=[var_name])
-
-    @staticmethod
-    def _interpolate_quantile(alpha, grid, values):
-        """Return the closest native quantile or interpolate between levels."""
-        closest_idx = int(np.argmin(np.abs(grid - alpha)))
-        if abs(grid[closest_idx] - alpha) <= 1e-8:
-            return values[closest_idx]
-        return np.interp(alpha, grid, values)
 
     def _run_forecast(self, fh):
         """Run Tabby once and return quantiles at all requested steps.
@@ -189,11 +178,13 @@ class TabbyForecaster(BaseForecaster):
         Returns
         -------
         predictions : np.ndarray
-            Quantile predictions with shape ``(1, 99, max(fh))``.
+            Quantile predictions with shape ``(1, n_quantiles, max(fh))``.
         relative_steps : np.ndarray
             Requested relative forecasting steps.
         index : pd.Index
             Absolute index corresponding to ``fh``.
+        levels : np.ndarray
+            Native quantile levels emitted by the model.
         """
         import torch
 
@@ -223,13 +214,22 @@ class TabbyForecaster(BaseForecaster):
             output = model.predict(history_tensor, prediction_length=horizon)
 
         predictions = output.detach().float().cpu().numpy()
-        if predictions.shape != (1, 99, horizon):
+        levels = np.asarray(model.quantile_levels, dtype=np.float64)
+        if predictions.shape != (1, len(levels), horizon):
             raise ValueError(
                 "Tabby returned quantiles with unexpected shape "
-                f"{predictions.shape}; expected {(1, 99, horizon)}."
+                f"{predictions.shape}; expected {(1, len(levels), horizon)}."
             )
 
-        return predictions, relative_steps, fh.to_absolute_index(self.cutoff)
+        return predictions, relative_steps, fh.to_absolute_index(self.cutoff), levels
+
+    def _update(self, y, X=None, update_params=True):
+        """Extend the stored history without refitting the model."""
+        context = pd.concat([self.context_, y])
+        context = context[~context.index.duplicated(keep="last")].sort_index()
+        context.name = self.context_.name
+        self.context_ = context
+        return self
 
     def _load_model(self):
         """Load the checkpoint or retrieve it from the shared model cache."""

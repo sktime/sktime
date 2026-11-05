@@ -19,9 +19,11 @@ monotone cumulative-softplus quantile head -- is unchanged.
 
 from typing import List, Optional, Union
 
-import torch
-import torch.nn as nn
-from transformers.modeling_utils import PreTrainedModel
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+PreTrainedModel = _safe_import("transformers.modeling_utils.PreTrainedModel")
 
 from .configuration_tabby import TabbyConfig
 from .input_preprocessing import mask_aware_normalize_for_inference

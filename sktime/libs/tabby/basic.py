@@ -1,9 +1,11 @@
 # ruff: noqa
 from typing import Optional, Type
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
 
 
 def make_attn_mask(query_pad: torch.Tensor, key_pad: torch.Tensor) -> torch.Tensor:

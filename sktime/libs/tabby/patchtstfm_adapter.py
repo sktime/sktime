@@ -54,8 +54,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import torch
-import torch.nn as nn
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
 from .configuration_patchtst_fm import PatchTSTFMConfig as HFPatchTSTFMConfig
 from .modeling_patchtst_fm import PatchTSTFMModel

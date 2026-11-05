@@ -7,7 +7,9 @@ only `.eps`, `.patch_size` and `.num_patches`.
 
 from typing import Tuple
 
-import torch
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
 
 
 def mask_aware_normalize_for_inference(

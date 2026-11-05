@@ -14,11 +14,11 @@ They are backbone-agnostic: nothing here touches PatchTST-FM specifics.
 from __future__ import annotations
 
 import math
-from typing import Optional
 
-import numpy as np
-import torch
-import torch.nn as nn
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
 
 class Chronos2StatsExtractor(nn.Module):

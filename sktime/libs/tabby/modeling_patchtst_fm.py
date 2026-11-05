@@ -7,11 +7,20 @@ import math
 from dataclasses import dataclass
 from typing import Any, List, Optional, Tuple
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from transformers.modeling_utils import PreTrainedModel
-from transformers.utils import ModelOutput, logging
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
+F = _safe_import("torch.nn.functional")
+PreTrainedModel = _safe_import("transformers.modeling_utils.PreTrainedModel")
+ModelOutput = _safe_import("transformers.utils.ModelOutput")
+logging = _safe_import("transformers.utils.logging")
+
+if ModelOutput.__class__.__name__ == "CommonMagicMeta":
+
+    class ModelOutput:
+        """Dummy model output if transformers is unavailable."""
+
 
 from .basic import (
     TransformerBlock,

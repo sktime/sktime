@@ -1,6 +1,8 @@
 # ruff: noqa
-import torch
-import torch.nn as nn
+from sktime.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+nn = _safe_import("torch.nn")
 
 
 class RevIN(nn.Module):

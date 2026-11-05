@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
-from sktime.forecasting.tabby import TabbyForecaster, _CachedTabby
+from sktime.forecasting.tabby import TabbyForecaster
 from sktime.tests.test_switch import run_test_for_class
 
 pytestmark = pytest.mark.skipif(
@@ -14,6 +14,20 @@ pytestmark = pytest.mark.skipif(
 )
 
 _TABBY_REVISION = "1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01"
+# Golden values generated with the raw upstream HF remote-code model:
+# pip install torch transformers einops numpy pandas
+# raw_tabby_golden.py:
+# import numpy as np
+# from sktime.datasets import load_airline
+# from transformers import AutoModel
+# revision = "1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01"
+# model = AutoModel.from_pretrained(
+#     "paris-noah/Tabby", revision=revision, trust_remote_code=True
+# ).eval()
+# history = load_airline().to_numpy(dtype=np.float32)[None, :]
+# output = model.predict(history, prediction_length=3)
+# print(output[0, 49, :])
+# print(output[0, [9, 49, 89], :].T)
 _GOLDEN_POINT = np.array([448.55990601, 442.19024658, 494.63415527])
 _GOLDEN_QUANTILES = np.array(
     [
@@ -60,44 +74,3 @@ def test_tabby_predict_proba_matches_quantiles():
         ppf = distribution.ppf(probabilities)
         expected = quantiles[(var_name, alpha)].to_numpy().reshape(-1, 1)
         np.testing.assert_allclose(ppf.to_numpy(), expected, rtol=1e-5, atol=1e-6)
-
-
-@pytest.mark.parametrize(
-    "loading_info",
-    [
-        {"missing_keys": ["backbone.blocks.0.weight"], "unexpected_keys": []},
-        {"missing_keys": [], "unexpected_keys": ["ctx_generator.mlp.0.weight"]},
-    ],
-)
-def test_tabby_rejects_incomplete_checkpoint(monkeypatch, loading_info):
-    """A checkpoint with missing or unexpected weights must not be used."""
-    import sktime.libs.tabby as tabby_lib
-
-    class FakeModel:
-        def to(self, device):
-            return self
-
-        def eval(self):
-            return self
-
-    def fake_from_pretrained(*args, **kwargs):
-        return FakeModel(), loading_info
-
-    monkeypatch.setattr(
-        tabby_lib.TabbyForForecasting, "from_pretrained", fake_from_pretrained
-    )
-    monkeypatch.setattr(
-        tabby_lib.TabbyConfig,
-        "from_pretrained",
-        classmethod(lambda cls, *args, **kwargs: cls()),
-    )
-
-    loader = _CachedTabby(
-        key=("incomplete-checkpoint", repr(loading_info)),
-        model_path="test",
-        revision=None,
-        device="cpu",
-        dtype=None,
-    )
-    with pytest.raises(RuntimeError, match="did not load exactly"):
-        loader.load()

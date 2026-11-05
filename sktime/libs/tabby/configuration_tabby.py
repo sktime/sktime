@@ -16,7 +16,9 @@ Note the two different window widths, which are easy to confuse:
   the prompt's segmentation and moves the numbers.
 """
 
-from transformers.configuration_utils import PretrainedConfig
+from sktime.utils.dependencies import _safe_import
+
+PretrainedConfig = _safe_import("transformers.configuration_utils.PretrainedConfig")
 
 
 class TabbyConfig(PretrainedConfig):
