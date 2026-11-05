@@ -4316,6 +4316,15 @@
         "test",
         "maintenance"
       ]
+    },
+    {
+      "login": "karthiksenv",
+      "name": "KarthikS",
+      "avatar_url": "https://avatars.githubusercontent.com/u/197310616?v=4",
+      "profile": "https://github.com/karthiksenv",
+      "contributions": [
+        "doc"
+      ]
     }
   ]
 }
