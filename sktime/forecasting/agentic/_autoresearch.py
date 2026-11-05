@@ -834,6 +834,15 @@ class AutoResearchForecaster(BaseForecaster):
         """Predict using the best blueprint forecaster."""
         return self.best_forecaster_.predict(fh=fh, X=X)
 
+    def _update(self, y, X=None, update_params=True):
+        """Update the best blueprint forecaster with new data.
+
+        The LLM blueprint search is not re-run, only ``best_forecaster_``
+        is updated, so its cutoff stays in sync with this forecaster.
+        """
+        self.best_forecaster_.update(y=y, X=X, update_params=update_params)
+        return self
+
     def summary(self):
         """Return a summary DataFrame of all evaluated blueprints.
 
