@@ -1,0 +1,37 @@
+name: Reproduce macOS Python 3.12 failure
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reproduce:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: |
+          uv pip install --system ".[all_extras,dev,dl,compatibility_tests]" --no-cache-dir
+
+      - name: Print environment information
+        run: |
+          python -c "import sys, torch, skbase; print('Python:', sys.version); print('PyTorch:', torch.__version__); print('scikit-base:', skbase.__version__)"
+          python -c "import torch; f = torch.backends.mps.is_available; print('MPS function type:', type(f)); print('Has __wrapped__:', hasattr(f, '__wrapped__')); print('MPS available:', f())"
+
+      - name: Test estimator discovery
+        run: |
+          python -c "from sktime.registry import all_estimators; print('Discovered:', len(all_estimators()))"
+
+      - name: Run failing test without xdist
+        run: |
+          python -m pytest -n 0 sktime/tests/tests/test_test_utils.py::test_excluded_tests_by_test -vv
