@@ -15,7 +15,8 @@ keywords = [
   "time-series-classification",
   "time-series-regression",
 ]
-license = { file = "LICENSE" }
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
 # sktime is governed by the Community Council, see docs/source/get_involved/governance
 # use the email or sktime discord (governance channel) to get in touch
 maintainers = [
@@ -34,7 +35,6 @@ requires-python = ">=3.10,<3.16"
 classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: BSD License",
   "Operating System :: MacOS",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
