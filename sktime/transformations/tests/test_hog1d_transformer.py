@@ -145,6 +145,52 @@ def test_hog1d_performs_correctly_along_each_dim():
     assert check_if_dataframes_are_equal(res, orig)
 
 
+def _hog1d_reference(X, num_bins, scaling_factor):
+    """HOG1D of one interval, element by element, as in the original algorithm."""
+    import math
+
+    X = np.pad(np.asarray(X, dtype=float), 1, mode="edge")
+    gradients = [
+        scaling_factor * 0.5 * (X[i + 1] - X[i - 1]) for i in range(1, len(X) - 1)
+    ]
+    orients = [math.degrees(math.atan(g)) for g in gradients]
+    boundaries = [
+        -90 + (180 / num_bins) + ((180 / num_bins) * x) for x in range(num_bins)
+    ]
+    histogram = [0.0] * num_bins
+    for orient in orients:
+        for y, boundary in enumerate(boundaries):
+            if orient <= boundary:
+                histogram[y] += 1.0
+                break
+    return histogram
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HOG1DTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("num_bins", [2, 8, 12])
+@pytest.mark.parametrize("scaling_factor", [0.1, 1.0, 10.0])
+def test_get_hog1d_matches_reference(num_bins, scaling_factor):
+    """Vectorized histogram of gradients matches the element-wise reference."""
+    rng = np.random.default_rng(0)
+    transformer = HOG1DTransformer(num_bins=num_bins, scaling_factor=scaling_factor)
+
+    series = [
+        rng.standard_normal(50),
+        rng.standard_normal(7) * 100,
+        np.zeros(10),  # all gradients zero, orientation exactly zero
+        np.arange(10.0),  # constant gradient, orientation on a bin boundary for 1.0
+        np.array([5.0]),  # single element
+        np.array([1e12, -1e12] * 5),  # orientations at +-90 degrees
+    ]
+    for X in series:
+        expected = _hog1d_reference(X, num_bins, scaling_factor)
+        assert transformer._get_hog1d(X) == expected
+        assert sum(expected) == len(X)
+
+
 def convert_list_to_dataframe(list_to_convert):
     """Convert a Python list to a Pandas dataframe."""
     df = pd.DataFrame()
