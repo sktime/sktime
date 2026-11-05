@@ -1,7 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Tabby forecaster for ``sktime``."""
 
-__author__ = ["saptadeep12", "specter2028"]
+__author__ = ["saptadeep12", "B1h14", "ShifengXIE"]
 
 __all__ = ["TabbyForecaster"]
 
@@ -90,7 +90,7 @@ class TabbyForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "python_dependencies": ["torch", "transformers>=5.22.1"],
         "tests:libs": ["sktime.libs.tabby"],
-        "authors": ["saptadeep12", "specter2028"],
+        "authors": ["saptadeep12", "B1h14", "ShifengXIE"],
         "maintainers": ["saptadeep12"],
         "tests:vm": True,
     }
