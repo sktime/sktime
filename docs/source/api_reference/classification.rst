@@ -152,6 +152,7 @@ Dummy
     :template: class.rst
 
     DummyClassifier
+    DummyPretrainClassifier
 
 Early classification
 --------------------
