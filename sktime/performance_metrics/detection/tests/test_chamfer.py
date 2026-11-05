@@ -31,3 +31,6 @@ def test_chamfer():
     # closest locs are 1, 1, 5, 5, 5
     # distances are 0 + 1 + 0 + 37 + 38 = 76
     assert loss2 == 76
+
+    X.index = pd.RangeIndex(start=10, stop=28, step=3)
+    assert metric(y_true, y_pred, X) == 12

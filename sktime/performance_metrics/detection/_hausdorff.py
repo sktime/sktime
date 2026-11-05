@@ -1,7 +1,6 @@
 """Directed Hausdorff distance between two sets of points."""
 
 import numpy as np
-import pandas as pd
 
 from sktime.performance_metrics.detection._base import BaseDetectionMetric
 from sktime.performance_metrics.detection.utils import _find_closest_elements
@@ -21,8 +20,8 @@ class DirectedHausdorff(BaseDetectionMetric):
     where :math:`b'_i` is the true event closest to :math:`a_i`,
     that is, :math:`b'_i = \arg \min_{b\in B} |a_i - b|`.
 
-    If ``X`` is provided, the time points are taken as the location indices in ``X``.
-    Otherwise, it is assumed that ``X`` has a ``RangeIndex``.
+    If ``X`` is provided, distances use the values of its index.
+    Otherwise, distances use integer event positions.
     """
 
     _tags = {
@@ -65,7 +64,7 @@ class DirectedHausdorff(BaseDetectionMetric):
         y_true_ilocs = y_true.ilocs
         y_pred_ilocs = y_pred.ilocs
 
-        if X is not None and not isinstance(X.index, pd.RangeIndex):
+        if X is not None:
             y_true_locs = X.index[y_true_ilocs]
             y_pred_locs = X.index[y_pred_ilocs]
         else:
