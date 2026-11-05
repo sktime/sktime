@@ -64,7 +64,7 @@ loads it back:
 
     y = load_airline()
     forecaster = NaiveForecaster(strategy="mean")
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
 
     # creates model.zip in the current working directory
     forecaster.save("model")
@@ -98,7 +98,7 @@ the first tuple element, passing it the second element:
 
     y = load_airline()
     forecaster = NaiveForecaster(strategy="mean")
-    forecaster.fit(y, fh=[1, 2, 3])
+    forecaster.fit(y, fh=3)
 
     serial = forecaster.save()
     # (<class 'sktime.forecasting.naive._naive.NaiveForecaster'>, b'\x80\x05...')

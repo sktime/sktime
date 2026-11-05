@@ -113,6 +113,7 @@ class HCrystalBallAdapter(BaseForecaster):
         "tests:python_dependencies": ["statsmodels"],
         # estimator type
         # --------------
+        "category": ["adapter"],
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,

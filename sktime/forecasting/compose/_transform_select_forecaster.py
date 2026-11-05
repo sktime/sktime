@@ -104,6 +104,7 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "python_version": None,
         # estimator type
         # --------------
+        "category": ["composition"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
