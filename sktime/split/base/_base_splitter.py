@@ -181,15 +181,16 @@ class BaseSplitter(BaseObject):
         """
         srs = pd.DataFrame(index=y).reset_index(-1).iloc[:, 0]
         index = srs.index
-        anchors = pd.Series(range(len(srs)), index).groupby(index).first().tolist()
+        positions = pd.Series(np.arange(len(srs)), index).groupby(index)
+        inst_positions = [inst.to_numpy() for _, inst in positions]
         splits = (self._split(pd.Index(inst.values)) for _, inst in srs.groupby(index))
 
         train = []
         test = []
-        for split_inst, anchor in zip(splits, anchors):
+        for split_inst, inst_pos in zip(splits, inst_positions):
             train_inst, test_inst = zip(*split_inst)
-            train.append(tuple(indices + anchor for indices in train_inst))
-            test.append(tuple(indices + anchor for indices in test_inst))
+            train.append(tuple(_to_panel_iloc(ix, inst_pos) for ix in train_inst))
+            test.append(tuple(_to_panel_iloc(ix, inst_pos) for ix in test_inst))
 
         train = map(np.concatenate, zip(*train))
         test = map(np.concatenate, zip(*test))
@@ -554,3 +555,24 @@ class BaseSplitter(BaseObject):
                 (y >= y[max(train_start, 0)]) & (y <= y[min(split_point, len(y)) - 1])
             ).flatten()
         return np.array([], dtype=int)
+
+
+def _to_panel_iloc(inst_iloc, inst_positions):
+    """Map iloc indices within one instance to iloc indices in the whole panel.
+
+    Parameters
+    ----------
+    inst_iloc : 1D np.ndarray of int
+        iloc indices relative to the instance; -1 marks a missing index
+    inst_positions : 1D np.ndarray of int
+        iloc positions of the instance's rows in the panel, in row order
+
+    Returns
+    -------
+    1D np.ndarray of int
+        iloc indices in the panel; indices that are -1 or out of range for the
+        instance are returned as -1, and are removed by ``split``
+    """
+    inst_iloc = np.asarray(inst_iloc, dtype=int)
+    valid = (inst_iloc >= 0) & (inst_iloc < len(inst_positions))
+    return np.where(valid, inst_positions[np.where(valid, inst_iloc, 0)], -1)
