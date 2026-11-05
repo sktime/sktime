@@ -4,10 +4,15 @@
 __author__ = ["mloning", "kkoralturk", "khrapovs", "fkiraly"]
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.split import ExpandingWindowSplitter, SlidingWindowSplitter
+from sktime.split import (
+    ExpandingWindowSplitter,
+    SlidingWindowSplitter,
+    TemporalTrainTestSplitter,
+)
 from sktime.tests.test_switch import run_test_for_class
 from sktime.utils.datetime import _coerce_duration_to_int
 from sktime.utils.validation import (
@@ -144,3 +149,35 @@ def test_window_splitter_in_sample_fh_greater_than_window_length(CV):
     train_windows, test_windows, cutoffs, n_splits = _check_cv(cv, y)
     np.testing.assert_array_equal(test_windows[0], np.array([0, 2]))
     np.testing.assert_array_equal(train_windows[0], np.array([3, 4, 5]))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(
+        [SlidingWindowSplitter, ExpandingWindowSplitter, TemporalTrainTestSplitter]
+    ),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "cv",
+    [
+        SlidingWindowSplitter(fh=[1, 2], window_length=3),
+        ExpandingWindowSplitter(fh=[1], initial_window=2),
+        TemporalTrainTestSplitter(test_size=1),
+    ],
+)
+def test_split_panel_with_interleaved_instances(cv):
+    """Splits of a panel do not depend on the row order of its instances, see #11709."""
+    index = pd.MultiIndex.from_tuples(
+        [(i, t) for t in range(6) for i in ["a", "b"]], names=["id", "time"]
+    )
+    y = pd.DataFrame({"y": np.arange(12.0)}, index=index)
+    y_sorted = y.sort_index()
+
+    splits = list(cv.split(y))
+    splits_sorted = list(cv.split(y_sorted))
+
+    assert len(splits) == len(splits_sorted)
+    for (train, test), (train_sorted, test_sorted) in zip(splits, splits_sorted):
+        for iloc, iloc_sorted in ((train, train_sorted), (test, test_sorted)):
+            assert len(set(iloc)) == len(iloc)
+            assert sorted(y.index[iloc]) == sorted(y_sorted.index[iloc_sorted])
