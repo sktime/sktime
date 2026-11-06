@@ -52,13 +52,13 @@ class TimestralForecaster(BaseForecaster):
         Whether to enable upstream test-time symmetric reflection augmentation.
     clip_nonnegative : bool, default=True
         Whether to clamp forecasts to 0 for series with strictly non-negative context.
-    ignore_deps : bool, default=False
-        If ``True``, skip soft-dependency checks (for testing).
 
     References
     ----------
     .. [1] https://github.com/mistralai/timestral
     .. [2] https://mistral.ai/news/timestral/
+    .. [3] Petralia, A., Gavaudan, A., Joosen, A., et al. "Timestral",
+           arXiv:2610.37585, 2026.
 
     Examples
     --------
@@ -88,7 +88,7 @@ class TimestralForecaster(BaseForecaster):
 
     _tags = {
         "category": ["deep_learning", "foundation_model"],
-        "authors": ["Artjom Joosen"],
+        "authors": ["ajoosen", "hasanfaesal"],
         "maintainers": ["hasanfaesal"],
         "python_dependencies": [
             "torch>=2.4.0",
@@ -121,7 +121,6 @@ class TimestralForecaster(BaseForecaster):
         max_context: int | None = None,
         symmetric_averaging: bool = True,
         clip_nonnegative: bool = True,
-        ignore_deps: bool = False,
     ):
         self.model_path = model_path
         self.device = device
@@ -130,16 +129,10 @@ class TimestralForecaster(BaseForecaster):
         self.max_context = max_context
         self.symmetric_averaging = symmetric_averaging
         self.clip_nonnegative = clip_nonnegative
-        self.ignore_deps = ignore_deps
 
         self.forecaster = None
 
         super().__init__()
-
-    def __dynamic_tags__(self):
-        """Dynamic tag setter logic for setting tag values conditional on parameters."""
-        if self.ignore_deps:
-            self.set_tags(python_dependencies=[])
 
     def __getstate__(self):
         """Return state for pickling, excluding the unpickleable upstream model."""
@@ -168,6 +161,8 @@ class TimestralForecaster(BaseForecaster):
             "path_or_repo_id": self.model_path,
             "local_files_only": self.local_files_only,
         }
+        if self.max_context is not None:
+            kwargs["max_context"] = self.max_context
         if self.device is not None:
             kwargs["device"] = self.device
         if self.revision is not None:
@@ -358,19 +353,7 @@ class TimestralForecaster(BaseForecaster):
         forecaster = self._ensure_model_loaded()
 
         horizon = int(max(fh.to_relative(self.cutoff)))
-        if horizon <= 0:
-            raise ValueError(
-                f"Horizon must be strictly positive (out-of-sample), but got {horizon}."
-            )
-
-        # Determine context window length
-        trained_len = forecaster.max_context
-        if self.max_context is not None:
-            limit = min(trained_len, self.max_context)
-        else:
-            limit = trained_len
-
-        y_ctx = self._cur_y.iloc[-limit:] if len(self._cur_y) > limit else self._cur_y
+        y_ctx = self._cur_y
 
         # Partition exogenous variables
         (
@@ -431,12 +414,8 @@ class TimestralForecaster(BaseForecaster):
         """
         forecast, index, pred_out, _ = self._run_forecast(fh, X)
 
-        # forecast.median shape: (1, V, horizon) or (V, horizon)
-        median = _to_numpy(forecast.median)
-        if median.ndim == 3:
-            median = median[0]  # (V, horizon)
-        elif median.ndim == 1:
-            median = median[np.newaxis, :]
+        # forecast.median shape: (1, V, horizon)
+        median = _to_numpy(forecast.median)[0]  # (V, horizon)
 
         pred_df = pd.DataFrame(
             median.T,
@@ -471,12 +450,8 @@ class TimestralForecaster(BaseForecaster):
         """
         forecast, index, pred_out, _ = self._run_forecast(fh, X)
 
-        # forecast.quantiles shape: (1, V, horizon, 21) or (V, horizon, 21)
-        quantiles = _to_numpy(forecast.quantiles)
-        if quantiles.ndim == 4:
-            quantiles = quantiles[0]  # (V, horizon, 21)
-        elif quantiles.ndim == 2:
-            quantiles = quantiles[np.newaxis, :, :]
+        # forecast.quantiles shape: (1, V, horizon, n_quantiles)
+        quantiles = _to_numpy(forecast.quantiles)[0]  # (V, horizon, n_quantiles)
 
         native_levels = np.asarray(forecast.quantile_levels, dtype=float)
 
@@ -520,12 +495,8 @@ class TimestralForecaster(BaseForecaster):
 
         forecast, index, pred_out, _ = self._run_forecast(fh, X)
 
-        # forecast.quantiles shape: (1, V, horizon, 21) or (V, horizon, 21)
-        quantiles = _to_numpy(forecast.quantiles)
-        if quantiles.ndim == 4:
-            quantiles = quantiles[0]  # (V, horizon, 21)
-        elif quantiles.ndim == 2:
-            quantiles = quantiles[np.newaxis, :, :]
+        # forecast.quantiles shape: (1, V, horizon, n_quantiles)
+        quantiles = _to_numpy(forecast.quantiles)[0]  # (V, horizon, n_quantiles)
 
         levels = np.asarray(forecast.quantile_levels, dtype=float)
         var_names = self._get_varnames()
@@ -552,13 +523,11 @@ class TimestralForecaster(BaseForecaster):
         """Return testing parameter sets for the estimator."""
         params1 = {
             "model_path": "mistralai/Timestral-5M",
-            "ignore_deps": True,
         }
         params2 = {
             "model_path": "mistralai/Timestral-5M",
             "symmetric_averaging": False,
             "clip_nonnegative": False,
-            "ignore_deps": True,
         }
         return [params1, params2]
 
