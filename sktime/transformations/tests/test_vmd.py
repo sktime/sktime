@@ -73,3 +73,57 @@ def test_vmd_sequence_length(length):
     transformer = VmdTransformer()
     modes = transformer.fit_transform(y)
     assert len(modes) == length
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([VmdTransformer, VMD]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("returned_decomp", ["u", "u_hat", "u_both"])
+def test_vmd_preserves_time_index(returned_decomp):
+    """Test vmd output keeps the time index of the input."""
+    y = _generate_vmd_testdata(T=100)
+    y.index = pd.period_range("2000-01", periods=100, freq="M")
+
+    transformer = VmdTransformer(K=3, returned_decomp=returned_decomp)
+    modes = transformer.fit_transform(y)
+    assert modes.index.equals(y.index)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([VmdTransformer, VMD]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_vmd_pipeline_forecast_index():
+    """Test decompose-forecast-recompose pipeline returns the correct fh index."""
+    from sktime.forecasting.trend import TrendForecaster
+
+    y = _generate_vmd_testdata(T=100)["y"]
+    y.index = pd.period_range("2000-01", periods=100, freq="M")
+
+    pipe = VmdTransformer(K=3) * TrendForecaster()
+    pipe.fit(y, fh=[1, 2, 3])
+    y_pred = pipe.predict()
+
+    expected_index = pd.period_range("2008-05", periods=3, freq="M")
+    assert y_pred.index.equals(expected_index)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([VmdTransformer, VMD]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_vmd_multivariate_decomposes_each_variable():
+    """Test that multivariate input is decomposed variable by variable."""
+    y = _generate_vmd_testdata(T=100)
+    X = pd.concat(
+        [y.rename(columns={"y": "a"}), (2 * y).rename(columns={"y": "b"})], axis=1
+    )
+
+    transformer = VmdTransformer(K=3)
+    modes = transformer.fit_transform(X)
+
+    assert modes.shape == (100, 6)
+    assert modes.index.equals(X.index)
+    modes_a = VmdTransformer(K=3).fit_transform(X[["a"]])
+    np.testing.assert_allclose(modes.iloc[:, :3].to_numpy(), modes_a.to_numpy())

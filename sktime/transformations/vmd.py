@@ -119,7 +119,7 @@ class VmdTransformer(BaseTransformer):
         "scitype:transform-labels": "None",
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "None",
-        "capability:multivariate": True,
+        "capability:multivariate": False,
         "requires_y": False,
         "remember_data": False,
         "fit_is_empty": False,
@@ -187,9 +187,9 @@ class VmdTransformer(BaseTransformer):
         )
         if return_dec in ["u", "u_both"]:
             transposed = u.T
-            u_return = pd.DataFrame(transposed)
+            u_return = pd.DataFrame(transposed, index=X.index)
         if return_dec in ["u_hat", "u_both"]:
-            u_hat_return = pd.DataFrame(np.abs(u_hat))
+            u_hat_return = pd.DataFrame(np.abs(u_hat), index=X.index)
         if return_dec == "omega":
             omega_return = pd.DataFrame(omega)
 
