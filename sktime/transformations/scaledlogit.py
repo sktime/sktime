@@ -152,7 +152,8 @@ class ScaledLogitTransformer(BaseTransformer):
             )
 
         if self.upper_bound and self.lower_bound:
-            X_transformed = np.log((X - self.lower_bound) / (self.upper_bound - X))
+            # Avoid overflow or underflow in the ratio of distances to the bounds.
+            X_transformed = np.log(X - self.lower_bound) - np.log(self.upper_bound - X)
         elif self.upper_bound is not None:
             X_transformed = -np.log(self.upper_bound - X)
         elif self.lower_bound is not None:
