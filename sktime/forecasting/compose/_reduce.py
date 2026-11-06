@@ -193,7 +193,8 @@ def _sliding_window_transform_local(y, window_length, fh, X, windows_identical):
 
 def _sliding_window_transform_global(y, window_length, X, transformers):
     """Transform time series data using sliding window for global pooling."""
-    n_cut = -window_length
+    backfilled = all(getattr(t, "truncate", None) == "bfill" for t in transformers)
+    n_cut = 0 if backfilled else -window_length
 
     if len(transformers) == 1:
         tf_fit = transformers[0].fit(y)
