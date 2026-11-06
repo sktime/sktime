@@ -35,7 +35,7 @@ class TestResetAt:
         forecaster = _make_pretrained_dummy(strategy="last")
         pretrain_mean = forecaster.global_mean_
 
-        forecaster.fit(_make_series(n_timepoints=20), fh=[1, 2, 3])
+        forecaster.fit(_make_series(n_timepoints=20), fh=3)
         assert hasattr(forecaster, "last_value_")
 
         forecaster._reset_at("pretrained")
@@ -58,7 +58,7 @@ class TestResetAt:
     def test_pretrained_without_pretraining_degrades_to_new(self):
         """Target state is an upper bound, not a state guarantee."""
         forecaster = DummyGlobalForecaster(strategy="last")
-        forecaster.fit(_make_series(n_timepoints=20), fh=[1, 2, 3])
+        forecaster.fit(_make_series(n_timepoints=20), fh=3)
 
         forecaster._reset_at("pretrained")
 
@@ -68,7 +68,7 @@ class TestResetAt:
     def test_no_pretrain_capability_falls_back_to_reset(self):
         """Forecasters without pretrain capability use ordinary reset."""
         forecaster = NaiveForecaster()
-        forecaster.fit(_make_series(n_timepoints=20), fh=[1, 2, 3])
+        forecaster.fit(_make_series(n_timepoints=20), fh=3)
 
         forecaster._reset_at("pretrained")
 
@@ -190,7 +190,7 @@ class TestCloneAt:
     def test_no_pretrain_capability_falls_back_to_clone(self):
         """Forecasters without pretrain capability use ordinary clone."""
         forecaster = NaiveForecaster()
-        forecaster.fit(_make_series(n_timepoints=20), fh=[1, 2, 3])
+        forecaster.fit(_make_series(n_timepoints=20), fh=3)
 
         cloned = forecaster._clone_at("pretrained")
 
@@ -209,7 +209,7 @@ def test_state_aware_tuner_sequence_preserves_pretraining():
 
     candidate = forecaster._clone_at("pretrained")
     candidate._set_params_at("pretrained", {"strategy": "last"})
-    candidate.fit(_make_series(n_timepoints=20), fh=[1, 2, 3])
+    candidate.fit(_make_series(n_timepoints=20), fh=3)
 
     assert candidate.is_fitted
     np.testing.assert_almost_equal(candidate.global_mean_, pretrain_mean)

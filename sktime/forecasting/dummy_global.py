@@ -64,7 +64,7 @@ class DummyGlobalForecaster(BaseForecaster):
     >>> y = load_airline()
     >>> forecaster.fit(y)  # Set context
     DummyGlobalForecaster()
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # Predict global mean
+    >>> y_pred = forecaster.predict(fh=3)  # Predict global mean
     >>> y_pred.shape
     (3,)
     """

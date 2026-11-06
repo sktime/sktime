@@ -58,7 +58,7 @@ def test_darts_regression_model_without_X(model):
         kwargs=kwargs,
     )
     # train the model
-    sktime_model.fit(y_train, fh=[1, 2, 3, 4])
+    sktime_model.fit(y_train, fh=4)
     # make prediction
     pred = sktime_model.predict()
 
@@ -147,9 +147,9 @@ def test_darts_regression_model_with_X(model):
     )
     # attempt fitting without exogenous
     with pytest.raises(ValueError, match=expected_message):
-        sktime_model.fit(y_train, fh=[1, 2, 3, 4])
+        sktime_model.fit(y_train, fh=4)
 
-    sktime_model.fit(y_train, fh=[1, 2, 3, 4], X=X_train)
+    sktime_model.fit(y_train, fh=4, X=X_train)
     # attempt to predict without exogenous
     with pytest.raises(ValueError, match=expected_message):
         sktime_model.predict()

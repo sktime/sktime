@@ -161,7 +161,7 @@ def test_ARCH_with_exogenous():
     assert sktime_model.get_tag("capability:exogenous") is True
 
     # Predict with exogenous variables (X_forecast must match horizon exactly)
-    skt_pred = sktime_model.predict(fh=[1, 2, 3], X=X_forecast)
+    skt_pred = sktime_model.predict(fh=3, X=X_forecast)
 
     # Fit arch package model directly for comparison
     arch_model_direct = arch_model(

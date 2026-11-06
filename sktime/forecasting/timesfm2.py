@@ -210,7 +210,7 @@ class TimesFM2Forecaster(BaseForecaster):
     >>> forecaster = TimesFM2Forecaster()  # doctest: +SKIP
     >>> # fit loads the model weights and stores the forecasting context.
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Simple zero-shot forecasting with TimesFM-2.0:
 
@@ -223,7 +223,7 @@ class TimesFM2Forecaster(BaseForecaster):
     ...     forward_kwargs={"forecast_context_len": 1024},
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Quantile prediction:
 
@@ -234,7 +234,7 @@ class TimesFM2Forecaster(BaseForecaster):
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> # Select only quantiles available in the model config.
     >>> y_pred = forecaster.predict_quantiles(  # doctest: +SKIP
-    ...     fh=[1, 2, 3],
+    ...     fh=3,
     ...     alpha=[0.1, 0.5, 0.9],
     ... )
 
@@ -252,7 +252,7 @@ class TimesFM2Forecaster(BaseForecaster):
     ...     quantization_config=QuantoConfig(weights="int8"),
     ... )
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Global training with a PEFT-wrapped pretrained model:
 
@@ -278,7 +278,7 @@ class TimesFM2Forecaster(BaseForecaster):
     >>> # Training happens on hierarchical data.
     >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
 
     Global training on a randomly initialized model with custom config:
     ``device_map`` and ``dtype`` can still be applied in this path, but
@@ -316,7 +316,7 @@ class TimesFM2Forecaster(BaseForecaster):
     ... )
     >>> forecaster.pretrain(y_panel)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
-    >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
+    >>> y_pred = forecaster.predict(fh=3)  # doctest: +SKIP
     """
 
     _tags = {

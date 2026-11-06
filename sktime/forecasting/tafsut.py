@@ -49,7 +49,7 @@ class TafsutForecaster(BaseForecaster):
     ...     model_path=None, config=config, device="cpu"
     ... )
     >>> y = pd.Series(range(8))
-    >>> _ = forecaster.fit(y, fh=[1, 2, 3, 4])
+    >>> _ = forecaster.fit(y, fh=4)
     >>> y_pred = forecaster.predict()
     """
 

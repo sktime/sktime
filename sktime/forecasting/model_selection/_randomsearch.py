@@ -201,7 +201,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.forecasting.naive import NaiveForecaster
     >>> y = load_shampoo_sales()
-    >>> fh = [1, 2, 3]
+    >>> fh = 3
     >>> cv = ExpandingWindowSplitter(fh=fh)
     >>> forecaster = NaiveForecaster()
     >>> param_distributions = {"strategy": ["last", "mean", "drift"]}
@@ -234,7 +234,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     ...     "forecaster__strategy": ["mean", "last", "drift"],
     ... }
     >>> cv = ExpandingWindowSplitter(
-    ...     initial_window=18, step_length=6, fh=[1, 2, 3])
+    ...     initial_window=18, step_length=6, fh=3)
     >>> rscv = ForecastingRandomizedSearchCV(
     ...     forecaster=pipe,
     ...     param_distributions=param_distributions,
@@ -243,7 +243,7 @@ class ForecastingRandomizedSearchCV(BaseGridSearch):
     ...     random_state=42)
     >>> rscv.fit(y)
     ForecastingRandomizedSearchCV(...)
-    >>> y_pred = rscv.predict(fh=[1, 2, 3])
+    >>> y_pred = rscv.predict(fh=3)
     """
 
     _tags = {

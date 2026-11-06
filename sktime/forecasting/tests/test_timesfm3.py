@@ -43,7 +43,7 @@ def test_timesfm3_airline_matches_source_reference():
 
     forecaster = TimesFM3Forecaster(device="cpu", license_accepted=True)
     forecaster.fit(y_train)
-    y_pred = forecaster.predict(fh=[1, 2, 3])
+    y_pred = forecaster.predict(fh=3)
 
     np.testing.assert_allclose(
         y_pred.iloc[:3].to_numpy().ravel(),
@@ -98,7 +98,7 @@ def test_timesfm3_covariates_match_source_reference():
 def test_timesfm3_predict_proba_matches_quantiles():
     """``predict_proba().quantile`` agrees with ``predict_quantiles`` (#10566)."""
     y_train = load_airline().iloc[:-12]
-    fh = [1, 2, 3]
+    fh = 3
     alpha = [0.1, 0.25, 0.5, 0.9]
 
     forecaster = TimesFM3Forecaster(device="cpu", license_accepted=True)

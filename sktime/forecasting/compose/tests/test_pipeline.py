@@ -188,7 +188,7 @@ def test_pipeline_with_dimension_changing_transformer():
     y, X = load_longley()
 
     # split train/test both y and X
-    fh = [1, 2, 3]
+    fh = 3
     train_model, test_model = temporal_train_test_split(y, fh=fh)
     X_train = X[X.index.isin(train_model.index)]
 
@@ -499,7 +499,7 @@ def test_featurizer_forecastingpipeline_logic():
     # we need to specify index_out="original" as otherwise ARIMA gets 1 and 2 ahead
     forecaster = lagged_y_trafo**f  # this uses lagged_y_trafo to generate X
 
-    forecaster.fit(y_train, X=X_train, fh=[1])  # try to forecast next year
+    forecaster.fit(y_train, X=X_train, fh=1)  # try to forecast next year
     forecaster.predict(X=X_test)  # dummy X to predict next year
 
 
@@ -567,7 +567,7 @@ def test_pipeline_exogenous_none():
         ]
     )
 
-    pipe.fit(y_train, X_train, fh=[1, 2, 3])
+    pipe.fit(y_train, X_train, fh=3)
     y_pred = pipe.predict(X=X_test)
     assert np.all(y_pred.index == y_test.index)
 
@@ -726,7 +726,7 @@ def test_transformed_target_forecaster_predict_proba_delegates():
 
     y = load_airline()
     y_train, _ = temporal_train_test_split(y)
-    fh = [1, 2, 3]
+    fh = 3
 
     # --- Scenario 1: inner forecaster with native _predict_proba ---
     # Create a forecaster that natively implements _predict_proba
@@ -836,7 +836,7 @@ def test_transformed_target_forecaster_predict_proba_dunder():
 
     y = load_airline()
     y_train, _ = temporal_train_test_split(y)
-    fh = [1, 2, 3]
+    fh = 3
 
     # create pipeline using * operator: transformer * forecaster
     pipe = ExponentTransformer(power=0.5) * NaiveForecaster()

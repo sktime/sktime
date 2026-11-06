@@ -54,7 +54,7 @@ def test_wrapper_series_mtype(wrapper, override_y_mtype, mtype):
         f.set_tags(**{"y_inner_mtype": "pd.DataFrame"})
 
     interval_forecaster = wrapper(f)
-    interval_forecaster.fit(y, fh=[1, 2, 3])
+    interval_forecaster.fit(y, fh=3)
     pred_int = interval_forecaster.predict_interval()
 
     assert isinstance(pred_int, pd.DataFrame)
@@ -147,7 +147,7 @@ def test_naive_variance_exponential_smoothing_short_series():
     forecaster = ExponentialSmoothing()
     my_forecaster_with_proba = NaiveVariance(forecaster)
 
-    my_forecaster_with_proba.fit(y, fh=[1, 2])
+    my_forecaster_with_proba.fit(y, fh=2)
     pred_var = my_forecaster_with_proba.predict_var()
 
     assert isinstance(pred_var, pd.DataFrame)
