@@ -7,6 +7,24 @@ from sktime.utils.estimator_checks import check_estimator, parametrize_with_chec
 
 
 class _TransformChangeNInstances(BaseTransformer):
+    """Test transformer that changes the number of instances.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.transformations.tests.test_check_estimator import (
+    ...     _TransformChangeNInstances
+    ... )
+    >>> X = pd.DataFrame({
+    ...     "series": [
+    ...         pd.Series([1.0, 2.0, 3.0, 4.0]),
+    ...         pd.Series([10.0, 8.0, 6.0, 4.0]),
+    ...     ]
+    ... })
+    >>> t = _TransformChangeNInstances(n=1)
+    >>> Xt = t.fit_transform(X)
+    """
+
     _tags = {
         # dummy tags for the testing purpose
         #
