@@ -515,6 +515,18 @@ def test_theilu2_class():
     assert np.isfinite(result_sp2)
     assert result_sp2 > 0
 
+    # --- sp exceeds y_train -> ValueError ---
+    y_train_short = np.array([5.0, 0.5, 4.0])
+    metric_sp4 = TheilU2(sp=4)
+    with pytest.raises(
+        ValueError, match="Seasonal periodicity sp=4 exceeds the number of training"
+    ):
+        metric_sp4(y_true, y_pred, y_train=y_train_short)
+    with pytest.raises(
+        ValueError, match="Seasonal periodicity sp=4 exceeds the number of training"
+    ):
+        metric_sp4.evaluate_by_index(y_true, y_pred, y_train=y_train_short)
+
 
 @pytest.mark.skipif(
     not run_test_module_changed(["sktime.performance_metrics"]),
