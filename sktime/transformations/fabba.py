@@ -181,10 +181,6 @@ class FABBA(BaseTransformer):
         "maintainers": ["poopsiclepooding"],
         "python_version": None,
         "python_dependencies": None,
-        "tests:skip_by_name": [
-            "test_fit_idempotent",  # numpy3d not supported for unequal length series
-            "test_multiprocessing_idempotent",  # if_partition true causes issues
-        ],
     }
 
     def __init__(
