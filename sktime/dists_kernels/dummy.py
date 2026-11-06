@@ -6,7 +6,7 @@ import numpy as np
 
 from sktime.dists_kernels.base import BasePairwiseTransformerPanel
 
-SUPPORTED_MTYPES = ["df-list", "nested_univ", "numpy3D"]
+SUPPORTED_MTYPES = ["df-list", "numpy3D"]
 
 
 class ConstantPwTrafoPanel(BasePairwiseTransformerPanel):
