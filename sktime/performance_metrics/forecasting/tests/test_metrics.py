@@ -715,3 +715,40 @@ def test_maep_evaluate_by_index_is_jackknife(y_true, y_pred):
 
     by_index = metric.evaluate_by_index(y_true, y_pred)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("weights", [[3, 7], [0.3, 0.7], np.array([30.0, 70.0])])
+def test_array_like_multioutput_is_weighted_average(weights):
+    """Array-like multioutput must be used as averaging weights, see #11710.
+
+    The class result must match the function result and the weighted average
+    of the raw values, also when the weights do not sum to 1.
+    """
+    from sktime.performance_metrics.forecasting import (
+        MeanAbsoluteError,
+        MeanSquaredError,
+        mean_absolute_error,
+        mean_squared_error,
+    )
+
+    y_true = np.array([[0.5, 1], [-1, 1], [7, -6]])
+    y_pred = np.array([[0, 2], [-1, 2], [8, -5]])
+
+    for cls, func in [
+        (MeanAbsoluteError, mean_absolute_error),
+        (MeanSquaredError, mean_squared_error),
+    ]:
+        raw = cls(multioutput="raw_values")(y_true, y_pred)
+        expected = np.average(raw, weights=weights)
+        res = cls(multioutput=weights)(y_true, y_pred)
+        assert np.isclose(res, expected)
+        assert np.isclose(res, func(y_true, y_pred, multioutput=weights))
+
+        raw_by_index = cls(multioutput="raw_values").evaluate_by_index(y_true, y_pred)
+        res_by_index = cls(multioutput=weights).evaluate_by_index(y_true, y_pred)
+        expected_by_index = np.average(raw_by_index.values, axis=1, weights=weights)
+        np.testing.assert_allclose(res_by_index.values, expected_by_index)
