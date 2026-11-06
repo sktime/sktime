@@ -21,7 +21,7 @@ TEST_SERIES = np.array([30, 40, 60])
 @pytest.mark.parametrize(
     "lower, upper, output",
     [
-        (10, 70, np.log((TEST_SERIES - 10) / (70 - TEST_SERIES))),
+        (10, 70, np.log(TEST_SERIES - 10) - np.log(70 - TEST_SERIES)),
         (None, 70, -np.log(70 - TEST_SERIES)),
         (10, None, np.log(TEST_SERIES - 10)),
         (None, None, TEST_SERIES),
@@ -62,3 +62,22 @@ def test_scaledlogit_bound_errors(lower, upper, message):
     with pytest.warns(RuntimeWarning):
         ScaledLogitTransformer(lower, upper).fit_transform(y)
         warn(message, RuntimeWarning)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ScaledLogitTransformer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("X", [np.array([1e-300]), np.array([1e-300, 1e299])])
+@pytest.mark.parametrize("lower, upper", [(1e-310, 1e300), (-1e300, -1e-310)])
+def test_scaledlogit_transform_extreme_ratio(X, lower, upper):
+    """Interior values have finite logits even when their distance ratio overflows."""
+    if upper < 0:
+        X = -X
+    expected = np.array([-1381.5510557965274, -2.1972245773362196])[: X.size]
+    if upper < 0:
+        expected = -expected
+    with np.errstate(over="raise", divide="raise", invalid="raise"):
+        result = ScaledLogitTransformer(lower, upper).fit_transform(X)
+    assert np.isfinite(result).all()
+    np.testing.assert_allclose(result, expected)
