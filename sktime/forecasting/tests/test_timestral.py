@@ -1,6 +1,39 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-"""Golden-output regression tests for the Timestral forecaster."""
+"""Golden-output regression tests for the Timestral forecaster.
+
+Golden values were generated using the upstream mistralai/timestral standalone inference
+pipeline with `mistralai/Timestral-5M` on CPU:
+
+    import numpy as np
+    from sktime.datasets import load_airline
+    from sktime.libs.timestral.forecaster import TimestralForecaster
+
+    # 1. Airline univariate reference:
+    y = load_airline().iloc[:-12].values.reshape(1, 1, -1).astype(np.float32)
+    m = TimestralForecaster.from_pretrained("mistralai/Timestral-5M", device="cpu")
+    pred = m.forecast(y, prediction_length=3)
+    EXPECTED_AIRLINE = pred.median[0, 0].tolist()
+
+    # 2. Covariates multivariate reference:
+    rng = np.random.default_rng(0)
+    n, horizon = 32, 4
+    ta, tb = rng.normal(size=n), rng.normal(size=n)
+    po = rng.normal(size=n)
+    fk, fkf = rng.normal(size=n), rng.normal(size=horizon)
+
+    target = np.stack([ta, tb], axis=0).astype(np.float32)[np.newaxis, ...]
+    num_past = po.astype(np.float32).reshape(1, 1, n)
+    num_known = np.concatenate([fk, fkf]).astype(np.float32).reshape(1, 1, n + horizon)
+
+    pred_cov = m.forecast(
+        context=target,
+        prediction_length=horizon,
+        past_covariates=num_past,
+        known_covariates=num_known,
+    )
+    EXPECTED_COV = pred_cov.median[0, :, :2].T.tolist()
+"""
 
 from __future__ import annotations
 
