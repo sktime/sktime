@@ -171,6 +171,10 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
             Training data used to calculate the naive forecasting error.
             Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
 
+        sample_weight : array-like, optional
+            Sample weights applied once per time point before scaling by the naive
+            error.
+
         Returns
         -------
         loss : pd.Series or pd.DataFrame
@@ -201,8 +205,6 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
         naive_error = naive_diff.mean()
 
         raw_values = raw_values / np.maximum(naive_error, eps)
-
-        raw_values = self._get_weighted_df(raw_values, **kwargs)
 
         return self._handle_multioutput(raw_values, multioutput)
 
