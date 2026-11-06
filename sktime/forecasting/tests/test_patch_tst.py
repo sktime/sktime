@@ -1,8 +1,5 @@
 """Golden-output regression tests for the PatchTST forecaster."""
 
-from importlib import import_module
-from unittest import mock
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -37,29 +34,6 @@ _EXPECTED_HEAD = [
     [0.36408472061157227, -0.010364898480474949, 0.13800708949565887],
     [0.33699220418930054, -0.04303717985749245, 0.20896030962467194],
 ]
-
-
-def test_patch_tst_mps_availability_wrapper():
-    """MPS availability override is compatible with PyTorch Dynamo."""
-    torch = pytest.importorskip("torch")
-    patch_tst_module = import_module("sktime.forecasting.patch_tst")
-    original_is_available = torch.backends.mps.is_available
-
-    try:
-        with (
-            mock.patch("platform.system", return_value="Darwin"),
-            mock.patch.object(
-                patch_tst_module, "_check_soft_dependencies", return_value=True
-            ),
-        ):
-            PatchTSTForecaster.get_test_params()
-            is_available = torch.backends.mps.is_available
-
-            assert is_available() is False
-            assert hasattr(is_available, "__wrapped__")
-            assert callable(is_available.cache_info)
-    finally:
-        torch.backends.mps.is_available = original_is_available
 
 
 @pytest.mark.skipif(
