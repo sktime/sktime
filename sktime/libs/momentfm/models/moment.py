@@ -229,7 +229,11 @@ if _check_soft_dependencies(
 
         def _get_transformer_backbone(self, config) -> nn.Module:
             if config.getattr("randomly_initialize_backbone", False):
-                model_config = T5Config.from_pretrained(config.transformer_backbone)
+                transformer_config = config.getattr("transformer_config", None)
+                if transformer_config is None:
+                    model_config = T5Config.from_pretrained(config.transformer_backbone)
+                else:
+                    model_config = T5Config(**transformer_config)
                 transformer_backbone = T5Model(model_config)
                 logging.info(
                     f"Initializing randomly initialized transformer from "
@@ -630,9 +634,11 @@ if _check_soft_dependencies(
 
         def __init__(self, config, **kwargs: dict):
             self._validate_model_kwargs(**kwargs)
-            self.new_task_name = kwargs.get("model_kwargs", {}).pop(
-                "task_name", TASKS.RECONSTRUCTION
-            )
+            model_kwargs = kwargs.get("model_kwargs", {})
+            if model_kwargs.pop("init_task_head", False):
+                self.new_task_name = model_kwargs.get("task_name", TASKS.RECONSTRUCTION)
+            else:
+                self.new_task_name = model_kwargs.pop("task_name", TASKS.RECONSTRUCTION)
             super().__init__(config, **kwargs)
 
         def _validate_model_kwargs(self, **kwargs: dict) -> None:

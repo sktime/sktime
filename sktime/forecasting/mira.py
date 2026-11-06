@@ -94,6 +94,7 @@ class MIRAForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "tests:vm": True,
         "tests:libs": ["sktime.libs.mira"],
+        "serialization:skip": ("model",),
     }
 
     def __init__(
@@ -113,16 +114,6 @@ class MIRAForecaster(BaseForecaster):
         self.time_snap_step = time_snap_step
         self.model = None
         super().__init__()
-
-    def __getstate__(self):
-        """Get state for pickling."""
-        state = self.__dict__.copy()
-        state["model"] = None
-        return state
-
-    def __setstate__(self, state):
-        """Set state for unpickling."""
-        self.__dict__.update(state)
 
     def __post_init__(self):
         """Post-initialization setup."""
@@ -170,7 +161,7 @@ class MIRAForecaster(BaseForecaster):
         return self
 
     def _predict(self, fh, X=None):
-        if self.model is None:
+        if not hasattr(self, "model") or self.model is None:
             self.model = self._load_model()
             self.model.eval()
 
