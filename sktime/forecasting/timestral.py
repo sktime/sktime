@@ -52,9 +52,6 @@ class TimestralForecaster(BaseForecaster):
         Whether to enable upstream test-time symmetric reflection augmentation.
     clip_nonnegative : bool, default=True
         Whether to clamp forecasts to 0 for series with strictly non-negative context.
-    license_accepted : bool, default=False
-        Must be ``True`` to use pretrained weights distributed under Mistral AI's
-        Modified MIT license. Call ``TimestralForecaster.print_license()`` for details.
     ignore_deps : bool, default=False
         If ``True``, skip soft-dependency checks (for testing).
 
@@ -70,7 +67,7 @@ class TimestralForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.timestral import TimestralForecaster
     >>> y = load_airline().iloc[:-12]
-    >>> forecaster = TimestralForecaster(license_accepted=True)  # doctest: +SKIP
+    >>> forecaster = TimestralForecaster()  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
 
@@ -78,7 +75,7 @@ class TimestralForecaster(BaseForecaster):
 
     >>> import pandas as pd
     >>> y_multi = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [3.0, 2.0, 1.0]})
-    >>> forecaster = TimestralForecaster(license_accepted=True)  # doctest: +SKIP
+    >>> forecaster = TimestralForecaster()  # doctest: +SKIP
     >>> forecaster.fit(y_multi)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2])  # doctest: +SKIP
 
@@ -124,7 +121,6 @@ class TimestralForecaster(BaseForecaster):
         max_context: int | None = None,
         symmetric_averaging: bool = True,
         clip_nonnegative: bool = True,
-        license_accepted: bool = False,
         ignore_deps: bool = False,
     ):
         self.model_path = model_path
@@ -134,7 +130,6 @@ class TimestralForecaster(BaseForecaster):
         self.max_context = max_context
         self.symmetric_averaging = symmetric_averaging
         self.clip_nonnegative = clip_nonnegative
-        self.license_accepted = license_accepted
         self.ignore_deps = ignore_deps
 
         self.forecaster = None
@@ -166,18 +161,6 @@ class TimestralForecaster(BaseForecaster):
             "consolidated monthly revenue exceeds $20M for the preceding month."
         )
         print(f"Full license text: {_LICENSE_URL}")
-
-    def _check_license(self):
-        """Raise unless the user has accepted the Timestral weight license."""
-        if not self.license_accepted:
-            raise ValueError(
-                "Use of TimestralForecaster with pretrained weights is subject to "
-                "the Mistral Modified MIT license (requiring a commercial agreement "
-                "if global consolidated monthly revenue exceeds $20M). To confirm "
-                "acceptance, set the `license_accepted` parameter to True. To "
-                f"view the license, call `TimestralForecaster.print_license()` or "
-                f"visit {_LICENSE_URL}."
-            )
 
     def _get_load_kwargs(self):
         """Build upstream from_pretrained loading arguments."""
@@ -351,7 +334,6 @@ class TimestralForecaster(BaseForecaster):
 
     def _fit(self, y, X=None, fh=None):
         """Fit forecaster to training data."""
-        self._check_license()
         self._load_model()
         self._cur_y = y
         self._cur_X = X
@@ -373,7 +355,6 @@ class TimestralForecaster(BaseForecaster):
         Returns forecast object, absolute forecast index, expected prediction index,
         and horizon integer.
         """
-        self._check_license()
         forecaster = self._ensure_model_loaded()
 
         horizon = int(max(fh.to_relative(self.cutoff)))
@@ -571,14 +552,12 @@ class TimestralForecaster(BaseForecaster):
         """Return testing parameter sets for the estimator."""
         params1 = {
             "model_path": "mistralai/Timestral-5M",
-            "license_accepted": True,
             "ignore_deps": True,
         }
         params2 = {
             "model_path": "mistralai/Timestral-5M",
             "symmetric_averaging": False,
             "clip_nonnegative": False,
-            "license_accepted": True,
             "ignore_deps": True,
         }
         return [params1, params2]

@@ -65,7 +65,6 @@ def test_timestral_airline_matches_source_reference():
     forecaster = TimestralForecaster(
         model_path="mistralai/Timestral-5M",
         device="cpu",
-        license_accepted=True,
     )
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh=fh)
@@ -104,7 +103,6 @@ def test_timestral_covariates_match_source_reference():
     forecaster = TimestralForecaster(
         model_path="mistralai/Timestral-5M",
         device="cpu",
-        license_accepted=True,
     )
     forecaster.fit(y, X=X)
     y_pred = forecaster.predict(fh=list(range(1, horizon + 1)), X=X_future)
@@ -130,7 +128,6 @@ def test_timestral_predict_proba_matches_quantiles():
     forecaster = TimestralForecaster(
         model_path="mistralai/Timestral-5M",
         device="cpu",
-        license_accepted=True,
     )
     forecaster.fit(y_train)
 
