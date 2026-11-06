@@ -8,6 +8,7 @@ __all__ = ["TabbyForecaster"]
 import numpy as np
 import pandas as pd
 
+from sktime.datatypes import update_data
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.singleton import _multiton
 
@@ -39,6 +40,10 @@ class TabbyForecaster(BaseForecaster):
         convention.
     revision : str or None, default=None
         Hugging Face repository revision to load.
+    license_accepted : bool, optional, default=False
+        Whether the user has read and accepted the CC BY-NC 4.0 license terms
+        for the Tabby weights and vendored code. Must be set to ``True`` to
+        use ``TabbyForecaster``; otherwise ``fit`` raises.
 
     Notes
     -----
@@ -73,7 +78,7 @@ class TabbyForecaster(BaseForecaster):
     >>> from sktime.datasets import load_airline
     >>> from sktime.forecasting.tabby import TabbyForecaster  # doctest: +SKIP
     >>> y = load_airline()
-    >>> forecaster = TabbyForecaster()  # doctest: +SKIP
+    >>> forecaster = TabbyForecaster(license_accepted=True)  # doctest: +SKIP
     >>> forecaster.fit(y)  # doctest: +SKIP
     >>> y_pred = forecaster.predict(fh=[1, 2, 3])  # doctest: +SKIP
     """
@@ -88,7 +93,7 @@ class TabbyForecaster(BaseForecaster):
         "capability:pred_int:insample": False,
         "capability:update": True,
         "requires-fh-in-fit": False,
-        "python_dependencies": ["torch", "transformers>=5.22.1"],
+        "python_dependencies": ["torch", "transformers>=5.15.1"],
         "tests:libs": ["sktime.libs.tabby"],
         "authors": ["saptadeep12", "B1h14", "ShifengXIE"],
         "maintainers": ["saptadeep12"],
@@ -102,16 +107,30 @@ class TabbyForecaster(BaseForecaster):
         device: str = "auto",
         dtype=None,
         revision: str | None = None,
+        license_accepted: bool = False,
     ):
         self.model_path = model_path
         self.device = device
         self.dtype = dtype
         self.revision = revision
+        self.license_accepted = license_accepted
 
         super().__init__()
 
+    def _check_license(self):
+        """Raise unless the user has accepted the Tabby license."""
+        if not self.license_accepted:
+            raise ValueError(
+                "Tabby weights and code are licensed under CC BY-NC 4.0 "
+                "(non-commercial use only). You must read and accept these "
+                "terms to use the forecaster. The license and model card are "
+                "at https://huggingface.co/paris-noah/Tabby. To confirm "
+                "acceptance, set `license_accepted=True`."
+            )
+
     def _fit(self, y, X=None, fh=None):
         """Store the observed series and load the pretrained model."""
+        self._check_license()
         self.context_ = y.copy()
         self.model_ = self._load_model()
         return self
@@ -226,10 +245,7 @@ class TabbyForecaster(BaseForecaster):
 
     def _update(self, y, X=None, update_params=True):
         """Extend the stored history without refitting the model."""
-        context = pd.concat([self.context_, y])
-        context = context[~context.index.duplicated(keep="last")].sort_index()
-        context.name = self.context_.name
-        self.context_ = context
+        self.context_ = update_data(self.context_, y)
         return self
 
     def _load_model(self):
@@ -267,8 +283,8 @@ class TabbyForecaster(BaseForecaster):
             Parameters to create testing instances of the class.
         """
         return [
-            {},
-            {"device": "cpu"},
+            {"license_accepted": True},
+            {"device": "cpu", "license_accepted": True},
         ]
 
 
@@ -314,23 +330,13 @@ class _CachedTabby:
         load_kwargs = {
             "revision": self.revision,
             "config": config,
-            "output_loading_info": True,
         }
         if self.dtype is not None:
             load_kwargs["dtype"] = self.dtype
 
-        self.model_, loading_info = TabbyForForecasting.from_pretrained(
+        self.model_ = TabbyForForecasting.from_pretrained(
             self.model_path, **load_kwargs
         )
-        missing_keys = loading_info.get("missing_keys", [])
-        unexpected_keys = loading_info.get("unexpected_keys", [])
-        if missing_keys or unexpected_keys:
-            raise RuntimeError(
-                "Tabby checkpoint did not load exactly. "
-                f"Missing keys: {missing_keys}; "
-                f"unexpected keys: {unexpected_keys}."
-            )
-        self.model_.loading_info_ = loading_info
         self.model_ = self.model_.to(device)
         self.model_.eval()
         return self.model_

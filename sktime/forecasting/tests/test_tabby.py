@@ -15,15 +15,14 @@ pytestmark = pytest.mark.skipif(
 
 _TABBY_REVISION = "1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01"
 # Golden values generated with the raw upstream HF remote-code model:
-# pip install torch transformers einops numpy pandas
+# transformers==5.22.1, torch==2.15.0
+# pip install sktime torch transformers numpy pandas
 # raw_tabby_golden.py:
 # import numpy as np
 # from sktime.datasets import load_airline
 # from transformers import AutoModel
 # revision = "1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01"
-# model = AutoModel.from_pretrained(
-#     "paris-noah/Tabby", revision=revision, trust_remote_code=True
-# ).eval()
+# model = AutoModel.from_pretrained("paris-noah/Tabby", revision=revision).eval()
 # history = load_airline().to_numpy(dtype=np.float32)[None, :]
 # output = model.predict(history, prediction_length=3)
 # print(output[0, 49, :])
@@ -42,7 +41,9 @@ _ALPHA = [0.1, 0.5, 0.9]
 
 def _golden_forecaster():
     """Fit the real Tabby checkpoint used for golden outputs."""
-    return TabbyForecaster(revision=_TABBY_REVISION).fit(load_airline())
+    return TabbyForecaster(revision=_TABBY_REVISION, license_accepted=True).fit(
+        load_airline()
+    )
 
 
 def test_tabby_golden_outputs():
