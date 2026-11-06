@@ -99,8 +99,29 @@ utility can be used.
 For this, follow the instructions in the
 :doc:`estimator development guide </developer_guide/add_estimators>`
 
+.. _full_test_suite_runs:
+
 Full test suite runs via ``pytest``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+
+   **Avoid running the entire test suite locally!**
+
+   The full ``sktime`` test suite contains tens of thousands of dynamically parameterized tests across hundreds of estimators. Running a bare ``pytest``, ``pytest ./sktime``, or ``make test`` locally consumes massive amounts of RAM and CPU, which frequently leads to out-of-memory (OOM) crashes, system freezing, or unresponsiveness on local development machines.
+
+   Instead, developers should **only run tests on the specific module, file, or estimator** they are actively developing:
+
+   * **Run tests for a specific module**:
+     ``pytest sktime/classification/`` or ``pytest sktime/forecasting/``
+   * **Run tests for a single test file**:
+     ``pytest sktime/forecasting/tests/test_all_forecasters.py``
+   * **Run tests for a specific estimator using ``-k``**:
+     ``pytest -k "NaiveForecaster"``
+   * **Run estimator validation directly via ``check_estimator``**:
+     ``check_estimator(EstimatorClass)`` (see :doc:`estimator development guide </developer_guide/add_estimators>`).
+
+   The comprehensive test suite is automatically executed across all supported operating systems and Python versions in remote CI when you open or update a pull request.
 
 The full test suite can be run locally via `pytest <https://docs.pytest.org/en/latest/>`__,
 which ``sktime`` uses for its testing framework.
