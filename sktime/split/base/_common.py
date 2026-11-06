@@ -130,7 +130,7 @@ def _get_train_window_via_endpoint(y, train_endpoint, window_length):
     this private function is used to get training window for
     `CutOffSplitter` and `SingleWindowSplitter`
     """
-    if isinstance(y, (pd.DatetimeIndex, pd.PeriodIndex)) and is_int(window_length):
+    if is_int(train_endpoint) and is_int(window_length):
         y_train = pd.Series(index=y, dtype=y.dtype)  # convert pd.index to pd.series
         train_start = train_endpoint - window_length + 1
         # adjust start point to account for negative time point

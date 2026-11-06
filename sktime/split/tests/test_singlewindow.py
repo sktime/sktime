@@ -2,6 +2,8 @@
 """Tests for single window splitter."""
 
 import numpy as np
+import pandas as pd
+
 import pytest
 
 from sktime.forecasting.tests._config import (
@@ -89,3 +91,22 @@ def test_single_window_splitter_default_window_length(y, fh):
             [y.index.get_loc(y.index[train_window[-1]] + x) for x in checked_fh]
         )
     np.testing.assert_array_equal(test_window, test_window_expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(SingleWindowSplitter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_single_window_splitter_integer_index():
+    """Test SingleWindowSplitter on integer indices with gaps (see #11389)."""
+    y_gap = pd.Series(np.arange(10.0), index=[0, 1, 2, 3, 4, 5, 6, 10, 11, 12])
+    cv = SingleWindowSplitter(fh=[1, 2], window_length=3)
+    train, test = next(cv.split(y_gap))
+    np.testing.assert_array_equal(train, [5, 6, 7])
+    np.testing.assert_array_equal(test, [8, 9])
+
+    y_step = pd.Series(np.arange(10.0), index=pd.RangeIndex(5, 25, 2))
+    cv2 = SingleWindowSplitter(fh=[1, 2], window_length=3)
+    train2, test2 = next(cv2.split(y_step))
+    np.testing.assert_array_equal(train2, [5, 6, 7])
+    np.testing.assert_array_equal(test2, [8, 9])
