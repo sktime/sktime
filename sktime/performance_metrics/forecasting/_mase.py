@@ -7,6 +7,8 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+from numbers import Integral
+
 import numpy as np
 
 from sktime.performance_metrics.forecasting._base import (
@@ -57,7 +59,7 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
     Parameters
     ----------
     sp : int, default = 1
-        Seasonal periodicity of the data
+        Positive seasonal periodicity of the data.
 
     eps : float, default=None
         Numerical epsilon used in denominator to avoid division by zero.
@@ -146,6 +148,9 @@ class MeanAbsoluteScaledError(_ScaledMetricTags, BaseForecastingErrorMetric):
         by_index=False,
         eps=None,
     ):
+        if not isinstance(sp, Integral) or isinstance(sp, bool) or sp <= 0:
+            raise ValueError("sp must be a positive integer")
+
         self.sp = sp
         self.eps = eps
         super().__init__(
