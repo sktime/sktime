@@ -169,14 +169,12 @@ class TimeBinAggregate(BaseTransformer):
                 Xt.index = bins[1:]
 
         elif self.return_index == "bin_mid":
-            if isinstance(bins, pd.IntervalIndex):
-                Xt_ix = [(x.left + x.right) / 2 for x in Xt.index]
-            else:
-                Xt_ix = (np.array(bins[:-1]) + np.array(bins[1:])) / 2
-            # if all integer, coerce to integer
-            remainder = np.mod(Xt_ix, 1)
-            if np.sum(np.abs(remainder)) < 1e-10:
-                Xt_ix = np.array(Xt_ix, dtype=int)
+            Xt_ix = self._bins.mid
+            if pd.api.types.is_numeric_dtype(Xt_ix.dtype):
+                # Keep whole-number midpoints compatible with integer indices.
+                remainder = np.mod(Xt_ix, 1)
+                if np.sum(np.abs(remainder)) < 1e-10:
+                    Xt_ix = Xt_ix.astype(int)
             Xt.index = Xt_ix
 
         elif self.return_index == "bin":
