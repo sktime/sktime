@@ -206,14 +206,13 @@ class TimestralForecaster(BaseForecaster):
         known_cols = [col for col in fit_cols if col in predict_cols]
         past_cols = [col for col in fit_cols if col not in predict_cols]
 
-        def is_cat(col):
-            s = self._cur_X[col]
-            return s.dtype.name in ["category", "object", "string"]
+        def is_num(col):
+            return pd.api.types.is_numeric_dtype(self._cur_X[col])
 
-        cat_past = [col for col in past_cols if is_cat(col)]
-        num_past = [col for col in past_cols if not is_cat(col)]
-        cat_known = [col for col in known_cols if is_cat(col)]
-        num_known = [col for col in known_cols if not is_cat(col)]
+        num_past = [col for col in past_cols if is_num(col)]
+        cat_past = [col for col in past_cols if not is_num(col)]
+        num_known = [col for col in known_cols if is_num(col)]
+        cat_known = [col for col in known_cols if not is_num(col)]
 
         return num_past, num_known, cat_past, cat_known
 
