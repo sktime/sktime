@@ -715,3 +715,84 @@ def test_maep_evaluate_by_index_is_jackknife(y_true, y_pred):
 
     by_index = metric.evaluate_by_index(y_true, y_pred)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("true_column", [False, True])
+@pytest.mark.parametrize("pred_column", [False, True])
+@pytest.mark.parametrize("perfect", [False, True])
+@pytest.mark.parametrize("multioutput", ["uniform_average", "raw_values"])
+def test_maape_function_univariate_shapes(
+    true_column, pred_column, perfect, multioutput
+):
+    """Equivalent flat and column targets must not broadcast into pairwise errors."""
+    from sktime.performance_metrics.forecasting import (
+        mean_arctangent_absolute_percentage_error,
+    )
+
+    y_true = np.array([1.0, 2.0, 3.0])
+    y_pred = y_true.copy() if perfect else 2 * y_true
+    if true_column:
+        y_true = y_true[:, None]
+    if pred_column:
+        y_pred = y_pred[:, None]
+
+    result = mean_arctangent_absolute_percentage_error(
+        y_true, y_pred, multioutput=multioutput
+    )
+    # Every relative error is zero for a perfect forecast, otherwise one.
+    expected = 0.0 if perfect else np.pi / 4
+    np.testing.assert_allclose(result, expected)
+    if multioutput == "raw_values":
+        assert result.shape == (1,)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize(
+    "y_true, y_pred, error",
+    [
+        (np.ones(3), np.ones(1), "inconsistent numbers of samples"),
+        (np.ones(1), np.ones(3), "inconsistent numbers of samples"),
+        (np.ones((3, 2)), np.ones((3, 1)), "different number of output"),
+        (np.ones((3, 1)), np.ones((3, 2)), "different number of output"),
+    ],
+)
+def test_maape_function_rejects_mismatched_targets(y_true, y_pred, error):
+    """Mismatched targets must raise instead of producing broadcasted scores."""
+    from sktime.performance_metrics.forecasting import (
+        mean_arctangent_absolute_percentage_error,
+    )
+
+    with pytest.raises(ValueError, match=error):
+        mean_arctangent_absolute_percentage_error(y_true, y_pred)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+@pytest.mark.parametrize("container", [np.array, pd.DataFrame])
+@pytest.mark.parametrize("weight_param", ["horizon_weight", "sample_weight"])
+def test_maape_function_weighted_multioutput(container, weight_param):
+    """Target validation preserves time weights and weighted output averaging."""
+    from sktime.performance_metrics.forecasting import (
+        mean_arctangent_absolute_percentage_error,
+    )
+
+    y_true = container([[1.0, 2.0], [2.0, 4.0]])
+    y_pred = container([[1.0, 4.0], [4.0, 4.0]])
+    weights = {weight_param: [1.0, 3.0]}
+    raw = mean_arctangent_absolute_percentage_error(
+        y_true, y_pred, multioutput="raw_values", **weights
+    )
+    np.testing.assert_allclose(raw, [3 * np.pi / 16, np.pi / 16])
+    result = mean_arctangent_absolute_percentage_error(
+        y_true, y_pred, multioutput=[1.0, 3.0], **weights
+    )
+    np.testing.assert_allclose(result, 3 * np.pi / 32)
