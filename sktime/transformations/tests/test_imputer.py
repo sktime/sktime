@@ -129,3 +129,20 @@ def test_imputer_forecaster_y():
 
     transformer.fit(X=X, y=y)
     transformer.transform(X=X, y=y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("method", ["fore", "cast", "forecast", "r", ""])
+def test_imputer_y_inner_mtype_substring_of_forecaster(method):
+    """Test that only method="forecaster" sets the y_inner_mtype tag.
+
+    Failure case in bug #11688: the check ``method in "forecaster"`` was a substring
+    test, so invalid methods that are substrings of "forecaster" set the tag.
+    """
+    default_y_inner_mtype = Imputer(method="mean").get_tag("y_inner_mtype")
+
+    assert Imputer(method=method).get_tag("y_inner_mtype") == default_y_inner_mtype
+    assert Imputer(method="forecaster").get_tag("y_inner_mtype") == ["pd.DataFrame"]
