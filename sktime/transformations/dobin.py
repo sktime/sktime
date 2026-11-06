@@ -263,13 +263,16 @@ def close_distance_matrix(X: npt.ArrayLike, k: int, frac: float):
     nbrs = NearestNeighbors(n_neighbors=k + 1, metric="euclidean").fit(X)
     _, indices = nbrs.kneighbors(X)
 
+    values = X.to_numpy()
+    # Keep the pair order and the dtype inference from the original row lists.
     dist = pd.DataFrame(
-        [
-            ((X.iloc[i,] - X.iloc[j,]) ** 2).tolist()
-            for (i, j) in zip(
-                np.repeat(indices[:, 0], repeats=k), indices[:, 1:].flatten()
+        (
+            (
+                values[np.repeat(indices[:, 0], repeats=k)]
+                - values[indices[:, 1:].ravel()]
             )
-        ]
+            ** 2
+        ).tolist()
     )
 
     row_sums = dist.apply(sum, axis=1)
