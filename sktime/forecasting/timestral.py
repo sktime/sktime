@@ -7,8 +7,6 @@ Wraps Mistral AI Timestral foundation model.
 
 __all__ = ["TimestralForecaster"]
 
-from copy import deepcopy
-
 import numpy as np
 import pandas as pd
 
@@ -165,17 +163,9 @@ class TimestralForecaster(BaseForecaster):
             kwargs["revision"] = self.revision
         return kwargs
 
-    def _get_cache_key_kwargs(self):
-        """Build deterministic cache key kwargs, omitting sensitive values."""
-        cfg = self._get_load_kwargs()
-        if "token" in cfg:
-            cfg = deepcopy(cfg)
-            cfg["token"] = "<redacted>"
-        return cfg
-
     def _get_unique_key(self):
         """Build cache key for the multiton model loader."""
-        return str(sorted(self._get_cache_key_kwargs().items()))
+        return str(sorted(self._get_load_kwargs().items()))
 
     def _load_model(self):
         """Load or retrieve the cached upstream Timestral forecaster."""
