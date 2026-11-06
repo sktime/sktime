@@ -6,13 +6,15 @@ import numpy as np
 import numpy.typing as npt
 from sklearn.neighbors import NearestNeighbors
 
-from sktime.transformations.base import BaseTransformer
+import pandas as pd
+
+from sktime.detection.base import BaseDetector
 
 __author__ = ["KatieBuc"]
 __all__ = ["STRAY"]
 
 
-class STRAY(BaseTransformer):
+class STRAY(BaseDetector):
     """STRAY: robust anomaly detection in data streams with concept drift.
 
     This is based on STRAY (Search TRace AnomalY) _[1], which is a modification
@@ -82,6 +84,8 @@ class STRAY(BaseTransformer):
         "maintainers": "KatieBuc",
         # estimator type
         # --------------
+        "task": "anomaly_detection",
+        "learning_type": "unsupervised",
         "capability:missing_values": True,
         "X_inner_mtype": "np.ndarray",
         "fit_is_empty": False,
@@ -226,16 +230,13 @@ class STRAY(BaseTransformer):
         self :
             Reference to self.
         """
-        # remember X for transform
-        self._X = X
-
         info_dict = self._find_outliers(X)
         self.score_ = info_dict["outlier_scores"]
         self.y_ = info_dict["outlier_bool"]
 
         return self
 
-    def _transform(self, X: npt.ArrayLike, y: npt.ArrayLike = None) -> npt.ArrayLike:
+    def _predict(self, X: npt.ArrayLike) -> pd.Series:
         """Return anomaly detection.
 
         Parameters
@@ -245,28 +246,44 @@ class STRAY(BaseTransformer):
 
         Returns
         -------
-        y_ : np.ArrayLike
-            Anomaly detection, boolean.
+        y : pd.Series
+            Anomaly detection, indices of anomalies.
         """
-        # fit again if data is different to fit, but don't store anything
-        if not np.allclose(X, self._X, equal_nan=True):
-            new_obj = STRAY(
-                alpha=self.alpha,
-                k=self.k,
-                knn_algorithm=self.knn_algorithm,
-                p=self.p,
-                size_threshold=self.size_threshold,
-                outlier_tail=self.outlier_tail,
-            ).fit(X)
-            warnings.warn(
-                "Warning: Input data X differs from that given to fit(). "
-                "Refitting with new input data, not storing updated public class "
-                "attributes. For this, explicitly use fit(X) or fit_transform(X).",
-                stacklevel=2,
-            )
-            return new_obj.y_.astype(bool)
+        # if X is same as fit X, use self.y_
+        # we use np.allclose on the inner numpy arrays
+        # self._X is the original X, so we might need to convert it or use another way
+        # Actually, STRAY's original _transform used self._X which it stored in _fit.
+        # BaseDetector stores original X in self._X.
+        
+        # To avoid issues with different X, we can just run _find_outliers
+        # unless it's exactly the same as fitted data.
+        
+        # For simplicity and correctness (following STRAY's original logic):
+        # We'll check if X is the same as the one used in fit.
+        # But wait, BaseDetector already provides fit_predict etc.
+        
+        # If _predict is called, we should probably just compute it for X.
+        info_dict = self._find_outliers(X)
+        outlier_bool = info_dict["outlier_bool"]
+        
+        indices = np.where(outlier_bool == 1)[0]
+        return pd.Series(indices)
 
-        return self.y_.astype(bool)
+    def _transform_scores(self, X: npt.ArrayLike) -> pd.DataFrame:
+        """Return outlier scores.
+
+        Parameters
+        ----------
+        X : np.ArrayLike
+            Data for anomaly detection (time series).
+
+        Returns
+        -------
+        scores : pd.DataFrame
+            Outlier scores.
+        """
+        info_dict = self._find_outliers(X)
+        return pd.DataFrame(info_dict["outlier_scores"])
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
