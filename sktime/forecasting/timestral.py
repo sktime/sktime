@@ -318,9 +318,18 @@ class TimestralForecaster(BaseForecaster):
         """Update forecaster with new training data."""
         from sktime.datatypes import update_data
 
+        if self._cur_X is None and X is not None:
+            raise ValueError(
+                "Exogenous `X` was provided in `update`, but no `X` was provided in `fit`."
+            )
+        if self._cur_X is not None and X is None:
+            raise ValueError(
+                "No exogenous `X` was provided in `update`, but `X` was provided in `fit`."
+            )
+
         self._cur_y = update_data(self._cur_y, y)
         if X is not None:
-            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+            self._cur_X = update_data(self._cur_X, X)
         return self
 
     def _run_forecast(self, fh, X=None):
