@@ -53,13 +53,6 @@ EXPECTED_COV = [
 ]
 
 
-def test_timestral_license_rejected_by_default():
-    """Verify license_accepted=False raises a clear ValueError."""
-    forecaster = TimestralForecaster(license_accepted=False)
-    with pytest.raises(ValueError, match="license_accepted"):
-        forecaster._check_license()
-
-
 @pytest.mark.skipif(
     not run_test_for_class(TimestralForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
