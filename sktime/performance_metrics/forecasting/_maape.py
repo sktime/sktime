@@ -7,6 +7,7 @@ import numpy as np
 
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetric
 from sktime.performance_metrics.forecasting._common import _percentage_error
+from sktime.utils.sklearn import _check_reg_targets
 
 
 def mean_arctangent_absolute_percentage_error(
@@ -46,6 +47,8 @@ def mean_arctangent_absolute_percentage_error(
     loss : float or ndarray of floats
         The computed metric value.
     """
+    _, y_true, y_pred, multioutput = _check_reg_targets(y_true, y_pred, multioutput)
+
     # Use _percentage_error from common utils to get the element-wise APE
     ape = _percentage_error(
         y_true=y_true,
