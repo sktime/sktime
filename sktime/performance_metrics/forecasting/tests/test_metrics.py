@@ -612,6 +612,19 @@ def test_owa_aggregate_then_ratio():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+@pytest.mark.parametrize("sp", [0, -1, 1.5, True])
+def test_mase_rejects_invalid_sp(sp):
+    """MASE requires a positive integer seasonal periodicity."""
+    from sktime.performance_metrics.forecasting import MeanAbsoluteScaledError
+
+    with pytest.raises(ValueError, match="sp must be a positive integer"):
+        MeanAbsoluteScaledError(sp=sp)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_msle_no_stdout_on_index_mismatch():
     """mean_squared_log_error must not print debug output.
 
