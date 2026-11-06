@@ -11,8 +11,6 @@ __author__ = [
 ]
 
 
-from functools import lru_cache
-
 import numpy as np
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
@@ -685,11 +683,7 @@ class PatchTSTForecaster(BaseForecaster):
             if _check_soft_dependencies("torch", severity="none"):
                 import torch
 
-                @lru_cache
-                def is_available():
-                    return False
-
-                torch.backends.mps.is_available = is_available
+                torch.backends.mps.is_available = lambda: False
             else:
                 pass
 
