@@ -426,3 +426,28 @@ def test_timezoneaware_index():
 
     # These should give us identical predictions
     np.testing.assert_almost_equal(pred_tzaware.values, pred_tznaive.values)
+
+
+def test_recursive_global_mixed_feature_names():
+    """Lag and exogenous names stay compatible with sklearn during fit/predict."""
+    from sktime.transformations.summarize import WindowSummarizer
+
+    index = pd.period_range("2020-01", periods=40, freq="M")
+    y = pd.Series(np.arange(40, dtype=float), index=index)
+    X = pd.DataFrame({0: np.sin(np.arange(40))}, index=index)
+
+    def forecast(exogenous):
+        forecaster = make_reduction(
+            LinearRegression(),
+            strategy="recursive",
+            window_length=None,
+            transformers=[WindowSummarizer(lag_feature={"lag": [1, 2]}, n_jobs=1)],
+            pooling="global",
+        )
+        forecaster.fit(y.iloc[:-3], X=exogenous.iloc[:-3])
+        return forecaster.predict([1, 2, 3], X=exogenous.iloc[-3:])
+
+    expected = forecast(X.rename(columns=str))
+    actual = forecast(X)
+    pd.testing.assert_series_equal(actual, expected)
+    assert X.columns.tolist() == [0]
