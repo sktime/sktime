@@ -141,10 +141,6 @@ class TimestralForecaster(BaseForecaster):
             state["forecaster"] = None
         return state
 
-    def __setstate__(self, state):
-        """Restore state from unpickled state dictionary."""
-        self.__dict__.update(state)
-
     @classmethod
     def print_license(cls):
         """Print license information for Timestral pretrained weights."""
