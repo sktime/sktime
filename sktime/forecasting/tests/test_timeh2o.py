@@ -17,6 +17,10 @@ class _OfflineTimeH2OForecaster(TimeH2OForecaster):
     _tags = {"python_dependencies": [], "python_version": None}
 
 
+class _GatedRepoError(Exception):
+    """Stand in for the optional Hugging Face exception."""
+
+
 class _Model:
     """Deterministic substitute for the gated, optional inference boundary."""
 
@@ -41,6 +45,11 @@ class _Model:
 def forecaster_class(monkeypatch):
     """Replace only the optional upstream model and its network loading."""
     monkeypatch.setitem(sys.modules, "h2ofm", types.SimpleNamespace(TimeH2O=_Model))
+    monkeypatch.setitem(
+        sys.modules,
+        "huggingface_hub.errors",
+        types.SimpleNamespace(GatedRepoError=_GatedRepoError),
+    )
 
     def make_forecaster(**kwargs):
         options = {"model_path": "offline-test-checkpoint", "license_accepted": True}
@@ -213,24 +222,18 @@ def test_repeated_fit_reuses_loaded_model(forecaster_class, monkeypatch):
 
 def test_license_acceptance_required_for_checkpoint():
     """Restricted pretrained weights require explicit license acceptance."""
+    f = _OfflineTimeH2OForecaster(model_path="h2oai/timeh2o-v1")
     with pytest.raises(ValueError, match="license_accepted=True"):
-        TimeH2OForecaster(model_path="h2oai/timeh2o-v1").fit(pd.Series([1.0, 2.0]))
+        f.fit(pd.Series([1.0, 2.0]))
 
 
 def test_gated_checkpoint_error_has_actionable_message(forecaster_class, monkeypatch):
     """A missing Hugging Face grant explains the required user action."""
-    from huggingface_hub.errors import GatedRepoError
 
     class GatedModel(_Model):
         @classmethod
         def from_pretrained(cls, path, **kwargs):
-            import httpx
-
-            response = httpx.Response(
-                403,
-                request=httpx.Request("GET", "https://huggingface.co/h2oai/timeh2o-v1"),
-            )
-            raise GatedRepoError("access denied", response=response)
+            raise _GatedRepoError("access denied")
 
     monkeypatch.setattr(sys.modules["h2ofm"], "TimeH2O", GatedModel)
     with pytest.raises(ValueError, match="huggingface.co/h2oai/timeh2o-v1"):
