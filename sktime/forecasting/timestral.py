@@ -16,29 +16,6 @@ from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.utils.singleton import _multiton
 
 _LICENSE_URL = "https://huggingface.co/mistralai/Timestral-209M/blob/main/LICENSE"
-_NATIVE_QUANTILES = (
-    0.01,
-    0.05,
-    0.1,
-    0.15,
-    0.2,
-    0.25,
-    0.3,
-    0.35,
-    0.4,
-    0.45,
-    0.5,
-    0.55,
-    0.6,
-    0.65,
-    0.7,
-    0.75,
-    0.8,
-    0.85,
-    0.9,
-    0.95,
-    0.99,
-)
 
 
 def _to_numpy(x):
@@ -493,8 +470,8 @@ class TimestralForecaster(BaseForecaster):
     def _predict_quantiles(self, fh, X=None, alpha=None):
         """Compute/return prediction quantiles for a forecast.
 
-        Requested levels are linearly interpolated on the 21 native quantile levels.
-        Levels beyond the native range [0.01, 0.99] are clamped to the nearest
+        Requested levels are linearly interpolated on the native model quantile
+        levels from config. Levels beyond the native range are clamped to the nearest
         native quantile.
 
         Parameters
@@ -520,7 +497,7 @@ class TimestralForecaster(BaseForecaster):
         elif quantiles.ndim == 2:
             quantiles = quantiles[np.newaxis, :, :]
 
-        native_levels = np.asarray(_NATIVE_QUANTILES, dtype=float)
+        native_levels = np.asarray(forecast.quantile_levels, dtype=float)
 
         # Interpolate along the quantile axis (axis=2)
         interpolated = np.apply_along_axis(
@@ -540,9 +517,9 @@ class TimestralForecaster(BaseForecaster):
     def _predict_proba(self, fh, X=None, marginal=True):
         """Compute/return a fully probabilistic forecast.
 
-        Returns a ``skpro`` ``HistogramQPD`` built from the 21 native quantile levels.
-        ``tails="mass"`` places residual tail probability as point masses at the
-        outermost native quantiles (0.01 and 0.99), matching ``predict_quantiles``.
+        Returns a ``skpro`` ``HistogramQPD`` built from the native model quantile
+        levels from config. ``tails="mass"`` places residual tail probability as point
+        masses at the outermost native quantiles, matching ``predict_quantiles``.
 
         Parameters
         ----------
@@ -569,7 +546,7 @@ class TimestralForecaster(BaseForecaster):
         elif quantiles.ndim == 2:
             quantiles = quantiles[np.newaxis, :, :]
 
-        levels = np.asarray(_NATIVE_QUANTILES, dtype=float)
+        levels = np.asarray(forecast.quantile_levels, dtype=float)
         var_names = self._get_varnames()
         pred_index = pd.Index(index)
         pred_index.names = self._y_index_names
