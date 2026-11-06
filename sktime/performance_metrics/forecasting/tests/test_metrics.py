@@ -715,3 +715,29 @@ def test_maep_evaluate_by_index_is_jackknife(y_true, y_pred):
 
     by_index = metric.evaluate_by_index(y_true, y_pred)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if tested module has changed.",
+)
+def test_default_evaluate_by_index_with_sample_weight():
+    """Default jackknife evaluate_by_index must drop the i-th sample weight."""
+    from sktime.performance_metrics.forecasting import MeanSquaredPercentageError
+
+    y_true = pd.Series([3.0, 1.5, 2.0, 7.0, 2.0])
+    y_pred = pd.Series([2.5, 1.0, 2.0, 8.0, 1.25])
+    w = np.array([1.0, 2.0, 0.5, 3.0, 1.0])
+    metric = MeanSquaredPercentageError(square_root=True)
+
+    n = len(y_true)
+    full = metric(y_true, y_pred, sample_weight=w)
+    expected = [
+        n * full
+        - (n - 1)
+        * metric(y_true.drop(i), y_pred.drop(i), sample_weight=np.delete(w, i))
+        for i in range(n)
+    ]
+
+    by_index = metric.evaluate_by_index(y_true, y_pred, sample_weight=w)
+    assert np.allclose(by_index.to_numpy(), expected)
