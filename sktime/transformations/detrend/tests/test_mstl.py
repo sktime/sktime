@@ -96,3 +96,34 @@ def test_mstl_component_pipeline():
     assert y_pred.shape == (3,)
     # assert there are no nans
     assert not y_pred.isna().any()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class([MSTL]),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("periods", [3, [3], [3, 12], (3, 12)])
+def test_inverse_transform_round_trip(periods):
+    """Test that inverse_transform recovers the series for any form of periods.
+
+    ``_inverse_transform`` iterated ``self.periods`` directly, which is the raw
+    user parameter and may be a single int, and looked up a
+    ``seasonal_<period>`` column, which statsmodels only produces when there is
+    more than one period. A single period therefore raised ``TypeError`` when
+    given as an int and ``KeyError`` when given as a one element sequence.
+    """
+    import numpy as np
+    import pandas as pd
+
+    index = pd.date_range("2020-01-01", periods=40, freq="D")
+    X = pd.DataFrame({"a": np.linspace(1.0, 20.0, 40)}, index=index)
+
+    transformer = MSTL(periods=periods, return_components=False)
+    Xt = transformer.fit_transform(X)
+    Xi = transformer.inverse_transform(Xt)
+
+    np.testing.assert_allclose(
+        np.asarray(Xi, dtype=float).ravel(),
+        np.asarray(X, dtype=float).ravel(),
+        atol=1e-8,
+    )
