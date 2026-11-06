@@ -101,7 +101,10 @@ class BOSSVSClassifierPyts(_PytsAdapter, BaseClassifier):
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": "pyts<0.14.0",
+        "python_dependencies": "pyts>=0.14",
+        # pyts 0.14 is the first release compatible with scikit-learn 1.8,
+        # and it requires python 3.11 or higher
+        "python_version": ">=3.11",
         # estimator type
         # --------------
         "capability:multivariate": False,

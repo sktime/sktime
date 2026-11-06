@@ -6,6 +6,8 @@ __author__ = ["fkiraly"]
 
 from inspect import signature
 
+import numpy as np
+
 from sktime.utils.adapters.forward import _clone_fitted_params
 
 
@@ -14,8 +16,10 @@ class _PytsAdapter:
 
     _tags = {
         "X_inner_mtype": "numpyflat",
-        "python_dependencies": ["pyts<0.14", "scikit-learn<1.8"],
-        # todo 1.3.0: check whether sklearn compatibility has been updated
+        "python_dependencies": "pyts>=0.14",
+        # pyts 0.14 is the first release compatible with scikit-learn 1.8,
+        # and it requires python 3.11 or higher
+        "python_version": ">=3.11",
         "tests:vm": True,  # pyts based estimators get tested in their own VM
     }
 
@@ -62,6 +66,11 @@ class _PytsAdapter:
             Method to call
         X, y: any objects
         """
+        # pyts 0.14 compiles its numba kernels with eager signatures that do
+        # not accept read-only arrays, so a writeable copy is passed
+        if isinstance(X, np.ndarray) and not X.flags.writeable:
+            X = X.copy()
+
         # check if method has y parameter
         # if yes, call with y, otherwise without
         method_has_y = "y" in signature(method).parameters
