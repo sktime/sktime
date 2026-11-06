@@ -97,10 +97,22 @@ class DummyClassifier(BaseClassifier):
         self.strategy = strategy
         self.random_state = random_state
         self.constant = constant
-        self.sklearn_dummy_classifier = SklearnDummyClassifier(
-            strategy=strategy, random_state=random_state, constant=constant
-        )
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        rs = self.random_state
+        random_state = np.random.RandomState() if rs is None else rs
+        self.sklearn_dummy_classifier = SklearnDummyClassifier(
+            strategy=self.strategy, random_state=random_state, constant=self.constant
+        )
 
     def _fit(self, X, y):
         """Fit the dummy classifier.
