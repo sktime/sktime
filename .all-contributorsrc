@@ -4316,6 +4316,15 @@
         "test",
         "maintenance"
       ]
+    },
+    {
+      "login": "kritikhatri",
+      "name": "Kritika Khatri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/228373846?v=4",
+      "profile": "https://github.com/kritikhatri",
+      "contributions": [
+        "maintenance"
+      ]
     }
   ]
 }
