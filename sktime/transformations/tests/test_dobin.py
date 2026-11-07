@@ -230,3 +230,24 @@ def test_zero_variance():
 
     assert np.allclose(coords_expected, coords_actual)
     assert np.allclose(basis_expected, basis_actual)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(DOBIN),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "X",
+    [
+        np.tile([1.0, 2.0], (5, 1)),
+        np.array([[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]]),
+    ],
+    ids=["identical-observations", "tied-neighbor-distances"],
+)
+def test_no_initial_direction(X):
+    """Equal neighbor distances leave no preferred direction for the basis."""
+    model = DOBIN(k=1)
+    coords = model.fit_transform(X)
+
+    np.testing.assert_allclose(model._basis, np.eye(X.shape[1]))
+    np.testing.assert_allclose(coords, X)

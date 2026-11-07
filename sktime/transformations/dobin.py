@@ -143,7 +143,7 @@ class DOBIN(BaseTransformer):
 
         X_copy = X.copy()
         B = np.identity(n_dim)
-        basis = pd.DataFrame()
+        basis = pd.DataFrame(index=range(n_dim))
 
         for _ in range(n_dim):
             # Compute Y space
@@ -151,14 +151,15 @@ class DOBIN(BaseTransformer):
 
             # Find eta
             w = y_space.apply(sum, axis=0)
-            eta = np.array([w / np.sqrt(sum(w**2))])
+            norm = np.sqrt(sum(w**2))
 
-            # If issues finding Y space (e.g. no variance in column)
-            # get null space of basis
-            if np.isnan(eta).any():
+            # Complete the basis when the neighbor differences give no direction.
+            if norm == 0 or not np.isfinite(norm):
                 basis_col = pd.DataFrame(null_space(basis.T))
                 basis = pd.concat([basis, basis_col], axis=1)
                 break
+
+            eta = np.array([w / norm])
 
             # Update basis
             basis_col = pd.DataFrame(np.dot(B, eta.T))
