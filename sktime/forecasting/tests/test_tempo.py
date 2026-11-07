@@ -76,42 +76,43 @@ _FH = [1, 2, 3, 97]  # 97 is beyond the native horizon of 96, so it is recursive
 #       values = run_upstream(filename)[np.asarray(FH) - 1]
 #       print(filename, [float(f"{v:.8f}") for v in values])
 #
-_REFERENCE_CASES = [
-    pytest.param(
-        "TEMPO-80M_v1.pth", [2.4794631, 2.43720865, 2.44409704, 1.70633984], id="v1"
-    ),
-    pytest.param(
-        "TEMPO-80M_v2.pth", [3.74482203, 3.63304782, 3.44458461, 2.2167089], id="v2"
-    ),
-]
+_REFERENCE_VALUES = {
+    "TEMPO-80M_v1.pth": [2.4794631, 2.43720865, 2.44409704, 1.70633984],
+    "TEMPO-80M_v2.pth": [3.74482203, 3.63304782, 3.44458461, 2.2167089],
+}
 
 
 @pytest.mark.skipif(
     not run_test_for_class(TEMPOForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
-@pytest.mark.parametrize("filename,expected", _REFERENCE_CASES)
-def test_tempo_predictions_match_reference(filename, expected):
+def test_tempo_predictions_match_reference():
     """TEMPO forecasts match the raw upstream reference outputs."""
     import torch
 
     y = load_airline()
 
-    # cache_dir=None differs from get_test_params, so that the model is built here,
-    # after seeding, rather than reused from the cache of an earlier unseeded test
-    forecaster = TEMPOForecaster(
-        filename=filename,
-        cache_dir=None,
-        device="cpu",
-        upstream_compatible=True,
-    )
+    # The checkpoints are checked in one test, not parametrized, so that one process
+    # downloads them. Parallel downloads into the same Hugging Face cache can fail on
+    # Windows with PermissionError, when updating the cached reference to the commit.
+    for filename, expected in _REFERENCE_VALUES.items():
+        # cache_dir=None differs from get_test_params, so that the model is built
+        # here, after seeding, rather than reused from the cache of an earlier
+        # unseeded test
+        forecaster = TEMPOForecaster(
+            filename=filename,
+            cache_dir=None,
+            device="cpu",
+            upstream_compatible=True,
+        )
 
-    torch.manual_seed(_SEED)
-    y_pred = forecaster.fit(y).predict(fh=_FH)
+        torch.manual_seed(_SEED)
+        y_pred = forecaster.fit(y).predict(fh=_FH)
 
-    np.testing.assert_allclose(
-        y_pred.to_numpy().flatten(),
-        np.asarray(expected, dtype=np.float32),
-        rtol=1e-5,
-        atol=1e-4,
-    )
+        np.testing.assert_allclose(
+            y_pred.to_numpy().flatten(),
+            np.asarray(expected, dtype=np.float32),
+            rtol=1e-5,
+            atol=1e-4,
+            err_msg=f"forecasts of {filename} differ from the reference",
+        )
