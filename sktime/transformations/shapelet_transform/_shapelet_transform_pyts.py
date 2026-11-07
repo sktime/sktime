@@ -125,7 +125,10 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
         # --------------
         "authors": ["johannfaouzi", "Abhay-Lejith"],
         # johannfaouzi is author of upstream pyts code
-        "python_dependencies": "pyts<0.14.0",
+        "python_dependencies": "pyts>=0.14",
+        # pyts 0.14 is the first release compatible with scikit-learn 1.8,
+        # and it requires python 3.11 or higher
+        "python_version": ">=3.11",
         # capability:multivariate controls whether internal X can be multivariate
         # if False (only univariate), always applies vectorization over variables
         "capability:multivariate": False,
@@ -152,7 +155,7 @@ class ShapeletTransformPyts(_PytsAdapter, BaseTransformer):
 
         should import and return pyts class
         """
-        from pyts.transformation.shapelet_transform import ShapeletTransform
+        from pyts.transformation import ShapeletTransform
 
         return ShapeletTransform
 
