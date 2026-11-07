@@ -14,12 +14,13 @@ from sktime.utils.singleton import _multiton
 class _CachedTEMPO:
     """Cache a single loaded TEMPO model instance per configuration."""
 
-    def __init__(self, key, model_path, device, filename, cache_dir):
+    def __init__(self, key, model_path, device, filename, cache_dir, match_layers):
         self.key = key
         self.model_path = model_path
         self.device = device
         self.filename = filename
         self.cache_dir = cache_dir
+        self.match_layers = match_layers
         self.model = None
 
     def load_model(self):
@@ -34,6 +35,7 @@ class _CachedTEMPO:
             repo_id=self.model_path,
             filename=self.filename,
             cache_dir=self.cache_dir,
+            match_checkpoint_layers=self.match_layers,
         )
         return self.model
 
@@ -57,6 +59,22 @@ class TEMPOForecaster(BaseForecaster):
         If None, uses the default cache directory of the upstream TEMPO library.
     device : str or None, optional (default=None)
         Device to run inference on, e.g., "cpu" or "cuda".
+    upstream_compatible : bool, optional (default=True)
+        Whether to reproduce the original TEMPO inference code, or to apply
+        sktime's fixes to it, in the vendored ``sktime.libs.tempo``.
+
+        * If True, forecasts match the upstream ``TEMPO.predict``, including two known
+          problems. First, forecasts are not on the scale of ``y``: the series is
+          normalized twice and the statistics needed to invert the first normalization
+          are lost, so a series in the hundreds gets forecasts close to zero. Second,
+          ``config.json`` of the checkpoint sets 6 GPT-2 layers but the checkpoints
+          hold 3, so layers 3 to 5 keep their random initialization. Forecasts
+          therefore change between processes, unless ``torch.manual_seed`` is set
+          before ``fit``.
+        * If False, both problems are fixed: forecasts are returned on the scale of
+          ``y``, and the number of GPT-2 layers is taken from the checkpoint, so all
+          weights in use are pretrained and forecasts are deterministic.
+          Forecasts then differ from the upstream ``TEMPO.predict``.
     """
 
     _tags = {
@@ -99,11 +117,13 @@ class TEMPOForecaster(BaseForecaster):
         filename="TEMPO-80M_v1.pth",
         cache_dir="./checkpoints/TEMPO_checkpoints",
         device=None,
+        upstream_compatible=True,
     ):
         self.model_path = model_path
         self.filename = filename
         self.cache_dir = cache_dir
         self.device = device
+        self.upstream_compatible = upstream_compatible
 
         super().__init__()
 
@@ -125,6 +145,7 @@ class TEMPOForecaster(BaseForecaster):
                 "model_path": "Melady/TEMPO",
                 "device": "cpu",
                 "filename": "TEMPO-80M_v2.pth",
+                "upstream_compatible": False,
             },
         ]
 
@@ -153,6 +174,7 @@ class TEMPOForecaster(BaseForecaster):
             device=self._device,
             filename=self.filename,
             cache_dir=self.cache_dir,
+            match_layers=not self.upstream_compatible,
         ).load_model()
 
     def _ensure_model_loaded(self):
@@ -169,6 +191,7 @@ class TEMPOForecaster(BaseForecaster):
                 "filename": self.filename,
                 "cache_dir": self.cache_dir,
                 "device": self._device if hasattr(self, "_device") else self.device,
+                "upstream_compatible": self.upstream_compatible,
             }
         )
 
@@ -183,7 +206,11 @@ class TEMPOForecaster(BaseForecaster):
         if np.asarray(y_values).ndim == 2 and y_values.shape[1] == 1:
             y_values = y_values.ravel()
 
-        model_pred = self.model_.predict(y_values, pred_length=pred_length)
+        model_pred = self.model_.predict(
+            y_values,
+            pred_length=pred_length,
+            restore_scale=not self.upstream_compatible,
+        )
         pred = np.asarray(model_pred, dtype=float).reshape(-1)
         pred = pred[np.asarray(rel_idx, dtype=int) - 1]
 
