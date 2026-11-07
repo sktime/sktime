@@ -86,6 +86,7 @@ class DateRangeWeightGenerator(BaseSampleWeightGenerator):
                 f"2000-{range_config['start']}", format="%Y-%m-%d"
             )
             end_date = pd.to_datetime(f"2000-{range_config['end']}", format="%Y-%m-%d")
+
             dt = self._get_dt(dates)
             mask = (
                 (dt.month >= start_date.month)
