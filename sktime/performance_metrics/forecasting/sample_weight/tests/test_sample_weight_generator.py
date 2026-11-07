@@ -82,8 +82,8 @@ class DateRangeWeightGenerator(BaseSampleWeightGenerator):
         weights = np.full(len(y_true), self.default_weight)
 
         for range_config in self.date_ranges:
-            start_date = pd.to_datetime(range_config["start"], format="%m-%d")
-            end_date = pd.to_datetime(range_config["end"], format="%m-%d")
+            start_date = pd.to_datetime(range_config["start"], format="%y-%m-%d")
+            end_date = pd.to_datetime(range_config["end"], format="%y-%m-%d")
 
             dt = self._get_dt(dates)
             mask = (
