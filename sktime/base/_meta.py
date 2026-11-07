@@ -12,6 +12,7 @@ import pandas as pd
 
 from sktime.base import BaseEstimator
 from sktime.base._base import _safe_clone
+from sktime.base._pretrain._state_at import _clone_at
 from sktime.utils._estimator_html_repr import _VisualBlock
 
 
@@ -351,7 +352,7 @@ class _HeterogenousMetaEstimator:
             name = type(obj).__name__
 
         if clone_est:
-            return (name, _safe_clone(est))
+            return (name, _clone_at(est, "pretrained"))
         else:
             return (name, est)
 
