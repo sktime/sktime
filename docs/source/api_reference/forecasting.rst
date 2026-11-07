@@ -817,6 +817,14 @@ Domain agnostic foundation models
 
     TimerS1Forecaster
 
+.. currentmodule:: sktime.forecasting.timeh2o
+
+.. autosummary::
+    :toctree: auto_generated/
+    :template: class.rst
+
+    TimeH2OForecaster
+
 .. currentmodule:: sktime.forecasting.timesfm
 
 .. autosummary::
