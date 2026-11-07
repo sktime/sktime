@@ -1,6 +1,7 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Implements compositor for different forecast by fh index."""
 
+from sktime.base._pretrain._state_at import _clone_at, _set_params_at
 from sktime.forecasting.base import BaseForecaster
 
 __author__ = ["fkiraly"]
@@ -211,7 +212,8 @@ class FhPlexForecaster(BaseForecaster):
                 fh_i = range(1, fh_rel[i] + 1)
 
             params_ix = self._plexfun(ix)
-            f_ix = self.forecaster.clone().set_params(**params_ix)
+            f_ix = _clone_at(self.forecaster, "pretrained")
+            f_ix = _set_params_at(f_ix, "pretrained", params_ix)
             self.forecasters_[fh_key] = f_ix.fit(y=y, X=X, fh=fh_i)
 
         return self

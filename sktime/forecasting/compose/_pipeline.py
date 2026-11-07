@@ -7,6 +7,7 @@ __all__ = ["TransformedTargetForecaster", "ForecastingPipeline", "ForecastX"]
 import pandas as pd
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.base._pretrain._state_at import _clone_at, _set_params_at
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.forecasting.base._base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -538,13 +539,13 @@ class ForecastingPipeline(_Pipeline):
         if not skip_trafos:
             # transform X
             for step_idx, name, transformer in self._iter_transformers():
-                t = transformer.clone()
+                t = _clone_at(transformer, "pretrained")
                 X = t.fit_transform(X=X, y=y)
                 self.steps_[step_idx] = (name, t)
 
         # fit forecaster
         name, forecaster = self.steps_[-1]
-        f = forecaster.clone()
+        f = _clone_at(forecaster, "pretrained")
         f.fit(y=y, X=X, fh=fh)
         self.steps_[-1] = (name, f)
 
@@ -1650,9 +1651,9 @@ class ForecastX(BaseForecaster):
         self.X_was_None_ = X is None
 
         # initialize forecaster_X_ and forecaster_y_
-        self.forecaster_y_ = self.forecaster_y.clone()
+        self.forecaster_y_ = _clone_at(self.forecaster_y, "pretrained")
         if X is not None:
-            self.forecaster_X_ = self.forecaster_X_c.clone()
+            self.forecaster_X_ = _clone_at(self.forecaster_X_c, "pretrained")
 
         if self.behaviour == "update" and X is not None:
             X_for_fcX = self._get_X_for_fcX(X)
@@ -1752,7 +1753,7 @@ class ForecastX(BaseForecaster):
         elif self.behaviour == "refit":
             if self.fh_X_ is not None:
                 fh = self.fh_X_
-            forecaster = self.forecaster_X_c.clone()
+            forecaster = _clone_at(self.forecaster_X_c, "pretrained")
             X_for_fcX = self._get_X_for_fcX(self._cur_X)
             forecaster.fit(y=self._get_Xcols(self._cur_X), fh=fh, X=X_for_fcX)
 
@@ -2127,7 +2128,7 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
         permutation = self.permutation
         steps_arg = self.steps_arg
 
-        self.estimator_ = estimator.clone()
+        self.estimator_ = _clone_at(estimator, "pretrained")
 
         if permutation is not None:
             inner_estimators = getattr(estimator, steps_arg)
@@ -2154,8 +2155,10 @@ class Permute(_DelegatedForecaster, BaseForecaster, _HeterogenousMetaEstimator):
 
             estimator_tuples_permuted = [(k, estimator_dict[k]) for k in permutation]
 
-            self.estimator_ = estimator.clone()
-            self.estimator_.set_params(**{steps_arg: estimator_tuples_permuted})
+            self.estimator_ = _clone_at(estimator, "pretrained")
+            self.estimator_ = _set_params_at(
+                self.estimator_, "pretrained", {steps_arg: estimator_tuples_permuted}
+            )
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):

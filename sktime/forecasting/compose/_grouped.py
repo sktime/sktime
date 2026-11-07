@@ -4,6 +4,7 @@
 import pandas as pd
 
 from sktime.base._meta import _HeterogenousMetaEstimator
+from sktime.base._pretrain._state_at import _clone_at
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES, mtype_to_scitype
 from sktime.forecasting.base import BaseForecaster
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -128,7 +129,7 @@ class ForecastByLevel(_DelegatedForecaster):
         IMPORTANT: no significant compute or memory use should happen in __post_init__,
         memory and compute intensive operations should be in _fit, not __post_init__.
         """
-        self.forecaster_ = self.forecaster.clone()
+        self.forecaster_ = _clone_at(self.forecaster, "pretrained")
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
@@ -443,10 +444,12 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
                 # Adopt the fallback forecaster if possible
                 else:
-                    chosen_forecaster_ = self.fallback_forecaster.clone()
+                    chosen_forecaster_ = _clone_at(
+                        self.fallback_forecaster, "pretrained"
+                    )
 
             else:
-                chosen_forecaster_ = self.forecasters[category].clone()
+                chosen_forecaster_ = _clone_at(self.forecasters[category], "pretrained")
 
             y_category = self._loc_group(y, group)
 
