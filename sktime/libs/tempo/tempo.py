@@ -1,5 +1,6 @@
 # ruff: noqa
 import os
+import re
 import warnings
 
 from sktime.utils.dependencies import _check_soft_dependencies, _safe_import
@@ -35,6 +36,16 @@ class ComplexLinear(nn.Module):
         out_real = self.fc_real(x_real) - self.fc_imag(x_imag)
         out_imag = self.fc_real(x_imag) + self.fc_imag(x_real)
         return torch.complex(out_real, out_imag)
+
+
+def _count_checkpoint_gpt_layers(state_dict):
+    """Return the number of GPT-2 layers stored in a TEMPO state dict."""
+    layers = {
+        int(match.group(1))
+        for match in (re.search(r"\.h\.(\d+)\.", key) for key in state_dict)
+        if match
+    }
+    return max(layers) + 1
 
 
 def print_trainable_parameters(model):
@@ -325,7 +336,15 @@ class TEMPO(nn.Module):
         repo_id="Melady/TEMPO",
         filename="TEMPO-80M_v1.pth",
         cache_dir="./checkpoints/TEMPO_checkpoints",
+        match_checkpoint_layers=False,
     ):
+        """Load a pretrained TEMPO model.
+
+        sktime addition, not in upstream: if ``match_checkpoint_layers`` is True, the
+        number of GPT-2 layers is taken from the checkpoint instead of ``config.json``.
+        The published ``config.json`` sets ``gpt_layers=6`` but the checkpoints hold 3
+        layers, so with False, layers 3-5 keep their random initialization, as upstream.
+        """
         # Download the model checkpoint
         checkpoint_path = hf_hub_download(
             repo_id=repo_id, filename=filename, cache_dir=cache_dir
@@ -340,6 +359,14 @@ class TEMPO(nn.Module):
         if cfg is None:
             cfg = OmegaConf.load(config_path)
 
+        # Load the state dict
+        state_dict = torch.load(checkpoint_path, map_location=device)
+
+        if match_checkpoint_layers:
+            cfg = OmegaConf.merge(
+                cfg, {"gpt_layers": _count_checkpoint_gpt_layers(state_dict)}
+            )
+
         # Initialize the model
         model = cls(cfg, device)
 
@@ -348,8 +375,6 @@ class TEMPO(nn.Module):
         best_model_path = model_path + "_checkpoint.pth"
         print(f"Loading model from: {best_model_path}")
 
-        # Load the state dict
-        state_dict = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(state_dict, strict=False)
 
         return model
@@ -651,12 +676,16 @@ class TEMPO(nn.Module):
             return outputs, None
         return outputs, loss_local
 
-    def predict(self, x, pred_length=96):
+    def predict(self, x, pred_length=96, restore_scale=False):
         """
         Predict using the TEMPO model.
 
         Args:
         - x: Input time series data (shape: [B, L, M])
+        - restore_scale: sktime addition, not in upstream. ``x`` is normalized here
+          and again in ``forward``, which overwrites the statistics of ``x``. If False,
+          as upstream, these are lost and the output is not on the scale of ``x``. If
+          True, they are kept and used to return the output on the scale of ``x``.
 
         Returns
         -------
@@ -668,6 +697,7 @@ class TEMPO(nn.Module):
             torch.FloatTensor(x).unsqueeze(0).unsqueeze(2).to(self.device)
         )  # Shape: [1, 336, 1]
         x = self.rev_in_trend(x, "norm")
+        input_mean, input_stdev = self.rev_in_trend.mean, self.rev_in_trend.stdev
 
         B, L, M = x.shape
         target_length = self.seq_len  # Maximum supported length
@@ -705,7 +735,8 @@ class TEMPO(nn.Module):
             while len(all_predictions) < pred_length:
                 # Forward pass
                 outputs, _ = self.forward(current_input, test=True)
-                outputs = self.rev_in_trend(outputs, "denorm")
+                if not restore_scale:
+                    outputs = self.rev_in_trend(outputs, "denorm")
                 step_size = outputs.shape[1]
                 # Extract the predicted values
                 predicted_values = outputs.cpu().squeeze().numpy()[-step_size:]
@@ -727,7 +758,19 @@ class TEMPO(nn.Module):
                     .to(self.device)
                 )
         # Trim to the desired length
-        return np.array(all_predictions[:pred_length])
+        predictions = np.array(all_predictions[:pred_length])
+
+        if restore_scale:
+            self.rev_in_trend.mean = input_mean
+            self.rev_in_trend.stdev = input_stdev
+            with torch.no_grad():
+                predictions = self.rev_in_trend(
+                    torch.FloatTensor(predictions).reshape(1, -1, 1).to(self.device),
+                    "denorm",
+                )
+            predictions = predictions.cpu().numpy().reshape(-1)
+
+        return predictions
 
     def predict_prob(self, x, pred_length=96):
         """
