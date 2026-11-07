@@ -139,6 +139,38 @@ class LocalAnomalyScore(BaseIntervalScorer):
     Using costs to generate local anomaly scores is slower than direct anomaly
     scores because evaluating the cost on disjoint surrounding segments
     requires concatenation and re-evaluation per cut.
+
+    Examples
+    --------
+    Compare an elevated inner interval with its surrounding observations.
+    A cut is ``[start, inner_start, inner_end, end]``; all positions are
+    integer locations and both end positions are exclusive. The first cut
+    encloses the elevated values, while the second covers only zeros.
+
+    >>> import numpy as np
+    >>> from sktime.detection._anomaly_scores import LocalAnomalyScore
+    >>> from sktime.detection.costs import L2Cost
+    >>> X = np.array([0., 0., 4., 4., 0., 0., 0., 0.])
+    >>> cuts = [[0, 2, 4, 6], [4, 5, 6, 8]]
+    >>> scorer = LocalAnomalyScore(L2Cost())
+    >>> scores = scorer.evaluate(X, cuts)
+    >>> scores.shape
+    (2, 1)
+    >>> np.testing.assert_allclose(scores[:, 0], [64 / 3, 0])
+
+    ``L2Cost`` returns a separate contribution for each variable. Adding a
+    second variable scaled by two therefore multiplies its score by four.
+
+    >>> X_multi = np.column_stack([X, 2 * X])
+    >>> multi_scores = scorer.evaluate(X_multi, cuts)
+    >>> multi_scores.shape
+    (2, 2)
+    >>> np.testing.assert_allclose(multi_scores[:, 0], scores[:, 0])
+    >>> np.testing.assert_allclose(multi_scores[:, 1], 4 * scores[:, 0])
+
+    The scorer receives its data on each call and can be reused without fit.
+
+    >>> np.testing.assert_allclose(scorer.evaluate(X, cuts), scores)
     """
 
     _tags = {
