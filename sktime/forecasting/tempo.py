@@ -88,7 +88,8 @@ class TEMPOForecaster(BaseForecaster):
         # CI and test flags
         # -----------------
         "tests:vm": True,
-        "tests:libs": ["sktime.forecasting.tests.test_tempo"],
+        "tests:libs": ["sktime.libs.tempo"],
+        "tests:specific": ["sktime.forecasting.tests.test_tempo"],
         "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
