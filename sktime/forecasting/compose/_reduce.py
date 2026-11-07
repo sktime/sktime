@@ -28,12 +28,14 @@ __all__ = [
     "YfromX",
 ]
 
+from copy import copy
+
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
 from sklearn.multioutput import MultiOutputRegressor
 
-from sktime.datatypes._utilities import get_time_index
+from sktime.datatypes._utilities import get_cutoff, get_time_index
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
 from sktime.forecasting.base._fh import _index_range
 from sktime.forecasting.base._sktime import _BaseWindowForecaster
@@ -892,6 +894,34 @@ class _MultioutputReducer(_Reducer):
 class _RecursiveReducer(_Reducer):
     strategy = "recursive"
 
+    def _predict_by_cutoff(self, fh, X, last_index):
+        """Forecast groups with a common cutoff using the pooled fitted regressor.
+
+        Relative horizons start after each group's last observation. Absolute
+        horizons retain their requested dates, with the recursive steps computed
+        from each group's cutoff. Only the prediction context is copied; the
+        regressor remains the one fitted on all instances.
+        """
+        cutoffs = pd.Series(
+            last_index.get_level_values(-1), index=last_index.droplevel(-1)
+        )
+        y_cutoffs = cutoffs.reindex(self._cur_y.index.droplevel(-1)).to_numpy()
+        if self._cur_X is not None:
+            X_cutoffs = cutoffs.reindex(self._cur_X.index.droplevel(-1)).to_numpy()
+            X_groups = self._cur_X.groupby(X_cutoffs, sort=False)
+        predictions = []
+        for cutoff, y_group in self._cur_y.groupby(y_cutoffs, sort=False):
+            forecaster = copy(self)
+            forecaster._cur_y = y_group
+            if self._cur_X is not None:
+                forecaster._cur_X = X_groups.get_group(cutoff)
+            forecaster._timepoints = get_time_index(forecaster._cur_y)
+            forecaster._cutoff = get_cutoff(forecaster._cur_y, return_index=True)
+            # The window feature transformers are refitted during prediction.
+            forecaster.transformers_ = clone(self.transformers_)
+            predictions.append(forecaster._predict_last_window(fh, X=X))
+        return pd.concat(predictions).sort_index()
+
     def _transform(self, y, X=None):
         # For the recursive strategy, the forecasting horizon for the sliding-window
         # transform is simply a one-step ahead horizon, regardless of the horizon
@@ -1031,6 +1061,13 @@ class _RecursiveReducer(_Reducer):
             raise ValueError(
                 "`X` must be passed to `predict` if `X` is given in `fit`."
             )
+
+        if self.pooling == "global" and isinstance(self._cur_y.index, pd.MultiIndex):
+            index = self._cur_y.index
+            instances = index.droplevel(-1)
+            last_index = index[~instances.duplicated(keep="last")]
+            if last_index.get_level_values(-1).nunique() > 1:
+                return self._predict_by_cutoff(fh, X, last_index)
 
         # Get last window of available data.
         # If we cannot generate a prediction from the available data, return nan.
@@ -1361,6 +1398,9 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
+        With global pooling on panel or hierarchical data, relative forecasting
+        horizons start after each instance's last observed time point. Absolute
+        forecasting horizons specify the same time points for every instance.
     """
 
     _tags = {
