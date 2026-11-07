@@ -47,14 +47,17 @@ class DummyRegressor(BaseRegressor):
 
     Examples
     --------
+    With the median strategy, every test series receives the median training target.
+
+    >>> import numpy as np
     >>> from sktime.regression.dummy import DummyRegressor
-    >>> from sktime.datasets import load_unit_test
-    >>> X_train, y_train = load_unit_test(split="train")
-    >>> X_test, y_test = load_unit_test(split="test")
-    >>> regressor = DummyRegressor(strategy="median") # doctest: +SKIP
-    >>> regressor.fit(X_train,y_train) # doctest: +SKIP
-    DummyRegressor(strategy='median')
-    >>> y_pred = regressor.predict(X_test) # doctest: +SKIP
+    >>> X_train = np.arange(12).reshape(3, 1, 4)
+    >>> y_train = np.array([1.0, 2.0, 9.0])
+    >>> X_test = np.arange(12, 20).reshape(2, 1, 4)
+    >>> regressor = DummyRegressor(strategy="median")
+    >>> _ = regressor.fit(X_train, y_train)
+    >>> regressor.predict(X_test).tolist()
+    [2.0, 2.0]
     """
 
     _tags = {
