@@ -31,3 +31,6 @@ def test_hausdorff():
     # closest locs are 1, 1, 5, 5, 5
     # absolute distance is max(0, 1, 0, 37, 38) = 38
     assert loss2 == 38
+
+    X.index = pd.RangeIndex(start=10, stop=28, step=3)
+    assert metric(y_true, y_pred, X) == 6
