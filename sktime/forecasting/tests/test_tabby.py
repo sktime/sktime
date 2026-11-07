@@ -13,20 +13,25 @@ pytestmark = pytest.mark.skipif(
     reason="run test only if torch and transformers are installed",
 )
 
+# Golden values generated with the raw upstream HF remote-code model, on CPU:
+#
+#   pip install sktime torch==2.15.0 transformers==5.22.1 einops numpy pandas
+#
+#   import numpy as np
+#   import torch
+#   from sktime.datasets import load_airline
+#   from transformers import AutoModel
+#
+#   revision = "1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01"
+#   model = AutoModel.from_pretrained(
+#       "paris-noah/Tabby", revision=revision, trust_remote_code=True
+#   ).eval()
+#   history = load_airline().to_numpy(dtype=np.float32)[None, :]
+#   with torch.no_grad():
+#       output = model.predict(history, prediction_length=3).cpu().numpy()
+#   print(output[0, 49, :])  # median, _GOLDEN_POINT
+#   print(output[0, [9, 49, 89], :].T)  # alpha 0.1, 0.5, 0.9, _GOLDEN_QUANTILES
 _TABBY_REVISION = "1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01"
-# Golden values generated with the raw upstream HF remote-code model:
-# transformers==5.22.1, torch==2.15.0
-# pip install sktime torch transformers numpy pandas
-# raw_tabby_golden.py:
-# import numpy as np
-# from sktime.datasets import load_airline
-# from transformers import AutoModel
-# revision = "1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01"
-# model = AutoModel.from_pretrained("paris-noah/Tabby", revision=revision).eval()
-# history = load_airline().to_numpy(dtype=np.float32)[None, :]
-# output = model.predict(history, prediction_length=3)
-# print(output[0, 49, :])
-# print(output[0, [9, 49, 89], :].T)
 _GOLDEN_POINT = np.array([448.55990601, 442.19024658, 494.63415527])
 _GOLDEN_QUANTILES = np.array(
     [
