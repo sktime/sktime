@@ -312,12 +312,12 @@ class TimeH2OForecaster(BaseForecaster):
             values.reshape(len(index), -1), index=index, columns=columns
         )
 
-    def _predict_proba(self, marginal=True, **kwargs):
+    def _predict_proba(self, fh, X, marginal=True):
         """Represent native quantiles with point-mass tails outside the grid."""
         from skpro.distributions import HistogramQPD
 
-        levels = [round(i / 10, 1) for i in range(1, 10)]
-        output, positions, index = self._run_forecast(alpha=levels, **kwargs)
+        levels = list(self.model_.config.quantiles)
+        output, positions, index = self._run_forecast(fh=fh, X=X, alpha=levels)
         values = np.asarray(output.quantiles)[:, positions, :]
         quantile_index = pd.MultiIndex.from_product([levels, index])
         quantiles = pd.DataFrame(
