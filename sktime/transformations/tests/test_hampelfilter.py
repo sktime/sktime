@@ -30,6 +30,34 @@ def test_hampel_filter_series():
     not run_test_for_class(HampelFilter),
     reason="skip test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.parametrize("window_length", [4, 5])
+@pytest.mark.parametrize("outlier_position", [0, -2, -1])
+@pytest.mark.parametrize("return_bool", [False, True])
+def test_hampel_filter_single_window(window_length, outlier_position, return_bool):
+    """Check every part of a series that fills exactly one window."""
+    data = pd.Series(
+        np.zeros(window_length),
+        index=pd.date_range("2020-01-01", periods=window_length),
+        name="signal",
+    )
+    data.iloc[outlier_position] = 100.0
+    original = data.copy()
+    expected = data.replace(100.0, np.nan)
+    if return_bool:
+        expected = expected.isna()
+
+    result = HampelFilter(
+        window_length=window_length, return_bool=return_bool
+    ).fit_transform(data)
+
+    pd.testing.assert_series_equal(data, original)
+    pd.testing.assert_series_equal(result, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(HampelFilter),
+    reason="skip test only if softdeps are present and incrementally (if requested)",
+)
 def test_hampel_filter_panel():
     """Verify that HampelFilter works as expected on panel data."""
     # Create a sample time series with outliers
