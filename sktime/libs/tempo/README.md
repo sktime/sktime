@@ -31,6 +31,18 @@ Only the minimal code required for inference:
 
 Training-specific code (layers, data providers, metrics) is not included as it is not needed for the sktime forecaster wrapper.
 
+## Changes From Upstream
+
+Upstream inference has two problems, fixed here behind options that default to the
+upstream behaviour. `TEMPOForecaster(upstream_compatible=False)` enables both.
+
+- `TEMPO.predict(..., restore_scale=True)`: `predict` and `forward` both normalize the
+  input, and the statistics of the original series are lost, so upstream forecasts are
+  not on the input scale. This option keeps them and inverts the normalization.
+- `TEMPO.load_pretrained_model(..., match_checkpoint_layers=True)`: `config.json` sets
+  6 GPT-2 layers but the checkpoints hold 3, so upstream keeps layers 3-5 randomly
+  initialized. This option takes the number of layers from the checkpoint.
+
 ## License
 
 This vendored implementation is distributed under the same MIT License as the original TEMPO project. See the license text in `__init__.py` for details.
