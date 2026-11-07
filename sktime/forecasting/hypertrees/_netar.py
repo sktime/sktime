@@ -148,8 +148,7 @@ class HyperTreeNetARForecaster(BaseForecaster):
         -------
         self : reference to self
         """
-        self._cur_y = y
-        self._cur_X = X
+        self._y_name = y.name
         from hypertrees.models.HyperTreeNetAR import HyperTreeNetAR
 
         self._series_id = 0
@@ -244,7 +243,7 @@ class HyperTreeNetARForecaster(BaseForecaster):
 
         values = forecast["fcst"].to_numpy()[rel - 1]
         index = fh.to_absolute(self.cutoff).to_pandas()
-        return pd.Series(values, index=index, name=self._cur_y.name)
+        return pd.Series(values, index=index, name=self._y_name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
