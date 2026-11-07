@@ -81,7 +81,10 @@ DIST_PARAMS = {
     "wddtw": BASIC_BOUNDING_PARAMS
     + [{"compute_derivative": _test_derivative}]
     + [{"g": 0.5}],
-    "twe": BASIC_BOUNDING_PARAMS + [{"lmbda": 0.5}, {"nu": 0.9}, {"p": 4}],
+    # TWE 的内部坐标包含补零原点, 自定义边界需覆盖该行和该列。
+    "twe": BASIC_BOUNDING_PARAMS[:2]
+    + [{"bounding_matrix": np.zeros((11, 11))}]
+    + [{"lmbda": 0.5}, {"nu": 0.9}, {"p": 4}],
 }
 
 
