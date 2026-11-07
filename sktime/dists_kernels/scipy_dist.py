@@ -26,7 +26,7 @@ class ScipyDist(BasePairwiseTransformer):
         if string, one of: ``braycurtis``, ``canberra``, ``chebyshev``, ``cityblock``,
             ``correlation``, ``cosine``, ``dice``, ``euclidean``, ``hamming``,
             ``jaccard``, ``jensenshannon``,
-            ``kulsinski`` (< scipy 1.11) or ``kulczynski1`` (from scipy 1.11),
+            ``kulsinski`` (< scipy 1.11) or ``kulczynski1`` (scipy >=1.11, <1.17),
             ``mahalanobis``, ``matching``, ``minkowski``,
             ``rogerstanimoto``, ``russellrao``, ``seuclidean``, ``sokalmichener``,
             ``sokalsneath``, ``sqeuclidean``, ``yule``

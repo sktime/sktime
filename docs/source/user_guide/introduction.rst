@@ -36,7 +36,7 @@ can simply write:
 
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
-    fh = np.arange(1, len(y_test) + 1)  # forecasting horizon
+    fh = len(y_test)  # forecasting horizon
     regressor = RandomForestRegressor()
     forecaster = make_reduction(
     	regressor,

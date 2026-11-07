@@ -497,7 +497,7 @@ class _TreeNode:
                 X, intervals[interval], dims[interval], atts[att], c22
             )
             value = value.round(8)
-            value = np.nan_to_num(value, False, posinf=np.nan, neginf=np.nan)
+            value = np.nan_to_num(value, posinf=np.nan, neginf=np.nan)
 
             if value <= self.best_threshold:
                 return self.children[0].predict_proba_cif(
@@ -559,7 +559,7 @@ class _TreeNode:
                 X[rep], intervals[interval], dims[interval], atts[att], c22
             )
             value = value.round(8)
-            value = np.nan_to_num(value, False, posinf=np.nan, neginf=np.nan)
+            value = np.nan_to_num(value, posinf=np.nan, neginf=np.nan)
 
             if value <= self.best_threshold:
                 return self.children[0].predict_proba_drcif(

@@ -2,8 +2,6 @@
 
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 
-import numpy as np
-
 
 def prep_skl_df(df, copy_df=False):
     """Make df compatible with sklearn input expectations.
@@ -24,7 +22,7 @@ def prep_skl_df(df, copy_df=False):
     cols = df.columns
     str_cols = cols.astype(str)
 
-    if not np.all(str_cols == cols):
+    if not all(isinstance(col, str) for col in cols):
         if copy_df:
             df = df.copy()
         df.columns = str_cols

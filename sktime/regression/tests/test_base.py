@@ -7,6 +7,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.regression.base import BaseRegressor
 from sktime.regression.deep_learning.base import BaseDeepRegressor
@@ -17,7 +18,6 @@ from sktime.utils._testing.panel import (
     _make_regression_y,
     make_regression_problem,
 )
-from sktime.utils.dependencies import _check_soft_dependencies
 
 
 class _DummyRegressor(BaseRegressor):

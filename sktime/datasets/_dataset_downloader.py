@@ -14,8 +14,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlretrieve
 
 from skbase.base import BaseObject
-
-from sktime.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _check_soft_dependencies
 
 
 class DatasetDownloadStrategy(BaseObject):

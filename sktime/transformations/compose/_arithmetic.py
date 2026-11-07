@@ -50,7 +50,7 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
     See Also
     --------
     FeatureUnion : Concatenates outputs of multiple transformers.
-    sktime.transformations.series.exponent.ExponentTransformer
+    sktime.transformations.exponent.ExponentTransformer
 
     References
     ----------
@@ -60,7 +60,7 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
     --------
     >>> import numpy as np
     >>> from sktime.utils._testing.series import _make_series
-    >>> from sktime.transformations.series.exponent import ExponentTransformer
+    >>> from sktime.transformations.exponent import ExponentTransformer
     >>> from sktime.transformations.compose import CombineTransformers
     >>> transformers = [
     ...     ("t1", ExponentTransformer(power=2)),
@@ -177,8 +177,8 @@ class CombineTransformers(_HeterogenousMetaEstimator, BaseTransformer):
                     operation.
         """
         from sktime.transformations.compose import Id
-        from sktime.transformations.series.exponent import ExponentTransformer
-        from sktime.transformations.series.func_transform import FunctionTransformer
+        from sktime.transformations.exponent import ExponentTransformer
+        from sktime.transformations.func_transform import FunctionTransformer
 
         params1 = {
             "transformers": [

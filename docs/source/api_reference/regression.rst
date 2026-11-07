@@ -62,20 +62,29 @@ Deep learning
     :template: class.rst
 
     cnn.CNNRegressor
+    cnn.CNNRegressorTorch
     cntc.CNTCRegressor
+    cntc.CNTCRegressorTorch
+    convtimenet.ConvTimeNetRegressor
+    convtran.ConvTranRegressorTorch
     fcn.FCNRegressor
+    fcn.FCNRegressorTorch
     inceptiontime.InceptionTimeRegressor
     inceptiontime.InceptionTimeRegressorTorch
     lstmfcn.LSTMFCNRegressor
     lstmfcn.LSTMFCNRegressorTorch
     macnn.MACNNRegressor
+    macnn.MACNNRegressorTorch
     mcdcnn.MCDCNNRegressor
     mcdcnn.MCDCNNRegressorTorch
     mlp.MLPRegressor
+    mlp.MLPRegressorTorch
     resnet.ResNetRegressor
+    resnet.ResNetRegressorTorch
     rnn.SimpleRNNRegressor
     rnn.SimpleRNNRegressorTorch
     tapnet.TapNetRegressor
+    tapnet.TapNetRegressorTorch
 
 Distance-based
 --------------

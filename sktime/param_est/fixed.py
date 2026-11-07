@@ -22,6 +22,16 @@ class FixedParams(BaseParamFitter):
     ----------
     param_dict : dict
         fixed parameter values written to ``self``
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> from sktime.param_est.fixed import FixedParams
+    >>> X = pd.Series([1, 2, 3])
+    >>> estimator = FixedParams({"alpha": 0.5})
+    >>> _ = estimator.fit(X)
+    >>> estimator.get_fitted_params()
+    {'alpha': 0.5}
     """
 
     _tags = {

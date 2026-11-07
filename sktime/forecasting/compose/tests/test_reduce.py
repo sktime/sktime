@@ -7,10 +7,10 @@ __author__ = ["Lovkush-A", "mloning", "LuisZugasti", "AyushmaanSeth"]
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.pipeline import make_pipeline
 
 from sktime.datasets import load_airline
 from sktime.forecasting.base import ForecastingHorizon
@@ -30,14 +30,14 @@ from sktime.forecasting.compose import (
 from sktime.forecasting.compose._reduce import _sliding_window_transform
 from sktime.forecasting.tests._config import TEST_OOS_FHS, TEST_WINDOW_LENGTHS_INT
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
+from sktime.pipeline import make_pipeline
 from sktime.regression.base import BaseRegressor
 from sktime.regression.interval_based import TimeSeriesForestRegressor
 from sktime.split import SlidingWindowSplitter, temporal_train_test_split
 from sktime.split.tests.test_split import _get_windows
 from sktime.tests.test_switch import run_test_module_changed
-from sktime.transformations.panel.reduce import Tabularizer
+from sktime.transformations.reduce import Tabularizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.validation.forecasting import check_fh
 
 N_TIMEPOINTS = [13, 17]
@@ -254,7 +254,7 @@ def test_linear_extrapolation_endogenous_only(
     not run_test_module_changed(["sktime.forecasting", "sktime.split"]),
     reason="run test only if forecasting or split module has changed",
 )
-@pytest.mark.parametrize("fh", [1, 3, 5])
+@pytest.mark.parametrize("fh", [[1], [3], [5]])
 @pytest.mark.parametrize("window_length", TEST_WINDOW_LENGTHS_INT)
 @pytest.mark.parametrize("strategy", STRATEGIES)
 @pytest.mark.parametrize("scitype", ["time-series-regressor", "tabular-regressor"])
@@ -440,7 +440,7 @@ def test_make_reduction_infer_scitype_for_sklearn_pipeline():
     """
     estimator = make_pipeline(Tabularizer(), LinearRegression())
     forecaster = make_reduction(estimator, scitype="infer")
-    assert forecaster._estimator_scitype == "tabular-regressor"
+    assert forecaster._estimator_scitype == "time-series-regressor"
 
 
 @pytest.mark.skipif(

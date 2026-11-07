@@ -11,14 +11,13 @@ __author__ = [
 __all__ = ["TimeSeriesForestRegressor"]
 
 import numpy as np
-from sklearn.ensemble._forest import ForestRegressor
 from sklearn.tree import DecisionTreeRegressor
 
 from sktime.base._panel.forest._tsf import BaseTimeSeriesForest, _transform
 from sktime.regression.base import BaseRegressor
 
 
-class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegressor):
+class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
     """Time series forest regressor.
 
     A time series forest is an ensemble of decision trees built on random intervals.
@@ -109,9 +108,6 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
         n_jobs=1,
         random_state=None,
     ):
-        self.criterion = "gini"  # needed for BaseForest in sklearn > 1.4.0,
-        # because sklearn tag logic looks at this attribute
-
         super().__init__(
             min_interval=min_interval,
             n_estimators=n_estimators,
@@ -119,21 +115,6 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, ForestRegressor, BaseRegre
             random_state=random_state,
         )
         BaseRegressor.__init__(self)
-
-    def fit(self, X, y):
-        """Override sklearn forest fit with BaseRegressor fit."""
-        return BaseRegressor.fit(self, X, y)
-
-    def _fit(self, X, y):
-        """Wrap BaseForest._fit.
-
-        This is a temporary measure prior to the BaseRegressor refactor.
-        """
-        return BaseTimeSeriesForest._fit(self, X, y)
-
-    def predict(self, X):
-        """Override sklearn forest predict with BaseRegressor predict."""
-        return BaseRegressor.predict(self, X)
 
     def _predict(self, X):
         """Predict.

@@ -6,15 +6,18 @@ Defining methods:
     fitting         - fit(self, X, y)
     predicting      - predict(self, X)
                     - predict_proba(self, X)
+    pretraining     - pretrain(self, X, y=None)
 
 Inherited inspection methods:
-    hyper-parameter inspection  - get_params()
-    fitted parameter inspection - get_fitted_params()
+    hyper-parameter inspection      - get_params()
+    fitted parameter inspection     - get_fitted_params()
+    pretrained parameter inspection - get_pretrained_params()
 
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - is_fitted (property)
     fitted state inspection - check_is_fitted()
+    estimator state         - state, one of "new", "pretrained", "fitted"
 """
 
 __all__ = [
@@ -25,10 +28,10 @@ __author__ = ["mloning", "fkiraly", "TonyBagnall", "MatthewMiddlehurst", "ksharm
 import time
 
 import numpy as np
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BasePanelMixin
-from sktime.datatypes import VectorizedDF, check_is_scitype
-from sktime.utils.dependencies import _check_estimator_deps
+from sktime.datatypes import check_is_scitype
 from sktime.utils.sklearn import is_sklearn_transformer
 
 
@@ -64,6 +67,7 @@ class BaseClassifier(BasePanelMixin):
         "capability:categorical_in_X": True,
         "capability:predict_proba": False,
         "capability:class_weight": False,  # can the classifier use class weights?
+        "capability:pretrain": False,  # can the classifier learn in pretrain?
         "python_version": None,  # PEP 440 python version specifier to limit versions
         "requires_cython": False,  # whether C compiler is required in env, e.g., gcc
         "authors": "sktime developers",  # author(s) of the object
@@ -102,8 +106,26 @@ class BaseClassifier(BasePanelMixin):
         self._is_vectorized = False
         self._converter_store_y = {}
 
+        self._state = "new"
+
         super().__init__()
-        _check_estimator_deps(self)
+
+        # this block has a double purpose:
+        # - emit a warning if dependencies are not met, but allow instantiation
+        # - if dependencies are met, call __post_init__ used by inheriting classes
+        if _check_estimator_deps(self, severity="warning"):
+            self.__post_init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+        """
+        pass
 
     def __rmul__(self, other):
         """Magic * method, return concatenated ClassifierPipeline, transformers on left.
@@ -122,9 +144,9 @@ class BaseClassifier(BasePanelMixin):
         (last).
         """
         from sktime.classification.compose import ClassifierPipeline
+        from sktime.transformations.adapt import TabularToSeriesAdaptor
         from sktime.transformations.base import BaseTransformer
         from sktime.transformations.compose import TransformerPipeline
-        from sktime.transformations.series.adapt import TabularToSeriesAdaptor
 
         # behaviour is implemented only if other inherits from BaseTransformer
         #  in that case, distinctions arise from whether self or other is a pipeline
@@ -175,6 +197,7 @@ class BaseClassifier(BasePanelMixin):
         Writes to self:
             Sets self.is_fitted to True.
             Sets fitted model attributes ending in "_".
+            Pretrained model attributes, set by ``pretrain``, are retained.
 
         Parameters
         ----------
@@ -209,20 +232,26 @@ class BaseClassifier(BasePanelMixin):
         -------
         self : Reference to self.
         """
-        # reset estimator at the start of fit
-        self.reset()
+        _check_estimator_deps(self)
+
+        # skip reset on the first fit after pretrain; on refit, discard
+        # task-specific fitted state while retaining pretrained state
+        if not self._state == "pretrained":
+            self._reset_at("pretrained")
 
         # fit timer start
         start = int(round(time.time() * 1000))
 
         # check and convert y for multioutput vectorization
-        y, y_metadata, y_inner_mtype = self._check_y(y, return_to_mtype=True)
+        y_inner, y_metadata, y_inner_mtype, y_schema = self._check_y(
+            y, return_to_mtype=True
+        )
         self._y_metadata = y_metadata
         self._y_inner_mtype = y_inner_mtype
-        self._is_vectorized = isinstance(y, VectorizedDF)
+        self._is_vectorized = y_schema is not None
 
         if self._is_vectorized:
-            self._vectorize("fit", X=X, y=y)
+            self._vectorize("fit", X=X, y=(y_inner, y_schema))
             # fit timer end
             self.fit_time_ = int(round(time.time() * 1000)) - start
             # this should happen last: fitted state is set to True
@@ -233,7 +262,7 @@ class BaseClassifier(BasePanelMixin):
 
         # convenience conversions to allow user flexibility:
         # if X is 2D array, convert to 3D, if y is Series, convert to numpy
-        X, y = self._internal_convert(X, y)
+        X, y = self._internal_convert(X, y_inner)
         X_metadata = self._check_input(
             X, y, return_metadata=self.METADATA_REQ_IN_CHECKS
         )
@@ -361,8 +390,6 @@ class BaseClassifier(BasePanelMixin):
         # enter vectorized mode if needed
         if self._is_vectorized:
             return self._vectorize("predict_proba", X=X)
-
-        self.check_is_fitted()
 
         # boilerplate input checks for predict-like methods
         X = self._check_convert_X_for_predict(X)

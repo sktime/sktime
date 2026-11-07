@@ -21,7 +21,6 @@ from queue import PriorityQueue
 import numpy as np
 import pandas as pd
 
-from sktime.transformations.series.clasp import ClaSPTransformer
 from sktime.utils.validation.series import check_series
 
 
@@ -250,7 +249,7 @@ class ClaSPSegmentation(BaseDetector):
         X : pd.DataFrame
             Training data to fit model to (time series).
         Y : pd.Series, optional
-            Ground truth annotations for training if annotator is supervised.
+            Ground truth annotations for training if detector is supervised.
 
         Returns
         -------
@@ -327,6 +326,8 @@ class ClaSPSegmentation(BaseDetector):
 
         if isinstance(X, pd.Series):
             X = X.to_numpy()
+
+        from sktime.transformations.clasp import ClaSPTransformer
 
         clasp_transformer = ClaSPTransformer(
             window_length=self.period_length, exclusion_radius=self.exclusion_radius

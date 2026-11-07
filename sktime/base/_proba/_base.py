@@ -9,9 +9,9 @@ from warnings import warn
 
 import numpy as np
 import pandas as pd
+from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseObject
-from sktime.utils.dependencies import _check_estimator_deps
 from sktime.utils.pandas import df_map
 
 

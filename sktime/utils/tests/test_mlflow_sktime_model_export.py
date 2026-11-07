@@ -10,13 +10,13 @@ from unittest import mock
 import numpy as np
 import pandas as pd
 import pytest
+from skbase.utils.dependencies import _check_soft_dependencies
 
 from sktime.datasets import load_airline, load_arrow_head, load_longley
 from sktime.forecasting.arima import AutoARIMA
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.split import temporal_train_test_split
 from sktime.tests.test_switch import run_test_for_class
-from sktime.utils.dependencies import _check_soft_dependencies
 from sktime.utils.multiindex import flatten_multiindex
 
 if _check_soft_dependencies("mlflow", "boto3", "moto", "botocore", severity="none"):
@@ -79,10 +79,6 @@ def mock_s3_bucket():
         yield bucket_name
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("mlflow", severity="none"),
-    reason="skip test if required soft dependency not available",
-)
 @pytest.fixture
 def sktime_custom_env(tmp_path):
     """Create a conda environment and returns path to conda environment yml file."""
@@ -115,10 +111,6 @@ def test_data_arrow_head():
     return y_train.astype(int), y_test.astype(int), X_train, X_test
 
 
-@pytest.mark.skipif(
-    not run_test_for_class(AutoARIMA),
-    reason="Skip AutoARIMA to test mlflow functionalities since soft deps are missing.",
-)
 @pytest.fixture(scope="module")
 def auto_arima_model(test_data_airline):
     """Create instance of fitted auto arima model."""
@@ -127,10 +119,6 @@ def auto_arima_model(test_data_airline):
     )
 
 
-@pytest.mark.skipif(
-    not _check_soft_dependencies("tensorflow", severity="none"),
-    reason="skip test if required soft dependency is not available.",
-)
 @pytest.fixture(scope="module")
 def cnn_model(test_data_arrow_head):
     """Create an instance of fitted ResNet Classifier model."""

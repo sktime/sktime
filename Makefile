@@ -20,8 +20,8 @@ help:
 release: ## Make a release
 	python3 $(BUILD_TOOLS)/make_release.py
 
-install: ## Install for the current user using the default python command
-	python3 setup.py build_ext --inplace && python setup.py install --user
+install: ## Install editable into the active Python environment of the user
+	python3 -m pip install -e . --user
 
 test: ## Run unit tests
 	-rm -rf ${TEST_DIR}

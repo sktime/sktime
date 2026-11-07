@@ -7,6 +7,7 @@ from sktime.benchmarking._storage_handlers import (
     JSONStorageHandler,
     # ParquetStorageHandler,
 )
+from sktime.benchmarking.benchmarks import BenchmarkingResults
 
 RESULT_OBJECT_LISTS = [
     [
@@ -126,3 +127,38 @@ def test_store_load_results_empty_training(tmp_path, storage_handler, file_exten
     assert results[0].folds[0].ground_truth is None
     assert results[0].folds[0].predictions is None
     assert results[0].folds[0].train_data is None
+
+
+@pytest.mark.parametrize(
+    "storage_handler,file_extension",
+    [
+        (JSONStorageHandler, ".json"),
+        (CSVStorageHandler, ".csv"),
+    ],
+)
+@pytest.mark.parametrize("sample_results", RESULT_OBJECT_LISTS)
+def test_benchmarking_results_to_df(
+    tmp_path, storage_handler, file_extension, sample_results
+):
+    path = tmp_path / f"results{file_extension}"
+    storage_handler(path).save(sample_results)
+
+    loaded_df = BenchmarkingResults(path=str(path)).to_df()
+    expected = BenchmarkingResults.__new__(BenchmarkingResults)
+    expected.results = sample_results
+    expected_df = expected.to_df()
+
+    pd.testing.assert_frame_equal(loaded_df, expected_df)
+
+
+def test_benchmarking_results_to_df_missing_file(tmp_path):
+    path = tmp_path / "results.csv"
+    loaded_df = BenchmarkingResults(path=str(path)).to_df()
+    assert loaded_df.empty
+
+
+def test_benchmarking_results_unsupported_extension(tmp_path):
+    path = tmp_path / "results.txt"
+    path.touch()
+    with pytest.raises(ValueError, match="No storage handler found"):
+        BenchmarkingResults(path=str(path))

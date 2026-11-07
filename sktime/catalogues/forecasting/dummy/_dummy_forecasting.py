@@ -4,15 +4,29 @@ from sktime.catalogues.base import BaseCatalogue
 
 
 class DummyForecastingCatalogue(BaseCatalogue):
-    """Dummy catalogue of datasets, forecasters, metrics, and cv."""
+    """Dummy catalogue of datasets, forecasters, metrics, and cv.
+
+    Examples
+    --------
+    >>> from sktime.catalogues import DummyForecastingCatalogue
+    >>> catalogue = DummyForecastingCatalogue()
+    >>> len(catalogue)
+    5
+    >>> "Airline" in catalogue
+    True
+    >>> catalogue.get("dataset")
+    ['Airline']
+    >>> catalogue.get("dataset", as_object=True)[0].__name__
+    'Airline'
+    """
 
     _tags = {
         "authors": "jgyasu",
         "maintainers": "jgyasu",
         "object_type": "catalogue",
         "catalogue_type": "mixed",
-        "n_items": 6,
-        "n_datasets": 2,
+        "n_items": 5,
+        "n_datasets": 1,
         "n_forecasters": 1,
         "n_metrics": 2,
         "n_cv_splitters": 1,
@@ -21,13 +35,10 @@ class DummyForecastingCatalogue(BaseCatalogue):
     def _get(self):
         """Return a dict of items (datasets, forecasters, metrics)."""
         datasets = [
-            "cif_2016_dataset",
-            "hospital_dataset",
+            "Airline",
         ]
 
-        forecasters = [
-            "NaiveForecaster()",
-        ]
+        forecasters = [{"NaiveForecaster": "NaiveForecaster(strategy='last')"}]
 
         metrics = ["MeanAbsoluteError()", "MeanAbsolutePercentageError()"]
 
@@ -36,7 +47,7 @@ class DummyForecastingCatalogue(BaseCatalogue):
         ]
 
         all_objects = {
-            "dataset": [f"ForecastingData('{dataset}')" for dataset in datasets],
+            "dataset": datasets,
             "forecaster": forecasters,
             "metric": metrics,
             "cv_splitter": cv_splitters,

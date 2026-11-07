@@ -12,8 +12,8 @@ import numpy as np
 from sktime.base._base import _clone_estimator
 from sktime.classification.base import BaseClassifier
 from sktime.classification.sklearn import RotationForest
-from sktime.transformations.panel.catch22 import Catch22
-from sktime.transformations.panel.random_intervals import RandomIntervals
+from sktime.transformations.catch22 import Catch22
+from sktime.transformations.random_intervals import RandomIntervals
 
 
 class RandomIntervalClassifier(BaseClassifier):
@@ -213,7 +213,7 @@ class RandomIntervalClassifier(BaseClassifier):
         """
         from sklearn.ensemble import RandomForestClassifier
 
-        from sktime.transformations.series.summarize import SummaryTransformer
+        from sktime.transformations.summarize import SummaryTransformer
 
         if parameter_set == "results_comparison":
             return {
@@ -225,10 +225,24 @@ class RandomIntervalClassifier(BaseClassifier):
                 ),
             }
         else:
-            return {
+            from sklearn.tree import DecisionTreeClassifier
+
+            params1 = {
                 "n_intervals": 2,
                 "estimator": RandomForestClassifier(n_estimators=2),
                 "interval_transformers": SummaryTransformer(
                     summary_function=("mean", "min", "max"),
                 ),
             }
+            # second set: a different interval count, a single-tree estimator
+            # rather than an ensemble, a different summary feature set, and a
+            # fixed random_state for the interval extraction
+            params2 = {
+                "n_intervals": 3,
+                "estimator": DecisionTreeClassifier(random_state=0),
+                "interval_transformers": SummaryTransformer(
+                    summary_function=("median", "std"),
+                ),
+                "random_state": 0,
+            }
+            return [params1, params2]
