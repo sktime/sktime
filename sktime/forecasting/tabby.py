@@ -22,7 +22,8 @@ class TabbyForecaster(BaseForecaster):
 
     .. note::
 
-        The Tabby weights and vendored code are licensed under CC BY-NC 4.0
+        The Tabby weights and vendored code in sktime.libs.tabby
+        are licensed under CC BY-NC 4.0
         (non-commercial use only), copied from
         https://huggingface.co/paris-noah/Tabby at revision
         ``1b2381d7f1b0982aa1d5f09ce01b99eb4ee57e01``. The weights are not
@@ -121,10 +122,11 @@ class TabbyForecaster(BaseForecaster):
         """Raise unless the user has accepted the Tabby license."""
         if not self.license_accepted:
             raise ValueError(
-                "Tabby weights and code are licensed under CC BY-NC 4.0 "
+                "Tabby weights and vendored code in sktime.libs.tabby "
+                "are licensed under CC BY-NC 4.0 "
                 "(non-commercial use only). You must read and accept these "
-                "terms to use the forecaster. The license and model card are "
-                "at https://huggingface.co/paris-noah/Tabby. To confirm "
+                "terms to use the forecaster. The license is printed "
+                "at sktime.libs.tabby.LICENSE. To confirm "
                 "acceptance, set `license_accepted=True`."
             )
 
