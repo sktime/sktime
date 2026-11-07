@@ -337,6 +337,11 @@ class TimeH2OForecaster(BaseForecaster):
             {
                 "model_path": None,
                 "device": "cpu",
-                "forecast_kwargs": {"context_length": 32},
+                "batch_size": 8,
+                "forecast_kwargs": {
+                    "context_length": 16,
+                    "flip_equivariant": False,
+                    "clip_nonnegative": True,
+                },
             },
         ]
