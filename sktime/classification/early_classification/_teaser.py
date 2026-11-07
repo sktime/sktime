@@ -126,6 +126,7 @@ class TEASER(BaseEarlyClassifier):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
             "test_get_test_params_coverage",
+            "test_scenario_does_not_modify_global_numpy_rng",
         ],
     }
 

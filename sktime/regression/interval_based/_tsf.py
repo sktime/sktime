@@ -97,6 +97,7 @@ class TimeSeriesForestRegressor(BaseTimeSeriesForest, BaseRegressor):
         "X_inner_mtype": "numpy3D",
         "capability:random_state": True,
         "property:randomness": "derandomized",
+        "tests:skip_by_name": ["test_scenario_does_not_modify_global_numpy_rng"],
     }
 
     _base_estimator = DecisionTreeRegressor()

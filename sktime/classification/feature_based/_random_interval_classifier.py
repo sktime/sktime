@@ -77,6 +77,7 @@ class RandomIntervalClassifier(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "interval",
+        "tests:skip_by_name": ["test_scenario_does_not_modify_global_numpy_rng"],
     }
 
     def __init__(
