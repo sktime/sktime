@@ -70,6 +70,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._check import mtype as infer_mtype
+from sktime.datatypes._convert_utils._chain import get_converter_chain
 from sktime.datatypes._hierarchical import convert_dict_Hierarchical
 from sktime.datatypes._panel import convert_dict_Panel
 from sktime.datatypes._proba import convert_dict_Proba
@@ -127,8 +128,14 @@ def convert(
 
     Raises
     ------
-    KeyError if conversion is not implemented
+    NotImplementedError if no conversion, and no chain of conversions, is defined
     TypeError or ValueError if inputs do not match specification
+
+    Notes
+    -----
+    If no conversion from ``from_type`` to ``to_type`` is defined directly,
+    defined conversions are chained, via a shortest path in the graph of
+    defined conversions, see ``datatypes._convert_utils._chain``.
     """
     if obj is None:
         return None
@@ -164,7 +171,13 @@ def convert(
 
     key = (from_type, to_type, as_scitype)
 
-    if key not in convert_dict.keys():
+    if key in convert_dict.keys():
+        converter = convert_dict[key]
+    else:
+        # if no conversion is defined directly, chain defined conversions
+        converter = get_converter_chain(from_type, to_type, as_scitype, convert_dict)
+
+    if converter is None:
         raise NotImplementedError(
             "no conversion defined from type " + str(from_type) + " to " + str(to_type)
         )
@@ -183,7 +196,7 @@ def convert(
             "bug: unreachable condition error, store_behaviour has unexpected value"
         )
 
-    converted_obj = convert_dict[key](obj, store=store)
+    converted_obj = converter(obj, store=store)
 
     if return_to_mtype:
         return converted_obj, to_type
