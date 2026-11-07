@@ -5,8 +5,10 @@ decoder tokens are forecast queries for the horizon patches. All masks are boole
 True meaning "may attend".
 """
 
-import torch
-from torch import Tensor
+from skbase.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+Tensor = _safe_import("torch.Tensor")
 
 
 def compute_enc_key_validity(obs_per_patch: Tensor, attend_missing: bool) -> Tensor:

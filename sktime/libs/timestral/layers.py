@@ -8,9 +8,12 @@ attention runs per patch over the rows of the same series.
 
 from dataclasses import dataclass
 
-import torch
-import torch.nn.functional as F
-from torch import Tensor, nn
+from skbase.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+F = _safe_import("torch.nn.functional")
+Tensor = _safe_import("torch.Tensor")
+nn = _safe_import("torch.nn")
 
 from sktime.libs.timestral.config import LAYER_KIND_AXES
 

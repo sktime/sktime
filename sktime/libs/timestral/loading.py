@@ -3,10 +3,14 @@ disk or in a Hugging Face Hub repo."""
 
 from pathlib import Path
 
-import torch
-from huggingface_hub import snapshot_download
-from huggingface_hub.utils import GatedRepoError, HFValidationError, RepositoryNotFoundError
-from safetensors.torch import load_file
+from skbase.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+snapshot_download = _safe_import("huggingface_hub.snapshot_download")
+GatedRepoError = _safe_import("huggingface_hub.utils.GatedRepoError")
+HFValidationError = _safe_import("huggingface_hub.utils.HFValidationError")
+RepositoryNotFoundError = _safe_import("huggingface_hub.utils.RepositoryNotFoundError")
+load_file = _safe_import("safetensors.torch.load_file")
 
 from sktime.libs.timestral.config import TimestralConfig
 from sktime.libs.timestral.model import TimestralModel

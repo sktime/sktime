@@ -51,6 +51,15 @@ class TimestralForecaster(BaseForecaster):
     clip_nonnegative : bool, default=True
         Whether to clamp forecasts to 0 for series with strictly non-negative context.
 
+    Notes
+    -----
+    Pretrained Timestral weights are released by Mistral AI under the Mistral
+    Modified MIT license. Use of the weights is free for academic and commercial
+    purposes, except that entities with global consolidated monthly revenue
+    exceeding $20M must obtain a commercial license from Mistral AI.
+    Call ``TimestralForecaster.print_license()`` or consult upstream repository
+    licenses for full terms.
+
     References
     ----------
     .. [1] https://github.com/mistralai/timestral
@@ -216,18 +225,22 @@ class TimestralForecaster(BaseForecaster):
 
         return num_past, num_known, cat_past, cat_known
 
-    def _build_future_exog(self, X, known_cols, horizon):
-        """Validate and return prediction-time known covariates."""
+    def _build_future_exog(self, X, known_cols, fh, horizon):
+        """Validate and return prediction-time known covariates aligned to horizon."""
         if not known_cols:
             return None
 
-        if len(X) < horizon:
-            raise ValueError(
-                f"Prediction-time `X` must cover at least {horizon} future steps "
-                f"ahead of the cutoff, but only {len(X)} rows were provided."
+        # Dense contiguous future index required by timestral (steps 1..horizon)
+        full_fh = ForecastingHorizon(range(1, horizon + 1), is_relative=True)
+        fh_abs = full_fh.to_absolute(self.cutoff).to_pandas()
+
+        missing_idx = fh_abs.difference(X.index)
+        if len(missing_idx) > 0:
+            raise KeyError(
+                f"Prediction-time `X` is missing required future time steps: {list(missing_idx)}"
             )
 
-        return X[known_cols].iloc[:horizon]
+        return X.loc[fh_abs, known_cols]
 
     def _encode_categorical(self, series_fit, series_future=None):
         """Encode categorical series to float array with codes, preserving NaNs."""
@@ -337,8 +350,8 @@ class TimestralForecaster(BaseForecaster):
     def _run_forecast(self, fh, X=None):
         """Run upstream Timestral inference and return raw forecast object plus indexes.
 
-        Returns forecast object, absolute forecast index, expected prediction index,
-        and horizon integer.
+        Returns forecast object, absolute forecast index, and expected prediction
+        index.
         """
         forecaster = self._load_model()
 
@@ -353,7 +366,7 @@ class TimestralForecaster(BaseForecaster):
             cat_known_cols,
         ) = self._partition_exog_columns(X)
         all_known = num_known_cols + cat_known_cols
-        X_future = self._build_future_exog(X, all_known, horizon)
+        X_future = self._build_future_exog(X, all_known, fh, horizon)
 
         (
             target,
@@ -385,7 +398,7 @@ class TimestralForecaster(BaseForecaster):
             ForecastingHorizon(range(1, horizon + 1)).to_absolute(self._cutoff)._values
         )
         pred_out = fh.get_expected_pred_idx(self._cur_y, cutoff=self.cutoff)
-        return forecast, index, pred_out, horizon
+        return forecast, index, pred_out
 
     def _predict(self, fh, X=None):
         """Forecast time series at specified future horizon.
@@ -402,7 +415,7 @@ class TimestralForecaster(BaseForecaster):
         y_pred : pd.DataFrame
             Point forecasts corresponding to ``fh``, using upstream median.
         """
-        forecast, index, pred_out, _ = self._run_forecast(fh, X)
+        forecast, index, pred_out = self._run_forecast(fh, X)
 
         # forecast.median shape: (1, V, horizon)
         median = _to_numpy(forecast.median)[0]  # (V, horizon)
@@ -438,7 +451,7 @@ class TimestralForecaster(BaseForecaster):
         quantiles_df : pd.DataFrame
             Quantile forecasts with 2-level MultiIndex columns (variable, alpha).
         """
-        forecast, index, pred_out, _ = self._run_forecast(fh, X)
+        forecast, index, pred_out = self._run_forecast(fh, X)
 
         # forecast.quantiles shape: (1, V, horizon, n_quantiles)
         quantiles = _to_numpy(forecast.quantiles)[0]  # (V, horizon, n_quantiles)
@@ -483,7 +496,7 @@ class TimestralForecaster(BaseForecaster):
         """
         from skpro.distributions import HistogramQPD
 
-        forecast, index, pred_out, _ = self._run_forecast(fh, X)
+        forecast, index, pred_out = self._run_forecast(fh, X)
 
         # forecast.quantiles shape: (1, V, horizon, n_quantiles)
         quantiles = _to_numpy(forecast.quantiles)[0]  # (V, horizon, n_quantiles)
@@ -516,6 +529,7 @@ class TimestralForecaster(BaseForecaster):
         }
         params2 = {
             "model_path": "mistralai/Timestral-5M",
+            "max_context": 32,
             "symmetric_averaging": False,
             "clip_nonnegative": False,
         }

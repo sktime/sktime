@@ -6,8 +6,11 @@ patches followed by learned forecast-query tokens), and reads quantiles for ever
 horizon time step from the decoder tokens.
 """
 
-import torch
-from torch import Tensor, nn
+from skbase.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+Tensor = _safe_import("torch.Tensor")
+nn = _safe_import("torch.nn")
 
 from sktime.libs.timestral.config import TimestralConfig
 from sktime.libs.timestral.layers import ResidualBlock, Transformer, TwoStreamMask

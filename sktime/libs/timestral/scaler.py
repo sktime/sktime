@@ -7,8 +7,10 @@ normalized (asinh) space of the last context patch and are inverted with `sinh`.
 
 import functools
 
-import torch
-from torch import Tensor
+from skbase.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+Tensor = _safe_import("torch.Tensor")
 
 
 def compute_causal_statistics(

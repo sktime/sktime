@@ -22,8 +22,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
-import torch
-from torch import Tensor
+from skbase.utils.dependencies import _safe_import
+
+torch = _safe_import("torch")
+Tensor = _safe_import("torch.Tensor")
 
 from sktime.libs.timestral.covariate_encoding import target_encode
 from sktime.libs.timestral.loading import load_model
