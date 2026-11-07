@@ -156,6 +156,7 @@ class HyperTreeARForecaster(BaseForecaster):
         )
         forecaster.dataset_references = None
         self._forecaster = forecaster
+        self._y_name = y.name
         return self
 
     def _predict(self, fh, X):
@@ -199,7 +200,7 @@ class HyperTreeARForecaster(BaseForecaster):
 
         values = forecast["fcst"].to_numpy()[rel - 1]
         index = fh.to_absolute(self.cutoff).to_pandas()
-        return pd.Series(values, index=index, name=self._y.name)
+        return pd.Series(values, index=index, name=self._y_name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
