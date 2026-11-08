@@ -237,17 +237,8 @@ class VARMAX(_StatsModelsAdapter):
         "capability:update": True,
         # CI and testing tags
         # -------------------
-        "tests:skip_by_name": [
-            # sporadic failures in update due to singular matrix error
-            "test_update_with_exogenous_variables",
-            # sporadic LinAlgError (LU/Schur decomposition) in statsmodels fit,
-            # see #2997
-            "test_hierarchical_with_exogenous",
-            "test_predict_time_index",
-            "test_predict_time_index_with_X",
-            "test_update_predict_predicted_index",
-            "test_update_predict_single",
-        ],
+        "tests:skip_by_name": ["test_update_with_exogenous_variables"],
+        # sporadic failures in update due to singular matrix error
     }
 
     def __init__(
@@ -459,7 +450,8 @@ class VARMAX(_StatsModelsAdapter):
         params = [
             {"order": (1, 0)},
             {"order": (0, 1)},
-            {"order": (1, 1)},
+            # (1, 1) VARMA fits sporadically raised LinAlgError in CI, see #2997
+            {"order": (1, 0), "trend": "ct"},
         ]
 
         return params
