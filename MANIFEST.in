@@ -5,4 +5,5 @@ recursive-include examples *
 recursive-include sktime *.py
 recursive-include sktime *.c *.h *.pyx *.pxd *.pxi *.tp
 recursive-include sktime/datasets *.csv *.csv.gz *.arff *.arff.gz *.txt *.ts *.tsv *.tsf
+recursive-include sktime/transformations/detrend/tests/data *.csv *.R
 include LICENSE
