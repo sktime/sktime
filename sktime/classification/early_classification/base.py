@@ -97,7 +97,8 @@ class BaseEarlyClassifier(BaseEstimator):
         state_info, as it will only store as many rows as there are input instances to
         update/predict.
         """
-        self.state_info = None
+        self.state_info = None        
+        self._state = "new"
 
         self._converter_store_y = {}
 
