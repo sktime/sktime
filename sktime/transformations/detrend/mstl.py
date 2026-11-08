@@ -143,7 +143,7 @@ class MSTL(BaseTransformer):
     >>> mstl_trafo = MSTL(periods=[2, 12])
     >>> mstl_deseason_fcst = mstl_trafo * TrendForecaster()
     >>> y = load_airline()
-    >>> mstl_deseason_fcst.fit(y, fh=[1, 2, 3])
+    >>> mstl_deseason_fcst.fit(y, fh=3)
     TransformedTargetForecaster(...)
     >>> y_pred = mstl_deseason_fcst.predict()
 
@@ -174,7 +174,7 @@ class MSTL(BaseTransformer):
     ...     ]
     ... )
     >>> y = load_airline()
-    >>> mstl_component_fcst.fit(y, fh=[1, 2, 3])
+    >>> mstl_component_fcst.fit(y, fh=3)
     TransformedTargetForecaster(...)
     >>> y_pred = mstl_component_fcst.predict()
     """

@@ -487,10 +487,7 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         self._X = update_data(self._X, X_inner)
 
         if y is not None:
-            if self._y is None:
-                self._y = y
-            else:
-                self._y = y.combine_first(self._y)
+            self._y = y.combine_first(self._y)
 
         if _method_has_arg(self._update, "y"):
             self._update(X=X_inner, y=y)

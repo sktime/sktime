@@ -3,6 +3,7 @@
 import numpy as np
 import pytest
 
+from sktime.detection.dummy import DummyRegularAnomalies
 from sktime.tests.test_switch import run_test_module_changed
 
 
@@ -69,25 +70,31 @@ def test_update_after_fit_supported_input_types(input_type):
     )
 
 
-@pytest.mark.skipif(
-    not run_test_module_changed("sktime.detection"),
-    reason="module not changed",
-)
-def test_update_with_y_after_fit_without_y():
-    """Test that update with labels after an unlabelled fit does not raise TypeError.
-
-    Regression test for bug #11606: calling update(X, y=labels) after fit(X)
-    (without y) was raising TypeError because fit stored self._y = None and
-    update then called y.combine_first(None).
-    """
+@pytest.mark.parametrize("ndim", [1, 2])
+def test_repeated_numpy_updates_after_indexed_fit(ndim):
+    """Successive array batches append after the stored index without mutation."""
     import pandas as pd
 
-    from sktime.detection.dummy import DummyRegularAnomalies
+    initial = pd.DataFrame(np.arange(10.0), index=pd.RangeIndex(100, 110))
+    detector = DummyRegularAnomalies().fit(initial)
+    for batch in [np.arange(10.0, 13.0), np.arange(13.0, 15.0)]:
+        if ndim == 2:
+            batch = batch.reshape(-1, 1)
+        original = batch.copy()
+        detector.update(batch)
+        np.testing.assert_array_equal(batch, original)
+    pd.testing.assert_index_equal(detector._X.index, pd.RangeIndex(100, 115))
+    np.testing.assert_array_equal(detector._X.to_numpy().ravel(), np.arange(15.0))
 
-    X = pd.Series(np.arange(15, dtype=float))
-    y_new = pd.DataFrame({"ilocs": [1]})
 
-    detector = DummyRegularAnomalies()
-    detector.fit(X.iloc[:10])  # fit without labels -> self._y = None
-    detector.update(X.iloc[10:].to_frame(), y=y_new)  # was raising TypeError before fix
-    assert detector._y is not None
+def test_indexed_update_retains_overlap_semantics():
+    """Explicit pandas labels revise existing observations and append new ones."""
+    import pandas as pd
+
+    initial = pd.DataFrame({0: [1.0, 2.0, 3.0]}, index=pd.RangeIndex(3))
+    revised = pd.DataFrame({0: [30.0, 4.0]}, index=pd.RangeIndex(2, 4))
+    original = revised.copy(deep=True)
+    detector = DummyRegularAnomalies().fit(initial).update(revised)
+    expected = pd.DataFrame({0: [1.0, 2.0, 30.0, 4.0]})
+    pd.testing.assert_frame_equal(detector._X, expected)
+    pd.testing.assert_frame_equal(revised, original)
