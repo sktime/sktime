@@ -179,9 +179,24 @@ class ScaledLogitTransformer(BaseTransformer):
         inverse transformed version of X
         """
         if self.upper_bound and self.lower_bound:
-            X_inv_transformed = (self.upper_bound * np.exp(X) + self.lower_bound) / (
-                np.exp(X) + 1
-            )
+            # Use at least double precision for the weights and bounds.
+            dtype = np.result_type(X.dtype, np.float64)
+            X = X.astype(dtype, copy=False)
+            lower, upper = np.asarray([self.lower_bound, self.upper_bound], dtype=dtype)
+            # Compute the smaller sigmoid weight without a positive exponent.
+            ratio = np.exp(-np.abs(X))
+            weight = ratio / (1 + ratio)
+            positive = X >= 0
+            near = np.where(positive, upper, lower)
+
+            if np.signbit(lower) == np.signbit(upper):
+                # Interpolate from the nearer bound to avoid adding large terms.
+                offset = weight * (upper - lower)
+                X_inv_transformed = near + np.where(positive, -offset, offset)
+            else:
+                # A difference between opposite-sign bounds could overflow.
+                far = np.where(positive, lower, upper)
+                X_inv_transformed = (1 - weight) * near + weight * far
         elif self.upper_bound is not None:
             X_inv_transformed = self.upper_bound - np.exp(-X)
         elif self.lower_bound is not None:
