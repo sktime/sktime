@@ -19,7 +19,11 @@ from sklearn.pipeline import make_pipeline
 from sktime.datasets import load_airline, load_solar
 from sktime.datatypes import get_examples
 from sktime.forecasting.base import ForecastingHorizon
-from sktime.forecasting.compose import make_reduction
+from sktime.forecasting.compose import (
+    DirectTabularRegressionForecaster,
+    RecursiveTabularRegressionForecaster,
+    make_reduction,
+)
 from sktime.forecasting.compose._reduce import _DirectReducer, _RecursiveReducer
 from sktime.performance_metrics.forecasting import mean_absolute_percentage_error
 from sktime.split import temporal_train_test_split
@@ -432,8 +436,8 @@ def test_timezoneaware_index():
 @pytest.mark.parametrize(
     "forecaster_cls",
     [
-        "DirectTabularRegressionForecaster",
-        "RecursiveTabularRegressionForecaster",
+        DirectTabularRegressionForecaster,
+        RecursiveTabularRegressionForecaster,
     ],
 )
 def test_global_reduction_nan_inf_returns_nan(invalid_val, forecaster_cls):
@@ -441,15 +445,10 @@ def test_global_reduction_nan_inf_returns_nan(invalid_val, forecaster_cls):
 
     Fixes #11521.
     """
-    from sklearn.linear_model import LinearRegression
-
-    import sktime.forecasting.compose as compose
-
-    forecaster_type = getattr(compose, forecaster_cls)
     y = pd.DataFrame({"y": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]})
     fh = [1, 2, 3]
 
-    reducer = forecaster_type(
+    reducer = forecaster_cls(
         estimator=LinearRegression(),
         window_length=3,
         pooling="global",
