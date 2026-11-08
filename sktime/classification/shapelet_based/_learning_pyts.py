@@ -147,13 +147,32 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
     .. [1] J. Grabocka, N. Schilling, M. Wistuba and L. Schmidt-Thieme,
            "Learning Time-Series Shapelets". International Conference on Data
            Mining, 14, 392-401 (2014).
+
+    Examples
+    --------
+    Fit a classifier and predict labels for new series (requires ``pyts``).
+
+    >>> from sktime.classification.shapelet_based import ShapeletLearningClassifierPyts
+    >>> from sktime.datasets import load_unit_test
+    >>> X_train, y_train = load_unit_test(split="train", return_type="numpy3D")
+    >>> X_test, _ = load_unit_test(split="test", return_type="numpy3D")
+    >>> clf = ShapeletLearningClassifierPyts(
+    ...     n_shapelets_per_size=1,
+    ...     min_shapelet_length=3,
+    ...     shapelet_scale=1,
+    ...     random_state=0,
+    ... )  # doctest: +SKIP
+    >>> _ = clf.fit(X_train, y_train)  # doctest: +SKIP
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
+    >>> y_pred.shape  # doctest: +SKIP
+    (22,)
     """
 
     _tags = {
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": "pyts",
+        "python_dependencies": "pyts<0.14.0",
         # estimator type
         # --------------
         "capability:multioutput": False,
@@ -161,11 +180,12 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         "capability:unequal_length": False,
         "capability:missing_values": True,
         "capability:predict_proba": True,
+        "capability:random_state": True,
+        "property:randomness": "derandomized",
         "classifier_type": "shapelet",
         # CI and test flags
         # -----------------
         "tests:libs": ["sktime.base.adapters._pyts"],
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     # defines the name of the attribute containing the pyts estimator
