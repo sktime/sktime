@@ -156,6 +156,23 @@ def test_conformal_quantile_rank_below_one_uses_smallest():
     assert not too_few
 
 
+def test_conformal_quantile_respects_coverage_above_rank_boundary():
+    """A real increase above attainable coverage must not be erased by tolerance."""
+    scores = np.arange(1.0, 10.0)
+    _, too_few = _conformal_quantile(scores, 1 - np.array([0.9, 0.9 + 1e-11]))
+    np.testing.assert_array_equal(too_few, [False, True])
+
+
+def test_conformal_quantile_vectorized_levels_do_not_mutate_scores():
+    """Unordered, repeated levels retain their order and their input scores."""
+    scores = np.array([8.0, 2.0, 4.0, 1.0])
+    original = scores.copy()
+    values, too_few = _conformal_quantile(scores, [0.4, 0.8, 0.4, 0.0])
+    np.testing.assert_array_equal(values, [4.0, 1.0, 4.0, 8.0])
+    np.testing.assert_array_equal(too_few, [False, False, False, True])
+    np.testing.assert_array_equal(scores, original)
+
+
 @pytest.mark.skipif(
     not run_test_for_class(ConformalIntervals),
     reason="run test only if softdeps are present and incrementally (if requested)",

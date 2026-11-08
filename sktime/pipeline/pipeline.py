@@ -313,7 +313,7 @@ class Pipeline(BaseEstimator):
             skobject if fit/predict/.. is called.
 
         """
-        step = {key: value for key, value in kwargs.items()}
+        step = {**kwargs}
         step.update(
             {
                 "skobject": skobject,

@@ -54,8 +54,13 @@ def _conformal_quantile(scores, alpha):
     """
     scores = np.sort(np.asarray(scores, dtype=float))
     n = len(scores)
-    # tolerance guards the ceil against floating point error in (n+1)*(1-alpha)
-    rank = np.ceil((n + 1) * (1 - np.asarray(alpha, dtype=float)) - 1e-9)
+    # Only snap floating-point noise near an integer; a genuinely higher
+    # coverage must advance to the next order statistic.
+    raw_rank = (n + 1) * (1 - np.asarray(alpha, dtype=float))
+    nearest = np.rint(raw_rank)
+    tolerance = 4 * np.finfo(float).eps * np.maximum(1, np.abs(raw_rank))
+    raw_rank = np.where(np.abs(raw_rank - nearest) <= tolerance, nearest, raw_rank)
+    rank = np.ceil(raw_rank)
     rank = rank.astype(int)
     too_few = rank > n
     rank = np.clip(rank, 1, n)
@@ -404,8 +409,8 @@ class ConformalIntervals(BaseForecaster):
                 f"{min_n_too_few} residuals at a forecast horizon). "
                 "The largest absolute residual is used instead, so the intervals "
                 "do not have the nominal coverage guarantee. "
-                "To avoid this, use a lower coverage, a larger initial_window or "
-                "sample_frac, or more training data.",
+                "To avoid this, use a lower coverage, a smaller initial_window, "
+                "a larger sample_frac, or more training data.",
                 obj=self,
                 stacklevel=2,
             )
