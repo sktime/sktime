@@ -305,7 +305,7 @@ def test_equality_transfo_nontranso(regressor):
     y_train, y_test = temporal_train_test_split(y, test_size=12)
     fh = ForecastingHorizon(y_test.index, is_relative=False)
 
-    lag_vec = [i for i in range(6, 0, -1)]
+    lag_vec = [*range(6, 0, -1)]
     kwargs = {
         "lag_feature": {
             "lag": lag_vec,
