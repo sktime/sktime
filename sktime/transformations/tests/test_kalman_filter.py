@@ -212,12 +212,12 @@ def init_kf_filterpy(measurements, adapter, n=10, y=None):
     )
 
     matrices = {
-        "Fs": [adapter.F_] * n if adapter.F_.ndim == 2 else [f for f in adapter.F_],
-        "Qs": [adapter.Q_] * n if adapter.Q_.ndim == 2 else [q for q in adapter.Q_],
-        "Rs": [adapter.R_] * n if adapter.R_.ndim == 2 else [r for r in adapter.R_],
-        "Hs": [adapter.H_] * n if adapter.H_.ndim == 2 else [h for h in adapter.H_],
-        "Bs": [G] * n if G.ndim == 2 else [g for g in G],
-        "us": None if y is None else ([y] * n if y.ndim == 1 else [_y for _y in y]),
+        "Fs": [adapter.F_] * n if adapter.F_.ndim == 2 else [*adapter.F_],
+        "Qs": [adapter.Q_] * n if adapter.Q_.ndim == 2 else [*adapter.Q_],
+        "Rs": [adapter.R_] * n if adapter.R_.ndim == 2 else [*adapter.R_],
+        "Hs": [adapter.H_] * n if adapter.H_.ndim == 2 else [*adapter.H_],
+        "Bs": [G] * n if G.ndim == 2 else [*G],
+        "us": None if y is None else ([y] * n if y.ndim == 1 else [*y]),
         "x": adapter.X0_,
         "P": adapter.P0_,
     }
