@@ -96,6 +96,7 @@ class FhPlexForecaster(BaseForecaster):
         "authors": "fkiraly",
         # estimator type
         # --------------
+        "category": ["composition"],
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
         "capability:multivariate": True,
