@@ -220,4 +220,4 @@ in VScode `here <https://code.visualstudio.com/docs/python/environments>`_.
 References
 ----------
 
-The installation instruction are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/advanced_installation.html>`_.
+The installation instruction are adapted from scikit-learn's advanced `installation instructions <https://scikit-learn.org/stable/developers/development_setup.html>`_.
