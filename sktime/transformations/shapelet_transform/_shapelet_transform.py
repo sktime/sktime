@@ -902,8 +902,7 @@ class ShapeletTransform(BaseTransformer):
         This is to allow for sensible processing of candidate
         shapelets/comparison subseries that are a straight
         line. Original version:
-        https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats
-        .zscore.html
+        https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.zscore.html
 
         Parameters
         ----------
