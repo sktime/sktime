@@ -237,7 +237,8 @@ class TimestralForecaster(BaseForecaster):
         missing_idx = fh_abs.difference(X.index)
         if len(missing_idx) > 0:
             raise KeyError(
-                f"Prediction-time `X` is missing required future time steps: {list(missing_idx)}"
+                "Prediction-time `X` is missing required future time steps: "
+                f"{list(missing_idx)}"
             )
 
         return X.loc[fh_abs, known_cols]
