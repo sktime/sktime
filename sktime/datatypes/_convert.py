@@ -71,14 +71,12 @@ import numpy as np
 import pandas as pd
 
 from sktime.datatypes._check import mtype as infer_mtype
-from sktime.datatypes._panel import convert_dict_Panel
 from sktime.datatypes._registry import mtype_to_scitype
-from sktime.datatypes._series import convert_dict_Series
-from sktime.datatypes._table import convert_dict_Table
 
-# conversions obtained via an anchor mtype, applied in this order
-# triples (mtype, anchor_mtype, scitype): conversions from and to mtype are
-# obtained via anchor_mtype, for all mtypes of scitype, if not defined directly
+# conversion dicts built in the scitype modules, merged into generate_convert_dict.
+# Direct conversions there are BaseConverter instances, also collected as classes.
+# Remaining function based entries are conversions of mtypes without a datatype
+# class (pd-long, pd-wide, pl.LazyFrame), which cannot be keyed by BaseConverter yet.
 _EXTENSION_SEQUENCE = [
     ("xr.DataArray", "pd.DataFrame", "Series"),
     ("dask_series", "pd.DataFrame", "Series"),
@@ -97,15 +95,6 @@ _EXTENSION_SEQUENCE = [
     ("polars_eager_table", "pd_DataFrame_Table", "Table"),
     ("polars_lazy_table", "pd_DataFrame_Table", "Table"),
 ]
-
-# conversion dicts built in the scitype modules, merged into generate_convert_dict.
-# Direct conversions there are BaseConverter instances, also collected as classes.
-# Remaining function based entries are conversions of mtypes without a datatype
-# class (pd-long, pd-wide, pl.LazyFrame), which cannot be keyed by BaseConverter yet.
-_convert_dict_legacy = dict()
-_convert_dict_legacy.update(convert_dict_Series)
-_convert_dict_legacy.update(convert_dict_Panel)
-_convert_dict_legacy.update(convert_dict_Table)
 
 
 def get_convert_dict(soft_deps="present"):
@@ -157,7 +146,7 @@ def generate_convert_dict(soft_deps="present"):
     if soft_deps == "present":
         classes = [x for x in classes if _check_estimator_deps(x, severity="none")]
 
-    convert_dict = dict(_convert_dict_legacy)
+    convert_dict = {}
     for cls in classes:
         if not cls.get_class_tag("multiple_conversions", False):
             converters = [cls()]
@@ -204,16 +193,14 @@ def _extend_conversions(convert_dict, extension_sequence):
             anchor_to_tp = convert_dict.get((anchor, tp, scitype))
             if anchor_to_tp is not None and (mtype, tp, scitype) not in convert_dict:
                 convert_dict[(mtype, tp, scitype)] = _ConverterConcat(
-                    to_anchor, anchor_to_tp, mtype, tp
+                    to_anchor, anchor_to_tp
                 )
             tp_to_anchor = convert_dict.get((tp, anchor, scitype))
             if tp_to_anchor is not None and (tp, mtype, scitype) not in convert_dict:
                 convert_dict[(tp, mtype, scitype)] = _ConverterConcat(
-                    tp_to_anchor, from_anchor, tp, mtype
+                    tp_to_anchor, from_anchor
                 )
-
     return convert_dict
-
 
 def convert(
     obj,
