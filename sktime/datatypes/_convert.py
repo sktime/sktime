@@ -70,45 +70,11 @@ from functools import lru_cache
 import numpy as np
 import pandas as pd
 
-from sktime.datatypes._base import BaseConverter
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._panel import convert_dict_Panel
 from sktime.datatypes._registry import mtype_to_scitype
 from sktime.datatypes._series import convert_dict_Series
 from sktime.datatypes._table import convert_dict_Table
-from sktime.utils.retrieval import _all_classes
-
-
-def _generate_convert_dict():
-    """Generate conversion dictionary from BaseConverter classes."""
-    classes = _all_classes("sktime.datatypes")
-    classes = [x[1] for x in classes]
-    classes = [
-        x
-        for x in classes
-        if issubclass(x, BaseConverter) and not x.__name__.startswith("Base")
-    ]
-
-    convert_dict = dict()
-
-    for cls in classes:
-        if not cls.get_class_tag("multiple_conversions", False):
-            mtype_from, mtype_to = cls.get_conversions()[0]
-            converter = cls(
-                mtype_from=mtype_from,
-                mtype_to=mtype_to,
-            )
-            convert_dict[converter._get_key()] = converter
-        else:
-            for mtype_from, mtype_to in cls.get_conversions():
-                converter = cls(
-                    mtype_from=mtype_from,
-                    mtype_to=mtype_to,
-                )
-                convert_dict[converter._get_key()] = converter
-
-    return convert_dict
-
 
 # conversions obtained via an anchor mtype, applied in this order
 # triples (mtype, anchor_mtype, scitype): conversions from and to mtype are
@@ -309,8 +275,6 @@ def convert(
     if store_behaviour is None and store != {}:
         store_behaviour = "freeze"
 
-    convert_dict = _get_convert_dict()
-
     key = (from_type, to_type, as_scitype)
     convert_dict = generate_convert_dict()
 
@@ -472,9 +436,11 @@ def _conversions_defined(scitype: str):
 
     Returns
     -------
-    conv_df: pd.DataFrame, columns and index is list of mtypes for scitype
-            entry of row i, col j is 1 if conversion from i to j is defined,
-                                0 if conversion from i to j is not defined
+    conv_df: pd.DataFrame
+        DataFrame, indicator matrix for defined conversions.
+        columns and index is list of mtypes for scitype;
+        entry of row i, col j is 1 if conversion from i to j is defined,
+        0 if conversion from i to j is not defined
     """
     convert_dict = generate_convert_dict()
     pairs = [(x[0], x[1]) for x in list(convert_dict.keys()) if x[2] == scitype]
