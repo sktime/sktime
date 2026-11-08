@@ -180,6 +180,9 @@ class TemporalTrainTestSplitter(BaseSplitter):
     If the data contains multiple time series (Panel or Hierarchical),
     fractions and train-test sets will be computed per individual time series.
 
+    The forecasting horizon ``fh`` is ``None`` because the test fold size depends
+    on the input data. Evaluation routines derive the horizon from the test fold.
+
     Parameters
     ----------
     test_size : float, int or None, optional (default=None)
@@ -261,6 +264,10 @@ class TemporalTrainTestSplitter(BaseSplitter):
             y_test_ix = y_test_ix[:test_size]
 
         yield y_train_ix, y_test_ix
+
+    def _fh(self):
+        """Return None: the forecasting horizon depends on the input data."""
+        return None
 
     def get_n_splits(self, y=None) -> int:
         """Return the number of splits.
