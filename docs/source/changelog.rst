@@ -42,7 +42,9 @@ Dependency changes
 * Python 3.10 is no longer supported by the ``sktime`` framework, as Python 3.10
   reached end-of-life.
 * ``pandas 3.1.X`` is now supported by the ``sktime`` framework.
-  The upper bound has been raised to ``<3.2``.
+  The ``pandas`` upper bound has been raised to ``<3.2``.
+* ``polars`` (data container soft dependency) bounds have been updated to ``<3.0``.
+
 
 Core interface changes
 ~~~~~~~~~~~~~~~~~~~~~~
