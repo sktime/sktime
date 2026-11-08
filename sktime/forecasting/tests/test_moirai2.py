@@ -83,13 +83,19 @@ def test_moirai2_airline_predictions_match_uni2ts_reference(
         ("QE", "Q"),
         ("YS", "Y"),
         ("YE", "Y"),
+        ("2YS-JAN", "2Y"),
+        ("3QS-MAR", "3Q"),
+        ("2MS", "2M"),
+        ("2QE-DEC", "2Q"),
         # pass-through for unrecognised aliases
         ("D", "D"),
         ("h", "h"),
         ("W-SUN", "W-SUN"),  # weekly with anchor - pass-through unchanged
+        ("2W-MON", "2W-MON"),
+        ("15min", "15min"),
     ],
 )
-def test_infer_freq_compound_aliases(freq_str, expected):
+def test_infer_freq_compound_aliases(freq_str, expected, monkeypatch):
     """infer_freq must normalise compound pandas freq aliases to period strings.
 
     Regression test for GitHub issue #11535:
@@ -99,11 +105,39 @@ def test_infer_freq_compound_aliases(freq_str, expected):
     ``pd.infer_freq`` yields compound aliases like ``YS-JAN``.
     """
     forecaster = Moirai2Forecaster.__new__(Moirai2Forecaster)
-    idx = pd.date_range("2000-01-01", periods=4, freq=freq_str)
+    idx = pd.date_range("2000-01-01", periods=4, freq="D")
+    monkeypatch.setattr(pd, "infer_freq", lambda index: freq_str)
     result = forecaster.infer_freq(idx)
-    assert (
-        result == expected
-    ), f"infer_freq({freq_str!r}) == {result!r}, expected {expected!r}"
+    assert result == expected, (
+        f"infer_freq({freq_str!r}) == {result!r}, expected {expected!r}"
+    )
+
+
+@pytest.mark.parametrize(
+    "freq,expected",
+    [
+        ("YS-JAN", "Y"),
+        ("2YS-JAN", "2Y"),
+        ("QS-MAR", "Q"),
+        ("3QS-MAR", "3Q"),
+        ("MS", "M"),
+        ("2MS", "2M"),
+        ("W-SUN", "W-SUN"),
+        ("2W-MON", "2W-MON"),
+    ],
+)
+def test_infer_freq_datetime_index(freq, expected):
+    """Normalize actual inferred frequencies, retaining interval multipliers."""
+    forecaster = Moirai2Forecaster.__new__(Moirai2Forecaster)
+    index = pd.date_range("2000-01-01", periods=4, freq=freq)
+    assert forecaster.infer_freq(index) == expected
+
+
+def test_infer_freq_irregular_index():
+    """An index without a regular frequency remains uninferred."""
+    forecaster = Moirai2Forecaster.__new__(Moirai2Forecaster)
+    index = pd.to_datetime(["2000-01-01", "2000-01-02", "2000-01-04"])
+    assert forecaster.infer_freq(index) is None
 
 
 def test_infer_freq_period_index():
