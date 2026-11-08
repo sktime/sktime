@@ -11,8 +11,10 @@ class _PretrainedCloner(BaseCloner):
     the two required methods: ``_check`` and ``_clone``.
 
     This plugin checks if an object has pretrained attributes
-    (tracked in ``_pretrained_attrs``) and copies them to the clone,
-    preserving the pretrained state across clone operations.
+    (tracked in ``_pretrained_attrs``) and shares them by reference to the clone,
+    preserving the pretrained state across clone operations while minimizing
+    memory footprint. Clones share pretrained state via copy-on-write semantics
+    and detach before mutating operations.
 
     Used in cross-validation and other scenarios where estimators
     are cloned but pretrained state should be preserved.
