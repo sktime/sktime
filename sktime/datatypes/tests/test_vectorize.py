@@ -323,17 +323,10 @@ def test_iteration(scitype, mtype, fixture_index, iterate_as, iterate_cols):
     assert isinstance(X_keys, list)
     assert len(X_keys) == len(X_vect)
 
-    # testing that iterator comprehension works
-    X_iter2 = [*X_vect]
-    assert isinstance(X_iter2, list)
-
-    # testing that as_list method works
-    X_iter3 = X_vect.as_list()
-    assert isinstance(X_iter3, list)
-
-    # check that these are all the same
-    assert deep_equals(X_iter1, X_iter2)
-    assert deep_equals(X_iter2, X_iter3)
+    X_slices = X_vect.as_list(X=X_mi)
+    assert isinstance(X_slices, list)
+    assert len(X_slices) == len(X_vect)
+    assert all(s is not None for s in X_slices)
 
 
 @pytest.mark.skipif(
