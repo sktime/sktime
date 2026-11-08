@@ -4300,6 +4300,16 @@
       ]
     },
     {
+      "login": "KrishChadha001",
+      "name": "Krish Chadha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/187894152?v=4",
+      "profile": "https://github.com/KrishChadha001",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
       "login": "S-h-u-b-h-1",
       "name": "Shubhaang Kataruka",
       "avatar_url": "https://avatars.githubusercontent.com/u/164889601?v=4",
@@ -4338,6 +4348,15 @@
         "code",
         "test",
         "maintenance"
+      ]
+    },
+    {
+      "login": "dhruvgupta2109",
+      "name": "Dhruv Gupta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/248665831?v=4",
+      "profile": "https://github.com/dhruvgupta2109",
+      "contributions": [
+        "doc"
       ]
     },
     {
@@ -4397,6 +4416,15 @@
       "contributions": [
         "code",
         "bug"
+      ]
+    },
+    {
+      "login": "markksantos",
+      "name": "Mark Santos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24554186?v=4",
+      "profile": "https://www.markstudios.com",
+      "contributions": [
+        "doc"
       ]
     }
   ]
