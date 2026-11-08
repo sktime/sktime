@@ -61,7 +61,7 @@ def test_moirai2_airline_predictions_match_uni2ts_reference(
 
 
 # ---------------------------------------------------------------------------
-# Regression tests for issue #11535 – YS-JAN and similar compound freq aliases
+# Regression tests for issue #11535 - YS-JAN and similar compound freq aliases
 # ---------------------------------------------------------------------------
 
 
@@ -76,7 +76,7 @@ def test_moirai2_airline_predictions_match_uni2ts_reference(
         ("QS-JAN", "Q"),
         ("QS-MAR", "Q"),
         ("QS-APR", "Q"),
-        # plain aliases – must still work
+        # plain aliases - must still work
         ("MS", "M"),
         ("ME", "M"),
         ("QS", "Q"),
@@ -86,7 +86,7 @@ def test_moirai2_airline_predictions_match_uni2ts_reference(
         # pass-through for unrecognised aliases
         ("D", "D"),
         ("h", "h"),
-        ("W-SUN", "W-SUN"),  # weekly with anchor – pass-through unchanged
+        ("W-SUN", "W-SUN"),  # weekly with anchor - pass-through unchanged
     ],
 )
 def test_infer_freq_compound_aliases(freq_str, expected):
@@ -101,13 +101,13 @@ def test_infer_freq_compound_aliases(freq_str, expected):
     forecaster = Moirai2Forecaster.__new__(Moirai2Forecaster)
     idx = pd.date_range("2000-01-01", periods=4, freq=freq_str)
     result = forecaster.infer_freq(idx)
-    assert result == expected, (
-        f"infer_freq({freq_str!r}) == {result!r}, expected {expected!r}"
-    )
+    assert (
+        result == expected
+    ), f"infer_freq({freq_str!r}) == {result!r}, expected {expected!r}"
 
 
 def test_infer_freq_period_index():
-    """infer_freq returns the PeriodIndex.freq object unchanged for PeriodIndex inputs."""
+    """Return the PeriodIndex frequency object unchanged."""
     forecaster = Moirai2Forecaster.__new__(Moirai2Forecaster)
     # Longley-style annual PeriodIndex (Y-DEC)
     idx = pd.period_range("1947", periods=16, freq="Y-DEC")

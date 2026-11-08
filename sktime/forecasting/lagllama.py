@@ -450,6 +450,14 @@ class LagLlamaForecaster(BaseForecaster):
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_lagllama"],
         "tests:libs": ["sktime.libs.lag_llama"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "lagllama": (
+                "LagLlamaForecaster("
+                'ckpt_path="time-series-foundation-models/Lag-Llama")'
+            ),
+        },
     }
 
     def __init__(
