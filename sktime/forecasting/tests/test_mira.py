@@ -13,6 +13,10 @@ from sktime.tests.test_switch import run_test_for_class
 # normalization, z-scoring of the context, then the autoregressive loop
 # ``mira_predict_autoregressive_norm``.
 #
+# The values are identical with the upstream microsoft/MIRA modules
+# (``MIRA.models``, commit 80ce803) and with the vendored ``sktime.libs.mira``,
+# the script below uses the vendored imports.
+#
 # Time values are the monthly period ordinals of the airline index, followed by
 # the ordinals of the forecast steps. The full series is used as context:
 # MIRA is zero-shot and fitting only stores the context. Inference is
