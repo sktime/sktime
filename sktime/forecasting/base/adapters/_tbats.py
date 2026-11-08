@@ -189,7 +189,7 @@ class _TbatsAdapter(BaseForecaster):
         )
         y_pred = pd.DataFrame(y_pred)
         # Workaround for slicing with negative index
-        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
+        y_pred["idx"] = [*range(-len(y_in_sample), len(y_out_sample))]
         y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
         y_pred.index = self.fh.to_absolute_index(self.cutoff)
         y_pred = y_pred["y_pred"].rename(None)
