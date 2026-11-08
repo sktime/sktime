@@ -144,8 +144,10 @@ class ShapeletTransform(BaseTransformer):
         "capability:categorical_in_X": False,
         "capability:random_state": True,
         "property:randomness": "derandomized",
-        "tests:skip_by_name": ["test_get_test_params_coverage"],
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
+        "tests:skip_by_name": [
+            "test_get_test_params_coverage",
+            "test_class_has_doctest_example",
+        ],
     }
 
     def __init__(
