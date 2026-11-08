@@ -109,7 +109,13 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         """
         from sktime.transformations.boxcox import BoxCoxTransformer
 
-        self.boxcox_transformer_ = BoxCoxTransformer(lambda_fixed=self.lambda_fixed)
+        if self.lambda_fixed is None:
+            self.boxcox_transformer_ = BoxCoxTransformer()
+        else:
+            # lambda_fixed is only used by BoxCoxTransformer if method="fixed"
+            self.boxcox_transformer_ = BoxCoxTransformer(
+                method="fixed", lambda_fixed=self.lambda_fixed
+            )
         y_transformed = self.boxcox_transformer_.fit_transform(y)
 
         self.forecaster_ = self.forecaster.clone()
@@ -164,13 +170,14 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
         """
         pred_int_transformed = self.forecaster_.predict_interval(fh, X, coverage)
         columns = pred_int_transformed.columns
-        variance = self.forecaster_.predict_var(fh, X).squeeze()
+        variance = self.forecaster_.predict_var(fh, X).squeeze(axis=1)
 
-        result = pd.DataFrame(0, index=pred_int_transformed.index, columns=columns)
+        result = pd.DataFrame(0.0, index=pred_int_transformed.index, columns=columns)
 
-        coverage_idx = 0
-        var_type_idx = 1
-        coverage_levels = columns.levels[coverage_idx].unique()
+        # columns are 3-level MultiIndex: (variable name, coverage, lower/upper)
+        coverage_idx = 1
+        var_type_idx = 2
+        coverage_levels = columns.get_level_values(coverage_idx).unique()
 
         for coverage_level in coverage_levels:
             level_mask = columns.get_level_values(coverage_idx) == coverage_level
@@ -179,17 +186,17 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
                 columns.get_level_values(var_type_idx) == "lower"
             )
             if any(lower_mask):
-                lower = pred_int_transformed.loc[:, lower_mask]
+                lower = pred_int_transformed.loc[:, lower_mask].squeeze(axis=1)
                 lower_adjusted = self._apply_bias_adjustment(lower, variance)
-                result.loc[:, lower_mask] = lower_adjusted
+                result.loc[:, lower_mask] = lower_adjusted.to_numpy()[:, None]
 
             upper_mask = level_mask & (
                 columns.get_level_values(var_type_idx) == "upper"
             )
             if any(upper_mask):
-                upper = pred_int_transformed.loc[:, upper_mask]
+                upper = pred_int_transformed.loc[:, upper_mask].squeeze(axis=1)
                 upper_adjusted = self._apply_bias_adjustment(upper, variance)
-                result.loc[:, upper_mask] = upper_adjusted
+                result.loc[:, upper_mask] = upper_adjusted.to_numpy()[:, None]
 
         result = result.sort_index(axis=1)
 
