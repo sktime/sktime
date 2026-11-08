@@ -198,6 +198,45 @@ def test_metric_coercion_bug():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_mse_evaluate_by_index_rmse_pseudo_values():
+    """Regression: RMSE evaluate_by_index returns jackknife pseudo-values.
+
+    Tests that RMSE evaluate_by_index returns jackknife pseudo-values,
+    not raw squared errors.
+
+    This test defines the intended behaviour after the refactor of
+    MeanSquaredError(square_root=True)._evaluate_by_index, to guard against
+    future regressions.
+    """
+    from sktime.performance_metrics.forecasting import MeanSquaredError
+
+    # simple 1D example
+    y_true = pd.Series([3.0, -0.5, 2.0, 7.0], name="y")
+    y_pred = pd.Series([2.5, 0.0, 2.0, 8.0], name="yhat")
+
+    mse = MeanSquaredError(square_root=True)
+
+    # value under test
+    by_index = mse.evaluate_by_index(y_true, y_pred)
+    # cast to numpy 1D
+    by_index = np.asarray(by_index)
+
+    # independently compute expected jackknife pseudo-values for RMSE
+    # this mirrors the logic in _mse.py
+    raw_values = (y_true - y_pred) ** 2
+    raw_values = raw_values.to_numpy()
+    n = raw_values.shape[0]
+
+    mse_all = raw_values.mean()
+    rmse_all = np.sqrt(mse_all)
+    sqe_sum = raw_values.sum()
+    mse_jackknife = (sqe_sum - raw_values) / (n - 1)
+    rmse_jackknife = np.sqrt(mse_jackknife)
+    expected = n * rmse_all - (n - 1) * rmse_jackknife
+
+    np.testing.assert_allclose(by_index, expected)
+
+
 @pytest.mark.parametrize(
     "metric_name",
     [
@@ -727,4 +766,30 @@ def test_maep_evaluate_by_index_is_jackknife(y_true, y_pred):
     ]
 
     by_index = metric.evaluate_by_index(y_true, y_pred)
+    assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if tested module has changed.",
+)
+def test_default_evaluate_by_index_with_sample_weight():
+    """Default jackknife evaluate_by_index must drop the i-th sample weight."""
+    from sktime.performance_metrics.forecasting import MeanSquaredPercentageError
+
+    y_true = pd.Series([3.0, 1.5, 2.0, 7.0, 2.0])
+    y_pred = pd.Series([2.5, 1.0, 2.0, 8.0, 1.25])
+    w = np.array([1.0, 2.0, 0.5, 3.0, 1.0])
+    metric = MeanSquaredPercentageError(square_root=True)
+
+    n = len(y_true)
+    full = metric(y_true, y_pred, sample_weight=w)
+    expected = [
+        n * full
+        - (n - 1)
+        * metric(y_true.drop(i), y_pred.drop(i), sample_weight=np.delete(w, i))
+        for i in range(n)
+    ]
+
+    by_index = metric.evaluate_by_index(y_true, y_pred, sample_weight=w)
     assert np.allclose(by_index.to_numpy(), expected)
