@@ -98,6 +98,7 @@ class BaseEarlyClassifier(BaseEstimator):
         update/predict.
         """
         self.state_info = None
+        self._state = "new"
 
         self._converter_store_y = {}
 
