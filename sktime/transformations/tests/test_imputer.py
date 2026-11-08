@@ -129,3 +129,24 @@ def test_imputer_forecaster_y():
 
     transformer.fit(X=X, y=y)
     transformer.transform(X=X, y=y)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Imputer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize(
+    "method, expected",
+    [
+        ("forecaster", ["pd.DataFrame"]),
+        ("mean", "None"),
+        ("median", "None"),
+        ("drift", "None"),
+        ("fore", "None"),
+        ("cast", "None"),
+        ("", "None"),
+    ],
+)
+def test_imputer_y_inner_mtype_by_method(method, expected):
+    """Only the exact forecaster method requires the auxiliary target as a frame."""
+    assert Imputer(method=method).get_tag("y_inner_mtype") == expected
