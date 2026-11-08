@@ -78,6 +78,27 @@ Time series detection, classification, regression
 Deprecations and removals
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Forecasting
+^^^^^^^^^^^
+
+From version 1.3.0, forecasters no longer universally provide "refitting " ``update`` capability by default
+and as a consequence no longer store all data seen so far in ``self._y`` and/or ``self._X``.
+Forecasters with an available "update" mode can now be queried via the ``capability:update`` tag.
+To replicate the former default behaviour of "memorize all data and refit" in an upwards compatible way,
+users can use the ``UpdateRefitsEvery`` compositor from ``sktime.forecasting.stream``.
+In order to test future post-1.3.0 behaviour, users can set the config ``remember_data`` to ``False``,
+via the ``.set_config(remember_data=False)`` (prior to forecaster use).
+
+Time series classification and regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In tuners ``TSCGridSearchCV`` and ``TSRGridSearchCV``,
+deprecated parameters ``n_jobs`` and ``pre_dispatch`` have been removed.
+
+Configuration parameters for the parallelization backend should be passed via
+``backend_params`` in the future.
+
+
 Enhancements
 ~~~~~~~~~~~~
 
@@ -199,9 +220,10 @@ Documentation
 
 Maintenance
 ~~~~~~~~~~~
-* [MNT] [Dependabot](deps-dev): Update sphinx-gallery requirement from <0.22.0 to <0.23.0 (:pr:`11266`) :user:`dependabot[bot]`
+
+* [MNT] [Dependabot](deps-dev): Update sphinx-gallery requirement from ``<0.22.0`` to ``<0.23.0`` (:pr:`11266`) :user:`dependabot[bot]`
 * [MNT] all-contributors update (:pr:`11303`) :user:`github-actions[bot]`
-* [MNT] Update core dependency upper bounds - ``scikit-base<1.3.0`` and ``numba<1.3.0`` (:pr:`11391`) :user:`aryamanDutta`
+* [MNT] Update core dependency upper bounds - ``scikit-base<1.3.0`` and ``numba<0.69`` (:pr:`11391`) :user:`aryamanDutta`
 * [MNT] raise ``skpro`` bound to ``skpro<2.17`` (:pr:`11396`) :user:`fkiraly`
 * [MNT] add PragnyaKhandelwal to all-contributors (:pr:`10036`) :user:`PragnyaKhandelwal`
 * [MNT] Bump ``github/codeql-action`` from ``4.38.1`` to ``4.38.3`` (:pr:`11466`) :user:`dependabot[bot]`
