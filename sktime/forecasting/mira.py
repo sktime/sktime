@@ -283,7 +283,11 @@ def _resolve_device():
 
 def _index_as_float(index) -> np.ndarray:
     """Map sktime index labels to float time coordinates for MIRA ``time_values``."""
-    if isinstance(index, (pd.DatetimeIndex, pd.PeriodIndex)):
+    if isinstance(index, pd.DatetimeIndex):
+        # Subtract in integer precision: epoch timestamps collapse in float32,
+        # and even float64 loses nanosecond differences at modern dates.
+        return (index.asi8 - index.asi8[0]).astype(np.float64)
+    if isinstance(index, pd.PeriodIndex):
         return index.asi8.astype(np.float64)
     arr = np.asarray(index)
     if np.issubdtype(arr.dtype, np.number):
@@ -325,7 +329,8 @@ def _prepare_context(y, pred_len, cutoff, context_length):
         series = series[-context_length:]
         index = index[-context_length:]
 
-    times_np = np.concatenate([_index_as_float(index), _index_as_float(future_index)])
+    # Use one origin for context and future so their relative spacing is kept.
+    times_np = _index_as_float(index.append(future_index))
     values = torch.tensor(series.reshape(1, -1), dtype=torch.float32)
     times = torch.tensor(times_np.reshape(1, -1), dtype=torch.float32)
     return values, times
