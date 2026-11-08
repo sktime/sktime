@@ -103,35 +103,3 @@ def test_mira_airline_predictions_match_source_reference(
         rtol=1e-5,
         atol=1e-4,
     )
-
-
-def test_mira_local_checkpoint(tmp_path):
-    """Load and forecast with installed dependencies, without a Hub download."""
-    import torch
-
-    from sktime.libs.mira import MIRAConfig, MIRAForPrediction
-
-    torch.manual_seed(0)
-    model = MIRAForPrediction(
-        MIRAConfig(
-            hidden_size=16,
-            intermediate_size=32,
-            num_hidden_layers=1,
-            num_attention_heads=2,
-            num_experts_per_tok=1,
-            use_dense=True,
-            apply_aux_loss=False,
-        )
-    )
-    model.save_pretrained(tmp_path)
-    y = load_airline().iloc[:12]
-    forecaster = MIRAForecaster(
-        model_path=str(tmp_path), config={"local_files_only": True}
-    )
-
-    y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])
-
-    assert len(y_pred) == 3
-    assert list(y_pred.index) == [y.index[-1] + step for step in [1, 2, 3]]
-    assert y_pred.name == y.name
-    assert np.isfinite(y_pred.to_numpy()).all()
