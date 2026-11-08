@@ -153,4 +153,3 @@ def test_t0_forecaster_update_context_length_truncation():
         f"context_ should be capped at context_length=15, "
         f"got {forecaster.context_.shape[1]}"
     )
-

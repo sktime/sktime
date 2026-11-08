@@ -623,6 +623,29 @@ class catalogue(_BaseScitypeOfObject):
         return TestAllCatalogues
 
 
+class benchmark_analyzer(_BaseScitypeOfObject):
+    """Analyzer of benchmark results.
+
+    Benchmark analyzers consume the flat results table produced by the
+    benchmarking framework and compute a benchmark analysis, such as ranking,
+    omnibus or pairwise significance tests, or critical-difference diagrams.
+
+    Base class: :class:`sktime.benchmarking.analysis.BaseBenchmarkAnalyzer`
+    """
+
+    _tags = {
+        "scitype_name": "benchmark_analyzer",
+        "short_descr": "analyzer of benchmark results",
+        "parent_scitype": "object",
+    }
+
+    @classmethod
+    def get_base_class(cls):
+        from sktime.benchmarking.analysis._base import BaseBenchmarkAnalyzer
+
+        return BaseBenchmarkAnalyzer
+
+
 class reconciler(_BaseScitypeOfObject):
     _tags = {
         "scitype_name": "reconciler",

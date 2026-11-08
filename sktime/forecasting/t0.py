@@ -169,7 +169,18 @@ class T0Forecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:non_contiguous_X": False,
+        # CI and testing tags
+        # -------------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_t0"],
+        # Shorthands
+        # -----------
+        "shorthands": {
+            "t0": (
+                'T0Forecaster(model_path="theforecastingcompany/t0-alpha", '
+                "license_accepted=True)"
+            ),
+        },
     }
 
     def __init__(
@@ -478,12 +489,12 @@ class T0Forecaster(BaseForecaster):
         """Update forecaster with new observations, extending the context series.
 
         New observations are appended to the stored context (``self.context_``).
-        If ``context_length`` is set, the context is truncated to the most recent
-        ``context_length`` time points after appending.
+        If ``context_length`` is set, the context is truncated to the most
+        recent ``context_length`` time points after appending.
 
         ``update_params`` has no effect: T0 is a zero-shot model and does not
         train, so there are no parameters to update. The context window is
-        always refreshed with the new observations.
+        always refreshed with the new data.
 
         Parameters
         ----------
