@@ -87,7 +87,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     >>> sp_auto = PluginParamsForecaster(sp_est, fcst)  # doctest: +SKIP
     >>>
     >>> # fit sp_auto to data, predict, and inspect the tuned sp parameter
-    >>> sp_auto.fit(y, fh=[1, 2, 3])  # doctest: +SKIP
+    >>> sp_auto.fit(y, fh=3)  # doctest: +SKIP
     PluginParamsForecaster(...)
     >>> y_pred = sp_auto.predict()  # doctest: +SKIP
     >>> sp_auto.forecaster_.get_params()["sp"]  # doctest: +SKIP
