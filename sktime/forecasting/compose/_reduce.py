@@ -244,6 +244,7 @@ class _Reducer(_BaseWindowForecaster):
         window_length=10,
         transformers=None,
         pooling="local",
+        window_stride=1,
     ):
         super().__init__(window_length=window_length)
         self.transformers = transformers
@@ -251,6 +252,7 @@ class _Reducer(_BaseWindowForecaster):
         self.estimator = estimator
         self.pooling = pooling
         self._cv = None
+        self.window_stride = window_stride
 
         # it seems that the sklearn tags are not fully reliable
         # see discussion in PR #3405 and issue #3402
@@ -277,6 +279,29 @@ class _Reducer(_BaseWindowForecaster):
         self.set_tags(**{"capability:pred_int": _est_type == "regressor_proba"})
 
         self._est_type = _est_type
+
+    def _subsample_windows(self, yt, Xt):
+        """Select training windows, restarting the stride for each pooled series."""
+        stride = self.window_stride
+        if (
+            isinstance(stride, bool | np.bool_)
+            or not isinstance(stride, int | np.integer)
+            or stride < 1
+        ):
+            raise ValueError("window_stride must be a positive integer")
+        if stride == 1:
+            return yt, Xt
+
+        if isinstance(Xt, pd.DataFrame) and isinstance(Xt.index, pd.MultiIndex):
+            levels = list(range(Xt.index.nlevels - 1))
+            positions = Xt.groupby(level=levels, sort=False, dropna=False).cumcount()
+            rows = np.flatnonzero(positions.to_numpy() % stride == 0)
+        else:
+            rows = np.arange(0, len(Xt), stride)
+
+        yt = yt.iloc[rows] if isinstance(yt, pd.Series | pd.DataFrame) else yt[rows]
+        Xt = Xt.iloc[rows] if isinstance(Xt, pd.DataFrame) else Xt[rows]
+        return yt, Xt
 
     def _is_predictable(self, last_window):
         """Check if we can make predictions from last window."""
@@ -519,6 +544,7 @@ class _DirectReducer(_Reducer):
         transformers=None,
         pooling="local",
         windows_identical=True,
+        window_stride=1,
     ):
         self.windows_identical = windows_identical
         super().__init__(
@@ -526,6 +552,7 @@ class _DirectReducer(_Reducer):
             window_length=window_length,
             transformers=transformers,
             pooling=pooling,
+            window_stride=window_stride,
         )
 
     def _transform(self, y, X=None):
@@ -648,6 +675,8 @@ class _DirectReducer(_Reducer):
             else:
                 Xt_cut = Xt[: -(fh_rel[i] - 1)]
                 yt_cut = yt[: -(fh_rel[i] - 1), i]
+
+            yt_cut, Xt_cut = self._subsample_windows(yt_cut, Xt_cut)
 
             # coercion to pandas for skpro proba regressors
             if self._est_type != "regressor" and not isinstance(Xt, pd.DataFrame):
@@ -847,6 +876,7 @@ class _MultioutputReducer(_Reducer):
         )
 
         yt, Xt = self._transform(y, X)
+        yt, Xt = self._subsample_windows(yt, Xt)
 
         # Fit a multi-output estimator to the transformed data.
         self.estimator_ = clone(self.estimator)
@@ -1004,6 +1034,7 @@ class _RecursiveReducer(_Reducer):
                 )
 
         yt, Xt = self._transform(y, X)
+        yt, Xt = self._subsample_windows(yt, Xt)
 
         # Make sure yt is 1d array to avoid DataConversion warning from scikit-learn.
         if self.transformers_ is not None:
@@ -1200,6 +1231,7 @@ class _DirRecReducer(_Reducer):
 
         # Transform the data using sliding-window.
         yt, Xt = self._transform(y, X)
+        yt, Xt = self._subsample_windows(yt, Xt)
 
         # We cast the 2d tabular array into a 3d panel array to handle the data
         # consistently for the reduction to tabular and time-series regression.
@@ -1291,6 +1323,12 @@ class DirectTabularRegressionForecaster(_DirectReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    window_stride : int, default=1
+        Positive number of time points between training windows. The first
+        eligible window is retained, followed by every ``window_stride``-th
+        window. For global pooling, selection restarts for each series.
+        Applies only to training; prediction uses the latest available window.
+        The default of 1 retains every training window.
     """
 
     _tags = {
@@ -1304,9 +1342,13 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         transformers=None,
         pooling="local",
         windows_identical=True,
+        window_stride=1,
     ):
         super(_DirectReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            window_stride=window_stride,
         )
         self.pooling = pooling
         self.windows_identical = windows_identical
@@ -1345,6 +1387,12 @@ class MultioutputTabularRegressionForecaster(_MultioutputReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    window_stride : int, default=1
+        Positive number of time points between training windows. The first
+        eligible window is retained, followed by every ``window_stride``-th
+        window. For global pooling, selection restarts for each series.
+        Applies only to training; prediction uses the latest available window.
+        The default of 1 retains every training window.
     """
 
     _tags = {
@@ -1377,6 +1425,12 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
         (local) of if you wish to fit a single model to all instances ("global").
+    window_stride : int, default=1
+        Positive number of time points between training windows. The first
+        eligible window is retained, followed by every ``window_stride``-th
+        window. For global pooling, selection restarts for each series.
+        Applies only to training; prediction uses the latest available window.
+        The default of 1 retains every training window.
     """
 
     _tags = {
@@ -1393,9 +1447,13 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
         window_length=10,
         transformers=None,
         pooling="local",
+        window_stride=1,
     ):
         super(_RecursiveReducer, self).__init__(
-            estimator=estimator, window_length=window_length, transformers=transformers
+            estimator=estimator,
+            window_length=window_length,
+            transformers=transformers,
+            window_stride=window_stride,
         )
         self.pooling = pooling
 
@@ -1436,6 +1494,12 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
+    window_stride : int, default=1
+        Positive number of time points between training windows. The first
+        eligible window is retained, followed by every ``window_stride``-th
+        window. For global pooling, selection restarts for each series.
+        Applies only to training; prediction uses the latest available window.
+        The default of 1 retains every training window.
     """
 
     _tags = {
@@ -1458,6 +1522,12 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    window_stride : int, default=1
+        Positive number of time points between training windows. The first
+        eligible window is retained, followed by every ``window_stride``-th
+        window. For global pooling, selection restarts for each series.
+        Applies only to training; prediction uses the latest available window.
+        The default of 1 retains every training window.
     """
 
     _tags = {
@@ -1517,6 +1587,12 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    window_stride : int, default=1
+        Positive number of time points between training windows. The first
+        eligible window is retained, followed by every ``window_stride``-th
+        window. For global pooling, selection restarts for each series.
+        Applies only to training; prediction uses the latest available window.
+        The default of 1 retains every training window.
     """
 
     _tags = {
@@ -1539,6 +1615,12 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix.
+    window_stride : int, default=1
+        Positive number of time points between training windows. The first
+        eligible window is retained, followed by every ``window_stride``-th
+        window. For global pooling, selection restarts for each series.
+        Applies only to training; prediction uses the latest available window.
+        The default of 1 retains every training window.
     """
 
     _tags = {
@@ -1605,6 +1687,12 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
     window_length : int, optional (default=10)
         The length of the sliding window used to transform the series into
         a tabular matrix
+    window_stride : int, default=1
+        Positive number of time points between training windows. The first
+        eligible window is retained, followed by every ``window_stride``-th
+        window. For global pooling, selection restarts for each series.
+        Applies only to training; prediction uses the latest available window.
+        The default of 1 retains every training window.
     """
 
     _tags = {
@@ -1622,6 +1710,7 @@ def make_reduction(
     transformers=None,
     pooling="local",
     windows_identical=True,
+    window_stride=1,
 ):
     r"""Make forecaster based on reduction to tabular or time-series regression.
 
@@ -1744,11 +1833,25 @@ def make_reduction(
         (False: Number of windows = total observations + 1 - window_length
         - forecasting horizon). See pictionary below for more information.
 
+    window_stride : int, default=1
+        Positive number of time points between training windows. The first
+        eligible window is retained, followed by every ``window_stride``-th
+        window. For global pooling, selection restarts for each series.
+        Applies only to training; prediction uses the latest available window.
+        The default of 1 retains every training window.
+
     Returns
     -------
     forecaster : an sktime forecaster object
         the reduction forecaster, wrapping ``estimator``
         class is determined by the ``strategy`` argument and type of ``estimator``.
+
+    Notes
+    -----
+    ``window_stride`` subsamples the rows passed to the regression estimator.
+    Lagged features are still constructed using the full history. For example,
+    ``window_stride=3`` fits on the first eligible window and every third window
+    thereafter, while predictions still start from the most recent observations.
 
     Examples
     --------
@@ -1782,6 +1885,7 @@ def make_reduction(
         "transformers": transformers,
         "pooling": pooling,
         "windows_identical": windows_identical,
+        "window_stride": window_stride,
     }
 
     return construct_dispatch(Forecaster, dispatch_params)
@@ -1950,7 +2054,7 @@ def slice_at_ix(df, ix):
         all index levels are retained in the return, none are dropped
         CAVEAT: index is sorted by last (-1 st) level if ix is iterable
     """
-    if isinstance(ix, (list, pd.Index, ForecastingHorizon)):
+    if isinstance(ix, list | pd.Index | ForecastingHorizon):
         return pd.concat([slice_at_ix(df, x) for x in ix])
     if isinstance(df.index, pd.MultiIndex):
         return df.xs(ix, level=-1, axis=0, drop_level=False)
