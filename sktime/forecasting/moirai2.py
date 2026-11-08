@@ -1,5 +1,7 @@
 """Adapter for using MOIRAI 2.0 Forecasters."""
 
+import re
+
 import pandas as pd
 from skbase.utils.dependencies import _check_soft_dependencies
 
@@ -489,7 +491,14 @@ class Moirai2Forecaster(BaseForecaster):
         return dataset, df_config
 
     def infer_freq(self, index):
-        """Infer frequency of the index."""
+        """Infer frequency of the index.
+
+        Handles compound pandas frequency aliases such as ``YS-JAN``, ``QS-MAR``,
+        ``AS-OCT``, etc. that arise when a ``PeriodIndex`` is converted to a
+        ``DatetimeIndex`` via ``.to_timestamp()``.  The month suffix is stripped
+        before the base alias is looked up in the normalisation table. Frequency
+        multipliers are retained, e.g., ``2YS-JAN`` becomes ``2Y``.
+        """
         if isinstance(index, pd.PeriodIndex):
             return index.freq
         freq = pd.infer_freq(index[:3])
@@ -503,7 +512,14 @@ class Moirai2Forecaster(BaseForecaster):
             "YE": "Y",
             "AE": "Y",
         }
-        return _offset_to_period.get(freq, freq)
+        if freq is None:
+            return freq
+        # Strip trailing month/anchor suffix (e.g. "YS-JAN" -> "YS", "QS-MAR" -> "QS")
+        base_freq = freq.split("-")[0]
+        match = re.fullmatch(r"(\d*)([A-Z]+)", base_freq)
+        if match is not None and match[2] in _offset_to_period:
+            return match[1] + _offset_to_period[match[2]]
+        return freq
 
     def return_time_index(self, df):
         """Return the time index, given any type of index."""
