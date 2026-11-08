@@ -169,6 +169,10 @@ class TimeBinAggregate(BaseTransformer):
                 Xt.index = bins[1:]
 
         elif self.return_index == "bin_mid":
+            if isinstance(self._bins.left, pd.DatetimeIndex):
+                Xt.index = self._bins.mid
+                return Xt
+
             if isinstance(bins, pd.IntervalIndex):
                 Xt_ix = [(x.left + x.right) / 2 for x in Xt.index]
             else:
