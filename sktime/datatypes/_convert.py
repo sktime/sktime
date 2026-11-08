@@ -200,7 +200,9 @@ def _extend_conversions(convert_dict, extension_sequence):
                 convert_dict[(tp, mtype, scitype)] = _ConverterConcat(
                     tp_to_anchor, from_anchor
                 )
+
     return convert_dict
+
 
 def convert(
     obj,
