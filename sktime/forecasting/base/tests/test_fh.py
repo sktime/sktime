@@ -1089,3 +1089,22 @@ def test_timestamp_format_to_absolute():
     fh = ForecastingHorizon([1, 2, 3], freq="D")
     y_pred_idx = fh.to_absolute_index(cutoff)
     assert "12:00:00" in str(y_pred_idx)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.base", "sktime.utils.validation"]),
+    reason="Run if tested module has changed.",
+)
+def test_fh_not_mutated_by_fit():
+    """Fitting a forecaster must not set freq on the user's fh, see check_fh."""
+    y_monthly = _make_series(n_timepoints=30, index_type="period")
+    y_daily = _make_series(n_timepoints=30, index_type="datetime")
+    y_daily.index = pd.date_range("2000-01-01", periods=30, freq="D")
+
+    fh = ForecastingHorizon([1, 2, 3])
+    NaiveForecaster().fit(y_monthly, fh=fh).predict()
+    assert fh.freq is None
+
+    # reusing the same fh on data with a different frequency must work
+    y_pred = NaiveForecaster().fit(y_daily).predict(fh=fh)
+    assert y_pred.index.freqstr == "D"
