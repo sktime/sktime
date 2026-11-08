@@ -1892,7 +1892,7 @@ def _create_fcst_df(target_date, origin_df, fill=None):
 
     Parameters
     ----------
-    target_date : a list of dates
+    target_date : list of dates, pd.Index, or absolute ForecastingHorizon
         this will be correspond to the new timepoints index to be created in the
         forecasting dataframe
     origin_df : a pandas Series or Dataframe
@@ -1909,30 +1909,25 @@ def _create_fcst_df(target_date, origin_df, fill=None):
     -------
     A pandas dataframe or series
     """
-    fh_idx_flat = pd.Index(target_date)
-
-    origin_index = origin_df.index
-
-    # Fast path for panel data (MultiIndex): build the cartesian product of
-    # instance identifiers × fh time-points directly, without calling
-    # get_expected_pred_idx which iterates over every series and calls
-    # get_cutoff / check_is_mtype once per instance (the dominant bottleneck
-    # for global-pooled recursive forecasting, see sktime/sktime#11329).
-    if isinstance(origin_index, pd.MultiIndex):
-        y_inst_idx = origin_index.droplevel(-1).unique()
-        if isinstance(y_inst_idx, pd.MultiIndex):
-            fh_list = [x + (z,) for x in y_inst_idx for z in fh_idx_flat]
-        else:
-            fh_list = [(x, z) for x in y_inst_idx for z in fh_idx_flat]
-        index = pd.Index(fh_list)
-        if hasattr(origin_index, "names") and origin_index.names is not None:
-            index.names = origin_index.names
+    if isinstance(target_date, ForecastingHorizon):
+        fh = target_date.to_absolute(cutoff=None)
     else:
-        # Scalar / flat index: the original single-series path (fast already).
-        if not isinstance(fh_idx_flat, ForecastingHorizon):
-            fh = ForecastingHorizon(fh_idx_flat, is_relative=False)
-        else:
-            fh = fh_idx_flat.to_absolute()
+        fh = ForecastingHorizon(pd.Index(target_date), is_relative=False)
+
+    if isinstance(origin_df.index, pd.MultiIndex):
+        # Retain frequency compatibility checks without inspecting each instance.
+        fh.freq = origin_df.index.levels[-1]
+        # Dates are absolute: no per-instance cutoff or mtype checks are needed.
+        # Repeat only observed instance keys, not the product of hierarchy levels.
+        instances = origin_df.index.droplevel(-1).unique()
+        dates = fh.to_pandas()
+        arrays = [
+            instances.get_level_values(level).repeat(len(dates))
+            for level in range(instances.nlevels)
+        ]
+        arrays.append(dates.take(np.tile(np.arange(len(dates)), len(instances))))
+        index = pd.MultiIndex.from_arrays(arrays, names=origin_df.index.names)
+    else:
         index = fh.get_expected_pred_idx(origin_df)
 
     if isinstance(origin_df, pd.Series):
@@ -1952,7 +1947,6 @@ def _create_fcst_df(target_date, origin_df, fill=None):
         res.name = origin_df.name
 
     return res
-
 
 
 def slice_at_ix(df, ix):
