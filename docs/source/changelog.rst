@@ -17,6 +17,121 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 1.3.0 - 2026-11-09
+--------------------------
+
+Highlights
+~~~~~~~~~~
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forecasting
+^^^^^^^^^^^
+
+Parameter estimation and hypothesis testing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Registry and search
+^^^^^^^^^^^^^^^^^^^
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+Transformations
+^^^^^^^^^^^^^^^
+
+Test framework
+^^^^^^^^^^^^^^
+
+Documentation
+~~~~~~~~~~~~~
+
+Maintenance
+~~~~~~~~~~~
+
+Fixes
+~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Data types, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forecasting
+^^^^^^^^^^^
+
+Parameter estimation and hypothesis testing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Registry and search
+^^^^^^^^^^^^^^^^^^^
+
+Time series alignment
+^^^^^^^^^^^^^^^^^^^^^
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+Time series distances and kernels
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+Transformations
+^^^^^^^^^^^^^^^
+
+Test framework
+^^^^^^^^^^^^^^
+
+
 Version 1.2.0 - 2026-09-22
 --------------------------
 
