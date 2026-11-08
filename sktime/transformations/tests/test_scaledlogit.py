@@ -4,6 +4,7 @@
 __author__ = ["ltsaprounis"]
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
@@ -81,3 +82,19 @@ def test_scaledlogit_transform_extreme_ratio(X, lower, upper):
         result = ScaledLogitTransformer(lower, upper).fit_transform(X)
     assert np.isfinite(result).all()
     np.testing.assert_allclose(result, expected)
+
+
+def test_scaledlogit_extreme_ratio_multivariate_frame():
+    """Finite logits preserve the frame layout and leave caller data untouched."""
+    X = pd.DataFrame(
+        {"small": [1e-300, 1e-200], "large": [1e299, 5e299]},
+        index=pd.date_range("2026-01-01", periods=2),
+    )
+    original = X.copy(deep=True)
+    with np.errstate(over="raise", divide="raise", invalid="raise"):
+        result = ScaledLogitTransformer(1e-310, 1e300).fit_transform(X)
+    assert np.isfinite(result.to_numpy()).all()
+    np.testing.assert_allclose(result["large"], [-np.log(9.0), 0.0], atol=1e-12)
+    pd.testing.assert_index_equal(result.index, X.index)
+    pd.testing.assert_index_equal(result.columns, X.columns)
+    pd.testing.assert_frame_equal(X, original)
