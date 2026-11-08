@@ -43,6 +43,6 @@ def test_multiplex_classifier():
         scoring="accuracy",  # accuracy balanced_accuracy
         verbose=3,
         refit=True,
-        n_jobs=1,
+        backend_params={"n_jobs": 1},
     )
     parameter_tuning.fit_predict(X_train, y_train)

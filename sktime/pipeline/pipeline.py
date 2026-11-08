@@ -134,7 +134,7 @@ class Pipeline(BaseEstimator):
     ...      "name": "SARIMAX",
     ...      "edges": {"X": "exp", "y": "y"}}]:
     ...     general_pipeline = general_pipeline.add_step(**step)
-    >>> general_pipeline.fit(y=y_train, X=X_train, fh=[1, 2, 3, 4]) # doctest: +SKIP
+    >>> general_pipeline.fit(y=y_train, X=X_train, fh=4) # doctest: +SKIP
     >>> result_general = general_pipeline.predict(X=X_test) # doctest: +SKIP
 
     **Acknowledgements**
