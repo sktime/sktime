@@ -31,7 +31,7 @@ def test_against_statsmodels():
     autoreg_sktime = AutoREG(lags=2, trend="c")
     autoreg_sktime.fit(y=data, fh=None)
     # predict
-    fh = ForecastingHorizon([x for x in range(1, 13)])
+    fh = ForecastingHorizon([*range(1, 13)])
     start, end = data.shape[0] + fh[0] - 1, data.shape[0] + fh[-1] - 1
     y_pred_stats = sm_autoreg.predict(res.params, start=start, end=end)
     y_pred = autoreg_sktime.predict(fh=fh)

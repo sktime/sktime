@@ -30,7 +30,7 @@ def test_tsfresh_extractor(default_fc_parameters):
     actual = Xt.filter(like="__mean", axis=1).values.ravel()
     converted = convert(X, from_type="nested_univ", to_type="pd-wide")
     expected = converted.mean(axis=1).values
-    assert expected[0] == X.iloc[0, 0].mean()
+    np.testing.assert_allclose(expected[0], X.iloc[0, 0].mean())
     np.testing.assert_allclose(actual, expected)
 
 
