@@ -222,6 +222,7 @@ class VARMAX(_StatsModelsAdapter):
         # "python_dependencies": "statsmodels" - inherited from _StatsModelsAdapter
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": True,
         "capability:exogenous": True,
         "capability:missing_values": False,

@@ -132,7 +132,7 @@ class BaseProbaForecaster(BaseForecaster):
             Concatenated predictive distribution for all instances.
         """
         # Get the vectorized data structure
-        yvec = self._yvec
+        yschema = self._y_schema
 
         # Get the list of forecasters (one per instance)
         forecasters = self.forecasters_
@@ -140,13 +140,16 @@ class BaseProbaForecaster(BaseForecaster):
         # Prepare X for vectorization
         kwargs = {"args_rowvec": {"X": X}}
 
+        backend = self.get_config()["backend:parallel"]
+        backend_params = self.get_config()["backend:parallel:params"]
+
         # Collect distributions from each forecaster
-        dist_list = yvec.vectorize_est(
+        dist_list = yschema.vectorize_est(
             forecasters,
             method="_predict_proba",
             return_type="list",
-            backend=self.get_config()["backend:parallel"],
-            backend_params=self.get_config()["backend:parallel:params"],
+            backend=backend,
+            backend_params=backend_params,
             fh=fh,
             marginal=marginal,
             **kwargs,
@@ -158,18 +161,18 @@ class BaseProbaForecaster(BaseForecaster):
             return dist_list[0]
 
         # Concatenate distributions with proper hierarchical indexing
-        pred_dist = self._concat_distributions_hierarchical(dist_list, yvec)
+        pred_dist = self._concat_distributions_hierarchical(dist_list, yschema)
 
         return pred_dist
 
-    def _concat_distributions_hierarchical(self, dist_list, yvec):
+    def _concat_distributions_hierarchical(self, dist_list, yschema):
         """Concatenate distributions from vectorized prediction.
 
         Parameters
         ----------
         dist_list : list of skpro BaseDistribution
             List of distributions from each instance.
-        yvec : VectorizedDF
+        yschema : VectorizedDF
             The vectorized data structure with instance information.
 
         Returns
@@ -196,7 +199,7 @@ class BaseProbaForecaster(BaseForecaster):
 
         # Get the instance indices from the vectorized structure
         # yvec.get_iter_indices returns (row_idx, col_idx) where row_idx is a MultiIndex
-        row_idx, _ = yvec.get_iter_indices()
+        row_idx, _ = yschema.get_iter_indices()
         if row_idx is None:
             row_idx = pd.RangeIndex(len(dist_list))
 

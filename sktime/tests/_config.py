@@ -44,19 +44,10 @@ EXCLUDED_TESTS_BY_TEST = {
 
 # estimators that have 2 test params only when their soft dependency is installed
 EXCLUDE_SOFT_DEPS = [
-    "BaggingForecaster",
-    "ClustererPipeline",
     "EnbPIForecaster",
-    "FittedParamExtractor",
     "ForecastingOptunaSearchCV",
     "HFTransformersForecaster",
-    "ParamFitterPipeline",
-    "PluginParamsForecaster",
-    "PluginParamsTransformer",
-    "RegressorPipeline",
     "TSBootstrapAdapter",
-    "ThetaModularForecaster",
-    "WeightedEnsembleClassifier",
 ]
 
 # add EXCLUDED_TESTS_BY_TEST to EXCLUDED_TESTS

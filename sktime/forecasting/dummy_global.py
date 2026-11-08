@@ -75,6 +75,7 @@ class DummyGlobalForecaster(BaseForecaster):
         "authors": ["SimonBlanke"],
         # estimator type
         # --------------
+        "category": ["statistical", "naive"],
         "capability:multivariate": True,
         "capability:pretrain": True,
         "capability:pred_int": False,

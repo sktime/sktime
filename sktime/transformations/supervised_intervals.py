@@ -213,7 +213,7 @@ class SupervisedIntervals(BaseTransformer):
         self.reset()
         if y is None:
             raise ValueError("SupervisedIntervals requires `y` in `fit`.")
-        X, y, metadata = self._check_X_y(X=X, y=y, return_metadata=True)
+        X, y, metadata, _, _ = self._check_X_y(X=X, y=y, return_metadata=True)
 
         y = self._fit_setup(X, y)
         X_norm = z_normalise_series_3d(X)

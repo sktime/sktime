@@ -291,6 +291,7 @@ class HFTransformersForecaster(BaseForecaster):
         "maintainers": ["benheid", "geetu040"],
         # estimator type
         # --------------
+        "category": ["deep_learning"],
         "capability:exogenous": True,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
