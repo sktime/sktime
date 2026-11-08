@@ -221,8 +221,7 @@ class TSFreshFeatureExtractor(_TSFreshFeatureExtractor):
     ----------
     .. [1]  https://github.com/blue-yonder/tsfresh
     .. [2]  https://tsfresh.readthedocs.io/en/v0.1.2/text/feature_naming.html
-    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/
-            feature_extraction_settings.html
+    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/feature_extraction_settings.html
     .. [4]  https://tsfresh.readthedocs.io/en/latest/api/tsfresh.feature_extraction.html
             #module-tsfresh.feature_extraction.feature_calculators
     .. [5] Christ, M., Braun, N., Neuffer, J., and Kempa-Liehr A.W. (2018). Time Series
@@ -441,8 +440,7 @@ class TSFreshRelevantFeatureExtractor(_TSFreshFeatureExtractor):
     ----------
     .. [1]  https://github.com/blue-yonder/tsfresh
     .. [2]  https://tsfresh.readthedocs.io/en/v0.1.2/text/feature_naming.html
-    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/
-            feature_extraction_settings.html
+    .. [3]  https://tsfresh.readthedocs.io/en/latest/text/feature_extraction_settings.html
     .. [4]  https://tsfresh.readthedocs.io/en/latest/api/tsfresh.feature_extraction.html
             #module-tsfresh.feature_extraction.feature_calculators
     .. [5] Christ, M., Braun, N., Neuffer, J., and Kempa-Liehr A.W. (2018). Time Series
