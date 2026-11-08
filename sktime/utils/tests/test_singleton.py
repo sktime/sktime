@@ -81,10 +81,35 @@ def test_detach_from_multiton():
     instance.set_b([1, 2])
 
     detached = _detach_from_multiton(instance)
-    detached.set_b([3])
+    detached.b.append(3)
     detached.a = 0
 
     assert detached is not instance
     assert instance.a == 42
     assert instance.b == [1, 2]
     assert _TestMultiton("key_detach") is instance
+
+
+def test_detach_from_multiton_preserves_shared_torch_weights():
+    """Training a detached model changes neither cached parameters nor buffers."""
+    torch = pytest.importorskip("torch")
+    model = torch.nn.Linear(2, 1)
+    model.register_buffer("running_count", torch.tensor(0.0))
+    model.eval()
+    before = {
+        name: tensor.detach().clone() for name, tensor in model.state_dict().items()
+    }
+    detached = _detach_from_multiton(model)
+    assert not detached.training
+    assert detached.weight.data_ptr() != model.weight.data_ptr()
+    assert detached.running_count.data_ptr() != model.running_count.data_ptr()
+
+    optimizer = torch.optim.SGD(detached.parameters(), lr=0.1)
+    optimizer.zero_grad()
+    detached(torch.ones(3, 2)).sum().backward()
+    optimizer.step()
+    detached.running_count.add_(1)
+
+    assert not torch.equal(detached.weight, model.weight)
+    for name, tensor in model.state_dict().items():
+        assert torch.equal(tensor, before[name])
