@@ -21,6 +21,26 @@ class _BaseWindowForecaster(BaseForecaster):
         self.window_length = window_length
         self.window_length_ = None
 
+    def _store_fit_data(self, y, X=None):
+        """Store fit-time endogenous/exogenous snapshot as ``_cur_y`` / ``_cur_X``."""
+        self._cur_y = y
+        self._cur_X = X
+
+    def _append_fit_data(self, y, X=None):
+        """Append new observations to estimator-owned ``_cur_y`` / ``_cur_X``."""
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+
+    def _update(self, y, X=None, update_params=True):
+        """Refresh estimator-owned current snapshot; cutoff updated by base."""
+        # Current snapshot was previously appended in BaseForecaster._update_y_X.
+        # Leaf estimators keep it as _cur_y/_cur_X (not the stream pool _y/_X).
+        self._append_fit_data(y, X)
+        return self
+
     def _predict_boilerplate(self, fh, **kwargs):
         """Dispatcher to in-sample and out-of-sample logic.
 
@@ -56,11 +76,11 @@ class _BaseWindowForecaster(BaseForecaster):
         y_pred = self._predict_boilerplate(fh, **kwargs)
 
         # ensure pd.Series name attribute is preserved
-        if isinstance(y_pred, pd.Series) and isinstance(self._y, pd.Series):
-            y_pred.name = self._y.name
-        if isinstance(y_pred, pd.DataFrame) and isinstance(self._y, pd.Series):
+        if isinstance(y_pred, pd.Series) and isinstance(self._cur_y, pd.Series):
+            y_pred.name = self._cur_y.name
+        if isinstance(y_pred, pd.DataFrame) and isinstance(self._cur_y, pd.Series):
             y_pred = y_pred.iloc[:, 0]
-            y_pred.name = self._y.name
+            y_pred.name = self._cur_y.name
 
         return y_pred
 
@@ -98,7 +118,7 @@ class _BaseWindowForecaster(BaseForecaster):
         -------
         y_pred : pd.DataFrame or pd.Series
         """
-        y_train = self._y
+        y_train = self._cur_y
 
         # generate cutoffs from forecasting horizon, note that cutoffs are
         # still based on integer indexes, so that they can be used with .iloc
@@ -128,10 +148,14 @@ class _BaseWindowForecaster(BaseForecaster):
         cutoff = cutoff[0]
 
         # Get the last window of the endogenous variable.
-        y = self._y.loc[start:cutoff].to_numpy()
+        y = self._cur_y.loc[start:cutoff].to_numpy()
 
         # If X is given, also get the last window of the exogenous variables.
-        X = self._X.loc[start:cutoff].to_numpy() if self._X is not None else None
+        X = (
+            self._cur_X.loc[start:cutoff].to_numpy()
+            if self._cur_X is not None
+            else None
+        )
 
         return y, X
 
@@ -159,7 +183,7 @@ class _BaseWindowForecaster(BaseForecaster):
         if fh is None:
             fh = self.fh
 
-        index = fh.get_expected_pred_idx(y=self._y, cutoff=self.cutoff)
+        index = fh.get_expected_pred_idx(y=self._cur_y, cutoff=self.cutoff)
         columns = self._get_columns(method=method, **kwargs)
 
         y_pred = pd.DataFrame(np.nan, index=index, columns=columns)

@@ -93,6 +93,13 @@ class PatchTSTForecaster(BaseForecaster):
     validation_split : float, optional, default = 0.2
         Fraction of the data to use for validation.
 
+    device : str, optional (default=None)
+        Device on which to load the model, passed to the transformers
+        ``device_map``, for example ``"cpu"``, ``"cuda"``, or ``"auto"``.
+        ``"auto"`` selects an available accelerator. If ``None``, the
+        transformers default placement is used. Ignored when ``model_path`` is
+        an already initialized ``PatchTSTModel``, which keeps its own device.
+
     config : dict, optional, default = {}
         A config dict specifying parameters to initialize a full PatchTST
         model. Missing parameters in the config will be automatically replaced
@@ -367,6 +374,7 @@ class PatchTSTForecaster(BaseForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -378,12 +386,12 @@ class PatchTSTForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
         # Tests and CI tags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_patch_tst"],
     }
 
     def __init__(
@@ -396,24 +404,40 @@ class PatchTSTForecaster(BaseForecaster):
         training_args=None,
         compute_metrics=None,
         callbacks=None,
+        device=None,
     ):
         self.model_path = model_path
         self.fit_strategy = fit_strategy
         # dataset and training parameters
         self.validation_split = validation_split
         self.config = config
-        self._config = self.config if self.config else {}
         self.training_args = training_args
-        self._training_args = self.training_args if self.training_args else {}
         self.compute_metrics = compute_metrics
         self.callbacks = callbacks
+        self.device = device
 
-        self._config = self.config if self.config else {}
         super().__init__()
+
+    def __post_init__(self):
+        """Post-init constructor logic, can be used by inheriting classes.
+
+        This method should be used for:
+
+        * parameter validation
+        * initialization logic beyond self.param = param
+        * any soft dependency imports in the constructor
+
+        IMPORTANT: no significant compute or memory use should happen in __post_init__,
+        memory and compute intensive operations should be in _fit, not __post_init__.
+        """
+        self._config = self.config if self.config else {}
+        self._training_args = self.training_args if self.training_args else {}
+
         if self.fit_strategy not in ["full", "minimal", "zero-shot"]:
             raise ValueError("unexpected fit_strategy passed in argument")
 
-        if self.model_path is None and self.fit_strategy != "full":
+        model_path = self.model_path
+        if model_path is None and self.fit_strategy != "full":
             raise ValueError(f"model_path={model_path} requires fit_strategy=='full'")
 
     def _fit(self, y, X=None, fh=None):
@@ -431,6 +455,8 @@ class PatchTSTForecaster(BaseForecaster):
         -------
         self : a reference to the object
         """
+        self._cur_y = y
+        self._cur_X = X
         if isinstance(self.model_path, PatchTSTModel):
             self.model = self.model_path
             config = self.model.config
@@ -448,7 +474,7 @@ class PatchTSTForecaster(BaseForecaster):
             _config["num_input_channels"] = len(y.columns)
             if fh is not None:
                 _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
+                    *fh.to_relative(self._cutoff)._values,
                     _config["prediction_length"],
                 )
 
@@ -456,13 +482,19 @@ class PatchTSTForecaster(BaseForecaster):
 
             if not self.model_path:
                 self.model = PatchTSTForPrediction(config=config)
+                if self.device not in (None, "auto"):
+                    self.model = self.model.to(self.device)
             else:
                 # Load model with the passed config if it is given
+                load_kwargs = {}
+                if self.device is not None:
+                    load_kwargs["device_map"] = self.device
                 self.model, info = PatchTSTForPrediction.from_pretrained(
                     self.model_path,
                     config=config,
                     output_loading_info=True,
                     ignore_mismatched_sizes=True,
+                    **load_kwargs,
                 )
 
             if self.fit_strategy == "zero-shot":
@@ -540,6 +572,7 @@ class PatchTSTForecaster(BaseForecaster):
 
         # Train the model
         trainer.train()
+        self.model = trainer.model
 
         return self
 
@@ -569,7 +602,7 @@ class PatchTSTForecaster(BaseForecaster):
         y_pred : sktime time series object
             pandas DataFrame
         """
-        y = self._y
+        y = self._cur_y
         if fh is None:
             fh = self.fh_
         else:
@@ -643,19 +676,9 @@ class PatchTSTForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        import platform
-
-        os = platform.system()
-        if os == "Darwin":
-            if _check_soft_dependencies("torch", severity="none"):
-                import torch
-
-                torch.backends.mps.is_available = lambda: False
-            else:
-                pass
-
         params_set = []
         params1 = {
+            "device": "cpu",
             "config": {
                 "patch_length": 2,
                 "context_length": 4,
@@ -672,11 +695,13 @@ class PatchTSTForecaster(BaseForecaster):
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
                 "per_device_train_batch_size": 16,
+                "use_cpu": True,
             },
             "validation_split": 0.0,
         }
         params_set.append(params1)
         params2 = {
+            "device": "cpu",
             "config": {
                 "patch_length": 1,
                 "context_length": 2,
@@ -693,6 +718,7 @@ class PatchTSTForecaster(BaseForecaster):
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
                 "per_device_train_batch_size": 16,
+                "use_cpu": True,
             },
             "validation_split": 0.0,
         }

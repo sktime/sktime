@@ -705,11 +705,109 @@ class tests__python_dependencies(_BaseTag):
     }
 
 
+class shorthands(_BaseTag):
+    """Alphanumeric shorthands involving the object.
+
+    - String name: ``"shorthands"``
+    - Private tag, developer and framework facing
+    - Values: dict with str key and str value, or None.
+      str keys must be valid python variable names; values must be valid sktime
+      craft strings, not involving shorthands.
+    - Example: {"foobar": "NaiveForecaster(strategy='mean')"}
+    - Default: None
+
+    - Example: ``{"foobar": "NaiveForecaster(strategy='mean')"}``
+    - Default: None
+
+    ``shorthands`` records alphanumeric shorthand aliases for the object.
+
+    The value is a dict, so an estimator can carry multiple shorthand entries.
+
+    Valid key and value pairs of the dict of shorthands are:
+
+    * str key: valid python variable name.
+    * str value: valid sktime craft string, not involving shorthands.
+    """
+
+    _tags = {
+        "tag_name": "shorthands",
+        "parent_type": "object",
+        "tag_type": "dict",
+        "short_descr": "alphanumeric shorthand aliases for the object",
+        "user_facing": True,
+    }
+
+
 # Estimator tags
 # --------------
 
 # These tags are applicable to a wide range of objects,
 # most tags in this group apply to estimators
+
+
+class category(_BaseTag):
+    """Algorithm category of an estimator, by fitting principle.
+
+    - String name: ``"category"``
+    - Public information tag
+    - Applies to: estimators.
+    - Values: list of strings, each from the list below
+    - Example: ``["statistical"]``
+    - Example 2: ``["deep_learning", "foundation_model"]``
+    - Default: ``["statistical"]`` on forecasters.
+
+    ``category`` records how an estimator produces its result.
+    This is the fitting principle, not the scientific type
+    such as ``"forecaster"`` or ``"classifier"``.
+
+    The value is a list, so an estimator can carry more than one entry.
+
+    Valid values are:
+
+    * ``"statistical"``: classical statistical method. For forecasters this
+      includes naive baselines, exponential smoothing, ARIMA-type models,
+      structural models, intermittent-demand methods, and parametric curves.
+    * ``"naive"``: naive baseline, such as last value, mean, or a prescribed
+      playback. Naive models are also tagged ``"statistical"``.
+    * ``"machine_learning"``: machine learning method that is not a neural
+      network, such as a tree ensemble or a support vector machine.
+    * ``"deep_learning"``: neural network trained for the task.
+    * ``"foundation_model"``: deep learning model pretrained on a large
+      corpus. Also tagged ``"deep_learning"``.
+    * ``"reduction"``: reduction to another learning task. The inner
+      estimator determines the fitting principle of a fitted instance.
+    * ``"composition"``: pipeline, ensemble, wrapper, or other compositor.
+      The wrapped estimator carries its own ``category``.
+    * ``"adapter"``: adapter to an API from another library, not a specific estimator.
+      The wrapped model determines the fitting principle.
+    * ``"tuning"``: hyperparameter search over an estimator. Also tagged
+      ``"composition"``, but not all compositions are tuning.
+      The tuned estimator carries its own ``category``.
+    * ``"agentic"``: a language model constructs or revises an estimator
+      pipeline. The generated estimator carries its own ``category``.
+    """
+
+    _tags = {
+        "tag_name": "category",
+        "parent_type": "estimator",
+        "tag_type": (
+            "list",
+            [
+                "statistical",
+                "naive",
+                "machine_learning",
+                "deep_learning",
+                "foundation_model",
+                "reduction",
+                "composition",
+                "adapter",
+                "tuning",
+                "agentic",
+            ],
+        ),
+        "short_descr": "algorithm category of the estimator, by fitting principle",
+        "user_facing": True,
+    }
 
 
 class capability__missing_values(_BaseTag):
@@ -994,6 +1092,48 @@ class property__randomness(_BaseTag):
     }
 
 
+class remember_data(_BaseTag):
+    """Behaviour flag: whether the estimator remembers all data seen.
+
+    - String name: ``"remember_data"``
+    - Public behaviour flag
+    - Values: boolean, ``True`` / ``False``
+    - Example: ``True``
+    - Default: ``False`` (transformers), ``True`` (forecasters)
+
+    Developer tag that modifies behaviour of the boilerplate layer.
+
+    If set to ``True``, the estimator will remember all data seen, and store it
+    internally in the ``self._X`` and/or ``self._y`` attributes, in ``pd.DataFrame``
+    resp hierarchical ``DataFrame`` formats ``pd-multiindex`` or
+    ``pd_multiindex_hier``, if hierarchical data is passed.
+
+    This behaviour can be useful for models with incremental learning capabilities
+    that require access to all previously seen data in their internal logic.
+    Alternatively, the tag can also be useful for debugging.
+
+    If no ``X`` or ``y`` is passed to the estimator,
+    ``self._X`` and ``self._y`` will be set to ``None``.
+
+    Calls to ``update`` will update the data stored in the internal attributes as well,
+    using ``pandas`` update operations.
+
+    If the ``remember_data`` tag is set to ``True``, the ``fit_is_empty`` tag
+    must be ``False``, even if ``_fit`` is empty, because boilerplate
+    writes to ``self._X`` in ``fit``.
+    """
+
+    _tags = {
+        "tag_name": "remember_data",
+        "parent_type": ["forecaster", "transformer"],
+        "tag_type": "bool",
+        "short_descr": (
+            "whether estimator remembers all data seen as self._X, self._y, etc"
+        ),
+        "user_facing": False,
+    }
+
+
 # Forecasters
 # -----------
 
@@ -1158,7 +1298,7 @@ class capability__pred_int__insample(_BaseTag):
 
 
 class capability__pretrain(_BaseTag):
-    """Capability: the forecaster can use pretraining for global learning.
+    """Capability: the estimator can use pretraining for global learning.
 
     - String name: ``"capability:pretrain"``
     - Public capability tag
@@ -1180,13 +1320,22 @@ class capability__pretrain(_BaseTag):
     and subsequent calls to ``fit`` will preserve the pretrained weights
     (enabling fine-tuning) rather than resetting the estimator.
 
-    If the tag is ``False``, the forecaster does not support pretraining,
-    and calling ``pretrain`` will have no effect.
+    For detectors, the workflow is ``detector.pretrain(X_panel)``,
+    then ``detector.fit(X_series)``, then ``detector.predict(X_series)``.
+
+    For classifiers and regressors, the workflow is
+    ``estimator.pretrain(X_pretrain, y_pretrain)``, where ``y_pretrain`` is
+    optional and need not have the same labels as in ``fit``,
+    then ``estimator.fit(X, y)``, then ``estimator.predict(X_new)``.
+
+    If the tag is ``False``, the estimator does not support pretraining.
+    Calling ``pretrain`` does not learn from the data,
+    it only sets the state to ``"pretrained"``.
     """
 
     _tags = {
         "tag_name": "capability:pretrain",
-        "parent_type": "forecaster",
+        "parent_type": ["forecaster", "detector", "classifier", "regressor"],
         "tag_type": "bool",
         "short_descr": "can use pretrain for global learning",
         "user_facing": True,
@@ -1216,7 +1365,7 @@ class pretrain__fitted_params(_BaseTag):
 
     _tags = {
         "tag_name": "pretrain:fitted_params",
-        "parent_type": "forecaster",
+        "parent_type": ["forecaster", "classifier", "regressor"],
         "tag_type": ("list", "str"),
         "short_descr": "attributes carrying pretrained state",
         "user_facing": True,
@@ -2455,7 +2604,7 @@ class capability__update(_BaseTag):
 
     _tags = {
         "tag_name": "capability:update",
-        "parent_type": ["transformer", "detector"],
+        "parent_type": ["transformer", "detector", "forecaster"],
         "tag_type": "bool",
         "short_descr": "does the estimator provided stream/on-line capabilities via the update method?",  # noqa: E501
         "user_facing": True,
@@ -2761,6 +2910,36 @@ class scitype__X(_BaseTag):
         "parent_type": "param_est",
         "tag_type": "str",
         "short_descr": "which scitypes does X internally support?",
+        "user_facing": True,
+    }
+
+
+class scitype__y(_BaseTag):
+    """Scitype of the target data ``y`` supported by the object.
+
+    - String name: ``"scitype:y"``
+    - Public scitype tag
+    - Values: string, name of the supported scitype
+    - Example: ``"Series"``
+    - Example 2: ``"points"`` (detection metrics)
+
+    This tag applies to parameter estimators and detection metrics
+    (not forecasting metrics).
+
+    For parameter estimators, it specifies which scitype of ``y`` is supported
+    natively, typically ``"Series"``.
+
+    For metrics, it specifies the scientific type of the labels ``y`` that
+    the metric consumes. Detection metrics use values such as ``"points"``
+    (event locations) or ``"segments"`` (interval labels). Other metrics
+    may use the same tag for the scitype of the target series.
+    """
+
+    _tags = {
+        "tag_name": "scitype:y",
+        "parent_type": ["param_est", "metric"],
+        "tag_type": "str",
+        "short_descr": "what scitype of y does the object support? must be scitype string",  # noqa: E501
         "user_facing": True,
     }
 
@@ -3977,12 +4156,6 @@ class X_y_must_have_same_index(_BaseTag):
 
 ESTIMATOR_TAG_REGISTER = [
     (
-        "X-y-must-have-same-index",
-        ["forecaster", "regressor", "transformer"],
-        "bool",
-        "do X/y in fit/update and X/fh in predict have to be same indices?",
-    ),
-    (
         "enforce_index_type",
         ["forecaster", "regressor"],
         "type",
@@ -3993,15 +4166,6 @@ ESTIMATOR_TAG_REGISTER = [
         ["transformer-pairwise", "transformer-pairwise-panel"],
         ("str", ["distance", "kernel", "other"]),
         "mathematical type of pairwise transformer - distance, kernel, or other",
-    ),
-    (
-        "scitype:y",
-        # the scitype:y tag should be kept but for separate use,
-        # a list of the internal scitypes supported by the estimator
-        # or the base scitype of the target data
-        ["param_est", "metric"],
-        "str",
-        "what scitype of y does the object support? must be scitype string",
     ),
     (
         "classifier_type",
@@ -4020,12 +4184,6 @@ ESTIMATOR_TAG_REGISTER = [
         ),
         "which type the classifier falls under in the taxonomy of time series "
         "classification algorithms.",
-    ),
-    (
-        "remember_data",
-        ["forecaster", "transformer"],
-        "bool",
-        "whether estimator remembers all data seen as self._X, self._y, etc",
     ),
     (
         "reserved_params",
@@ -4085,16 +4243,6 @@ ESTIMATOR_TAG_REGISTER = [
         "distribution",
         "int",
         "max iters for bisection method in ppf",
-    ),
-    # ---------------------------
-    # to be deprecated or removed
-    # ---------------------------
-    # the following tags are to be deprecated or removed
-    (
-        "capability:global_forecasting",
-        ["forecaster"],
-        "bool",
-        "can the estimator make global forecasting?",
     ),
 ]
 

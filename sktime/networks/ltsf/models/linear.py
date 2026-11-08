@@ -1,15 +1,8 @@
 """Deep Learning Forecasters using LTSF-Linear Models."""
 
-from skbase.utils.dependencies import _check_soft_dependencies
+from skbase.utils.dependencies import _safe_import
 
-if _check_soft_dependencies("torch", severity="none"):
-    import torch.nn as nn
-
-    nn_module = nn.Module
-else:
-
-    class nn_module:
-        """Dummy class if torch is unavailable."""
+nn = _safe_import("torch.nn")
 
 
 class LTSFLinearNetwork:
@@ -52,7 +45,7 @@ class LTSFLinearNetwork:
         "maintainers": ["luca-miniati"],
     }
 
-    class _LTSFLinearNetwork(nn_module):
+    class _LTSFLinearNetwork(nn.Module):
         def __init__(
             self,
             seq_len,
@@ -152,7 +145,7 @@ class LTSFDLinearNetwork:
         "maintainers": ["luca-miniati"],
     }
 
-    class _LTSFDLinearNetwork(nn_module):
+    class _LTSFDLinearNetwork(nn.Module):
         def __init__(
             self,
             seq_len,
@@ -276,7 +269,7 @@ class LTSFNLinearNetwork:
         "maintainers": ["luca-miniati"],
     }
 
-    class _LTSFNLinearNetwork(nn_module):
+    class _LTSFNLinearNetwork(nn.Module):
         def __init__(
             self,
             seq_len,

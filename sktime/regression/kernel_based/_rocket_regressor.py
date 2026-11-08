@@ -49,8 +49,6 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         Valid inputs = ["rocket", "minirocket", "multirocket"]
     max_dilations_per_kernel : int, optional, default=32
         MiniRocket and MultiRocket only. The maximum number of dilations per kernel.
-    n_features_per_kernel : int, optional, default=4
-        MultiRocket only. The number of features per kernel.
     use_multivariate : str, ["auto", "yes", "no"], optional, default="auto"
         whether to use multivariate rocket transforms or univariate ones
         "auto" = multivariate iff data seen in fit is multivariate, otherwise univariate
@@ -61,6 +59,10 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         ``-1`` means using all processors.
     random_state : int or None, default=None
         Seed for random number generation.
+    n_features_per_kernel : int, optional, default="deprecated"
+        MultiRocket only. Deprecated, and will be removed in sktime 1.4.0.
+        MultiRocket always computes 4 features per kernel, so any value passed
+        is ignored.
 
     Attributes
     ----------
@@ -121,18 +123,16 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         num_kernels=10000,
         rocket_transform="rocket",
         max_dilations_per_kernel=32,
-        n_features_per_kernel=4,
         use_multivariate="auto",
         n_jobs=1,
         random_state=None,
+        n_features_per_kernel="deprecated",
     ):
         self.num_kernels = num_kernels
         self.rocket_transform = rocket_transform
-
         self.max_dilations_per_kernel = max_dilations_per_kernel
         self.n_features_per_kernel = n_features_per_kernel
         self.use_multivariate = use_multivariate
-
         self.n_jobs = n_jobs
         self.random_state = random_state
 
@@ -147,6 +147,12 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
         * initialization logic beyond self.param = param
         * any soft dependency imports in the constructor
         """
+        from sktime.transformations.rocket._multirocket import (
+            _check_n_features_per_kernel,
+        )
+
+        _check_n_features_per_kernel(self)
+
         n_jobs = self.n_jobs
         use_multivariate = self.use_multivariate
         num_kernels = self.num_kernels
@@ -197,7 +203,6 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
                 MultiRocketMultivariate,
             )
 
-            common_params["n_features_per_kernel"] = self.n_features_per_kernel
             multivar_rocket = MultiRocketMultivariate(**common_params)
             univar_rocket = MultiRocket(**common_params)
 
@@ -263,7 +268,6 @@ class RocketRegressor(_DelegatedRegressor, BaseRegressor):
             "num_kernels": 30,
             "rocket_transform": "rocket",
             "max_dilations_per_kernel": 24,
-            "n_features_per_kernel": 3,
         }
         params3 = {"num_kernels": 20, "rocket_transform": "minirocket"}
         params4 = {"num_kernels": 20, "rocket_transform": "multirocket"}

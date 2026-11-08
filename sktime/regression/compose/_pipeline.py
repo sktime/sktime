@@ -321,14 +321,22 @@ class RegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):
 
         params1 = {"transformers": [t1, t2], "regressor": r}
 
+        # soft dependency free second parameter set, with named steps
+        from sktime.regression.dummy import DummyRegressor
+
+        params_dummy = {
+            "transformers": [("square", ExponentTransformer(power=2))],
+            "regressor": DummyRegressor(strategy="median"),
+        }
+
         if _check_estimator_deps(KNeighborsTimeSeriesRegressor, severity="none"):
             c = KNeighborsTimeSeriesRegressor()
 
             # construct without names
             params2 = {"transformers": [t1, t2], "regressor": c}
-            return [params1, params2]
+            return [params1, params_dummy, params2]
         else:
-            return params1
+            return [params1, params_dummy]
 
 
 class SklearnRegressorPipeline(_HeterogenousMetaEstimator, BaseRegressor):

@@ -16,7 +16,6 @@ from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.utils import check_random_state
 
 from sktime.classification.base import BaseClassifier
-from sktime.transformations.dictionary_based import SFAFast
 from sktime.utils.warnings import warn
 
 
@@ -32,11 +31,11 @@ class MUSE(BaseClassifier):
 
     There are these primary parameters:
 
-    * alphabet_size: alphabet size
-    * chi2-threshold: used for feature selection to select best words
-    * anova: select best l/2 fourier coefficients other than first ones
-    * bigrams: using bigrams of SFA words
-    * binning_strategy: the binning strategy used to discretize into SFA words.
+    * ``alphabet_size``: alphabet size
+    * ``chi2-threshold``: used for feature selection to select best words
+    * ``anova``: select best l/2 fourier coefficients other than first ones
+    * ``bigrams``: using bigrams of SFA words
+    * ``binning_strategy``: the binning strategy used to discretize into SFA words.
 
     Parameters
     ----------
@@ -44,10 +43,14 @@ class MUSE(BaseClassifier):
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
-    variance: boolean, default = False
-            If True, the Fourier coefficient selection is done via the largest
-            variance. If False, the first Fourier coefficients are selected.
-            Only applicable if labels are given
+    ``variance``: boolean, default = False
+        Whether to use the variance-based selection for Fourier coefficients.
+
+        * If True, the Fourier coefficient selection is done via the largest
+        variance.
+        * If False, the first Fourier coefficients are selected.
+
+        Only applicable if labels are given
     bigrams: boolean, default=True
         whether to create bigrams of SFA words
     window_inc: int, default=2
@@ -464,6 +467,8 @@ def _parallel_fit(
     relevant_features_count = 0
 
     for window_size in window_sizes:
+        from sktime.transformations.dictionary_based import SFAFast
+
         transformer = SFAFast(
             word_length=rng.choice(word_lengths),
             alphabet_size=alphabet_size,

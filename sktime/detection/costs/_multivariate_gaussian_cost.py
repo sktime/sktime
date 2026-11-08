@@ -72,6 +72,31 @@ class MultivariateGaussianCost(BaseCost):
     param : 2-tuple of float or np.ndarray, or None (default=None)
         Fixed mean and covariance matrix for the cost calculation.
         If ``None``, the maximum likelihood estimates are used.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.costs import MultivariateGaussianCost
+    >>> X = np.array([[0., 0.], [2., 1.], [0., 1.], [2., 0.],
+    ...               [10., 5.], [12., 6.], [10., 6.], [12., 5.]])
+    >>> cost = MultivariateGaussianCost()
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[17.16],
+           [17.16],
+           [65.77]])
+
+    The cost is aggregated over all variables, so the result has a single
+    column. The first two intervals are each well described by one multivariate
+    Gaussian; the third spans the change in mean and is expensive.
+
+    Passing ``param`` evaluates the cost at a fixed mean and covariance matrix
+    instead of the maximum likelihood estimates of the interval:
+
+    >>> cost = MultivariateGaussianCost(param=(1.0, np.eye(2)))
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[ 20.7 ],
+           [500.7 ],
+           [521.41]])
     """
 
     _tags = {

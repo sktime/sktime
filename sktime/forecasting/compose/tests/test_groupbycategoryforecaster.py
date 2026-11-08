@@ -6,24 +6,29 @@ import pytest
 
 from sktime.forecasting.compose import GroupbyCategoryForecaster
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.transformations.base import BaseTransformer
 
 
-class PredefinedCategory(BaseTransformer):
-    _tags = {
-        "scitype:transform-input": "Panel",
-        "scitype:transform-output": "Panel",
-    }
+def _PredefinedCategory():
+    """Test fixture transformer class."""
+    from sktime.transformations.base import BaseTransformer
 
-    def __init__(self, transform_output):
-        self.transform_output = transform_output
-        super().__init__()
+    class PredefinedCategory(BaseTransformer):
+        _tags = {
+            "scitype:transform-input": "Panel",
+            "scitype:transform-output": "Panel",
+        }
 
-    def fit(self, X, y=None):
-        return self
+        def __init__(self, transform_output):
+            self.transform_output = transform_output
+            super().__init__()
 
-    def transform(self, X, y=None):
-        return self.transform_output
+        def fit(self, X, y=None):
+            return self
+
+        def transform(self, X, y=None):
+            return self.transform_output
+
+    return PredefinedCategory
 
 
 @pytest.fixture
@@ -67,7 +72,7 @@ def timeseries(timeseries_index):
 
 def test_predefined_output(timeseries):
     transform_output = pd.Series(["A"])
-    transformer = PredefinedCategory(transform_output=transform_output)
+    transformer = _PredefinedCategory()(transform_output=transform_output)
 
     # Should completely ignore the input and return the predefined output
     output = transformer.fit_transform(X=timeseries)
@@ -77,7 +82,7 @@ def test_predefined_output(timeseries):
 
 def test_predefined_output_groupby(timeseries, categories):
     """Test if the correct forecasters are fitted for each category"""
-    categorizer = PredefinedCategory(transform_output=categories)
+    categorizer = _PredefinedCategory()(transform_output=categories)
     forecaster = GroupbyCategoryForecaster(
         forecasters={
             0: NaiveForecaster(strategy="mean"),

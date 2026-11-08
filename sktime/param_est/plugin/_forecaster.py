@@ -106,6 +106,7 @@ class PluginParamsForecaster(_DelegatedForecaster):
     """
 
     _tags = {
+        "category": ["composition"],
         "authors": "fkiraly",
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
@@ -297,7 +298,13 @@ class PluginParamsForecaster(_DelegatedForecaster):
             "param_est": FixedParams({"foo": 12}),
             "params": {"sp": "foo"},
         }
-        params = [params1]
+        # soft dependency free, explicit reference to "sp", present in both
+        params_fixed = {
+            "forecaster": NaiveForecaster(),
+            "param_est": FixedParams({"sp": 4}),
+            "params": "sp",
+        }
+        params = [params1, params_fixed]
 
         # uses a "real" param est that depends on statsmodels, requires statsmodels
         if _check_estimator_deps(SeasonalityACF, severity="none"):

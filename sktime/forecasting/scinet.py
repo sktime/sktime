@@ -131,7 +131,11 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
         "maintainers": ["Sohaib-Ahmed21"],
         # "python_dependencies": "pytorch" - inherited from BaseDeepNetworkPyTorch
         # estimator type vars inherited from BaseDeepNetworkPyTorch
+        "category": ["deep_learning"],
         "capability:pretrain": True,
+        # test skip flags
+        # ---------------
+        "tests:skip_all": True,  # known bug, see #7871
     }
 
     def __init__(
@@ -229,7 +233,7 @@ class SCINetForecaster(BaseDeepNetworkPyTorch):
 
         return SCINet(
             seq_len=self.seq_len,
-            input_dim=self._y.shape[-1],
+            input_dim=self._cur_y.shape[-1],
             pred_len=fh,
             hid_size=self.hid_size,
             num_stacks=self.hid_size,

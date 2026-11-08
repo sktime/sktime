@@ -37,6 +37,11 @@ class TestPlusTrainSplitter(BaseSplitter):
     >>> splitter = TestPlusTrainSplitter(cv_tpl)
     """
 
+    _tags = {
+        # default for split_series_uses, cloned from cv in __dynamic_tags__
+        "split_series_uses": "iloc",
+    }
+
     def __init__(self, cv):
         self.cv = cv
         super().__init__()

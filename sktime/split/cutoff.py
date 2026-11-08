@@ -118,14 +118,28 @@ class CutoffSplitter(BaseSplitter):
     relative to the end of the training window.
     It will contain as many indices
     as there are forecasting horizons provided to the ``fh`` argument.
-    For a forecasting horizon :math:`(h_1,\ldots,h_H)`, the test window will
-    consist of the indices :math:`(k_n+h_1,\ldots, k_n+h_H)`.
+    For a forecasting horizon :math:`(h_1,\ldots,h_H)`, the test window
+    for the cutoff :math:`k_i` will consist of the indices
+    :math:`(k_i+h_1,\ldots,k_i+h_H)`.
 
     The number of splits returned by ``.get_n_splits``
     is then trivially equal to :math:`n`.
 
     The sorted array of cutoffs returned by ``.get_cutoffs`` is then equal to
     :math:`(t(k_1),\ldots,t(k_n))` with :math:`k_i<k_{i+1}`.
+
+    For example for ``cutoffs = [3, 5]``, ``window_length = 3`` and
+    ``fh = [2, 4]``, here is a representation of the folds::
+
+    |---------------------|
+    | - * * * - x - x - - |
+    | - - - * * * - x - x |
+
+    ``*`` = training fold.
+
+    ``x`` = test fold.
+
+    ``-`` = not used in this fold.
 
     Parameters
     ----------
@@ -312,6 +326,9 @@ class CutoffFhSplitter(BaseSplitter):
     _tags = {
         "split_hierarchical": False,
         "split_series_uses": "loc",
+        # CI and test flags
+        # -----------------
+        "tests:specific": ["sktime.split.tests.test_cutoff"],
     }
 
     def __init__(self, cutoff, fh=None):
@@ -336,6 +353,10 @@ class CutoffFhSplitter(BaseSplitter):
         test : pd.Index
             Test window indices, loc references to test indices in y
         """
+        if isinstance(y, pd.MultiIndex):
+            yield from super()._split_loc(y)
+            return
+
         cutoff = self.cutoff
         fh = self.fh
 
@@ -347,6 +368,9 @@ class CutoffFhSplitter(BaseSplitter):
 
             if not isinstance(fh, ForecastingHorizon):
                 fh = ForecastingHorizon(fh)
+
+            if fh.freq is None and isinstance(y, pd.DatetimeIndex):
+                fh.freq = y.freq or y.inferred_freq
 
         def is_date_like(x):
             return is_datetime64_any_dtype(x) or isinstance(x, pd.PeriodDtype)

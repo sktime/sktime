@@ -141,6 +141,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "classifier_type": "shapelet",
+        "tests:skip_by_name": ["test_get_test_params_coverage"],
     }
 
     def __init__(

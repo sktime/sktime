@@ -64,6 +64,7 @@ class ForecastByLevel(_DelegatedForecaster):
         "authors": ["fkiraly"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:multivariate": True,
@@ -236,6 +237,15 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
     """
 
     _tags = {
+        # packaging info
+        # --------------
+        "authors": ["felipeangelimvieira", "shlok191"],
+        "maintainers": ["felipeangelimvieira"],
+        "python_version": None,
+        # estimator type
+        # --------------
+        "category": ["composition"],
+        "visual_block_kind": "parallel",
         "y_inner_mtype": [
             "pd.DataFrame",
             "pd-multiindex",
@@ -249,12 +259,9 @@ class GroupbyCategoryForecaster(BaseForecaster, _HeterogenousMetaEstimator):
         "capability:multivariate": True,
         "capability:exogenous": True,
         "capability:unequal_length": False,
+        "capability:update": True,
         "requires-fh-in-fit": False,
         "enforce_index_type": None,
-        "authors": ["felipeangelimvieira", "shlok191"],
-        "maintainers": ["felipeangelimvieira"],
-        "python_version": None,
-        "visual_block_kind": "parallel",
     }
 
     def __init__(

@@ -431,6 +431,7 @@ class LagLlamaForecaster(BaseForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:exogenous": False,
         "capability:multivariate": False,  # LagLlama is univariate only
@@ -443,11 +444,20 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         # test and CI flags
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_lagllama"],
         "tests:libs": ["sktime.libs.lag_llama"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "lagllama": (
+                "LagLlamaForecaster("
+                'ckpt_path="time-series-foundation-models/Lag-Llama")'
+            ),
+        },
     }
 
     def __init__(
@@ -816,6 +826,8 @@ class LagLlamaForecaster(BaseForecaster):
         -------
         self : reference to self
         """
+        self._cur_y = y
+        self._cur_X = X
         # Store the inner column names seen during fit.
         # For pd.Series input, sktime converts to pd.DataFrame with:
         # - column 0 if Series.name is None
@@ -912,6 +924,24 @@ class LagLlamaForecaster(BaseForecaster):
             "prediction_length": prediction_length,
         }
         return str(sorted(config.items()))
+
+    def _update(self, y, X=None, update_params=True):
+        """Update forecaster with new data, i.e., extend the context series.
+
+        New observations extend the context that ``_predict`` conditions on.
+        Appending is required for ``_extend_df`` to produce a contiguous index,
+        since the cutoff advances in ``update``.
+
+        ``update_params`` has no effect: the model is used zero-shot, and ``_fit``
+        does not train, it loads the pretrained predictor. Fine-tuning on new data
+        is only available via ``pretrain``.
+        """
+        from sktime.datatypes import update_data
+
+        self._cur_y = update_data(self._cur_y, y)
+        if X is not None:
+            self._cur_X = update_data(self._cur_X, X) if self._cur_X is not None else X
+        return self
 
     def infer_freq(self, index):
         """
@@ -1032,9 +1062,9 @@ class LagLlamaForecaster(BaseForecaster):
                 "in-sample forecasting is not supported by LagLlamaForecaster"
             )
 
-        # Use self._y (stored during fit)
-        y = self._y
-        _y = self._y.copy()
+        # Use self._cur_y (stored during fit)
+        y = self._cur_y
+        _y = self._cur_y.copy()
 
         _y = self._extend_df(_y, fh)
 
@@ -1185,8 +1215,8 @@ class LagLlamaForecaster(BaseForecaster):
         if alpha is None:
             alpha = [0.1, 0.25, 0.5, 0.75, 0.9]
 
-        # Use self._y (stored during fit)
-        y = self._y
+        # Use self._cur_y (stored during fit)
+        y = self._cur_y
         _y = y.copy()
 
         _y = self._extend_df(_y, fh)
