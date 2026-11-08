@@ -124,7 +124,7 @@ class Prophet(_ProphetAdapter):
 
     References
     ----------
-    .. [1] https://facebook.github.io/prophet
+    .. [1] https://meta.github.io/prophet/
 
     Examples
     --------
