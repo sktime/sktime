@@ -43,7 +43,7 @@ class OptimalReconciler(_ReconcilerTransformer):
     >>> y = _make_hierarchical()
     >>> pipe = OptimalReconciler() * NaiveForecaster()
     >>> pipe = pipe.fit(y)
-    >>> y_pred = pipe.predict(fh=[1,2,3])
+    >>> y_pred = pipe.predict(fh=3)
     """
 
     def __init__(self, error_covariance_matrix: pd.DataFrame = None, alpha=0):
@@ -260,7 +260,7 @@ class NonNegativeOptimalReconciler(OptimalReconciler):
     >>> y = _make_hierarchical()
     >>> pipe = NonNegativeOptimalReconciler() * ExponentialSmoothing()
     >>> pipe = pipe.fit(y)
-    >>> y_pred = pipe.predict(fh=[1,2,3])
+    >>> y_pred = pipe.predict(fh=3)
     """
 
     _tags = {

@@ -50,7 +50,7 @@ class YtoX(BaseTransformer):
     ... )  # doctest: +SKIP
     >>>
     >>> # fit and forecast, using Fourier features as exogenous data
-    >>> pred = pipe.fit_predict(y, fh=[1, 2, 3, 4, 5])  # doctest: +SKIP
+    >>> pred = pipe.fit_predict(y, fh=5)  # doctest: +SKIP
 
     Use case: using lagged endogenous variables as exogenous data.
 
@@ -114,7 +114,7 @@ class YtoX(BaseTransformer):
     ... )  # doctest: +SKIP
     >>>
     >>> # fit and forecast, with summarized y as exogenous data
-    >>> preds = pipe.fit_predict(y=y, fh=range(1, 20))  # doctest: +SKIP
+    >>> preds = pipe.fit_predict(y=y, fh=19)  # doctest: +SKIP
     """
 
     _tags = {

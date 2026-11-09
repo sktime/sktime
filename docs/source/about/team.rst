@@ -111,8 +111,12 @@ Core Developers
      - :user:`SaiRevanth25`
    * - Simon Blanke
      - :user:`SimonBlanke`
+   * - Srujan Patwardhan
+     - :user:`srupat`
    * - Ugochukwu Onyeka
      - :user:`onyekaugochukwu`
+   * - Yash Sangwan
+     - :user:`yash-sangwan`
 
 
 Former Core Developers
