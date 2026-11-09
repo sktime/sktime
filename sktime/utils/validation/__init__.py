@@ -128,12 +128,15 @@ def check_n_jobs(n_jobs: int) -> int:
 
     Parameters
     ----------
-    n_jobs : int, positive or -1
+    n_jobs : int or None
         The number of jobs for parallelization.
+        ``None`` means 1 job. Negative values are interpreted as in ``joblib``:
+        ``-1`` means all CPUs, ``-2`` all CPUs but one, and so on,
+        with a minimum of 1 job.
 
     Returns
     -------
-    n_jobs : int
+    n_jobs : int, positive
         Checked number of jobs.
     """
     # scikit-learn convention
@@ -142,8 +145,12 @@ def check_n_jobs(n_jobs: int) -> int:
         return 1
     elif not is_int(n_jobs):
         raise ValueError(f"`n_jobs` must be None or an integer, but found: {n_jobs}")
+    elif n_jobs == 0:
+        raise ValueError("`n_jobs` must not be 0, as it has no meaning for parallelism")
     elif n_jobs < 0:
-        return os.cpu_count() - n_jobs + 1
+        # joblib convention: -1 is all CPUs, -2 all but one, etc.,
+        # see joblib.parallel.effective_n_jobs
+        return max(os.cpu_count() + 1 + n_jobs, 1)
     else:
         return n_jobs
 
