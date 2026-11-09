@@ -18,79 +18,24 @@ nothing" is distinguishable from any real value.
 
 ## Changing a default
 
-```python
-from sktime.utils.warnings import warn
+Copy "Step 1: during deprecation period" under "Changing the default value of a parameter",
+in the "Examples to illustrate recipes" section of
+`docs/source/developer_guide/deprecation.rst`. Then make the changes in "Things that often
+go wrong" in the skill:
 
-
-# todo 1.4.0: change the default of parameter to <new_default>, update the docstring,
-# and remove the warning in __init__
-class EstimatorName(BaseForecaster):
-    """...
-
-    Parameters
-    ----------
-    parameter : str, default=<old_default>
-        The parameter description.
-        The default will change to <new_default> in version 1.4.0.
-    """
-
-    def __init__(self, parameter="changing_value"):
-        self.parameter = parameter  # stored unchanged, for get_params and clone
-
-        super().__init__()
-
-        # todo 1.4.0: replace this block with self._parameter = parameter
-        if parameter == "changing_value":
-            warn(
-                "In EstimatorName, the default of parameter will change from "
-                "<old_default> to <new_default> in sktime 1.4.0. To keep the current "
-                "behaviour and silence this warning, set parameter=<old_default> "
-                "explicitly.",
-                DeprecationWarning,
-            )
-            self._parameter = <old_default>
-        else:
-            self._parameter = parameter
-```
+- call `warn` without `obj=self`
+- write the markers as lowercase `# todo 1.4.0: ...`
+- for an estimator, call `super().__init__()` after storing the parameters, before the
+  warning block
 
 Use `self._parameter` in all other methods.
 
 ## Renaming a parameter
 
+Copy the guide's "Renaming a parameter" example in the same section, with the same changes.
 Put the new parameter at the end, so positional calls keep working. The old one keeps its
-position and gets the default `"deprecated"`. The docstring describes only the new name.
-
-```python
-# todo 1.4.0: remove old_parameter from the signature, move new_parameter to its position,
-# and remove the warning in __init__
-class EstimatorName(BaseForecaster):
-    """...
-
-    Parameters
-    ----------
-    new_parameter : str, default=<default>
-        The parameter description.
-    """
-
-    def __init__(self, old_parameter="deprecated", new_parameter=<default>):
-        # both are written to self during the change period
-        self.old_parameter = old_parameter
-        self.new_parameter = new_parameter
-
-        super().__init__()
-
-        # todo 1.4.0: replace this block with self._new_parameter = new_parameter
-        if old_parameter != "deprecated":
-            warn(
-                "In EstimatorName, parameter old_parameter was renamed to new_parameter, "
-                "and will be removed in sktime 1.4.0. To keep the current behaviour and "
-                "silence this warning, use new_parameter instead of old_parameter.",
-                DeprecationWarning,
-            )
-            self._new_parameter = old_parameter
-        else:
-            self._new_parameter = new_parameter
-```
+position and gets the default `"deprecated"`. Both are written to `self` during the change
+period, and the docstring describes only the new name.
 
 ## Removing a parameter
 

@@ -39,12 +39,11 @@ _tags = {
 }
 ```
 
+The general rules for `authors`, `maintainers` and the soft dependency tags are in
+`sktime-add-estimator` step 4 and "Soft dependencies" in `AGENTS.md`. For FMs also:
+
 - Check capability tags against real behaviour. Test them, don't assume.
-- `authors` holds the upstream authors' GitHub handles and the contributor's. Verify the
-  handles, e.g. against upstream's commit authors. Mirror the list in `__author__`.
-- `maintainers` is a real handle, not `"sktime developers"` or an organization.
-- `tests:specific` is what makes the VM job run your test file. Without it, the job logs
-  "No object specific tests found" and stays green.
+- Verify the upstream authors' GitHub handles, e.g. against upstream's commit authors.
 - `tests:skip_all` is not how to handle gated weights, since it disables everything. See
   [Tests](#tests).
 
@@ -112,12 +111,11 @@ _tags = {
 
 ## State and update
 
-`remember_data` is moving to `False`, so `self._y` and `self._X` aren't reliable.
+The general rules are in "Common review findings" in
+`../../sktime-add-estimator/references/forecasting.md`: don't read `self._y` or `self._X`,
+keep your own context (e.g. `self._cur_y`, `self._cur_X`), and implement `_update` with
+`update_data`. Then set `"capability:update": True`. For FMs also:
 
-- Keep your own context, e.g. `self._cur_y` and `self._cur_X`, set in `_fit`.
-- **If context is stored in `_fit`, implement `_update`.** Otherwise `update` moves the cutoff
-  while `predict` uses stale context. Extend the series with `update_data` from
-  `sktime.datatypes`, not a hand-written `pd.concat`. Then set `"capability:update": True`.
 - In `_update`, raise an error if `X` was passed to `_fit` but not `_update`, or the other
   way round. Otherwise `_cur_X` drifts out of line with `_cur_y`.
 
@@ -127,18 +125,14 @@ Bugs here produce plausible numbers, so check each with real output (#11347 was 
 
 - **Scale:** forecasts are on the scale of `y`. Check whether the model normalizes
   internally, and invert it exactly once.
-- **Non-contiguous `fh`:** `[2, 5]` has to return steps 2 and 5. Compute up to `max(fh)`, then
-  select.
+- **Non-contiguous `fh`:** `[2, 5]` has to return steps 2 and 5, as `forecasting.md`
+  describes.
 - **Long horizons:** decide what happens past the model's native horizon, and document it.
-
-Also name the output with the original variable name, and index it with
-`fh.to_absolute(self.cutoff)`.
 
 ## Probabilistic output
 
-- If the model emits quantiles, `_predict_quantiles` isn't enough. The default `_predict_proba`
-  assumes a normal distribution. Implement `_predict_proba` too, e.g. with `HistogramQPD`
-  from `skpro.distributions`, with `tails="mass"`, as in `timesfm3.py`.
+- Implement `_predict_proba` as well as `_predict_quantiles` (see `forecasting.md`), e.g.
+  with `HistogramQPD` from `skpro.distributions`, with `tails="mass"`, as in `timesfm3.py`.
 - `predict`, `predict_quantiles` and `predict_proba` must agree (#10566, #10533). Add a test.
 - Use the model's own level list (`model.quantile_levels`, `config`) over a hardcoded grid
   or index, including the median index for the point forecast.

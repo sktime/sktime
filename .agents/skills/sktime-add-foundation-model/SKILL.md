@@ -24,14 +24,9 @@ specific pattern they're cited for, not a whole file to copy.
 
 ### 1. Check for existing work
 
-```bash
-grep -rli "<model name>" sktime/forecasting sktime/libs
-gh pr list --repo sktime/sktime --state open --search "<model name>"
-gh issue list --repo sktime/sktime --state open --search "<model name>"
-```
-
-If an open PR covers it, or an issue is assigned to someone, stop and tell the user. Read
-the linked issue if there is one, since it often lists the expected model API.
+Run the duplicate check in "Before starting new work" in `AGENTS.md`, with the model's name,
+and grep `sktime/libs` too. Read the linked issue if there is one, since it often lists the
+expected model API.
 
 ### 2. Inspect upstream, without running it
 
@@ -100,8 +95,6 @@ comment or an open bug.
   adapter reproduces the real model.
 - Don't write tests that monkeypatch a fake model. They repeat `check_estimator` and don't
   show that the model works.
-- Add `"tests:specific": ["sktime.forecasting.tests.test_<model>"]`, or the golden tests
-  won't run in CI.
 
 ### 7. Docs
 
@@ -120,20 +113,9 @@ Keep the environment on disk rather than in `/tmp`, which is often a tmpfs held 
 torch install takes several GB. Check there's enough free memory for the model too, and tell
 the user if the checkpoint is too large for their machine.
 
-```bash
-python -c "
-from sktime.utils.estimator_checks import check_estimator
-from sktime.forecasting.<model> import <Model>Forecaster
-results = check_estimator(<Model>Forecaster)
-failed = {k: v for k, v in results.items() if v != 'PASSED'}
-print(len(results), 'run,', len(failed), 'failed')
-print(failed)
-"
-# golden tests: skipped without --only_vm_estimators, because of tests:vm
-pytest sktime/forecasting/tests/test_<model>.py --only_vm_estimators True \
-  --only_changed_modules False --matrixdesign False -n0 -rs
-pre-commit run --files <changed files>
-```
+Run `check_estimator`, `sktime/forecasting/tests/test_<model>.py` and pre-commit with the
+commands in "Running tests" in `AGENTS.md`. The forecaster has `tests:vm`, so the test file
+needs `--only_vm_estimators True`, or the golden tests are skipped.
 
 In a second environment **without** torch or transformers, check isolation. This
 is what the `test-nosoftdeps` CI job checks:

@@ -156,14 +156,13 @@ The values above are placeholders. Replace them with the ones you generated. Oth
 
 - **The full generator goes in the comment.** A reference to a script outside the repo, or
   to "the upstream example", is no use to whoever has to regenerate the values later.
-- **Use `run_test_for_class`** as the gate. It reads the class tags, and also handles
-  VM and change-detection logic. Examples: `sktime/forecasting/tests/test_falcon_tst.py`,
-  `test_moirai2.py`.
+- **Use `run_test_for_class`** as the gate. Examples:
+  `sktime/forecasting/tests/test_falcon_tst.py`, `test_moirai2.py`.
 - **Tolerance `rtol=1e-5, atol=1e-4`** suits float32 inference. If you need to loosen it,
   find out why first, and write the reason in a comment.
 - **Set `license_accepted=True`** in the test if the estimator requires it.
-- **Add the tag** `"tests:specific": ["sktime.<module>.tests.test_<name>"]` to the estimator.
-  Without it the CI VM job doesn't run this file, and stays green.
+- **Add the `tests:specific` tag** to the estimator (see "Soft dependencies" in
+  `AGENTS.md`), or CI never runs this file.
 - **Don't parametrize over checkpoints.** CI runs pytest with `-n auto` (`setup.cfg`), so
   parametrized cases run in parallel processes. Two processes downloading into the same
   Hugging Face cache race on `refs/main`, and on Windows that fails with
@@ -177,15 +176,9 @@ The values above are placeholders. Replace them with the ones you generated. Oth
 
 ## 6. Prove that the test runs and detects a mismatch
 
-Run it in an environment with the estimator's dependencies:
-
-```bash
-pytest sktime/<module>/tests/test_<name>.py --only_changed_modules False --matrixdesign False -n0 -rs
-```
-
-If the estimator has `"tests:vm": True`, add `--only_vm_estimators True`, or the test is skipped
-locally with `False_requires_vm`. This is the mistake that makes a golden test look like it
-passes. Read the summary line: it must say `passed`, not `skipped`.
+Run it in an environment with the estimator's dependencies, with the commands in "Running
+tests" in `AGENTS.md`. Missing `--only_vm_estimators True` is the mistake that makes a golden
+test look like it passes. The summary line must say `passed`, not `skipped`.
 
 Then change one expected value temporarily, confirm the test fails, and restore it. A test that
 can't fail proves nothing. Do this for every case, and make the change larger than the

@@ -97,7 +97,7 @@ Give every rubric item one status:
 Never mark something OK because it looks fine. If you didn't run or read it, it's Not verified.
 
 Run what you can cheaply: `pre-commit run --files <changed files>` if available, and the tests
-for changed code, using the flags in the rubric. Don't install dependencies or download
+for changed code, using the commands in "Running tests" in `AGENTS.md`. Don't install dependencies or download
 weights. Mark those items Not verified.
 
 ## 5. Report

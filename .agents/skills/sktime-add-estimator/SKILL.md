@@ -11,17 +11,8 @@ review. Don't commit, push or open a PR unless they ask.
 
 ## 1. Check it should be added
 
-1. Look for an existing implementation, since duplicates are the most common reason a
-   new-estimator PR gets closed:
-
-   ```bash
-   grep -rli "<algorithm name>" sktime docs/source/api_reference
-   gh pr list --repo sktime/sktime --state open --search "<algorithm name>"
-   gh issue list --repo sktime/sktime --state open --search "<algorithm name>"
-   ```
-
-   If an open PR or an assigned issue covers it, stop and tell the user. They should
-   coordinate there instead of opening a competing PR.
+1. Run the duplicate check in "Before starting new work" in `AGENTS.md`, with the
+   algorithm's name.
 2. Establish what is being added: a native implementation, or an interface to a third
    party package. An interface means a soft dependency (step 4). If the package is
    compiled with cython, read "Estimators dependent on cython" in
@@ -105,18 +96,10 @@ _tags = {
   `python -c "from sktime.registry import all_tags; print(all_tags(estimator_types='forecaster', as_dataframe=True))"`
   rather than guessing.
 
-**If the estimator has a soft dependency:**
-
-- Import it inside methods, or in `__post_init__`, never at module top level or in
-  `__init__`. Otherwise `import sktime` fails for users without the package.
-- Set `"python_dependencies": ["pkg>=1.2"]` as a PEP 440 specifier. The base class then
-  raises a useful error for you, so don't add your own try/except or warning.
-- Set `"tests:vm": True`. The dependency guide requires it, and it gives the estimator its
-  own CI job with those dependencies installed.
-- Don't add a one-estimator dependency to `pyproject.toml` extras. The VM job installs it
-  from the tag. Read `docs/source/developer_guide/dependencies.rst` if it seems necessary.
-- If it has its own test file, add `"tests:specific": ["sktime.<path>.tests.test_<name>"]`.
-  Without that tag the VM job never runs the file, and CI stays green.
+**If the estimator has a soft dependency,** follow "Soft dependencies" in `AGENTS.md`. It
+covers the import location and the `python_dependencies`, `tests:vm` and `tests:specific`
+tags. An import at module top level or in `__init__` makes `import sktime` fail for users
+without the package.
 
 ## 5. `get_test_params`
 
@@ -152,51 +135,13 @@ Reviewers check these first, and most repeat comments on new estimators come fro
 right thing. A merged metric once needed a maintainer to fix its sign after every
 interface test passed. So add at least one test with hand-computed or reference values
 in the module's `tests/` folder. When a reference implementation exists, generate expected
-values from it with the `sktime-golden-tests` skill. Gate tests with soft dependencies:
-
-```python
-@pytest.mark.skipif(
-    not run_test_for_class(MyEstimator),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-```
-
-`run_test_for_class` comes from `sktime.tests.test_switch`.
+values from it with the `sktime-golden-tests` skill. Gate tests that need a soft dependency
+with `run_test_for_class`, as the dependency guide shows.
 
 ## 8. Verify
 
-Run these and report the real result. A skipped test isn't a passed one.
-
-```bash
-python -c "
-from sktime.utils.estimator_checks import check_estimator
-from sktime.<path> import MyEstimator
-results = check_estimator(MyEstimator)
-failed = {k: v for k, v in results.items() if v != 'PASSED'}
-print(len(results), 'run,', len(failed), 'failed')
-print(failed)
-"
-pre-commit run --files <changed files>
-```
-
-If something fails, narrow it down with `tests_to_run="test_name"` or
-`fixtures_to_run="test_name[MyEstimator-0]"`, then add `raise_exceptions=True` to get the
-traceback.
-
-To run the estimator's test file, the flags depend on the `tests:vm` tag, because
-`setup.cfg` turns on change detection and `run_test_for_class` skips VM estimators in a
-normal run:
-
-```bash
-# no tests:vm tag
-pytest sktime/<path>/tests/test_<name>.py --only_changed_modules False --matrixdesign False -n0
-# tests:vm: True, this is what the CI VM job runs
-pytest sktime/<path>/tests/test_<name>.py --only_vm_estimators True --only_changed_modules False --matrixdesign False -n0
-```
-
-Look at the pass count. "0 selected" or all skipped means nothing ran. Use `-rs` to see
-why. Common reasons are `False_requires_vm` (use the second command) and
-`False_required_deps_missing` (install the dependency).
+Run `check_estimator`, the estimator's test file and pre-commit, using the commands in
+"Running tests" in `AGENTS.md`, and report the real result. A skipped test isn't a passed one.
 
 If a test genuinely can't pass, ask the user before skipping it. `tests:skip_by_name` needs
 a comment next to it explaining why, ideally linking an issue. Avoid `tests:skip_all`,

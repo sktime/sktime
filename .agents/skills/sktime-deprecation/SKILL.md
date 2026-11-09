@@ -93,8 +93,8 @@ Things that often go wrong:
 
 ## 4. Verify
 
-- Run the tests for the changed object, with the flags in
-  [Running tests](#running-tests).
+- Run the tests for the changed object, with the commands in "Running tests" in
+  `AGENTS.md`.
 - Confirm the warning text once by actually triggering it, and read it as a user would. Can
   they fix their code from the message alone?
 - Trial the todo actions if they're not trivial. The guide asks that the result doesn't
@@ -146,15 +146,3 @@ Normally the release manager does this, but contributors may prepare a PR.
    `greykite`, `timesfm3`), which a marker alone wouldn't reveal.
 7. Title it `[MNT] <version> deprecations - <what>`, matching past PRs such as
    `[MNT] 1.3.0 deprecations - remove legacy benchmarking framework`.
-
-## Running tests
-
-`setup.cfg` turns on change detection, so pass the flags that make sure things really run:
-
-```bash
-pytest sktime/<path>/tests/test_x.py --only_changed_modules False --matrixdesign False -n0
-```
-
-If the object has `tests:vm: True`, add `--only_vm_estimators True`, otherwise its tests
-are skipped locally. Read the pass count. Nothing selected, or all skipped, means nothing
-was tested.

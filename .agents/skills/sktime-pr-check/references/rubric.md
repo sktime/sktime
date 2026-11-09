@@ -1,7 +1,8 @@
 # sktime PR rubric
 
 The items a reviewer checks. `.github/PULL_REQUEST_TEMPLATE.md` is the source for the PR
-items. The rest come from recurring review comments.
+items, so read it rather than relying on the summary here. The rest come from recurring
+review comments. Commands for running tests are in "Running tests" in `AGENTS.md`.
 
 ## Scope
 
@@ -14,24 +15,20 @@ items. The rest come from recurring review comments.
 
 ## Title and description
 
-- **Title prefix.** Starts with one of: `[ENH]` adding or improving code, `[BUG]` a bugfix,
-  `[MNT]` CI or test framework, `[DOC]` documentation or docstrings.
+- **Title prefix.** One of the four in the template's checklist, matching the change.
 - **Template used.** Sections are present and filled in, not deleted.
 - **Issue linked.** `Fixes #1234` where the PR resolves an issue, so it closes on merge.
 - **New dependency stated**, if `pyproject.toml` changed.
-- **AI disclosure.** The PR template has a hidden comment asking LLMs to begin with the
-  header `LLM generated content, by (your model name)`. If the PR description or an issue
-  was written by an LLM, including one you draft here, that header goes first. Hidden
-  comments are easy for contributors to miss, so point it out when it's absent from text that
-  looks generated. A human contributor who wrote the text themselves doesn't need it.
+- **AI disclosure.** See "Pull requests" in `AGENTS.md` for the header. If the PR
+  description or an issue was written by an LLM, including one you draft here, that header
+  goes first. Hidden comments are easy for contributors to miss, so point it out when it's
+  absent from text that looks generated. A human contributor who wrote the text themselves
+  doesn't need it.
 
 ## Contributors file
 
-- **Added to `.all-contributorsrc`.** This is the root file, not `CONTRIBUTORS.md`, which is
-  generated. Check with `grep -n '"login": "<handle>"' .all-contributorsrc`.
-- **Badges match the work.** `code` for bug fixes or logic, `doc` for documentation,
-  `bug` for reporting or diagnosing a bug (plus `code` if it was fixed in the PR),
-  `maintenance` for CI and the test framework.
+- **Added to `.all-contributorsrc`,** with the badges the template's checklist describes for
+  the work. Check with `grep -n '"login": "<handle>"' .all-contributorsrc`.
 - **Valid JSON.** Check with `python -m json.tool .all-contributorsrc > /dev/null`.
 
 ## New estimators
@@ -43,9 +40,8 @@ items. The rest come from recurring review comments.
 - **`get_test_params`** returns at least two different sets, and runs in seconds.
 - **`authors` and `maintainers`** are real GitHub handles, and include upstream authors for
   interfaces. `__author__` matches.
-- **Soft dependencies.** `python_dependencies` is set, imports happen in methods or
-  `__post_init__`, and `"tests:vm": True` is set.
-- **`tests:specific`** names the estimator's own test module if it has one.
+- **Soft dependencies** follow "Soft dependencies" in `AGENTS.md`, including
+  `tests:specific` when the estimator has its own test module.
 - **Capability tags** match what the code does.
 - **Exported** from `__init__.py` and `__all__` where neighbouring classes are.
 - **No leftover** template `todo` comments or template text.
@@ -76,35 +72,18 @@ Compare the docstring to the signature line by line. This is the most common rev
 
   `python -m pytest` matters here, because it imports `sktime` from the worktree rather
   than the editable install.
-- **Tests are gated.** Tests needing soft dependencies use `run_test_for_class` or
-  `_check_soft_dependencies`, with imports inside the test.
+- **Tests are gated,** as the dependency guide describes, with imports inside the test.
 - **No fake models.** Tests that monkeypatch the model only prove the mock works.
 - **Skips are justified.** `tests:skip_by_name` has a comment explaining why, ideally with an
   issue. `tests:skip_all` needs a strong reason.
 
-**Running tests.** `setup.cfg` turns on change detection, and `tests:vm` estimators are skipped
-without an explicit flag. So use:
-
-```bash
-pytest <test file> --only_changed_modules False --matrixdesign False -n0 -rs
-# for estimators with tests:vm: True, add
---only_vm_estimators True
-```
-
-If the summary shows nothing passed, or everything skipped, the item is Not verified, not OK.
-
-`check_estimator` is the direct route for one class:
-
-```python
-from sktime.utils.estimator_checks import check_estimator
-results = check_estimator(MyEstimator)
-print({k: v for k, v in results.items() if v != "PASSED"})
-```
+If the test summary shows nothing passed, or everything skipped, the item is Not verified,
+not OK.
 
 ## Dependencies
 
-- A new soft dependency used by a single estimator lives in the `python_dependencies` tag only,
-  not in the `pyproject.toml` extras.
+- A new soft dependency used by a single estimator lives in the `python_dependencies` tag only
+  (see `AGENTS.md`).
 - New core dependencies need agreement from core developers.
 - Version bounds are justified. Lower bounds were actually tried.
 
