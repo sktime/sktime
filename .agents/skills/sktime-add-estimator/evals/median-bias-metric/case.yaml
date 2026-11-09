@@ -1,4 +1,0 @@
-schema_version: "1.1"
-name: median-bias-metric
-expected_outcome: |
-  Adds a correct MedianBias metric with the right sign, exported, in the API reference, with a value test, and reports real verification.
