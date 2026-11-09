@@ -44,7 +44,11 @@ AIRLINE_VALUES = [
 
 
 def set_seed(seed):
-    """Seed every source of randomness, call right before the model."""
+    """Seed every source of randomness, where the adapter does.
+
+    Usually right before the model call. If weights are randomly initialised at
+    construction, call it before building the model as well.
+    """
     random.seed(seed)
     np.random.seed(seed)
     try:
@@ -64,9 +68,15 @@ def print_environment():
             print(package, "not installed")
 
 
-def run_case(context_length=None, prediction_length=3):
-    """Return a zero-shot forecast of the airline series from upstream's code."""
+def run_case(context_length=None, prediction_length=12, holdout=12):
+    """Return a zero-shot forecast of the airline series from upstream's code.
+
+    Forecast the full horizon the sktime test uses, so autoregressive or multi-pass
+    paths run as they do in the adapter. The test then stores only a small slice.
+    """
     y = np.asarray(AIRLINE_VALUES, dtype=np.float32)
+    if holdout:
+        y = y[:-holdout]
     if context_length is not None:
         y = y[-context_length:]
 
@@ -97,4 +107,6 @@ if __name__ == "__main__":
         second = np.asarray(run_case(**case), dtype=np.float64)
         if not np.array_equal(first, second):
             raise RuntimeError(f"Not reproducible for {case}: {first} != {second}")
-        print(case, [float(value) for value in first])
+        # head, plus the tail when later steps take a different path
+        print(case, "head", [float(value) for value in first[:3]])
+        print(case, "tail", [float(value) for value in first[-3:]])

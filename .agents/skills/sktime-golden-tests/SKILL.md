@@ -6,228 +6,227 @@ description: Write golden-output regression tests for sktime estimators, using r
 # Golden tests for sktime
 
 A golden test pins an estimator's output to reference numbers from the **original
-implementation**. `check_estimator` proves the API works. A golden test proves the
-numbers are right, by showing that the adapter's preprocessing, horizon and output
-handling reproduce the real model.
+implementation**. `check_estimator` proves the API works. A golden test proves the numbers
+are right, by showing that the adapter's preprocessing, horizon and output handling
+reproduce the real model.
+
+The convention comes from issue #10672. Its reference implementation is #10627
+(`sktime/forecasting/tests/test_ttm.py`), and the merged tests next to it in
+`sktime/forecasting/tests/` show the variations below. Read two or three that resemble your
+estimator before writing anything. If the estimator is on the issue's checklist, check its
+linked PR and the issue thread first, since someone may already be working on it.
 
 The key property is independence. Values generated through the sktime class would only prove
-that the code agrees with itself, so the generator must not touch it.
+that the code agrees with itself, so the generator must not import sktime.
 
-Don't commit, push or open a PR unless the user asks.
+## 1. Find the reference source, and ask before running it
 
-## 1. Read upstream, and ask before running it
+The reference is the **original** implementation: the upstream package, or the Hugging Face
+repo's own modeling code. A copy vendored into `sktime/libs` isn't independent, because a
+vendoring bug would be pinned as correct. Reviewers have rejected it as the reference. Use it
+only when upstream can't run at all (see "When upstream can't run").
 
 Generating values means executing third party code, and possibly `trust_remote_code=True`,
 which runs whatever is in the Hub repo. Before anything runs:
 
 1. Read the code you're about to execute, including any remote modeling files.
-2. Tell the user what will run, what gets downloaded and roughly how large it is, and
-   get their OK.
-3. Pin it: a commit for GitHub, `revision=` for Hugging Face. Otherwise, the values can't be
-   reproduced, and code you read may not be the code you run.
-
-If the checkpoint is gated and the user has no access, go to [Gated models](#gated-models).
+2. Tell the user what will run, what gets downloaded and roughly how large it is, and get
+   their OK.
+3. Pin it: a commit for GitHub, `revision=` for Hugging Face, or an exact PyPI version.
+   Otherwise the values can't be reproduced, and code you read may not be the code you run.
 
 ## 2. Create an isolated environment
 
-Keep it outside the repo, and install the upstream's requirements rather than sktime's, so the
-versions match what upstream expects. Put it on disk, not in `/tmp`: a torch environment takes
-several GB, and on many Linux systems `/tmp` is a tmpfs held in RAM, so a venv there can
-exhaust memory.
+Keep it outside the repo, and install upstream's requirements rather than sktime's. Put it on
+disk, not in `/tmp`: a torch environment takes several GB, and on many Linux systems `/tmp` is
+a tmpfs held in RAM.
 
 ```bash
 WORK="$HOME/.cache/sktime-golden/<model>"
 mkdir -p "$WORK"
-uv venv "$WORK/venv" --python 3.12   # or python -m venv
+uv venv "$WORK/venv" --python <version upstream supports>
 source "$WORK/venv/bin/activate"
-uv pip install <upstream package, or its requirements.txt pins>
-git clone <upstream repo> "$WORK/upstream"
-git -C "$WORK/upstream" checkout <commit>
+uv pip install <upstream package==version, or its requirements pins>
 ```
+
+- **Python version:** whatever upstream supports. It may be older than sktime's default. One
+  upstream package needed Python 3.10 and JAX, for example.
+- **Library versions:** if upstream behaviour depends on the `transformers` or torch version,
+  match the lower bound in the estimator's `python_dependencies`. That way the values reflect
+  the versions the estimator claims to support.
+- **Large models:** check there's enough RAM for the checkpoint, and tell the user if there
+  isn't.
 
 Don't install sktime here. If `import sktime` fails in this venv, that proves the generator
 is independent.
 
 ## 3. Write the generator
 
-Start from `assets/generate_golden.py`, and save a copy in `$WORK`. It already embeds the
-airline series, so the script needs no sktime.
+Start from `assets/generate_golden.py`, and save a copy in `$WORK`.
 
 **Mirror the adapter's real steps, and nothing else.** Read the estimator's `_fit` and
-`_predict`, then reproduce through upstream's own public API the same input construction:
-same context window, dtype, device, parameters and point-forecast reduction, such as median of
-samples or quantile 0.5. Prefer upstream's documented usage, since that's what you want to match.
+`_predict`. Then reproduce the same input construction through upstream's own public API:
+the same context window, dtype, device, parameters, padding, scaling and point-forecast
+reduction, such as median of samples or quantile 0.5. Prefer upstream's documented usage,
+since that's what you want to match.
 
-**Pick the input:**
+**Pick the input.** Embed the values in the generator, so it needs no sktime:
 
-- `load_airline` by default (values embedded in the template).
-- Domain-specific models, such as wind or finance, may not work on airline passengers. Use the
-  upstream repo's sample data, fixed to a commit URL.
-- If upstream ships its own regression test or example output, run that as well. It shows
-  your environment reproduces their numbers.
+| Situation | Input |
+|---|---|
+| Default | `load_airline`, which the template embeds, with a holdout so `fh` is out of sample |
+| The model needs more channels, a longer context or features airline lacks | Seeded random or deterministic synthetic data of the required shape |
+| Multivariate or exogenous cases | Airline as target, plus seeded random columns |
+| Domain-specific model (wind, finance, ...) | Upstream's own sample data from a pinned commit, inlined in the test rather than downloaded, so the test can't skip silently on a network error |
 
-**Pick a few cases that hit different code paths:**
+If upstream ships its own regression test or example output, run that as well. It shows your
+environment reproduces their numbers.
+
+**Pick cases that hit different code paths.** Two to five is typical:
 
 - defaults, and a non-default context length or option
+- each published checkpoint or variant the adapter offers, where they differ in architecture
+  or loading path. Reviewers ask for this.
+- padded and unpadded context, if the adapter pads short histories
 - quantiles, if probabilistic
-- exogenous data, if supported: past-only and known-future, if they differ
-- multivariate, if supported
-- for stochastic models: seed immediately before the model call, in the same place the
-  adapter does when `deterministic=True`
-- a step past the model's native horizon, if the adapter rolls out autoregressively
-- each published checkpoint the adapter offers, if there are several
+- exogenous and multivariate input, if supported
+- a horizon past the model's native one, if the adapter rolls out autoregressively or runs
+  several passes
 
-**Check that loading initializes every weight.** If upstream loads with
-`load_state_dict(strict=False)`, weights missing from the checkpoint stay randomly
-initialized, and the output depends on the RNG state when the model is built. `TEMPO`
-(#11073) had `gpt_layers=6` in `config.json` but 3 layers in the checkpoints. Compare the
-checkpoint's keys with the model's, and if some are missing, seed before *building* the
-model on both sides, not only before the call. Tell the user, since it's an upstream bug.
+**Run the horizon the adapter runs, and store a small slice.** Forecast the full horizon,
+then keep about three values per case. Add the last few values too when later steps go
+through a different path, as in autoregressive rollouts or second passes.
 
-Keep each to about three forecast values. That's enough to detect a mismatch, and keeps the
-test readable.
+**Seed every source of randomness, in the same place the adapter does.** Usually that's
+right before the model call. If weights are randomly initialised at construction, seed
+before *building* the model on both sides. That applies to a head that the checkpoint
+doesn't contain, or to weights missing under `load_state_dict(strict=False)`. Compare the
+checkpoint's keys with the model's to find out. Missing keys are an upstream bug to tell the
+user about.
 
-**Print at full precision**, and record the versions: Python, torch, transformers or the
-upstream package, and commit or revision. The template does this.
+**Print at full precision**, and record the versions of Python, torch and the upstream
+package, plus the commit or revision. The template does this.
 
 ## 4. Generate and sanity check
 
-Run it, then check before trusting the values:
-
-- **Run twice.** Values have to be identical. If not, find the remaining randomness.
-- **Check the scale.** Airline forecasts should be in the hundreds, near recent values.
-  Numbers near zero suggest missing denormalization, and that's a bug to raise with the
-  user before pinning anything. If the user decides the adapter keeps upstream's behaviour
-  by default (see section 7), pin the values from **unfixed** upstream, and say in the test
-  comment that the scale is upstream's.
-- **Use CPU.** GPU results can differ in low digits and CI has no GPU.
+- **Run on CPU, in float32.** CI has no GPU, GPU and MPS results differ in the low digits,
+  and bf16 results differ across platforms. If the estimator defaults to another device or
+  dtype, set CPU and float32 explicitly on both sides.
+- **Run it more than once.** The values should be identical. If they differ, find the
+  remaining randomness first.
+- **Check the scale.** Forecasts should be near the recent values of the input. Numbers near
+  zero suggest missing denormalization. That's a bug to raise with the user before pinning
+  anything.
 
 ## 5. Write the test
 
-Add it to `sktime/<module>/tests/test_<name>.py`:
+Add it to the estimator's test module, e.g. `sktime/forecasting/tests/test_<name>.py`, and
+follow the shape of `test_ttm.py`:
 
-```python
-"""Golden-output regression tests for the <Model> forecaster."""
+- **Cases** in a module-level list of `pytest.param(..., id="...")`, with one parametrized
+  test. Checkpoints can be cases. Pass the pinned `revision` to the estimator when it accepts
+  one. Otherwise record the revision in a comment. One exception: CI runs pytest with
+  `-n auto`, so when several cases download different files from the **same** Hugging Face
+  repo **without** a pinned revision, parallel workers race on the repo's `refs/main`. This
+  failed on Windows (#11073). Pin the revision, or loop over those cases in one test, passing
+  `err_msg` so a failure still names the case.
+- **Gate** the module or the test with `run_test_for_class(<Estimator>)`, not
+  `_check_soft_dependencies` or `_check_estimator_deps`. Reviewers ask for this, though older
+  files still use the others.
+- **Add the `tests:specific` tag** to the estimator (see "Soft dependencies" in `AGENTS.md`),
+  or CI never runs the file.
+- **Run the whole estimator,** through `fit` and `predict`, with the same data and parameters
+  as the generator, and `device="cpu"`. Don't mock internal components. Set
+  `license_accepted=True` if the estimator requires it.
+- **Compare with `np.testing.assert_allclose(..., rtol=1e-5, atol=1e-4)`,** which suits
+  float32 inference.
+- **Write a provenance comment** above the cases. It says what was called directly,
+  bypassing sktime, the source and revision, the versions, the input, and anything unusual
+  such as a seeded head.
 
-import numpy as np
-import pytest
+The full generator goes in the PR description, in a `<details>` block, as #10672 asks. Many
+tests also embed it as a comment in the test file. Do that too when it's reasonably short,
+because a PR description is harder to find later than the test file.
 
-from sktime.datasets import load_airline
-from sktime.forecasting.<name> import <Model>Forecaster
-from sktime.tests.test_switch import run_test_for_class
-
-# Reference forecasts were generated by the original <Model> implementation,
-# called directly (not through sktime), on load_airline.
-#
-# Source: <repo URL> @ <commit> (or HF revision)
-# Environment: python 3.12, torch x.y.z, transformers x.y.z, CPU
-#
-# Generation script:
-#
-#   <paste the complete generator here, as comments>
-#
-_REFERENCE_CASES = [
-    pytest.param({"context_length": 96}, [441.419555, 441.523040, 457.269531], id="c96"),
-    pytest.param({"context_length": 48}, [438.112304, 440.902343, 455.190429], id="c48"),
-]
-
-
-@pytest.mark.skipif(
-    not run_test_for_class(<Model>Forecaster),
-    reason="run test only if softdeps are present and incrementally (if requested)",
-)
-@pytest.mark.parametrize("params,expected", _REFERENCE_CASES)
-def test_<name>_predictions_match_reference(params, expected):
-    """<Model> forecasts match the raw upstream reference outputs."""
-    y = load_airline()
-
-    forecaster = <Model>Forecaster(device="cpu", **params)
-    y_pred = forecaster.fit(y).predict(fh=[1, 2, 3])
-
-    np.testing.assert_allclose(
-        y_pred.to_numpy().flatten(),
-        np.asarray(expected, dtype=np.float32),
-        rtol=1e-5,
-        atol=1e-4,
-    )
-```
-
-The values above are placeholders. Replace them with the ones you generated. Other rules:
-
-- **The full generator goes in the comment.** A reference to a script outside the repo, or
-  to "the upstream example", is no use to whoever has to regenerate the values later.
-- **Use `run_test_for_class`** as the gate. Examples:
-  `sktime/forecasting/tests/test_falcon_tst.py`, `test_moirai2.py`.
-- **Tolerance `rtol=1e-5, atol=1e-4`** suits float32 inference. If you need to loosen it,
-  find out why first, and write the reason in a comment.
-- **Set `license_accepted=True`** in the test if the estimator requires it.
-- **Add the `tests:specific` tag** to the estimator (see "Soft dependencies" in
-  `AGENTS.md`), or CI never runs this file.
-- **Don't parametrize over checkpoints.** CI runs pytest with `-n auto` (`setup.cfg`), so
-  parametrized cases run in parallel processes. Two processes downloading into the same
-  Hugging Face cache race on `refs/main`, and on Windows that fails with
-  `PermissionError: [WinError 5] Access is denied` (#11073). Loop over the checkpoints in
-  one test, and pass `err_msg=f"... {filename} ..."` so a failure still names the
-  checkpoint. Parametrizing options of one checkpoint is fine once it's cached.
-- **Make the test build its own model** when values depend on a seed at build time. The
-  `_multiton` cache can hand it a model built by another test under a different RNG
-  state. Give it a loading argument that differs from every `get_test_params` set, e.g.
-  `cache_dir=None`, so the cache key differs, and seed right before `fit`.
+If the estimator caches loaded models with `_multiton`, and the values depend on a seed at
+build time, make the test build its own model. Give it a loading argument that differs from
+every `get_test_params` set, so another test can't hand it a model built under a different
+RNG state.
 
 ## 6. Prove that the test runs and detects a mismatch
 
-Run it in an environment with the estimator's dependencies, with the commands in "Running
-tests" in `AGENTS.md`. Missing `--only_vm_estimators True` is the mistake that makes a golden
-test look like it passes. The summary line must say `passed`, not `skipped`.
+Run it with the commands in "Running tests" in `AGENTS.md`. Missing
+`--only_vm_estimators True` is the usual reason a golden test looks as if it passes. The
+summary line must say `passed`, not `skipped`.
 
-Then change one expected value temporarily, confirm the test fails, and restore it. A test that
-can't fail proves nothing. Do this for every case, and make the change larger than the
-tolerance, `rtol * |value| + atol`. For forecasts in the hundreds that's about 0.005, so a
-change of 0.001 still passes and looks as if the test can't catch anything. Keep a backup of
-the file and compare it after restoring.
+Then show the test can fail:
 
-Once more, run it the way CI does: with `-n auto` and an empty Hugging Face cache
-(e.g. `HF_HOME="$WORK/hf-cold"`, deleted afterwards). CI's `--timeout 600` from `setup.cfg` covers the downloads, so note
-how long a cold run takes. Platform-specific failures, such as the Windows cache race above,
-only show up in CI, so check the `test-est` jobs on every OS after pushing.
+- **If the PR fixes a bug:** revert the fix, and confirm the test fails, then restore it.
+  This is the strongest evidence, and the reference PR did it in CI.
+- **Otherwise:** change each expected value temporarily by more than the tolerance,
+  `rtol * |value| + atol`, confirm the test fails, and restore it from a backup. A change
+  smaller than the tolerance still passes, and makes the test look as if it can't catch
+  anything.
+
+Once, run it the way CI does, with `-n auto` and an empty Hugging Face cache
+(`HF_HOME="$WORK/hf-cold"`, deleted afterwards). That shows download races, and how long a
+cold run takes against CI's `--timeout` in `setup.cfg`. After pushing, check the test passed
+on every OS in CI, not only Linux.
 
 ## 7. If the numbers don't match
 
 The mismatch is the point of the test, so don't change expected values or loosen the
-tolerance to get green. It's usually a real adapter bug. Check these, in order:
+tolerance to get green. Most mismatches found under #10672 were real adapter bugs. Check
+these, in order:
 
 1. Input dtype: `float32` versus `float64`
-2. Context: length, truncation, and whether the last point is included
+2. Context: length, truncation, padding and its mask, and whether the last point is included
 3. Normalization: applied twice, or not inverted
 4. Off-by-one in horizon selection
 5. Seed placement, and consumption of random numbers before the model call
 6. Point reduction: mean versus median, or a different quantile level
-7. Loading: wrong revision, `eval()` mode missing, dropout active
+7. Loading: wrong revision, `map_location` or device ignored, `eval()` mode missing
 8. Time features or frequency encoding built differently
 
-Fix the adapter. If the investigation shows upstream itself is wrong, tell the user and don't
-decide alone. One accepted outcome (`TEMPOForecaster`, #11073): the fix goes into the vendored
-code behind a documented `__init__` flag that defaults to upstream's behaviour, the golden
-test pins unfixed upstream with the default, and the fixed mode is exercised through
-`get_test_params`.
+Fix the adapter. If the fix changes results for existing users, ask the user whether the old
+behaviour should stay reachable through a parameter, since maintainers raise this (#10627).
+If upstream itself is wrong, tell the user and don't decide alone. One
+accepted outcome: the fix goes behind an `__init__` flag that defaults to upstream's
+behaviour, the golden test pins upstream with the default, and `get_test_params` exercises
+the fixed mode. See "Constructor parameters" in
+`../sktime-add-foundation-model/references/adapter-checklist.md`.
 
-## Gated models
+### When the tolerance really has to change
 
-When the checkpoint can't be downloaded in tests, the test can use a seeded untrained model:
-with `model_path=None` the estimator initializes from config, without authentication. Set
-`torch.manual_seed(...)` before constructing the model on both sides, so the random weights
-match. Such a test verifies the adapter's pipeline, not the published weights, so the comment
-has to say that. The generating code still goes in the comment.
+Only after you've shown the difference isn't randomness or a bug. Reruns with the same seed
+must give identical values locally. A remaining difference across platforms comes from
+floating point, e.g. BLAS backends, and recursive rollouts amplify it. In that case:
+
+- measure the deviation across platforms, e.g. from CI runs on each OS
+- set the bound at about six standard deviations of the observed differences, which is what
+  maintainers asked for
+- loosen it only for the affected values, such as the tail of a long rollout
+- explain the cause and the calculation in a comment, as `test_mantis.py` does
+
+Maintainers have rejected a loose tolerance picked by hand.
+
+## When the real checkpoint can't run
+
+- **Gated:** use a public checkpoint of the same architecture if there is one, and say so.
+- **Too large for CI or for the user's machine:** generate from a small config with seeded
+  weights on both sides, and ask the user first. This checks the adapter's code paths, not
+  the published weights, so the provenance comment must say that.
 
 ## When upstream can't run
 
-If upstream's environment can't be installed at all, say so and ask the user how to proceed. The
-second-best source is the vendored `sktime.libs.<model>` code called directly, bypassing the
-adapter, as `test_kronos.py` does. This still catches adapter bugs, but not vendoring bugs, so
-say that in the test comment.
+If upstream's environment can't be installed at all, say so and ask the user how to proceed.
+The fallback is the vendored `sktime.libs.<model>` code called directly, bypassing the
+adapter, as `test_kronos.py` does. That still catches adapter bugs but not vendoring bugs, so
+say so in the comment and the PR. If upstream can run anywhere, even once on another
+machine, check that the vendored code gives the same output, as #11751 did.
 
 ## Hand over
 
-Report what ran, the environment versions, whether the test was seen to fail on a changed value,
-and anything you couldn't check. Tell the user the location of `$WORK`, which can be deleted
-once the reference values are in the test.
+Report what ran, the environment versions, how the test was shown to fail, and anything you
+couldn't check. Include the drafted `<details>` block for the PR description. Tell the user
+the location of `$WORK`, which can be deleted once the reference values are in the test.

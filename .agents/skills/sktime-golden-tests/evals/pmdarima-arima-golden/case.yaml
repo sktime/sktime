@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: pmdarima-arima-golden
+expected_outcome: |
+  Reference values come from raw pmdarima without sktime, the generator and versions are in the test comment, and the test really runs and can fail.
