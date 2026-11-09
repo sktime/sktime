@@ -249,7 +249,7 @@ numpy1 = [
   "numpy<2.0.0",
 ]
 pandas1 = [
-  "pandas<2.0.0",
+  "pandas<4.0.0",
 ]
 skpro = [
   "skpro>=2",
