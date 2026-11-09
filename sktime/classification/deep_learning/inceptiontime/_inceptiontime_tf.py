@@ -112,7 +112,11 @@ class InceptionTimeClassifier(BaseDeepClassifier):
         "capability:class_weight": True,
         # testing configuration
         # ---------------------
-        "tests:skip_by_name": ["test_fit_idempotent"],
+        "tests:skip_by_name": [
+            "test_fit_idempotent",
+            # Fitted deepcopy loses model_; tracked in #10712, fixed by #10453.
+            "test_deepcopy_fitted_predict",
+        ],
         "tests:libs": ["sktime.networks.inceptiontime._inceptiontime_tf"],
         "tests:vm": True,
     }
