@@ -187,6 +187,8 @@ Bugs here produce plausible numbers, so check each with real output (#11347 was 
 - **Gated weights:** with `model_path=None`, initialize from the default config without
   downloading anything (see `timer_s1.py`, `falcon_tst.py`). Tests can then run with no
   authentication. Warn that the weights are random. That replaces `tests:skip_all`.
-- Golden tests with real weights, or from a seeded untrained model when the checkpoint is gated.
+- Golden tests against the original upstream implementation, not the vendored copy. If the
+  real checkpoint can't run, see "When the real checkpoint can't run" in
+  `sktime-golden-tests`.
 - No monkeypatched fake models, and no tests of trivial behaviour, such as a license check
   raising.
