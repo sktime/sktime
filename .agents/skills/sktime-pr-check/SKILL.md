@@ -130,7 +130,7 @@ Then check:
 Depending on the change type, also apply:
 
 - **New estimator:** steps 3 to 6 of `../sktime-add-estimator/SKILL.md`, and the scitype's
-  file in `../sktime-add-estimator/references/`.
+  entry in its "Review findings by scitype" section.
 - **Foundation model:** apply
   `../sktime-add-foundation-model/references/adapter-checklist.md`, and
   `../sktime-add-foundation-model/references/vendoring.md` if it vendors code.
