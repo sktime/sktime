@@ -5,10 +5,9 @@ description: Handle deprecation and breaking changes in sktime. Covers renaming 
 
 # sktime deprecation
 
-sktime's policy: never break user code without a clear, actionable warning given at
-least one full MINOR release in advance. "Break" includes silently changing the
-algorithm, not only exceptions. The full guide is
-`docs/source/developer_guide/deprecation.rst`.
+The policy and the recipes are in `docs/source/developer_guide/deprecation.rst`. Read it
+first. This skill adds what the guide leaves out, and the places where recent code has moved
+on from the guide's examples. Where they disagree, follow the skill.
 
 Work out which situation applies:
 
@@ -17,79 +16,71 @@ Work out which situation applies:
 
 ## 1. Does this need a deprecation?
 
-**Needs one:** changing a parameter's default, renaming or removing a parameter, changing
-parameter order, changing an import location, or changing the algorithm for given
-arguments. This applies to any public name, so also to estimators, functions and tags.
+Use the lists at the top of the guide, and the guide's "Deprecating and change of
+parameters" section. They apply to any public name, so to estimators, functions and tags as
+well. Two cases the guide doesn't mention:
 
-**Doesn't need one:**
-
-- a new parameter at the end of the list, with a default that keeps prior behaviour
-- refactoring that leaves the public API alone
-- a different implementation of the same algorithm, e.g. for speed
-- removing a parameter whose non-default values always raised anyway
-- private names (leading underscore), and bug fixes that make the code do what's documented
-
-Bug fixes are the grey area. If users could reasonably rely on the old result, ask the
-user whether to raise it with maintainers, rather than deciding alone.
+- Private names, with a leading underscore, don't need one.
+- Bug fixes are the grey area. A fix that makes the code do what's documented doesn't need
+  one, but if users could reasonably rely on the old result, ask the user whether to raise it
+  with maintainers, rather than deciding alone.
 
 If no deprecation is needed, say why and stop.
 
 ## 2. Pick the version
 
+Apply the timeline in "Deprecation policy" in the guide to the current version, read from
+upstream, since a fork may be out of date:
+
 ```bash
-python -c "import sktime; print(sktime.__version__)"
 git fetch https://github.com/sktime/sktime main && git show FETCH_HEAD:sktime/__init__.py | grep __version__
 ```
 
-The second command matters when a fork is out of date, since the current version decides
-everything below.
-
-The warning has to ship in a release for a **full MINOR cycle** before the change, so the
-change usually lands at the **second next MINOR**. From `1.2.x`:
-
-- the warning first ships in the next release
-- `1.3.0` is the full cycle with the warning
-- **the change happens at `1.4.0`**
-
-Changes happen only at MINOR or MAJOR releases, never PATCH. If the PR might merge after
-the next MINOR is cut, the target moves out by one. Say so in the PR. If the user or a
-maintainer wants a different version, that's their call, but state that it shortens
-the policy's notice period.
+From `1.2.x`, the warning ships in the next release, `1.3.0` is the full cycle with the
+warning, and **the change happens at `1.4.0`**. If the PR might merge after the next MINOR
+is cut, the target moves out by one, so say so in the PR. If the user or a maintainer wants
+a different version, that's their call, but state that it shortens the notice period.
 
 ## 3. Apply the recipe
 
-Read `references/recipes.md`, and follow the section for the change. It has worked code for
-the default change, rename, removal, reorder, new behaviour-changing parameter, class or
-function move, and tags.
+Follow the guide's recipe for the change, under "Special deprecations", and copy its worked
+example from "Examples to illustrate recipes" where there is one. Then apply these
+corrections, since the examples are older than current practice:
 
-Whichever recipe applies, the PR always has these parts:
-
-1. **A warning** that names the object, the version of change, and the exact code to write
-   instead.
-2. **The docstring**, updated with the timeline.
-3. **A `todo <version>` comment** at each place that needs editing, stating every action
-   explicitly, so that the release manager doesn't have to re-derive anything.
-4. **Tests**: the warning fires for the old usage, and the new usage is clean.
-5. **Migrated internal callers**, so sktime's own code doesn't trigger the warning.
-6. **A PR note** stating the change and version, for the release notes. Leave
-   `docs/source/changelog.rst` alone, because the release manager writes it.
-
-Things that often go wrong:
-
-- **`__init__` must store parameters unchanged.** An estimator can't overwrite
-  `self.param` with the resolved value, as that breaks `get_params` and `clone`. Keep the
-  resolved value in `self._param`, and use that everywhere else.
-- **`DeprecationWarning` must always fire.** Use `warn` from `sktime.utils.warnings`, and
-  leave out `obj=`. With `obj=self`, a user's `warnings="off"` config silences it, and the
-  docstring of that function says deprecation warnings must always be raised. The dev guide's
-  example still shows `obj=self`, but recent code such as
+- **`warn` without `obj=`.** Use `warn` from `sktime.utils.warnings` with
+  `DeprecationWarning`, and leave out `obj=self`, which the guide's examples still pass.
+  With it, a user's `warnings="off"` config silences the warning, and the docstring of `warn`
+  says deprecation warnings must always be raised. Recent code such as
   `sktime/transformations/rocket/_multirocket.py` omits it.
-- **Use the sentinels from the guide:** `"changing_value"` for a default change,
-  `"deprecated"` for a rename or removal, `"position_change"` for reordering.
-- **Check `get_test_params`, docstring examples and notebooks** for the old usage.
-- **Write markers the audit can find:** lowercase `# todo 1.4.0: ...`, matching recent
-  code. Put one at each edit site.
-- **A removal test goes too.** Mark deprecation tests with `# todo 1.4.0: remove this test`.
+- **Lowercase markers:** `# todo 1.4.0: ...`, not the guide's `TODO (release ...)`, so the
+  audit below finds them. Put one at each edit site.
+- **`super().__init__()`** comes after the parameters are stored, before the warning block.
+- **For a rename, both parameters are written to `self`** during the change period, and the
+  docstring describes only the new name.
+
+The PR also needs these, which the guide doesn't list for the developer:
+
+- **Tests** that the old usage warns and the new usage doesn't, and that both give the same
+  result where behaviour is retained. Mark them `# todo 1.4.0: remove this test`.
+- **Migrated internal callers,** so sktime's own code doesn't trigger the warning. Check
+  `get_test_params`, docstring examples and notebooks for the old usage.
+- **A PR note** stating the change and version, for the release notes. Leave
+  `docs/source/changelog.rst` alone, because the release manager writes it.
+
+### Cases the guide doesn't cover
+
+**A parameter shared by several classes:** put the warning in one helper, as
+`_check_n_features_per_kernel` in `sktime/transformations/rocket/_multirocket.py` does. Its
+todo names every class whose signature and docstring need changing.
+
+**Moving a class or function:** keep a forwarding definition at the old location that
+warns and returns the new object, as `sktime/forecasting/model_selection/__init__.py` does
+for splitters, but with `warn` from `sktime.utils.warnings` rather than the standard
+library's. Import the new location inside it if the two modules could form an import
+cycle, and update the API reference to the new location.
+
+**Removing a class or function:** warn on use, in `__init__`, `__post_init__` or the function
+body. Name the replacement, or say there is none. Put the todo above the definition.
 
 ## 4. Verify
 
