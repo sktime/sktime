@@ -34,6 +34,7 @@ from sktime.forecasting.model_evaluation import evaluate
 from sktime.forecasting.model_evaluation._functions import (
     _check_scores,
     _get_column_order_and_datatype,
+    _include_intermediate_X,
 )
 from sktime.forecasting.naive import NaiveForecaster
 from sktime.forecasting.tests._config import TEST_FHS, TEST_STEP_LENGTHS_INT
@@ -64,6 +65,25 @@ from sktime.utils._testing.forecasting import make_forecasting_problem
 from sktime.utils._testing.hierarchical import _make_hierarchical
 from sktime.utils._testing.series import _make_series
 from sktime.utils.parallel import _get_parallel_test_fixtures
+
+
+@pytest.mark.parametrize("hierarchical", [False, True])
+def test_include_intermediate_X_uses_each_instance_window(hierarchical):
+    """Expand only the future interval of each evaluated instance."""
+    index = pd.MultiIndex.from_product([["a", "b", "c"], range(8)])
+    if hierarchical:
+        index = pd.MultiIndex.from_tuples([("group", *row) for row in index])
+    X = pd.DataFrame({"x": np.arange(len(index))}, index=index)
+    train = [0, 2, 8, 12, 16]
+    test = [4, 5, 14, 15]
+    X_test = X.iloc[sorted(train + test)]
+
+    actual = _include_intermediate_X(X, X_test, X.iloc[train], X.iloc[test])
+
+    # Keep the original rows, plus a/3 and b/5. Do not add training gaps,
+    # rows past the end of a fold, or future rows for the training-only group.
+    pd.testing.assert_frame_equal(actual, X.iloc[sorted(train + test + [3, 13])])
+
 
 METRICS = [MeanAbsolutePercentageError(symmetric=True), MeanAbsoluteScaledError()]
 METRICS_GLOBAL = [MeanSquaredPercentageError(), MedianSquaredPercentageError()]

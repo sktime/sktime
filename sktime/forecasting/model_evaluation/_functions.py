@@ -23,6 +23,34 @@ from sktime.utils.validation.forecasting import check_cv, check_scoring
 PANDAS_MTYPES = ["pd.DataFrame", "pd.Series", "pd-multiindex", "pd_multiindex_hier"]
 
 
+def _include_intermediate_X(X, X_test, y_train, y_test):
+    """Include X between the training cutoff and last test time per instance."""
+    if y_train.empty or y_test.empty:
+        return X_test
+
+    keep = X.index.isin(X_test.index)
+    if not isinstance(X.index, pd.MultiIndex):
+        keep |= (X.index > y_train.index.max()) & (X.index <= y_test.index.max())
+        return X.loc[keep]
+
+    # Unequal-length panels can have a different cutoff and end in each instance.
+    def last_time(index):
+        instances = index.droplevel(-1)
+        times = pd.Series(index.get_level_values(-1), index=instances)
+        return times.groupby(level=list(range(instances.nlevels)), sort=False).max()
+
+    cutoffs = last_time(y_train.index)
+    ends = last_time(y_test.index)
+    instances = X.index.droplevel(-1)
+    positions = np.flatnonzero(instances.isin(cutoffs.index.intersection(ends.index)))
+    selected = instances[positions]
+    times = X.index.get_level_values(-1)[positions]
+    keep[positions] |= (times > cutoffs.reindex(selected).array) & (
+        times <= ends.reindex(selected).array
+    )
+    return X.loc[keep]
+
+
 def _check_strategy(strategy):
     """Assert strategy value.
 
@@ -532,6 +560,9 @@ def evaluate(
         y is always split according to ``cv``, see above
 
         * if ``cv_X`` is not passed, ``X`` splits are subset to ``loc`` equal to ``y``
+          for temporal evaluation. For forecasters requiring contiguous ``X``,
+          the test input also includes time points between the training cutoff
+          and last test time.
         * if ``cv_X`` is passed, ``X`` is split according to ``cv_X``
 
     y : sktime time series container
@@ -837,6 +868,9 @@ def evaluate(
             for y_train, y_test in geny:
                 yield y_train, y_test, None, None
         else:
+            include_intermediate = cv_X is None and not forecaster.get_tag(
+                "capability:non_contiguous_X"
+            )
             if cv_X is None:
                 from sktime.split import SameLocSplitter, TestPlusTrainSplitter
 
@@ -845,6 +879,8 @@ def evaluate(
             genx = cv_X.split_series(X)
 
             for (y_train, y_test), (X_train, X_test) in zip(geny, genx):
+                if include_intermediate:
+                    X_test = _include_intermediate_X(X, X_test, y_train, y_test)
                 yield y_train, y_test, X_train, X_test
 
     # generator for y and X splits to iterate over below.
