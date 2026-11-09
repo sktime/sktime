@@ -81,6 +81,17 @@ class SignatureClassifier(BaseClassifier):
     classes_ : ndarray of shape (n_classes_)
         Holds the label for each class.
 
+    Examples
+    --------
+    >>> from sktime.classification.feature_based import SignatureClassifier
+    >>> from sktime.datasets import load_basic_motions
+    >>> X_train, y_train = load_basic_motions(split="train")
+    >>> X_test, y_test = load_basic_motions(split="test")
+    >>> clf = SignatureClassifier(random_state=42)
+    >>> clf.fit(X_train, y_train)  # doctest: +SKIP
+    SignatureClassifier(...)
+    >>> y_pred = clf.predict(X_test)  # doctest: +SKIP
+    
     References
     ----------
     .. [1] Morrill, James, et al. "A generalised signature method for multivariate time
