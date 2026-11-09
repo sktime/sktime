@@ -73,10 +73,9 @@ import pandas as pd
 from sktime.datatypes._check import mtype as infer_mtype
 from sktime.datatypes._registry import mtype_to_scitype
 
-# conversion dicts built in the scitype modules, merged into generate_convert_dict.
-# Direct conversions there are BaseConverter instances, also collected as classes.
-# Remaining function based entries are conversions of mtypes without a datatype
-# class (pd-long, pd-wide, pl.LazyFrame), which cannot be keyed by BaseConverter yet.
+# conversions obtained via an anchor mtype, applied in this order
+# triples (mtype, anchor_mtype, scitype): conversions from and to mtype are
+# obtained via anchor_mtype, for all mtypes of scitype, if not defined directly
 _EXTENSION_SEQUENCE = [
     ("xr.DataArray", "pd.DataFrame", "Series"),
     ("dask_series", "pd.DataFrame", "Series"),
@@ -130,7 +129,7 @@ def generate_convert_dict(soft_deps="present"):
     """Generate convert_dict using lookup of BaseConverter classes.
 
     Collects all ``BaseConverter`` subclasses in ``sktime.datatypes``,
-    and adds the function based conversions not yet migrated to classes.
+    and adds the conversions via anchor mtypes in ``_EXTENSION_SEQUENCE``.
     """
     from skbase.utils.dependencies import _check_estimator_deps
 

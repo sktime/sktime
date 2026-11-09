@@ -11,9 +11,6 @@ from sktime.utils.dependencies import _check_soft_dependencies
 
 SCITYPES = ["Series", "Panel", "Hierarchical", "Table", "Proba"]
 
-# mtypes without a datatype class, conversions from/to these stay function based
-MTYPES_WITHOUT_CLASS = ["pd-long", "pd-wide", "pl.LazyFrame"]
-
 
 @pytest.mark.skipif(
     not run_test_module_changed("sktime.datatypes"),
@@ -45,30 +42,18 @@ def test_convert_dict_keys_and_values(soft_deps):
 )
 @pytest.mark.parametrize("scitype", SCITYPES)
 def test_conversions_are_baseconverters(scitype):
-    """Test that conversions are BaseConverter matching their key.
-
-    Exceptions are direct conversions from or to mtypes without a datatype class.
-    """
+    """Test that conversions are BaseConverter matching their key."""
     convert_dict = get_convert_dict(soft_deps="all")
     keys = [k for k in convert_dict if k[2] == scitype]
     assert len(keys) > 0
 
-    n_converters = 0
     for key in keys:
         converter = convert_dict[key]
         mtype_from, mtype_to, _ = key
-        no_class = mtype_from in MTYPES_WITHOUT_CLASS
-        no_class = no_class or mtype_to in MTYPES_WITHOUT_CLASS
-        if not isinstance(converter, BaseConverter):
-            assert no_class, f"{key} is not a BaseConverter"
-            continue
-        n_converters += 1
+        assert isinstance(converter, BaseConverter), f"{key} is not a BaseConverter"
         assert converter.get_tag("mtype_from") == mtype_from
         assert converter.get_tag("mtype_to") == mtype_to
-        if not no_class:
-            assert converter._get_key() == key
-
-    assert n_converters > 0
+        assert converter._get_key() == key
 
 
 @pytest.mark.skipif(

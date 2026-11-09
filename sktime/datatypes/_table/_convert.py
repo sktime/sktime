@@ -1,34 +1,10 @@
 """Machine type converters for Table scitype.
 
-Exports conversion and mtype dictionary for Table scitype:
-
-convert_dict: dict indexed by triples of str
-  1st element = convert from - str
-  2nd element = convert to - str
-  3rd element = considered as this scitype - str
-elements are conversion functions of machine type (1st) -> 2nd
-
-Function signature of all elements
-convert_dict[(from_type, to_type, as_scitype)]
-
-Parameters
-----------
-obj : from_type - object to convert
-store : dictionary - reference of storage for lossy conversions, default=None (no store)
-
-Returns
--------
-converted_obj : to_type - object obj converted to to_type
-
-Raises
-------
-ValueError and TypeError, if requested conversion is not possible
-                            (depending on conversion logic)
+Conversions are implemented as ``BaseConverter`` classes, one class per
+conversion, and collected by ``generate_convert_dict`` in ``datatypes._convert``.
 """
 
 __author__ = ["fkiraly", "shlok191"]
-
-__all__ = ["convert_dict"]
 
 import numpy as np
 import pandas as pd
@@ -341,19 +317,8 @@ class TablePolarsEagerToPolarsLazy(BaseConverter):
         return convert_polars_eager_to_lazy(obj, store=store)
 
 
-convert_dict = dict()
-
-
 def convert_identity(obj, store=None):
     return obj
-
-
-# assign identity converter to type conversion to self
-for tp in MTYPE_LIST_TABLE:
-    if (tp, tp) in TableIdentity.get_conversions():
-        convert_dict[(tp, tp, "Table")] = TableIdentity(tp, tp)
-    else:
-        convert_dict[(tp, tp, "Table")] = convert_identity
 
 
 def convert_1D_to_2D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
@@ -368,9 +333,6 @@ def convert_1D_to_2D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
     return res
 
 
-convert_dict[("numpy1D", "numpy2D", "Table")] = TableNumpy1DToNumpy2D()
-
-
 def convert_2D_to_1D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
     if not isinstance(obj, np.ndarray):
         raise TypeError("input must be a np.ndarray")
@@ -383,9 +345,6 @@ def convert_2D_to_1D_numpy_as_Table(obj: np.ndarray, store=None) -> np.ndarray:
     return res
 
 
-convert_dict[("numpy2D", "numpy1D", "Table")] = TableNumpy2DToNumpy1D()
-
-
 def convert_df_to_2Dnp_as_Table(obj: pd.DataFrame, store=None) -> np.ndarray:
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input must be a pd.DataFrame")
@@ -396,14 +355,8 @@ def convert_df_to_2Dnp_as_Table(obj: pd.DataFrame, store=None) -> np.ndarray:
     return obj.to_numpy()
 
 
-convert_dict[("pd_DataFrame_Table", "numpy2D", "Table")] = TablePdDataFrameToNumpy2D()
-
-
 def convert_df_to_1Dnp_as_Table(obj: pd.DataFrame, store=None) -> np.ndarray:
     return convert_df_to_2Dnp_as_Table(obj=obj, store=store).flatten()
-
-
-convert_dict[("pd_DataFrame_Table", "numpy1D", "Table")] = TablePdDataFrameToNumpy1D()
 
 
 def convert_2Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
@@ -425,9 +378,6 @@ def convert_2Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("numpy2D", "pd_DataFrame_Table", "Table")] = TableNumpy2DToPdDataFrame()
-
-
 def convert_1Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
     if not isinstance(obj, np.ndarray) and len(obj.shape) != 1:
         raise TypeError("input must be a 1D np.ndarray")
@@ -446,9 +396,6 @@ def convert_1Dnp_to_df_as_Table(obj: np.ndarray, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("numpy1D", "pd_DataFrame_Table", "Table")] = TableNumpy1DToPdDataFrame()
-
-
 def convert_s_to_df_as_table(obj: pd.Series, store=None) -> pd.DataFrame:
     if not isinstance(obj, pd.Series):
         raise TypeError("input must be a pd.Series")
@@ -465,11 +412,6 @@ def convert_s_to_df_as_table(obj: pd.Series, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("pd_Series_Table", "pd_DataFrame_Table", "Table")] = (
-    TablePdSeriesToPdDataFrame()
-)
-
-
 def convert_df_to_s_as_table(obj: pd.DataFrame, store=None) -> pd.Series:
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input is not a pd.DataFrame")
@@ -484,11 +426,6 @@ def convert_df_to_s_as_table(obj: pd.DataFrame, store=None) -> pd.Series:
     y.name = None
 
     return y
-
-
-convert_dict[("pd_DataFrame_Table", "pd_Series_Table", "Table")] = (
-    TablePdDataFrameToPdSeries()
-)
 
 
 def convert_list_of_dict_to_df_as_table(obj: list, store=None) -> pd.DataFrame:
@@ -510,11 +447,6 @@ def convert_list_of_dict_to_df_as_table(obj: list, store=None) -> pd.DataFrame:
     return res
 
 
-convert_dict[("list_of_dict", "pd_DataFrame_Table", "Table")] = (
-    TableListOfDictToPdDataFrame()
-)
-
-
 def convert_df_to_list_of_dict_as_table(obj: pd.DataFrame, store=None) -> list:
     if not isinstance(obj, pd.DataFrame):
         raise TypeError("input is not a pd.DataFrame")
@@ -525,11 +457,6 @@ def convert_df_to_list_of_dict_as_table(obj: pd.DataFrame, store=None) -> list:
         store["index"] = obj.index
 
     return ret_dict
-
-
-convert_dict[("pd_DataFrame_Table", "list_of_dict", "Table")] = (
-    TablePdDataFrameToListOfDict()
-)
 
 
 if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
@@ -567,24 +494,3 @@ if _check_soft_dependencies(["polars", "pyarrow"], severity="none"):
             raise TypeError("input is not a pl.LazyFrame")
 
         return obj.collect()
-
-    convert_dict[("pd_DataFrame_Table", "polars_eager_table", "Table")] = (
-        TablePdDataFrameToPolarsEager()
-    )
-    convert_dict[("pd_DataFrame_Table", "polars_lazy_table", "Table")] = (
-        TablePdDataFrameToPolarsLazy()
-    )
-
-    convert_dict[("polars_eager_table", "pd_DataFrame_Table", "Table")] = (
-        TablePolarsEagerToPdDataFrame()
-    )
-    convert_dict[("polars_lazy_table", "pd_DataFrame_Table", "Table")] = (
-        TablePolarsLazyToPdDataFrame()
-    )
-
-    convert_dict[("polars_lazy_table", "polars_eager_table", "Table")] = (
-        TablePolarsLazyToPolarsEager()
-    )
-    convert_dict[("polars_eager_table", "polars_lazy_table", "Table")] = (
-        TablePolarsEagerToPolarsLazy()
-    )
