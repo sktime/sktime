@@ -142,6 +142,7 @@ class ShapeletTransformClassifier(BaseClassifier):
         "property:randomness": "derandomized",
         "classifier_type": "shapelet",
         "tests:skip_by_name": ["test_get_test_params_coverage"],
+        "tests:specific": ["sktime.classification.shapelet_based.tests.test_stc"],
     }
 
     def __init__(
