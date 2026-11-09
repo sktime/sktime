@@ -3,17 +3,21 @@
 Documentation
 =============
 
+=============
+Documentation
+=============
+
 .. toctree::
    :maxdepth: 1
-   :hidden:
 
    installation
-   tutorials
    examples
    estimator_overview
    glossary
    changelog
    related_software
+   user_guide/index
+
 
 .. grid:: 1 2 2 2
     :gutter: 3
