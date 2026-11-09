@@ -139,7 +139,7 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
 
     _config_doc = {
         "remember_data": """
-        remember_data : bool, default=True
+        remember_data : bool, default=False
             whether self._X and self._y are stored in fit, and updated
             in update. If True, self._X and self._y are stored and updated.
             If False, self._X and self._y are not stored and updated.
