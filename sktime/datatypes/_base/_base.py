@@ -338,6 +338,10 @@ class BaseConverter(BaseObject):
                 "mtype_to must be set in constructor, as the class has no defaults. "
                 "For valid pairs of defaults, use get_conversions."
             )
+        self._check_conversion(mtype_from, mtype_to)
+
+    def _check_conversion(self, mtype_from, mtype_to):
+        """Check that the pair of mtypes is a conversion of this class."""
         if (mtype_from, mtype_to) not in self.__class__.get_conversions():
             raise ValueError(
                 f"Error in instantiating {self.__class__.__name__}: "
