@@ -131,6 +131,42 @@ class TransformSelectForecaster(BaseForecaster, _HeterogenousMetaEstimator):
 
         super().__init__()
 
+    def get_params(self, deep=True):
+        """Get parameters, including each forecaster in the forecasters dict."""
+        params = super().get_params(deep=deep)
+        if deep:
+            for name, estimator in self.forecasters.items():
+                for key, value in estimator.get_params(deep=True).items():
+                    params[f"forecasters__{name}__{key}"] = value
+        return params
+
+    def set_params(self, **kwargs):
+        """Set parameters, including forecasters__name__param keys."""
+        nested = {}
+        rest = {}
+        prefix = "forecasters__"
+        for key, value in kwargs.items():
+            if key.startswith(prefix):
+                name, sep, subkey = key[len(prefix) :].partition("__")
+                nested.setdefault(name, {})
+                nested[name][subkey if sep else None] = value
+            else:
+                rest[key] = value
+
+        for name, updates in nested.items():
+            if None in updates:
+                self.forecasters[name] = updates[None]
+                if hasattr(self, "forecasters_"):
+                    self.forecasters_[name] = updates[None].clone()
+            else:
+                self.forecasters[name].set_params(**updates)
+                if hasattr(self, "forecasters_") and name in self.forecasters_:
+                    self.forecasters_[name].set_params(**updates)
+
+        super().set_params(**rest)
+        return self
+
+
     def __post_init__(self):
         """Post-init constructor logic, can be used by inheriting classes.
 
