@@ -129,6 +129,29 @@ class BoxCoxBiasAdjustedForecaster(BaseForecaster):
 
         return self
 
+    def _update(self, y, X=None, update_params=True):
+        """Update the wrapped forecaster with new data, on the Box-Cox scale.
+
+        The Box-Cox lambda estimated in ``fit`` is kept, new data is transformed
+        with it and passed to the ``update`` of the wrapped forecaster.
+
+        Parameters
+        ----------
+        y : pd.Series
+            New target time series values.
+        X : pd.DataFrame, optional (default=None)
+            Exogenous variables.
+        update_params : bool, optional (default=True)
+            Whether the wrapped forecaster should update its parameters.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        y_transformed = self.boxcox_transformer_.transform(y)
+        self.forecaster_.update(y=y_transformed, X=X, update_params=update_params)
+        return self
+
     def _predict(self, fh, X=None):
         """Forecast time series at future horizon.
 
