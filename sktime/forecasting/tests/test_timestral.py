@@ -85,6 +85,7 @@ def test_timestral_airline_matches_source_reference():
         model_path="mistralai/Timestral-5M",
         revision=HF_REVISION,
         device="cpu",
+        license_accepted=True,
     )
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh=fh)
@@ -138,6 +139,7 @@ def test_timestral_covariates_match_source_reference():
         model_path="mistralai/Timestral-5M",
         revision=HF_REVISION,
         device="cpu",
+        license_accepted=True,
     )
     forecaster.fit(y, X=X)
     y_pred = forecaster.predict(fh=list(range(1, horizon + 1)), X=X_future)
@@ -205,6 +207,7 @@ def test_timestral_categorical_covariates_predict():
         model_path="mistralai/Timestral-5M",
         revision=HF_REVISION,
         device="cpu",
+        license_accepted=True,
     )
     forecaster.fit(y, X=X)
     y_pred = forecaster.predict(fh=list(range(1, horizon + 1)), X=X_future)
@@ -228,6 +231,7 @@ def test_timestral_predict_proba_matches_quantiles():
         model_path="mistralai/Timestral-5M",
         revision=HF_REVISION,
         device="cpu",
+        license_accepted=True,
     )
     forecaster.fit(y_train)
 
@@ -253,6 +257,7 @@ def test_timestral_multi_patch_horizon():
         model_path="mistralai/Timestral-5M",
         revision=HF_REVISION,
         device="cpu",
+        license_accepted=True,
     )
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh=fh)
@@ -275,6 +280,7 @@ def test_timestral_max_context_truncation():
         revision=HF_REVISION,
         device="cpu",
         max_context=32,
+        license_accepted=True,
     )
     forecaster_capped.fit(y_full)
     pred_capped = forecaster_capped.predict(fh=fh)
@@ -284,6 +290,7 @@ def test_timestral_max_context_truncation():
         revision=HF_REVISION,
         device="cpu",
         max_context=32,
+        license_accepted=True,
     )
     forecaster_truncated.fit(y_full.iloc[-32:])
     pred_truncated = forecaster_truncated.predict(fh=fh)
@@ -294,3 +301,15 @@ def test_timestral_max_context_truncation():
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimestralForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_timestral_license_acceptance_required():
+    """fit() raises ValueError if license_accepted is False."""
+    forecaster = TimestralForecaster(license_accepted=False)
+    y = load_airline().iloc[:-12]
+    with pytest.raises(ValueError, match="Mistral Modified MIT license"):
+        forecaster.fit(y)
