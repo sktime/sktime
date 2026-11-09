@@ -13,10 +13,13 @@ Development
    :hidden:
 
    developer_guide
+   llm_prompts
    contributing/reviewer_guide
    contributing/enhancement_proposals
    roadmap
    get_involved/governance
+
+The Development section provides resources for contributing to sktime. This includes development conventions, guides for reviewers, enhancement proposals process, and governance information.
 
 .. grid:: 1 2 2 2
     :gutter: 3
@@ -38,6 +41,24 @@ Development
             :expand:
 
             Developer Guide
+
+    .. grid-item-card::
+        :text-align: center
+
+        LLM Prompts
+
+        ^^^
+
+        Prompts for LLM-assisted development with sktime.
+
+        +++
+
+        .. button-ref:: llm_prompts
+            :color: primary
+            :click-parent:
+            :expand:
+
+            LLM Prompts
 
     .. grid-item-card::
         :text-align: center
