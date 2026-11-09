@@ -261,6 +261,79 @@ class Reconciler(BaseTransformer):
         """
         return [{"method": x} for x in cls.METHOD_LIST]
 
+class ImmutableReconciler(Reconciler):
+    """Hierarchical reconciliation with immutable series (OLS prototype).
+
+    Ensures selected series remain unchanged while preserving coherence.
+    """
+
+    def __init__(self, immutable_series=None):
+        self.immutable_series = immutable_series or []
+        super().__init__(method="ols")
+
+    def _transform(self, X, y=None):
+        # ---- standard checks (reuse parent logic) ----
+        if X.index.nlevels < 2:
+            warn(
+                "ImmutableReconciler requires hierarchical index. Returning X.",
+                obj=self,
+            )
+            return X
+
+        if _check_index_no_total(X):
+            X = self._add_totals(X)
+
+        al_inds = X.droplevel(level=-1).index.unique()
+
+        if not np.all(self.s_matrix.index == al_inds):
+            raise ValueError("Index mismatch with fitted hierarchy.")
+
+        # ---- map immutable nodes ----
+        immutable = set(self.immutable_series)
+
+        recon_preds = []
+
+        for _, group in X.groupby(level=-1):
+            y_hat = group.droplevel(-1)
+
+            # split indices
+            imm_idx = [i for i in y_hat.index if i in immutable]
+            free_idx = [i for i in y_hat.index if i not in immutable]
+
+            # if nothing is free → return original
+            if len(free_idx) == 0:
+                recon_preds.append(group)
+                continue
+
+            # ---- reduced matrices ----
+            S = self.s_matrix
+            G = self.g_matrix
+
+            S_free = S.loc[free_idx]
+            y_free = y_hat.loc[free_idx]
+
+            # ---- OLS on reduced system ----
+            # pseudo-inverse approach
+            G_free = np.linalg.pinv(S_free.values)
+
+            y_rec_free = S_free.values @ (G_free @ y_free.values)
+
+            # ---- reconstruct ----
+            y_rec = y_hat.copy()
+
+            for i, idx in enumerate(free_idx):
+                y_rec.loc[idx] = y_rec_free[i]
+
+            # immutable indices untouched
+
+            # restore time index
+            y_rec.index = group.index
+
+            recon_preds.append(y_rec)
+
+        recon_preds = pd.concat(recon_preds).sort_index()
+
+        return recon_preds
 
 def _get_s_matrix(X):
     """Determine the summation "S" matrix.
