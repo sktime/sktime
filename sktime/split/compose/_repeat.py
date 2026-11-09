@@ -60,9 +60,11 @@ class Repeat(BaseSplitter):
                 f"but found {mode}"
             )
 
-        tags_to_clone = ["split_series_uses"]
+        tags_to_clone = ["split_series_uses", "split:arity"]
 
         self.clone_tags(splitter, tags_to_clone)
+        if self.get_tag("split:arity") == 1:
+            self.fh = None
 
     def _split(self, y):
         """Get iloc references to train/test splits of ``y``.
@@ -130,9 +132,9 @@ class Repeat(BaseSplitter):
             one_gen = getattr(one_clone, method)(y)
 
         if self.mode == "entry" and not random_repeat:
-            for train, test in one_gen:
+            for folds in one_gen:
                 for _ in range(self.times):
-                    yield train, test
+                    yield folds
         elif self.mode == "entry" and random_repeat:
             for _ in range(self.splitter.get_n_splits(y)):
                 for spl_gen in spl_gens:
@@ -140,8 +142,7 @@ class Repeat(BaseSplitter):
         elif self.mode == "sequence" and not random_repeat:
             all_res = list(one_gen)
             for _ in range(self.times):
-                for train, test in all_res:
-                    yield train, test
+                yield from all_res
         elif self.mode == "sequence" and random_repeat:
             for spl_gen in spl_gens:
                 yield from spl_gen

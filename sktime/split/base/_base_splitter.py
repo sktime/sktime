@@ -35,6 +35,14 @@ class BaseSplitter(BaseObject):
     Method ``.split(y)`` is used to generate a pair of index sets:
     train :math:`(t(1),\ldots,t(k))` and test :math:`(t(k+1),\ldots,t(k+l))`.
 
+    The tag ``split:arity`` determines the number of returned folds. The default
+    value 2 preserves train/test tuples. With arity 1, ``split`` yields a single
+    array, ``split_loc`` a single index, and ``split_series`` a single series.
+    For arities greater than 1, these methods yield tuples of that length.
+    Subclasses implement ``_split`` or ``_split_loc`` with the same convention.
+    A single-window resampler has no forecasting horizon and must be composed
+    with a test horizon before use in forecasting cross-validation.
+
     Method ``.get_n_splits`` returns the number of splitting iterations.
     This number depends on a concrete splitting strategy and splitter parameters.
 
@@ -71,6 +79,7 @@ class BaseSplitter(BaseObject):
 
     _tags = {
         "object_type": "splitter",
+        "split:arity": 2,
         "split_hierarchical": False,
         # split_hierarchical: whether _split supports hierarchical types natively
         # if not, splitter broadcasts over instances
@@ -135,8 +144,23 @@ class BaseSplitter(BaseObject):
         else:
             split = self._split_vectorized
 
-        for train, test in split(y_index):
-            yield train[train >= 0], test[test >= 0]
+        for folds in split(y_index):
+            yield self._format_folds(fold[fold >= 0] for fold in self._as_folds(folds))
+
+    def _as_folds(self, folds):
+        """Normalize a public split to a tuple of folds internally."""
+        arity = self.get_tag("split:arity")
+        if arity == 1:
+            return (folds,)
+        folds = tuple(folds)
+        if len(folds) != arity:
+            raise ValueError(f"Expected a tuple of {arity} folds.")
+        return folds
+
+    def _format_folds(self, folds):
+        """Unwrap a single fold; retain the tuple for multiple folds."""
+        folds = tuple(folds)
+        return folds[0] if self.get_tag("split:arity") == 1 else folds
 
     def _split(self, y):
         """Get iloc references to train/test splits of `y`.
@@ -155,11 +179,11 @@ class BaseSplitter(BaseObject):
         test : 1D np.ndarray of dtype int
             Test window indices, iloc references to test indices in y
         """
-        for train_loc, test_loc in self.split_loc(y):
+        for folds in self.split_loc(y):
             # default gets iloc index from loc index
-            train_iloc = y.get_indexer(train_loc)
-            test_iloc = y.get_indexer(test_loc)
-            yield train_iloc, test_iloc
+            yield self._format_folds(
+                y.get_indexer(fold) for fold in self._as_folds(folds)
+            )
 
     def _split_vectorized(self, y):
         """Get iloc references to train/test splits of `y`, for pd.MultiIndex.
@@ -184,17 +208,18 @@ class BaseSplitter(BaseObject):
         anchors = pd.Series(range(len(srs)), index).groupby(index).first().tolist()
         splits = (self._split(pd.Index(inst.values)) for _, inst in srs.groupby(index))
 
-        train = []
-        test = []
+        per_instance = []
         for split_inst, anchor in zip(splits, anchors):
-            train_inst, test_inst = zip(*split_inst)
-            train.append(tuple(indices + anchor for indices in train_inst))
-            test.append(tuple(indices + anchor for indices in test_inst))
-
-        train = map(np.concatenate, zip(*train))
-        test = map(np.concatenate, zip(*test))
-
-        yield from zip(train, test)
+            per_instance.append(
+                [
+                    tuple(indices + anchor for indices in self._as_folds(folds))
+                    for folds in split_inst
+                ]
+            )
+        for folds_by_instance in zip(*per_instance):
+            yield self._format_folds(
+                np.concatenate(indices) for indices in zip(*folds_by_instance)
+            )
 
     def split_loc(self, y):
         """Get loc references to train/test splits of `y`.
@@ -238,9 +263,9 @@ class BaseSplitter(BaseObject):
         test : pd.Index
             Test window indices, loc references to test indices in y
         """
-        for train, test in self.split(y):
+        for folds in self.split(y):
             # default gets loc index from iloc index
-            yield y[train], y[test]
+            yield self._format_folds(y[fold] for fold in self._as_folds(folds))
 
     def split_series(self, y):
         """Split `y` into training and test windows.
@@ -278,13 +303,11 @@ class BaseSplitter(BaseObject):
         _split = getattr(self, splitter_name)
         _slicer = getattr(y_inner, use_iloc_or_loc)
 
-        for train, test in _split(y_inner.index):
-            y_train = _slicer[train]
-            y_test = _slicer[test]
-
-            y_train = convert(y_train, from_type=y_inner_mtype, to_type=y_orig_mtype)
-            y_test = convert(y_test, from_type=y_inner_mtype, to_type=y_orig_mtype)
-            yield y_train, y_test
+        for folds in _split(y_inner.index):
+            yield self._format_folds(
+                convert(_slicer[fold], from_type=y_inner_mtype, to_type=y_orig_mtype)
+                for fold in self._as_folds(folds)
+            )
 
     def _coerce_to_index(self, y) -> pd.Index:
         """Check and coerce y to pandas index.
@@ -527,6 +550,8 @@ class BaseSplitter(BaseObject):
               that do not have a natural forecasting horizon associated to them.
         """
         fh = self.fh
+        if fh is None:
+            return None
         fh = check_fh(fh)  # coerce to ForecastingHorizon
         return fh
 

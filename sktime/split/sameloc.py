@@ -79,6 +79,7 @@ class SameLocSplitter(BaseSplitter):
         self.cv = cv
         self.y_template = y_template
         super().__init__()
+        self.clone_tags(cv, "split:arity")
 
     def _split(self, y: pd.Index):
         cv = self.cv
@@ -87,10 +88,10 @@ class SameLocSplitter(BaseSplitter):
         else:
             y_template = self.y_template
 
-        for y_train_loc, y_test_loc in cv.split_loc(y_template):
-            y_train_iloc = y.get_indexer(y_train_loc)
-            y_test_iloc = y.get_indexer(y_test_loc)
-            yield y_train_iloc, y_test_iloc
+        for folds in cv.split_loc(y_template):
+            yield self._format_folds(
+                y.get_indexer(fold) for fold in self._as_folds(folds)
+            )
 
     def _split_loc(self, y: pd.Index):
         """Get loc references to train/test splits of ``y``.

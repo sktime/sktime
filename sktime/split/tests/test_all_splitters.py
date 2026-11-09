@@ -63,22 +63,18 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
 
         assert isinstance(splits, list)
 
+        assert len(splits) == n_splits
         for x in splits:
-            assert isinstance(x, tuple)
-            assert len(x) == 2
-            assert isinstance(x[0], np.ndarray)
-            assert isinstance(x[1], np.ndarray)
-
-            train = x[0]
-            test = x[1]
-
-            assert train.ndim == 1
-            assert test.ndim == 1
-            assert train.dtype in [np.int64, np.int32]
-            assert test.dtype in [np.int64, np.int32]
-
-            assert np.all(train < len(y))
-            assert np.all(test < len(y))
+            arity = splitter.get_tag("split:arity")
+            folds = (x,) if arity == 1 else x
+            assert isinstance(folds, tuple)
+            assert len(folds) == arity
+            for fold in folds:
+                assert isinstance(fold, np.ndarray)
+                assert fold.ndim == 1
+                assert fold.dtype in [np.int64, np.int32]
+                assert np.all(fold >= 0)
+                assert np.all(fold < len(y))
 
     @pytest.mark.parametrize("hierarchical", [False, True])
     def test_split_loc(self, object_instance, hierarchical):
@@ -110,16 +106,13 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
         assert len(splits) == n_splits
 
         for x in splits:
-            assert isinstance(x, tuple)
-            assert len(x) == 2
-            assert isinstance(x[0], pd.Index)
-            assert isinstance(x[1], pd.Index)
-
-            train = x[0]
-            test = x[1]
-
-            assert np.all(train.isin(y.index))
-            assert np.all(test.isin(y.index))
+            arity = splitter.get_tag("split:arity")
+            folds = (x,) if arity == 1 else x
+            assert isinstance(folds, tuple)
+            assert len(folds) == arity
+            for fold in folds:
+                assert isinstance(fold, pd.Index)
+                assert np.all(fold.isin(y.index))
 
     @pytest.mark.parametrize("hierarchical", [False, True])
     def test_split_series(self, object_instance, hierarchical):
@@ -156,7 +149,8 @@ class TestAllSplitters(SplitterFixtureGenerator, QuickTester):
             expected_type = pd.Series
 
         for x in splits:
-            assert isinstance(x, tuple)
-            assert len(x) == 2
-            assert isinstance(x[0], expected_type)
-            assert isinstance(x[1], expected_type)
+            arity = splitter.get_tag("split:arity")
+            folds = (x,) if arity == 1 else x
+            assert isinstance(folds, tuple)
+            assert len(folds) == arity
+            assert all(isinstance(fold, expected_type) for fold in folds)
