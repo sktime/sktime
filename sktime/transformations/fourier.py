@@ -218,10 +218,22 @@ class FourierFeatures(BaseTransformer):
             self.freq_ = time_index.freq or self.freq or pd.infer_freq(time_index)
             if self.freq_ is None:
                 raise ValueError("X has no known frequency and none is supplied")
-            if self.freq_ == time_index.freq and self.freq_ != self.freq:
+            # warn only if a frequency was given and it differs from the index freq,
+            # which takes precedence
+            if self.freq is not None and time_index.freq is not None:
+                try:
+                    given_freq = _to_offset_compat(self.freq)
+                except ValueError:
+                    # not a valid offset alias, compare as given
+                    given_freq = self.freq
+            if (
+                self.freq is not None
+                and time_index.freq is not None
+                and time_index.freq != given_freq
+            ):
                 warnings.warn(
                     f"Using frequency from index: {time_index.freq}, which "
-                    f"does not match the frequency given:{self.freq}.",
+                    f"does not match the frequency given: {self.freq}.",
                     stacklevel=2,
                 )
             time_index = time_index.to_period(_get_period_freq(self.freq_))
