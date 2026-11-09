@@ -88,7 +88,7 @@ class RocketPyts(_PytsAdapter, BaseTransformer):
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": "pyts<0.14.0",
+        "python_dependencies": "pyts",
         # estimator type
         # --------------
         "capability:multivariate": False,
@@ -113,7 +113,7 @@ class RocketPyts(_PytsAdapter, BaseTransformer):
 
         should import and return pyts class
         """
-        from pyts.transformation.rocket import ROCKET
+        from pyts.transformation import ROCKET
 
         return ROCKET
 
