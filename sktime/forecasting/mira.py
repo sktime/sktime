@@ -281,14 +281,20 @@ def _resolve_device():
     return "cpu"
 
 
-def _index_as_float(index) -> np.ndarray:
-    """Map sktime index labels to float time coordinates for MIRA ``time_values``."""
+def _index_as_int(index) -> np.ndarray:
+    """Map sktime index labels to integer coordinates for MIRA ``time_values``.
+
+    Returns raw ``int64`` values so the caller can subtract a shared integer
+    origin before converting to float, avoiding float32 precision loss for
+    high-frequency DatetimeIndex (nanoseconds since epoch ≈ 1.8e18 overflow
+    float32's ~7-digit mantissa, collapsing sub-minute timestamps).
+    """
     if isinstance(index, (pd.DatetimeIndex, pd.PeriodIndex)):
-        return index.asi8.astype(np.float64)
+        return index.asi8
     arr = np.asarray(index)
     if np.issubdtype(arr.dtype, np.number):
-        return arr.astype(np.float64)
-    return np.arange(len(index), dtype=np.float64)
+        return arr.astype(np.int64)
+    return np.arange(len(index), dtype=np.int64)
 
 
 def _prepare_context(y, pred_len, cutoff, context_length):
@@ -325,7 +331,22 @@ def _prepare_context(y, pred_len, cutoff, context_length):
         series = series[-context_length:]
         index = index[-context_length:]
 
-    times_np = np.concatenate([_index_as_float(index), _index_as_float(future_index)])
+    raw_ctx = _index_as_int(index)
+    raw_fut = _index_as_int(future_index)
+    raw_all = np.concatenate([raw_ctx, raw_fut])
+
+    # Subtract integer origin to get small offsets (still int64, no precision lost).
+    # Then normalize to [0, seq_len - 1] entirely in float64 before casting to
+    # float32, so float32's ~7-digit mantissa never collapses neighbouring
+    # timestamps — even for sub-minute DatetimeIndex where naive float32 of
+    # nanoseconds-since-epoch (~1.8e18) loses all sub-2-minute resolution.
+    seq_len = len(raw_all)
+    offsets_f64 = (raw_all - raw_all[0]).astype(np.float64)
+    t_min = offsets_f64.min()
+    t_max = offsets_f64.max()
+    denom = max(float(t_max - t_min), 1e-8)
+    times_np = (offsets_f64 - t_min) / denom * float(seq_len - 1)
+
     values = torch.tensor(series.reshape(1, -1), dtype=torch.float32)
     times = torch.tensor(times_np.reshape(1, -1), dtype=torch.float32)
     return values, times

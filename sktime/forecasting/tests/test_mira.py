@@ -103,3 +103,19 @@ def test_mira_airline_predictions_match_source_reference(
         rtol=1e-5,
         atol=1e-4,
     )
+
+
+@pytest.mark.parametrize("freq", ["D", "h", "min", "s"])
+def test_mira_prepare_context_high_frequency(freq):
+    """Test that _prepare_context avoids float32 precision collapse for high frequencies."""
+    import pandas as pd
+
+    from sktime.forecasting.mira import _prepare_context
+
+    idx = pd.date_range("2026-01-01", periods=48, freq=freq)
+    y = pd.DataFrame({"y": np.arange(48.0)}, index=idx)
+    _, times = _prepare_context(y, pred_len=4, cutoff=idx[-1:], context_length=None)
+    assert len(np.unique(times.numpy())) == 52
+    diffs = np.diff(times.numpy().ravel())
+    np.testing.assert_allclose(diffs, 1.0, atol=1e-5)
+
