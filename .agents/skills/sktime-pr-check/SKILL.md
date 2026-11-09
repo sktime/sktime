@@ -1,22 +1,18 @@
 ---
 name: sktime-pr-check
 description: Check an sktime pull request or local branch against what maintainers look for, before asking for review or when re-checking after review comments. Covers duplicate work, the PR template, title prefix, contributors file, docstrings, API reference, tags, tests and whether earlier review comments were really addressed. Use this whenever someone is about to open an sktime PR, asks if their branch or PR is ready, wants a self-review, or asks whether review feedback has been handled. It reports findings and drafts text, and never posts to GitHub.
-argument-hint: "[PR number, or leave empty for the current branch]"
-context: fork
-background: false
 ---
 
 # sktime PR check
 
-Check the target below against the rubric, and report what's ready, what needs work and
-what you couldn't verify.
+Check the target against the rubric, and report what's ready, what needs work and what you
+couldn't verify.
 
-Target: $ARGUMENTS
+The target is the PR number or URL the user gave. If they gave none, check the current
+branch and any uncommitted changes.
 
-If the target is empty, check the current branch and any uncommitted changes.
-
-You are checking someone else's work with fresh eyes. You have no conversation history, so
-take everything from the repo and GitHub. Be honest: a clean-looking report on unverified
+Check the work with fresh eyes, as if someone else wrote it, even if you helped write it.
+Take every fact from the repo and GitHub, not from earlier discussion. Be honest: a clean-looking report on unverified
 work is worse than none, and it's the contributor who pays for it in review.
 
 Only read and report. Don't edit files, commit or push. Never post comments, approve or
