@@ -111,8 +111,8 @@ The general rules for `authors`, `maintainers` and the soft dependency tags are 
 
 ## State and update
 
-The general rules are in "Common review findings" in
-`../../sktime-add-estimator/references/forecasting.md`: don't read `self._y` or `self._X`,
+The general rules are under "Forecasters" in "Review findings by scitype" in
+`../../sktime-add-estimator/SKILL.md`: don't read `self._y` or `self._X`,
 keep your own context (e.g. `self._cur_y`, `self._cur_X`), and implement `_update` with
 `update_data`. Then set `"capability:update": True`. For FMs also:
 
@@ -125,13 +125,13 @@ Bugs here produce plausible numbers, so check each with real output (#11347 was 
 
 - **Scale:** forecasts are on the scale of `y`. Check whether the model normalizes
   internally, and invert it exactly once.
-- **Non-contiguous `fh`:** `[2, 5]` has to return steps 2 and 5, as `forecasting.md`
-  describes.
+- **Non-contiguous `fh`:** `[2, 5]` has to return steps 2 and 5, as the forecaster
+  review findings describe.
 - **Long horizons:** decide what happens past the model's native horizon, and document it.
 
 ## Probabilistic output
 
-- Implement `_predict_proba` as well as `_predict_quantiles` (see `forecasting.md`), e.g.
+- Implement `_predict_proba` as well as `_predict_quantiles` (see the forecaster review findings), e.g.
   with `HistogramQPD` from `skpro.distributions`, with `tails="mass"`, as in `timesfm3.py`.
 - `predict`, `predict_quantiles` and `predict_proba` must agree (#10566, #10533). Add a test.
 - Use the model's own level list (`model.quantile_levels`, `config`) over a hardcoded grid
