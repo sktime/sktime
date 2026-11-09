@@ -361,7 +361,9 @@ default="full"
             buf = io.BytesIO()
             torch.save(network.state_dict(), buf)
             buf.seek(0)
-            network_copy.load_state_dict(torch.load(buf, weights_only=True))
+            network_copy.load_state_dict(
+                torch.load(buf, map_location=self._device_, weights_only=True)
+            )
             network = network_copy
 
         return MantisTrainer(device=self._device_, network=network)
@@ -386,7 +388,11 @@ default="full"
             # Restore backbone weights if we serialised them
             network_bytes = getattr(self, "_network_state_bytes_", None)
             if network_bytes is not None:
-                state = torch.load(io.BytesIO(network_bytes), weights_only=True)
+                state = torch.load(
+                    io.BytesIO(network_bytes),
+                    map_location=self._device_,
+                    weights_only=True,
+                )
                 trainer.network.load_state_dict(state)
 
             # Restore the fine-tuned model weights.
@@ -414,7 +420,11 @@ default="full"
                     batch_size=n_classes,
                     learning_rate_adjusting=False,
                 )
-                state = torch.load(io.BytesIO(model_bytes), weights_only=True)
+                state = torch.load(
+                    io.BytesIO(model_bytes),
+                    map_location=self._device_,
+                    weights_only=True,
+                )
                 trainer.fine_tuned_model.load_state_dict(state)
 
             self._trainer_ = trainer
