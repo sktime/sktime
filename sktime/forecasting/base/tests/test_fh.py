@@ -608,7 +608,8 @@ def test_estimator_fh(freqstr):
     forecaster.fit(train)
     fh = ForecastingHorizon(np.arange(1, 27))
     pred = forecaster.predict(fh)
-    expected_fh = fh.to_absolute(train.index[-1])
+    # cutoff as index, carries the freq; fh passed by the user has no freq set
+    expected_fh = fh.to_absolute(train.index[-1:])
     assert_array_equal(pred.index.to_numpy(), expected_fh.to_numpy())
 
 
