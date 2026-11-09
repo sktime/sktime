@@ -65,6 +65,10 @@ class DummyRegularAnomalies(BaseDetector):
             Reference to self.
         """
         X_index = X.index
+        if len(X_index) == 0:
+            raise ValueError(
+                "X cannot be empty. DummyRegularAnomalies requires at least 1 row."
+            )
         if isinstance(X_index, pd.DatetimeIndex):
             X_index = pd.PeriodIndex(X_index)
         self.first_index_ = X_index[0]
