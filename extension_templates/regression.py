@@ -10,7 +10,7 @@ How to use this implementation template to implement a new estimator:
 - work through all the "todo" comments below
 - fill in code for mandatory methods, and optionally for optional methods
 - do not write to reserved variables: is_fitted, _is_fitted, _X, _y,
-    fit_time_, _class_dictionary, _threads_to_use, _tags, _tags_dynamic
+    fit_time_, _threads_to_use, _tags, _tags_dynamic
 - you can add more private methods, but do not override BaseEstimator's private methods
     an easy way to be safe is to prefix your methods with "_custom"
 - change docstrings for functions and the file
@@ -187,7 +187,7 @@ class MyTimeSeriesRegressor(BaseRegressor):
             for specifications, see examples/AA_datatypes_and_datasets.ipynb
         y : guaranteed to be of a type in self.get_tag("y_inner_mtype")
             1D iterable, of shape [n_instances]
-            or 2D iterable, of shape [n_instances, n_dimensions]
+            or 2D iterable, of shape [n_instances, n_outputs]
             target values for fitting
             if self.get_tag("capability:multioutput") = False, guaranteed to be 1D
             if self.get_tag("capability:multioutput") = True, guaranteed to be 2D
