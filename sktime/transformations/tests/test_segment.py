@@ -6,6 +6,7 @@ import pytest
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.segment import (
+    IntervalSegmenter,
     RandomIntervalSegmenter,
     _rand_intervals_fixed_n,
     _rand_intervals_rand_n,
@@ -128,3 +129,31 @@ def test_rand_intervals_fixed_n_min_max_length(n_intervals, min_length, max_leng
     lengths = intervals[:, 1] - intervals[:, 0]  # length = end - start
     assert np.all(lengths >= min_length)
     assert np.all(lengths <= max_length)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(IntervalSegmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("n_timepoints, n_intervals", [(8, 2), (10, 3), (20, 10)])
+def test_interval_segmenter_int_intervals_keep_all_timepoints(
+    n_timepoints, n_intervals
+):
+    """Test that IntervalSegmenter with int intervals does not drop time points.
+
+    Failure case of #11785: the last time point of every interval was dropped,
+    because fit stored inclusive end points while transform slices exclusively.
+    """
+    n_instances = 2
+    index = pd.MultiIndex.from_product([range(n_instances), range(n_timepoints)])
+    values = np.arange(n_instances * n_timepoints, dtype=float)
+    X = pd.DataFrame({"value": values}, index=index)
+
+    Xt = IntervalSegmenter(intervals=n_intervals).fit_transform(X)
+
+    expected = np.array_split(np.arange(n_timepoints), n_intervals)
+    assert len(Xt.columns) == n_intervals
+    for col, exp in zip(Xt.columns, expected):
+        for i in range(n_instances):
+            segment = Xt.loc[i, col].dropna().to_numpy()
+            np.testing.assert_array_equal(segment, exp + i * n_timepoints)
