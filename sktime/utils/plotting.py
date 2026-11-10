@@ -585,9 +585,8 @@ def plot_windows(cv, y, title="", ax=None):
     >>> from sktime.split import ExpandingWindowSplitter
     >>> from sktime.utils.plotting import plot_windows
     >>> from sktime.datasets import load_airline
-    >>> import numpy as np
 
-    >>> fh = np.arange(1, 13)
+    >>> fh = 12
     >>> cv = ExpandingWindowSplitter(step_length=1, fh=fh, initial_window=24)
     >>> y = load_airline()
     >>> plot_windows(cv, y.iloc[:50])  # doctest: +SKIP
