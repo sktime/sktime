@@ -6,82 +6,83 @@ __author__ = ["johannvk"]
 
 import numpy as np
 
-from sktime.detection._utils import MeanType, check_non_negative_parameter
+from sktime.detection._utils import (
+    MeanType,
+    check_non_negative_parameter,
+    col_cumsum,
+)
 from sktime.detection.costs._base import BaseCost
 
 
-def _poisson_log_likelihood(rate, samples):
-    """Fast Poisson log-likelihood for a fixed rate parameter."""
-    bin_counts = np.bincount(samples)
-    sample_counts = np.flip(np.cumsum(np.flip(bin_counts)))
-    max_sample = len(sample_counts) - 1
+def _poisson_cumsums(X):
+    """Cumulative sums of the samples and of the log factorials of the samples.
 
-    if max_sample < 2:
-        sum_log_factorial_samples = 0.0
-    else:
-        sum_log_factorial_samples = np.sum(
-            np.log(np.arange(2, max_sample + 1)) * sample_counts[2:]
-        )
+    Parameters
+    ----------
+    X : np.ndarray of shape (n_samples, n_columns)
+        non-negative integer counts
 
-    return (
-        -len(samples) * rate
-        + np.log(rate) * np.sum(samples)
-        - sum_log_factorial_samples
+    Returns
+    -------
+    sums : np.ndarray of shape (n_samples + 1, n_columns)
+        cumulative sums of ``X``, with a leading row of zeros
+    log_factorial_sums : np.ndarray of shape (n_samples + 1, n_columns)
+        cumulative sums of ``log(X!)``, with a leading row of zeros
+    """
+    X = X.astype(np.int64)
+    sums = col_cumsum(X, init_zero=True)
+
+    # log(x!) for every value of x present in the data, via a lookup table
+    # of cumulative sums of log(k), k = 1, ..., max(X), so that every
+    # log factorial is a sum of the same terms as in _poisson_log_likelihood
+    max_sample = int(X.max()) if X.size > 0 else 0
+    log_factorials = np.concatenate(
+        [[0.0], np.cumsum(np.log(np.arange(1, max_sample + 1)))]
     )
+    log_factorial_sums = col_cumsum(log_factorials[X], init_zero=True)
 
-
-def _poisson_mle_rate_log_likelihood(mle_rate, samples):
-    """Fast Poisson log-likelihood for the MLE rate parameter."""
-    bin_counts = np.bincount(samples)
-    sample_counts = np.flip(np.cumsum(np.flip(bin_counts)))
-    max_sample = len(sample_counts) - 1
-
-    if max_sample < 2:
-        sum_log_factorial_samples = 0.0
-    else:
-        sum_log_factorial_samples = np.sum(
-            np.log(np.arange(2, max_sample + 1)) * sample_counts[2:]
-        )
-
-    return (
-        len(samples) * mle_rate * (np.log(mle_rate) - 1.0) - sum_log_factorial_samples
-    )
+    return sums, log_factorial_sums
 
 
 def _poisson_cost_mle_params(starts, ends, X):
     """Evaluate the Poisson cost with MLE parameters."""
-    n_intervals = len(starts)
-    n_columns = X.shape[1]
-    costs = np.zeros((n_intervals, n_columns))
+    starts = np.asarray(starts)
+    ends = np.asarray(ends)
+    sums, log_factorial_sums = _poisson_cumsums(X)
 
-    for i in range(n_intervals):
-        start, end = starts[i], ends[i]
-        for col in range(n_columns):
-            samples = X[start:end, col].astype(np.int64)
-            mle_rate = np.mean(samples)
-            if mle_rate > 0:
-                costs[i, col] = -2.0 * _poisson_mle_rate_log_likelihood(
-                    mle_rate, samples
-                )
-            else:
-                costs[i, col] = 0.0
+    n = (ends - starts).astype(float)[:, None]
+    partial_sums = sums[ends] - sums[starts]
+    partial_log_factorials = log_factorial_sums[ends] - log_factorial_sums[starts]
+
+    # cost = -2 * (n * rate * (log(rate) - 1) - sum(log(x!))), rate = sum / n;
+    # a zero sum, i.e., all samples zero, has cost zero
+    with np.errstate(divide="ignore", invalid="ignore"):
+        mle_rate = partial_sums / n
+        log_likelihood = partial_sums * (np.log(mle_rate) - 1.0)
+    log_likelihood = np.where(partial_sums > 0, log_likelihood, 0.0)
+    costs = -2.0 * (log_likelihood - partial_log_factorials)
+    costs = np.where(partial_sums > 0, costs, 0.0)
 
     return costs
 
 
 def _poisson_cost_fixed_params(starts, ends, X, rates):
     """Evaluate the Poisson cost for fixed rate parameters."""
-    n_intervals = len(starts)
-    n_columns = X.shape[1]
-    costs = np.zeros((n_intervals, n_columns))
+    starts = np.asarray(starts)
+    ends = np.asarray(ends)
+    rates = np.asarray(rates, dtype=float)
+    sums, log_factorial_sums = _poisson_cumsums(X)
 
-    for i in range(n_intervals):
-        start, end = starts[i], ends[i]
-        for col in range(n_columns):
-            samples = X[start:end, col].astype(np.int64)
-            costs[i, col] = -2.0 * _poisson_log_likelihood(rates[col], samples)
+    n = (ends - starts).astype(float)[:, None]
+    partial_sums = sums[ends] - sums[starts]
+    partial_log_factorials = log_factorial_sums[ends] - log_factorial_sums[starts]
 
-    return costs
+    log_likelihood = (
+        -n * rates[None, :]
+        + np.log(rates)[None, :] * partial_sums
+        - partial_log_factorials
+    )
+    return -2.0 * log_likelihood
 
 
 class PoissonCost(BaseCost):
