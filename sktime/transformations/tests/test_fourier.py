@@ -10,6 +10,7 @@ from pandas.testing import assert_frame_equal, assert_index_equal
 from sktime.datasets import load_airline
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.fourier import FourierFeatures
+from sktime.utils.datetime import _to_offset_compat
 
 Y = load_airline()
 Y_datetime = deepcopy(Y)
@@ -161,3 +162,38 @@ def test_fit_transform_month_start_outputs():
         .assign(cos_12_2=[np.cos(4 * np.pi * i / 12) for i in range(3)])
     )
     assert_frame_equal(y_transformed, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(FourierFeatures),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("period_str", ["D", "W", "M", "Q", "Y"])
+@pytest.mark.parametrize("tz", [None, "America/New_York"])
+@pytest.mark.parametrize("ordered", [True, False])
+def test_offset_fractions_match_scalar_reference(period_str, tz, ordered):
+    """Preserve scalar fractions across leap days, DST and repeated timestamps."""
+    index = pd.date_range("2023-12-20", periods=1500, freq="6h", tz=tz)
+    if not ordered:
+        order = np.random.default_rng(42).permutation(len(index))
+        index = index.take(np.concatenate([order, order[:3]]))
+
+    offset = _to_offset_compat(period_str)
+    boundaries = pd.date_range(
+        start=index.min() - offset,
+        end=index.max() + offset,
+        freq=offset,
+        tz=index.tz,
+    )
+    if not pd.to_timedelta(offset, errors="coerce") <= pd.Timedelta(days=1):
+        boundaries = boundaries + pd.Timedelta(days=1)
+
+    expected = []
+    for timestamp in index:
+        position = np.searchsorted(boundaries, timestamp, side="right")
+        previous, following = boundaries[position - 1], boundaries[position]
+        expected.append((timestamp - previous) / (following - previous))
+
+    transformer = FourierFeatures([period_str], [1])
+    actual = transformer._offset_frac_since_prev_offset(index, period_str)
+    np.testing.assert_array_equal(actual, expected)
