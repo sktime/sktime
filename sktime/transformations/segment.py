@@ -88,7 +88,7 @@ class IntervalSegmenter(BaseTransformer):
                     " or less"
                 )
             ints = np.array_split(self._time_index, self.intervals)
-            ints = [x[[0, -1]] for x in ints]
+            ints = [np.array([x[0], x[-1] + 1]) for x in ints]
             self.intervals_ = ints
 
         else:

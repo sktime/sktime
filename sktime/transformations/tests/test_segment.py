@@ -6,6 +6,7 @@ import pytest
 
 from sktime.tests.test_switch import run_test_for_class
 from sktime.transformations.segment import (
+    IntervalSegmenter,
     RandomIntervalSegmenter,
     _rand_intervals_fixed_n,
     _rand_intervals_rand_n,
@@ -128,3 +129,88 @@ def test_rand_intervals_fixed_n_min_max_length(n_intervals, min_length, max_leng
     lengths = intervals[:, 1] - intervals[:, 0]  # length = end - start
     assert np.all(lengths >= min_length)
     assert np.all(lengths <= max_length)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(IntervalSegmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_interval_segmenter_integer_intervals_regression_11785():
+    """Test IntervalSegmenter with integer intervals does not drop trailing time points.
+
+    Regression test for #11785.
+    """
+    index = pd.MultiIndex.from_product([[0, 1], range(8)], names=["instance", "time"])
+    X = pd.DataFrame(
+        {
+            "value": [
+                5,
+                7,
+                6,
+                8,
+                9,
+                4,
+                3,
+                5,
+                1,
+                2,
+                2,
+                3,
+                4,
+                4,
+                5,
+                6,
+            ]
+        },
+        index=index,
+    )
+
+    t = IntervalSegmenter(intervals=2)
+    Xt = t.fit_transform(X)
+
+    # Expected exclusive end points [0, 4] and [4, 8]
+    assert len(t.intervals_) == 2
+    np.testing.assert_array_equal(t.intervals_[0], [0, 4])
+    np.testing.assert_array_equal(t.intervals_[1], [4, 8])
+
+    # Ensure all 4 timepoints per interval are retained for each instance
+    for col in ["value_0_4", "value_4_8"]:
+        assert col in Xt.columns
+        for inst in [0, 1]:
+            assert len(Xt.loc[inst, col]) == 4
+
+    # Check exact values for instance 0
+    np.testing.assert_array_equal(Xt.loc[0, "value_0_4"].values, [5, 7, 6, 8])
+    np.testing.assert_array_equal(Xt.loc[0, "value_4_8"].values, [9, 4, 3, 5])
+
+    # Check exact values for instance 1
+    np.testing.assert_array_equal(Xt.loc[1, "value_0_4"].values, [1, 2, 2, 3])
+    np.testing.assert_array_equal(Xt.loc[1, "value_4_8"].values, [4, 4, 5, 6])
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(IntervalSegmenter),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("n_timepoints", [10, 15, 20])
+@pytest.mark.parametrize("n_intervals", [2, 3, 5])
+def test_interval_segmenter_integer_intervals_partitions_series(
+    n_timepoints, n_intervals
+):
+    """Test IntervalSegmenter partitions timepoints without gaps or drops."""
+    index = pd.MultiIndex.from_product(
+        [[0], range(n_timepoints)], names=["instance", "time"]
+    )
+    values = np.arange(n_timepoints)
+    X = pd.DataFrame({"dim_0": values}, index=index)
+
+    t = IntervalSegmenter(intervals=n_intervals)
+    Xt = t.fit_transform(X)
+
+    total_len = sum(len(Xt.loc[0, col].dropna()) for col in Xt.columns)
+    assert total_len == n_timepoints
+
+    concatenated = np.concatenate(
+        [Xt.loc[0, col].dropna().values for col in Xt.columns]
+    )
+    np.testing.assert_array_equal(concatenated, values)
