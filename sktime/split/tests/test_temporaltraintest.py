@@ -30,7 +30,8 @@ def _check_train_test_split_y(fh, split):
     assert len(test) == len(fh)
     assert len(train) > 0
 
-    cutoff = train.index[-1]
+    # cutoff as index, carries the freq; fh passed by the user has no freq set
+    cutoff = train.index[-1:]
     np.testing.assert_array_equal(test.index, fh.to_absolute(cutoff).to_numpy())
 
 
