@@ -70,8 +70,11 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
         y_true_np = np.asanyarray(y_true)
         y_pred_np = np.asanyarray(y_pred)
 
-        y_true_np = np.maximum(y_true_np, 0)
-        y_pred_np = np.maximum(y_pred_np, 0)
+        if np.any(y_true_np <= -1) or np.any(y_pred_np <= -1):
+            raise ValueError(
+                "Mean Squared Logarithmic Error cannot be used when "
+                "targets contain values less than or equal to -1."
+            )
 
         y_true_log = np.log1p(y_true_np)
         y_pred_log = np.log1p(y_pred_np)
