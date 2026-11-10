@@ -65,6 +65,20 @@ def test_imputer(method, Z, value, forecaster):
     assert not y_hat.isnull().to_numpy().any()
 
 
+@pytest.mark.parametrize("missing_value", [np.inf, 0])
+def test_drift_with_custom_missing_values(missing_value):
+    """Test that drift imputation handles custom missing-value markers."""
+    X_missing = X.iloc[:, [0]].copy()
+    X_missing.iloc[3, 0] = missing_value
+
+    X_imputed = Imputer(method="drift", missing_values=missing_value).fit_transform(
+        X_missing
+    )
+
+    assert np.isfinite(X_imputed.to_numpy()).all()
+    assert X_missing.iloc[3, 0] == missing_value
+
+
 @pytest.mark.skipif(
     not run_test_for_class(Imputer),
     reason="run test only if softdeps are present and incrementally (if requested)",
