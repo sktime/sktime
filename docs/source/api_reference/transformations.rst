@@ -455,6 +455,7 @@ Detrending and Decomposition
     ConditionalDeseasonalizer
     STLTransformer
     mstl.MSTL
+    STR
 
 .. currentmodule:: sktime.transformations.vmd
 
