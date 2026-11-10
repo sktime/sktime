@@ -76,15 +76,16 @@ def _calculate_distance_profile(
         d: numpy.array
             Distance profile of query q.
     """
-    d = [
-        2
-        * q_len
-        * (
-            1
-            - ((dot_prod[i] - q_len * q_mean * t_mean[i]) / (q_len * q_std * t_std[i]))
+    dot_prod = np.asarray(dot_prod)[:n_t_subs]
+    t_mean = np.asarray(t_mean)[:n_t_subs]
+    t_std = np.asarray(t_std)[:n_t_subs]
+
+    with np.errstate(divide="ignore", invalid="ignore"):
+        d = (
+            2
+            * q_len
+            * (1 - ((dot_prod - q_len * q_mean * t_mean) / (q_len * q_std * t_std)))
         )
-        for i in range(0, n_t_subs)
-    ]
     d = np.absolute(d)
     d = np.sqrt(d)
 
@@ -118,14 +119,24 @@ def _minimum_distance(mp, ip, dp, i, m, dp_len):
         Array with the indexes of the nearest neighbors of each
         subsequence.
     """
-    # Initialization
-    min_value = float("inf")
-    min_index = -1
+    dp = np.asarray(dp)[:dp_len]
 
-    for k in range(0, dp_len):
-        if dp[k] < min_value and (k < i - m / 2 or k > i + m / 2):
-            min_value = dp[k]
-            min_index = k
+    # candidates outside the exclusion zone, and with a finite, non-nan distance
+    k = np.arange(dp_len)
+    outside_exclusion_zone = (k < i - m / 2) | (k > i + m / 2)
+    candidates = np.where(outside_exclusion_zone & ~np.isnan(dp), dp, np.inf)
+
+    if dp_len > 0:
+        min_index = int(np.argmin(candidates))
+        min_value = candidates[min_index]
+    else:
+        min_value = np.inf
+
+    # argmin of an all-inf (or nan) array is 0, but no candidate is smaller than inf
+    if not min_value < np.inf:
+        min_value = float("inf")
+        min_index = -1
+
     mp[i] = min_value
     ip[i] = min_index
 
@@ -150,16 +161,17 @@ def _stomp_self(ts, m):
         ip: numpy.array
             Array with the index of the nearest neighbor of ts1 in ts2.
     """
-    ts = ts.flatten()
+    ts = np.asarray(ts, dtype=float).flatten()
 
     ts_len = ts.shape[0]
 
     # Number of subsequences
     n_subs = ts_len - m + 1
 
-    # Compute the mean and standard deviation
-    ts_mean = [np.mean(ts[i : i + m]) for i in range(0, n_subs)]
-    ts_std = [np.std(ts[i : i + m]) for i in range(0, n_subs)]
+    # Compute the mean and standard deviation of all subsequences
+    windows = np.lib.stride_tricks.sliding_window_view(ts, m)
+    ts_mean = np.mean(windows, axis=1)
+    ts_std = np.std(windows, axis=1)
 
     # Compute the dot products between the first subsequence and every other
     # subsequence
@@ -178,12 +190,16 @@ def _stomp_self(ts, m):
     # Updates the matrix profile
     mp, ip = _minimum_distance(mp, ip, dp, 0, m, n_subs)
 
+    # the j-th dot product of subsequence i is obtained from the (j-1)-th dot
+    # product of subsequence i-1, by dropping the first and adding the last
+    # product of the two subsequences
+    ts_head = ts[: n_subs - 1]
+    ts_tail = ts[m : m + n_subs - 1]
+
     for i in range(1, n_subs):
-        for j in range(n_subs - 1, 0, -1):
-            dot_prod[j] = (
-                dot_prod[j - 1] - ts[j - 1] * ts[i - 1] + ts[j - 1 + m] * ts[i - 1 + m]
-            )  # compute the next dot products
-            # using the previous ones
+        dot_prod[1:n_subs] = (
+            dot_prod[: n_subs - 1] - ts_head * ts[i - 1] + ts_tail * ts[i - 1 + m]
+        )
         dot_prod[0] = first_dot_prod[i]
         dp = _calculate_distance_profile(
             dot_prod, ts_mean[i], ts_std[i], ts_mean, ts_std, m, n_subs
