@@ -10,7 +10,7 @@ from sktime.forecasting.base.adapters._neuralforecast import (
     _NeuralForecastAdapter,
 )
 
-__author__ = ["yarnabrina", "geetu040", "pranavvp16"]
+__author__ = ["yarnabrina", "geetu040", "pranavvp16", "JamesBoardman27"]
 
 
 class NeuralForecastRNN(_NeuralForecastAdapter):
@@ -2025,10 +2025,415 @@ class NeuralForecastTCN(_NeuralForecastAdapter):
         return params_broadcasting + params_no_broadcasting
 
 
+class NeuralForecastTiDE(_NeuralForecastAdapter):
+    """NeuralForecast TiDE model.
+
+    Interface to ``neuralforecast.models.TiDE`` [1]_
+    through ``neuralforecast.NeuralForecast`` [2]_,
+    from ``neuralforecast`` [3]_ by Nixtla
+
+    Time-series Dense Encoder (TiDE) with MLP-based architecture.
+    Encoder-decoder model for long-term univariate forecasting
+    with exogenous input support.
+
+    Parameters
+    ----------
+    freq : Union[str, int] (default="auto")
+        frequency of the data, see available frequencies [4]_ from ``pandas``
+        use int freq when using RangeIndex in ``y``
+
+        default ("auto") interprets freq from ForecastingHorizon in ``fit``
+    local_scaler_type : str (default=None)
+        scaler to apply per-series to all features before fitting, which is inverted
+        after predicting
+
+        can be one of the following:
+
+        - 'standard'
+        - 'robust'
+        - 'robust-iqr'
+        - 'minmax'
+        - 'boxcox'
+    futr_exog_list : str list, (default=None)
+        future exogenous variables
+    verbose_fit : bool (default=False)
+        print processing steps during fit
+    verbose_predict : bool (default=False)
+        print processing steps during predict
+    input_size : int (default=2)
+        considered autoregressive inputs (lags)
+    hidden_size : int (default=512)
+        number of units for the dense MLPs
+    decoder_output_dim : int (default=32)
+        number of units for the output of the decoder
+    temporal_decoder_dim : int (default=128)
+        number of units for the hidden size of the temporal decoder
+    dropout : float (default=0.3)
+        dropout rate between (0, 1)
+    layernorm : bool (default=True)
+        if True uses Layer Normalization on the MLP residual block outputs
+    num_encoder_layers : int (default=1)
+        number of encoder layers
+    num_decoder_layers : int (default=1)
+        number of decoder layers
+    temporal_width : int (default=4)
+        lower temporal projected dimension
+    loss : pytorch module (default=None)
+        instantiated train loss class from losses collection [5]_
+    valid_loss : pytorch module (default=None)
+        instantiated validation loss class from losses collection [5]_
+    max_steps : int (default=1000)
+        maximum number of training steps
+    learning_rate : float (default=1e-3)
+        learning rate between (0, 1)
+    num_lr_decays : int (default=-1)
+        number of learning rate decays, evenly distributed across max_steps
+    early_stop_patience_steps : int (default=-1)
+        number of validation iterations before early stopping
+    val_check_steps : int (default=100)
+        number of training steps between every validation loss check
+    batch_size : int (default=32)
+        number of different series in each batch
+    valid_batch_size : Optional[int] (default=None)
+        number of different series in each validation and test batch
+    step_size : int (default=1)
+        step size between each window of temporal data
+    scaler_type : str (default="identity")
+        type of scaler for temporal inputs normalization
+    random_seed : int (default=1)
+        random_seed for pytorch initializer and numpy generators
+    num_workers_loader : int (default=0)
+        workers to be used by ``TimeSeriesDataLoader``
+    drop_last_loader : bool (default=False)
+        if True TimeSeriesDataLoader drops last non-full batch
+    optimizer : pytorch optimizer (default=None) [7]_
+        optimizer to use for training, if passed with None defaults to ``Adam``
+    optimizer_kwargs : dict (default=None) [8]_
+        dict of parameters to pass to the user defined optimizer
+    lr_scheduler : pytorch learning rate scheduler (default=None) [9]_
+        user specified lr_scheduler instead of the default choice ``StepLR`` [10]_
+    lr_scheduler_kwargs : dict (default=None)
+        list of parameters used by the user specified ``lr_scheduler``
+    trainer_kwargs : dict, (default=None)
+        keyword trainer arguments inherited from PyTorch Lighning's trainer [6]_
+    broadcasting : bool (default=False)
+        if True, a model will be fit per time series.
+        Panels, e.g., multiindex data input, will be broadcasted to single series,
+        and for each single series, one copy of this forecaster will be applied.
+
+    Notes
+    -----
+    * If ``loss`` is unspecified, MAE is used as the loss function for training.
+    * Only ``futr_exog_list`` will be considered as exogenous variables.
+
+    Examples
+    --------
+    >>>
+    >>> # importing necessary libraries
+    >>> from sktime.datasets import load_longley
+    >>> from sktime.forecasting.neuralforecast import NeuralForecastTiDE
+    >>> from sktime.split import temporal_train_test_split
+    >>>
+    >>> # loading the Longley dataset and splitting it into train and test subsets
+    >>> y, X = load_longley()
+    >>> y_train, y_test, X_train, X_test = temporal_train_test_split(y, X, test_size=4)
+    >>>
+    >>> # creating model instance configuring the hyperparameters
+    >>> model = NeuralForecastTiDE(
+    ...    "A-DEC",
+    ...    futr_exog_list=["ARMED", "POP"],
+    ...    input_size=8,
+    ...    max_steps=500,
+    ... )# doctest: +SKIP
+    >>>
+    >>> # fitting the model
+    >>> model.fit(y_train, X=X_train, fh=[1, 2, 3, 4])  # doctest: +SKIP
+    Seed set to 1
+    Epoch 499: 100%|████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 10.91it/s, v_num=19, train_loss_step=1.04e+3, train_loss_epoch=1.04e+3]
+    NeuralForecastTiDE(freq='A-DEC', futr_exog_list=['ARMED', 'POP'], input_size=8, max_steps=500)
+    >>>
+    >>> # getting point predictions
+    >>> model.predict(X=X_test)  # doctest: +SKIP
+    Predicting DataLoader 0: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 333.41it/s]
+    Period
+    1959    69115.882812
+    1960    70173.476562
+    1961    69802.398438
+    1962    70407.023438
+    Freq: Y-DEC, Name: TOTEMP, dtype: float32
+    >>>
+
+    References
+    ----------
+    .. [1] https://nixtlaverse.nixtla.io/neuralforecast/models.tide.html#tide
+    .. [2] https://nixtlaverse.nixtla.io/neuralforecast/core.html#neuralforecast
+    .. [3] https://github.com/Nixtla/neuralforecast/
+    .. [4]
+    https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
+    .. [5] https://nixtlaverse.nixtla.io/neuralforecast/losses.pytorch.html
+    .. [6]
+    https://lightning.ai/docs/pytorch/stable/api/pytorch_lightning.trainer.trainer.Trainer.html#lightning.pytorch.trainer.trainer.Trainer
+    .. [7] https://pytorch.org/docs/stable/optim.html
+    .. [8] https://pytorch.org/docs/stable/optim.html#algorithms
+    .. [9] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.LRScheduler.html
+    .. [10] https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.StepLR.html
+    """  # noqa: E501
+
+    _tags = {
+        # packaging info
+        # --------------
+        # "authors": ["JamesBoardman27"],
+        # "maintainers": ["JamesBoardman27"],
+        # "python_dependencies": "neuralforecast"
+        # inherited from _NeuralForecastAdapter
+        # estimator type
+        # --------------
+        "python_dependencies": ["neuralforecast>=1.7.2,<4.0.0"],
+        "capability:global_forecasting": True,
+        "capability:unequal_length": False,
+        "tests:specific": ["sktime.forecasting.tests.test_neuralforecast"],
+    }
+
+    def __init__(
+        self: "NeuralForecastTiDE",
+        freq: str | int = "auto",
+        local_scaler_type: _SUPPORTED_LOCAL_SCALAR_TYPES | None = None,
+        futr_exog_list: list[str] | None = None,
+        verbose_fit: bool = False,
+        verbose_predict: bool = False,
+        input_size: int = 2,
+        hidden_size: int = 512,
+        decoder_output_dim: int = 32,
+        temporal_decoder_dim: int = 128,
+        dropout: float = 0.3,
+        layernorm: bool = True,
+        num_encoder_layers: int = 1,
+        num_decoder_layers: int = 1,
+        temporal_width: int = 4,
+        loss=None,
+        valid_loss=None,
+        max_steps: int = 1000,
+        learning_rate: float = 1e-3,
+        num_lr_decays: int = -1,
+        early_stop_patience_steps: int = -1,
+        val_check_steps: int = 100,
+        batch_size: int = 32,
+        valid_batch_size: int | None = None,
+        step_size: int = 1,
+        scaler_type: str = "identity",
+        random_seed: int = 1,
+        num_workers_loader: int = 0,
+        drop_last_loader: bool = False,
+        optimizer=None,
+        optimizer_kwargs: dict | None = None,
+        lr_scheduler=None,
+        lr_scheduler_kwargs: dict | None = None,
+        trainer_kwargs: dict | None = None,
+        broadcasting: bool = False,
+    ):
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.decoder_output_dim = decoder_output_dim
+        self.temporal_decoder_dim = temporal_decoder_dim
+        self.dropout = dropout
+        self.layernorm = layernorm
+        self.num_encoder_layers = num_encoder_layers
+        self.num_decoder_layers = num_decoder_layers
+        self.temporal_width = temporal_width
+        self.loss = loss
+        self.valid_loss = valid_loss
+        self.max_steps = max_steps
+        self.learning_rate = learning_rate
+        self.num_lr_decays = num_lr_decays
+        self.early_stop_patience_steps = early_stop_patience_steps
+        self.val_check_steps = val_check_steps
+        self.batch_size = batch_size
+        self.valid_batch_size = valid_batch_size
+        self.step_size = step_size
+        self.scaler_type = scaler_type
+        self.random_seed = random_seed
+        self.num_workers_loader = num_workers_loader
+        self.drop_last_loader = drop_last_loader
+        self.optimizer = optimizer
+        self.optimizer_kwargs = optimizer_kwargs
+        self.lr_scheduler = lr_scheduler
+        self.lr_scheduler_kwargs = lr_scheduler_kwargs
+        self.trainer_kwargs = trainer_kwargs
+
+        super().__init__(
+            freq,
+            local_scaler_type=local_scaler_type,
+            futr_exog_list=futr_exog_list,
+            verbose_fit=verbose_fit,
+            verbose_predict=verbose_predict,
+            broadcasting=broadcasting,
+        )
+
+        self._trainer_kwargs = None
+        self._loss = None
+        self._valid_loss = None
+
+    @functools.cached_property
+    def algorithm_exogenous_support(self: "NeuralForecastTiDE") -> bool:
+        """Set support for exogenous features."""
+        return True
+
+    @functools.cached_property
+    def algorithm_name(self: "NeuralForecastTiDE") -> str:
+        """Set custom model name."""
+        return "TiDE"
+
+    @functools.cached_property
+    def algorithm_class(self: "NeuralForecastTiDE"):
+        """Import underlying NeuralForecast algorithm class."""
+        from neuralforecast.models import TiDE
+
+        return TiDE
+
+    @functools.cached_property
+    def algorithm_parameters(self: "NeuralForecastTiDE") -> dict:
+        """Get keyword parameters for the underlying NeuralForecast algorithm class.
+
+        Returns
+        -------
+        dict
+            keyword arguments for the underlying algorithm class
+        """
+        self._trainer_kwargs = (
+            {} if self.trainer_kwargs is None else self.trainer_kwargs
+        )
+
+        if self.loss:
+            self._loss = self.loss
+        else:
+            from neuralforecast.losses.pytorch import MAE
+
+            self._loss = MAE()
+
+        if self.valid_loss:
+            self._valid_loss = self.valid_loss
+
+        return {
+            "input_size": self.input_size,
+            "hidden_size": self.hidden_size,
+            "decoder_output_dim": self.decoder_output_dim,
+            "temporal_decoder_dim": self.temporal_decoder_dim,
+            "dropout": self.dropout,
+            "layernorm": self.layernorm,
+            "num_encoder_layers": self.num_encoder_layers,
+            "num_decoder_layers": self.num_decoder_layers,
+            "temporal_width": self.temporal_width,
+            "loss": self._loss,
+            "valid_loss": self._valid_loss,
+            "max_steps": self.max_steps,
+            "learning_rate": self.learning_rate,
+            "num_lr_decays": self.num_lr_decays,
+            "early_stop_patience_steps": self.early_stop_patience_steps,
+            "val_check_steps": self.val_check_steps,
+            "batch_size": self.batch_size,
+            "valid_batch_size": self.valid_batch_size,
+            "step_size": self.step_size,
+            "scaler_type": self.scaler_type,
+            "random_seed": self.random_seed,
+            "num_workers_loader": self.num_workers_loader,
+            "drop_last_loader": self.drop_last_loader,
+            "optimizer": self.optimizer,
+            "optimizer_kwargs": self.optimizer_kwargs,
+            "lr_scheduler": self.lr_scheduler,
+            "lr_scheduler_kwargs": self.lr_scheduler_kwargs,
+            "trainer_kwargs": self._trainer_kwargs,
+        }
+
+    @classmethod
+    def get_test_params(cls, parameter_set="default"):
+        """Return testing parameter settings for the estimator.
+
+        Parameters
+        ----------
+        parameter_set : str, default="default"
+            Name of the set of test parameters to return, for use in tests. If no
+            special parameters are defined for a value, will return ``"default"`` set.
+            There are currently no reserved values for forecasters.
+
+        Returns
+        -------
+        params : dict or list of dict, default = {}
+            Parameters to create testing instances of the class
+            Each dict are parameters to construct an "interesting" test instance, i.e.,
+            ``MyClass(**params)`` or ``MyClass(**params[i])`` creates a valid test
+            instance.
+            ``create_test_instance`` uses the first (or only) dictionary in ``params``
+        """
+        del parameter_set  # to avoid being detected as unused by ``vulture`` etc.
+
+        nf_present = _check_soft_dependencies("neuralforecast", severity="none")
+        torch_present = _check_soft_dependencies("torch", severity="none")
+        if not (nf_present and torch_present):
+            params = [
+                {
+                    "freq": "auto",
+                    "input_size": 2,
+                    "hidden_size": 2,
+                    "decoder_output_dim": 3,
+                    "temporal_decoder_dim": 2,
+                    "max_steps": 4,
+                    "trainer_kwargs": {"logger": False},
+                },
+                {
+                    "freq": "auto",
+                    "input_size": 2,
+                    "hidden_size": 2,
+                    "decoder_output_dim": 3,
+                    "temporal_decoder_dim": 2,
+                    "max_steps": 4,
+                    "val_check_steps": 2,
+                    "trainer_kwargs": {"logger": False},
+                },
+            ]
+        else:
+            from neuralforecast.losses.pytorch import SMAPE, QuantileLoss
+            from torch.optim import Adam
+            from torch.optim.lr_scheduler import ConstantLR
+
+            params = [
+                {
+                    "freq": "auto",
+                    "input_size": 2,
+                    "hidden_size": 2,
+                    "decoder_output_dim": 3,
+                    "temporal_decoder_dim": 2,
+                    "max_steps": 4,
+                    "trainer_kwargs": {"logger": False},
+                    "lr_scheduler": ConstantLR,
+                    "lr_scheduler_kwargs": {"factor": 0.5},
+                },
+                {
+                    "freq": "auto",
+                    "input_size": 2,
+                    "hidden_size": 2,
+                    "decoder_output_dim": 3,
+                    "temporal_decoder_dim": 2,
+                    "loss": QuantileLoss(0.5),
+                    "valid_loss": SMAPE(),
+                    "max_steps": 4,
+                    "val_check_steps": 2,
+                    "trainer_kwargs": {"logger": False},
+                    "optimizer": Adam,
+                    "optimizer_kwargs": {"lr": 0.001},
+                },
+            ]
+
+        params_broadcasting = [{**param, "broadcasting": True} for param in params]
+        params_no_broadcasting = [{**param, "broadcasting": False} for param in params]
+
+        return params_broadcasting + params_no_broadcasting
+
+
 __all__ = [
     "NeuralForecastRNN",
     "NeuralForecastLSTM",
     "NeuralForecastGRU",
     "NeuralForecastDilatedRNN",
     "NeuralForecastTCN",
+    "NeuralForecastTiDE",
 ]
