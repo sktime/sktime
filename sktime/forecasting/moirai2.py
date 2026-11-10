@@ -496,7 +496,41 @@ class Moirai2Forecaster(BaseForecaster):
             "YE": "Y",
             "AE": "Y",
         }
-        return _offset_to_period.get(freq, freq)
+        if freq in _offset_to_period:
+            return _offset_to_period[freq]
+
+        if freq is not None:
+            offset, separator, month = freq.partition("-")
+            if separator and offset in ("YS", "AS", "QS", "YE", "AE", "QE"):
+                months = (
+                    "JAN",
+                    "FEB",
+                    "MAR",
+                    "APR",
+                    "MAY",
+                    "JUN",
+                    "JUL",
+                    "AUG",
+                    "SEP",
+                    "OCT",
+                    "NOV",
+                    "DEC",
+                )
+                try:
+                    end_month = month.upper()
+                    if offset in ("YS", "AS", "QS"):
+                        end_month = months[(months.index(end_month) - 1) % 12]
+                    elif end_month not in months:
+                        return freq
+                except ValueError:
+                    return freq
+
+                period_freq = "Y" if offset in ("YS", "AS", "YE", "AE") else "Q"
+                return (
+                    period_freq if end_month == "DEC" else f"{period_freq}-{end_month}"
+                )
+
+        return freq
 
     def return_time_index(self, df):
         """Return the time index, given any type of index."""
