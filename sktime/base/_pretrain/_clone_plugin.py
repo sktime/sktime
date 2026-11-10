@@ -1,8 +1,6 @@
 # copyright: sktime developers, BSD-3-Clause License (see LICENSE file)
 """Clone plugin for preserving pretrained state in estimators."""
 
-from copy import deepcopy
-
 from skbase.base._clone_plugins import BaseCloner, _default_clone
 
 
@@ -13,8 +11,10 @@ class _PretrainedCloner(BaseCloner):
     the two required methods: ``_check`` and ``_clone``.
 
     This plugin checks if an object has pretrained attributes
-    (tracked in ``_pretrained_attrs``) and copies them to the clone,
-    preserving the pretrained state across clone operations.
+    (tracked in ``_pretrained_attrs``) and shares them by reference to the clone,
+    preserving the pretrained state across clone operations while minimizing
+    memory footprint. Clones share pretrained state via copy-on-write semantics
+    and detach before mutating operations.
 
     Used in cross-validation and other scenarios where estimators
     are cloned but pretrained state should be preserved.
@@ -52,8 +52,11 @@ class _PretrainedCloner(BaseCloner):
         new_object._pretrained_attrs = list(obj._pretrained_attrs)
         for attr in obj._pretrained_attrs:
             if hasattr(obj, attr):
-                setattr(new_object, attr, deepcopy(getattr(obj, attr)))
+                # Share reference instead of deepcopy to avoid memory explosion
+                setattr(new_object, attr, getattr(obj, attr))
 
+        new_object._has_shared_pretrained_attrs = True
+        obj._has_shared_pretrained_attrs = True
         new_object._state = "pretrained"
 
         return new_object

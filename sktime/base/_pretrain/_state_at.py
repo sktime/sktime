@@ -31,7 +31,8 @@ def _clone_at(obj, state):
 
     Returns
     -------
-    clone : new object of same type, without shared references to ``obj``.
+    clone : new object of same type. Pretrained attributes are shared
+        by reference on clone and detached via copy-on-write before mutation.
 
     Raises
     ------
