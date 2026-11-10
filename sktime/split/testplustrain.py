@@ -44,6 +44,8 @@ class TestPlusTrainSplitter(BaseSplitter):
 
     def __init__(self, cv):
         self.cv = cv
+        if cv.get_tag("split:arity", 2) != 2:
+            raise ValueError("TestPlusTrainSplitter requires a train/test splitter.")
         super().__init__()
 
     def __dynamic_tags__(self):
