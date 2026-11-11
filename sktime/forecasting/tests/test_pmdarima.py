@@ -52,3 +52,59 @@ def test_ARIMA_integer_index_not_starting_at_zero():
     forecaster.update(y.iloc[35:], X=X.loc[38:42])
     y_pred = forecaster.predict(X=X.loc[43:44])
     assert list(y_pred.index) == [43, 44]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ARIMA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_arima_gapped_exogenous_horizon():
+    """ARIMA uses intermediate exogenous rows, but returns only requested steps."""
+    import numpy as np
+    import pandas as pd
+
+    rng = np.random.default_rng(42)
+    index = pd.period_range("2020-01", periods=40, freq="M")
+    X = pd.DataFrame({"x": rng.normal(size=len(index))}, index=index)
+    y = 2 * X["x"] + rng.normal(scale=0.2, size=len(index))
+    model = ARIMA(order=(1, 0, 0)).fit(y.iloc[:30], X=X.iloc[:30])
+    future = X.iloc[30:]
+    requested = index[[32, 34]]
+
+    full_pred = model.predict(fh=[1, 2, 3, 4, 5], X=future.iloc[:5])
+    full_int = model.predict_interval(fh=[1, 2, 3, 4, 5], X=future.iloc[:5])
+    pd.testing.assert_series_equal(
+        model.predict(fh=[3, 5], X=future), full_pred.loc[requested]
+    )
+    pd.testing.assert_frame_equal(
+        model.predict_interval(fh=[3, 5], X=future), full_int.loc[requested]
+    )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ARIMA),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_evaluate_arima_gapped_exogenous_horizon():
+    """Backtesting passes intermediate X observations to a recursive forecaster."""
+    import numpy as np
+    import pandas as pd
+
+    from sktime.forecasting.model_evaluation import evaluate
+    from sktime.split import SlidingWindowSplitter
+
+    rng = np.random.default_rng(42)
+    index = pd.period_range("2020-01", periods=40, freq="M")
+    X = pd.DataFrame({"x": rng.normal(size=len(index))}, index=index)
+    y = 2 * X["x"] + rng.normal(scale=0.2, size=len(index))
+    cv = SlidingWindowSplitter(fh=[3, 5], window_length=30, step_length=5)
+    model = ARIMA(order=(1, 0, 0))
+    results = evaluate(model, cv, y, X=X, return_data=True, error_score="raise")
+
+    for (_, row), (train, test) in zip(results.iterrows(), cv.split(y)):
+        expected = (
+            model.clone()
+            .fit(y.iloc[train], X=X.iloc[train])
+            .predict(fh=[1, 2, 3, 4, 5], X=X.iloc[train[-1] + 1 : test[-1] + 1])
+        )
+        pd.testing.assert_series_equal(row["y_pred"], expected.loc[y.index[test]])
