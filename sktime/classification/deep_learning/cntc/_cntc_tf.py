@@ -353,6 +353,7 @@ class CNTCClassifier(BaseDeepClassifier):
         import numpy as np
 
         X2 = self.prepare_input(X)
+        kwargs.setdefault("verbose", self.verbose)
         probs = self.model_.predict([X2, X, X], self.batch_size, **kwargs)
 
         # check if binary classification
