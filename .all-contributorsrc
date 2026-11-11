@@ -4171,7 +4171,8 @@
       "contributions": [
         "code",
         "bug",
-        "doc"
+        "doc",
+        "test"
       ]
     },
     {
@@ -4405,7 +4406,8 @@
       "profile": "https://github.com/Dhruv-Kumar-Singh",
       "contributions": [
         "bug",
-        "code"
+        "code",
+        "test"
       ]
     },
     {
