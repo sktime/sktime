@@ -9,6 +9,17 @@ class M4CompetitionCatalogueHourly(_BaseM4CompetitionCatalogue):
 
     This catalogue binds the M4 hourly dataset with the standard set of
     classical forecasters and evaluates them using OWA with sp=24.
+
+    Examples
+    --------
+    >>> from sktime.catalogues.forecasting.M4 import M4CompetitionCatalogueHourly
+    >>> cat = M4CompetitionCatalogueHourly()
+    >>> len(cat)
+    13
+    >>> cat.get("dataset")
+    ["ForecastingData('m4_hourly_dataset')"]
+    >>> "Naive_1" in cat
+    True
     """
 
     _tags = {
