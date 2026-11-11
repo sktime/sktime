@@ -281,20 +281,24 @@ def _resolve_device():
     return "cpu"
 
 
-def _index_as_int(index) -> np.ndarray:
-    """Map sktime index labels to integer coordinates for MIRA ``time_values``.
+def _index_as_float(index) -> np.ndarray:
+    """Map sktime index labels to float64 coordinates for MIRA ``time_values``.
 
-    Returns raw ``int64`` values so the caller can subtract a shared integer
-    origin before converting to float, avoiding float32 precision loss for
-    high-frequency DatetimeIndex (nanoseconds since epoch ≈ 1.8e18 overflow
-    float32's ~7-digit mantissa, collapsing sub-minute timestamps).
+    Integer indices and Datetime/PeriodIndex ordinals are converted via float64,
+    while float indices are preserved as-is in float64 without truncation to int64,
+    avoiding precision loss or truncation collapse for irregular float time values.
     """
     if isinstance(index, (pd.DatetimeIndex, pd.PeriodIndex)):
-        return index.asi8
+        return index.asi8.astype(np.float64)
     arr = np.asarray(index)
-    if np.issubdtype(arr.dtype, np.number):
-        return arr.astype(np.int64)
-    return np.arange(len(index), dtype=np.int64)
+    if np.issubdtype(arr.dtype, np.integer):
+        return arr.astype(np.float64)
+    if np.issubdtype(arr.dtype, np.floating):
+        return arr.astype(np.float64)
+    return np.arange(len(index), dtype=np.float64)
+
+
+_index_as_int = _index_as_float
 
 
 def _prepare_context(y, pred_len, cutoff, context_length):
@@ -323,29 +327,26 @@ def _prepare_context(y, pred_len, cutoff, context_length):
         y = y.to_frame()
     series = y.iloc[:, 0].to_numpy(dtype=np.float32)
     index = y.index
-    future_index = (
-        ForecastingHorizon(range(1, pred_len + 1)).to_absolute(cutoff)._values
-    )
+    try:
+        future_index = (
+            ForecastingHorizon(range(1, pred_len + 1)).to_absolute(cutoff)._values
+        )
+    except TypeError:
+        step = index[1] - index[0] if len(index) > 1 else 1.0
+        future_index = pd.Index([index[-1] + i * step for i in range(1, pred_len + 1)])
 
     if context_length is not None and len(series) > context_length:
         series = series[-context_length:]
         index = index[-context_length:]
 
-    raw_ctx = _index_as_int(index)
-    raw_fut = _index_as_int(future_index)
-    raw_all = np.concatenate([raw_ctx, raw_fut])
+    times_np = np.concatenate([_index_as_float(index), _index_as_float(future_index)])
 
-    # Subtract integer origin to get small offsets (still int64, no precision lost).
-    # Then normalize to [0, seq_len - 1] entirely in float64 before casting to
-    # float32, so float32's ~7-digit mantissa never collapses neighbouring
-    # timestamps — even for sub-minute DatetimeIndex where naive float32 of
-    # nanoseconds-since-epoch (~1.8e18) loses all sub-2-minute resolution.
-    seq_len = len(raw_all)
-    offsets_f64 = (raw_all - raw_all[0]).astype(np.float64)
-    t_min = offsets_f64.min()
-    t_max = offsets_f64.max()
-    denom = max(float(t_max - t_min), 1e-8)
-    times_np = (offsets_f64 - t_min) / denom * float(seq_len - 1)
+    # Subtract origin in float64 so values are small relative offsets before
+    # converting to float32. This avoids float32 precision loss for DatetimeIndex
+    # (~1.8e18 nanoseconds) and prevents irregular float timestamps from collapsing.
+    # _predict already calls normalize_time_for_ctrope on the full tensor, so extra
+    # rescaling is not needed here.
+    times_np = times_np - times_np[0]
 
     values = torch.tensor(series.reshape(1, -1), dtype=torch.float32)
     times = torch.tensor(times_np.reshape(1, -1), dtype=torch.float32)
