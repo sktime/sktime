@@ -1,8 +1,11 @@
 """Dataclasses for benchmarking."""
 
 import copy
+import json
 from collections.abc import Callable
+from dataclasses import asdict as dataclass_asdict
 from dataclasses import dataclass, field, fields
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -293,3 +296,123 @@ def _asdict_inner(obj, dict_factory, pd_orient):
         return obj.tolist()
     else:
         return copy.deepcopy(obj)
+
+
+@dataclass
+class ComponentMetadata:
+    """Identity and tags of one task component.
+
+    Parameters
+    ----------
+    id : str
+        Component name as used by the benchmark, for example a dataset name,
+        splitter class name, or scorer name.
+    tags : dict or None
+        Tags from ``get_tags`` or ``get_class_tags``. ``None`` when the
+        component does not implement sktime tags, for example an sklearn
+        splitter or a metric function. Those components are still listed
+        by ``id``.
+    """
+
+    id: str
+    tags: dict | None = None
+
+
+@dataclass
+class TaskMetadata:
+    """One benchmark task and the tags of its components.
+
+    Parameters
+    ----------
+    task_id : str
+        Task identifier. Matches ``validation_id`` in the results table.
+    dataset : ComponentMetadata
+        Dataset loader or dataset object used by the task.
+    cv_splitter : ComponentMetadata
+        Cross-validation splitter used by the task.
+    scorers : list of ComponentMetadata
+        Metrics or scoring functions used by the task.
+    cv_global : ComponentMetadata or None
+        Global splitter, when the task uses global evaluation.
+    """
+
+    task_id: str
+    dataset: ComponentMetadata
+    cv_splitter: ComponentMetadata
+    scorers: list[ComponentMetadata]
+    cv_global: ComponentMetadata | None = None
+
+
+@dataclass
+class EstimatorMetadata:
+    """One benchmark estimator and its tags.
+
+    Parameters
+    ----------
+    estimator_id : str
+        Estimator identifier. Matches ``model_id`` in the results table.
+    class_name : str
+        Class name of the estimator instance that was registered.
+    tags : dict or None
+        Tags from ``get_tags``. ``None`` when the estimator does not
+        implement sktime tags.
+    """
+
+    estimator_id: str
+    class_name: str
+    tags: dict | None = None
+
+
+@dataclass
+class BenchmarkMetadata:
+    """JSON-serializable description of a benchmark run.
+
+    Built from the tasks and estimators registered on a `BaseBenchmark`.
+    Each tag dictionary is the object's full ``get_tags`` set.
+    Components that do not implement sktime tags keep ``tags`` as ``None``.
+
+    ``save`` writes this document as UTF-8 JSON with two-space indentation
+    and a trailing newline. `BaseBenchmark.run` writes that file beside the
+    results file.
+
+    Parameters
+    ----------
+    schema_version : int
+        Metadata document version.
+    timestamp_utc : str
+        UTC time the run was recorded, ``YYYY-MM-DDTHH:MM:SSZ``.
+    sktime_version : str
+        ``sktime`` version that produced the run.
+    python_version : str
+        Python version, from `platform.python_version`.
+    tasks : list of TaskMetadata
+        Tasks included in the run.
+    estimators : list of EstimatorMetadata
+        Estimators included in the run.
+    """
+
+    schema_version: int
+    timestamp_utc: str
+    sktime_version: str
+    python_version: str
+    tasks: list[TaskMetadata]
+    estimators: list[EstimatorMetadata]
+
+    def to_dict(self) -> dict:
+        """Return this metadata document as a JSON-serializable dict."""
+        # The module-level asdict renames task_id for result files.
+        return dataclass_asdict(self)
+
+    def save(self, path: str | Path) -> None:
+        """Write this metadata document to ``path`` as JSON.
+
+        Parameters
+        ----------
+        path : str or pathlib.Path
+            Destination file. Parent directory must already exist.
+        """
+        destination = Path(path)
+        contents = json.dumps(self.to_dict(), indent=2) + "\n"
+        temporary = destination.with_suffix(destination.suffix + ".tmp")
+        temporary.write_text(contents, encoding="utf-8")
+        temporary.replace(destination)
