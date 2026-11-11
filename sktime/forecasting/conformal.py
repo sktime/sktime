@@ -16,6 +16,7 @@ from sklearn.base import clone
 
 from sktime.datatypes import MTYPE_LIST_SERIES, convert, convert_to
 from sktime.datatypes._utilities import get_slice
+from sktime.exceptions import InsufficientDataError
 from sktime.forecasting.base import BaseForecaster
 from sktime.utils.warnings import warn
 
@@ -60,6 +61,9 @@ class ConformalIntervals(BaseForecaster):
         of the dataset to include for the initial window for the train split.
         If int, represents the relative number of train samples in the initial window.
         If None, the value is set to the larger of 0.1*len(y) and 10
+        Calibration windows that raise ``InsufficientDataError`` during fitting
+        are skipped with a warning. Later windows are still used. Increase
+        ``initial_window`` to avoid these skips. Other fit errors propagate.
     sample_frac : float, optional, default=None
         value in range (0,1) corresponding to fraction of y index to calculate
         residuals matrix values for (for speeding up calculation)
@@ -310,6 +314,13 @@ class ConformalIntervals(BaseForecaster):
             resids = np.diagonal(residuals_matrix, offset=offset)
             resids = resids[~np.isnan(resids)]
             if len(resids) < 1:
+                if residuals_matrix.attrs.get("insufficient_data", False):
+                    raise ValueError(
+                        "ConformalIntervals has no valid calibration residuals "
+                        f"for horizon {offset} after skipping training windows "
+                        "with insufficient data. Provide more training data "
+                        "or request a shorter forecasting horizon."
+                    )
                 resids = np.array([0], dtype=float)
                 warn(
                     "In ConformalIntervals, sample fraction too low for "
@@ -474,9 +485,15 @@ class ConformalIntervals(BaseForecaster):
 
             X_train = get_slice(X, start=None, end=id)
             X_test = get_slice(X, start=id, end=None)
-            forecaster.fit(y_train, X=X_train, fh=y_test.index)
-            # Append fitted forecaster to list for extending for update
-            self.forecasters_.append({"id": str(id), "forecaster": forecaster})
+            try:
+                forecaster.fit(y_train, X=X_train, fh=y_test.index)
+            except InsufficientDataError as exc:
+                message = (
+                    "ConformalIntervals skipped a calibration window with "
+                    f"{len(y_train)} observations: {exc}. Increase "
+                    "initial_window to avoid windows with insufficient data."
+                )
+                return pd.Series(index=y_test.index, dtype=float), None, message
 
             try:
                 residuals = forecaster.predict_residuals(y_test, X_test)
@@ -486,14 +503,19 @@ class ConformalIntervals(BaseForecaster):
                     f"{len(y_train)}.",
                     obj=forecaster,
                 )
-            return residuals
+            return residuals, forecaster, None
 
         all_residuals = Parallel(n_jobs=self.n_jobs)(
             delayed(_get_residuals_matrix_row)(forecaster.clone(), y, X, id)
             for id in y_index
         )
         for idx, id in enumerate(y_index):
-            residuals_matrix.loc[id] = all_residuals[idx]
+            residuals, fitted_forecaster, message = all_residuals[idx]
+            if message is not None:
+                warn(message, obj=self)
+            residuals_matrix.loc[id] = residuals
+            # Collect in the parent process, including when n_jobs > 1.
+            self.forecasters_.append({"id": str(id), "forecaster": fitted_forecaster})
 
         if overlapping_index is not None:
 
@@ -505,6 +527,9 @@ class ConformalIntervals(BaseForecaster):
 
                 y_test = get_slice(y, start=id, end=None)
                 X_test = get_slice(X, start=id, end=None)
+
+                if forecaster_to_extend is None:
+                    return pd.Series(index=y_test.index, dtype=float)
 
                 try:
                     residuals = forecaster_to_extend.predict_residuals(y_test, X_test)
@@ -524,6 +549,9 @@ class ConformalIntervals(BaseForecaster):
             for idx, id in enumerate(overlapping_index):
                 residuals_matrix.loc[id] = extend_residuals[idx]
 
+        residuals_matrix.attrs["insufficient_data"] = any(
+            record["forecaster"] is None for record in self.forecasters_
+        )
         return residuals_matrix
 
     @classmethod
