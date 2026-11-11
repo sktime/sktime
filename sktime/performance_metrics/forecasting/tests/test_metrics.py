@@ -86,6 +86,136 @@ def test_gmse_function():
     not run_test_module_changed(["sktime.performance_metrics"]),
     reason="Run if performance_metrics module has changed.",
 )
+def test_gmse_evaluate_by_index():
+    """GMSE evaluate_by_index equals jackknife pseudo-values from evaluate.
+
+    Regression test for the closed-form ``_evaluate_by_index``: on a small
+    sample containing a zero error (index 2), the by-index values must equal
+    the jackknife definition, ``n * evaluate(all) - (n - 1) * evaluate``
+    on the sample with the i-th point dropped, for both ``square_root``
+    settings. The zero error exercises the EPS substitution, which must be
+    identical in ``evaluate`` and ``evaluate_by_index``.
+    """
+    from sktime.performance_metrics.forecasting import GeometricMeanSquaredError
+
+    y_true = pd.Series([3.0, -0.5, 2.0, 7.0, 2.0, 5.0, 1.0])
+    y_pred = pd.Series([2.5, 0.0, 2.0, 8.0, 1.25, 4.0, 1.5])
+    n = len(y_true)
+
+    for square_root in (False, True):
+        metric = GeometricMeanSquaredError(square_root=square_root)
+        by_index = metric.evaluate_by_index(y_true, y_pred)
+        theta = metric.evaluate(y_true, y_pred)
+        expected = pd.Series(
+            [
+                n * theta
+                - (n - 1)
+                * metric.evaluate(y_true.drop(i), y_pred.drop(i))
+                for i in range(n)
+            ],
+            index=y_true.index,
+        )
+        assert np.allclose(by_index, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
+def test_gmse_evaluate_by_index_edge_cases():
+    """GMSE evaluate_by_index edge cases of the closed-form implementation.
+
+    Covers the behaviours the closed form must share with the jackknife
+    definition via ``evaluate``: n=1 raises, n=2, integer dtype input
+    (squaring must not overflow), squared errors that underflow to zero
+    or overflow to infinity when squaring, NaN input propagating to the
+    whole column instead of being silently dropped, custom multioutput
+    weights, and the output types and indices.
+    """
+    from sktime.performance_metrics.forecasting import GeometricMeanSquaredError
+
+    def jackknife_definition(metric, y_true, y_pred):
+        y_true_df = pd.DataFrame(np.asarray(y_true, dtype="float64"))
+        y_pred_df = pd.DataFrame(np.asarray(y_pred, dtype="float64"))
+        n = len(y_true_df)
+        theta = metric.evaluate(y_true_df, y_pred_df)
+        values = [
+            n * theta
+            - (n - 1) * metric.evaluate(y_true_df.drop(i), y_pred_df.drop(i))
+            for i in range(n)
+        ]
+        return np.asarray(values, dtype="float64")
+
+    metric = GeometricMeanSquaredError()
+
+    # n=1: jackknife pseudo-values are not defined, must raise
+    with pytest.raises(ValueError, match="at least two time points"):
+        metric.evaluate_by_index(pd.Series([1.0]), pd.Series([0.0]))
+
+    # n=2, with non-default index: equals the definition, type and index kept
+    y_true = pd.Series([3.0, 2.0], index=[10, 20])
+    y_pred = pd.Series([2.5, 1.0], index=[10, 20])
+    for square_root in (False, True):
+        metric_sr = GeometricMeanSquaredError(square_root=square_root)
+        by_index = metric_sr.evaluate_by_index(y_true, y_pred)
+        assert isinstance(by_index, pd.Series)
+        assert by_index.index.equals(y_true.index)
+        expected = jackknife_definition(metric_sr, y_true, y_pred)
+        assert np.allclose(by_index.values, expected)
+
+    # integer dtype: squaring 4e9 must not overflow, agrees with evaluate
+    y_true_int = np.array([4_000_000_000, 4_000_000_000], dtype="int64")
+    y_pred_int = np.zeros(2, dtype="int64")
+    by_index = metric.evaluate_by_index(y_true_int, y_pred_int)
+    assert np.isfinite(by_index.values).all()
+    expected = jackknife_definition(metric, y_true_int, y_pred_int)
+    assert np.allclose(by_index.values, expected)
+
+    # squared error underflows to zero: evaluate is 0, pseudo-values are
+    # -1 and 0 by the definition (the point itself, and the clean point)
+    y_true = np.array([1e-200, 1.0])
+    y_pred = np.zeros(2)
+    for square_root in (False, True):
+        metric_sr = GeometricMeanSquaredError(square_root=square_root)
+        by_index = metric_sr.evaluate_by_index(y_true, y_pred)
+        assert np.allclose(by_index.values, [-1.0, 0.0])
+
+    # squared error overflows to infinity: as by the definition, the
+    # overflowing point gets an infinite pseudo-value, the other NaN
+    by_index = metric.evaluate_by_index(np.array([1e200, 1.0]), y_pred)
+    assert np.isinf(by_index.iloc[0])
+    assert np.isnan(by_index.iloc[1])
+
+    # NaN input: propagates to the whole column (as in
+    # GeometricMeanAbsoluteError), no finite values are fabricated
+    by_index = metric.evaluate_by_index(
+        np.array([1.0, 2.0, 3.0]), np.array([0.0, np.nan, 1.0])
+    )
+    assert by_index.isna().all()
+
+    # multivariate: output types, index and columns; per-variable values
+    y_true = pd.DataFrame([[1.0, 2.0], [2.0, 4.0]], columns=["a", "b"])
+    y_pred = pd.DataFrame(np.zeros((2, 2)), columns=["a", "b"])
+    metric_raw = GeometricMeanSquaredError(multioutput="raw_values")
+    by_index_raw = metric_raw.evaluate_by_index(y_true, y_pred)
+    assert isinstance(by_index_raw, pd.DataFrame)
+    assert by_index_raw.index.equals(y_true.index)
+    assert by_index_raw.columns.equals(y_true.columns)
+    assert np.allclose(by_index_raw.values, [[0.0, 0.0], [3.0, 12.0]])
+
+    # custom multioutput weights: equals the definition via evaluate
+    metric_w = GeometricMeanSquaredError(multioutput=[0.3, 0.7])
+    by_index_w = metric_w.evaluate_by_index(y_true, y_pred)
+    assert isinstance(by_index_w, pd.Series)
+    assert by_index_w.index.equals(y_true.index)
+    expected = jackknife_definition(metric_w, y_true, y_pred)
+    assert np.allclose(by_index_w.values, expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if performance_metrics module has changed.",
+)
 def test_linex_class():
     """Doctest from MeanLinexError."""
     from sktime.performance_metrics.forecasting import MeanLinexError

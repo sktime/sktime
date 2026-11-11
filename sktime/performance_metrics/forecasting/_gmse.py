@@ -7,8 +7,12 @@ Classes named as ``*Error`` or ``*Loss`` return a value to minimize:
 the lower the better.
 """
 
+import numpy as np
+import pandas as pd
+
 from sktime.performance_metrics.forecasting._base import BaseForecastingErrorMetricFunc
 from sktime.performance_metrics.forecasting._functions import (
+    EPS,
     geometric_mean_squared_error,
 )
 
@@ -24,6 +28,13 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     on the same scale as the input data like RMSE and RdMSE. Because GMSE and RGMSE
     square the forecast error rather than taking the absolute value, they
     penalize large errors more than GMAE.
+
+    ``evaluate_by_index`` returns, at each time index, the jackknife
+    pseudo-value of the GMSE (or RGMSE, if ``square_root`` is True),
+    ``n * theta - (n - 1) * theta_i``, where ``theta`` is the metric over
+    all time indices, and ``theta_i`` is the metric with the i-th time
+    index removed. The pseudo-values are not themselves metric values
+    and, unlike the GMSE, they can be negative.
 
     Parameters
     ----------
@@ -119,6 +130,109 @@ class GeometricMeanSquaredError(BaseForecastingErrorMetricFunc):
     """
 
     func = geometric_mean_squared_error
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        private _evaluate_by_index containing core logic, called from evaluate_by_index
+
+        Parameters
+        ----------
+        y_true : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Ground truth (correct) target values.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        y_pred : pandas.DataFrame with RangeIndex, integer index, or DatetimeIndex
+            Predicted values to evaluate.
+            Time series in sktime ``pd.DataFrame`` format for ``Series`` type.
+
+        Returns
+        -------
+        loss : pd.Series or pd.DataFrame
+            Calculated metric, by time point (default=jackknife pseudo-values).
+
+            * pd.Series if self.multioutput="uniform_average" or array-like;
+              index is equal to index of y_true;
+              entry at index i is metric at time i, averaged over variables.
+            * pd.DataFrame if self.multioutput="raw_values";
+              index and columns equal to those of y_true;
+              i,j-th entry is metric at time i, at variable j.
+        """
+        multioutput = self.multioutput
+
+        errors = y_true - y_pred
+        # convert to float first, as _check_reg_targets does for evaluate,
+        # otherwise squaring integer errors can overflow (or wrap negative)
+        errors = errors.astype("float64")
+        # zero errors are replaced by EPS, as in geometric_mean_squared_error,
+        # so that the logarithms below are finite and consistent with evaluate
+        errors = errors.mask(errors == 0.0, EPS)
+        squared_errors = errors**2
+
+        n = squared_errors.shape[0]
+        if n == 1:
+            raise ValueError(
+                "evaluate_by_index requires at least two time points, "
+                "jackknife pseudo-values are not defined for a single time point."
+            )
+
+        # leave-one-out geometric mean, in closed form in log-space:
+        # the mean of the logs without the i-th point is
+        # (sum of logs - log(s_i)) / (n - 1)
+        # squared errors can still be 0 if squaring underflowed (zero errors
+        # were replaced by EPS above), or inf if squaring overflowed.
+        # geometric_mean_squared_error, via scipy's gmean, maps any remaining
+        # 0 in a column to a geometric mean of 0, and any remaining inf to
+        # inf, so both are counted per column and handled explicitly below,
+        # to agree with evaluate on such inputs as well.
+        sqe = squared_errors.values
+        with np.errstate(divide="ignore", invalid="ignore"):
+            log_sqe = np.log(sqe)
+        is_zero = sqe == 0.0
+        is_inf = np.isinf(sqe)
+        is_finite_positive = ~(is_zero | is_inf | np.isnan(sqe))
+        log_sqe_finite = np.where(is_finite_positive, log_sqe, 0.0)
+        log_sum = log_sqe_finite.sum(axis=0)
+        n_zero = is_zero.sum(axis=0)
+        n_inf = is_inf.sum(axis=0)
+
+        gmse = np.exp(log_sum / n)
+        gmse = np.where(n_zero > 0, 0.0, gmse)
+        gmse = np.where((n_zero == 0) & (n_inf > 0), np.inf, gmse)
+        gmse = np.where((n_zero > 0) & (n_inf > 0), np.nan, gmse)
+
+        loo_zero = n_zero - is_zero
+        loo_inf = n_inf - is_inf
+        gmse_jackknife = np.exp((log_sum - log_sqe_finite) / (n - 1))
+        gmse_jackknife = np.where(loo_zero > 0, 0.0, gmse_jackknife)
+        gmse_jackknife = np.where(
+            (loo_zero == 0) & (loo_inf > 0), np.inf, gmse_jackknife
+        )
+        gmse_jackknife = np.where(
+            (loo_zero > 0) & (loo_inf > 0), np.nan, gmse_jackknife
+        )
+
+        if self.square_root:
+            gmse = gmse**0.5
+            gmse_jackknife = gmse_jackknife**0.5
+
+        pseudo_values = n * gmse - (n - 1) * gmse_jackknife
+        pseudo_values = pd.DataFrame(
+            pseudo_values, index=squared_errors.index, columns=squared_errors.columns
+        )
+
+        # NaN input propagates to the entire column, as in
+        # GeometricMeanAbsoluteError: evaluate rejects non-finite input via
+        # _check_reg_targets, but no _evaluate_by_index in the framework
+        # validates finiteness, and finite pseudo-values must not be
+        # silently fabricated from the remaining points of the column
+        nan_columns = squared_errors.columns[squared_errors.isna().any(axis=0)]
+        if len(nan_columns) > 0:
+            pseudo_values[nan_columns] = np.nan
+
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+
+        return self._handle_multioutput(pseudo_values, multioutput)
 
     def __init__(
         self,
