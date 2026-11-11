@@ -203,6 +203,7 @@ class MatrixProfileFeatures(BaseTransformer):
     ----------
     m : int, default=10
         Desired subsequence length used to compute the matrix profile.
+        It must not exceed the length of each input time series.
 
     Examples
     --------
@@ -248,7 +249,13 @@ class MatrixProfileFeatures(BaseTransformer):
             The number of columns equals the number of subsequences
             of the desired length in each time series.
         """
-        # Input checks
+        series_length = X.shape[-1]
+        if self.m > series_length:
+            raise ValueError(
+                f"Subsequence length m={self.m} cannot exceed the input series "
+                f"length ({series_length}). For numpy3D input, the axes are "
+                "(instances, variables, timepoints)."
+            )
         n_instances = X.shape[0]
         Xt = pd.DataFrame([_stomp_self(X[i], self.m) for i in range(n_instances)])
         return Xt
