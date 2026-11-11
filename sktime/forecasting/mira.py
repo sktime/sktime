@@ -59,6 +59,7 @@ class MIRAForecaster(BaseForecaster):
     """
 
     _tags = {
+        "category": ["deep_learning", "foundation_model"],
         "authors": [
             "Faakhir30",
             # from Microsoft:
@@ -93,6 +94,7 @@ class MIRAForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "tests:vm": True,
         "tests:libs": ["sktime.libs.mira"],
+        "tests:specific": ["sktime.forecasting.tests.test_mira"],
     }
 
     def __init__(

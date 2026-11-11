@@ -8,7 +8,7 @@ Overview
 
 sktime is a consensus-based community project. Anyone with an interest in the project can join the community, contribute to the project, and participate in the governance process. This document describes how that participation takes place, which roles we have in our community, how we make decisions, and how we acknowledge contributions.
 
-We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and members of groups underrepresented in the tech sector. Go to our `contributing guide <https://github.com/sktime/sktime/blob/main/CONTRIBUTING.rst>`__ for more details.
+We are particularly motivated to support new and/or anxious contributors, people who are looking to learn and develop their skills, and members of groups underrepresented in the tech sector. Go to our `contributing guide <https://github.com/sktime/sktime/blob/main/CONTRIBUTING.md>`__ for more details.
 
 .. list-table::
    :header-rows: 1
@@ -81,7 +81,7 @@ Contributors
 Contributors are community members who have contributed in concrete ways
 to the project. Anyone can become a contributor, and contributions can
 take many forms – not only code – as detailed in the `contributing
-guide <https://github.com/sktime/sktime/blob/main/CONTRIBUTING.rst>`__.
+guide <https://github.com/sktime/sktime/blob/main/CONTRIBUTING.md>`__.
 
 For more details on how we acknowledge contributions, see :ref:`acknowledging-contributions` below.
 

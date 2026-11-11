@@ -305,6 +305,7 @@ class ChronosForecaster(BaseForecaster):
         "python_dependencies": ["torch", "transformers", "accelerate"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "capability:exogenous": False,
         "requires-fh-in-fit": False,
         "X-y-must-have-same-index": True,
@@ -326,6 +327,47 @@ class ChronosForecaster(BaseForecaster):
             "test_persistence_via_pickle",
             "test_save_estimators_to_file",
         ],
+        # Shorthands for quick use
+        # ------------------------
+        "shorthands": {
+            "chronos_bolt": (
+                'ChronosForecaster(model_path="amazon/chronos-bolt-tiny", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_bolt_mini": (
+                'ChronosForecaster(model_path="amazon/chronos-bolt-mini", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_bolt_small": (
+                'ChronosForecaster(model_path="amazon/chronos-bolt-small", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_bolt_base": (
+                'ChronosForecaster(model_path="amazon/chronos-bolt-base", '
+                'config={"device_map": "auto"})'
+            ),
+            # Original Chronos (T5).
+            "chronos_t5": (
+                'ChronosForecaster(model_path="amazon/chronos-t5-tiny", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_t5_mini": (
+                'ChronosForecaster(model_path="amazon/chronos-t5-mini", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_t5_small": (
+                'ChronosForecaster(model_path="amazon/chronos-t5-small", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_t5_base": (
+                'ChronosForecaster(model_path="amazon/chronos-t5-base", '
+                'config={"device_map": "auto"})'
+            ),
+            "chronos_t5_large": (
+                'ChronosForecaster(model_path="amazon/chronos-t5-large", '
+                'config={"device_map": "auto"})'
+            ),
+        },
     }
 
     _default_chronos_config = {

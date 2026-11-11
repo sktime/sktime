@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from sktime.forecasting.base import BaseForecaster, ForecastingHorizon
+from sktime.forecasting.hypertrees._utils import _get_frequency
 
 
 class HyperTreeARForecaster(BaseForecaster):
@@ -64,6 +65,7 @@ class HyperTreeARForecaster(BaseForecaster):
         "python_dependencies": ["hypertrees-forecasting>=0.2"],
         # estimator type
         # --------------
+        "category": ["statistical", "machine_learning"],
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",
         "capability:multivariate": False,
@@ -118,13 +120,7 @@ class HyperTreeARForecaster(BaseForecaster):
 
         self._series_id = 0
         self._train_len = len(y)
-        freq = getattr(y.index, "freqstr", None)
-        if freq is None and isinstance(y.index, pd.DatetimeIndex):
-            try:
-                freq = pd.infer_freq(y.index)
-            except ValueError:
-                freq = None
-        self._freq = freq or "MS"
+        self._freq = _get_frequency(y.index)
         fcst_h = int(np.max(fh.to_relative(self.cutoff)._values))
         self._dates = pd.date_range(
             "2000-01-01", periods=self._train_len + fcst_h, freq=self._freq
@@ -160,6 +156,7 @@ class HyperTreeARForecaster(BaseForecaster):
         )
         forecaster.dataset_references = None
         self._forecaster = forecaster
+        self._y_name = y.name
         return self
 
     def _predict(self, fh, X):
@@ -203,7 +200,7 @@ class HyperTreeARForecaster(BaseForecaster):
 
         values = forecast["fcst"].to_numpy()[rel - 1]
         index = fh.to_absolute(self.cutoff).to_pandas()
-        return pd.Series(values, index=index, name=self._y.name)
+        return pd.Series(values, index=index, name=self._y_name)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
