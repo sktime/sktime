@@ -129,6 +129,81 @@ def test_reconcilerforecaster_exog(n_columns):
     not run_test_for_class(ReconcilerForecaster),
     reason="run test only if softdeps are present and incrementally (if requested)",
 )
+@pytest.mark.skipif(
+    not _check_soft_dependencies("statsmodels", severity="none"),
+    reason="skip test if required soft dependency not available",
+)
+@pytest.mark.parametrize("n_columns", [1, 2])
+@pytest.mark.parametrize("method", ["mint_cov", "mint_shrink", "wls_var"])
+@pytest.mark.parametrize("update_params", [True, False])
+def test_reconcilerforecaster_update_residuals(n_columns, method, update_params):
+    """Residuals use base forecasts made before observing the update, see #11643."""
+    from sktime.datatypes._utilities import get_window
+    from sktime.forecasting.reconcile import ReconcilerForecaster
+    from sktime.forecasting.sarimax import SARIMAX
+
+    y = _make_hierarchical(
+        hierarchy_levels=(2, 3),
+        n_columns=n_columns,
+        min_timepoints=12,
+        max_timepoints=12,
+        index_type="period",
+        random_state=42,
+    )
+    y_train = get_window(y, lag=2)
+    y_test = get_window(y, window_length=2)
+
+    X = _make_hierarchical(
+        hierarchy_levels=(2, 3),
+        n_columns=2,
+        min_timepoints=12,
+        max_timepoints=12,
+        index_type="period",
+        random_state=43,
+    )
+    X.columns = ["foo", "bar"]
+    X_train = get_window(X, lag=2)
+    X_test = get_window(X, window_length=2)
+
+    forecaster = SARIMAX()
+    estimator_instance = ReconcilerForecaster(forecaster, method=method)
+    fh = [1, 2]
+    estimator_instance.fit(y=y_train, X=X_train, fh=fh)
+    estimator_instance.predict(X=X_test)
+
+    # Only the expectation uses aggregated copies. The public update below must
+    # continue to receive bottom-level y and X to exercise automatic aggregation.
+    y_test_agg = Aggregator().fit_transform(y_test)
+    X_test_agg = Aggregator().fit_transform(X_test)
+
+    # Multivariate targets are fitted as one reconciler per target column.
+    if n_columns == 1:
+        reconcilers = [(y.columns[0], estimator_instance)]
+    else:
+        reconcilers = list(estimator_instance.forecasters_.iloc[0].items())
+
+    expected_residuals = {}
+    previous_cutoffs = {}
+    for column, reconciler in reconcilers:
+        expected_residuals[column] = y_test_agg[[column]] - (
+            reconciler.forecaster_.predict(fh=fh, X=X_test_agg)
+        )
+        previous_cutoffs[column] = reconciler.forecaster_.cutoff.copy()
+
+    estimator_instance.update(y=y_test, X=X_test, update_params=update_params)
+
+    for column, reconciler in reconcilers:
+        assert_frame_equal(
+            reconciler.residuals_.loc[y_test_agg.index], expected_residuals[column]
+        )
+        assert reconciler.forecaster_.cutoff.equals(estimator_instance.cutoff)
+        assert (reconciler.forecaster_.cutoff > previous_cutoffs[column]).all()
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ReconcilerForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
 @pytest.mark.parametrize("method", METHOD_LIST)
 @pytest.mark.parametrize("return_totals", [True, False])
 def test_reconcilerforecaster_return_totals(method, return_totals):
