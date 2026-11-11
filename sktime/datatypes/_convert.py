@@ -436,9 +436,11 @@ def _conversions_defined(scitype: str):
 
     Returns
     -------
-    conv_df: pd.DataFrame, columns and index is list of mtypes for scitype
-            entry of row i, col j is 1 if conversion from i to j is defined,
-                                     0 if conversion from i to j is not defined
+    conv_df: pd.DataFrame
+        DataFrame, indicator matrix for defined conversions.
+        columns and index is list of mtypes for scitype;
+        entry of row i, col j is 1 if conversion from i to j is defined,
+        0 if conversion from i to j is not defined
     """
     convert_dict = generate_convert_dict()
     pairs = [(x[0], x[1]) for x in list(convert_dict.keys()) if x[2] == scitype]
