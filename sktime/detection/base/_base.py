@@ -114,11 +114,11 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
 
         super().__init__()
 
-        # todo 1.3.0: change default of remember_data to False and remove this warning
+        # todo 1.4.0: change default of remember_data to False and remove this warning
         if self.get_config()["remember_data"]:
             warn(
                 "The default of config ``remember_data`` will change from ``True`` "
-                "to ``False`` in sktime 1.3.0. After 1.3.0, ``BaseDetector`` will "
+                "to ``False`` in sktime 1.4.0. After 1.4.0, ``BaseDetector`` will "
                 "no longer store incremental data in ``_X`` and ``_y`` by default. "
                 "To silence this warning and adopt the new default early, set "
                 "``remember_data=False`` via ``set_config``. "
