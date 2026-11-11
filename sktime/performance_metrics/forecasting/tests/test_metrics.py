@@ -792,3 +792,32 @@ def test_default_evaluate_by_index_with_sample_weight():
 
     by_index = metric.evaluate_by_index(y_true, y_pred, sample_weight=w)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if tested module has changed.",
+)
+def test_mase_sample_weight():
+    """Test that MeanAbsoluteScaledError applies sample_weight linearly, not squared."""
+    from sktime.performance_metrics.forecasting import MeanAbsoluteScaledError
+
+    # Values chosen so naive training error = mean(|3-1|, |5-3|, |7-5|) = 2.0.
+    # Absolute errors: |5-5| = 0.0, |6-7| = 1.0.
+    # Non-uniform weights [1.0, 3.0] verify per-index mapping.
+    # Correct weighted values: [0.0 * 1.0 / 2.0, 1.0 * 3.0 / 2.0] = [0.0, 1.5].
+    y_train = pd.DataFrame({"y": [1.0, 3.0, 5.0, 7.0]})
+    y_true = pd.DataFrame({"y": [5.0, 6.0]})
+    y_pred = pd.DataFrame({"y": [5.0, 7.0]})
+    sample_weight = np.array([1.0, 3.0])
+
+    mase = MeanAbsoluteScaledError()
+    by_index = mase.evaluate_by_index(
+        y_true, y_pred, y_train=y_train, sample_weight=sample_weight
+    )
+    assert np.allclose(by_index.to_numpy().ravel(), [0.0, 1.5])
+
+    # Aggregate check: evaluate averages by_index over time points: (0.0 + 1.5) / 2 = 0.75
+    loss = mase.evaluate(y_true, y_pred, y_train=y_train, sample_weight=sample_weight)
+    assert np.isclose(loss, 0.75)
+
