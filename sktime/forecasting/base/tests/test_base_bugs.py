@@ -114,7 +114,8 @@ def test_statsmodels_adapter_random_state_handling():
             simulate_repetitions=1000,
             **simulate_kwargs,
         ):
-            assert simulate_kwargs["simulate_kwargs"] == {"rng": 42}
+            # the seed must be passed directly, not nested, see #11467
+            assert simulate_kwargs == {"rng": 42}
             return MockPredictionResults()
 
         def simulate(self, nsimulations, rng=None, **kwargs):
