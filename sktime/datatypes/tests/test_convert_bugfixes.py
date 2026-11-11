@@ -2,9 +2,12 @@
 
 __author__ = ["fkiraly", "ericjb"]
 
+import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datasets import load_airline
+from sktime.datatypes import check_is_mtype, convert_to
 from sktime.datatypes._series._convert import convert_MvS_to_UvS_as_Series
 from sktime.tests.test_switch import run_test_module_changed
 
@@ -41,3 +44,59 @@ def test_convert_MvS_to_UvS_as_Series():
     w = convert_MvS_to_UvS_as_Series(z)
 
     assert y.name == w.name
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes has been changed",
+)
+@pytest.mark.parametrize(
+    "columns",
+    [
+        pd.Index(["temperature", "pressure", "humidity"]),
+        pd.Index([7, 2, 5]),
+        pd.MultiIndex.from_tuples([("sensor", "z"), ("sensor", "a"), ("other", "m")]),
+    ],
+)
+def test_dflist_to_numpy3d_aligns_variables(columns):
+    """Array channels follow the first frame's variable order, see #11799."""
+    expected = np.arange(27, dtype=float).reshape(3, 3, 3)
+    permutations = [[0, 1, 2], [2, 0, 1], [1, 2, 0]]
+    panel = [
+        pd.DataFrame(values.T, columns=columns).iloc[:, permutation]
+        for values, permutation in zip(expected, permutations)
+    ]
+    before = [frame.copy(deep=True) for frame in panel]
+    assert check_is_mtype(panel, "df-list")
+
+    actual = convert_to(panel, "numpy3D", as_scitype="Panel")
+    via_pandas = convert_to(
+        convert_to(panel, "pd-multiindex", as_scitype="Panel"),
+        "numpy3D",
+        as_scitype="Panel",
+    )
+
+    np.testing.assert_array_equal(actual, expected)
+    np.testing.assert_array_equal(actual, via_pandas)
+    for frame, original in zip(panel, before):
+        pd.testing.assert_frame_equal(frame, original)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed("sktime.datatypes"),
+    reason="Test only if sktime.datatypes has been changed",
+)
+@pytest.mark.parametrize("mismatch", ["missing_column", "different_column", "length"])
+def test_dflist_to_numpy3d_rejects_incompatible_frames(mismatch):
+    """Column alignment must not fill missing variables or unequal lengths."""
+    first = pd.DataFrame({"a": [1.0, 2.0], "b": [3.0, 4.0]})
+    second = first.copy()
+    if mismatch == "missing_column":
+        second = second.drop(columns="b")
+    elif mismatch == "different_column":
+        second = second.rename(columns={"b": "c"})
+    else:
+        second = second.iloc[:1]
+
+    with pytest.raises(ValueError, match="same length and columns"):
+        convert_to([first, second], "numpy3D", as_scitype="Panel")

@@ -1019,17 +1019,21 @@ convert_dict[("pd-multiindex", "df-list", "Panel")] = from_multiindex_to_dflist
 
 
 def from_dflist_to_numpy3D(obj, store=None):
+    """Convert df-list to numpy3D in the first frame's variable order."""
     if not isinstance(obj, list):
         raise TypeError("obj must be a list of pd.DataFrame")
 
     n = len(obj[0])
-    cols = set(obj[0].columns)
+    columns = obj[0].columns
+    cols = set(columns)
 
     for i in range(len(obj)):
         if not n == len(obj[i]) or not set(obj[i].columns) == cols:
             raise ValueError("elements of obj must have same length and columns")
 
-    nparr = np.array([X.to_numpy().transpose() for X in obj])
+    # Each array channel must refer to the same named variable across instances.
+    aligned = (X if X.columns.equals(columns) else X.loc[:, columns] for X in obj)
+    nparr = np.array([X.to_numpy().transpose() for X in aligned])
 
     return nparr
 
