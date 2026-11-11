@@ -290,7 +290,7 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
             self._is_fitted = True
             return self
 
-        self._X = X
+        self._X = X_inner
         self._y = y
 
         if _method_has_arg(self._fit, "y"):
@@ -452,10 +452,36 @@ class BaseDetector(_PretrainMixin, BaseEstimator):
         if self.get_tag("fit_is_empty", False):
             return self
 
+        # ensure self._X is converted to DataFrame/mtype if it was set unconverted
+        if not isinstance(self._X, (pd.DataFrame, pd.Series)) and hasattr(
+            self, "_check_X"
+        ):
+            self._X = self._check_X(self._X)
+        elif isinstance(self._X, pd.Series):
+            self._X = self._X.to_frame()
+
+        if (
+            isinstance(X, np.ndarray)
+            and hasattr(self._X, "index")
+            and len(self._X.index) > 0
+            and isinstance(self._X.index, pd.Index)
+            and (
+                isinstance(self._X.index, pd.RangeIndex)
+                or pd.api.types.is_numeric_dtype(self._X.index.dtype)
+            )
+        ):
+            start = self._X.index[-1] + 1
+            X_inner.index = pd.RangeIndex(start, start + len(X_inner))
+
         self._X = X_inner.combine_first(self._X)
 
         if y is not None:
-            self._y = y.combine_first(self._y)
+            if self._y is None:
+                self._y = y
+            else:
+                from sktime.datatypes._utilities import update_data
+
+                self._y = update_data(self._y, y)
 
         if _method_has_arg(self._update, "y"):
             self._update(X=X_inner, y=y)
