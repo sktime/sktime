@@ -154,7 +154,7 @@ class FalconTSTForecaster(BaseForecaster):
     References
     ----------
     .. [1] Falcon-TST repository:
-       https://github.com/AntGroup/Falcon-TST
+       https://github.com/ant-intl/Falcon-TST
     .. [2] Falcon-TST model card:
        https://huggingface.co/ant-intl/Falcon-TST_Large
     .. [3] Quantization docs:

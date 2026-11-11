@@ -94,6 +94,7 @@ class MIRAForecaster(BaseForecaster):
         "requires-fh-in-fit": False,
         "tests:vm": True,
         "tests:libs": ["sktime.libs.mira"],
+        "tests:specific": ["sktime.forecasting.tests.test_mira"],
         "serialization:skip": ("model",),
     }
 
