@@ -1,6 +1,7 @@
 """Tests for GGS module."""
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.detection.ggs import GGS, GreedyGaussianSegmentation
@@ -40,3 +41,32 @@ def test_GreedyGaussianSegmentation(univariate_mean_shift):
         "max_shuffles": 250,
         "random_state": None,
     }
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(GreedyGaussianSegmentation),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_GreedyGaussianSegmentation_fit_transform(univariate_mean_shift):
+    """Test that fit_transform passes y through to fit_predict."""
+    ggs = GreedyGaussianSegmentation(k_max=5, lamb=0.5)
+    y_pred = ggs.fit_transform(univariate_mean_shift)
+    assert len(y_pred) == len(univariate_mean_shift)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(GreedyGaussianSegmentation),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_GreedyGaussianSegmentation_predict_returns_segments(univariate_mean_shift):
+    """Test that predict returns segments, not dense point labels."""
+    ggs = GreedyGaussianSegmentation(k_max=5, lamb=0.5)
+    y_pred = ggs.fit_predict(univariate_mean_shift)
+
+    assert isinstance(y_pred, pd.DataFrame)
+    assert list(y_pred.columns) == ["ilocs"]
+    assert isinstance(y_pred.ilocs.dtype, pd.IntervalDtype)
+
+    # segments tile the series exactly, without running past its end
+    assert y_pred.ilocs.iloc[0].left == 0
+    assert y_pred.ilocs.iloc[-1].right == len(univariate_mean_shift)
