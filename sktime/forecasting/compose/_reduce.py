@@ -570,12 +570,6 @@ class _DirectReducer(_Reducer):
                 "pooling must be one of local, global" + f" but found {self.pooling}"
             )
 
-        if self.window_length is not None and self.transformers is not None:
-            raise ValueError(
-                "Transformers provided, suggesting en-bloc approach"
-                + " to derive reduction features. Window length will be"
-                + " inferred, please set to None"
-            )
         if self.transformers is not None and self.pooling == "local":
             raise ValueError(
                 "Transformers currently cannot be provided"
@@ -939,12 +933,6 @@ class _RecursiveReducer(_Reducer):
                 "pooling must be one of local, global" + f" but found {self.pooling}"
             )
 
-        if self.window_length is not None and self.transformers is not None:
-            raise ValueError(
-                "Transformers provided, suggesting en-bloc approach"
-                + " to derive reduction features. Window length will be"
-                + " inferred, please set to None"
-            )
         if self.transformers is not None and self.pooling == "local":
             raise ValueError(
                 "Transformers currently cannot be provided"
@@ -1713,8 +1701,10 @@ def make_reduction(
         The strategy to generate forecasts. Must be one of "direct", "recursive" or
         "multioutput".
 
-    window_length : int, optional (default=10)
-        Window length used in sliding window transformation.
+    window_length : int or None, optional (default=10)
+        Window length used in sliding window transformation. With custom
+        transformers, pass an explicit length that covers their lookback, or
+        pass None to infer it from transformers exposing ``truncate_start``.
 
     scitype : str, optional (default="infer")
         Legacy argument for downwards compatibility, should not be used.
@@ -1727,9 +1717,9 @@ def make_reduction(
         A suitable list of transformers that allows for using an en-bloc approach with
         make_reduction. This means that instead of using the raw past observations of
         y across the window length, suitable features will be generated directly from
-        the past raw observations. Currently only supports WindowSummarizer (or a list
-        of WindowSummarizers) to generate features e.g. the mean of the past 7
-        observations. Currently only works for RecursiveTimeSeriesRegressionForecaster.
+        the past raw observations. Supported by direct and recursive reduction with
+        global pooling. For example, a WindowSummarizer can generate the mean of the
+        past 7 observations.
 
     pooling: str {"local", "global"}, optional
         Specifies whether separate models will be fit at the level of each instance
