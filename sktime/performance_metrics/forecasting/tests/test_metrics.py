@@ -792,3 +792,22 @@ def test_default_evaluate_by_index_with_sample_weight():
 
     by_index = metric.evaluate_by_index(y_true, y_pred, sample_weight=w)
     assert np.allclose(by_index.to_numpy(), expected)
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.performance_metrics"]),
+    reason="Run if tested module has changed.",
+)
+def test_median_metrics_by_index_sample_weight():
+    """Test MedianAbsoluteError.evaluate_by_index applies sample_weight."""
+    from sktime.performance_metrics.forecasting import MedianAbsoluteError
+
+    y_true = pd.DataFrame({"y": [1.0, 2.0, 3.0]})
+    y_pred = pd.DataFrame({"y": [2.0, 4.0, 6.0]})  # abs errors: 1, 2, 3
+    sample_weight = np.array([1.0, 2.0, 3.0])
+
+    by_index = MedianAbsoluteError().evaluate_by_index(
+        y_true, y_pred, sample_weight=sample_weight
+    )
+    # weights multiply the per-index absolute errors: [1*1, 2*2, 3*3]
+    assert np.allclose(by_index.to_numpy().ravel(), [1.0, 4.0, 9.0])
