@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import check_random_state
 
+from sktime.base._pretrain._state_at import _clone_at
 from sktime.datatypes._utilities import update_data
 from sktime.forecasting.base import BaseForecaster
 
@@ -224,7 +225,7 @@ class BaggingForecaster(BaseForecaster):
                 "forecaster in BaggingForecaster should be an sktime forecaster"
             )
 
-        return forecaster.clone()
+        return _clone_at(forecaster, "pretrained")
 
     def _fit(self, y, X, fh):
         """Fit forecaster to training data.

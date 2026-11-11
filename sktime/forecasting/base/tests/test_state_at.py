@@ -213,3 +213,94 @@ def test_state_aware_tuner_sequence_preserves_pretraining():
 
     assert candidate.is_fitted
     np.testing.assert_almost_equal(candidate.global_mean_, pretrain_mean)
+
+
+def test_compositor_pipeline_preserves_pretraining():
+    """ForecastingPipeline preserves pretrained state of forecaster."""
+    from sktime.forecasting.compose import TransformedTargetForecaster
+    from sktime.transformations.series.exponent import ExponentTransformer
+
+    pretrained = _make_pretrained_dummy()
+    pretrain_mean = pretrained.global_mean_
+
+    pipe = TransformedTargetForecaster(
+        [
+            ("exp", ExponentTransformer()),
+            ("forecaster", pretrained),
+        ]
+    )
+    y = _make_series(n_timepoints=20)
+    pipe.fit(y, fh=[1, 2, 3])
+
+    fitted_fc = pipe.steps_[-1][1]
+    assert fitted_fc.is_fitted
+    assert hasattr(fitted_fc, "global_mean_")
+    np.testing.assert_almost_equal(fitted_fc.global_mean_, pretrain_mean)
+
+
+def test_compositor_column_ensemble_preserves_pretraining():
+    """ColumnEnsembleForecaster preserves pretrained state of forecasters."""
+    import pandas as pd
+
+    from sktime.forecasting.compose import ColumnEnsembleForecaster
+
+    pretrained = _make_pretrained_dummy()
+    pretrain_mean = pretrained.global_mean_
+
+    ens = ColumnEnsembleForecaster([("fc", pretrained, [0, 1])])
+    y = pd.DataFrame({"a": np.arange(20, dtype=float), "b": np.arange(20, dtype=float)})
+    ens.fit(y, fh=[1, 2, 3])
+
+    fitted_fc = ens.forecasters_[0][1]
+    assert fitted_fc.is_fitted
+    assert hasattr(fitted_fc, "global_mean_")
+    np.testing.assert_almost_equal(fitted_fc.global_mean_, pretrain_mean)
+
+
+def test_compositor_multiplexer_preserves_pretraining():
+    """MultiplexForecaster preserves pretrained state of selected forecaster."""
+    from sktime.forecasting.compose import MultiplexForecaster
+
+    pretrained = _make_pretrained_dummy()
+    pretrain_mean = pretrained.global_mean_
+
+    mux = MultiplexForecaster([("dummy", pretrained)])
+    y = _make_series(n_timepoints=20)
+    mux.fit(y, fh=[1, 2, 3])
+
+    assert mux.forecaster_.is_fitted
+    assert hasattr(mux.forecaster_, "global_mean_")
+    np.testing.assert_almost_equal(mux.forecaster_.global_mean_, pretrain_mean)
+
+
+def test_compositor_fallback_preserves_pretraining():
+    """FallbackForecaster preserves pretrained state of fallback forecasters."""
+    from sktime.forecasting.compose import FallbackForecaster
+
+    pretrained = _make_pretrained_dummy()
+    pretrain_mean = pretrained.global_mean_
+
+    fb = FallbackForecaster([("dummy", pretrained)])
+    y = _make_series(n_timepoints=20)
+    fb.fit(y, fh=[1, 2, 3])
+
+    assert fb.current_forecaster_.is_fitted
+    assert hasattr(fb.current_forecaster_, "global_mean_")
+    np.testing.assert_almost_equal(fb.current_forecaster_.global_mean_, pretrain_mean)
+
+
+def test_compositor_fhplex_preserves_pretraining():
+    """FhPlexForecaster preserves pretrained state when cloning and setting params."""
+    from sktime.forecasting.compose import FhPlexForecaster
+
+    pretrained = _make_pretrained_dummy(strategy="mean")
+    pretrain_mean = pretrained.global_mean_
+
+    plex = FhPlexForecaster(pretrained, fh_params={1: {}, 2: {}})
+    y = _make_series(n_timepoints=20)
+    plex.fit(y, fh=[1, 2])
+
+    for f in plex.forecasters_.values():
+        assert f.is_fitted
+        assert hasattr(f, "global_mean_")
+        np.testing.assert_almost_equal(f.global_mean_, pretrain_mean)

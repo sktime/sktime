@@ -12,6 +12,7 @@ __author__ = ["ninedigits", "RikStarmans"]
 __all__ = ["FallbackForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
+from sktime.base._pretrain._state_at import _clone_at
 from sktime.datatypes import ALL_TIME_SERIES_MTYPES
 from sktime.datatypes._check import check_is_mtype
 from sktime.forecasting.base._delegate import _DelegatedForecaster
@@ -250,7 +251,7 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
             name, forecaster = self.forecasters_[ix]
             try:
                 self.current_name_ = name
-                self.current_forecaster_ = forecaster.clone()
+                self.current_forecaster_ = _clone_at(forecaster, "pretrained")
                 self.current_forecaster_.fit(y=y, X=X, fh=fh)
                 return self
             except Exception as e:
