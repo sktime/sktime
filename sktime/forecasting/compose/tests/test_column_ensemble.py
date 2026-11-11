@@ -8,9 +8,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from sktime.forecasting.compose import ColumnEnsembleForecaster
+from sktime.forecasting.compose import ColumnEnsembleForecaster, YfromX
 from sktime.forecasting.naive import NaiveForecaster
-from sktime.forecasting.sarimax import SARIMAX
 from sktime.forecasting.trend import PolynomialTrendForecaster
 from sktime.tests.test_switch import run_test_for_class, run_test_module_changed
 
@@ -93,7 +92,7 @@ def test_column_ensemble_multivariate_and_int():
 
 
 @pytest.mark.skipif(
-    not run_test_for_class([ColumnEnsembleForecaster, SARIMAX])
+    not run_test_for_class([ColumnEnsembleForecaster, YfromX])
     and not run_test_module_changed("sktime.transformations.hierarchical.aggregate")
     and not run_test_module_changed("sktime.transformations.hierarchical.reconcile"),
     reason="run test only if softdeps are present and incrementally (if requested)",
@@ -111,7 +110,9 @@ def test_column_ensemble_hierarchical():
     X_train = get_window(X, lag=1)
     y_train = get_window(y, lag=1)
 
-    f = Aggregator() * (Aggregator() ** SARIMAX()) * Reconciler()
+    exog_fcst = YfromX.create_test_instance()
+
+    f = Aggregator() * (Aggregator() ** exog_fcst) * Reconciler()
 
     f_hat = ColumnEnsembleForecaster(f)
     f_hat.fit(y=y_train, X=X_train, fh=1)
