@@ -199,3 +199,23 @@ class TestAllForecastingPtMetrics(ForecastingMetricPtFixtureGenerator, QuickTest
         # wt_metr = metric(sample_weight=wts)
         # res_wt = wt_metr(y_true, y_pred)
         # assert np.allclose(res_wt, metric_obj(y_true, y_pred, sample_weight=wts))
+
+    def test_metric_weights_scale_invariant(self, object_instance):
+        """Test that multiplying all sample weights by a constant has no effect."""
+        metric_obj = object_instance
+
+        y_true = np.array([3, -0.5, 2, 7, 2])
+        y_pred = np.array([2.5, 0.5, 2.02, 8, 7.25])
+        wts = np.array([0.1, 0.2, 0.1, 0.3, 2.4])
+
+        y_kwargs = {
+            "y_true": y_true,
+            "y_pred": y_pred,
+            "y_pred_benchmark": y_true,
+            "y_train": y_true,
+        }
+
+        res = metric_obj(sample_weight=wts, **y_kwargs)
+        res_scaled = metric_obj(sample_weight=10 * wts, **y_kwargs)
+
+        assert np.allclose(res, res_scaled)
