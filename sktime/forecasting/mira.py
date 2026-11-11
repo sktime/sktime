@@ -282,13 +282,23 @@ def _resolve_device():
 
 
 def _index_as_float(index) -> np.ndarray:
-    """Map sktime index labels to float time coordinates for MIRA ``time_values``."""
+    """Map sktime index labels to float64 coordinates for MIRA ``time_values``.
+
+    Integer indices and Datetime/PeriodIndex ordinals are converted via float64,
+    while float indices are preserved as-is in float64 without truncation to int64,
+    avoiding precision loss or truncation collapse for irregular float time values.
+    """
     if isinstance(index, (pd.DatetimeIndex, pd.PeriodIndex)):
         return index.asi8.astype(np.float64)
     arr = np.asarray(index)
-    if np.issubdtype(arr.dtype, np.number):
+    if np.issubdtype(arr.dtype, np.integer):
+        return arr.astype(np.float64)
+    if np.issubdtype(arr.dtype, np.floating):
         return arr.astype(np.float64)
     return np.arange(len(index), dtype=np.float64)
+
+
+_index_as_int = _index_as_float
 
 
 def _prepare_context(y, pred_len, cutoff, context_length):
@@ -317,15 +327,27 @@ def _prepare_context(y, pred_len, cutoff, context_length):
         y = y.to_frame()
     series = y.iloc[:, 0].to_numpy(dtype=np.float32)
     index = y.index
-    future_index = (
-        ForecastingHorizon(range(1, pred_len + 1)).to_absolute(cutoff)._values
-    )
+    try:
+        future_index = (
+            ForecastingHorizon(range(1, pred_len + 1)).to_absolute(cutoff)._values
+        )
+    except TypeError:
+        step = index[1] - index[0] if len(index) > 1 else 1.0
+        future_index = pd.Index([index[-1] + i * step for i in range(1, pred_len + 1)])
 
     if context_length is not None and len(series) > context_length:
         series = series[-context_length:]
         index = index[-context_length:]
 
     times_np = np.concatenate([_index_as_float(index), _index_as_float(future_index)])
+
+    # Subtract origin in float64 so values are small relative offsets before
+    # converting to float32. This avoids float32 precision loss for DatetimeIndex
+    # (~1.8e18 nanoseconds) and prevents irregular float timestamps from collapsing.
+    # _predict already calls normalize_time_for_ctrope on the full tensor, so extra
+    # rescaling is not needed here.
+    times_np = times_np - times_np[0]
+
     values = torch.tensor(series.reshape(1, -1), dtype=torch.float32)
     times = torch.tensor(times_np.reshape(1, -1), dtype=torch.float32)
     return values, times
