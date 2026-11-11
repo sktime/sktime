@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from sktime.tests.test_switch import run_test_for_class
-from sktime.transformations.detrend import Deseasonalizer
+from sktime.transformations.detrend import ConditionalDeseasonalizer, Deseasonalizer
 from sktime.utils._testing.forecasting import make_forecasting_problem
 
 MODELS = ["additive", "multiplicative"]
@@ -91,6 +91,37 @@ def test_transform_inverse_transform_equivalence(sp, model):
     yit = transformer.inverse_transform(transformer.transform(y_train))
     np.testing.assert_array_equal(y_train.index, yit.index)
     np.testing.assert_array_almost_equal(y_train, yit)
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(Deseasonalizer),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("sp", TEST_SPS)
+@pytest.mark.parametrize("model", MODELS)
+@pytest.mark.parametrize("transformer_cls", [Deseasonalizer, ConditionalDeseasonalizer])
+def test_update_refits_on_all_data(sp, model, transformer_cls):
+    """update with update_params=True re-estimates seasonality on all data seen."""
+    from sktime.split import temporal_train_test_split
+
+    y = make_forecasting_problem()
+    y_train, y_update = temporal_train_test_split(y, train_size=0.75)
+
+    transformer = transformer_cls(sp=sp, model=model)
+    transformer.fit(y_train)
+    seasonal_fit = np.array(transformer.seasonal_)
+
+    # update with update_params=False leaves the seasonal components unchanged
+    transformer.update(y_update, update_params=False)
+    np.testing.assert_array_equal(np.array(transformer.seasonal_), seasonal_fit)
+
+    # update with update_params=True is equivalent to fitting on all data
+    transformer.update(y_update, update_params=True)
+    expected = transformer_cls(sp=sp, model=model).fit(y)
+    np.testing.assert_allclose(
+        np.array(transformer.seasonal_), np.array(expected.seasonal_)
+    )
+    np.testing.assert_allclose(transformer.transform(y), expected.transform(y))
 
 
 @pytest.mark.skipif(
