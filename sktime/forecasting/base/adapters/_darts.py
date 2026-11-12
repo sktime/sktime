@@ -323,7 +323,7 @@ class _DartsRegressionAdapter(BaseForecaster):
         if not fh.is_all_out_of_sample(cutoff=self.cutoff):
             raise NotImplementedError("in-sample prediction is currently not supported")
         non_auto_regressive_fh = ForecastingHorizon(
-            [i for i in range(1, self.output_chunk_length + 1)]
+            [*range(1, self.output_chunk_length + 1)]
         )
         # warning for fh out of range of output_chunk_length
         if max(fh.to_indexer(cutoff=self.cutoff)) > max(
@@ -596,7 +596,7 @@ class _DartsRegressionModelsAdapter(_DartsRegressionAdapter):
                 at quantile probability in second col index, for the row index.
         """
         non_auto_regressive_fh = ForecastingHorizon(
-            [i for i in range(1, self.output_chunk_length + 1)]
+            [*range(1, self.output_chunk_length + 1)]
         )
         # warning for fh out of range of output_chunk_length
         if max(fh.to_indexer(cutoff=self.cutoff)) > max(
