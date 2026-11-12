@@ -25,6 +25,10 @@ class ReconcilerForecaster(BaseForecaster):
 
     Please refer to [1]_ for further information.
 
+    For residual-based methods, ``update`` refreshes the reconciliation covariance
+    when ``update_params=True``. With ``update_params=False``, the covariance is
+    kept fixed and new residuals are retained for subsequent parameter updates.
+
     Parameters
     ----------
     forecaster : estimator
@@ -322,7 +326,9 @@ class ReconcilerForecaster(BaseForecaster):
         X : pd.DataFrame, default=None
             Exogenous variables based to the base forecaster
         update_params : bool, optional (default=True)
-            whether model parameters should be updated
+            Whether the base model and reconciliation covariance should be updated.
+            If False, advance the cutoff and retain new residuals while keeping
+            the fitted reconciliation covariance fixed.
 
         Returns
         -------
@@ -352,6 +358,9 @@ class ReconcilerForecaster(BaseForecaster):
         self.residuals_ = pd.concat([self.residuals_, update_residuals], axis=0)
         self.residuals_ = self.residuals_.sort_index()
 
+        if not update_params:
+            return self
+
         # now define recon matrix
         if self.method == "mint_cov":
             self.error_cov_matrix_ = self._get_error_covariance_matrix(shrink=False)
@@ -361,6 +370,11 @@ class ReconcilerForecaster(BaseForecaster):
             self.error_cov_matrix_ = self._get_error_covariance_matrix(
                 shrink=False, diag_only=True
             )
+
+        self.reconciler_transform_.set_params(
+            error_covariance_matrix=self.error_cov_matrix_
+        )
+        self.reconciler_transform_.fit(y)
 
         return self
 
