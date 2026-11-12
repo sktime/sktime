@@ -4169,7 +4169,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/184361025?v=4",
       "profile": "https://www.linkedin.com/in/piyush-kumar-935017316/",
       "contributions": [
-        "code"
+        "code",
+        "bug",
+        "doc",
+        "test"
       ]
     },
     {
@@ -4297,12 +4300,133 @@
       ]
     },
     {
+      "login": "KrishChadha001",
+      "name": "Krish Chadha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/187894152?v=4",
+      "profile": "https://github.com/KrishChadha001",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "S-h-u-b-h-1",
+      "name": "Shubhaang Kataruka",
+      "avatar_url": "https://avatars.githubusercontent.com/u/164889601?v=4",
+      "profile": "https://github.com/S-h-u-b-h-1",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
       "login": "Harshdeep-creator",
       "name": "Harshdeep Singh",
       "avatar_url": "https://avatars.githubusercontent.com/u/223303066?v=4",
       "profile": "https://github.com/Harshdeep-creator",
       "contributions": [
         "test"
+      ]
+    },
+    {
+      "login": "Viranshul-P",
+      "name": "Viranshul Panchal",
+      "avatar_url": "https://avatars.githubusercontent.com/u/203832072?v=4",
+      "profile": "https://github.com/Viranshul-P",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "shrohan2003",
+      "name": "Shanjidul Hasan Rohan",
+      "avatar_url": "https://avatars.githubusercontent.com/u/125924303?v=4",
+      "profile": "https://github.com/shrohan2003",
+      "contributions": [
+        "bug",
+        "code",
+        "test",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "dhruvgupta2109",
+      "name": "Dhruv Gupta",
+      "avatar_url": "https://avatars.githubusercontent.com/u/248665831?v=4",
+      "profile": "https://github.com/dhruvgupta2109",
+      "contributions": [
+        "doc"
+      ]
+    },
+    {
+      "login": "Arihant2007",
+      "name": "Arihant",
+      "avatar_url": "https://avatars.githubusercontent.com/u/189824923?v=4",
+      "profile": "https://github.com/Arihant2007",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "Vivek1106-04",
+      "name": "Gangavarapu Vivek",
+      "avatar_url": "https://avatars.githubusercontent.com/u/140163742?v=4",
+      "profile": "https://github.com/Vivek1106-04",
+      "contributions": [
+        "bug",
+        "code"
+      ]
+    },
+    {
+      "login": "kritikhatri",
+      "name": "Kritika Khatri",
+      "avatar_url": "https://avatars.githubusercontent.com/u/228373846?v=4",
+      "profile": "https://github.com/kritikhatri",
+      "contributions": [
+        "doc",
+        "maintenance"
+      ]
+    },
+    {
+      "login": "KrishChadha001",
+      "name": "krish chadha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/187894152?v=4",
+      "profile": "https://github.com/KrishChadha001",
+      "contributions": [
+        "code",
+        "doc"
+      ]
+    },
+    {
+      "login": "Dhruv-Kumar-Singh",
+      "name": "Dhruv Kumar Singh",
+      "avatar_url": "https://avatars.githubusercontent.com/u/230005492?v=4",
+      "profile": "https://github.com/Dhruv-Kumar-Singh",
+      "contributions": [
+        "bug",
+        "code",
+        "test"
+      ]
+    },
+    {
+      "login": "KrishChadha001",
+      "name": "Krish Chadha",
+      "avatar_url": "https://avatars.githubusercontent.com/u/187894152?v=4",
+      "profile": "https://github.com/KrishChadha001",
+      "contributions": [
+        "code",
+        "bug"
+      ]
+    },
+    {
+      "login": "markksantos",
+      "name": "Mark Santos",
+      "avatar_url": "https://avatars.githubusercontent.com/u/24554186?v=4",
+      "profile": "https://www.markstudios.com",
+      "contributions": [
+        "doc"
       ]
     },
     {
