@@ -63,6 +63,34 @@ def _check_fh(fh):
     return fh.to_indexer().to_numpy()
 
 
+def _check_fh_steps_unchanged(forecaster, fh):
+    """Check that ``fh`` maps to the steps ahead fitted in ``fit``.
+
+    Direct reducers fit estimators for the steps ahead that ``fh`` had relative
+    to the cutoff in ``fit``. If ``fh`` is absolute and the cutoff has moved since,
+    e.g., after ``update``, the same ``fh`` maps to different steps ahead.
+    The fitted estimators would then return forecasts for the wrong time points,
+    or fail with an uninformative error, so we raise an informative one instead.
+
+    Does nothing if ``forecaster`` has no ``_fh_rel_fit``, i.e., if it does not
+    set it in ``fit``.
+    """
+    fh_rel_fit = getattr(forecaster, "_fh_rel_fit", None)
+    if fh_rel_fit is None:
+        return
+    fh_rel = fh.to_relative(forecaster.cutoff).to_numpy()
+    if not np.array_equal(fh_rel, fh_rel_fit):
+        raise ValueError(
+            f"{type(forecaster).__name__} was fitted for steps ahead "
+            f"{fh_rel_fit.tolist()}, but the forecasting horizon now maps to "
+            f"steps ahead {fh_rel.tolist()} of the current cutoff. "
+            "This happens if fh is absolute and the cutoff has moved since fit, "
+            "e.g., after update. Direct reduction fits one estimator per step "
+            "ahead, so the fitted estimators cannot be reused for other steps. "
+            "Pass a relative fh to fit, or fit again with the new fh."
+        )
+
+
 def _sliding_window_transform(
     y,
     window_length,
@@ -307,35 +335,8 @@ class _Reducer(_BaseWindowForecaster):
 
     def _predict_boilerplate(self, fh, **kwargs):
         # check fh before dispatching, covers predict and predict_quantiles
-        self._check_fh_steps_unchanged(fh)
+        _check_fh_steps_unchanged(self, fh)
         return super()._predict_boilerplate(fh, **kwargs)
-
-    def _check_fh_steps_unchanged(self, fh):
-        """Check that ``fh`` maps to the steps ahead fitted in ``fit``.
-
-        Direct, multioutput and dirrec reducers fit estimators for the steps
-        ahead that ``fh`` had relative to the cutoff in ``fit``. If ``fh`` is
-        absolute and the cutoff has moved since, e.g., after ``update``, the same
-        ``fh`` maps to different steps ahead. The fitted estimators would then
-        silently return forecasts for the wrong time points, so we raise instead.
-
-        Does nothing for reducers that do not set ``_fh_rel_fit`` in ``fit``.
-        """
-        fh_rel_fit = getattr(self, "_fh_rel_fit", None)
-        if fh_rel_fit is None:
-            return
-        fh_rel = fh.to_relative(self.cutoff).to_numpy()
-        if not np.array_equal(fh_rel, fh_rel_fit):
-            raise ValueError(
-                f"{type(self).__name__} was fitted for steps ahead "
-                f"{fh_rel_fit.tolist()}, but the forecasting horizon now maps to "
-                f"steps ahead {fh_rel.tolist()} of the current cutoff. "
-                "This happens if fh is absolute and the cutoff has moved since fit, "
-                "e.g., after update. The direct, multioutput and dirrec strategies "
-                "fit one estimator per step ahead, so the fitted estimators cannot "
-                "be reused for other steps. Pass a relative fh to fit, or fit again "
-                "with the new fh."
-            )
 
     def _predict_in_sample(self, fh, X=None, **kwargs):
         # Note that we currently only support out-of-sample predictions. For the
@@ -591,7 +592,7 @@ class _DirectReducer(_Reducer):
             An fitted instance of self.
         """
         self._store_fit_data(y, X)
-        # steps ahead the estimators are fitted for, checked again in predict
+        # steps ahead the estimators are fitted for, re-checked in predict
         self._fh_rel_fit = fh.to_relative(self.cutoff).to_numpy()
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
@@ -873,7 +874,7 @@ class _MultioutputReducer(_Reducer):
         self : returns an instance of self.
         """
         self._store_fit_data(y, X)
-        # steps ahead the estimators are fitted for, checked again in predict
+        # steps ahead the estimators are fitted for, re-checked in predict
         self._fh_rel_fit = fh.to_relative(self.cutoff).to_numpy()
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
@@ -1226,7 +1227,7 @@ class _DirRecReducer(_Reducer):
             An fitted instance of self.
         """
         self._store_fit_data(y, X)
-        # steps ahead the estimators are fitted for, checked again in predict
+        # steps ahead the estimators are fitted for, re-checked in predict
         self._fh_rel_fit = fh.to_relative(self.cutoff).to_numpy()
         # todo: logic for X below is broken. Escape X until fixed.
         if X is not None:
@@ -2250,6 +2251,8 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
     def _fit(self, y, X, fh):
         """Fit dispatcher based on X_treatment and windows_identical."""
         self._store_fit_data(y, X)
+        # steps ahead the estimators are fitted for, re-checked in predict
+        self._fh_rel_fit = fh.to_relative(self.cutoff).to_numpy()
         # shifted X (future X unknown) and identical windows reduce to
         # multioutput regression, o/w fit multiple individual estimators
         if (self.X_treatment == "shifted") and (self.windows_identical is True):
@@ -2259,6 +2262,7 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
 
     def _predict(self, fh=None, X=None):
         """Predict dispatcher based on X_treatment and windows_identical."""
+        _check_fh_steps_unchanged(self, fh)
         if self.X_treatment == "shifted":
             if self.windows_identical is True:
                 return self._predict_multioutput(X=X, fh=fh)
