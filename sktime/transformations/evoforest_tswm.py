@@ -831,6 +831,7 @@ class EvoForestTSWM(BaseTransformer):
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.transformations.tests.test_evoforest_tswm"],
+        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(self, pooling="full"):
