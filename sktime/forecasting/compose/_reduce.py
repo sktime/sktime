@@ -305,6 +305,38 @@ class _Reducer(_BaseWindowForecaster):
 
         return y_pred
 
+    def _predict_boilerplate(self, fh, **kwargs):
+        # check fh before dispatching, covers predict and predict_quantiles
+        self._check_fh_steps_unchanged(fh)
+        return super()._predict_boilerplate(fh, **kwargs)
+
+    def _check_fh_steps_unchanged(self, fh):
+        """Check that ``fh`` maps to the steps ahead fitted in ``fit``.
+
+        Direct, multioutput and dirrec reducers fit estimators for the steps
+        ahead that ``fh`` had relative to the cutoff in ``fit``. If ``fh`` is
+        absolute and the cutoff has moved since, e.g., after ``update``, the same
+        ``fh`` maps to different steps ahead. The fitted estimators would then
+        silently return forecasts for the wrong time points, so we raise instead.
+
+        Does nothing for reducers that do not set ``_fh_rel_fit`` in ``fit``.
+        """
+        fh_rel_fit = getattr(self, "_fh_rel_fit", None)
+        if fh_rel_fit is None:
+            return
+        fh_rel = fh.to_relative(self.cutoff).to_numpy()
+        if not np.array_equal(fh_rel, fh_rel_fit):
+            raise ValueError(
+                f"{type(self).__name__} was fitted for steps ahead "
+                f"{fh_rel_fit.tolist()}, but the forecasting horizon now maps to "
+                f"steps ahead {fh_rel.tolist()} of the current cutoff. "
+                "This happens if fh is absolute and the cutoff has moved since fit, "
+                "e.g., after update. The direct, multioutput and dirrec strategies "
+                "fit one estimator per step ahead, so the fitted estimators cannot "
+                "be reused for other steps. Pass a relative fh to fit, or fit again "
+                "with the new fh."
+            )
+
     def _predict_in_sample(self, fh, X=None, **kwargs):
         # Note that we currently only support out-of-sample predictions. For the
         # direct and multioutput strategy, we need to check this already during fit,
@@ -559,6 +591,8 @@ class _DirectReducer(_Reducer):
             An fitted instance of self.
         """
         self._store_fit_data(y, X)
+        # steps ahead the estimators are fitted for, checked again in predict
+        self._fh_rel_fit = fh.to_relative(self.cutoff).to_numpy()
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
@@ -839,6 +873,8 @@ class _MultioutputReducer(_Reducer):
         self : returns an instance of self.
         """
         self._store_fit_data(y, X)
+        # steps ahead the estimators are fitted for, checked again in predict
+        self._fh_rel_fit = fh.to_relative(self.cutoff).to_numpy()
         # We currently only support out-of-sample predictions. For the direct
         # strategy, we need to check this at the beginning of fit, as the fh is
         # required for fitting.
@@ -1190,6 +1226,8 @@ class _DirRecReducer(_Reducer):
             An fitted instance of self.
         """
         self._store_fit_data(y, X)
+        # steps ahead the estimators are fitted for, checked again in predict
+        self._fh_rel_fit = fh.to_relative(self.cutoff).to_numpy()
         # todo: logic for X below is broken. Escape X until fixed.
         if X is not None:
             X = None
@@ -1699,6 +1737,12 @@ def make_reduction(
     performance across different horizons, since all models trained will use the
     same windows. Use ``windows_identical = False`` if you want to have the highest
     forecasting accuracy for each forecasting horizon.
+
+    The ``"direct"``, ``"multioutput"`` and ``"dirrec"`` strategies fit their models
+    for the steps ahead that ``fh`` has relative to the cutoff in ``fit``.
+    A relative ``fh`` keeps these steps when the cutoff moves, e.g., in ``update``.
+    An absolute ``fh`` maps to different steps once the cutoff moves, so ``predict``
+    then raises an error. Use a relative ``fh``, or fit again with the new ``fh``.
 
     Parameters
     ----------
