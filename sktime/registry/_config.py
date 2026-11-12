@@ -6,7 +6,6 @@ MODULES_TO_IGNORE = (
     "tests",
     "setup",
     "contrib",
-    "benchmarking",
     "utils",
     "all",
     "plotting",
