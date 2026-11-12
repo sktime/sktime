@@ -134,6 +134,17 @@ class BaseEarlyClassifier(BaseEstimator):
         fit = BaseClassifier.fit
         return fit(self, X, y)
 
+    def _reset_at(self, state):
+        """Reset early classifier for shared ``BaseClassifier.fit`` logic.
+
+        Early classifiers do not expose pretraining, but ``BaseClassifier.fit``
+        uses the state-aware reset hook introduced for classifiers with optional
+        pretraining. A full reset is therefore the correct behavior here.
+        """
+        if state not in {"new", "pretrained"}:
+            raise ValueError("state must be one of {'new', 'pretrained'}")
+        return self.reset()
+
     def predict(self, X) -> tuple[np.ndarray, np.ndarray]:
         """Predicts labels for sequences in X.
 
