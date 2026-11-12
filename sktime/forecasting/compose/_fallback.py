@@ -12,7 +12,7 @@ __author__ = ["ninedigits", "RikStarmans"]
 __all__ = ["FallbackForecaster"]
 
 from sktime.base import _HeterogenousMetaEstimator
-from sktime.datatypes import ALL_TIME_SERIES_MTYPES
+from sktime.datatypes import ALL_TIME_SERIES_MTYPES, update_data
 from sktime.datatypes._check import check_is_mtype
 from sktime.forecasting.base._delegate import _DelegatedForecaster
 from sktime.utils.warnings import warn
@@ -37,6 +37,10 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
     forecaster fails during fitting or prediction, it proceeds to the next one. This
     class is useful in scenarios where the reliability of individual forecasting models
     may be in question, and a fallback mechanism is desired.
+
+    The wrapper retains observations and exogenous data from ``fit`` and ``update``
+    so that later candidates can be fitted to the current history. This storage is
+    independent of the base forecaster's ``remember_data`` configuration.
 
     Parameters
     ----------
@@ -223,6 +227,18 @@ class FallbackForecaster(_HeterogenousMetaEstimator, _DelegatedForecaster):
         self.first_nonfailing_forecaster_index_ = 0
         self.exceptions_raised_ = dict()
         return self._try_fit_forecasters(y=y, X=X, fh=fh)
+
+    def _update(self, y, X=None, update_params=True):
+        """Retain current history for fallback and update the active candidate."""
+        self._cur_y = update_data(self._cur_y, y)
+        self._cur_X = update_data(self._cur_X, X)
+        return super()._update(y=y, X=X, update_params=update_params)
+
+    def _update_predict_single(self, y, fh, X=None, update_params=True):
+        """Update the wrapper's history and use its prediction fallback logic."""
+        # The public entry point has already checked data and advanced the cutoff.
+        self._update(y=y, X=X, update_params=update_params)
+        return self._predict(fh=fh, X=X)
 
     def _try_fit_forecasters(self, y, X, fh):
         """
