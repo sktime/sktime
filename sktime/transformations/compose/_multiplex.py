@@ -89,6 +89,8 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
 
     # tags will largely be copied from selected_transformer
     _tags = {
+        "named_object_parameters": "_transformers",
+        "fitted_named_object_parameters": "transformers_",
         "authors": ["miraep8", "fkiraly"],
         "fit_is_empty": False,
         "capability:multivariate": True,
@@ -102,16 +104,6 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
     #     all non-overridden methods are same as of getattr(self, _delegate_name)
     #     see further details in _DelegatedTransformer docstring
     _delegate_name = "transformer_"
-
-    # for default get_params/set_params from _HeterogenousMetaEstimator
-    # _steps_attr points to the attribute of self
-    # which contains the heterogeneous set of estimators
-    # this must be an iterable of (name: str, estimator) pairs for the default
-    _steps_attr = "_transformers"
-    # if the estimator is fittable, _HeterogenousMetaEstimator also
-    # provides an override for get_fitted_params for params from the fitted estimators
-    # the fitted estimators should be in a different attribute, _steps_fitted_attr
-    _steps_fitted_attr = "transformers_"
 
     def __init__(
         self,
@@ -129,7 +121,12 @@ class MultiplexTransformer(_HeterogenousMetaEstimator, _DelegatedTransformer):
             clone_ests=False,
         )
         self._set_transformer()
-        self.clone_tags(self.transformer_)
+        # Component parameter attributes belong to this multiplexer.
+        parameter_tags = {"named_object_parameters", "fitted_named_object_parameters"}
+        tags_to_clone = [
+            tag for tag in self.transformer_.get_tags() if tag not in parameter_tags
+        ]
+        self.clone_tags(self.transformer_, tags_to_clone)
         self.set_tags(**{"fit_is_empty": False})
         # this ensures that we convert in the inner estimator, not in the multiplexer
         self.set_tags(**{"X_inner_mtype": ALL_TIME_SERIES_MTYPES})

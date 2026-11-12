@@ -19,6 +19,16 @@ from sktime.utils.validation.forecasting import check_scoring
 RELEVANT_MODULES = ["sktime.transformations", "sktime.forecasting", "sktime.split"]
 
 
+def test_multiplexer_with_pipeline_exposes_its_own_parameters():
+    """The selected pipeline's component attributes do not shadow the multiplexer."""
+    pipeline = ExponentTransformer(2) * ExponentTransformer(3)
+    multiplexer = MultiplexTransformer([("pipeline", pipeline)])
+
+    assert multiplexer.get_params()["pipeline"] is pipeline
+    multiplexer.set_params(pipeline=ExponentTransformer(4))
+    assert multiplexer.get_params()["pipeline__power"] == 4
+
+
 @pytest.mark.skipif(
     not run_test_module_changed(RELEVANT_MODULES),
     reason="run test only if anything in relevant modules has changed",
