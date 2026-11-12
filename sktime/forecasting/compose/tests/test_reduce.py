@@ -759,6 +759,65 @@ def test_reduction_without_X(strategy):
     reason="run test only if reduce module has changed",
 )
 @pytest.mark.parametrize(
+    "params",
+    [
+        {"strategy": "direct"},
+        {"strategy": "multioutput"},
+        {"strategy": "dirrec"},
+        {"X_treatment": "concurrent"},
+        {"X_treatment": "shifted", "windows_identical": True},
+        {"X_treatment": "shifted", "windows_identical": False},
+    ],
+)
+@pytest.mark.parametrize("update_params", [False, True])
+def test_direct_strategies_absolute_fh_after_update(params, update_params):
+    """Direct-type reducers must not reuse step estimators after the cutoff moves.
+
+    With an absolute fh, moving the cutoff with update changes the steps ahead
+    that fh maps to. Before the fix, predict silently returned the forecasts of
+    the steps fitted in fit, labelled with the absolute fh, i.e., for the wrong
+    time points, or failed with a KeyError. See issue #4846.
+
+    ``strategy`` params are passed to ``make_reduction``, the others to
+    ``DirectReductionForecaster``.
+    """
+
+    def _make():
+        if "strategy" in params:
+            return make_reduction(LinearRegression(), window_length=12, **params)
+        return DirectReductionForecaster(LinearRegression(), window_length=12, **params)
+
+    y = load_airline()
+    y_train, y_new = y.iloc[:120], y.iloc[120:122]
+    fh_rel = ForecastingHorizon([3, 4, 5], is_relative=True)
+    fh_abs = fh_rel.to_absolute(y_train.index[-1])
+
+    # absolute fh and unchanged cutoff: same forecasts as the relative fh
+    f_abs = _make()
+    f_abs.fit(y_train, fh=fh_abs)
+    f_rel = _make()
+    f_rel.fit(y_train, fh=fh_rel)
+    pd.testing.assert_series_equal(f_abs.predict(), f_rel.predict())
+
+    # relative fh moves with the cutoff, so update keeps working
+    f_rel.update(y_new, update_params=update_params)
+    y_pred = f_rel.predict()
+    assert list(y_pred.index) == list(fh_rel.to_absolute_index(y_new.index[-1]))
+
+    # absolute fh now maps to steps 1, 2, 3, the estimators are for steps 3, 4, 5
+    f_abs.update(y_new, update_params=update_params)
+    with pytest.raises(
+        ValueError,
+        match=r"fitted for steps ahead \[3, 4, 5\].*maps to steps ahead \[1, 2, 3\]",
+    ):
+        f_abs.predict()
+
+
+@pytest.mark.skipif(
+    not run_test_module_changed(["sktime.forecasting.compose._reduce"]),
+    reason="run test only if reduce module has changed",
+)
+@pytest.mark.parametrize(
     "x_treatment",
     ["concurrent", "shifted"],
 )
