@@ -359,7 +359,7 @@ class ShapeDTW(BaseClassifier):
 
         # To hold the result of each transformer
         dataFrames = []
-        col_names = [x for x in range(len(data.columns))]
+        col_names = [*range(len(data.columns))]
 
         # Apply each transformer on the set of subsequences
         for t in self.transformer:
