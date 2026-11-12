@@ -27,7 +27,6 @@ can simply write:
 
 .. code-block:: python
 
-    import numpy as np
     from sktime.datasets import load_airline
     from sktime.forecasting.compose import make_reduction
     from sklearn.ensemble import RandomForestRegressor
@@ -37,7 +36,7 @@ can simply write:
     y = load_airline()
     y_train, y_test = temporal_train_test_split(y)
     fh = len(y_test)  # forecasting horizon
-    regressor = RandomForestRegressor()
+    regressor = RandomForestRegressor(random_state=0)
     forecaster = make_reduction(
     	regressor,
     	strategy="recursive",
@@ -45,9 +44,8 @@ can simply write:
     )
     forecaster.fit(y_train)
     y_pred = forecaster.predict(fh)
-    smape = MeanAbsolutePercentageError()
-    smape(y_test, y_pred)
-    >>> 0.1261192310833735
+    mape = MeanAbsolutePercentageError()
+    print(mape(y_test, y_pred))
 
 For more details, check out our `paper
 <http://learningsys.org/neurips19/assets/papers/sktime_ml_systems_neurips2019.pdf>`__.
