@@ -17,6 +17,359 @@ available on GitHub.
 For our long-term plan, see our :ref:`roadmap`.
 
 
+Version 1.3.0 - 2026-11-09
+--------------------------
+
+Highlights
+~~~~~~~~~~
+
+* Python 3.15 compatibility, ``pandas`` 3.1.X compatibility (:pr:`11649`)
+  :user:`fkiraly`, :user:`yash-sangwan`
+* further reduction of estimator memory usage and stored model sizes (:pr:`10802`) :user:`Faakhir30`
+* ``category`` tag for estimator categorization, e.g.,
+  ``"machine_learning"``, ``"foundation_model"`` (:pr:`11417`) :user:`jgyasu`
+* TimeH2O forecasting foundation model (:pr:`11694`) :user:`KrishChadha001`
+* Tabby forecasting foundation model (:pr:`11691`) :user:`saptadeep12`
+* TimerS1 forecasting foundation model compatibility with ``transformers 5`` (:pr:`11237`) :user:`yftx293`
+* New forecasting metrics: MeanAbsoluteErrorPercentage (MAE%)
+  and mean forecast bias (:pr:`11637`, :pr:`11582`) :user:`Nischal1425`, :user:`Utkarshhs`
+
+
+Dependency changes
+~~~~~~~~~~~~~~~~~~
+
+* Python 3.15 is now supported by the ``sktime`` framework.
+* Python 3.10 is no longer supported by the ``sktime`` framework, as Python 3.10
+  reached end-of-life.
+* ``pandas 3.1.X`` is now supported by the ``sktime`` framework.
+  The ``pandas`` upper bound has been raised to ``<3.2``.
+* ``polars`` (data container soft dependency) upper bound has been updated to ``<3.0``.
+* ``numba`` (computation soft dependency) upper bound has been updated to ``<0.69``
+
+
+Core interface changes
+~~~~~~~~~~~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* All objects now can have a ``category`` tag for categorization, e.g.,
+  ``"machine_learning"``, ``"foundation_model"``.
+  This allows to search for models in a specific category via ``all_estimators``.
+* All objects now can have a ``shorthands`` tag, which can specify short names or
+  aliases for specific instances of the object. These shorthands can be accessed
+  via the ``craft`` utility.
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Benchmark analyzers are now first-class citizens, and inspectable via the registry,
+or craftable via ``craft``. The type shorthand is ``benchmark_analyzer``.
+
+Time series detection, classification, regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Time series detectors (``BaseDetector``), classifiers (``BaseClassifier``),
+  and regressors (``BaseRegressor``) now have an extensible ``pretrain`` mechanism for handling pretrained models.
+
+  The pretraining API for detectors, classifiers, and regressors is not fully mature;
+  model capabilities will be expanded in future releases.
+
+
+Deprecations and removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Forecasting
+^^^^^^^^^^^
+
+From version 1.3.0, forecasters no longer universally provide "refitting " ``update`` capability by default
+and as a consequence no longer store all data seen so far in ``self._y`` and/or ``self._X``.
+Forecasters with an available "update" mode can now be queried via the ``capability:update`` tag.
+To replicate the former default behaviour of "memorize all data and refit" in an upwards compatible way,
+users can use the ``UpdateRefitsEvery`` compositor from ``sktime.forecasting.stream``.
+In order to test future post-1.3.0 behaviour, users can set the config ``remember_data`` to ``False``,
+via the ``.set_config(remember_data=False)`` (prior to forecaster use).
+
+Time series classification and regression
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In tuners ``TSCGridSearchCV`` and ``TSRGridSearchCV``,
+deprecated parameters ``n_jobs`` and ``pre_dispatch`` have been removed.
+
+Configuration parameters for the parallelization backend should be passed via
+``backend_params`` in the future.
+
+
+Enhancements
+~~~~~~~~~~~~
+
+BaseObject and base framework
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``all_estimators`` to allow list-of-str for ``filter_tags``; improve docstring (:pr:`8252`) :user:`nahcol10`
+* [ENH] Environment Managers for Isolating Runtime Environments (:pr:`11021`) :user:`jgyasu`
+* [ENH] dedicated namespace hook in registry (:pr:`11316`) :user:`fkiraly`
+* [ENH] ``category`` tag for object categorization (:pr:`11417`) :user:`jgyasu`
+* [ENH] namespace plugin for ``craft`` utility (:pr:`11232`) :user:`fkiraly`
+* [ENH] Refactor ``_PretrainedCloner`` and ``_StateAtMixin`` to a common base for reuse with other estimator types, along with a ``_PretrainMixin`` for common pretrain operations (:pr:`11534`) :user:`srupat`
+* [ENH] Merge ``_PretrainMixin`` and ``_StateAtMixin`` and delete ``_StateAtMixin`` (:pr:`11629`) :user:`srupat`
+* [ENH] shorthands in ``craft`` (:pr:`11627`) :user:`fkiraly`
+* [ENH] Add benchmark analyzers to the registry (:pr:`11720`) :user:`jgyasu`
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] MeanAbsoluteErrorPercentage (MAE%) forecasting metric (:pr:`11637`) :user:`Nischal1425`
+* [ENH] Mean Forecast Bias metric (:pr:`11582`) :user:`Utkarshhs`
+* [ENH] Add benchmark analyzers to the registry (:pr:`11720`) :user:`jgyasu`
+
+Data sets and data loaders
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Fix pandas 3.1.0 compatibility issues in forecasting and tests (:pr:`11649`) :user:`yash-sangwan`
+
+Datatypes, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Make ``VectorizedDF`` stateless (:pr:`10802`) :user:`Faakhir30`
+* [ENH] test that check and convert do not mutate inputs (:pr:`11609`) :user:`Harshdeep-creator`
+* [ENH] class-based ``convert_dict`` registry, migrate Hierarchical and Proba conversions to ``BaseConverter`` (:pr:`11581`):user:`Ayushagrawal-cse`,  :user:`PragnyaKhandelwal`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] golden output tests for ``TafsutForecaster`` (:pr:`11351`) :user:`AbdulAliMamnun`
+* [ENH] ``category`` tag for object categorization (:pr:`11417`) :user:`jgyasu`
+* [ENH] Add golden output regression test and fix router dtype for FalconTSTForecaster (:pr:`11337`) :user:`shivamkumxr`
+* [ENH] minor fixes to tags (:pr:`11529`) :user:`fkiraly`
+* [ENH] Support transformers 5 generation in TimerS1 (:pr:`11237`) :user:`yftx293`
+* [ENH] Fix pandas 3.1.0 compatibility issues in forecasting and tests (:pr:`11649`) :user:`yash-sangwan`
+* [ENH] TimeH2O forecasting foundation model (:pr:`11694`) :user:`KrishChadha001`
+* [ENH] Tabby forecasting foundation model (:pr:`11691`) :user:`saptadeep12`
+* [ENH] golden output tests for MIRAForecaster (:pr:`11751`) :user:`PragnyaKhandelwal`
+* [ENH] Fix false-positive StatsForecastMSTL forecasting-horizon test (:pr:`11479`) :user:`PiyushKumar74110`
+* [ENH] replace ``SARIMAX`` in an unrelated test by ``YfromX`` to reduce soft dependencies (:pr:`11758`) :user:`fkiraly`
+* [ENH] Refactor: remove duplicate PyTorch base class (:pr:`11706`) :user:`srupat`
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] ``BaseDetector`` ``pretrain`` API (:pr:`11206`) :user:`yash-sangwan`
+* [ENH] ``DummyPretrainedAnomalies`` with strategy=rate|pattern|timefreq text (:pr:`11302`) :user:`yash-sangwan`
+* [ENH] Add test parameter coverage for MLPNetwork (:pr:`11578`) :user:`S-h-u-b-h-1`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] allow arbitrary str from ``torch.optim``, ``torch.nn`` and ``torch.optim.lr_scheduler`` in the pytorch base classes (:pr:`11151`) :user:`srupat`
+* [ENH] Unify ``BaseDeepClassifierPyTorch`` and ``BaseDeepRegressorTorch`` to a common mixin adapter (:pr:`11171`) :user:`srupat`
+* [ENH] Migrate gru & grufcn classifier from old ``_pytorch.py`` to new ``_base_torch.py`` interface (:pr:`11426`) :user:`srupat`
+* [ENH] Migrate ConvTimeNet estimators to new PyTorch base interface (:pr:`11325`) :user:`srupat`
+* [ENH] Migrate mvts_transformer classifier from old ``_pytorch.py`` to new ``_base_torch.py`` interface  (:pr:`11360`) :user:`srupat`
+* [ENH] in classifiers and regressors, restrict ``pyts`` version to last working (:pr:`11674`) :user:`fkiraly`
+* [ENH] Pretrain capability for ``BaseClassifier`` and ``BaseRegressor`` (:pr:`11596`) :user:`srupat`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] Add golden output regression test and fix router dtype for ``FalconTSTForecaster`` (:pr:`11337`) :user:`shivamkumxr`
+
+Time series regression
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [ENH] allow arbitrary str from ``torch.optim``, ``torch.nn`` and ``torch.optim.lr_scheduler`` in the pytorch base classes (:pr:`11151`) :user:`srupat`
+* [ENH] fix ``_build_network`` signature in deep learning torch base classes (:pr:`10955`) :user:`srupat`
+* [ENH] in ``DummyRegressor`` replace ``nested_univ`` with ``df-list`` / ``numpy3D`` (:pr:`11436`) :user:`shubham5080`
+* [ENH] Unify ``BaseDeepClassifierPyTorch`` and ``BaseDeepRegressorTorch`` to a common mixin adapter (:pr:`11171`) :user:`srupat`
+* [ENH] Migrate ConvTimeNet estimators to new PyTorch base interface (:pr:`11325`) :user:`srupat`
+* [ENH] Pretrain capability for ``BaseClassifier`` and ``BaseRegressor`` (:pr:`11596`) :user:`srupat`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [ENH] Add second parameter configuration for ``SupervisedIntervals`` (:pr:`11381`) :user:`amarjaleelbanbhan`
+* [ENH] temporarily skip failing tests from 11495 (:pr:`11496`) :user:`fkiraly`
+* [ENH] xfail ``test_catch22_wrapper_on_basic_motions`` due to change in feature calculation (:pr:`11669`) :user:`fkiraly`
+* [ENH] Speed up ``KinematicFeatures`` row reductions (:pr:`11707`) :user:`dhruvgupta2109`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [ENH] test that ``__all__`` of all sktime modules lists names of module attributes (:pr:`11418`) :user:`Me-Priyank`
+* [ENH] remove stale test skips for eight estimators whose skipped tests pass (:pr:`11562`) :user:`shrohan2003`
+* [ENH] soft dependency free second test parameter sets, remove ``test_get_test_params_coverage`` skips for 14 estimators (:pr:`11624`) :user:`shrohan2003`
+
+Documentation
+~~~~~~~~~~~~~
+* [DOC] Fix links on "Community Showcase" page (:pr:`11268`) :user:`amotl`
+* [DOC] make roadmap link also list closed roadmap issues (:pr:`11279`) :user:`fkiraly`
+* [DOC] Add ``TimeSeriesAgglomerativeClustering`` usage example (:pr:`11380`) :user:`amarjaleelbanbhan`
+* [DOC] minimal fix to docstring of ``run_test_module_changes`` (:pr:`11394`) :user:`fkiraly`
+* [DOC] Fix typo in ``SFAFast`` docstring: "feature selectiona" → "feature selection" (:pr:`9585`) :user:`MayankSharma-2812`
+* [DOC] Use integer ``fh`` shorthand in user guide and serialization docs (:pr:`11445`) :user:`aakash1552005`
+* [DOC] minor improvements to ``load_basic_motions`` docstring (:pr:`11465`) :user:`fkiraly`
+* [DOC] example in docstring of test transformer ``_TransformChangeNInstances`` (:pr:`11498`) :user:`fkiraly`
+* [DOC] improve description of some values in ``category`` tag API reference (:pr:`11530`) :user:`fkiraly`
+* [DOC] miscellaneous documentation improvements and changes (:pr:`11446`) :user:`fkiraly`
+* [DOC] minor improvements for metrics API docs (:pr:`11642`) :user:`fkiraly`
+* [DOC] Link developer installation card to contributor setup (:pr:`11664`) :user:`gthay`
+* [DOC] CutoffSplitter - fix test window formula, add fold diagram (:pr:`11464`) :user:`7524yash7524`
+* [DOC] Add usage example for ShapeletLearningClassifierPyts (:pr:`11678`) :user:`dhruvgupta2109`
+* [DOC] fix dead links in docs, notebooks and docstrings (:pr:`11726`) :user:`markksantos`
+* [DOC] use integer fh in transformations module docstrings (:pr:`11747`) :user:`kritikhatri`
+* [DOC] use integer fh in utils, param_est, base and pipeline docstrings (:pr:`11760`) :user:`kritikhatri`
+
+Maintenance
+~~~~~~~~~~~
+
+* [MNT] [Dependabot](deps-dev): Update sphinx-gallery requirement from ``<0.22.0`` to ``<0.23.0`` (:pr:`11266`) :user:`dependabot[bot]`
+* [MNT] all-contributors update (:pr:`11303`) :user:`github-actions[bot]`
+* [MNT] Update core dependency upper bounds - ``scikit-base<1.3.0`` and ``numba<0.69`` (:pr:`11391`) :user:`aryamanDutta`
+* [MNT] raise ``skpro`` bound to ``skpro<2.17`` (:pr:`11396`) :user:`fkiraly`
+* [MNT] add PragnyaKhandelwal to all-contributors (:pr:`10036`) :user:`PragnyaKhandelwal`
+* [MNT] Bump ``github/codeql-action`` from ``4.38.1`` to ``4.38.3`` (:pr:`11466`) :user:`dependabot[bot]`
+* [MNT] 1.3.0 deprecations - remove legacy benchmarking framework (:pr:`11545`) :user:`fkiraly`
+* [MNT] Bump ``github/codeql-action`` from ``4.38.3`` to ``4.39.0`` (:pr:`11567`) :user:`dependabot[bot]`
+* [MNT] all-contributors update (:pr:`11620`) :user:`github-actions[bot]`
+* [MNT] updated the polars upper bound to ``<3.0`` to unblock CI (:pr:`11602`) :user:`Utkarshhs`
+* [MNT] Bump ``github/codeql-action`` from ``4.39.0`` to ``4.39.1`` (:pr:`11641`) :user:`dependabot[bot]`
+* [MNT] 1.3.0 deprecations - flip ``remember_data`` config to ``False`` in all objects (:pr:`11634`) :user:`fkiraly`
+* [MNT] 1.3.0 deprecations - remove deprecated fixture aliases and test_fixture_deprecation_module (:pr:`11461`) :user:`Utkarshhs`
+* [MNT] Remove legacy 1.3.0 coverage name-swapping hack in Pipeline (:pr:`11586`) :user:`Utkarshhs`
+* [MNT] raise ``pandas`` bound to ``pandas<3.2.0`` (:pr:`11633`) :user:`fkiraly`
+* [MNT] enable ``python 3.15`` and newest ``scikit-base``, ``skpro`` versions (:pr:`11373`) :user:`fkiraly`
+* [MNT] all-contributors update (:pr:`11670`) :user:`github-actions[bot]`
+* [MNT] migrate project.license to SPDX expression (PEP 639) (:pr:`11705`) :user:`kritikhatri`
+* [MNT] add kritikhatri to all-contributors (:pr:`11724`) :user:`kritikhatri`
+* [MNT] all-contributors update (:pr:`11741`) :user:`github-actions[bot]`
+* [MNT] all-contributors update (:pr:`11433`) :user:`github-actions[bot]`
+* [MNT] all-contributors update (:pr:`11515`) :user:`github-actions[bot]`
+* [MNT] Add KrishChadha001 to all-contributors (:pr:`11744`) :user:`KrishChadha001`
+* [MNT] Bump ``github/codeql-action`` from ``4.39.1`` to ``4.39.2`` (:pr:`11721`) :user:`dependabot[bot]`
+* [MNT] Register Shubhaang Kataruka as sktime code contributor (:pr:`11612`) :user:`S-h-u-b-h-1`
+* [MNT] remove outdated ``_contrib`` module (:pr:`11757`) :user:`fkiraly`
+* [MNT] bump python lower bound to 3.11 (:pr:`11450`) :user:`yarnabrina`
+* [MNT] 1.3.0 deprecations - Remove deprecated parallel parameters and bridge functions in GridSearch    (:pr:`11431`) :user:`Utkarshhs`
+* [MNT] 1.3.0 deprecations and change actions (:pr:`11762`) :user:`fkiraly`
+
+Fixes
+~~~~~
+
+Benchmarking, Metrics, Splitters
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix median metrics failing with list or tuple ``horizon_weight`` (:pr:`11370`) :user:`VividhDesign`
+* [BUG] Fix ``TypeError`` in ``sktime.catalogues.classification`` star import (:pr:`11411`) :user:`KrishChadha001`
+* [BUG] fix recently merged ``MeanBias`` (:pr:`11667`) :user:`fkiraly`
+* [BUG] fix default ``evaluate_by_index`` of forecasting metrics crashing with ``sample_weight`` (:pr:`11702`) :user:`PragnyaKhandelwal`
+* [BUG] Fix ``MeanSquaredError.evaluate_by_index`` returning wrong values for RMSE (:pr:`9575`) :user:`PredictiveManish`
+* [BUG] Fix TheilU2 confusing broadcast error when len(y_train) < sp (:pr:`11731`) :user:`Dhruv-Kumar-Singh`
+* [BUG] fix ``SquaredDistrLoss`` using ``log_pdf`` instead of ``pdf`` (:pr:`11750`) :user:`PragnyaKhandelwal`
+
+Datatypes, checks, conversions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``nested_univ`` target dtype with ``pandas 3`` (:pr:`11444`) :user:`SumanGouda`
+* [BUG] fix index levels in ``convert_Hierarchical_to_Panel`` (:pr:`11523`) :user:`PragnyaKhandelwal`
+
+Forecasting
+^^^^^^^^^^^
+
+* [ENH] fix ``MCRecursiveProbaReductionForecaster`` use of ``self._cur_y`` and make its use in ``_get_expected_pred_idx`` explicit (:pr:`11386`) :user:`fkiraly`
+* [BUG] fix ``predict_quantiles`` default from ``predict_interval`` mixing up variables for multivariate ``y`` (:pr:`11424`) :user:`VividhDesign`
+* [BUG] fix compatibility of ``BaseProbaForecaster`` with new ``VectorizedDF`` (:pr:`11524`) :user:`fkiraly`
+* [BUG] fit trend forecasters on time since the series start (:pr:`11520`) :user:`chetana1410`
+* [BUG] fix ``T0Forecaster`` contract test failures (:pr:`11539`) :user:`KrishChadha001`
+* [BUG] In ``ReconcilerForecaster``, fix residual calculation before forecaster update (:pr:`11644`) :user:`SumanGouda`
+* [BUG] fix numerical instability of ``PolynomialTrendForecaster`` for large time stamps (:pr:`11472`) :user:`shrohan2003`
+* [BUG] replace ``eval`` with ``getattr`` in vendored Chronos ``create_tokenizer`` (:pr:`11645`) :user:`Me-Priyank`
+* [BUG] fix ``NormalHedgeEnsemble`` crash when no estimator has positive regret (:pr:`11428`) :user:`Viranshul-P`
+* [BUG] treat non-finite scores as failed blueprints in AutoResearchForecaster (:pr:`11682`) :user:`RobKuebler`
+* [BUG] fix ``AutoResearchForecaster`` update not updating ``best_forecaster_`` (:pr:`11686`) :user:`Vivek1106-04`
+* [BUG] fix ``FlowStateForecaster`` fails estimator suite tests on MacOS (:pr:`11532`) :user:`KrishChadha001`
+* [BUG] fix hypertrees forecaster with pandas3 (:pr:`11560`):user:`RugvedBane`,  :user:`PiyushKumar74110`
+* [BUG] fix NaN and Inf detection logic in global pooling reduction forecasters (#11521) (:pr:`11701`) :user:`aakash1552005`
+* [BUG] Preserve the MPS availability wrapper in PatchTST test parameters (:pr:`11723`) :user:`aryamanDutta`
+
+Time series anomalies, changepoints, segmentation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``SyntaxError`` in ``BaseDetector.segments_to_change_points`` doctest (:pr:`9925`) :user:`direkkakkar319-ops`
+
+Time series classification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] fix ``_build_network`` signature in deep learning torch base classes (:pr:`10955`) :user:`srupat`
+* [BUG] fix ``CNTCClassifier`` custom objects method name for save/load (:pr:`10971`) :user:`srupat`
+* [BUG] ``BaggingClassifier``: stop reseeding the process-global numpy RNG (:pr:`11307`) :user:`nikolas-sapa`
+* [BUG] fix ``TEASER`` by replacing ``sklearn`` cross-validation with ``sktime``-native ``fit_predict_proba`` call (:pr:`11440`) :user:`fkiraly`
+* [BUG] fix early classifier ``_state`` handling and add some missing doctest test skips (:pr:`11753`) :user:`fkiraly`
+
+Time series clustering
+^^^^^^^^^^^^^^^^^^^^^^
+
+* [BUG] remove spurious ``decision_function`` from classification and clustering scenarios (:pr:`11442`) :user:`fkiraly`
+
+Transformations
+^^^^^^^^^^^^^^^
+
+* [BUG] fix ``SeasonalDummiesOneHot`` for quarterly, weekly and hourly data (:pr:`11183`) :user:`yash-sangwan`
+* [BUG] fix multirocket first-order features computation (:pr:`11292`) :user:`leandrepi`
+* [BUG] Fix ``Imputer._init_`` method in "forecaster" equality check (:pr:`11690`) :user:`Dhruv-Kumar-Singh`
+* [BUG] Fix timestamp midpoints in ``TimeBinAggregate`` on ``pd.DateTimeIndex`` (:pr:`11737`) :user:`KrishChadha001`
+
+Test framework
+^^^^^^^^^^^^^^
+
+* [BUG] remove spurious ``decision_function`` from classification and clustering scenarios (:pr:`11442`) :user:`fkiraly`
+
+Contributors
+~~~~~~~~~~~~
+
+:user:`7524yash7524`,
+:user:`aakash1552005`,
+:user:`AbdulAliMamnun`,
+:user:`amarjaleelbanbhan`,
+:user:`amotl`,
+:user:`aryamanDutta`,
+:user:`chetana1410`,
+:user:`Dhruv-Kumar-Singh`,
+:user:`dhruvgupta2109`,
+:user:`direkkakkar319-ops`,
+:user:`Faakhir30`,
+:user:`fkiraly`,
+:user:`gthay`,
+:user:`Harshdeep-creator`,
+:user:`jgyasu`,
+:user:`KrishChadha001`,
+:user:`kritikhatri`,
+:user:`leandrepi`,
+:user:`markksantos`,
+:user:`MayankSharma-2812`,
+:user:`Me-Priyank`,
+:user:`nahcol10`,
+:user:`nikolas-sapa`,
+:user:`Nischal1425`,
+:user:`PiyushKumar74110`,
+:user:`PragnyaKhandelwal`,
+:user:`PredictiveManish`,
+:user:`RobKuebler`,
+:user:`S-h-u-b-h-1`,
+:user:`saptadeep12`,
+:user:`shivamkumxr`,
+:user:`shrohan2003`,
+:user:`shubham5080`,
+:user:`srupat`,
+:user:`SumanGouda`,
+:user:`Utkarshhs`,
+:user:`Viranshul-P`,
+:user:`Vivek1106-04`,
+:user:`VividhDesign`,
+:user:`yarnabrina`,
+:user:`yash-sangwan`,
+:user:`yftx293`
+
+
 Version 1.2.0 - 2026-09-22
 --------------------------
 
@@ -37,7 +390,8 @@ Highlights
 Dependency changes
 ~~~~~~~~~~~~~~~~~~
 
-* ``pandas 3.X`` is now supported by the ``sktime`` framework.
+* ``pandas 3.0.X`` is now supported by the ``sktime`` framework.
+  The upper bound has been raised to ``<3.1``.
 * ``numpy`` upper bounds have been updated to ``<2.6``.
 * ``scikit-learn`` upper bounds have been updated to ``<1.10``.
 * ``joblib`` upper bounds have been updated to ``<1.7``.
