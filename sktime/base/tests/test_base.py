@@ -11,6 +11,7 @@ tests in this module:
 
     test_reset           - tests reset logic on a simple, non-composite estimator
     test_reset_composite - tests reset logic on a composite estimator
+    test_reset_parent_callback_ctx - tests reset retains sklearn callback context
 
     test_components         - tests retrieval of list of components via _components
     test_get_fitted_params  - tests get_fitted_params logic, nested and non-nested
@@ -28,6 +29,7 @@ __all__ = [
     "test_set_tags",
     "test_reset",
     "test_reset_composite",
+    "test_reset_parent_callback_ctx",
     "test_components",
     "test_param_alias",
     "test_nested_set_params_and_alias",
@@ -266,6 +268,32 @@ def test_reset_composite():
     assert hasattr(x, "a")
     assert not hasattr(x, "d")
     assert not hasattr(x.a, "d")
+
+
+def test_reset_parent_callback_ctx():
+    """Test reset retains the callback context set by sklearn meta-estimators.
+
+    Failure case of bug #11408, where ``scikit-learn>=1.9`` meta-estimators, e.g.,
+    ``Pipeline``, failed to fit ``sktime`` components, since ``reset`` in ``fit``
+    deleted the ``_parent_callback_ctx`` attribute they set on the components.
+    """
+    x = ResetTester(168)
+    x.foo()
+    parent_callback_ctx = object()
+    x._parent_callback_ctx = parent_callback_ctx
+
+    x.reset()
+
+    assert x._parent_callback_ctx is parent_callback_ctx
+    assert hasattr(x, "a") and x.a == 168
+    assert not hasattr(x, "d")
+    assert not hasattr(x, "_d")
+    assert not hasattr(x, "d_")
+
+    del x._parent_callback_ctx
+    x.reset()
+
+    assert not hasattr(x, "_parent_callback_ctx")
 
 
 def test_components():

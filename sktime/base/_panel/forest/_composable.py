@@ -6,23 +6,114 @@ __author__ = ["mloning", "AyushmaanSeth"]
 __all__ = ["BaseTimeSeriesForest"]
 
 from abc import abstractmethod
+from numbers import Integral, Real
 from warnings import catch_warnings, simplefilter
 
 import numpy as np
 import pandas as pd
 from numpy import float64 as DOUBLE
 from sklearn.base import clone
-from sklearn.ensemble._forest import (
-    MAX_INT,
-    BaseForest,
-    _generate_sample_indices,
-    _get_n_samples_bootstrap,
-)
+from sklearn.ensemble._forest import MAX_INT, BaseForest
 from sklearn.exceptions import DataConversionWarning
 from sklearn.utils import check_array, check_random_state, compute_sample_weight
 
 from sktime.utils.random_state import set_random_state
 from sktime.utils.warnings import warn
+
+
+def _get_n_samples_bootstrap(n_samples, max_samples):
+    """Get the number of samples in a bootstrap sample.
+
+    Copy of the private ``scikit-learn`` function of the same name, as in
+    ``scikit-learn`` 1.4 to 1.8, before ``scikit-learn`` 1.9 changed its signature.
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples in the dataset.
+    max_samples : int or float or None
+        The maximum number of samples to draw from the total available:
+
+        - if float, this indicates a fraction of the total and should be
+          the interval ``(0.0, 1.0]``;
+        - if int, this indicates the exact number of samples;
+        - if None, this indicates the total number of samples.
+
+    Returns
+    -------
+    n_samples_bootstrap : int
+        The total number of samples to draw for the bootstrap sample.
+    """
+    if max_samples is None:
+        return n_samples
+
+    if isinstance(max_samples, Integral):
+        if max_samples > n_samples:
+            msg = "`max_samples` must be <= n_samples={} but got value {}"
+            raise ValueError(msg.format(n_samples, max_samples))
+        return max_samples
+
+    if isinstance(max_samples, Real):
+        return max(round(n_samples * max_samples), 1)
+
+
+def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
+    """Generate the indices of a bootstrap sample.
+
+    Copy of the private ``scikit-learn`` function of the same name, as in
+    ``scikit-learn`` 1.4 to 1.8, before ``scikit-learn`` 1.9 changed its signature.
+
+    Parameters
+    ----------
+    random_state : int, RandomState instance or None
+        Random state used to draw the bootstrap sample.
+    n_samples : int
+        Number of samples in the dataset.
+    n_samples_bootstrap : int
+        Number of samples to draw for the bootstrap sample.
+
+    Returns
+    -------
+    sample_indices : np.ndarray of shape (n_samples_bootstrap,)
+        Indices of the samples in the bootstrap sample, drawn with replacement.
+    """
+    random_instance = check_random_state(random_state)
+    sample_indices = random_instance.randint(
+        0, n_samples, n_samples_bootstrap, dtype=np.int32
+    )
+
+    return sample_indices
+
+
+def _generate_unsampled_indices(random_state, n_samples, n_samples_bootstrap):
+    """Generate the indices of the samples not in a bootstrap sample.
+
+    Copy of the private ``scikit-learn`` function of the same name, as in
+    ``scikit-learn`` 1.4 to 1.8, before ``scikit-learn`` 1.9 changed its signature.
+
+    Parameters
+    ----------
+    random_state : int, RandomState instance or None
+        Random state used to draw the bootstrap sample.
+    n_samples : int
+        Number of samples in the dataset.
+    n_samples_bootstrap : int
+        Number of samples to draw for the bootstrap sample.
+
+    Returns
+    -------
+    unsampled_indices : np.ndarray
+        Indices of the samples not in the bootstrap sample, i.e., out-of-bag.
+    """
+    sample_indices = _generate_sample_indices(
+        random_state, n_samples, n_samples_bootstrap
+    )
+    sample_counts = np.bincount(sample_indices, minlength=n_samples)
+    unsampled_mask = sample_counts == 0
+    indices_range = np.arange(n_samples)
+    unsampled_indices = indices_range[unsampled_mask]
+
+    return unsampled_indices
 
 
 def _parallel_build_trees(
