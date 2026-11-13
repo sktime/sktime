@@ -101,6 +101,7 @@ class BaseDeepRegressorTorch(_PytorchDeepAdapter, BaseRegressor):
         "capability:random_state": True,
         "property:randomness": "stochastic",
         "tests:vm": True,
+        "serialization:native_artifacts": ("network",),
         "tests:libs": [
             "sktime.regression.deep_learning.base._base_torch",
             "sktime.base.adapters._pytorch",
@@ -160,6 +161,7 @@ class BaseDeepRegressorTorch(_PytorchDeepAdapter, BaseRegressor):
         super().__init__()
 
     def _fit(self, X, y):
+        self._network_input_shape_ = X.shape
         self.network = self._build_network(X)
 
         # instantiate loss function and optimizer
@@ -175,6 +177,16 @@ class BaseDeepRegressorTorch(_PytorchDeepAdapter, BaseRegressor):
         self.network.train()
         for epoch in range(self.num_epochs):
             self._run_epoch(epoch, dataloader)
+
+    def _create_torch_artifact(self, name):
+        """Construct the fitted network architecture for deserialization."""
+        import numpy as np
+
+        if name != "network":
+            raise ValueError(f"Unknown torch artifact {name!r}.")
+
+        X = np.broadcast_to(np.empty(1), self._network_input_shape_)
+        return self._build_network(X)
 
     @abc.abstractmethod
     def _build_network(self, X):
