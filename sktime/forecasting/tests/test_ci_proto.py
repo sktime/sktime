@@ -1,5 +1,7 @@
 """Tests for the ci-proto forecasting adapter without downloading weights."""
 
+import importlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -23,13 +25,15 @@ class _FakeModel:
 
 @pytest.fixture
 def fake_model(monkeypatch):
+    pytest.importorskip("torch")
     model = _FakeModel()
+    ci_proto = importlib.import_module("sktime.forecasting.ci_proto")
     monkeypatch.setattr(
         "sktime.forecasting.base._base._check_estimator_deps",
         lambda *args, **kwargs: True,
     )
     monkeypatch.setattr(
-        "sktime.forecasting.ci_proto._CachedCIProto",
+        ci_proto, "_CachedCIProto",
         lambda **kwargs: type("Loader", (), {"load": lambda self: model})(),
     )
     return model
@@ -62,6 +66,7 @@ def test_covariates_are_split_by_future_availability(fake_model):
 
 def test_predict_quantiles_matches_native_grid(fake_model):
     """Probabilistic results preserve the upstream quantile and time axes."""
+    pytest.importorskip("skpro")
     y = pd.DataFrame({"a": [1.0, 2.0, 3.0], "b": [4.0, 5.0, 6.0]})
     forecaster = CIProtoForecaster(device="cpu").fit(y)
     quantiles = forecaster.predict_quantiles(fh=[1, 3], alpha=[0.1, 0.5, 0.9])
