@@ -42,7 +42,7 @@ def load(serial):
     >>> # 1. fit the estimator
     >>> y = load_airline()
     >>> forecaster = NaiveForecaster()
-    >>> forecaster.fit(y, fh=[1, 2, 3])
+    >>> forecaster.fit(y, fh=3)
     NaiveForecaster()
     >>>
     >>> # 2. save the fitted estimator

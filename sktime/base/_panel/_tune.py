@@ -16,7 +16,6 @@ from sktime.exceptions import NotFittedError
 from sktime.utils.parallel import parallelize
 from sktime.utils.sklearn._model_selection import _check_param_grid
 from sktime.utils.sklearn._scoring import _resolve_scoring
-from sktime.utils.warnings import warn
 
 
 class _FixedSplitter:
@@ -375,89 +374,6 @@ def _fit_and_time(estimator, X, y):
 _JOBLIB_BACKENDS = ["loky", "multiprocessing", "threading", "joblib"]
 
 
-# todo 1.3.0: remove this function, and use tuner.backend and tuner.backend_params
-# directly in _fit_tuner, together with removal of the n_jobs and pre_dispatch
-# parameters of TSCGridSearchCV and TSRGridSearchCV
-def _resolve_deprecated_parallel(tuner):
-    """Resolve the deprecated n_jobs and pre_dispatch parameters of a tuner.
-
-    Values passed are forwarded to the joblib backend via ``backend_params``,
-    overriding values present there, so that they keep working as before.
-    If no ``backend`` is set, the ``loky`` backend is selected, as the
-    parameters have no effect on the sequential default.
-
-    Parameters
-    ----------
-    tuner : TSCGridSearchCV or TSRGridSearchCV instance
-
-    Returns
-    -------
-    backend : str or None, backend to pass to ``parallelize``
-    backend_params : dict or None, backend parameters to pass to ``parallelize``
-    """
-    backend = tuner.backend
-    backend_params = tuner.backend_params
-
-    deprecated = {
-        name: getattr(tuner, name)
-        for name in ["n_jobs", "pre_dispatch"]
-        if getattr(tuner, name) != "deprecated"
-    }
-    if len(deprecated) == 0:
-        return backend, backend_params
-
-    cls_name = type(tuner).__name__
-    passed = ", ".join(f"{name}={value!r}" for name, value in deprecated.items())
-
-    if backend is not None and backend not in _JOBLIB_BACKENDS:
-        warn(
-            f"Parameters n_jobs and pre_dispatch of {cls_name} are deprecated "
-            "and will be removed in sktime 1.3.0. The values passed "
-            f"({passed}) apply to joblib backends only, and are ignored for "
-            f"backend={backend!r}. Pass parallelization parameters in "
-            "backend_params instead.",
-            DeprecationWarning,
-            obj=tuner,
-        )
-        return backend, backend_params
-
-    warn(
-        f"Parameters n_jobs and pre_dispatch of {cls_name} are deprecated and "
-        "will be removed in sktime 1.3.0. The values passed "
-        f"({passed}) are forwarded to the joblib backend for now. To retain "
-        "current behaviour and silence this warning, pass them via backend and "
-        f"backend_params instead, e.g., backend='loky', "
-        f"backend_params={deprecated!r}.",
-        DeprecationWarning,
-        obj=tuner,
-    )
-
-    backend_params = dict(backend_params) if backend_params else {}
-    backend_params.update(deprecated)
-    if backend is None:
-        backend = "loky"
-
-    return backend, backend_params
-
-
-# todo 1.3.0: remove this function and its call in _fit_tuner, together with
-# removal of the return_train_score parameter of TSCGridSearchCV and
-# TSRGridSearchCV
-def _check_return_train_score(tuner):
-    """Warn if the deprecated return_train_score parameter of a tuner is set."""
-    if not tuner.return_train_score:
-        return
-
-    warn(
-        f"Parameter return_train_score of {type(tuner).__name__} is deprecated "
-        "and will be removed in sktime 1.3.0. Train scores are not computed by "
-        "the native grid search, so the value passed is ignored, and "
-        "cv_results_ contains test scores only.",
-        DeprecationWarning,
-        obj=tuner,
-    )
-
-
 def _fit_tuner(tuner, X, y, estimator_type):
     """Run the grid search for a tuner, and write the results to it.
 
@@ -474,8 +390,8 @@ def _fit_tuner(tuner, X, y, estimator_type):
     -------
     tuner : reference to ``tuner``, with the fitted attributes written
     """
-    backend, backend_params = _resolve_deprecated_parallel(tuner)
-    _check_return_train_score(tuner)
+    backend = tuner.backend
+    backend_params = tuner.backend_params
 
     results = _run_grid_search(
         estimator=tuner.estimator,

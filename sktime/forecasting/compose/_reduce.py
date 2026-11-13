@@ -462,12 +462,14 @@ class _Reducer(_BaseWindowForecaster):
         # y_raw is a dataframe window_length forecasting steps into the past in order to
         # calculate the new X from y features based on the transformer provided
 
-        y_raw.update(self._cur_y)
+        common_idx = y_raw.index.intersection(self._cur_y.index)
+        y_raw.loc[common_idx] = self._cur_y.loc[common_idx]
         # Historical values are passed here for all time steps of y_raw that lie in
         # the past .
 
         if y_update is not None:
-            y_raw.update(y_update)
+            common_update_idx = y_raw.index.intersection(y_update.index)
+            y_raw.loc[common_update_idx] = y_update.loc[common_update_idx]
         # The y_raw dataframe will is updated with recursively forecast values.
 
         if len(self.transformers_) == 1:
@@ -487,9 +489,11 @@ class _Reducer(_BaseWindowForecaster):
 
         if self._cur_X is not None:
             X = _create_fcst_df([index_range[-1]], self._cur_X)
-            X.update(self._cur_X)
+            common_X_idx = X.index.intersection(self._cur_X.index)
+            X.loc[common_X_idx] = self._cur_X.loc[common_X_idx]
             if X_update is not None:
-                X.update(X_update)
+                common_Xu_idx = X.index.intersection(X_update.index)
+                X.loc[common_Xu_idx] = X_update.loc[common_Xu_idx]
             X_cut = _cut_df(X)
             X = pd.concat([X_from_y_cut, X_cut], axis=1)
             # X_from_y_cut is added to X dataframe (no features need to be calculated).
@@ -693,7 +697,13 @@ class _DirectReducer(_Reducer):
         if self.pooling == "global":
             y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
-            if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+            Xs = np.array(X_last)
+            if (
+                np.any(np.isnan(ys))
+                or np.any(np.isinf(ys))
+                or np.any(np.isnan(Xs))
+                or np.any(np.isinf(Xs))
+            ):
                 return self._predict_nan(fh, method=method, **kwargs)
         else:
             y_last, X_last = self._get_last_window()
@@ -1039,7 +1049,13 @@ class _RecursiveReducer(_Reducer):
         if self.pooling == "global":
             y_last, X_last = self._get_shifted_window(X_update=X)
             ys = np.array(y_last)
-            if not np.sum(np.isnan(ys)) == 0 and np.sum(np.isinf(ys)) == 0:
+            Xs = np.array(X_last)
+            if (
+                np.any(np.isnan(ys))
+                or np.any(np.isinf(ys))
+                or np.any(np.isnan(Xs))
+                or np.any(np.isinf(Xs))
+            ):
                 return self._predict_nan(fh)
         else:
             y_last, X_last = self._get_last_window()
@@ -1278,6 +1294,10 @@ class DirectTabularRegressionForecaster(_DirectReducer):
         a tabular matrix.
     """
 
+    _tags = {
+        "category": ["reduction"],
+    }
+
     def __init__(
         self,
         estimator,
@@ -1328,6 +1348,10 @@ class MultioutputTabularRegressionForecaster(_MultioutputReducer):
         a tabular matrix.
     """
 
+    _tags = {
+        "category": ["reduction"],
+    }
+
     _estimator_scitype = "tabular-regressor"
 
 
@@ -1357,6 +1381,7 @@ class RecursiveTabularRegressionForecaster(_RecursiveReducer):
     """
 
     _tags = {
+        "category": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         # CI and test flags
         # -----------------
@@ -1414,6 +1439,10 @@ class DirRecTabularRegressionForecaster(_DirRecReducer):
         a tabular matrix
     """
 
+    _tags = {
+        "category": ["reduction"],
+    }
+
     _estimator_scitype = "tabular-regressor"
 
 
@@ -1431,6 +1460,10 @@ class DirectTimeSeriesRegressionForecaster(_DirectReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix.
     """
+
+    _tags = {
+        "category": ["reduction"],
+    }
 
     _estimator_scitype = "time-series-regressor"
 
@@ -1487,6 +1520,10 @@ class MultioutputTimeSeriesRegressionForecaster(_MultioutputReducer):
         a tabular matrix.
     """
 
+    _tags = {
+        "category": ["reduction"],
+    }
+
     _estimator_scitype = "time-series-regressor"
 
 
@@ -1506,6 +1543,7 @@ class RecursiveTimeSeriesRegressionForecaster(_RecursiveReducer):
     """
 
     _tags = {
+        "category": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         # CI and test flags
         # -----------------
@@ -1569,6 +1607,10 @@ class DirRecTimeSeriesRegressionForecaster(_DirRecReducer):
         The length of the sliding window used to transform the series into
         a tabular matrix
     """
+
+    _tags = {
+        "category": ["reduction"],
+    }
 
     _estimator_scitype = "time-series-regressor"
 
@@ -2099,6 +2141,7 @@ class DirectReductionForecaster(_ReducerMixin, BaseForecaster):
         "maintainers": "hliebert",
         # estimator type
         # --------------
+        "category": ["reduction"],
         "requires-fh-in-fit": True,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,
@@ -2529,6 +2572,7 @@ class RecursiveReductionForecaster(_ReducerMixin, BaseForecaster):
         "authors": "fkiraly",
         # estimator type
         # --------------
+        "category": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:unequal_length": False,
@@ -3004,6 +3048,7 @@ class YfromX(_ReducerMixin, BaseForecaster):
     """
 
     _tags = {
+        "category": ["reduction"],
         "requires-fh-in-fit": False,  # is the forecasting horizon required in fit?
         "capability:exogenous": True,
         "capability:missing_values": True,
