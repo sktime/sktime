@@ -4235,8 +4235,10 @@
       "avatar_url": "https://avatars.githubusercontent.com/u/120083366?v=4",
       "profile": "https://github.com/hasanfaesal",
       "contributions": [
+        "bug",
         "code",
-        "doc"
+        "doc",
+        "test"
       ]
     },
     {
