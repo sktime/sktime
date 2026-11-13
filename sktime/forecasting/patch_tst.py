@@ -676,19 +676,9 @@ class PatchTSTForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        import platform
-
-        os = platform.system()
-        if os == "Darwin":
-            if _check_soft_dependencies("torch", severity="none"):
-                import torch
-
-                torch.backends.mps.is_available = lambda: False
-            else:
-                pass
-
         params_set = []
         params1 = {
+            "device": "cpu",
             "config": {
                 "patch_length": 2,
                 "context_length": 4,
@@ -705,11 +695,13 @@ class PatchTSTForecaster(BaseForecaster):
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
                 "per_device_train_batch_size": 16,
+                "use_cpu": True,
             },
             "validation_split": 0.0,
         }
         params_set.append(params1)
         params2 = {
+            "device": "cpu",
             "config": {
                 "patch_length": 1,
                 "context_length": 2,
@@ -726,6 +718,7 @@ class PatchTSTForecaster(BaseForecaster):
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
                 "per_device_train_batch_size": 16,
+                "use_cpu": True,
             },
             "validation_split": 0.0,
         }

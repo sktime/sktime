@@ -78,3 +78,35 @@ def test_time_bin_aggregate_bin_mid_uses_midpoints():
     Xt = transformer.fit_transform(X)
 
     assert list(Xt.index) == [1, 3]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimeBinAggregate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+def test_time_bin_aggregate_bin_mid_preserves_float32_rounding():
+    """A midpoint that rounds to an integer remains a valid sktime index."""
+    X = pd.DataFrame({"y": [1.0, 2.0, 3.0]})
+    bins = np.array([0.1, 1.9], dtype=np.float32)
+
+    result = TimeBinAggregate(bins=bins, return_index="bin_mid").fit_transform(X)
+
+    pd.testing.assert_index_equal(result.index, pd.Index([1]))
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(TimeBinAggregate),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("tz", [None, "UTC"])
+@pytest.mark.parametrize("as_interval_index", [False, True])
+def test_time_bin_aggregate_bin_mid_with_datetime_bins(tz, as_interval_index):
+    """Timestamp bins return datetime midpoints and preserve the timezone."""
+    index = pd.date_range("2026-01-01", periods=5, freq="h", tz=tz)
+    X = pd.DataFrame({"y": [1, 2, 3, 4, 5]}, index=index)
+    breaks = index[::2]
+    bins = pd.IntervalIndex.from_breaks(breaks) if as_interval_index else list(breaks)
+
+    result = TimeBinAggregate(bins=bins, return_index="bin_mid").fit_transform(X)
+
+    pd.testing.assert_index_equal(result.index, index[[1, 3]])
