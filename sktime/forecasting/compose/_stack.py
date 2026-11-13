@@ -60,15 +60,20 @@ class StackingForecaster(_HeterogenousEnsembleForecaster):
     """
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["mloning", "fkiraly", "indinewton"],
+        # estimator type
+        # --------------
+        "category": ["composition"],
         "capability:exogenous": True,
         "requires-fh-in-fit": True,
         "capability:missing_values": True,
         "capability:random_state": True,
         "property:randomness": "derandomized",
         "capability:multivariate": False,
+        "capability:update": True,
         "X-y-must-have-same-index": True,
-        "tests:skip_by_name": ["test_predict_time_index_with_X"],
     }
 
     def __init__(self, forecasters, regressor=None, random_state=None, n_jobs=None):

@@ -132,15 +132,24 @@ class NaiveForecaster(_BaseWindowForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["statistical", "naive"],
         "y_inner_mtype": "pd.Series",
         "requires-fh-in-fit": False,
         "capability:missing_values": True,
         "capability:exogenous": False,
         "capability:multivariate": False,
         "capability:pred_int": True,
+        "capability:update": True,
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        # Shorthands for quick use
+        # ------------------------
+        "shorthands": {
+            "f_naive_last": 'NaiveForecaster(strategy="last")',
+            "f_naive_mean": 'NaiveForecaster(strategy="mean")',
+            "f_naive_drift": 'NaiveForecaster(strategy="drift")',
+        },
     }
 
     def __init__(self, strategy="last", window_length=None, sp=1):
@@ -688,11 +697,13 @@ class NaiveVariance(BaseForecaster):
         "authors": ["fkiraly", "bethrice44"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
+        "capability:update": True,
     }
 
     def __init__(self, forecaster, initial_window=1, verbose=False):
@@ -705,6 +716,7 @@ class NaiveVariance(BaseForecaster):
             "requires-fh-in-fit",
             "capability:exogenous",
             "capability:missing_values",
+            "capability:update",
             "y_inner_mtype",
             "X_inner_mtype",
             "X-y-must-have-same-index",

@@ -59,6 +59,7 @@ class TSB(BaseForecaster):
         "maintainers": "swetha3456",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "requires-fh-in-fit": False,  # is forecasting horizon already required in fit?
     }
 

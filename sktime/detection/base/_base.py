@@ -5,8 +5,9 @@
     class name: BaseDetector
 
 Scitype defining methods:
+    pretraining          - pretrain(self, X, y=None)
     fitting              - fit(self, X, y=None)
-    annotating           - predict(self, X)
+    detecting            - predict(self, X)
     updating (temporal)  - update(self, X, y=None)
     update&annotate      - update_predict(self, X, y=None)
 
@@ -17,6 +18,7 @@ Inspection methods:
 State:
     fitted model/strategy   - by convention, any attributes ending in "_"
     fitted state flag       - check_is_fitted()
+    estimator state         - state, one of "new", "pretrained", "fitted"
 """
 
 __author__ = ["fkiraly", "tveten", "alex-jg3", "satya-pattnaik"]
@@ -27,12 +29,14 @@ import pandas as pd
 from skbase.utils.dependencies import _check_estimator_deps
 
 from sktime.base import BaseEstimator
+from sktime.base._pretrain import _PretrainMixin
 from sktime.datatypes import check_is_error_msg, check_is_scitype, convert
 from sktime.utils.adapters._safe_call import _method_has_arg
+from sktime.utils.multiindex import flatten_multiindex
 from sktime.utils.validation.series import check_series
 
 
-class BaseDetector(BaseEstimator):
+class BaseDetector(_PretrainMixin, BaseEstimator):
     """Base class for time series detectors.
 
     Developers should set the task and learning_type tags in the derived class.
@@ -79,6 +83,7 @@ class BaseDetector(BaseEstimator):
         "capability:multivariate": False,
         "capability:missing_values": False,
         "capability:update": False,
+        "capability:pretrain": False,
         "capability:variable_identification": False,
         #
         # todo: distribution_type does not seem to be used - refactor or remove
@@ -88,6 +93,8 @@ class BaseDetector(BaseEstimator):
     }
 
     def __init__(self):
+        self._state = "new"
+
         super().__init__()
 
         # this block has a double purpose:
@@ -138,6 +145,97 @@ class BaseDetector(BaseEstimator):
             return TabularToSeriesAdaptor(other) * self
         else:
             return NotImplemented
+
+    def pretrain(self, X, y=None):
+        """Pretrain detector on a collection of time series.
+
+        Pretrains the detector on Panel or Hierarchical data, i.e., multiple
+        time series, before it is fitted to a single series via ``fit``.
+
+        Only detectors with the ``capability:pretrain`` tag set to ``True``
+        learn from the data. For all other detectors, ``pretrain`` is a no-op:
+        the data is checked, nothing is stored, and only the state changes.
+
+        For detectors with the ``capability:pretrain`` tag, if ``pretrain`` is
+        called when the detector is already in the ``"pretrained"`` or
+        ``"fitted"`` state, the internal ``_pretrain_update`` method is called
+        instead of ``_pretrain``. By default, this pretrains again on the new
+        data only, replacing the previous pretrained state.
+
+        State change:
+            Changes state to ``"pretrained"``.
+
+        Writes to self:
+
+            * Sets ``self.state`` to ``"pretrained"``.
+            * If the ``capability:pretrain`` tag is ``True``, sets pretrained
+              model attributes ending in ``"_"``, inspectable via
+              ``get_pretrained_params``.
+
+        Parameters
+        ----------
+        X : Panel or Hierarchical data in ``sktime`` compatible format
+            Data to pretrain the detector on, must contain multiple time series.
+            For instance, a ``pd.DataFrame`` with 2-level row ``MultiIndex``
+            ``(instance, time)``, or a 3D ``np.ndarray``
+            ``(instance, variable, time)``.
+            Hierarchical data is flattened to Panel data, by joining all
+            instance levels into one level, for instance, the instance
+            ``("h0_0", "h1_0")`` becomes ``"h0_0__h1_0"``.
+
+        y : pd.DataFrame, optional, default=None
+            Known events in ``X``, for detectors that learn from labels.
+            One row per event, with an ``"ilocs"`` column, and a row
+            ``MultiIndex`` ``(instance, event_no)``, where the instance can
+            have more than one level, as for ``X``.
+            Instance levels are flattened into one level, the same way as
+            for ``X``, so the instance ``("h0_0", "h1_0")`` becomes
+            ``"h0_0__h1_0"``. Not otherwise checked or converted.
+            Ignored by detectors without the ``capability:pretrain`` tag.
+
+        Returns
+        -------
+        self : reference to self
+
+        Raises
+        ------
+        TypeError
+            If ``X`` is a single time series, or not valid Panel
+            or Hierarchical data.
+
+        See Also
+        --------
+        fit : Fit detector to a single series.
+        get_pretrained_params : Retrieve parameters set during pretraining.
+        state : Current state of the detector.
+        """
+        _check_estimator_deps(self)
+
+        X, X_metadata = self._check_X_pretrain(X)
+
+        # detectors without pretrain capability: no-op, only the state changes
+        can_pretrain = self.get_tag(
+            "capability:pretrain", tag_value_default=False, raise_error=False
+        )
+        if not can_pretrain:
+            self._state = "pretrained"
+            return self
+
+        # pretrain accepts panel data independent of what fit and predict
+        # support via X_inner_mtype, so panel mtypes are added here
+        X_inner_mtype = self.get_tag("X_inner_mtype")
+        if isinstance(X_inner_mtype, str):
+            X_inner_mtype = [X_inner_mtype]
+        X_inner = convert(
+            X,
+            from_type=X_metadata["mtype"],
+            to_type=list(X_inner_mtype) + ["pd-multiindex"],
+        )
+
+        # instance levels of y are flattened the same way as those of X
+        y = self._flatten_y_pretrain(y)
+
+        return self._pretrain_and_track(X=X_inner, y=y)
 
     def fit(self, X, y=None):
         """Fit to training data.
@@ -607,6 +705,183 @@ class BaseDetector(BaseEstimator):
         X_inner_mtype = self.get_tag("X_inner_mtype")
         X_inner = convert(X, from_type=X_metadata["mtype"], to_type=X_inner_mtype)
         return X_inner
+
+    @staticmethod
+    def _flatten_instance_levels(index):
+        """Flatten all levels but the last of a row MultiIndex into one level.
+
+        The last level is kept as is: the time index for ``X``, the event
+        counter for ``y``. Instance levels are joined by
+        ``flatten_multiindex``, so ``("h0_0", "h1_0")`` becomes
+        ``"h0_0__h1_0"``.
+
+        Parameters
+        ----------
+        index : pd.MultiIndex
+            Row index with at least two instance levels, and a last level
+            that is not an instance level.
+
+        Returns
+        -------
+        pd.MultiIndex
+            2-level index, the flattened instance level and the last level.
+        """
+        instances = flatten_multiindex(index.droplevel(-1))
+        last = index.get_level_values(-1)
+
+        return pd.MultiIndex.from_arrays(
+            [instances, last], names=[None, index.names[-1]]
+        )
+
+    def _flatten_y_pretrain(self, y):
+        """Flatten instance levels of y, the same way as for X in pretrain.
+
+        Known events ``y`` of a collection of time series are indexed by
+        ``(instance, event_no)``, so, as for ``X``, the instance levels are
+        all levels but the last.
+
+        Does not write to self, and does not change ``y``.
+
+        Parameters
+        ----------
+        y : object
+            Known events, as passed to ``pretrain``.
+
+        Returns
+        -------
+        y : object
+            ``y`` with instance levels flattened into one level, if ``y``
+            has more than one instance level. Otherwise ``y`` unchanged.
+        """
+        has_instance_levels = (
+            hasattr(y, "index")
+            and isinstance(y.index, pd.MultiIndex)
+            and y.index.nlevels > 2
+        )
+        if not has_instance_levels:
+            return y
+
+        return y.set_axis(self._flatten_instance_levels(y.index), axis=0)
+
+    def _check_X_pretrain(self, X):
+        """Check input data to pretrain, and flatten Hierarchical data to Panel.
+
+        Unlike ``_check_X``, does not write to self.
+
+        Panel data is returned unchanged. Hierarchical data is flattened to
+        Panel data, by joining all instance levels into one level with
+        ``flatten_multiindex``, for instance, the instance ``("h0_0", "h1_0")``
+        becomes ``"h0_0__h1_0"``.
+
+        Parameters
+        ----------
+        X : object
+            Input data to ``pretrain``.
+
+        Returns
+        -------
+        X : Panel data
+            ``X`` if it is Panel data, or ``X`` flattened to a ``pd.DataFrame``
+            with 2-level row ``MultiIndex`` if it is Hierarchical data.
+        X_metadata : dict
+            Metadata of the returned ``X``, as returned by ``check_is_scitype``,
+            contains the mtype of ``X`` in the ``"mtype"`` key.
+
+        Raises
+        ------
+        TypeError
+            If ``X`` is a single time series, or not valid Panel
+            or Hierarchical data.
+        """
+        name = type(self).__name__
+
+        if check_is_scitype(X, scitype="Series"):
+            raise TypeError(
+                f"{name}.pretrain requires Panel or Hierarchical data "
+                "(multiple time series), but a single Series was passed. "
+                "Use fit for a single series, or pass Panel data to pretrain, "
+                "for instance a pd.DataFrame with 2-level row MultiIndex "
+                "(instance, time)."
+            )
+
+        X_valid, X_msg, X_metadata = check_is_scitype(
+            X, scitype=["Panel", "Hierarchical"], return_metadata=[]
+        )
+
+        # flatten all instance levels into one level, then continue as Panel
+        if X_valid and X_metadata["scitype"] == "Hierarchical":
+            X = convert(X, from_type=X_metadata["mtype"], to_type="pd_multiindex_hier")
+            X = X.set_axis(self._flatten_instance_levels(X.index), axis=0)
+            X_valid, X_msg, X_metadata = check_is_scitype(
+                X, scitype="Panel", return_metadata=[]
+            )
+
+        if not X_valid:
+            check_is_error_msg(
+                X_msg,
+                var_name=f"Unsupported input data type in {name}.pretrain, input X",
+                allowed_msg=(
+                    "Allowed scitypes for X in pretrain are Panel and Hierarchical, "
+                    "for instance a pd.DataFrame with 2-level row MultiIndex "
+                    "(instance, time), or a 3D np.ndarray (instance, variable, time)."
+                ),
+                raise_exception=True,
+            )
+
+        return X, X_metadata
+
+    def _pretrain(self, X, y=None):
+        """Pretrain detector on a collection of time series, first call.
+
+        private _pretrain containing the core logic, called from pretrain
+        if the ``capability:pretrain`` tag is ``True``
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : pd.DataFrame with 2-level row MultiIndex, or other Panel mtype
+            Data to pretrain the detector on, a collection of time series.
+        y : pd.DataFrame, optional, default=None
+            Known events in ``X``, as passed to ``pretrain``, with instance
+            levels flattened into one, so the row ``MultiIndex`` is
+            ``(instance, event_no)``.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+        """
+        # the default simply discards the data, i.e., no pretraining happens
+        return self
+
+    def _pretrain_update(self, X, y=None):
+        """Pretrain detector on a collection of time series, if already pretrained.
+
+        private _pretrain_update containing the core logic, called from pretrain
+        if the ``capability:pretrain`` tag is ``True``, and the detector
+        is already in the ``"pretrained"`` or ``"fitted"`` state
+
+        Writes to self:
+            Sets pretrained model attributes ending in "_".
+
+        Parameters
+        ----------
+        X : pd.DataFrame with 2-level row MultiIndex, or other Panel mtype
+            Data to pretrain the detector on, a collection of time series.
+        y : pd.DataFrame, optional, default=None
+            Known events in ``X``, as passed to ``pretrain``, with instance
+            levels flattened into one, so the row ``MultiIndex`` is
+            ``(instance, event_no)``.
+
+        Returns
+        -------
+        self :
+            Reference to self.
+        """
+        # the default calls _pretrain, i.e., the new data replaces the old
+        return self._pretrain(X=X, y=y)
 
     def _fit(self, X, y=None):
         """Fit to training data.
@@ -1126,10 +1401,10 @@ class BaseDetector(BaseEstimator):
         >>> import pandas as pd
         >>> from sktime.detection.base import BaseDetector
         >>> segments =  pd.DataFrame({
-                "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
-                (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
-                "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
-            })
+        ...     "ilocs": pd.IntervalIndex.from_tuples([(0, 3), (3, 4), (4, 5),
+        ...     (5, 6), (6, 7), (7, 8), (8, 10), (10, 11), (11, 12), (12, 20)]),
+        ...     "labels": [0, 2, 1, 0, 2, 1, 0, 2, 1, 0]
+        ... })
         >>> BaseDetector.segments_to_change_points(segments)
         Index([0, 3, 4, 5, 6, 7, 8, 10, 11, 12], dtype='int64')
         """

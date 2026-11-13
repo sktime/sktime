@@ -17,14 +17,19 @@ class _TbatsAdapter(BaseForecaster):
     """Base class for interfacing tbats forecasting algorithms."""
 
     _tags = {
+        # packaging info
+        # --------------
         "authors": ["cotterpl", "mloning", "aiwalter", "k1m190r", "fkiraly"],
         # cotterpl for tbats package
+        "python_dependencies": ["pmdarima"],
+        # estimator type
+        # --------------
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
-        "python_dependencies": ["pmdarima"],
+        "capability:update": True,
         # CI and testing tags
         # -------------------
         "tests:vm": True,
@@ -184,7 +189,7 @@ class _TbatsAdapter(BaseForecaster):
         )
         y_pred = pd.DataFrame(y_pred)
         # Workaround for slicing with negative index
-        y_pred["idx"] = [x for x in range(-len(y_in_sample), len(y_out_sample))]
+        y_pred["idx"] = [*range(-len(y_in_sample), len(y_out_sample))]
         y_pred = y_pred.loc[y_pred["idx"].isin(self.fh.to_indexer(self.cutoff).values)]
         y_pred.index = self.fh.to_absolute_index(self.cutoff)
         y_pred = y_pred["y_pred"].rename(None)

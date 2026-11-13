@@ -374,6 +374,7 @@ class PatchTSTForecaster(BaseForecaster):
         "python_dependencies": ["transformers", "torch", "accelerate"],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
         "capability:multivariate": True,
@@ -385,12 +386,12 @@ class PatchTSTForecaster(BaseForecaster):
         "capability:insample": False,
         "capability:pred_int": False,
         "capability:pred_int:insample": False,
-        "capability:global_forecasting": True,
         "property:randomness": "stochastic",
         "capability:random_state": False,
         # Tests and CI tags
         # -----------------
         "tests:vm": True,
+        "tests:specific": ["sktime.forecasting.tests.test_patch_tst"],
     }
 
     def __init__(
@@ -473,7 +474,7 @@ class PatchTSTForecaster(BaseForecaster):
             _config["num_input_channels"] = len(y.columns)
             if fh is not None:
                 _config["prediction_length"] = max(
-                    *(fh.to_relative(self._cutoff)._values + 1),
+                    *fh.to_relative(self._cutoff)._values,
                     _config["prediction_length"],
                 )
 
@@ -675,19 +676,9 @@ class PatchTSTForecaster(BaseForecaster):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        import platform
-
-        os = platform.system()
-        if os == "Darwin":
-            if _check_soft_dependencies("torch", severity="none"):
-                import torch
-
-                torch.backends.mps.is_available = lambda: False
-            else:
-                pass
-
         params_set = []
         params1 = {
+            "device": "cpu",
             "config": {
                 "patch_length": 2,
                 "context_length": 4,
@@ -704,11 +695,13 @@ class PatchTSTForecaster(BaseForecaster):
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
                 "per_device_train_batch_size": 16,
+                "use_cpu": True,
             },
             "validation_split": 0.0,
         }
         params_set.append(params1)
         params2 = {
+            "device": "cpu",
             "config": {
                 "patch_length": 1,
                 "context_length": 2,
@@ -725,6 +718,7 @@ class PatchTSTForecaster(BaseForecaster):
                 "learning_rate": 1e-4,
                 "num_train_epochs": 1,
                 "per_device_train_batch_size": 16,
+                "use_cpu": True,
             },
             "validation_split": 0.0,
         }

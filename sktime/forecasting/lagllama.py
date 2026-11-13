@@ -431,6 +431,7 @@ class LagLlamaForecaster(BaseForecaster):
         ],
         # estimator type
         # --------------
+        "category": ["deep_learning", "foundation_model"],
         "y_inner_mtype": ["pd.DataFrame", "pd-multiindex", "pd_multiindex_hier"],
         "capability:exogenous": False,
         "capability:multivariate": False,  # LagLlama is univariate only
@@ -443,11 +444,20 @@ class LagLlamaForecaster(BaseForecaster):
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
         "capability:unequal_length": False,
+        "capability:update": True,  # can estimator update its parameters with new data?
         # test and CI flags
         # -----------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_lagllama"],
         "tests:libs": ["sktime.libs.lag_llama"],
+        # Shorthands
+        # ----------
+        "shorthands": {
+            "lagllama": (
+                "LagLlamaForecaster("
+                'ckpt_path="time-series-foundation-models/Lag-Llama")'
+            ),
+        },
     }
 
     def __init__(

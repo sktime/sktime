@@ -156,8 +156,7 @@ def test_craft_safe_rejects_unsafe_specs(spec):
         craft(spec, safe=True)
 
 
-@pytest.mark.parametrize("spec", specs)
-def test_deps(spec):
+def test_deps():
     """Check that deps retrieves the correct requirement sets."""
     # should return length 0 list since has no deps
     assert deps(simple_spec) == []
@@ -219,3 +218,10 @@ def test_sklearn_imports():
         est_obj = craft(est_spec)
 
         assert est_obj.__class__.__name__ == est_name
+
+    from sklearn.model_selection import KFold
+
+    assert craft("KFold()").__class__ == KFold
+    kfold_instance = craft("KFold(n_splits=5)")
+    assert isinstance(kfold_instance, KFold)
+    assert craft("KFold(n_splits=5)").n_splits == 5

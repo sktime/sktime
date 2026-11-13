@@ -344,6 +344,33 @@ class MultivariateTCost(BaseCost):
         Relative tolerance for MLE scale matrix convergence.
     mle_scale_max_iter : int, optional (default=100)
         Maximum iterations for MLE scale matrix estimation.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sktime.detection.costs import MultivariateTCost
+    >>> X = np.array([[0., 0.], [2., 1.], [0., 1.], [2., 0.],
+    ...               [10., 5.], [12., 6.], [10., 6.], [12., 5.]])
+    >>> cost = MultivariateTCost()
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[17.16],
+           [17.16],
+           [65.77]])
+
+    The first two intervals are each well described by a single distribution,
+    so their cost is low. The third spans the change in location and is
+    expensive.
+
+    The degrees of freedom are estimated from the data by default. Where the
+    estimate exceeds ``infinite_dof_threshold``, the distribution is
+    approximated by a Gaussian. Fixing a small number of degrees of freedom
+    gives the heavier tails of the t distribution:
+
+    >>> cost = MultivariateTCost(fixed_dof=3)
+    >>> cost.evaluate(X, [[0, 4], [4, 8], [0, 8]]).round(2)
+    array([[19.37],
+           [19.37],
+           [69.13]])
     """
 
     _tags = {

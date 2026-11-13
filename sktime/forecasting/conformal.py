@@ -125,12 +125,14 @@ class ConformalIntervals(BaseForecaster):
         "python_dependencies": ["joblib"],
         # estimator type
         # --------------
+        "category": ["composition"],
         "capability:multivariate": False,
         "requires-fh-in-fit": False,
         "capability:missing_values": False,
         "capability:exogenous": True,
         "capability:pred_int": True,
         "capability:pred_int:insample": False,
+        "capability:update": True,
         "X_inner_mtype": MTYPE_LIST_SERIES,
         "y_inner_mtype": MTYPE_LIST_SERIES,
         # CI and test flags
@@ -178,6 +180,7 @@ class ConformalIntervals(BaseForecaster):
             "capability:missing_values",
             "X-y-must-have-same-index",
             "enforce_index_type",
+            "capability:update",
         ]
         self.clone_tags(self.forecaster, tags_to_clone)
 

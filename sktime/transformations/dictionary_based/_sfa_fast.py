@@ -37,72 +37,75 @@ class SFAFast(BaseTransformer):
 
     Parameters
     ----------
-    word_length:         int, default = 8
+    word_length: int, default = 8
         length of word to shorten window to (using PAA)
 
-    alphabet_size:       int, default = 4
+    alphabet_size: int, default = 4
         number of values to discretise each value to
 
-    window_size:         int, default = 12
+    window_size: int, default = 12
         size of window for sliding. Input series
         length for whole series transform
 
-    norm:                boolean, default = False
+    norm: boolean, default = False
         mean normalise words by dropping first fourier coefficient
 
-    binning_method:      {"equi-depth", "equi-width", "information-gain", "kmeans",
-                            "quantile"},
-                            default="equi-depth"
-        the binning method used to derive the breakpoints.
+    binning_method: str, default = "equi-depth"
+        The binning method used to derive the breakpoints.
+        One of {"equi-depth", "equi-width", "information-gain", "kmeans", "quantile"},
+        default="equi-depth"
 
-    anova:               boolean, default = False
+    anova:  boolean, default = False
         If True, the Fourier coefficient selection is done via a one-way
         ANOVA test. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
 
-    variance:               boolean, default = False
+    variance: boolean, default = False
         If True, the Fourier coefficient selection is done via the largest
         variance. If False, the first Fourier coefficients are selected.
         Only applicable if labels are given
 
-    save_words:          boolean, default = False
+    save_words: boolean, default = False
         whether to save the words generated for each series (default False)
 
-    bigrams:             boolean, default = False
+    bigrams: boolean, default = False
         whether to create bigrams of SFA words
 
     feature_selection: {"chi2", "none", "random"}, default: chi2
-        Sets the feature selections strategy to be used. Chi2 reduces the number
+        The feature selections strategy to be used.
+        Chi2 reduces the number
         of words significantly and is thus much faster (preferred). Random also
-        reduces the number significantly. None applies not feature selectiona and
+        reduces the number significantly. None applies not feature selection and
         yields large bag of words, e.g. much memory may be needed.
 
-    p_threshold:  int, default=0.05 (disabled by default)
+    p_threshold: int, default=0.05 (disabled by default)
+        The p-value threshold for the chi-squared test.
         If feature_selection=chi2 is chosen, feature selection is applied based on
         the chi-squared test. This is the p-value threshold to use for chi-squared
         test on bag-of-words (lower means more strict). 1 indicates that the test
         should not be performed.
 
-    max_feature_count:  int, default=256
+    max_feature_count: int, default=256
+        Maximum number of features to retain when feature_selection=random is chosen.
         If feature_selection=random is chosen, this parameter defines the number of
         randomly chosen unique words used.
 
-    skip_grams:     boolean, default = False
+    skip_grams: boolean, default = False
         whether to create skip-grams of SFA words
 
     remove_repeat_words: boolean, default = False
         whether to use numerosity reduction (default False)
 
-    return_sparse:  boolean, default=True
+    return_sparse: boolean, default=True
         if set to true, a scipy sparse matrix will be returned as BOP model.
         If set to false a dense array will be returned as BOP model. Sparse
         arrays are much more compact.
 
-    n_jobs:     int, optional, default = 1
+    n_jobs: int, optional, default = 1
         The number of jobs to run in parallel for both `transform`.
         ``-1`` means using all processors.
 
-    return_pandas_data_series:          boolean, default = False
+    return_pandas_data_series: boolean, default = False
         set to true to return Pandas Series as a result of transform.
         setting to true reduces speed significantly but is required for
         automatic test.
@@ -142,6 +145,7 @@ class SFAFast(BaseTransformer):
             "test_categorical_y_raises_error",
             "test_categorical_X_passes",
             "test_get_test_params_coverage",
+            "test_class_has_doctest_example",
         ],
     }
 

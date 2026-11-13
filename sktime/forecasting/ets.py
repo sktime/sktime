@@ -182,6 +182,7 @@ class AutoETS(_StatsModelsAdapter):
         "python_dependencies": ["statsmodels", "joblib"],
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:exogenous": False,
         "capability:pred_int": True,
         "capability:pred_int:insample": True,
