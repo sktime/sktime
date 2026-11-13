@@ -13,7 +13,7 @@ from sktime.utils.singleton import _multiton
 class CIProtoForecaster(BaseForecaster):
     """Interface to the ci-proto probabilistic forecasting model.
 
-    The model forecasts all target columns jointly and returns nine quantiles.
+    The model [1]_ forecasts all target columns jointly and returns nine quantiles.
     The 0.5 quantile supplies point forecasts. Covariate columns supplied only
     during fit are past covariates; columns supplied at fit and predict time are
     known future covariates. Future covariates must cover every step through the
@@ -26,7 +26,8 @@ class CIProtoForecaster(BaseForecaster):
     revision : str or None, default=None
         Hugging Face commit SHA to pin the model. Applies to Hub models only.
     device : {"auto", "cpu", "cuda"}, default="auto"
-        Inference device. Use ``"cpu"`` for portable inference.
+        Inference device. ``"auto"`` selects CUDA when PyTorch reports it is
+        available and uses CPU otherwise.
 
     Notes
     -----
@@ -35,7 +36,8 @@ class CIProtoForecaster(BaseForecaster):
 
     References
     ----------
-    .. [1] https://github.com/continuousintelligence/ci
+    .. [1] Continuous Intelligence. ci-proto.
+       https://github.com/continuousintelligence/ci
 
     Examples
     --------
@@ -52,7 +54,7 @@ class CIProtoForecaster(BaseForecaster):
 
     _tags = {
         "category": ["deep_learning", "foundation_model"],
-        "authors": ["KrishChadha001"],
+        "authors": ["KrishChadha001", "Benjamin-Walker", "berndtt"],
         "maintainers": ["KrishChadha001"],
         "y_inner_mtype": "pd.DataFrame",
         "X_inner_mtype": "pd.DataFrame",
@@ -86,13 +88,16 @@ class CIProtoForecaster(BaseForecaster):
     def _fit(self, y, X, fh):
         self._cur_y = y
         self._cur_X = X
-        self.model_ = _CachedCIProto(
+        self._load_model()
+        return self
+
+    def _load_model(self):
+        return _CachedCIProto(
             key=(str(self.model_path), self.revision, self.device),
             model_path=self.model_path,
             revision=self.revision,
             device=self.device,
         ).load()
-        return self
 
     def _forecast(self, fh, X):
         import torch
@@ -144,8 +149,9 @@ class CIProtoForecaster(BaseForecaster):
         elif X is not None:
             raise ValueError("Prediction covariates require fit-time X")
 
-        output = self.model_.forecast(history, horizon=horizon, **kwargs)
-        levels = np.asarray(self.model_.quantiles)
+        model = self._load_model()
+        output = model.forecast(history, horizon=horizon, **kwargs)
+        levels = np.asarray(model.quantiles)
         values = np.asarray(output)
         index = fh.to_absolute(self.cutoff)._values
         return levels, values[:, :, steps - 1], index
@@ -160,6 +166,7 @@ class CIProtoForecaster(BaseForecaster):
         )
 
     def _predict_proba(self, marginal=True, **kwargs):
+        """Build marginal distributions from the native quantile forecasts."""
         from skpro.distributions import HistogramQPD
 
         fh = kwargs["fh"]
