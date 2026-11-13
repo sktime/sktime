@@ -56,12 +56,16 @@ def test_convert_MvS_to_UvS_as_Series():
         pd.Index(["temperature", "pressure", "humidity"]),
         pd.Index([7, 2, 5]),
         pd.MultiIndex.from_tuples([("sensor", "z"), ("sensor", "a"), ("other", "m")]),
+        pd.Index([False, True]),
+        pd.Index([True, False]),
     ],
+    ids=["string", "integer", "multiindex", "boolean", "boolean-reversed"],
 )
 def test_dflist_to_numpy3d_aligns_variables(columns):
     """Array channels follow the first frame's variable order, see #11799."""
-    expected = np.arange(27, dtype=float).reshape(3, 3, 3)
-    permutations = [[0, 1, 2], [2, 0, 1], [1, 2, 0]]
+    n_columns = len(columns)
+    expected = np.arange(9 * n_columns, dtype=float).reshape(3, n_columns, 3)
+    permutations = [np.roll(np.arange(n_columns), i) for i in range(3)]
     panel = [
         pd.DataFrame(values.T, columns=columns).iloc[:, permutation]
         for values, permutation in zip(expected, permutations)

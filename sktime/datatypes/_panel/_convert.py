@@ -1032,7 +1032,9 @@ def from_dflist_to_numpy3D(obj, store=None):
             raise ValueError("elements of obj must have same length and columns")
 
     # Each array channel must refer to the same named variable across instances.
-    aligned = (X if X.columns.equals(columns) else X.loc[:, columns] for X in obj)
+    aligned = (
+        X if X.columns.equals(columns) else X.reindex(columns=columns) for X in obj
+    )
     nparr = np.array([X.to_numpy().transpose() for X in aligned])
 
     return nparr
