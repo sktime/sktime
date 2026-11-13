@@ -106,6 +106,18 @@ class PenalisedScore(BaseIntervalScorer):
        detection.
     .. [2] Tickle et al. (2021). A computationally efficient, high-dimensional
        multiple changepoint procedure.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> from sktime.detection._anomaly_scores._l2_saving import L2Saving
+    >>> from sktime.detection._compose import PenalisedScore
+    >>> X = pd.DataFrame({"v": [0.0, 0.0, 0.0, 0.0, 0.0, 5.0, 5.0, 5.0]})
+    >>> cuts = np.array([[0, 8]])
+    >>> score = PenalisedScore(L2Saving(), penalty=2.0)
+    >>> score.evaluate(X, cuts)
+    array([[26.125]])
     """
 
     _tags = {
