@@ -1,6 +1,7 @@
 """Column concatenator test code."""
 
 import numpy as np
+import pandas as pd
 import pytest
 
 from sktime.datasets import load_basic_motions
@@ -33,3 +34,22 @@ def test_TimeSeriesConcatenator():
     # check specific observations
     assert X.iloc[0, -1].iloc[-3] == Xt.iloc[0, 0].iloc[-3]
     assert X.iloc[0, 0].iloc[3] == Xt.iloc[0, 0].iloc[3]
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(ColumnConcatenator),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("columns", [["z", "a"], ["c2", "c10"], [1, 0]])
+def test_column_order_preserved(columns):
+    """Test that columns are concatenated from left to right, not sorted by name."""
+    idx = pd.MultiIndex.from_product([[0, 1], range(3)], names=["inst", "time"])
+    X = pd.DataFrame(
+        {columns[0]: [1, 2, 3, 4, 5, 6], columns[1]: [10, 20, 30, 40, 50, 60]},
+        index=idx,
+    )
+
+    Xt = ColumnConcatenator().fit_transform(X)
+
+    assert Xt.loc[0].iloc[:, 0].tolist() == [1, 2, 3, 10, 20, 30]
+    assert Xt.loc[1].iloc[:, 0].tolist() == [4, 5, 6, 40, 50, 60]
