@@ -89,6 +89,7 @@ class FunctionTransformer(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:core": True,  # should tests be triggered by framework changes?
+        "tests:specific": ["sktime.transformations.tests.test_func_transform"],
         "tests:skip_by_name": ["test_categorical_X_passes"],
         # this test uses RangeIndex data which is not supported
     }
@@ -116,7 +117,10 @@ class FunctionTransformer(BaseTransformer):
 
     def _check_inverse_transform(self, Z):
         """Check that func and inverse_func are each other's inverse."""
-        Z_round_trip = self.inverse_func(self.func(Z))
+        Z_transformed = self._apply_function(Z, func=self.func, kw_args=self.kw_args)
+        Z_round_trip = self._apply_function(
+            Z_transformed, func=self.inverse_func, kw_args=self.inv_kw_args
+        )
         if not np.allclose(Z_round_trip, Z, equal_nan=True):
             raise UserWarning(
                 "The provided functions are not strictly"
