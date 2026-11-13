@@ -43,6 +43,16 @@ class RandomIntervals(BaseTransformer):
     See Also
     --------
     SupervisedIntervals
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.transformations.random_intervals import RandomIntervals
+    >>> X, _ = load_unit_test(return_X_y=True, split="train")
+    >>> transformer = RandomIntervals(n_intervals=3, random_state=0)
+    >>> Xt = transformer.fit_transform(X)
+    >>> Xt.shape
+    (20, 21)
     """
 
     _tags = {
@@ -61,7 +71,6 @@ class RandomIntervals(BaseTransformer):
         # CI and test flags
         # -----------------
         "tests:skip_by_name": ["test_categorical_X_passes"],
-        "tests:skip_all": True,
         # categoricals can be passed, but depending on transformers passed
     }
 
@@ -197,4 +206,14 @@ class RandomIntervals(BaseTransformer):
             `MyClass(**params)` or `MyClass(**params[i])` creates a valid test instance.
             `create_test_instance` uses the first (or only) dictionary in `params`
         """
-        return {"n_intervals": 3}
+        from sktime.transformations.summarize import SummaryTransformer
+
+        params1 = {"n_intervals": 3}
+        params2 = {
+            "n_intervals": 2,
+            "transformers": SummaryTransformer(
+                summary_function=("mean", "max"), quantiles=None
+            ),
+            "random_state": 42,
+        }
+        return [params1, params2]
