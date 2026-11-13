@@ -257,6 +257,7 @@ class MCDCNNRegressor(BaseDeepRegressor):
         X = X.transpose([0, 2, 1])
         X = self._network._prepare_input(X)
 
+        kwargs.setdefault("verbose", self.verbose)
         probs = self.model_.predict(X, self.batch_size, **kwargs)
 
         probs = squeeze(probs, axis=-1)

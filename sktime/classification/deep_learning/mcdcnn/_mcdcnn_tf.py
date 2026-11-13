@@ -270,6 +270,7 @@ class MCDCNNClassifier(BaseDeepClassifier):
         X = X.transpose([0, 2, 1])
         X = self._network._prepare_input(X)
 
+        kwargs.setdefault("verbose", self.verbose)
         probs = self.model_.predict(X, self.batch_size, **kwargs)
 
         if probs.shape[1] == 1:
