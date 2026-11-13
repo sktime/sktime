@@ -543,6 +543,20 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
     Notes
     -----
     If unspecified, all columns will be assumed to be known during prediction duration.
+
+    Examples
+    --------
+    Use the last two observations to forecast the next two values of a linear trend.
+
+    >>> import pandas as pd
+    >>> from sktime.forecasting.darts import DartsLinearRegressionModel
+    >>> y = pd.Series(range(10), dtype=float)
+    >>> model = DartsLinearRegressionModel(  # doctest: +SKIP
+    ...     lags=2, output_chunk_length=2
+    ... )
+    >>> _ = model.fit(y)  # doctest: +SKIP
+    >>> model.predict(fh=[1, 2]).round(1).tolist()  # doctest: +SKIP
+    [10.0, 11.0]
     """
 
     _tags = {
@@ -563,7 +577,6 @@ class DartsLinearRegressionModel(_DartsRegressionModelsAdapter):
         # ---------------------
         "tests:vm": True,
         "tests:specific": ["sktime.forecasting.tests.test_darts"],
-        "tests:skip_by_name": ["test_class_has_doctest_example"],
     }
 
     def __init__(
