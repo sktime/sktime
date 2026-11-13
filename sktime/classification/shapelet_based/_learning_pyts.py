@@ -172,7 +172,7 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         # packaging info
         # --------------
         "authors": ["johannfaouzi", "fkiraly"],  # johannfaouzi is author of upstream
-        "python_dependencies": "pyts<0.14.0",
+        "python_dependencies": "pyts",
         # estimator type
         # --------------
         "capability:multioutput": False,
@@ -197,9 +197,19 @@ class ShapeletLearningClassifierPyts(_PytsAdapter, BaseClassifier):
         should import and return pyts class
         """
         if self.loss == "crossentropy":
-            from pyts.classification.learning_shapelets import (
-                CrossEntropyLearningShapelets,
-            )
+            # CrossEntropyLearningShapelets is not exported from the public
+            # pyts.classification namespace, so a private module is imported.
+            # pyts 0.14 renamed the private modules with a leading underscore.
+            from sktime.utils.dependencies import _check_soft_dependencies
+
+            if _check_soft_dependencies("pyts<0.14", severity="none"):
+                from pyts.classification.learning_shapelets import (
+                    CrossEntropyLearningShapelets,
+                )
+            else:
+                from pyts.classification._learning_shapelets import (
+                    CrossEntropyLearningShapelets,
+                )
 
             return CrossEntropyLearningShapelets
         elif self.loss == "softmax":
