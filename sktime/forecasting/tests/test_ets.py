@@ -107,3 +107,25 @@ def test_inf_ic_false():
         and np.isinf(fitted_forecaster.bic)
         and np.isinf(fitted_forecaster.aicc)
     )
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(AutoETS),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("error, seasonal", [("mul", "mul"), ("add", "mul")])
+@pytest.mark.parametrize("random_state", [None, 42])
+def test_predict_interval_multiplicative(error, seasonal, random_state):
+    """Multiplicative models return finite, ordered prediction intervals."""
+    forecaster = AutoETS(
+        error=error, trend="add", seasonal=seasonal, sp=12, random_state=random_state
+    )
+    forecaster.fit(y)
+
+    intervals = forecaster.predict_interval(fh=[1, 2, 3], coverage=0.9)
+
+    assert intervals.shape == (3, 2)
+    assert np.isfinite(intervals).all().all()
+    assert np.all(
+        intervals[(y.name, 0.9, "lower")] <= intervals[(y.name, 0.9, "upper")]
+    )
