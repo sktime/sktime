@@ -159,8 +159,11 @@ class CIProtoForecaster(BaseForecaster):
             values[:, median[0], :].T, index=index, columns=self._cur_y.columns
         )
 
-    def _predict_proba(self, fh, X, marginal=True):
+    def _predict_proba(self, marginal=True, **kwargs):
         from skpro.distributions import HistogramQPD
+
+        fh = kwargs["fh"]
+        X = kwargs.get("X")
 
         levels, values, index = self._forecast(fh, X)
         row_index = pd.MultiIndex.from_product([levels, index])
