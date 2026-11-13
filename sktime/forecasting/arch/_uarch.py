@@ -165,6 +165,7 @@ class ARCH(BaseForecaster):
         "python_dependencies": "arch",
         # estimator type
         # --------------
+        "category": ["statistical"],
         "capability:multivariate": False,
         "y_inner_mtype": "pd.Series",
         "X_inner_mtype": "pd.DataFrame",

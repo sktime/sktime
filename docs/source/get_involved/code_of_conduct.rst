@@ -399,7 +399,7 @@ Tracy Teal.
 
 The Turing Institute Data Study Group Code of Conduct was heavily
 adapted from the `Citizen Lab Summer Institute 2017 Code of
-Conduct <https://citizenlab.ca/summerinstitute/codeofconduct.html>`__
+Conduct <https://web.archive.org/web/20190201180037/https://citizenlab.ca/summerinstitute/codeofconduct.html>`__
 and used under a CC BY 2.5 CA license. Citizen Lab based their Code of
 Conduct on the `xvzf Code of Conduct <http://xvzf.io/>`__, the
 `Contributor Covenant <http://contributor-covenant.org/>`__, the `Django
