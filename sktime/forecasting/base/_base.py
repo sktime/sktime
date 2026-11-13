@@ -1047,10 +1047,10 @@ class BaseForecaster(_PretrainMixin, _PredictProbaMixin, BaseEstimator):
         implement meaningful pretraining logic. For all other forecasters,
         ``pretrain`` is a no-op that still transitions the state.
 
-        If called after ``fit``, fitted state (including ``cutoff``) is cleared
+        If called after ``fit``, fitted state is cleared
         while pretrained attributes are preserved. If pretrained state exists,
         pretraining updates it with the new data; otherwise, pretraining starts
-        from scratch. After the call, ``is_fitted`` is ``False``.
+        from scratch.
 
         State change:
             Changes ``state`` to ``"pretrained"`` regardless of prior state.
