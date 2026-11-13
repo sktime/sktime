@@ -367,7 +367,7 @@ class NaiveForecaster(_BaseWindowForecaster):
         from sktime.transformations.lag import Lag
 
         strategy = self.strategy
-        sp = self.sp
+        sp = self.sp or 1
         _y = self._cur_y
         cutoff = self.cutoff
 
@@ -523,16 +523,16 @@ class NaiveForecaster(_BaseWindowForecaster):
         y = self._cur_y
         y = convert_to(y, "pd.Series")
         T = len(y)
-        sp = self.sp
+        sp = self.sp or 1
 
         # Compute "past" residuals
         if self.strategy == "last":
-            y_res = y - y.shift(self.sp)
+            y_res = y - y.shift(sp)
         elif self.strategy == "mean":
             if not self.window_length:
                 if sp > 1:
                     # Get the next sp predictions and repeat them
-                    # T / self.sp times to match the length of trained y
+                    # T / sp times to match the length of trained y
                     # NOTE: +1 extra tile to defend against off-by-one errors
                     reps = math.ceil(T / sp) + 1
                     past_fh = ForecastingHorizon(

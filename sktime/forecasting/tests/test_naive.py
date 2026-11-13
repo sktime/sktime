@@ -487,3 +487,27 @@ def test_insample_with_numpy_input():
     forecaster.fit(y)
     y_pred = forecaster.predict(np.arange(0, 10))
     assert len(y_pred) == 10
+
+
+@pytest.mark.skipif(
+    not run_test_for_class(NaiveForecaster),
+    reason="run test only if softdeps are present and incrementally (if requested)",
+)
+@pytest.mark.parametrize("strategy", ["last", "mean", "drift"])
+def test_sp_none_same_as_sp_1(strategy):
+    """Test that sp=None behaves like sp=1, as documented.
+
+    Checks predict, predict_var and predict_interval for all strategies.
+    """
+    y = pd.Series(
+        np.arange(60, dtype="float64") % 7 + np.arange(60) * 0.5,
+        index=pd.period_range("2000-01", periods=60, freq="M"),
+    )
+    fh = [1, 2, 3]
+
+    f_none = NaiveForecaster(strategy=strategy, sp=None).fit(y, fh=fh)
+    f_one = NaiveForecaster(strategy=strategy, sp=1).fit(y, fh=fh)
+
+    pd.testing.assert_series_equal(f_none.predict(), f_one.predict())
+    pd.testing.assert_frame_equal(f_none.predict_var(), f_one.predict_var())
+    pd.testing.assert_frame_equal(f_none.predict_interval(), f_one.predict_interval())
