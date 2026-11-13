@@ -417,10 +417,11 @@ class EnsembleForecaster(_HeterogenousEnsembleForecaster):
         y_pred = pd.concat(self._predict_forecasters(fh, X), axis=1, keys=names)
         # aggregate over forecasters, separately per variable (column level 1);
         # loop instead of groupby.agg, which passes Series not DataFrames in pandas>=3.1
+        # sort=False keeps the variables in the column order of y, not sorted by name
         y_pred = pd.concat(
             {
                 var: _aggregate(y_var.T, self.aggfunc, self.weights)
-                for var, y_var in y_pred.T.groupby(level=1)
+                for var, y_var in y_pred.T.groupby(level=1, sort=False)
             },
             axis=1,
             names=[y_pred.columns.names[1]],
