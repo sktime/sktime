@@ -83,6 +83,9 @@ class ColumnConcatenator(BaseTransformer):
           Transformed pandas DataFrame with same number of rows and single
           column
         """
+        # use column positions as labels, so sort_index below keeps the column
+        # order of X instead of sorting the columns by name
+        X = X.set_axis(range(X.shape[1]), axis=1)
         Xst = pd.DataFrame(X.stack())
         Xt = Xst.swaplevel(-2, -1).sort_index().droplevel(-2)
 
