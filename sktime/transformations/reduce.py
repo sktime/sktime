@@ -18,11 +18,18 @@ from sktime.utils.pandas import df_map
 class Tabularizer(BaseTransformer):
     """A transformer that turns time series/panel data into tabular data.
 
-    This estimator converts nested pandas dataframe containing time-series/panel data
-    with numpy arrays or pandas Series in dataframe cells into a tabular pandas
-    dataframe with only primitives in cells. This is useful for transforming time-
-    series/panel data into a format that is accepted by standard validation learning
-    algorithms (as in sklearn).
+    This estimator converts panel time series into a flat tabular representation
+    with only primitives (via ``numpyflat``). This is useful for transforming
+    time-series/panel data into a format accepted by standard sklearn estimators.
+
+    Examples
+    --------
+    >>> from sktime.datasets import load_unit_test
+    >>> from sktime.transformations.reduce import Tabularizer
+    >>> X, _ = load_unit_test(return_X_y=True, split="train")
+    >>> Xt = Tabularizer().fit_transform(X)
+    >>> Xt.shape
+    (20, 24)
     """
 
     _tags = {
@@ -34,17 +41,18 @@ class Tabularizer(BaseTransformer):
         "scitype:transform-output": "Primitives",
         # what is the scitype of y: None (not needed), Primitives, Series, Panel
         "scitype:instancewise": True,  # is this an instance-wise transform?
-        "X_inner_mtype": ["nested_univ", "numpy3D"],
+        "X_inner_mtype": ["df-list", "numpy3D"],
         # which mtypes do _fit/_predict support for X?
         "y_inner_mtype": "None",  # and for y?
+        "capability:unequal_length": True,
     }
 
     def _transform(self, X, y=None):
-        """Transform nested pandas dataframe into tabular dataframe.
+        """Transform panel time series into a flat tabular array.
 
         Parameters
         ----------
-        X : pandas DataFrame or 3D np.ndarray
+        X : list of pd.DataFrame or 3D np.ndarray
             panel of time series to transform
         y : ignored argument for interface compatibility
 
