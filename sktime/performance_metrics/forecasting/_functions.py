@@ -2790,14 +2790,13 @@ def mean_squared_log_error(
     loss : float or ndarray of floats
         The computed metric value.
     """
-    import numpy as np
-    from sklearn.utils import check_consistent_length
-
-    check_consistent_length(y_true, y_pred)
-
-    # [FIX] Force to numpy to avoid pandas index alignment causing NaNs/crashes
-    y_true_np = np.asanyarray(y_true)
-    y_pred_np = np.asanyarray(y_pred)
+    # coerces to 2D numpy arrays of equal shape, so that a 1D y_true and a
+    # single-column y_pred do not broadcast to a (fh, fh) array
+    _, y_true_np, y_pred_np, multioutput = _check_reg_targets(
+        y_true, y_pred, multioutput
+    )
+    if horizon_weight is not None:
+        check_consistent_length(y_true_np, horizon_weight)
 
     # Clip negative values to 0 to avoid log domain errors
     y_true_np = np.maximum(y_true_np, 0)

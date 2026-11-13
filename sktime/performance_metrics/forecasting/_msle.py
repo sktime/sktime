@@ -65,8 +65,8 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
             by_index=by_index,
         )
 
-    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
-        """Return the metric evaluated at each time point."""
+    def _squared_log_error(self, y_true, y_pred):
+        """Return the squared log error at each time point, as a pd.DataFrame."""
         y_true_np = np.asanyarray(y_true)
         y_pred_np = np.asanyarray(y_pred)
 
@@ -78,13 +78,41 @@ class MeanSquaredLogError(BaseForecastingErrorMetric):
 
         squared_log_error = np.square(y_true_log - y_pred_log)
 
-        squared_log_error = pd.DataFrame(
+        return pd.DataFrame(
             squared_log_error, index=y_true.index, columns=y_true.columns
         )
 
+    def _evaluate(self, y_true, y_pred, **kwargs):
+        """Evaluate the desired metric on given inputs."""
+        squared_log_error = self._squared_log_error(y_true, y_pred)
         squared_log_error = self._get_weighted_df(squared_log_error, **kwargs)
+        msle = squared_log_error.mean()
 
-        return self._handle_multioutput(squared_log_error, self.multioutput)
+        if self.square_root:
+            msle = msle.pow(0.5)
+
+        return self._handle_multioutput(msle, self.multioutput)
+
+    def _evaluate_by_index(self, y_true, y_pred, **kwargs):
+        """Return the metric evaluated at each time point.
+
+        If ``square_root`` is True, returns the jackknife pseudo-values of RMSLE.
+        """
+        squared_log_error = self._squared_log_error(y_true, y_pred)
+
+        if self.square_root:
+            n = squared_log_error.shape[0]
+            rmsle = squared_log_error.mean(axis=0).pow(0.5)
+            sle_sum = squared_log_error.sum(axis=0)
+            msle_jackknife = (sle_sum - squared_log_error) / (n - 1)
+            rmsle_jackknife = msle_jackknife.pow(0.5)
+            pseudo_values = n * rmsle - (n - 1) * rmsle_jackknife
+        else:
+            pseudo_values = squared_log_error
+
+        pseudo_values = self._get_weighted_df(pseudo_values, **kwargs)
+
+        return self._handle_multioutput(pseudo_values, self.multioutput)
 
     @classmethod
     def get_test_params(cls, parameter_set="default"):
