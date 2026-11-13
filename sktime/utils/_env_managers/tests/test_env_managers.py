@@ -69,7 +69,7 @@ def test_env_python_platform_path():
         (lambda: None, "callable"),
         (Path("script.py"), "script"),
         ("script.py", "script"),
-        ("sktime.benchmarking._worker", "module"),
+        ("my_package.worker", "module"),
     ],
 )
 def test_resolve_run_target(target, expected):
@@ -105,7 +105,7 @@ def test_run_module_builds_command(monkeypatch):
 
     manager = _DummyManager()
     manager.run(
-        "sktime.benchmarking._worker",
+        "my_package.worker",
         requirements=["pandas"],
         input=b"payload",
         args=["--verbose"],
@@ -115,7 +115,7 @@ def test_run_module_builds_command(monkeypatch):
     assert captured["cmd"] == [
         str(Path(sys.executable)),
         "-m",
-        "sktime.benchmarking._worker",
+        "my_package.worker",
         "--verbose",
     ]
     assert captured["kwargs"]["input"] == b"payload"

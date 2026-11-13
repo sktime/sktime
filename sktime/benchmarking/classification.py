@@ -75,6 +75,21 @@ class ClassificationBenchmark(BaseBenchmark):
 
     return_data : bool, optional (default=False)
         Whether to return the prediction and the ground truth data in the results.
+    env_mode : str, optional (default="auto")
+        One of ``"auto"``, ``"current"``, or ``"per_task_estimator"``.
+        ``"per_task_estimator"`` runs each task-estimator pair by calling
+        this class's ``_run_validation`` in an isolated environment.
+        See ``BaseBenchmark`` for the full description.
+    env_manager : BaseEnvironmentManager, optional (default=None)
+        Manager used to create environments and run validation.
+        ``None`` builds a ``UvEnvironmentManager`` that installs
+        ``cloudpickle`` and the same ``sktime`` version as the parent.
+    envs_dir : str or pathlib.Path, optional (default=None)
+        Directory for isolated environments when ``env_manager`` is
+        ``None``. ``None`` uses ``.benchmark_envs``. The auto-built
+        manager uses the parent interpreter; a different Python
+        version is not supported because the child unpickles
+        parent objects with ``cloudpickle``.
     """
 
     def add_task(
