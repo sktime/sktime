@@ -80,8 +80,9 @@ class MIRAForecaster(BaseForecaster):
         "python_dependencies": [
             "torch",
             "torchdiffeq",
-            "transformers==4.40.1",
-            "accelerate==0.28.0",
+            # MIRA uses Cache.get_max_length, removed in transformers 4.49.
+            "transformers>=4.40.1,<4.49",
+            "accelerate>=0.28.0",
         ],
         "X_inner_mtype": "pd.DataFrame",
         "y_inner_mtype": "pd.DataFrame",
