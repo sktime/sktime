@@ -4,7 +4,7 @@ This code provides a base interface template for models
 from hmmlearn for using that library for detection of time series.
 
 Please see the original library
-(https://github.com/hmmlearn/hmmlearn/blob/main/lib/hmmlearn/hmm.py)
+(https://github.com/hmmlearn/hmmlearn/blob/main/src/hmmlearn/hmm.py)
 """
 
 import numpy as np
